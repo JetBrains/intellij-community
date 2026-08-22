@@ -21,6 +21,13 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_libraries = [
+        # do not sort,
+        "@lib//:com-jetbrains-fus-reporting-fus-api",
+        "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+        "@lib//:jetbrains-fus-reporting-api-jvm",
+    ],
     module_name = "intellij.platform.statistics",
     resource_strip_prefix = "resources",
     resources = glob(

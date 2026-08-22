@@ -7,6 +7,13 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_libraries = [
+        # do not sort,
+        "@lib//:libraries-maven-resolver-transport-org-apache-maven-resolver-maven-resolver-connector-basic",
+        "@lib//:libraries-maven-resolver-transport-org-apache-maven-resolver-maven-resolver-transport-file",
+        "@lib//:libraries-maven-resolver-transport-org-apache-maven-resolver-maven-resolver-transport-http",
+    ],
     module_name = "intellij.libraries.maven.resolver.transport",
     resource_strip_prefix = "resources",
     resources = glob(

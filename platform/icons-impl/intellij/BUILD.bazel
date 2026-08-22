@@ -61,6 +61,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     module_name = "intellij.platform.icons.impl.intellij",
     resource_strip_prefix = "resources",
     resources = glob(

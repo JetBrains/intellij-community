@@ -1,0 +1,29 @@
+load("@rules_java//java:defs.bzl", "java_test")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_test(
+    name = "tests",
+    size = "small",
+    # `ByteBufferCleaner` in `//zip` releases mapped buffers through `sun.nio.ch.DirectBuffer`; without these the
+    # writer produces a truncated jar and an `IllegalAccessException` buried in the output.
+    jvm_flags = [
+        "--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED",
+        "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+    ],
+    test_class = "org.jetbrains.bazel.contentModule.ContentModulePackerTest",
+    runtime_deps = [":tests-lib"],
+)
+
+kt_jvm_library(
+    name = "tests-lib",
+    srcs = ["src/ContentModulePackerTest.kt"],
+    # An associate rather than a plain dep: the flag-file grammar is the contract with the rule, and `packAll` is
+    # internal to the packer.
+    associates = ["//content-module-packer:content-module-packer-lib"],
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    deps = [
+        "//:junit4",
+        "//:kotlin-stdlib_import",
+        "//:kotlinx-coroutines-core_import",
+    ],
+)

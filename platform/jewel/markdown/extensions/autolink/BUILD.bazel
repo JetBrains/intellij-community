@@ -34,6 +34,8 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_libraries = ["@lib//:platform-jewel-markdown-extensions-autolink-commonmark-ext-autolink"],
     kotlinc_opts = ":custom_autolink",
     module_name = "intellij.platform.jewel.markdown.extensions.autolink",
     resource_strip_prefix = "src/main/resources",

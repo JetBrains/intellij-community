@@ -84,6 +84,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     kotlinc_opts = ":custom_rhizomedb.transactor.rebase",
     module_name = "fleet.rhizomedb.transactor.rebase",
     resource_jars = [":rhizomedb.transactor.rebase_fleet_plugin_services_resources"],

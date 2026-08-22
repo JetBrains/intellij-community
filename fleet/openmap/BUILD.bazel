@@ -37,6 +37,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     kotlinc_opts = ":custom_openmap",
     module_name = "fleet.openmap",
     resource_strip_prefix = "resources",

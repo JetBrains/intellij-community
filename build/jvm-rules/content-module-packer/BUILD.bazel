@@ -1,0 +1,60 @@
+load("@bazel_skylib//rules:common_settings.bzl", "string_list_flag")
+load("@rules_java//java:defs.bzl", "java_binary")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_files", "strip_prefix")
+load("//:jvm-args.bzl", "get_jvm_flags")
+
+# This package ships in the `rules_jvm` distribution archive, and it has to: `content_module_jar_action` gives every
+# `_jvm_library_jps` rule an implicit dependency on `:content-module-packer-jvm_flags`, so a workspace that consumes
+# the packaged rules fails analysis on *every* jvm_library if this directory is missing - which is what
+# `jvm-inc-builder-tests` does, 845 targets at a time. `//:rules_jvm_zip` names it beside `//zip:files_to_zip`.
+pkg_files(
+    name = "files_to_zip",
+    srcs = glob(
+        ["**"],
+        exclude = [
+            "*.iml",
+        ],
+    ),
+    prefix = "content-module-packer",
+    strip_prefix = strip_prefix.from_pkg(),
+    visibility = ["//visibility:public"],
+)
+
+# `ByteBufferCleaner` in `//zip` releases mapped buffers through `sun.nio.ch.DirectBuffer`, so the packer cannot write
+# a jar without these two. They are declared twice on purpose: here for a standalone run, and in the `jvm_flags`
+# setting below for the persistent worker, which is spawned from the rule rather than through this launcher.
+_ZIP_WRITER_JVM_FLAGS = [
+    "--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED",
+    "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+]
+
+java_binary(
+    name = "content-module-packer",
+    jvm_flags = _ZIP_WRITER_JVM_FLAGS,
+    main_class = "org.jetbrains.bazel.contentModule.ContentModulePackerWorker",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":content-module-packer-lib"],
+)
+
+kt_jvm_library(
+    name = "content-module-packer-lib",
+    srcs = [
+        "ContentModulePacker.kt",
+    ],
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//:kotlin-stdlib_import",
+        "//:kotlinx-coroutines-core_import",
+        "//:opentelemetry-api_import",
+        "//worker-framework",
+        "//zip",
+    ],
+)
+
+string_list_flag(
+    name = "content-module-packer-jvm_flags",
+    build_setting_default = get_jvm_flags(_ZIP_WRITER_JVM_FLAGS),
+    visibility = ["//visibility:public"],
+)

@@ -11,6 +11,8 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_libraries = ["@lib//:libraries-grpc-netty-shaded-grpc-netty-shaded"],
     module_name = "intellij.libraries.grpc.netty.shaded",
     resource_strip_prefix = "resources",
     resources = glob(

@@ -28,6 +28,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     javac_opts = ":custom-javac-options",
     kotlinc_opts = ":custom_impl",
     module_name = "intellij.grid.impl",

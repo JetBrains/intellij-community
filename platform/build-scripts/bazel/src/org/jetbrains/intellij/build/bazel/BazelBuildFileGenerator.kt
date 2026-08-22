@@ -17,6 +17,7 @@ import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
+import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.util.JpsPathUtil
@@ -55,8 +56,20 @@ internal class ModuleList(
     return nameToDescriptor[name] ?: error("Unknown module name: $name")
   }
 
+  fun getModuleDescriptorOrNull(name: String): ModuleDescriptor? = nameToDescriptor[name]
+
   @JvmField val deps = IdentityHashMap<ModuleDescriptor, ModuleDeps>()
   @JvmField val testDeps = IdentityHashMap<ModuleDescriptor, ModuleDeps>()
+
+  /**
+   * Modules that own a content-module jar, i.e. that a product layout includes as a `<content>` module.
+   *
+   * Stands in for `layout.includedModules` where `JarPackager` consults it. Owning a jar is what a checked-in
+   * `module-content.yaml` records, and a module has one exactly when some product ships it as a content module.
+   */
+  val contentModuleNames: Set<String> by lazy {
+    allModules.mapNotNullTo(HashSet()) { if (hasContentModuleRecipe(it)) it.module.name else null }
+  }
 }
 
 internal data class CustomModuleDescription(
@@ -362,7 +375,7 @@ internal class BazelBuildFileGenerator(
         if (isProvided) {
           providedLibraries.markAsProvided(communityLibrary, ultimateLibraries)
         }
-        return communityLibrary
+        return rememberJpsIdentity(communityLibrary)
       }
     }
 
@@ -370,7 +383,7 @@ internal class BazelBuildFileGenerator(
     if (isProvided) {
       providedLibraries.markAsProvided(internedLib, internedLib.target.container)
     }
-    return internedLib
+    return rememberJpsIdentity(internedLib)
   }
 
   fun addLocalLibrary(lib: LocalLibrary, isProvided: Boolean): LocalLibrary {
@@ -378,8 +391,67 @@ internal class BazelBuildFileGenerator(
     if (isProvided) {
       providedLibraries.markAsProvided(internedLib, internedLib.target.container)
     }
-    return internedLib
+    return rememberJpsIdentity(internedLib)
   }
+
+  /**
+   * The library a JPS name refers to, as the JPS model names it: a project library by its own name, a module library by
+   * its name plus its owning module.
+   *
+   * `mavenLibraries`/`localLibraries` are keyed by Bazel target name, which is derived through several naming rules and
+   * cannot be recomputed from a name alone. A content-module jar recipe records library *names*, so the mapping back has
+   * to be recorded while the libraries are being collected. Interning matters here: an ultimate module depending on a
+   * library that community already collected must resolve to the community instance, because that is the one whose
+   * `copy_file` targets exist.
+   */
+  private val libraryByJpsIdentity = HashMap<Pair<String, String?>, Library>()
+
+  private fun <T : Library> rememberJpsIdentity(lib: T): T {
+    libraryByJpsIdentity.putIfAbsent(lib.target.jpsName to lib.target.moduleLibraryModuleName, lib)
+    return lib
+  }
+
+  fun getLibraryByJpsIdentity(jpsName: String, moduleLibraryModuleName: String?): Library? {
+    return libraryByJpsIdentity[jpsName to moduleLibraryModuleName]
+  }
+
+  /**
+   * The `intellij.libraries.*` module that exports a project library, for every project library one of them exports.
+   *
+   * This is `PlatformLayout.libAsProductModule`, which the distribution builder fills from
+   * `PlatformModules.collectExportedLibrariesFromLibraryModules`: a wrapper module's whole purpose is to own a library
+   * and ship it in its own content-module jar, so every *other* module that declares the same library must not pack a
+   * second copy. Reproduced here rather than read from a recipe because the JPS model already holds it.
+   *
+   * Two details of the original are deliberate and reproduced as-is: the collection filters on `isExported` with no
+   * scope filter, the mirror image of the packing walk, which filters on scope with no `isExported`; and the claim is
+   * ignored for a wrapper module itself, or every wrapper would see its own library as taken and pack nothing.
+   *
+   * The original collects only the wrappers in one product's layout. This collects every wrapper in the project, which
+   * is the same set for a library whose wrapper ships wherever the library is used, and a wider one otherwise.
+   */
+  private val projectLibraryToLibraryModule: Map<String, String> by lazy {
+    val result = HashMap<String, String>()
+    for (module in project.modules) {
+      val moduleName = module.name
+      if (!moduleName.startsWith(LIB_MODULE_PREFIX)) {
+        continue
+      }
+
+      for (element in module.dependenciesList.dependencies) {
+        if (element !is JpsLibraryDependency || javaExtensionService.getDependencyExtension(element)?.isExported != true) {
+          continue
+        }
+        if (element.libraryReference.parentReference is JpsModuleReference) {
+          continue
+        }
+        result.putIfAbsent(element.library?.name ?: continue, moduleName)
+      }
+    }
+    result
+  }
+
+  fun getLibraryModuleExporting(jpsLibraryName: String): String? = projectLibraryToLibraryModule[jpsLibraryName]
 
   fun computeModuleList(m2Repo: Path): ModuleList {
     val community = ArrayList<ModuleDescriptor>()
@@ -675,6 +747,12 @@ internal class BazelBuildFileGenerator(
       resourceJarTargets.add(BazelLabel(label = codegenTargetName, module = null))
     }
 
+    // This module's `lib/<module>.jar` of the platform distribution, packed as an extra output of the library it is
+    // named after. The action declares the jars it merges and nothing else - no project model, no product layout -
+    // which is the point: an unrelated `.iml` edit cannot invalidate it, unlike the dev-distribution fragment that
+    // packs the same jar today.
+    val contentModuleJar = computeContentModuleJar(module = moduleDescriptor, moduleList = moduleList, context = this@BazelBuildFileGenerator)
+
     target("jvm_library") {
       option("name", moduleDescriptor.targetName)
       productionCompileTargets.add(moduleDescriptor.targetAsLabel)
@@ -685,6 +763,25 @@ internal class BazelBuildFileGenerator(
       }
       else if (customModule.sources.isNotEmpty()) {
         option("srcs", customModule.sources)
+      }
+
+      if (contentModuleJar != null) {
+        option("content_module_jar", true)
+        // Merge order, not sets: the packer resolves a duplicate entry to the first source that offers it, and it
+        // expands each library target to its own jars in this order.
+        if (contentModuleJar.libraryTargetLabels.isNotEmpty()) {
+          option("content_module_jar_libraries", contentModuleJar.libraryTargetLabels.unsorted())
+        }
+        // Emitted in the order the Starlark formatter sorts them, which is alphabetical, so a regeneration does not
+        // need a reformat: `after` before `before`.
+        for ((optionName, moduleNames) in listOf(
+          "content_module_jar_modules_after" to contentModuleJar.modulesAfter,
+          "content_module_jar_modules_before" to contentModuleJar.modulesBefore,
+        )) {
+          if (moduleNames.isNotEmpty()) {
+            option(optionName, moduleNames.map { getBazelDependencyLabel(moduleList.getModuleDescriptor(it), moduleDescriptor) }.unsorted())
+          }
+        }
       }
 
       @Suppress("CascadeIf")

@@ -125,7 +125,6 @@ internal fun generateDeps(
         val m2OrgJetBrainsKotlin = m2Repo.resolve("org").resolve("jetbrains").resolve("kotlin")
         files.any { it.name.endsWith("-$kotlinCompilerCliVersion.jar") } && files.all { it.startsWith(m2OrgJetBrainsKotlin) }
       } ?: false
-      val targetNameSuffix = if (isProvided) PROVIDED_SUFFIX else ""
       val parentLibraryReference = element.libraryReference.parentReference
       val moduleLibraryModuleName = if (parentLibraryReference is JpsModuleReference) parentLibraryReference.moduleName else null
       when {
@@ -154,22 +153,24 @@ internal fun generateDeps(
             jpsName = jpsLibrary.name,
             moduleLibraryModuleName = moduleLibraryModuleName,
           )
-          context.addLocalLibrary(
-            lib = LocalLibrary(
-              files = localFiles,
-              target = libraryTarget,
-              bazelBuildFileDir = libSnapshotsDir,
-            ),
-            isProvided = isProvided,
-          )
-
-          val prefix = if (module.isCommunity) "@lib//snapshots" else "@ultimate_lib//snapshots"
+          val library = LocalLibrary(files = localFiles, target = libraryTarget, bazelBuildFileDir = libSnapshotsDir)
+          context.addLocalLibrary(lib = library, isProvided = isProvided)
 
           addDep(
             isTest = isTest,
             scope = scope,
             deps = deps,
-            dependencyLabel = BazelLabel("$prefix:$targetName$targetNameSuffix", null),
+            dependencyLabel = BazelLabel(
+              libraryDependencyLabel(
+                library = library,
+                container = libraryContainer,
+                communityRoot = context.communityRoot,
+                ultimateRoot = context.ultimateRoot,
+                isCommunityDependent = module.isCommunity,
+                isProvided = isProvided,
+              ),
+              null,
+            ),
             runtimeDeps = runtimeDeps,
             hasSources = hasSources,
             dependentModule = module,
@@ -220,10 +221,8 @@ internal fun generateDeps(
             "Absolute paths:\n${files.joinToString("\n") { it.invariantSeparatorsPathString }}"
           }
 
-          context.addLocalLibrary(
-            lib = LocalLibrary(files = files, target = libraryTarget, bazelBuildFileDir = bazelFileDir),
-            isProvided = isProvided,
-          )
+          val library = LocalLibrary(files = files, target = libraryTarget, bazelBuildFileDir = bazelFileDir)
+          context.addLocalLibrary(lib = library, isProvided = isProvided)
 
           if (!isCommunityLib) {
             require(!module.isCommunity) {
@@ -232,29 +231,21 @@ internal fun generateDeps(
             }
           }
 
-          val communityLibsRoot = context.communityRoot.resolve("lib")
-          val ultimateLibsRoot = context.ultimateRoot?.resolve("lib")
-          val prefix = when {
-            // separate Bazel module 'lib'
-            bazelFileDir.startsWith(communityLibsRoot) ->
-              "@lib//${bazelFileDir.relativeTo(communityLibsRoot).invariantSeparatorsPathString}"
-            // separate Bazel module 'ultimate_lib'
-            ultimateLibsRoot != null && bazelFileDir.startsWith(ultimateLibsRoot) ->
-              "@ultimate_lib//${bazelFileDir.relativeTo(ultimateLibsRoot).invariantSeparatorsPathString}"
-            // Bazel module 'community'
-            bazelFileDir.startsWith(context.communityRoot) ->
-              "${if (module.isCommunity) "//" else "@community//"}${bazelFileDir.relativeTo(context.communityRoot).invariantSeparatorsPathString}"
-            // Bazel module 'ultimate'
-            context.ultimateRoot != null && bazelFileDir.startsWith(context.ultimateRoot) ->
-              "//${bazelFileDir.relativeTo(context.ultimateRoot).invariantSeparatorsPathString}"
-            else -> error("Unknown library root location: $bazelFileDir (community=${context.communityRoot}, ultimate=${context.ultimateRoot})")
-          }
-
           addDep(
             isTest = isTest,
             scope = scope,
             deps = deps,
-            dependencyLabel = BazelLabel("$prefix:$targetName$targetNameSuffix", null),
+            dependencyLabel = BazelLabel(
+              libraryDependencyLabel(
+                library = library,
+                container = libraryContainer,
+                communityRoot = context.communityRoot,
+                ultimateRoot = context.ultimateRoot,
+                isCommunityDependent = module.isCommunity,
+                isProvided = isProvided,
+              ),
+              null,
+            ),
             runtimeDeps = runtimeDeps,
             hasSources = hasSources,
             dependentModule = module,
@@ -289,7 +280,7 @@ internal fun generateDeps(
           var libraryContainer = context.getLibraryContainer(isCommunityOrKotlinc)
 
           // we process community modules first, so, `addOrGet` (library equality ignores `isCommunity` flag)
-          libraryContainer = context.addMavenLibrary(
+          val library = context.addMavenLibrary(
             MavenLibrary(
               mavenCoordinates = "${jpsMavenLibraryDescriptor.groupId}:${jpsMavenLibraryDescriptor.artifactId}:${jpsMavenLibraryDescriptor.version}",
               jars = repositoryJpsLibrary.getPaths(JpsOrderRootType.COMPILED).map { getFileMavenFileDescription(m2Repo, repositoryJpsLibrary, it) },
@@ -298,7 +289,8 @@ internal fun generateDeps(
               target = LibraryTarget(targetName = targetName, container = libraryContainer, jpsName = jpsLibrary.name, moduleLibraryModuleName = moduleLibraryModuleName),
             ),
             isProvided = isProvided,
-          ).target.container
+          )
+          libraryContainer = library.target.container
 
           val containerForLabel = if (isProvided) {
             // provided libraries for ultimate are defined in ultimate, but not kotlinc.* as per ^^
@@ -310,7 +302,17 @@ internal fun generateDeps(
             libraryContainer
           }
 
-          val libLabel = BazelLabel("${containerForLabel.repoLabel}//:$targetName$targetNameSuffix", module = null)
+          val libLabel = BazelLabel(
+            libraryDependencyLabel(
+              library = library,
+              container = containerForLabel,
+              communityRoot = context.communityRoot,
+              ultimateRoot = context.ultimateRoot,
+              isCommunityDependent = module.isCommunity,
+              isProvided = isProvided,
+            ),
+            module = null,
+          )
 
           addDep(
             isTest = isTest,
@@ -330,7 +332,7 @@ internal fun generateDeps(
     }
   }
 
-  if (exports.isNotEmpty() && !dependentModuleName.startsWith("intellij.libraries.")) {
+  if (exports.isNotEmpty() && !dependentModuleName.startsWith(LIB_MODULE_PREFIX)) {
     require(!exports.any { it.label == "@lib//:kotlinx-serialization-core" }) {
       "Do not export kotlinx-serialization-core (module=$dependentModuleName})"
     }

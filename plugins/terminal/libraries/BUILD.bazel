@@ -7,6 +7,8 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_libraries = ["@lib//:terminal-libraries-completion_db_with_extensions-terminal-completion-db-with-extensions"],
     module_name = "intellij.terminal.libraries.completionDbWithExtensions",
     resource_strip_prefix = "resources",
     resources = glob(

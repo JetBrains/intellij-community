@@ -40,6 +40,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     kotlinc_opts = ":custom_codepoints",
     module_name = "fleet.util.codepoints",
     resource_strip_prefix = "resources",

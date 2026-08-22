@@ -11,6 +11,8 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_modules_after = ["//platform/util/text-matching"],
     module_name = "intellij.platform.analysis",
     resource_strip_prefix = "resources",
     resources = glob(

@@ -131,6 +131,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     module_name = "intellij.xml.emmet",
     resource_strip_prefix = "resources",
     resources = glob(

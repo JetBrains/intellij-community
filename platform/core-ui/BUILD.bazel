@@ -11,6 +11,8 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_modules_after = ["//platform/icons-api"],
     module_name = "intellij.platform.core.ui",
     resource_strip_prefix = "resources",
     resources = glob(

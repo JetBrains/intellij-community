@@ -291,6 +291,8 @@ exports_files(
 jvm_library(
     name = "dependency-graph",
     srcs = ["@rules_jvm//dependency-graph:dependency-graph_sources"],
+    content_module_jar = True,
+    content_module_jar_libraries = ["@lib//:kotlin-metadata"],
     kotlinc_opts = "@community//:k11",
     module_name = "intellij.platform.jps.build.dependencyGraph",
     resource_jars = ["@rules_jvm//dependency-graph:dependency-graph_resources"],
@@ -346,6 +348,8 @@ exports_files(
 jvm_library(
     name = "build-javac-rt",
     srcs = ["@rules_jvm//jps-builders-6:build-javac-rt_sources"],
+    content_module_jar = True,
+    content_module_jar_libraries = ["@lib//:jps-javac-extension"],
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.platform.jps.build.javac.rt",
     resource_jars = ["@rules_jvm//jps-builders-6:build-javac-rt_resources"],

@@ -20,6 +20,8 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_libraries = ["@lib//:sqlite"],
     module_name = "intellij.ide.startup.importSettings",
     resource_strip_prefix = "resources",
     resources = glob(

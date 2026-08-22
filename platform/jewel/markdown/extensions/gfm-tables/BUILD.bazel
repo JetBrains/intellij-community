@@ -34,6 +34,8 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_libraries = ["@lib//:platform-jewel-markdown-extensions-gfm_tables-commonmark-ext-gfm-tables"],
     kotlinc_opts = ":custom_gfm-tables",
     module_name = "intellij.platform.jewel.markdown.extensions.gfmTables",
     resource_strip_prefix = "src/main/resources",

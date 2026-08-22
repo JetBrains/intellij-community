@@ -20,6 +20,12 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_libraries = [
+        # do not sort,
+        "//xml/relaxng/lib:relaxng-rngom-20051226-patched",
+        "//xml/relaxng/lib:relaxng-trang-core",
+    ],
     module_name = "intellij.relaxng",
     resource_strip_prefix = "resources",
     resources = glob(

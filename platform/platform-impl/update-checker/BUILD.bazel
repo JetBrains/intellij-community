@@ -17,6 +17,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     kotlinc_opts = ":custom_update-checker",
     module_name = "intellij.platform.ide.updateChecker",
     resource_strip_prefix = "resources",

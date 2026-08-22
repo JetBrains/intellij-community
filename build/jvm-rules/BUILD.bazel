@@ -534,6 +534,7 @@ pkg_zip(
         "*.patch",
     ]) + [
         ":rules_to_zip",
+        "//content-module-packer:files_to_zip",
         "//dependency-graph:files_to_zip",
         "//jps-builders-6:files_to_zip",
         "//jvm-inc-builder:files_to_zip",

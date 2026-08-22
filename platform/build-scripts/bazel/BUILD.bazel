@@ -56,6 +56,7 @@ kt_jvm_library(
     runtime_deps = [],
     deps = [
         ":kotlin_serialization",
+        "@j2b_maven//:com_charleskorn_kaml_kaml_jvm",
         "@j2b_maven//:com_intellij_platform_kotlinx_coroutines_core_jvm",
         "@j2b_maven//:com_jetbrains_intellij_platform_build_scripts_downloader",
         "@j2b_maven//:com_jetbrains_intellij_platform_jps_model",

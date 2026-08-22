@@ -11,6 +11,12 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_modules_after = [
+        # do not sort,
+        "//platform/pluginSystem/parser/impl",
+        "//platform/syntax/syntax-api:syntax",
+    ],
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.platform.core.impl",
     resource_strip_prefix = "resources",

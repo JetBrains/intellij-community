@@ -12,6 +12,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     kotlinc_opts = "@community//:k11",
     module_name = "intellij.java.aetherDependencyResolver",
     resource_strip_prefix = "resources",

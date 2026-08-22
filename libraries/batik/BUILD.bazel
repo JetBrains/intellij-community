@@ -7,6 +7,12 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_libraries = [
+        # do not sort,
+        "@lib//:libraries-batik-batik-transcoder",
+        "@lib//:libraries-batik-xml-apis-ext",
+    ],
     module_name = "intellij.libraries.batik",
     resource_strip_prefix = "resources",
     resources = glob(

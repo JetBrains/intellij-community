@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@rules_kotlin//kotlin/internal:defs.bzl", "KtPluginConfiguration", _KtCompilerPluginInfo = "KtCompilerPluginInfo", _KtJvmInfo = "KtJvmInfo")
 load("//:rules/common-attrs.bzl", "USE_RULES_KOTLIN_BACKEND", "add_dicts", "common_attr", "common_outputs", "common_toolchains")
 load("//:rules/impl/compile.bzl", "kt_jvm_produce_jar_actions")
+load("//:rules/impl/content-module-jar.bzl", "CONTENT_MODULE_JAR_ATTRS", "content_module_jar_action")
 load("//:rules/impl/transitions.bzl", "jvm_platform_transition")
 load("//:rules/resource.bzl", "ResourceGroupInfo")
 
@@ -17,7 +18,10 @@ def _jvm_library(ctx):
     kotlin_cri_storage_file = providers.kt.outputs.kotlin_cri_storage_file
     if kotlin_cri_storage_file:
         files.append(kotlin_cri_storage_file)
-    return [
+
+    # Not in `DefaultInfo`: building a module must not pack a distribution jar.
+    content_module_jar = content_module_jar_action(ctx, ctx.outputs.jar)
+    result = [
         providers.java,
         providers.kt,
         DefaultInfo(
@@ -31,6 +35,9 @@ def _jvm_library(ctx):
             ),
         ),
     ]
+    if content_module_jar:
+        result.append(OutputGroupInfo(content_module_jar = depset([content_module_jar])))
+    return result
 
 _jvm_library_jps = rule(
     doc = """JPS-based implementation: compiles and links Kotlin and Java sources into a .jar file.""",
@@ -93,7 +100,7 @@ _jvm_library_jps = rule(
             cfg = "target",
             default = Label("@rules_kotlin//third_party:empty.jar"),
         ),
-    }),
+    }, CONTENT_MODULE_JAR_ATTRS),
     outputs = common_outputs,
     toolchains = common_toolchains,
     fragments = ["java"],  # required fragments of the target configuration
@@ -122,6 +129,10 @@ def jvm_library(
         data = [],
         visibility = None,
         tags = [],
+        content_module_jar = False,
+        content_module_jar_libraries = [],
+        content_module_jar_modules_before = [],
+        content_module_jar_modules_after = [],
         use_rules_kotlin_backend = USE_RULES_KOTLIN_BACKEND,
         **kwargs):
     """Macro that creates jvm_library using the configured backend.
@@ -145,6 +156,12 @@ def jvm_library(
         data: Data files
         visibility: Target visibility
         tags: Target tags
+        content_module_jar: Whether to pack this module's `lib/<module_name>.jar` of the platform distribution into the
+            `content_module_jar` output group. Only the JPS backend packs it.
+        content_module_jar_libraries: Libraries merged into that jar, in merge order, before every module output. Each
+            is the target that groups a library's jars, not a jar file, so the label carries no version.
+        content_module_jar_modules_before: Modules merged into that jar before this module's own output.
+        content_module_jar_modules_after: Modules merged into that jar after this module's own output.
         **kwargs: Additional arguments passed to the selected backend
     """
 
@@ -173,6 +190,9 @@ def jvm_library(
             data = data,
             visibility = visibility,
             tags = tags,
+            # `content_module_jar*` is deliberately dropped here: distribution packing is an extra output of the JPS
+            # backend's own rule, and `kt_jvm_library` has no attribute to carry it. The BTA backend is a compilation
+            # switch, and nothing consumes the distribution jars from it.
             **kwargs
         )
     else:
@@ -202,5 +222,9 @@ def jvm_library(
             data = data,
             visibility = visibility,
             tags = tags,
+            content_module_jar = content_module_jar,
+            content_module_jar_libraries = content_module_jar_libraries,
+            content_module_jar_modules_before = content_module_jar_modules_before,
+            content_module_jar_modules_after = content_module_jar_modules_after,
             **kwargs
         )

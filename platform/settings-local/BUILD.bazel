@@ -27,6 +27,8 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_libraries = ["@lib//:platform-settings-local-jackson-dataformat-cbor"],
     kotlinc_opts = ":custom_settings-local",
     module_name = "intellij.platform.settings.local",
     resource_strip_prefix = "resources",

@@ -19,6 +19,13 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_modules_after = ["//platform/syntax/syntax-util:util"],
+    content_module_jar_modules_before = [
+        # do not sort,
+        "//platform/syntax/syntax-extensions:extensions",
+        "//platform/syntax/syntax-i18n:i18n",
+    ],
     kotlinc_opts = ":custom_psi",
     module_name = "intellij.platform.syntax.psi",
     resource_strip_prefix = "resources",

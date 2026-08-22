@@ -64,6 +64,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     kotlinc_opts = ":custom_kernel",
     module_name = "fleet.kernel",
     resource_jars = [":kernel_fleet_plugin_services_resources"],

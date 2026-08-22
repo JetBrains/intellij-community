@@ -11,6 +11,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.grid.types",
     resource_strip_prefix = "resources",

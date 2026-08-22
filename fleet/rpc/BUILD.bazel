@@ -48,6 +48,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     exported_compiler_plugins = ["@community//fleet/compiler-plugins/rpc:rpc-plugin"],
     kotlinc_opts = ":custom_rpc",
     module_name = "fleet.rpc",

@@ -7,6 +7,8 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_libraries = ["@lib//:libraries-kotlinc-analysis-api-platform-interface-kotlinc-analysis-api-platform-interface"],
     module_name = "intellij.libraries.kotlinc.analysis.api.platform.interface",
     resource_strip_prefix = "resources",
     resources = glob(

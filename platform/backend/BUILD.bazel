@@ -7,6 +7,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    content_module_jar = True,
     module_name = "intellij.platform.backend",
     resource_strip_prefix = "resources",
     resources = glob(

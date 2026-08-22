@@ -16,7 +16,7 @@
       "exports": [],
       "moduleLibraries": {
         "dokka-core": {
-          "target": "@lib//:dokka-core-1-4-10-2-dev-52-snapshot",
+          "target": "@lib//snapshots:dokka-core-1-4-10-2-dev-52-snapshot",
           "jars": [
             "external/lib+/snapshots/dokka-core-1.4.10.2-dev-52-SNAPSHOT.jar"
           ],

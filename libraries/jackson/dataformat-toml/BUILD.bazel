@@ -7,6 +7,8 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_libraries = ["@lib//:libraries-jackson-dataformat-toml-jackson-dataformat-toml"],
     module_name = "intellij.libraries.jackson.dataformat.toml",
     resource_strip_prefix = "resources",
     resources = glob(

@@ -7,6 +7,18 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_libraries = [
+        # do not sort,
+        "@lib//:ktor-client-core",
+        "@lib//:ktor-client-java",
+        "@lib//:libraries-ktor-client-ktor-client-encoding",
+        "@lib//:libraries-ktor-client-ktor-client-content-negotiation",
+        "@lib//:ktor-serialization-kotlinx-json",
+        "@lib//:kotlinx-serialization-json-io",
+        "@lib//:libraries-ktor-client-ktor-client-auth",
+        "@lib//:libraries-ktor-client-ktor-client-logging",
+    ],
     module_name = "intellij.libraries.ktor.client",
     resource_strip_prefix = "resources",
     resources = glob(

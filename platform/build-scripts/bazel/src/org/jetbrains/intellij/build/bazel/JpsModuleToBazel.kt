@@ -330,92 +330,68 @@ internal class JpsModuleToBazel {
         return path
       }
 
-      fun makeJarTarget(library: Library, file: MavenFileDescription): String {
-        val target = library.target.container.repoLabel + "//:" +
-                     mavenCoordinatesToFileName(file.mavenCoordinates, groupDirectory = true)
-
-        return target
-      }
-
       fun makeLibraryDescription(library: Library): LibraryDescription {
-        val target = "${library.target.container.repoLabel}//:${library.target.targetName}"
+        // Not `repoLabel//:targetName`: that is the Maven form, and a local library's target is generated into the
+        // package its files live in - `@lib//ant/lib:ant`, not `@lib//:ant` - so 41 of these used to be unresolvable.
+        // This index is repo-global, so the one case with no single answer is a local library under the community root
+        // but outside `community/lib`, which community writes as `//` and ultimate as `@community//`; the index is
+        // written from whichever root the run has, and that is what `projectRoot` says.
+        val target = libraryTargetLabel(
+          library = library,
+          communityRoot = communityRoot,
+          ultimateRoot = ultimateRoot,
+          isCommunityDependent = projectRoot != ultimateRoot,
+        )
+        val jarTargets = libraryJarTargets(
+          library = library,
+          communityRoot = communityRoot,
+          ultimateRoot = ultimateRoot,
+          projectRoot = projectRoot,
+        )
 
         return when (library) {
           is MavenLibrary -> LibraryDescription(
             target = target,
             jars = library.jars.map { makeJarPath(library, it) },
-            jarTargets = library.jars.map { makeJarTarget(library, it) },
+            jarTargets = jarTargets,
             sourceJars = library.sourceJars.map { makeJarPath(library, it) },
           )
 
-          is LocalLibrary -> {
-            LibraryDescription(
-              target = target,
-              jars = library.files.map {
-                val normalized = it.normalize()
-                require(
-                  normalized.startsWith(communityRoot) ||
-                  (ultimateRoot != null && normalized.startsWith(ultimateRoot))
-                ) {
-                  "Library file $it is not under community root ($communityRoot) or ultimate root ($ultimateRoot)"
+          is LocalLibrary -> LibraryDescription(
+            target = target,
+            jars = library.files.map {
+              val normalized = it.normalize()
+              require(
+                normalized.startsWith(communityRoot) ||
+                (ultimateRoot != null && normalized.startsWith(ultimateRoot))
+              ) {
+                "Library file $it is not under community root ($communityRoot) or ultimate root ($ultimateRoot)"
+              }
+
+              val ultimateLibRoot = ultimateRoot?.resolve("lib")
+              val communityLibRoot = communityRoot.resolve("lib")
+
+              val relativeToBazelOutputBase = when {
+                ultimateLibRoot != null && normalized.startsWith(ultimateLibRoot) ->
+                  "external/ultimate_lib+/" + normalized.relativeTo(ultimateLibRoot).invariantSeparatorsPathString
+                normalized.startsWith(communityLibRoot) ->
+                  "external/lib+/" + normalized.relativeTo(communityLibRoot).invariantSeparatorsPathString
+                projectRoot == ultimateRoot && normalized.startsWith(communityRoot) ->
+                  "external/community+/" + normalized.relativeTo(communityRoot).invariantSeparatorsPathString
+                else -> "execroot/_main/${normalized.relativeTo(projectRoot).invariantSeparatorsPathString}"
+              }
+
+              if (bazelOutputBase != null) {
+                check(bazelOutputBase.resolve(relativeToBazelOutputBase).isRegularFile()) {
+                  "Cannot find ${bazelOutputBase.resolve(relativeToBazelOutputBase)} (library ${library.target.jpsName} library module=${library.target.moduleLibraryModuleName})"
                 }
+              }
 
-                val ultimateLibRoot = ultimateRoot?.resolve("lib")
-                val communityLibRoot = communityRoot.resolve("lib")
-
-                val relativeToBazelOutputBase = when {
-                  ultimateLibRoot != null && normalized.startsWith(ultimateLibRoot) ->
-                    "external/ultimate_lib+/" + normalized.relativeTo(ultimateLibRoot).invariantSeparatorsPathString
-                  normalized.startsWith(communityLibRoot) ->
-                    "external/lib+/" + normalized.relativeTo(communityLibRoot).invariantSeparatorsPathString
-                  projectRoot == ultimateRoot && normalized.startsWith(communityRoot) ->
-                    "external/community+/" + normalized.relativeTo(communityRoot).invariantSeparatorsPathString
-                  else -> "execroot/_main/${normalized.relativeTo(projectRoot).invariantSeparatorsPathString}"
-                }
-
-                if (bazelOutputBase != null) {
-                  check(bazelOutputBase.resolve(relativeToBazelOutputBase).isRegularFile()) {
-                    "Cannot find ${bazelOutputBase.resolve(relativeToBazelOutputBase)} (library ${library.target.jpsName} library module=${library.target.moduleLibraryModuleName})"
-                  }
-                }
-
-                relativeToBazelOutputBase
-              },
-              jarTargets = library.files.map {
-                val normalized = it.normalize()
-                require(
-                  normalized.startsWith(communityRoot) ||
-                  (ultimateRoot != null && normalized.startsWith(ultimateRoot))
-                ) {
-                  "Library file $it is not under community root ($communityRoot) or ultimate root ($ultimateRoot)"
-                }
-
-                val ultimateLibRoot = ultimateRoot?.resolve("lib")
-                val communityLibRoot = communityRoot.resolve("lib")
-
-                fun Path.toBazelLabel(repoName: String, repoRoot: Path): String {
-                  require(startsWith(repoRoot)) { "Path $this is not under root $repoRoot" }
-                  require(normalize() == this) { "Path $this must be normalized" }
-                  require(repoName.startsWith("@") || repoName.isEmpty()) { "Repo name $repoName must start with '@' or be empty" }
-                  val relative = relativeTo(repoRoot)
-                  return "$repoName//${if (relative.parent == null) "" else relative.parent.invariantSeparatorsPathString}:${relative.fileName}"
-                }
-
-                val target = when {
-                  ultimateLibRoot != null && normalized.startsWith(ultimateLibRoot) ->
-                    normalized.toBazelLabel("@ultimate_lib", ultimateLibRoot)
-                  normalized.startsWith(communityLibRoot) ->
-                    normalized.toBazelLabel("@lib", communityLibRoot)
-                  projectRoot == ultimateRoot && normalized.startsWith(communityRoot) ->
-                    normalized.toBazelLabel("@community", communityRoot)
-                  else -> normalized.toBazelLabel("", projectRoot)
-                }
-
-                target
-              },
-              sourceJars = emptyList(),
-            )
-          }
+              relativeToBazelOutputBase
+            },
+            jarTargets = jarTargets,
+            sourceJars = emptyList(),
+          )
         }
       }
 

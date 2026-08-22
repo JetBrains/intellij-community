@@ -5,3 +5,5 @@
       Kryo:
       - name: $MAVEN_REPOSITORY$/com/esotericsoftware/kryo/kryo/2/kryo-2.jar
       - name: $MAVEN_REPOSITORY$/com/esotericsoftware/minlog/minlog/1/minlog-1.jar
+      Objenesis:
+      - name: $MAVEN_REPOSITORY$/org/objenesis/objenesis/3/objenesis-3.jar

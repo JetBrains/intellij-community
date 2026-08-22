@@ -7,6 +7,15 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_libraries = [
+        # do not sort,
+        "@lib//:completion_ml_ranking_models-libraries-completion-ranking-css-exp",
+        "@lib//:completion_ml_ranking_models-libraries-completion-ranking-dart-exp",
+        "@lib//:completion_ml_ranking_models-libraries-completion-ranking-html-exp",
+        "@lib//:completion_ml_ranking_models-libraries-completion-ranking-python-exp",
+        "@lib//:completion_ml_ranking_models-libraries-completion-ranking-scala-exp",
+    ],
     module_name = "intellij.completionMlRankingModels.libraries",
     resource_strip_prefix = "resources",
     resources = glob(

@@ -26,7 +26,3 @@
     - name: $MAVEN_REPOSITORY$/io/ktor/ktor-server-sse-jvm/3/ktor-server-sse-jvm-3.jar
   modules:
   - name: intellij.mcpserver
-    libraries:
-      night-config-toml:
-      - name: $MAVEN_REPOSITORY$/com/electronwill/night-config/toml/3/toml-3.jar
-      - name: $MAVEN_REPOSITORY$/com/electronwill/night-config/core/3/core-3.jar

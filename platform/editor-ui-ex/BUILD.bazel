@@ -11,6 +11,12 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_modules_after = [
+        # do not sort,
+        "//platform/indexing-impl",
+        "//platform/util/storages",
+    ],
     module_name = "intellij.platform.editor.ex",
     resource_strip_prefix = "resources",
     resources = glob(

@@ -44,6 +44,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     kotlinc_opts = ":custom_andel",
     module_name = "fleet.andel",
     resource_strip_prefix = "resources",

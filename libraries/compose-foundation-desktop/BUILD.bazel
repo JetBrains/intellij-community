@@ -7,6 +7,13 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_libraries = [
+        # do not sort,
+        "@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop",
+        "@lib//:libraries-compose-foundation-desktop-androidx-navigationevent-navigationevent-desktop",
+        "@lib//:libraries-compose-foundation-desktop-androidx-navigationevent-navigationevent-compose-desktop",
+    ],
     module_name = "intellij.libraries.compose.foundation.desktop",
     resource_strip_prefix = "resources",
     resources = glob(

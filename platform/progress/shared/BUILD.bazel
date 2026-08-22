@@ -11,6 +11,12 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_modules_after = [
+        # do not sort,
+        "//platform/instanceContainer",
+        "//platform/service-container",
+    ],
     module_name = "intellij.platform.ide.progress",
     resource_strip_prefix = "resources",
     resources = glob(

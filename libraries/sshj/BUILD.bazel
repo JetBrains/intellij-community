@@ -7,6 +7,8 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_libraries = ["@lib//:libraries-sshj-_s_s_h_j"],
     module_name = "intellij.libraries.sshj",
     resource_strip_prefix = "resources",
     resources = glob(

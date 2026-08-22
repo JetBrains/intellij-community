@@ -7,6 +7,8 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_libraries = ["@lib//:libraries-commons-logging-commons-logging"],
     module_name = "intellij.libraries.commons.logging",
     resource_strip_prefix = "resources",
     resources = glob(

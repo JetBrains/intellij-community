@@ -14,6 +14,13 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_libraries = [
+        # do not sort,
+        "@lib//:platform-jps-build-qdox-java-parser",
+        "@lib//:jps-javac-extension",
+        "@lib//:kotlin-metadata",
+    ],
     kotlinc_opts = "@community//:k11",
     module_name = "intellij.platform.jps.build",
     resource_strip_prefix = "resources",

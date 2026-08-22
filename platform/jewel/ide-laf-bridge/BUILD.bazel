@@ -35,6 +35,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
     kotlinc_opts = ":custom_ide-laf-bridge",
     module_name = "intellij.platform.jewel.ideLafBridge",
     resource_strip_prefix = "src/main/resources",

@@ -7,6 +7,8 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_libraries = ["@lib//:tasks-core-libraries-commons_discovery-commons-discovery"],
     module_name = "intellij.tasks.core.libraries.commonsDiscovery",
     resource_strip_prefix = "resources",
     resources = glob(

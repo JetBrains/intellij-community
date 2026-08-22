@@ -11,6 +11,8 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_libraries = ["@lib//:platform-util-commons_lang_v2_shim-commons-collections"],
     module_name = "intellij.platform.util.commonsLangV2Shim",
     resource_strip_prefix = "resources",
     resources = glob(

@@ -22,6 +22,8 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_libraries = ["@lib//:rd-gen"],
     module_name = "intellij.remoteDev.util",
     resource_strip_prefix = "resources",
     resources = glob(

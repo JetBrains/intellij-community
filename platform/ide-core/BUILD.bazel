@@ -11,6 +11,8 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_modules_after = ["//platform/settings"],
     module_name = "intellij.platform.ide.core",
     resource_strip_prefix = "resources",
     resources = glob(

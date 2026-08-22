@@ -13,6 +13,17 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_modules_after = [
+        # do not sort,
+        "//platform/workspace/jps",
+        "//platform/workspace/storage",
+    ],
+    content_module_jar_modules_before = [
+        # do not sort,
+        "//platform/backend/workspace",
+        "//platform/util/concurrency",
+    ],
     module_name = "intellij.platform.projectModel",
     resource_strip_prefix = "resources",
     resources = glob(
