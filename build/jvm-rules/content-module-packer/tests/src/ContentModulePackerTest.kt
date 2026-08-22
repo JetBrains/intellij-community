@@ -17,7 +17,7 @@ import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
 
 /**
- * The contract the `ij_content_module_jar` rule relies on: the flag-file grammar, and the entry-level rules that make a
+ * The contract `jvm_library(content_module_jar = True)` relies on: the flag-file grammar, and the entry-level rules that make a
  * packed jar byte-identical to what the in-process `JarPackager` produces.
  *
  * Input jars are written with the JDK rather than with `//zip`, deliberately: the packer has to cope with any stored zip,
@@ -74,6 +74,31 @@ class ContentModulePackerTest {
 
     assertFalse(entryNames(pack("library=$library")).contains("META-INF/MANIFEST.MF"))
     assertTrue(entryNames(pack("keep-manifest=true", "library=$library")).contains("META-INF/MANIFEST.MF"))
+  }
+
+  @Test
+  fun `rewrite-boot-class-path points the manifest at the packed jar`() {
+    val library = storedJar(
+      "coverage.jar",
+      "META-INF/MANIFEST.MF" to
+        "Manifest-Version: 1.0\r\nPremain-Class: com.intellij.rt.coverage.main.CoveragePremain\r\n" +
+        "Boot-Class-Path: intellij-coverage-agent-1.0.jar\r\nCan-Retransform-Classes: true\r\n\r\n",
+      "a/B.class" to "class B",
+    )
+
+    val packed = pack("rewrite-boot-class-path=true", "library=$library")
+
+    // The name of the jar it ends up in, which is what lets the agent instrument from any class loader.
+    assertTrue(entryNames(packed).contains("META-INF/MANIFEST.MF"))
+    assertTrue(entryText(packed, "META-INF/MANIFEST.MF").contains("Boot-Class-Path: ${packed.fileName}\r\n"))
+    assertFalse(entryText(packed, "META-INF/MANIFEST.MF").contains("intellij-coverage-agent"))
+
+    // ...and deliberately absent from `__index__`: `mergeJars.kt` writes this entry ahead of its own indexing, so a
+    // packed jar that indexed it would no longer be byte-identical to the one the distribution ships. A jar that only
+    // *keeps* its manifest does index it, which is what makes the two indexes differ.
+    val kept = pack("keep-manifest=true", "library=$library")
+    assertEquals(entryNames(kept), entryNames(packed))
+    assertTrue(entrySize(kept, "__index__") > entrySize(packed, "__index__"))
   }
 
   @Test
@@ -185,6 +210,10 @@ class ContentModulePackerTest {
     stream.putNextEntry(entry)
     stream.write(content)
     stream.closeEntry()
+  }
+
+  private fun entrySize(jar: Path, name: String): Long {
+    return ZipFile(jar.toFile()).use { zip -> zip.getEntry(name).size }
   }
 
   private fun entryNames(jar: Path): List<String> {

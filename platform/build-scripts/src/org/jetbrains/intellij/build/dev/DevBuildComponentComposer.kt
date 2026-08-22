@@ -60,6 +60,11 @@ fun composeDevBuildComponents(
 ): ComposedDevBuild {
   require(components.isNotEmpty()) { "At least one dev-build component is required" }
   val first = components.first().manifest
+  // A component that only contributes files declares no main class - see `DevBuildComponentManifest.mainClass` - so the
+  // distribution's main class comes from the components that do, and they still have to agree.
+  val mainClass = checkNotNull(components.firstNotNullOfOrNull { it.manifest.mainClass }) {
+    "No dev-build component declares an IDE main class: ${components.joinToString { it.manifest.kind }}"
+  }
   for (manifest in components.asSequence().drop(1).map(DevBuildComponent::manifest)) {
     check(manifest.platformPrefix == first.platformPrefix) {
       "Dev-build components have different products: '${first.platformPrefix}' and '${manifest.platformPrefix}'"
@@ -67,8 +72,8 @@ fun composeDevBuildComponents(
     check(manifest.os == first.os && manifest.arch == first.arch) {
       "Dev-build components have different target platforms: '${first.os}/${first.arch}' and '${manifest.os}/${manifest.arch}'"
     }
-    check(manifest.mainClass == first.mainClass) {
-      "Dev-build components have different IDE main classes: '${first.mainClass}' and '${manifest.mainClass}'"
+    check(manifest.mainClass == null || manifest.mainClass == mainClass) {
+      "Dev-build components have different IDE main classes: '$mainClass' and '${manifest.mainClass}'"
     }
   }
 
@@ -135,7 +140,7 @@ fun composeDevBuildComponents(
   val coreClassPath = orderCoreClasspathEntries(components.flatMap { it.manifest.coreClassPath })
   return ComposedDevBuild(
     platformPrefix = first.platformPrefix,
-    mainClass = first.mainClass,
+    mainClass = mainClass,
     additionalModules = declaredModules.toList(),
     // Ordering can only happen here: each component sorted the share of the classpath it packed, and the leading jars
     // are not necessarily in the same component as the rest.

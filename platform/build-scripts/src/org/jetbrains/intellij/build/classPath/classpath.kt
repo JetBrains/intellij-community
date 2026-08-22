@@ -20,6 +20,7 @@ import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
 import org.jetbrains.intellij.build.impl.DescriptorCacheContainer
 import org.jetbrains.intellij.build.impl.LIB_DIRECTORY
 import org.jetbrains.intellij.build.impl.ModuleIncludeReasons
+import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.PRODUCT_DESCRIPTOR_META_PATH
 import org.jetbrains.intellij.build.impl.PlatformJarNames
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
@@ -93,6 +94,52 @@ fun generateClassPathByLayoutReport(libDir: Path, entries: List<DistributionFile
   CORE_CLASSPATH_LEADING_JARS.asSequence().map(libDir::resolve).filterTo(result, classPath::contains)
   // sorted to ensure stable performance results
   result.addAll(if (isWindows) classPath.sortedBy(Path::toString) else classPath.sorted())
+  return result
+}
+
+/**
+ * Which of [externallyPackedJars] belong on the core classpath, decided from the layout instead of from packed entries.
+ *
+ * A split dev-distribution fragment hands these jars to another producer, so it neither packs them nor resolves the
+ * modules in them - which is the point, since a resolved module output is what makes a source edit re-run the fragment.
+ * It still knows they exist, because the layout names them, and the core classpath has to stay complete: it is what
+ * `PreBuiltDevMain` starts the IDE with.
+ *
+ * The rule is [generateClassPathByLayoutReport]'s, read off the layout rather than off the entries it never produced.
+ * Every entry such a jar can hold - the module output, and the libraries merged into it - is a `ModuleOwnedFileEntry`
+ * owned by one of the jar's [ModuleItem]s (`JarPackager.packLibFilesIntoModuleJar`), and that function skips exactly
+ * the ones whose owner is included as [ModuleIncludeReasons.PRODUCT_MODULES]: a content module is loaded by the module
+ * system, not from the classpath. So a jar is on the classpath when some module in it is there for another reason -
+ * `intellij.libraries.asm` is an ordinary platform dependency as well as a content module, `intellij.charts` is not.
+ *
+ * A change to this has to be made in [generateClassPathByLayoutReport] too, and the composed distribution's
+ * `core-classpath.txt` is what proves the two agree.
+ */
+@ApiStatus.Internal
+fun contentModuleJarCoreClasspathEntries(
+  libDir: Path,
+  includedModules: Collection<ModuleItem>,
+  externallyPackedJars: Set<String>,
+  skipNioFs: Boolean,
+): Set<Path> {
+  if (externallyPackedJars.isEmpty()) {
+    return emptySet()
+  }
+
+  val result = LinkedHashSet<Path>()
+  for (item in includedModules) {
+    val jarName = item.relativeOutputFile
+    if (!externallyPackedJars.contains(jarName) || item.reason == ModuleIncludeReasons.PRODUCT_MODULES) {
+      continue
+    }
+    // The two module-name exclusions of `generateClassPathByLayoutReport`. Neither module owns a content-module jar
+    // today; they are here so that the two copies of the rule stay comparable line by line.
+    if (item.moduleName.startsWith("intellij.platform.unitTestMode") ||
+        (skipNioFs && item.moduleName == "intellij.platform.core.nio.fs")) {
+      continue
+    }
+    result.add(libDir.resolve(jarName))
+  }
   return result
 }
 

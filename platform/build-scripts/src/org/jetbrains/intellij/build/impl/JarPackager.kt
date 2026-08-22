@@ -78,12 +78,13 @@ private fun isJarPreSigned(file: Path, context: BuildContext): Boolean {
  * Selects the jars an assembly actually writes, out of everything the layout put in them.
  *
  * A split dev-distribution fragment lays the whole layout out - that part is metadata, and cheap - and then packs only
- * the jars it owns, so that reading and zipping is what the split divides. The layout is the input because ownership is
- * decided from it (see `org.jetbrains.intellij.build.dev.jarOwnership`), never from a list of file names.
+ * the jars it owns, so that reading and zipping is what the split divides. Ownership is decided per jar name against
+ * an explicit generated set (see `org.jetbrains.intellij.build.dev.PlatformJarSelector`): a name is all a filter sees,
+ * because a jar as a whole belongs to one producer regardless of what the layout put into it.
  */
 @ApiStatus.Internal
 fun interface DistributionAssetFilter {
-  fun accept(relativeOutputFile: String, includedModules: Collection<ModuleItem>): Boolean
+  fun accept(relativeOutputFile: String): Boolean
 }
 
 /**
@@ -220,7 +221,7 @@ class JarPackager private constructor(
         packager.assets.values
       }
       else {
-        packager.assets.values.filter { assetFilter.accept(it.relativePath, it.includedModules.keys) }
+        packager.assets.values.filter { assetFilter.accept(it.relativePath) }
       }
 
       val cacheManager = if (dryRun || context !is BuildContextImpl) NonCachingJarCacheManager else context.jarCacheManager
@@ -669,7 +670,7 @@ class JarPackager private constructor(
         }
       }
 
-      if (assetFilter != null && !assetFilter.accept(relativePath, emptyList())) continue
+      if (assetFilter != null && !assetFilter.accept(relativePath)) continue
       val library = context.outputProvider.findRequiredModule(item.moduleName).libraryCollection.libraries.find { getLibraryFileName(it) == item.libraryName }
                     ?: throw IllegalArgumentException("Cannot find library ${item.libraryName} in '${item.moduleName}' module")
       val asset = getJarAsset(targetFile, relativePath)
@@ -699,7 +700,7 @@ class JarPackager private constructor(
       if (outPath != null) {
         if (outPath.endsWith(".jar")) {
           val targetFile = outDir.resolve(outPath)
-          if (assetFilter != null && !assetFilter.accept(outPath, emptyList())) continue
+          if (assetFilter != null && !assetFilter.accept(outPath)) continue
           val asset = getJarAsset(targetFile, outPath)
           val files = copiedFiles.getLibraryFiles(library = library, targetFile = targetFile, outputProvider = outputProvider)
           filesToSourceWithMapping(asset, files, library, outPath, libraryData)
@@ -717,7 +718,7 @@ class JarPackager private constructor(
       if (libraryData.packMode == LibraryPackMode.STANDALONE_MERGED) {
         val targetFile = libOutputDir.resolve(nameToJarFileName(libName))
         val relativeOutputFile = outDir.relativize(targetFile).invariantSeparatorsPathString
-        if (assetFilter != null && !assetFilter.accept(relativeOutputFile, emptyList())) continue
+        if (assetFilter != null && !assetFilter.accept(relativeOutputFile)) continue
         addLibrary(
           targetFile = targetFile,
           relativeOutputFile = relativeOutputFile,
@@ -725,7 +726,7 @@ class JarPackager private constructor(
         )
       }
       else {
-        if (assetFilter != null && !assetFilter.accept(nameToJarFileName(libName), emptyList())) continue
+        if (assetFilter != null && !assetFilter.accept(nameToJarFileName(libName))) continue
         for (file in getLibraryRoots(library, outputProvider)) {
           val targetFile = libOutputDir.resolve(file.fileName.toString())
           val relativeOutputFile = outDir.relativize(targetFile).invariantSeparatorsPathString

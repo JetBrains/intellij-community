@@ -47,16 +47,25 @@ internal class ContentModuleJar(
   @JvmField val modulesBefore: List<String>,
   /** Modules merged after the owner's own output. */
   @JvmField val modulesAfter: List<String>,
+  /**
+   * Whether the packed jar keeps its merged manifest with `Boot-Class-Path` rewritten to the jar's own name.
+   *
+   * `mergeJars.kt`'s `checkCoverageAgentManifest` does this for the coverage agent, unconditionally and ahead of the
+   * rule that would otherwise drop the manifest: the agent instruments from any class loader, which needs the
+   * attribute to name the jar the agent is in, and merging it into `lib/<module>.jar` renames it. It is a
+   * product-layout decision, so it is decided here rather than in the packer.
+   */
+  @JvmField val rewriteBootClassPath: Boolean,
 )
+
+/** `mergeJars.kt` rewrites this module's `Boot-Class-Path`; see [ContentModuleJar.rewriteBootClassPath]. */
+private const val BOOT_CLASS_PATH_MODULE = "intellij.platform.coverage.agent"
 
 /**
  * Modules whose jar the distribution builder does more to than merge, so packing it from the recipe would produce a
  * different jar. Each of them stays with `JarPackager`; the comparison in `./build/dev-dist.cmd jars` is
  * what found them.
  *
- * - `intellij.platform.coverage.agent`: `mergeJars` rewrites its `Boot-Class-Path` manifest attribute to the target jar
- *   name so the agent can instrument from any class loader, unconditionally and before the rule that would otherwise
- *   drop the manifest. A packed jar would ship without a manifest and the agent would silently stop instrumenting.
  * - the five that pack a library named in `ProductProperties.presignedNativeLibs`: their native files are **taken out**
  *   of the jar, signed, and laid beside it as `lib/<libName>/`, and which ones survive depends on the target OS and
  *   architecture (`NativeFileHandler.isCompatibleWithTargetPlatform`). Both are product-layout decisions the packer
@@ -65,7 +74,6 @@ internal class ContentModuleJar(
  *   of every file source. There is no label for content that does not exist until the layout runs.
  */
 private val EXCLUDED_CONTENT_MODULES = setOf(
-  "intellij.platform.coverage.agent",
   "intellij.libraries.jna",
   "intellij.libraries.pty4j",
   "intellij.libraries.skiko",
@@ -269,6 +277,7 @@ internal fun computeContentModuleJar(module: ModuleDescriptor, moduleList: Modul
     libraryTargetLabels = libraryTargetLabels.toList(),
     modulesBefore = moduleNames.subList(0, ownerIndex),
     modulesAfter = moduleNames.subList(ownerIndex + 1, moduleNames.size),
+    rewriteBootClassPath = module.module.name == BOOT_CLASS_PATH_MODULE,
   )
 }
 

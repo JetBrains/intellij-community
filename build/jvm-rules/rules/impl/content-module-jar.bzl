@@ -5,9 +5,10 @@ own output, and only differs from a rename when libraries or other modules are m
 those two lists is already on the library target. It is exposed in the `content_module_jar` output group, not in
 `DefaultInfo`, so building a module does not pack its distribution jar.
 
-The point of packing here at all is what the action declares: the jars it merges, and nothing else. The
-dev-distribution fragment that packs the same jar today evaluates the whole product layout, so it declares the shared
-project-model tree, and any `.iml` edit re-keys it.
+The point of packing here at all is what the action declares: the jars it merges, and nothing else. A fragment that
+packed these jars had to evaluate the whole product layout, so it declared the shared project-model tree and any
+`.iml` edit re-keyed it; no composed fragment packs them any more, and the one that still can - the reference target
+`./build/dev-dist.cmd jars` builds - exists only to compare this packer against `JarPackager` byte for byte.
 
 **Source order is load-bearing.** The packer resolves an entry name offered by more than one source to the first source
 offering it. To reproduce what the in-process `JarPackager` writes, every library jar comes before every module output,
@@ -48,15 +49,26 @@ every `BUILD.bazel` that named one.
 
 The libraries precede every module output, as `JarPackager` writes them, and the order within decides which copy of an
 entry two libraries both carry ends up in the jar.""",
+        default = [],
         providers = [[JavaInfo]],
     ),
     "content_module_jar_modules_before": attr.label_list(
         doc = "Modules whose output is merged before this module's own.",
+        default = [],
         providers = [_KtJvmInfo],
     ),
     "content_module_jar_modules_after": attr.label_list(
         doc = "Modules whose output is merged after this module's own.",
+        default = [],
         providers = [_KtJvmInfo],
+    ),
+    "content_module_jar_rewrite_boot_class_path": attr.bool(
+        doc = """Whether to keep the merged manifest and point its `Boot-Class-Path` at the packed jar.
+
+The coverage agent instruments from any class loader, which needs that attribute to name the jar the agent is actually
+in - and merging it into `lib/<module>.jar` renames it. `mergeJars.kt` does the same for the same jar on the
+`JarPackager` side; which module needs it is decided by the generator, not here.""",
+        default = False,
     ),
     "_content_module_packer": attr.label(
         default = "//content-module-packer:content-module-packer_deploy.jar",
@@ -149,6 +161,8 @@ def content_module_jar_action(ctx, module_jar):
     args.add(output, format = "output=%s")
     if _keep_manifest(library_jars, merged_module_names):
         args.add("keep-manifest=true")
+    if ctx.attr.content_module_jar_rewrite_boot_class_path:
+        args.add("rewrite-boot-class-path=true")
 
     # Files, not `.path` strings, so path mapping can rewrite them.
     args.add_all(library_jars, format_each = "library=%s")

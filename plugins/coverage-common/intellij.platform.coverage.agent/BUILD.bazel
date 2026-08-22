@@ -7,6 +7,9 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    content_module_jar = True,
+    content_module_jar_libraries = ["@lib//:platform-coverage-agent-intellij-coverage"],
+    content_module_jar_rewrite_boot_class_path = True,
     module_name = "intellij.platform.coverage.agent",
     resource_strip_prefix = "resources",
     resources = glob(

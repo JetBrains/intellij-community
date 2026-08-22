@@ -133,6 +133,7 @@ def jvm_library(
         content_module_jar_libraries = [],
         content_module_jar_modules_before = [],
         content_module_jar_modules_after = [],
+        content_module_jar_rewrite_boot_class_path = False,
         use_rules_kotlin_backend = USE_RULES_KOTLIN_BACKEND,
         **kwargs):
     """Macro that creates jvm_library using the configured backend.
@@ -162,6 +163,8 @@ def jvm_library(
             is the target that groups a library's jars, not a jar file, so the label carries no version.
         content_module_jar_modules_before: Modules merged into that jar before this module's own output.
         content_module_jar_modules_after: Modules merged into that jar after this module's own output.
+        content_module_jar_rewrite_boot_class_path: Whether that jar keeps its merged manifest with `Boot-Class-Path`
+            rewritten to the jar's own name.
         **kwargs: Additional arguments passed to the selected backend
     """
 
@@ -226,5 +229,6 @@ def jvm_library(
             content_module_jar_libraries = content_module_jar_libraries,
             content_module_jar_modules_before = content_module_jar_modules_before,
             content_module_jar_modules_after = content_module_jar_modules_after,
+            content_module_jar_rewrite_boot_class_path = content_module_jar_rewrite_boot_class_path,
             **kwargs
         )

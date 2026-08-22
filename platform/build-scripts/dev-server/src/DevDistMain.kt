@@ -14,7 +14,7 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.DevBuildFragment
 import org.jetbrains.intellij.build.dev.DevBuildOutput
-import org.jetbrains.intellij.build.dev.PlatformFragmentSelector
+import org.jetbrains.intellij.build.dev.PlatformJarSelector
 import org.jetbrains.intellij.build.dev.PluginFragmentSelector
 import org.jetbrains.intellij.build.dev.buildProductInProcess
 import org.jetbrains.intellij.build.dev.materializeProjectModelTree
@@ -186,20 +186,21 @@ fun main(args: Array<String>) {
 private fun parseFragment(options: CommandLineOptions): DevBuildFragment {
   val name = options.optional("--fragment")
   val platform = options.optional("--platform")?.let { value ->
+    // The jars are named rather than derived: a fragment must own exactly the complement of what the distribution
+    // composes in as the packed-jars component, and both sides read one generated list.
+    val jars = options.list("--platform-jar").toSet()
     when (value) {
-      "all" -> PlatformFragmentSelector.All
-      "core" -> PlatformFragmentSelector.Core
-      "content-modules" -> PlatformFragmentSelector.ContentModules
-      else -> error("Unknown --platform value '$value', expected all, core or content-modules")
+      "except" -> PlatformJarSelector(jars = jars, mode = PlatformJarSelector.Mode.EXCLUDE)
+      "only" -> PlatformJarSelector(jars = jars, mode = PlatformJarSelector.Mode.ONLY)
+      else -> error("Unknown --platform value '$value', expected except or only")
     }
   }
   val platformResources = options.optionalBoolean("--platform-resources") ?: false
   val plugins = options.optional("--plugins")?.let { value ->
     when (value) {
-      "all" -> PluginFragmentSelector.All
       "named" -> PluginFragmentSelector.Named(options.list("--plugin").toSet())
       "remaining" -> PluginFragmentSelector.Remaining(options.list("--claimed-plugin").toSet())
-      else -> error("Unknown --plugins value '$value', expected all, named or remaining")
+      else -> error("Unknown --plugins value '$value', expected named or remaining")
     }
   }
 
@@ -250,12 +251,12 @@ private fun dropEmptyTempDir(runDir: Path) {
   }
 }
 
-private fun parseOs(value: String): OsFamily {
+internal fun parseOs(value: String): OsFamily {
   return OsFamily.entries.firstOrNull { it.name.equals(value, ignoreCase = true) || it.osId.equals(value, ignoreCase = true) || it.dirName.equals(value, ignoreCase = true) }
          ?: error("Unknown --os value '$value', expected one of ${OsFamily.entries.joinToString { it.osId }}")
 }
 
-private fun parseArch(value: String): JvmArchitecture {
+internal fun parseArch(value: String): JvmArchitecture {
   return JvmArchitecture.entries.firstOrNull {
     it.name.equals(value, ignoreCase = true) || it.archName.equals(value, ignoreCase = true) ||
     it.dirName.equals(value, ignoreCase = true) || it.marketplaceName.equals(value, ignoreCase = true)

@@ -146,9 +146,9 @@ intellij_project_model_tree = rule(
 )
 
 # The selector values `DevDistMain` accepts, mirrored here so a typo in a BUILD file fails at analysis time.
-_PLATFORM_SELECTORS = ["", "all", "core", "content-modules"]
+_PLATFORM_SELECTORS = ["", "except", "only"]
 
-_PLUGIN_SELECTORS = ["", "all", "named", "remaining"]
+_PLUGIN_SELECTORS = ["", "named", "remaining"]
 
 def _add_target_platform_args(args, target_platform):
     if target_platform:
@@ -206,6 +206,7 @@ def _fragment_impl(ctx):
 
     if ctx.attr.platform:
         args.add("--platform=" + ctx.attr.platform)
+        args.add_all(ctx.attr.platform_jars, format_each = "--platform-jar=%s")
     if ctx.attr.platform_resources:
         args.add("--platform-resources")
 
@@ -264,9 +265,10 @@ def _fragment_impl(ctx):
 intellij_dev_fragment = rule(
     doc = """One independently cacheable slice of a dev distribution.
 
-    What the fragment owns is a selector, not a file list: `platform` picks the `lib/` jars by what the plugin model
-    says about them, `plugins` picks bundled plugin directories by main module, and the `remaining*` selectors are the
-    exact complement of what their siblings claimed, so nothing is silently left out of the composition.
+    What the fragment owns is a selector over names, not a file list: `platform` owns `lib/` jars by an explicit
+    generated jar-name set - every jar `except` the named ones, or `only` them - `plugins` picks bundled plugin
+    directories by main module, and the `remaining` selector is the exact complement of what its siblings claimed,
+    so nothing is silently left out of the composition.
     """,
     implementation = _fragment_impl,
     attrs = {
@@ -279,12 +281,19 @@ intellij_dev_fragment = rule(
         # that period, which is what made every dev IDE start expired: a build date over a day ahead of the wall clock
         # is expired too.
         "build_date_seconds": attr.string(default = "1767225600"),  # 2026-01-01T00:00:00Z
-        "mode": attr.string(default = "ultimate", values = ["community", "ultimate"]),
         "platform_prefix": attr.string(mandatory = True),
         "target_platform": attr.string(default = ""),
         "fragment_name": attr.string(mandatory = True, doc = "Identifies this fragment in its manifest, its mnemonic and the composer's completeness check."),
-        "platform": attr.string(default = "", values = _PLATFORM_SELECTORS, doc = "Which `lib/` jars this fragment owns - all, the core that holds no content module, or the content-module jars; empty means none."),
+        "platform": attr.string(default = "", values = _PLATFORM_SELECTORS, doc = "Which `lib/` jars this fragment owns - all `except` the ones in `platform_jars`, or `only` those; empty means none."),
         "platform_resources": attr.bool(default = False, doc = "Whether this fragment owns `bin`, the product metadata, the launchers and the copied product files."),
+        "platform_jars": attr.string_list(
+            doc = "The `lib/` jar file names `platform` reads: with `except`, the jars another component provides and " +
+                  "this fragment must therefore not pack; with `only`, the jars it packs and nothing else. " +
+                  "`intellij_dev_packed_jars_component` is handed the same list, so an `except` fragment and it " +
+                  "partition the `lib/` jars exactly; the composer fails on a path both provide. The fragment still " +
+                  "reports those jars' core-classpath entries - deciding that needs the platform layout, which the " +
+                  "packer does not have.",
+        ),
         "plugins": attr.string(default = "", values = _PLUGIN_SELECTORS, doc = "Which bundled plugins this fragment owns; empty means none."),
         "plugin_main_modules": attr.string_list(doc = "For plugins = 'named': the main modules of the plugins this fragment owns."),
         "claimed_plugin_main_modules": attr.string_list(doc = "For plugins = 'remaining': the main modules the sibling fragments own."),
@@ -297,6 +306,90 @@ intellij_dev_fragment = rule(
         "preloaded_downloads": attr.label_list(allow_files = True),
         "preloaded_manifests": attr.label_list(allow_files = True),
         "ijent_binaries": attr.label_list(allow_files = True, doc = "The unpacked IJent binaries the assembly bundles at `lib/ijent/`, so that it extracts nothing itself."),
+    },
+)
+
+def _packed_jars_component_impl(ctx):
+    home = ctx.actions.declare_directory(ctx.label.name + ".home")
+    component_manifest = ctx.actions.declare_file(ctx.label.name + ".component.json")
+
+    jars = []
+    missing = []
+    for target in ctx.attr.modules:
+        output_groups = target[OutputGroupInfo]
+        if not hasattr(output_groups, "content_module_jar"):
+            missing.append(str(target.label))
+            continue
+        jars.extend(output_groups.content_module_jar.to_list())
+    if missing:
+        # The plan named a module whose `jvm_library` packs no distribution jar, so the fragment stopped declaring its
+        # inputs while nothing produces the jar. Fail here, where the message can name the module, rather than in the
+        # middle of an assembly that cannot resolve it.
+        fail(("%s: these modules were handed over to the packer but set no `content_module_jar`, so their `lib/` jars " +
+              "would be missing from the distribution: %s. Either the module's recipe stopped selecting it - " +
+              "`jpsModelToBazel` prints a WARN when a veto fires - or `build/dev_dist_content_module_jars.bzl` is " +
+              "stale.") % (ctx.label, ", ".join(missing)))
+    if not jars:
+        fail("%s: no module hands over a packed jar, so this component would contribute nothing" % ctx.label)
+
+    jar_list = ctx.actions.args()
+    jar_list.set_param_file_format("multiline")
+    jar_list.use_param_file("--jars-file=%s", use_always = True)
+    jar_list.add_all(jars)
+
+    args = ctx.actions.args()
+    args.add("--output-dir=" + home.path)
+    args.add("--component-manifest=" + component_manifest.path)
+    args.add("--kind=" + ctx.attr.component_name)
+    args.add("--platform-prefix=" + ctx.attr.platform_prefix)
+    _add_target_platform_args(args, ctx.attr.target_platform)
+
+    ctx.actions.run(
+        inputs = depset(jars),
+        outputs = [home, component_manifest],
+        executable = ctx.executable.collector,
+        arguments = [args, jar_list],
+        execution_requirements = _LOCAL_DISK_CACHE_ONLY,
+        mnemonic = "IntellijDevPackedJars",
+        progress_message = "Collecting %d packed %s jars for %%{label}" % (len(jars), ctx.attr.platform_prefix),
+    )
+    return [
+        DefaultInfo(files = depset([home, component_manifest])),
+        IntellijDevFragmentInfo(
+            name = ctx.attr.component_name,
+            home = home,
+            manifest = component_manifest,
+            plugin_classpath_part = None,
+            plugin_classpath_prefix = None,
+            # Not a declared-input boundary: this component reads the jars it collects and nothing else, so there is no
+            # over-declaration to measure. `dev_dist_unused_inputs_report_test` skips a component that reports neither.
+            inputs_manifest = None,
+            unused_inputs = None,
+        ),
+    ]
+
+intellij_dev_packed_jars_component = rule(
+    doc = """The distribution component made of the `lib/` jars `jvm_library` packed itself.
+
+    Every other component is assembled by evaluating the product layout, which declares the shared project-model tree
+    and is therefore re-keyed by any `.iml` edit. These jars are packed by actions that declare only the jars they
+    merge, and this rule does no more than name them `lib/<module>.jar` and inventory them - so an unrelated model edit
+    leaves both the packing and this collection untouched.
+
+    Which modules those are comes from the generated plan; the sibling fragment is handed the same list and stops
+    packing exactly these jars, so ownership cannot overlap. A named module that packs no jar is an error here rather
+    than a thinner IDE.
+    """,
+    implementation = _packed_jars_component_impl,
+    attrs = {
+        "collector": attr.label(executable = True, cfg = "exec", mandatory = True),
+        "component_name": attr.string(mandatory = True, doc = "Identifies this component in its manifest and in the composer's completeness check."),
+        "platform_prefix": attr.string(mandatory = True),
+        "target_platform": attr.string(default = ""),
+        "modules": attr.label_list(
+            mandatory = True,
+            doc = "The module targets whose `content_module_jar` output group this component collects.",
+        ),
     },
 )
 

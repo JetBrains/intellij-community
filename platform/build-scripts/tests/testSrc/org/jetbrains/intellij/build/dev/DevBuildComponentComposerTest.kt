@@ -89,7 +89,7 @@ internal class DevBuildComponentComposerTest {
     )
 
     val manifest = readDevBuildComponentManifest(manifestFile)
-    assertThat(manifest.version).isEqualTo(7)
+    assertThat(manifest.version).isEqualTo(8)
     assertThat(manifest.entries).anySatisfy { entry ->
       assertThat(entry.relativePath).isEqualTo("lib/ijent/ijent-x86_64-unknown-linux-musl-release")
       assertThat(entry.type).isEqualTo("component-file")
@@ -203,9 +203,9 @@ internal class DevBuildComponentComposerTest {
 
   @Test
   fun `platform resources solely own IJent DistFiles`() {
-    val platformCore = DevBuildFragment(
-      name = "platform_core",
-      platform = PlatformFragmentSelector.Core,
+    val platformLib = DevBuildFragment(
+      name = "platform_lib",
+      platform = PlatformJarSelector(jars = setOf("intellij.charts.jar"), mode = PlatformJarSelector.Mode.EXCLUDE),
       platformResources = false,
       plugins = null,
     )
@@ -216,9 +216,9 @@ internal class DevBuildComponentComposerTest {
       plugins = null,
     )
 
-    assertThat(shouldCopyDevBuildDistFile(platformCore, "lib/ijent/ijent-x86_64-unknown-linux-musl-release")).isFalse()
+    assertThat(shouldCopyDevBuildDistFile(platformLib, "lib/ijent/ijent-x86_64-unknown-linux-musl-release")).isFalse()
     assertThat(shouldCopyDevBuildDistFile(platformResources, "lib/ijent/ijent-x86_64-unknown-linux-musl-release")).isTrue()
-    assertThat(shouldCopyDevBuildDistFile(platformCore, "bin/another-dist-file")).isTrue()
+    assertThat(shouldCopyDevBuildDistFile(platformLib, "bin/another-dist-file")).isTrue()
   }
 
   @Test
@@ -426,6 +426,29 @@ internal class DevBuildComponentComposerTest {
   }
 
   @Test
+  fun `composer takes the main class from a component that declares one`(@TempDir tempDir: Path) {
+    // A component that only carries packed jars declares no launch metadata: it knows its product and target platform,
+    // but the main class follows from `ProductProperties`, which such a producer deliberately never evaluates.
+    val jars = DevBuildComponent(component(tempDir, "jars", "lib/packed.jar"), manifest(kind = "platform_jars", mainClass = null))
+    val core = DevBuildComponent(component(tempDir, "core", "lib/platform.jar"), manifest(kind = "platform_core"))
+
+    val composed = composeDevBuildComponents(listOf(jars, core), tempDir.resolve("target"))
+
+    assertThat(composed.mainClass).isEqualTo("com.intellij.idea.Main")
+  }
+
+  @Test
+  fun `composer rejects a composition where no component declares a main class`(@TempDir tempDir: Path) {
+    val jars = DevBuildComponent(component(tempDir, "jars", "lib/packed.jar"), manifest(kind = "platform_jars", mainClass = null))
+    val target = tempDir.resolve("target")
+
+    assertThatThrownBy { composeDevBuildComponents(listOf(jars), target) }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining("platform_jars")
+    assertThat(Files.exists(target)).isFalse()
+  }
+
+  @Test
   fun `composer rejects a composition that is missing a wired fragment`(@TempDir tempDir: Path) {
     val platform = DevBuildComponent(component(tempDir, "platform", "lib/platform.jar"), manifest(kind = "platform_core"))
 
@@ -609,6 +632,7 @@ internal class DevBuildComponentComposerTest {
     additionalModules: List<String> = emptyList(),
     pluginCount: Int = 0,
     entries: List<DevBuildComponentEntry> = emptyList(),
+    mainClass: String? = "com.intellij.idea.Main",
   ): DevBuildComponentManifest {
     return DevBuildComponentManifest(
       kind = kind,
@@ -616,7 +640,7 @@ internal class DevBuildComponentComposerTest {
       os = "linux",
       arch = "x64",
       additionalModules = additionalModules,
-      mainClass = "com.intellij.idea.Main",
+      mainClass = mainClass,
       coreClassPath = coreClassPath,
       pluginCount = pluginCount,
       entries = entries,

@@ -88,7 +88,12 @@ internal suspend fun packAll(arguments: List<String>, writer: Writer, baseDir: P
         async(Dispatchers.IO) {
           runInterruptible {
             spec.output.createParentDirectories()
-            val duplicates = mergeIntoJar(target = spec.output, sources = spec.sources, keepManifest = spec.keepManifest)
+            val duplicates = mergeIntoJar(
+              target = spec.output,
+              sources = spec.sources,
+              keepManifest = spec.keepManifest,
+              rewriteBootClassPath = spec.rewriteBootClassPath,
+            )
             if (duplicates.isNotEmpty()) {
               // Not a failure: two libraries merged into one jar can legitimately carry the same service file or
               // licence stub, and the first source wins. Reported so a genuine collision - two module outputs both
@@ -116,6 +121,7 @@ private class JarSpec(
   @JvmField val output: Path,
   @JvmField val sources: List<JarMergeSource>,
   @JvmField val keepManifest: Boolean,
+  @JvmField val rewriteBootClassPath: Boolean,
 )
 
 /**
@@ -125,18 +131,25 @@ private class JarSpec(
  * does not fit a command line. `output=` starts a group, so the file is ordered and the order is the precedence
  * `mergeIntoJar` uses for duplicates - emit every `library=` of a group before its `module=` lines, which is the order
  * `JarPackager` writes. An optional `keep-manifest=true` line inside a group lets that jar keep its
- * `META-INF/MANIFEST.MF`; the default is to drop it.
+ * `META-INF/MANIFEST.MF`; the default is to drop it. `rewrite-boot-class-path=true` keeps it as well and points its
+ * `Boot-Class-Path` at the jar being written - see [mergeIntoJar].
  */
 private fun parseJarSpecs(lines: List<String>, baseDir: Path): List<JarSpec> {
   val result = ArrayList<JarSpec>()
   var output: Path? = null
   var sources = ArrayList<JarMergeSource>()
   var keepManifest = false
+  var rewriteBootClassPath = false
 
   fun flush() {
     val current = output ?: return
     require(sources.isNotEmpty()) { "no inputs for '$current'" }
-    result.add(JarSpec(output = current, sources = sources, keepManifest = keepManifest))
+    result.add(JarSpec(
+      output = current,
+      sources = sources,
+      keepManifest = keepManifest,
+      rewriteBootClassPath = rewriteBootClassPath,
+    ))
   }
 
   for (line in lines) {
@@ -153,10 +166,15 @@ private fun parseJarSpecs(lines: List<String>, baseDir: Path): List<JarSpec> {
         output = baseDir.resolve(value)
         sources = ArrayList()
         keepManifest = false
+        rewriteBootClassPath = false
       }
       "keep-manifest" -> {
         requireNotNull(output) { "`keep-manifest=$value` before any `output=`" }
         keepManifest = value.toBooleanStrict()
+      }
+      "rewrite-boot-class-path" -> {
+        requireNotNull(output) { "`rewrite-boot-class-path=$value` before any `output=`" }
+        rewriteBootClassPath = value.toBooleanStrict()
       }
       "module" -> {
         requireNotNull(output) { "`module=$value` before any `output=`" }

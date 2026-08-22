@@ -36,6 +36,7 @@ import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.ScrambleTool
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
+import org.jetbrains.intellij.build.classPath.contentModuleJarCoreClasspathEntries
 import org.jetbrains.intellij.build.classPath.generateClassPathByLayoutReport
 import org.jetbrains.intellij.build.classPath.generateCoreClasspathFromPlugins
 import org.jetbrains.intellij.build.classPath.generatePluginClassPath
@@ -269,8 +270,8 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
       val platformResourcesJob = if (request.fragment.platformResources) {
         launch(Dispatchers.IO + CoroutineName("layout platform resources")) {
           // Product metadata, like `bin/product-info.json` below - and so owned by this fragment alone. It used to be
-          // written while laying out the platform jars, which every platform fragment does, and each of them then
-          // claimed the same file.
+          // written while laying out the platform jars, which the lib-owning fragment and the reference target both
+          // do, and each producer then claimed the same file.
           Files.writeString(runDir.resolve("build.txt"), context.fullBuildNumber)
 
           // PathManager.getBinPath() is used as a working dir for maven
@@ -979,20 +980,19 @@ private suspend fun layoutPlatform(
   request: BuildRequest,
 ): PlatformLayoutResult {
   val selector = checkNotNull(request.fragment.platform)
-  // One answer for both filters below, taken from the whole layout rather than from whatever each of them can see.
-  val ownership = PlatformJarOwnership.of(platformLayout.includedModules)
   check(platformLayout.resourcePaths.isEmpty() || request.fragment.isComplete) {
-    // Copied by every fragment that lays the platform out, into its own tree, and the paths are not jars the asset
-    // filter can partition. No product does this today; the first one that does has to say which fragment owns them.
+    // Copied by whatever lays the platform out, into its own tree, and the paths are not jars the asset filter can
+    // partition. No product does this today; the first one that does has to say which producer owns them - most
+    // naturally the fragment owning `lib/` by exclusion, which computes the layout anyway.
     "The platform layout of '${request.platformPrefix}' declares resource paths" +
     " (${platformLayout.resourcePaths.joinToString { it.relativeOutputPath }}), which a split assembly cannot place:" +
-    " every platform fragment would copy them. Give them an owner before splitting this product."
+    " they are not jars a selector can partition. Give them an owner before splitting this product."
   }
-  val includedModules = selector.selectModules(platformLayout.includedModules, ownership)
-  // The fragment decided before the layout existed that it would not need the inlined content-module descriptors,
-  // because the application-info module's jar holds no content module and so belongs to the core. Confirm it against
-  // the layout that was actually produced: a product that lands that module in a content-module jar would otherwise
-  // ship a product descriptor with nothing inlined into it, which fails far away at runtime.
+  val includedModules = selector.selectModules(platformLayout.includedModules)
+  // The fragment decided before the layout existed whether it would need the inlined content-module descriptors: a
+  // fragment that owns `lib/` by exclusion holds the application-info module, since no other producer packs that jar.
+  // Confirm it against the layout that was actually produced: a product that hands that module's jar to another
+  // producer would otherwise ship a product descriptor with nothing inlined into it, which fails far away at runtime.
   val applicationInfoModule = context.productProperties.applicationInfoModule
   check(context.options.embedProductContentModuleDescriptors || includedModules.none { it.moduleName == applicationInfoModule }) {
     "Fragment '${request.fragment}' packs the application-info module '$applicationInfoModule'," +
@@ -1008,21 +1008,28 @@ private suspend fun layoutPlatform(
     copyFiles = true,
     // Narrows what is resolved, so that a module this fragment does not pack cannot invalidate it.
     includedModules = includedModules,
-    // Narrows what is written, over the jars packing produced - including the ones the layout never named, which the
-    // core fragment owns: a library pinned into its own jar, or a project library.
-    assetFilter = { relativeOutputFile, _ -> selector.accepts(ownership, relativeOutputFile) },
+    // Narrows what is written, over the jars packing produced - including the ones the layout never named, which an
+    // excluding selector owns because nobody named them: a library pinned into its own jar, or a project library.
+    assetFilter = { relativeOutputFile -> selector.accepts(relativeOutputFile) },
     context = context,
   )
+  val libDir = runDir.resolve("lib")
+  // todo - we cannot for now skip nio-fs.jar, probably `-Xbootclasspath/a` is not correctly set for dev-mode-based tests
+  val skipNioFs = if (request.isBootClassPathCorrect) isMultiRoutingFileSystemEnabledForProduct(context.productProperties.platformPrefix) else false
   val coreClassPath = coroutineScope {
-    // todo - we cannot for now skip nio-fs.jar, probably `-Xbootclasspath/a` is not correctly set for dev-mode-based tests
-    generateClassPathByLayoutReport(
-      libDir = runDir.resolve("lib"),
-      entries = entries,
-      skipNioFs = if (request.isBootClassPathCorrect) isMultiRoutingFileSystemEnabledForProduct(context.productProperties.platformPrefix) else false,
-    )
+    generateClassPathByLayoutReport(libDir = libDir, entries = entries, skipNioFs = skipNioFs)
   }
+  // The jars this fragment handed over are absent from `entries` - it neither resolved nor packed them - but they are
+  // in the distribution, put there by their own component, and the classpath spans the whole distribution. Deciding
+  // this here is what lets that component be produced without a product layout at all.
+  val externallyPackedClassPath = contentModuleJarCoreClasspathEntries(
+    libDir = libDir,
+    includedModules = platformLayout.includedModules,
+    externallyPackedJars = if (selector.mode == PlatformJarSelector.Mode.EXCLUDE) selector.jars else emptySet(),
+    skipNioFs = skipNioFs,
+  )
 
-  return PlatformLayoutResult(entries, coreClassPath)
+  return PlatformLayoutResult(entries, coreClassPath + externallyPackedClassPath)
 }
 
 private fun computeAdditionalModulesFingerprint(additionalModules: List<String>): String {
