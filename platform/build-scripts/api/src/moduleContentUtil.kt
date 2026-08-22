@@ -129,18 +129,26 @@ fun getLibraryReferenceRoots(libraryReference: JpsLibraryReference, outputProvid
   return outputProvider.findLibraryRoots(libraryReference.libraryName, moduleLibraryModuleName = moduleLibraryModuleName)
 }
 
+/** [getLibraryReferenceRoots] for a probe: only the jars this build declares. See [ModuleOutputProvider.findDeclaredLibraryRoots]. */
+private fun getDeclaredLibraryReferenceRoots(libraryReference: JpsLibraryReference, outputProvider: ModuleOutputProvider): List<Path> {
+  val parentLibraryReference = libraryReference.parentReference
+  val moduleLibraryModuleName = if (parentLibraryReference is JpsModuleReference) parentLibraryReference.moduleName else null
+  return outputProvider.findDeclaredLibraryRoots(libraryReference.libraryName, moduleLibraryModuleName = moduleLibraryModuleName)
+}
+
 fun getLibraryRoots(library: JpsLibrary, outputProvider: ModuleOutputProvider): List<Path> {
   return getLibraryReferenceRoots(library.createReference(), outputProvider)
 }
 
 /**
  * Belongs to [DescriptorSearchPass.MODULE_OUTPUT] alone: a library has no source root, so there is nothing for the
- * sources pass to find, and resolving its jars to ask is the declaration that pass exists to avoid.
+ * sources pass to find, and resolving its jars to ask is the declaration that pass exists to avoid - which is why the
+ * jars come from [ModuleOutputProvider.findDeclaredLibraryRoots] rather than [ModuleOutputProvider.findLibraryRoots].
  */
 fun findFileInModuleLibraryDependencies(module: JpsModule, relativePath: String, outputProvider: ModuleOutputProvider): ByteArray? {
   for (dependency in module.dependenciesList.dependencies) {
     if (dependency is JpsLibraryDependency) {
-      for (jarPath in getLibraryReferenceRoots(dependency.libraryReference, outputProvider)) {
+      for (jarPath in getDeclaredLibraryReferenceRoots(dependency.libraryReference, outputProvider)) {
         ImmutableZipFile.load(jarPath).use { zipFile ->
           zipFile.getData(relativePath)?.let { return it }
         }

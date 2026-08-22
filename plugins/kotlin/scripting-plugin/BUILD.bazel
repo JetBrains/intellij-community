@@ -77,7 +77,6 @@ dev_dist_plugin_content(
         "@lib//:org.jetbrains.kotlin/kotlin-script-runtime-2.5.0-dev-4715.jar",
         "@lib//:org.jetbrains.kotlin/kotlin-scripting-jvm-2.5.0-dev-4715.jar",
         "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
-        "@lib//:org.slf4j/log4j-over-slf4j-1.7.36.jar",
     ],
     visibility = ["//visibility:public"],
 )

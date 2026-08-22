@@ -112,9 +112,6 @@ dev_dist_plugin_content(
     ],
     descriptor_module = ":completion-ml-ranking-models",
     libraries = [
-        "@lib//:com.hankcs/aho-corasick-double-array-trie-1.2.3.jar",
-        "@lib//:eawtstub.jar",
-        "@lib//:org.jetbrains.diogen/diogen-analysis-0.5.0.jar",
         "@lib//:org.jetbrains.intellij.deps.completion/completion-ranking-cpp-0.1.5.jar",
         "@lib//:org.jetbrains.intellij.deps.completion/completion-ranking-css-0.2.1.jar",
         "@lib//:org.jetbrains.intellij.deps.completion/completion-ranking-dart-0.0.2.jar",
@@ -131,10 +128,7 @@ dev_dist_plugin_content(
         "@lib//:org.jetbrains.intellij.deps.completion/completion-ranking-sh-0.0.2.jar",
         "@lib//:org.jetbrains.intellij.deps.completion/completion-ranking-swift-0.1.3.jar",
         "@lib//:org.jetbrains.intellij.deps.completion/completion-ranking-typescript-0.4.1.jar",
-        "@lib//:org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-263.33.jar",
         "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
-        "@lib//:org.slf4j/slf4j-api-2.0.13.jar",
-        "@lib//:org.slf4j/slf4j-jdk14-2.0.13.jar",
     ],
     visibility = ["//visibility:public"],
 )

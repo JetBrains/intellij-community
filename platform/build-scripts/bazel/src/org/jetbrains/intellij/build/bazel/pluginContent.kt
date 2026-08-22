@@ -3,9 +3,7 @@ package org.jetbrains.intellij.build.bazel
 
 import kotlinx.serialization.builtins.ListSerializer
 import org.jetbrains.jps.model.JpsGlobal
-import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.module.JpsLibraryDependency
-import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.nio.file.Path
 import java.util.TreeSet
@@ -155,7 +153,7 @@ internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleLi
   val crossRepositoryPrepackedModules = ArrayList<String>()
   val members = ArrayList<ModuleDescriptor>()
   members.add(module)
-  val prepackedMemberNames = entries.mapNotNull(::simplePluginContentModuleName).toSet()
+  val prepackedMemberNames = entries.mapNotNull(::simplePluginContentModuleName).toSet() - coPackedElsewhere(entries)
   for (memberName in memberNames) {
     val member = moduleList.getModuleDescriptorOrNull(memberName)
     if (member == null || moduleList.skippedModules.contains(memberName)) {
@@ -192,7 +190,6 @@ internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleLi
     module = module,
     members = members,
     recordedLibraries = recordedLibraries(entries),
-    moduleList = moduleList,
     context = context,
   )
   // Sorted: these are sets of inputs, not merge orders, so a stable order keeps a regeneration free of diff noise.
@@ -225,36 +222,31 @@ internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleLi
  * 2. the libraries the report records, which is what the distribution really packs into the plugin's `lib/`. A member's
  *    dependency is not necessarily where a packed library is declared, so this is not implied by the first.
  *
- * Scope-blind on purpose, as the retired payload was: it declared every `<orderEntry type="library">` and every
- * `module-library` of those modules regardless of scope, and only module *dependencies* were filtered to non-test. A
- * narrower set here would be a behaviour change hiding inside a mechanical migration - and `jmc-flightrecorder-writer`,
- * a TEST-scope module library of `intellij.profiler.ultimate` that the java fragment nevertheless has to declare, is
- * what a narrower set costs.
+ * Scope-blind for a **member**, TEST-filtered on the **frontier**. The retired payload was scope-blind on both, and this
+ * reproduced it exactly so that the move from a name table to targets stayed a mechanical migration; the asymmetry is
+ * the first deliberate narrowing on top of it, and it is where the whole cost was. A member's own TEST-scope library
+ * can still be packed - `jmc-flightrecorder-writer` of `intellij.profiler.ultimate` is one, and dropping it took its
+ * jar out of the java fragment's manifest - so members keep declaring every `<orderEntry type="library">` and every
+ * `module-library` whatever its scope. A member's *direct dependency* is a different case: this plugin does not pack
+ * that module, so a library it declares for its own tests cannot be a distribution input here. Scope-blindness there
+ * put `jmock` - TEST-scope on `intellij.platform.lang` - into 369 of the 475 content targets, packed by none of them.
+ *
+ * PROVIDED stays declared on both halves. It is compile-only rather than test-only, the layout can still pack such a
+ * library, and the hard-failure asymmetry says to narrow one clause at a time and measure.
  */
 private fun computeLibraryJarLabels(
   module: ModuleDescriptor,
   members: List<ModuleDescriptor>,
   recordedLibraries: Set<RecordedLibrary>,
-  moduleList: ModuleList,
   context: BazelBuildFileGenerator,
 ): List<String> {
   val libraries = LinkedHashSet<Library>()
-  val visited = HashSet<String>()
   // The modules whose *whole* declared library set is in `libraries`, which is what lets an unnamed recorded library be
   // recognised as already covered - see below.
   val collected = HashSet<String>()
   for (member in members) {
-    if (visited.add(member.module.name)) {
+    if (collected.add(member.module.name)) {
       collectDeclaredLibraries(module = member, libraries = libraries, context = context)
-      collected.add(member.module.name)
-    }
-    for (dependencyName in directModuleDependencies(member, context)) {
-      if (!visited.add(dependencyName)) {
-        continue
-      }
-      val dependency = moduleList.getModuleDescriptorOrNull(dependencyName) ?: continue
-      collectDeclaredLibraries(module = dependency, libraries = libraries, context = context)
-      collected.add(dependencyName)
     }
   }
 
@@ -315,6 +307,33 @@ private fun computeLibraryJarLabels(
 }
 
 /**
+ * The modules this report packs somewhere *besides* their own `lib/modules/<module>.jar` entry.
+ *
+ * [simplePluginContentModuleName] judges one entry in isolation, which is not enough to decide a hand-off: a module
+ * whose own entry is simple can still be a `modules:` member of another jar in the same plugin, and `JarPackager` packs
+ * that jar from the module's raw output. Handing the module off takes its raw jar out of the fragment's declaration
+ * while leaving that second jar to be packed, so the assembly resolves an input nobody declared.
+ *
+ * `intellij.gateway.core` is the case in the model: its own `lib/modules/intellij.gateway.core.jar` is simple, and the
+ * gateway layout also packs it into `lib/gateway-standalone/gateway.core.jar` (`cwmLayout.kt:197`). It built only
+ * because the retired dependency frontier happened to declare the jar - the plugin's own declaration never did.
+ *
+ * Fail-open like every other veto: the relation stays raw and `JarPackager` keeps both jars. Declaring the module in
+ * both halves instead would buy nothing, since the raw jar it would have to re-declare is what re-keys the fragment.
+ */
+private fun coPackedElsewhere(entries: List<RecipeEntry>): Set<String> {
+  val result = HashSet<String>()
+  for (entry in entries) {
+    if (simplePluginContentModuleName(entry) != null) {
+      continue
+    }
+    entry.modules.mapTo(result) { it.name }
+    entry.contentModules.mapTo(result) { it.moduleName }
+  }
+  return result
+}
+
+/**
  * The label repositories a `dev_dist_plugin_content` in [module]'s own package may name, or `null` when every repository
  * the project has is nameable.
  *
@@ -334,8 +353,20 @@ private fun nameableRepositories(module: ModuleDescriptor, context: BazelBuildFi
 /** The repository part of a Bazel label - `@lib` of `@lib//:foo.jar`, and `""` of a repo-relative `//lib:foo.jar`. */
 private fun labelRepository(label: String): String = label.substringBefore("//")
 
-/** Every library [module] declares itself, as the converted [Library] the jar labels are computed from. */
-private fun collectDeclaredLibraries(module: ModuleDescriptor, libraries: MutableCollection<Library>, context: BazelBuildFileGenerator) {
+/**
+ * Every library [module] declares itself, as the converted [Library] the jar labels are computed from.
+ *
+ * Every scope, TEST included: a member's own TEST-scope library can still be packed - `jmc-flightrecorder-writer` of
+ * `intellij.profiler.ultimate` is one, and dropping it once took the jar out of the java fragment's manifest. Only
+ * members are walked, so there is no second scope rule to separate this from; the walk over a member's *direct
+ * dependencies* is gone, and with it the keys it cost - `jmock`, a TEST-scope project library of
+ * `intellij.platform.lang`, reached 369 of the 475 content targets that way and was packed by none of them.
+ */
+private fun collectDeclaredLibraries(
+  module: ModuleDescriptor,
+  libraries: MutableCollection<Library>,
+  context: BazelBuildFileGenerator,
+) {
   for (element in module.module.dependenciesList.dependencies) {
     if (element !is JpsLibraryDependency) {
       continue
@@ -357,18 +388,6 @@ private fun collectDeclaredLibraries(module: ModuleDescriptor, libraries: Mutabl
       continue
     }
     libraries.add(library)
-  }
-}
-
-/** The modules [module] depends on outside test scope - `module_deps` of `jps_target_derivation.bzl`, one level deep. */
-private fun directModuleDependencies(module: ModuleDescriptor, context: BazelBuildFileGenerator): List<String> {
-  return module.module.dependenciesList.dependencies.mapNotNull { element ->
-    if (element !is JpsModuleDependency || context.javaExtensionService.getDependencyExtension(element)?.scope == JpsJavaDependencyScope.TEST) {
-      null
-    }
-    else {
-      element.moduleReference.moduleName
-    }
   }
 }
 

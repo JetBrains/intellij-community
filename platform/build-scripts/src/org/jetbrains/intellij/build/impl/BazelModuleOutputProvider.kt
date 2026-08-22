@@ -29,6 +29,25 @@ object BazelBuildInputs {
     return resolver?.resolve(label) ?: BazelRunfiles.getFileByLabel(BazelLabel.fromString(label))
   }
 
+  /**
+   * The path of [label], or `null` when an explicit manifest is configured and does not declare it.
+   *
+   * For a **probe** - a descriptor search asking many candidates for one file, at most one of which has it - and for
+   * nothing else. Such a search is defined by tolerating a miss, and under an explicit manifest a jar the fragment does
+   * not declare is a jar whose bytes may not reach this fragment's output, so "not declared" is a miss of exactly that
+   * kind. Resolving it strictly instead is what forced a fragment to declare every candidate a search might touch: the
+   * Kotlin plugin's descriptor search asked 20 platform modules for a file that was in a library all along, and one
+   * plugin fragment then held the whole platform's hot jars as action inputs.
+   *
+   * This does not soften under-declaration into silence. A search that finds its file nowhere still throws - see
+   * `XIncludeElementResolverImpl.resolveElement`, "Cannot resolve '<path>' in <scopes>" - and a read that *packs*
+   * bytes, every caller in `JarPackager`, goes through [resolve] and still fails on an undeclared input.
+   */
+  fun resolveIfDeclared(label: String): Path? {
+    val resolver = resolver ?: return BazelRunfiles.getFileByLabel(BazelLabel.fromString(label))
+    return resolver.resolveIfDeclared(label)
+  }
+
   fun writeUnusedInputs(file: Path) {
     resolver?.writeUnusedInputs(file) ?: Files.writeString(file, "")
   }
@@ -47,6 +66,13 @@ internal class ExplicitBazelInputResolver private constructor(
   @Synchronized
   fun resolve(label: String): Path {
     val input = inputs.get(label) ?: error("Bazel input '$label' is not declared in the explicit input manifest")
+    usedExecPaths.add(input.execPath)
+    return input.absolutePath
+  }
+
+  @Synchronized
+  fun resolveIfDeclared(label: String): Path? {
+    val input = inputs.get(label) ?: return null
     usedExecPaths.add(input.execPath)
     return input.absolutePath
   }
@@ -160,9 +186,12 @@ internal class BazelModuleOutputProvider(
 
   /**
    * Suspend version of [readFileContentFromModuleOutput] using cached zip file instances.
+   *
+   * A probe by contract - it returns `null` for a module that does not have the file - so it reads only the module
+   * outputs this build declares; see [BazelBuildInputs.resolveIfDeclared].
    */
   override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
-    for (moduleOutput in getModuleOutputRootsImpl(module, forTests)) {
+    for (moduleOutput in getModuleOutputRootsImpl(module, forTests, declaredOnly = true)) {
       zipFilePool.getData(moduleOutput, relativePath)?.let { return it }
     }
     return null
@@ -177,6 +206,23 @@ internal class BazelModuleOutputProvider(
   override fun findModule(name: String): JpsModule? = state.findModule(name)
 
   override fun findRequiredModule(name: String): JpsModule = state.findRequiredModule(name)
+
+  override fun findDeclaredLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> {
+    if (!BazelBuildInputs.isConfigured && !BazelRunfiles.isRunningFromBazel) {
+      // No manifest, so nothing to narrow to, and a library this build cannot find is still an error worth reporting.
+      return findLibraryRoots(libraryName = libraryName, moduleLibraryModuleName = moduleLibraryModuleName)
+    }
+
+    val bazelTargetsMap = state.bazelTargetsMap
+    val librariesTable = if (moduleLibraryModuleName == null) {
+      bazelTargetsMap.projectLibraries
+    }
+    else {
+      bazelTargetsMap.modules[moduleLibraryModuleName]?.moduleLibraries ?: return emptyList()
+    }
+    val library = librariesTable[libraryName] ?: return emptyList()
+    return library.jarTargets.mapNotNull(BazelBuildInputs::resolveIfDeclared).filter { it.isRegularFile() }
+  }
 
   override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> {
     val bazelTargetsMap = state.bazelTargetsMap
@@ -228,7 +274,7 @@ internal class BazelModuleOutputProvider(
     return state.bazelTargetsMap.pluginDistributionTargets[mainModuleName]
   }
 
-  private fun getModuleOutputRootsImpl(module: JpsModule, forTests: Boolean): List<Path> {
+  private fun getModuleOutputRootsImpl(module: JpsModule, forTests: Boolean, declaredOnly: Boolean = false): List<Path> {
     val bazelTargetsMap = state.bazelTargetsMap
     val moduleDescription = bazelTargetsMap.modules[module.name] ?: error("Cannot find module '${module.name}' in the project")
 
@@ -244,7 +290,7 @@ internal class BazelModuleOutputProvider(
 
     return if (BazelBuildInputs.isConfigured || BazelRunfiles.isRunningFromBazel) {
       val targets = if (forTests) moduleDescription.testTargets else moduleDescription.productionTargets
-      targets.map(BazelBuildInputs::resolve)
+      if (declaredOnly) targets.mapNotNull(BazelBuildInputs::resolveIfDeclared) else targets.map(BazelBuildInputs::resolve)
     }
     else {
       val jarsRelative = if (forTests) moduleDescription.testJars else moduleDescription.productionJars

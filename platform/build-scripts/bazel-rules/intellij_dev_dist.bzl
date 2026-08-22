@@ -17,16 +17,27 @@ IntellijDevBuildInputsInfo = provider(
     fields = {
         "files": "The input files named by the manifest.",
         "manifest": "The logical Bazel input label to execution path manifest.",
+        "inputs_origin": "The sidecar naming which half of the declaration each manifest key came from.",
         "prepacked_plugin_jars": "The typed prepacked plugin-jar records carried by this content.",
         "prepacked_plugin_jars_plan": "The relation-only plan passed to JarPackager; it contains no jar paths.",
     },
 )
 
-def _add_input_entry(ctx, entries, logical_key, file, source):
+# How strongly a declaration half demands its key, lowest first, for a key more than one half names.
+_ORIGIN_RANK = {"raw": 0, "member": 1, "library": 2}
+
+def _add_input_entry(ctx, entries, origins, logical_key, file, source, origin):
     """Record one manifest entry, failing when two different files claim the same logical key.
 
     Same key, same file is the normal case - two content targets naming the same module, say - and deduplicates.
+
+    [origin] is written to a sidecar only, never to the manifest: it answers "which half of the declaration asked for
+    this key", which is what turns `.unused-inputs` from a count into an attributable measurement.
     """
+    previous_origin = origins.get(logical_key)
+    if previous_origin == None or _ORIGIN_RANK[origin] < _ORIGIN_RANK[previous_origin]:
+        origins[logical_key] = origin
+
     previous = entries.get(logical_key)
     if previous == None:
         entries[logical_key] = file
@@ -40,12 +51,13 @@ def _add_input_entry(ctx, entries, logical_key, file, source):
 
 def _dev_build_inputs_impl(ctx):
     entries = {}
+    origins = {}
     prepacked_plugin_jars = []
     for target in ctx.attr.inputs:
         files = target[DefaultInfo].files.to_list()
         if len(files) != 1:
             fail("%s: %s must provide exactly one file, got %s" % (ctx.label, target.label, files))
-        _add_input_entry(ctx, entries, str(target.label), files[0], target.label)
+        _add_input_entry(ctx, entries, origins, str(target.label), files[0], target.label, "raw")
 
     if ctx.attr.content:
         content = ctx.attr.content[DevDistContentInfo]
@@ -57,14 +69,14 @@ def _dev_build_inputs_impl(ctx):
         # `@community//build:jps_target_derivation.bzl:410-420`), and the rule's jar output is `%{name}.jar`
         # (`jvm-rules/rules/common-attrs.bzl:129-132`) - so the jar file's owner is the rule and `owner + ".jar"`
         # reproduces the label. `jps_dynamic_deps_ultimate.bzl:567-570` states the same identity from the other side.
-        for jar in content.module_jars.to_list() + content.dependency_module_jars.to_list():
-            _add_input_entry(ctx, entries, str(jar.owner) + ".jar", jar, jar.owner)
+        for jar in content.module_jars.to_list():
+            _add_input_entry(ctx, entries, origins, str(jar.owner) + ".jar", jar, jar.owner, "member")
 
         # A library jar carries its own label, which is *not* derivable from the file: a Maven library's jar target is a
         # `copy_file` output, so the file's owner is the `...jar_copy` rule rather than the label recorded as
         # `jarTargets` (`lib.kt:408-423`). `DevDistContentInfo` therefore carries the label the target had.
         for entry in content.library_jars.to_list():
-            _add_input_entry(ctx, entries, entry.label, entry.jar, entry.label)
+            _add_input_entry(ctx, entries, origins, entry.label, entry.jar, entry.label, "library")
 
         prepacked_plugin_jars = content.prepacked_plugin_jars.to_list()
 
@@ -80,6 +92,13 @@ def _dev_build_inputs_impl(ctx):
     # does: `wc -l` is what reads this pair, and a blank line would report one declared input that does not exist.
     # Unchanged for every non-empty manifest, so no fragment is re-keyed by this.
     ctx.actions.write(manifest, ("\n".join(lines) + "\n") if lines else "")
+
+    # A sidecar, deliberately not a third column in the manifest: `ExplicitBazelInputResolver.load` splits on the first
+    # tab and takes the rest of the line as the path, and the manifest is an action input - changing its bytes would
+    # re-key every fragment to carry a measurement. Nothing declares this file as an input, so it re-keys nothing.
+    inputs_origin = ctx.actions.declare_file(ctx.label.name + ".bazel-inputs-origin")
+    origin_lines = ["%s\t%s" % (logical_key, origins[logical_key]) for logical_key in sorted(origins.keys())]
+    ctx.actions.write(inputs_origin, ("\n".join(origin_lines) + "\n") if origin_lines else "")
 
     prepacked_by_key = {}
     for entry in prepacked_plugin_jars:
@@ -104,10 +123,11 @@ def _dev_build_inputs_impl(ctx):
     ctx.actions.write(prepacked_plan, ("\n".join(plan_lines) + "\n") if plan_lines else "")
 
     return [
-        DefaultInfo(files = depset([manifest, prepacked_plan])),
+        DefaultInfo(files = depset([manifest, prepacked_plan, inputs_origin])),
         IntellijDevBuildInputsInfo(
             files = depset(files),
             manifest = manifest,
+            inputs_origin = inputs_origin,
             prepacked_plugin_jars = depset(prepacked_by_key.values()),
             prepacked_plugin_jars_plan = prepacked_plan,
         ),
@@ -137,6 +157,7 @@ IntellijDevFragmentInfo = provider(
         "plugin_classpath_part": "This fragment's plugin-classpath records, or None if it built no plugin.",
         "plugin_classpath_prefix": "The plugin-classpath prefix, or None if another fragment produces it.",
         "inputs_manifest": "The label-to-path manifest of the fragment's declared Bazel inputs.",
+        "inputs_origin": "The sidecar naming which half of the declaration each declared input came from.",
         "unused_inputs": "The declared inputs the assembly never resolved - declared minus these is what it used.",
         "prepacked_plugin_jars": "The prepacked jar records this fragment hands to a collector without consuming.",
         "prepacked_plugin_jars_placement": "The assembler-validated placement manifest, or None for a non-plugin component.",
@@ -327,6 +348,10 @@ def _fragment_impl(ctx):
     )
     return [
         DefaultInfo(files = depset([home, component_manifest])),
+        # The three files `./build/dev-dist.cmd inputs` joins, in one group: declared keys with their paths, the
+        # ones the assembly never resolved, and which half of the declaration asked for each. Requesting the group runs
+        # the assembly, which is the point - `used` is only knowable from a real assembly.
+        OutputGroupInfo(declared_inputs = depset([bazel_inputs_manifest, build_inputs.inputs_origin, unused_inputs])),
         IntellijDevFragmentInfo(
             name = ctx.attr.fragment_name,
             home = home,
@@ -334,6 +359,7 @@ def _fragment_impl(ctx):
             plugin_classpath_part = plugin_classpath_part,
             plugin_classpath_prefix = plugin_classpath_prefix,
             inputs_manifest = bazel_inputs_manifest,
+            inputs_origin = build_inputs.inputs_origin,
             unused_inputs = unused_inputs,
             prepacked_plugin_jars = build_inputs.prepacked_plugin_jars,
             prepacked_plugin_jars_placement = prepacked_plugin_jars_placement,
@@ -442,6 +468,7 @@ def _packed_jars_component_impl(ctx):
             # Not a declared-input boundary: this component reads the jars it collects and nothing else, so there is no
             # over-declaration to measure. `dev_dist_unused_inputs_report_test` skips a component that reports neither.
             inputs_manifest = None,
+            inputs_origin = None,
             unused_inputs = None,
             prepacked_plugin_jars = depset(),
             prepacked_plugin_jars_placement = None,
@@ -535,6 +562,7 @@ def _packed_plugin_jars_component_impl(ctx):
             plugin_classpath_part = None,
             plugin_classpath_prefix = None,
             inputs_manifest = None,
+            inputs_origin = None,
             unused_inputs = None,
             prepacked_plugin_jars = depset(),
             prepacked_plugin_jars_placement = None,

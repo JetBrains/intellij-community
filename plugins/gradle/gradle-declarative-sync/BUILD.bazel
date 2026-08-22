@@ -84,17 +84,7 @@ exports_files(
 dev_dist_plugin_content(
     name = "declarativeSync_dev_content",
     descriptor_module = ":declarativeSync",
-    libraries = [
-        "@lib//:com.fasterxml.jackson.core/jackson-core-2.19.0.jar",
-        "@lib//:com.fasterxml.jackson.core/jackson-databind-2.19.0.jar",
-        "@lib//:org.jetbrains.intellij.deps/studio-platform-2025.3.2-389.jar",
-        "@lib//:org.jetbrains.intellij.deps/studio-test-platform-2025.3.2-389.jar",
-        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
-        "@lib//:org.jetbrains/annotations-26.0.2.jar",
-        "@lib//:org.slf4j/log4j-over-slf4j-1.7.36.jar",
-        "@lib//:org.slf4j/slf4j-api-2.0.13.jar",
-        "@lib//:org.slf4j/slf4j-jdk14-2.0.13.jar",
-    ],
+    libraries = ["@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar"],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.gradle.declarativeSync` end

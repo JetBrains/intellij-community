@@ -97,18 +97,9 @@ dev_dist_plugin_content(
     name = "filePrediction_dev_content",
     descriptor_module = ":filePrediction",
     libraries = [
-        "@lib//:com.hankcs/aho-corasick-double-array-trie-1.2.3.jar",
-        "@lib//:com.jetbrains.fus.reporting/ap-validation-all-2.0.242.jar",
-        "@lib//:com.jetbrains.fus.reporting/fus-api-2.0.242.jar",
-        "@lib//:com.jetbrains.fus.reporting/fus-api-jvm-2.0.242.jar",
-        "@lib//:eawtstub.jar",
-        "@lib//:org.jetbrains.diogen/diogen-analysis-0.5.0.jar",
         "@lib//:org.jetbrains.intellij.deps.completion/ngram-slp-0.0.3.jar",
         "@lib//:org.jetbrains.intellij.deps.filePrediction.model/file-prediction-model-0.3.0.jar",
-        "@lib//:org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-263.33.jar",
         "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
-        "@lib//:org.slf4j/slf4j-api-2.0.13.jar",
-        "@lib//:org.slf4j/slf4j-jdk14-2.0.13.jar",
     ],
     prepacked_content_modules = {
         "//plugins/filePrediction/java": "modules/intellij.filePrediction.java.jar",

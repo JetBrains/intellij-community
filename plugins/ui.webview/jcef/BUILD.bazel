@@ -76,16 +76,7 @@ exports_files(
 dev_dist_plugin_content(
     name = "jcef_dev_content",
     descriptor_module = ":jcef",
-    libraries = [
-        "@lib//:eawtstub.jar",
-        "@lib//:org.jetbrains.intellij.deps.jcef/jcef-150.0.14-g7c1aa68-chromium-150.0.7871.129-api-1.21-263-b11.jar",
-        "@lib//:org.jetbrains.intellij.deps.kotlinx/kotlinx-coroutines-core-jvm-1.10.2-intellij-2.jar",
-        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
-        "@lib//:org.jetbrains.kotlinx/kotlinx-serialization-core-jvm-1.9.0.jar",
-        "@lib//:org.jetbrains.kotlinx/kotlinx-serialization-json-jvm-1.9.0.jar",
-        "@lib//:org.jetbrains/annotations-26.0.2.jar",
-        "@lib//:org.slf4j/log4j-over-slf4j-1.7.36.jar",
-    ],
+    libraries = ["@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar"],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `dev content intellij.platform.ui.webview.jcef` end

@@ -47,7 +47,6 @@ dev_dist_plugin_content(
     descriptor_module = ":plugin",
     libraries = [
         "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
-        "@lib//:org.slf4j/log4j-over-slf4j-1.7.36.jar",
         "@lib//:org.sqlite/native-3.42.0-jb.1.jar",
     ],
     prepacked_content_modules = {

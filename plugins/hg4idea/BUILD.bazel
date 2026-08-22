@@ -121,30 +121,6 @@ exports_files(
 )
 ### auto-generated section `iml intellij.vcs.hg` end
 
-### auto-generated section `dev content intellij.vcs.hg` start
-dev_dist_plugin_content(
-    name = "vcs-hg_dev_content",
-    descriptor_module = ":vcs-hg",
-    libraries = [
-        "@lib//:com.google.guava/failureaccess-1.0.3.jar",
-        "@lib//:com.google.guava/guava-33.5.0-jre.jar",
-        "@lib//:com.hankcs/aho-corasick-double-array-trie-1.2.3.jar",
-        "@lib//:com.miglayout/miglayout-core-11.4.2.jar",
-        "@lib//:com.miglayout/miglayout-swing-11.4.2.jar",
-        "@lib//:eawtstub.jar",
-        "@lib//:one.util/streamex-0.8.4.jar",
-        "@lib//:org.jetbrains.diogen/diogen-analysis-0.5.0.jar",
-        "@lib//:org.jetbrains.intellij.deps.fastutil/intellij-deps-fastutil-8.5.18-jb1.jar",
-        "@lib//:org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-263.33.jar",
-        "@lib//:org.jetbrains.kotlin/kotlin-stdlib-2.4.10-RC2.jar",
-        "@lib//:org.jetbrains.kotlinx/kotlinx-collections-immutable-jvm-0.5.0.jar",
-        "@lib//:org.slf4j/slf4j-api-2.0.13.jar",
-        "@lib//:org.slf4j/slf4j-jdk14-2.0.13.jar",
-    ],
-    visibility = ["//visibility:public"],
-)
-### auto-generated section `dev content intellij.vcs.hg` end
-
 ### auto-generated section `build intellij.vcs.hg.tests` start
 jvm_library(
     name = "vcs-hg-tests",

@@ -598,7 +598,8 @@ private suspend fun findFileInModuleDependencies(
   pass: DescriptorSearchPass,
   recursiveModuleExclude: String? = null,
 ): ByteArray? {
-  // A library has no source root, so it can only answer the output pass - and asking it resolves its jars.
+  // A library has no source root, so it can only answer the output pass - and it answers from the jars this build
+  // declares, so asking costs no declaration.
   if (pass == DescriptorSearchPass.MODULE_OUTPUT) {
     findFileInModuleLibraryDependencies(module, relativePath, outputProvider)?.let {
       return it

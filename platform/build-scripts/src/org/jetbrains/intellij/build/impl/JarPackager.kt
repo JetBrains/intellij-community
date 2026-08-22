@@ -351,9 +351,14 @@ class JarPackager private constructor(
       hasModuleExclusions = !pluginLayout.moduleExcludes.get(moduleName).isNullOrEmpty(),
       hasPatchedOutput = moduleOutputPatcher.getPatchedContent(moduleName).isNotEmpty(),
       hasGeneratedSearchableOptions = !searchableOptionSet?.createSourceByModule(moduleName).isNullOrEmpty(),
+      // The JPS model's declared paths, not the resolved jars. `isSeparateLibraryJar` is a pure name predicate and this
+      // is a guard, so a name is all it needs - and the two agree: a Maven library's Bazel jar target is named
+      // `<artifact>-<version>.jar`, which is the file name of its Maven path too, and a local library's jar keeps its
+      // own name on both sides. Resolving instead made a *guard* declare the library jars of every handed-off module as
+      // fragment inputs, which is how `slf4j-api` became an input of the Kotlin plugin fragment.
       hasSeparateLibraryJar = helper.getLibraryDependencies(module, withTests = false).any { dependency ->
         val library = dependency.library ?: return@any false
-        getLibraryRoots(library, context.outputProvider).any { isSeparateLibraryJar(it.fileName.toString()) }
+        library.getPaths(JpsOrderRootType.COMPILED).any { isSeparateLibraryJar(it.fileName.toString()) }
       },
       hasLayoutPlacedModuleLibrary = pluginLayout.includedModuleLibraries.any { it.moduleName == moduleName },
       isTestPluginModule = helper.isTestPluginModule(moduleName, module),
