@@ -64,6 +64,7 @@ exports_files(
 dev_dist_plugin_content(
     name = "mcpserver.plugin_dev_content",
     content_modules = [
+        "//libraries/kotlin/logging",
         "//libraries/ktor/server-content-negotiation:libraries-ktor-server-content-negotiation",
         "//libraries/ktor/server-sse:libraries-ktor-server-sse",
         "//libraries/night-config-toml",
@@ -73,9 +74,9 @@ dev_dist_plugin_content(
     ],
     descriptor_module = ":mcpserver.plugin",
     libraries = [
-        "@lib//:io-github-oshai-kotlin-logging-jvm",
         "@lib//:io-modelcontextprotocol-kotlin-sdk",
         "@lib//:kotlin-stdlib",
+        "@lib//:libraries-kotlin-logging-io-github-oshai-kotlin-logging-jvm",
         "@lib//:libraries-ktor-server-content-negotiation-ktor-server-content-negotiation",
         "@lib//:libraries-ktor-server-sse-ktor-server-sse-jvm",
         "@lib//:libraries-night-config-toml-night-config-toml",

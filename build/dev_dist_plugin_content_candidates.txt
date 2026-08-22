@@ -733,6 +733,7 @@ intellij.indexing.shared.performanceTesting
 intellij.indexing.shared.ultimate
 intellij.indexing.shared.ultimate.git
 intellij.indexing.shared.ultimate.java
+intellij.intellix.installer
 intellij.internal.jcef
 intellij.jade.css
 intellij.java

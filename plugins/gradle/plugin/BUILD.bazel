@@ -65,6 +65,7 @@ dev_dist_plugin_content(
         "@lib//ant/lib:ant",
     ],
     prepacked_content_modules = {
+        "//plugins/gradle/backend": "modules/intellij.gradle.backend.jar",
         "//plugins/gradle/completion": "modules/intellij.gradle.completion.jar",
         "//plugins/gradle/completion/kotlin": "modules/intellij.gradle.completion.kotlin.jar",
         "//plugins/gradle/completion/toml": "modules/intellij.gradle.completion.toml.jar",

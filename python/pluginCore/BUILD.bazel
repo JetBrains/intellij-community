@@ -56,6 +56,7 @@ dev_dist_plugin_content(
     content_modules = [
         "//commandInterface",
         "//libraries/jsr305",
+        "//libraries/mlapi/catboost",
         "//libraries/tuweni/toml",
         "//python/intellij.python.ml.features:ml-features",
         "//python:python-community-impl",
@@ -63,10 +64,10 @@ dev_dist_plugin_content(
     descriptor_module = ":community-plugin",
     libraries = [
         "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
-        "@lib//:jetbrains-mlapi-catboost",
-        "@lib//:jetbrains-mlapi-catboost-shadow-need-slf4j",
         "@lib//:kotlin-stdlib",
         "@lib//:libraries-jsr305-jsr305",
+        "@lib//:libraries-mlapi-catboost-jetbrains-mlapi-catboost",
+        "@lib//:libraries-mlapi-catboost-jetbrains-mlapi-catboost-shadow-need-slf4j",
         "@lib//:libraries-tuweni-toml-tuweni-toml",
         "@lib//:libthrift",
         "@lib//:python-community-impl-completion-ranking-python-with-full-line",

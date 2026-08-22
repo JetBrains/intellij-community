@@ -84,6 +84,7 @@ exports_files(
 dev_dist_plugin_content(
     name = "search-everywhere-ml_dev_content",
     content_modules = [
+        "//libraries/mlapi/core",
         "//libraries/search-everywhere-find-all-model",
         "//libraries/search-everywhere-find-ec-model",
         "//platform/ml-logs",
@@ -92,8 +93,8 @@ dev_dist_plugin_content(
     ],
     descriptor_module = ":search-everywhere-ml",
     libraries = [
-        "@lib//:jetbrains-mlapi-core",
         "@lib//:kotlin-stdlib",
+        "@lib//:libraries-mlapi-core-jetbrains-mlapi-core",
         "@lib//:libraries-search-everywhere-find-all-model-find-all-model-experimental",
         "@lib//:libraries-search-everywhere-find-ec-model-find-ec-model-experimental",
         "@lib//:search_everywhere_ml-ai-grazie-emb",

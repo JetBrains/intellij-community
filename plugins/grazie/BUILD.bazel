@@ -71,6 +71,7 @@ dev_dist_plugin_content(
     name = "grazie_dev_content",
     content_modules = [
         "//libraries/ai.grazie.spell.gec.engine.local",
+        "//libraries/kotlin/logging",
         "//plugins/grazie/json",
         "//plugins/grazie/markdown",
         "//plugins/grazie/src:core",
@@ -105,7 +106,6 @@ dev_dist_plugin_content(
         "@lib//:grazie-core-tech-units-indriya-1-3",
         "@lib//:grazie-core-tech-uom-lib-uom-lib-common-1-1",
         "@lib//:grazie-markdown-ai-grazie-tasks-library-model-jvm",
-        "@lib//:io-github-oshai-kotlin-logging-jvm",
         "@lib//:jaxb-api",
         "@lib//:jaxb-runtime",
         "@lib//:kotlin-stdlib",
@@ -121,6 +121,7 @@ dev_dist_plugin_content(
         "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-spell-hunspell-en",
         "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-utils-common-jvm",
         "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-utils-multiplatform-jvm",
+        "@lib//:libraries-kotlin-logging-io-github-oshai-kotlin-logging-jvm",
         "@lib//:slf4j-api",
         "@lib//:slf4j-jdk14",
     ],
