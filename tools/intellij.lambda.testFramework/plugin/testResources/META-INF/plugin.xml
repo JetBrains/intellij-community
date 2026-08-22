@@ -25,7 +25,6 @@
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.libraries.opentelemetry"/>
-    <module name="intellij.libraries.qodana.sarif"/>
     <module name="intellij.libraries.rd.core"/>
     <module name="intellij.libraries.rd.framework"/>
     <module name="intellij.libraries.teamcity.service.messages"/>
@@ -153,6 +152,8 @@
     <module name="intellij.libraries.assertj.core"/>
     <!-- chain: intellij.platform.testFramework.core -> intellij.libraries.opentest4j -->
     <module name="intellij.libraries.opentest4j"/>
+    <!-- chain: intellij.tools.ide.starter -> intellij.libraries.qodana.sarif -->
+    <module name="intellij.libraries.qodana.sarif"/>
   </content>
   <!-- endregion -->
 </idea-plugin>

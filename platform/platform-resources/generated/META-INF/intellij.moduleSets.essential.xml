@@ -97,7 +97,6 @@
     <module name="intellij.libraries.protobuf" loading="embedded"/>
     <module name="intellij.libraries.protobuf.kotlin" loading="embedded"/>
     <module name="intellij.libraries.proxy.vole" loading="embedded"/>
-    <module name="intellij.libraries.qodana.sarif" loading="embedded"/>
     <module name="intellij.libraries.rhino" loading="embedded"/>
     <module name="intellij.libraries.semver" loading="embedded"/>
     <module name="intellij.libraries.snakeyaml" loading="embedded"/>

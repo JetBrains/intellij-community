@@ -1,2 +1,8 @@
-<idea-plugin visibility="internal">
+<!--
+  This module is not included in the core plugin.
+  If a plugin needs to use this library, it should register this module as its own content module using a 'content' tag without
+  the 'namespace' attribute. This way the module is registered in an implicit per-plugin namespace and won't clash at runtime
+  with other copies of this module registered in other plugins.
+-->
+<idea-plugin visibility="private">
 </idea-plugin>
