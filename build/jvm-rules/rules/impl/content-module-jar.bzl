@@ -20,10 +20,9 @@ The libraries arrive as the targets that group their jars, not as jar files, so 
 rule expands each to its jars, in the order the library declares them, and drops a jar it has already seen.
 """
 
-load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@rules_java//java:defs.bzl", "JavaInfo")
-load("@rules_java//java/common:java_common.bzl", "java_common")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
+load("//:rules/impl/content-module-packer-tool.bzl", "ContentModulePackerInfo")
 
 visibility("private")
 
@@ -70,23 +69,12 @@ in - and merging it into `lib/<module>.jar` renames it. `mergeJars.kt` does the 
 `JarPackager` side; which module needs it is decided by the generator, not here.""",
         default = False,
     ),
+    # The packer carries its own shape - executable, argument prefix, tools, execution requirements - so this rule
+    # needs no knowledge of whether it is a JVM or a native binary. No `cfg` here: the tool rule's own attributes
+    # take the exec transition, which keeps `ctx.executable` meaningful and avoids an exec-of-exec configuration.
     "_content_module_packer": attr.label(
-        default = "//content-module-packer:content-module-packer_deploy.jar",
-        allow_single_file = True,
-        cfg = "exec",
-    ),
-    "_content_module_packer_launcher": attr.label(
-        default = "//:rules/impl/MemoryLauncher.java",
-        allow_single_file = True,
-    ),
-    # The zip writer releases mapped buffers through `sun.nio.ch.DirectBuffer`, so it needs `--add-opens` flags that
-    # `get_jvm_flags` does not include. The flag setting beside the binary owns that list.
-    "_content_module_packer_jvm_flags": attr.label(
-        default = "//content-module-packer:content-module-packer-jvm_flags",
-    ),
-    "_content_module_jar_java_runtime": attr.label(
-        default = Label("@bazel_tools//tools/jdk:current_java_runtime"),
-        cfg = "exec",
+        default = "//:content-module-packer",
+        providers = [ContentModulePackerInfo],
     ),
 }
 
@@ -168,26 +156,16 @@ def content_module_jar_action(ctx, module_jar):
     args.add_all(library_jars, format_each = "library=%s")
     args.add_all(module_jars, format_each = "module=%s")
 
-    java_runtime = ctx.attr._content_module_jar_java_runtime[java_common.JavaRuntimeInfo]
+    packer = ctx.attr._content_module_packer[ContentModulePackerInfo]
     ctx.actions.run(
-        # One mnemonic for every content-module jar, so all of them share one worker pool.
+        # One mnemonic for every content-module jar, so a strategy or an execution-info override reaches all of them.
         mnemonic = "PackContentModuleJar",
         inputs = depset(library_jars + module_jars),
         outputs = [output],
-        tools = [ctx.file._content_module_packer_launcher, ctx.file._content_module_packer, java_runtime.files],
-        executable = java_runtime.java_executable_exec_path,
-        execution_requirements = {
-            "supports-workers": "1",
-            "supports-multiplex-workers": "1",
-            "supports-worker-cancellation": "1",
-            "supports-path-mapping": "1",
-            "supports-multiplex-sandboxing": "1",
-        },
-        arguments = ctx.attr._content_module_packer_jvm_flags[BuildSettingInfo].value + [
-            ctx.file._content_module_packer_launcher.path,
-            ctx.file._content_module_packer.path,
-            args,
-        ],
+        tools = packer.tools,
+        executable = packer.executable,
+        execution_requirements = packer.execution_requirements,
+        arguments = packer.argument_prefix + [args],
         progress_message = "Packing distribution jar of %{label}",
     )
     return output

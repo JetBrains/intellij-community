@@ -7,6 +7,7 @@ load("@rules_pkg//pkg:mappings.bzl", "pkg_filegroup", "pkg_files", "strip_prefix
 load("@rules_pkg//pkg:pkg.bzl", "pkg_zip")
 load("//:jvm.bzl", "jvm_import", "jvm_provided_library", "kt_javac_options", "kt_kotlinc_options")
 load("//:rules/assert_maven_coordinates_match.bzl", "assert_maven_coordinates_match_jar")
+load("//:rules/impl/content-module-packer-tool.bzl", "unset_content_module_packer")
 
 jvm_import(
     name = "protobuf_java",
@@ -507,6 +508,17 @@ label_flag(
     visibility = ["//visibility:public"],
 )
 
+# Which implementation packs `content_module_jar`. The default is a stub that explains itself when a jar is actually
+# packed: this module ships as a consumable archive and may not name a label in the repository that consumes it, so
+# the implementation is pointed at from there - see `//build/content-module-packer` and the root `.bazelrc`.
+unset_content_module_packer(name = "content-module-packer-unset")
+
+label_flag(
+    name = "content-module-packer",
+    build_setting_default = ":content-module-packer-unset",
+    visibility = ["//visibility:public"],
+)
+
 label_flag(
     name = "jvm-builder",
     build_setting_default = "//jvm-inc-builder:jvm-inc-builder_deploy.jar",
@@ -534,7 +546,6 @@ pkg_zip(
         "*.patch",
     ]) + [
         ":rules_to_zip",
-        "//content-module-packer:files_to_zip",
         "//dependency-graph:files_to_zip",
         "//jps-builders-6:files_to_zip",
         "//jvm-inc-builder:files_to_zip",
