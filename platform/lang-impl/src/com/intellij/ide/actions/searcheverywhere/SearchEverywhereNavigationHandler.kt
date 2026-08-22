@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.CacheAvoidingVirtualFile
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.backend.navigation.NavigationRequests
 import com.intellij.platform.backend.navigation.impl.RawNavigationRequest
@@ -20,8 +21,10 @@ import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.IntPair
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.launch
@@ -83,27 +86,65 @@ open class SearchEverywhereNavigationHandler(val project: Project) {
       psiElement to file
     } ?: return emptyList()
 
-    val (psiElement, file) = target
-    if (file == null) {
+    val (rawPsiElement, rawFile) = target
+    if (rawFile == null) {
       // Navigation items from rd protocol often lack .containingFile or other PSI extensions, and are only expected to be
       // navigated through the Navigatable API.
       // This fallback is for items like that.
-      val navigatable = psiElement as? Navigatable
+      val navigatable = rawPsiElement as? Navigatable
       if (navigatable == null) {
-        LOG.warn("Cannot navigate to invalid PsiElement (psiElement=$psiElement)")
+        LOG.warn("Cannot navigate to invalid PsiElement (psiElement=$rawPsiElement)")
         return emptyList()
       }
       return listOf(RawNavigationRequest(navigatable, true))
     }
 
+    // An item may be backed by a cache-avoiding file (e.g. a file outside the project found by its absolute path).
+    // Now that the user is really opening it, the file has to become a regular one: an editor, its document and VFS events
+    // all rely on a single VirtualFile instance per path, which cache-avoiding files do not provide.
+    // Deliberately done outside the read action above: it does IO and puts new entries into the VFS cache.
+    val file = rawFile.asCacheableOrSelf()
+    if (file == null) {
+      LOG.warn("Cannot navigate: $rawFile cannot be added to VFS")
+      return emptyList()
+    }
+
     val extendedNavigatable = lineAndColumnNavigatable(file, searchText)
     if (extendedNavigatable != null) {
+      // navigates by the file alone, so there is no need to build PSI for the element
       triggerLineOrColumnFeatureUsed(extendedNavigatable)
       return listOfNotNull(rawNavigationRequest(extendedNavigatable))
     }
+
+    @Suppress("UseVirtualFileEquals")
+    val psiElement = if (file === rawFile) rawPsiElement else readAction { reResolveOnCacheableFile(rawPsiElement, file) }
     return listOfNotNull(
       createSourceNavigationRequest(project = project, element = psiElement, file = file, searchText = searchText, offset = offset)
     )
+  }
+
+  /**
+   * @return a regular VFS file for [this], adding it to the VFS cache if needed, or null if it no longer exists;
+   * [this] itself if it is a regular file already
+   */
+  private fun VirtualFile.asCacheableOrSelf(): VirtualFile? =
+    if (this is CacheAvoidingVirtualFile) asCacheable() else this
+
+  /**
+   * Re-resolves an element that was found on a cache-avoiding [file] against its regular counterpart,
+   * so that navigation doesn't use the cache-avoiding file behind our back.
+   *
+   * Only file system items can be re-resolved this way; for anything else navigation may still go through
+   * the cache-avoiding file, hence the warning.
+   */
+  @RequiresReadLock
+  private fun reResolveOnCacheableFile(element: PsiElement, file: VirtualFile): PsiElement {
+    val reResolved = if (element is PsiFileSystemItem) PsiUtilCore.findFileSystemItem(project, file) else null
+    if (reResolved == null) {
+      LOG.warn("Cannot re-resolve $element on $file, navigating through a cache-avoiding file")
+      return element
+    }
+    return reResolved
   }
 
   private fun lineAndColumnNavigatable(file: VirtualFile, searchText: String): OpenFileDescriptor? {

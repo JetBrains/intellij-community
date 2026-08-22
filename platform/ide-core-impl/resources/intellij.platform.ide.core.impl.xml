@@ -323,6 +323,8 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                  description="Cache null values for pushed properties to avoid reading nulls from disk every time."/>
     <registryKey defaultValue="true" key="se.enable.non.indexable.files.contributor" restartRequired="false"
                  description="Search files in non-indexable filesets with NonIndexableFilesSEContributor"/>
+    <registryKey defaultValue="true" key="search.everywhere.absolute.path.outside.project" restartRequired="false"
+                 description="Go to File resolves absolute paths pointing outside the project, without caching them in VFS"/>
     <registryKey defaultValue="true" key="find.in.files.in.non.indexable.enable" restartRequired="false"
                  description="Enables search over non-indexable files in Find-in-Files"/>
     <registryKey defaultValue="true" key="rename.files.in.dumb.mode.enable" restartRequired="false"
