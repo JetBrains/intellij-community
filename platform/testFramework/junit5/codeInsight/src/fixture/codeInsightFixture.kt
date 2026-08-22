@@ -36,6 +36,18 @@ private const val COMMUNITY_PATH_PREFIX = "community"
 @Target(AnnotationTarget.FUNCTION)
 annotation class TestSubPath(val value: String)
 
+// In JUnit5 the IdeaProjectTestFixture passed to CodeInsightTestFixtureImpl does not close the project on tearDown, which means
+// the pointers are not guaranteed to be disposed when the codeInsightFixture is torn down and attempts to check.
+// JUnit5 does its leak-checking through TestApplicationLeakTrackerExtension, so we do not miss
+// any leaks by disabling tracking here.
+@TestOnly
+private class NonTrackingCodeInsightTestFixture(
+  project: IdeaProjectTestFixture,
+  tempDir: TempDirTestFixture,
+) : CodeInsightTestFixtureImpl(project, tempDir) {
+  override fun shouldTrackVirtualFilePointers(): Boolean = false
+}
+
 /**
  * Creates a JUnit5 [TestFixture] wrapper for [CodeInsightTestFixture] that allows using it in JUnit5 tests.
  *
@@ -53,7 +65,9 @@ annotation class TestSubPath(val value: String)
 fun codeInsightFixture(
   projectFixture: TestFixture<Project>,
   tempDirFixture: TestFixture<Path>,
-): TestFixture<CodeInsightTestFixture> = codeInsightFixture(projectFixture, tempDirFixture) { project, tempDir -> CodeInsightTestFixtureImpl(project, tempDir) }
+): TestFixture<CodeInsightTestFixture> = codeInsightFixture(projectFixture, tempDirFixture) { project, tempDir ->
+  NonTrackingCodeInsightTestFixture(project, tempDir)
+}
 
 @TestOnly
 fun <T: CodeInsightTestFixture> codeInsightFixture(

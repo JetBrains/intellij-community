@@ -1019,6 +1019,8 @@ jvm_library(
         "//platform/syntax/syntax-util:util-tests_test_lib",
         "//platform/testFramework/junit5.jimfs:junit5-jimfs-tests",
         "//platform/testFramework/junit5.jimfs:junit5-jimfs-tests_test_lib",
+        "//platform/testFramework/junit5/codeInsight:testFramework-junit5-codeInsight-tests",
+        "//platform/testFramework/junit5/codeInsight:testFramework-junit5-codeInsight-tests_test_lib",
         "//platform/testFramework/junit5/projectStructure:testFramework-junit5-projectStructure-tests",
         "//platform/testFramework/junit5/projectStructure:testFramework-junit5-projectStructure-tests_test_lib",
         "//platform/testFramework/junit5:junit5-tests",

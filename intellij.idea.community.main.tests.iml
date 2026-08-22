@@ -263,6 +263,7 @@
     <orderEntry type="module" module-name="intellij.platform.syntax.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.syntax.util.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.jimfs.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.codeInsight.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.projectStructure.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.monorepo.tests" scope="TEST" />
