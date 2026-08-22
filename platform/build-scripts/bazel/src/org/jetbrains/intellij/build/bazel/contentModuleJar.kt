@@ -398,28 +398,32 @@ private fun isCompatibleSingleModuleRecipe(entry: RecipeEntry, moduleName: Strin
 }
 
 /**
+ * Directories this walk never enters.
+ *
+ * Four walks read these reports - this one, `indexPluginContentReports` and `collectContentRecipeOrphans` through
+ * `isPrunedReportDirectory` in `platform/buildScripts/src/productLayout/contentReportWalk.kt`, and `isPrunedDirectory`
+ * in `build/content-report/internal/content/discover.go` - and they prune the same names, because a report one reader
+ * cannot see is a fact that reader silently does not have.
+ *
+ * Other dot-directories are deliberately *not* pruned. `plugins/.remdev/remDevFeatureSample/plugin-content.yaml` is a
+ * real checked-in report, and skipping dot-directories wholesale - the default in most glob implementations, and the
+ * trap this repository's own search wrappers document - silently loses it. That cost nothing while that report held
+ * one main-jar entry, but the two halves of this index fail in opposite directions: a missed
+ * `lib/modules/<module>.jar` entry only declines to pack a jar, while a missed taken-out-library entry declines to
+ * *veto* one, and a wrongly prepacked module loses bytes that no byte comparison can see. The readers of these reports
+ * agreeing on which files exist is cheaper than rediscovering that.
+ */
+private fun isPrunedReportDirectory(name: String): Boolean {
+  return name == "out" || name == "node_modules" || name == ".git" || name == ".idea" || name.startsWith("bazel-")
+}
+
+/**
  * The repo-global candidates for the first plugin tranche.
  *
  * A module is selected only when every `contentModules` occurrence agrees on the same plain, product-independent
  * recipe. An occurrence in a main plugin jar (`modules:`) is irrelevant: `content_module_jar` is an extra output and
  * does not change that plugin's normal module jar.
  */
-/**
- * Directories this walk never enters, matching `isPrunedDirectory` in `build/content-report`, name for name.
- *
- * Other dot-directories are deliberately *not* pruned. `plugins/.remdev/remDevFeatureSample/plugin-content.yaml` is a
- * real checked-in report, and skipping dot-directories wholesale - the default in most glob implementations, and the
- * trap this repository's own search wrappers document - silently loses it. That cost nothing while that report held one
- * main-jar entry, but the two halves of this index fail in opposite directions: a missed `lib/modules/<module>.jar`
- * entry only
- * declines to pack a jar, while a missed taken-out-library entry declines to *veto* one, and a wrongly prepacked module
- * loses bytes that no byte comparison can see. The two readers of these reports agreeing on which files exist is
- * cheaper than rediscovering that.
- */
-private fun isPrunedReportDirectory(name: String): Boolean {
-  return name == "out" || name == "node_modules" || name == ".git" || name == ".idea" || name.startsWith("bazel-")
-}
-
 internal fun indexPluginContentModuleJarCandidates(projectRoot: Path): Set<String> {
   val eligibility = HashMap<String, Boolean>()
   Files.walkFileTree(projectRoot, object : SimpleFileVisitor<Path>() {
