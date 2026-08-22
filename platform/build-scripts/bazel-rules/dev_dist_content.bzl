@@ -12,8 +12,8 @@ the label instead of a silently thinner distribution, and `bazel query 'deps(...
 
 Two shapes were measured and rejected before settling on a sidecar rule plus an aspect:
 
-* Per-module *provider rules* - the "Four mechanisms at the boundary" section of `build/dev-build-architecture.md`
-  rejects sidecars that duplicate a fact across every module. The aspect adds no targets and duplicates nothing.
+* Per-module *provider rules* - the "The input boundary" section of `build/dev-build-architecture.md` rejects
+  sidecars that duplicate a fact across every module. The aspect adds no targets and duplicates nothing.
 * Membership as attributes on the plugin main module's own `jvm_library`, the way `content_module_jar` carries packing.
   It cannot work in either direction: 126 plugins have a content module that depends back on their main module
   through non-test JPS deps (372 direct edges - the split-mode `intellij.markdown.backend` -> `intellij.markdown`
@@ -44,6 +44,28 @@ _DevDistModuleInfo = provider(
 
         Its own jar when it is a module; the `own` of what it re-exports when it is a pass-through wrapper around one
         (see `_EXPORT_ATTR`); empty when it is a library.""",
+        "packed_jars": """depset of File: the `lib/<module>.jar` this target packs itself, or empty.
+
+        `jvm_library` packs it as an extra output when the module's checked-in `module-content.yaml` says it owns a
+        self-named distribution jar, and exposes it in the `content_module_jar` output group. Whether a module owns one
+        is therefore a fact of the graph, and this is how a dev distribution reads it instead of intersecting a
+        generated name table.""",
+        "packed_member_jars": """depset of File: the module jars whose bytes are inside `packed_jars`.
+
+        The owner's own jar plus the own jar of every module merged into it - `content_module_jar_modules_before` and
+        `_after`. A fragment that hands the packed jar over must stop declaring all of them: their output is in that jar
+        and nowhere else. Empty whenever `packed_jars` is.""",
+        "packed_member_modules": """depset of string: the same members by JPS module name.
+
+        The names, because that is what a payload is written in: the fragment's declared inputs are pruned by asking
+        which module contributed each one, and a module name is the one key that means the same thing on both sides of
+        the loading/analysis boundary - a label does not, since a repository rule writes `@community//...` where an
+        analysis-time `Label` reads back canonically.""",
+        "packed_library_jars": """depset of struct(label, jars): the libraries merged into `packed_jars`.
+
+        `content_module_jar_libraries`, expanded to the container's jars the way the packer expands it. Only the
+        reference target needs them - it packs the same jars the `JarPackager` way - so they are the second half of what
+        that target declares, beside `packed_member_jars`. Empty whenever `packed_jars` is.""",
     },
 )
 
@@ -96,8 +118,96 @@ def _module_jar(target):
         fail("%s has a module name ('%s') but produced no output jar" % (target.label, info.module_name))
     return info.all_output_jars[0]
 
+def _packed_content_module_jar(target):
+    """The `lib/<module>.jar` this target packs as an extra output of its own, or None.
+
+    The presence of the `content_module_jar` output group *is* the answer: `content_module_jar_action`
+    (`jvm-rules/rules/impl/content-module-jar.bzl`) registers the packing action only when the generator set
+    `content_module_jar = True` from the module's recipe, and `library.bzl` adds the output group only when it did. So
+    nothing has to be told which modules pack a jar - asking the target is asking the recipe.
+
+    Deliberately not `DefaultInfo`: building a module must not pack its distribution jar, which is why the jar lives in
+    an output group in the first place.
+
+    An **empty** group is "packs nothing", not an error. `jvm_library` never writes one - `library.bzl` adds the group
+    only when the action produced a jar - but this aspect visits whatever a payload names, and a group that exists and
+    holds nothing says the same thing as no group at all. `_collect_prepacked` is the opposite case and is right to
+    fail: there the relation was declared by hand, so an empty group means the jar it promised does not exist.
+    """
+    if OutputGroupInfo not in target:
+        return None
+    output_groups = target[OutputGroupInfo]
+    if not hasattr(output_groups, "content_module_jar"):
+        return None
+    jars = output_groups.content_module_jar.to_list()
+    if not jars:
+        return None
+    if len(jars) != 1:
+        fail("%s must have at most one `content_module_jar` output, got %s" % (target.label, jars))
+    return jars[0]
+
+def _library_entry(target, ctx_label_owner):
+    """One `struct(label, jars)` for a library container, deduped first-wins within the container.
+
+    The same expansion as `_collect_libraries` and as the packer's own `_library_jars`
+    (`jvm-rules/rules/impl/content-module-jar.bzl`): `transitive_runtime_jars` is the only `JavaInfo` set correct for all
+    three shapes the library generator emits, and the label is the container's so that it carries no artifact version.
+    """
+    jars = []
+    seen = {}
+    for jar in target[JavaInfo].transitive_runtime_jars.to_list():
+        if jar.path not in seen:
+            seen[jar.path] = True
+            jars.append(jar)
+    if not jars:
+        fail(
+            "%s: library container %s contributes no runtime jars, so it would merge nothing. " % (ctx_label_owner, target.label) +
+            "A `-provided` target is `neverlink` and never will - name the library itself.",
+        )
+
+    # A tuple, not the list: a depset element must be immutable, and a struct holding a list is not.
+    return struct(label = str(target.label), jars = tuple(jars))
+
+def _merged_library_jars(target, ctx):
+    """The libraries merged into this target's packed jar, as declarable container entries.
+
+    Read off `content_module_jar_libraries` for the same reason `_merged_module_jars` reads the module lists: the
+    generator writes it from the recipe that decided the packing, so this asks that recipe instead of restating it.
+    Not propagated over, for the same reason again.
+    """
+    return [
+        _library_entry(dep, target.label)
+        for dep in getattr(ctx.rule.attr, "content_module_jar_libraries", None) or []
+    ]
+
+def _merged_module_jars(target, ctx):
+    """The own jars of the modules merged into this target's packed jar, plus its own.
+
+    Read straight off the visited rule's `content_module_jar_modules_before`/`_after`, which the generator writes from
+    the same recipe object that decides `content_module_jar` itself
+    (`BazelBuildFileGenerator.kt`, one `if` for both) - so this asks the packing recipe rather than restating it.
+
+    **Deliberately not propagated over.** These labels stay out of `attr_aspects`: the jar is all that is wanted from
+    them, reading a non-propagated dep's provider is allowed, and propagating over module dependencies is exactly what
+    retiring the dependency frontier removed. Widening `attr_aspects` here would start putting that back.
+    """
+    jars = [_module_jar(target)]
+    names = [target[_KtJvmInfo].module_name]
+    for attr_name in ["content_module_jar_modules_before", "content_module_jar_modules_after"]:
+        for dep in getattr(ctx.rule.attr, attr_name, None) or []:
+            jar = _module_jar(dep)
+            if jar == None:
+                fail("%s: %s is merged into a packed jar but is not a module" % (target.label, dep.label))
+            jars.append(jar)
+            names.append(dep[_KtJvmInfo].module_name)
+    return struct(jars = jars, names = names)
+
 def _dev_dist_module_aspect_impl(target, ctx):
     exported = []
+    exported_packed = []
+    exported_packed_members = []
+    exported_packed_member_names = []
+    exported_packed_libraries = []
 
     # Defensively: the aspect is propagated over whatever the visited rule calls `exports`, and a rule may not have the
     # attribute at all, or may declare it as something other than a label list.
@@ -105,14 +215,50 @@ def _dev_dist_module_aspect_impl(target, ctx):
     if type(exports) == "list":
         for dep in exports:
             if _DevDistModuleInfo in dep:
-                exported.append(dep[_DevDistModuleInfo].own)
+                info = dep[_DevDistModuleInfo]
+                exported.append(info.own)
+                exported_packed.append(info.packed_jars)
+                exported_packed_members.append(info.packed_member_jars)
+                exported_packed_member_names.append(info.packed_member_modules)
+                exported_packed_libraries.append(info.packed_library_jars)
 
     jar = _module_jar(target)
+    packed_jar = _packed_content_module_jar(target)
+
+    # All three answers branch on the same question, so a wrapper stays transparent for packing exactly as it is for
+    # `own`: a target with a jar of its own is that module and nothing else; one without is either a library, whose
+    # `exports` are libraries too and contribute nothing, or a pass-through wrapper standing for the module it
+    # re-exports - see `_EXPORT_ATTR`.
+    if jar != None:
+        if packed_jar == None:
+            return [_DevDistModuleInfo(
+                own = depset([jar]),
+                packed_jars = depset(),
+                packed_member_jars = depset(),
+                packed_member_modules = depset(),
+                packed_library_jars = depset(),
+            )]
+        merged = _merged_module_jars(target, ctx)
+        return [_DevDistModuleInfo(
+            own = depset([jar]),
+            packed_jars = depset([packed_jar]),
+            packed_member_jars = depset(merged.jars),
+            packed_member_modules = depset(merged.names),
+            packed_library_jars = depset(_merged_library_jars(target, ctx)),
+        )]
+
+    if packed_jar != None:
+        # `content_module_jar` needs `module_name` and merges `all_output_jars[0]`, so a packing target always has a jar
+        # of its own. If that ever stops holding, the jar would be handed over while nothing stopped declaring its
+        # source - fail here rather than ship a jar built from bytes a fragment also packed.
+        fail("%s packs a distribution jar but stands for no module jar of its own" % target.label)
+
     return [_DevDistModuleInfo(
-        # A target with a jar of its own is that module and nothing else; one without is either a library, whose
-        # `exports` are libraries too and contribute nothing, or a pass-through wrapper standing for the module it
-        # re-exports - see `_EXPORT_ATTR`.
-        own = depset([jar]) if jar != None else depset(transitive = exported),
+        own = depset(transitive = exported),
+        packed_jars = depset(transitive = exported_packed),
+        packed_member_jars = depset(transitive = exported_packed_members),
+        packed_member_modules = depset(transitive = exported_packed_member_names),
+        packed_library_jars = depset(transitive = exported_packed_libraries),
     )]
 
 _dev_dist_module_aspect = aspect(
@@ -120,6 +266,150 @@ _dev_dist_module_aspect = aspect(
     implementation = _dev_dist_module_aspect_impl,
     attr_aspects = [_EXPORT_ATTR],
     provides = [_DevDistModuleInfo],
+)
+
+DevDistPlatformPayloadInfo = provider(
+    doc = "What a product's `lib/`-owning payload contains, split by which producer packs each jar.",
+    fields = {
+        "packed_jars": "depset of File: the `lib/<module>.jar`s `jvm_library` packed itself.",
+        "packed_jar_names": "list of string: their `lib/` file names, sorted - the jar-name exclusion set.",
+        "declared_modules": """depset of string: the payload modules whose inputs a fragment still declares.
+
+        The payload minus everything a packed jar already holds, plus the dependency closure of the seeds that survive
+        that subtraction. `intellij_dev_build_inputs` keeps an `owned_inputs` entry when any module that contributed it
+        is in here, which is what removes a handed-over module's jar, its libraries and its dependencies at once.""",
+    },
+)
+
+def _declared_modules(ctx, packed_members):
+    """The payload modules a fragment still declares, and the closure of the seeds among them.
+
+    A faithful move of one loop from fetch time to analysis time. A repository rule used to prune the payload with a
+    checked-in table of packed module names before walking `modules_with_dependencies`, and the walk is the reason the
+    table could not simply be dropped: a handed-over module's *dependencies* are not declared either, because the module
+    itself is not, and by the time a payload has been flattened into labels nothing remembers which module asked for
+    which input. So the walk happens here, where the packing answer is a provider.
+
+    Measured 2026-08-22 for `idea`: 155 of the 156 seeds are packed - `intellij.platform.core` is the one that is not -
+    so declaring every seed's closure would take `platform_lib` from 83 declared inputs to 430.
+    """
+    declared = {name: True for name in ctx.attr.modules_by_name if name not in packed_members}
+
+    frontier = [name for name in ctx.attr.seeds if name not in packed_members]
+    reached = {}
+    for _ in range(len(ctx.attr.module_deps) + 1):
+        if not frontier:
+            break
+        next_frontier = []
+        for name in frontier:
+            if name in reached:
+                continue
+            reached[name] = True
+            deps = ctx.attr.module_deps.get(name, "")
+            if deps:
+                next_frontier.extend(deps.split(" "))
+        frontier = next_frontier
+    if frontier:
+        fail("%s: the module dependency closure did not settle" % ctx.label)
+
+    for name in reached.keys():
+        if name not in packed_members:
+            declared[name] = True
+    return declared
+
+def _dev_dist_platform_payload_impl(ctx):
+    packed_jars = []
+    packed_member_jars = []
+    packed_member_names = []
+    packed_library_jars = []
+    for target in ctx.attr.modules:
+        info = target[_DevDistModuleInfo]
+        packed_jars.append(info.packed_jars)
+        packed_member_jars.append(info.packed_member_jars)
+        packed_member_names.append(info.packed_member_modules)
+        packed_library_jars.append(info.packed_library_jars)
+
+    packed = depset(transitive = packed_jars)
+    owner_by_name = {}
+    for jar in packed.to_list():
+        previous = owner_by_name.get(jar.basename)
+        if previous != None and previous != jar:
+            # Two producers for one `lib/` path. `mergeDevBuildComponent` would catch it during a compose, but only as a
+            # colliding path; here the two owning modules can still be named.
+            fail("%s: %s is packed by both %s and %s" % (ctx.label, jar.basename, previous.owner, jar.owner))
+        owner_by_name[jar.basename] = jar
+
+    if not owner_by_name:
+        fail("%s: no module in this payload packs a `lib/` jar, which cannot be right for a platform payload" % ctx.label)
+
+    packed_members = {}
+    for names in packed_member_names:
+        for name in names.to_list():
+            packed_members[name] = True
+
+    return [
+        DevDistPlatformPayloadInfo(
+            packed_jars = packed,
+            packed_jar_names = sorted(owner_by_name.keys()),
+            declared_modules = depset(_declared_modules(ctx, packed_members).keys()),
+        ),
+        # The reference target's whole declaration: it packs the handed-over jars the `JarPackager` way, so what it reads
+        # is exactly what is inside them - the member module jars and the libraries merged into them. Ordinary content,
+        # so it arrives through the same boundary every plugin fragment uses rather than through a second mechanism.
+        DevDistContentInfo(
+            module_jars = depset(transitive = packed_member_jars),
+            library_jars = depset(transitive = packed_library_jars),
+            prepacked_plugin_jars = depset(),
+        ),
+    ]
+
+dev_dist_platform_payload = rule(
+    doc = """The payload of the fragment that owns `lib/`, and which of its jars another producer already packed.
+
+    This is the one intersection that decides jar ownership within `lib/`, and it is a **question asked of the graph**.
+    It used to be a set intersection at *fetch* time: `jpsModelToBazel` wrote every module that packs a jar to a
+    generated `build/dev_dist_content_module_jars.bzl` - 2 524 names, 18 of which said anything the module's own
+    `jvm_library` did not already say - and the repository rule intersected that table with the payload, because a
+    repository rule cannot see providers. The table was checked in, so every branch that added or renamed a platform
+    module rewrote a line of it.
+
+    Nothing needs to be told any more. The payload arrives whole and unfiltered, the aspect reads `content_module_jar`
+    off each target, and everything the intersection used to produce comes out of one target so the answers cannot
+    disagree:
+
+    * `packed_jars` go to `intellij_dev_packed_jars_component`, which composes them in;
+    * `packed_jar_names` go to the owning fragment as the jars it must **not** pack, and to the reference target as the
+      jars it packs and nothing else;
+    * `declared_modules` is what the owning fragment still declares - see `_declared_modules`;
+    * `DevDistContentInfo` is the other side of the same split, and is the reference target's whole declaration.
+
+    A stale set is no longer a thing that can happen: a module that stops packing a jar stops appearing here in the same
+    analysis that stops producing it.
+    """,
+    implementation = _dev_dist_platform_payload_impl,
+    attrs = {
+        "modules": attr.label_list(
+            doc = "The payload's own modules, as their `jvm_library` targets - not their jar files, since an output " +
+                  "group lives on the rule and a file label would give the module's own jar instead.",
+            aspects = [_dev_dist_module_aspect],
+            providers = [_KtJvmInfo],
+            mandatory = True,
+        ),
+        "modules_by_name": attr.string_list(
+            doc = "The same modules by JPS module name, which is the key `declared_modules` and `owned_inputs` share.",
+            mandatory = True,
+        ),
+        # Names, not targets. Whether a jar is handed over is decided over `modules` alone - a module the payload reaches
+        # only through a dependency is not part of the platform this product assembles, and the fetch-time intersection
+        # did not hand its jar over either - so the closure is walked to find out what a surviving seed still needs, and
+        # for nothing else. `owned_inputs` already carries these modules' inputs keyed by the same names.
+        "seeds": attr.string_list(
+            doc = "The payload modules declared with their dependencies - `modules_with_dependencies` in the plan.",
+        ),
+        "module_deps": attr.string_dict(
+            doc = "Module name to its direct production module dependencies, space separated, over the closure above.",
+        ),
+    },
 )
 
 def _collect_modules(targets, module_jars):
@@ -152,25 +442,13 @@ def _collect_libraries(ctx, library_jars):
     for target in ctx.attr.libraries:
         if JavaInfo not in target:
             fail("%s: library container %s provides no JavaInfo" % (ctx.label, target.label))
-        jars = []
-        seen = {}
-        for jar in target[JavaInfo].transitive_runtime_jars.to_list():
-            if jar.path not in seen:
-                seen[jar.path] = True
-                jars.append(jar)
-        if not jars:
-            # A `neverlink` `-provided` wrapper has no runtime jars and never will. The generator never emits one here -
-            # `libraryTargetLabel` returns the plain container and `libraryDependencyLabel` is what adds the suffix - so
-            # this fires only on a hand-written entry, and naming the library itself is the fix. Do not reach for
-            # another `JavaInfo` set to paper over it: for a local library behind such a wrapper, `compile_jars` and
-            # `transitive_compile_time_jars` both yield the *interface* jar.
-            fail(
-                "%s: library container %s contributes no runtime jars, so it would declare nothing. " % (ctx.label, target.label) +
-                "A `-provided` target is `neverlink` and never will - name the library itself.",
-            )
 
-        # A tuple, not the list: a depset element must be immutable, and a struct holding a list is not.
-        library_jars.append(depset([struct(label = str(target.label), jars = tuple(jars))]))
+        # A `neverlink` `-provided` wrapper has no runtime jars and never will, and `_library_entry` refuses one. The
+        # generator never emits one here - `libraryTargetLabel` returns the plain container and `libraryDependencyLabel`
+        # is what adds the suffix - so that fires only on a hand-written entry, and naming the library itself is the fix.
+        # Do not reach for another `JavaInfo` set to paper over it: for a local library behind such a wrapper,
+        # `compile_jars` and `transitive_compile_time_jars` both yield the *interface* jar.
+        library_jars.append(depset([_library_entry(target, ctx.label)]))
 
 def _collect_library_jars(ctx, library_jars):
     """The per-jar half, for labels a *repository rule* produced rather than a generator writing a BUILD file.

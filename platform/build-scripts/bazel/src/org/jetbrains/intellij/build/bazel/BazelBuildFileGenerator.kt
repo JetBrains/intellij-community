@@ -142,20 +142,6 @@ internal class BazelBuildFileGenerator(
   private val moduleToDescriptor = IdentityHashMap<JpsModule, ModuleDescriptor>()
 
   /**
-   * The modules whose `jvm_library` packs a `lib/<module>.jar`, and the other modules merged into that jar.
-   *
-   * Collected while the `BUILD.bazel` files are written. A dev distribution consumes those jars instead of packing
-   * them itself, and it has to name the modules to do so: the owner to find the jar, and the merged ones because their
-   * output is in that jar and nowhere else, so the fragment must stop declaring them too. Deciding *which* modules
-   * those are is [computeContentModuleJar]'s job and nobody else's - the recipe, the exclusions and the veto all live
-   * there - so this records the answer rather than letting a second place derive it.
-   *
-   * Repo-global: the community and ultimate passes share this generator, and the file is written once for the project.
-   */
-  @JvmField
-  val packedContentModuleJars: MutableMap<String, List<String>> = TreeMap()
-
-  /**
    * Modules whose checked-in plugin content reports agree that they are a plain
    * `lib/modules/<module>.jar` containing only that module's production output.
    *
@@ -851,7 +837,6 @@ internal class BazelBuildFileGenerator(
       }
 
       if (contentModuleJar != null) {
-        packedContentModuleJars.put(moduleDescriptor.module.name, contentModuleJar.modulesBefore + contentModuleJar.modulesAfter)
         option("content_module_jar", true)
         // Merge order, not sets: the packer resolves a duplicate entry to the first source that offers it, and it
         // expands each library target to its own jars in this order.

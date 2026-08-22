@@ -10,7 +10,7 @@ scrambling require both component layouts in one process.
 
 load("@community//build:project_model_manifest.bzl", "write_project_model_manifest")
 load("//build:dev_launch_dependencies.bzl", "platform_parts")
-load(":dev_dist_content.bzl", "DevDistContentInfo")
+load(":dev_dist_content.bzl", "DevDistContentInfo", "DevDistPlatformPayloadInfo")
 
 IntellijDevBuildInputsInfo = provider(
     doc = "The exact Bazel inputs and label-to-path manifest made available to one dev-build fragment.",
@@ -80,11 +80,27 @@ def _dev_build_inputs_impl(ctx):
     entries = {}
     origins = {}
     prepacked_plugin_jars = []
+
     for target in ctx.attr.inputs:
         files = target[DefaultInfo].files.to_list()
         if len(files) != 1:
             fail("%s: %s must provide exactly one file, got %s" % (ctx.label, target.label, files))
         _add_input_entry(ctx, entries, origins, str(target.label), (files[0],), target.label, "raw")
+
+    # A raw input a payload asked for on behalf of named modules, kept only while one of those modules is still declared.
+    # This is where a handed-over `lib/` jar stops costing declarations: the module whose bytes are now in that jar is
+    # not declared, so neither its own output, nor its libraries, nor - through `declared_modules` - anything only its
+    # dependencies needed, stays in the manifest. The value is module *names* because a payload is written in names, and
+    # a name is the one key that means the same thing to the repository rule that wrote it and to analysis here.
+    if ctx.attr.owned_inputs:
+        declared = {name: True for name in ctx.attr.platform_payload[DevDistPlatformPayloadInfo].declared_modules.to_list()}
+        for target, owners in ctx.attr.owned_inputs.items():
+            files = target[DefaultInfo].files.to_list()
+            if len(files) != 1:
+                fail("%s: %s must provide exactly one file, got %s" % (ctx.label, target.label, files))
+            if not [owner for owner in owners.split(" ") if owner in declared]:
+                continue
+            _add_input_entry(ctx, entries, origins, str(target.label), (files[0],), target.label, "raw")
 
     if ctx.attr.content:
         content = ctx.attr.content[DevDistContentInfo]
@@ -168,6 +184,22 @@ intellij_dev_build_inputs = rule(
         # The jars, aggregated from the graph instead of from a generated name list. Both halves land in one manifest
         # under the same key convention, so nothing on the Kotlin side can tell where an entry came from.
         "content": attr.label(providers = [DevDistContentInfo]),
+        # Set on the fragment that owns `lib/`, together with `owned_inputs`. The reference target takes the same split
+        # from the other side - it declares the packed halves through `content` and packs them itself - so one target
+        # drives both and they cannot disagree about which side a module is on.
+        "platform_payload": attr.label(
+            providers = [DevDistPlatformPayloadInfo],
+            doc = "Decides which `owned_inputs` survive, through its `declared_modules`.",
+        ),
+        # Deliberately separate from `inputs`, which stays unconditional. What belongs there is everything a fragment
+        # reads for a reason no payload module owns: the project-model tree's files, the plugin descriptors, the
+        # payload's own library entries, and the build modules - every fragment loads the product properties before it
+        # packs anything, so those jars are classpath rather than content even for the two of them
+        # (`intellij.platform.dependencies`, `intellij.platform.buildScripts.downloader`) that a `lib/` jar also holds.
+        "owned_inputs": attr.label_keyed_string_dict(
+            allow_files = True,
+            doc = "Raw input to the space-separated names of the payload modules that asked for it.",
+        ),
     },
 )
 
@@ -317,7 +349,13 @@ def _fragment_impl(ctx):
 
     if ctx.attr.platform:
         args.add("--platform=" + ctx.attr.platform)
-        args.add_all(ctx.attr.platform_jars, format_each = "--platform-jar=%s")
+        if ctx.attr.platform_payload:
+            # Empty for a `lib/`-owning fragment of a product whose payload packs nothing per module: `except` then owns
+            # all of `lib/`, which is what it meant before any of these jars were handed over.
+            args.add_all(
+                ctx.attr.platform_payload[DevDistPlatformPayloadInfo].packed_jar_names,
+                format_each = "--platform-jar=%s",
+            )
     if ctx.attr.platform_resources:
         args.add("--platform-resources")
 
@@ -408,15 +446,16 @@ intellij_dev_fragment = rule(
         "platform_prefix": attr.string(mandatory = True),
         "target_platform": attr.string(default = ""),
         "fragment_name": attr.string(mandatory = True, doc = "Identifies this fragment in its manifest, its mnemonic and the composer's completeness check."),
-        "platform": attr.string(default = "", values = _PLATFORM_SELECTORS, doc = "Which `lib/` jars this fragment owns - all `except` the ones in `platform_jars`, or `only` those; empty means none."),
+        "platform": attr.string(default = "", values = _PLATFORM_SELECTORS, doc = "Which `lib/` jars this fragment owns - all `except` the packed ones, or `only` those; empty means none."),
         "platform_resources": attr.bool(default = False, doc = "Whether this fragment owns `bin`, the product metadata, the launchers and the copied product files."),
-        "platform_jars": attr.string_list(
-            doc = "The `lib/` jar file names `platform` reads: with `except`, the jars another component provides and " +
-                  "this fragment must therefore not pack; with `only`, the jars it packs and nothing else. " +
-                  "`intellij_dev_packed_jars_component` is handed the same list, so an `except` fragment and it " +
-                  "partition the `lib/` jars exactly; the composer fails on a path both provide. The fragment still " +
-                  "reports those jars' core-classpath entries - deciding that needs the platform layout, which the " +
-                  "packer does not have.",
+        "platform_payload": attr.label(
+            providers = [DevDistPlatformPayloadInfo],
+            doc = "The `lib/` jar file names `platform` reads, as the target that derives them: with `except`, the " +
+                  "jars another component provides and this fragment must therefore not pack; with `only`, the jars " +
+                  "it packs and nothing else. `intellij_dev_packed_jars_component` reads the same provider, so an " +
+                  "`except` fragment and it partition the `lib/` jars exactly; the composer fails on a path both " +
+                  "provide. The fragment still reports those jars' core-classpath entries - deciding that needs the " +
+                  "platform layout, which the packer does not have.",
         ),
         "plugins": attr.string(default = "", values = _PLUGIN_SELECTORS, doc = "Which bundled plugins this fragment owns; empty means none."),
         "plugin_main_modules": attr.string_list(doc = "For plugins = 'named': the main modules of the plugins this fragment owns."),
@@ -437,24 +476,10 @@ def _packed_jars_component_impl(ctx):
     home = ctx.actions.declare_directory(ctx.label.name + ".home")
     component_manifest = ctx.actions.declare_file(ctx.label.name + ".component.json")
 
-    jars = []
-    missing = []
-    for target in ctx.attr.modules:
-        output_groups = target[OutputGroupInfo]
-        if not hasattr(output_groups, "content_module_jar"):
-            missing.append(str(target.label))
-            continue
-        jars.extend(output_groups.content_module_jar.to_list())
-    if missing:
-        # The plan named a module whose `jvm_library` packs no distribution jar, so the fragment stopped declaring its
-        # inputs while nothing produces the jar. Fail here, where the message can name the module, rather than in the
-        # middle of an assembly that cannot resolve it.
-        fail(("%s: these modules were handed over to the packer but set no `content_module_jar`, so their `lib/` jars " +
-              "would be missing from the distribution: %s. Either the module's recipe stopped selecting it - " +
-              "`jpsModelToBazel` prints a WARN when a veto fires - or `build/dev_dist_content_module_jars.bzl` is " +
-              "stale.") % (ctx.label, ", ".join(missing)))
-    if not jars:
-        fail("%s: no module hands over a packed jar, so this component would contribute nothing" % ctx.label)
+    # Which jars these are is read off the graph by `dev_dist_platform_payload`, not from a list something had to
+    # keep in step. A module that stops packing a jar stops being collected here in the same analysis that stops
+    # producing it, so the old "handed over but sets no `content_module_jar`" staleness cannot arise.
+    jars = ctx.attr.platform_payload[DevDistPlatformPayloadInfo].packed_jars.to_list()
 
     jar_list = ctx.actions.args()
     jar_list.set_param_file_format("multiline")
@@ -502,9 +527,8 @@ intellij_dev_packed_jars_component = rule(
     merge, and this rule does no more than name them `lib/<module>.jar` and inventory them - so an unrelated model edit
     leaves both the packing and this collection untouched.
 
-    Which modules those are comes from the generated plan; the sibling fragment is handed the same list and stops
-    packing exactly these jars, so ownership cannot overlap. A named module that packs no jar is an error here rather
-    than a thinner IDE.
+    Which jars those are comes from `dev_dist_platform_payload`, which asks the payload's targets; the sibling
+    fragment is handed the same provider and stops packing exactly these jars, so ownership cannot overlap.
     """,
     implementation = _packed_jars_component_impl,
     attrs = {
@@ -512,9 +536,10 @@ intellij_dev_packed_jars_component = rule(
         "component_name": attr.string(mandatory = True, doc = "Identifies this component in its manifest and in the composer's completeness check."),
         "platform_prefix": attr.string(mandatory = True),
         "target_platform": attr.string(default = ""),
-        "modules": attr.label_list(
+        "platform_payload": attr.label(
+            providers = [DevDistPlatformPayloadInfo],
             mandatory = True,
-            doc = "The module targets whose `content_module_jar` output group this component collects.",
+            doc = "The payload's packed `lib/` jars, derived from the graph - see `dev_dist_platform_payload`.",
         ),
     },
 )
