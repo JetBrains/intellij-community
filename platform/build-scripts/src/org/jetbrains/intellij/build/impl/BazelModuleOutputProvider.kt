@@ -30,25 +30,6 @@ object BazelBuildInputs {
   }
 
   /**
-   * Every file [label] declares, in manifest order.
-   *
-   * For a **library container** - the `jvm_import`/`java_library`/`java_import` that groups a library's jars, recorded
-   * as `LibraryDescription.target`. A multi-jar library resolves to several files and the order is the packer's
-   * duplicate-resolution order, so it must not be sorted. Use [resolve] where exactly one file is the contract, such as
-   * a module target.
-   *
-   * **Manifest only, deliberately with no runfiles fallback.** A container target is a `java_library`/`jvm_import`, not
-   * a file, so `BazelRunfiles.getFileByLabel` cannot resolve it - it fails with "Unable to find dependency
-   * '@lib//:kotlin-stdlib'". Only the input manifest maps a container key to files, because
-   * `intellij_dev_build_inputs` is what expands it. A caller that may run under plain runfiles has to take the per-jar
-   * `LibraryDescription.jarTargets` branch instead, which is one of the reasons that field stays in `bazel-targets.json`.
-   */
-  fun resolveAll(label: String): List<Path> {
-    val resolver = resolver ?: error("Library container '$label' can only be resolved through an explicit input manifest")
-    return resolver.resolveAll(label)
-  }
-
-  /**
    * The path of [label], or `null` when an explicit manifest is configured and does not declare it.
    *
    * For a **probe** - a descriptor search asking many candidates for one file, at most one of which has it - and for
@@ -68,9 +49,19 @@ object BazelBuildInputs {
   }
 
   /**
-   * [resolveAll] with [resolveIfDeclared]'s probe contract: `null` when an explicit manifest does not declare [label].
+   * Every file [label] declares, in manifest order, with [resolveIfDeclared]'s probe contract: `null` when an explicit
+   * manifest does not declare [label], and `null` when no manifest is configured at all.
    *
-   * Manifest only, for the reason [resolveAll] gives; `null` also when no manifest is configured at all.
+   * For a **library container** - the `jvm_import`/`java_library`/`java_import` that groups a library's jars, recorded
+   * as `LibraryDescription.target`. A multi-jar library resolves to several files and the order is the packer's
+   * duplicate-resolution order, so it must not be sorted. Use [resolve] where exactly one file is the contract, such as
+   * a module target.
+   *
+   * **Manifest only, deliberately with no runfiles fallback.** A container target is a `java_library`/`jvm_import`, not
+   * a file, so `BazelRunfiles.getFileByLabel` cannot resolve it - it fails with "Unable to find dependency
+   * '@lib//:kotlin-stdlib'". Only the input manifest maps a container key to files, because
+   * `intellij_dev_build_inputs` is what expands it. A caller that may run under plain runfiles has to take the per-jar
+   * `LibraryDescription.jarTargets` branch instead, which is one of the reasons that field stays in `bazel-targets.json`.
    */
   fun resolveAllIfDeclared(label: String): List<Path>? = resolver?.resolveAllIfDeclared(label)
 
@@ -262,17 +253,14 @@ internal class BazelModuleOutputProvider(
       return findLibraryRoots(libraryName = libraryName, moduleLibraryModuleName = moduleLibraryModuleName)
     }
 
-    val bazelTargetsMap = state.bazelTargetsMap
-    val librariesTable = if (moduleLibraryModuleName == null) {
-      bazelTargetsMap.projectLibraries
-    }
-    else {
-      bazelTargetsMap.modules[moduleLibraryModuleName]?.moduleLibraries ?: return emptyList()
-    }
-    val library = librariesTable[libraryName] ?: return emptyList()
-    // Under a manifest the key is the container, with the test-plugin fallback [libraryManifestKeys] explains; under
+    val library = (libraryDescriptions(moduleLibraryModuleName) ?: return emptyList())[libraryName] ?: return emptyList()
+    // Under a manifest the key is the container, with the test-plugin fallback [resolveDeclaredLibrary] explains; under
     // plain runfiles it has to be the per-jar labels, because a container target is not a file - see
-    // `BazelBuildInputs.resolveAll`.
+    // `BazelBuildInputs.resolveAllIfDeclared`.
+    //
+    // Deliberately *not* [resolveDeclaredLibrary], which the strict path uses: this is a probe, so a partly declared
+    // library yields the jars that are declared rather than nothing. The file being searched for may be in one of them,
+    // and an undeclared jar has to answer like a jar without the file.
     val paths = if (BazelBuildInputs.isConfigured) {
       BazelBuildInputs.resolveAllIfDeclared(library.target)
       ?: library.jarTargets.mapNotNull(BazelBuildInputs::resolveIfDeclared)
@@ -283,18 +271,24 @@ internal class BazelModuleOutputProvider(
     return paths.filter { it.isRegularFile() }
   }
 
-  override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> {
+  /**
+   * The `bazel-targets.json` library table [moduleLibraryModuleName] names, or `null` when the project has no such
+   * module. A `null` module name asks for the project-level table, which always exists.
+   */
+  private fun libraryDescriptions(moduleLibraryModuleName: String?): Map<String, BazelTargetsInfo.LibraryDescription>? {
     val bazelTargetsMap = state.bazelTargetsMap
-    val librariesTable = if (moduleLibraryModuleName == null) {
-      bazelTargetsMap.projectLibraries
+    if (moduleLibraryModuleName == null) {
+      return bazelTargetsMap.projectLibraries
     }
-    else {
-      val module = bazelTargetsMap.modules[moduleLibraryModuleName] ?: error("Cannot find module '$moduleLibraryModuleName' in the project")
-      module.moduleLibraries
-    }
+    return bazelTargetsMap.modules[moduleLibraryModuleName]?.moduleLibraries
+  }
+
+  override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> {
+    val librariesTable = libraryDescriptions(moduleLibraryModuleName)
+                         ?: error("Cannot find module '$moduleLibraryModuleName' in the project")
 
     val libraryMoniker = "library '$libraryName' " +
-                         if (moduleLibraryModuleName == null) "(project level)" else "(in module '$moduleLibraryModuleName'"
+                         if (moduleLibraryModuleName == null) "(project level)" else "(in module '$moduleLibraryModuleName')"
     val library = librariesTable[libraryName] ?: error(
       "Cannot find $libraryMoniker"
     )

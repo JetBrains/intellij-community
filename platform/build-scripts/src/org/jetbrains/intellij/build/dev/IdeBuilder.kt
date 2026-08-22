@@ -1051,9 +1051,7 @@ private suspend fun layoutPlatform(
   val libDir = runDir.resolve("lib")
   // todo - we cannot for now skip nio-fs.jar, probably `-Xbootclasspath/a` is not correctly set for dev-mode-based tests
   val skipNioFs = if (request.isBootClassPathCorrect) isMultiRoutingFileSystemEnabledForProduct(context.productProperties.platformPrefix) else false
-  val coreClassPath = coroutineScope {
-    generateClassPathByLayoutReport(libDir = libDir, entries = entries, skipNioFs = skipNioFs)
-  }
+  val coreClassPath = generateClassPathByLayoutReport(libDir = libDir, entries = entries, skipNioFs = skipNioFs)
   // The jars this fragment handed over are absent from `entries` - it neither resolved nor packed them - but they are
   // in the distribution, put there by their own component, and the classpath spans the whole distribution. Deciding
   // this here is what lets that component be produced without a product layout at all.

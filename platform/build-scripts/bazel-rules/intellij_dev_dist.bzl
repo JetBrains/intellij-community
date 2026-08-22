@@ -56,6 +56,26 @@ def _add_input_entry(ctx, entries, origins, logical_key, files, source, origin):
             source,
         ))
 
+def _prepacked_by_relation(ctx, entries):
+    """Index prepacked plugin-jar records by their *(plugin, content module)* relation.
+
+    Same relation, same placement and same jar is the normal case - a content module shared by two plugins, or a
+    community half and the completion set naming the same member - and deduplicates. Anything else is two producers
+    disagreeing about where one jar goes, which the composer would only catch if the paths happened to collide.
+    """
+    result = {}
+    for entry in entries:
+        key = (entry.plugin_main_module, entry.content_module)
+        previous = result.get(key)
+        if previous != None and (previous.relative_output_file != entry.relative_output_file or previous.jar != entry.jar):
+            fail("%s: prepacked plugin relation %s/%s is provided by conflicting records" % (
+                ctx.label,
+                entry.plugin_main_module,
+                entry.content_module,
+            ))
+        result[key] = entry
+    return result
+
 def _dev_build_inputs_impl(ctx):
     entries = {}
     origins = {}
@@ -112,17 +132,7 @@ def _dev_build_inputs_impl(ctx):
     origin_lines = ["%s\t%s" % (logical_key, origins[logical_key]) for logical_key in sorted(origins.keys())]
     ctx.actions.write(inputs_origin, ("\n".join(origin_lines) + "\n") if origin_lines else "")
 
-    prepacked_by_key = {}
-    for entry in prepacked_plugin_jars:
-        key = (entry.plugin_main_module, entry.content_module)
-        previous = prepacked_by_key.get(key)
-        if previous != None and (previous.relative_output_file != entry.relative_output_file or previous.jar != entry.jar):
-            fail("%s: prepacked plugin relation %s/%s is provided by conflicting records" % (
-                ctx.label,
-                entry.plugin_main_module,
-                entry.content_module,
-            ))
-        prepacked_by_key[key] = entry
+    prepacked_by_key = _prepacked_by_relation(ctx, prepacked_plugin_jars)
 
     plan_lines = []
     for key in sorted(prepacked_by_key.keys()):
@@ -169,7 +179,6 @@ IntellijDevFragmentInfo = provider(
         "plugin_classpath_part": "This fragment's plugin-classpath records, or None if it built no plugin.",
         "plugin_classpath_prefix": "The plugin-classpath prefix, or None if another fragment produces it.",
         "inputs_manifest": "The label-to-path manifest of the fragment's declared Bazel inputs.",
-        "inputs_origin": "The sidecar naming which half of the declaration each declared input came from.",
         "unused_inputs": "The declared inputs the assembly never resolved - declared minus these is what it used.",
         "prepacked_plugin_jars": "The prepacked jar records this fragment hands to a collector without consuming.",
         "prepacked_plugin_jars_placement": "The assembler-validated placement manifest, or None for a non-plugin component.",
@@ -371,7 +380,6 @@ def _fragment_impl(ctx):
             plugin_classpath_part = plugin_classpath_part,
             plugin_classpath_prefix = plugin_classpath_prefix,
             inputs_manifest = bazel_inputs_manifest,
-            inputs_origin = build_inputs.inputs_origin,
             unused_inputs = unused_inputs,
             prepacked_plugin_jars = build_inputs.prepacked_plugin_jars,
             prepacked_plugin_jars_placement = prepacked_plugin_jars_placement,
@@ -480,7 +488,6 @@ def _packed_jars_component_impl(ctx):
             # Not a declared-input boundary: this component reads the jars it collects and nothing else, so there is no
             # over-declaration to measure. `dev_dist_unused_inputs_report_test` skips a component that reports neither.
             inputs_manifest = None,
-            inputs_origin = None,
             unused_inputs = None,
             prepacked_plugin_jars = depset(),
             prepacked_plugin_jars_placement = None,
@@ -516,22 +523,14 @@ def _packed_plugin_jars_component_impl(ctx):
     home = ctx.actions.declare_directory(ctx.label.name + ".home")
     component_manifest = ctx.actions.declare_file(ctx.label.name + ".component.json")
 
-    records = {}
     placement_manifests = []
+    entries = []
     for target in ctx.attr.fragments:
         fragment = target[IntellijDevFragmentInfo]
         if fragment.prepacked_plugin_jars_placement:
             placement_manifests.append(fragment.prepacked_plugin_jars_placement)
-        for entry in fragment.prepacked_plugin_jars.to_list():
-            key = (entry.plugin_main_module, entry.content_module)
-            previous = records.get(key)
-            if previous != None and (previous.relative_output_file != entry.relative_output_file or previous.jar != entry.jar):
-                fail("%s: conflicting prepacked plugin jar records for %s/%s" % (
-                    ctx.label,
-                    entry.plugin_main_module,
-                    entry.content_module,
-                ))
-            records[key] = entry
+        entries.extend(fragment.prepacked_plugin_jars.to_list())
+    records = _prepacked_by_relation(ctx, entries)
 
     metadata_lines = []
     jars = []
@@ -574,7 +573,6 @@ def _packed_plugin_jars_component_impl(ctx):
             plugin_classpath_part = None,
             plugin_classpath_prefix = None,
             inputs_manifest = None,
-            inputs_origin = None,
             unused_inputs = None,
             prepacked_plugin_jars = depset(),
             prepacked_plugin_jars_placement = None,
@@ -648,11 +646,10 @@ def _compose(ctx, fragment_targets):
             fingerprint = fingerprint,
             stamp_inputs = depset(stamp_inputs),
         ),
-        OutputGroupInfo(
-            fingerprint = depset([fingerprint]),
-            home = depset([home]),
-            ide_config = depset([ide_config]),
-        ),
+        # Read by `intellij_dev_dist_config`, which needs the single-file label `$(rlocationpath ...)` takes - which a
+        # dist target, with three outputs, is not. Not reachable through `IntellijDevDistInfo`: the consumers are
+        # `filegroup`s and `$(location)` expansions in `data`, not rules that could ask for a provider.
+        OutputGroupInfo(ide_config = depset([ide_config])),
     ]
 
 def _compose_fragments_impl(ctx):

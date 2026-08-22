@@ -40,7 +40,7 @@ internal class PluginContent(
    * `dev_dist_plugin_content.libraries` keys its manifest by this container and expands it through
    * `JavaInfo.transitive_runtime_jars`, so the checked-in label carries no artifact version and a Maven bump leaves
    * every plugin `BUILD.bazel` alone. It is the same label `bazel-targets.json` records as `LibraryDescription.target`
-   * and that `BazelBuildInputs.resolveAll` is asked for.
+   * and that `BazelBuildInputs.resolveAllIfDeclared` is asked for.
    */
   @JvmField val libraryContainerLabels: List<String>,
 )
