@@ -37,6 +37,8 @@
     <orderEntry type="module" module-name="fleet.rhizomedb" scope="TEST" />
     <orderEntry type="module" module-name="fleet.util.core" scope="TEST" />
     <orderEntry type="module" module-name="fleet.util.serialization" scope="TEST" />
+    <orderEntry type="module" module-name="fleet.rpc" scope="TEST" />
+    <orderEntry type="module" module-name="fleet.rpc.server" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinx-collections-immutable" level="project" />

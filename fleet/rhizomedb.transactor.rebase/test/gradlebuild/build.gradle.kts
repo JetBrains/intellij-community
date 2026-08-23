@@ -81,6 +81,8 @@ kotlin {
     implementation(project(":fleet.rhizomedb"))
     implementation(project(":fleet.util.core"))
     implementation(project(":fleet.util.serialization"))
+    implementation(project(":fleet.rpc"))
+    implementation(project(":fleet.rpc.server"))
   }
   // KOTLIN__MARKER_END
 }
