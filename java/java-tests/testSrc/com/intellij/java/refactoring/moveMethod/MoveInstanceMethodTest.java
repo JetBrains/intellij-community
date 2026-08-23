@@ -56,6 +56,7 @@ public class MoveInstanceMethodTest extends LightJavaCodeInsightTestCase {
   public void testOverloadingMethods() { doTest(true, 0); }
   public void testOverloadingMethods1() { doTest(true, 0); }
   public void testMoveAbstractMethod() { doTest(true, 0); }
+  public void testNoIncorrectParameterAdded() { doTest(true, 0); }
   public void testPolyadicExpr() { doTest(true, 0); }
 
   public void testIOOBE_MovingInvalidCode() { doTest(true, 0); }
@@ -140,10 +141,9 @@ public class MoveInstanceMethodTest extends LightJavaCodeInsightTestCase {
     PsiMethod method = (PsiMethod) targetElement;
     final PsiVariable targetVariable = isTargetParameter ? method.getParameterList().getParameters()[targetIndex] :
                                        method.getContainingClass().getFields()[targetIndex];
-    new MoveInstanceMethodProcessor(getProject(),
-                                    method, targetVariable, newVisibility, MoveInstanceMethodHandler.suggestParameterNames (method, targetVariable)).run();
+    new MoveInstanceMethodProcessor(getProject(), method, targetVariable, newVisibility, 
+                                    MoveInstanceMethodHandler.suggestParameterNames (method, targetVariable)).run();
     checkResultByFile(filePath + ".after");
-
   }
 
   @Override
