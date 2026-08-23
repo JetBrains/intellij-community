@@ -5,6 +5,7 @@ import com.google.common.collect.Iterators;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.startup.ServiceNotReadyException;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,6 +39,7 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
@@ -144,6 +146,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.BiConsumer;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -197,7 +200,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     () -> AsyncEventSupport.EP_NAME.findExtensionOrFail(ChangedFilesCollector.class)
   );
   private final FilesToUpdateCollector myFilesToUpdateCollector = new FilesToUpdateCollector();
-
+  private volatile @Nullable BiConsumer<@Nullable Project, @NotNull List<FileIndexingRequest>> myForceUpdateTestHook;
   private final List<Pair<IndexableFileSet, Project>> myIndexableSets = createLockFreeCopyOnWriteList();
 
   private final SimpleMessageBusConnection myConnection;
@@ -978,22 +981,16 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
             includeFilesFromOtherProjects
           );
           if (!ActionUtil.isDumbMode(project) || getCurrentDumbModeAccessType_NoDumbChecks() == null) {
-            //RC: if (restrictedFile!=null) we can't use modCount-based updates skipping, because with (restrictedFile!=null)
-            //    we do not process _all_ the new updates, but only those with (restrictedFile), hence after that processing
-            //    statement 'all updates up to [modCount] have been processed' is not true -> we can't bump up lastProcessedModCount.
+            //RC: if (restrictedFile!=null) we can't advance the project cursor, because we do not process _all_ the new
+            //    updates, but only those with (restrictedFile), hence after that processing statement
+            //    'all updates up to the snapshot boundary have been processed' is not true.
             //RC: Why can't we just abandon (restrictedFile) filtering altogether, and always apply all the updates available (if any)?
-            //    We could, but turns out it opens the pandora box: we have some deadlocks hidden inside Stubs building (which happens
+            //    We could, but turns out it opens the Pandora box: we have some deadlocks hidden inside Stubs building (which happens
             //    during indexing by Stubs index), and these deadlocks are unreachable when (restrictedFile) branch is in place -- but
             //    they become reachable if the (restrictedFile) branch is dropped. So we stuck with (restrictedFile) for now.
-            //TODO RC: with (restrictedFile!=null) we can't _fully_ utilise modCount-based optimization, we still can utilise
-            //         it _partially_. Namely: if modCount hasn't changed since last (full) forceUpdate() -> there are definitely
-            //         no new updates to apply, even when filtering by restrictedFile. The difference with regular branch
-            //         (restrictedFile==null) is that we should NOT bump up lastProcessedModCount after the update, since we
-            //         don't process _all_ the updates in queue, but only those with (restrictedFile)
-            boolean skipUpdatingIfNoNewUpdatesAvailable = (restrictedFile == null);
             forceUpdate(
               project,
-              skipUpdatingIfNoNewUpdatesAvailable,
+              /* advanceProjectCursorIf: */ (restrictedFile == null),
               projectFilterCondition
             );
           }
@@ -1932,38 +1929,30 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   });
 
   private void forceUpdate(@Nullable Project project,
-                           boolean skipUpdatingIfNoNewUpdatesAvailable,
+                           boolean advanceProjectCursor,
                            @NotNull ProjectFilesCondition filter) {
-    boolean useProjectCursor = skipUpdatingIfNoNewUpdatesAvailable && USE_REQUEST_VERSION_TO_SKIP_REPEATING_UPDATES;
-    Project cursorProject = useProjectCursor ? project : null;
-    long currentPublishedVersion = -1;
-    if (!useProjectCursor) {
-      LOG.debug("skipUpdatingIfNoNewUpdatesAvailable=false -> do updates regardless of updates availability");
-    }
-    else if (cursorProject == null) {
-      LOG.debug("project=null -> can't check updates availability -> be conservative, do updates");
+    @Nullable Project cursorOwningProject;
+    if (project != null && (USE_REQUEST_VERSION_TO_SKIP_REPEATING_UPDATES || advanceProjectCursor)) {
+      cursorOwningProject = project;
     }
     else {
-      long lastProcessedVersionValue = myFilesToUpdateCollector.cursorFor(cursorProject, -1);
-      FilesToUpdateCollector.RequestsSnapshot snapshot = myFilesToUpdateCollector.collectRequestsNewerThan(lastProcessedVersionValue);
-      currentPublishedVersion = snapshot.readUpToVersion();
-      if (lastProcessedVersionValue >= 0 && lastProcessedVersionValue >= currentPublishedVersion) {
-        if (LOG.isDebugEnabled()) {
-          THROTTLED_LOG_FAST.debug(
-            () -> "requestsVersionCheck[last: " + lastProcessedVersionValue + " >= current: " + currentPublishedVersion + "] -> skip updates"
-          );
-        }
-        return;
-      }
-
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("requestsVersionCheck[last: " + lastProcessedVersionValue + " < current: " + currentPublishedVersion + "] -> do updates");
-      }
+      cursorOwningProject = null;
+      THROTTLED_LOG_FAST.debug(project == null ? "project=null -> can't use a request cursor -> process all updates"
+                                               : "restricted update without request version filtering -> process all updates");
     }
 
-    Collection<FileIndexingRequest> allFilesToUpdate = getAllFilesToUpdate();
-    if (!allFilesToUpdate.isEmpty()) {
-      List<FileIndexingRequest> virtualFilesToBeUpdatedForProject = ContainerUtil.filter(allFilesToUpdate, filter::acceptsRequest);
+    var snapshot = myFilesToUpdateCollector.requestsFor(cursorOwningProject, USE_REQUEST_VERSION_TO_SKIP_REPEATING_UPDATES);
+    List<FileIndexingRequest> requestsToProcess = snapshot.requests();
+    if (cursorOwningProject != null && requestsToProcess.isEmpty()) {
+      THROTTLED_LOG_FAST.debug(() -> snapshot + " -> no new requests");
+    }
+
+    if (!requestsToProcess.isEmpty()) {
+      BiConsumer<@Nullable Project, @NotNull List<FileIndexingRequest>> testHook = myForceUpdateTestHook;
+      if (testHook != null) {
+        testHook.accept(project, requestsToProcess);
+      }
+      List<FileIndexingRequest> virtualFilesToBeUpdatedForProject = ContainerUtil.filter(requestsToProcess, filter::acceptsRequest);
       if (!virtualFilesToBeUpdatedForProject.isEmpty()) {
         if (LOG.isDebugEnabled()) {
           List<String> files = ContainerUtil.map(virtualFilesToBeUpdatedForProject, request -> request.getFile().getPath());
@@ -1977,10 +1966,24 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       }
     }
 
-    if (cursorProject != null) {
+    if (advanceProjectCursor && cursorOwningProject != null) {
       // Advance only to the boundary captured before processing: concurrently published requests remain for the next pass.
-      myFilesToUpdateCollector.advanceCursor(cursorProject, currentPublishedVersion);
+      myFilesToUpdateCollector.advanceCursor(cursorOwningProject, snapshot.readUpToVersion());
     }
+  }
+
+  /** Delivers pending VFS events, then runs the unrestricted project update path. */
+  @TestOnly
+  public void forceUpdateProjectInTest(@NotNull Project project) {
+    getChangedFilesCollector().ensureUpToDate();
+    forceUpdate(
+      project,
+      /* advanceProjectCursor: */ true,
+      new ProjectFilesCondition(
+        projectIndexableFiles(project), GlobalSearchScope.everythingScope(project), null,
+        /* includeFilesFromOtherProjects: */ false
+      )
+    );
   }
 
   @Internal
@@ -2109,6 +2112,18 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @Internal
   public @NotNull FilesToUpdateCollector getFilesToUpdateCollector() {
     return myFilesToUpdateCollector;
+  }
+
+  /** Installs a hook that lets tests inspect requests before project filtering. */
+  @TestOnly
+  public void installForceUpdateTestHook(@NotNull Disposable disposable,
+                                         @NotNull BiConsumer<@Nullable Project, @NotNull List<FileIndexingRequest>> hook) {
+    Disposer.register(disposable, () -> {
+      if (myForceUpdateTestHook == hook) {
+        myForceUpdateTestHook = null;
+      }
+    });
+    myForceUpdateTestHook = hook;
   }
 
   public void scheduleFileForIncrementalIndexing(int fileId,

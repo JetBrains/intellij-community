@@ -31,6 +31,7 @@ import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
+import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.ApplicationRule
@@ -54,6 +55,7 @@ import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils
 import com.intellij.util.indexing.diagnostic.dto.JsonIndexingActivityDiagnostic
 import com.intellij.util.indexing.diagnostic.dto.JsonProjectScanningHistory
 import com.intellij.util.indexing.diagnostic.dto.JsonProjectScanningHistoryTimes
+import com.intellij.util.indexing.events.FileIndexingRequest
 import com.intellij.util.indexing.mocks.FakeFileType
 import com.intellij.util.indexing.testEntities.TestModuleEntitySource
 import com.intellij.util.io.DataExternalizer
@@ -69,6 +71,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
 import java.nio.file.Path
+import java.util.concurrent.TimeUnit.SECONDS
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.createDirectories
 import kotlin.random.Random
 
@@ -249,6 +253,51 @@ class DirtyFilesQueueTest {
           fileBasedIndex.getAllKeys(BadFileBasedIndexExtension().name, project)
         }
         assertThat(allKeys).isNotEmpty()
+      }
+    }
+  }
+
+  /** Verifies that a restricted update does not advance the project cursor. */
+  @Test
+  fun `restricted update leaves cursor for unrestricted pass`() {
+    runBlocking {
+      val filetype = FakeFileType()
+      registerFiletype(filetype)
+      openProject(testNameRule.methodName) { project, module ->
+        val src = tempDir.createVirtualDir("src-restricted-update")
+        module.createContentRoot(project, src)
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
+        val restrictedFile = edtWriteAction { src.createFile("restricted.${filetype.defaultExtension}") }
+        val pendingFile = edtWriteAction { src.createFile("pending.${filetype.defaultExtension}") }
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
+
+        val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
+        waitForVfsEvents(fileBasedIndex)
+        forceUpdate(fileBasedIndex, project)
+        val collector = fileBasedIndex.filesToUpdateCollector
+        val request = FileIndexingRequest.updateRequest(pendingFile)
+        val visits = AtomicInteger()
+        fileBasedIndex.installForceUpdateTestHook(testRootDisposable) { observedProject, requests ->
+          if (observedProject == project && requests.any { it === request }) {
+            visits.incrementAndGet()
+          }
+        }
+        collector.scheduleForUpdate(request, setOf(project), emptyList())
+
+        smartReadAction(project) {
+          fileBasedIndex.ensureUpToDate(IdIndex.NAME, project, GlobalSearchScope.everythingScope(project), restrictedFile)
+        }
+        assertThat(collector.containsFileId((pendingFile as VirtualFileWithId).id))
+          .describedAs { "The restricted update must leave the other request pending" }
+          .isTrue()
+
+        forceUpdate(fileBasedIndex, project)
+        assertThat(visits.get())
+          .describedAs { "The unrestricted pass must revisit a request seen by the restricted pass" }
+          .isEqualTo(2)
+        assertThat(collector.containsFileId(pendingFile.id))
+          .describedAs { "The unrestricted pass must complete the pending request" }
+          .isFalse()
       }
     }
   }
@@ -466,6 +515,19 @@ class DirtyFilesQueueTest {
       val fileTypeManager = FileTypeManager.getInstance() as FileTypeManagerImpl
       val corePlugin = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)!!
       fileTypeManager.registerFileType(filetype, listOf(ExtensionFileNameMatcher(filetype.defaultExtension)), testRootDisposable, corePlugin)
+    }
+  }
+
+  /** Delivers queued VFS events into the request collector. */
+  private fun waitForVfsEvents(fileBasedIndex: FileBasedIndexImpl) {
+    fileBasedIndex.changedFilesCollector.waitForVfsEventsExecuted(10, SECONDS) { }
+    fileBasedIndex.changedFilesCollector.ensureUpToDate()
+  }
+
+  /** Runs the unrestricted update path that advances the project cursor. */
+  private suspend fun forceUpdate(fileBasedIndex: FileBasedIndexImpl, project: Project) {
+    smartReadAction(project) {
+      fileBasedIndex.forceUpdateProjectInTest(project)
     }
   }
 }

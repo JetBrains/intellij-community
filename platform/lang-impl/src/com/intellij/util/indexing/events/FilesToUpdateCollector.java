@@ -73,13 +73,6 @@ public class FilesToUpdateCollector {
     }
   }
 
-  /** Returns the project cursor, or {@code defaultIfUnknown} when it is not initialized. */
-  public long cursorFor(@NotNull Project project, long defaultIfUnknown) {
-    synchronized (requestsLock) {
-      return projectCursors.cursorFor(project, defaultIfUnknown);
-    }
-  }
-
   /** Advances the cursor of the current project registration. */
   public void advanceCursor(@NotNull Project project, long version) {
     synchronized (requestsLock) {
@@ -172,45 +165,32 @@ public class FilesToUpdateCollector {
            : Collections.unmodifiableCollection(new RequestsView());
   }
 
-  /** @return requests versioned _after_ {@code exclusiveVersion} */
-  public @NotNull RequestsSnapshot collectRequestsNewerThan(long exclusiveVersion) {
-    return collectRequestsNewerThan(exclusiveVersion, true);
+  /** Captures the request suffix for the current project registration. */
+  public @NotNull RequestsSnapshot requestsFor(@Nullable Project project,
+                                               boolean filterByRequestVersion) {
+    synchronized (requestsLock) {
+      long cursor = project == null ? -1 : projectCursors.cursorFor(project, -1);
+      return collectRequestsNewerThanUnderLock(cursor, filterByRequestVersion);
+    }
   }
 
-  /**
-   * The method returns an empty snapshot when {@code exclusiveVersion} covers the current publication version.
-   *
-   * @param filterByRequestVersion if {@code true}, include only requests newer than {@code exclusiveVersion}.
-   *                               If {@code false}, include all requests after the publication version changes.
-   */
-  public @NotNull RequestsSnapshot collectRequestsNewerThan(long exclusiveVersion,
-                                                            boolean filterByRequestVersion) {
-    synchronized (requestsLock) {
-      long readUpToVersion = publishedVersion;
-      if (exclusiveVersion >= readUpToVersion) {
-        return new RequestsSnapshot(exclusiveVersion, readUpToVersion, Collections.emptyList());
-      }
-
-      //Materialising the snapshot below is an overhead, and something like a 'live Stream over myFilesToUpdate filtered by
-      // version' is much cheaper alternative. But such a 'live' collection does not provide needed consistency: in a 'live
-      // iteration' scenario new, concurrently added requests may be listed or not, depending on concurrent iterator
-      // implementation details.
-      // I.e., there is no guarantee that _all_ requests up to readUpToVersion are listed: some already added requests with
-      // (.version < readUpToVersion) may be included but some may be skipped over.
-      // But this invariant '_all_ requests up to readUpToVersion are included' is the important one: we advance per-project
-      // cursors (='already seen versions') to readUpToVersion based on this exact invariant. If there _could_ be requests with
-      // (.version < readUpToVersion) that are not listed by collectRequestsNewerThan() -- it means that 'all requests with version
-      // <= readUpToVersion -- are already seen' is not a guarantee anymore.
-      // Materialising the snapshot under the requestsLock enforces this invariant, though:
-      List<FileIndexingRequest> requests = new ArrayList<>();
-      for (VersionedRequest versionedRequest : myFilesToUpdate.values()) {
-        if ((!filterByRequestVersion || exclusiveVersion < versionedRequest.version()) &&
-            versionedRequest.version() <= readUpToVersion) {
-          requests.add(versionedRequest.request());
-        }
-      }
-      return new RequestsSnapshot(exclusiveVersion, readUpToVersion, requests);
+  //@GuardedBy(requestsLock)
+  private @NotNull RequestsSnapshot collectRequestsNewerThanUnderLock(long exclusiveVersion,
+                                                                      boolean filterByRequestVersion) {
+    long readUpToVersion = publishedVersion;
+    if (exclusiveVersion >= readUpToVersion) {
+      return new RequestsSnapshot(exclusiveVersion, readUpToVersion, Collections.emptyList());
     }
+
+    // Materialize the snapshot under the lock to include all requests through the captured boundary.
+    List<FileIndexingRequest> requests = new ArrayList<>();
+    for (VersionedRequest versionedRequest : myFilesToUpdate.values()) {
+      if ((!filterByRequestVersion || exclusiveVersion < versionedRequest.version()) &&
+          versionedRequest.version() <= readUpToVersion) {
+        requests.add(versionedRequest.request());
+      }
+    }
+    return new RequestsSnapshot(exclusiveVersion, readUpToVersion, requests);
   }
 
   public boolean isScheduledForUpdate(@NotNull VirtualFile file) {

@@ -23,24 +23,28 @@ internal class FilesToUpdateCollectorTest {
   @Test
   fun `snapshot contains only requests published after cursor`() {
     val collector = FilesToUpdateCollector()
-    val initialSnapshot = collector.collectRequestsNewerThan(0)
+    val project = mock<Project>()
+    collector.registerProject(project)
+    val initialSnapshot = collector.requestsFor(project, true)
     assertEquals(0, initialSnapshot.readUpToVersion(), "An empty collector must publish the initial boundary")
     assertEquals(emptyList<FileIndexingRequest>(), initialSnapshot.requests(), "An empty collector must not expose requests")
 
     val firstRequest = FileIndexingRequest.deleteRequest(TestVirtualFile("first.txt", 1))
     collector.scheduleForUpdate(firstRequest, emptySet(), emptyList())
-    val firstSnapshot = collector.collectRequestsNewerThan(initialSnapshot.readUpToVersion())
+    val firstSnapshot = collector.requestsFor(project, true)
     assertEquals(1, firstSnapshot.readUpToVersion(), "The first request must advance the publication boundary")
     assertEquals(listOf(firstRequest), firstSnapshot.requests(), "The first suffix must contain the first published request")
+    collector.advanceCursor(project, firstSnapshot.readUpToVersion())
 
     val secondRequest = FileIndexingRequest.deleteRequest(TestVirtualFile("second.txt", 2))
     collector.scheduleForUpdate(secondRequest, emptySet(), emptyList())
-    val secondSnapshot = collector.collectRequestsNewerThan(firstSnapshot.readUpToVersion())
+    val secondSnapshot = collector.requestsFor(project, true)
     assertEquals(2, secondSnapshot.readUpToVersion(), "The next request must advance the publication boundary again")
     assertEquals(listOf(secondRequest), secondSnapshot.requests(), "The next suffix must exclude requests covered by the cursor")
     assertEquals(listOf(firstRequest), firstSnapshot.requests(), "A later publication must not mutate an earlier snapshot")
+    collector.advanceCursor(project, secondSnapshot.readUpToVersion())
 
-    val exhaustedSnapshot = collector.collectRequestsNewerThan(secondSnapshot.readUpToVersion())
+    val exhaustedSnapshot = collector.requestsFor(project, true)
     assertEquals(2, exhaustedSnapshot.readUpToVersion(), "Reading an exhausted suffix must keep the current boundary")
     assertEquals(emptyList<FileIndexingRequest>(), exhaustedSnapshot.requests(), "A cursor at the boundary must produce an empty suffix")
   }
@@ -49,17 +53,20 @@ internal class FilesToUpdateCollectorTest {
   @Test
   fun `snapshot without version filtering contains all current requests after boundary changes`() {
     val collector = FilesToUpdateCollector()
+    val project = mock<Project>()
+    collector.registerProject(project)
     val firstRequest = FileIndexingRequest.deleteRequest(TestVirtualFile("first.txt", 1))
     collector.scheduleForUpdate(firstRequest, emptySet(), emptyList())
-    val firstBoundary = collector.collectRequestsNewerThan(0).readUpToVersion()
+    val firstSnapshot = collector.requestsFor(project, false)
+    collector.advanceCursor(project, firstSnapshot.readUpToVersion())
 
-    val unchangedSnapshot = collector.collectRequestsNewerThan(firstBoundary, false)
+    val unchangedSnapshot = collector.requestsFor(project, false)
     assertEquals(emptyList<FileIndexingRequest>(), unchangedSnapshot.requests(),
                  "An unchanged publication boundary must produce an empty snapshot")
 
     val secondRequest = FileIndexingRequest.deleteRequest(TestVirtualFile("second.txt", 2))
     collector.scheduleForUpdate(secondRequest, emptySet(), emptyList())
-    val changedSnapshot = collector.collectRequestsNewerThan(firstBoundary, false)
+    val changedSnapshot = collector.requestsFor(project, false)
 
     assertEquals(setOf(firstRequest, secondRequest), changedSnapshot.requests().toSet(),
                  "A changed boundary without version filtering must expose all current requests")
@@ -69,14 +76,17 @@ internal class FilesToUpdateCollectorTest {
   @Test
   fun `rescheduled file is visible after previous boundary`() {
     val collector = FilesToUpdateCollector()
+    val project = mock<Project>()
+    collector.registerProject(project)
     val file = TestVirtualFile("file.txt", 1)
     val firstRequest = FileIndexingRequest.deleteRequest(file)
     collector.scheduleForUpdate(firstRequest, emptySet(), emptyList())
-    val firstSnapshot = collector.collectRequestsNewerThan(0)
+    val firstSnapshot = collector.requestsFor(project, true)
+    collector.advanceCursor(project, firstSnapshot.readUpToVersion())
 
     val rescheduledRequest = FileIndexingRequest.deleteRequest(file)
     collector.scheduleForUpdate(rescheduledRequest, emptySet(), emptyList())
-    val rescheduledSnapshot = collector.collectRequestsNewerThan(firstSnapshot.readUpToVersion())
+    val rescheduledSnapshot = collector.requestsFor(project, true)
 
     assertEquals(2, rescheduledSnapshot.readUpToVersion(), "Rescheduling must publish a new generation")
     assertEquals(1, rescheduledSnapshot.requests().size, "The suffix must expose only the current request for a file")
@@ -109,10 +119,36 @@ internal class FilesToUpdateCollectorTest {
     }
   }
 
+  /** Ensures each project can consume its own suffix while requests remain available to projects that lag behind. */
+  @Test
+  fun `project cursors select independent request suffixes`() {
+    val collector = FilesToUpdateCollector()
+    val firstProject = mock<Project>()
+    val secondProject = mock<Project>()
+    collector.registerProject(firstProject)
+    collector.registerProject(secondProject)
+
+    val request = FileIndexingRequest.deleteRequest(TestVirtualFile("file.txt", 1))
+    collector.scheduleForUpdate(request, emptySet(), emptyList())
+
+    val firstSnapshot = collector.requestsFor(firstProject, true)
+    collector.advanceCursor(firstProject, firstSnapshot.readUpToVersion())
+    val repeatedFirstSnapshot = collector.requestsFor(firstProject, true)
+    val secondSnapshot = collector.requestsFor(secondProject, true)
+
+    assertEquals(emptyList<FileIndexingRequest>(), repeatedFirstSnapshot.requests(),
+                 "A project at the publication boundary must not reconsider an old request")
+    assertEquals(listOf(request), secondSnapshot.requests(), "A project with an uninitialized cursor must still receive the request")
+    assertEquals(listOf(request), collector.filesToUpdate.toList(),
+                 "Advancing one project must not remove work needed by another project")
+  }
+
   /** Ensures a snapshot cannot observe the collector while a request publication is incomplete. */
   @Test
   fun `snapshot waits for request publication boundary`() {
     val collector = FilesToUpdateCollector()
+    val project = mock<Project>()
+    collector.registerProject(project)
     val request = FileIndexingRequest.deleteRequest(TestVirtualFile("file.txt", 1))
     val dirtyUpdateStarted = CountDownLatch(1)
     val allowDirtyUpdate = CountDownLatch(1)
@@ -136,7 +172,7 @@ internal class FilesToUpdateCollectorTest {
       val snapshotStarted = CountDownLatch(1)
       val snapshotFuture = executor.submit<FilesToUpdateCollector.RequestsSnapshot> {
         snapshotStarted.countDown()
-        collector.collectRequestsNewerThan(0)
+        collector.requestsFor(project, true)
       }
       assertTrue(snapshotStarted.await(10, TimeUnit.SECONDS), "The snapshot task must start while publication is blocked")
       assertThrows<TimeoutException>("A snapshot must not complete at an intermediate publication boundary") {
