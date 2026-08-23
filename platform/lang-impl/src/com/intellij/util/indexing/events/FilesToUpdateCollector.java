@@ -11,14 +11,18 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -36,6 +40,7 @@ public class FilesToUpdateCollector {
   ///  processed by the indexing pipeline, and the indexes are updated accordingly.
   /// The project(s) owner(s) for a `fileId` is typically transferred from the previous phase ([ChangedFilesCollector])
   private final DirtyFiles myDirtyFiles = new DirtyFiles();
+  private final VisitedRequestsVersionPerProject projectCursors = new VisitedRequestsVersionPerProject();
 
   /** Increments on each request publication. */
   //@GuardedBy("requestsLock")
@@ -49,6 +54,38 @@ public class FilesToUpdateCollector {
 
   /** Increments on each change in myFilesToUpdate content -- i.e., it is 'version' of myFilesToUpdate content */
   private final AtomicLong modificationCount = new AtomicLong(0);
+
+  /** Registers the project cursor and its dirty-file state as one operation. */
+  public void registerProject(@NotNull Project project) {
+    synchronized (requestsLock) {
+      if (projectCursors.registerProject(project)) {
+        myDirtyFiles.addProject(project);
+      }
+    }
+  }
+
+  /** Removes the project cursor and its dirty-file state as one operation. */
+  public void unregisterProject(@NotNull Project project) {
+    synchronized (requestsLock) {
+      if (projectCursors.unregisterProject(project)) {
+        myDirtyFiles.removeProject(project);
+      }
+    }
+  }
+
+  /** Returns the project cursor, or {@code defaultIfUnknown} when it is not initialized. */
+  public long cursorFor(@NotNull Project project, long defaultIfUnknown) {
+    synchronized (requestsLock) {
+      return projectCursors.cursorFor(project, defaultIfUnknown);
+    }
+  }
+
+  /** Advances the cursor of the current project registration. */
+  public void advanceCursor(@NotNull Project project, long version) {
+    synchronized (requestsLock) {
+      projectCursors.advanceCursor(project, version);
+    }
+  }
 
   /**
    * @param containingProjects projects request.file is belong to. Used mostly for diagnostics
@@ -176,7 +213,7 @@ public class FilesToUpdateCollector {
     }
   }
 
-  public boolean isScheduledForUpdate(VirtualFile file) {
+  public boolean isScheduledForUpdate(@NotNull VirtualFile file) {
     return containsFileId(FileBasedIndex.getFileId(file));
   }
 
@@ -232,6 +269,118 @@ public class FilesToUpdateCollector {
     @Override
     public int size() {
       return myFilesToUpdate.size();
+    }
+  }
+
+  /**
+   * Tracks [project -> max(version of indexing requests already visited by the project)].
+   * Not thread-safe: owner must supply a synchronization, if needed.
+   */
+  @Internal
+  @VisibleForTesting
+  public static final class VisitedRequestsVersionPerProject {
+    /// Values:
+    /// - `cursors[project].cursor = OptionalLong(actualCursorValue)` => project is open and registered, and its cursor is initialized
+    /// - `cursors[project].cursor = OptionalLong.empty()`            => project is open and registered, but its cursor is not initialized
+    /// - `cursors[project] = null`                                   => project is not open and registered
+    private final Map<Project, Registration> cursors = new HashMap<>();
+
+    /**
+     * Registers a project for tracking; with cursor initially un-initialized.
+     * Does not modify an existing registration.
+     */
+    public boolean registerProject(@NotNull Project project) {
+      if (cursors.containsKey(project)) {
+        return false;
+      }
+      cursors.put(project, new Registration());
+      return true;
+    }
+
+    /** Removes a project from tracking. */
+    public boolean unregisterProject(@NotNull Project project) {
+      return cursors.remove(project) != null;
+    }
+
+    /** Returns the current registration, or {@code null} for an unregistered project. */
+    @Nullable Registration registrationFor(@NotNull Project project) {
+      return cursors.get(project);
+    }
+
+    /** @return the project cursor, or {@code defaultIfUnknown} if the project is uninitialized or unregistered */
+    public long cursorFor(@NotNull Project project, long defaultIfUnknown) {
+      Registration registration = cursors.get(project);
+      return registration == null ? defaultIfUnknown : registration.cursor().orElse(defaultIfUnknown);
+    }
+
+    /** Advances a registered cursor to {@code version} */
+    @VisibleForTesting
+    public void advanceCursor(@NotNull Project project, long version) {
+      Registration registration = cursors.get(project);
+      if (registration != null) {
+        advanceCursor(project, registration, version);
+      }
+    }
+
+    /**
+     * Advances the expected registration to {@code advanceToVersion}.
+     * Does not update if a project was unregistered/registered back (i.e. a current registration != expectedRegistration)
+     */
+    void advanceCursor(@NotNull Project project,
+                       @NotNull Registration expectedRegistration,
+                       long advanceToVersion) {
+      Registration currentRegistration = cursors.get(project);
+      if (currentRegistration != expectedRegistration) {
+        return;
+      }
+
+      OptionalLong current = currentRegistration.cursor();
+      if (current.isEmpty() || current.getAsLong() < advanceToVersion) {
+        currentRegistration.advanceTo(advanceToVersion);
+      }
+    }
+
+    /**
+     * @return the minimum cursor if all registered projects initialized their cursors;
+     *         empty if a cursor is uninitialized or no project is registered.
+     */
+    public @NotNull OptionalLong minimumCursor() {
+      if (cursors.isEmpty()) {
+        return OptionalLong.empty();
+      }
+
+      long minimum = Long.MAX_VALUE;
+      for (Registration registration : cursors.values()) {
+        OptionalLong cursor = registration.cursor();
+        if (cursor.isEmpty()) {
+          return OptionalLong.empty();
+        }
+        minimum = Math.min(minimum, cursor.getAsLong());
+      }
+      return OptionalLong.of(minimum);
+    }
+
+    /**
+     * Stores cursor for a project
+     * Introduced to differentiate the same project if it is registered/unregistered multiple times
+     */
+    static final class Registration {
+      @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+      private OptionalLong cursor = OptionalLong.empty();
+
+      @NotNull OptionalLong cursor() {
+        return cursor;
+      }
+
+      void advanceTo(long version) {
+        cursor = OptionalLong.of(version);
+      }
+
+
+      @Override
+      public String toString() {
+        return "Registration[cursor: " + cursor + ']';
+      }
     }
   }
 }

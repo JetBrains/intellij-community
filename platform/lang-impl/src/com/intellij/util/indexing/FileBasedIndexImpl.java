@@ -175,10 +175,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   /** How often, on average, flush each index to the disk */
   private static final long FLUSHING_PERIOD_MS = SECONDS.toMillis(FlushingDaemon.FLUSHING_PERIOD_IN_SECONDS);
   /**
-   * If true -- track {@link FilesToUpdateCollector#modificationCount()} per project, and skip looking for
-   * updates if current modCount was already processed per project
+   * If true, track the published request boundary per project and skip looking for updates when it is already processed.
+   * The system property keeps its historical name for compatibility.
+   * TODO RC: change the property name so it matches the constant name
    */
-  private static final boolean USE_MOD_COUNT_TO_SKIP_REPEATING_UPDATES =
+  private static final boolean USE_REQUEST_VERSION_TO_SKIP_REPEATING_UPDATES =
     getBooleanProperty("FileBasedIndexImpl.USE_MOD_COUNT_TO_SKIP_REPEATING_UPDATES", true);
 
   final CoroutineScope coroutineScope;
@@ -372,11 +373,14 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @Override
   public void onProjectClosing(@NotNull Project project) {
     myIndexableSets.removeIf(p -> p.second.equals(project));
+
     Ref<Long> lastSeenIndex = myLastSeenIndexesInOrphanQueue.remove(project);
     persistDirtyFiles(project, lastSeenIndex.isNull() ? 0 : lastSeenIndex.get());
+
+    myFilesToUpdateCollector.unregisterProject(project);
     getChangedFilesCollector().getDirtyFiles().removeProject(project);
-    myFilesToUpdateCollector.getDirtyFiles().removeProject(project);
     myDirtyFiles.removeProject(project);
+
     myIndexableFilesFilterHolder.onProjectClosing(project, vfsCreationStamp);
   }
 
@@ -429,7 +433,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   void registerProject(@NotNull Project project, @NotNull Collection<Integer> projectDirtyFileIdsFromLastSession) {
     getChangedFilesCollector().getDirtyFiles().addProject(project);
-    myFilesToUpdateCollector.getDirtyFiles().addProject(project);
+    myFilesToUpdateCollector.registerProject(project);
     myLastSeenIndexesInOrphanQueue.put(project, new Ref<>(null));
     // don't lose these ids if the project is closed before indexes are removed
     myDirtyFiles.addProject(project).addFiles(projectDirtyFileIdsFromLastSession);
@@ -1932,7 +1936,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                            @NotNull ProjectFilesCondition filter) {
     runIfHaveNewUpdatesFor(
       project,
-      skipUpdatingIfNoNewUpdatesAvailable && USE_MOD_COUNT_TO_SKIP_REPEATING_UPDATES,
+      skipUpdatingIfNoNewUpdatesAvailable && USE_REQUEST_VERSION_TO_SKIP_REPEATING_UPDATES,
       () -> {
         Collection<FileIndexingRequest> allFilesToUpdate = getAllFilesToUpdate();
         if (!allFilesToUpdate.isEmpty()) {
@@ -1952,8 +1956,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       }
     );
   }
-
-  private static final Key<Long> LAST_PROCESSED_MOD_COUNT = Key.create("LAST_PROCESSED_MOD_COUNT");
 
   /**
    * Runs the task if myFilesToUpdateCollector _likely_ has some new updates (for the project), since the last time this method was called.
@@ -1980,24 +1982,26 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       return;
     }
 
-    Long lastProcessedModCount = project.getUserData(LAST_PROCESSED_MOD_COUNT);
-    long currentModCount = myFilesToUpdateCollector.modificationCount();
-    if (lastProcessedModCount != null && lastProcessedModCount >= currentModCount) {
+    long lastProcessedVersionValue = myFilesToUpdateCollector.cursorFor(project, -1);
+    FilesToUpdateCollector.RequestsSnapshot snapshot = myFilesToUpdateCollector.collectRequestsNewerThan(lastProcessedVersionValue);
+    long currentPublishedVersion = snapshot.readUpToVersion();
+    if (lastProcessedVersionValue >= 0 && lastProcessedVersionValue >= currentPublishedVersion) {
       if (LOG.isDebugEnabled()) {
         THROTTLED_LOG_FAST.debug(
-          () -> "modCountCheck[last: " + lastProcessedModCount + " >= current: " + currentModCount + "] -> skip updates");
+          () -> "requestsVersionCheck[last: " + lastProcessedVersionValue + " >= current: " + currentPublishedVersion + "] -> skip updates"
+        );
       }
       //everything is already processed
       return;
     }
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("modCountCheck[last: " + lastProcessedModCount + " < current: " + currentModCount + "] -> do updates");
+      LOG.debug("requestsVersionCheck[last: " + lastProcessedVersionValue + " < current: " + currentPublishedVersion + "] -> do updates");
     }
 
     task.run();
-    //update last_processed only if task completed successfully:
-    project.putUserData(LAST_PROCESSED_MOD_COUNT, currentModCount);
+    // Advance only to the boundary captured before the task: concurrently published requests remain for the next pass.
+    myFilesToUpdateCollector.advanceCursor(project, currentPublishedVersion);
   }
 
   @Internal

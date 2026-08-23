@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.mockito.kotlin.mock
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -80,6 +81,32 @@ internal class FilesToUpdateCollectorTest {
     assertEquals(2, rescheduledSnapshot.readUpToVersion(), "Rescheduling must publish a new generation")
     assertEquals(1, rescheduledSnapshot.requests().size, "The suffix must expose only the current request for a file")
     assertSame(rescheduledRequest, rescheduledSnapshot.requests().single(), "The suffix must expose the rescheduled request instance")
+  }
+
+  /** Ensures concurrent registration creates one dirty-file entry. */
+  @Test
+  fun `concurrent project registration is idempotent`() {
+    val collector = FilesToUpdateCollector()
+    val project = mock<Project>()
+    val start = CountDownLatch(1)
+    val executor = Executors.newFixedThreadPool(2)
+
+    try {
+      val registrations = List(2) {
+        executor.submit {
+          assertTrue(start.await(10, TimeUnit.SECONDS), "Both registration tasks must start together")
+          collector.registerProject(project)
+        }
+      }
+      start.countDown()
+      registrations.forEach { it.get(10, TimeUnit.SECONDS) }
+
+      assertEquals(listOf(project), collector.dirtyFiles.getProjects(), "Concurrent registration must create one dirty-file entry")
+    }
+    finally {
+      start.countDown()
+      executor.shutdownNow()
+    }
   }
 
   /** Ensures a snapshot cannot observe the collector while a request publication is incomplete. */
