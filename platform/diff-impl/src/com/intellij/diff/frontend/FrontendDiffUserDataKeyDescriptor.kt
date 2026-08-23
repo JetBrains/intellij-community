@@ -38,6 +38,10 @@ interface FrontendDiffUserDataKeyDescriptor<T : Any> {
     fun collect(holder: UserDataHolder): List<FrontendDiffUserDataValue<*>> =
       EP_NAME.extensionList.mapNotNull { descriptor -> descriptor.valueOf(holder) }
 
+    @Suppress("UNCHECKED_CAST")
+    fun <T : Any> find(key: Key<T>): FrontendDiffUserDataKeyDescriptor<T>? =
+      EP_NAME.extensionList.firstOrNull { descriptor -> descriptor.key == key } as? FrontendDiffUserDataKeyDescriptor<T>
+
     private fun <T : Any> FrontendDiffUserDataKeyDescriptor<T>.valueOf(holder: UserDataHolder): FrontendDiffUserDataValue<T>? =
       holder.getUserData(key)?.let { FrontendDiffUserDataValue(this, it) }
   }

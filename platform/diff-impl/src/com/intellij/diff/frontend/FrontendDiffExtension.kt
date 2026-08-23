@@ -131,6 +131,6 @@ object FrontendDiffContentKeys {
 
 @ApiStatus.Internal
 interface FrontendDiffExtensionData {
-  fun <T : Any> getContextData(descriptor: FrontendDiffUserDataKeyDescriptor<T>): T?
-  fun <T : Any> getRequestData(descriptor: FrontendDiffUserDataKeyDescriptor<T>): T?
+  fun <T : Any> getContextData(key: Key<T>): T?
+  fun <T : Any> getRequestData(key: Key<T>): T?
 }

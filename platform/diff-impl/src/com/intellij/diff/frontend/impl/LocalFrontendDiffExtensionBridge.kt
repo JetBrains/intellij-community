@@ -17,7 +17,6 @@ import com.intellij.diff.frontend.FrontendDiffExtensionData
 import com.intellij.diff.frontend.FrontendDiffLineLocation
 import com.intellij.diff.frontend.FrontendDiffLineMapper
 import com.intellij.diff.frontend.FrontendDiffRequest
-import com.intellij.diff.frontend.FrontendDiffUserDataKeyDescriptor
 import com.intellij.diff.frontend.FrontendDiffViewer
 import com.intellij.diff.frontend.FrontendUnifiedDiffMapping
 import com.intellij.diff.requests.ContentDiffRequest
@@ -34,6 +33,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
@@ -150,9 +150,9 @@ private class LocalFrontendDiffExtensionData(
   private val context: DiffContext,
   private val request: DiffRequest,
 ) : FrontendDiffExtensionData {
-  override fun <T : Any> getContextData(descriptor: FrontendDiffUserDataKeyDescriptor<T>): T? = context.getUserData(descriptor.key)
+  override fun <T : Any> getContextData(key: Key<T>): T? = context.getUserData(key)
 
-  override fun <T : Any> getRequestData(descriptor: FrontendDiffUserDataKeyDescriptor<T>): T? = request.getUserData(descriptor.key)
+  override fun <T : Any> getRequestData(key: Key<T>): T? = request.getUserData(key)
 }
 
 /**
