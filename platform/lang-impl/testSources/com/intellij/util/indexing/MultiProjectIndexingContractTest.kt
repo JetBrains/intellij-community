@@ -256,7 +256,6 @@ internal class MultiProjectIndexingContractTest {
   /** Verifies that closing the owner of published updates does not leave them permanently pending. */
   @Test
   @Timeout(60)
-  @Disabled("To be fixed")
   fun `closing project with pending updates eventually drains foreign requests`(): Unit = timeoutRunBlocking(timeout = 55.seconds) {
     val indexToTest = indexFixture.get()
     val scenarioModel = ScenarioModel()

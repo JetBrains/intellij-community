@@ -182,8 +182,13 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
    * The system property keeps its historical name for compatibility.
    * TODO RC: change the property name so it matches the constant name
    */
-  private static final boolean USE_REQUEST_VERSION_TO_SKIP_REPEATING_UPDATES =
+  @VisibleForTesting
+  public static final boolean USE_REQUEST_VERSION_TO_SKIP_REPEATING_UPDATES =
     getBooleanProperty("FileBasedIndexImpl.USE_MOD_COUNT_TO_SKIP_REPEATING_UPDATES", true);
+  /** If true, remove requests after all open projects visit them. */
+  @VisibleForTesting
+  public static final boolean CLEAN_REQUESTS_VISITED_BY_ALL_PROJECTS =
+    getBooleanProperty("FileBasedIndexImpl.CLEAN_REQUESTS_VISITED_BY_ALL_PROJECTS", true);
 
   final CoroutineScope coroutineScope;
 
@@ -199,7 +204,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private final NotNullLazyValue<ChangedFilesCollector> myChangedFilesCollector = NotNullLazyValue.createValue(
     () -> AsyncEventSupport.EP_NAME.findExtensionOrFail(ChangedFilesCollector.class)
   );
-  private final FilesToUpdateCollector myFilesToUpdateCollector = new FilesToUpdateCollector();
+  private final FilesToUpdateCollector myFilesToUpdateCollector = new FilesToUpdateCollector(CLEAN_REQUESTS_VISITED_BY_ALL_PROJECTS);
   private volatile @Nullable BiConsumer<@Nullable Project, @NotNull List<FileIndexingRequest>> myForceUpdateTestHook;
   private final List<Pair<IndexableFileSet, Project>> myIndexableSets = createLockFreeCopyOnWriteList();
 

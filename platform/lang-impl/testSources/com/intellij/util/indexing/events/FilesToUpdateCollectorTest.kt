@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.mock
 import java.util.concurrent.CountDownLatch
@@ -54,7 +55,7 @@ internal class FilesToUpdateCollectorTest {
   /** Ensures the boundary can skip an unchanged collector without hiding older pending requests after a new publication. */
   @Test
   fun `snapshot without version filtering contains all current requests after boundary changes`() {
-    val collector = FilesToUpdateCollector()
+    val collector = FilesToUpdateCollector(false)
     val project = mock<Project>()
     collector.registerProject(project)
     val firstRequest = FileIndexingRequest.deleteRequest(TestVirtualFile("first.txt", 1))
@@ -170,6 +171,163 @@ internal class FilesToUpdateCollectorTest {
     assertEquals(listOf(request), secondSnapshot.requests(), "A project with an uninitialized cursor must still receive the request")
     assertEquals(listOf(request), collector.filesToUpdate.toList(),
                  "Advancing one project must not remove work needed by another project")
+  }
+
+  /** Ensures collection removes the inclusive cleanup boundary and preserves later requests. */
+  @Test
+  fun `collection removes requests through cleanup boundary`() {
+    val collector = FilesToUpdateCollector()
+    val firstProject = mock<Project>()
+    val secondProject = mock<Project>()
+    collector.registerProject(firstProject)
+    collector.registerProject(secondProject)
+    val firstRequest = FileIndexingRequest.deleteRequest(TestVirtualFile("first.txt", 1))
+    val secondRequest = FileIndexingRequest.deleteRequest(TestVirtualFile("second.txt", 2))
+    collector.scheduleForUpdate(firstRequest, emptySet(), emptyList())
+    collector.advanceWithoutProcessing(firstProject, collector.requestsFor(firstProject, true))
+    collector.advanceWithoutProcessing(secondProject, collector.requestsFor(secondProject, true))
+    collector.scheduleForUpdate(secondRequest, emptySet(), emptyList())
+
+    val snapshot = collector.requestsFor(firstProject, true)
+
+    assertEquals(listOf(secondRequest), snapshot.requests(), "The snapshot must contain only requests after the project cursor")
+    assertEquals(1, snapshot.droppedRequestsBeforeVersion(), "The snapshot must report the applied cleanup boundary")
+    assertEquals(1, snapshot.droppedRequestsCount(), "The collection pass must remove the request at the cleanup boundary")
+    assertFalse(collector.containsFileId(1), "The request covered by both projects must be removed")
+    assertFalse(collector.dirtyFiles.getProjectDirtyFiles(null)!!.containsFile(1),
+                "Cleanup must remove dirty metadata together with its request")
+    assertTrue(collector.containsFileId(2), "A request after the cleanup boundary must remain available")
+    assertEquals(2, snapshot.readUpToVersion(), "Cleanup must preserve the publication boundary")
+  }
+
+  /** Ensures a restricted collection accepts a cleanup boundary after its synthetic cursor. */
+  @Test
+  fun `restricted collection permits cleanup after synthetic cursor`() {
+    val collector = FilesToUpdateCollector()
+    val registeredProject = mock<Project>()
+    val unregisteredProject = mock<Project>()
+    collector.registerProject(registeredProject)
+    val coveredRequest = FileIndexingRequest.deleteRequest(TestVirtualFile("covered.txt", 1))
+    val pendingRequest = FileIndexingRequest.deleteRequest(TestVirtualFile("pending.txt", 2))
+    collector.scheduleForUpdate(coveredRequest, emptySet(), emptyList())
+    collector.advanceWithoutProcessing(registeredProject, collector.requestsFor(registeredProject, false))
+    collector.scheduleForUpdate(pendingRequest, emptySet(), emptyList())
+
+    val snapshot = assertDoesNotThrow {
+      collector.requestsFor(unregisteredProject, false)
+    }
+
+    assertEquals(listOf(pendingRequest), snapshot.requests(), "The restricted collection must retain requests after the cleanup boundary")
+    assertEquals(1, snapshot.droppedRequestsCount(), "The restricted collection must remove the covered request")
+  }
+
+  /** Ensures project removal applies the new shared cleanup boundary. */
+  @Test
+  fun `project removal cleans requests through remaining cursor`() {
+    val collector = FilesToUpdateCollector()
+    val firstProject = mock<Project>()
+    val secondProject = mock<Project>()
+    val uninitializedProject = mock<Project>()
+    collector.registerProject(firstProject)
+    collector.registerProject(secondProject)
+    collector.registerProject(uninitializedProject)
+    val firstRequest = FileIndexingRequest.deleteRequest(TestVirtualFile("first.txt", 1))
+    val secondRequest = FileIndexingRequest.deleteRequest(TestVirtualFile("second.txt", 2))
+    collector.scheduleForUpdate(firstRequest, emptySet(), emptyList())
+    collector.advanceWithoutProcessing(firstProject, collector.requestsFor(firstProject, true))
+    collector.advanceWithoutProcessing(secondProject, collector.requestsFor(secondProject, true))
+    collector.scheduleForUpdate(secondRequest, emptySet(), emptyList())
+    collector.advanceWithoutProcessing(firstProject, collector.requestsFor(firstProject, true))
+
+    collector.unregisterProject(uninitializedProject)
+
+    assertFalse(collector.containsFileId(1), "Project removal must clean the request at the remaining cursor")
+    assertFalse(collector.dirtyFiles.getProjectDirtyFiles(null)!!.containsFile(1),
+                "Project removal must clean dirty metadata with its request")
+    assertTrue(collector.containsFileId(2), "Project removal must preserve requests after the remaining cursor")
+  }
+
+  /** Ensures cleanup removes a covered request and preserves a later generation of another file. */
+  @Test
+  fun `cleanup preserves rescheduled request beyond cursor`() {
+    val collector = FilesToUpdateCollector()
+    val firstProject = mock<Project>()
+    val secondProject = mock<Project>()
+    collector.registerProject(firstProject)
+    collector.registerProject(secondProject)
+    val rescheduledFile = TestVirtualFile("rescheduled.txt", 1)
+    val coveredFile = TestVirtualFile("covered.txt", 2)
+    collector.scheduleForUpdate(FileIndexingRequest.deleteRequest(rescheduledFile), emptySet(), emptyList())
+    collector.scheduleForUpdate(FileIndexingRequest.deleteRequest(coveredFile), emptySet(), emptyList())
+    collector.advanceWithoutProcessing(firstProject, collector.requestsFor(firstProject, true))
+    collector.advanceWithoutProcessing(secondProject, collector.requestsFor(secondProject, true))
+    val rescheduledRequest = FileIndexingRequest.deleteRequest(rescheduledFile)
+    collector.scheduleForUpdate(rescheduledRequest, emptySet(), emptyList())
+
+    val snapshot = collector.requestsFor(firstProject, true)
+
+    assertEquals(listOf(rescheduledRequest), snapshot.requests(), "The new generation must remain visible after the project cursor")
+    assertEquals(1, snapshot.droppedRequestsCount(), "Cleanup must remove the covered request at the cleanup boundary")
+    assertFalse(collector.containsFileId(coveredFile.id), "Cleanup must remove the covered request")
+    assertEquals(listOf(rescheduledRequest), collector.filesToUpdate.toList(),
+                 "The current generation beyond the cursor must remain scheduled")
+  }
+
+  /** Ensures the unchanged publication fast path does not scan the request map for cleanup. */
+  @Test
+  fun `unchanged publication skips cleanup traversal`() {
+    val collector = FilesToUpdateCollector()
+    val project = mock<Project>()
+    collector.registerProject(project)
+    val request = FileIndexingRequest.deleteRequest(TestVirtualFile("file.txt", 1))
+    collector.scheduleForUpdate(request, emptySet(), emptyList())
+    collector.advanceWithoutProcessing(project, collector.requestsFor(project, true))
+
+    val snapshot = collector.requestsFor(project, true)
+
+    assertEquals(emptyList<FileIndexingRequest>(), snapshot.requests(), "The current cursor must produce an empty snapshot")
+    assertEquals(0, snapshot.droppedRequestsCount(), "The fast path must not traverse the request map for cleanup")
+    assertTrue(collector.isCurrent(request), "The request must remain until a later collection traverses the request map")
+  }
+
+  /** Ensures an unregistered project gets every request after the shared cleanup boundary. */
+  @Test
+  fun `unregistered project reads remaining requests after cleanup`() {
+    val collector = FilesToUpdateCollector()
+    val registeredProject = mock<Project>()
+    val unregisteredProject = mock<Project>()
+    collector.registerProject(registeredProject)
+    val coveredRequest = FileIndexingRequest.deleteRequest(TestVirtualFile("covered.txt", 1))
+    collector.scheduleForUpdate(coveredRequest, emptySet(), emptyList())
+    collector.advanceWithoutProcessing(registeredProject, collector.requestsFor(registeredProject, true))
+
+    val pendingRequest = FileIndexingRequest.deleteRequest(TestVirtualFile("pending.txt", 2))
+    collector.scheduleForUpdate(pendingRequest, emptySet(), emptyList())
+    val snapshot = collector.requestsFor(unregisteredProject, true)
+
+    assertEquals(listOf(pendingRequest), snapshot.requests(),
+                 "The unregistered project must receive every request after cleanup")
+    assertFalse(collector.isCurrent(coveredRequest), "The read must remove the request before the shared cursor")
+    assertTrue(collector.isCurrent(pendingRequest), "The read must preserve the request after the shared cursor")
+  }
+
+  /** Ensures a null project gets every request after the shared cleanup boundary. */
+  @Test
+  fun `null project reads remaining requests after cleanup`() {
+    val collector = FilesToUpdateCollector()
+    val registeredProject = mock<Project>()
+    collector.registerProject(registeredProject)
+    val coveredRequest = FileIndexingRequest.deleteRequest(TestVirtualFile("covered.txt", 1))
+    collector.scheduleForUpdate(coveredRequest, emptySet(), emptyList())
+    collector.advanceWithoutProcessing(registeredProject, collector.requestsFor(registeredProject, true))
+
+    val pendingRequest = FileIndexingRequest.deleteRequest(TestVirtualFile("pending.txt", 2))
+    collector.scheduleForUpdate(pendingRequest, emptySet(), emptyList())
+    val snapshot = collector.requestsFor(null, true)
+
+    assertEquals(listOf(pendingRequest), snapshot.requests(), "A null project must receive every request after cleanup")
+    assertFalse(collector.isCurrent(coveredRequest), "The read must remove the request before the shared cursor")
+    assertTrue(collector.isCurrent(pendingRequest), "The read must preserve the request after the shared cursor")
   }
 
   /** Ensures a snapshot cannot observe the collector while a request publication is incomplete. */

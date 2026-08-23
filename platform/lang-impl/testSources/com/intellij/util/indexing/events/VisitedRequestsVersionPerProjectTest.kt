@@ -50,6 +50,42 @@ internal class VisitedRequestsVersionPerProjectTest {
     assertEquals(10, registry.minimumCursor().asLong, "A closed project must stop constraining the shared boundary")
   }
 
+  /** Ensures a new project invalidates a minimum until its cursor becomes initialized. */
+  @Test
+  fun `new project invalidates initialized minimum`() {
+    val registry = FilesToUpdateCollector.VisitedRequestsVersionPerProject()
+    val firstProject = mock<Project>()
+    val secondProject = mock<Project>()
+
+    registry.registerProject(firstProject)
+    registry.advanceCursor(firstProject, 5)
+    assertEquals(5, registry.minimumCursor().asLong, "The initialized project must define the first minimum")
+
+    registry.registerProject(secondProject)
+    assertTrue(registry.minimumCursor().isEmpty, "The new uninitialized project must invalidate the cached minimum")
+    registry.advanceCursor(secondProject, 8)
+    assertEquals(5, registry.minimumCursor().asLong, "The earlier project must define the minimum after initialization")
+  }
+
+  /** Ensures equal minimum cursors constrain the minimum until each slow project advances. */
+  @Test
+  fun `equal minimum advances after every slow project`() {
+    val registry = FilesToUpdateCollector.VisitedRequestsVersionPerProject()
+    val firstProject = mock<Project>()
+    val secondProject = mock<Project>()
+
+    registry.registerProject(firstProject)
+    registry.registerProject(secondProject)
+    registry.advanceCursor(firstProject, 5)
+    registry.advanceCursor(secondProject, 5)
+
+    registry.advanceCursor(firstProject, 8)
+    assertEquals(5, registry.minimumCursor().asLong, "The second project must keep the shared minimum at its cursor")
+
+    registry.advanceCursor(secondProject, 7)
+    assertEquals(7, registry.minimumCursor().asLong, "The smaller advanced cursor must become the new minimum")
+  }
+
   /** Ensures a completion racing with project close cannot recreate a removed registry entry. */
   @Test
   fun `advance does not resurrect unregistered project`() {
@@ -59,7 +95,6 @@ internal class VisitedRequestsVersionPerProjectTest {
     registry.unregisterProject(project)
 
     registry.advanceCursor(project, 5)
-
     registry.registerProject(project)
 
     assertEquals(-1, registry.cursorFor(project, -1), "A completion after close must not restore a cursor")

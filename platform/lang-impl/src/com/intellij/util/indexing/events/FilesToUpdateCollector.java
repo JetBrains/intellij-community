@@ -34,6 +34,7 @@ public class FilesToUpdateCollector {
   private static final Logger LOG = Logger.getInstance(FilesToUpdateCollector.class);
   private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, 1000);
 
+  private final boolean cleanRequestsVisitedByAllProjects;
   private final ConcurrentIntObjectMap<VersionedRequest> myFilesToUpdate = createConcurrentIntObjectMap();
 
   /// This [DirtyFiles] container tracks the ([FileIndexingRequest] -> indexing) phase of the pipeline: `fileId` is
@@ -56,6 +57,16 @@ public class FilesToUpdateCollector {
   /** Increments on each change in myFilesToUpdate content -- i.e., it is 'version' of myFilesToUpdate content */
   private final AtomicLong modificationCount = new AtomicLong(0);
 
+  /** Creates a collector that removes requests after all registered projects visit them. */
+  public FilesToUpdateCollector() {
+    this(/* cleanRequestsVisitedByAllProjects: */ true);
+  }
+
+  /** Creates a collector with the specified policy for requests that all projects visited. */
+  public FilesToUpdateCollector(boolean cleanRequestsVisitedByAllProjects) {
+    this.cleanRequestsVisitedByAllProjects = cleanRequestsVisitedByAllProjects;
+  }
+
   /** Registers the project cursor and its dirty-file state as one operation. */
   public void registerProject(@NotNull Project project) {
     synchronized (requestsLock) {
@@ -70,6 +81,7 @@ public class FilesToUpdateCollector {
     synchronized (requestsLock) {
       if (projectCursors.unregisterProject(project)) {
         myDirtyFiles.removeProject(project);
+        removeRequestsVisitedByAllProjects();
       }
     }
   }
@@ -166,6 +178,19 @@ public class FilesToUpdateCollector {
     return currentRequest != null && currentRequest.request() == request;
   }
 
+  /** Removes requests whose version is not newer than the specified boundary. */
+  private void removeRequestsUpToVersion(long dropRequestsNotNewerThan) {
+    synchronized (requestsLock) {
+      for (Iterator<VersionedRequest> iterator = myFilesToUpdate.values().iterator(); iterator.hasNext(); ) {
+        VersionedRequest request = iterator.next();
+        if (request.version() <= dropRequestsNotNewerThan) {
+          iterator.remove();
+          myDirtyFiles.removeFile(request.request().getFileId());
+        }
+      }
+    }
+  }
+
   public void clear() {
     synchronized (requestsLock) {
       myDirtyFiles.clear();
@@ -188,13 +213,14 @@ public class FilesToUpdateCollector {
            : Collections.unmodifiableCollection(new RequestsView());
   }
 
-  /** Captures the request suffix for the current project registration. */
+  /** Captures requests for the current project registration and removes the prefix that all projects visited. */
   public @NotNull RequestsSnapshot requestsFor(@Nullable Project project,
                                                boolean filterByRequestVersion) {
     synchronized (requestsLock) {
       VisitedRequestsVersionPerProject.Registration registration = project == null ? null : projectCursors.registrationFor(project);
-      long cursor = registration == null ? -1 : registration.cursor().orElse(-1);
-      return collectRequestsNewerThanUnderLock(cursor, filterByRequestVersion, registration);
+      long dropRequestsNotNewerThan = cleanRequestsVisitedByAllProjects ? projectCursors.minimumCursor().orElse(-1L) : -1L;
+      long cursor = registration == null ? dropRequestsNotNewerThan : registration.cursor().orElse(-1L);
+      return collectRequestsNewerThanUnderLock(cursor, filterByRequestVersion, dropRequestsNotNewerThan, registration);
     }
   }
 
@@ -202,22 +228,40 @@ public class FilesToUpdateCollector {
   private @NotNull RequestsSnapshot collectRequestsNewerThanUnderLock(
     long exclusiveVersion,
     boolean filterByRequestVersion,
+    long dropRequestsNotNewerThan,
     @Nullable VisitedRequestsVersionPerProject.Registration registration
   ) {
+    if (filterByRequestVersion && exclusiveVersion < dropRequestsNotNewerThan) {
+      throw new IllegalArgumentException(
+        "exclusiveVersion(=" + exclusiveVersion + ") must be >= dropRequestsNotNewerThan(=" + dropRequestsNotNewerThan + ")"
+      );
+    }
+
     long readUpToVersion = publishedVersion;
-    if (exclusiveVersion >= readUpToVersion) {
-      return new RequestsSnapshot(exclusiveVersion, readUpToVersion, Collections.emptyList(), registration);
+    if (registration != null && exclusiveVersion >= readUpToVersion) {
+      return new RequestsSnapshot(exclusiveVersion, readUpToVersion, Collections.emptyList(), -1L, 0, registration);
     }
 
     // Materialize the snapshot under the lock to keep its boundary consistent with all included requests.
     List<FileIndexingRequest> requests = new ArrayList<>();
-    for (VersionedRequest versionedRequest : myFilesToUpdate.values()) {
-      if ((!filterByRequestVersion || exclusiveVersion < versionedRequest.version()) &&
-          versionedRequest.version() <= readUpToVersion) {
-        requests.add(versionedRequest.request());
+    int droppedRequests = 0;
+    for (Iterator<VersionedRequest> iterator = myFilesToUpdate.values().iterator(); iterator.hasNext(); ) {
+      VersionedRequest versionedRequest = iterator.next();
+      long requestVersion = versionedRequest.version();
+      FileIndexingRequest request = versionedRequest.request();
+      if (requestVersion <= dropRequestsNotNewerThan) {
+        iterator.remove();
+        myDirtyFiles.removeFile(request.getFileId());
+        droppedRequests++;
+        continue;
+      }
+      if ((!filterByRequestVersion || exclusiveVersion < requestVersion) && requestVersion <= readUpToVersion) {
+        requests.add(request);
       }
     }
-    return new RequestsSnapshot(exclusiveVersion, readUpToVersion, requests, registration);
+    return new RequestsSnapshot(
+      exclusiveVersion, readUpToVersion, requests, dropRequestsNotNewerThan, droppedRequests, registration
+    );
   }
 
   /** Advances the cursor after every accepted request in the snapshot completes. */
@@ -228,6 +272,12 @@ public class FilesToUpdateCollector {
           projectCursors.advanceCursor(project, consumedSnapshot.registration, consumedSnapshot.readUpToVersion);
         }
       }
+    }
+  }
+
+  private void removeRequestsVisitedByAllProjects() {
+    if (cleanRequestsVisitedByAllProjects) {
+      projectCursors.minimumCursor().ifPresent(this::removeRequestsUpToVersion);
     }
   }
 
@@ -250,15 +300,21 @@ public class FilesToUpdateCollector {
     private final long readAfterVersion;
     private final long readUpToVersion;
     private final @NotNull List<FileIndexingRequest> requests;
+    private final long droppedRequestsBeforeVersion;
+    private final int droppedRequestsCount;
 
     /** Captures both boundaries and detaches the request list from the mutable collector. */
     private RequestsSnapshot(long readAfterVersion,
                              long readUpToVersion,
                              @NotNull List<FileIndexingRequest> requests,
+                             long droppedRequestsBeforeVersion,
+                             int droppedRequestsCount,
                              @Nullable VisitedRequestsVersionPerProject.Registration registration) {
       this.readAfterVersion = readAfterVersion;
       this.readUpToVersion = readUpToVersion;
       this.requests = List.copyOf(requests);
+      this.droppedRequestsBeforeVersion = droppedRequestsBeforeVersion;
+      this.droppedRequestsCount = droppedRequestsCount;
       this.registration = registration;
     }
 
@@ -279,6 +335,8 @@ public class FilesToUpdateCollector {
         readAfterVersion,
         readUpToVersion,
         requests.stream().filter(predicate).toList(),
+        droppedRequestsBeforeVersion,
+        droppedRequestsCount,
         registration
       );
     }
@@ -293,10 +351,21 @@ public class FilesToUpdateCollector {
       return true;
     }
 
+    @VisibleForTesting
+    public long droppedRequestsBeforeVersion() {
+      return droppedRequestsBeforeVersion;
+    }
+
+    @VisibleForTesting
+    public int droppedRequestsCount() {
+      return droppedRequestsCount;
+    }
+
     @Override
     public String toString() {
       return "RequestsSnapshot[versions=(" + readAfterVersion + ", " + readUpToVersion + "], " +
-             "requestsCount=" + requests.size() + ']';
+             "requestsCount=" + requests.size() + ", " +
+             "droppedRequests(<=" + droppedRequestsBeforeVersion + ")=" + droppedRequestsCount + ']';
     }
   }
 
@@ -326,6 +395,12 @@ public class FilesToUpdateCollector {
     /// - `cursors[project] = null`                                   => project is not open and registered
     private final Map<Project, Registration> cursors = new HashMap<>();
 
+    /// Cached minimum cursor value.
+    /// `null` means the value must be recalculated.
+    /// [OptionalLong#empty] means that a cursor is not initialized.
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private @Nullable OptionalLong cachedMinimumCursor;
+
     /**
      * Registers a project for tracking; with cursor initially un-initialized.
      * Does not modify an existing registration.
@@ -335,12 +410,19 @@ public class FilesToUpdateCollector {
         return false;
       }
       cursors.put(project, new Registration());
+      //noinspection OptionalAssignedToNull
+      cachedMinimumCursor = null;
       return true;
     }
 
     /** Removes a project from tracking. */
     public boolean unregisterProject(@NotNull Project project) {
-      return cursors.remove(project) != null;
+      if (cursors.remove(project) == null) {
+        return false;
+      }
+      //noinspection OptionalAssignedToNull
+      cachedMinimumCursor = null;
+      return true;
     }
 
     /** Returns the current registration, or {@code null} for an unregistered project. */
@@ -378,6 +460,10 @@ public class FilesToUpdateCollector {
       OptionalLong current = currentRegistration.cursor();
       if (current.isEmpty() || current.getAsLong() < advanceToVersion) {
         currentRegistration.advanceTo(advanceToVersion);
+        if (current.equals(cachedMinimumCursor)) {
+          //noinspection OptionalAssignedToNull
+          cachedMinimumCursor = null;
+        }
       }
     }
 
@@ -386,6 +472,14 @@ public class FilesToUpdateCollector {
      *         empty if a cursor is uninitialized or no project is registered.
      */
     public @NotNull OptionalLong minimumCursor() {
+      //noinspection OptionalAssignedToNull
+      if (cachedMinimumCursor == null) {
+        cachedMinimumCursor = calculateMinimumCursor();
+      }
+      return cachedMinimumCursor;
+    }
+
+    private @NotNull OptionalLong calculateMinimumCursor() {
       if (cursors.isEmpty()) {
         return OptionalLong.empty();
       }

@@ -65,6 +65,7 @@ import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
@@ -134,6 +135,66 @@ class DirtyFilesQueueTest {
     testDirtyFileIsIndexedAfterFileBasedIndexIsRestarted(skipFullScanning = false)
   }
 
+  /** Verifies that project cursors bound repeated filtering of a stale foreign request. */
+  @Test
+  fun `foreign dirty request is examined only once per project`() {
+    assumeProjectRequestCursorFeaturesEnabled()
+    runBlocking {
+      openProject("${testNameRule.methodName}-A") { projectA, moduleA ->
+        val srcA = tempDir.createVirtualDir("src-A")
+        moduleA.createContentRoot(projectA, srcA)
+        IndexingTestUtil.waitUntilIndexesAreReady(projectA)
+
+        openProject("${testNameRule.methodName}-B") { projectB, moduleB ->
+          val srcB = tempDir.createVirtualDir("src-B")
+          moduleB.createContentRoot(projectB, srcB)
+          IndexingTestUtil.waitUntilIndexesAreReady(projectB)
+
+          val foreignFile = edtWriteAction {
+            tempDir.createVirtualDir("outside-projects").createFile("foreign.txt")
+          }
+          val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
+          fileBasedIndex.changedFilesCollector.waitForVfsEventsExecuted(10, SECONDS) { }
+          fileBasedIndex.changedFilesCollector.ensureUpToDate()
+
+          val foreignFileId = (foreignFile as VirtualFileWithId).id
+          val collector = fileBasedIndex.filesToUpdateCollector
+          val projectAVisits = AtomicInteger()
+          val projectBVisits = AtomicInteger()
+          fileBasedIndex.installForceUpdateTestHook(testRootDisposable) { project, requests ->
+            if (requests.any { it.fileId == foreignFileId }) {
+              when (project) {
+                projectA -> projectAVisits.incrementAndGet()
+                projectB -> projectBVisits.incrementAndGet()
+              }
+            }
+          }
+          // Preserve the original owner only in request diagnostics, as happens when project membership changes before consumption.
+          collector.scheduleForUpdate(FileIndexingRequest.updateRequest(foreignFile), setOf(projectB), emptyList())
+          try {
+            assertThat(collector.containsFileId(foreignFileId))
+              .describedAs { "The controlled foreign request must be pending before forceUpdate" }
+              .isTrue()
+
+            forceUpdate(fileBasedIndex, projectA)
+            forceUpdate(fileBasedIndex, projectA)
+            forceUpdate(fileBasedIndex, projectB)
+
+            assertThat(projectAVisits.get())
+              .describedAs { "Repeated forceUpdate calls must examine the foreign request only once for the first project" }
+              .isEqualTo(1)
+            assertThat(projectBVisits.get())
+              .describedAs { "The second project must examine the request from its own cursor once" }
+              .isEqualTo(1)
+          }
+          finally {
+            collector.removeScheduledFileFromUpdate(foreignFile)
+          }
+        }
+      }
+    }
+  }
+
   @Test
   fun `test queues removed from disk after invalidating caches`() {
     runBlocking {
@@ -185,6 +246,18 @@ class DirtyFilesQueueTest {
         this.contentRoots += contentRoot
       }
     }
+  }
+
+  /** Skips cursor-cleanup contract tests when either independently configurable production feature is disabled. */
+  private fun assumeProjectRequestCursorFeaturesEnabled() {
+    assumeTrue(
+      "Project request cursor tracking is disabled",
+      FileBasedIndexImpl.USE_REQUEST_VERSION_TO_SKIP_REPEATING_UPDATES
+    )
+    assumeTrue(
+      "Cleanup by project request cursors is disabled",
+      FileBasedIndexImpl.CLEAN_REQUESTS_VISITED_BY_ALL_PROJECTS
+    )
   }
 
   internal class BadFileBasedIndexExtension : FileBasedIndexExtension<String, String>() {
