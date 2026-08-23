@@ -25,7 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.ui.SystemNotifications;
-import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.net.HttpConnectionUtils;
 import com.intellij.util.net.IOExceptionDialog;
 import com.intellij.util.net.JdkProxyProvider;
 import com.intellij.util.net.ProxyCredentialStore;
@@ -115,7 +115,7 @@ public class IdeUiServiceImpl extends IdeUiService {
 
   @Override
   public URLConnection openHttpConnection(String url) throws IOException {
-    return HttpConfigurable.getInstance().openConnection(url);
+    return HttpConnectionUtils.openConnection(url);
   }
 
   @Override
@@ -146,7 +146,7 @@ public class IdeUiServiceImpl extends IdeUiService {
 
   @Override
   public void prepareURL(String url) throws IOException {
-    HttpConfigurable.getInstance().prepareURL(url);
+    HttpConnectionUtils.prepareUrl(url);
   }
 
   @Override

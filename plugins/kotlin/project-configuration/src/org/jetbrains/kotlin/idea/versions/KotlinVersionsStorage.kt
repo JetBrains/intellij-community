@@ -11,9 +11,8 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.io.HttpRequests
-import com.intellij.util.net.HttpConfigurable
+import com.intellij.util.net.HttpConnectionUtils
 import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.util.xmlb.XmlSerializerUtil
 import org.jetbrains.annotations.ApiStatus
@@ -74,8 +73,7 @@ class KotlinVersionsStorage : PersistentStateComponent<KotlinVersionsStorage> {
             val kotlinArtifactVersion = kotlinCompilerVersion.artifactVersion
             val repositoryDescription = getRepositoryForVersion(kotlinCompilerVersion)
             if (repositoryDescription?.bintrayUrl != null) {
-                val eapConnection =
-                    HttpConfigurable.getInstance().openHttpConnection(repositoryDescription.bintrayUrl + kotlinArtifactVersion)
+                val eapConnection = HttpConnectionUtils.openHttpConnection(repositoryDescription.bintrayUrl + kotlinArtifactVersion)
                 try {
                     val timeout = 30.seconds.toInt(DurationUnit.MILLISECONDS)
                     eapConnection.setConnectTimeout(timeout)
@@ -87,7 +85,7 @@ class KotlinVersionsStorage : PersistentStateComponent<KotlinVersionsStorage> {
                     eapConnection.disconnect()
                 }
             }
-            val urlConnection = HttpConfigurable.getInstance().openHttpConnection(url)
+            val urlConnection = HttpConnectionUtils.openHttpConnection(url)
             try {
                 val timeout = TimeUnit.SECONDS.toMillis(30).toInt()
                 urlConnection.setConnectTimeout(timeout)

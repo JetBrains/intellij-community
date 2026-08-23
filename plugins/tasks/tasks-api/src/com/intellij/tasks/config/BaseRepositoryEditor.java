@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.config;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,7 +24,9 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.Consumer;
-import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.net.HttpProxyConfigurable;
+import com.intellij.util.net.ProxyConfiguration;
+import com.intellij.util.net.ProxySettings;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -233,7 +235,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myProxySettingsButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        HttpConfigurable.editConfigurable(myPanel);
+        HttpProxyConfigurable.editConfigurable(myPanel);
         enableButtons();
         doApply();
       }
@@ -414,8 +416,9 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
   }
 
   protected void enableButtons() {
-    myUseProxy.setEnabled(HttpConfigurable.getInstance().USE_HTTP_PROXY);
-    if (!HttpConfigurable.getInstance().USE_HTTP_PROXY) {
+    var useHttpProxy = ProxySettings.getInstance().getProxyConfiguration() instanceof ProxyConfiguration.StaticProxyConfiguration;
+    myUseProxy.setEnabled(useHttpProxy);
+    if (!useHttpProxy) {
       myUseProxy.setSelected(false);
     }
   }

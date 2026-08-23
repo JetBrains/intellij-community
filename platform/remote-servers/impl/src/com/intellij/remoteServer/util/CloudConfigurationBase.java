@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.util;
 
 import com.intellij.credentialStore.CredentialAttributes;
@@ -7,7 +7,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remoteServer.agent.util.CloudAgentConfigBase;
 import com.intellij.remoteServer.agent.util.CloudProxySettings;
 import com.intellij.remoteServer.configuration.ServerConfigurationBase;
-import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.net.ProxyConfiguration;
+import com.intellij.util.net.ProxyCredentialStore;
+import com.intellij.util.net.ProxySettings;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
@@ -16,14 +18,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-/**
- * @author michael.golubev
- */
 public class CloudConfigurationBase<Self extends CloudConfigurationBase<Self>>
   extends ServerConfigurationBase<Self> implements CloudAgentConfigBase {
 
   private String myEmail;
-
   private String myPassword;
 
   @Override
@@ -49,44 +47,44 @@ public class CloudConfigurationBase<Self extends CloudConfigurationBase<Self>>
   @Transient
   @Override
   public CloudProxySettings getProxySettings() {
-    final HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
+    var configuration = ProxySettings.getInstance().getProxyConfiguration();
+    var credentials = ProxyCredentialStore.getInstance().getCredentials(configuration);
     return new CloudProxySettings() {
-
       @Override
       public boolean useHttpProxy() {
-        return httpConfigurable.USE_HTTP_PROXY;
+        return configuration instanceof ProxyConfiguration.StaticProxyConfiguration;
       }
 
       @Override
       public String getHost() {
-        return httpConfigurable.PROXY_HOST;
+        return configuration instanceof ProxyConfiguration.StaticProxyConfiguration http ? http.getHost() : null;
       }
 
       @Override
       public int getPort() {
-        return httpConfigurable.PROXY_PORT;
+        return configuration instanceof ProxyConfiguration.StaticProxyConfiguration http ? http.getPort() : 0;
       }
 
       @Override
       public boolean useAuthentication() {
-        return httpConfigurable.PROXY_AUTHENTICATION;
+        return credentials != null;
       }
 
       @Override
       public String getLogin() {
-        return httpConfigurable.getProxyLogin();
+        return credentials == null ? null : credentials.getUserName();
       }
 
       @Override
       public String getPassword() {
-        return httpConfigurable.getPlainProxyPassword();
+        return credentials == null ? null : credentials.getPasswordAsString();
       }
     };
   }
 
   @Transient
   public boolean isPasswordSafe() {
-    CredentialAttributes credentialAttributes = createCredentialAttributes();
+    var credentialAttributes = createCredentialAttributes();
     return credentialAttributes != null && PasswordSafe.getInstance().get(credentialAttributes) != null;
   }
 
@@ -118,11 +116,12 @@ public class CloudConfigurationBase<Self extends CloudConfigurationBase<Self>>
     return getEmail();
   }
 
-  protected static void doSetSafeValue(@Nullable CredentialAttributes credentialAttributes,
-                                       @Nullable String credentialUser,
-                                       @Nullable String secretValue,
-                                       @NotNull Consumer<? super String> unsafeSetter) {
-
+  protected static void doSetSafeValue(
+    @Nullable CredentialAttributes credentialAttributes,
+    @Nullable String credentialUser,
+    @Nullable String secretValue,
+    @NotNull Consumer<String> unsafeSetter
+  ) {
     CloudConfigurationUtil.doSetSafeValue(credentialAttributes, credentialUser, secretValue, unsafeSetter);
   }
 
@@ -143,7 +142,7 @@ public class CloudConfigurationBase<Self extends CloudConfigurationBase<Self>>
   }
 
   public void migrateToPasswordSafe() {
-    final String unsafePassword = getPassword();
+    var unsafePassword = getPassword();
     if (!StringUtil.isEmpty(unsafePassword)) {
       setPasswordSafe(unsafePassword);
     }

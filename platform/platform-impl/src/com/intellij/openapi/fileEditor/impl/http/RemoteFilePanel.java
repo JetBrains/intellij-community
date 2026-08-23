@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.http;
 
 import com.intellij.icons.AllIcons;
@@ -21,7 +21,7 @@ import com.intellij.openapi.vfs.impl.http.RemoteFileState;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
-import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.net.HttpProxyConfigurable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -191,7 +191,7 @@ public final class RemoteFilePanel {
     myChangeProxySettingsButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(@NotNull ActionEvent e) {
-        HttpConfigurable.editConfigurable(myMainPanel);
+        HttpProxyConfigurable.editConfigurable(myMainPanel);
       }
     });
 

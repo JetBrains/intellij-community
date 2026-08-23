@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -50,8 +50,9 @@ public final class IOExceptionDialog extends DialogWrapper {
     return new Action[] {
       new AbstractAction(UIBundle.message("io.error.dialog.no.proxy")) {
         @Override
+        @SuppressWarnings("SSBasedInspection")
         public void actionPerformed(@NotNull ActionEvent e) {
-          HttpConfigurable.editConfigurable(ObjectUtils.tryCast(e.getSource(), JComponent.class));
+          HttpProxyConfigurable.editConfigurable(ObjectUtils.tryCast(e.getSource(), JComponent.class));
         }
       }
     };
