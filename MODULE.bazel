@@ -80,6 +80,9 @@ single_version_override(
     patches = [
         "//:build/llvm_msvc.patch",  # TODO: remove that once merged to upstream
     ],
+    # Kept in sync with the `ultimate` root, which has to hold `llvm` at 0.8.9 because `llvm_msvc.patch` does not
+    # apply to the 0.8.18 that `rules_rs` asks for. `BazelProjectStructureTest` requires identical overrides.
+    version = "0.8.9",
 )
 
 register_toolchains(
