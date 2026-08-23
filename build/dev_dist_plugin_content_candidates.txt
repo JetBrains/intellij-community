@@ -70,9 +70,17 @@ intellij.air.backend.session.view.gui
 intellij.air.backend.session.view.tui
 intellij.air.backend.session.working.tree.api
 intellij.air.backend.session.working.tree.git
+intellij.air.backend.sessionNotes
 intellij.air.backend.terminal.threads
 intellij.air.backend.threads.toolwindow
 intellij.air.backend.voice.space
+intellij.air.codeNotes.api
+intellij.air.codeNotes.data.backend
+intellij.air.codeNotes.data.backend.api
+intellij.air.codeNotes.ui.backend
+intellij.air.codeNotes.ui.frontend
+intellij.air.codeNotes.ui.frontend.api
+intellij.air.codeNotes.ui.shared
 intellij.air.frontend.acp
 intellij.air.frontend.acp.debug
 intellij.air.frontend.agents
@@ -111,6 +119,7 @@ intellij.air.frontend.session.view.gui
 intellij.air.frontend.session.view.gui.mcp.render
 intellij.air.frontend.session.view.gui.showcase
 intellij.air.frontend.session.view.tui
+intellij.air.frontend.sessionNotes
 intellij.air.frontend.settings
 intellij.air.frontend.settings.api
 intellij.air.frontend.terminal.api
@@ -152,6 +161,7 @@ intellij.air.shared.session
 intellij.air.shared.session.jbcentral
 intellij.air.shared.session.view.gui
 intellij.air.shared.session.view.tui
+intellij.air.shared.sessionNotes
 intellij.air.shared.settings
 intellij.air.shared.settings.split
 intellij.air.shared.threads.toolwindow
