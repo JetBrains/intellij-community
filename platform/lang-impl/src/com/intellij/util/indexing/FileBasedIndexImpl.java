@@ -1934,74 +1934,53 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private void forceUpdate(@Nullable Project project,
                            boolean skipUpdatingIfNoNewUpdatesAvailable,
                            @NotNull ProjectFilesCondition filter) {
-    runIfHaveNewUpdatesFor(
-      project,
-      skipUpdatingIfNoNewUpdatesAvailable && USE_REQUEST_VERSION_TO_SKIP_REPEATING_UPDATES,
-      () -> {
-        Collection<FileIndexingRequest> allFilesToUpdate = getAllFilesToUpdate();
-        if (!allFilesToUpdate.isEmpty()) {
-          List<FileIndexingRequest> virtualFilesToBeUpdatedForProject = ContainerUtil.filter(allFilesToUpdate, filter::acceptsRequest);
-          if (!virtualFilesToBeUpdatedForProject.isEmpty()) {
-            if (LOG.isDebugEnabled()) {
-              List<String> files = ContainerUtil.map(virtualFilesToBeUpdatedForProject, request -> request.getFile().getPath());
-              String message = "Indexing the following files because up-to-date indexes were requested by <see the stacktrace>. " +
-                               "Number of files: " + files.size() + " paths: " + StringUtil.trimLog(Strings.join(files, ", "), 500);
-              LOG.debug(message, new Throwable());
-            }
-
-            Objects.requireNonNull(project, "Project can't be null: it is needed to get ProjectIndexingDependenciesService below");
-            myForceUpdateProcessor.processAll(virtualFilesToBeUpdatedForProject, project);
-          }
-        }
-      }
-    );
-  }
-
-  /**
-   * Runs the task if myFilesToUpdateCollector _likely_ has some new updates (for the project), since the last time this method was called.
-   * Skips the task otherwise if there are no new updates since the last call.
-   * The task execution is skipped only if it is _guaranteed_ there are no new updates, but the opposite is not true:
-   * if the task is executed, it means we just _can't guarantee_ there are no new updates.
-   *
-   * @param skipUpdatingIfNoNewUpdatesAvailable if false, always runs the task, doesn't check if there are new updates available,
-   *                                            if true -- check if there are possibly new updates first before running the task.
-   */
-  private <E extends Exception> void runIfHaveNewUpdatesFor(@Nullable Project project,
-                                                            boolean skipUpdatingIfNoNewUpdatesAvailable,
-                                                            @NotNull ThrowableRunnable<E> task) throws E {
-    if (!skipUpdatingIfNoNewUpdatesAvailable) {
+    boolean useProjectCursor = skipUpdatingIfNoNewUpdatesAvailable && USE_REQUEST_VERSION_TO_SKIP_REPEATING_UPDATES;
+    Project cursorProject = useProjectCursor ? project : null;
+    long currentPublishedVersion = -1;
+    if (!useProjectCursor) {
       LOG.debug("skipUpdatingIfNoNewUpdatesAvailable=false -> do updates regardless of updates availability");
-      task.run();
-      return;
     }
-
-    if (project == null) {
+    else if (cursorProject == null) {
       LOG.debug("project=null -> can't check updates availability -> be conservative, do updates");
-      //can't tell are there any new updates -> be conservative, assume there are:
-      task.run();
-      return;
     }
-
-    long lastProcessedVersionValue = myFilesToUpdateCollector.cursorFor(project, -1);
-    FilesToUpdateCollector.RequestsSnapshot snapshot = myFilesToUpdateCollector.collectRequestsNewerThan(lastProcessedVersionValue);
-    long currentPublishedVersion = snapshot.readUpToVersion();
-    if (lastProcessedVersionValue >= 0 && lastProcessedVersionValue >= currentPublishedVersion) {
-      if (LOG.isDebugEnabled()) {
-        THROTTLED_LOG_FAST.debug(
-          () -> "requestsVersionCheck[last: " + lastProcessedVersionValue + " >= current: " + currentPublishedVersion + "] -> skip updates"
-        );
+    else {
+      long lastProcessedVersionValue = myFilesToUpdateCollector.cursorFor(cursorProject, -1);
+      FilesToUpdateCollector.RequestsSnapshot snapshot = myFilesToUpdateCollector.collectRequestsNewerThan(lastProcessedVersionValue);
+      currentPublishedVersion = snapshot.readUpToVersion();
+      if (lastProcessedVersionValue >= 0 && lastProcessedVersionValue >= currentPublishedVersion) {
+        if (LOG.isDebugEnabled()) {
+          THROTTLED_LOG_FAST.debug(
+            () -> "requestsVersionCheck[last: " + lastProcessedVersionValue + " >= current: " + currentPublishedVersion + "] -> skip updates"
+          );
+        }
+        return;
       }
-      //everything is already processed
-      return;
+
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("requestsVersionCheck[last: " + lastProcessedVersionValue + " < current: " + currentPublishedVersion + "] -> do updates");
+      }
     }
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("requestsVersionCheck[last: " + lastProcessedVersionValue + " < current: " + currentPublishedVersion + "] -> do updates");
+    Collection<FileIndexingRequest> allFilesToUpdate = getAllFilesToUpdate();
+    if (!allFilesToUpdate.isEmpty()) {
+      List<FileIndexingRequest> virtualFilesToBeUpdatedForProject = ContainerUtil.filter(allFilesToUpdate, filter::acceptsRequest);
+      if (!virtualFilesToBeUpdatedForProject.isEmpty()) {
+        if (LOG.isDebugEnabled()) {
+          List<String> files = ContainerUtil.map(virtualFilesToBeUpdatedForProject, request -> request.getFile().getPath());
+          String message = "Indexing the following files because up-to-date indexes were requested by <see the stacktrace>. " +
+                           "Number of files: " + files.size() + " paths: " + StringUtil.trimLog(Strings.join(files, ", "), 500);
+          LOG.debug(message, new Throwable());
+        }
+
+        Objects.requireNonNull(project, "Project can't be null: it is needed to get ProjectIndexingDependenciesService below");
+        myForceUpdateProcessor.processAll(virtualFilesToBeUpdatedForProject, project);
+      }
     }
 
-    task.run();
-    // Advance only to the boundary captured before the task: concurrently published requests remain for the next pass.
-    myFilesToUpdateCollector.advanceCursor(project, currentPublishedVersion);
+    if (cursorProject != null) {
+      // Advance only to the boundary captured before processing: concurrently published requests remain for the next pass.
+      myFilesToUpdateCollector.advanceCursor(cursorProject, currentPublishedVersion);
+    }
   }
 
   @Internal
