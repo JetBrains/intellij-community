@@ -36,8 +36,11 @@ def _native_content_module_packer_impl(ctx):
         # envelope an order of magnitude larger - so at this action count the envelope *is* the build. Measured on this
         # repository at 2 524 jars, one process per action cost 55.1 s where the JVM worker it replaced cost 29.5 s.
         #
-        # `json` rather than the proto dialect: the two encodings are otherwise identical, and proto would cost a
-        # protobuf dependency for a message with six fields. `rules_go` ships no worker package either way.
+        # `requires-worker-protocol` is absent because proto is Bazel's default, and the packer speaks it: it decodes the
+        # six fields by hand in `//build/internal/worker`, with no protobuf dependency and no generated schema, the way
+        # `//worker-framework:protocol.kt` already decodes the same message on the JVM side. Every other worker in the
+        # consuming repository is on the same default. An explicit `"proto"` would only add something that can drift from
+        # the code - and an unrecognised value here is a hard failure, so a typo in one is worse than its absence.
         #
         # `supports-path-mapping` is deliberately absent - path mapping is not enabled in this repository - and so is
         # `supports-multiplex-sandboxing`, which is inert without `--worker_sandboxing`.
@@ -52,7 +55,6 @@ def _native_content_module_packer_impl(ctx):
             "supports-workers": "1",
             "supports-multiplex-workers": "1",
             "supports-worker-cancellation": "1",
-            "requires-worker-protocol": "json",
             "no-sandbox": "1",
         },
     )]
