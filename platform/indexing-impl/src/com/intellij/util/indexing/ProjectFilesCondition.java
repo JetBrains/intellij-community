@@ -11,39 +11,21 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public final class ProjectFilesCondition {
-  private static final int MAX_FILES_TO_UPDATE_FROM_OTHER_PROJECT = 2;
-
   private final IdFilter myIndexableFilesFilter;
   private final GlobalSearchScope myFilter;
   private final VirtualFile myRestrictedTo;
 
-  private int myFilesFromOtherProjects;
-
   //indexableFilesFilter = (ProjectIndexableFilesFilter | null)
   public ProjectFilesCondition(@Nullable IdFilter indexableFilesFilter,
                                @Nullable GlobalSearchScope filter,
-                               @Nullable VirtualFile restrictedTo,
-                               boolean includeFilesFromOtherProjects) {
+                               @Nullable VirtualFile restrictedTo) {
     myRestrictedTo = restrictedTo;
     myFilter = filter;
     myIndexableFilesFilter = indexableFilesFilter;
-    if (!includeFilesFromOtherProjects) {
-      myFilesFromOtherProjects = MAX_FILES_TO_UPDATE_FROM_OTHER_PROJECT;
-    }
   }
 
   private boolean acceptsFileAndId(@Nullable VirtualFile file, int fileId) {
-    if (belongsTo(file, fileId)) {
-      return true;
-    }
-
-    //even if the file doesn't belong to the project/scope provided -- give it a chance!
-    // MAX_FILES_TO_UPDATE_FROM_OTHER_PROJECT chances, really:
-    if (myFilesFromOtherProjects < MAX_FILES_TO_UPDATE_FROM_OTHER_PROJECT) {
-      myFilesFromOtherProjects++;
-      return true;
-    }
-    return false;
+    return belongsTo(file, fileId);
   }
 
   private boolean belongsTo(@Nullable VirtualFile file, int fileId) {

@@ -966,7 +966,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           // because indexUnsavedDocuments builds a diff of in-memory/on-the-disc state.
           // Also make sure that if forceUpdate is invoked, it is invoked before indexUnsavedDocuments
 
-          boolean includeFilesFromOtherProjects = (restrictedFile == null && project == null);
           //TODO RC: why we use projectScope here, ignoring scope parameter altogether?
           GlobalSearchScope projectScope = project == null ? null : GlobalSearchScope.everythingScope(project);
           IdFilter projectIndexableFilesFilter = projectIndexableFiles(project);
@@ -976,9 +975,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
             // TODO: index changed documents from other projects too for performance reasons: changed documents will break
             //  fast check (myUpToDateIndicesForUnsavedOrTransactedDocuments) in indexUnsavedDocument
             /*scope: */ projectScope,
-            restrictedFile,
-            //MAYBE RC: force this to false?
-            includeFilesFromOtherProjects
+            restrictedFile
           );
           if (!ActionUtil.isDumbMode(project) || getCurrentDumbModeAccessType_NoDumbChecks() == null) {
             //RC: if (restrictedFile!=null) we can't advance the project cursor, because we do not process _all_ the new
