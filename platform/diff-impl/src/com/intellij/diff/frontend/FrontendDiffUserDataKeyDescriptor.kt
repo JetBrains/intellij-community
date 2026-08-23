@@ -26,8 +26,7 @@ interface FrontendDiffUserDataKeyDescriptor<T : Any> {
   fun write(value: T): ByteArray
 
   companion object {
-    @JvmField
-    val EP_NAME: ExtensionPointName<FrontendDiffUserDataKeyDescriptor<*>> =
+    private val EP_NAME: ExtensionPointName<FrontendDiffUserDataKeyDescriptor<*>> =
       ExtensionPointName.create("com.intellij.diff.frontendUserDataKey")
 
     /** Every registered descriptor for which [holder] has a value, paired with that value. */
