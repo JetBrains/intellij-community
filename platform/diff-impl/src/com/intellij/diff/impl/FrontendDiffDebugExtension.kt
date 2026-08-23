@@ -5,6 +5,7 @@ import com.intellij.diff.frontend.FrontendDiffContent
 import com.intellij.diff.frontend.FrontendDiffContext
 import com.intellij.diff.frontend.FrontendDiffEditor
 import com.intellij.diff.frontend.FrontendDiffExtension
+import com.intellij.diff.frontend.FrontendDiffLineMapper
 import com.intellij.diff.frontend.FrontendDiffViewer
 import com.intellij.diff.frontend.FrontendUnifiedDiffMapping
 import com.intellij.diff.util.Side
@@ -32,7 +33,7 @@ class FrontendDiffDebugExtension : FrontendDiffExtension {
 
     val mapping = (viewer as? FrontendDiffViewer.FrontendUnifiedDiffViewer)?.mapping
     val inlays = viewer.editors.mapIndexedNotNull { index, frontendEditor ->
-      createInlay(frontendEditor, index, context.request.contents, mapping, context.parentDisposable)
+      createInlay(viewer, frontendEditor, index, context.request.contents, mapping, context.parentDisposable)
     }
 
     val scheduleUpdate = {
@@ -40,7 +41,7 @@ class FrontendDiffDebugExtension : FrontendDiffExtension {
         {
           for (debugInlay in inlays) {
             if (!debugInlay.inlay.isValid) continue
-            debugInlay.update(buildDebugLines(debugInlay.frontendEditor, debugInlay.index, context.request.contents, mapping))
+            debugInlay.update(buildDebugLines(viewer, debugInlay.frontendEditor, debugInlay.index, context.request.contents, mapping))
           }
         },
         ModalityState.any(),
@@ -48,18 +49,19 @@ class FrontendDiffDebugExtension : FrontendDiffExtension {
     }
     mapping?.addListener(context.parentDisposable, scheduleUpdate)
     for (frontendEditor in viewer.editors) {
-      frontendEditor.lineMapper.addListener(context.parentDisposable, scheduleUpdate)
+      viewer.lineMapper(frontendEditor)?.addListener(context.parentDisposable, scheduleUpdate)
     }
   }
 
   private fun createInlay(
+    viewer: FrontendDiffViewer,
     frontendEditor: FrontendDiffEditor,
     index: Int,
     contents: List<FrontendDiffContent>,
     mapping: FrontendUnifiedDiffMapping?,
     parentDisposable: Disposable,
   ): DebugInlay? {
-    val renderer = FrontendDiffDebugInlayRenderer(buildDebugLines(frontendEditor, index, contents, mapping))
+    val renderer = FrontendDiffDebugInlayRenderer(buildDebugLines(viewer, frontendEditor, index, contents, mapping))
     val inlay = frontendEditor.editor.inlayModel.addBlockElement(
       0,
       false,
@@ -73,14 +75,16 @@ class FrontendDiffDebugExtension : FrontendDiffExtension {
 
   @NonNls
   private fun buildDebugLines(
+    viewer: FrontendDiffViewer,
     frontendEditor: FrontendDiffEditor,
     index: Int,
     contents: List<FrontendDiffContent>,
     mapping: FrontendUnifiedDiffMapping?,
   ): List<String> = buildList {
+    val lineMapper = viewer.lineMapper(frontendEditor)
     add(
-      "Frontend editor $index: side=${frontendEditor.side ?: "UNIFIED"}, document=${describeDocument(frontendEditor.editor.document)}, " +
-      "mapperAvailable=${frontendEditor.lineMapper.isAvailable}",
+      "Frontend editor $index: side=${viewer.side(frontendEditor) ?: "UNIFIED"}, document=${describeDocument(frontendEditor.editor.document)}, " +
+      "mapperAvailable=${lineMapper?.isAvailable ?: false}",
     )
     contents.forEachIndexed { contentIndex, content ->
       add(
@@ -93,6 +97,26 @@ class FrontendDiffDebugExtension : FrontendDiffExtension {
       add("LEFT sideDocument: ${describeDocument(mapping.sideDocument(Side.LEFT))}")
       add("RIGHT sideDocument: ${describeDocument(mapping.sideDocument(Side.RIGHT))}")
     }
+  }
+
+  private fun FrontendDiffViewer.side(frontendEditor: FrontendDiffEditor): Side? = when (this) {
+    is FrontendDiffViewer.FrontendOneSideDiffViewer -> side.takeIf { editor == frontendEditor }
+    is FrontendDiffViewer.FrontendTwoSideDiffViewer -> when (frontendEditor) {
+      left -> Side.LEFT
+      right -> Side.RIGHT
+      else -> null
+    }
+    is FrontendDiffViewer.FrontendUnifiedDiffViewer -> null
+  }
+
+  private fun FrontendDiffViewer.lineMapper(frontendEditor: FrontendDiffEditor): FrontendDiffLineMapper? = when (this) {
+    is FrontendDiffViewer.FrontendOneSideDiffViewer -> lineMapper.takeIf { editor == frontendEditor }
+    is FrontendDiffViewer.FrontendTwoSideDiffViewer -> when (frontendEditor) {
+      left -> leftLineMapper
+      right -> rightLineMapper
+      else -> null
+    }
+    is FrontendDiffViewer.FrontendUnifiedDiffViewer -> lineMapper.takeIf { editor == frontendEditor }
   }
 
   @NonNls

@@ -41,17 +41,24 @@ sealed interface FrontendDiffViewer {
 
   interface FrontendOneSideDiffViewer : FrontendDiffViewer {
     val editor: FrontendDiffEditor
+    val side: Side
+    val lineMapper: FrontendDiffLineMapper
     override val editors: List<FrontendDiffEditor> get() = listOf(editor)
   }
 
   interface FrontendTwoSideDiffViewer : FrontendDiffViewer {
     val left: FrontendDiffEditor
     val right: FrontendDiffEditor
+    val leftLineMapper: FrontendDiffLineMapper
+    val rightLineMapper: FrontendDiffLineMapper
     override val editors: List<FrontendDiffEditor> get() = listOf(left, right)
+
+    fun lineMapper(side: Side): FrontendDiffLineMapper = side.select(leftLineMapper, rightLineMapper)
   }
 
   interface FrontendUnifiedDiffViewer : FrontendDiffViewer {
     val editor: FrontendDiffEditor
+    val lineMapper: FrontendDiffLineMapper
     val mapping: FrontendUnifiedDiffMapping
     override val editors: List<FrontendDiffEditor> get() = listOf(editor)
   }
@@ -60,8 +67,6 @@ sealed interface FrontendDiffViewer {
 @ApiStatus.Internal
 data class FrontendDiffEditor(
   val editor: EditorEx,
-  val side: Side?,
-  val lineMapper: FrontendDiffLineMapper,
 )
 
 @ApiStatus.Internal

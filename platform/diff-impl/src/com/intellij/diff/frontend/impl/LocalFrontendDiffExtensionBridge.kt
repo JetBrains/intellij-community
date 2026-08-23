@@ -15,6 +15,7 @@ import com.intellij.diff.frontend.FrontendDiffEditor
 import com.intellij.diff.frontend.FrontendDiffExtension
 import com.intellij.diff.frontend.FrontendDiffExtensionData
 import com.intellij.diff.frontend.FrontendDiffLineLocation
+import com.intellij.diff.frontend.FrontendDiffLineMapper
 import com.intellij.diff.frontend.FrontendDiffRequest
 import com.intellij.diff.frontend.FrontendDiffUserDataKeyDescriptor
 import com.intellij.diff.frontend.FrontendDiffViewer
@@ -91,10 +92,10 @@ object LocalFrontendDiffExtensionBridge {
     val side = viewer.side
     return object : FrontendDiffViewer.FrontendOneSideDiffViewer {
       override val component: JComponent = viewer.component
+      override val side: Side = side
+      override val lineMapper: FrontendDirectDiffLineMapper = FrontendDirectDiffLineMapper(viewer.editor.document, side)
       override val editor: FrontendDiffEditor = FrontendDiffEditor(
         editor = viewer.editor,
-        side = side,
-        lineMapper = FrontendDirectDiffLineMapper(viewer.editor.document, side),
       )
     }
   }
@@ -106,15 +107,13 @@ object LocalFrontendDiffExtensionBridge {
     val mapping = LocalTwoSideDiffMapping(viewer, parentDisposable)
     return object : FrontendDiffViewer.FrontendTwoSideDiffViewer {
       override val component: JComponent = viewer.component
+      override val leftLineMapper: FrontendDiffLineMapper = FrontendDirectDiffLineMapper(viewer.editor1.document, Side.LEFT, mapping)
+      override val rightLineMapper: FrontendDiffLineMapper = FrontendDirectDiffLineMapper(viewer.editor2.document, Side.RIGHT, mapping)
       override val left: FrontendDiffEditor = FrontendDiffEditor(
         editor = viewer.editor1,
-        side = Side.LEFT,
-        lineMapper = FrontendDirectDiffLineMapper(viewer.editor1.document, Side.LEFT, mapping),
       )
       override val right: FrontendDiffEditor = FrontendDiffEditor(
         editor = viewer.editor2,
-        side = Side.RIGHT,
-        lineMapper = FrontendDirectDiffLineMapper(viewer.editor2.document, Side.RIGHT, mapping),
       )
     }
   }
@@ -127,10 +126,10 @@ object LocalFrontendDiffExtensionBridge {
     return object : FrontendDiffViewer.FrontendUnifiedDiffViewer {
       override val component: JComponent = viewer.component
       override val mapping: FrontendUnifiedDiffMapping = mapping
+      override val lineMapper: FrontendDiffLineMapper =
+        FrontendUnifiedDiffLineMapper(viewer.editor.document, mapping, mapping::unifiedLineToLocation)
       override val editor: FrontendDiffEditor = FrontendDiffEditor(
         editor = viewer.editor,
-        side = null,
-        lineMapper = FrontendUnifiedDiffLineMapper(viewer.editor.document, mapping, mapping::unifiedLineToLocation),
       )
     }
   }
