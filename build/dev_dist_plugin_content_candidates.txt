@@ -611,7 +611,8 @@ intellij.featuresTrainer.tips
 intellij.figma.backend
 intellij.figma.backend.llmInstaller
 intellij.figma.codegen
-intellij.figma.frontend.compose
+intellij.figma.frontend.android.compose
+intellij.figma.frontend.android.xml
 intellij.figma.frontend.css
 intellij.figma.model
 intellij.figma.shared
@@ -1048,7 +1049,6 @@ intellij.ktor.run.gradle.tooling
 intellij.ktor.swagger
 intellij.less.copyright
 intellij.less.watcher
-intellij.libraries.javax.activation
 intellij.liquibase.git
 intellij.liquibase.jpa
 intellij.liquibase.orm

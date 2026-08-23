@@ -39,27 +39,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.libraries.misc.plugin` end
-
-### auto-generated section `dev content intellij.libraries.misc.plugin` start
-dev_dist_plugin_content(
-    content_modules = [
-        "//libraries/commons/text",
-        "//libraries/jettison",
-        "//libraries/lucene.common",
-        "//libraries/opencsv",
-        "//libraries/oshi-core",
-        "//libraries/xstream",
-    ],
-    descriptor_module = ":plugin",
-    libraries = [
-        "@lib//:libraries-commons-text-commons-text",
-        "@lib//:libraries-jettison-jettison",
-        "@lib//:libraries-lucene-common-lucene-analysis-common",
-        "@lib//:libraries-lucene-common-lucene-core",
-        "@lib//:libraries-opencsv-opencsv",
-        "@lib//:libraries-oshi-core-github-oshi-core",
-        "@lib//:libraries-xstream-xstream",
-    ],
-    prepacked_content_modules = ["//libraries/javax/activation:activation_content_module_jar"],
-)
-### auto-generated section `dev content intellij.libraries.misc.plugin` end
