@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 
 import static com.intellij.concurrency.ConcurrentCollectionFactory.createConcurrentIntObjectMap;
@@ -53,9 +52,6 @@ public class FilesToUpdateCollector {
    * Still, we utilise {@link #myFilesToUpdate} concurrent nature where possible, to reduce the duration of locked regions.
    */
   private final Object requestsLock = new Object();
-
-  /** Increments on each change in myFilesToUpdate content -- i.e., it is 'version' of myFilesToUpdate content */
-  private final AtomicLong modificationCount = new AtomicLong(0);
 
   /** Creates a collector that removes requests after all registered projects visit them. */
   public FilesToUpdateCollector() {
@@ -120,8 +116,6 @@ public class FilesToUpdateCollector {
       replacedRequest = myFilesToUpdate.put(fileId, versionedRequest);
 
       publishedVersion = version;
-
-      modificationCount.incrementAndGet();
     }
 
     if (replacedRequest != null && LOG.isDebugEnabled()) {
@@ -141,7 +135,6 @@ public class FilesToUpdateCollector {
       synchronized (requestsLock) {
         if (myFilesToUpdate.remove(fileId, alreadyScheduledRequest)) {
           myDirtyFiles.removeFile(fileId);
-          modificationCount.incrementAndGet();
           removed = true;
         }
       }
@@ -165,7 +158,6 @@ public class FilesToUpdateCollector {
     synchronized (requestsLock) {
       if (myFilesToUpdate.remove(fileId, currentRequest)) {
         myDirtyFiles.removeFile(fileId);
-        modificationCount.incrementAndGet();
         return true;
       }
     }
@@ -195,12 +187,7 @@ public class FilesToUpdateCollector {
     synchronized (requestsLock) {
       myDirtyFiles.clear();
       myFilesToUpdate.clear();
-      modificationCount.incrementAndGet();
     }
-  }
-
-  public long modificationCount(){
-    return modificationCount.get();
   }
 
   public Iterator<@NotNull FileIndexingRequest> getFilesToUpdateAsIterator() {
