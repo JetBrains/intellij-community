@@ -9,7 +9,6 @@ import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.contents.EmptyContent
 import com.intellij.diff.contents.FileContent
 import com.intellij.diff.frontend.FrontendDiffContent
-import com.intellij.diff.frontend.FrontendDiffContentKeys
 import com.intellij.diff.frontend.FrontendDiffContext
 import com.intellij.diff.frontend.FrontendDiffEditor
 import com.intellij.diff.frontend.FrontendDiffExtension
@@ -139,7 +138,7 @@ object LocalFrontendDiffExtensionBridge {
       is DocumentContent -> FrontendDiffContent(
         file = (content as? FileContent)?.file,
         document = content.document,
-        isCurrent = content.getUserData(FrontendDiffContentKeys.IS_CURRENT) == true,
+        isCurrent = content is FileContent,
       )
       else -> null
     }

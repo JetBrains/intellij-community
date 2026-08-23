@@ -11,7 +11,6 @@ import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.FileContent;
-import com.intellij.diff.frontend.FrontendDiffContentKeys;
 import com.intellij.diff.impl.DiffViewerWrapper;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
@@ -445,9 +444,7 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
         if (vFile == null || !vFile.isValid()) {
           throw new DiffRequestProducerException(DiffBundle.message("error.cant.show.diff.cant.load.revision.content"));
         }
-        DiffContent content = contentFactory.create(project, vFile);
-        content.putUserData(FrontendDiffContentKeys.IS_CURRENT, true);
-        return content;
+        return contentFactory.create(project, vFile);
       }
 
       DiffContent content;

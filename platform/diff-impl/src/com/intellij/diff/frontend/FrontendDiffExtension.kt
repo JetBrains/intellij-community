@@ -124,12 +124,6 @@ data class FrontendDiffContent(
 }
 
 @ApiStatus.Internal
-object FrontendDiffContentKeys {
-  @JvmField
-  val IS_CURRENT: Key<Boolean> = Key.create("Diff.FrontendContent.IsCurrent")
-}
-
-@ApiStatus.Internal
 interface FrontendDiffExtensionData {
   fun <T : Any> getContextData(key: Key<T>): T?
   fun <T : Any> getRequestData(key: Key<T>): T?
