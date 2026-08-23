@@ -56,13 +56,8 @@ import java.util.Set;
 
 import static com.intellij.openapi.util.Pair.pair;
 
-/**
- * @deprecated Use {@link ProxySettings}, {@link ProxyAuthentication}, {@link HttpConnectionUtils}, and {@link ProxyUtils} instead.
- * See method deprecation notices for more details.
- * <p/>
- * For removal in version 24.3
- */
-@SuppressWarnings({"unused", "DeprecatedIsStillUsed"})
+/// @deprecated Use [ProxySettings], [ProxyAuthentication], [HttpConnectionUtils], and [ProxyUtils] instead.
+/// See method deprecation notices for more details.
 @Deprecated(forRemoval = true)
 @State(
   name = "HttpConfigurable",
@@ -71,46 +66,46 @@ import static com.intellij.openapi.util.Pair.pair;
   storages = @Storage(value = "proxy.settings.xml", roamingType = RoamingType.DISABLED),
   reportStatistic = false
 )
+@SuppressWarnings({"unused", "DeprecatedIsStillUsed", "removal"})
 public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, Disposable {
   private static final Logger LOG = Logger.getInstance(HttpConfigurable.class);
   private static final Path PROXY_CREDENTIALS_FILE = PathManager.getOptionsDir().resolve("proxy.settings.pwd");
 
   // only one out of these three should be true
-  /** @deprecated use {@link ProxySettings#getProxyConfiguration()} or {@link ProxySettings#setProxyConfiguration(ProxyConfiguration)}  */
+  /// @deprecated use [ProxySettings#getProxyConfiguration()] or [ProxySettings#setProxyConfiguration(ProxyConfiguration)]
   @Deprecated(forRemoval = true) public boolean USE_HTTP_PROXY;
-  /** @deprecated use {@link ProxySettings#getProxyConfiguration()} or {@link ProxySettings#setProxyConfiguration(ProxyConfiguration)}  */
+  /// @deprecated use [ProxySettings#getProxyConfiguration()] or [ProxySettings#setProxyConfiguration(ProxyConfiguration)]
   @Deprecated(forRemoval = true) public boolean USE_PROXY_PAC;
   // USE_NO_PROXY = !USE_HTTP_PROXY && !USE_PROXY_PAC
 
-  /** @deprecated use {@link ProxySettings#getProxyConfiguration()} or {@link ProxySettings#setProxyConfiguration(ProxyConfiguration)}  */
+  /// @deprecated use [ProxySettings#getProxyConfiguration()] or [ProxySettings#setProxyConfiguration(ProxyConfiguration)]
   @Deprecated(forRemoval = true) public boolean PROXY_TYPE_IS_SOCKS;
-  /** @deprecated use {@link ProxySettings#getProxyConfiguration()} or {@link ProxySettings#setProxyConfiguration(ProxyConfiguration)}  */
+  /// @deprecated use [ProxySettings#getProxyConfiguration()] or [ProxySettings#setProxyConfiguration(ProxyConfiguration)]
   @Deprecated(forRemoval = true) public String PROXY_HOST;
-  /** @deprecated use {@link ProxySettings#getProxyConfiguration()} or {@link ProxySettings#setProxyConfiguration(ProxyConfiguration)}  */
+  /// @deprecated use [ProxySettings#getProxyConfiguration()] or [ProxySettings#setProxyConfiguration(ProxyConfiguration)]
   @Deprecated(forRemoval = true) public int PROXY_PORT = 80;
-  /** @deprecated use {@link ProxySettings#getProxyConfiguration()} or {@link ProxySettings#setProxyConfiguration(ProxyConfiguration)}  */
+  /// @deprecated use [ProxySettings#getProxyConfiguration()] or [ProxySettings#setProxyConfiguration(ProxyConfiguration)]
   @Deprecated(forRemoval = true) public String PROXY_EXCEPTIONS;
-  /** @deprecated use {@link ProxySettings#getProxyConfiguration()} or {@link ProxySettings#setProxyConfiguration(ProxyConfiguration)}  */
+  /// @deprecated use [ProxySettings#getProxyConfiguration()] or [ProxySettings#setProxyConfiguration(ProxyConfiguration)]
   @Deprecated(forRemoval = true) public boolean USE_PAC_URL;
-  /** @deprecated use {@link ProxySettings#getProxyConfiguration()} or {@link ProxySettings#setProxyConfiguration(ProxyConfiguration)}  */
+  /// @deprecated use [ProxySettings#getProxyConfiguration()] or [ProxySettings#setProxyConfiguration(ProxyConfiguration)]
   @Deprecated(forRemoval = true) public String PAC_URL;
 
   /// @deprecated the flag is not used in the [ProxySettings] API;
   /// if no authentication is needed, set credentials to `null` via [ProxyCredentialStore#setCredentials(String, int, Credentials, boolean)]
   @Deprecated(forRemoval = true) public volatile boolean PROXY_AUTHENTICATION;
 
-  /** @deprecated this flag shouldn't be persisted. In HttpConfigurable it controls whether the password is dropped from the persistence.
-   * But if the user wants the password to not be remembered, then such a password should never reach persistence in the first place.
-   *
-   * @see ProxyAuthentication
-   */
+  /// @deprecated this flag shouldn't be persisted. In HttpConfigurable it controls whether the password is dropped from the persistence.
+  /// But if the user wants the password to not be remembered, then such a password should never reach persistence in the first place.
+  ///
+  /// @see ProxyAuthentication
   @Deprecated(forRemoval = true) public boolean KEEP_PROXY_PASSWORD;
 
-  /** @deprecated without replacement */
+  /// @deprecated without replacement
   @Deprecated(forRemoval = true) public transient String LAST_ERROR;
 
-  /** @deprecated use {@link ProxyAuthentication#isPromptedAuthenticationCancelled(String, int)} with StaticProxy configuration
-   * from {@link ProxySettings#getProxyConfiguration()} */
+  /// @deprecated use [ProxyAuthentication#isPromptedAuthenticationCancelled(String, int)] with StaticProxy configuration
+  /// from [ProxySettings#getProxyConfiguration()]
   @Deprecated(forRemoval = true) public transient volatile boolean AUTHENTICATION_CANCELLED;
 
   private final Map<CommonProxy.HostInfo, ProxyInfo> myGenericPasswords = new HashMap<>();
@@ -142,7 +137,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     return ApplicationManager.getApplication().getService(HttpConfigurable.class);
   }
 
-  /** @deprecated use {@link HttpProxyConfigurable#editConfigurable(JComponent)} */
+  /// @deprecated use [HttpProxyConfigurable#editConfigurable(JComponent)]
   @Deprecated
   public static boolean editConfigurable(@Nullable JComponent parent) {
     return HttpProxyConfigurable.editConfigurable(parent);
@@ -166,7 +161,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
   }
 
-  /** @deprecated use {@link JdkProxyCustomizer#getOriginalProxySelector()} */
+  /// @deprecated use [JdkProxyCustomizer#getOriginalProxySelector()]
   @Deprecated(forRemoval = true)
   public @NotNull ProxySelector getOnlyBySettingsSelector() {
     return JdkProxyCustomizer.getInstance().getOriginalProxySelector();
@@ -189,7 +184,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     correctPasswords(this);
   }
 
-  /** @deprecated use {@link ProxyAuthentication#isPromptedAuthenticationCancelled(String, int)} */
+  /// @deprecated use [ProxyAuthentication#isPromptedAuthenticationCancelled(String, int)]
   @Deprecated
   public boolean isGenericPasswordCanceled(@NotNull String host, int port) {
     synchronized (myLock) {
@@ -218,7 +213,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
   }
 
-  /** @deprecated use {@link ProxyCredentialStore#getCredentials(String, int)} */
+  /// @deprecated use [ProxyCredentialStore#getCredentials(String, int)]
   @Deprecated(forRemoval = true)
   public PasswordAuthentication getGenericPassword(@NotNull String host, int port) {
     ProxyInfo proxyInfo;
@@ -234,7 +229,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     return new PasswordAuthentication(proxyInfo.getUsername(), decode(String.valueOf(proxyInfo.getPasswordCrypt())).toCharArray());
   }
 
-  /** @deprecated use {@link ProxyCredentialStore#setCredentials(String, int, Credentials, boolean)} */
+  /// @deprecated use [ProxyCredentialStore#setCredentials(String, int, Credentials, boolean)]
   @Deprecated(forRemoval = true)
   @SuppressWarnings("WeakerAccess")
   public void putGenericPassword(final String host, final int port, @NotNull PasswordAuthentication authentication, boolean remember) {
@@ -319,13 +314,11 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     return Base64.getEncoder().encodeToString(password.getBytes(StandardCharsets.UTF_8));
   }
 
-  /**
-   * @deprecated use {@link ProxyAuthentication#getPromptedAuthentication(String, String, int)}.
-   * <b>ARGUMENT ORDER HAS BEEN CHANGED!</b>
-   * <p/>
-   * @param prefix is never used with anything other than "Proxy authentication: "
-   * @param remember should be a hint, dropped in new API
-   */
+  /// @deprecated use [ProxyAuthentication#getPromptedAuthentication(String, String, int)].
+  /// **ARGUMENT ORDER HAS BEEN CHANGED!**
+  ///
+  /// @param prefix is never used with anything other than "Proxy authentication: "
+  /// @param remember should be a hint, dropped in new API
   @Deprecated(forRemoval = true)
   public PasswordAuthentication getGenericPromptedAuthentication(@Nls String prefix, @NlsSafe String host, @Nls String prompt, int port, boolean remember) {
     Credentials credentials = ProxyAuthentication.getInstance().getPromptedAuthentication(prompt, host, port);
@@ -339,52 +332,35 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     return new PasswordAuthentication(credentials.getUserName(), Objects.requireNonNull(credentials.getPassword()).toCharArray());
   }
 
-  /** @deprecated use {@link ProxyAuthentication#getPromptedAuthentication(String, String, int)} */
+  /// @deprecated use [ProxyAuthentication#getPromptedAuthentication(String, String, int)]
   @Deprecated(forRemoval = true)
   public PasswordAuthentication getPromptedAuthentication(final String host, final @Nls String prompt) {
     Credentials credentials = ProxyAuthentication.getInstance().getPromptedAuthentication(prompt, host, PROXY_PORT);
     return credentialsToPasswordAuth(credentials);
   }
 
-  /**
-   * todo [all] It is NOT necessary to call anything if you obey common IDE proxy settings;
-   * todo if you want to define your own behaviour, refer to {@link CommonProxy}
-   *
-   * Also, this method is useful in a way that it tests connection to the host [through proxy].
-   *
-   * @param url URL for HTTP connection
-   *
-   * @deprecated use {@link HttpConnectionUtils#prepareUrl(String)}
-   */
+  /// @deprecated use [HttpConnectionUtils#prepareUrl(String)]
   @Deprecated(forRemoval = true)
   public void prepareURL(@NotNull String url) throws IOException {
     HttpConnectionUtils.prepareUrl(url);
   }
 
-  /** @deprecated use {@link HttpConnectionUtils#openConnection(String)} */
+  /// @deprecated use [HttpConnectionUtils#openConnection(String)]
   @Deprecated(forRemoval = true)
   public @NotNull URLConnection openConnection(@NotNull String location) throws IOException {
     return HttpConnectionUtils.openConnection(location);
   }
 
-  /**
-   * Opens HTTP connection to a given location using configured http proxy settings.
-   * @param location url to connect to
-   * @return instance of {@link HttpURLConnection}
-   * @throws IOException in case of any I/O troubles or if created connection isn't instance of HttpURLConnection.
-   *
-   * @deprecated use {@link HttpConnectionUtils#openHttpConnection(String)}
-   */
+  /// @deprecated use [HttpConnectionUtils#openHttpConnection(String)]
   @Deprecated(forRemoval = true)
   public @NotNull HttpURLConnection openHttpConnection(@NotNull String location) throws IOException {
     return HttpConnectionUtils.openHttpConnection(location);
   }
 
-  /** @deprecated this method is 1. a utility that shouldn't be a method;
-   * 2. error-prone as it only considers the case when proxy is specified statically, i.e., PAC configuration is not considered.
-   * Reimplement at use site if necessary.
-   * @see ProxyAuthentication
-   */
+  /// @deprecated this method is 1. a utility that shouldn't be a method;
+  /// 2. error-prone as it only considers the case when proxy is specified statically, i.e., PAC configuration is not considered.
+  /// Reimplement at use site if necessary.
+  /// @see ProxyAuthentication
   @Deprecated(forRemoval = true)
   public boolean isHttpProxyEnabledForUrl(@Nullable String url) {
     if (!USE_HTTP_PROXY) return false;
@@ -392,12 +368,12 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     return uri == null || !isProxyException(uri.getHost());
   }
 
-  /** @deprecated use {@link ProxyUtils#getDetectedSettingsAsJvmProperties(URI)}.
-   * If autodetection really needs to be disallowed, check {@link ProxySettings} first. Keep in mind that
-   * proxy configuration depends on the URI, so it cannot be null. If you only care about statically configured proxies, see
-   * {@link ProxyUtils#getCurrentSettingsAsJvmProperties}.
-   * Also, the new util has different properties for user and password that match JDK system properties
-   * (see {@link JavaProxyProperty#HTTP_PROXY_USER}). */
+  /// @deprecated use [ProxyUtils#getDetectedSettingsAsJvmProperties(URI)].
+  /// If autodetection really needs to be disallowed, check [ProxySettings] first. Keep in mind that
+  /// proxy configuration depends on the URI, so it cannot be null. If you only care about statically configured proxies, see
+  /// [ProxyUtils#getCurrentSettingsAsJvmProperties].
+  /// Also, the new util has different properties for user and password that match JDK system properties
+  /// (see [JavaProxyProperty#HTTP_PROXY_USER]).
   @Deprecated(forRemoval = true)
   public @NotNull List<Pair<String, String>> getJvmProperties(boolean withAutodetection, @Nullable URI uri) {
     if (!USE_HTTP_PROXY && !USE_PROXY_PAC) {
@@ -457,7 +433,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     return result;
   }
 
-  /** @deprecated use {@link ProxyConfiguration#buildProxyExceptionsMatcher(String)} */
+  /// @deprecated use [ProxyConfiguration#buildProxyExceptionsMatcher(String)]
   @Deprecated(forRemoval = true)
   public boolean isProxyException(URI uri) {
     return isProxyException(uri.getHost());
@@ -471,7 +447,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     return ProxyConfiguration.buildProxyExceptionsMatcher(PROXY_EXCEPTIONS).test(uriHost);
   }
 
-  /** @deprecated use {@link ProxyUtils#isRealProxy(Proxy)} */
+  /// @deprecated use [ProxyUtils#isRealProxy(Proxy)]
   @Deprecated(forRemoval = true)
   public static boolean isRealProxy(@NotNull Proxy proxy) {
     return ProxyUtils.isRealProxy(proxy);
@@ -485,7 +461,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
   }
 
-  /** @deprecated use {@link ProxyCredentialStore#setCredentials(String, int, Credentials, boolean)} */
+  /// @deprecated use [ProxyCredentialStore#setCredentials(String, int, Credentials, boolean)]
   @Deprecated(forRemoval = true)
   public void removeGeneric(@NotNull CommonProxy.HostInfo info) { // IdeAuthenticatorService
     synchronized (myLock) {
