@@ -26,7 +26,7 @@ private val shouldRescheduleNavigationFromWriteLock: Boolean
  * Tracks navigation tasks of a project so that tests can explicitly await their completion
  * instead of relying on `isUnitTestMode` in the production navigation path.
  *
- * Tasks dispatched by [requestNavigate] / [CoroutineScope.requestNavigate] are registered before they start.
+ * Tasks dispatched by [requestNavigate] are registered before they start.
  * Direct [NavigationService] calls are tracked from the moment they enter the service implementation.
  */
 @ApiStatus.Internal

@@ -23,6 +23,7 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.pom.Navigatable
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.runIf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -40,14 +41,11 @@ private val isNavigationRequestsEnabled: Boolean
  * Otherwise, a blocking modal navigation is scheduled on a later EDT event.
  * In both modes the function returns before the navigation completes.
  * UI context is captured immediately for EDT callers and asynchronously for callers on other threads.
- * Whenever possible, prefer [CoroutineScope.requestNavigate].
  *
  * Tests which depend on navigation started outside those fixtures (e.g., via `EditorTestUtil.executeAction`)
  * must explicitly await the pending-navigation barrier (see `NavigationTestUtil.awaitPendingNavigation`)
  * outside a write action.
  * NB: prefer passing a lifecycle-bound [coroutineScope] when possible.
- *
- * @see [CoroutineScope.requestNavigate]
  *
  * @return [Job] which completes when the navigation task settles: finishes, is canceled
  * by a newer navigation request, or fails. This is an observation handle only
@@ -61,38 +59,14 @@ fun requestNavigate(
   dataContext: DataContext? = null,
   coroutineScope: CoroutineScope? = null,
 ): Job {
-  return dispatchNavigateRequest(
-    project,
-    dataContext,
-    coroutineScope,
-    options,
-    navigateAsync = { ctx ->
-      project.serviceAsync<NavigationService>().navigate(navigatable, ctx.navigationOptions)
-    }
-  ) { ctx ->
-    navigateBlocking(project, navigatable, ctx.navigationOptions)
+  return dispatchNavigateRequest(project, options, dataContext, coroutineScope) { ctx ->
+    navigate(navigatable, ctx.navigationOptions)
   }
 }
 
 /**
  * Submits navigation to [navigatables] without waiting for it to finish.
- *
- * When `ide.navigation.requests` is enabled, the navigation is launched asynchronously in [coroutineScope]
- * or, when none is given, in the project navigation service scope.
- * Otherwise, a blocking modal navigation is scheduled on a later EDT event.
- * In both modes the function returns before the navigation completes.
- * UI context is captured immediately for EDT callers and asynchronously for callers on other threads.
- * Whenever possible, prefer [CoroutineScope.requestNavigate].
- *
- * Tests which depend on navigation started outside those fixtures (e.g., via `EditorTestUtil.executeAction`)
- * must explicitly await the pending-navigation barrier (see `NavigationTestUtil.awaitPendingNavigation`)
- * outside a write action.
- * NB: prefer passing a lifecycle-bound [coroutineScope] when possible.
- *
- * @see [CoroutineScope.requestNavigate]
- *
- * @return [Job] which completes when the navigation task settles: finishes, is canceled
- * by a newer navigation request, or fails. This is an observation handle only
+ * @see [requestNavigate] for the dispatch and completion semantics.
  */
 @ApiStatus.Internal
 @JvmOverloads
@@ -103,18 +77,8 @@ fun requestNavigate(
   dataContext: DataContext? = null,
   coroutineScope: CoroutineScope? = null,
 ): Job {
-  return dispatchNavigateRequest(
-    project,
-    dataContext,
-    coroutineScope,
-    options,
-    navigateAsync = { ctx ->
-      project.serviceAsync<NavigationService>().navigate(navigatables, ctx.navigationOptions)
-    }
-  ) { ctx ->
-    for (navigatable in navigatables) {
-      navigateBlocking(project, navigatable, ctx.navigationOptions)
-    }
+  return dispatchNavigateRequest(project, options, dataContext, coroutineScope) { ctx ->
+    navigate(navigatables, ctx.navigationOptions)
   }
 }
 
@@ -133,14 +97,11 @@ fun requestNavigate(
 ): Job {
   return dispatchNavigateRequest(
     project,
-    dataContext,
-    coroutineScope,
     options,
-    navigateAsync = { ctx ->
-      project.serviceAsync<NavigationService>().navigate(request, ctx.navigationOptions)
-    }
+    dataContext,
+    coroutineScope
   ) { ctx ->
-    navigateBlocking(project, request, ctx.navigationOptions)
+    navigate(request, ctx.navigationOptions)
   }
 }
 
@@ -154,62 +115,11 @@ fun requestNavigate(
 ): Job {
   return dispatchNavigateRequest(
     project,
-    dataContext,
-    coroutineScope,
     options,
-    navigateAsync = { ctx ->
-      navigate(project, ctx.dataContext, ctx.navigationOptions)
-    }
-  ) { ctx ->
-    runWithModalProgressBlocking(project, IdeBundle.message("progress.title.preparing.navigation")) {
-      navigate(project, ctx.dataContext, ctx.navigationOptions)
-    }
-  }
-}
-
-/**
- * Fire-and-forget navigation from a [CoroutineScope].
- * The returned [Job] completes when the navigation task finishes (including cancellation).
- */
-@ApiStatus.Internal
-fun CoroutineScope.requestNavigate(
-  project: Project,
-  navigatable: Navigatable,
-  options: NavigationOptions = NavigationOptions.defaultOptions(),
-  dataContext: DataContext? = null,
-): Job {
-  return dispatchNavigateRequest(
-    project,
     dataContext,
-    options,
-    navigateAsync = { ctx ->
-      project.serviceAsync<NavigationService>().navigate(navigatable, ctx.navigationOptions)
-    }
+    coroutineScope
   ) { ctx ->
-    navigateBlocking(project, navigatable, ctx.navigationOptions)
-  }
-}
-
-/**
- * Fire-and-forget navigation from a [CoroutineScope].
- * @see [CoroutineScope.requestNavigate].
- */
-@ApiStatus.Internal
-fun CoroutineScope.requestNavigate(
-  project: Project,
-  request: NavigationRequest,
-  options: NavigationOptions = NavigationOptions.defaultOptions(),
-  dataContext: DataContext? = null,
-): Job {
-  return dispatchNavigateRequest(
-    project,
-    dataContext,
-    options,
-    navigateAsync = { ctx ->
-      project.serviceAsync<NavigationService>().navigate(request, ctx.navigationOptions)
-    }
-  ) { ctx ->
-    navigateBlocking(project, request, ctx.navigationOptions)
+    navigate(project, ctx.dataContext, ctx.navigationOptions)
   }
 }
 
@@ -225,87 +135,35 @@ internal suspend fun navigate(project: Project, dataContext: DataContext?, optio
   }
 }
 
-private fun dispatchNavigateRequest(
+private inline fun dispatchNavigateRequest(
   project: Project,
+  options: NavigationOptions,
   dataContext: DataContext?,
   coroutineScope: CoroutineScope?,
-  options: NavigationOptions,
-  navigateAsync: suspend (NavigationTaskContext) -> Unit,
-  navigateBlocking: (NavigationTaskContext) -> Unit,
+  crossinline navigate: suspend NavigationService.(NavigationTaskContext) -> Unit,
 ): Job {
-  if (ApplicationManager.getApplication().isDispatchThread) {
-    return createNavigationContext(project, options, dataContext)
-      .dispatchNavigateRequest(project, coroutineScope, navigateAsync, navigateBlocking)
+  val coordinator = NavigationTaskCoordinator.getInstance(project)
+  val precomputedContext = runIf(ApplicationManager.getApplication().isDispatchThread) {
+    createNavigationContext(project, options, dataContext)
   }
-  return coroutineScope.dispatchNavigateRequest(project, dataContext, options, navigateAsync, navigateBlocking)
-}
 
-private fun CoroutineScope?.dispatchNavigateRequest(
-  project: Project,
-  dataContext: DataContext?,
-  options: NavigationOptions,
-  navigateAsync: suspend (NavigationTaskContext) -> Unit,
-  navigateBlocking: (NavigationTaskContext) -> Unit,
-): Job {
-  return NavigationTaskCoordinator.getInstance(project).dispatchNavigation(this) {
-    val navigateContext = withContext(Dispatchers.EDT) {
+  return coordinator.dispatchNavigation(coroutineScope) {
+    val context = precomputedContext ?: withContext(Dispatchers.EDT) {
       createNavigationContext(project, options, dataContext)
     }
-    withContext(navigateContext.coroutineContext) {
+    withContext(context.coroutineContext) {
+      val service = project.serviceAsync<NavigationService>()
       if (isNavigationRequestsEnabled) {
-        navigateAsync(navigateContext)
+        service.navigate(context)
       }
       else {
         withContext(Dispatchers.EDT) {
-          navigateBlocking(navigateContext)
+          runWithModalProgressBlocking(project, IdeBundle.message("progress.title.preparing.navigation")) {
+            service.navigate(context)
+          }
         }
       }
     }
-  }
-}
-
-private inline fun NavigationTaskContext.dispatchNavigateRequest(
-  project: Project,
-  coroutineScope: CoroutineScope?,
-  crossinline navigateAsync: suspend (NavigationTaskContext) -> Unit,
-  crossinline navigateBlocking: (NavigationTaskContext) -> Unit,
-): Job {
-  val coordinator = NavigationTaskCoordinator.getInstance(project)
-  return if (isNavigationRequestsEnabled) {
-    coordinator.dispatchNavigation(coroutineScope, this) {
-      navigateAsync(this@dispatchNavigateRequest)
-    }
-  }
-  else {
-    coordinator.dispatchNavigation(coroutineScope, this) {
-      withContext(Dispatchers.EDT) {
-        navigateBlocking(this@dispatchNavigateRequest)
-      }
-    }
-  }
-}
-
-/**
- * Navigates to the specified [navigatable] in a blocking manner, showing a modal progress dialog.
- * This is a blocking version of [NavigationService.navigate].
- */
-@RequiresEdt
-private fun navigateBlocking(project: Project, navigatable: Navigatable, options: NavigationOptions) {
-  ThreadingAssertions.assertEventDispatchThread()
-  return runWithModalProgressBlocking(project, IdeBundle.message("progress.title.preparing.navigation")) {
-    project.serviceAsync<NavigationService>().navigate(navigatable, options)
-  }
-}
-
-/**
- * Navigates to the specified navigation [request] in a blocking manner, showing a modal progress dialog.
- * This is a blocking version of [NavigationService.navigate].
- */
-@RequiresEdt
-private fun navigateBlocking(project: Project, request: NavigationRequest, options: NavigationOptions) {
-  ThreadingAssertions.assertEventDispatchThread()
-  return runWithModalProgressBlocking(project, IdeBundle.message("progress.title.preparing.navigation")) {
-    project.serviceAsync<NavigationService>().navigate(request, options)
   }
 }
 
