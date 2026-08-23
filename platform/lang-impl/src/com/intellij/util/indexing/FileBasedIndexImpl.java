@@ -177,20 +177,18 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   /** How often, on average, flush each index to the disk */
   private static final long FLUSHING_PERIOD_MS = SECONDS.toMillis(FlushingDaemon.FLUSHING_PERIOD_IN_SECONDS);
-  /**
-   * If true, track the published request boundary per project and skip looking for updates when it is already processed.
-   * The system property keeps its historical name for compatibility.
-   * TODO RC: change the property name so it matches the constant name
-   */
+
+  //@formatter:off
+  /** If true: process only requests after the project cursor. If false: use the cursor only to skip an unchanged queue. */
   @VisibleForTesting
-  public static final boolean USE_REQUEST_VERSION_TO_SKIP_REPEATING_UPDATES =
-    getBooleanProperty("FileBasedIndexImpl.USE_MOD_COUNT_TO_SKIP_REPEATING_UPDATES", true);
-  /** If true, remove requests after all open projects visit them. */
+  public static final boolean USE_REQUEST_VERSION_TO_SKIP_REPEATING_UPDATES = getBooleanProperty("FileBasedIndexImpl.USE_REQUEST_VERSION_TO_SKIP_REPEATING_UPDATES", true);
+  /** If true: periodically clean pending updates: drop from pending the updates that are visited by _all_ currently opened projects */
   @VisibleForTesting
-  public static final boolean CLEAN_REQUESTS_VISITED_BY_ALL_PROJECTS =
-    getBooleanProperty("FileBasedIndexImpl.CLEAN_REQUESTS_VISITED_BY_ALL_PROJECTS", true);
+  public static final boolean CLEAN_REQUESTS_VISITED_BY_ALL_PROJECTS = getBooleanProperty("FileBasedIndexImpl.CLEAN_REQUESTS_VISITED_BY_ALL_PROJECTS", true);
+  //@formatter:on
 
   final CoroutineScope coroutineScope;
+
 
   private volatile RegisteredIndexes myRegisteredIndexes;
   private volatile @Nullable String myShutdownReason;
@@ -206,6 +204,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   );
   private final FilesToUpdateCollector myFilesToUpdateCollector = new FilesToUpdateCollector(CLEAN_REQUESTS_VISITED_BY_ALL_PROJECTS);
   private volatile @Nullable BiConsumer<@Nullable Project, @NotNull List<FileIndexingRequest>> myForceUpdateTestHook;
+
   private final List<Pair<IndexableFileSet, Project>> myIndexableSets = createLockFreeCopyOnWriteList();
 
   private final SimpleMessageBusConnection myConnection;
@@ -254,6 +253,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @Internal
   public FileBasedIndexImpl(@NotNull CoroutineScope coroutineScope) {
+    LOG.info("Indexing requests optimizations: " +
+             "skip already visited pending requests by version=" + USE_REQUEST_VERSION_TO_SKIP_REPEATING_UPDATES +
+             ", periodically drop pending requests visited by all opened projects=" + CLEAN_REQUESTS_VISITED_BY_ALL_PROJECTS);
+
     this.coroutineScope = coroutineScope;
     //TODO RC: better hold a reference to the RRWLock in a field
     ReadWriteLock lock = new ReentrantReadWriteLock();
@@ -1996,7 +1999,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  /** Delivers pending VFS events, then runs the unrestricted project update path. */
+  /** Delivers pending VFS events, then runs the unrestricted project update path without an individual index fast path. */
   @TestOnly
   public void forceUpdateProjectInTest(@NotNull Project project) {
     getChangedFilesCollector().ensureUpToDate();
@@ -2135,7 +2138,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return myFilesToUpdateCollector;
   }
 
-  /** Installs a hook that lets tests inspect requests before project filtering. */
+  /** Installs a hook that lets tests verify which requests reach project filtering. */
   @TestOnly
   public void installForceUpdateTestHook(@NotNull Disposable disposable,
                                          @NotNull BiConsumer<@Nullable Project, @NotNull List<FileIndexingRequest>> hook) {
