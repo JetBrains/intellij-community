@@ -212,11 +212,11 @@ dev_dist_plugin_content(
         "@lib//:terminal-libraries-completion_db_with_extensions-terminal-completion-db-with-extensions",
     ],
     prepacked_content_modules = [
-        "//plugins/terminal/backend",
-        "//plugins/terminal/cloud",
-        "//plugins/terminal/emulator",
-        "//plugins/terminal/frontend",
-        "//plugins/terminal/sh",
+        "//plugins/terminal/backend:backend_content_module_jar",
+        "//plugins/terminal/cloud:cloud_content_module_jar",
+        "//plugins/terminal/emulator:emulator_content_module_jar",
+        "//plugins/terminal/frontend:frontend_content_module_jar",
+        "//plugins/terminal/sh:sh_content_module_jar",
     ],
 )
 ### auto-generated section `dev content intellij.terminal` end

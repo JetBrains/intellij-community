@@ -1,6 +1,7 @@
 load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 fleet_wasmjs_module(
     name = "wasmjs_module",
@@ -33,7 +34,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     kotlinc_opts = ":custom_fastutil",
     module_name = "fleet.fastutil",
     resource_strip_prefix = "resources",
@@ -43,6 +43,8 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = ["@lib//:kotlin-stdlib"],
 )
+
+content_module_jar(module = ":fastutil")
 
 jvm_library(
     name = "fastutil_test_lib",

@@ -44,8 +44,8 @@ exports_files(
 dev_dist_plugin_content(
     descriptor_module = ":plugin",
     prepacked_content_modules = [
-        "//plugins/lombok",
-        "//plugins/lombok/generated",
+        "//plugins/lombok/generated:generated_content_module_jar",
+        "//plugins/lombok:lombok_content_module_jar",
     ],
 )
 ### auto-generated section `dev content intellij.lombok.plugin` end

@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.kotlin.test.junit` start
 jvm_library(
@@ -7,8 +8,6 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    content_module_jar = True,
-    content_module_jar_libraries = ["@lib//:libraries-kotlin-test-junit-kotlin-test-junit"],
     module_name = "intellij.libraries.kotlin.test.junit",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -21,6 +20,11 @@ jvm_library(
         "//libraries/kotlin/test:libraries-kotlinTest",
         "@lib//:libraries-kotlin-test-junit-kotlin-test-junit",
     ],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-kotlin-test-junit-kotlin-test-junit"],
+    module = ":libraries-kotlin-test-junit",
 )
 
 jvm_library(

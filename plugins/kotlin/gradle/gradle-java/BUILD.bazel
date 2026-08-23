@@ -1,6 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "kotlin-gradle-gradle-java-tests_test",
@@ -29,7 +30,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     kotlinc_opts = ":custom_gradle-java",
     module_name = "kotlin.gradle.gradle-java",
     resource_strip_prefix = "resources",
@@ -118,6 +118,8 @@ jvm_library(
         "@lib//:kotlinc-allopen-compiler-plugin",
     ],
 )
+
+content_module_jar(module = ":gradle-java")
 
 jvm_library(
     name = "gradle-java_test_lib",

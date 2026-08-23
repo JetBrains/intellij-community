@@ -1,6 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "whatsNew-tests_test",
@@ -32,7 +33,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     kotlinc_opts = ":custom_whatsNew",
     module_name = "intellij.platform.whatsNew",
     resource_strip_prefix = "resources",
@@ -63,6 +63,8 @@ jvm_library(
         ":libraries_kotlinc_libraries-kotlinc-kotlinx-serialization-compiler-plugin_provided",
     ],
 )
+
+content_module_jar(module = ":whatsNew")
 
 jvm_library(
     name = "whatsNew_test_lib",

@@ -139,10 +139,10 @@ exports_files(
 dev_dist_plugin_content(
     descriptor_module = ":mermaid",
     prepacked_content_modules = [
-        "//plugins/mermaid/frontend",
-        "//plugins/mermaid/json",
-        "//plugins/mermaid/markdown",
-        "//plugins/mermaid/spellchecker",
+        "//plugins/mermaid/frontend:frontend_content_module_jar",
+        "//plugins/mermaid/json:json_content_module_jar",
+        "//plugins/mermaid/markdown:markdown_content_module_jar",
+        "//plugins/mermaid/spellchecker:spellchecker_content_module_jar",
     ],
 )
 ### auto-generated section `dev content intellij.mermaid` end

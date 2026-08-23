@@ -46,10 +46,10 @@ dev_dist_plugin_content(
     descriptor_module = ":editorconfig-plugin",
     libraries = ["@lib//:libraries-ec4j-core-ec4j-core"],
     prepacked_content_modules = [
-        "//plugins/editorconfig/backend",
-        "//plugins/editorconfig/backend.spellchecking",
-        "//plugins/editorconfig/common",
-        "//plugins/editorconfig/frontend",
+        "//plugins/editorconfig/backend.spellchecking:backend.spellchecking_content_module_jar",
+        "//plugins/editorconfig/backend:backend_content_module_jar",
+        "//plugins/editorconfig/common:common_content_module_jar",
+        "//plugins/editorconfig/frontend:frontend_content_module_jar",
     ],
 )
 ### auto-generated section `dev content intellij.editorconfig.plugin` end

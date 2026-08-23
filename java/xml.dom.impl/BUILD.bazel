@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.java.xml.dom.impl` start
 jvm_library(
@@ -11,7 +12,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     module_name = "intellij.java.xml.dom.impl",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -47,6 +47,8 @@ jvm_library(
         "//xml/xml-psi-api:psi",
     ],
 )
+
+content_module_jar(module = ":xml.dom.impl")
 
 jvm_library(
     name = "xml.dom.impl_test_lib",

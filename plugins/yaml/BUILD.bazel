@@ -127,7 +127,7 @@ exports_files(
 dev_dist_plugin_content(
     content_modules = ["//plugins/yaml/syntax"],
     descriptor_module = ":yaml",
-    prepacked_content_modules = ["//plugins/yaml/backend"],
+    prepacked_content_modules = ["//plugins/yaml/backend:backend_content_module_jar"],
 )
 ### auto-generated section `dev content intellij.yaml` end
 

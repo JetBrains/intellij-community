@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.emojipicker` start
 jvm_library(
@@ -13,7 +14,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     module_name = "intellij.emojipicker",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -36,6 +36,8 @@ jvm_library(
         "//platform/util/xmlDom",
     ],
 )
+
+content_module_jar(module = ":emojipicker")
 
 jvm_library(
     name = "emojipicker_test_lib",

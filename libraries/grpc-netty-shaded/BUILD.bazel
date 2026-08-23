@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.grpc.netty.shaded` start
 jvm_library(
@@ -11,8 +12,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
-    content_module_jar_libraries = ["@lib//:libraries-grpc-netty-shaded-grpc-netty-shaded"],
     module_name = "intellij.libraries.grpc.netty.shaded",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -27,6 +26,11 @@ jvm_library(
         "//libraries/jetbrains/annotations",
         "//libraries/grpc",
     ],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-grpc-netty-shaded-grpc-netty-shaded"],
+    module = ":grpc-netty-shaded",
 )
 
 jvm_library(

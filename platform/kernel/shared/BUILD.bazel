@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.platform.kernel` start
 jvm_library(
@@ -11,8 +12,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
-    content_module_jar_modules_after = ["//platform/kernel/pasta"],
     module_name = "intellij.platform.kernel",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -32,6 +31,11 @@ jvm_library(
         "//platform/kernel/pasta",
         "//fleet/rhizomedb",
     ],
+)
+
+content_module_jar(
+    module = ":kernel",
+    modules_after = ["//platform/kernel/pasta"],
 )
 
 jvm_library(

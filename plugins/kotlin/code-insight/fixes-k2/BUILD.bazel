@@ -1,5 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.kotlin.codeInsight.fixes` start
 create_kotlinc_options(
@@ -23,7 +24,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     kotlinc_opts = ":custom_kotlin-codeInsight-fixes",
     module_name = "intellij.kotlin.codeInsight.fixes",
     resource_strip_prefix = "resources",
@@ -80,6 +80,8 @@ jvm_library(
         "//plugins/kotlin/base/plugin",
     ],
 )
+
+content_module_jar(module = ":kotlin-codeInsight-fixes")
 
 jvm_library(
     name = "kotlin-codeInsight-fixes_test_lib",

@@ -1,6 +1,7 @@
 load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 fleet_wasmjs_module(
     name = "wasmjs_module",
@@ -57,7 +58,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     kotlinc_opts = ":custom_core",
     module_name = "fleet.util.core",
     resource_strip_prefix = "resources",
@@ -87,6 +87,8 @@ jvm_library(
         ":fleet_util_multiplatform_provided",
     ],
 )
+
+content_module_jar(module = ":core")
 
 jvm_library(
     name = "core_test_lib",

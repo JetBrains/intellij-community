@@ -1,5 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.impl` start
 create_kotlinc_options(
@@ -17,9 +18,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
-    content_module_jar_modules_after = ["//platform/util/http"],
-    content_module_jar_modules_before = ["//platform/diagnostic/telemetry.exporters"],
     kotlinc_opts = ":custom_telemetry-impl",
     module_name = "intellij.platform.diagnostic.telemetry.impl",
     resource_strip_prefix = "resources",
@@ -56,6 +54,12 @@ jvm_library(
         "//platform/diagnostic/telemetry/rt",
         "//libraries/guava",
     ],
+)
+
+content_module_jar(
+    module = ":telemetry-impl",
+    modules_after = ["//platform/util/http"],
+    modules_before = ["//platform/diagnostic/telemetry.exporters"],
 )
 
 jvm_library(

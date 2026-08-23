@@ -1,6 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//plugins/kotlin:kotlin_test_dependencies.bzl", "all_test_dep_targets")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "evaluationPlugin-languages-kotlin-tests_test",
@@ -22,7 +23,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     module_name = "intellij.evaluationPlugin.languages.kotlin",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -48,6 +48,8 @@ jvm_library(
         "//plugins/kotlin/references",
     ],
 )
+
+content_module_jar(module = ":kotlin")
 
 jvm_library(
     name = "kotlin_test_lib",

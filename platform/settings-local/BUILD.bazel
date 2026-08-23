@@ -1,6 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "settings-local-tests_test",
@@ -27,8 +28,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
-    content_module_jar_libraries = ["@lib//:platform-settings-local-jackson-dataformat-cbor"],
     kotlinc_opts = ":custom_settings-local",
     module_name = "intellij.platform.settings.local",
     resource_strip_prefix = "resources",
@@ -63,6 +62,11 @@ jvm_library(
         "//libraries/aalto-xml",
         "//libraries/kotlinx/serialization/cbor",
     ],
+)
+
+content_module_jar(
+    libraries = ["@lib//:platform-settings-local-jackson-dataformat-cbor"],
+    module = ":settings-local",
 )
 
 jvm_library(

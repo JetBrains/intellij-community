@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.java.langInjection` start
 jvm_provided_library(
@@ -16,7 +17,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     module_name = "intellij.java.langInjection",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -61,6 +61,8 @@ jvm_library(
         ":plugins_IntelliLang_backend_provided",
     ],
 )
+
+content_module_jar(module = ":langInjection")
 
 jvm_library(
     name = "langInjection_test_lib",

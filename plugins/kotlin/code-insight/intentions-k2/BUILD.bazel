@@ -1,5 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.kotlin.codeInsight.intentions` start
 create_kotlinc_options(
@@ -23,7 +24,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     kotlinc_opts = ":custom_kotlin-codeInsight-intentions",
     module_name = "intellij.kotlin.codeInsight.intentions",
     resource_strip_prefix = "resources",
@@ -82,6 +82,8 @@ jvm_library(
         "//plugins/kotlin/formatter",
     ],
 )
+
+content_module_jar(module = ":kotlin-codeInsight-intentions")
 
 jvm_library(
     name = "kotlin-codeInsight-intentions_test_lib",

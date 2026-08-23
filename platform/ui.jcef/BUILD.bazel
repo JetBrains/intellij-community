@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.platform.ui.jcef` start
 kt_javac_options(
@@ -22,7 +23,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     javac_opts = ":custom-javac-options",
     module_name = "intellij.platform.ui.jcef",
     resource_strip_prefix = "resources",
@@ -55,6 +55,8 @@ jvm_library(
         "//libraries/jna",
     ],
 )
+
+content_module_jar(module = ":ui.jcef")
 
 jvm_library(
     name = "ui.jcef_test_lib",

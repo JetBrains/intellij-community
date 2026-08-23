@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "kt_javac_options", "resourcegroup")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "util-tests_test",
@@ -327,7 +328,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     javac_opts = ":custom-javac-options",
     module_name = "intellij.platform.util.ui",
     resource_strip_prefix = "ui/resources",
@@ -364,6 +364,8 @@ jvm_library(
         "//libraries/mvstore",
     ],
 )
+
+content_module_jar(module = ":util-ui")
 
 jvm_library(
     name = "util-ui_test_lib",

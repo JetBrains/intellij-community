@@ -63,11 +63,11 @@ dev_dist_plugin_content(
         "@lib//ant/lib:ant",
     ],
     prepacked_content_modules = [
-        "//plugins/gradle/backend",
-        "//plugins/gradle/completion",
-        "//plugins/gradle/completion/kotlin",
-        "//plugins/gradle/completion/toml",
-        "//plugins/gradle/properties",
+        "//plugins/gradle/backend:backend_content_module_jar",
+        "//plugins/gradle/completion/kotlin:kotlin_content_module_jar",
+        "//plugins/gradle/completion/toml:toml_content_module_jar",
+        "//plugins/gradle/completion:completion_content_module_jar",
+        "//plugins/gradle/properties:properties_content_module_jar",
     ],
 )
 ### auto-generated section `dev content intellij.gradle.plugin` end

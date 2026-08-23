@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.jackson.dataformat.toml` start
 jvm_library(
@@ -7,8 +8,6 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    content_module_jar = True,
-    content_module_jar_libraries = ["@lib//:libraries-jackson-dataformat-toml-jackson-dataformat-toml"],
     module_name = "intellij.libraries.jackson.dataformat.toml",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -21,6 +20,11 @@ jvm_library(
         "@lib//:libraries-jackson-dataformat-toml-jackson-dataformat-toml",
         "//libraries/jackson/jackson",
     ],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-jackson-dataformat-toml-jackson-dataformat-toml"],
+    module = ":libraries-jackson-dataformat-toml",
 )
 
 jvm_library(

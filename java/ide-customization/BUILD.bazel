@@ -88,8 +88,8 @@ exports_files(
 dev_dist_plugin_content(
     descriptor_module = ":ide-customization",
     prepacked_content_modules = [
-        "//java/ide-customization/backend",
-        "//java/ide-customization/training",
+        "//java/ide-customization/backend:backend_content_module_jar",
+        "//java/ide-customization/training:training_content_module_jar",
     ],
 )
 ### auto-generated section `dev content intellij.java.ide.customization` end

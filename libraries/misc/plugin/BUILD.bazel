@@ -60,6 +60,6 @@ dev_dist_plugin_content(
         "@lib//:libraries-oshi-core-github-oshi-core",
         "@lib//:libraries-xstream-xstream",
     ],
-    prepacked_content_modules = ["//libraries/javax/activation"],
+    prepacked_content_modules = ["//libraries/javax/activation:activation_content_module_jar"],
 )
 ### auto-generated section `dev content intellij.libraries.misc.plugin` end

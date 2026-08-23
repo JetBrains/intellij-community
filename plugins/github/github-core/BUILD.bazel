@@ -233,10 +233,10 @@ dev_dist_plugin_content(
     descriptor_module = ":vcs-github",
     libraries = ["@lib//:vcs-github-apollographql-apollo-ast-jvm"],
     prepacked_content_modules = [
-        "//plugins/github/github-git:vcs-github-git",
-        "//plugins/github/github-json:vcs-github-json",
-        "//plugins/github/github-tracker:vcs-github-tracker",
-        "//plugins/github/ultimate-promo",
+        "//plugins/github/github-git:vcs-github-git_content_module_jar",
+        "//plugins/github/github-json:vcs-github-json_content_module_jar",
+        "//plugins/github/github-tracker:vcs-github-tracker_content_module_jar",
+        "//plugins/github/ultimate-promo:ultimate-promo_content_module_jar",
     ],
 )
 ### auto-generated section `dev content intellij.vcs.github` end

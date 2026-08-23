@@ -71,12 +71,12 @@ dev_dist_plugin_content(
     descriptor_module = ":vcs-git",
     libraries = ["@lib//:cucumber-testing"],
     prepacked_content_modules = [
-        "//plugins/git4idea/frontend",
-        "//plugins/git4idea/intellij.vcs.git.coverage:vcs-git-coverage",
-        "//plugins/git4idea/localHistory",
-        "//plugins/git4idea/performanceTesting",
-        "//plugins/git4idea/shared",
-        "//plugins/git4idea/terminal",
+        "//plugins/git4idea/frontend:frontend_content_module_jar",
+        "//plugins/git4idea/intellij.vcs.git.coverage:vcs-git-coverage_content_module_jar",
+        "//plugins/git4idea/localHistory:localHistory_content_module_jar",
+        "//plugins/git4idea/performanceTesting:performanceTesting_content_module_jar",
+        "//plugins/git4idea/shared:shared_content_module_jar",
+        "//plugins/git4idea/terminal:terminal_content_module_jar",
     ],
 )
 ### auto-generated section `dev content intellij.vcs.git` end

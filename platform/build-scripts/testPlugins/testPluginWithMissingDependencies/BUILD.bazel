@@ -44,6 +44,6 @@ exports_files(
 ### auto-generated section `dev content intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies` start
 dev_dist_plugin_content(
     descriptor_module = ":testPluginWithMissingDependencies",
-    prepacked_content_modules = ["//platform/build-scripts/testPlugins/testPluginWithMissingDependencies/module"],
+    prepacked_content_modules = ["//platform/build-scripts/testPlugins/testPluginWithMissingDependencies/module:module_content_module_jar"],
 )
 ### auto-generated section `dev content intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies` end

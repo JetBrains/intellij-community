@@ -1,5 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.platform.workspace.jps` start
 create_kotlinc_options(
@@ -20,8 +21,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
-    content_module_jar_modules_after = ["//platform/workspace/storage"],
     kotlinc_opts = ":custom_jps",
     module_name = "intellij.platform.workspace.jps",
     resource_strip_prefix = "resources",
@@ -49,6 +48,11 @@ jvm_library(
         "//platform/util/base",
         "//platform/core-api:core",
     ],
+)
+
+content_module_jar(
+    module = ":jps",
+    modules_after = ["//platform/workspace/storage"],
 )
 
 jvm_library(

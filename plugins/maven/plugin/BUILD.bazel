@@ -100,12 +100,12 @@ dev_dist_plugin_content(
         "@lib//:slf4j-jdk14",
     ],
     prepacked_content_modules = [
-        "//plugins/maven/completion",
-        "//plugins/maven/groovy",
-        "//plugins/maven/jps",
-        "//plugins/maven/jps/ide",
-        "//plugins/maven/performanceTesting",
-        "//plugins/maven/proofreading",
+        "//plugins/maven/completion:completion_content_module_jar",
+        "//plugins/maven/groovy:groovy_content_module_jar",
+        "//plugins/maven/jps/ide:ide_content_module_jar",
+        "//plugins/maven/jps:jps_content_module_jar",
+        "//plugins/maven/performanceTesting:performanceTesting_content_module_jar",
+        "//plugins/maven/proofreading:proofreading_content_module_jar",
     ],
 )
 ### auto-generated section `dev content intellij.maven.plugin` end

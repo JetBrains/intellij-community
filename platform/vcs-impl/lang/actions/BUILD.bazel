@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.platform.vcs.impl.lang.actions` start
 jvm_library(
@@ -7,7 +8,6 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    content_module_jar = True,
     module_name = "intellij.platform.vcs.impl.lang.actions",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -20,6 +20,8 @@ jvm_library(
         "//platform/vcs-impl",
     ],
 )
+
+content_module_jar(module = ":actions")
 
 jvm_library(
     name = "actions_test_lib",

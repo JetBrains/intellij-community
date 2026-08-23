@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.kotlin.gradle.plugin.idea` start
 jvm_library(
@@ -7,8 +8,6 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    content_module_jar = True,
-    content_module_jar_libraries = ["@lib//:libraries-kotlin-gradle-plugin-idea-kotlin-gradle-plugin-idea"],
     module_name = "intellij.libraries.kotlin.gradle.plugin.idea",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -21,6 +20,11 @@ jvm_library(
         "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
         "@lib//:libraries-kotlin-gradle-plugin-idea-kotlin-gradle-plugin-idea",
     ],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-kotlin-gradle-plugin-idea-kotlin-gradle-plugin-idea"],
+    module = ":libraries-kotlin-gradle-plugin-idea",
 )
 
 jvm_library(

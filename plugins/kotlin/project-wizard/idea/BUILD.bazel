@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.kotlin.projectWizard.idea` start
 jvm_library(
@@ -11,7 +12,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     module_name = "intellij.kotlin.projectWizard.idea",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -72,6 +72,8 @@ jvm_library(
         "//platform/workspace/storage",
     ],
 )
+
+content_module_jar(module = ":idea")
 
 jvm_library(
     name = "idea_test_lib",

@@ -50,10 +50,10 @@ dev_dist_plugin_content(
     ],
     descriptor_module = ":dev",
     prepacked_content_modules = [
-        "//platform/platform-impl/ui-inspector:ide-ui-inspector",
-        "//platform/statistics/devkit",
-        "//plugins/dev/intellij.dev.leakDetection:leakDetection",
-        "//plugins/dev/intellij.groovy.dev:groovy-dev",
+        "//platform/platform-impl/ui-inspector:ide-ui-inspector_content_module_jar",
+        "//platform/statistics/devkit:devkit_content_module_jar",
+        "//plugins/dev/intellij.dev.leakDetection:leakDetection_content_module_jar",
+        "//plugins/dev/intellij.groovy.dev:groovy-dev_content_module_jar",
     ],
 )
 ### auto-generated section `dev content intellij.dev` end

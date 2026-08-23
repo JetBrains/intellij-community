@@ -1,6 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "repository-search-completion-tests_test",
@@ -21,7 +22,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     module_name = "intellij.repository.search.completion",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -44,6 +44,8 @@ jvm_library(
         "//platform/util/text-matching",
     ],
 )
+
+content_module_jar(module = ":completion")
 
 jvm_library(
     name = "completion_test_lib",

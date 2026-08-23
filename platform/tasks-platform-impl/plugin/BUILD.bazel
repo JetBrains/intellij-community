@@ -44,10 +44,10 @@ exports_files(
 dev_dist_plugin_content(
     descriptor_module = ":plugin",
     prepacked_content_modules = [
-        "//platform/tasks-platform-api:tasks",
-        "//platform/tasks-platform-impl/tasks.impl.bookmarks",
-        "//platform/tasks-platform-impl/tasks.impl.debugger",
-        "//platform/tasks-platform-impl:tasks-impl",
+        "//platform/tasks-platform-api:tasks_content_module_jar",
+        "//platform/tasks-platform-impl/tasks.impl.bookmarks:tasks.impl.bookmarks_content_module_jar",
+        "//platform/tasks-platform-impl/tasks.impl.debugger:tasks.impl.debugger_content_module_jar",
+        "//platform/tasks-platform-impl:tasks-impl_content_module_jar",
     ],
 )
 ### auto-generated section `dev content intellij.platform.tasks.plugin` end

@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.batik` start
 jvm_library(
@@ -7,12 +8,6 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    content_module_jar = True,
-    content_module_jar_libraries = [
-        # do not sort,
-        "@lib//:libraries-batik-batik-transcoder",
-        "@lib//:libraries-batik-xml-apis-ext",
-    ],
     module_name = "intellij.libraries.batik",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -29,6 +24,15 @@ jvm_library(
         "@lib//:libraries-batik-batik-transcoder",
         "@lib//:libraries-batik-xml-apis-ext",
     ],
+)
+
+content_module_jar(
+    libraries = [
+        # do not sort,
+        "@lib//:libraries-batik-batik-transcoder",
+        "@lib//:libraries-batik-xml-apis-ext",
+    ],
+    module = ":batik",
 )
 
 jvm_library(

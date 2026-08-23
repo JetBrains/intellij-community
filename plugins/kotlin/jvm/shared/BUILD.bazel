@@ -1,5 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build kotlin.jvm.shared` start
 create_kotlinc_options(
@@ -22,7 +23,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     kotlinc_opts = ":custom_shared",
     module_name = "kotlin.jvm.shared",
     resource_strip_prefix = "resources",
@@ -98,6 +98,8 @@ jvm_library(
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     ],
 )
+
+content_module_jar(module = ":shared")
 
 jvm_library(
     name = "shared_test_lib",

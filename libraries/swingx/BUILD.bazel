@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.swingx` start
 jvm_library(
@@ -7,7 +8,6 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    content_module_jar = True,
     module_name = "intellij.libraries.swingx",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -17,6 +17,8 @@ jvm_library(
     exports = ["@lib//:libraries-swingx-swingx"],
     runtime_deps = ["@lib//:libraries-swingx-swingx"],
 )
+
+content_module_jar(module = ":swingx")
 
 jvm_library(
     name = "swingx_test_lib",

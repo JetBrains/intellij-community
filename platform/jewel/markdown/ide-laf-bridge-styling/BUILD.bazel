@@ -1,5 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.platform.jewel.markdown.ideLafBridgeStyling` start
 create_kotlinc_options(
@@ -39,7 +40,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     kotlinc_opts = ":custom_ide-laf-bridge-styling",
     module_name = "intellij.platform.jewel.markdown.ideLafBridgeStyling",
     resource_strip_prefix = "src/main/resources",
@@ -75,6 +75,8 @@ jvm_library(
         ":platform_jewel_markdown_extensions_front-matter_provided",
     ],
 )
+
+content_module_jar(module = ":ide-laf-bridge-styling")
 
 jvm_library(
     name = "ide-laf-bridge-styling_test_lib",

@@ -46,11 +46,11 @@ dev_dist_plugin_content(
     descriptor_module = ":plugin",
     libraries = ["@lib//:libraries-joni-joni"],
     prepacked_content_modules = [
-        "//plugins/textmate",
-        "//plugins/textmate/backend",
-        "//plugins/textmate/common",
-        "//plugins/textmate/core",
-        "//plugins/textmate/joni",
+        "//plugins/textmate/backend:backend_content_module_jar",
+        "//plugins/textmate/common:common_content_module_jar",
+        "//plugins/textmate/core:core_content_module_jar",
+        "//plugins/textmate/joni:joni_content_module_jar",
+        "//plugins/textmate:textmate_content_module_jar",
     ],
 )
 ### auto-generated section `dev content intellij.textmate.plugin` end

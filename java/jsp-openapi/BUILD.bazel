@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.jsp` start
 jvm_library(
@@ -11,7 +12,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     module_name = "intellij.jsp",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -29,6 +29,8 @@ jvm_library(
         "//java/jsp-base-openapi:jsp-base",
     ],
 )
+
+content_module_jar(module = ":jsp")
 
 jvm_library(
     name = "jsp_test_lib",

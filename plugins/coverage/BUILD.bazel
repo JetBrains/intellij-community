@@ -180,8 +180,8 @@ dev_dist_plugin_content(
         "@lib//:libraries-test-discovery-intellij-test-discovery",
     ],
     prepacked_content_modules = [
-        "//plugins/coverage/junit",
-        "//plugins/coverage/testng",
+        "//plugins/coverage/junit:junit_content_module_jar",
+        "//plugins/coverage/testng:testng_content_module_jar",
     ],
 )
 ### auto-generated section `dev content intellij.java.coverage` end

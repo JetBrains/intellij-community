@@ -106,10 +106,10 @@ dev_dist_plugin_content(
         "@lib//:search_everywhere_ml-typos-ai-grazie-spell-gec-engine-local-jvm",
     ],
     prepacked_content_modules = [
-        "//plugins/search-everywhere-ml/ranking/ext",
-        "//plugins/search-everywhere-ml/ranking/java",
-        "//plugins/search-everywhere-ml/ranking/vcs",
-        "//plugins/search-everywhere-ml/ranking/yaml",
+        "//plugins/search-everywhere-ml/ranking/ext:ext_content_module_jar",
+        "//plugins/search-everywhere-ml/ranking/java:java_content_module_jar",
+        "//plugins/search-everywhere-ml/ranking/vcs:vcs_content_module_jar",
+        "//plugins/search-everywhere-ml/ranking/yaml:yaml_content_module_jar",
     ],
 )
 ### auto-generated section `dev content intellij.searchEverywhereMl` end

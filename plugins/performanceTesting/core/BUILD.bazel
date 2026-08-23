@@ -198,14 +198,14 @@ dev_dist_plugin_content(
         "@lib//:libraries-assertj-core-assert_j",
     ],
     prepacked_content_modules = [
-        "//plugins/performanceTesting/backend",
-        "//plugins/performanceTesting/freezes",
-        "//plugins/performanceTesting/frontend",
-        "//plugins/performanceTesting/problemsView",
-        "//plugins/performanceTesting/remote-driver.compose",
-        "//plugins/performanceTesting/remote-driver.jcef",
-        "//plugins/performanceTesting/structureView",
-        "//plugins/performanceTesting/vcs",
+        "//plugins/performanceTesting/backend:backend_content_module_jar",
+        "//plugins/performanceTesting/freezes:freezes_content_module_jar",
+        "//plugins/performanceTesting/frontend:frontend_content_module_jar",
+        "//plugins/performanceTesting/problemsView:problemsView_content_module_jar",
+        "//plugins/performanceTesting/remote-driver.compose:remote-driver.compose_content_module_jar",
+        "//plugins/performanceTesting/remote-driver.jcef:remote-driver.jcef_content_module_jar",
+        "//plugins/performanceTesting/structureView:structureView_content_module_jar",
+        "//plugins/performanceTesting/vcs:vcs_content_module_jar",
     ],
 )
 ### auto-generated section `dev content intellij.performanceTesting` end

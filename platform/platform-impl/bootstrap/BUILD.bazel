@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.platform.ide.bootstrap` start
 jvm_library(
@@ -11,18 +12,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
-    content_module_jar_libraries = ["@lib//:googlecode-plist-dd"],
-    content_module_jar_modules_after = [
-        # do not sort,
-        "//platform/platform-impl/bootstrap/eel",
-        "//platform/platform-impl/bootstrap/kernel",
-    ],
-    content_module_jar_modules_before = [
-        # do not sort,
-        "//platform/icons-api/rendering",
-        "//platform/icons-impl",
-    ],
     module_name = "intellij.platform.ide.bootstrap",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -77,6 +66,21 @@ jvm_library(
         "//platform/eel-nioFs-impl",
         "//platform/icons-impl",
         "//platform/icons-impl/intellij",
+    ],
+)
+
+content_module_jar(
+    libraries = ["@lib//:googlecode-plist-dd"],
+    module = ":bootstrap",
+    modules_after = [
+        # do not sort,
+        "//platform/platform-impl/bootstrap/eel",
+        "//platform/platform-impl/bootstrap/kernel",
+    ],
+    modules_before = [
+        # do not sort,
+        "//platform/icons-api/rendering",
+        "//platform/icons-impl",
     ],
 )
 

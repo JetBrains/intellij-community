@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.groovy.dev` start
 jvm_library(
@@ -11,7 +12,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     module_name = "intellij.groovy.dev",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -30,6 +30,8 @@ jvm_library(
         "//libraries/fastutil",
     ],
 )
+
+content_module_jar(module = ":groovy-dev")
 
 jvm_library(
     name = "groovy-dev_test_lib",

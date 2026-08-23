@@ -1,6 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.kotlin.base.scripting.scratch` start
 create_kotlinc_options(
@@ -19,7 +20,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     kotlinc_opts = ":custom_scripting.scratch",
     module_name = "intellij.kotlin.base.scripting.scratch",
     resource_strip_prefix = "resources",
@@ -82,6 +82,8 @@ jvm_library(
         "//java/openapi:java",
     ],
 )
+
+content_module_jar(module = ":scripting.scratch")
 
 jvm_library(
     name = "scripting.scratch_test_lib",

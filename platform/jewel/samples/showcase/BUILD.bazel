@@ -1,5 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.platform.jewel.samples.showcase` start
 create_kotlinc_options(
@@ -26,7 +27,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     kotlinc_opts = ":custom_showcase",
     module_name = "intellij.platform.jewel.samples.showcase",
     resource_strip_prefix = "src/main/resources",
@@ -47,6 +47,8 @@ jvm_library(
         "//libraries/skiko",
     ],
 )
+
+content_module_jar(module = ":showcase")
 
 jvm_library(
     name = "showcase_test_lib",

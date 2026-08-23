@@ -1,6 +1,7 @@
 load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 BAZEL_TARGETS_JSON = current_bazel_targets_json()
 
@@ -29,7 +30,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     module_name = "intellij.java.ui",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -100,6 +100,8 @@ jvm_library(
         "//platform/lang-api:lang",
     ],
 )
+
+content_module_jar(module = ":ui")
 
 jvm_library(
     name = "ui_test_lib",

@@ -148,10 +148,10 @@ dev_dist_plugin_content(
         "@lib//:tasks-core-libraries-commons_discovery-commons-discovery",
     ],
     prepacked_content_modules = [
-        "//plugins/tasks/tasks-core/bugzilla",
-        "//plugins/tasks/tasks-core/jira",
-        "//plugins/tasks/tasks-core/trac",
-        "//plugins/tasks/tasks-java:java",
+        "//plugins/tasks/tasks-core/bugzilla:bugzilla_content_module_jar",
+        "//plugins/tasks/tasks-core/jira:jira_content_module_jar",
+        "//plugins/tasks/tasks-core/trac:trac_content_module_jar",
+        "//plugins/tasks/tasks-java:java_content_module_jar",
     ],
 )
 ### auto-generated section `dev content intellij.tasks.core` end

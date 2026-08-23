@@ -140,9 +140,9 @@ dev_dist_plugin_content(
         "@lib//:mockito-junit-jupiter",
     ],
     prepacked_content_modules = [
-        "//plugins/evaluation-plugin/languages/java",
-        "//plugins/evaluation-plugin/languages/kotlin",
-        "//plugins/evaluation-plugin/languages/python",
+        "//plugins/evaluation-plugin/languages/java:java_content_module_jar",
+        "//plugins/evaluation-plugin/languages/kotlin:kotlin_content_module_jar",
+        "//plugins/evaluation-plugin/languages/python:python_content_module_jar",
     ],
 )
 ### auto-generated section `dev content intellij.evaluationPlugin` end

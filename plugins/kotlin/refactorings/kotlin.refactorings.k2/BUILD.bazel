@@ -1,5 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.kotlin.refactorings` start
 create_kotlinc_options(
@@ -24,7 +25,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     kotlinc_opts = ":custom_kotlin-refactorings",
     module_name = "intellij.kotlin.refactorings",
     resource_strip_prefix = "resources",
@@ -97,6 +97,8 @@ jvm_library(
         "//platform/lang-core",
     ],
 )
+
+content_module_jar(module = ":kotlin-refactorings")
 
 jvm_library(
     name = "kotlin-refactorings_test_lib",

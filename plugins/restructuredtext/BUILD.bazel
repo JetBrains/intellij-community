@@ -129,7 +129,7 @@ exports_files(
 ### auto-generated section `dev content intellij.restructuredtext` start
 dev_dist_plugin_content(
     descriptor_module = ":restructuredtext",
-    prepacked_content_modules = ["//python/python-restructuredtext:restructuredtext-python"],
+    prepacked_content_modules = ["//python/python-restructuredtext:restructuredtext-python_content_module_jar"],
 )
 ### auto-generated section `dev content intellij.restructuredtext` end
 

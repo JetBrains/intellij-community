@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "credentialStore-impl-tests_test",
@@ -20,8 +21,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
-    content_module_jar_libraries = ["@lib//:platform-credential_store-impl-dbus-java"],
     module_name = "intellij.platform.credentialStore.impl",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -58,6 +57,11 @@ jvm_library(
         "//platform/analysis-api:analysis",
         "//platform/platform-api:ide",
     ],
+)
+
+content_module_jar(
+    libraries = ["@lib//:platform-credential_store-impl-dbus-java"],
+    module = ":credentialStore-impl",
 )
 
 jvm_library(

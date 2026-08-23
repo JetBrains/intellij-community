@@ -63,6 +63,76 @@ internal class ContentModuleJar(
   @JvmField val rewriteBootClassPath: Boolean,
 )
 
+/**
+ * The name of the target that packs [module]'s `lib/` jar, in the module's own package.
+ *
+ * Not written into the `BUILD.bazel`: the `content_module_jar` macro derives it from `module`, the way
+ * `dev_dist_plugin_content` derives its own from `descriptor_module`. This is the Kotlin half of that one derivation -
+ * `content_module_jar_target_name` in `content_module_jar.bzl` is the Starlark half - and it exists because
+ * `build/bazel-targets.json` has to record the label the macro will produce, for the plan generator to name as a
+ * plugin's prepacked content.
+ */
+internal fun contentModuleJarTargetName(module: ModuleDescriptor): String = "${module.targetName}_content_module_jar"
+
+/**
+ * The label of [module]'s packing target as [dependent]'s package must write it.
+ *
+ * Derived from the module's own dependency label rather than composed from scratch, so the repository prefix and the
+ * community/ultimate rules stay in one place: that label is `<package>` or `<package>:<target>`, and the packing target
+ * is a second target in the same package.
+ */
+internal fun contentModuleJarLabel(module: ModuleDescriptor, dependent: ModuleDescriptor, context: BazelBuildFileGenerator): String {
+  val label = context.getBazelDependencyLabel(module, dependent)
+  return label.substringBefore(':') + ":" + contentModuleJarTargetName(module)
+}
+
+/** [ContentModuleJar] with every merged-module name resolved to a label. */
+internal class ContentModuleJarTarget(
+  @JvmField val modulesBefore: List<String>,
+  @JvmField val modulesAfter: List<String>,
+  @JvmField val libraryTargetLabels: List<String>,
+  @JvmField val rewriteBootClassPath: Boolean,
+)
+
+/**
+ * Writes [module]'s packing target into its own `BUILD.bazel`.
+ *
+ * A target of its own, next to the `jvm_library` whose module it names, rather than attributes on that library. It was
+ * attributes while the packer lived in the repository that consumes `rules_jvm`, because `jvm_library` is a `rules_jvm`
+ * rule and could not name the tool - so the tool was pushed in through a `label_flag` and the recipe had to travel on
+ * the only target that already existed. With the packer in `@community//build/content-module-packer` the rule names it
+ * directly.
+ *
+ * What the target form buys, beyond letting the flag die: a recipe both compile backends see, where the attributes were
+ * dropped on the `kt_jvm_library` path; and attributes `dev_dist_content.bzl` reads as its own rather than by name off
+ * somebody else's rule. It costs almost nothing in the generated tree, because everything derivable is derived - see
+ * the emitter.
+ */
+internal fun BuildFile.emitContentModuleJar(module: ModuleDescriptor, jar: ContentModuleJarTarget) {
+  load((if (module.isCommunity) "" else "@community") + "//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+  target("content_module_jar") {
+    // Emitted in the order the Starlark formatter sorts them - alphabetical - so a regeneration needs no reformat.
+    //
+    // Four things this deliberately does not write, because 2 524 copies of a derivable fact is what the generated tree
+    // pays for: `name`, which the macro derives from `module`; `module_name`, which the rule reads off `module`'s own
+    // `KtJvmInfo`; `visibility`, which the macro defaults to public, as every one of these has to be; and `tags`, since
+    // the macro adds `manual`. Most of these targets are therefore a single line.
+    if (jar.libraryTargetLabels.isNotEmpty()) {
+      option("libraries", jar.libraryTargetLabels.unsorted())
+    }
+    option("module", ":${module.targetName}")
+    if (jar.modulesAfter.isNotEmpty()) {
+      option("modules_after", jar.modulesAfter.unsorted())
+    }
+    if (jar.modulesBefore.isNotEmpty()) {
+      option("modules_before", jar.modulesBefore.unsorted())
+    }
+    if (jar.rewriteBootClassPath) {
+      option("rewrite_boot_class_path", true)
+    }
+  }
+}
+
 /** `mergeJars.kt` rewrites this module's `Boot-Class-Path`; see [ContentModuleJar.rewriteBootClassPath]. */
 private const val BOOT_CLASS_PATH_MODULE = "intellij.platform.coverage.agent"
 
@@ -264,8 +334,8 @@ internal fun computeContentModuleJar(module: ModuleDescriptor, moduleList: Modul
   }
 
   val moduleNames = entry.modules.map { it.name }
-  // The rule packs the owner's own jar in place, so the merged modules are split around it. A jar whose recipe does not
-  // list its owner is not this module's to pack.
+  // The owner's own jar is merged in place, so the rest are split around it. A jar whose recipe does not list its owner
+  // is not this module's to pack.
   val ownerIndex = moduleNames.indexOf(moduleName)
   if (ownerIndex < 0) {
     return null

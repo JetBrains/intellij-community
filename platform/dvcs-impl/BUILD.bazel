@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "vcs-dvcs-impl-tests_test",
@@ -21,7 +22,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     module_name = "intellij.platform.vcs.dvcs.impl",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -70,6 +70,8 @@ jvm_library(
         "//fleet/rhizomedb",
     ],
 )
+
+content_module_jar(module = ":vcs-dvcs-impl")
 
 jvm_library(
     name = "vcs-dvcs-impl_test_lib",

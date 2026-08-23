@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "diagnostic-telemetry-agent-extension-tests_test",
@@ -26,7 +27,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.platform.diagnostic.telemetry.agent.extension",
     resource_strip_prefix = "resources",
@@ -44,6 +44,8 @@ jvm_library(
         ":libraries_opentelemetry-sdk-autoconfigure-spi_provided",
     ],
 )
+
+content_module_jar(module = ":diagnostic-telemetry-agent-extension")
 
 jvm_library(
     name = "diagnostic-telemetry-agent-extension_test_lib",

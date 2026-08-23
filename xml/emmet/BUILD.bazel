@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.xml.emmet` start
 jvm_provided_library(
@@ -131,7 +132,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     module_name = "intellij.xml.emmet",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -172,6 +172,8 @@ jvm_library(
         ":fleet_rpc_provided",
     ],
 )
+
+content_module_jar(module = ":emmet")
 
 jvm_library(
     name = "emmet_test_lib",

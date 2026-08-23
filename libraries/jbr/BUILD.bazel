@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.jbr` start
 jvm_library(
@@ -7,8 +8,6 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    content_module_jar = True,
-    content_module_jar_libraries = ["@lib//:libraries-jbr-jbr-api"],
     module_name = "intellij.libraries.jbr",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -17,6 +16,11 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jbr-jbr-api"],
     runtime_deps = ["@lib//:libraries-jbr-jbr-api"],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-jbr-jbr-api"],
+    module = ":jbr",
 )
 
 jvm_library(

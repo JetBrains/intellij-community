@@ -4,6 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:intellij_dev.bzl", "INTELLIJ_ADD_OPENS")
 load("//build:intellij_dev_community.bzl", "intellij_dev_binary_community")
 load("//build:jps_to_bazel_targets_json.bzl", "jps_to_bazel_targets_json")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 load(":dev_launch_dependencies_test.bzl", "dev_launch_dependencies_test_suite")
 load(":jps_library_derivation_pipeline_test.bzl", "jps_library_derivation_pipeline_test_suite")
 load(":jps_library_derivation_test.bzl", "jps_library_derivation_test_suite")
@@ -292,8 +293,6 @@ exports_files(
 jvm_library(
     name = "dependency-graph",
     srcs = ["@rules_jvm//dependency-graph:dependency-graph_sources"],
-    content_module_jar = True,
-    content_module_jar_libraries = ["@lib//:kotlin-metadata"],
     kotlinc_opts = "@community//:k11",
     module_name = "intellij.platform.jps.build.dependencyGraph",
     resource_jars = ["@rules_jvm//dependency-graph:dependency-graph_resources"],
@@ -309,6 +308,11 @@ jvm_library(
         "//libraries/fastutil",
         "@lib//:kotlin-stdlib-provided",
     ],
+)
+
+content_module_jar(
+    libraries = ["@lib//:kotlin-metadata"],
+    module = ":dependency-graph",
 )
 
 jvm_library(
@@ -349,8 +353,6 @@ exports_files(
 jvm_library(
     name = "build-javac-rt",
     srcs = ["@rules_jvm//jps-builders-6:build-javac-rt_sources"],
-    content_module_jar = True,
-    content_module_jar_libraries = ["@lib//:jps-javac-extension"],
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.platform.jps.build.javac.rt",
     resource_jars = ["@rules_jvm//jps-builders-6:build-javac-rt_resources"],
@@ -365,6 +367,11 @@ jvm_library(
         "//libraries/netty/codec-http:libraries-netty-codec-http",
         "//libraries/netty/buffer",
     ],
+)
+
+content_module_jar(
+    libraries = ["@lib//:jps-javac-extension"],
+    module = ":build-javac-rt",
 )
 
 jvm_library(

@@ -247,6 +247,15 @@ internal class JpsModuleToBazel {
       val testJars: List<String>,
       val exports: List<String>,
       val moduleLibraries: Map<String, LibraryDescription>,
+      /**
+       * The label of this module's `content_module_jar` target, or empty when it packs no `lib/` jar.
+       *
+       * Recorded rather than derived: it is not a function of any other label here - the target name is
+       * `<bazel target name>_content_module_jar`, and the Bazel target name is itself derived from the JPS module name,
+       * the package directory and the custom-module table. The plan generator names this label as a plugin's prepacked
+       * content and as the platform payload's `packed`, so both sides have to mean the same target.
+       */
+      @JvmField val contentModuleJarTarget: String = "",
     )
 
     /**
@@ -391,7 +400,7 @@ internal class JpsModuleToBazel {
       }
 
       val skippedModules = moduleList.skippedModules
-      val emptyModule = TargetsFileModuleDescription(emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyMap())
+      val emptyModule = TargetsFileModuleDescription(emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyMap(), "")
       val module2Libraries = libs
         .filter { it.target.moduleLibraryModuleName != null }
         .groupBy { it.target.moduleLibraryModuleName }
@@ -407,6 +416,7 @@ internal class JpsModuleToBazel {
             exports = moduleList.deps[moduleTarget.moduleDescriptor]?.exports?.map { it.label } ?: emptyList(),
             moduleLibraries = module2Libraries[moduleName]
                                 ?.associateTo(TreeMap()) { it.target.jpsName to makeLibraryDescription(it) } ?: emptyMap(),
+            contentModuleJarTarget = moduleTarget.contentModuleJarTarget ?: "",
           ).also {
             if (assertAllModuleOutputsExist) {
               for (outputPath in it.productionJars + it.testJars) {

@@ -156,6 +156,8 @@ class BazelTargetsInfo {
     @JvmField val testJars: List<String>,
     @JvmField val exports: List<String>,
     @JvmField val moduleLibraries: Map<String, LibraryDescription>,
+    /** The label of this module's `content_module_jar` target, or empty when it packs no `lib/` jar. */
+    @JvmField val contentModuleJarTarget: String = "",
   )
 
   @Serializable

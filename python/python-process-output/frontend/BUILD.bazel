@@ -1,6 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "python-processOutput-frontend-tests_test",
@@ -29,7 +30,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     kotlinc_opts = ":custom_frontend",
     module_name = "intellij.python.processOutput.frontend",
     resource_strip_prefix = "resources",
@@ -62,6 +62,8 @@ jvm_library(
         "//platform/util/coroutines",
     ],
 )
+
+content_module_jar(module = ":frontend")
 
 jvm_library(
     name = "frontend_test_lib",

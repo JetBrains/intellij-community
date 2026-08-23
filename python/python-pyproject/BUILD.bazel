@@ -1,6 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "pyproject-tests_test",
@@ -28,7 +29,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     kotlinc_opts = ":custom_pyproject",
     module_name = "intellij.python.pyproject",
     resource_strip_prefix = "resources",
@@ -71,6 +71,8 @@ jvm_library(
         "//python/python-requirements/backend",
     ],
 )
+
+content_module_jar(module = ":pyproject")
 
 jvm_library(
     name = "pyproject_test_lib",

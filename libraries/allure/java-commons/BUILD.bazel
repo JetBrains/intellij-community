@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.allure.java.commons` start
 jvm_library(
@@ -7,8 +8,6 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    content_module_jar = True,
-    content_module_jar_libraries = ["@lib//:libraries-allure-java-commons-io-qameta-allure-java-commons"],
     module_name = "intellij.libraries.allure.java.commons",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -17,6 +16,11 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-allure-java-commons-io-qameta-allure-java-commons"],
     runtime_deps = ["@lib//:libraries-allure-java-commons-io-qameta-allure-java-commons"],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-allure-java-commons-io-qameta-allure-java-commons"],
+    module = ":libraries-allure-java-commons",
 )
 
 jvm_library(

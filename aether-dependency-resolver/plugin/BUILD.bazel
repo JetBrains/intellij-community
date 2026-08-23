@@ -61,8 +61,8 @@ dev_dist_plugin_content(
         "@lib//:package-search-api-client",
     ],
     prepacked_content_modules = [
-        "//aether-dependency-resolver",
-        "//plugins/repository-search/completion",
+        "//aether-dependency-resolver:aether-dependency-resolver_content_module_jar",
+        "//plugins/repository-search/completion:completion_content_module_jar",
     ],
 )
 ### auto-generated section `dev content intellij.java.aetherDependencyResolver.plugin` end

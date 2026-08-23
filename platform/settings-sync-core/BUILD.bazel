@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.settingsSync.core` start
 jvm_library(
@@ -12,8 +13,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
-    content_module_jar_libraries = ["@lib//:jetbrains-intellij-deps-eclipse-jgit"],
     module_name = "intellij.settingsSync.core",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -66,6 +65,11 @@ jvm_library(
         "//platform/vcs-impl",
         "//platform/diff-impl",
     ],
+)
+
+content_module_jar(
+    libraries = ["@lib//:jetbrains-intellij-deps-eclipse-jgit"],
+    module = ":settingsSync-core",
 )
 
 jvm_library(

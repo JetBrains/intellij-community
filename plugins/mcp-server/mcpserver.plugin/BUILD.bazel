@@ -85,11 +85,11 @@ dev_dist_plugin_content(
         "@lib//:slf4j-jdk14",
     ],
     prepacked_content_modules = [
-        "//plugins/mcp-server/mcpserver.frontend",
-        "//plugins/mcp-server/mcpserver.terminal",
-        "//plugins/mcp-server/mcpserver.terminal.frontend",
-        "//plugins/mcp-server/mcpserver.toolsets",
-        "//plugins/mcp-server/mcpserver.vcs",
+        "//plugins/mcp-server/mcpserver.frontend:mcpserver.frontend_content_module_jar",
+        "//plugins/mcp-server/mcpserver.terminal.frontend:mcpserver.terminal.frontend_content_module_jar",
+        "//plugins/mcp-server/mcpserver.terminal:mcpserver.terminal_content_module_jar",
+        "//plugins/mcp-server/mcpserver.toolsets:mcpserver.toolsets_content_module_jar",
+        "//plugins/mcp-server/mcpserver.vcs:mcpserver.vcs_content_module_jar",
     ],
 )
 ### auto-generated section `dev content intellij.mcpserver.plugin` end

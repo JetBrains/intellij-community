@@ -1,5 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.platform.runtime.product` start
 create_kotlinc_options(
@@ -18,7 +19,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     kotlinc_opts = ":custom_product",
     module_name = "intellij.platform.runtime.product",
     resource_strip_prefix = "resources",
@@ -34,6 +34,8 @@ jvm_library(
         "//platform/util/base",
     ],
 )
+
+content_module_jar(module = ":product")
 
 jvm_library(
     name = "product_test_lib",

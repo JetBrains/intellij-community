@@ -242,12 +242,12 @@ dev_dist_plugin_content(
         "@lib//:libraries-opentest4j-opentest4j",
     ],
     prepacked_content_modules = [
-        "//plugins/groovy/ant",
-        "//plugins/groovy/byteCodeViewer",
-        "//plugins/groovy/intellij.groovy.copyright:copyright",
-        "//plugins/groovy/langInjection",
-        "//plugins/groovy/spock",
-        "//plugins/groovy/structuralsearch-groovy:structuralSearch",
+        "//plugins/groovy/ant:ant_content_module_jar",
+        "//plugins/groovy/byteCodeViewer:byteCodeViewer_content_module_jar",
+        "//plugins/groovy/intellij.groovy.copyright:copyright_content_module_jar",
+        "//plugins/groovy/langInjection:langInjection_content_module_jar",
+        "//plugins/groovy/spock:spock_content_module_jar",
+        "//plugins/groovy/structuralsearch-groovy:structuralSearch_content_module_jar",
     ],
 )
 ### auto-generated section `dev content intellij.groovy` end

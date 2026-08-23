@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "execution-process-mediator-client-tests_test",
@@ -20,8 +21,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
-    content_module_jar_libraries = ["@lib//:execution-process-mediator-client-grpc-inprocess"],
     module_name = "intellij.execution.process.mediator.client",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -45,6 +44,11 @@ jvm_library(
         "//libraries/grpc",
         "//libraries/grpc-netty-shaded",
     ],
+)
+
+content_module_jar(
+    libraries = ["@lib//:execution-process-mediator-client-grpc-inprocess"],
+    module = ":client",
 )
 
 jvm_library(

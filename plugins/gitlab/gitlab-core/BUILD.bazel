@@ -206,8 +206,8 @@ exports_files(
 dev_dist_plugin_content(
     descriptor_module = ":vcs-gitlab",
     prepacked_content_modules = [
-        "//plugins/gitlab/gitlab-git:vcs-gitlab-git",
-        "//plugins/gitlab/gitlab-yaml:vcs-gitlab-yaml",
+        "//plugins/gitlab/gitlab-git:vcs-gitlab-git_content_module_jar",
+        "//plugins/gitlab/gitlab-yaml:vcs-gitlab-yaml_content_module_jar",
     ],
 )
 ### auto-generated section `dev content intellij.vcs.gitlab` end

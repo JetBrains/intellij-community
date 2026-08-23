@@ -48,9 +48,9 @@ dev_dist_plugin_content(
     ],
     descriptor_module = ":toml",
     prepacked_content_modules = [
-        "//plugins/toml/backend",
-        "//plugins/toml/frontend",
-        "//plugins/toml/json",
+        "//plugins/toml/backend:backend_content_module_jar",
+        "//plugins/toml/frontend:frontend_content_module_jar",
+        "//plugins/toml/json:json_content_module_jar",
     ],
 )
 ### auto-generated section `dev content intellij.toml` end

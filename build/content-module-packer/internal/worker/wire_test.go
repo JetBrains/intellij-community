@@ -347,7 +347,8 @@ func TestAppendResponseReusesTheBuffer(t *testing.T) {
 
 // realBazelRequest is one framed WorkRequest as Bazel actually sent it, captured from a live packing action.
 //
-//	target      @community//platform/util:util-ui, --output_groups=content_module_jar
+//	target      the `PackContentModuleJar` action of @community//platform/util:util-ui, captured while packing was
+//	            still an output group of that target rather than the `content_module_jar` target beside it
 //	bazel       JetBrains/9.1.0-jb_20260505_126, darwin arm64, multiplex worker
 //	captured    2026-08-23, with a temporary io.TeeReader on the worker's stdin
 //

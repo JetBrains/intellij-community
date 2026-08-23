@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "ide-startup-importSettings-tests_test",
@@ -20,8 +21,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
-    content_module_jar_libraries = ["@lib//:sqlite"],
     module_name = "intellij.ide.startup.importSettings",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -69,6 +68,11 @@ jvm_library(
         "//platform/progress/shared:ide-progress",
         "//platform/pluginSystem/parser/impl",
     ],
+)
+
+content_module_jar(
+    libraries = ["@lib//:sqlite"],
+    module = ":importSettings",
 )
 
 jvm_library(

@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.minimap.core` start
 jvm_library(
@@ -11,7 +12,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     module_name = "intellij.minimap.core",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -43,6 +43,8 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core",
     ],
 )
+
+content_module_jar(module = ":core")
 
 jvm_library(
     name = "core_test_lib",

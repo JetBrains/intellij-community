@@ -3,14 +3,20 @@
 load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts")
 load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
+load(":content_module_jar.bzl", "ContentModuleJarInfo")
 load(":dev_dist_content.bzl", "DevDistContentInfo", "dev_dist_content_set", "dev_dist_plugin_content")
 load(":intellij_dev_dist.bzl", "intellij_dev_build_inputs")
 
 def _fake_module_impl(ctx):
+    """A module: one own output jar, and the `KtJvmInfo.module_name` that tells a module from a library container.
+
+    Nothing about packing lives here. A module's `lib/` jar is a `content_module_jar` target of its own now - see
+    `_fake_packed` - so a module fake is only what the `modules`/`content_modules`/`descriptor_module` attributes ask
+    for.
+    """
     module_jar = ctx.actions.declare_file(ctx.label.name + ".jar")
     ctx.actions.write(module_jar, ctx.attr.module_name)
-
-    providers = [
+    return [
         DefaultInfo(files = depset([module_jar])),
         _KtJvmInfo(
             all_output_jars = [module_jar],
@@ -18,22 +24,44 @@ def _fake_module_impl(ctx):
         ),
     ]
 
-    content_jars = []
-    for index in range(ctx.attr.content_output_count):
-        jar = ctx.actions.declare_file("%s-content-%d.jar" % (ctx.label.name, index))
-        ctx.actions.write(jar, "%s:%d" % (ctx.attr.module_name, index))
-        content_jars.append(jar)
-    if ctx.attr.has_content_output_group:
-        providers.append(OutputGroupInfo(content_module_jar = depset(content_jars)))
-    else:
-        providers.append(OutputGroupInfo(other = depset()))
-    return providers
-
 _fake_module = rule(
     implementation = _fake_module_impl,
     attrs = {
-        "content_output_count": attr.int(default = 0),
-        "has_content_output_group": attr.bool(default = True),
+        "module_name": attr.string(mandatory = True),
+    },
+)
+
+def _fake_packed_impl(ctx):
+    """A `content_module_jar` target: the packed jar, the module it is named after, and the recipe inside it.
+
+    The jar is named after the *target*, where the real rule names it after the module. That is the one deviation, and
+    it is what makes the two-producers-one-relation case constructible: two real packing targets for one module name
+    cannot share a package, since they would declare the same file, so the conflict this suite defends against is
+    reachable only across packages. The record's placement is derived from `module_name` regardless of the file's own
+    name, which is exactly the derivation `_completion_provider_test` pins.
+
+    The recipe fields are filled because the real provider fills them - `dev_dist_platform_payload` reads all of them -
+    and the member is the owner module's *own* jar, never the packed jar it was merged into.
+    """
+    packed_jar = ctx.actions.declare_file(ctx.label.name + ".jar")
+    ctx.actions.write(packed_jar, ctx.attr.module_name)
+    member_jar = ctx.actions.declare_file(ctx.label.name + "-member.jar")
+    ctx.actions.write(member_jar, ctx.attr.module_name)
+    return [
+        DefaultInfo(files = depset([packed_jar])),
+        # Tuples, not lists: these travel in a depset, whose elements must be immutable.
+        ContentModuleJarInfo(
+            jar = packed_jar,
+            module_name = ctx.attr.module_name,
+            member_jars = (member_jar,),
+            member_modules = (ctx.attr.module_name,),
+            library_jars = (),
+        ),
+    ]
+
+_fake_packed = rule(
+    implementation = _fake_packed_impl,
+    attrs = {
         "module_name": attr.string(mandatory = True),
     },
 )
@@ -142,25 +170,18 @@ def dev_dist_content_test_suite(name):
         name = name + "_descriptor",
         module_name = "test.plugin",
     )
-    _fake_module(
+
+    # Two packing targets for one module name, which is what a relation claimed by two producers is made of. A module
+    # that packs nothing has no such target at all, so `prepacked_content_modules` cannot name one: the attribute's
+    # `providers = [ContentModuleJarInfo]` gate refuses it before any rule code runs, and that is now the whole check -
+    # there is no fake for it, because there is nothing left for a fake to reach.
+    _fake_packed(
         name = name + "_content",
-        content_output_count = 1,
         module_name = "test.content",
     )
-    _fake_module(
+    _fake_packed(
         name = name + "_content_same_name",
-        content_output_count = 1,
         module_name = "test.content",
-    )
-    _fake_module(
-        name = name + "_missing_output_group",
-        has_content_output_group = False,
-        module_name = "test.missing",
-    )
-    _fake_module(
-        name = name + "_multiple_outputs",
-        content_output_count = 2,
-        module_name = "test.multiple",
     )
 
     _fake_library(
@@ -203,30 +224,6 @@ def dev_dist_content_test_suite(name):
         name = name + "_provided_library_test",
         expected_message = "contributes no runtime jars",
         target_under_test = name + "_provided_library_content",
-    )
-
-    dev_dist_plugin_content(
-        name = name + "_missing_output_group_content",
-        descriptor_module = name + "_descriptor",
-        prepacked_content_modules = [name + "_missing_output_group"],
-        tags = ["manual"],
-    )
-    _expected_failure_test(
-        name = name + "_missing_output_group_test",
-        expected_message = "has no `content_module_jar` output",
-        target_under_test = name + "_missing_output_group_content",
-    )
-
-    dev_dist_plugin_content(
-        name = name + "_multiple_outputs_content",
-        descriptor_module = name + "_descriptor",
-        prepacked_content_modules = [name + "_multiple_outputs"],
-        tags = ["manual"],
-    )
-    _expected_failure_test(
-        name = name + "_multiple_outputs_test",
-        expected_message = "must have exactly one `content_module_jar` output",
-        target_under_test = name + "_multiple_outputs_content",
     )
 
     dev_dist_plugin_content(
@@ -301,8 +298,6 @@ def dev_dist_content_test_suite(name):
         tests = [
             name + "_multi_jar_library_test",
             name + "_provided_library_test",
-            name + "_missing_output_group_test",
-            name + "_multiple_outputs_test",
             name + "_composed_provider_test",
             name + "_conflicting_relation_test",
             name + "_completion_provider_test",

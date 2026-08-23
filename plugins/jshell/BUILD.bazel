@@ -48,6 +48,6 @@ dev_dist_plugin_content(
     ],
     descriptor_module = ":jshell",
     libraries = ["//plugins/jshell/execution:java-jshell-execution-jshell-frontend"],
-    prepacked_content_modules = ["//plugins/jshell/console"],
+    prepacked_content_modules = ["//plugins/jshell/console:console_content_module_jar"],
 )
 ### auto-generated section `dev content intellij.java.jshell` end

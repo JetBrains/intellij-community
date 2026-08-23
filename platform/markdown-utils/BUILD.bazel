@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "markdown-utils-tests_test",
@@ -21,7 +22,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     module_name = "intellij.platform.markdown.utils",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -38,6 +38,8 @@ jvm_library(
         "//platform/lang-impl",
     ],
 )
+
+content_module_jar(module = ":markdown-utils")
 
 jvm_library(
     name = "markdown-utils_test_lib",

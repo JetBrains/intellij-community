@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.xml.emmet.frontend` start
 jvm_provided_library(
@@ -56,7 +57,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
     module_name = "intellij.xml.emmet.frontend",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -82,6 +82,8 @@ jvm_library(
         ":platform_editor-ui_provided",
     ],
 )
+
+content_module_jar(module = ":frontend")
 
 jvm_library(
     name = "frontend_test_lib",

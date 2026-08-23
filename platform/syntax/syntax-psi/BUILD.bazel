@@ -1,5 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.platform.syntax.psi` start
 create_kotlinc_options(
@@ -19,13 +20,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
-    content_module_jar_modules_after = ["//platform/syntax/syntax-util:util"],
-    content_module_jar_modules_before = [
-        # do not sort,
-        "//platform/syntax/syntax-extensions:extensions",
-        "//platform/syntax/syntax-i18n:i18n",
-    ],
     kotlinc_opts = ":custom_psi",
     module_name = "intellij.platform.syntax.psi",
     resource_strip_prefix = "resources",
@@ -47,6 +41,16 @@ jvm_library(
         "//libraries/fastutil",
         "//platform/syntax/syntax-util:util",
         "//platform/syntax/syntax-extensions:extensions",
+    ],
+)
+
+content_module_jar(
+    module = ":psi",
+    modules_after = ["//platform/syntax/syntax-util:util"],
+    modules_before = [
+        # do not sort,
+        "//platform/syntax/syntax-extensions:extensions",
+        "//platform/syntax/syntax-i18n:i18n",
     ],
 )
 

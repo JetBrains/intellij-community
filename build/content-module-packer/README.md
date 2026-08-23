@@ -1,13 +1,15 @@
 # content-module-packer
 
 Packs the `lib/` jars of a product's content modules, one jar per module, from already-built module and library jars.
-It is the tool behind `jvm_library(content_module_jar = True)` — 2 524 declarations across the repository — reached
-through `--@rules_jvm//:content-module-packer`, which the root `.bazelrc` points at `:packer_tool`.
+It is the tool behind `content_module_jar` (`../../platform/build-scripts/bazel-rules/content_module_jar.bzl`) — 2 524
+targets across the repository — which names it directly, as a private attribute.
 
-`rules_jvm` ships as a consumable archive and may not name a label in this repository, so the flag's default there is
-a stub that prints how to configure one. That is the whole reason the tool arrives through a provider
-(`ContentModulePackerInfo`) rather than a plain label: the two implementations had different action *shapes*, and a
-`label_flag` on a file cannot carry an argument prefix, a tool set and execution requirements.
+Directly, because it lives here. The recipe used to be five attributes on the `jvm_library` itself, and the packer had
+to be pushed in through a `--@rules_jvm//:content-module-packer` `label_flag` whose default in `rules_jvm` was a stub
+that failed at execution time: `jvm_library` is a `rules_jvm` rule, and `rules_jvm` ships as a consumable archive that
+may not name a label in a repository consuming it. Moving the packer into `@community//`, which both the community and
+the ultimate tree can name, removed the flag, its stub, its `ContentModulePackerInfo` provider — a provider rather
+than a plain label only because the two implementations had different action *shapes* — and its `.bazelrc` line.
 
 ## What is verified
 
@@ -64,19 +66,19 @@ Three things got it there, and only the first two moved the build.
    multiplex worker may be given in parallel, and left unset the packer is a worker pool of a handful.
 
    The dialect was JSON first and is proto now, and that switch is **not** in the table because its effect is below the
-   table's resolution - the rows here are 6.6 s where `.bazelrc` records 6.7 s for the same configuration, and the
-   protocol is a slice of the envelope rather than of the packing. It was taken because proto is Bazel's default and
-   what every other worker in this repository speaks, and because the decoder can then step over `inputs` - three
-   quarters of every request's bytes, and read by nothing - instead of lexing them. What *is* measured is the decode
-   itself, on a request captured from a real action: **57 ns and two allocations**, against a payload the JSON dialect
-   had to materialise into a slice of structs and six strings. Do not go looking for that in a wall clock. It is
+   table's resolution - the rows here are 6.6 s where `../../common.bazelrc` records 6.7 s for the same configuration,
+   and the protocol is a slice of the envelope rather than of the packing. It was taken because proto is Bazel's
+   default and what every other worker in this repository speaks, and because the decoder can then step over `inputs` -
+   three quarters of every request's bytes, and read by nothing - instead of lexing them. What *is* measured is the
+   decode itself, on a request captured from a real action: **57 ns and two allocations**, against a payload the JSON
+   dialect had to materialise into a slice of structs and six strings. Do not go looking for that in a wall clock. It is
    `--worker_max_multiplex_instances` and `no-cache` that moved this build, and nothing else here has.
 2. **Not caching the action at all** (`--modify_execution_info=PackContentModuleJar=+no-cache`, with the numbers in
-   `.bazelrc`). The remote leg was 16.7 s of the 26.0 s row for an action that does about a millisecond of work. This is
-   why the scrubbing route was not taken: it would have turned those misses into *hits*, and a hit - a round trip plus
-   the download of a 0.25-1 MB jar - cannot beat merging one locally. The disk leg is a loss too, by less: populating it
-   costs 2.6 s and 3.3 GB per cold pack to save the 1.4 s a hit is worth, in the only case Bazel's own action cache does
-   not already cover for free.
+   `../../common.bazelrc`). The remote leg was 16.7 s of the 26.0 s row for an action that does about a millisecond of
+   work. This is why the scrubbing route was not taken: it would have turned those misses into *hits*, and a hit - a
+   round trip plus the download of a 0.25-1 MB jar - cannot beat merging one locally. The disk leg is a loss too, by
+   less: populating it costs 2.6 s and 3.3 GB per cold pack to save the 1.4 s a hit is worth, in the only case Bazel's
+   own action cache does not already cover for free.
 3. **Mapping the source jars** instead of reading them entry by entry. This one does *not* move the cold pack, and it is
    in the tree for the CPU rather than the wall clock: `pread` was 61.8 % of the packer's 5.91 s of CPU, one syscall per
    entry for two useful bytes of local header and a second for the data. The merge is now 2.44 s of CPU, and the whole

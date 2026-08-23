@@ -195,13 +195,14 @@ internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleLi
       continue
     }
 
-    val label = context.getBazelDependencyLabel(member, module)
     if (isPrepacked) {
-      prepackedContentModuleLabels.add(label)
+      // The member's packing target, not its `jvm_library`: the jar is that target's own output, and
+      // `prepacked_content_modules` gates on `ContentModuleJarInfo`, which only it provides.
+      prepackedContentModuleLabels.add(contentModuleJarLabel(module = member, dependent = module, context = context))
     }
     else {
       members.add(member)
-      contentModuleLabels.add(label)
+      contentModuleLabels.add(context.getBazelDependencyLabel(member, module))
     }
   }
 

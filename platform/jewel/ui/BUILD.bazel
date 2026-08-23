@@ -1,6 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "ui-tests_test",
@@ -38,12 +39,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    content_module_jar = True,
-    content_module_jar_libraries = [
-        # do not sort,
-        "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources",
-        "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
-    ],
     kotlinc_opts = ":custom_ui",
     module_name = "intellij.platform.jewel.ui",
     resource_strip_prefix = "src/main/resources",
@@ -75,6 +70,15 @@ jvm_library(
         "//platform/icons-api/rendering",
         "//platform/icons-impl",
     ],
+)
+
+content_module_jar(
+    libraries = [
+        # do not sort,
+        "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources",
+        "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
+    ],
+    module = ":ui",
 )
 
 jvm_library(
