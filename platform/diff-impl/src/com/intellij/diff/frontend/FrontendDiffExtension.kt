@@ -106,11 +106,6 @@ interface FrontendUnifiedDiffMapping {
   /** Maps [line] to [side]. When [strict] is `false`, an approximate side line may be returned. */
   fun unifiedLineToSide(side: Side, line: Int, strict: Boolean = true): Int?
   fun unifiedLineToSideLines(line: Int): Pair<Int, Int>
-  fun sideOffsetToUnified(side: Side, offset: Int): Int?
-
-  /** Maps [offset] to [side]. When [strict] is `false`, an offset on an approximate side line may be returned. */
-  fun unifiedOffsetToSide(side: Side, offset: Int, strict: Boolean = true): Int?
-  fun sideDocument(side: Side): Document?
 }
 
 @ApiStatus.Internal

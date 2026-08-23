@@ -31,7 +31,6 @@ import com.intellij.diff.util.LineCol
 import com.intellij.diff.util.Side
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.util.Disposer
@@ -274,7 +273,8 @@ private class LocalFrontendUnifiedDiffMapping(
   }
 
   override fun sideLineToUnified(side: Side, line: Int): Int? {
-    if (!isAvailable || line !in 0 until sideDocument(side).lineCount) return null
+    val sideDocument = viewer.getDocument(side)
+    if (!isAvailable || line !in 0 until sideDocument.lineCount) return null
     return viewer.transferLineToOnesideStrict(side, line).takeIf { it >= 0 }
   }
 
@@ -303,23 +303,6 @@ private class LocalFrontendUnifiedDiffMapping(
     val lines = viewer.transferLineFromOneside(line).first
     return lines[0] to lines[1]
   }
-
-  override fun sideOffsetToUnified(side: Side, offset: Int): Int? {
-    if (!isAvailable) return null
-    val sideDocument = sideDocument(side)
-    val position = LineCol.fromOffset(sideDocument, offset)
-    val unifiedLine = sideLineToUnified(side, position.line) ?: return null
-    return LineCol.toOffset(viewer.editor.document, unifiedLine, position.column)
-  }
-
-  override fun unifiedOffsetToSide(side: Side, offset: Int, strict: Boolean): Int? {
-    if (!isAvailable) return null
-    val position = LineCol.fromOffset(viewer.editor.document, offset)
-    val sideLine = unifiedLineToSide(side, position.line, strict) ?: return null
-    return LineCol.toOffset(sideDocument(side), sideLine, position.column)
-  }
-
-  override fun sideDocument(side: Side): Document = viewer.getDocument(side)
 
   private fun invalidate() {
     if (!available) return

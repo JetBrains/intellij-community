@@ -94,8 +94,6 @@ class FrontendDiffDebugExtension : FrontendDiffExtension {
     }
     if (mapping != null) {
       add("FrontendUnifiedDiffMapping: available=${mapping.isAvailable}, revision=${mapping.revision}")
-      add("LEFT sideDocument: ${describeDocument(mapping.sideDocument(Side.LEFT))}")
-      add("RIGHT sideDocument: ${describeDocument(mapping.sideDocument(Side.RIGHT))}")
     }
   }
 
