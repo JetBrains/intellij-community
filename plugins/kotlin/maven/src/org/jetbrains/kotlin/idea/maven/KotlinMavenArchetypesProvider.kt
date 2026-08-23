@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.maven
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonParser
-import com.intellij.util.net.HttpConfigurable
+import com.intellij.util.net.HttpConnectionUtils
 import org.jetbrains.idea.maven.dom.MavenVersionComparable
 import org.jetbrains.idea.maven.indices.MavenArchetypesProvider
 import org.jetbrains.idea.maven.model.MavenArchetype
@@ -71,7 +71,7 @@ class KotlinMavenArchetypesProvider(private val kotlinPluginVersion: String, pri
     }
 
     private fun <R> connectAndApply(url: String, timeoutSeconds: Int = 15, block: (HttpURLConnection) -> R): R {
-        return HttpConfigurable.getInstance().openHttpConnection(url).use { urlConnection ->
+        return HttpConnectionUtils.openHttpConnection(url).use { urlConnection ->
             val timeout = TimeUnit.SECONDS.toMillis(timeoutSeconds.toLong()).toInt()
             urlConnection.connectTimeout = timeout
             urlConnection.readTimeout = timeout
