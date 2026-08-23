@@ -13,15 +13,11 @@ import org.jetbrains.annotations.ApiStatus
  *
  * The data is put under [key] into `DiffContext` or `DiffRequest` by whoever shows the diff, and is read back via
  * [FrontendDiffExtensionData]. In split mode it travels between the backend and the frontend as [write]/[read] bytes,
- * so the on-the-wire format is up to the descriptor: implement [read] so that it also accepts the bytes written by the
- * versions of this descriptor that the counterpart IDE may still be running. For the common case see
+ * where it is identified by the name of [key]. The byte format is up to the descriptor. For the common case see
  * [JsonFrontendDiffUserDataKeyDescriptor].
  */
 @ApiStatus.Internal
 interface FrontendDiffUserDataKeyDescriptor<T : Any> {
-  /** Identifies the data on the wire, so it must stay stable between versions - unlike the name of [key], which is a debug name. */
-  val id: String
-
   val key: Key<T>
 
   /** Throws when [bytes] cannot be read - the caller reports the failure and skips the value. */
@@ -59,12 +55,10 @@ data class FrontendDiffUserDataValue<T : Any>(
 /**
  * A descriptor that transfers its value as JSON, which fits any [kotlinx.serialization.Serializable] type.
  *
- * Unknown properties are ignored on reading, so a field added on one side does not break an IDE that runs an older
- * version of [T]; any other change of [T] still has to stay readable by both sides, or be made under a new [id].
+ * Unknown properties are ignored on reading, so adding a field to [T] does not break already stored values.
  */
 @ApiStatus.Internal
 abstract class JsonFrontendDiffUserDataKeyDescriptor<T : Any>(
-  override val id: String,
   override val key: Key<T>,
   private val serializer: KSerializer<T>,
 ) : FrontendDiffUserDataKeyDescriptor<T> {
