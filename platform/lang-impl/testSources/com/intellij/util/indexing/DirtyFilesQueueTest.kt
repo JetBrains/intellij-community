@@ -287,7 +287,7 @@ class DirtyFilesQueueTest {
         smartReadAction(project) {
           fileBasedIndex.ensureUpToDate(IdIndex.NAME, project, GlobalSearchScope.everythingScope(project), restrictedFile)
         }
-        assertThat(collector.containsFileId((pendingFile as VirtualFileWithId).id))
+        assertThat(collector.isCurrent(request))
           .describedAs { "The restricted update must leave the other request pending" }
           .isTrue()
 
@@ -295,7 +295,7 @@ class DirtyFilesQueueTest {
         assertThat(visits.get())
           .describedAs { "The unrestricted pass must revisit a request seen by the restricted pass" }
           .isEqualTo(2)
-        assertThat(collector.containsFileId(pendingFile.id))
+        assertThat(collector.isCurrent(request))
           .describedAs { "The unrestricted pass must complete the pending request" }
           .isFalse()
       }

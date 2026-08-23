@@ -23,6 +23,11 @@ class FileIndexingRequest private constructor(
     return fileId * 31 + if (isDeleteRequest) 1 else 0
   }
 
+  override fun toString(): String {
+    return "FileIndexingRequest(fileId=#$fileId, $file, ${if (isDeleteRequest) "delete" else "update"})"
+  }
+
+
   companion object {
     private val LOG = Logger.getInstance(FileIndexingRequest::class.java)
 

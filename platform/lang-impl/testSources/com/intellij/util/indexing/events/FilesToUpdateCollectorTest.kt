@@ -6,6 +6,8 @@ import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -34,7 +36,7 @@ internal class FilesToUpdateCollectorTest {
     val firstSnapshot = collector.requestsFor(project, true)
     assertEquals(1, firstSnapshot.readUpToVersion(), "The first request must advance the publication boundary")
     assertEquals(listOf(firstRequest), firstSnapshot.requests(), "The first suffix must contain the first published request")
-    collector.advanceCursor(project, firstSnapshot.readUpToVersion())
+    collector.advanceWithoutProcessing(project, firstSnapshot)
 
     val secondRequest = FileIndexingRequest.deleteRequest(TestVirtualFile("second.txt", 2))
     collector.scheduleForUpdate(secondRequest, emptySet(), emptyList())
@@ -42,7 +44,7 @@ internal class FilesToUpdateCollectorTest {
     assertEquals(2, secondSnapshot.readUpToVersion(), "The next request must advance the publication boundary again")
     assertEquals(listOf(secondRequest), secondSnapshot.requests(), "The next suffix must exclude requests covered by the cursor")
     assertEquals(listOf(firstRequest), firstSnapshot.requests(), "A later publication must not mutate an earlier snapshot")
-    collector.advanceCursor(project, secondSnapshot.readUpToVersion())
+    collector.advanceWithoutProcessing(project, secondSnapshot)
 
     val exhaustedSnapshot = collector.requestsFor(project, true)
     assertEquals(2, exhaustedSnapshot.readUpToVersion(), "Reading an exhausted suffix must keep the current boundary")
@@ -58,7 +60,7 @@ internal class FilesToUpdateCollectorTest {
     val firstRequest = FileIndexingRequest.deleteRequest(TestVirtualFile("first.txt", 1))
     collector.scheduleForUpdate(firstRequest, emptySet(), emptyList())
     val firstSnapshot = collector.requestsFor(project, false)
-    collector.advanceCursor(project, firstSnapshot.readUpToVersion())
+    collector.advanceWithoutProcessing(project, firstSnapshot)
 
     val unchangedSnapshot = collector.requestsFor(project, false)
     assertEquals(emptyList<FileIndexingRequest>(), unchangedSnapshot.requests(),
@@ -82,7 +84,7 @@ internal class FilesToUpdateCollectorTest {
     val firstRequest = FileIndexingRequest.deleteRequest(file)
     collector.scheduleForUpdate(firstRequest, emptySet(), emptyList())
     val firstSnapshot = collector.requestsFor(project, true)
-    collector.advanceCursor(project, firstSnapshot.readUpToVersion())
+    collector.advanceWithoutProcessing(project, firstSnapshot)
 
     val rescheduledRequest = FileIndexingRequest.deleteRequest(file)
     collector.scheduleForUpdate(rescheduledRequest, emptySet(), emptyList())
@@ -119,6 +121,33 @@ internal class FilesToUpdateCollectorTest {
     }
   }
 
+  /** Ensures identity distinguishes equal request instances published for successive generations. */
+  @Test
+  fun `old request instance does not remove rescheduled request`() {
+    val collector = FilesToUpdateCollector()
+    val project = mock<Project>()
+    collector.registerProject(project)
+    val file = TestVirtualFile("file.txt", 1)
+    val firstRequest = FileIndexingRequest.deleteRequest(file)
+    collector.scheduleForUpdate(firstRequest, emptySet(), emptyList())
+    val firstSnapshot = collector.requestsFor(project, true)
+    val firstScheduledInstance = firstSnapshot.requests().single()
+    collector.advanceWithoutProcessing(project, firstSnapshot)
+
+    val secondRequest = FileIndexingRequest.deleteRequest(file)
+    collector.scheduleForUpdate(secondRequest, emptySet(), emptyList())
+    val secondScheduledInstance = collector.requestsFor(project, true).requests().single()
+
+    assertEquals(firstScheduledInstance, secondScheduledInstance,
+                 "Equal file requests must remain serialized across schedule generations")
+    assertNotSame(firstScheduledInstance, secondScheduledInstance, "Each publication must have a distinct request identity")
+    assertFalse(collector.removeIfCurrent(firstScheduledInstance), "Completion of the old generation must not remove its replacement")
+    assertTrue(collector.isCurrent(secondScheduledInstance), "The replacement must remain current after stale completion")
+    assertEquals(listOf(secondRequest), collector.filesToUpdate.toList(), "The replacement must remain scheduled")
+    assertTrue(collector.removeIfCurrent(secondScheduledInstance), "Completion of the current generation must remove its request")
+    assertEquals(emptyList<FileIndexingRequest>(), collector.filesToUpdate.toList(), "Current completion must empty the collector")
+  }
+
   /** Ensures each project can consume its own suffix while requests remain available to projects that lag behind. */
   @Test
   fun `project cursors select independent request suffixes`() {
@@ -132,7 +161,7 @@ internal class FilesToUpdateCollectorTest {
     collector.scheduleForUpdate(request, emptySet(), emptyList())
 
     val firstSnapshot = collector.requestsFor(firstProject, true)
-    collector.advanceCursor(firstProject, firstSnapshot.readUpToVersion())
+    collector.advanceWithoutProcessing(firstProject, firstSnapshot)
     val repeatedFirstSnapshot = collector.requestsFor(firstProject, true)
     val secondSnapshot = collector.requestsFor(secondProject, true)
 
@@ -189,6 +218,49 @@ internal class FilesToUpdateCollectorTest {
       allowDirtyUpdate.countDown()
       executor.shutdownNow()
     }
+  }
+
+  /** Ensures a snapshot from an old registration cannot advance a new cursor. */
+  @Test
+  fun `old snapshot does not advance new registration`() {
+    val collector = FilesToUpdateCollector()
+    val project = mock<Project>()
+    collector.registerProject(project)
+    val request = FileIndexingRequest.deleteRequest(TestVirtualFile("file.txt", 1))
+    collector.scheduleForUpdate(request, emptySet(), emptyList())
+    val oldSnapshot = collector.requestsFor(project, true).filter { false }
+
+    collector.unregisterProject(project)
+    collector.registerProject(project)
+    collector.advanceCursor(project, oldSnapshot)
+
+    assertEquals(listOf(request), collector.requestsFor(project, true).requests(),
+                 "The new registration must receive requests from before registration")
+  }
+
+  /** Ensures the collector advances a cursor only after every accepted request completes. */
+  @Test
+  fun `cursor waits for accepted requests`() {
+    val collector = FilesToUpdateCollector()
+    val project = mock<Project>()
+    collector.registerProject(project)
+    val request = FileIndexingRequest.deleteRequest(TestVirtualFile("file.txt", 1))
+    collector.scheduleForUpdate(request, emptySet(), emptyList())
+    val snapshot = collector.requestsFor(project, true).filter { true }
+
+    collector.advanceCursor(project, snapshot)
+    assertEquals(listOf(request), collector.requestsFor(project, true).requests(),
+                 "A current accepted request must block cursor advancement")
+
+    assertTrue(collector.removeIfCurrent(request), "The test must complete the accepted request")
+    collector.advanceCursor(project, snapshot)
+    assertEquals(emptyList<FileIndexingRequest>(), collector.requestsFor(project, true).requests(),
+                 "The completed accepted request must allow cursor advancement")
+  }
+
+  /** Simulates a pass that accepts no requests and can advance its project cursor. */
+  private fun FilesToUpdateCollector.advanceWithoutProcessing(project: Project, snapshot: FilesToUpdateCollector.RequestsSnapshot) {
+    advanceCursor(project, snapshot.filter { false })
   }
 
   /** Supplies a stable persistent ID without creating a real VFS file. */

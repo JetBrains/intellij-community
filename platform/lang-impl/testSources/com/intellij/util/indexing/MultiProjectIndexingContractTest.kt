@@ -138,7 +138,6 @@ internal class MultiProjectIndexingContractTest {
   /** Verifies final index state after independent workers race through the global write-action order */
   @Test
   @Timeout(600)
-  @Disabled("To be fixed")
   fun `with many parallel competing writes only the latest version stays in index`(): Unit = timeoutRunBlocking(timeout = 590.seconds) {
     val indexToTest = indexFixture.get()
     val scenarioModel = ScenarioModel()

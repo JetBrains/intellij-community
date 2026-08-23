@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Predicate;
 
 import static com.intellij.concurrency.ConcurrentCollectionFactory.createConcurrentIntObjectMap;
 
@@ -73,14 +74,9 @@ public class FilesToUpdateCollector {
     }
   }
 
-  /** Advances the cursor of the current project registration. */
-  public void advanceCursor(@NotNull Project project, long version) {
-    synchronized (requestsLock) {
-      projectCursors.advanceCursor(project, version);
-    }
-  }
-
   /**
+   * @param request            must be new instance every time: one should NOT re-use same request instance -- request identity is used to trace
+   *                           request completion in a concurrent environment
    * @param containingProjects projects request.file is belong to. Used mostly for diagnostics
    * @param dirtyQueueProjects projects request.file is belong to. Used to actually put the file into
    *                           apt queue(s)
@@ -101,16 +97,23 @@ public class FilesToUpdateCollector {
     }
     IndexingEventsLogger.tryLog("ADD_TO_UPDATE", file);
     int fileId = request.getFileId();
+
+    VersionedRequest replacedRequest;
+    long version;
     synchronized (requestsLock) {
-      long version = publishedVersion + 1;
+      version = publishedVersion + 1;
       VersionedRequest versionedRequest = new VersionedRequest(request, version);
 
       myDirtyFiles.addFile(dirtyQueueProjects, fileId);
-      myFilesToUpdate.put(fileId, versionedRequest);
+      replacedRequest = myFilesToUpdate.put(fileId, versionedRequest);
 
       publishedVersion = version;
 
       modificationCount.incrementAndGet();
+    }
+
+    if (replacedRequest != null && LOG.isDebugEnabled()) {
+      LOG.debug("Replaced indexing request #" + fileId + ": " + replacedRequest + " -> " + request);
     }
   }
 
@@ -135,12 +138,32 @@ public class FilesToUpdateCollector {
     }
   }
 
-  public void removeFileIdFromFilesScheduledForUpdate(int fileId) {
-    synchronized (requestsLock) {
-      myFilesToUpdate.remove(fileId);
-      myDirtyFiles.removeFile(fileId);
-      modificationCount.incrementAndGet();
+  /** Removes the request only if the supplied instance still the actual one */
+  public boolean removeIfCurrent(@NotNull FileIndexingRequest expectedRequest) {
+    int fileId = expectedRequest.getFileId();
+
+    VersionedRequest currentRequest = myFilesToUpdate.get(fileId);
+    if (currentRequest == null || currentRequest.request() != expectedRequest) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("stale removeIfCurrent(#" + fileId + ", expected: " + expectedRequest + ", current=" + currentRequest);
+      }
+      return false;
     }
+
+    synchronized (requestsLock) {
+      if (myFilesToUpdate.remove(fileId, currentRequest)) {
+        myDirtyFiles.removeFile(fileId);
+        modificationCount.incrementAndGet();
+        return true;
+      }
+    }
+    return false; //should also log 'stale removeIfCurrent...'?
+  }
+
+  /** @return whether the instance is still the actual one */
+  public boolean isCurrent(@NotNull FileIndexingRequest request) {
+    VersionedRequest currentRequest = myFilesToUpdate.get(request.getFileId());
+    return currentRequest != null && currentRequest.request() == request;
   }
 
   public void clear() {
@@ -169,20 +192,24 @@ public class FilesToUpdateCollector {
   public @NotNull RequestsSnapshot requestsFor(@Nullable Project project,
                                                boolean filterByRequestVersion) {
     synchronized (requestsLock) {
-      long cursor = project == null ? -1 : projectCursors.cursorFor(project, -1);
-      return collectRequestsNewerThanUnderLock(cursor, filterByRequestVersion);
+      VisitedRequestsVersionPerProject.Registration registration = project == null ? null : projectCursors.registrationFor(project);
+      long cursor = registration == null ? -1 : registration.cursor().orElse(-1);
+      return collectRequestsNewerThanUnderLock(cursor, filterByRequestVersion, registration);
     }
   }
 
   //@GuardedBy(requestsLock)
-  private @NotNull RequestsSnapshot collectRequestsNewerThanUnderLock(long exclusiveVersion,
-                                                                      boolean filterByRequestVersion) {
+  private @NotNull RequestsSnapshot collectRequestsNewerThanUnderLock(
+    long exclusiveVersion,
+    boolean filterByRequestVersion,
+    @Nullable VisitedRequestsVersionPerProject.Registration registration
+  ) {
     long readUpToVersion = publishedVersion;
     if (exclusiveVersion >= readUpToVersion) {
-      return new RequestsSnapshot(exclusiveVersion, readUpToVersion, Collections.emptyList());
+      return new RequestsSnapshot(exclusiveVersion, readUpToVersion, Collections.emptyList(), registration);
     }
 
-    // Materialize the snapshot under the lock to include all requests through the captured boundary.
+    // Materialize the snapshot under the lock to keep its boundary consistent with all included requests.
     List<FileIndexingRequest> requests = new ArrayList<>();
     for (VersionedRequest versionedRequest : myFilesToUpdate.values()) {
       if ((!filterByRequestVersion || exclusiveVersion < versionedRequest.version()) &&
@@ -190,7 +217,18 @@ public class FilesToUpdateCollector {
         requests.add(versionedRequest.request());
       }
     }
-    return new RequestsSnapshot(exclusiveVersion, readUpToVersion, requests);
+    return new RequestsSnapshot(exclusiveVersion, readUpToVersion, requests, registration);
+  }
+
+  /** Advances the cursor after every accepted request in the snapshot completes. */
+  public void advanceCursor(@NotNull Project project, @NotNull RequestsSnapshot consumedSnapshot) {
+    if (consumedSnapshot.registration != null) {
+      synchronized (requestsLock) {
+        if (consumedSnapshot.noRequestsIn(myFilesToUpdate)) {
+          projectCursors.advanceCursor(project, consumedSnapshot.registration, consumedSnapshot.readUpToVersion);
+        }
+      }
+    }
   }
 
   public boolean isScheduledForUpdate(@NotNull VirtualFile file) {
@@ -207,6 +245,7 @@ public class FilesToUpdateCollector {
 
   /** Immutable requests with versions in the {@code (readAfterVersion, readUpToVersion]} range. */
   public static final class RequestsSnapshot {
+    private final @Nullable VisitedRequestsVersionPerProject.Registration registration;
     /** Retained for diagnostics; callers only need the upper boundary to advance their cursor. */
     private final long readAfterVersion;
     private final long readUpToVersion;
@@ -215,10 +254,12 @@ public class FilesToUpdateCollector {
     /** Captures both boundaries and detaches the request list from the mutable collector. */
     private RequestsSnapshot(long readAfterVersion,
                              long readUpToVersion,
-                             @NotNull List<FileIndexingRequest> requests) {
+                             @NotNull List<FileIndexingRequest> requests,
+                             @Nullable VisitedRequestsVersionPerProject.Registration registration) {
       this.readAfterVersion = readAfterVersion;
       this.readUpToVersion = readUpToVersion;
       this.requests = List.copyOf(requests);
+      this.registration = registration;
     }
 
     /** @return inclusive upper publication boundary captured by this snapshot */
@@ -230,6 +271,26 @@ public class FilesToUpdateCollector {
     /** @return immutable requests currently present between the snapshot boundaries */
     public @NotNull List<FileIndexingRequest> requests() {
       return requests;
+    }
+
+    /** Returns the same boundary with only requests accepted for processing. */
+    public @NotNull RequestsSnapshot filter(@NotNull Predicate<? super FileIndexingRequest> predicate) {
+      return new RequestsSnapshot(
+        readAfterVersion,
+        readUpToVersion,
+        requests.stream().filter(predicate).toList(),
+        registration
+      );
+    }
+
+    private boolean noRequestsIn(@NotNull ConcurrentIntObjectMap<VersionedRequest> currentRequests) {
+      for (FileIndexingRequest request : requests) {
+        VersionedRequest currentRequest = currentRequests.get(request.getFileId());
+        if (currentRequest != null && currentRequest.request() == request) {
+          return false;
+        }
+      }
+      return true;
     }
 
     @Override

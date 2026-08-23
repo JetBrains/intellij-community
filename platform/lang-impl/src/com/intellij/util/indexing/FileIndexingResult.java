@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.dependencies.FileIndexingStamp;
 import com.intellij.util.indexing.diagnostic.FileIndexingStatistics;
 import com.intellij.util.indexing.diagnostic.IndexesEvaluated;
+import com.intellij.util.indexing.events.FileIndexingRequest;
 import com.intellij.util.indexing.events.IndexingEventsLogger;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +37,8 @@ public final class FileIndexingResult {
 
   private final @NotNull VirtualFile file;
   private final int fileId;
+  /// Which request to clean when finished: used as a witness to avoid cleaning a concurrently inserted request for the same fileId.
+  private final @NotNull FileIndexingRequest coveredRequest;
 
   private final @NotNull ApplicationMode applicationMode;
 
@@ -53,6 +56,7 @@ public final class FileIndexingResult {
   FileIndexingResult(@NotNull FileBasedIndexImpl index,
                      int fileId,
                      @NotNull VirtualFile file,
+                     @NotNull FileIndexingRequest coveredRequest,
                      @NotNull FileIndexingStamp indexingStamp,
                      @NotNull List<SingleIndexValueApplier<?>> appliers,
                      @NotNull List<SingleIndexValueRemover> removers,
@@ -65,6 +69,7 @@ public final class FileIndexingResult {
 
     this.file = file;
     this.fileId = fileId;
+    this.coveredRequest = coveredRequest;
     this.appliers = appliers;
     this.removers = removers;
 
@@ -137,8 +142,7 @@ public final class FileIndexingResult {
                                 @NotNull Supplier<String> debugString) {
     if (allModificationsSuccessful) {
       IndexingEventsLogger.tryLog("INDEX_UPDATED", file, debugString);
-      //remove indexed (=processed) files from the 'dirty files queue' (FilesToUpdateCollector)
-      indexImpl.getFilesToUpdateCollector().removeFileIdFromFilesScheduledForUpdate(fileId);
+      indexImpl.getFilesToUpdateCollector().removeIfCurrent(coveredRequest);
 
       if (shouldMarkFileAsIndexed) {
         IndexingFlag.setIndexedIfFileWithSameLock(file, fileStatusLockObject, indexingStamp);

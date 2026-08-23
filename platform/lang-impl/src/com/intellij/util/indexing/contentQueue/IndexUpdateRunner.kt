@@ -344,16 +344,16 @@ class IndexUpdateRunner(
       val indexingStamp = indexingRequest.getFileIndexingStamp(file)
 
       val (applier, contentLoadingTime, length) = if (fileIndexingRequest.isDeleteRequest) {
-        val applierOrNullIfResurrected = getApplierForFileIndexDelete(indexingStamp, file)
+        val applierOrNullIfResurrected = getApplierForFileIndexDelete(indexingStamp, file, fileIndexingRequest)
         if (applierOrNullIfResurrected == null) {
-          getApplierForFileIndexUpdate(indexingStamp, startTime, file, project, contentLoader)
+          getApplierForFileIndexUpdate(indexingStamp, startTime, file, project, contentLoader, fileIndexingRequest)
         }
         else {
           Triple(applierOrNullIfResurrected, 0L, 0L)
         }
       }
       else {
-        getApplierForFileIndexUpdate(indexingStamp, startTime, file, project, contentLoader)
+        getApplierForFileIndexUpdate(indexingStamp, startTime, file, project, contentLoader, fileIndexingRequest)
       }
 
       try {
@@ -375,9 +375,10 @@ class IndexUpdateRunner(
     private suspend fun getApplierForFileIndexDelete(
       indexingStamp: FileIndexingStamp,
       file: VirtualFile,
+      coveredRequest: FileIndexingRequest,
     ): FileIndexingResult? {
       val fileIndexingResult = readActionUndispatched {
-        fileBasedIndex.getApplierToRemoveDataFromIndexesForFile(file, indexingStamp)
+        fileBasedIndex.getApplierToRemoveDataFromIndexesForFile(file, indexingStamp, coveredRequest)
       }
       incIndexingSuccessfulCountAndLogIfNeeded()
       return fileIndexingResult
@@ -388,6 +389,7 @@ class IndexUpdateRunner(
       file: VirtualFile,
       project: Project,
       loader: CachedFileContentLoader,
+      coveredRequest: FileIndexingRequest,
     ): Triple<FileIndexingResult, Long, Long> {
       // Propagate ProcessCanceledException and unchecked exceptions. The latter fails the whole indexing.
       val loadingResult: ContentLoadingResult = loadContent(file, loader)
@@ -404,7 +406,7 @@ class IndexUpdateRunner(
         val fileIndexingResult = readActionUndispatched {
           indexingAttemptCount.incrementAndGet()
           val fileType = if (fileTypeChangeChecker.get()) type else null
-          fileBasedIndex.indexFileContent(project, fileContent, false, fileType, indexingStamp)
+          fileBasedIndex.indexFileContent(project, fileContent, false, fileType, indexingStamp, coveredRequest)
         }
         incIndexingSuccessfulCountAndLogIfNeeded()
         return Triple(fileIndexingResult, contentLoadingTime, length)
