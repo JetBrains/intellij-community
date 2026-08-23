@@ -498,10 +498,12 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       final PsiCodeBlock body = myMethod.getBody();
       if (body != null) {
         replaceReferences(body);
-      } else {
+      }
+      else {
         if (myMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
             !myTargetClass.isInterface() && !myTargetClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
           CreateFromUsageUtils.setupMethodBody(myMethod);
+          PsiUtil.setModifierProperty(myMethod, PsiModifier.ABSTRACT, false);
         }
       }
 
