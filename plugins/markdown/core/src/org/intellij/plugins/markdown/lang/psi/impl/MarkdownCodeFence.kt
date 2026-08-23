@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.lang.psi.impl
 
 import com.intellij.navigation.ItemPresentation
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.AbstractElementManipulator
@@ -11,6 +12,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.tree.IElementType
+import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.IncorrectOperationException
@@ -68,46 +70,33 @@ class MarkdownCodeFence(elementType: IElementType): MarkdownCodeFenceImpl(elemen
     return CodeFenceLiteralTextEscaper(this)
   }
 
-  // Note that in this text escaper getStartOffsetInParent() refers to offset in host
-  private class CodeFenceLiteralTextEscaper(host: MarkdownCodeFence): LiteralTextEscaper<PsiLanguageInjectionHost>(host) {
+  private class CodeFenceLiteralTextEscaper(host: MarkdownCodeFence): LiteralTextEscaper<MarkdownCodeFence>(host) {
+    private var outSourceOffsets: IntArray? = null
+
     override fun decode(rangeInsideHost: TextRange, outChars: StringBuilder): Boolean {
-      val elements = obtainFenceContent(myHost as MarkdownCodeFence, withWhitespaces = false) ?: return true
-      for (element in elements) {
-        val intersected = rangeInsideHost.intersection(element.textRangeInParent) ?: continue
-        outChars.append(intersected.substring(myHost.text))
+      val contentMask = obtainFenceContentMask(myHost)
+      val sourceOffsets = IntArray(rangeInsideHost.length + 1)
+      var decodedLength = 0
+      for (hostOffset in rangeInsideHost.startOffset until rangeInsideHost.endOffset) {
+        if (!contentMask[hostOffset]) continue
+        outChars.append(myHost.text[hostOffset])
+        if (decodedLength == 0) {
+          sourceOffsets[0] = hostOffset - rangeInsideHost.startOffset
+        }
+        sourceOffsets[decodedLength + 1] = hostOffset - rangeInsideHost.startOffset + 1
+        decodedLength++
       }
+      outSourceOffsets = if (decodedLength == 0) null else sourceOffsets.copyOf(decodedLength + 1)
       return true
     }
 
     override fun getOffsetInHost(offsetInDecoded: Int, rangeInsideHost: TextRange): Int {
-      val elements = obtainFenceContent(myHost as MarkdownCodeFence, withWhitespaces = false) ?: return -1
-      var cur = 0
-      for (element in elements) {
-        val intersected = rangeInsideHost.intersection(element.textRangeInParent)
-        if (intersected == null || intersected.isEmpty) continue
-        if (cur + intersected.length == offsetInDecoded) {
-          return intersected.startOffset + intersected.length
-        }
-        else if (cur == offsetInDecoded) {
-          return intersected.startOffset
-        }
-        else if (cur < offsetInDecoded && cur + intersected.length > offsetInDecoded) {
-          return intersected.startOffset + (offsetInDecoded - cur)
-        }
-        cur += intersected.length
-      }
-      val last = elements[elements.size - 1]
-      val intersected = rangeInsideHost.intersection(last.textRangeInParent)
-      if (intersected == null || intersected.isEmpty) return -1
-      val result = intersected.startOffset + (offsetInDecoded - (cur - intersected.length))
-      return if (rangeInsideHost.startOffset <= result && result <= rangeInsideHost.endOffset) {
-        result
-      }
-      else -1
+      val result = outSourceOffsets?.getOrNull(offsetInDecoded) ?: return -1
+      return result + rangeInsideHost.startOffset
     }
 
     override fun getRelevantTextRange(): TextRange {
-      return obtainRelevantTextRange(myHost as MarkdownCodeFence)
+      return obtainRelevantTextRange(myHost)
     }
 
     override fun isOneLine(): Boolean = false
@@ -189,6 +178,21 @@ class MarkdownCodeFence(elementType: IElementType): MarkdownCodeFenceImpl(elemen
   }
 
   companion object {
+    private val FENCE_CONTENT_MASK_KEY = Key.create<CachedValue<BooleanArray>>("markdown.fence.content.mask")
+
+    private fun obtainFenceContentMask(element: MarkdownCodeFence): BooleanArray {
+      return CachedValuesManager.getCachedValue(element, FENCE_CONTENT_MASK_KEY) {
+        val mask = BooleanArray(element.textLength)
+        obtainFenceContent(element, withWhitespaces = false)?.forEach { child ->
+          val range = child.textRangeInParent
+          for (offset in range.startOffset until range.endOffset) {
+            mask[offset] = true
+          }
+        }
+        CachedValueProvider.Result.create(mask, element)
+      }
+    }
+
     private fun obtainContentTextRange(element: MarkdownCodeFence): TextRange {
       val elements = obtainFenceContent(element, withWhitespaces = true) ?: return MarkdownCodeFenceUtils.getEmptyRange(element)
       val first = elements.first()
