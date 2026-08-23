@@ -6,7 +6,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.Objects
 
 @Internal
 class FileIndexingRequest private constructor(
@@ -15,11 +14,13 @@ class FileIndexingRequest private constructor(
   val fileId: Int = FileBasedIndex.getFileId(file),
 ) {
   override fun equals(other: Any?): Boolean {
-    return other is FileIndexingRequest && isDeleteRequest == other.isDeleteRequest && fileId == other.fileId
+    return (other is FileIndexingRequest)
+           && isDeleteRequest == other.isDeleteRequest
+           && fileId == other.fileId
   }
 
   override fun hashCode(): Int {
-    return Objects.hash(isDeleteRequest, fileId)
+    return fileId * 31 + if (isDeleteRequest) 1 else 0
   }
 
   companion object {
