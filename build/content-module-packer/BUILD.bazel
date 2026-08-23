@@ -1,0 +1,34 @@
+load("@rules_go//go:def.bzl", "go_binary")
+load("@rules_jvm//:rules/impl/content-module-packer-tool.bzl", "native_content_module_packer")
+
+# Hand-maintained: no gazelle target is wired up in this repository, so adding a `.go` file means editing `srcs` here.
+
+go_binary(
+    name = "content-module-packer",
+    srcs = ["main.go"],
+    # Strip the symbol table and DWARF. Panic traces keep their function names and line numbers either way - those
+    # come from the runtime's own pclntab - so this costs nothing but an external debugger, and the binary is a
+    # declared input of every packing action in the repository.
+    gc_linkopts = [
+        "-s",
+        "-w",
+    ],
+    importpath = "jetbrains.com/content-module-packer",
+    # pure disables cgo, so the Go-internal linker is used: the hermetic LLVM toolchain links PIE executables, which
+    # is incompatible with the non-PIC objects produced by the Go compiler.
+    pure = "on",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//build/content-module-packer/internal/jarpack",
+        "//build/content-module-packer/internal/worker",
+    ],
+)
+
+# What `--@rules_jvm//:content-module-packer` is pointed at from the root `.bazelrc`. The wrapper exists because the
+# two implementations have different action shapes - a JVM needs its flags, a launcher and a runtime tree, a native
+# binary needs none of that - so the rule reads the shape from a provider rather than guessing it from a file.
+native_content_module_packer(
+    name = "packer_tool",
+    binary = ":content-module-packer",
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,23 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+# Hand-maintained: no gazelle target is wired up in this repository, so adding a `.go` file means editing `srcs` here.
+
+go_library(
+    name = "worker",
+    srcs = [
+        "wire.go",
+        "worker.go",
+    ],
+    importpath = "jetbrains.com/content-module-packer/internal/worker",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "worker_test",
+    srcs = [
+        "wire_test.go",
+        "worker_test.go",
+    ],
+    embed = [":worker"],
+    pure = "on",
+)
