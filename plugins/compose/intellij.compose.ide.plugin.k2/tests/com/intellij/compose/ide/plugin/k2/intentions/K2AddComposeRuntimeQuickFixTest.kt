@@ -7,11 +7,13 @@ import org.jetbrains.kotlin.idea.fir.K2DirectiveBasedActionUtils
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
+import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 
 @TestRoot("../compose/intellij.compose.ide.plugin.k2/testData")
 @TestMetadata("gradle/fixes")
+@Ignore("OOM errors")
 internal class K2AddComposeRuntimeQuickFixTest : AbstractGradleMultiFileQuickFixTest() {
 
   override fun checkUnexpectedErrors(mainFile: File, ktFile: KtFile, fileText: String) {
