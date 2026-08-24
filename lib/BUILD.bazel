@@ -7500,28 +7500,6 @@ java_library(
 )
 
 copy_file(
-    name = "org.jetbrains.kotlin/scripting-compiler-plugin-for-ide-2.5.0-dev-5674.jar_copy",
-    src = "@org_jetbrains_kotlin-scripting-compiler-plugin-for-ide-2_5_0-dev-5674_http//file",
-    out = "org.jetbrains.kotlin/scripting-compiler-plugin-for-ide-2.5.0-dev-5674.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "kotlinc-scripting-compiler-plugin",
-    jar = "@org_jetbrains_kotlin-scripting-compiler-plugin-for-ide-2_5_0-dev-5674_http//file",
-    source_jar = "@org_jetbrains_kotlin-scripting-compiler-plugin-for-ide-2_5_0-dev-5674-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "kotlinc-scripting-compiler-plugin-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":kotlinc-scripting-compiler-plugin"],
-)
-
-copy_file(
     name = "org.jetbrains.kotlinx/kotlinx-collections-immutable-jvm-0.5.0.jar_copy",
     src = "@org_jetbrains_kotlinx-kotlinx-collections-immutable-jvm-0_5_0_http//file",
     out = "org.jetbrains.kotlinx/kotlinx-collections-immutable-jvm-0.5.0.jar",
@@ -13276,6 +13254,21 @@ jvm_import(
     name = "libraries-kotlinc-low-level-api-fir-kotlinc-low-level-api-fir",
     jar = "@org_jetbrains_kotlin-low-level-api-fir-for-ide-2_5_0-dev-5674_http//file",
     source_jar = "@org_jetbrains_kotlin-low-level-api-fir-for-ide-2_5_0-dev-5674-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.jetbrains.kotlin/scripting-compiler-plugin-for-ide-2.5.0-dev-5674.jar_copy",
+    src = "@org_jetbrains_kotlin-scripting-compiler-plugin-for-ide-2_5_0-dev-5674_http//file",
+    out = "org.jetbrains.kotlin/scripting-compiler-plugin-for-ide-2.5.0-dev-5674.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-kotlinc-scripting-compiler-plugin-kotlinc-scripting-compiler-plugin",
+    jar = "@org_jetbrains_kotlin-scripting-compiler-plugin-for-ide-2_5_0-dev-5674_http//file",
+    source_jar = "@org_jetbrains_kotlin-scripting-compiler-plugin-for-ide-2_5_0-dev-5674-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

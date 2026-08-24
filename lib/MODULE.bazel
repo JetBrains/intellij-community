@@ -5895,20 +5895,6 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_kotlin-scripting-compiler-plugin-for-ide-2_5_0-dev-5674_http",
-    downloaded_file_path = "scripting-compiler-plugin-for-ide-2.5.0-dev-5674.jar",
-    sha256 = "9484e9e000b6f5c22751ecf3d1e9004cd1d6faedbffb27b8f6863f22550ac96d",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.5.0-dev-5674/scripting-compiler-plugin-for-ide-2.5.0-dev-5674.jar",
-)
-
-http_file(
-    name = "org_jetbrains_kotlin-scripting-compiler-plugin-for-ide-2_5_0-dev-5674-sources_http",
-    downloaded_file_path = "scripting-compiler-plugin-for-ide-2.5.0-dev-5674-sources.jar",
-    sha256 = "f2eb84b9381ab378d5dcbabe98a5599dfe8918de341e4397745aff03def32750",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.5.0-dev-5674/scripting-compiler-plugin-for-ide-2.5.0-dev-5674-sources.jar",
-)
-
-http_file(
     name = "org_jetbrains_kotlinx-kotlinx-collections-immutable-jvm-0_5_0_http",
     downloaded_file_path = "kotlinx-collections-immutable-jvm-0.5.0.jar",
     sha256 = "9481ed3b87e282ffb95d7e2a033702afa3af476e3b89137294aeccebb27c76f7",
@@ -10617,6 +10603,20 @@ http_file(
     downloaded_file_path = "low-level-api-fir-for-ide-2.5.0-dev-5674-sources.jar",
     sha256 = "a5cd644d38bd76cbd87b6f1fd17a2718a1e2e89e23e674c1a19a79909b8e8e96",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/low-level-api-fir-for-ide/2.5.0-dev-5674/low-level-api-fir-for-ide-2.5.0-dev-5674-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlin-scripting-compiler-plugin-for-ide-2_5_0-dev-5674_http",
+    downloaded_file_path = "scripting-compiler-plugin-for-ide-2.5.0-dev-5674.jar",
+    sha256 = "9484e9e000b6f5c22751ecf3d1e9004cd1d6faedbffb27b8f6863f22550ac96d",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.5.0-dev-5674/scripting-compiler-plugin-for-ide-2.5.0-dev-5674.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlin-scripting-compiler-plugin-for-ide-2_5_0-dev-5674-sources_http",
+    downloaded_file_path = "scripting-compiler-plugin-for-ide-2.5.0-dev-5674-sources.jar",
+    sha256 = "f2eb84b9381ab378d5dcbabe98a5599dfe8918de341e4397745aff03def32750",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.5.0-dev-5674/scripting-compiler-plugin-for-ide-2.5.0-dev-5674-sources.jar",
 )
 
 http_file(

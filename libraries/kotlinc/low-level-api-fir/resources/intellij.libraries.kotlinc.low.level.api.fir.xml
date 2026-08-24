@@ -7,6 +7,7 @@
     <module name="intellij.libraries.kotlinc.kotlin.scripting.common"/>
     <module name="intellij.libraries.kotlinc.kotlin.scripting.compiler.impl"/>
     <module name="intellij.libraries.kotlinc.kotlin.scripting.jvm"/>
+    <module name="intellij.libraries.kotlinc.scripting.compiler.plugin"/>
     <module name="intellij.platform.backend"/>
   </dependencies>
   <!-- endregion -->

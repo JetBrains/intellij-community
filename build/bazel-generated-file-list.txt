@@ -548,6 +548,7 @@ libraries/kotlinc/kotlin-scripting-dependencies
 libraries/kotlinc/kotlin-scripting-jvm
 libraries/kotlinc/kotlinx-serialization-compiler-plugin
 libraries/kotlinc/low-level-api-fir
+libraries/kotlinc/scripting-compiler-plugin
 libraries/kotlinc/symbol-light-classes
 libraries/kotlinx/bcv
 libraries/kotlinx/collections-immutable

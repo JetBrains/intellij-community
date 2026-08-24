@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinc.scripting.compiler.plugin.jar
+  modules:
+  - name: intellij.libraries.kotlinc.scripting.compiler.plugin
+    libraries:
+      kotlinc.scripting-compiler-plugin:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2/scripting-compiler-plugin-for-ide-2.jar
