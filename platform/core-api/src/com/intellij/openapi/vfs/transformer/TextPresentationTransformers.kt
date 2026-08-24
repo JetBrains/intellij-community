@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.transformer
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.Service
@@ -16,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Service(Service.Level.APP)
-class TextPresentationTransformers : FileTypeExtension<TextPresentationTransformer>(EP), Disposable.Default {
+class TextPresentationTransformers : FileTypeExtension<TextPresentationTransformer>(EP) {
   init {
     val extensionPoint = ApplicationManager.getApplication().extensionArea.getExtensionPointIfRegistered<TextPresentationTransformer>(EP.name)
     extensionPoint?.addChangeListener({ notifyTextPresentationSetChange() }, null)
@@ -25,7 +24,7 @@ class TextPresentationTransformers : FileTypeExtension<TextPresentationTransform
   private fun notifyTextPresentationSetChange() {
     val fileTypes = EP.extensionsIfPointIsRegistered.map {
       val key = it.key
-      FileTypeRegistry.getInstance().getFileTypeByExtension(key)
+      FileTypeRegistry.getInstance().findFileTypeByName(key)
     }.toSet()
     ApplicationManager.getApplication().invokeLater(
       { FileDocumentManager.getInstance().reloadFileTypes(fileTypes) }, ModalityState.nonModal())
