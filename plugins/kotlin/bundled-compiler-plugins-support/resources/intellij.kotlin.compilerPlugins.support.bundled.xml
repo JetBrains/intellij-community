@@ -5,6 +5,7 @@
     <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
     <module name="intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin"/>
     <module name="intellij.libraries.kotlinc.scripting.compiler.plugin"/>
+    <module name="intellij.libraries.kotlinc.assignment.compiler.plugin"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.lang"/>
   </dependencies>

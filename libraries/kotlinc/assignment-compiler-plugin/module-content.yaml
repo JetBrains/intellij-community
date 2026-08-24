@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinc.assignment.compiler.plugin.jar
+  modules:
+  - name: intellij.libraries.kotlinc.assignment.compiler.plugin
+    libraries:
+      kotlinc.assignment-compiler-plugin:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2/assignment-compiler-plugin-for-ide-2.jar

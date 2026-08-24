@@ -1,0 +1,6 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.fir"/>
+  </dependencies>
+</idea-plugin>

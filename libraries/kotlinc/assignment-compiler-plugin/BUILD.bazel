@@ -1,0 +1,58 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.libraries.kotlinc.assignment.compiler.plugin` start
+jvm_library(
+    name = "libraries-kotlinc-assignment-compiler-plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.kotlinc.assignment.compiler.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kotlinc-assignment-compiler-plugin-kotlinc-assignment-compiler-plugin"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-kotlinc-assignment-compiler-plugin-kotlinc-assignment-compiler-plugin",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir",
+    ],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-kotlinc-assignment-compiler-plugin-kotlinc-assignment-compiler-plugin"],
+    module = ":libraries-kotlinc-assignment-compiler-plugin",
+)
+
+jvm_library(
+    name = "libraries-kotlinc-assignment-compiler-plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.kotlinc.assignment.compiler.plugin",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kotlinc-assignment-compiler-plugin-kotlinc-assignment-compiler-plugin"],
+    runtime_deps = [
+        # do not sort,
+        ":libraries-kotlinc-assignment-compiler-plugin",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir_test_lib",
+    ],
+)
+### auto-generated section `build intellij.libraries.kotlinc.assignment.compiler.plugin` end
+
+### auto-generated section `iml intellij.libraries.kotlinc.assignment.compiler.plugin` start
+exports_files(
+    [
+        "intellij.libraries.kotlinc.assignment.compiler.plugin.iml",
+        "resources/intellij.libraries.kotlinc.assignment.compiler.plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.kotlinc.assignment.compiler.plugin` end

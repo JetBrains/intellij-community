@@ -26,7 +26,7 @@
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.noarg-compiler-plugin" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.parcelize-compiler-plugin" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.sam-with-receiver-compiler-plugin" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinc.assignment-compiler-plugin" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.assignment.compiler.plugin" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.scripting.compiler.plugin" scope="PROVIDED" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.compose-compiler-plugin" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.js-plain-objects-compiler-plugin" level="project" />
