@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.gradleJava.run
 
@@ -55,8 +55,11 @@ class KotlinMultiplatformJvmRunConfigurationProducer : LazyRunConfigurationProdu
         val runTask = KotlinJvmRunTaskData.findSuitableKotlinJvmRunTask(module) ?: return false
         if (runTask.taskName !in configuration.settings.taskNames) return false
 
-        val isDifferentMainFunction = function.containingKtFile.javaFileFacadeFqName.asString() != configuration.mainFunctionClassFqn
-        if (isDifferentMainFunction) return false
+        val mainModuleDataNode = module.findMainModuleCachedData() ?: return false
+        if (usesComposeGradlePlugin(mainModuleDataNode)) {
+            val isDifferentMainFunction = function.containingKtFile.javaFileFacadeFqName.asString() != configuration.mainFunctionClassFqn
+            if (isDifferentMainFunction) return false
+        }
 
         if (!runTask.isComposeGradlePluginConfigured &&
             mainClassScriptParameter(function) !in configuration.settings.scriptParameters) return false
