@@ -264,6 +264,7 @@ sealed class SharingMode(
 ) {
   /**
    * The resource starts immediately and remains active until the scope is canceled.
+   * A failure is terminal here: since the resource runs without a consumer, restarting it on failure would be an unbounded retry loop, so there is no `restartOnFailure` to opt into.
    */
   data object Eager : SharingMode(
     runImmediately = true,
@@ -271,9 +272,14 @@ sealed class SharingMode(
   )
 
   /**
-   * The resource starts when a consumer appears and remains active until the scope is canceled.
+   * The resource starts when a consumer appears and remains active until the scope is canceled, or, with [Lazy.restartOnFailure], until it fails and is dropped once nobody holds it any more.
    */
-  data object Lazy : SharingMode(
+  data class Lazy(
+    /**
+     * drops a failed resource once nobody holds it any more, instead of keeping it for the lifetime of the scope, so the consumer after that gets a new one rather than the cached failure. Off by default: a failure is replayed to every consumer that comes later.
+     */
+    val restartOnFailure: Boolean = false,
+  ) : SharingMode(
     runImmediately = false,
     stopWithoutConsumersMode = StopMode.DoNotStop,
   )
@@ -370,7 +376,11 @@ private fun <T> sharedResource(
     is StopMode.Stop -> mode.graceful
     StopMode.DoNotStop -> true
   }
-  val restartOnFailure = sharing is SharingMode.WhileUsed && sharing.restartOnFailure
+  val restartOnFailure = when (sharing) {
+    is SharingMode.Eager -> false
+    is SharingMode.Lazy -> sharing.restartOnFailure
+    is SharingMode.WhileUsed -> sharing.restartOnFailure
+  }
   val resource = resource<T> { cc ->
     while (true) {
       val r: Pair<SharedResourceState.Running<T>?, Job?> = store.update { state ->
@@ -379,7 +389,9 @@ private fun <T> sharedResource(
             SharedResourceState.Running(1, runSharedResource(state.source, coroutineScope)).also { state.value = it } to null
           }
           is SharedResourceState.Running<T> -> {
-            s.copy(refCount = s.refCount + 1).also { state.value = it } to null
+            // a resource nobody holds may have died in the meantime — restart it instead of replaying its failure
+            val running = if (restartOnFailure && s.refCount == 0 && s.runnning.isDead) runSharedResource(state.source, coroutineScope) else s.runnning
+            s.copy(refCount = s.refCount + 1, runnning = running).also { state.value = it } to null
           }
           is SharedResourceState.Stopping<T> -> {
             when {
@@ -458,7 +470,8 @@ private fun <T> sharedResource(
                         }
                       }
                       StopMode.DoNotStop -> {
-                        s.copy(refCount = 0)
+                        // a dead resource is not worth keeping for the rest of the scope's life: drop it so the next consumer starts a new one
+                        if (restartOnFailure && s.runnning.isDead) SharedResourceState.NotRunning() else s.copy(refCount = 0)
                       }
                     }
                   }
