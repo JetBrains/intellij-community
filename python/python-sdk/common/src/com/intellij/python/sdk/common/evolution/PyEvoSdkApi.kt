@@ -534,6 +534,14 @@ data class EvoAddNewOptionDto(
    * at all: uv and conda fetch their own interpreters, and a remote machine cannot be installed onto from here.
    */
   val installable: Boolean = false,
+  /**
+   * This version is not on the machine either, but the *tool* fetches it as part of creating the environment — uv, which
+   * downloads whatever `--python` names when it does not find it.
+   *
+   * Reads the same as [installable] (download icon, "will be downloaded"), and deliberately does not share its flag: the
+   * IDE must not run its own Python installer first, because the tool is about to do that job itself.
+   */
+  val downloadedByTool: Boolean = false,
 )
 
 /**
