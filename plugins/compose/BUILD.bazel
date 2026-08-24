@@ -56,6 +56,7 @@ dev_dist_plugin_content(
     ],
     prepacked_content_modules = [
         "//plugins/compose/intellij.compose.ide.plugin.gradleTooling:ide-plugin-gradleTooling-rt_content_module_jar",
+        "//plugins/compose/intellij.compose.ide.plugin.shared.android:ide-plugin-shared-android_content_module_jar",
         "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared_content_module_jar",
     ],
 )

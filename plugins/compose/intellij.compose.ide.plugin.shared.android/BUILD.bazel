@@ -1,0 +1,63 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.compose.ide.plugin.shared.android` start
+jvm_library(
+    name = "ide-plugin-shared-android",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.compose.ide.plugin.shared.android",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared",
+        "@lib//:studio-platform-provided",
+        "//android/android-npw:newProjectWizard",
+        "//platform/core-api:core",
+        "//platform/util",
+    ],
+)
+
+content_module_jar(module = ":ide-plugin-shared-android")
+
+jvm_library(
+    name = "ide-plugin-shared-android_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.compose.ide.plugin.shared.android",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":ide-plugin-shared-android",
+        "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared_test_lib",
+        "@lib//:studio-platform-provided",
+        "//android/android-npw:newProjectWizard_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+    ],
+)
+### auto-generated section `build intellij.compose.ide.plugin.shared.android` end
+
+### auto-generated section `iml intellij.compose.ide.plugin.shared.android` start
+exports_files(
+    [
+        "intellij.compose.ide.plugin.shared.android.iml",
+        "resources/intellij.compose.ide.plugin.shared.android.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.compose.ide.plugin.shared.android` end
