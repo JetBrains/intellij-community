@@ -1,6 +1,7 @@
 <idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.java.execution.impl"/>
     <module name="intellij.java.frontback.psi"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.ui"/>
@@ -16,15 +17,14 @@
     <module name="intellij.kotlin.codeInsight.api"/>
     <module name="intellij.kotlin.codeInsight.utils"/>
     <module name="intellij.kotlin.preferences"/>
+    <module name="intellij.kotlin.runConfigurations.jvm"/>
     <module name="intellij.libraries.guava"/>
     <module name="intellij.libraries.kotlinc.analysis.api"/>
     <module name="intellij.libraries.kotlinc.analysis.api.platform.interface"/>
     <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
-    <module name="intellij.libraries.kotlinc.kotlin.scripting.dependencies"/>
-    <module name="intellij.libraries.kotlinc.kotlin.jps.common"/>
-    <module name="intellij.libraries.kotlinc.kotlin.script.runtime"/>
     <module name="intellij.libraries.kotlinc.kotlin.scripting.common"/>
     <module name="intellij.libraries.kotlinc.kotlin.scripting.compiler.impl"/>
+    <module name="intellij.libraries.kotlinc.kotlin.scripting.dependencies"/>
     <module name="intellij.libraries.kotlinc.kotlin.scripting.jvm"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.analysis"/>
@@ -33,6 +33,7 @@
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.externalSystem.impl"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.impl"/>
@@ -122,6 +123,11 @@
     <projectView.externalLibraries.workspaceModelNodesProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.KotlinScriptExternalLibrariesNodesProvider"/>
 
     <vfs.asyncListener implementation="org.jetbrains.kotlin.idea.core.script.k2.KotlinScriptFileListener"/>
+
+    <configurationType implementation="org.jetbrains.kotlin.idea.runConfigurations.jvm.script.KotlinStandaloneScriptRunConfigurationType"/>
+
+    <runConfigurationProducer
+            implementation="org.jetbrains.kotlin.idea.runConfigurations.jvm.script.KotlinStandaloneScriptRunConfigurationProducer"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptConfigurationsProviderImpl"/>
