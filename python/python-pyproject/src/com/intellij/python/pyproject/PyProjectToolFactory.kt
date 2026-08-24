@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
  *     override val tables: List<String> = listOf("tool.uv")
  *
  *     override fun createTool(tables: Map<String, TomlTable?>): UvPyProject {
- *       val dependencies = tables["tool.uv"]?.safeGetArr<String>("dev-dependencies")?.successOrNull ?: listOf()
+ *       val dependencies = tables["tool.uv"]?.safeGetArr<String>("dev-dependencies", unquotedDottedKey = false)?.successOrNull ?: listOf()
  *       return UvPyProject(uvDevDependencies)
  *     }
  *   }

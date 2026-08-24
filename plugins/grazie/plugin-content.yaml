@@ -6,16 +6,6 @@
   - name: intellij.grazie.xml
   - name: intellij.grazie.yaml
 - name: lib/intellij.grazie.core.jar
-  projectLibraries:
-  - name: ai.grazie.rule.engine
-    files:
-    - name: $MAVEN_REPOSITORY$/ai/grazie/grazie-rule-engine/0/grazie-rule-engine-0.jar
-    - name: $MAVEN_REPOSITORY$/net/fellbaum/jemoji/1/jemoji-1.jar
-    reason: <- intellij.grazie.core
-  - name: io.github.oshai.kotlin.logging.jvm
-    files:
-    - name: $MAVEN_REPOSITORY$/io/github/oshai/kotlin-logging-jvm/7/kotlin-logging-jvm-7.jar
-    reason: <- intellij.grazie.core
   contentModules:
   - name: intellij.grazie.core
     libraries:
@@ -103,6 +93,11 @@
       - name: $MAVEN_REPOSITORY$/cloud/jetbrains/sdk/ml/jbai-tree-api/2/jbai-tree-api-2.jar
       cloud.jetbrains.sdk.ml.jbai.ner.api:
       - name: $MAVEN_REPOSITORY$/cloud/jetbrains/sdk/ml/jbai-ner-api/0/jbai-ner-api-0.jar
+  library: ai.grazie.rule.engine
+  files:
+  - name: $MAVEN_REPOSITORY$/ai/grazie/grazie-rule-engine/0/grazie-rule-engine-0.jar
+  - name: $MAVEN_REPOSITORY$/net/fellbaum/jemoji/1/jemoji-1.jar
+  reason: <- intellij.grazie.core
 - name: lib/intellij.libraries.ai.grazie.spell.gec.engine.local.jar
   contentModules:
   - name: intellij.libraries.ai.grazie.spell.gec.engine.local
@@ -133,6 +128,12 @@
       - name: $MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-en/0/hunspell-en-0.jar
       ai.grazie.model.swagger.annotations.jvm:
       - name: $MAVEN_REPOSITORY$/ai/grazie/model/swagger-annotations-jvm/0/swagger-annotations-jvm-0.jar
+- name: lib/intellij.libraries.kotlin.logging.jar
+  contentModules:
+  - name: intellij.libraries.kotlin.logging
+    libraries:
+      io.github.oshai.kotlin.logging.jvm:
+      - name: $MAVEN_REPOSITORY$/io/github/oshai/kotlin-logging-jvm/7/kotlin-logging-jvm-7.jar
 - name: lib/modules/intellij.grazie.java.jar
   contentModules:
   - name: intellij.grazie.java

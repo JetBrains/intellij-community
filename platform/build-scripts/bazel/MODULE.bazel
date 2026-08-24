@@ -58,6 +58,7 @@ maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
 maven.install(
     name = "j2b_maven",
     artifacts = [
+        "com.charleskorn.kaml:kaml-jvm:0.99.0",
         "com.jetbrains.intellij.platform:jps-model-impl:" + intellij_version,
         "com.jetbrains.intellij.platform:build-scripts-downloader:" + intellij_version,
         "com.jetbrains.intellij.platform:jps-model-serialization:" + intellij_version,

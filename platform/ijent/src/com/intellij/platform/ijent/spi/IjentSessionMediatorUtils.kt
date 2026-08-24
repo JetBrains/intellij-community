@@ -63,6 +63,10 @@ object IjentSessionMediatorUtils {
     val ijentProcessScope = trickySupervisorScope.childScope(ijentLabel, supervisor = false, context = IjentScope.IjentContext())
 
     ijentProcessScope.coroutineContext.job.invokeOnCompletion { err ->
+      // Unconditional: the categorized logging below mutes cancellations and expected exits, which leaves a
+      // teardown mid-bootstrap with no trace of what felled the scope.
+      IjentLogger.LIFETIME_LOG.debug { "$ijentLabel session scope completed, cause: $err" }
+
       trickySupervisorScope.cancel()
 
       if (err != null) {

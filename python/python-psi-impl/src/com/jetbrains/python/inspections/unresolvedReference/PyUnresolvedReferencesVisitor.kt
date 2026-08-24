@@ -36,7 +36,6 @@ import com.jetbrains.python.psi.PsiReferenceEx
 import com.jetbrains.python.psi.PyAugAssignmentStatement
 import com.jetbrains.python.psi.PyBinaryExpression
 import com.jetbrains.python.psi.PyCallExpression
-import com.jetbrains.python.psi.PyCallSiteExpression
 import com.jetbrains.python.psi.PyCallable
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyElement
@@ -236,7 +235,7 @@ class PyUnresolvedReferencesVisitor(
     referencedName: String,
     target: PsiElement?,
   ) {
-    val qualifier = if (node is PyCallSiteExpression && target is PyCallable) node.getReceiver(target) else node.qualifier
+    val qualifier = if (reference is PyOperatorReference && target is PyCallable) reference.getReceiver(target) else node.qualifier
     val qualifierType = qualifier?.let { myTypeEvalContext.getType(it) }
     if (qualifierType !is PyUnionType) return
     val missing = findStrictUnionMemberMissingAttribute(qualifierType, reference, referencedName) ?: return
@@ -575,7 +574,7 @@ class PyUnresolvedReferencesVisitor(
         reference is PyOperatorReference &&
         PyTypingTypeProvider.GENERATOR == cls.qualifiedName
     ) {
-      val receiver = reference.receiver
+      val receiver = reference.getReceiver(null)
 
       if (receiver is PyCallExpression) {
         return PyKnownDecoratorUtil.isResolvedToGeneratorBasedCoroutine(receiver, resolveContext, myTypeEvalContext)

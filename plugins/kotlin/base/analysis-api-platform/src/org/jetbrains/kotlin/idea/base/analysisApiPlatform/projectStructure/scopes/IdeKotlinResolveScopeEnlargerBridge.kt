@@ -18,7 +18,7 @@ internal class IdeKotlinResolveScopeEnlargerBridge : KotlinContentScopeRefiner {
     override fun getEnlargementScopes(module: KaModule): List<GlobalSearchScope> {
         if (module !is KaSourceModule) return emptyList()
 
-        return listOf(KotlinResolveScopeEnlarger.Companion.enlargeScope(
+        return listOf(KotlinResolveScopeEnlarger.enlargeScope(
           GlobalSearchScope.EMPTY_SCOPE,
           module.openapiModule,
           isTestScope = module.sourceModuleKind == KaSourceModuleKind.TEST,

@@ -8,20 +8,20 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.python.community.execService.BinaryToExec
+import com.intellij.python.pytools.ToolCommandSpec
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.ToolCommandSpec
 import com.jetbrains.python.sdk.ToolProbeResult
 import com.jetbrains.python.target.ui.TargetPanelExtension
+import java.nio.file.Path
+import javax.swing.JComponent
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
-import java.nio.file.Path
-import javax.swing.JComponent
 
 @ApiStatus.Internal
 interface FileSystem<P : PathHolder> {

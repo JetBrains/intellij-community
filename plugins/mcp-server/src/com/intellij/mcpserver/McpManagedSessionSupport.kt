@@ -3,12 +3,12 @@ package com.intellij.mcpserver
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
-import org.jetbrains.annotations.ApiStatus
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 
 private const val CONTRIB_DIRECT_EXPOSURE_REGISTRY_KEY = "llm.agents.contrib.tools.direct.exposure.enabled"
 
@@ -33,7 +33,7 @@ interface McpManagedSessionSupport {
       val flow = MutableStateFlow(invocationModeOverride())
       EP_NAME.addChangeListener(scope) { flow.value = invocationModeOverride() }
       scope.launch {
-        Registry.get(CONTRIB_DIRECT_EXPOSURE_REGISTRY_KEY).asStringFlow().collect {
+        Registry.get(CONTRIB_DIRECT_EXPOSURE_REGISTRY_KEY).asChangeEventsFlow().collect {
           flow.value = invocationModeOverride()
         }
       }

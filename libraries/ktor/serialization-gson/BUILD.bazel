@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.ktor.serialization.gson` start
 jvm_library(
@@ -15,6 +16,11 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-ktor-serialization-gson-ktor-serialization-gson"],
     runtime_deps = ["@lib//:libraries-ktor-serialization-gson-ktor-serialization-gson"],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-ktor-serialization-gson-ktor-serialization-gson"],
+    module = ":libraries-ktor-serialization-gson",
 )
 
 jvm_library(

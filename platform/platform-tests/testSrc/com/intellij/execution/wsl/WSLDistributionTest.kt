@@ -555,6 +555,8 @@ private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser
 
   override suspend fun waitUntilExit(): Unit = Unit
 
+  override suspend fun testRequest(data: String): String = data
+
   override val exec: IjentExecPosixApi get() = MockIjentExecApi(adapter, rootUser)
 
   override val fs: IjentFileSystemPosixApi get() = throw UnsupportedOperationException()

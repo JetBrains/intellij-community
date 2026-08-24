@@ -43,6 +43,7 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
+import com.intellij.openapi.updateSettings.impl.getPresentableName
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
@@ -1259,14 +1260,6 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     myPluginUpdateSourceId?.apply {
       selectedItem = pluginUpdateSource
       text = pluginUpdateSource.getPresentableName()
-    }
-  }
-
-  private fun PluginUpdateSourceId?.getPresentableName(): @Nls(capitalization = Nls.Capitalization.Sentence) String {
-    return when {
-      this == null -> IdeBundle.message("plugin.update.source.presentable.name.unknown")
-      this.isMarketplace -> IdeBundle.message("plugin.update.source.presentable.name.marketplace")
-      else -> this.host
     }
   }
 

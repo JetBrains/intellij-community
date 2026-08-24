@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.filePrediction` start
@@ -85,10 +86,25 @@ exports_files(
     [
         "intellij.filePrediction.iml",
         "resources/META-INF/plugin.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.filePrediction` end
+
+### auto-generated section `dev content intellij.filePrediction` start
+dev_dist_plugin_content(
+    descriptor_module = ":filePrediction",
+    libraries = [
+        "@lib//:file_prediction-file-prediction-model",
+        "@lib//:ngram-slp",
+    ],
+    prepacked_content_modules = [
+        "//plugins/filePrediction/java:java_content_module_jar",
+        "//plugins/filePrediction/vcs:vcs_content_module_jar",
+    ],
+)
+### auto-generated section `dev content intellij.filePrediction` end
 
 ### auto-generated section `build intellij.filePrediction.tests` start
 jvm_library(

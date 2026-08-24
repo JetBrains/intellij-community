@@ -101,8 +101,8 @@ final class IntroduceConstantHelper implements FieldHelper {
   }
 
   @Override
-  public @NotNull BaseExpressionToFieldHandler.Settings getSettings(@NotNull JavaIntroduceFieldService.ToFieldContext.VariableContext context,
-                                                                    @NotNull JavaIntroduceFieldService.InitializationPlace place,
+  public @NotNull BaseExpressionToFieldHandler.Settings getSettings(@NotNull JavaIntroduceFieldModCommandService.ToFieldContext.VariableContext context,
+                                                                    @NotNull JavaIntroduceFieldModCommandService.InitializationPlace place,
                                                                     @NotNull PsiExpression @NotNull [] occurrences) {
     PsiLocalVariable local = context.localVariable();
     PsiClass destinationClass = context.variableToFieldCandidatesContext().classes().getFirst();
@@ -138,7 +138,7 @@ final class IntroduceConstantHelper implements FieldHelper {
   }
 
   @Override
-  public @NotNull SuggestedNameInfo getSuggestedNameInfo(@NotNull JavaIntroduceFieldService.ToFieldContext.ExpressionContext expressionContextContext,
+  public @NotNull SuggestedNameInfo getSuggestedNameInfo(@NotNull JavaIntroduceFieldModCommandService.ToFieldContext.ExpressionContext expressionContextContext,
                                                          @NotNull FieldExtractor.SettingParameters parameters) {
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expressionContextContext.selectedExpr().getProject());
     NameSuggestionsGenerator generator =

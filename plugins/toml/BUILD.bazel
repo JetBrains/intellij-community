@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.toml` start
@@ -33,7 +34,23 @@ exports_files(
     [
         "intellij.toml.iml",
         "resources/META-INF/plugin.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.toml` end
+
+### auto-generated section `dev content intellij.toml` start
+dev_dist_plugin_content(
+    content_modules = [
+        "//plugins/toml/core",
+        "//plugins/toml/grazie",
+    ],
+    descriptor_module = ":toml",
+    prepacked_content_modules = [
+        "//plugins/toml/backend:backend_content_module_jar",
+        "//plugins/toml/frontend:frontend_content_module_jar",
+        "//plugins/toml/json:json_content_module_jar",
+    ],
+)
+### auto-generated section `dev content intellij.toml` end

@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-swift-export" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-swift-export-for-ide:2.5.0-dev-4232">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-swift-export-for-ide:2.5.0-dev-5423">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-swift-export-for-ide/2.5.0-dev-4232/kotlin-swift-export-for-ide-2.5.0-dev-4232.jar">
-          <sha256sum>9b8af030665347dae4fd184aade621e79581d2f05ad34c599cd33e37fbe168d6</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-swift-export-for-ide/2.5.0-dev-5423/kotlin-swift-export-for-ide-2.5.0-dev-5423.jar">
+          <sha256sum>cbf691bc571c549134332c060e9a00c13250f1ef4b4c86d3b1b616b76560c0c8</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-swift-export-for-ide/2.5.0-dev-4232/kotlin-swift-export-for-ide-2.5.0-dev-4232.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-swift-export-for-ide/2.5.0-dev-5423/kotlin-swift-export-for-ide-2.5.0-dev-5423.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-swift-export-for-ide/2.5.0-dev-4232/kotlin-swift-export-for-ide-2.5.0-dev-4232-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-swift-export-for-ide/2.5.0-dev-5423/kotlin-swift-export-for-ide-2.5.0-dev-5423-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

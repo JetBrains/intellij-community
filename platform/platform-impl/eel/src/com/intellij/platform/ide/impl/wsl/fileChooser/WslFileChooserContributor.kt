@@ -64,7 +64,9 @@ internal class WslFileChooserContributor : UniversalFileChooserContributor {
       }
     }
 
-    roots
+    // Present the distributions in a stable, alphabetical order by name instead of the arbitrary
+    // order reported by WslDistributionManager.
+    roots.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.presentation.presentableName })
   }
 
   override suspend fun getFilteredRoots(path: Path): List<Root> {
@@ -130,7 +132,7 @@ internal class WslFileChooserContributor : UniversalFileChooserContributor {
    * Uses the `wsl.localhost` prefix as the canonical form, matching what `EelWslMrfsBackend.getCustomRoots` exposes.
    */
   private fun canonicalRootId(pathString: String): String {
-    val normalized = pathString.replace('/', '\\').trimEnd('\\').lowercase()
+    val normalized = pathString.replace('/', '\\').trimEnd('\\')
     val prefixes = listOf("\\\\wsl.localhost\\", "\\\\wsl\$\\")
     for (prefix in prefixes) {
       if (normalized.startsWith(prefix)) {

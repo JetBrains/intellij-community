@@ -93,6 +93,7 @@ internal class ParentWithLinkToAbstractChildImpl(private val dataSource: ParentW
         changedProperty.add("data")
       }
     override var child: AbstractChildWithLinkToParentEntityBuilder<out AbstractChildWithLinkToParentEntity>?
+      @Suppress("UNCHECKED_CAST")
       get() = getChild(CHILD_CONNECTION_ID) as? AbstractChildWithLinkToParentEntityBuilder<out AbstractChildWithLinkToParentEntity>?
       set(value) {
         changeChild(value, CHILD_CONNECTION_ID)

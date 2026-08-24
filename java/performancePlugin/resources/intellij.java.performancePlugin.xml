@@ -1,7 +1,7 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.backend"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="com.jetbrains.performancePlugin"/>
     <module name="intellij.java"/>
     <module name="intellij.java.analysis.impl"/>
@@ -23,8 +23,9 @@
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
-    <!-- endregion -->
+    <module name="intellij.platform.refactoring"/>
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.jetbrains">
     <performancePlugin.commandProvider implementation="com.intellij.java.performancePlugin.JavaCommandProvider"/>
   </extensions>

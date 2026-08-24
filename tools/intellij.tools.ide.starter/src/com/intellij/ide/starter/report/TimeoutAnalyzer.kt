@@ -141,7 +141,7 @@ object TimeoutAnalyzer {
     val logs = runContext.lastIdeReportingData.logsDir
     val killThreadDump = logs.listDirectoryEntries("threadDump-before-kill*.txt").firstOrNull()
 
-    val threadDumpsDirectory = logs.resolve("monitoring-thread-dumps-ide")
+    val threadDumpsDirectory = logs.resolve("thread-dumps-ide")
     val lastThreadDump = threadDumpsDirectory
       .takeIf { it.exists() }
       ?.listDirectoryEntries("threadDump*.txt")

@@ -3,14 +3,14 @@ UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identif
 UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> SymbolLightConstructor of SymbolLightClassForClassOrObject:
 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to SymbolLightConstructor of SymbolLightClassForClassOrObject) -> UQualifiedReferenceExpression -> null: null
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = i) -> SymbolLightValueParameter: i
-UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUNCTION: toString
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to KtLightMethodForDecompiledDeclaration of KtLightClassForDecompiledFacade of PsiFile:ConsoleKt.class) -> USimpleNameReferenceExpression (identifier = println) -> KtLightMethodForDecompiledDeclaration of KtLightClassForDecompiledFacade of PsiFile:ConsoleKt.class: println
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
 UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> SymbolLightConstructor of SymbolLightClassForClassOrObject:
 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to SymbolLightConstructor of SymbolLightClassForClassOrObject) -> UQualifiedReferenceExpression -> null: null
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = i) -> SymbolLightValueParameter: i
-UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUNCTION: toString
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to KtLightMethodForDecompiledDeclaration of KtLightClassForDecompiledFacade of PsiFile:ConsoleKt.class) -> USimpleNameReferenceExpression (identifier = println) -> KtLightMethodForDecompiledDeclaration of KtLightClassForDecompiledFacade of PsiFile:ConsoleKt.class: println
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to KtLightMethodForDecompiledDeclaration of KtLightClassForDecompiledFacade of PsiFile:ConsoleKt.class) -> USimpleNameReferenceExpression (identifier = println) -> KtLightMethodForDecompiledDeclaration of KtLightClassForDecompiledFacade of PsiFile:ConsoleKt.class: println
@@ -18,7 +18,7 @@ UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identif
 UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> SymbolLightConstructor of SymbolLightClassForClassOrObject:
 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to SymbolLightConstructor of SymbolLightClassForClassOrObject) -> UQualifiedReferenceExpression -> null: null
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = i) -> SymbolLightValueParameter: i
-UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUNCTION: toString
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to KtLightMethodForDecompiledDeclaration of KtLightClassForDecompiledFacade of PsiFile:ConsoleKt.class) -> USimpleNameReferenceExpression (identifier = println) -> KtLightMethodForDecompiledDeclaration of KtLightClassForDecompiledFacade of PsiFile:ConsoleKt.class: println
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to KtLightMethodForDecompiledDeclaration of KtLightClassForDecompiledFacade of PsiFile:ConsoleKt.class) -> USimpleNameReferenceExpression (identifier = println) -> KtLightMethodForDecompiledDeclaration of KtLightClassForDecompiledFacade of PsiFile:ConsoleKt.class: println
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
@@ -28,7 +28,7 @@ UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'
     UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> null: null
     UBinaryExpression (operator = =) -> UQualifiedReferenceExpression -> null: null
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = i) -> SymbolLightValueParameter: i
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUNCTION: toString
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
 UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) -> PsiMethod:Object:
     UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = a) -> SymbolLightAccessorMethod of SymbolLightClassForClassOrObject: setA
@@ -42,7 +42,7 @@ UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'
     UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> null: null
     UBinaryExpression (operator = =) -> UQualifiedReferenceExpression -> null: null
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = i) -> SymbolLightValueParameter: i
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUNCTION: toString
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
 UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) -> PsiMethod:Object:
     UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = a) -> SymbolLightAccessorMethod of SymbolLightClassForClassOrObject: setA
@@ -59,4 +59,4 @@ UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpres
     UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> null: null
     UBinaryExpression (operator = =) -> UQualifiedReferenceExpression -> null: null
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = i) -> SymbolLightValueParameter: i
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUNCTION: toString

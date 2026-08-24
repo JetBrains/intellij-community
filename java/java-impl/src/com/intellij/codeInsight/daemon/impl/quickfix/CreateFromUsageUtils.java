@@ -101,6 +101,7 @@ import com.intellij.psi.TypeAnnotationProvider;
 import com.intellij.psi.WeighingComparable;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -309,12 +310,9 @@ public final class CreateFromUsageUtils {
     }
   }
 
-  static void setupMethodParameters(PsiMethod method, TemplateBuilder builder, PsiExpressionList argumentList,
-                                    PsiSubstitutor substitutor) throws IncorrectOperationException {
+  static void setupMethodParameters(PsiMethod method, TemplateBuilder builder, PsiExpressionList argumentList, PsiSubstitutor substitutor) {
     if (argumentList == null) return;
-    PsiExpression[] args = argumentList.getExpressions();
-
-    setupMethodParameters(method, builder, argumentList, substitutor, args);
+    setupMethodParameters(method, builder, argumentList, substitutor, argumentList.getExpressions());
   }
 
   public static void setupMethodParameters(PsiMethod method, TemplateBuilder builder, PsiElement contextElement,
@@ -323,24 +321,22 @@ public final class CreateFromUsageUtils {
   }
 
   static void setupMethodParameters(PsiMethod method, TemplateBuilder builder, PsiElement contextElement,
-                                    PsiSubstitutor substitutor, List<? extends Pair<PsiExpression, PsiType>> arguments)
-    throws IncorrectOperationException {
-
+                                    PsiSubstitutor substitutor, List<? extends Pair<PsiExpression, PsiType>> arguments) {
     final PsiManager psiManager = method.getManager();
     final Project project = psiManager.getProject();
 
     JVMElementFactory factory = JVMElementFactories.getFactory(method.getLanguage(), project);
     if (factory == null) return;
 
-    PsiParameterList parameterList = method.getParameterList();
-
-    GlobalSearchScope resolveScope = method.getResolveScope();
-
-    GuessTypeParameters guesser = new GuessTypeParameters(project, JavaPsiFacade.getElementFactory(project), builder, substitutor);
-
-    PostprocessReformattingAspect postprocessReformattingAspect = PostprocessReformattingAspect.getInstance(project);
+    final PsiParameterList parameterList = method.getParameterList();
+    final GlobalSearchScope resolveScope = method.getResolveScope();
     final PsiClass containingClass = method.getContainingClass();
-    final boolean isInterface = containingClass != null && containingClass.isInterface();
+    final boolean makeFinal = JavaCodeStyleSettings.getInstance(method.getContainingFile()).GENERATE_FINAL_PARAMETERS
+                              && (containingClass == null || !containingClass.isInterface())
+                              && !method.hasModifierProperty(PsiModifier.ABSTRACT);
+    GuessTypeParameters guesser = new GuessTypeParameters(project, JavaPsiFacade.getElementFactory(project), builder, substitutor);
+    PostprocessReformattingAspect postprocessReformattingAspect = PostprocessReformattingAspect.getInstance(project);
+
     //255 is the maximum number of method parameters
     for (int i = 0; i < Math.min(arguments.size(), 255); i++) {
       Pair<PsiExpression, PsiType> arg = arguments.get(i);
@@ -369,9 +365,6 @@ public final class CreateFromUsageUtils {
           }
         }
         PsiParameter param = factory.createParameter(names[0], notAnnotated);
-        if (isInterface) {
-          PsiUtil.setModifierProperty(param, PsiModifier.FINAL, false);
-        }
         parameter = postprocessReformattingAspect.postponeFormattingInside(() -> (PsiParameter) parameterList.add(param));
       }
 
@@ -379,6 +372,7 @@ public final class CreateFromUsageUtils {
 
       PsiElement context = PsiTreeUtil.getParentOfType(contextElement, PsiClass.class, PsiMethod.class);
       guesser.setupTypeElement(parameter.getTypeElement(), new ExpectedTypeInfo[]{info}, context, containingClass);
+      PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, makeFinal);
 
       Expression expression = new ParameterNameExpression(names);
       builder.replaceElement(parameter.getNameIdentifier(), expression);

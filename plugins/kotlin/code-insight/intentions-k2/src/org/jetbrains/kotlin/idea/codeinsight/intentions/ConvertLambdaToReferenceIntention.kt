@@ -12,12 +12,12 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.compositeScope
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbols
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
@@ -51,13 +51,13 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertLambdaToReferenceUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
 import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
 import org.jetbrains.kotlin.idea.k2.refactoring.util.areTypeArgumentsRedundant
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtDynamicType
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtLabeledExpression
 import org.jetbrains.kotlin.psi.KtLambdaArgument
@@ -76,6 +76,7 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.buildValueArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.resolution.KtResolvable
 import org.jetbrains.kotlin.types.Variance
 
 internal class ConvertLambdaToReferenceIntention :
@@ -358,10 +359,11 @@ private fun KtNameReferenceExpression.renderTargetReceiverType(): String {
     return receiverType.render(position = Variance.IN_VARIANCE)
 }
 
+@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
 context(_: KaSession)
 private fun KtExpression.isReferenceToPackage(): Boolean {
     val selectorOrThis = (this as? KtQualifiedExpression)?.selectorExpression ?: this
-    val symbols = selectorOrThis.mainReference?.resolveToSymbols() ?: return false
+    val symbols = (selectorOrThis as? KtResolvable)?.resolveSymbols() ?: return false
     return symbols.any { it is KaPackageSymbol }
 }
 

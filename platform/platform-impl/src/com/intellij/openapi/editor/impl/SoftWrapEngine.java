@@ -95,6 +95,7 @@ public final class SoftWrapEngine {
     int maxWrapOffset = -1;
     float nonWhitespaceStartX = 0;
     int nonWhitespaceStartOffset = -1;
+    Boolean softWrappingAllowed = null;
 
     float x;
     if (startOffset == 0) {
@@ -122,6 +123,7 @@ public final class SoftWrapEngine {
         x = 0;
         lastSoftWrap = null;
         nonWhitespaceStartOffset = -1;
+        softWrappingAllowed = null;
         if (it.getElementEndOffset() > minEndOffset) {
           myEvent.setActualEndOffset(it.getElementEndOffset());
           return;
@@ -143,19 +145,24 @@ public final class SoftWrapEngine {
             if (maxWrapOffset > minWrapOffset && it.isFoldRegion()) minWrapOffset = maxWrapOffset;
           }
           if (x > myVisibleWidth) {
-            lastSoftWrap = createSoftWrap(lastSoftWrap, minWrapOffset, maxWrapOffset, minWrapOffsetAtFolding,
-                                          nonWhitespaceStartOffset, nonWhitespaceStartX);
-            int wrapOffset = lastSoftWrap.getStart();
-            if (wrapOffset > minEndOffset && myDataMapper.matchesOldSoftWrap(lastSoftWrap, myEvent.getLengthDiff())) {
-              myEvent.setActualEndOffset(wrapOffset);
-              return;
+            if (softWrappingAllowed == null) {
+              softWrappingAllowed = getLineWrapPositionStrategy().isSoftWrappingAllowed(myEditor, it.getElementStartOffset());
             }
-            minWrapOffset = -1;
-            maxWrapOffset = -1;
-            x = lastSoftWrap.getIndentInPixels();
-            if (wrapOffset <= it.getElementStartOffset()) {
-              it.retreat(wrapOffset);
-              continue;
+            if (softWrappingAllowed) {
+              lastSoftWrap = createSoftWrap(lastSoftWrap, minWrapOffset, maxWrapOffset, minWrapOffsetAtFolding,
+                                            nonWhitespaceStartOffset, nonWhitespaceStartX);
+              int wrapOffset = lastSoftWrap.getStart();
+              if (wrapOffset > minEndOffset && myDataMapper.matchesOldSoftWrap(lastSoftWrap, myEvent.getLengthDiff())) {
+                myEvent.setActualEndOffset(wrapOffset);
+                return;
+              }
+              minWrapOffset = -1;
+              maxWrapOffset = -1;
+              x = lastSoftWrap.getIndentInPixels();
+              if (wrapOffset <= it.getElementStartOffset()) {
+                it.retreat(wrapOffset);
+                continue;
+              }
             }
           }
         }
@@ -196,21 +203,25 @@ public final class SoftWrapEngine {
 
   // the returned offset is in [minOffset; maxOffset], possibly in [minOffset-1; maxOffset] due to a surrogate pair
   private int calcSoftWrapOffset(int minOffset, int maxOffset, boolean preferMinOffset) {
-    if (myLineWrapPositionStrategy == null) {
-      myLineWrapPositionStrategy = LanguageLineWrapPositionStrategy.INSTANCE.forEditor(myEditor);
-    }
+    LineWrapPositionStrategy strategy = getLineWrapPositionStrategy();
     if (!myEditor.getState().getDisableDefaultSoftWrapsCalculation()) {
-      int position = findWrapPosition(myText, maxOffset, minOffset, myLineWrapPositionStrategy);
+      int position = findWrapPosition(myText, maxOffset, minOffset, strategy);
       if (position != -1) return position;
     }
 
-    int wrapOffset = myLineWrapPositionStrategy.calculateWrapPosition(myEditor, minOffset - 1, maxOffset + 1,
-                                                                      maxOffset + 1, false, true);
+    int wrapOffset = strategy.calculateWrapPosition(myEditor, minOffset - 1, maxOffset + 1, maxOffset + 1, false, true);
     if (wrapOffset < 0) return preferMinOffset ? minOffset : maxOffset;
     if (wrapOffset < minOffset) return minOffset;
     if (wrapOffset > maxOffset) return maxOffset;
     if (DocumentUtil.isInsideSurrogatePair(myDocument, wrapOffset)) return wrapOffset - 1;
     return wrapOffset;
+  }
+
+  private @NotNull LineWrapPositionStrategy getLineWrapPositionStrategy() {
+    if (myLineWrapPositionStrategy == null) {
+      myLineWrapPositionStrategy = LanguageLineWrapPositionStrategy.INSTANCE.forEditor(myEditor);
+    }
+    return myLineWrapPositionStrategy;
   }
 
   /**
@@ -236,6 +247,7 @@ public final class SoftWrapEngine {
     int widthInColumns = grid.getColumns();
     int endOffset = maxEndOffset;
     var wrappedSoFar = 0;
+    Boolean softWrappingAllowed = null;
     for (var it = grid.iterator(startOffset, maxEndOffset); !it.isAtEnd(); it.advance()) {
       var cellStartOffset = it.getCellStartOffset();
       var cellEndOffset = it.getCellEndOffset();
@@ -243,17 +255,23 @@ public final class SoftWrapEngine {
       var cellEndColumn = it.getCellEndColumn() - wrappedSoFar;
       if (it.isLineBreak()) {
         wrappedSoFar = 0;
+        softWrappingAllowed = null;
         if (cellEndOffset > minEndOffset) {
           endOffset = cellEndOffset;
           break;
         }
       }
       else if (cellEndColumn > widthInColumns) {
-        wrappedSoFar += cellStartColumn;
-        var softWrap = createGridSoftWrap(cellStartOffset);
-        if (cellStartOffset > minEndOffset && myDataMapper.matchesOldSoftWrap(softWrap, myEvent.getLengthDiff())) {
-          endOffset = cellStartOffset;
-          break;
+        if (softWrappingAllowed == null) {
+          softWrappingAllowed = getLineWrapPositionStrategy().isSoftWrappingAllowed(myEditor, cellStartOffset);
+        }
+        if (softWrappingAllowed) {
+          wrappedSoFar += cellStartColumn;
+          var softWrap = createGridSoftWrap(cellStartOffset);
+          if (cellStartOffset > minEndOffset && myDataMapper.matchesOldSoftWrap(softWrap, myEvent.getLengthDiff())) {
+            endOffset = cellStartOffset;
+            break;
+          }
         }
       }
     }

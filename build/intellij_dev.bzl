@@ -129,7 +129,9 @@ def intellij_dev_binary(
         additional_modules,
         program_args,
         preloaded_download_repos,
-        preloaded_downloads_exhaustive_on):
+        preloaded_downloads_exhaustive_on,
+        before_run_main_class = "",
+        before_run_runtime_deps = []):
     all_jvm_flags = _runtime_jvm_flags(name, jvm_flags, platform_prefix, config_path, system_path) + [
         "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % bazel_targets_json,
     ]
@@ -143,6 +145,15 @@ def intellij_dev_binary(
 
     if additional_modules:
         all_jvm_flags = all_jvm_flags + ["-Dadditional.modules=\"" + additional_modules + "\""]
+
+    main_class = "org.jetbrains.intellij.build.devServer.DevMainKt"
+    runtime_deps = ["@community//platform/bootstrap/dev"]
+    if before_run_main_class:
+        main_class = "org.jetbrains.intellij.build.devServer.BeforeRunDevMain"
+        runtime_deps = runtime_deps + before_run_runtime_deps
+        all_jvm_flags = all_jvm_flags + [
+            "-Dintellij.build.dev.server.before.run.main.class=" + before_run_main_class,
+        ]
 
     # The archives the assembly would otherwise download at launch, as runfiles for the host platform,
     # with their manifests. `preloaded_downloads_exhaustive_on` names the platforms where the declared set
@@ -160,8 +171,8 @@ def intellij_dev_binary(
     java_binary(
         name = name,
         visibility = visibility,
-        runtime_deps = ["@community//platform/bootstrap/dev"],
-        main_class = "org.jetbrains.intellij.build.devServer.DevMainKt",
+        runtime_deps = runtime_deps,
+        main_class = main_class,
         data = data + [bazel_targets_json] + preloaded_data,
         jvm_flags = all_jvm_flags,
         env = env,

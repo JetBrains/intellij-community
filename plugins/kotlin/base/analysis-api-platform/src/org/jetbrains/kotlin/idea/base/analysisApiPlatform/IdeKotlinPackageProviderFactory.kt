@@ -71,6 +71,6 @@ private class IdeKotlinPackageProvider(
             restrictedAnalysisService.withRestrictedDataAccess {
                 KotlinPackageIndexUtils.getSubpackageNames(packageFqName, searchScope)
             }
-        } ?: emptySet()
+        }
     }
 }

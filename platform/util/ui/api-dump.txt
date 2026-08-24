@@ -1370,7 +1370,6 @@ f:com.intellij.icons.AllIcons$Toolwindows
 - sf:ErrorEvents:javax.swing.Icon
 - sf:InfoEvents:javax.swing.Icon
 - sf:Learn:javax.swing.Icon
-- sf:MeetNewUi:javax.swing.Icon
 - sf:NoEvents:javax.swing.Icon
 - sf:Notifications:javax.swing.Icon
 - sf:NotificationsNew:javax.swing.Icon
@@ -1537,6 +1536,7 @@ f:com.intellij.icons.AllIcons$Xml$Browsers
 - sf:Nwjs:javax.swing.Icon
 - sf:Opera:javax.swing.Icon
 - sf:Safari:javax.swing.Icon
+- sf:Vivaldi:javax.swing.Icon
 - sf:Yandex:javax.swing.Icon
 - <init>():V
 f:com.intellij.openapi.ui.CheckBoxWithDescription
@@ -3318,6 +3318,7 @@ f:com.intellij.ui.paint.PaintUtil
 - s:getFractOffsetInRootPane(javax.swing.JComponent):java.awt.geom.Point2D
 - s:getParityMode(D,com.intellij.ui.scale.ScaleContext,com.intellij.ui.paint.PaintUtil$RoundingMode):com.intellij.ui.paint.PaintUtil$ParityMode
 - s:getParityMode(D,java.awt.Graphics2D):com.intellij.ui.paint.PaintUtil$ParityMode
+- s:getUserSpacePixelOffset(java.awt.Graphics2D):java.awt.geom.Point2D
 - s:insets2offset(java.awt.Insets):java.awt.geom.Point2D
 - s:isFractionalScale(java.awt.geom.AffineTransform):Z
 - s:negate(java.awt.geom.Point2D):java.awt.geom.Point2D
@@ -3342,6 +3343,7 @@ e:com.intellij.ui.paint.PaintUtil$RoundingMode
 - s:values():com.intellij.ui.paint.PaintUtil$RoundingMode[]
 f:com.intellij.ui.paint.PaintUtilKt
 - sf:alignToInt(java.awt.Graphics):V
+- sf:use(java.awt.Graphics,kotlin.jvm.functions.Function1):java.lang.Object
 - sf:withTxAndClipAligned(java.awt.Graphics,I,I,I,I,kotlin.jvm.functions.Function1):V
 e:com.intellij.ui.paint.RectanglePainter
 - java.lang.Enum
@@ -3370,6 +3372,9 @@ f:com.intellij.ui.progress.ProgressUIUtil
 - sf:INSTANCE:com.intellij.ui.progress.ProgressUIUtil
 f:com.intellij.ui.render.RenderingUtil
 - sf:ALWAYS_PAINT_SELECTION_AS_FOCUSED:com.intellij.openapi.util.Key
+- sf:CUSTOM_SELECTION_BACKGROUND:com.intellij.openapi.util.Key
+- sf:CUSTOM_SELECTION_FOREGROUND:com.intellij.openapi.util.Key
+- sf:PAINT_HOVERED_BACKGROUND:com.intellij.openapi.util.Key
 - <init>():V
 - s:getBackground(javax.swing.JList):java.awt.Color
 - s:getBackground(javax.swing.JList,Z):java.awt.Color
@@ -3394,6 +3399,8 @@ f:com.intellij.ui.render.RenderingUtil
 - s:getSelectionForeground(javax.swing.JTable):java.awt.Color
 - s:getSelectionForeground(javax.swing.JTree):java.awt.Color
 - s:isFocused(javax.swing.JComponent):Z
+- s:isHoverPaintingDisabled(javax.swing.JComponent):Z
+- s:setHoverPaintingDisabled(javax.swing.JComponent,Z):V
 a:com.intellij.ui.scale.AbstractScaleContextAware
 - com.intellij.ui.scale.ScaleContextAware
 - p:<init>(com.intellij.ui.scale.UserScaleContext):V

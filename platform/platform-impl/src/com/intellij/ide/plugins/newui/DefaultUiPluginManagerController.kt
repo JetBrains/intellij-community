@@ -22,6 +22,7 @@ import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerMain
+import com.intellij.ide.plugins.PluginManagerStateService
 import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.ide.plugins.PluginUtils.toPluginDescriptors
 import com.intellij.ide.plugins.api.PluginDto
@@ -958,7 +959,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       return CheckErrorsResult() // suppress any errors for plugins that are marked disabled
     }
 
-    val loadingError = PluginManagerCore.getPluginNonLoadReason(pluginId)
+    val loadingError = service<PluginManagerStateService>().getPluginNonLoadReason(pluginId)
     val disabledDependency = if (loadingError is PluginDependencyIsDisabled) loadingError.dependencyId else null
     if (disabledDependency == null) {
       return CheckErrorsResult(loadingError = loadingError?.shortMessage, isDisabledDependencyError = true)

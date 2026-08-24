@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.java.syntax.parser.JavaKeywords;
@@ -136,10 +136,30 @@ public final class PsiTypesUtil {
    * @return a string representing an expression for default value of a given type
    */
   public static @NotNull String getDefaultValueOfType(@Nullable PsiType type, boolean customDefaultValues) {
+    return getDefaultValueOfType(type, customDefaultValues, null);
+  }
+
+  /**
+   * @param type    type to return default value for
+   * @param context the context used to check if certain constructs are available
+   * @return a string representing an expression for default value of a given type
+   */
+  public static @NotNull String getDefaultValueOfType(@Nullable PsiType type, @Nullable PsiElement context) {
+    return getDefaultValueOfType(type, true, context);
+  }
+
+  /**
+   * @param type                type to return default value for
+   * @param customDefaultValues if true, non-null values for object types could be returned that represent an absent value
+   *                            for a specific type (e.g., empty string, empty list, etc.)
+   * @param context             the context used to check if certain constructs are available
+   * @return a string representing an expression for default value of a given type
+   */
+  private static @NotNull String getDefaultValueOfType(@Nullable PsiType type, boolean customDefaultValues, @Nullable PsiElement context) {
     if (type instanceof PsiPrimitiveType) {
       return PsiTypes.booleanType().equals(type) ? JavaKeywords.FALSE : "0";
     }
-    if (customDefaultValues) {
+    if (customDefaultValues || context != null) {
       if (type instanceof PsiArrayType) {
         int count = type.getArrayDimensions() - 1;
         PsiType componentType = type.getDeepComponentType();
@@ -153,10 +173,7 @@ public final class PsiTypesUtil {
 
         PsiType erasedComponentType = TypeConversionUtil.erasure(componentType);
         StringBuilder buffer = new StringBuilder();
-        buffer.append(JavaKeywords.NEW);
-        buffer.append(" ");
-        buffer.append(erasedComponentType.getCanonicalText());
-        buffer.append("[0]");
+        buffer.append(JavaKeywords.NEW).append(" ").append(erasedComponentType.getCanonicalText()).append("[0]");
         for (int i = 0; i < count; i++) {
           buffer.append("[]");
         }
@@ -165,6 +182,7 @@ public final class PsiTypesUtil {
 
       PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
       if (psiClass != null) {
+        if (context == null) context = psiClass;
         String typeText = psiClass.getQualifiedName();
         if (typeText != null) {
           switch (typeText) {
@@ -190,12 +208,21 @@ public final class PsiTypesUtil {
             case CommonClassNames.JAVA_LANG_DOUBLE:
               return "0.0";
             case CommonClassNames.JAVA_UTIL_SET:
-              return PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, psiClass) ? "java.util.Set.of()" : "java.util.Collections.emptySet()";
+              return PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, context)
+                     && PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, psiClass) 
+                     ? "java.util.Set.of()" 
+                     : "java.util.Collections.emptySet()";
             case CommonClassNames.JAVA_UTIL_COLLECTION:
             case CommonClassNames.JAVA_UTIL_LIST:
-              return PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, psiClass) ? "java.util.List.of()" : "java.util.Collections.emptyList()";
+              return PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, context)
+                     && PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, psiClass)
+                     ? "java.util.List.of()"
+                     : "java.util.Collections.emptyList()";
             case CommonClassNames.JAVA_UTIL_MAP:
-              return PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, psiClass) ? "java.util.Map.of()" : "java.util.Collections.emptyMap()";
+              return PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, context)
+                     && PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, psiClass)
+                     ? "java.util.Map.of()"
+                     : "java.util.Collections.emptyMap()";
           }
         }
       }

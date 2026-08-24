@@ -1,6 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "jewel-markdown-extensions-frontMatter-tests_test",
@@ -52,6 +53,8 @@ jvm_library(
         "//libraries/compose-runtime-desktop",
     ],
 )
+
+content_module_jar(module = ":front-matter")
 
 jvm_library(
     name = "front-matter_test_lib",

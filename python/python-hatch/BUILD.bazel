@@ -1,5 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.python.hatch` start
 create_kotlinc_options(
@@ -51,10 +52,13 @@ jvm_library(
         "//python/python-sdk/common",
         "//python/common",
         "//python/python-exec-service/execService.python",
+        "//python/services/system-python",
         "//python/python-process-output/common",
         "//platform/util/jdom",
     ],
 )
+
+content_module_jar(module = ":hatch")
 
 jvm_library(
     name = "hatch_test_lib",
@@ -88,6 +92,7 @@ jvm_library(
         "//python/python-sdk/common:common_test_lib",
         "//python/common:common_test_lib",
         "//python/python-exec-service/execService.python:execService.python_test_lib",
+        "//python/services/system-python:system-python_test_lib",
         "//python/python-process-output/common:common_test_lib",
         "//platform/util/jdom:jdom_test_lib",
     ],

@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.jackson3.module.kotlin` start
 jvm_library(
@@ -19,6 +20,11 @@ jvm_library(
         "@lib//:libraries-jackson3-module-kotlin-jackson3-module-kotlin",
         "//libraries/jackson3/jackson:libraries-jackson3",
     ],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-jackson3-module-kotlin-jackson3-module-kotlin"],
+    module = ":libraries-jackson3-module-kotlin",
 )
 
 jvm_library(

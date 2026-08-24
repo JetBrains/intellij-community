@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.auth
 
 import com.intellij.concurrency.JobScheduler
@@ -31,8 +31,11 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ThreeState
 import com.intellij.util.io.delete
 import com.intellij.util.io.directoryStreamIfExists
-import com.intellij.util.net.HttpConfigurable
-import com.intellij.util.proxy.CommonProxy
+import com.intellij.util.net.JdkProxyProvider
+import com.intellij.util.net.ProxyConfiguration
+import com.intellij.util.net.ProxyCredentialStore
+import com.intellij.util.net.ProxySettings
+import com.intellij.util.net.isRealProxy
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.svn.RootsToWorkingCopies
 import org.jetbrains.idea.svn.SvnBundle.message
@@ -245,26 +248,28 @@ class SvnAuthenticationNotifier(project: Project) :
       // we should also NOT show proxy credentials dialog if at least fixed proxy was used, so
       var proxyToRelease: Proxy? = null
       if (!interactive && configuration.isUseDefaultProxy) {
-        val instance = HttpConfigurable.getInstance()
-        if (instance.USE_HTTP_PROXY && instance.PROXY_AUTHENTICATION && (isEmptyOrSpaces(instance.proxyLogin) || isEmptyOrSpaces(
-            instance.plainProxyPassword))) {
+        val proxyConfig = ProxySettings.getInstance().getProxyConfiguration()
+        val credentials = ProxyCredentialStore.getInstance().getCredentials(proxyConfig)
+        if (
+          proxyConfig is ProxyConfiguration.StaticProxyConfiguration && credentials != null &&
+          (credentials.userName.isNullOrBlank() || credentials.getPasswordAsString().isNullOrBlank())
+        ) {
           return false
         }
-        if (instance.USE_PROXY_PAC) {
+        if (proxyConfig is ProxyConfiguration.ProxyAutoConfiguration) {
           val select = try {
-            CommonProxy.getInstance().select(URI(url.toString()))
+            JdkProxyProvider.getInstance().proxySelector.select(URI(url.toString()))
           }
-          catch (e: URISyntaxException) {
+          catch (_: URISyntaxException) {
             LOG.info("wrong URL: $url")
             return false
           }
-
           for (proxy in select) {
-            if (HttpConfigurable.isRealProxy(proxy) && Proxy.Type.HTTP == proxy.type()) {
+            if (proxy.isRealProxy() && Proxy.Type.HTTP == proxy.type()) {
               val address = proxy.address() as InetSocketAddress
-              val password = HttpConfigurable.getInstance().getGenericPassword(address.hostString, address.port)
+              val password = ProxyCredentialStore.getInstance().getCredentials(address.hostString, address.port)?.getPasswordAsString()
               if (password == null) {
-                CommonProxy.getInstance().noAuthentication("http", address.hostString, address.port)
+                // no-op: CommonProxy.getInstance().noAuthentication("http", address.hostString, address.port)
                 proxyToRelease = proxy
               }
             }
@@ -293,7 +298,7 @@ class SvnAuthenticationNotifier(project: Project) :
       finally {
         if (!interactive && configuration.isUseDefaultProxy && proxyToRelease != null) {
           val address = proxyToRelease.address() as InetSocketAddress
-          CommonProxy.getInstance().noAuthentication("http", address.hostString, address.port)
+          // no-op: CommonProxy.getInstance().noAuthentication("http", address.hostString, address.port)
         }
       }
 

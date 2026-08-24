@@ -7,11 +7,13 @@ import com.intellij.platform.pluginGraph.ContentModuleName
 
 const val LIB_MODULE_PREFIX: String = "intellij.libraries."
 
+/** The name a module set is referenced by, in a product descriptor and in everything generated from one. */
+const val MODULE_SET_PREFIX: String = "intellij.moduleSets."
+
 // Constants for magic strings used throughout the generator
 internal const val ADDITIONAL_MODULES_BLOCK = "additional"
 internal const val JETBRAINS_NAMESPACE = "jetbrains"
 internal const val GENERATOR_SUFFIX = ".main()"
-internal const val MODULE_SET_PREFIX = "intellij.moduleSets."
 
 /**
  * Type-safe wrapper for module set names.

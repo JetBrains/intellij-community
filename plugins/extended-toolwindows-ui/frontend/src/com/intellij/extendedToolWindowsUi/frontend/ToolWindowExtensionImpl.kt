@@ -53,7 +53,7 @@ internal class ToolWindowExtensionImpl : ToolWindowExtension {
     // Assume the paddings are symmetrical, so use the left padding as the reference
     // This allows customization and works well for both Islands and non-Islands themes
     val paddings = JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPadding(true, false)
-    val sidePadding = JBUIScale.scale(if (compactMode) 4 else 5)
+    val sidePadding = JBUIScale.scale(4)
     val left = paddings.left
     val right = paddings.right
 
@@ -235,13 +235,14 @@ private class SquareStripeButtonLookVerticalText(button: SquareStripeButton) : S
   private fun getTextFont() = if (compactMode) JBFont.create(button.font).lessOn(1f) else button.font
 
   private fun getStripeText(): String {
-    return (toolWindow.stripeShortTitleProvider?.get() ?: toolWindow.stripeTitleProvider.get()).trim()
+    // Don't use short title the plugin
+    return toolWindow.stripeTitleProvider.get().trim()
   }
 
   private fun getButtonScaledInsets(): ButtonScaledInsets {
     return if (compactMode)
       ButtonScaledInsets(leftRightExtraInset = JBUIScale.scale(6), iconLabelInset = JBUIScale.scale(4))
-    else ButtonScaledInsets(leftRightExtraInset = JBUIScale.scale(8), iconLabelInset = JBUIScale.scale(6))
+    else ButtonScaledInsets(leftRightExtraInset = JBUIScale.scale(4), iconLabelInset = JBUIScale.scale(6))
   }
 
   private data class ButtonScaledInsets(

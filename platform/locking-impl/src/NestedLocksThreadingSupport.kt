@@ -42,6 +42,7 @@ import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.lang.ref.WeakReference
 import java.util.Arrays
 import java.util.Collections
 import java.util.concurrent.CopyOnWriteArrayList
@@ -1959,6 +1960,22 @@ class NestedLocksThreadingSupport : ThreadingSupport {
       "The executor must run the action synchronously"
     }
   }
+
+  override fun dumpSomeDiagnosticInfo(thread: Thread): List<String> {
+    val r = mutableListOf<String>()
+    val readActionsInThread = pokeThreadLocalValueWithStick(thread, myReadActionsInThread)
+    if (readActionsInThread != null && readActionsInThread.toString() != "0") {
+      r += "(nested read actions: $readActionsInThread)"
+    }
+    val topMostReadAction = pokeThreadLocalValueWithStick(thread, myTopmostReadAction)
+    if (topMostReadAction != null && topMostReadAction.toString() != "false") {
+      r += "(in top-most read action)"
+    }
+    if (myWriteAcquired == thread) {
+      r += "(write action acquired)"
+    }
+    return r
+  }
 }
 
 
@@ -2049,3 +2066,31 @@ private fun <T> Deferred<T>.getOrThrow(): T {
 private data class PermitWaitingInterceptor(
   val consumer: (Deferred<*>) -> Unit,
 )
+
+private fun pokeThreadLocalValueWithStick(targetThread: Thread, targetThreadLocal: ThreadLocal<*>): Any? {
+  try {
+    // 1. Get the 'threadLocals' field from the target Thread object
+    val threadLocalsField = Thread::class.java.getDeclaredField("threadLocals")
+    threadLocalsField.setAccessible(true)
+    val threadLocalMap = threadLocalsField.get(targetThread)
+    if (threadLocalMap == null) {
+      return null // Map hasn't been initialized yet
+    }
+    // 2. Locate the 'getEntry' method inside ThreadLocalMap
+    val getEntryMethod = Class.forName($$"java.lang.ThreadLocal$ThreadLocalMap").getDeclaredMethod("getEntry", ThreadLocal::class.java)
+    getEntryMethod.setAccessible(true)
+    // 3. Invoke 'getEntry' to extract the map entry for your ThreadLocal key
+    val entry = getEntryMethod.invoke(threadLocalMap, targetThreadLocal) as WeakReference<*>?
+    if (entry == null) {
+      return null
+    }
+    // 4. Extract the 'value' field from that Entry
+    val valueField = Class.forName($$"java.lang.ThreadLocal$ThreadLocalMap$Entry").getDeclaredField("value")
+    valueField.setAccessible(true)
+    return valueField.get(entry)
+  }
+  catch (e: Exception) {
+    e.printStackTrace()
+    return null
+  }
+}

@@ -3,6 +3,15 @@
   If a plugin needs to use this library, it should register this module as its own content module using a 'content' tag without
   the 'namespace' attribute. This way the module is registered in an implicit per-plugin namespace and won't clash at runtime
   with other copies of this module registered in other plugins.
+
+  The dependency on `intellij.libraries.sshj` looks odd - MINA sshd and sshj are unrelated libraries - but `net.i2p.crypto:eddsa`
+  ships inside the sshj wrapper, and `org.apache.sshd.common.util.security.eddsa.NetI2pCryptoEdDSASupport` needs it.
+  Do not drop this edge without giving eddsa a wrapper of its own.
 -->
 <idea-plugin visibility="private">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.sshj"/>
+  </dependencies>
+  <!-- endregion -->
 </idea-plugin>

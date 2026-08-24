@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors;
 
 import com.intellij.application.options.OptionsContainingConfigurable;
@@ -48,6 +48,7 @@ import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.options.colors.ColorSettingsPages;
 import com.intellij.openapi.options.colors.RainbowColorSettingsPage;
 import com.intellij.openapi.options.ex.Settings;
+import com.intellij.openapi.options.newEditor.CustomizedSettingsProvider;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -67,6 +68,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.util.BitUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -974,6 +976,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     private Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor> myBaseAttributeDescriptor;
     private final boolean myIsInheritedInitial;
 
+    // What the option is compared to for the "customized" marks: the original (default) scheme's value
+    // when the edited scheme was created from one, otherwise the value at the time the settings were opened.
+    private final @NotNull TextAttributes myBaselineAttributes;
+    private final boolean myIsInheritedBaseline;
+
     private SchemeTextAttributesDescription(String name,
                                             String group,
                                             @NotNull TextAttributesKey key,
@@ -999,7 +1006,26 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       if (myIsInheritedInitial && myFallbackAttributes != null) {
         getTextAttributes().copyFrom(myFallbackAttributes);
       }
+      AbstractColorsScheme baselineScheme = scheme.getOriginal();
+      if (baselineScheme != null) {
+        TextAttributes baselineAttributes = baselineScheme.getAttributes(key);
+        myBaselineAttributes = baselineAttributes != null ? baselineAttributes : new TextAttributes();
+        myIsInheritedBaseline = isInheritedIn(baselineScheme, key);
+      }
+      else {
+        myBaselineAttributes = myInitialAttributes;
+        myIsInheritedBaseline = myIsInheritedInitial;
+      }
       initCheckedStatus();
+    }
+
+    private static boolean isInheritedIn(@NotNull AbstractColorsScheme scheme, @NotNull TextAttributesKey key) {
+      TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
+      if (fallbackKey == null) return false;
+      TextAttributes ownAttributes = scheme.getDirectlyDefinedAttributes(key);
+      if (ownAttributes != null) return ownAttributes == AbstractColorsScheme.INHERITED_ATTRS_MARKER;
+      TextAttributes attributes = scheme.getAttributes(key);
+      return attributes != null && attributes == scheme.getAttributes(fallbackKey);
     }
 
     @Override
@@ -1034,6 +1060,70 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     }
 
     @Override
+    boolean isChannelModified(@NotNull Channel channel) {
+      if (isInherited()) return false;
+      TextAttributes baseline = myBaselineAttributes;
+      TextAttributes current = getTextAttributes();
+      return switch (channel) {
+        case BOLD -> BitUtil.isSet(baseline.getFontType(), Font.BOLD) != BitUtil.isSet(current.getFontType(), Font.BOLD);
+        case ITALIC -> BitUtil.isSet(baseline.getFontType(), Font.ITALIC) != BitUtil.isSet(current.getFontType(), Font.ITALIC);
+        case FOREGROUND -> !Comparing.equal(baseline.getForegroundColor(), current.getForegroundColor());
+        case BACKGROUND -> !Comparing.equal(baseline.getBackgroundColor(), current.getBackgroundColor());
+        case ERROR_STRIPE -> !Comparing.equal(baseline.getErrorStripeColor(), current.getErrorStripeColor());
+        case EFFECTS -> !Comparing.equal(baseline.getEffectColor(), current.getEffectColor()) ||
+                        !Comparing.equal(baseline.getEffectType(), current.getEffectType());
+      };
+    }
+
+    @Override
+    void revertChannel(@NotNull Channel channel) {
+      copyChannelValue(channel, myBaselineAttributes);
+    }
+
+    @Override
+    boolean isInheritanceModified() {
+      return isInherited() != myIsInheritedBaseline;
+    }
+
+    @Override
+    void revertInheritance() {
+      setInherited(myIsInheritedBaseline);
+      TextAttributes source = myIsInheritedBaseline ? getBaseAttributes() : myBaselineAttributes;
+      if (source != null) {
+        for (Channel channel : Channel.values()) {
+          copyChannelValue(channel, source);
+        }
+      }
+    }
+
+    private void copyChannelValue(@NotNull Channel channel, @NotNull TextAttributes source) {
+      switch (channel) {
+        case BOLD, ITALIC -> {
+          boolean bold = BitUtil.isSet((channel == Channel.BOLD ? source : getTextAttributes()).getFontType(), Font.BOLD);
+          boolean italic = BitUtil.isSet((channel == Channel.ITALIC ? source : getTextAttributes()).getFontType(), Font.ITALIC);
+          setFontType((bold ? Font.BOLD : Font.PLAIN) | (italic ? Font.ITALIC : Font.PLAIN));
+        }
+        case FOREGROUND -> {
+          setForegroundChecked(source.getForegroundColor() != null);
+          setForegroundColor(source.getForegroundColor());
+        }
+        case BACKGROUND -> {
+          setBackgroundChecked(source.getBackgroundColor() != null);
+          setBackgroundColor(source.getBackgroundColor());
+        }
+        case ERROR_STRIPE -> {
+          setErrorStripeChecked(source.getErrorStripeColor() != null);
+          setErrorStripeColor(source.getErrorStripeColor());
+        }
+        case EFFECTS -> {
+          setEffectsColorChecked(source.getEffectColor() != null);
+          setEffectColor(source.getEffectColor());
+          setEffectType(source.getEffectType());
+        }
+      }
+    }
+
+    @Override
     public boolean isErrorStripeEnabled() {
       return true;
     }
@@ -1060,6 +1150,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     private TextAttributes myFallbackAttributes;
     private Pair<ColorAndFontDescriptorsProvider, ColorDescriptor> myBaseAttributeDescriptor;
     private final boolean myIsInheritedInitial;
+
+    // What the option is compared to for the "customized" marks: the original (default) scheme's value
+    // when the edited scheme was created from one, otherwise the value at the time the settings were opened.
+    private final @Nullable Color myBaselineColor;
+    private final boolean myIsInheritedBaseline;
 
     EditorSettingColorDescription(String name,
                                   String group,
@@ -1089,7 +1184,25 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       if (myIsInheritedInitial) {
         //setInheritedAttributes(getTextAttributes());
       }
+      AbstractColorsScheme baselineScheme = scheme.getOriginal();
+      if (baselineScheme != null) {
+        myBaselineColor = baselineScheme.getColor(myColorKey);
+        myIsInheritedBaseline = isInheritedIn(baselineScheme, myColorKey);
+      }
+      else {
+        myBaselineColor = myInitialColor;
+        myIsInheritedBaseline = myIsInheritedInitial;
+      }
       initCheckedStatus();
+    }
+
+    private static boolean isInheritedIn(@NotNull AbstractColorsScheme scheme, @NotNull ColorKey key) {
+      ColorKey fallbackKey = key.getFallbackColorKey();
+      if (fallbackKey == null) return false;
+      Color ownColor = scheme.getDirectlyDefinedColor(key);
+      if (ownColor != null) return ownColor == AbstractColorsScheme.INHERITED_COLOR_MARKER;
+      Color color = scheme.getColor(key);
+      return color != null && color == scheme.getColor(fallbackKey);
     }
 
     @Override
@@ -1190,6 +1303,42 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
         return !myIsInheritedInitial;
       }
       return !Comparing.equal(myInitialColor, myColor) || myIsInheritedInitial;
+    }
+
+    @Override
+    boolean isChannelModified(@NotNull Channel channel) {
+      if (isInherited()) return false;
+      if (channel == Channel.FOREGROUND && myKind.isForeground() ||
+          channel == Channel.BACKGROUND && myKind.isBackground()) {
+        return !Comparing.equal(myBaselineColor, myColor);
+      }
+      return false;
+    }
+
+    @Override
+    void revertChannel(@NotNull Channel channel) {
+      if (channel == Channel.FOREGROUND && myKind.isForeground()) {
+        setForegroundChecked(myBaselineColor != null);
+        setForegroundColor(myBaselineColor);
+      }
+      else if (channel == Channel.BACKGROUND && myKind.isBackground()) {
+        setBackgroundChecked(myBaselineColor != null);
+        setBackgroundColor(myBaselineColor);
+      }
+    }
+
+    @Override
+    boolean isInheritanceModified() {
+      return isInherited() != myIsInheritedBaseline;
+    }
+
+    @Override
+    void revertInheritance() {
+      setInherited(myIsInheritedBaseline);
+      if (!myIsInheritedBaseline) {
+        revertChannel(Channel.FOREGROUND);
+        revertChannel(Channel.BACKGROUND);
+      }
     }
 
     @Override
@@ -1557,7 +1706,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   }
 
   private final class InnerSearchableConfigurable
-    implements SearchableConfigurable, OptionsContainingConfigurable, NoScroll, InnerWithModifiableParent {
+    implements SearchableConfigurable, OptionsContainingConfigurable, NoScroll, InnerWithModifiableParent,
+               CustomizedSettingsProvider {
     private NewColorAndFontPanel mySubPanel;
     private boolean mySubInitInvoked = false;
     private final @NotNull ColorAndFontPanelFactory myFactory;
@@ -1642,6 +1792,23 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
       return false;
 
+    }
+
+    @Override
+    public boolean hasCustomizedSettings() {
+      // intentionally avoids createPanel(): this is called while painting the settings tree,
+      // descriptors are enough to answer and are shared with the page anyway
+      MyColorScheme scheme = getMySelectedScheme();
+      if (scheme == null) return false;
+      String group = getDisplayName();
+      for (EditorSchemeAttributeDescriptor descriptor : scheme.getDescriptors()) {
+        if (group.equals(descriptor.getGroup()) &&
+            descriptor instanceof ColorAndFontDescription description &&
+            description.isModifiedFromBaseline()) {
+          return true;
+        }
+      }
+      return false;
     }
 
     @Override

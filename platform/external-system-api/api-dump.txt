@@ -1421,12 +1421,6 @@ f:com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 - s:toCanonicalPath(java.lang.String):java.lang.String
 - s:toExternalSource(com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.openapi.roots.ProjectModelExternalSource
 - s:visit(com.intellij.openapi.externalSystem.model.DataNode,java.util.function.Consumer):V
-c:com.intellij.openapi.externalSystem.util.ExternalSystemBundle
-- com.intellij.DynamicBundle
-- sf:PATH_TO_BUNDLE:java.lang.String
-- <init>():V
-- s:message(java.lang.String,java.lang.Object[]):java.lang.String
-- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 f:com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 - sf:BUILTIN_LIBRARY_DATA_SERVICE_ORDER:I
 - sf:BUILTIN_MODULE_DATA_SERVICE_ORDER:I

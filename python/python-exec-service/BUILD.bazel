@@ -1,6 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "community-execService-tests_test",
@@ -60,6 +61,8 @@ jvm_library(
         "//platform/projectModel-impl",
     ],
 )
+
+content_module_jar(module = ":community-execService")
 
 jvm_library(
     name = "community-execService_test_lib",

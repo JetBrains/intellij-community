@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.LongBinaryOperator;
 
@@ -56,10 +57,33 @@ public final class StartUpMeasurer {
 
   private static final ConcurrentLinkedQueue<ActivityImpl> items = new ConcurrentLinkedQueue<>();
 
-  private static boolean isEnabled = true;
+  // Normally the queue is drained (and collection is stopped) by `processAndClear` soon after startup, but nothing guarantees the drain:
+  // if the startup handshake never completes (e.g., power save mode blocks the first-editor highlighting signal),
+  // or with `idea.collect.perf.after.first.project=true`, activities accumulate for the whole IDE session and eventually cause an OOM.
+  // The limit is a safety bound far above what a real startup produces (a few thousand items).
+  private static final int itemLimit = Integer.getInteger("idea.start.up.measurer.item.limit", 300_000);
+  private static final AtomicInteger itemCount = new AtomicInteger();
+  private static volatile boolean overflowDetected;
+
+  private static volatile boolean isEnabled = true;
 
   public static boolean isEnabled() {
     return isEnabled;
+  }
+
+  @ApiStatus.Internal
+  public static boolean isOverflowDetected() {
+    return overflowDetected;
+  }
+
+  private static void addItem(@NotNull ActivityImpl item) {
+    if (itemCount.incrementAndGet() <= itemLimit) {
+      items.add(item);
+    }
+    else {
+      itemCount.decrementAndGet();
+      overflowDetected = true;
+    }
   }
 
   @TestOnly
@@ -91,7 +115,7 @@ public final class StartUpMeasurer {
 
     ActivityImpl activity = new ActivityImpl(name, System.nanoTime(), null, null);
     activity.setEnd(-1);
-    items.add(activity);
+    addItem(activity);
   }
 
   public static @NotNull Activity startActivity(@NonNls @NotNull String name, @NotNull ActivityCategory category) {
@@ -129,7 +153,7 @@ public final class StartUpMeasurer {
 
     ActivityImpl item = new ActivityImpl(name, start, /* parent = */ (ActivityImpl)parent, null, ActivityCategory.DEFAULT);
     item.setEnd(end);
-    items.add(item);
+    addItem(item);
   }
 
   public static long addCompletedActivity(long start,
@@ -176,7 +200,7 @@ public final class StartUpMeasurer {
 
     ActivityImpl item = new ActivityImpl(name, start, /* parent = */ null, pluginId, category);
     item.setEnd(end);
-    items.add(item);
+    addItem(item);
   }
 
   @ApiStatus.Internal
@@ -191,11 +215,15 @@ public final class StartUpMeasurer {
 
       consumer.accept(item);
     }
+
+    // the count may race with concurrent producers, but the limit is a safety bound, not an exact quota
+    itemCount.set(0);
+    overflowDetected = false;
   }
 
   public static void addActivity(@NotNull ActivityImpl activity) {
     if (isEnabled) {
-      items.add(activity);
+      addItem(activity);
     }
   }
 
@@ -221,9 +249,9 @@ public final class StartUpMeasurer {
 
       ActivityImpl activity = new ActivityImpl((String)timings.get(i), start, parent, null);
       activity.setEnd(i == timings.size() - 2 ? parent.getEnd() : (long)timings.get(i + 3));
-      items.add(activity);
+      addItem(activity);
     }
-    items.add(parent);
+    addItem(parent);
   }
 
   @ApiStatus.Internal

@@ -7,34 +7,8 @@ import com.intellij.util.net.DisabledProxyAuthPromptsManager
 import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.net.ProxyCredentialStore
 import com.intellij.util.proxy.CommonProxy
-import com.intellij.util.text.nullize
 import java.net.PasswordAuthentication
-
-private fun HttpConfigurable.getCredentials(): Credentials? {
-  // as in com.intellij.util.net.HttpConfigurable.getPromptedAuthentication
-  if (!PROXY_AUTHENTICATION) {
-    return null
-  }
-  val login = proxyLogin
-  if (login.isNullOrEmpty()) {
-    return null
-  }
-  val password = plainProxyPassword?.nullize()
-  return Credentials(login, password?.toCharArray())
-}
-
-private fun HttpConfigurable.setCredentials(credentials: Credentials?) {
-  if (credentials == null) {
-    PROXY_AUTHENTICATION = false
-    proxyLogin = null
-    plainProxyPassword = null
-  }
-  else {
-    PROXY_AUTHENTICATION = true
-    proxyLogin = credentials.userName
-    plainProxyPassword = credentials.password?.toString()
-  }
-}
+import java.nio.ByteBuffer
 
 private fun PasswordAuthentication.toCredentials(): Credentials = Credentials(userName, password)
 
@@ -43,27 +17,49 @@ internal fun (() -> HttpConfigurable).asDisabledProxyAuthPromptsManager(): Disab
 
 private class HttpConfigurableToCredentialStoreAdapter(private val getHttpConfigurable: () -> HttpConfigurable) : ProxyCredentialStore {
   private val httpConfigurable: HttpConfigurable get() = getHttpConfigurable()
+  private var buffer: ByteBuffer? = null
 
   // host is not checked in com.intellij.util.net.HttpConfigurable.getPromptedAuthentication, but here we check it
   // theoretically might change the behavior, but shouldn't be critical
 
   @Synchronized
   override fun getCredentials(host: String, port: Int): Credentials? = when {
-    httpConfigurable.PROXY_HOST == host && httpConfigurable.PROXY_PORT == port -> httpConfigurable.getCredentials()
+    httpConfigurable.PROXY_HOST == host && httpConfigurable.PROXY_PORT == port -> {
+      val credentials = httpConfigurable.readCredentials()
+      if (credentials == null || httpConfigurable.KEEP_PROXY_PASSWORD) credentials else {
+        val password = buffer?.let {
+          val bytes = ByteArray(it.limit())
+          it.get(0, bytes)
+          bytes
+        }
+        Credentials(credentials.userName, password)
+      }
+    }
     else -> httpConfigurable.getGenericPassword(host, port)?.toCredentials()
   }
 
   @Synchronized
   override fun setCredentials(host: String, port: Int, credentials: Credentials?, remember: Boolean) {
     if (httpConfigurable.PROXY_HOST == host && httpConfigurable.PROXY_PORT == port) {
-      httpConfigurable.setCredentials(credentials)
+      buffer = null
+      if (credentials == null || remember) {
+        httpConfigurable.writeCredentials(credentials)
+      }
+      else {
+        httpConfigurable.writeCredentials(Credentials(credentials.userName, password = null as String?))
+        buffer = credentials.password?.let {
+          val buffer = ByteBuffer.allocateDirect(it.length)
+          buffer.put(0, it.toByteArray())
+          buffer
+        }
+      }
       httpConfigurable.KEEP_PROXY_PASSWORD = credentials != null && remember
     }
-    else if (credentials == null || credentials.password == null) {
-      httpConfigurable.removeGeneric(CommonProxy.HostInfo(null, host, port))
+    else if (credentials?.password != null) {
+      httpConfigurable.putGenericPassword(host, port, PasswordAuthentication(credentials.userName, credentials.password!!.toCharArray()), remember)
     }
     else {
-      httpConfigurable.putGenericPassword(host, port, PasswordAuthentication(credentials.userName, credentials.password!!.toCharArray()), remember)
+      httpConfigurable.removeGeneric(CommonProxy.HostInfo(null, host, port))
     }
   }
 
@@ -80,8 +76,8 @@ private class HttpConfigurableToCredentialStoreAdapter(private val getHttpConfig
 
   @Synchronized
   override fun clearAllCredentials() {
-    httpConfigurable.setCredentials(null)
-    httpConfigurable.plainProxyPassword = null
+    buffer = null
+    httpConfigurable.writeCredentials(null)
     httpConfigurable.KEEP_PROXY_PASSWORD = false
     httpConfigurable.clearGenericPasswords()
   }

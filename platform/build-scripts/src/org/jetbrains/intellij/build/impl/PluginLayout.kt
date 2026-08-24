@@ -144,6 +144,18 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
   @JvmField
   internal var modulesWithExcludedModuleLibraries: Set<String> = emptySet()
 
+  /**
+   * Modules whose module libraries this layout packs itself - see `doNotCopyModuleLibrariesAutomatically`.
+   *
+   * A declared-input question, which is why it is readable from outside. `JarPackager` does not copy these libraries
+   * into the module's jar, so nothing about the module's own bytes says they are needed; a custom asset or generator
+   * reads them instead (`layoutDatabaseDialects` zips the dialect jars this way). A dev-distribution fragment must
+   * therefore still declare them - and a prepacked member makes that explicit, because the hand-off takes the module's
+   * libraries out of the declaration the report drove.
+   */
+  @Internal
+  fun getModulesWithExcludedModuleLibraries(): Set<String> = modulesWithExcludedModuleLibraries
+
   internal var resourceGenerators: PersistentList<ResourceGenerator> = persistentListOf()
     private set
 
@@ -405,6 +417,10 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
 
     fun withRawPluginXmlPatcher(pluginXmlPatcher: (String, BuildContext) -> String) {
       layout.rawPluginXmlPatcher = pluginXmlPatcher
+    }
+
+    fun withPluginXmlPatcher(pluginXmlPatcher: (String, BuildContext) -> String) {
+      layout.pluginXmlPatcher = pluginXmlPatcher
     }
 
     fun withDeprecatedPostProcessor(layoutPatcher: LayoutPatcher, pluginXmlPatcher: DeprecatedPostScrambleProcessor) {

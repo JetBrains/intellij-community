@@ -10,12 +10,15 @@ import git4idea.repo.expectEvent
 import git4idea.repo.getAndInit
 import git4idea.test.GitSingleRepoContext
 import git4idea.test.git
+import git4idea.test.gitPlatformContextFixture
+import git4idea.test.gitSingleRepoFixture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 @TestApplication
 internal class GitWorkingTreeRecentProjectsTest {
-  private val contextFixture = gitWorkingTreeSingleRepoFixture()
+
+  private val contextFixture = gitPlatformContextFixture().gitSingleRepoFixture(makeInitialCommit = true)
   private val context: GitSingleRepoContext get() = contextFixture.get()
 
   @Test

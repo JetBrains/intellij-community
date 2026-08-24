@@ -7,6 +7,7 @@ import com.google.gson.JsonParseException;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -92,6 +93,8 @@ public final class RegionUrlMapper {
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
   public static @NotNull String tryMapUrlBlocking(@NotNull String url, @NotNull Region region) {
+    SlowOperations.assertNonCancelableSlowOperationsAreAllowed();
+
     try {
       return tryMapUrl(url, region).join();
     }

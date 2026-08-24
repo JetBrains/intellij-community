@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.Alignment;
@@ -93,7 +93,7 @@ class ChainMethodCallsBlockBuilder {
 
       blocks.add(builder.create(currentCallChunk.nodes,
                                 currWrap, chainedCallsAlignment,
-                                getRelativeIndentSize(commonIndentSize, currentCallChunk)));
+                                getRelativeIndentSize(commonIndentSize, currentCallChunk), i == 0));
     }
 
     return blocks;

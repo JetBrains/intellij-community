@@ -27,6 +27,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -38,6 +39,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings
 import org.intellij.plugins.markdown.settings.MarkdownSettings
@@ -84,7 +86,8 @@ class MarkdownPreviewFileEditor(
   init {
     coroutineScope.launch {
       mainEditor.filterNotNull().first()
-      coroutineScope.launch(Dispatchers.EDT) {
+
+      withContext(Dispatchers.EDT) {
         attachHtmlPanel()
       }
     }
@@ -283,6 +286,8 @@ class MarkdownPreviewFileEditor(
 
   @RequiresEdt
   private fun attachHtmlPanel() {
+    ThreadingAssertions.assertEventDispatchThread()
+
     logger.info("MarkdownPreviewFileEditor: attachHtmlPanel")
     val settings = MarkdownSettings.getInstance(project)
     val panelProvider = retrievePanelProvider(settings)

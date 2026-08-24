@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.groovy.scripting` start
@@ -45,7 +46,24 @@ exports_files(
     [
         "intellij.groovy.scripting.iml",
         "resources/META-INF/plugin.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.groovy.scripting` end
+
+### auto-generated section `dev content intellij.groovy.scripting` start
+dev_dist_plugin_content(
+    content_modules = [
+        "//libraries/groovy",
+        "//libraries/groovy/jsr223",
+        "//libraries/ivy",
+    ],
+    descriptor_module = ":groovy-scripting",
+    libraries = [
+        "@lib//:libraries-groovy-groovy",
+        "@lib//:libraries-groovy-jsr223-groovy-jsr223",
+        "@lib//:libraries-ivy-ivy",
+    ],
+)
+### auto-generated section `dev content intellij.groovy.scripting` end

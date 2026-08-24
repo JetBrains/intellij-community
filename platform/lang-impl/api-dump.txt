@@ -1512,6 +1512,7 @@ f:com.intellij.codeInsight.navigation.actions.GotoDeclarationOnlyAction
 c:com.intellij.codeInsight.navigation.actions.GotoImplementationAction
 - com.intellij.codeInsight.actions.BaseCodeInsightAction
 - <init>():V
+- p:getHandler(com.intellij.openapi.actionSystem.DataContext):com.intellij.codeInsight.CodeInsightActionHandler
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction
 - com.intellij.codeInsight.actions.BaseCodeInsightAction
@@ -2269,10 +2270,11 @@ com.intellij.find.editorHeaderActions.ContextAwareShortcutProvider
 c:com.intellij.find.editorHeaderActions.EditorHeaderSetSearchContextAction
 - com.intellij.find.editorHeaderActions.EditorHeaderToggleAction
 a:com.intellij.find.editorHeaderActions.EditorHeaderToggleAction
-- com.intellij.openapi.actionSystem.ex.CheckboxAction
 - com.intellij.ide.lightEdit.LightEditCompatible
+- com.intellij.openapi.actionSystem.ex.CheckboxAction
 - com.intellij.openapi.project.DumbAware
 - p:<init>(java.lang.String):V
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 com.intellij.find.editorHeaderActions.Embeddable
 f:com.intellij.find.editorHeaderActions.NextOccurrenceAction
 - com.intellij.find.editorHeaderActions.PrevNextOccurrenceAction
@@ -2286,11 +2288,6 @@ f:com.intellij.find.editorHeaderActions.PrevOccurrenceAction
 - com.intellij.find.editorHeaderActions.PrevNextOccurrenceAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-c:com.intellij.find.editorHeaderActions.ShowFilterPopupGroup
-- com.intellij.openapi.actionSystem.DefaultActionGroup
-- com.intellij.openapi.actionSystem.ShortcutProvider
-- com.intellij.openapi.project.DumbAware
-- <init>():V
 c:com.intellij.find.editorHeaderActions.StatusTextAction
 - com.intellij.openapi.project.DumbAwareAction
 - com.intellij.ide.lightEdit.LightEditCompatible
@@ -2408,7 +2405,6 @@ f:com.intellij.find.impl.livePreview.LivePreview
 - com.intellij.openapi.editor.event.SelectionListener
 - searchResultsAppended(com.intellij.find.impl.livePreview.SearchResults,java.util.List):V
 f:com.intellij.find.impl.livePreview.LivePreviewController
-- dispose():V
 - moveCursor(com.intellij.find.impl.livePreview.SearchResults$Direction):V
 - on():V
 - setLivePreview(com.intellij.find.impl.livePreview.LivePreview):V

@@ -30,7 +30,7 @@ private val GRADLE_PROJECT_PACKAGE = FqName("org.gradle.accessors.dm")
 private val KOTLIN_DEPENDENCY_HANDLER_CLASS = FqName("KotlinDependencyHandler")
 
 class KotlinGradleProjectReferenceProvider: AbstractKotlinGradleReferenceProvider() {
-    override fun getImplicitReference(
+    override fun getGradleImplicitReference(
         element: PsiElement,
         offsetInElement: Int
     ): PsiSymbolReference? {

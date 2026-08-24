@@ -29,6 +29,42 @@ object BazelBuildInputs {
     return resolver?.resolve(label) ?: BazelRunfiles.getFileByLabel(BazelLabel.fromString(label))
   }
 
+  /**
+   * The path of [label], or `null` when an explicit manifest is configured and does not declare it.
+   *
+   * For a **probe** - a descriptor search asking many candidates for one file, at most one of which has it - and for
+   * nothing else. Such a search is defined by tolerating a miss, and under an explicit manifest a jar the fragment does
+   * not declare is a jar whose bytes may not reach this fragment's output, so "not declared" is a miss of exactly that
+   * kind. Resolving it strictly instead is what forced a fragment to declare every candidate a search might touch: the
+   * Kotlin plugin's descriptor search asked 20 platform modules for a file that was in a library all along, and one
+   * plugin fragment then held the whole platform's hot jars as action inputs.
+   *
+   * This does not soften under-declaration into silence. A search that finds its file nowhere still throws - see
+   * `XIncludeElementResolverImpl.resolveElement`, "Cannot resolve '<path>' in <scopes>" - and a read that *packs*
+   * bytes, every caller in `JarPackager`, goes through [resolve] and still fails on an undeclared input.
+   */
+  fun resolveIfDeclared(label: String): Path? {
+    val resolver = resolver ?: return BazelRunfiles.getFileByLabel(BazelLabel.fromString(label))
+    return resolver.resolveIfDeclared(label)
+  }
+
+  /**
+   * Every file [label] declares, in manifest order, with [resolveIfDeclared]'s probe contract: `null` when an explicit
+   * manifest does not declare [label], and `null` when no manifest is configured at all.
+   *
+   * For a **library container** - the `jvm_import`/`java_library`/`java_import` that groups a library's jars, recorded
+   * as `LibraryDescription.target`. A multi-jar library resolves to several files and the order is the packer's
+   * duplicate-resolution order, so it must not be sorted. Use [resolve] where exactly one file is the contract, such as
+   * a module target.
+   *
+   * **Manifest only, deliberately with no runfiles fallback.** A container target is a `java_library`/`jvm_import`, not
+   * a file, so `BazelRunfiles.getFileByLabel` cannot resolve it - it fails with "Unable to find dependency
+   * '@lib//:kotlin-stdlib'". Only the input manifest maps a container key to files, because
+   * `intellij_dev_build_inputs` is what expands it. A caller that may run under plain runfiles has to take the per-jar
+   * `LibraryDescription.jarTargets` branch instead, which is one of the reasons that field stays in `bazel-targets.json`.
+   */
+  fun resolveAllIfDeclared(label: String): List<Path>? = resolver?.resolveAllIfDeclared(label)
+
   fun writeUnusedInputs(file: Path) {
     resolver?.writeUnusedInputs(file) ?: Files.writeString(file, "")
   }
@@ -39,28 +75,57 @@ private data class ExplicitBazelInput(
   @JvmField val absolutePath: Path,
 )
 
+/**
+ * Resolves the labels a fragment declared, and records which of them it read.
+ *
+ * A key maps to an ordered *list* of files, not to one file. A module target and a raw input are one jar each, but a
+ * library is keyed by the container target that groups its jars, so a multi-jar library resolves to several - in the
+ * order the manifest lists them, which is the order the container's `exports` declare and which the packer depends on
+ * for duplicate entries. The manifest keeps one line per file and repeats the key, so the key's files are exactly its
+ * lines in order.
+ */
 internal class ExplicitBazelInputResolver private constructor(
-  private val inputs: Map<String, ExplicitBazelInput>,
+  private val inputs: Map<String, List<ExplicitBazelInput>>,
 ) {
   private val usedExecPaths = HashSet<String>()
 
   @Synchronized
-  fun resolve(label: String): Path {
-    val input = inputs.get(label) ?: error("Bazel input '$label' is not declared in the explicit input manifest")
-    usedExecPaths.add(input.execPath)
-    return input.absolutePath
+  fun resolve(label: String): Path = resolveAll(label).single()
+
+  @Synchronized
+  fun resolveAll(label: String): List<Path> {
+    val declared = inputs.get(label) ?: error("Bazel input '$label' is not declared in the explicit input manifest")
+    return declared.map {
+      usedExecPaths.add(it.execPath)
+      it.absolutePath
+    }
+  }
+
+  @Synchronized
+  fun resolveIfDeclared(label: String): Path? = resolveAllIfDeclared(label)?.single()
+
+  @Synchronized
+  fun resolveAllIfDeclared(label: String): List<Path>? {
+    val declared = inputs.get(label) ?: return null
+    return declared.map {
+      usedExecPaths.add(it.execPath)
+      it.absolutePath
+    }
   }
 
   @Synchronized
   fun writeUnusedInputs(file: Path) {
     file.parent?.let { Files.createDirectories(it) }
-    val unused = inputs.values.asSequence().map(ExplicitBazelInput::execPath).filterNot(usedExecPaths::contains).distinct().sorted()
-    Files.writeString(file, unused.joinToString(separator = "\n", postfix = "\n"))
+    val unused = inputs.values.asSequence().flatten().map(ExplicitBazelInput::execPath).filterNot(usedExecPaths::contains).distinct().sorted().toList()
+    // Empty means an empty file, not a lone newline. The only reader is `wc -l`
+    // (`build/dev_dist_unused_inputs_test.bzl`), so a trailing newline with nothing before it reports a fully honest
+    // fragment as having one unused input.
+    Files.writeString(file, if (unused.isEmpty()) "" else unused.joinToString(separator = "\n", postfix = "\n"))
   }
 
   companion object {
     fun load(file: Path): ExplicitBazelInputResolver {
-      val inputs = LinkedHashMap<String, ExplicitBazelInput>()
+      val inputs = LinkedHashMap<String, MutableList<ExplicitBazelInput>>()
       Files.readAllLines(file).forEachIndexed { index, line ->
         if (line.isBlank()) return@forEachIndexed
         val separator = line.indexOf('\t')
@@ -69,9 +134,13 @@ internal class ExplicitBazelInputResolver private constructor(
         val execPath = line.substring(separator + 1)
         check(!Path.of(execPath).isAbsolute) { "Bazel input path '$execPath' must be relative to the execution root" }
         val input = ExplicitBazelInput(execPath = execPath, absolutePath = Path.of(execPath).toAbsolutePath().normalize())
-        check(inputs.put(label, input) == null) { "Duplicate Bazel input label '$label' in $file" }
-        apparentRepositoryLabel(label)?.let { apparentLabel ->
-          check(inputs.put(apparentLabel, input) == null) { "Duplicate Bazel input label '$apparentLabel' in $file" }
+        // A repeated label is how a multi-jar library states its jars, so appending is the normal case and order is
+        // preserved. What is still a defect is the *same* file twice under one key: the writer deduplicates
+        // (`_collect_libraries`, first-wins), so a repeat here means two producers disagreed about the same key.
+        for (key in listOfNotNull(label, apparentRepositoryLabel(label))) {
+          val declared = inputs.getOrPut(key) { mutableListOf() }
+          check(declared.none { it.execPath == execPath }) { "Duplicate Bazel input '$key' -> '$execPath' in $file" }
+          declared.add(input)
         }
       }
       return ExplicitBazelInputResolver(inputs)
@@ -157,9 +226,12 @@ internal class BazelModuleOutputProvider(
 
   /**
    * Suspend version of [readFileContentFromModuleOutput] using cached zip file instances.
+   *
+   * A probe by contract - it returns `null` for a module that does not have the file - so it reads only the module
+   * outputs this build declares; see [BazelBuildInputs.resolveIfDeclared].
    */
   override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
-    for (moduleOutput in getModuleOutputRootsImpl(module, forTests)) {
+    for (moduleOutput in getModuleOutputRootsImpl(module, forTests, declaredOnly = true)) {
       zipFilePool.getData(moduleOutput, relativePath)?.let { return it }
     }
     return null
@@ -175,27 +247,61 @@ internal class BazelModuleOutputProvider(
 
   override fun findRequiredModule(name: String): JpsModule = state.findRequiredModule(name)
 
-  override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> {
-    val bazelTargetsMap = state.bazelTargetsMap
-    val librariesTable = if (moduleLibraryModuleName == null) {
-      bazelTargetsMap.projectLibraries
-    }
-    else {
-      val module = bazelTargetsMap.modules[moduleLibraryModuleName] ?: error("Cannot find module '$moduleLibraryModuleName' in the project")
-      module.moduleLibraries
+  override fun findDeclaredLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> {
+    if (!BazelBuildInputs.isConfigured && !BazelRunfiles.isRunningFromBazel) {
+      // No manifest, so nothing to narrow to, and a library this build cannot find is still an error worth reporting.
+      return findLibraryRoots(libraryName = libraryName, moduleLibraryModuleName = moduleLibraryModuleName)
     }
 
+    val library = (libraryDescriptions(moduleLibraryModuleName) ?: return emptyList())[libraryName] ?: return emptyList()
+    // Under a manifest the key is the container, with the test-plugin fallback [resolveDeclaredLibrary] explains; under
+    // plain runfiles it has to be the per-jar labels, because a container target is not a file - see
+    // `BazelBuildInputs.resolveAllIfDeclared`.
+    //
+    // Deliberately *not* [resolveDeclaredLibrary], which the strict path uses: this is a probe, so a partly declared
+    // library yields the jars that are declared rather than nothing. The file being searched for may be in one of them,
+    // and an undeclared jar has to answer like a jar without the file.
+    val paths = if (BazelBuildInputs.isConfigured) {
+      BazelBuildInputs.resolveAllIfDeclared(library.target)
+      ?: library.jarTargets.mapNotNull(BazelBuildInputs::resolveIfDeclared)
+    }
+    else {
+      library.jarTargets.map { BazelRunfiles.getFileByLabel(BazelLabel.fromString(it)) }
+    }
+    return paths.filter { it.isRegularFile() }
+  }
+
+  /**
+   * The `bazel-targets.json` library table [moduleLibraryModuleName] names, or `null` when the project has no such
+   * module. A `null` module name asks for the project-level table, which always exists.
+   */
+  private fun libraryDescriptions(moduleLibraryModuleName: String?): Map<String, BazelTargetsInfo.LibraryDescription>? {
+    val bazelTargetsMap = state.bazelTargetsMap
+    if (moduleLibraryModuleName == null) {
+      return bazelTargetsMap.projectLibraries
+    }
+    return bazelTargetsMap.modules[moduleLibraryModuleName]?.moduleLibraries
+  }
+
+  override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> {
+    val librariesTable = libraryDescriptions(moduleLibraryModuleName)
+                         ?: error("Cannot find module '$moduleLibraryModuleName' in the project")
+
     val libraryMoniker = "library '$libraryName' " +
-                         if (moduleLibraryModuleName == null) "(project level)" else "(in module '$moduleLibraryModuleName'"
+                         if (moduleLibraryModuleName == null) "(project level)" else "(in module '$moduleLibraryModuleName')"
     val library = librariesTable[libraryName] ?: error(
       "Cannot find $libraryMoniker"
     )
 
-    val paths = if (BazelBuildInputs.isConfigured || BazelRunfiles.isRunningFromBazel) {
-      library.jarTargets.map(BazelBuildInputs::resolve)
-    }
-    else {
-      library.jars.map { state.bazelOutputRoot.resolve(it) }
+    // Three sources, and the middle one is why `jarTargets` stays in `bazel-targets.json`. Under a fragment's explicit
+    // manifest the key is the library *container*, whose label carries no artifact version and which the manifest
+    // expands back into ordered jars. Under plain Bazel runfiles there is no manifest to expand anything, and a
+    // container target is not a file, so the per-jar labels are the only thing resolvable - the same branch
+    // `ArchivedCompilationContextUtil` and `MonorepoProjectStructure` take. Outside Bazel entirely it is the output root.
+    val paths = when {
+      BazelBuildInputs.isConfigured -> resolveDeclaredLibrary(library, libraryMoniker)
+      BazelRunfiles.isRunningFromBazel -> library.jarTargets.map { BazelRunfiles.getFileByLabel(BazelLabel.fromString(it)) }
+      else -> library.jars.map { state.bazelOutputRoot.resolve(it) }
     }
 
     check(paths.isNotEmpty()) {
@@ -209,6 +315,29 @@ internal class BazelModuleOutputProvider(
     }
 
     return paths
+  }
+
+  /**
+   * A declared library's files, by the container key or - for the one producer that cannot write one - its jar keys.
+   *
+   * Every declaration a *generator* writes keys a library by its container target
+   * (`computeLibraryContainerLabels`, `addMemberLibraries`), because that label carries no artifact version and so
+   * stays out of a Maven bump's diff. Test plugins are the exception, as they are for content generally: they have no
+   * `plugin-content.yaml`, so the dynamic JPS-to-Bazel bridge derives their payload from library XML while loading, and
+   * what a library XML yields is jar file labels - a container's target name comes from the library's *name* through the
+   * branchy derivation in `dependency.kt:130-290`, which is not worth mirroring in Starlark for a payload that is
+   * checked into nothing and therefore causes no churn either way.
+   *
+   * So each producer has exactly one convention and this picks between them, container first. Under-declaration stays
+   * loud: neither key declared is an error naming the library.
+   */
+  private fun resolveDeclaredLibrary(library: BazelTargetsInfo.LibraryDescription, libraryMoniker: String): List<Path> {
+    BazelBuildInputs.resolveAllIfDeclared(library.target)?.let { return it }
+    val perJar = library.jarTargets.mapNotNull(BazelBuildInputs::resolveIfDeclared)
+    check(perJar.size == library.jarTargets.size) {
+      "Neither the container '${library.target}' nor every jar of $libraryMoniker is declared in the explicit input manifest"
+    }
+    return perJar
   }
 
   override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
@@ -225,7 +354,7 @@ internal class BazelModuleOutputProvider(
     return state.bazelTargetsMap.pluginDistributionTargets[mainModuleName]
   }
 
-  private fun getModuleOutputRootsImpl(module: JpsModule, forTests: Boolean): List<Path> {
+  private fun getModuleOutputRootsImpl(module: JpsModule, forTests: Boolean, declaredOnly: Boolean = false): List<Path> {
     val bazelTargetsMap = state.bazelTargetsMap
     val moduleDescription = bazelTargetsMap.modules[module.name] ?: error("Cannot find module '${module.name}' in the project")
 
@@ -241,7 +370,7 @@ internal class BazelModuleOutputProvider(
 
     return if (BazelBuildInputs.isConfigured || BazelRunfiles.isRunningFromBazel) {
       val targets = if (forTests) moduleDescription.testTargets else moduleDescription.productionTargets
-      targets.map(BazelBuildInputs::resolve)
+      if (declaredOnly) targets.mapNotNull(BazelBuildInputs::resolveIfDeclared) else targets.map(BazelBuildInputs::resolve)
     }
     else {
       val jarsRelative = if (forTests) moduleDescription.testJars else moduleDescription.productionJars

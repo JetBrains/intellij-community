@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.jackson3.databind` start
 jvm_library(
@@ -24,6 +25,11 @@ jvm_library(
         "//libraries/jackson/annotations",
         "//libraries/jackson3/jackson:libraries-jackson3",
     ],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-jackson3-databind-jackson3-databind"],
+    module = ":databind",
 )
 
 jvm_library(

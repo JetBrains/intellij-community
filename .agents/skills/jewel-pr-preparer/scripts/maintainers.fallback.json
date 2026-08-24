@@ -1,0 +1,33 @@
+{
+  "$schema_version": 1,
+  "maintainers": [
+    {
+      "display_name": "Sebastiano Poggi",
+      "github_username": "rock3r",
+      "youtrack_username": "sebp",
+      "role": "lead",
+      "team": "google"
+    },
+    {
+      "display_name": "Nebojsa Vuksic",
+      "github_username": "nebojsa-vuksic",
+      "youtrack_username": "nebojsa.vuksic",
+      "role": "dev",
+      "team": "jetbrains"
+    },
+    {
+      "display_name": "Wellington Pereira",
+      "github_username": "wellingtoncosta",
+      "youtrack_username": "wellington.twpi",
+      "role": "dev",
+      "team": "google"
+    },
+    {
+      "display_name": "Daniel Bertoldi",
+      "github_username": "DanielSouzaBertoldi",
+      "youtrack_username": "daniel.tiwz",
+      "role": "dev",
+      "team": "google"
+    }
+  ]
+}

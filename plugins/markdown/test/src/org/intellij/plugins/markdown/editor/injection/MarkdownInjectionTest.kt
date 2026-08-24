@@ -251,6 +251,24 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
     )
   }
 
+  fun `test code fence escaper filters fence syntax`() {
+    val text = "> ```java\n> class C {}\n> ```"
+    configureFromFileText("test.md", text)
+
+    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)!!
+    val escaper = codeFence.createLiteralTextEscaper()
+    val range = escaper.relevantTextRange
+    val decoded = StringBuilder()
+
+    assertTrue(escaper.decode(range, decoded))
+    assertEquals("class C {}", decoded.toString())
+
+    val contentStart = codeFence.text.indexOf("class")
+    assertEquals(contentStart, escaper.getOffsetInHost(0, range))
+    assertEquals(contentStart + decoded.length, escaper.getOffsetInHost(decoded.length, range))
+    assertEquals(-1, escaper.getOffsetInHost(decoded.length + 1, range))
+  }
+
   fun `test typing after replacing code fence opening line break with enter does not corrupt injected psi`() {
     configureFromFileText("test.md", "```java<selection>\n<caret></selection>String s = \"<h1>test</h1>\";\n```")
 

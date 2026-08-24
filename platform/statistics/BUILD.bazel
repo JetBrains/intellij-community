@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "statistics-tests_test",
@@ -73,6 +74,16 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "@lib//:jetbrains-fus-reporting-api-jvm",
     ],
+)
+
+content_module_jar(
+    libraries = [
+        # do not sort,
+        "@lib//:com-jetbrains-fus-reporting-fus-api",
+        "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+        "@lib//:jetbrains-fus-reporting-api-jvm",
+    ],
+    module = ":statistics",
 )
 
 jvm_library(

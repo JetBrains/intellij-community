@@ -1,16 +1,22 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv
 
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.pyproject.PY_PROJECT_TOML
+import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.PyProjectTomlFile
 import com.intellij.python.pyproject.model.internal.workspaceBridge.getToolWorkspaceLayout
+import com.intellij.python.pyproject.model.spi.ProjectName
+import com.intellij.python.pytools.resolveExecutable
+import com.intellij.python.uv.backend.UvPyTool
 import com.intellij.python.uv.common.UV_TOOL_ID
 import com.intellij.util.cancelOnDispose
 import com.jetbrains.python.PyBundle.message
@@ -22,20 +28,15 @@ import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
-import com.intellij.python.pyproject.PyDependencyGroup
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
-import com.intellij.python.pyproject.model.spi.ProjectName
+import com.jetbrains.python.orLogException
 import com.jetbrains.python.packaging.management.PythonManagerCliSpec
-import com.jetbrains.python.packaging.management.PythonWorkspaceSupport
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManager.Companion.PackageManagerErrorMessage
 import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
-import com.intellij.platform.eel.provider.localEel
-import com.intellij.python.pytools.resolveExecutable
-import com.intellij.python.uv.backend.UvPyTool
-import com.jetbrains.python.sdk.add.v2.EelFileSystem
+import com.jetbrains.python.packaging.management.PythonWorkspaceSupport
 import com.jetbrains.python.packaging.packageRequirements.CachedDependencyTreeProvider
 import com.jetbrains.python.packaging.packageRequirements.PackageCollectionPackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.PackageStructureNode
@@ -48,6 +49,7 @@ import com.jetbrains.python.packaging.pip.PipRepositoryManager
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.requirements.PyDependenciesFile
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.findModuleForSdk
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -55,7 +57,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
-@ApiStatus.Internal
 internal class UvPackageManager internal constructor(
   project: Project,
   sdk: Sdk,
@@ -67,9 +68,9 @@ internal class UvPackageManager internal constructor(
   override val cliSpecs: List<PythonManagerCliSpec> = listOf(
     PythonManagerCliSpec("uv", { UvPyTool.getInstance().resolveExecutable(EelFileSystem(localEel))?.path })
   )
-  override val treeProvider = CachedDependencyTreeProvider {
-    withUv { uv -> uv.listProjectStructureTree() }.getOrNull()
-  }
+  override val treeProvider = CachedDependencyTreeProvider(fetchOutput = {
+    withUv { uv -> uv.listProjectStructureTree() }.orLogException(thisLogger())
+  })
   override val dependenciesFilesRelativePaths: List<Path>
     get() = listOf(
       Path.of(PY_PROJECT_TOML),
@@ -117,7 +118,11 @@ internal class UvPackageManager internal constructor(
     return result
   }
 
-  override suspend fun uninstallPackageCommand(vararg pythonPackages: String, workspaceMember: PyWorkspaceMember?, dependencyGroup: PyDependencyGroup?): PyResult<Unit> {
+  override suspend fun uninstallPackageCommand(
+    vararg pythonPackages: String,
+    workspaceMember: PyWorkspaceMember?,
+    dependencyGroup: PyDependencyGroup?,
+  ): PyResult<Unit> {
     return withUv { uv ->
       if (pythonPackages.isEmpty()) return@withUv PyResult.success(Unit)
 
@@ -328,7 +333,7 @@ private class UvWorkspaceSupport(private val project: Project, private val sdk: 
         ModuleRootManager.getInstance(module).contentRoots.firstOrNull()?.findFileByRelativePath(PY_PROJECT_TOML)
       }
       val name = if (tomlVf != null) PyProjectToml.parseCached(project, tomlVf)?.project?.name ?: module.name
-                 else module.name
+      else module.name
       PyWorkspaceMember(name)
     }
   }
@@ -350,7 +355,7 @@ private class UvWorkspaceSupport(private val project: Project, private val sdk: 
           .firstNotNullOfOrNull { it.findFileByRelativePath(PY_PROJECT_TOML) }
       }
       val name = if (tomlVf != null) PyProjectToml.parseCached(project, tomlVf)?.project?.name ?: module.name
-                 else module.name
+      else module.name
       name == member.name
     }
   }
@@ -369,7 +374,7 @@ private class UvWorkspaceSupport(private val project: Project, private val sdk: 
       ModuleRootManager.getInstance(module).contentRoots.firstOrNull()?.findFileByRelativePath(PY_PROJECT_TOML)
     } ?: return null
     val parsed = PyProjectToml.parseCached(project, tomlVf) ?: return null
-    return (parsed.project?.name ?: module.name) to parsed.getDependencyGroupNames()
+    return parsed.project.name to parsed.getDependencyGroupNames()
   }
 }
 

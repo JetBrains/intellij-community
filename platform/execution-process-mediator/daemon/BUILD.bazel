@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.execution.process.mediator.daemon` start
 jvm_library(
@@ -30,6 +31,8 @@ jvm_library(
         "//libraries/grpc-netty-shaded",
     ],
 )
+
+content_module_jar(module = ":daemon")
 
 jvm_library(
     name = "daemon_test_lib",

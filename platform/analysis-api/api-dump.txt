@@ -1476,6 +1476,8 @@ com.intellij.modcommand.ModCommandAction
 - availableInBatchMode():Z
 - generatePreview(com.intellij.modcommand.ActionContext):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - a:getPresentation(com.intellij.modcommand.ActionContext):com.intellij.modcommand.Presentation
+- s:of(java.lang.String,java.lang.String,java.util.function.Function):com.intellij.modcommand.ModCommandAction
+- s:of(java.lang.String,java.util.function.Function):com.intellij.modcommand.ModCommandAction
 - a:perform(com.intellij.modcommand.ActionContext):com.intellij.modcommand.ModCommand
 - withPresentation(java.util.function.UnaryOperator):com.intellij.modcommand.ModCommandAction
 com.intellij.modcommand.ModCommandExecutor

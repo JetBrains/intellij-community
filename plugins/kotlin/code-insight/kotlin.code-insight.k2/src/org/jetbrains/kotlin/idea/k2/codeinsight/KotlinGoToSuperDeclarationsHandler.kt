@@ -1,16 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight
 
+import com.intellij.codeInsight.NavigationOptionsAwareCodeInsightActionHandler
 import com.intellij.codeInsight.generation.actions.PresentableCodeInsightActionHandler
+import com.intellij.codeInsight.navigation.PsiTargetNavigator
 import com.intellij.codeInsight.navigation.actions.GotoSuperAction
-import com.intellij.codeInsight.navigation.getPsiElementPopup
 import com.intellij.featureStatistics.FeatureUsageTracker
+import com.intellij.ide.util.EditSourceUtil
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.NlsContexts.PopupTitle
+import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
@@ -24,7 +27,7 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
 
-class KotlinGoToSuperDeclarationsHandler : PresentableCodeInsightActionHandler {
+class KotlinGoToSuperDeclarationsHandler : PresentableCodeInsightActionHandler, NavigationOptionsAwareCodeInsightActionHandler {
     companion object {
         fun findTargetDeclaration(
             file: PsiFile,
@@ -51,12 +54,11 @@ class KotlinGoToSuperDeclarationsHandler : PresentableCodeInsightActionHandler {
             }
         }
 
-        fun gotoSuperDeclarations(targetDeclaration: KtDeclaration) : JBPopup? {
+        fun gotoSuperDeclarations(targetDeclaration: KtDeclaration, options: NavigationOptions = NavigationOptions.requestFocus()): JBPopup? {
             when (val result = findSuperDeclarations(targetDeclaration)) {
                 is HandlerResult.Single -> {
-                    result.item.descriptor
-                        ?.takeIf { it.canNavigate() }
-                        ?.navigate(/* requestFocus = */ true)
+                    val declaration = result.item.declaration.element ?: return null
+                    EditSourceUtil.navigateToPsiElement(declaration, options)
                 }
 
                 is HandlerResult.Multiple -> {
@@ -65,7 +67,11 @@ class KotlinGoToSuperDeclarationsHandler : PresentableCodeInsightActionHandler {
                         .toTypedArray()
 
                     if (superDeclarationsArray.isNotEmpty()) {
-                        return getPsiElementPopup(superDeclarationsArray, result.title)
+                        // propagate options via an explicit processor
+                        return PsiTargetNavigator(superDeclarationsArray)
+                            .createPopup(targetDeclaration.project, result.title) { element ->
+                                EditSourceUtil.navigateToPsiElement(element, options)
+                            }
                     }
                 }
 
@@ -73,6 +79,7 @@ class KotlinGoToSuperDeclarationsHandler : PresentableCodeInsightActionHandler {
             }
             return null
         }
+
     }
 
     sealed class HandlerResult {
@@ -86,7 +93,7 @@ class KotlinGoToSuperDeclarationsHandler : PresentableCodeInsightActionHandler {
         abstract val items: List<SuperDeclaration>
     }
 
-    override fun invoke(project: Project, editor: Editor, file: PsiFile) {
+    override fun invoke(project: Project, editor: Editor, file: PsiFile, options: NavigationOptions) {
         if (file !is KtFile) {
             return
         }
@@ -94,7 +101,7 @@ class KotlinGoToSuperDeclarationsHandler : PresentableCodeInsightActionHandler {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(GotoSuperAction.FEATURE_ID)
 
         val targetDeclaration = findTargetDeclaration(file, editor) ?: return
-        gotoSuperDeclarations(targetDeclaration)?.showInBestPositionFor(editor)
+        gotoSuperDeclarations(targetDeclaration, options)?.showInBestPositionFor(editor)
     }
 
     override fun update(editor: Editor, file: PsiFile, presentation: Presentation?) {

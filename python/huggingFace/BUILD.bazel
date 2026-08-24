@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.python.community.impl.huggingFace` start
 jvm_library(
@@ -44,6 +45,8 @@ jvm_library(
         "//python/python-sdk/backend",
     ],
 )
+
+content_module_jar(module = ":huggingFace")
 
 jvm_library(
     name = "huggingFace_test_lib",

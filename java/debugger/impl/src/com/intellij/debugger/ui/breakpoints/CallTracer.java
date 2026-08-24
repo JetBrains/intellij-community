@@ -26,7 +26,6 @@ import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.InvalidStackFrameException;
@@ -189,8 +188,9 @@ public class CallTracer implements OverheadProducer {
   }
 
   @Override
-  public void customizeRenderer(SimpleColoredComponent renderer) {
-    renderer.append(JavaDebuggerBundle.message("call.tracer"));
+  public @NotNull OverheadProducer.Presentation computePresentation() {
+    return new OverheadProducer.Presentation(
+      JavaDebuggerBundle.message("call.tracer"));
   }
 
   public static @NotNull CallTracer get(DebugProcessImpl debugProcess) {

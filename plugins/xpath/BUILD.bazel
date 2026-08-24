@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -141,10 +142,18 @@ exports_files(
         "xpath-lang/resources/META-INF/plugin.xml",
         "xpath-lang/resources/liveTemplates/xsl.xml",
         "xpath-lang/resources/org/intellij/lang/xpath/xslt/resources/documentation.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.xpath` end
+
+### auto-generated section `dev content intellij.xpath` start
+dev_dist_plugin_content(
+    content_modules = ["//plugins/xpath/xslt-rt:rt"],
+    descriptor_module = ":xpath",
+)
+### auto-generated section `dev content intellij.xpath` end
 
 ### auto-generated section `build intellij.xpath.tests` start
 jvm_library(

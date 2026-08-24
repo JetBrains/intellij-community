@@ -31,10 +31,11 @@ import com.jetbrains.python.refactoring.PyReplaceExpressionUtil
 class PyAsyncCallInspection : PyInspection() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-      val context = PyInspectionVisitor.getContext(session)
-      return Visitor(holder, context).also {
-          it.downgradeHighlightForTypeEngine = context.usesExternalTypeEngine
-      }
+    val context = PyInspectionVisitor.getContext(session)
+    if (context.usesExternalTypeEngine) {
+      return PsiElementVisitor.EMPTY_VISITOR
+    }
+    return Visitor(holder, context)
   }
 
   private class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {

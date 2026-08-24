@@ -9,19 +9,16 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class GradleDeprecatedMessagesBundle extends DynamicBundle {
+public final class GradleDeprecatedMessagesBundle {
   public static final @NonNls String PATH_TO_BUNDLE = "messages.GradleDeprecatedMessagesBundle";
-  private static final GradleDeprecatedMessagesBundle BUNDLE = new GradleDeprecatedMessagesBundle();
+  private static final DynamicBundle BUNDLE = new DynamicBundle(GradleDeprecatedMessagesBundle.class, PATH_TO_BUNDLE);
 
   public static @Nls String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object @NotNull ... params) {
     return BUNDLE.getMessage(key, params);
   }
 
-  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key,
+                                                              Object @NotNull ... params) {
     return BUNDLE.getLazyMessage(key, params);
-  }
-
-  public GradleDeprecatedMessagesBundle() {
-    super(PATH_TO_BUNDLE);
   }
 }

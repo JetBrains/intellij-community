@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "kt_javac_options", "resourcegroup")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "util-tests_test",
@@ -168,6 +169,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
+        "//libraries/kotlinx/coroutines/test",
         "@lib//:kotlin-test",
         "//platform/eel-provider",
         "//platform/core-impl",
@@ -200,6 +202,8 @@ jvm_library(
     ],
     deps = [
         # do not sort,
+        "//libraries/kotlinx/coroutines/test",
+        "//libraries/kotlinx/coroutines/test:test_test_lib",
         "@lib//:kotlin-test",
         "//platform/eel-provider",
         "//platform/eel-provider:eel-provider_test_lib",
@@ -238,7 +242,8 @@ jvm_library(
         "//platform/testFramework:testFramework_test_lib",
         "//platform/testFramework/extensions:testExtensions",
         "//platform/testFramework/extensions:testExtensions_test_lib",
-        "@lib//:memoryfilesystem",
+        "//libraries/memoryfilesystem",
+        "//libraries/memoryfilesystem:memoryfilesystem_test_lib",
         "//platform/util-class-loader:util-classLoader",
         "//platform/util-class-loader:util-classLoader_test_lib",
         "//libraries/fastutil",
@@ -362,6 +367,8 @@ jvm_library(
         "//libraries/mvstore",
     ],
 )
+
+content_module_jar(module = ":util-ui")
 
 jvm_library(
     name = "util-ui_test_lib",

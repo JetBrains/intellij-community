@@ -84,7 +84,7 @@ override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?
 dataSource as EntityWithUrls
 if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
 if (this.simpleUrl != dataSource.simpleUrl) this.simpleUrl = dataSource.simpleUrl
-if (this.nullableUrl != dataSource?.nullableUrl) this.nullableUrl = dataSource.nullableUrl
+if (this.nullableUrl != dataSource.nullableUrl) this.nullableUrl = dataSource.nullableUrl
 if (this.listOfUrls != dataSource.listOfUrls) this.listOfUrls = dataSource.listOfUrls.toMutableList()
 if (this.dataClassWithUrl != dataSource.dataClassWithUrl) this.dataClassWithUrl = dataSource.dataClassWithUrl
 updateChildToParentReferences(parents)

@@ -3,10 +3,11 @@ package com.intellij.openapi.fileEditor
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
@@ -15,17 +16,13 @@ import com.intellij.openapi.fileTypes.INativeFileType
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.pom.Navigatable
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 class FileNavigatorImpl : FileNavigator {
-  private val ignoreContextEditor = ThreadLocal<Boolean?>()
-
   override fun canNavigateToSource(descriptor: OpenFileDescriptor): Boolean {
     val file = descriptor.file
     if (file.isValid) {
@@ -37,8 +34,12 @@ class FileNavigatorImpl : FileNavigator {
   }
 
   override fun navigate(descriptor: OpenFileDescriptor, requestFocus: Boolean) {
+    navigate(descriptor, requestFocus, requestedEditor = contextEditor)
+  }
+
+  override fun navigate(descriptor: OpenFileDescriptor, requestFocus: Boolean, requestedEditor: Editor?) {
     check(canNavigate(descriptor)) { "target not valid" }
-    if (!descriptor.file.isDirectory && navigateInEditorOrNativeApp(descriptor, requestFocus)) {
+    if (!descriptor.file.isDirectory && navigateInEditorOrNativeApp(descriptor, requestFocus, requestedEditor)) {
       return
     }
     else {
@@ -46,7 +47,7 @@ class FileNavigatorImpl : FileNavigator {
     }
   }
 
-  private fun navigateInEditorOrNativeApp(descriptor: OpenFileDescriptor, requestFocus: Boolean): Boolean {
+  private fun navigateInEditorOrNativeApp(descriptor: OpenFileDescriptor, requestFocus: Boolean, requestedEditor: Editor?): Boolean {
     val type = FileTypeManager.getInstance().getKnownFileTypeOrAssociate(descriptor.file, descriptor.project)
     if (type == null || !descriptor.file.isValid) {
       return false
@@ -56,73 +57,82 @@ class FileNavigatorImpl : FileNavigator {
       return type.openFileInAssociatedApplication(descriptor.project, descriptor.file)
     }
     else {
-      return navigateInEditor(descriptor, requestFocus)
+      return navigateInEditor(descriptor, requestFocus, requestedEditor)
     }
   }
 
   override fun navigateInEditor(descriptor: OpenFileDescriptor, requestFocus: Boolean): Boolean {
-    return navigateInRequestedEditor(descriptor, requestFocus) || navigateInAnyFileEditor(descriptor, requestFocus)
+    return navigateInEditor(descriptor, requestFocus, contextEditor)
   }
 
-  fun navigateInRequestedEditor(descriptor: OpenFileDescriptor, requestFocus: Boolean = false): Boolean {
-    if (ignoreContextEditor.get() == true) {
-      return false
-    }
+  private fun navigateInEditor(descriptor: OpenFileDescriptor, requestFocus: Boolean, requestedEditor: Editor?): Boolean {
+    return navigateInRequestedEditor(descriptor, requestedEditor, requestFocus) || navigateInAnyFileEditor(descriptor, requestFocus)
+  }
 
-    @Suppress("DEPRECATION")
-    val dataContext = DataManager.getInstance().dataContext
-    val e = OpenFileDescriptor.NAVIGATE_IN_EDITOR.getData(dataContext) ?: return false
-    if (e.isDisposed) {
-      logger<FileNavigatorImpl>().error("Disposed editor returned for NAVIGATE_IN_EDITOR from $dataContext")
+  /**
+   * @see editorSuppressionCoroutineContext
+   */
+  private val contextEditor: Editor?
+    get() {
+      if (isContextEditorSuppressed) {
+        return null
+      }
+      @Suppress("DEPRECATION")
+      val dataContext = DataManager.getInstance().dataContext
+      val e = OpenFileDescriptor.NAVIGATE_IN_EDITOR.getData(dataContext) ?: return null
+      if (e.isDisposed) {
+        // a disposed editor in the current data context means the context itself is stale
+        LOG.error("Disposed editor returned for NAVIGATE_IN_EDITOR from $dataContext")
+        return null
+      }
+      return e
+  }
+
+  private fun navigateInRequestedEditor(descriptor: OpenFileDescriptor, requestedEditor: Editor?, requestFocus: Boolean = false): Boolean {
+    if (requestedEditor == null) {
       return false
     }
-    if (FileDocumentManager.getInstance().getFile(e.document) != descriptor.file) {
-      return false
-    }
-    navigateInEditorAndMaybeFocus(descriptor, e, requestFocus)
-    return true
+    return navigateInEditorIfShowsFile(descriptor, requestedEditor, FileDocumentManager.getInstance(), requestFocus)
   }
 
   suspend fun navigateInRequestedEditorAsync(
     descriptor: OpenFileDescriptor,
-    dataContext: DataContext,
+    editor: Editor,
     requestFocus: Boolean = false,
   ): Boolean {
-    val e = OpenFileDescriptor.NAVIGATE_IN_EDITOR.getData(dataContext) ?: return false
-    if (e.isDisposed) {
-      logger<FileNavigatorImpl>().error("Disposed editor returned for NAVIGATE_IN_EDITOR from $dataContext")
+    if (editor.isDisposed) {
+      // the editor may be closed while the navigation is being prepared; fall back to opening the file
+      LOG.debug { "Disposed editor requested for navigation to ${descriptor.file}" }
       return false
     }
 
-    if (serviceAsync<FileDocumentManager>().getFile(e.document) != descriptor.file) {
+    val fileDocumentManager = serviceAsync<FileDocumentManager>()
+    return withContext(Dispatchers.EDT) {
+      navigateInEditorIfShowsFile(descriptor, editor, fileDocumentManager, requestFocus)
+    }
+  }
+
+  @RequiresEdt
+  private fun navigateInEditorIfShowsFile(
+    descriptor: OpenFileDescriptor,
+    editor: Editor,
+    fileDocumentManager: FileDocumentManager,
+    requestFocus: Boolean = false,
+  ): Boolean {
+    if (editor.isDisposed || fileDocumentManager.getFile(editor.document) != descriptor.file) {
       return false
     }
-
-    withContext(Dispatchers.EDT) {
-      navigateInEditorAndMaybeFocus(descriptor, e, requestFocus)
-    }
+    navigateInEditorAndMaybeFocus(descriptor, editor, requestFocus)
     return true
   }
 
-  @ApiStatus.Experimental
-  fun navigateIgnoringContextEditor(navigatable: Navigatable): Boolean {
-    if (!navigatable.canNavigate()) {
-      return false
-    }
-
-    ignoreContextEditor.set(true)
-    try {
-      navigatable.navigate(true)
-    }
-    finally {
-      ignoreContextEditor.set(null)
-    }
-    return true
+  companion object {
+    private val LOG: Logger = logger<FileNavigatorImpl>()
   }
 }
 
 @RequiresEdt
-private fun navigateInEditorAndMaybeFocus(descriptor: OpenFileDescriptor, editor: Editor, requestFocus: Boolean, ) {
+private fun navigateInEditorAndMaybeFocus(descriptor: OpenFileDescriptor, editor: Editor, requestFocus: Boolean) {
   OpenFileDescriptor.navigateInEditor(descriptor, editor)
   if (requestFocus) {
     IdeFocusManager.getGlobalInstance().requestFocusInProject(editor.contentComponent, descriptor.project)

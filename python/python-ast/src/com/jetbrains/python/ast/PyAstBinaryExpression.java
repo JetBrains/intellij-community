@@ -70,18 +70,6 @@ public interface PyAstBinaryExpression extends PyAstQualifiedExpression, PyAstCa
     return buf.toString();
   }
 
-  default @Nullable PyAstExpression getOppositeExpression(PyAstExpression expression) throws IllegalArgumentException {
-    PyAstExpression right = getRightExpression();
-    PyAstExpression left = getLeftExpression();
-    if (expression.equals(left)) {
-      return right;
-    }
-    if (expression.equals(right)) {
-      return left;
-    }
-    throw new IllegalArgumentException("expression " + expression + " is neither left exp or right exp");
-  }
-
   default boolean isRightOperator(@Nullable PyAstCallable resolvedCallee) {
     return resolvedCallee != null && PyNames.isRightOperatorName(getReferencedName(), resolvedCallee.getName());
   }

@@ -1,10 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AbstractBasicJavaTypingTest;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Consumer;
 
 public class JavaTypingTest extends AbstractBasicJavaTypingTest {
   //doesn't support in general case because of resolving
@@ -25,21 +28,61 @@ public class JavaTypingTest extends AbstractBasicJavaTypingTest {
   //doesn't support because of formatting
   public void testDotOnNewLine() { doTest('.'); }
 
+  public void testDotOnNewLineWithStatementBelow() { doTest('.'); }
+
+  public void testDotOnNewLineAfterFirstCallWithStatementBelow() { doTest('.'); }
+
+  public void testDotOnNewLineAfterFirstCallWithStatementBelowAligned() {
+    doTestWithCodeStyleSettings('.', s -> s.ALIGN_MULTILINE_CHAINED_METHODS = true, s -> s.ALIGN_MULTILINE_CHAINED_METHODS = false);
+  }
+
+  public void testDotOnNewLineWithStatementBelowAligned() {
+    doTestWithCodeStyleSettings('.', s -> s.ALIGN_MULTILINE_CHAINED_METHODS = true, s -> s.ALIGN_MULTILINE_CHAINED_METHODS = false);
+  }
+
+  public void testDotOnNewLineWithStatementBelowNoLineBreak() {
+    doTestWithCodeStyleSettings('.', s -> s.KEEP_LINE_BREAKS = false, s -> s.KEEP_LINE_BREAKS = true);
+  }
+
+  public void testDotOnNewLineAfterFirstCallWithStatementBelowNoLineBreak() {
+    doTestWithCodeStyleSettings('.', s -> s.KEEP_LINE_BREAKS = false, s -> s.KEEP_LINE_BREAKS = true);
+  }
+
+  public void testDotOnNewLineAfterFirstBuilderCallWithStatementBelow() {
+    doTestWithCodeStyleSettings('.', JavaTypingTest::keepBuilderMethodsIndents, JavaTypingTest::restoreBuilderMethodsIndents);
+  }
+
+  public void testDotOnNewLineAfterSecondBuilderCallWithStatementBelow() {
+    doTestWithCodeStyleSettings('.', JavaTypingTest::keepBuilderMethodsIndents, JavaTypingTest::restoreBuilderMethodsIndents);
+  }
+
+  public void testDotOnNewLineAfterFirstBuilderCallWithStatementBelowNoLineBreak() {
+    doTestWithCodeStyleSettings('.', s -> {
+      keepBuilderMethodsIndents(s);
+      s.KEEP_LINE_BREAKS = false;
+    }, s -> {
+      restoreBuilderMethodsIndents(s);
+      s.KEEP_LINE_BREAKS = true;
+    });
+  }
+
+  public void testDotOnNewLineAfterSecondBuilderCallWithStatementBelowNoLineBreak() {
+    doTestWithCodeStyleSettings('.', s -> {
+      keepBuilderMethodsIndents(s);
+      s.KEEP_LINE_BREAKS = false;
+    }, s -> {
+      restoreBuilderMethodsIndents(s);
+      s.KEEP_LINE_BREAKS = true;
+    });
+  }
+
+
   //doesn't support because of formatting
   public void testEqualAfterBitwiseOp() { doTest('='); }
 
   //doesn't support because of formatting
   public void testEqualAfterBitwiseOp2() {
-    myFixture.configureByFile(getTestName(true) + "_before.java");
-    CommonCodeStyleSettings settings = CodeStyle.getLanguageSettings(myFixture.getFile());
-    settings.SPACE_WITHIN_PARENTHESES = true;
-    try {
-      myFixture.type('=');
-      myFixture.checkResultByFile(getTestName(true) + "_after.java");
-    }
-    finally {
-      settings.SPACE_WITHIN_PARENTHESES = false;
-    }
+    doTestWithCodeStyleSettings('=', s -> s.SPACE_WITHIN_PARENTHESES = true, s -> s.SPACE_WITHIN_PARENTHESES = false);
   }
 
   //doesn't support because of formatting
@@ -129,5 +172,28 @@ public class JavaTypingTest extends AbstractBasicJavaTypingTest {
   public void testOpenBracesAfterSwitchRuleExpressionInCharLiteral() {
     setLanguageLevel(LanguageLevel.JDK_21);
     doTest('{');
+  }
+
+  private static void keepBuilderMethodsIndents(@NotNull CommonCodeStyleSettings settings) {
+    settings.BUILDER_METHODS = "withA,withB";
+    settings.KEEP_BUILDER_METHODS_INDENTS = true;
+  }
+
+  private static void restoreBuilderMethodsIndents(@NotNull CommonCodeStyleSettings settings) {
+    settings.BUILDER_METHODS = "";
+    settings.KEEP_BUILDER_METHODS_INDENTS = false;
+  }
+
+  private void doTestWithCodeStyleSettings(char typeChar, Consumer<CommonCodeStyleSettings> newValue, Consumer<CommonCodeStyleSettings> restore) {
+    myFixture.configureByFile(getTestName(true) + "_before.java");
+    CommonCodeStyleSettings settings = CodeStyle.getLanguageSettings(myFixture.getFile());
+    newValue.accept(settings);
+    try {
+      myFixture.type(typeChar);
+      myFixture.checkResultByFile(getTestName(true) + "_after.java");
+    }
+    finally {
+      restore.accept(settings);
+    }
   }
 }

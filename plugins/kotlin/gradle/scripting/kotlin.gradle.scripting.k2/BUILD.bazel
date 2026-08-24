@@ -1,6 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.kotlin.gradle.scripting` start
 create_kotlinc_options(
@@ -96,6 +97,8 @@ jvm_library(
         "//plugins/kotlin/scripting",
     ],
 )
+
+content_module_jar(module = ":kotlin-gradle-scripting")
 
 jvm_library(
     name = "kotlin-gradle-scripting_test_lib",

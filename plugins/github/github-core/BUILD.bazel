@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
 jps_test(
@@ -221,10 +222,24 @@ exports_files(
         "intellij.vcs.github.iml",
         "resources/META-INF/plugin.xml",
         "resources/intellij.vcs.github.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.vcs.github` end
+
+### auto-generated section `dev content intellij.vcs.github` start
+dev_dist_plugin_content(
+    descriptor_module = ":vcs-github",
+    libraries = ["@lib//:vcs-github-apollographql-apollo-ast-jvm"],
+    prepacked_content_modules = [
+        "//plugins/github/github-git:vcs-github-git_content_module_jar",
+        "//plugins/github/github-json:vcs-github-json_content_module_jar",
+        "//plugins/github/github-tracker:vcs-github-tracker_content_module_jar",
+        "//plugins/github/ultimate-promo:ultimate-promo_content_module_jar",
+    ],
+)
+### auto-generated section `dev content intellij.vcs.github` end
 
 ### auto-generated section `build intellij.vcs.github.tests` start
 jvm_library(

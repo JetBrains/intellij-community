@@ -2095,6 +2095,7 @@ c:com.intellij.openapi.vcs.changes.ui.ChangeListChooser
 - setChangeLists(java.util.Collection):V
 - setDefaultSelection(com.intellij.openapi.vcs.changes.ChangeList):V
 - setSuggestedName(java.lang.String):V
+- setSuggestedName(java.lang.String,java.lang.String,Z):V
 - setSuggestedName(java.lang.String,Z):V
 f:com.intellij.openapi.vcs.changes.ui.ChangeListChooserPanel
 - javax.swing.JPanel
@@ -3046,9 +3047,6 @@ f:com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 - sf:Companion:com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$Companion
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - f:addInitializationRequest(com.intellij.openapi.vcs.impl.VcsInitObject,java.lang.Runnable):V
-- addMessageToConsoleWindow(com.intellij.openapi.vcs.VcsConsoleLine):V
-- addMessageToConsoleWindow(java.lang.String,com.intellij.execution.ui.ConsoleViewContentType):V
-- addMessageToConsoleWindow(java.lang.String,com.intellij.openapi.editor.markup.TextAttributes):V
 - areVcsesActivated():Z
 - awaitInitialization(kotlin.coroutines.Continuation):java.lang.Object
 - checkAllFilesAreUnder(com.intellij.openapi.vcs.AbstractVcs,com.intellij.openapi.vfs.VirtualFile[]):Z
@@ -3112,11 +3110,9 @@ f:com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 - f:removeDirectoryMapping(com.intellij.openapi.vcs.VcsDirectoryMapping):V
 - runAfterInitialization(java.lang.Runnable):V
 - scheduleMappedRootsUpdate():V
-- scrollConsoleToTheEnd():V
 - f:setAutoDirectoryMappings(java.util.List):V
 - setDirectoryMapping(java.lang.String,java.lang.String):V
 - setDirectoryMappings(java.util.List):V
-- showConsole(java.lang.Runnable):V
 - showUpdateProjectInfo(com.intellij.openapi.vcs.update.UpdatedFiles,java.lang.String,com.intellij.openapi.vcs.update.ActionInfo,Z):com.intellij.openapi.vcs.update.UpdateInfoTree
 - f:startBackgroundTask(java.lang.Object[]):V
 - startBackgroundVcsOperation():V

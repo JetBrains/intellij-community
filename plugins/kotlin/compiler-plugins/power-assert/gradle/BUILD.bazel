@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.kotlin.compilerPlugins.powerAssert.gradle` start
 jvm_library(
@@ -25,6 +26,8 @@ jvm_library(
         "//plugins/kotlin/gradle/gradle-java",
     ],
 )
+
+content_module_jar(module = ":gradle")
 
 jvm_library(
     name = "gradle_test_lib",

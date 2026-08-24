@@ -1,5 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.kotlin.base.analysis.platform` start
 create_kotlinc_options(
@@ -59,6 +60,8 @@ jvm_library(
         "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
     ],
 )
+
+content_module_jar(module = ":kotlin-base-analysis-platform")
 
 jvm_library(
     name = "kotlin-base-analysis-platform_test_lib",

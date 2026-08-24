@@ -163,6 +163,11 @@ internal class JpsModuleToBazel {
         )
 
         saveDevServerRunConfigurations(ultimateRoot = ultimateRoot, targetFilePath = ultimateRoot.resolve("build").resolve("dev_server_run_configurations.bzl"))
+        // Recorded for the community-only run, which cannot see the ultimate reports this set is an AND over.
+        savePluginContentModuleJarCandidates(
+          file = communityRoot.resolve("build").resolve(PLUGIN_CONTENT_CANDIDATES_FILE_NAME),
+          candidates = generator.pluginContentModuleJarCandidates,
+        )
       }
       else {
         check(bazelWorkspaceRoot == null || bazelWorkspaceRoot == communityRoot) { "Bazel workspace root ($bazelWorkspaceRoot) must be community root ($communityRoot)" }
@@ -242,12 +247,39 @@ internal class JpsModuleToBazel {
       val testJars: List<String>,
       val exports: List<String>,
       val moduleLibraries: Map<String, LibraryDescription>,
+      /**
+       * The label of this module's `content_module_jar` target, or empty when it packs no `lib/` jar.
+       *
+       * Recorded rather than derived: it is not a function of any other label here - the target name is
+       * `<bazel target name>_content_module_jar`, and the Bazel target name is itself derived from the JPS module name,
+       * the package directory and the custom-module table. The plan generator names this label as a plugin's prepacked
+       * content and as the platform payload's `packed`, so both sides have to mean the same target.
+       */
+      @JvmField val contentModuleJarTarget: String = "",
     )
 
+    /**
+     * What Bazel offers for one plugin, by its main module name.
+     *
+     * Every field is optional because the two halves are independent: `target`/`distributionDirectory` exist for a
+     * plugin whose descriptor opted into `ij_plugin`, `contentTarget` for every plugin with a checked-in
+     * `plugin-content.yaml`, and today those are almost disjoint sets. The mirror of this class the platform reads it
+     * with is `BazelTargetsInfo.PluginDistributionTargetDescription`.
+     */
     @Serializable
     data class PluginDistributionTargetDescription(
-      @JvmField val target: String,
-      @JvmField val distributionDirectory: String,
+      @JvmField val target: String = "",
+      @JvmField val distributionDirectory: String = "",
+      @JvmField val contentTarget: String = "",
+      /**
+       * Prepack-eligible content modules of this plugin that its own `contentTarget` could not name.
+       *
+       * Module names, and only ever non-empty for a community plugin that packs ultimate modules: the community
+       * repository cannot name an ultimate label, so the completion set in `//build/dev-dist-content` - the one package
+       * that sees both repositories - is what turns these into `prepacked_content_modules`. Without this, every such
+       * member silently fell back to `JarPackager`, which was 70 of the 79 relations the vetoes cost.
+       */
+      @JvmField val crossRepositoryPrepackedContentModules: List<String> = emptyList(),
     )
 
     @Serializable
@@ -269,47 +301,9 @@ internal class JpsModuleToBazel {
       assertAllModuleOutputsExist: Boolean,
       bazelOutputBase: Path?,
     ): TargetsFile {
-      data class ImlPackageDescription(
-        val packagePrefix: String,
-      )
-
-      fun makePackagePrefix(repoName: String, relativePath: String): String {
-        return when {
-          repoName.isEmpty() && relativePath.isEmpty() -> "//"
-          repoName.isEmpty() -> "//$relativePath"
-          relativePath.isEmpty() -> "$repoName//"
-          else -> "$repoName//$relativePath"
-        }
-      }
-
-      fun computeImlPackage(module: ModuleDescriptor): ImlPackageDescription {
-        if (module.isCommunity) {
-          val standaloneRepoRoot = when {
-            module.bazelBuildFileDir.startsWith(communityRoot.resolve("platform/build-scripts/bazel")) -> communityRoot.resolve("platform/build-scripts/bazel") to "@jps_to_bazel"
-            module.bazelBuildFileDir.startsWith(communityRoot.resolve("build/jvm-rules")) -> communityRoot.resolve("build/jvm-rules") to "@rules_jvm"
-            else -> null
-          }
-          if (standaloneRepoRoot != null) {
-            val (repoRoot, repoName) = standaloneRepoRoot
-            val relativePackagePath = module.bazelBuildFileDir.relativeTo(repoRoot).invariantSeparatorsPathString
-            return ImlPackageDescription(
-              packagePrefix = makePackagePrefix(repoName, relativePackagePath),
-            )
-          }
-        }
-
-        val repoRoot = if (module.isCommunity) communityRoot else ultimateRoot ?: error("Ultimate root is not available")
-        val repoName = if (module.isCommunity) "@community" else ""
-        val relativePackagePath = module.bazelBuildFileDir.relativeTo(repoRoot).invariantSeparatorsPathString
-        return ImlPackageDescription(
-          packagePrefix = makePackagePrefix(repoName, relativePackagePath),
-        )
-      }
-
       fun makeImlTarget(module: ModuleDescriptor): String {
-        val imlPackage = computeImlPackage(module)
         val relativeImlPath = module.imlFile.relativeTo(module.bazelBuildFileDir).invariantSeparatorsPathString
-        return "${imlPackage.packagePrefix}:$relativeImlPath"
+        return "${bazelPackagePrefix(module = module, communityRoot = communityRoot, ultimateRoot = ultimateRoot)}:$relativeImlPath"
       }
 
       fun makeJarPath(library: Library, file: MavenFileDescription): String {
@@ -330,92 +324,68 @@ internal class JpsModuleToBazel {
         return path
       }
 
-      fun makeJarTarget(library: Library, file: MavenFileDescription): String {
-        val target = library.target.container.repoLabel + "//:" +
-                     mavenCoordinatesToFileName(file.mavenCoordinates, groupDirectory = true)
-
-        return target
-      }
-
       fun makeLibraryDescription(library: Library): LibraryDescription {
-        val target = "${library.target.container.repoLabel}//:${library.target.targetName}"
+        // Not `repoLabel//:targetName`: that is the Maven form, and a local library's target is generated into the
+        // package its files live in - `@lib//ant/lib:ant`, not `@lib//:ant` - so 41 of these used to be unresolvable.
+        // This index is repo-global, so the one case with no single answer is a local library under the community root
+        // but outside `community/lib`, which community writes as `//` and ultimate as `@community//`; the index is
+        // written from whichever root the run has, and that is what `projectRoot` says.
+        val target = libraryTargetLabel(
+          library = library,
+          communityRoot = communityRoot,
+          ultimateRoot = ultimateRoot,
+          isCommunityDependent = projectRoot != ultimateRoot,
+        )
+        val jarTargets = libraryJarTargets(
+          library = library,
+          communityRoot = communityRoot,
+          ultimateRoot = ultimateRoot,
+          projectRoot = projectRoot,
+        )
 
         return when (library) {
           is MavenLibrary -> LibraryDescription(
             target = target,
             jars = library.jars.map { makeJarPath(library, it) },
-            jarTargets = library.jars.map { makeJarTarget(library, it) },
+            jarTargets = jarTargets,
             sourceJars = library.sourceJars.map { makeJarPath(library, it) },
           )
 
-          is LocalLibrary -> {
-            LibraryDescription(
-              target = target,
-              jars = library.files.map {
-                val normalized = it.normalize()
-                require(
-                  normalized.startsWith(communityRoot) ||
-                  (ultimateRoot != null && normalized.startsWith(ultimateRoot))
-                ) {
-                  "Library file $it is not under community root ($communityRoot) or ultimate root ($ultimateRoot)"
+          is LocalLibrary -> LibraryDescription(
+            target = target,
+            jars = library.files.map {
+              val normalized = it.normalize()
+              require(
+                normalized.startsWith(communityRoot) ||
+                (ultimateRoot != null && normalized.startsWith(ultimateRoot))
+              ) {
+                "Library file $it is not under community root ($communityRoot) or ultimate root ($ultimateRoot)"
+              }
+
+              val ultimateLibRoot = ultimateRoot?.resolve("lib")
+              val communityLibRoot = communityRoot.resolve("lib")
+
+              val relativeToBazelOutputBase = when {
+                ultimateLibRoot != null && normalized.startsWith(ultimateLibRoot) ->
+                  "external/ultimate_lib+/" + normalized.relativeTo(ultimateLibRoot).invariantSeparatorsPathString
+                normalized.startsWith(communityLibRoot) ->
+                  "external/lib+/" + normalized.relativeTo(communityLibRoot).invariantSeparatorsPathString
+                projectRoot == ultimateRoot && normalized.startsWith(communityRoot) ->
+                  "external/community+/" + normalized.relativeTo(communityRoot).invariantSeparatorsPathString
+                else -> "execroot/_main/${normalized.relativeTo(projectRoot).invariantSeparatorsPathString}"
+              }
+
+              if (bazelOutputBase != null) {
+                check(bazelOutputBase.resolve(relativeToBazelOutputBase).isRegularFile()) {
+                  "Cannot find ${bazelOutputBase.resolve(relativeToBazelOutputBase)} (library ${library.target.jpsName} library module=${library.target.moduleLibraryModuleName})"
                 }
+              }
 
-                val ultimateLibRoot = ultimateRoot?.resolve("lib")
-                val communityLibRoot = communityRoot.resolve("lib")
-
-                val relativeToBazelOutputBase = when {
-                  ultimateLibRoot != null && normalized.startsWith(ultimateLibRoot) ->
-                    "external/ultimate_lib+/" + normalized.relativeTo(ultimateLibRoot).invariantSeparatorsPathString
-                  normalized.startsWith(communityLibRoot) ->
-                    "external/lib+/" + normalized.relativeTo(communityLibRoot).invariantSeparatorsPathString
-                  projectRoot == ultimateRoot && normalized.startsWith(communityRoot) ->
-                    "external/community+/" + normalized.relativeTo(communityRoot).invariantSeparatorsPathString
-                  else -> "execroot/_main/${normalized.relativeTo(projectRoot).invariantSeparatorsPathString}"
-                }
-
-                if (bazelOutputBase != null) {
-                  check(bazelOutputBase.resolve(relativeToBazelOutputBase).isRegularFile()) {
-                    "Cannot find ${bazelOutputBase.resolve(relativeToBazelOutputBase)} (library ${library.target.jpsName} library module=${library.target.moduleLibraryModuleName})"
-                  }
-                }
-
-                relativeToBazelOutputBase
-              },
-              jarTargets = library.files.map {
-                val normalized = it.normalize()
-                require(
-                  normalized.startsWith(communityRoot) ||
-                  (ultimateRoot != null && normalized.startsWith(ultimateRoot))
-                ) {
-                  "Library file $it is not under community root ($communityRoot) or ultimate root ($ultimateRoot)"
-                }
-
-                val ultimateLibRoot = ultimateRoot?.resolve("lib")
-                val communityLibRoot = communityRoot.resolve("lib")
-
-                fun Path.toBazelLabel(repoName: String, repoRoot: Path): String {
-                  require(startsWith(repoRoot)) { "Path $this is not under root $repoRoot" }
-                  require(normalize() == this) { "Path $this must be normalized" }
-                  require(repoName.startsWith("@") || repoName.isEmpty()) { "Repo name $repoName must start with '@' or be empty" }
-                  val relative = relativeTo(repoRoot)
-                  return "$repoName//${if (relative.parent == null) "" else relative.parent.invariantSeparatorsPathString}:${relative.fileName}"
-                }
-
-                val target = when {
-                  ultimateLibRoot != null && normalized.startsWith(ultimateLibRoot) ->
-                    normalized.toBazelLabel("@ultimate_lib", ultimateLibRoot)
-                  normalized.startsWith(communityLibRoot) ->
-                    normalized.toBazelLabel("@lib", communityLibRoot)
-                  projectRoot == ultimateRoot && normalized.startsWith(communityRoot) ->
-                    normalized.toBazelLabel("@community", communityRoot)
-                  else -> normalized.toBazelLabel("", projectRoot)
-                }
-
-                target
-              },
-              sourceJars = emptyList(),
-            )
-          }
+              relativeToBazelOutputBase
+            },
+            jarTargets = jarTargets,
+            sourceJars = emptyList(),
+          )
         }
       }
 
@@ -430,7 +400,7 @@ internal class JpsModuleToBazel {
       }
 
       val skippedModules = moduleList.skippedModules
-      val emptyModule = TargetsFileModuleDescription(emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyMap())
+      val emptyModule = TargetsFileModuleDescription(emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyMap(), "")
       val module2Libraries = libs
         .filter { it.target.moduleLibraryModuleName != null }
         .groupBy { it.target.moduleLibraryModuleName }
@@ -446,6 +416,7 @@ internal class JpsModuleToBazel {
             exports = moduleList.deps[moduleTarget.moduleDescriptor]?.exports?.map { it.label } ?: emptyList(),
             moduleLibraries = module2Libraries[moduleName]
                                 ?.associateTo(TreeMap()) { it.target.jpsName to makeLibraryDescription(it) } ?: emptyMap(),
+            contentModuleJarTarget = moduleTarget.contentModuleJarTarget ?: "",
           ).also {
             if (assertAllModuleOutputsExist) {
               for (outputPath in it.productionJars + it.testJars) {
@@ -469,12 +440,21 @@ internal class JpsModuleToBazel {
           targets
             .asSequence()
             .mapNotNull { moduleTarget ->
-              moduleTarget.pluginDistributionTarget?.let { pluginTarget ->
-                moduleTarget.moduleDescriptor.module.name to PluginDistributionTargetDescription(
-                  target = pluginTarget.target,
-                  distributionDirectory = adjustOutputPath(pluginTarget.distributionDirectory),
-                )
+              val pluginTarget = moduleTarget.pluginDistributionTarget
+              val contentTarget = moduleTarget.pluginContentTarget
+              val crossRepositoryPrepacked = moduleTarget.crossRepositoryPrepackedModules
+              // The third half is independent of the other two: a plugin can have no `ij_plugin` target and no content
+              // target of its own and still have cross-repository members to complete.
+              if (pluginTarget == null && contentTarget == null && crossRepositoryPrepacked.isEmpty()) {
+                return@mapNotNull null
               }
+
+              moduleTarget.moduleDescriptor.module.name to PluginDistributionTargetDescription(
+                target = pluginTarget?.target ?: "",
+                distributionDirectory = pluginTarget?.let { adjustOutputPath(it.distributionDirectory) } ?: "",
+                contentTarget = contentTarget ?: "",
+                crossRepositoryPrepackedContentModules = crossRepositoryPrepacked,
+              )
             }
             .sortedBy { it.first }
             .toMap()
@@ -539,6 +519,39 @@ private fun deleteOldFiles(projectDir: Path, generatedFiles: Set<Path>) {
 
   fileListFile.parent.createDirectories()
   Files.writeString(fileListFile, generatedFiles.joinToString("\n") { projectDir.relativize(it).invariantSeparatorsPathString })
+}
+
+/**
+ * The Bazel package a module's generated targets and exported files live in, as a label prefix.
+ *
+ * Top-level rather than local to [JpsModuleToBazel.Companion.saveTargets], because the parity check in
+ * [JpsModuleToBazelTargetsOnly] has to name files in the same package and the two must not compute it differently.
+ */
+internal fun bazelPackagePrefix(module: ModuleDescriptor, communityRoot: Path, ultimateRoot: Path?): String {
+  fun makePackagePrefix(repoName: String, relativePath: String): String {
+    return when {
+      repoName.isEmpty() && relativePath.isEmpty() -> "//"
+      repoName.isEmpty() -> "//$relativePath"
+      relativePath.isEmpty() -> "$repoName//"
+      else -> "$repoName//$relativePath"
+    }
+  }
+
+  if (module.isCommunity) {
+    val standaloneRepoRoot = when {
+      module.bazelBuildFileDir.startsWith(communityRoot.resolve("platform/build-scripts/bazel")) -> communityRoot.resolve("platform/build-scripts/bazel") to "@jps_to_bazel"
+      module.bazelBuildFileDir.startsWith(communityRoot.resolve("build/jvm-rules")) -> communityRoot.resolve("build/jvm-rules") to "@rules_jvm"
+      else -> null
+    }
+    if (standaloneRepoRoot != null) {
+      val (repoRoot, repoName) = standaloneRepoRoot
+      return makePackagePrefix(repoName, module.bazelBuildFileDir.relativeTo(repoRoot).invariantSeparatorsPathString)
+    }
+  }
+
+  val repoRoot = if (module.isCommunity) communityRoot else ultimateRoot ?: error("Ultimate root is not available")
+  val repoName = if (module.isCommunity) "@community" else ""
+  return makePackagePrefix(repoName, module.bazelBuildFileDir.relativeTo(repoRoot).invariantSeparatorsPathString)
 }
 
 /**

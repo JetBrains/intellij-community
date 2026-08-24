@@ -56,11 +56,14 @@ class BatchSpanProcessor(
           select {
             flushRequested.onReceive { request ->
               try {
-                val isExported = exportCurrentBatch(batch)
-                if (isExported && !request.exportOnly) {
+                exportCurrentBatch(batch)
+                // Flush exporters even when the batch is empty: a max-size batch export (see `queue.onReceive`
+                // below) hands spans to the exporters without flushing them, so JaegerJsonSpanExporter can be
+                // left with buffered bytes and a json file that ends mid-span. If the empty batch skipped this,
+                // no number of explicit flush() calls would ever finalize that file (AT-1875).
+                if (!request.exportOnly) {
                   flushExporters()
                 }
-                Unit
               }
               finally {
                 request.job.complete(Unit)

@@ -89,7 +89,7 @@ internal class ModuleCustomImlDataEntityImpl(private val dataSource: ModuleCusto
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ModuleCustomImlDataEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.rootManagerTagCustomData != dataSource?.rootManagerTagCustomData) this.rootManagerTagCustomData =
+      if (this.rootManagerTagCustomData != dataSource.rootManagerTagCustomData) this.rootManagerTagCustomData =
         dataSource.rootManagerTagCustomData
       if (this.customModuleOptions != dataSource.customModuleOptions) this.customModuleOptions =
         dataSource.customModuleOptions.toMutableMap()

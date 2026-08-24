@@ -1,17 +1,36 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.inMemory.rebase.log.changes
 
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.vcs.test.assertErrorNotification
+import com.intellij.vcs.test.refresh
+import com.intellij.vcs.test.updateChangeListManager
 import git4idea.i18n.GitBundle
-import git4idea.inMemory.rebase.log.GitInMemoryOperationTest
+import git4idea.inMemory.rebase.log.GitInMemoryOperationContext
+import git4idea.inMemory.rebase.log.RewrittenCommit
+import git4idea.inMemory.rebase.log.capturePostRewrites
+import git4idea.inMemory.rebase.log.gitInMemoryOperationFixture
+import git4idea.inMemory.rebase.log.run
 import git4idea.rebase.log.GitCommitEditingOperationResult
 import git4idea.test.assertCommitted
 import git4idea.test.assertLastMessage
 import git4idea.test.commit
+import git4idea.test.commitDetails
+import git4idea.test.file
 import git4idea.test.filterChangesByFileName
 import git4idea.test.getHash
+import git4idea.test.git
+import git4idea.test.gitSingleRepoContextFixture
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
-internal class GitExtractSelectedChangesOperationTest : GitInMemoryOperationTest() {
-  fun `test extract single file from middle commit`() {
+@TestApplication
+internal class GitExtractSelectedChangesOperationTest {
+  private val fixture = gitSingleRepoContextFixture().gitInMemoryOperationFixture()
+  private val context: GitInMemoryOperationContext get() = fixture.get()
+
+  @Test
+  fun `test extract single file from middle commit`(): Unit = with(context) {
     file("a").create().addCommit("Add a")
 
     file("b").create().add()
@@ -41,7 +60,8 @@ internal class GitExtractSelectedChangesOperationTest : GitInMemoryOperationTest
     }
   }
 
-  fun `test extract fires post-rewrite mapping target to remainder and descendants`() {
+  @Test
+  fun `test extract fires post-rewrite mapping target to remainder and descendants`(): Unit = with(context) {
     file("a").create().addCommit("Add a")
 
     file("b").create().add()
@@ -64,16 +84,14 @@ internal class GitExtractSelectedChangesOperationTest : GitInMemoryOperationTest
     val remainderNewHash = getHash(2)
     val dNewHash = getHash(0)
 
-    assertEquals(
-      listOf(
-        RewrittenCommit(targetOldHash, remainderNewHash),
-        RewrittenCommit(dOldHash, dNewHash)
-      ),
-      postRewrites.single().mappings
+    assertThat(postRewrites.single().mappings).containsExactly(
+      RewrittenCommit(targetOldHash, remainderNewHash),
+      RewrittenCommit(dOldHash, dNewHash)
     )
   }
 
-  fun `test extract nested directory structure`() {
+  @Test
+  fun `test extract nested directory structure`(): Unit = with(context) {
     file("a").create().addCommit("Add a")
 
     file("src/main/App.java").create().add()
@@ -107,7 +125,8 @@ internal class GitExtractSelectedChangesOperationTest : GitInMemoryOperationTest
     }
   }
 
-  fun `test extract from initial commit`() {
+  @Test
+  fun `test extract from initial commit`(): Unit = with(context) {
     file("b").create().add()
     file("c").create().add()
     git("commit --amend --no-edit")
@@ -135,7 +154,8 @@ internal class GitExtractSelectedChangesOperationTest : GitInMemoryOperationTest
     }
   }
 
-  fun `test extract removal of a file`() {
+  @Test
+  fun `test extract removal of a file`(): Unit = with(context) {
     file("a").create("content a").addCommit("Add a")
     file("b").create("content b").addCommit("Add b")
 
@@ -167,7 +187,8 @@ internal class GitExtractSelectedChangesOperationTest : GitInMemoryOperationTest
     }
   }
 
-  fun `test extract from commit where file becomes directory`() {
+  @Test
+  fun `test extract from commit where file becomes directory`(): Unit = with(context) {
     file("component").create("component content").addCommit("Create component")
 
     file("component").delete().add()
@@ -184,7 +205,8 @@ internal class GitExtractSelectedChangesOperationTest : GitInMemoryOperationTest
     GitExtractSelectedChangesOperation(objectRepo, commit.id, "Extract component file removal", fileRemoval).run()
       as GitCommitEditingOperationResult.Incomplete
 
-    assertErrorNotification(GitBundle.message("in.memory.rebase.log.changes.extract.failed.title"), GitBundle.message("in.memory.split.tree.mixed.error"))
+    assertErrorNotification(GitBundle.message("in.memory.rebase.log.changes.extract.failed.title"),
+                            GitBundle.message("in.memory.split.tree.mixed.error"))
 
     val filesCreation = filterChangesByFileName(commit, listOf("A.java", "B.java"))
     val result = GitExtractSelectedChangesOperation(objectRepo, commit.id, "Extract component files creation", filesCreation).run()
@@ -203,7 +225,8 @@ internal class GitExtractSelectedChangesOperationTest : GitInMemoryOperationTest
 
     result.undo()
 
-    GitExtractSelectedChangesOperation(objectRepo, commit.id, "Extract file removal and component files creation", filesCreation + fileRemoval).run()
+    GitExtractSelectedChangesOperation(objectRepo, commit.id, "Extract file removal and component files creation",
+                                       filesCreation + fileRemoval).run()
       as GitCommitEditingOperationResult.Complete
 
     with(repo) {
@@ -218,7 +241,8 @@ internal class GitExtractSelectedChangesOperationTest : GitInMemoryOperationTest
     }
   }
 
-  fun `test extract from commit where directory becomes file`() {
+  @Test
+  fun `test extract from commit where directory becomes file`(): Unit = with(context) {
     file("component/A.java").create("content A").add()
     file("component/B.java").create("content B").add()
     commit("Create component dir")
@@ -248,11 +272,13 @@ internal class GitExtractSelectedChangesOperationTest : GitInMemoryOperationTest
     GitExtractSelectedChangesOperation(objectRepo, commit.id, "Extract component directory file removal", directoryFileRemoval).run()
       as GitCommitEditingOperationResult.Incomplete
 
-    assertErrorNotification(GitBundle.message("in.memory.rebase.log.changes.extract.failed.title"), GitBundle.message("in.memory.split.tree.mixed.error"))
+    assertErrorNotification(GitBundle.message("in.memory.rebase.log.changes.extract.failed.title"),
+                            GitBundle.message("in.memory.split.tree.mixed.error"))
 
     val directoryRemovalAndFileCreation = filterChangesByFileName(commit, listOf("A.java", "B.java", "component"))
 
-    GitExtractSelectedChangesOperation(objectRepo, commit.id, "Extract directory removal and file creation", directoryRemovalAndFileCreation).run()
+    GitExtractSelectedChangesOperation(objectRepo, commit.id, "Extract directory removal and file creation",
+                                       directoryRemovalAndFileCreation).run()
       as GitCommitEditingOperationResult.Complete
 
     with(repo) {

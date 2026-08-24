@@ -105,12 +105,20 @@ jobs:
     runs-on: ubuntu-latest
     needs: check_paths
     if: needs.check_paths.outputs.run_formalities == 'true'
+    permissions:
+      contents: read
+      pull-requests: read
 
     steps:
+      # These scripts only need the PR number via the GitHub API. Checkout the
+      # base SHA so a PR cannot replace the validators that receive GH_TOKEN
+      # and JEWEL_YT_TOKEN (JEWEL-1288).
       - uses: actions/checkout@v7.0.1
+        name: Check out base branch scripts only
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
-        name: Check out repository
+          ref: ${{ github.event.pull_request.base.sha }}
+          sparse-checkout: |
+            platform/jewel/scripts/
 
       - name: Grant execute permission to validation scripts
         run: chmod +x ./scripts/validate-commit-message.sh && chmod +x ./scripts/validate-pr-commits.sh
@@ -131,6 +139,9 @@ jobs:
   annotate_breaking_api_changes:
     name: Annotate breaking API changes with IJP dumps
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
 
     steps:
       - uses: actions/checkout@v7.0.1
@@ -138,6 +149,22 @@ jobs:
           # We need fetch-depth: '2' so we get HEAD~1 in case this is missing the PR token
           fetch-depth: '2'
         name: Check out repository
+
+      # The job needs the PR's API dumps, but must run the trusted annotator
+      # with GH_TOKEN, not a replacement from the PR (JEWEL-1288).
+      - uses: actions/checkout@v7.0.1
+        name: Check out trusted CI scripts from the base branch
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          sparse-checkout: |
+            platform/jewel/scripts/
+          path: .trusted-base-scripts
+
+      - name: Overlay trusted CI scripts
+        working-directory: .
+        run: |
+          rm -rf platform/jewel/scripts
+          cp -a .trusted-base-scripts/platform/jewel/scripts platform/jewel/scripts
 
       - name: Set up Kotlin ${{ env.KOTLIN_VERSION }}
         id: kotlin
@@ -287,6 +314,81 @@ jobs:
             exit 1
           fi
           echo "Bazel build files look up-to-date."
+
+  spectre_tests:
+    name: Jewel Spectre tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+
+    steps:
+      - uses: actions/checkout@v7.0.1
+        name: Check out repository
+
+      - name: Install Xvfb
+        # libxrandr2 and libxinerama1 are dlopened, so nothing reports them missing.
+        # language=bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            xvfb \
+            libxrender1 \
+            libxtst6 \
+            libxi6 \
+            libxrandr2 \
+            libxinerama1 \
+            libgl1 \
+            libfontconfig1
+
+      - name: Run the Spectre headful UI tests
+        run: |
+          xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" \
+            ./bazel.cmd test //platform/jewel/... \
+              --build_tests_only \
+              --test_tag_filters=requires-display \
+              --test_output=errors
+
+      - name: Upload Bazel test logs
+        uses: actions/upload-artifact@v7.0.1
+        if: failure()
+        with:
+          name: spectre-test-logs
+          path: out/bazel-testlogs/platform/jewel/**
+          retention-days: 7
+          if-no-files-found: ignore
+
+  spectre_tests_windows:
+    name: Jewel Spectre tests (Windows)
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: .
+
+    steps:
+      # Kotlin test data blows past MAX_PATH, so checkout fails with "Filename too long" without this.
+      - name: Enable long paths
+        run: git config --global core.longpaths true
+
+      - uses: actions/checkout@v7.0.1
+        name: Check out repository
+
+      - name: Run the Spectre headful UI tests
+        # Not redundant: JDialogRenderer uses RenderSettings.SwingGraphics on Windows.
+        run: >
+          ./bazel.cmd test //platform/jewel/...
+          --build_tests_only
+          --test_tag_filters=requires-display
+          --test_output=errors
+
+      - name: Upload Bazel test logs
+        uses: actions/upload-artifact@v7.0.1
+        if: failure()
+        with:
+          name: spectre-test-logs-windows
+          path: out/bazel-testlogs/platform/jewel/**
+          retention-days: 7
+          if-no-files-found: ignore
 
   metalava:
     name: Check for breaking API changes with Metalava

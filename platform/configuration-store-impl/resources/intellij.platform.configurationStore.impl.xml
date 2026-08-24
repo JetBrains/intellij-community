@@ -25,9 +25,11 @@
     <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.serviceContainer"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.util.ex"/>
     <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.workspace.jps"/>
   </dependencies>
   <!-- endregion -->
   <extensionPoints>

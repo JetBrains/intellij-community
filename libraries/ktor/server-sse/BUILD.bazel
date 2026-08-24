@@ -1,0 +1,49 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.libraries.ktor.server.sse` start
+jvm_library(
+    name = "libraries-ktor-server-sse",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.ktor.server.sse",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-ktor-server-sse-ktor-server-sse-jvm"],
+    runtime_deps = ["@lib//:libraries-ktor-server-sse-ktor-server-sse-jvm"],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-ktor-server-sse-ktor-server-sse-jvm"],
+    module = ":libraries-ktor-server-sse",
+)
+
+jvm_library(
+    name = "libraries-ktor-server-sse_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.ktor.server.sse",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-ktor-server-sse-ktor-server-sse-jvm"],
+    runtime_deps = [":libraries-ktor-server-sse"],
+)
+### auto-generated section `build intellij.libraries.ktor.server.sse` end
+
+### auto-generated section `iml intellij.libraries.ktor.server.sse` start
+exports_files(
+    [
+        "intellij.libraries.ktor.server.sse.iml",
+        "resources/intellij.libraries.ktor.server.sse.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.ktor.server.sse` end

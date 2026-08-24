@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Version
 import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.agent.TerminalAgent
 import org.jetbrains.plugins.terminal.fus.TerminalCommandUsageStatistics.getKnownCommandValuesListWithoutPaths
 import org.jetbrains.plugins.terminal.fus.TerminalShellInfoStatistics.KNOWN_SHELLS
 import org.jetbrains.plugins.terminal.fus.TerminalShellInfoStatistics.getShellNameForStat
@@ -27,7 +26,7 @@ private const val GROUP_ID = "terminal"
 object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup(GROUP_ID, 19)
+  private val GROUP = EventLogGroup(GROUP_ID, 20)
 
   private val OS_VERSION_FIELD = EventFields.StringValidatedByRegexpReference("os-version", "version")
   private val SHELL_STR_FIELD = EventFields.String("shell", KNOWN_SHELLS.toList())
@@ -38,8 +37,6 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   private val TABS_COUNT = EventFields.Int("tab_count", "Total number of terminal tabs including the newly added one")
   private val FOCUS = StringEventField.ValidatedByCustomValidationRule("counterpart", TerminalFocusRule::class.java)
   private val AGENT_WORKBENCH_PROVIDER_FIELD = EventFields.String("provider", listOf("codex", "claude"))
-  private val TERMINAL_AI_AGENT_FIELD = EventFields.Enum<FusTerminalAiAgent>("agent")
-  private val IS_INSTALL_FIELD = EventFields.Boolean("is_install")
   private val PROCESS_EXECUTABLE = EventFields.String("process_executable", getKnownCommandValuesListWithoutPaths())
   private val INSERTED_CONTENT_TYPE = EventFields.Enum<TerminalInsertedContentType>("content_type")
   private val INSERTED_CONTENT_SOURCE = EventFields.Enum<TerminalInsertedContentSource>("content_source")
@@ -154,17 +151,6 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   private val agentWorkbenchPromoActivationSucceededEvent = GROUP.registerEvent(
     "agent.workbench.promo.activation.succeeded",
     AGENT_WORKBENCH_PROVIDER_FIELD,
-  )
-
-  private val agentLaunchedEvent = GROUP.registerEvent(
-    "agent.launched",
-    TERMINAL_AI_AGENT_FIELD,
-    IS_INSTALL_FIELD,
-  )
-
-  private val agentInstalledEvent = GROUP.registerEvent(
-    "agent.installed",
-    TERMINAL_AI_AGENT_FIELD,
   )
 
   @JvmStatic
@@ -333,14 +319,6 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   fun logAgentWorkbenchPromoActivationSucceeded(project: Project, provider: String) {
     agentWorkbenchPromoActivationSucceededEvent.log(project, provider)
   }
-
-  fun logAgentLaunched(project: Project, agentKey: TerminalAgent.AgentKey, isInstall: Boolean) {
-    agentLaunchedEvent.log(project, agentKey.toFusTerminalAiAgent(), isInstall)
-  }
-
-  fun logAgentInstalled(project: Project, agentKey: TerminalAgent.AgentKey) {
-    agentInstalledEvent.log(project, agentKey.toFusTerminalAiAgent())
-  }
 }
 
 @ApiStatus.Internal
@@ -357,23 +335,6 @@ enum class TerminalInsertedContentSource {
   IDE,
   EXTERNAL_APP,
   CLIPBOARD,
-}
-
-internal enum class FusTerminalAiAgent {
-  NONE,
-  JUNIE,
-  CLAUDE_CODE,
-  CODEX,
-  OTHER,
-}
-
-internal fun TerminalAgent.AgentKey.toFusTerminalAiAgent(): FusTerminalAiAgent {
-  return when (this.key) {
-    "junie" -> FusTerminalAiAgent.JUNIE
-    "claude_code" -> FusTerminalAiAgent.CLAUDE_CODE
-    "codex" -> FusTerminalAiAgent.CODEX
-    else -> FusTerminalAiAgent.OTHER
-  }
 }
 
 @ApiStatus.Internal

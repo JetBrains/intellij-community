@@ -81,7 +81,8 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
     if (indentColumn < 0) return; // 0 is possible in Rider virtual formatting, and it is logically sound
 
     FoldingModel foldingModel = editor.getFoldingModel();
-    if (foldingModel.isOffsetCollapsed(startOffset)) return;
+    FoldRegion startRegion = foldingModel.getCollapsedRegionAtOffset(startOffset);
+    if (startRegion != null && doc.getLineNumber(startRegion.getEndOffset()) > doc.getLineNumber(startOffset)) return;
 
     FoldRegion headerRegion = foldingModel.getCollapsedRegionAtOffset(doc.getLineEndOffset(doc.getLineNumber(startOffset)));
     FoldRegion tailRegion = foldingModel.getCollapsedRegionAtOffset(doc.getLineStartOffset(doc.getLineNumber(endOffset)));

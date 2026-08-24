@@ -1,0 +1,74 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.java.ide.customization.backend` start
+jvm_library(
+    name = "backend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.ide.customization.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/non-modal-welcome-screen/backend",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//platform/non-modal-welcome-screen",
+        "//platform/kernel/rpc.backend",
+        "//platform/project/shared:project",
+        "//platform/platform-api:ide",
+        "//platform/ide-core",
+        "//platform/core-ui",
+        "@lib//:kotlin-stdlib",
+        "//platform/platform-impl:ide-impl",
+    ],
+)
+
+content_module_jar(module = ":backend")
+
+jvm_library(
+    name = "backend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.ide.customization.backend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":backend",
+        "//platform/non-modal-welcome-screen/backend:backend_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/non-modal-welcome-screen:non-modal-welcome-screen_test_lib",
+        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
+        "//platform/project/shared:project_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+    ],
+)
+### auto-generated section `build intellij.java.ide.customization.backend` end
+
+### auto-generated section `iml intellij.java.ide.customization.backend` start
+exports_files(
+    [
+        "intellij.java.ide.customization.backend.iml",
+        "resources/intellij.java.ide.customization.backend.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.java.ide.customization.backend` end

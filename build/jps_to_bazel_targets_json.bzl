@@ -12,6 +12,7 @@ def _jps_to_bazel_targets_json_impl(ctx):
     args.add_all(ctx.attr.starlark_library_targets, format_each = "--starlark-library=%s")
     args.add_all(ctx.attr.starlark_iml_targets, format_each = "--starlark-iml=%s")
     args.add_all(ctx.attr.starlark_plugin_distribution_targets, format_each = "--starlark-plugin-distribution=%s")
+    args.add_all(ctx.attr.starlark_plugin_content_report_files, format_each = "--starlark-plugin-content=%s")
     args.use_param_file("@%s", use_always = True)
 
     env = {}
@@ -68,6 +69,14 @@ jps_to_bazel_targets_json = rule(
         "starlark_plugin_distribution_targets": attr.string_list(
             default = [],
             doc = "Starlark-derived plugin distribution targets for parity assertion.",
+        ),
+        "starlark_plugin_content_report_files": attr.string_list(
+            default = [],
+            doc = """Starlark-derived `plugin-content.yaml` file labels for parity assertion.
+
+The inputs of the `contentTarget` half of `pluginDistributionTargets`, not the targets: whether a report yields a
+content target depends on what the report says, which only the converter reads. Asserting the file set is what proves
+the converter saw every report the checkout has, which is the property a missing manifest entry would break.""",
         ),
         "jps_to_bazel_treat_kotlin_dev_version_as_snapshot": attr.string(
             default = "",

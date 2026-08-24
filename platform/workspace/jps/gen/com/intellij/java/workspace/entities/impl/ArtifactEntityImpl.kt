@@ -18,7 +18,6 @@ import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
@@ -103,17 +102,6 @@ internal class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : 
       if (!getEntityData().isArtifactTypeInitialized()) {
         error("Field ArtifactEntity#artifactType should be initialized")
       }
-// Check initialization for list with ref type
-      if (_diff != null) {
-        if (_diff.instrumentation.getManyChildrenBuilders(CUSTOMPROPERTIES_CONNECTION_ID, this) == null) {
-          error("Field ArtifactEntity#customProperties should be initialized")
-        }
-      }
-      else {
-        if (this.entityLinks[EntityLink(true, CUSTOMPROPERTIES_CONNECTION_ID)] == null) {
-          error("Field ArtifactEntity#customProperties should be initialized")
-        }
-      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -127,7 +115,7 @@ internal class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : 
       if (this.name != dataSource.name) this.name = dataSource.name
       if (this.artifactType != dataSource.artifactType) this.artifactType = dataSource.artifactType
       if (this.includeInProjectBuild != dataSource.includeInProjectBuild) this.includeInProjectBuild = dataSource.includeInProjectBuild
-      if (this.outputUrl != dataSource?.outputUrl) this.outputUrl = dataSource.outputUrl
+      if (this.outputUrl != dataSource.outputUrl) this.outputUrl = dataSource.outputUrl
       updateChildToParentReferences(parents)
     }
 
@@ -173,6 +161,7 @@ internal class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : 
         if (_diff != null) index(this, "outputUrl", value)
       }
     override var rootElement: CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
+      @Suppress("UNCHECKED_CAST")
       get() = getChild(ROOTELEMENT_CONNECTION_ID) as? CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
       set(value) {
         changeChild(value, ROOTELEMENT_CONNECTION_ID)

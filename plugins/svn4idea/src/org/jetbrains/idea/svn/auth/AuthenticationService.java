@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.auth;
 
 import com.intellij.openapi.application.ModalityState;
@@ -9,10 +9,12 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.WaitForProgressToShow;
-import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.IdeHttpClientHelpers;
+import com.intellij.util.net.JdkProxyProvider;
+import com.intellij.util.net.ProxyConfiguration;
+import com.intellij.util.net.ProxySettings;
+import com.intellij.util.net.ProxyUtils;
 import com.intellij.util.net.ssl.CertificateManager;
-import com.intellij.util.proxy.CommonProxy;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
@@ -261,8 +263,10 @@ public final class AuthenticationService {
 
   // TODO: rename
   public boolean haveDataForTmpConfig() {
-    final HttpConfigurable instance = HttpConfigurable.getInstance();
-    return myConfiguration.isUseDefaultProxy() && (instance.USE_HTTP_PROXY || instance.USE_PROXY_PAC);
+    var proxyConfig = ProxySettings.getInstance().getProxyConfiguration();
+    return myConfiguration.isUseDefaultProxy() && (
+      proxyConfig instanceof ProxyConfiguration.StaticProxyConfiguration || proxyConfig instanceof ProxyConfiguration.ProxyAutoConfiguration
+    );
   }
 
   public static @Nullable Proxy getIdeaDefinedProxy(final @NotNull Url url) {
@@ -275,12 +279,12 @@ public final class AuthenticationService {
     // To prevent such behavior repositoryUrl is manually removed from noProxy() list (for current thread).
     // NOTE, that current method is only called from code flows for executing commands through command line client and should not be called
     // from SVNKit code flows.
-    CommonProxy.getInstance().removeNoProxy(url.getProtocol(), url.getHost(), url.getPort());
+    // no-op CommonProxy.getInstance().removeNoProxy(url.getProtocol(), url.getHost(), url.getPort());
 
-    final List<Proxy> proxies = CommonProxy.getInstance().select(URI.create(url.toString()));
+    final List<Proxy> proxies = JdkProxyProvider.getInstance().getProxySelector().select(URI.create(url.toString()));
     if (!proxies.isEmpty()) {
       for (Proxy proxy : proxies) {
-        if (HttpConfigurable.isRealProxy(proxy) && Proxy.Type.HTTP.equals(proxy.type())) {
+        if (ProxyUtils.isRealProxy(proxy) && Proxy.Type.HTTP.equals(proxy.type())) {
           return proxy;
         }
       }
@@ -306,11 +310,10 @@ public final class AuthenticationService {
   }
 
   private static void showFailedAuthenticateProxy() {
-    HttpConfigurable instance = HttpConfigurable.getInstance();
-    String message = instance.USE_HTTP_PROXY || instance.USE_PROXY_PAC
-                     ? message("popup.content.failed.to.authenticate.to.proxy.change.credentials")
-                     : message("popup.content.failed.to.authenticate.to.proxy");
-
+    var proxyConfig = ProxySettings.getInstance().getProxyConfiguration();
+    var message = proxyConfig instanceof ProxyConfiguration.StaticProxyConfiguration || proxyConfig instanceof ProxyConfiguration.ProxyAutoConfiguration
+      ? message("popup.content.failed.to.authenticate.to.proxy.change.credentials")
+      : message("popup.content.failed.to.authenticate.to.proxy");
     PopupUtil.showBalloonForActiveComponent(message, MessageType.ERROR);
   }
 

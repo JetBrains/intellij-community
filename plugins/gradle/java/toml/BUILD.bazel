@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.gradle.java.toml` start
 jvm_library(
@@ -38,6 +39,8 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
     ],
 )
+
+content_module_jar(module = ":toml")
 
 jvm_library(
     name = "toml_test_lib",

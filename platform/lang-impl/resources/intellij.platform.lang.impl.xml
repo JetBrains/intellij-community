@@ -37,6 +37,7 @@
     <module name="intellij.platform.analysis.impl"/>
     <module name="intellij.platform.builtInServer"/>
     <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.codeStyle.impl"/>
     <module name="intellij.platform.configurationStore.impl"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
@@ -69,8 +70,10 @@
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.rd.community"/>
+    <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.rpc.lite"/>
     <module name="intellij.platform.runtime.product"/>
+    <module name="intellij.platform.serviceContainer"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.syntax.psi"/>
     <module name="intellij.platform.testIntegration"/>
@@ -82,6 +85,7 @@
     <module name="intellij.platform.util.ex"/>
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.welcomeScreen.impl"/>
+    <module name="intellij.platform.workspace.jps"/>
   </dependencies>
   <!-- endregion -->
 
@@ -546,6 +550,13 @@
                  description="Prevents Project View from loading directory children eagerly for directories in remote file systems."/>
     <registryKey key="project.structure.source.roots.editable.limit" defaultValue="20"
                  description="Maximum number of source roots under a content root to be editable"/>
+    <registryKey key="ide.scanning.cancellation.monitor" defaultValue="true"
+                 restartRequired="true"
+                 description="Detect scanning threads that keep a read action after a write action asked them to stop, report them and cancel them"/>
+    <registryKey key="ide.scanning.cancellation.monitor.grace.ms" defaultValue="10000"
+                 description="How long a scanning thread may keep a read action after a write action became pending, in ms"/>
+    <registryKey key="ide.scanning.cancellation.monitor.max.reports" defaultValue="10"
+                 description="Maximum number of scanning cancellation reports per session. Use '-1' to keep reporting."/>
     <applicationService serviceImplementation="com.intellij.codeInsight.template.TemplateGroupOrderProvider" open="true"/>
     <appStarter id="intentions" implementation="com.intellij.help.impl.IntentionDump" internal="true"/>
     <appStarter id="inspections" implementation="com.intellij.help.impl.InspectionDump" internal="true"/>
@@ -585,6 +596,7 @@
     <postStartupActivity implementation="com.intellij.ide.actions.PowerSaveModeNotifier"/>
     <postStartupActivity implementation="com.intellij.ide.actions.EssentialHighlightingNotifier"/>
     <applicationActivity implementation="com.intellij.codeInsight.editorActions.TypedHandlerPreloader"/>
+    <postStartupActivity implementation="com.intellij.openapi.roots.impl.ScanningCancellationMonitorStarter"/>
     <search.projectOptionsTopHitProvider implementation="com.intellij.ui.tabs.FileColorsOptionsTopHitProvider"/>
     <jbProtocolCommand implementation="com.intellij.navigation.JBProtocolNavigateCommand"/>
     <intentionAction>
@@ -1889,6 +1901,8 @@
     <applicationSettings service="com.intellij.codeInsight.inline.completion.tooltip.onboarding.InlineCompletionOnboardingComponent"/>
     <applicationService serviceInterface="com.intellij.refactoring.move.moveClassesOrPackages.MovedFileProvider"
                         serviceImplementation="com.intellij.refactoring.move.moveClassesOrPackages.DefaultMovedFileProvider"/>
+
+    <applicationActivity implementation="com.intellij.ide.RegionSettingsServiceActivity"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.codeInsight.hints.InlayUnloadingListener" activeInHeadlessMode="false" activeInTestMode="false"
@@ -1914,8 +1928,6 @@
               topic="com.intellij.openapi.editor.colors.EditorColorsListener" activeInHeadlessMode="false"/>
     <listener class="com.intellij.refactoring.suggested.SuggestedRefactoringEditorHintAdvSettingListener"
               topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
-    <listener class="com.intellij.codeInsight.completion.command.commands.ActionsAdjustLastListener"
-              topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
     <listener class="com.intellij.ide.projectView.impl.ProjectViewVfsInfoListener" topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
     <listener class="com.intellij.ide.projectView.impl.ProjectViewIndexableInfoListener" topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
   </applicationListeners>

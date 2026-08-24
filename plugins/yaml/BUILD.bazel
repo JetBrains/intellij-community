@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -116,10 +117,19 @@ exports_files(
         "intellij.yaml.iml",
         "resources/META-INF/plugin.xml",
         "resources/intellij.yaml.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.yaml` end
+
+### auto-generated section `dev content intellij.yaml` start
+dev_dist_plugin_content(
+    content_modules = ["//plugins/yaml/syntax"],
+    descriptor_module = ":yaml",
+    prepacked_content_modules = ["//plugins/yaml/backend:backend_content_module_jar"],
+)
+### auto-generated section `dev content intellij.yaml` end
 
 ### auto-generated section `build intellij.yaml.tests` start
 jvm_library(

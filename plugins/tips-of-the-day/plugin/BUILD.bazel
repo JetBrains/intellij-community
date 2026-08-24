@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.tipsOfTheDay.plugin` start
@@ -33,7 +34,30 @@ exports_files(
     [
         "intellij.tipsOfTheDay.plugin.iml",
         "resources/META-INF/plugin.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.tipsOfTheDay.plugin` end
+
+### auto-generated section `dev content intellij.tipsOfTheDay.plugin` start
+dev_dist_plugin_content(
+    content_modules = ["//plugins/tips-of-the-day:tips"],
+    descriptor_module = ":plugin",
+    libraries = [
+        "@lib//:tips-tips-appcode",
+        "@lib//:tips-tips-big-data-tools",
+        "@lib//:tips-tips-clion",
+        "@lib//:tips-tips-database-plugin",
+        "@lib//:tips-tips-datagrip",
+        "@lib//:tips-tips-goland",
+        "@lib//:tips-tips-idea",
+        "@lib//:tips-tips-idea-ce",
+        "@lib//:tips-tips-phpstorm",
+        "@lib//:tips-tips-pycharm-community",
+        "@lib//:tips-tips-pycharm-pro",
+        "@lib//:tips-tips-rubymine",
+        "@lib//:tips-tips-webstorm",
+    ],
+)
+### auto-generated section `dev content intellij.tipsOfTheDay.plugin` end

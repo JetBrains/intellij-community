@@ -20,10 +20,10 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS
 import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbols
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
@@ -37,11 +37,12 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.k2.codeinsight.fetchReplaceWithPattern
-import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
+import org.jetbrains.kotlin.resolution.KtResolvable
 
 @ApiStatus.Internal
 class KotlinCleanupInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
@@ -95,13 +96,13 @@ private fun KtFile.hasAnnotationToSuppressDeprecation(): Boolean {
     }
 }
 
+@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
 context(_: KaSession)
 private fun KtImportDirective.isImportToBeRemoved(): Boolean {
     if (isAllUnder) return false
 
-    val symbols = importedReference?.getQualifiedElementSelector()
-        ?.mainReference
-        ?.resolveToSymbols()
+    val symbols = (importedReference?.getQualifiedElementSelector() as? KtResolvable)
+        ?.resolveSymbols()
         ?.filterIsInstance<KaDeclarationSymbol>()
         .orEmpty()
     return symbols.isNotEmpty() && symbols.all { fetchReplaceWithPattern(it) != null }

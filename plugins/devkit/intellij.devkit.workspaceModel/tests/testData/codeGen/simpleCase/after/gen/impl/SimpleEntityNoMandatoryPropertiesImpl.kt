@@ -49,7 +49,7 @@ return emptyList()
 override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?){
 dataSource as SimpleEntityNoMandatoryProperties
 if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-if (this.optionalProperty != dataSource?.optionalProperty) this.optionalProperty = dataSource.optionalProperty
+if (this.optionalProperty != dataSource.optionalProperty) this.optionalProperty = dataSource.optionalProperty
 updateChildToParentReferences(parents)
 }
 override var entitySource: EntitySource

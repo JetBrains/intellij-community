@@ -8,16 +8,16 @@ import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator
+import com.intellij.python.pytools.ToolCommandSpec
+import com.intellij.python.pytools.ToolSearchPath
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.sdk.ToolCommandSpec
 import com.jetbrains.python.sdk.ToolProbeResult
-import com.jetbrains.python.sdk.ToolSearchPath
+import java.nio.file.Path
+import kotlin.time.Duration.Companion.minutes
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
-import java.nio.file.Path
-import kotlin.time.Duration.Companion.minutes
 
 private const val TOOL_VERSION_PROBE_HELPER = "tool_version_probe.sh"
 private const val PYTHON_PATH_OPTION = "--python"

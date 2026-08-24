@@ -24,6 +24,8 @@ import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.antToRegex
 import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
 import org.jetbrains.intellij.build.classPath.PluginBuildResult
+import org.jetbrains.intellij.build.dev.PrepackedPluginContentJar
+import org.jetbrains.intellij.build.dev.PrepackedPluginContentKey
 import org.jetbrains.intellij.build.hasModuleOutputPath
 import org.jetbrains.intellij.build.impl.BUILT_IN_HELP_MODULE_NAME
 import org.jetbrains.intellij.build.impl.DescriptorCacheContainer
@@ -53,6 +55,7 @@ internal suspend fun buildPlugins(
   context: BuildContext,
   copyFiles: Boolean = true,
   layoutOnly: Boolean = false,
+  prepackedPluginContent: Map<PrepackedPluginContentKey, PrepackedPluginContentJar> = emptyMap(),
   additionalScrambleDescriptorsProvider: (suspend () -> Collection<PluginBuildResult>)? = null,
   pluginBuilt: (suspend (PluginLayout, pluginDirOrFile: Path) -> List<DistributionFileEntry>)? = null,
 ): List<PluginBuildResult> {
@@ -76,11 +79,12 @@ internal suspend fun buildPlugins(
         context = context,
         copyFiles = copyFiles,
         pluginBuilt = pluginBuilt,
+        prepackedPluginContent = prepackedPluginContent,
       )
     }
   }
 
-  val resultsForPluginsBuiltByBazel = buildPluginsByBazel(pluginsBuildByBazel, targetDir, context)
+  val resultsForPluginsBuiltByBazel = buildPluginsByBazel(pluginsBuildByBazel, targetDir, descriptorCacheContainer, context)
   val results = (resultsForPluginsBuiltInProcess + resultsForPluginsBuiltByBazel.map { it to null }).sortedBy { it.first.mainModule }
 
   val scrambleTasks = results.mapNotNull { it.second }
@@ -165,6 +169,7 @@ private suspend fun CoroutineScope.buildPlugin(
   context: BuildContext,
   copyFiles: Boolean,
   pluginBuilt: (suspend (PluginLayout, Path) -> List<DistributionFileEntry>)?,
+  prepackedPluginContent: Map<PrepackedPluginContentKey, PrepackedPluginContentJar>,
 ): Pair<PluginBuildResult, ScrambleTask?> {
   val directoryName = pluginLayout.directoryName
   val pluginDir = targetDir.resolve(directoryName)
@@ -195,6 +200,7 @@ private suspend fun CoroutineScope.buildPlugin(
     )
   }
 
+  val prepackedContentJars = ArrayList<PrepackedPluginContentJar>()
   val task = spanBuilder("plugin").setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString()).use {
     val (entries, file) = layoutDistribution(
       layout = pluginLayout,
@@ -205,6 +211,8 @@ private suspend fun CoroutineScope.buildPlugin(
       includedModules = pluginLayout.includedModules,
       searchableOptionSet = searchableOptionSet,
       cachedDescriptorWriterProvider = descriptorCacheContainer.forPlugin(pluginDir),
+      prepackedPluginContent = prepackedPluginContent,
+      prepackedPluginContentJars = prepackedContentJars,
       context = context,
     )
 
@@ -216,7 +224,14 @@ private suspend fun CoroutineScope.buildPlugin(
     }
   }
 
-  val buildResult = PluginBuildResult(mainModule = pluginLayout.mainModule, dir = pluginDir, os = os, arch = arch, distribution = task)
+  val buildResult = PluginBuildResult(
+    mainModule = pluginLayout.mainModule,
+    dir = pluginDir,
+    os = os,
+    arch = arch,
+    distribution = task,
+    prepackedContentJars = prepackedContentJars,
+  )
   var scrambleTask: ScrambleTask? = null
   if (!pluginLayout.pathsToScramble.isEmpty()) {
     val attributes = Attributes.of(AttributeKey.stringKey("plugin"), directoryName)

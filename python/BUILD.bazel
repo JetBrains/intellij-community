@@ -1,6 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.pycharm.community` start
 resourcegroup(
@@ -523,6 +524,7 @@ jvm_library(
         "//platform/testIntegration",
         "//platform/testIntegration-ui",
         "//python/python-poetry/backend",
+        "//platform/eel-nioFs",
     ],
 )
 
@@ -686,6 +688,7 @@ jvm_library(
         "//platform/testIntegration:testIntegration_test_lib",
         "//platform/testIntegration-ui:testIntegration-ui_test_lib",
         "//python/python-poetry/backend:backend_test_lib",
+        "//platform/eel-nioFs:eel-nioFs_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.community.impl` end
@@ -1599,6 +1602,8 @@ jvm_library(
         "//platform/ide-core",
     ],
 )
+
+content_module_jar(module = ":python-pydev")
 
 jvm_library(
     name = "python-pydev_test_lib",

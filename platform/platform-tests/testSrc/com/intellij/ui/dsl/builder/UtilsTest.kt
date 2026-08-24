@@ -4,7 +4,9 @@ package com.intellij.ui.dsl.builder
 import com.intellij.icons.AllIcons
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.assertInstanceOf
+import com.intellij.ui.components.Badge
 import com.intellij.ui.icons.getReflectiveIcon
+import com.intellij.ui.icons.isReflectivePath
 import com.intellij.util.ui.EmptyIcon
 import org.junit.Before
 import org.junit.Test
@@ -14,6 +16,7 @@ import javax.swing.Icon
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 class UtilsTest {
 
@@ -42,14 +45,16 @@ class UtilsTest {
 
   @Test
   fun testToHtmlIcon() {
-    val src = "AllIcons.General.Information"
-
     // Check top level icon as a corner case
     assertEquals("<icon src='AllIcons.Empty'>", toHtmlIcon(AllIcons::Empty))
-    assertEquals("<icon src='$src'>", toHtmlIcon(AllIcons.General::Information))
-    assertSame(AllIcons.General.Information, getReflectiveIcon(src, AllIcons::class.java.classLoader))
+    assertEquals("<icon src='AllIcons.General.Information'>", toHtmlIcon(AllIcons.General::Information))
+    assertEquals("<icon src='Badge.beta'>", toHtmlIcon(Badge::beta))
+    assertSame(AllIcons.General.Information, getReflectiveIcon("AllIcons.General.Information", AllIcons::class.java.classLoader))
+    assertSame(Badge.new, getReflectiveIcon("Badge.new", Badge::class.java.classLoader))
+    assertSame(Badge.beta, getReflectiveIcon("Badge.beta", Badge::class.java.classLoader))
+    assertTrue(isReflectivePath("Badge.beta"))
 
-    // only AllIcons properties are supported
+    // only AllIcons and Badge properties are supported
     assertFailsWith<IllegalArgumentException> {
       toHtmlIcon(EmptyIcon::ICON_16)
     }
@@ -62,24 +67,28 @@ class UtilsTest {
   }
 
   /**
-   * Checks that the src built by [toHtmlIconSrc] can be resolved back by [getReflectiveIcon] for every [AllIcons] icon
+   * Checks that the src built by [toHtmlIconSrc] can be resolved back by [getReflectiveIcon] for every supported icon
    */
   @Test
   fun testToHtmlIconSrcConsistency() {
     assertEquals("AllIcons.General.Information", toHtmlIconSrc(AllIcons.General::Information))
+    assertEquals("Badge.beta", toHtmlIconSrc(Badge::beta))
 
-    val allIcons = mutableListOf<Pair<Field, String>>()
-    collectIcons(AllIcons::class.java, allIcons)
+    for (rootClass in SUPPORTED_ICON_CLASSES) {
+      val icons = mutableListOf<Pair<Field, String>>()
+      collectIcons(rootClass, rootClass, icons)
+      assertTrue(icons.isNotEmpty(), "No icons found in ${rootClass.name}")
 
-    for ((field, src) in allIcons) {
-      val icon = field.get(null)
-      assertInstanceOf<Icon>(icon)
-      assertSame(icon, getReflectiveIcon(src, AllIcons::class.java.classLoader), "Inconsistent icon for src '$src'")
+      for ((field, src) in icons) {
+        val icon = field.get(null)
+        assertInstanceOf<Icon>(icon)
+        assertSame(icon, getReflectiveIcon(src, rootClass.classLoader), "Inconsistent icon for src '$src'")
+      }
     }
   }
 }
 
-private fun collectIcons(clazz: Class<*>, result: MutableList<Pair<Field, String>>) {
+private fun collectIcons(clazz: Class<*>, rootClass: Class<*>, result: MutableList<Pair<Field, String>>) {
   for (field in clazz.declaredFields) {
     if (!Modifier.isStatic(field.modifiers) ||
         !Modifier.isPublic(field.modifiers) ||
@@ -87,12 +96,12 @@ private fun collectIcons(clazz: Class<*>, result: MutableList<Pair<Field, String
       continue
     }
     // The same src as toHtmlIconSrc builds: com.intellij.icons.AllIcons$General + Information -> AllIcons.General.Information
-    val src = clazz.name.substring(AllIcons::class.java.packageName.length + 1).replace('$', '.') + '.' + field.name
+    val src = clazz.name.substring(rootClass.packageName.length + 1).replace('$', '.') + '.' + field.name
     result += Pair(field, src)
   }
 
   for (nestedClass in clazz.declaredClasses) {
-    collectIcons(nestedClass, result)
+    collectIcons(nestedClass, rootClass, result)
   }
 }
 

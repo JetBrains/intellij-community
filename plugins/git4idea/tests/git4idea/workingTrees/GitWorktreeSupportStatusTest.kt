@@ -3,15 +3,18 @@ package git4idea.workingTrees
 
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.vcs.test.vcsTestProjectPathFixture
+import git4idea.config.GitSaveChangesPolicy
 import git4idea.test.GitPlatformTestContext
 import git4idea.test.createRepository
+import git4idea.test.gitPlatformContextFixture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 @TestApplication
 @RegistryKey("git.enable.working.trees.feature", "true")
 internal class GitWorktreeSupportStatusTest {
-  private val contextFixture = gitWorkingTreePlatformFixture()
+  private val contextFixture = gitPlatformContextFixture()
   private val context: GitPlatformTestContext get() = contextFixture.get()
 
   @Test

@@ -10,46 +10,165 @@ scrambling require both component layouts in one process.
 
 load("@community//build:project_model_manifest.bzl", "write_project_model_manifest")
 load("//build:dev_launch_dependencies.bzl", "platform_parts")
+load(":dev_dist_content.bzl", "DevDistContentInfo", "DevDistPlatformPayloadInfo")
 
 IntellijDevBuildInputsInfo = provider(
     doc = "The exact Bazel inputs and label-to-path manifest made available to one dev-build fragment.",
     fields = {
         "files": "The input files named by the manifest.",
         "manifest": "The logical Bazel input label to execution path manifest.",
+        "inputs_origin": "The sidecar naming which half of the declaration each manifest key came from.",
+        "prepacked_plugin_jars": "The typed prepacked plugin-jar records carried by this content.",
+        "prepacked_plugin_jars_plan": "The relation-only plan passed to JarPackager; it contains no jar paths.",
     },
 )
 
+# How strongly a declaration half demands its key, lowest first, for a key more than one half names.
+_ORIGIN_RANK = {"raw": 0, "member": 1, "library": 2}
+
+def _add_input_entry(ctx, entries, origins, logical_key, files, source, origin):
+    """Record one manifest entry, failing when two different file lists claim the same logical key.
+
+    Same key, same files is the normal case - two content targets naming the same module, say - and deduplicates.
+
+    [files] is a *list* because one key does not always mean one file: a module or a raw input is one jar, but a library
+    is keyed by the container target that groups its jars (see `_collect_libraries` in `dev_dist_content.bzl`) and a
+    multi-jar library has several, in an order the packer depends on. The manifest still holds one line per file, which
+    is what keeps `wc -l` counting files for `dev_dist_unused_inputs_test.bzl`. The origin sidecar stays one line per
+    *key* and is read as a lookup rather than positionally (`tallyOrigins` in `//build/dev-dist` keeps the manifest as
+    a list of pairs and the origins as a `Map`), so a repeated key resolves to the one origin it was recorded under.
+
+    [origin] is written to a sidecar only, never to the manifest: it answers "which half of the declaration asked for
+    this key", which is what turns `.unused-inputs` from a count into an attributable measurement.
+    """
+    previous_origin = origins.get(logical_key)
+    if previous_origin == None or _ORIGIN_RANK[origin] < _ORIGIN_RANK[previous_origin]:
+        origins[logical_key] = origin
+
+    previous = entries.get(logical_key)
+    if previous == None:
+        entries[logical_key] = files
+    elif previous != files:
+        fail("%s: logical input '%s' is provided by both %s and %s" % (
+            ctx.label,
+            logical_key,
+            [file.owner for file in previous],
+            source,
+        ))
+
+def _prepacked_by_relation(ctx, entries):
+    """Index prepacked plugin-jar records by their *(plugin, content module)* relation.
+
+    Same relation, same placement and same jar is the normal case - a content module shared by two plugins, or a
+    community half and the completion set naming the same member - and deduplicates. Anything else is two producers
+    disagreeing about where one jar goes, which the composer would only catch if the paths happened to collide.
+    """
+    result = {}
+    for entry in entries:
+        key = (entry.plugin_main_module, entry.content_module)
+        previous = result.get(key)
+        if previous != None and (previous.relative_output_file != entry.relative_output_file or previous.jar != entry.jar):
+            fail("%s: prepacked plugin relation %s/%s is provided by conflicting records" % (
+                ctx.label,
+                entry.plugin_main_module,
+                entry.content_module,
+            ))
+        result[key] = entry
+    return result
+
 def _dev_build_inputs_impl(ctx):
     entries = {}
+    origins = {}
+    prepacked_plugin_jars = []
+
     for target in ctx.attr.inputs:
-        logical_key = str(target.label)
         files = target[DefaultInfo].files.to_list()
         if len(files) != 1:
             fail("%s: %s must provide exactly one file, got %s" % (ctx.label, target.label, files))
-        file = files[0]
-        previous = entries.get(logical_key)
-        if previous == None:
-            entries[logical_key] = file
-        elif previous != file:
-            fail("%s: logical input '%s' is provided by both %s and %s" % (
-                ctx.label,
-                logical_key,
-                previous.owner,
-                target.label,
-            ))
+        _add_input_entry(ctx, entries, origins, str(target.label), (files[0],), target.label, "raw")
+
+    # A raw input a payload asked for on behalf of named modules, kept only while one of those modules is still declared.
+    # This is where a handed-over `lib/` jar stops costing declarations: the module whose bytes are now in that jar is
+    # not declared, so neither its own output, nor its libraries, nor - through `declared_modules` - anything only its
+    # dependencies needed, stays in the manifest. The value is module *names* because a payload is written in names, and
+    # a name is the one key that means the same thing to the repository rule that wrote it and to analysis here.
+    if ctx.attr.owned_inputs:
+        declared = {name: True for name in ctx.attr.platform_payload[DevDistPlatformPayloadInfo].declared_modules.to_list()}
+        for target, owners in ctx.attr.owned_inputs.items():
+            files = target[DefaultInfo].files.to_list()
+            if len(files) != 1:
+                fail("%s: %s must provide exactly one file, got %s" % (ctx.label, target.label, files))
+            if not [owner for owner in owners.split(" ") if owner in declared]:
+                continue
+            _add_input_entry(ctx, entries, origins, str(target.label), (files[0],), target.label, "raw")
+
+    if ctx.attr.content:
+        content = ctx.attr.content[DevDistContentInfo]
+
+        # The keys must be byte-identical to the ones the generated name table produced, because `DevDistMain` asks
+        # for exactly those strings through `BazelBuildInputs.resolve` and an unknown key is a hard error there.
+        #
+        # A module's production label is the *rule* label plus `.jar` (`compute_module_targets`,
+        # `@community//build:jps_target_derivation.bzl:410-420`), and the rule's jar output is `%{name}.jar`
+        # (`jvm-rules/rules/common-attrs.bzl:129-132`) - so the jar file's owner is the rule and `owner + ".jar"`
+        # reproduces the label. `jps_dynamic_deps_ultimate.bzl:567-570` states the same identity from the other side.
+        for jar in content.module_jars.to_list():
+            _add_input_entry(ctx, entries, origins, str(jar.owner) + ".jar", (jar,), jar.owner, "member")
+
+        # A library is keyed by its *container* target, whose label is not derivable from the jars: a Maven library's
+        # per-jar target is a `copy_file` output, so a file's owner is the `...jar_copy` rule (`lib.kt:408-423`), and the
+        # container is a third label again. The key is what `build/bazel-targets.json` records as
+        # `LibraryDescription.target`, because that is what `findLibraryRoots` asks for; `DevDistContentInfo` carries it
+        # with the container's ordered jars.
+        for entry in content.library_jars.to_list():
+            _add_input_entry(ctx, entries, origins, entry.label, entry.jars, entry.label, "library")
+
+        prepacked_plugin_jars = content.prepacked_plugin_jars.to_list()
 
     lines = []
     files = []
     for logical_key in sorted(entries.keys()):
-        file = entries[logical_key]
-        lines.append("%s\t%s" % (logical_key, file.path))
-        files.append(file)
+        # One line per file, so a multi-jar library repeats its key. `ExplicitBazelInputResolver.load` collects the
+        # repeats into one ordered list; keeping the file as the unit is what lets `wc -l` and the origin sidecar go on
+        # meaning what they meant.
+        for file in entries[logical_key]:
+            lines.append("%s\t%s" % (logical_key, file.path))
+            files.append(file)
     manifest = ctx.actions.declare_file(ctx.label.name + ".bazel-inputs")
-    ctx.actions.write(manifest, "\n".join(lines) + "\n")
+
+    # An empty declaration writes an empty file rather than a lone newline, for the same reason `writeUnusedInputs`
+    # does: `wc -l` is what reads this pair, and a blank line would report one declared input that does not exist.
+    # Unchanged for every non-empty manifest, so no fragment is re-keyed by this.
+    ctx.actions.write(manifest, ("\n".join(lines) + "\n") if lines else "")
+
+    # A sidecar, deliberately not a third column in the manifest: `ExplicitBazelInputResolver.load` splits on the first
+    # tab and takes the rest of the line as the path, and the manifest is an action input - changing its bytes would
+    # re-key every fragment to carry a measurement. Nothing declares this file as an input, so it re-keys nothing.
+    inputs_origin = ctx.actions.declare_file(ctx.label.name + ".bazel-inputs-origin")
+    origin_lines = ["%s\t%s" % (logical_key, origins[logical_key]) for logical_key in sorted(origins.keys())]
+    ctx.actions.write(inputs_origin, ("\n".join(origin_lines) + "\n") if origin_lines else "")
+
+    prepacked_by_key = _prepacked_by_relation(ctx, prepacked_plugin_jars)
+
+    plan_lines = []
+    for key in sorted(prepacked_by_key.keys()):
+        entry = prepacked_by_key[key]
+        for value in [entry.plugin_main_module, entry.content_module, entry.relative_output_file]:
+            if "\t" in value or "\n" in value:
+                fail("%s: prepacked plugin plan value contains a tab or newline: %s" % (ctx.label, value))
+        plan_lines.append("%s\t%s\t%s" % (entry.plugin_main_module, entry.content_module, entry.relative_output_file))
+    prepacked_plan = ctx.actions.declare_file(ctx.label.name + ".prepacked-plugin-jars")
+    ctx.actions.write(prepacked_plan, ("\n".join(plan_lines) + "\n") if plan_lines else "")
 
     return [
-        DefaultInfo(files = depset([manifest])),
-        IntellijDevBuildInputsInfo(files = depset(files), manifest = manifest),
+        DefaultInfo(files = depset([manifest, prepacked_plan, inputs_origin])),
+        IntellijDevBuildInputsInfo(
+            files = depset(files),
+            manifest = manifest,
+            inputs_origin = inputs_origin,
+            prepacked_plugin_jars = depset(prepacked_by_key.values()),
+            prepacked_plugin_jars_plan = prepacked_plan,
+        ),
     ]
 
 intellij_dev_build_inputs = rule(
@@ -58,7 +177,29 @@ intellij_dev_build_inputs = rule(
     attrs = {
         # Inputs are direct generated labels, never aliases: configured Target.label is the manifest key. The Kotlin
         # resolver adds apparent-repository aliases for canonical external-repository labels.
+        #
+        # This half keeps carrying the raw sources - the project-model tree's files, plugin descriptors, build modules -
+        # which are files a generator names one by one and no provider can aggregate.
         "inputs": attr.label_list(allow_files = True),
+        # The jars, aggregated from the graph instead of from a generated name list. Both halves land in one manifest
+        # under the same key convention, so nothing on the Kotlin side can tell where an entry came from.
+        "content": attr.label(providers = [DevDistContentInfo]),
+        # Set on the fragment that owns `lib/`, together with `owned_inputs`. The reference target takes the same split
+        # from the other side - it declares the packed halves through `content` and packs them itself - so one target
+        # drives both and they cannot disagree about which side a module is on.
+        "platform_payload": attr.label(
+            providers = [DevDistPlatformPayloadInfo],
+            doc = "Decides which `owned_inputs` survive, through its `declared_modules`.",
+        ),
+        # Deliberately separate from `inputs`, which stays unconditional. What belongs there is everything a fragment
+        # reads for a reason no payload module owns: the project-model tree's files, the plugin descriptors, the
+        # payload's own library entries, and the build modules - every fragment loads the product properties before it
+        # packs anything, so those jars are classpath rather than content even for the two of them
+        # (`intellij.platform.dependencies`, `intellij.platform.buildScripts.downloader`) that a `lib/` jar also holds.
+        "owned_inputs": attr.label_keyed_string_dict(
+            allow_files = True,
+            doc = "Raw input to the space-separated names of the payload modules that asked for it.",
+        ),
     },
 )
 
@@ -71,6 +212,8 @@ IntellijDevFragmentInfo = provider(
         "plugin_classpath_prefix": "The plugin-classpath prefix, or None if another fragment produces it.",
         "inputs_manifest": "The label-to-path manifest of the fragment's declared Bazel inputs.",
         "unused_inputs": "The declared inputs the assembly never resolved - declared minus these is what it used.",
+        "prepacked_plugin_jars": "The prepacked jar records this fragment hands to a collector without consuming.",
+        "prepacked_plugin_jars_placement": "The assembler-validated placement manifest, or None for a non-plugin component.",
     },
 )
 
@@ -146,9 +289,9 @@ intellij_project_model_tree = rule(
 )
 
 # The selector values `DevDistMain` accepts, mirrored here so a typo in a BUILD file fails at analysis time.
-_PLATFORM_SELECTORS = ["", "all", "core", "content-modules"]
+_PLATFORM_SELECTORS = ["", "except", "only"]
 
-_PLUGIN_SELECTORS = ["", "all", "named", "remaining"]
+_PLUGIN_SELECTORS = ["", "named", "remaining"]
 
 def _add_target_platform_args(args, target_platform):
     if target_platform:
@@ -206,10 +349,18 @@ def _fragment_impl(ctx):
 
     if ctx.attr.platform:
         args.add("--platform=" + ctx.attr.platform)
+        if ctx.attr.platform_payload:
+            # Empty for a `lib/`-owning fragment of a product whose payload packs nothing per module: `except` then owns
+            # all of `lib/`, which is what it meant before any of these jars were handed over.
+            args.add_all(
+                ctx.attr.platform_payload[DevDistPlatformPayloadInfo].packed_jar_names,
+                format_each = "--platform-jar=%s",
+            )
     if ctx.attr.platform_resources:
         args.add("--platform-resources")
 
     plugin_classpath_part = None
+    prepacked_plugin_jars_placement = None
     if ctx.attr.plugins:
         args.add("--plugins=" + ctx.attr.plugins)
         args.add_all(ctx.attr.plugin_main_modules, format_each = "--plugin=%s")
@@ -222,6 +373,11 @@ def _fragment_impl(ctx):
         plugin_classpath_part = ctx.actions.declare_file(ctx.label.name + ".plugin-classpath-part")
         args.add("--plugin-classpath-part=" + plugin_classpath_part.path)
         outputs.append(plugin_classpath_part)
+
+        prepacked_plugin_jars_placement = ctx.actions.declare_file(ctx.label.name + ".prepacked-plugin-jars-placement")
+        args.add("--prepacked-plugin-jars=" + build_inputs.prepacked_plugin_jars_plan.path)
+        args.add("--prepacked-plugin-jars-placement=" + prepacked_plugin_jars_placement.path)
+        outputs.append(prepacked_plugin_jars_placement)
 
     plugin_classpath_prefix = None
     if ctx.attr.produces_plugin_classpath_prefix:
@@ -237,6 +393,7 @@ def _fragment_impl(ctx):
             direct = [
                 project_tree,
                 bazel_inputs_manifest,
+                build_inputs.prepacked_plugin_jars_plan,
                 ctx.file.bazel_targets_json,
             ] + ctx.files.preloaded_downloads + ctx.files.preloaded_manifests + ctx.files.ijent_binaries,
             transitive = [build_inputs.files],
@@ -250,6 +407,10 @@ def _fragment_impl(ctx):
     )
     return [
         DefaultInfo(files = depset([home, component_manifest])),
+        # The three files `./build/dev-dist.cmd inputs` joins, in one group: declared keys with their paths, the
+        # ones the assembly never resolved, and which half of the declaration asked for each. Requesting the group runs
+        # the assembly, which is the point - `used` is only knowable from a real assembly.
+        OutputGroupInfo(declared_inputs = depset([bazel_inputs_manifest, build_inputs.inputs_origin, unused_inputs])),
         IntellijDevFragmentInfo(
             name = ctx.attr.fragment_name,
             home = home,
@@ -258,15 +419,18 @@ def _fragment_impl(ctx):
             plugin_classpath_prefix = plugin_classpath_prefix,
             inputs_manifest = bazel_inputs_manifest,
             unused_inputs = unused_inputs,
+            prepacked_plugin_jars = build_inputs.prepacked_plugin_jars,
+            prepacked_plugin_jars_placement = prepacked_plugin_jars_placement,
         ),
     ]
 
 intellij_dev_fragment = rule(
     doc = """One independently cacheable slice of a dev distribution.
 
-    What the fragment owns is a selector, not a file list: `platform` picks the `lib/` jars by what the plugin model
-    says about them, `plugins` picks bundled plugin directories by main module, and the `remaining*` selectors are the
-    exact complement of what their siblings claimed, so nothing is silently left out of the composition.
+    What the fragment owns is a selector over names, not a file list: `platform` owns `lib/` jars by an explicit
+    generated jar-name set - every jar `except` the named ones, or `only` them - `plugins` picks bundled plugin
+    directories by main module, and the `remaining` selector is the exact complement of what its siblings claimed,
+    so nothing is silently left out of the composition.
     """,
     implementation = _fragment_impl,
     attrs = {
@@ -279,12 +443,20 @@ intellij_dev_fragment = rule(
         # that period, which is what made every dev IDE start expired: a build date over a day ahead of the wall clock
         # is expired too.
         "build_date_seconds": attr.string(default = "1767225600"),  # 2026-01-01T00:00:00Z
-        "mode": attr.string(default = "ultimate", values = ["community", "ultimate"]),
         "platform_prefix": attr.string(mandatory = True),
         "target_platform": attr.string(default = ""),
         "fragment_name": attr.string(mandatory = True, doc = "Identifies this fragment in its manifest, its mnemonic and the composer's completeness check."),
-        "platform": attr.string(default = "", values = _PLATFORM_SELECTORS, doc = "Which `lib/` jars this fragment owns - all, the core that holds no content module, or the content-module jars; empty means none."),
+        "platform": attr.string(default = "", values = _PLATFORM_SELECTORS, doc = "Which `lib/` jars this fragment owns - all `except` the packed ones, or `only` those; empty means none."),
         "platform_resources": attr.bool(default = False, doc = "Whether this fragment owns `bin`, the product metadata, the launchers and the copied product files."),
+        "platform_payload": attr.label(
+            providers = [DevDistPlatformPayloadInfo],
+            doc = "The `lib/` jar file names `platform` reads, as the target that derives them: with `except`, the " +
+                  "jars another component provides and this fragment must therefore not pack; with `only`, the jars " +
+                  "it packs and nothing else. `intellij_dev_packed_jars_component` reads the same provider, so an " +
+                  "`except` fragment and it partition the `lib/` jars exactly; the composer fails on a path both " +
+                  "provide. The fragment still reports those jars' core-classpath entries - deciding that needs the " +
+                  "platform layout, which the packer does not have.",
+        ),
         "plugins": attr.string(default = "", values = _PLUGIN_SELECTORS, doc = "Which bundled plugins this fragment owns; empty means none."),
         "plugin_main_modules": attr.string_list(doc = "For plugins = 'named': the main modules of the plugins this fragment owns."),
         "claimed_plugin_main_modules": attr.string_list(doc = "For plugins = 'remaining': the main modules the sibling fragments own."),
@@ -297,6 +469,150 @@ intellij_dev_fragment = rule(
         "preloaded_downloads": attr.label_list(allow_files = True),
         "preloaded_manifests": attr.label_list(allow_files = True),
         "ijent_binaries": attr.label_list(allow_files = True, doc = "The unpacked IJent binaries the assembly bundles at `lib/ijent/`, so that it extracts nothing itself."),
+    },
+)
+
+def _packed_jars_component_impl(ctx):
+    home = ctx.actions.declare_directory(ctx.label.name + ".home")
+    component_manifest = ctx.actions.declare_file(ctx.label.name + ".component.json")
+
+    # Which jars these are is read off the graph by `dev_dist_platform_payload`, not from a list something had to
+    # keep in step. A module that stops packing a jar stops being collected here in the same analysis that stops
+    # producing it, so the old "handed over but sets no `content_module_jar`" staleness cannot arise.
+    jars = ctx.attr.platform_payload[DevDistPlatformPayloadInfo].packed_jars.to_list()
+
+    jar_list = ctx.actions.args()
+    jar_list.set_param_file_format("multiline")
+    jar_list.use_param_file("--jars-file=%s", use_always = True)
+    jar_list.add_all(jars)
+
+    args = ctx.actions.args()
+    args.add("--output-dir=" + home.path)
+    args.add("--component-manifest=" + component_manifest.path)
+    args.add("--kind=" + ctx.attr.component_name)
+    args.add("--platform-prefix=" + ctx.attr.platform_prefix)
+    _add_target_platform_args(args, ctx.attr.target_platform)
+
+    ctx.actions.run(
+        inputs = depset(jars),
+        outputs = [home, component_manifest],
+        executable = ctx.executable.collector,
+        arguments = [args, jar_list],
+        execution_requirements = _LOCAL_DISK_CACHE_ONLY,
+        mnemonic = "IntellijDevPackedJars",
+        progress_message = "Collecting %d packed %s jars for %%{label}" % (len(jars), ctx.attr.platform_prefix),
+    )
+    return [
+        DefaultInfo(files = depset([home, component_manifest])),
+        IntellijDevFragmentInfo(
+            name = ctx.attr.component_name,
+            home = home,
+            manifest = component_manifest,
+            plugin_classpath_part = None,
+            plugin_classpath_prefix = None,
+            # Not a declared-input boundary: this component reads the jars it collects and nothing else, so there is no
+            # over-declaration to measure. `dev_dist_unused_inputs_report_test` skips a component that reports neither.
+            inputs_manifest = None,
+            unused_inputs = None,
+            prepacked_plugin_jars = depset(),
+            prepacked_plugin_jars_placement = None,
+        ),
+    ]
+
+intellij_dev_packed_jars_component = rule(
+    doc = """The distribution component made of the `lib/` jars `jvm_library` packed itself.
+
+    Every other component is assembled by evaluating the product layout, which declares the shared project-model tree
+    and is therefore re-keyed by any `.iml` edit. These jars are packed by actions that declare only the jars they
+    merge, and this rule does no more than name them `lib/<module>.jar` and inventory them - so an unrelated model edit
+    leaves both the packing and this collection untouched.
+
+    Which jars those are comes from `dev_dist_platform_payload`, which asks the payload's targets; the sibling
+    fragment is handed the same provider and stops packing exactly these jars, so ownership cannot overlap.
+    """,
+    implementation = _packed_jars_component_impl,
+    attrs = {
+        "collector": attr.label(executable = True, cfg = "exec", mandatory = True),
+        "component_name": attr.string(mandatory = True, doc = "Identifies this component in its manifest and in the composer's completeness check."),
+        "platform_prefix": attr.string(mandatory = True),
+        "target_platform": attr.string(default = ""),
+        "platform_payload": attr.label(
+            providers = [DevDistPlatformPayloadInfo],
+            mandatory = True,
+            doc = "The payload's packed `lib/` jars, derived from the graph - see `dev_dist_platform_payload`.",
+        ),
+    },
+)
+
+def _packed_plugin_jars_component_impl(ctx):
+    home = ctx.actions.declare_directory(ctx.label.name + ".home")
+    component_manifest = ctx.actions.declare_file(ctx.label.name + ".component.json")
+
+    placement_manifests = []
+    entries = []
+    for target in ctx.attr.fragments:
+        fragment = target[IntellijDevFragmentInfo]
+        if fragment.prepacked_plugin_jars_placement:
+            placement_manifests.append(fragment.prepacked_plugin_jars_placement)
+        entries.extend(fragment.prepacked_plugin_jars.to_list())
+    records = _prepacked_by_relation(ctx, entries)
+
+    metadata_lines = []
+    jars = []
+    for key in sorted(records.keys()):
+        entry = records[key]
+        metadata_lines.append("%s\t%s\t%s\t%s" % (
+            entry.plugin_main_module,
+            entry.content_module,
+            entry.relative_output_file,
+            entry.jar.path,
+        ))
+        jars.append(entry.jar)
+    metadata = ctx.actions.declare_file(ctx.label.name + ".prepacked-plugin-jars")
+    ctx.actions.write(metadata, ("\n".join(metadata_lines) + "\n") if metadata_lines else "")
+
+    args = ctx.actions.args()
+    args.add("--output-dir=" + home.path)
+    args.add("--component-manifest=" + component_manifest.path)
+    args.add("--kind=" + ctx.attr.component_name)
+    args.add("--platform-prefix=" + ctx.attr.platform_prefix)
+    args.add("--plugin-jars-file=" + metadata.path)
+    args.add_all(placement_manifests, format_each = "--plugin-placement=%s")
+    _add_target_platform_args(args, ctx.attr.target_platform)
+
+    ctx.actions.run(
+        inputs = depset(direct = [metadata] + jars + placement_manifests),
+        outputs = [home, component_manifest],
+        executable = ctx.executable.collector,
+        arguments = [args],
+        execution_requirements = _LOCAL_DISK_CACHE_ONLY,
+        mnemonic = "IntellijDevPackedPluginJars",
+        progress_message = "Collecting packed plugin content jars for %{label}",
+    )
+    return [
+        DefaultInfo(files = depset([home, component_manifest])),
+        IntellijDevFragmentInfo(
+            name = ctx.attr.component_name,
+            home = home,
+            manifest = component_manifest,
+            plugin_classpath_part = None,
+            plugin_classpath_prefix = None,
+            inputs_manifest = None,
+            unused_inputs = None,
+            prepacked_plugin_jars = depset(),
+            prepacked_plugin_jars_placement = None,
+        ),
+    ]
+
+intellij_dev_packed_plugin_jars_component = rule(
+    doc = "Collects plugin content-module jars packed by `jvm_library` into their JarPackager-validated destinations.",
+    implementation = _packed_plugin_jars_component_impl,
+    attrs = {
+        "collector": attr.label(executable = True, cfg = "exec", mandatory = True),
+        "component_name": attr.string(mandatory = True),
+        "platform_prefix": attr.string(mandatory = True),
+        "target_platform": attr.string(default = ""),
+        "fragments": attr.label_list(providers = [IntellijDevFragmentInfo], mandatory = True),
     },
 )
 
@@ -318,6 +634,7 @@ def _compose(ctx, fragment_targets):
         json.encode({
             "version": 1,
             "expectedFragments": ctx.attr.expect_fragments,
+            "additionalModules": ctx.attr.additional_modules,
             "components": [
                 {
                     "root": fragment.home.path,
@@ -354,11 +671,10 @@ def _compose(ctx, fragment_targets):
             fingerprint = fingerprint,
             stamp_inputs = depset(stamp_inputs),
         ),
-        OutputGroupInfo(
-            fingerprint = depset([fingerprint]),
-            home = depset([home]),
-            ide_config = depset([ide_config]),
-        ),
+        # Read by `intellij_dev_dist_config`, which needs the single-file label `$(rlocationpath ...)` takes - which a
+        # dist target, with three outputs, is not. Not reachable through `IntellijDevDistInfo`: the consumers are
+        # `filegroup`s and `$(location)` expansions in `data`, not rules that could ask for a provider.
+        OutputGroupInfo(ide_config = depset([ide_config])),
     ]
 
 def _compose_fragments_impl(ctx):
@@ -371,6 +687,12 @@ intellij_dev_fragments_dist = rule(
         "fragments": attr.label_list(providers = [IntellijDevFragmentInfo], mandatory = True),
         "expect_fragments": attr.string_list(
             doc = "The fragment names this distribution is supposed to be made of, stated independently of `fragments` so that a fragment missing from that list fails composition instead of thinning the IDE.",
+        ),
+        "additional_modules": attr.string_list(
+            doc = "The plugin modules this distribution declares it contains, for `DevIdeConfig`. What the " +
+                  "distribution was configured with, not what any one fragment assembled: a module the product " +
+                  "bundles is packed by a shared plugin fragment, and a consumer asking for it can only find out " +
+                  "from here.",
         ),
     },
 )

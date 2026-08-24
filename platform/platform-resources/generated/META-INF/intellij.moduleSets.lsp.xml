@@ -6,9 +6,7 @@
   <content namespace="jetbrains">
     <!-- region nested: libraries.lsp4j -->
     <module name="intellij.libraries.eclipse.lsp4j" loading="embedded"/>
-    <module name="intellij.libraries.eclipse.lsp4j.debug" loading="embedded"/>
     <module name="intellij.libraries.eclipse.lsp4j.jsonrpc" loading="embedded"/>
-    <module name="intellij.libraries.eclipse.lsp4j.jsonrpc.debug" loading="embedded"/>
     <!-- endregion -->
 
     <!-- region direct modules -->

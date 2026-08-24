@@ -5,9 +5,9 @@ import com.intellij.devkit.workspaceModel.codegen.writer.CodeWriter
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.javaSourceRoots
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -44,7 +44,8 @@ import java.nio.file.Path
 
 abstract class AbstractEntityCodeGenTest {
   private val tempPath = tempPathFixture(prefix = this.javaClass.simpleName)
-  private val project = projectFixture(pathFixture = tempPath, openProjectTask = OpenProjectTask { createModule = false }, openAfterCreation = true)
+  private val project =
+    projectFixture(pathFixture = tempPath, openProjectTask = OpenProjectTask { createModule = false }, openAfterCreation = true)
   private val testName = testNameFixture()
   private val disposable = disposableFixture()
 
@@ -73,12 +74,21 @@ abstract class AbstractEntityCodeGenTest {
 
     val wsm = project.get().workspaceModel
     wsm.update("Setup project roots") {
-      val module = ModuleEntity("${this@AbstractEntityCodeGenTest.javaClass.simpleName}_${testName}_module", listOf(ModuleSourceDependency), NonPersistentEntitySource)
-      val contentRoot = ContentRootEntity(projectRoot.toVirtualFileUrl(wsm.getVirtualFileUrlManager()), emptyList(), NonPersistentEntitySource)
+      val module = ModuleEntity("${this@AbstractEntityCodeGenTest.javaClass.simpleName}_${testName}_module",
+                                listOf(ModuleSourceDependency),
+                                NonPersistentEntitySource)
+      val contentRoot =
+        ContentRootEntity(projectRoot.toVirtualFileUrl(wsm.getVirtualFileUrlManager()), emptyList(), NonPersistentEntitySource)
       module.contentRoots += contentRoot
-      contentRoot.sourceRoots += SourceRootEntity(actualSrcRoot.toVirtualFileUrl(wsm.getVirtualFileUrlManager()), JAVA_SOURCE_ROOT_ENTITY_TYPE_ID, NonPersistentEntitySource)
-      val genSourceRoot = SourceRootEntity(actualGenRoot.toVirtualFileUrl(wsm.getVirtualFileUrlManager()), JAVA_SOURCE_ROOT_ENTITY_TYPE_ID, NonPersistentEntitySource)
-      genSourceRoot.javaSourceRoots += JavaSourceRootPropertiesEntity(generated = true, packagePrefix = "", entitySource = NonPersistentEntitySource)
+      contentRoot.sourceRoots += SourceRootEntity(actualSrcRoot.toVirtualFileUrl(wsm.getVirtualFileUrlManager()),
+                                                  JAVA_SOURCE_ROOT_ENTITY_TYPE_ID,
+                                                  NonPersistentEntitySource)
+      val genSourceRoot = SourceRootEntity(actualGenRoot.toVirtualFileUrl(wsm.getVirtualFileUrlManager()),
+                                           JAVA_SOURCE_ROOT_ENTITY_TYPE_ID,
+                                           NonPersistentEntitySource)
+      genSourceRoot.javaSourceRoots += JavaSourceRootPropertiesEntity(generated = true,
+                                                                      packagePrefix = "",
+                                                                      entitySource = NonPersistentEntitySource)
       contentRoot.sourceRoots += genSourceRoot
 
       it.addEntity(module)
@@ -248,7 +258,7 @@ abstract class AbstractEntityCodeGenTest {
   fun testVisibilityModifier() {
     doTest()
   }
-  
+
   @Test
   fun testChildIdUsesParentId() {
     doTest()
@@ -256,6 +266,11 @@ abstract class AbstractEntityCodeGenTest {
 
   @Test
   fun testKeyField() {
+    doTest()
+  }
+
+  @Test
+  fun testComputableReference() {
     doTest()
   }
 

@@ -1,49 +1,61 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.remoteApi
 
 import com.intellij.dvcs.repo.repositoryId
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.platform.project.projectId
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.vcs.git.rpc.GitOperationsApi
 import git4idea.GitStandardLocalBranch
+import git4idea.config.GitSaveChangesPolicy
 import git4idea.repo.GitRepository
+import git4idea.test.GitPlatformTestContext
 import git4idea.test.GitScenarios.unmergedFiles
 import git4idea.test.assertCurrentBranch
 import git4idea.test.assertCurrentRevision
 import git4idea.test.assertLatestSubjects
 import git4idea.test.checkout
 import git4idea.test.git
+import git4idea.test.gitPlatformContextFixture
 import git4idea.test.last
 import git4idea.test.resolveConflicts
 import git4idea.test.tac
-import git4idea.update.GitMultiRepoUpdateBaseTest
+import git4idea.update.gitMultiRepoUpdateFixture
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class GitCheckoutAndUpdateTest : GitMultiRepoUpdateBaseTest() {
-  override fun setUp() {
-    super.setUp()
+@TestApplication
+internal class GitCheckoutAndUpdateTest {
 
-    cd(bro)
-    git("checkout -b feature")
-    tac("a.txt")
-    git("push origin feature")
+  private val contextFixture = gitPlatformContextFixture(saveChangesPolicy = GitSaveChangesPolicy.STASH).gitMultiRepoUpdateFixture()
+  private val context get() = contextFixture.get()
 
-    cd(bromunity)
-    git("checkout -b feature")
-    tac("community_a.txt")
-    git("push origin feature")
+  @BeforeEach
+  fun setUp() {
+    with(context) {
+      cd(bro)
+      git("checkout -b feature")
+      tac("a.txt")
+      git("push origin feature")
 
-    listOf(repository, community).forEach {
-      with(it) {
-        git("fetch origin feature")
-        git("checkout -b feature --track origin/feature")
-        checkout("master")
+      cd(bromunity)
+      git("checkout -b feature")
+      tac("community_a.txt")
+      git("push origin feature")
+
+      listOf(repository, community).forEach {
+        with(it) {
+          git("fetch origin feature")
+          git("checkout -b feature --track origin/feature")
+          checkout("master")
+        }
       }
     }
   }
 
-  fun `test checkoutAndUpdate on multiple repositories with same branch name`() {
+  @Test
+  fun `test checkoutAndUpdate on multiple repositories with same branch name`(): Unit = with(context) {
     cd(bro)
     val newHashInRepository = tac("b.txt")
     git("push origin feature")
@@ -61,7 +73,8 @@ class GitCheckoutAndUpdateTest : GitMultiRepoUpdateBaseTest() {
     community.assertCurrentRevision(newHashInCommunity)
   }
 
-  fun `test partial checkout failure prompts rollback and rolls back successful repositories without updating them`() {
+  @Test
+  fun `test partial checkout failure prompts rollback and rolls back successful repositories without updating them`(): Unit = with(context) {
     community.checkout("feature")
     val oldHash = community.last()
     community.checkout("master")
@@ -86,7 +99,8 @@ class GitCheckoutAndUpdateTest : GitMultiRepoUpdateBaseTest() {
     community.assertCurrentRevision(oldHash)
   }
 
-  fun `test partial checkout failure without rollback updates successful repository`() {
+  @Test
+  fun `test partial checkout failure without rollback updates successful repository`(): Unit = with(context) {
     repository.checkout("feature")
     val oldHashInRepository = repository.last()
     repository.checkout("master")
@@ -122,7 +136,8 @@ class GitCheckoutAndUpdateTest : GitMultiRepoUpdateBaseTest() {
     community.assertCurrentRevision(newHashInCommunity)
   }
 
-  fun `test checkoutAndUpdate performs non fast-forward update via merge when histories diverged`() {
+  @Test
+  fun `test checkoutAndUpdate performs non fast-forward update via merge when histories diverged`(): Unit = with(context) {
     repository.checkout("feature")
     tac("local.txt")
     repository.checkout("master")
@@ -140,7 +155,7 @@ class GitCheckoutAndUpdateTest : GitMultiRepoUpdateBaseTest() {
     community.assertCurrentBranch("feature")
   }
 
-  private fun checkoutAndUpdateBranch(
+  private fun GitPlatformTestContext.checkoutAndUpdateBranch(
     repositories: List<GitRepository>,
     branchName: String,
   ) {

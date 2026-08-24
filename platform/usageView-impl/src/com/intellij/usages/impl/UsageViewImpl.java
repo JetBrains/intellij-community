@@ -238,7 +238,11 @@ public class UsageViewImpl implements UsageViewEx {
     if (o1 == NullUsage.INSTANCE) return -1;
     if (o2 == NullUsage.INSTANCE) return 1;
 
-    int c = compareByFileAndOffset(o1, o2);
+    int c = Integer.compare(getUsagePriority(o1), getUsagePriority(o2));
+    if (c != 0) {
+      return c;
+    }
+    c = compareByFileAndOffset(o1, o2);
     if (c != 0) {
       return c;
     }
@@ -266,6 +270,10 @@ public class UsageViewImpl implements UsageViewEx {
       return Integer.compare(o1.getNavigationOffset(), o2.getNavigationOffset());
     }
     return VfsUtilCore.compareByPath(file1, file2);
+  }
+
+  private static int getUsagePriority(@NotNull Usage usage) {
+    return usage instanceof UsageInfo2UsageAdapter usageInfo ? usageInfo.getUsageInfo().getPriority() : 0;
   }
 
   public static final @NonNls String HELP_ID = "ideaInterface.find";

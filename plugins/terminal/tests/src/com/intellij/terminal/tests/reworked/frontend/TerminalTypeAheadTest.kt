@@ -3,6 +3,7 @@ package com.intellij.terminal.tests.reworked.frontend
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.view.typeahead.TerminalTypeAheadOutputModelController
 import com.intellij.terminal.frontend.view.typeahead.TerminalTypeAheadOutputModelControllerV2
@@ -13,12 +14,12 @@ import com.intellij.terminal.tests.reworked.util.outputPattern
 import com.intellij.terminal.tests.reworked.util.updateContent
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.intellij.util.asDisposable
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModelImpl
+import org.jetbrains.plugins.terminal.session.ShellName
 import org.jetbrains.plugins.terminal.session.impl.Osc8Hyperlink
 import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCursorPositionChangedEvent
@@ -409,7 +410,9 @@ internal class TerminalTypeAheadTest : BasePlatformTestCase() {
       outputModel.updateContent(0L, "link here", emptyList(), listOf(Osc8Hyperlink(0L, 4L, "https://example.com")))
 
       val sessionModel = TerminalSessionModelImpl()
-      val shellIntegration = TerminalShellIntegrationImpl(outputModel, sessionModel, controllerScope.asDisposable())
+      val shellIntegration = TerminalShellIntegrationImpl(
+        outputModel, sessionModel, controllerScope, LocalEelDescriptor, ShellName.of("unknown")
+      )
       shellIntegration.onPromptStarted(TerminalOffset.ZERO)
       shellIntegration.onPromptFinished(TerminalOffset.ZERO)
       val controller = TerminalTypeAheadOutputModelControllerV2(
@@ -1128,7 +1131,9 @@ internal class TerminalTypeAheadTest : BasePlatformTestCase() {
     }
     val sessionModel = TerminalSessionModelImpl()
 
-    val shellIntegration = TerminalShellIntegrationImpl(outputModel, sessionModel, coroutineScope.asDisposable())
+    val shellIntegration = TerminalShellIntegrationImpl(
+      outputModel, sessionModel, coroutineScope, LocalEelDescriptor, ShellName.of("unknown")
+    )
     shellIntegration.onPromptStarted(TerminalOffset.ZERO)
     shellIntegration.onPromptFinished(TerminalOffset.ZERO)
 

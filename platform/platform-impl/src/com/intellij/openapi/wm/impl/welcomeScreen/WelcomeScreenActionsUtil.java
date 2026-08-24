@@ -65,6 +65,9 @@ public final class WelcomeScreenActionsUtil {
   public static final Key<Icon> TEXT_BUTTON_RIGHT_ICON = Key.create("WelcomeScreenActionsUtil.TEXT_BUTTON_RIGHT_ICON");
 
   @ApiStatus.Internal
+  public static final Key<@Nls String> LARGE_BUTTON_TEXT = Key.create("WelcomeScreenActionsUtil.LARGE_BUTTON_TEXT");
+
+  @ApiStatus.Internal
   public static final Key<@Nls String> INLINE_ACTIONS_POPUP_AD_TEXT = Key.create("WelcomeScreenActionsUtil.POPUP_HINT");
 
   public static @NotNull CustomComponentAction createToolbarTextButtonAction(@NotNull AnAction action) {
@@ -230,7 +233,8 @@ public final class WelcomeScreenActionsUtil {
         panel.myIconButton.setIcon(presentation.getIcon());
         panel.myIconButton.setSelectedIcon(presentation.getSelectedIcon());
         //noinspection DialogTitleCapitalization
-        panel.myLabel.setText(presentation.getText());
+        String text = presentation.getClientProperty(LARGE_BUTTON_TEXT);
+        panel.myLabel.setText(text != null ? text : presentation.getText());
         panel.myIconButton.getAccessibleContext().setAccessibleName(presentation.getText());
         UIUtil.setEnabled(panel, presentation.isEnabled(), true);
       }

@@ -14,8 +14,10 @@ fun isStationWelcomeScreenPromoEnabled(): Boolean {
  */
 @Internal
 fun getWelcomeScreenPrimaryButtonsNum(): Int {
-  if (isStationWelcomeScreenPromoEnabled() || Registry.`is`("jetbrainsd.new.connection.flow.enabled", false)) {
-    return 4
+  val configuredCount = Registry.intValue("welcome.screen.primaryButtonsCount", 3)
+  return if (isStationWelcomeScreenPromoEnabled() || Registry.`is`("jetbrainsd.new.connection.flow.enabled", false)) {
+    maxOf(4, configuredCount)
+  } else {
+    configuredCount
   }
-  return Registry.intValue("welcome.screen.primaryButtonsCount", 3)
 }

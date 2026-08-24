@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.json.networknt.wrapper.libraries.jsonSchemaValidator` start
 jvm_library(
@@ -22,6 +23,11 @@ jvm_library(
         "//libraries/jackson3/dataformat-yaml:libraries-jackson3-dataformat-yaml",
         "//libraries/joni",
     ],
+)
+
+content_module_jar(
+    libraries = ["@lib//:json-networknt-wrapper-libraries-json_schema_validator-json-schema-validator-jetbrains"],
+    module = ":json-networknt-wrapper-libraries-jsonSchemaValidator",
 )
 
 jvm_library(

@@ -2,7 +2,7 @@ UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identif
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
     UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
     UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = varWithType) -> Kotlin_Light_Variable: varWithType
-    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> FUN: plus
+    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> FUNCTION: plus
     UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = varWithoutType) -> Kotlin_Light_Variable: varWithoutType
     UReturnExpression -> USimpleNameReferenceExpression (identifier = result) -> Kotlin_Light_Variable: result
 UTypeReferenceExpression (name = java.util.List<? extends java.util.List<? extends java.lang.String>>) -> USimpleNameReferenceExpression (identifier = List) -> Decompiled_Class: List
@@ -24,7 +24,7 @@ UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifie
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = map) -> Decompiled_Method: map
         UReturnExpression -> UQualifiedReferenceExpression -> null: null
         UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = it) -> Kotlin_Light_Value_Parameter: it
-        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUN: toString
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> FUNCTION: toString
     UTypeReferenceExpression (name = java.util.List<? extends java.util.List<? extends java.lang.String>>) -> USimpleNameReferenceExpression (identifier = List) -> Decompiled_Class: List
     UTypeReferenceExpression (name = java.util.List<? extends java.lang.String>) -> USimpleNameReferenceExpression (identifier = List) -> Decompiled_Class: List
     UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String

@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.tasks.core` start
@@ -125,7 +126,32 @@ exports_files(
         "resources/com/intellij/tasks/generic/connectors/asana.xml",
         "resources/com/intellij/tasks/generic/connectors/assembla.xml",
         "resources/com/intellij/tasks/generic/connectors/sprintly.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.tasks.core` end
+
+### auto-generated section `dev content intellij.tasks.core` start
+dev_dist_plugin_content(
+    content_modules = [
+        "//libraries/xml-rpc",
+        "//plugins/tasks/tasks-api:tasks",
+        "//plugins/tasks/tasks-compatibility:compatibility",
+        "//plugins/tasks/tasks-core/libraries:tasks-core-libraries-commonsDiscovery",
+    ],
+    descriptor_module = ":core",
+    libraries = [
+        "//plugins/tasks/tasks-core/lib:tasks-core-axis-1-4",
+        "@lib//:libraries-xml-rpc-xml-rpc",
+        "@lib//:tasks-compatibility-http-client-3-1",
+        "@lib//:tasks-core-libraries-commons_discovery-commons-discovery",
+    ],
+    prepacked_content_modules = [
+        "//plugins/tasks/tasks-core/bugzilla:bugzilla_content_module_jar",
+        "//plugins/tasks/tasks-core/jira:jira_content_module_jar",
+        "//plugins/tasks/tasks-core/trac:trac_content_module_jar",
+        "//plugins/tasks/tasks-java:java_content_module_jar",
+    ],
+)
+### auto-generated section `dev content intellij.tasks.core` end

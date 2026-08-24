@@ -6,7 +6,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.getPathMatcher
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.pyproject.PyProjectToml
-import com.intellij.python.pyproject.safeGet
 import com.intellij.python.pyproject.model.spi.ProjectDependencies
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pyproject.model.spi.ProjectStructureInfo
@@ -17,6 +16,7 @@ import com.intellij.python.pyproject.model.spi.PySdkDependencyGroupSupport
 import com.intellij.python.pyproject.model.spi.TomlDependencySpecification
 import com.intellij.python.pyproject.psi.spi.PyProjectTomlPathValue
 import com.intellij.python.pyproject.psi.spi.isPathDependencyKey
+import com.intellij.python.pyproject.safeGet
 import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.pytools.runtime.PyToolRuntime
 import com.intellij.python.uv.backend.UvPyTool
@@ -37,6 +37,7 @@ import com.jetbrains.python.venvReader.Directory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.tuweni.toml.TomlArray
+import org.apache.tuweni.toml.TomlInvalidTypeException
 import org.apache.tuweni.toml.TomlTable
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
@@ -182,6 +183,13 @@ internal class UvPyProjectManager : PyProjectManager, PyProjectCreator by ToolBa
     getTomlDependencySpecifications().isPathDependencyKey(keyPath) -> PyProjectTomlPathValue(acceptFiles = true)
     else -> null
   }
+
+  override fun canBeVirtualProject(pyProjectToml: TomlTable): Boolean = try {
+    pyProjectToml.getTable(UV_WORKSPACE)
+  }
+  catch (_: TomlInvalidTypeException) {
+    null
+  } != null
 }
 
 private const val UV_SOURCES = "tool.uv.sources"
@@ -194,7 +202,7 @@ private val WORKSPACE_EXCLUDE_KEY = "$UV_WORKSPACE.exclude".split('.')
 private val DEPENDENCY_NAME_REGEX = """^\s*(\w([\w\-.]*\w)?).*$""".toRegex()
 
 private fun extractDependencyNamesWithoutExtras(toml: PyProjectToml): Set<String> =
-  toml.project.dependencies.let { it.project + it.allDepsFromGroups }.mapNotNull {
+  toml.allDeclaredDeps.mapNotNull {
     val (dependencyName, _) = DEPENDENCY_NAME_REGEX.matchEntire(it)?.destructured ?: return@mapNotNull null
     dependencyName
   }.toSet()
@@ -225,8 +233,8 @@ private fun getWorkspaceMembers(toml: TomlTable): WorkspaceInfo? {
   // PY-91089: safeGet instead of getTable/getArrayOrEmpty, which throw TomlInvalidTypeException when
   // the key holds an unexpected type (e.g. the `[[tool.uv.workspace]]` array typo, or `members = "x"`).
   val workspace = toml.safeGet<TomlTable>(UV_WORKSPACE, unquotedDottedKey = true).successOrNull ?: return null
-  val members = workspace.safeGet<TomlArray>("members").successOrNull?.asMatchers ?: emptyList()
-  val exclude = workspace.safeGet<TomlArray>("exclude").successOrNull?.asMatchers ?: emptyList()
+  val members = workspace.safeGet<TomlArray>("members", unquotedDottedKey = false).successOrNull?.asMatchers ?: emptyList()
+  val exclude = workspace.safeGet<TomlArray>("exclude", unquotedDottedKey = false).successOrNull?.asMatchers ?: emptyList()
   if (members.isEmpty()) return null
   return WorkspaceInfo(members = members, exclude = exclude)
 }
@@ -268,12 +276,12 @@ private fun getUvDependencies(
       var resolved = false
       for (table in depTables) {
         // PY-91089: safeGet instead of getBoolean/getString, which throw when the value has an unexpected type.
-        if (table.safeGet<Boolean>("workspace").successOrNull == true) {
+        if (table.safeGet<Boolean>("workspace", unquotedDottedKey = false).successOrNull == true) {
           workspaceDeps.add(ProjectName(depName))
           resolved = true
         }
         else {
-          val path = table.safeGet<String>("path").successOrNull ?: continue
+          val path = table.safeGet<String>("path", unquotedDottedKey = false).successOrNull ?: continue
           try {
             pathDeps.add(ownerRoot.resolve(path).normalize())
             resolved = true

@@ -2578,6 +2578,44 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       "_multidict.py" to """
         class MultiDictProxy: ...
         """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-85200"])
+    fun `compound TYPE_CHECKING guard resolves to the type-checking branch, not to both`() = test("""
+      from widget import Widget
+
+      def f(w: Widget):
+          expr = w.value
+      #   └ TYPE int
+      """.trimIndent(),
+      // The same compound `if TYPE_CHECKING or not USE_EXTENSIONS:` shape as the multidict case above, with
+      // one difference that matters for what the test can observe: the two same-named classes differ in the
+      // type of a member. In the multidict case the union hides behind two identical class names and is only
+      // reachable through the failed `[int]` parametrization; here it is visible directly, because unless the
+      // compound condition is recognized `w.value` comes out as `int | str`.
+      "widget.py" to """
+        from typing import TYPE_CHECKING
+
+        from _compat import USE_EXTENSIONS
+
+        if TYPE_CHECKING or not USE_EXTENSIONS:
+            from _widget_py import Widget
+        else:
+            from _widget_c import Widget
+        """.trimIndent(),
+      "_compat.py" to """
+        import os
+
+        USE_EXTENSIONS = not bool(os.environ.get("WIDGET_NO_EXTENSIONS"))
+        """.trimIndent(),
+      "_widget_py.py" to """
+        class Widget:
+            value: int
+        """.trimIndent(),
+      "_widget_c.py" to """
+        class Widget:
+            value: str
+        """.trimIndent())
   }
 
   @Nested

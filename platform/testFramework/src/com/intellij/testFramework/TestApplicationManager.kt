@@ -29,6 +29,7 @@ import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 import com.intellij.openapi.module.ModuleManager
@@ -124,6 +125,10 @@ class TestApplicationManager private constructor() {
             if (isLightProject) {
               LightPlatformTestCase.tearDownSourceRoot(project)
             }
+          },
+          {
+            // close before prepareForNextTest clears document/file mapping
+            FileEditorManagerEx.getInstanceExIfCreated(project)?.closeAllFiles()
           },
           {
             app.runWriteIntentReadAction<Unit, Nothing?> {

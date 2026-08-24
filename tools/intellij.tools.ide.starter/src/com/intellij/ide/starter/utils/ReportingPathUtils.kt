@@ -10,9 +10,7 @@ import java.nio.file.Path
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-private const val SHORTENED_NAME_HASH_LENGTH = 6
 private const val MAX_FILE_NAME_LENGTH_IN_BYTES = 255
-private const val MAX_DIR_NAME_LENGTH_IN_BYTES = 50
 private const val TEAMCITY_ARTIFACT_SUFFIX = "-2147483647.zip"
 
 /**
@@ -27,6 +25,24 @@ private const val TEAMCITY_ARTIFACT_SUFFIX = "-2147483647.zip"
 @ApiStatus.Internal
 object ReportingPathUtils {
   const val PATH_LENGTH_LIMIT: Int = 260
+
+  /**
+   * The length of the hash [shortenWithHashIfNeeded] appends to a name it had to cut down. Deliberately short: a path on Windows has 260
+   * characters for everything, and two names cut down to the same prefix that also collide over 16 bits are rare enough to live with.
+   */
+  const val NAME_HASH_LENGTH: Int = 4
+
+  /** The longest one reporting directory name gets, a hash of what was cut away included. */
+  const val MAX_DIR_NAME_LENGTH_IN_BYTES: Int = 45
+
+  /**
+   * The longest the one directory of a launch gets. Far shorter than [MAX_DIR_NAME_LENGTH_IN_BYTES]: a launch name largely repeats what the
+   * method above it is called, so little of it is worth a path's length. Nothing compares the two names — the bound is simply tighter.
+   */
+  const val MAX_LAUNCH_DIR_NAME_LENGTH_IN_BYTES: Int = 25
+
+  /** The longest a published artifact name gets: what a file name has left once TeamCity has appended a suffix of its own. */
+  const val MAX_ARTIFACT_NAME_LENGTH_IN_BYTES: Int = MAX_FILE_NAME_LENGTH_IN_BYTES - TEAMCITY_ARTIFACT_SUFFIX.length
 
   /** The longest name a JVM crash log gets: the JVM expands `%p` to a process id, 32 bits wide at most on every OS Starter runs on. */
   val WIDEST_CRASH_LOG_NAME: String = "java_error_in_idea_${UInt.MAX_VALUE}.log"
@@ -84,16 +100,19 @@ object ReportingPathUtils {
   }
 
   /**
-   * The file name a published artifact takes: `<type>-<timestamp>`, timestamped so that several artifacts of one type can land in one
-   * directory, and short enough for the suffix TeamCity appends. [testName] qualifies it for whoever publishes without a directory of their
-   * own to tell the tests apart.
+   * The file name a published artifact takes: `<type>-<time>`, timed so that several artifacts of one type can land in one directory, and
+   * short enough for the suffix TeamCity appends. [testName] qualifies it for whoever publishes without a directory of their own to tell the
+   * tests apart.
+   *
+   * The time comes without a date, which the artifacts of one run have no use for and a path on Windows has no room for: two artifacts of one
+   * type would have to land in one directory a whole day apart, to the second, to take the same name.
    */
   fun formatArtifactName(artifactType: String, testName: String = ""): String {
-    val time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
+    val time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HHmmss"))
     val name = listOf(artifactType, testName.replace("/", "-").replace(" ", ""), time)
       .filter(String::isNotEmpty)
       .joinToString("-")
-    return shortenWithHashIfNeeded(name, MAX_FILE_NAME_LENGTH_IN_BYTES - TEAMCITY_ARTIFACT_SUFFIX.length)
+    return shortenWithHashIfNeeded(name, MAX_ARTIFACT_NAME_LENGTH_IN_BYTES)
   }
 
   /**
@@ -106,18 +125,41 @@ object ReportingPathUtils {
   /** Flattens a test name into one bounded directory segment. */
   fun testDirectoryName(testName: String): String = dirName(testName.replace('/', '-'))
 
-  /** Returns [name] unchanged when it fits; otherwise shortens it and appends a stable hash of the full name. */
-  fun shortenWithHashIfNeeded(name: String, maxLengthInBytes: Int): String {
-    require(maxLengthInBytes > SHORTENED_NAME_HASH_LENGTH) {
+  /**
+   * The one directory a launch reports in: the last level [launchName] names, cut to [MAX_LAUNCH_DIR_NAME_LENGTH_IN_BYTES]. A name that
+   * lost anything — a level above the last, or bytes over the bound — carries a hash of the whole of it instead, which is what tells one
+   * launch of a method from another once the rest is gone. `null` when [launchName] names no level at all, being nothing but separators.
+   */
+  fun launchDirNameOf(launchName: String): String? {
+    // the last level that names something: a name trailing off into separators has already been spelled out one level up
+    val lastLevel = launchName.split('/').lastOrNull(String::isNotEmpty)?.escapeDotSegment() ?: return null
+    return shortenWithHashIfNeeded(lastLevel, MAX_LAUNCH_DIR_NAME_LENGTH_IN_BYTES, hashedName = launchName)
+  }
+
+  /**
+   * Returns [name] unchanged when it is the whole of what it stands for and fits; otherwise shortens it and appends a stable hash.
+   *
+   * [hashedName] is what that hash is taken of and defaults to [name]. Pass the longer name [name] is only a part of, and the result
+   * carries the hash whether or not [name] itself fits: what was left out above is exactly what the hash is there to tell apart.
+   */
+  fun shortenWithHashIfNeeded(name: String, maxLengthInBytes: Int, hashedName: String = name): String {
+    require(maxLengthInBytes > NAME_HASH_LENGTH) {
       "Maximum length must leave room for the hash suffix"
     }
 
-    val bytes = name.toByteArray(Charsets.UTF_8)
-    if (bytes.size <= maxLengthInBytes) return name
+    if (hashedName == name && name.toByteArray(Charsets.UTF_8).size <= maxLengthInBytes) return name
 
-    val hash = DigestUtil.sha256Hex(bytes).take(SHORTENED_NAME_HASH_LENGTH)
     // Reporting names are expected to be ASCII; non-ASCII truncation may be imprecise
-    val prefix = name.take(maxLengthInBytes - SHORTENED_NAME_HASH_LENGTH - 1)
-    return "$prefix-$hash"
+    // a cut that lands on a hyphen leaves one, and the artifact path collapses hyphen runs, so keeping it spells the name two ways
+    // a cut that lands on a separator would leave a directory named after nothing but the hash, the name itself having ended above it
+    val prefix = name.take(maxLengthInBytes - NAME_HASH_LENGTH - 1).trimEnd('-', '/')
+    return "$prefix-${nameHash(hashedName)}"
   }
+
+  /**
+   * A short stable hash of [name], for a directory name that keeps only a part of what it is named after: whatever was left out, the hash
+   * still tells this name from every other one that was cut down the same way.
+   */
+  fun nameHash(name: String): String =
+    DigestUtil.sha256Hex(name.toByteArray(Charsets.UTF_8)).take(NAME_HASH_LENGTH)
 }

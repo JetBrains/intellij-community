@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.fileEditor.createdFileEditorSink
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
 import com.intellij.openapi.project.Project
@@ -40,7 +41,6 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -71,6 +71,8 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
       editorCoroutineScope = editorCoroutineScope,
     )
 
+    // if cancellation lands between the editor creation and the consumption of the result, coroutineScope discards the created editor
+    val createdEditors = createdFileEditorSink()
     return coroutineScope {
       val effectiveDocument = document!!
 
@@ -90,12 +92,10 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
         // (the document text is compared, so, double work is not performed)
         highlighter.setText(effectiveDocument.immutableCharSequence)
         if (effectiveDocument.immutableCharSequence.isNotEmpty()) {
-          asyncLoader.coroutineScope.launch {
-            // preload the syntax highlighter in BGT because it's expensive
-            // - to classload all highlighters and
-            // - enumerate and handle all extensions (see e.g. [com.intellij.ide.highlighter.XmlFileHighlighter.EMBEDDED_HIGHLIGHTERS])
-            highlighter.createIterator(0).textAttributes
-          }
+          // preload the syntax highlighter in BGT because it's expensive
+          // - to classload all highlighters and
+          // - enumerate and handle all extensions (see e.g. [com.intellij.ide.highlighter.XmlFileHighlighter.EMBEDDED_HIGHLIGHTERS])
+          highlighter.createIterator(0).textAttributes
         }
         highlighter
       }
@@ -121,6 +121,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
           editor.gutterComponentEx.setInitialIconAreaWidth(EditorGutterLayout.getInitialGutterWidth())
           val component = createPsiAwareTextEditorComponent(file = file, editor = editor)
           val textEditor = PsiAwareTextEditorImpl(project = project, file = file, component = component, asyncLoader = asyncLoader)
+          createdEditors?.register(textEditor)
           asyncLoader.start(textEditor = textEditor, task = task)
           textEditor
         }

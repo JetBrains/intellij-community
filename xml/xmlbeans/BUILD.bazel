@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "xmlbeans-tests_test",
@@ -49,6 +50,8 @@ jvm_library(
         "//platform/util/concurrency",
     ],
 )
+
+content_module_jar(module = ":xmlbeans")
 
 jvm_library(
     name = "xmlbeans_test_lib",

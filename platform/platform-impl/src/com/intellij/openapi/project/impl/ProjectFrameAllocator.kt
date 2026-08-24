@@ -5,6 +5,12 @@ package com.intellij.openapi.project.impl
 
 import com.intellij.conversion.CannotConvertException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolderEx
+import com.intellij.openapi.wm.IdeFrame
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
@@ -61,9 +67,25 @@ class HeadlessProjectFrameAllocator : ProjectFrameAllocator {
   }
 
   override suspend fun preInitProject(project: Project) {
+    project.getOrCreateIdeFrameDeferred().complete(null)
   }
 
   override suspend fun projectNotLoaded(cannotConvertException: CannotConvertException?) {
     cannotConvertException?.let { throw cannotConvertException }
   }
+}
+
+private val IDE_FRAME_DEFERRED_KEY = Key.create<CompletableDeferred<IdeFrame?>>("Project.IdeFrameDeferred")
+
+internal fun Project.getOrCreateIdeFrameDeferred(): CompletableDeferred<IdeFrame?> {
+  val newDeferred = CompletableDeferred<IdeFrame?>()
+  val actualDeferred = (this as UserDataHolderEx).putUserDataIfAbsent(IDE_FRAME_DEFERRED_KEY, newDeferred)
+  if (newDeferred === actualDeferred) {
+    Disposer.register(this) {
+      if (!newDeferred.isCompleted) {
+        newDeferred.cancel(CancellationException("Project is disposed"))
+      }
+    }
+  }
+  return actualDeferred
 }

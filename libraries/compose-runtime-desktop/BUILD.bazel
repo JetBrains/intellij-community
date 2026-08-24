@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.compose.runtime.desktop` start
 jvm_library(
@@ -27,6 +28,16 @@ jvm_library(
         "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-retain-desktop",
         "//libraries/jspecify",
     ],
+)
+
+content_module_jar(
+    libraries = [
+        # do not sort,
+        "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-desktop",
+        "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-saveable-desktop",
+        "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-retain-desktop",
+    ],
+    module = ":compose-runtime-desktop",
 )
 
 jvm_library(

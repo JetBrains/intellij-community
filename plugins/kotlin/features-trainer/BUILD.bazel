@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.kotlin.featuresTrainer` start
 jvm_library(
@@ -47,6 +48,8 @@ jvm_library(
         "//libraries/kotlinx/serialization/json",
     ],
 )
+
+content_module_jar(module = ":features-trainer")
 
 jvm_library(
     name = "features-trainer_test_lib",

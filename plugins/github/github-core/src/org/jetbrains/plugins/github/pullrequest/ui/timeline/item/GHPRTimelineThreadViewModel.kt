@@ -116,6 +116,12 @@ internal class UpdateableGHPRTimelineThreadViewModel internal constructor(
     calcDiffWithAnchor(it)
   }
 
+  override val canChangeResolvedState: StateFlow<Boolean> =
+    dataState.mapState { it.viewerCanResolve || it.viewerCanUnresolve }
+  override val isResolved: StateFlow<Boolean> = dataState.mapState { it.isResolved }
+
+  // fields order: put the field initialization after all fields that are used in comment VMs,
+  // because they have to be initialized first to avoid NPE
   private val commentsVms = dataState
     .map { it.comments.withIndex() }
     .mapDataToModel({ it.value.id }, { createComment(it) }, { update(it) })
@@ -123,10 +129,6 @@ internal class UpdateableGHPRTimelineThreadViewModel internal constructor(
 
   override val mainCommentVm: StateFlow<GHPRReviewThreadCommentViewModel> = commentsVms.mapState { it.first() }
   override val replies: StateFlow<List<GHPRReviewThreadCommentViewModel>> = commentsVms.mapState { it.drop(1) }
-
-  override val canChangeResolvedState: StateFlow<Boolean> =
-    dataState.mapState { it.viewerCanResolve || it.viewerCanUnresolve }
-  override val isResolved: StateFlow<Boolean> = dataState.mapState { it.isResolved }
 
   override val repliesState: StateFlow<CodeReviewFoldableThreadViewModel.RepliesStateData> = dataState.mapState {
     val replies = it.comments.drop(1)
@@ -246,7 +248,8 @@ internal class UpdateableGHPRTimelineThreadViewModel internal constructor(
 
   private fun CoroutineScope.createComment(comment: IndexedValue<GHPullRequestReviewComment>): UpdateableGHPRReviewThreadCommentViewModel =
     UpdateableGHPRReviewThreadCommentViewModel(project, this, dataContext, dataProvider,
-                                               this@UpdateableGHPRTimelineThreadViewModel, viewModelWithTextCompletion, comment)
+                                               viewModelWithTextCompletion, comment,
+                                               id, isResolved)
 
   private fun Collection<RefComparisonChange>.findByFilePath(path: String): RefComparisonChange? {
     val repoRoot = dataContext.repositoryDataService.remoteCoordinates.repository.root

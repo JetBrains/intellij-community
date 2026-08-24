@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 # Checkout directories that plugin layouts copy into a distribution verbatim (`withResource*`). They are
@@ -191,7 +192,31 @@ exports_files(
         "intellij.terminal.iml",
         "resources/META-INF/plugin.xml",
         "resources/META-INF/terminal.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.terminal` end
+
+### auto-generated section `dev content intellij.terminal` start
+dev_dist_plugin_content(
+    content_modules = [
+        "//libraries/completion-ranking-sh",
+        "//plugins/terminal/completion",
+        "//plugins/terminal/libraries:libraries-completionDbWithExtensions",
+    ],
+    descriptor_module = ":terminal",
+    libraries = [
+        "@lib//:libraries-completion-ranking-sh-completion-ranking-sh",
+        "@lib//:terminal-completion-terminal-completion-spec",
+        "@lib//:terminal-libraries-completion_db_with_extensions-terminal-completion-db-with-extensions",
+    ],
+    prepacked_content_modules = [
+        "//plugins/terminal/backend:backend_content_module_jar",
+        "//plugins/terminal/cloud:cloud_content_module_jar",
+        "//plugins/terminal/emulator:emulator_content_module_jar",
+        "//plugins/terminal/frontend:frontend_content_module_jar",
+        "//plugins/terminal/sh:sh_content_module_jar",
+    ],
+)
+### auto-generated section `dev content intellij.terminal` end

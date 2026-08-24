@@ -2,6 +2,7 @@ load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 BAZEL_TARGETS_JSON = current_bazel_targets_json()
 
@@ -63,6 +64,8 @@ jvm_library(
         "//java/java-psi-api:psi",
     ],
 )
+
+content_module_jar(module = ":groovy")
 
 jvm_library(
     name = "groovy_test_lib",

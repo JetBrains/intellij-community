@@ -88,6 +88,10 @@ internal open class MonolithBreakpointTypeProxy @Deprecated("Use type.asProxy() 
     return breakpointType.isAddBreakpointButtonVisible
   }
 
+  override fun isNewBadgeVisible(): Boolean {
+    return breakpointType.isNewBadgeVisible
+  }
+
   override suspend fun addBreakpoint(project: Project): XBreakpointProxy? {
     val breakpoint = withContext(Dispatchers.EDT) {
       breakpointType.addBreakpoint(project, null)

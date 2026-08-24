@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
-import com.intellij.openapi.util.Ref;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableConsumer;
@@ -34,7 +33,6 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -113,48 +111,28 @@ public final class JobLauncherImpl extends JobLauncher {
       runWhileForking.run();
 
       // help all others
-      ThreadContext.resetThreadContext(() -> {
+      try (var _ = ThreadContext.resetThreadContext()) {
         safeIterate(globalCompleters, thrown, completer -> {
           wrapper.checkCanceled();
           // don't call .invoke() or other FJP-setting status functions
           completer.wrapAndRun(() -> completer.execAll());
         });
-        return null;
-      });
-      // all work is done or distributed; wait for in-flight appliers and manifest exceptions
-      safeIterate(globalCompleters, thrown, completer -> {
-        while (true) {
-          try {
+
+        // all work is done or distributed; wait for in-flight appliers and manifest exceptions
+        safeIterate(globalCompleters, thrown, completer -> {
+          while (true) {
             // while waiting for completion, check for cancellation, except when some applier returned false and the wrapper was canceled because of that
             if (wrapper.isCanceled() && !(thrown.get() instanceof ApplierCompleter.ComputationAbortedException)) {
               wrapper.checkCanceled();
             }
             // optimization
-            if (completer.isDone()) {
+            if (completer.isDone() || completer.quietlyJoin(1, TimeUnit.MILLISECONDS)) {
               completer.get();
+              break;
             }
-            else {
-              Ref<Throwable> throwableRef = new Ref<>(null);
-              ThreadContext.resetThreadContext(() -> {
-                try {
-                  completer.get(1, TimeUnit.MILLISECONDS);
-                }
-                catch (Throwable e) {
-                  throwableRef.set(e);
-                }
-                return null;
-              });
-              Throwable throwable = throwableRef.get();
-              if (throwable != null) {
-                throw throwable;
-              }
-            }
-            break;
           }
-          catch (TimeoutException ignored) {
-          }
-        }
-      });
+        });
+      }
 
       if (thrown.get() != null) {
         throw thrown.get();
@@ -168,7 +146,7 @@ public final class JobLauncherImpl extends JobLauncher {
       // failFastOnAcquireReadAction==true and one of the processors called runReadAction() during the pending write action
       throw e;
     }
-    catch (ProcessCanceledException e) {
+    catch (ProcessCanceledException _) {
       // We should distinguish between genuine 'progress' cancellation and optimization when
       // task1.processor returns false and the task cancels the indicator then task2 calls checkCancel() and get here.
       // The former requires to re-throw PCE, the latter should just return false.
@@ -221,8 +199,7 @@ public final class JobLauncherImpl extends JobLauncher {
         thrown.set(e);
       }
       catch (Throwable e) {
-        e = ApplierCompleter.accumulateException(thrown, e);
-        ApplierCompleter.rethrowUncheckedRaw(e);
+        ApplierCompleter.rethrowUncheckedRaw(ApplierCompleter.accumulateException(thrown, e));
       }
     }
   }
@@ -240,6 +217,7 @@ public final class JobLauncherImpl extends JobLauncher {
       ) {
       AtomicBoolean result = new AtomicBoolean(true);
       Runnable runnable = () -> ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+        //noinspection ForLoopReplaceableByForEach
         for (int i = 0; i < things.size(); i++) {
           T thing = things.get(i);
           if (!thingProcessor.process(thing)) {
@@ -459,13 +437,13 @@ public final class JobLauncherImpl extends JobLauncher {
     boolean isQueueBounded = things.contains(tombStone);
     int remainingSize = things.size() + failedToProcess.size() - (isQueueBounded ? 1 : 0);
     // start up (CPU cores) parallel tasks but no more than (queue size)
-    int n = Math.max(1, Math.min(isQueueBounded ? remainingSize : Integer.MAX_VALUE, JobSchedulerImpl.getJobPoolParallelism() - 1));
+    int n = Math.clamp(isQueueBounded ? remainingSize : Integer.MAX_VALUE, 1, Math.max(1, myForkJoinPool.getParallelism() - 1));
     List<ForkJoinTask<Boolean>> tasks = new ArrayList<>(n-1);
     List<T> firstElements = new ArrayList<>(n);
     things.drainTo(firstElements, n);
     // if the tombstone was removed by this batch operation, return it to the queue to give a chance to other tasks to stop themselves
     if (ContainerUtil.getLastItem(firstElements) == tombStone) {
-      firstElements.remove(firstElements.size() - 1);
+      firstElements.removeLast();
       try {
         things.put(tombStone);
       }
@@ -510,4 +488,3 @@ public final class JobLauncherImpl extends JobLauncher {
     return invokeConcurrentlyUnderProgressAsync(items, progress, true, true, thingProcessor, runnable);
   }
 }
-

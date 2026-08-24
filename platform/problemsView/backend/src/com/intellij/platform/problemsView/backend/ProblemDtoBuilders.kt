@@ -62,7 +62,7 @@ suspend fun buildChangelistFromEventsBatch(
         ProblemEventDto.Appeared(problemDto)
       }
       is ProblemEvent.Disappeared -> {
-        val problemId = ProblemLifetimeManager.getInstance(project).removeProblemId(event.problem)
+        val problemId = ProblemLifetimeManager.getInstance(project).removeProblemId(event.problem, lifetime)
         if (problemId == null) {
           logMissingIdErrorWithDiagnostic(
             problem = event.problem,

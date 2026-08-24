@@ -8,10 +8,16 @@ import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.ListItem
+import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-class EvoTreeItem(val element: EvoTreeElement, val separatorAbove: ListSeparator? = null) {
+class EvoTreeItem(
+  val element: EvoTreeElement,
+  val separatorAbove: ListSeparator? = null,
+  /** Full text behind [separatorAbove]'s elided label, shown while the header strip above this row is hovered. */
+  val separatorTooltip: @NlsSafe String? = null,
+) {
   val isSubstepSuppressed: Boolean
     get() = element is EvoTreeNodeElement && !Utils.isSubmenuSuppressed(element.presentation)
 

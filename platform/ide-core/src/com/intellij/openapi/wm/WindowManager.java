@@ -3,6 +3,8 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import kotlinx.coroutines.Deferred;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,6 +80,13 @@ public abstract class WindowManager {
   public abstract @Nullable JFrame getFrame(@Nullable Project project);
 
   public abstract @Nullable IdeFrame getIdeFrame(@Nullable Project project);
+
+  /**
+   * IDE Frame is initialized asynchronously, so during early stages the {@link #getIdeFrame(Project)} and {@link #getStatusBar(Project)}
+   * might return null.
+   */
+  @ApiStatus.Internal
+  public abstract @NotNull Deferred<@Nullable IdeFrame> getIdeFrameDeferred(@NotNull Project project);
 
   /**
    * Tests whether the specified rectangle is inside of screen bounds.

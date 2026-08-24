@@ -302,7 +302,7 @@ fun createTerminalKeyEventDispatcherForTests(
   settings: JBTerminalSystemSettingsProviderBase,
   eventsHandler: TerminalKeyEventsHandler,
   disposable: Disposable,
-): IdeEventQueue.EventDispatcher = TerminalEventDispatcher(editor, settings, eventsHandler, disposable)
+): IdeEventQueue.NonLockedEventDispatcher = TerminalEventDispatcher(editor, settings, eventsHandler, disposable)
 
 @ApiStatus.Internal
 @VisibleForTesting

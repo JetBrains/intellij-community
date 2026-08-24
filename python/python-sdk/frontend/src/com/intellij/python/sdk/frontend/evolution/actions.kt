@@ -6,6 +6,8 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -14,38 +16,39 @@ import com.intellij.python.sdk.common.evolution.EvoLeafDto
 import com.intellij.python.sdk.common.evolution.EvoSelectResultDto
 import com.intellij.python.sdk.common.evolution.PyInterpreterDto
 import com.intellij.python.sdk.common.evolution.PyInterpreterRef
-import com.intellij.python.sdk.common.evolution.requestEvoAddInterpreter
+import com.intellij.python.sdk.common.evolution.evoRpcOrNull
 import com.intellij.python.sdk.common.evolution.requestEvoPerformNodeAction
 import com.intellij.python.sdk.common.evolution.requestEvoResolveVersion
 import com.intellij.python.sdk.common.evolution.requestEvoSelectInterpreter
-import com.intellij.python.sdk.frontend.PySdkFrontendBundle
 import com.intellij.python.sdk.frontend.evolution.components.EvoLazyDetail
-import com.intellij.icons.AllIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * Opens the v2 "Add Python Interpreter" dialog for the module, preselecting the manager of the tool node
- * ([nodeId]) this row belongs to. The status-bar widget refreshes on the resulting `rootsChanged`.
+ * Remembers the tool node whose interpreter configuration is currently in progress, so the status-bar widget shows that
+ * tool's (fading) logo while the SDK-configuration lock is held. Set by the select/create actions before they call the
+ * backend; cleared by the widget when the lock is released.
  */
-class AddNewEnvAction(
-  private val project: Project,
-  private val moduleName: String,
-  private val nodeId: String,
-  private val scope: CoroutineScope,
-) : AnAction(
-  { PySdkFrontendBundle.message("evolution.action.add.new.env.text") },
-  { PySdkFrontendBundle.message("evolution.action.add.new.env.description") },
-  AllIcons.General.InlineAdd,
-), DumbAware {
-  override fun actionPerformed(e: AnActionEvent) {
-    scope.launch {
-      when (val result = requestEvoAddInterpreter(project.projectId(), moduleName, nodeId)) {
-        is EvoSelectResultDto.Ok -> Unit
-        is EvoSelectResultDto.Error -> LOG.warn("Evo: failed to open Add Interpreter dialog for '$moduleName': ${result.message}")
-      }
+@Service(Service.Level.PROJECT)
+internal class EvoConfiguringTracker {
+  @Volatile
+  var nodeId: String? = null
+}
+
+/**
+ * Creates (and assigns to the module) an environment for the chosen version [token] via [requestEvoSelectInterpreter]
+ * with a [PyInterpreterRef.CreateEnv]. [folder] is the base location (uv/pip: the containing dir; other tools: tool
+ * specific) and [name] the user-editable env name from the add-new field (uv/pip: the env folder name; conda: the env
+ * name; null keeps the tool default). The widget refreshes itself on the resulting `rootsChanged`.
+ */
+internal fun createEvoEnv(project: Project, moduleName: String, nodeId: String, token: String, folder: String, name: String?, scope: CoroutineScope) {
+  project.service<EvoConfiguringTracker>().nodeId = nodeId   // so the widget fades this tool's logo while configuring
+  scope.launch {
+    when (val result = requestEvoSelectInterpreter(project.projectId(), moduleName, PyInterpreterRef.CreateEnv(token, folder, name), nodeId)) {
+      is EvoSelectResultDto.Ok -> Unit
+      is EvoSelectResultDto.Error -> LOG.warn("Evo: failed to create '$nodeId' environment for '$moduleName': ${result.message}")
     }
   }
 }
@@ -102,6 +105,7 @@ internal class SelectEnvAction(
   }
 
   override fun actionPerformed(e: AnActionEvent) {
+    project.service<EvoConfiguringTracker>().nodeId = nodeId   // so the widget fades this tool's logo while configuring
     scope.launch {
       when (val result = requestEvoSelectInterpreter(project.projectId(), moduleName, ref, nodeId)) {
         is EvoSelectResultDto.Ok -> Unit
@@ -116,7 +120,7 @@ internal class SelectEnvAction(
     if (versionRequested || templatePresentation.getClientProperty(ActionUtil.SECONDARY_TEXT) != null) return
     versionRequested = true
     scope.launch {
-      val version = runCatching { requestEvoResolveVersion(project.projectId(), moduleName, nodeId, detected.homePath, traceId) }.getOrNull() ?: "n/a"
+      val version = evoRpcOrNull { requestEvoResolveVersion(project.projectId(), moduleName, nodeId, detected.homePath, traceId) } ?: "n/a"
       withContext(Dispatchers.EDT) {
         templatePresentation.putClientProperty(ActionUtil.SECONDARY_TEXT, version)
         onResolved()

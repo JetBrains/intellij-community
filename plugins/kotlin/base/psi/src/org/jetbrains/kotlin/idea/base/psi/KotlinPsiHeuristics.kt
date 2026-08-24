@@ -50,7 +50,7 @@ object KotlinPsiHeuristics {
 
     @JvmStatic
     fun unwrapImportAlias(type: KtUserType, aliasName: String): Collection<String> {
-        val file = type.containingKotlinFileStub?.psi as? KtFile ?: return emptyList()
+        val file = type.greenStub?.containingFileStub?.psi as? KtFile ?: return emptyList()
         return unwrapImportAlias(file, aliasName)
     }
 
@@ -75,28 +75,6 @@ object KotlinPsiHeuristics {
                 put(aliasName, name)
             }
         }
-    }
-
-    @JvmStatic
-    fun isProbablyNothing(typeReference: KtTypeReference): Boolean {
-        val userType = typeReference.typeElement as? KtUserType ?: return false
-        return isProbablyNothing(userType)
-    }
-
-    @JvmStatic
-    fun isProbablyNothing(type: KtUserType): Boolean {
-        val referencedName = type.referencedName ?: return false
-        if (referencedName == "Nothing") {
-            return true
-        }
-
-        // TODO: why don't use PSI-less stub for calculating aliases?
-        val file = type.containingKotlinFileStub?.psi as? KtFile ?: return false
-        // TODO: support type aliases
-        if (file.hasImportAlias()) {
-            return file.aliasImportMap.get(referencedName).contains("Nothing")
-        }
-        return false
     }
 
     @JvmStatic

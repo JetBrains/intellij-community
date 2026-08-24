@@ -41,6 +41,8 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.ProjectRule;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.Timings;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
@@ -96,6 +98,8 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   private static final Logger LOG = Logger.getInstance(VirtualFilePointerTest.class);
 
   @Rule public TempDirectory tempDir = new TempDirectory();
+
+  @Rule public ProjectRule projectRule = new ProjectRule();
 
   private final Disposable disposable = Disposer.newDisposable();
   private VirtualFilePointerManagerImpl myVirtualFilePointerManager;
@@ -899,6 +903,9 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   public void testSeveralDirectoriesWithCommonPrefix() throws IOException {
     var vDir = getVirtualTempRoot();
     assertNotNull(vDir);
+
+    PsiTestUtil.addContentRoot(projectRule.getModule(), vDir);
+
     vDir.getChildren();
     vDir.refresh(false, true);
 

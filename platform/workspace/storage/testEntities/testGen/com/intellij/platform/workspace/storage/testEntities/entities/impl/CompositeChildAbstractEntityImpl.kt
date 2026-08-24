@@ -10,7 +10,6 @@ import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
@@ -75,17 +74,6 @@ internal class CompositeChildAbstractEntityImpl(private val dataSource: Composit
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
-// Check initialization for list with ref type
-      if (_diff != null) {
-        if (_diff.instrumentation.getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this) == null) {
-          error("Field CompositeAbstractEntity#children should be initialized")
-        }
-      }
-      else {
-        if (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] == null) {
-          error("Field CompositeAbstractEntity#children should be initialized")
-        }
-      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -107,6 +95,7 @@ internal class CompositeChildAbstractEntityImpl(private val dataSource: Composit
         changedProperty.add("entitySource")
       }
     override var parentInList: CompositeAbstractEntityBuilder<out CompositeAbstractEntity>?
+      @Suppress("UNCHECKED_CAST")
       get() = getParent(PARENTINLIST_CONNECTION_ID) as? CompositeAbstractEntityBuilder<out CompositeAbstractEntity>?
               ?: error("parentInList is null for SimpleAbstractEntity")
       set(value) {

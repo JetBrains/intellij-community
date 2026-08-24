@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `iml intellij.gradle.toml` end
 
@@ -37,6 +38,8 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
     ],
 )
+
+content_module_jar(module = ":toml")
 
 jvm_library(
     name = "toml_test_lib",

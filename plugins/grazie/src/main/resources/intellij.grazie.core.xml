@@ -11,11 +11,13 @@
     <module name="intellij.libraries.guava"/>
     <module name="intellij.libraries.jackson"/>
     <module name="intellij.libraries.jackson.databind"/>
+    <module name="intellij.libraries.jackson.dataformat.yaml"/>
     <module name="intellij.libraries.jackson.module.kotlin"/>
     <module name="intellij.libraries.javax.activation"/>
     <module name="intellij.libraries.javax.annotation"/>
     <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.jna"/>
+    <module name="intellij.libraries.kotlin.logging"/>
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.kotlinx.html"/>
@@ -31,6 +33,7 @@
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.credentialStore"/>
     <module name="intellij.platform.diff.impl"/>
     <module name="intellij.platform.editor.ex"/>
     <module name="intellij.platform.editor.ui"/>
@@ -43,6 +46,8 @@
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.refactoring"/>
+    <module name="intellij.platform.serviceContainer"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ui"/>

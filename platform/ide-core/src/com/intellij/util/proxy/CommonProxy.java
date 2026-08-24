@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.proxy;
 
 import com.intellij.ide.IdeCoreBundle;
@@ -30,20 +30,19 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * @deprecated use {@link com.intellij.util.net.JdkProxyProvider} for the main proxy provider of the application
- */
-@SuppressWarnings("JavadocReference")
-@Deprecated
+/// @deprecated use [com.intellij.util.net.JdkProxyProvider] for the main proxy provider of the application
+@Deprecated(forRemoval = true)
+@SuppressWarnings("DeprecatedIsStillUsed")
 public final class CommonProxy extends ProxySelector {
   static final Logger LOG = Logger.getInstance(CommonProxy.class);
 
   private static final CommonProxy ourInstance = new CommonProxy();
 
-  /** @deprecated use {@link com.intellij.util.net.ProxyUtils#NO_PROXY_LIST} */
+  /// @deprecated use [com.intellij.util.net.ProxyUtils#NO_PROXY_LIST]
   @ApiStatus.Internal
   @Deprecated
   public static final List<Proxy> NO_PROXY_LIST = Collections.singletonList(Proxy.NO_PROXY);
+
   private static final long ourErrorInterval = TimeUnit.MINUTES.toMillis(3);
   private static final AtomicInteger ourNotificationCount = new AtomicInteger();
   private static volatile long ourErrorTime;
@@ -51,7 +50,6 @@ public final class CommonProxy extends ProxySelector {
   private static final AtomicReference<Map<String, String>> ourProps = new AtomicReference<>();
 
   private final Object myLock = new Object();
-
   private final Map<String, AccessToken> myCustomAuthRegistrations = new HashMap<>();
 
   public static CommonProxy getInstance() {
@@ -62,12 +60,10 @@ public final class CommonProxy extends ProxySelector {
     ensureAuthenticator();
   }
 
-  /**
-   * @deprecated use {@link com.intellij.util.net.JdkProxyProvider#ensureDefault()}
-   */
+  /// @deprecated use [com.intellij.util.net.JdkProxyProvider#ensureDefault()]
   @Deprecated
   public static void isInstalledAssertion() {
-    final ProxySelector aDefault = ProxySelector.getDefault();
+    final ProxySelector aDefault = getDefault();
     if (CommonProxyCompatibility.mainProxySelector != null && CommonProxyCompatibility.mainProxySelector != aDefault) {
       // to report only once
       if (ourWrong != aDefault || itsTime()) {
@@ -76,7 +72,7 @@ public final class CommonProxy extends ProxySelector {
                   "Instead, methods of com.intellij.util.net.ProxyService should be used for proxying.");
         ourWrong = aDefault;
       }
-      ProxySelector.setDefault(CommonProxyCompatibility.mainProxySelector);
+      setDefault(CommonProxyCompatibility.mainProxySelector);
       ourInstance.ensureAuthenticator();
     }
     assertSystemPropertiesSet();
@@ -131,9 +127,7 @@ public final class CommonProxy extends ProxySelector {
   }
 
 
-  /**
-   * @deprecated use {@link com.intellij.util.net.JdkProxyProvider#ensureDefault()}
-   */
+  /// @deprecated use [com.intellij.util.net.JdkProxyProvider#ensureDefault()]
   @ApiStatus.Internal
   @Deprecated
   public void ensureAuthenticator() {
@@ -145,22 +139,20 @@ public final class CommonProxy extends ProxySelector {
     }
   }
 
-  /** @deprecated no replacement, existing usages are internal and are no-op since noProxy has no usages */
+  /// @deprecated no replacement, existing usages are internal and are no-op since noProxy has no usages
   @ApiStatus.Internal
   @Deprecated
+  @SuppressWarnings("unused")
   public void removeNoProxy(final @NotNull String protocol, final @NotNull String host, final int port) { }
 
-  /**
-   * @deprecated no replacement, only two internal usages, and the rule is never removed, logic should be implemented by other means,
-   * see {@link com.intellij.util.net.ProxyAuthentication}
-   */
+  /// @deprecated no replacement, only two internal usages, and the rule is never removed, logic should be implemented by other means,
+  /// see [com.intellij.util.net.ProxyAuthentication]
   @ApiStatus.Internal
   @Deprecated
+  @SuppressWarnings("unused")
   public void noAuthentication(final @NotNull String protocol, final @NotNull String host, final int port) { }
 
-  /**
-   * @deprecated see {@link com.intellij.util.net.JdkProxyCustomizer}
-   */
+  /// @deprecated see [com.intellij.util.net.JdkProxyCustomizer]
   @Deprecated
   public void setCustomAuth(@NotNull String key, @NotNull NonStaticAuthenticator nonStaticAuthenticator) {
     synchronized (myLock) {
@@ -173,9 +165,7 @@ public final class CommonProxy extends ProxySelector {
     }
   }
 
-  /**
-   * @deprecated see {@link com.intellij.util.net.JdkProxyCustomizer}
-   */
+  /// @deprecated see [com.intellij.util.net.JdkProxyCustomizer]
   @Deprecated
   public void removeCustomAuth(final @NotNull String key) {
     synchronized (myLock) {
@@ -211,16 +201,14 @@ public final class CommonProxy extends ProxySelector {
     mainProxySelector.connectFailed(uri, sa, ioe);
   }
 
-  /** @deprecated use {@link com.intellij.util.net.JdkProxyProvider#getAuthenticator()} */
+  /// @deprecated use [com.intellij.util.net.JdkProxyProvider#getAuthenticator()]
   @Deprecated
   public Authenticator getAuthenticator() {
     return CommonProxyCompatibility.mainAuthenticator != null ? CommonProxyCompatibility.mainAuthenticator : Authenticator.getDefault();
   }
 
-  /**
-   * @apiNote no external usages
-   * @deprecated use {@link com.intellij.util.net.ProxyUtils#getHostNameReliably(String, InetAddress, URL)} (it is nullable now)
-   */
+  /// @apiNote no external usages
+  /// @deprecated use [com.intellij.util.net.ProxyUtils#getHostNameReliably(String, InetAddress, URL)] (it is nullable now)
   @Deprecated
   public static String getHostNameReliably(final String requestingHost, final InetAddress site, final URL requestingUrl) {
     String host = requestingHost;
@@ -240,7 +228,7 @@ public final class CommonProxy extends ProxySelector {
     return VfsUtil.toUri(url.toString());
   }
 
-  /** @deprecated one external usage in the method that is deprecated, remove after migration */
+  /// @deprecated one external usage in the method that is deprecated, remove after migration
   @Deprecated
   public static final class HostInfo {
     public final String myProtocol;

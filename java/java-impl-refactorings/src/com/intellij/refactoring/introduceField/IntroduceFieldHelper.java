@@ -94,8 +94,8 @@ final class IntroduceFieldHelper implements FieldHelper {
   }
 
   @Override
-  public @NotNull BaseExpressionToFieldHandler.Settings getSettings(@NotNull JavaIntroduceFieldService.ToFieldContext.VariableContext context,
-                                                                    @NotNull JavaIntroduceFieldService.InitializationPlace place,
+  public @NotNull BaseExpressionToFieldHandler.Settings getSettings(@NotNull JavaIntroduceFieldModCommandService.ToFieldContext.VariableContext context,
+                                                                    @NotNull JavaIntroduceFieldModCommandService.InitializationPlace place,
                                                                     @NotNull PsiExpression @NotNull [] occurrences) {
     PsiLocalVariable local = context.localVariable();
     PsiExpression expr = local.getInitializer();
@@ -127,7 +127,7 @@ final class IntroduceFieldHelper implements FieldHelper {
   }
 
   @Override
-  public @NotNull SuggestedNameInfo getSuggestedNameInfo(@NotNull JavaIntroduceFieldService.ToFieldContext.ExpressionContext expressionContextContext,
+  public @NotNull SuggestedNameInfo getSuggestedNameInfo(@NotNull JavaIntroduceFieldModCommandService.ToFieldContext.ExpressionContext expressionContextContext,
                                                          FieldExtractor.@NotNull SettingParameters parameters) {
     return JavaNameSuggestionUtil.suggestFieldName(expressionContextContext.tempType(), null, expressionContextContext.selectedExpr(),
                                             parameters.declareStatic(), expressionContextContext.parentClass());

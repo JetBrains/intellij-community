@@ -34,3 +34,16 @@ fun String.hyphenateTestName(): String {
 
   return hyphenatedPath.replaceSpecialCharactersWithHyphens()
 }
+
+/** A name as a reporting directory spells it: hyphenated, and its slashes flattened, one name getting one directory. */
+internal fun String.flattened(): String = hyphenateTestName().replace('/', '-')
+
+/** `.` and `..` spelled so that a directory name cannot point at another directory. */
+internal fun String.escapeDotSegment(): String = if (this == "." || this == "..") replace(".", "%2E") else this
+
+/**
+ * Whether this name begins with the whole of [name] rather than merely beginning like it: `maven-smoke-tests`, `maven-smoke-tests-x` and
+ * `maven-smoke-tests.x` all begin with the whole of `maven-smoke-tests`, `maven-smoke-testsuite` does not.
+ */
+internal fun String.startsWithWholeName(name: String): Boolean =
+  startsWith(name) && getOrNull(name.length)?.isLetterOrDigit() != true

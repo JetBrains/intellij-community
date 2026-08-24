@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.lookup.ExpressionLookupItem;
@@ -74,7 +74,7 @@ public class AddVariableInitializerFix extends PsiUpdateModCommandAction<PsiVari
 
     List<LookupElement> result = new SmartList<>();
     String defaultValue = PsiTypesUtil.getDefaultValueOfType(type);
-    String customDefaultValue = PsiTypesUtil.getDefaultValueOfType(type, true);
+    String customDefaultValue = PsiTypesUtil.getDefaultValueOfType(type, variable);
     if (!customDefaultValue.equals(defaultValue)) {
       PsiExpression customDef = elementFactory.createExpressionFromText(customDefaultValue, variable);
       result.add(new ExpressionLookupItem((PsiExpression)JavaCodeStyleManager.getInstance(variable.getProject()).shortenClassReferences(customDef)));

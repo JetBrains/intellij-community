@@ -16,6 +16,8 @@ object FoldingKeys {
   @JvmField
   val HIDE_GUTTER_RENDERER_FOR_COLLAPSED: Key<Boolean> = Key.create("FoldRegion.HIDE_GUTTER_RENDERER_FOR_COLLAPSED")
 
+  @JvmField
+  val HIDE_PLACEHOLDER_BACKGROUND: Key<Boolean> = Key.create("folding.hide.placeholder.background")
 
   /**
    * This key is needed for rendering inline completion.

@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.structureView.plugin` start
@@ -33,7 +34,20 @@ exports_files(
     [
         "intellij.platform.structureView.plugin.iml",
         "resources/META-INF/plugin.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.structureView.plugin` end
+
+### auto-generated section `dev content intellij.platform.structureView.plugin` start
+dev_dist_plugin_content(
+    descriptor_module = ":plugin",
+    prepacked_content_modules = [
+        "//platform/structure-view-impl/backend:backend_content_module_jar",
+        "//platform/structure-view-impl/frontend:frontend_content_module_jar",
+        "//platform/structure-view-impl/intellij.platform.structureView.impl:structureView-impl_content_module_jar",
+        "//platform/structure-view-impl:structureView_content_module_jar",
+    ],
+)
+### auto-generated section `dev content intellij.platform.structureView.plugin` end

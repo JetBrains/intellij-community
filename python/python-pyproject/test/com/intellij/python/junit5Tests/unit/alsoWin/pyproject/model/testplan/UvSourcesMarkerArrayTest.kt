@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.testplan
 
+import com.intellij.idea.TestFor
 import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
@@ -27,7 +28,8 @@ internal class UvSourcesMarkerArrayTest {
   private val f by pyProjectTomlSyncFixture(projectFixture)
 
   @Test
-  fun sanity(): Unit = timeoutRunBlocking {
+  @TestFor(issues = ["PY-91195"])
+  fun `workspace sources written as arrays of tables resolve both members and their dependency edges`(): Unit = timeoutRunBlocking {
     f.reloadProject()
     f.assertProjectStructure(
       ExpectedModule("pythonproject", contentRoot = ".", deps = listOf("sub-project-a", "sub-project-b"), sourceRoots = listOf(".")),

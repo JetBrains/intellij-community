@@ -1,0 +1,165 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.gradle.backend` start
+jvm_library(
+    name = "backend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.gradle.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/kernel/rpc.backend",
+        "//platform/kernel/backend",
+        "//platform/platform-impl/rpc",
+        "//platform/backend",
+        "//platform/refactoring",
+        "//platform/core-api:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/projectModel-api:projectModel",
+        "//platform/util",
+        "//platform/external-system-api:externalSystem",
+        "//platform/external-system-impl:externalSystem-impl",
+        "//plugins/gradle/settings",
+        "//plugins/gradle",
+    ],
+)
+
+content_module_jar(module = ":backend")
+
+jvm_library(
+    name = "backend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.gradle.backend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":backend",
+        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
+        "//platform/kernel/backend:backend_test_lib",
+        "//platform/platform-impl/rpc:rpc_test_lib",
+        "//platform/backend:backend_test_lib",
+        "//platform/refactoring:refactoring_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/external-system-api:externalSystem_test_lib",
+        "//platform/external-system-impl:externalSystem-impl_test_lib",
+        "//plugins/gradle/settings:settings_test_lib",
+        "//plugins/gradle:gradle_test_lib",
+    ],
+)
+### auto-generated section `build intellij.gradle.backend` end
+
+### auto-generated section `iml intellij.gradle.backend` start
+exports_files(
+    [
+        "intellij.gradle.backend.iml",
+        "resources/intellij.gradle.backend.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.gradle.backend` end
+
+### auto-generated section `build intellij.gradle.backend.tests` start
+jvm_library(
+    name = "backend-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.gradle.backend.tests",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "backend-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSources/**/*.kt",
+            "testSources/**/*.java",
+            "testSources/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//plugins/gradle/backend",
+        "//plugins/gradle/backend:backend_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [":backend-tests"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/gradle",
+        "//plugins/gradle:gradle_test_lib",
+        "//plugins/gradle/settings",
+        "//plugins/gradle/settings:settings_test_lib",
+        "//plugins/gradle:gradle-tests",
+        "//plugins/gradle:gradle-tests_test_lib",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/projectModel-api:projectModel",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/refactoring",
+        "//platform/refactoring:refactoring_test_lib",
+        "//platform/external-system-api:externalSystem",
+        "//platform/external-system-api:externalSystem_test_lib",
+        "//platform/external-system-impl:externalSystem-impl",
+        "//platform/external-system-impl:externalSystem-impl_test_lib",
+        "//platform/external-system-impl:externalSystem-tests",
+        "//platform/external-system-impl:externalSystem-tests_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/mockito",
+        "//libraries/mockito:mockito_test_lib",
+        "//libraries/mockito-kotlin",
+        "//libraries/mockito-kotlin:mockito-kotlin_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+    ],
+)
+### auto-generated section `build intellij.gradle.backend.tests` end
+
+### auto-generated section `iml intellij.gradle.backend.tests` start
+exports_files(
+    [
+        "intellij.gradle.backend.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.gradle.backend.tests` end
+
+### auto-generated section `test intellij.gradle.backend.tests` start
+jps_test(
+    name = "backend-tests_test",
+    runtime_deps = [":backend-tests_test_lib"],
+)
+### auto-generated section `test intellij.gradle.backend.tests` end

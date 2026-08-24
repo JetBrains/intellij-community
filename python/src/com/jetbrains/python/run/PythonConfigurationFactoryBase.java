@@ -17,10 +17,15 @@ package com.jetbrains.python.run;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.PlatformUtils;
+import com.jetbrains.python.run.features.PyRunConfigurationIconsKt;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.Icon;
 
 public abstract class PythonConfigurationFactoryBase extends ConfigurationFactory {
   protected PythonConfigurationFactoryBase(@NotNull ConfigurationType type) {
@@ -35,5 +40,11 @@ public abstract class PythonConfigurationFactoryBase extends ConfigurationFactor
   @Override
   public boolean isEditableInDumbMode() {
     return true;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public Icon getIcon(@NotNull RunConfiguration configuration) {
+    return PyRunConfigurationIconsKt.decorateIcon(configuration, super.getIcon(configuration));
   }
 }

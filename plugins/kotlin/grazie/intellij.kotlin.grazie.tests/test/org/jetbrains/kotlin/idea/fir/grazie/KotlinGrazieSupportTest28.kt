@@ -26,6 +26,15 @@ class KotlinGrazieSupportTest28 : GrazieTestBase() {
         runHighlightTestForFile("grazie/Constructs.kt")
     }
 
+    fun `test Kotlin keyword operator is not a typo`() {
+        myFixture.configureByText("a.kt", """
+            fun f(low: Int, high: Int) {
+                val mid = (low + high) ushr 1
+            }
+        """.trimIndent())
+        myFixture.checkHighlighting()
+    }
+
     fun `test grammar check in docs`() {
         enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
         runHighlightTestForFile("grazie/Docs.kt")

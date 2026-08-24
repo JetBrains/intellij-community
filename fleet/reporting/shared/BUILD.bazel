@@ -1,6 +1,7 @@
 load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 fleet_wasmjs_module(
     name = "wasmjs_module",
@@ -55,6 +56,8 @@ jvm_library(
         "//fleet/multiplatform.shims",
     ],
 )
+
+content_module_jar(module = ":shared")
 
 jvm_library(
     name = "shared_test_lib",

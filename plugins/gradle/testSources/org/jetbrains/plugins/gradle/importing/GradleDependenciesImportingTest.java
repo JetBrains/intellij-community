@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.jps.entities.LibraryId;
 import com.intellij.platform.workspace.jps.entities.LibraryTableId;
-import com.intellij.platform.workspace.jps.entities.ModuleId;
 import com.intellij.testFramework.RunAll;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -61,6 +60,7 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -70,6 +70,8 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.BiPredicate;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getExternalProjectId;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getExternalProjectPath;
@@ -270,7 +272,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertNotNull(library);
     assertNotNull(library.getExternalSource());
   }
-  
+
   @Test
   @TargetVersions("<=6.9.x")
   public void testTransitiveNonTransitiveDependencyScopeMerge() throws Exception {
@@ -287,16 +289,17 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
         })
         .project(":project2", it -> {
           it.addPostfix("""
-            dependencies.ext.strict = { projectPath ->
-            dependencies.compile dependencies.project(path: projectPath, transitive: false)
-            dependencies.runtime dependencies.project(path: projectPath, transitive: true)
-            dependencies.testRuntime dependencies.project(path: projectPath, transitive: true)
-          }
-          
-          dependencies {
-            strict ':project1'
-          }
-          """);})
+                            dependencies.ext.strict = { projectPath ->
+                            dependencies.compile dependencies.project(path: projectPath, transitive: false)
+                            dependencies.runtime dependencies.project(path: projectPath, transitive: true)
+                            dependencies.testRuntime dependencies.project(path: projectPath, transitive: true)
+                          }
+                          
+                          dependencies {
+                            strict ':project1'
+                          }
+                          """);
+        })
         .generate()
     );
 
@@ -330,7 +333,9 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
             .withJavaPlugin()
             .addPostfix("configurations { provided }");
         })
-        .project(":web", it -> { it.addDependency("provided", "junit:junit:4.11"); })
+        .project(":web", it -> {
+          it.addDependency("provided", "junit:junit:4.11");
+        })
         .project(":user", it -> {
           it
             .applyPlugin("war")
@@ -362,9 +367,9 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     createSettingsFile(including("api", "impl"));
 
     importProject(script(it -> {
-      it.allprojects( p -> {
-        p.withJavaPlugin()
-          .withMavenCentral();
+      it.allprojects(p -> {
+          p.withJavaPlugin()
+            .withMavenCentral();
         })
         .project("impl", p -> {
           p.addPrefix("sourceSets {",
@@ -515,7 +520,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  public void testLocalFileDepsImportedAsModuleLibraries_existingPath() throws Exception {
+  public void testLocalFileDepsImportedAsProjectLibraries_existingPath() throws Exception {
     Registry.get("gradle.phased.sync.bridge.disabled").setValue(true, getTestRootDisposable());
 
     var jarPath = "deps/dep.jar";
@@ -535,10 +540,10 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModules("project", "project.main", "project.test");
 
     var moduleLibDeps = getModuleLibDeps("project.main", "Gradle: dep.jar");
-    assertEquals("Should have a single module level dependency", 1, moduleLibDeps.size());
+    assertEquals("Should have a single library dependency", 1, moduleLibDeps.size());
 
     var libDep = moduleLibDeps.getFirst();
-    assertTrue("Dependency must be module level: " + libDep.toString(), libDep.isModuleLevel());
+    assertFalse("Dependency must be project level: " + libDep.toString(), libDep.isModuleLevel());
     assertEquals("URLs must be in the correct format", expectedPath, libDep.getLibrary().getUrls(OrderRootType.CLASSES)[0]);
 
     // Try another import attempt and make sure it doesn't throw anything
@@ -546,33 +551,32 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModules("project", "project.main", "project.test");
 
     moduleLibDeps = getModuleLibDeps("project.main", "Gradle: dep.jar");
-    assertEquals("Should have a single module level dependency", 1, moduleLibDeps.size());
+    assertEquals("Should have a single library dependency", 1, moduleLibDeps.size());
 
     libDep = moduleLibDeps.getFirst();
-    assertTrue("Dependency must be module level: " + libDep.toString(), libDep.isModuleLevel());
+    assertFalse("Dependency must be project level: " + libDep.toString(), libDep.isModuleLevel());
     assertEquals("URLs must be in the correct format", expectedPath, libDep.getLibrary().getUrls(OrderRootType.CLASSES)[0]);
-    ((LibraryBridgeImpl) libDep.getLibrary()).getLibrarySnapshot$intellij_platform_projectModel_impl().getLibraryEntity().getEntitySource();
+    ((LibraryBridgeImpl)libDep.getLibrary()).getLibrarySnapshot$intellij_platform_projectModel_impl().getLibraryEntity().getEntitySource();
 
     // Try another import attempt and make sure it doesn't throw anything
     importProject();
     assertModules("project", "project.main", "project.test");
 
     moduleLibDeps = getModuleLibDeps("project.main", "Gradle: dep.jar");
-    assertEquals("Should have a single module level dependency", 1, moduleLibDeps.size());
+    assertEquals("Should have a single library dependency", 1, moduleLibDeps.size());
 
     libDep = moduleLibDeps.getFirst();
-    assertTrue("Dependency must be module level: " + libDep.toString(), libDep.isModuleLevel());
+    assertFalse("Dependency must be project level: " + libDep.toString(), libDep.isModuleLevel());
     assertEquals("URLs must be in the correct format", expectedPath, libDep.getLibrary().getUrls(OrderRootType.CLASSES)[0]);
   }
 
   @Test
-  public void testLocalFileDepsImportedAsModuleLibraries_nonExistentPath() throws Exception {
+  public void testLocalFileDepsImportedAsProjectLibraries_nonExistentPath() throws Exception {
     Registry.get("gradle.phased.sync.bridge.disabled").setValue(true, getTestRootDisposable());
 
     var jarPath = "deps/dep.jar";
     var expectedPath = JpsPathUtil.getLibraryRootUrl(getProjectPath(jarPath));
-    var expectedLibraryId = new LibraryId("Gradle: dep.jar",
-                                          new LibraryTableId.ModuleLibraryTableId(new ModuleId("project.main")));
+    var expectedLibraryId = new LibraryId("Gradle: dep.jar", LibraryTableId.ProjectLibraryTableId.INSTANCE);
 
 
     String config = createBuildScriptBuilder()
@@ -583,41 +587,60 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       })
       .generate();
 
-      importProject(config);
+    importProject(config);
 
-      assertModules("project", "project.main", "project.test");
+    assertModules("project", "project.main", "project.test");
 
-      var moduleLibDeps = getModuleLibDeps("project.main", "Gradle: dep.jar");
-      assertEquals("Should have a single module level dependency", 1, moduleLibDeps.size());
+    var moduleLibDeps = getModuleLibDeps("project.main", "Gradle: dep.jar");
+    assertEquals("Should have a single library dependency", 1, moduleLibDeps.size());
 
-      var libDep = moduleLibDeps.getFirst();
-      assertTrue("Dependency must be module level: " + libDep.toString(), libDep.isModuleLevel());
-      assertEquals("URLs must be in the correct format", expectedPath, libDep.getLibrary().getUrls(OrderRootType.CLASSES)[0]);
+    var libDep = moduleLibDeps.getFirst();
+    assertFalse("Dependency must be project level: " + libDep.toString(), libDep.isModuleLevel());
+    assertEquals("URLs must be in the correct format", expectedPath, libDep.getLibrary().getUrls(OrderRootType.CLASSES)[0]);
 
-      var libraryEntity = WorkspaceModel.getInstance(getMyProject()).getCurrentSnapshot().resolve(expectedLibraryId);
-      assertNotNull("Library entity must exists", libraryEntity);
-      assertTrue("Library entity source must be from data services",
-                 (libraryEntity.getEntitySource()) instanceof GradleEntitySource
-                 && ((GradleEntitySource) libraryEntity.getEntitySource()).getPhase() == GradleSyncPhase.DATA_SERVICES_PHASE
-      );
+    var libraryEntity = WorkspaceModel.getInstance(getMyProject()).getCurrentSnapshot().resolve(expectedLibraryId);
+    assertNotNull("Library entity must exists", libraryEntity);
 
-      // Try another import attempt and make sure it doesn't throw anything
-      importProject();
-      assertModules("project", "project.main", "project.test");
+    // Try another import attempt and make sure it doesn't throw anything
+    importProject();
+    assertModules("project", "project.main", "project.test");
 
-      moduleLibDeps = getModuleLibDeps("project.main", "Gradle: dep.jar");
-      assertEquals("Should have a single module level dependency", 1, moduleLibDeps.size());
+    moduleLibDeps = getModuleLibDeps("project.main", "Gradle: dep.jar");
+    assertEquals("Should have a single library dependency", 1, moduleLibDeps.size());
 
-      libDep = moduleLibDeps.getFirst();
-      assertTrue("Dependency must be module level: " + libDep.toString(), libDep.isModuleLevel());
-      assertEquals("URLs must be in the correct format", expectedPath, libDep.getLibrary().getUrls(OrderRootType.CLASSES)[0]);
+    libDep = moduleLibDeps.getFirst();
+    assertFalse("Dependency must be project level: " + libDep.toString(), libDep.isModuleLevel());
+    assertEquals("URLs must be in the correct format", expectedPath, libDep.getLibrary().getUrls(OrderRootType.CLASSES)[0]);
 
-      libraryEntity = WorkspaceModel.getInstance(getMyProject()).getCurrentSnapshot().resolve(expectedLibraryId);
-      assertNotNull("Library entity must exists", libraryEntity);
-      assertTrue("Library entity source must be from data services",
-                 (libraryEntity.getEntitySource()) instanceof GradleEntitySource
-                 && ((GradleEntitySource) libraryEntity.getEntitySource()).getPhase() == GradleSyncPhase.DATA_SERVICES_PHASE
-      );
+    libraryEntity = WorkspaceModel.getInstance(getMyProject()).getCurrentSnapshot().resolve(expectedLibraryId);
+    assertNotNull("Library entity must exists", libraryEntity);
+  }
+
+  @Test
+  public void testLocalFileDepsImportedWithDuplicatedName() throws Exception {
+    String config = createBuildScriptBuilder()
+      .allprojects(p -> {
+        p
+          .withJavaPlugin()
+          .addImplementationDependency(p.code("files('deps/dep.jar')"))
+          .addImplementationDependency(p.code("files('deps2/dep.jar')"));
+      })
+      .generate();
+
+    importProject(config);
+
+    assertModules("project", "project.main", "project.test");
+
+    Map<String, LibraryOrderEntry> libraries = Arrays.stream(getRootManager("project.main").getOrderEntries())
+      .filter(it -> it instanceof LibraryOrderEntry)
+      .map(it -> (LibraryOrderEntry)it)
+      .collect(Collectors.toMap(it -> it.getLibraryName(), Function.identity()));
+
+    assertEquals(2, libraries.size());
+    for (LibraryOrderEntry value : libraries.values()) {
+      assertTrue(value.getLibraryName().contains("Gradle: dep.jar"));
+      assertFalse(value.isModuleLevel());
+    }
   }
 
   @Test
@@ -762,7 +785,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertLibraryExcludedRoots("project.main", "Gradle: junit:junit:4.11", ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
-  private void assertLibraryExcludedRoots(String moduleName, String depName, String ... roots) {
+  private void assertLibraryExcludedRoots(String moduleName, String depName, String... roots) {
     List<LibraryOrderEntry> deps = getModuleLibDeps(moduleName, depName);
     assertThat(deps).hasSize(1);
     LibraryEx library = (LibraryEx)deps.get(0).getLibrary();
@@ -887,9 +910,11 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
               task.code("dependsOn testClasses");
               if (isGradleAtLeast("8.2")) {
                 task.code("archiveBaseName = \"${project.base.archivesName}-tests\"");
-              } else if (isGradleAtLeast("7.0")) {
+              }
+              else if (isGradleAtLeast("7.0")) {
                 task.code("archiveBaseName = \"${project.archivesBaseName}-tests\"");
-              } else {
+              }
+              else {
                 task.code("baseName = \"${project.archivesBaseName}-tests\"");
               }
               if (isGradleOlderThan("8.0")) {
@@ -957,7 +982,8 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
     assertModules("project",
                   "project.common", "project.common.main", "project.common.test", "project.common.testFixtures",
-                  "project.consumer", "project.consumer.main", "project.consumer.test", "project.consumer.testFixtures", "project.consumer.customTest");
+                  "project.consumer", "project.consumer.main", "project.consumer.test", "project.consumer.testFixtures",
+                  "project.consumer.customTest");
     assertProductionOnTestDependencies("project.consumer.customTest", "project.common.testFixtures");
   }
 
@@ -977,7 +1003,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                           sourceSets { mySourceSet }
                           tasks.create("myJar", Jar) {
                             dependsOn compileMySourceSetJava
-                          """ +  archiveBaseName + """
+                          """ + archiveBaseName + """
                             from sourceSets.mySourceSet.output
                           }
                           artifacts { myConfig myJar }
@@ -1075,7 +1101,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                   "project.api", "project.api.main", "project.api.test", "project.api.extraSourceSet",
                   "project.impl", "project.impl.main", "project.impl.test");
 
-    assertModuleModuleDeps("project.impl.main",  "project.api.extraSourceSet", "project.api.main");
+    assertModuleModuleDeps("project.impl.main", "project.api.extraSourceSet", "project.api.main");
     assertModuleLibDeps("project.impl.main");
     assertModuleModuleDeps("project.impl.test", "project.impl.main", "project.api.extraSourceSet", "project.api.main");
   }
@@ -1086,7 +1112,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   public void testProjectDependencyOnShadowedArtifacts() throws Exception {
     String shadowVersion = isGradleAtLeast("8.0") ? "8.1.1" : "5.2.0";
     createSettingsFile(including("moduleA", "moduleB"));
-    createProjectSubFile("moduleA/build.gradle",  script(it -> {
+    createProjectSubFile("moduleA/build.gradle", script(it -> {
       it.withPlugin("com.github.johnrengelman.shadow", shadowVersion);
       it.withJavaLibraryPlugin();
       it.withMavenCentral();
@@ -1096,12 +1122,14 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                       shadowJar {
                         from sourceSets.extraSourceSet.output
                       }
-                      """); }));
+                      """);
+    }));
 
     createProjectSubFile("moduleB/build.gradle",
-                         script( it -> {
+                         script(it -> {
                            it.withJavaPlugin();
-                           it.addImplementationDependency(it.project(":moduleA", "shadow")); }));
+                           it.addImplementationDependency(it.project(":moduleA", "shadow"));
+                         }));
 
     importProject("");
 
@@ -1122,30 +1150,31 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   public void testProjectDependencyOnBootJar3Artifact() throws Exception {
     createSettingsFile(including("moduleA", "moduleB"));
     createProjectSubFile("moduleB/build.gradle",
-                         script( it -> {
+                         script(it -> {
                            it.withJavaPlugin();
-                           it.addImplementationDependency(it.project(":moduleA")); }));
+                           it.addImplementationDependency(it.project(":moduleA"));
+                         }));
 
     String springBootVersion = "3.2.0";
     importProject(script(it -> {
-        it.withMavenCentral();
-        it.withPlugin("org.springframework.boot", springBootVersion);
-        it.allprojects(all -> {
-          all.withMavenCentral();
-          all.applyPlugin("java");
-          all.applyPlugin("org.springframework.boot");
-          all.addPostfix("""
-                             bootJar {
-                               enabled = true
-                               mainClass = 'MyApplication'
-                             }
-                             jar {
-                               enabled = true
-                               archiveClassifier.set('')
-                             }
-                           """);
-        });
-      }
+                           it.withMavenCentral();
+                           it.withPlugin("org.springframework.boot", springBootVersion);
+                           it.allprojects(all -> {
+                             all.withMavenCentral();
+                             all.applyPlugin("java");
+                             all.applyPlugin("org.springframework.boot");
+                             all.addPostfix("""
+                                                bootJar {
+                                                  enabled = true
+                                                  mainClass = 'MyApplication'
+                                                }
+                                                jar {
+                                                  enabled = true
+                                                  archiveClassifier.set('')
+                                                }
+                                              """);
+                           });
+                         }
     ));
 
     assertModules("project", "project.main", "project.test",
@@ -1164,9 +1193,10 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   public void testProjectDependencyOnBootJar2Artifact() throws Exception {
     createSettingsFile(including("moduleA", "moduleB"));
     createProjectSubFile("moduleB/build.gradle",
-                         script( it -> {
+                         script(it -> {
                            it.withJavaPlugin();
-                           it.addImplementationDependency(it.project(":moduleA")); }));
+                           it.addImplementationDependency(it.project(":moduleA"));
+                         }));
 
     String springBootVersion = "2.7.18";
     importProject(script(it -> {
@@ -1177,15 +1207,15 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                              all.applyPlugin("java");
                              all.applyPlugin("org.springframework.boot");
                              all.addPostfix("""
-                             bootJar {
-                               enabled = true
-                               mainClass = 'MyApplication'
-                             }
-                             jar {
-                               enabled = true
-                               archiveClassifier.set('')
-                             }
-                           """);
+                                                bootJar {
+                                                  enabled = true
+                                                  mainClass = 'MyApplication'
+                                                }
+                                                jar {
+                                                  enabled = true
+                                                  archiveClassifier.set('')
+                                                }
+                                              """);
                            });
                          }
     ));
@@ -1195,7 +1225,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                   "project.moduleB", "project.moduleB.main", "project.moduleB.test");
 
     assertModuleModuleDeps("project.moduleB.main", "project.moduleA.main");
-    assertModuleLibDeps( "project.moduleB.main");
+    assertModuleLibDeps("project.moduleB.main");
     assertModuleModuleDeps("project.moduleB.test", "project.moduleB.main", "project.moduleA.main");
   }
 
@@ -1260,16 +1290,18 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
     importProject(
       createBuildScriptBuilder()
-        .subprojects(it -> { it.withMavenCentral(); })
+        .subprojects(it -> {
+          it.withMavenCentral();
+        })
         .project(":project1", it -> {
-          it.addPrefix( """
-        configurations {
-          myConf {
-            description = 'My Conf'
-            transitive = true
-          }
-        }
-      """)
+          it.addPrefix("""
+                           configurations {
+                             myConf {
+                               description = 'My Conf'
+                               transitive = true
+                             }
+                           }
+                         """)
             .addDependency("myConf", "junit:junit:4.11");
         })
         .project(":project2", it -> {
@@ -1551,12 +1583,13 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
           p.withJavaPlugin();
           if (isGradleOlderThan("8.0")) {
             p.addPrefix("configurations.all {",
-                       "  resolutionStrategy.dependencySubstitution {",
-                       "    substitute module('mygroup:core') with project(':core')",
-                       "    substitute project(':util') with module('junit:junit:4.11')",
-                       "  }",
-                       "}");
-          } else {
+                        "  resolutionStrategy.dependencySubstitution {",
+                        "    substitute module('mygroup:core') with project(':core')",
+                        "    substitute project(':util') with module('junit:junit:4.11')",
+                        "  }",
+                        "}");
+          }
+          else {
             p.addPrefix("configurations.all {",
                         "  resolutionStrategy.dependencySubstitution {",
                         "    substitute module('mygroup:core') using project(':core')",
@@ -1615,7 +1648,8 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                           "    substitute module('project:modB:1.0.0') with project(':modB')",
                           "  }",
                           "}");
-          } else {
+          }
+          else {
             it.addPostfix("configurations.all {",
                           "  resolutionStrategy.dependencySubstitution {",
                           "    substitute module('project:modA:1.0.0') using project(':modA')",
@@ -1624,8 +1658,12 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                           "}");
           }
         })
-        .project(":modA", it -> { it.addApiDependency(it.project(":modB")); })
-        .project(":modB", it -> { it.addApiDependency("org.hamcrest:hamcrest-core:1.3"); })
+        .project(":modA", it -> {
+          it.addApiDependency(it.project(":modB"));
+        })
+        .project(":modB", it -> {
+          it.addApiDependency("org.hamcrest:hamcrest-core:1.3");
+        })
         .generate()
     );
 
@@ -1746,7 +1784,9 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
     importProject(
       createBuildScriptBuilder()
-        .subprojects(it -> { it.withMavenCentral(); })
+        .subprojects(it -> {
+          it.withMavenCentral();
+        })
         .project(":project1", p -> {
           p
             .withJavaPlugin()
@@ -1857,7 +1897,9 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
     importProject(
       createBuildScriptBuilder()
-        .subprojects(it -> { it.withMavenCentral(); })
+        .subprojects(it -> {
+          it.withMavenCentral();
+        })
         .project(":project1", it -> {
           it.withJavaPlugin()
             .addPrefix("configurations {",
@@ -2096,7 +2138,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                            </ivy-module>
                            """);
     String apiJar = createProjectJarSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/depArtifact-api-1.0-SNAPSHOT.jar").getUrl();
-    String runtimeJar =  createProjectJarSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/depArtifact-runtime-1.0-SNAPSHOT.jar").getUrl();
+    String runtimeJar = createProjectJarSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/depArtifact-runtime-1.0-SNAPSHOT.jar").getUrl();
 
     importProject(
       createBuildScriptBuilder()
@@ -2554,7 +2596,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   @TargetVersions("7.4+")
   public void testVersionCatalogsModelImport() throws Exception {
     final VirtualFile toml1 = createProjectSubFile("my_versions.toml", "[libraries]\n" +
-                                                                      "mylib = \"junit:junit:4.12\"");
+                                                                       "mylib = \"junit:junit:4.12\"");
     final VirtualFile toml2 = createProjectSubFile("my_versions_2.toml", "[libraries]\n" +
                                                                          "myOtherLib = \"org.hamcrest:hamcrest-core:1.3\"");
     createSettingsFile("""

@@ -743,6 +743,9 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   public static void executeAction(@NonNls @NotNull String actionId, @NotNull Editor editor, @Nullable Project project) {
     CommandProcessor.getInstance()
       .executeCommand(project, () -> EditorTestUtil.executeAction(editor, actionId, true), "", null, editor.getDocument());
+    if (project != null) {
+      NavigationTestUtil.awaitPendingNavigationIfEnabled(project);
+    }
   }
 
   protected @NotNull DataContext getCurrentEditorDataContext() {

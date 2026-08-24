@@ -76,6 +76,7 @@ internal class ParentSingleAbEntityImpl(private val dataSource: ParentSingleAbEn
         changedProperty.add("entitySource")
       }
     override var child: ChildSingleAbstractBaseEntityBuilder<out ChildSingleAbstractBaseEntity>?
+      @Suppress("UNCHECKED_CAST")
       get() = getChild(CHILD_CONNECTION_ID) as? ChildSingleAbstractBaseEntityBuilder<out ChildSingleAbstractBaseEntity>?
       set(value) {
         changeChild(value, CHILD_CONNECTION_ID)

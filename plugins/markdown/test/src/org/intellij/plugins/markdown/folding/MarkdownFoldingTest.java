@@ -101,7 +101,8 @@ public class MarkdownFoldingTest extends BasePlatformTestCase {
     doTest();
   }
 
-  public void testLinkDestinationsInsideTableAreNotFolded() {
+  /** IJPL-162519: visual table alignment supports folded link destinations. */
+  public void testLinkDestinationsInsideTableAreFolded() {
     myFixture.configureByText("table.md", """
       [Regular link](https://jetbrains.com/path)
 
@@ -113,8 +114,8 @@ public class MarkdownFoldingTest extends BasePlatformTestCase {
 
     String foldingDescription = ((CodeInsightTestFixtureImpl)myFixture).getFoldingDescription(false, false);
     assertTrue(foldingDescription, foldingDescription.contains("[Regular link](<fold text='...'>https://jetbrains.com/path</fold>)"));
-    assertFalse(foldingDescription, foldingDescription.contains("[http://localhost](<fold text='...'>http://localhost/variable-length-link</fold>)"));
-    assertFalse(foldingDescription, foldingDescription.contains("[http://localhost](<fold text='...'>http://localhost/variable</fold>)"));
+    assertTrue(foldingDescription, foldingDescription.contains("[http://localhost](<fold text='...'>http://localhost/variable-length-link</fold>)"));
+    assertTrue(foldingDescription, foldingDescription.contains("[http://localhost](<fold text='...'>http://localhost/variable</fold>)"));
   }
 
   public void testTableOfContents() {

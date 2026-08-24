@@ -17,11 +17,16 @@ import org.jetbrains.annotations.ApiStatus
  * distinguished from a non-workspace project — both return `null` from
  * [getToolWorkspaceLayout]. This is acceptable for packaging purposes.
  */
+@ConsistentCopyVisibility
 @ApiStatus.Internal
-data class ToolWorkspaceLayout(
+data class ToolWorkspaceLayout internal constructor(
+  val tool: ToolId,
   val rootModule: Module,
   val memberModules: List<Module>,
-)
+) {
+  /** Every module of the workspace: its root followed by its members. */
+  val allModules: List<Module> get() = listOf(rootModule) + memberModules
+}
 
 /**
  * Returns workspace layout for the given tool if this module participates in a workspace.
@@ -53,5 +58,20 @@ fun Module.getToolWorkspaceLayout(toolId: ToolId): ToolWorkspaceLayout? {
   // A workspace with zero members (root-only, no sub-projects added yet) is
   // indistinguishable from a plain non-workspace project here; both return null.
   if (members.isEmpty()) return null
-  return ToolWorkspaceLayout(rootModule, members)
+  return ToolWorkspaceLayout(toolId, rootModule, members)
+}
+
+/**
+ * Workspace layout for the first tool this module participates in, whether as the root or as a member; `null` when it
+ * is in no workspace at all.
+ *
+ * Tool-agnostic counterpart of [getToolWorkspaceLayout], for callers (the interpreter widget) that care only that the
+ * module shares a workspace — not which tool declares it. A module participating in two tools' workspaces at once is
+ * not a configuration we support, so the first tool wins.
+ */
+@ApiStatus.Internal
+fun Module.getWorkspaceLayout(): ToolWorkspaceLayout? {
+  val storage = project.workspaceModel.currentSnapshot
+  val entity = findModuleEntity(storage)?.pyProjectTomlEntity ?: return null
+  return entity.participatedTools.keys.firstNotNullOfOrNull { getToolWorkspaceLayout(it) }
 }

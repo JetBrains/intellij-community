@@ -46,12 +46,6 @@
 - f:getName():java.lang.String
 - f:getOrganization():java.lang.String
 - f:getUrl():java.lang.String
-*:com.intellij.ide.plugins.PluginNonLoadReason
-- a:getDetailedMessage():java.lang.String
-- a:getLogMessage():java.lang.String
-- a:getPlugin():com.intellij.ide.plugins.IdeaPluginDescriptor
-- a:getShortMessage():java.lang.String
-- a:getShouldNotifyUser():Z
 *c:com.intellij.lang.impl.TokenSequence
 - com.intellij.lexer.TokenList
 - asLexer():com.intellij.lexer.Lexer
@@ -146,3 +140,8 @@ a:com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor
 - com.intellij.psi.PsiRecursiveVisitor
 - *p:<init>(com.intellij.lang.ASTNode):V
 - *p:<init>(com.intellij.lang.ASTNode,Z):V
+*a:com.intellij.psi.impl.source.tree.mvcc.userData.VersionedUserDataHolderBase
+- com.intellij.openapi.util.UserDataHolderBase
+- <init>():V
+- p:changeUserMap(com.intellij.util.keyFMap.KeyFMap,com.intellij.util.keyFMap.KeyFMap):Z
+- p:setUserMap(com.intellij.util.keyFMap.KeyFMap):V

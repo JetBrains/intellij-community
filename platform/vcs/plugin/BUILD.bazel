@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.vcs.plugin` start
@@ -33,7 +34,30 @@ exports_files(
     [
         "intellij.platform.vcs.plugin.iml",
         "resources/META-INF/plugin.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.vcs.plugin` end
+
+### auto-generated section `dev content intellij.platform.vcs.plugin` start
+dev_dist_plugin_content(
+    content_modules = ["//platform/sqlite"],
+    descriptor_module = ":plugin",
+    libraries = ["@lib//:sqlite-native"],
+    prepacked_content_modules = [
+        "//platform/dvcs-api:vcs-dvcs_content_module_jar",
+        "//platform/dvcs-impl:vcs-dvcs-impl_content_module_jar",
+        "//platform/vcs-impl/debugger:debugger_content_module_jar",
+        "//platform/vcs-impl/exec:exec_content_module_jar",
+        "//platform/vcs-impl/frontend:frontend_content_module_jar",
+        "//platform/vcs-impl/lang/actions:actions_content_module_jar",
+        "//platform/vcs-impl/lang:lang_content_module_jar",
+        "//platform/vcs-impl:vcs-impl_content_module_jar",
+        "//platform/vcs-log/api:vcs-log_content_module_jar",
+        "//platform/vcs-log/graph-api:vcs-log-graph_content_module_jar",
+        "//platform/vcs-log/graph:vcs-log-graph-impl_content_module_jar",
+        "//platform/vcs-log/impl:impl_content_module_jar",
+    ],
+)
+### auto-generated section `dev content intellij.platform.vcs.plugin` end

@@ -24,12 +24,14 @@ import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyAugAssignmentStatement;
 import com.jetbrains.python.psi.PyBinaryExpression;
-import com.jetbrains.python.psi.PyCallSiteExpression;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyPrefixExpression;
 import com.jetbrains.python.psi.PyQualifiedElement;
+import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.PySubscriptionExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -107,11 +109,14 @@ public class PyOperatorReference extends PyReferenceBase {
     }
   }
 
-  public @Nullable PyExpression getReceiver() {
-    if (myElement instanceof PyCallSiteExpression) {
-      return ((PyCallSiteExpression)myElement).getReceiver(null);
-    }
-    return null;
+  public @Nullable PyExpression getReceiver(@Nullable PyCallable resolvedCallee) {
+    return switch (myElement) {
+      case PyCallExpression call -> call.getCallee() instanceof PyQualifiedExpression callee ? callee.getQualifier() : null;
+      case PyPrefixExpression prefixExpr -> prefixExpr.getOperand();
+      case PySubscriptionExpression subscription -> subscription.getOperand();
+      case PyBinaryExpression binaryExpr -> binaryExpr.getReceiver(resolvedCallee);
+      default -> null;
+    };
   }
 
   private @NotNull List<Pair<@NotNull PyType, @NotNull List<RatedResolveResult>>>

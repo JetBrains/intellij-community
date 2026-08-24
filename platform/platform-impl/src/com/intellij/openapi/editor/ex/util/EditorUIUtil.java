@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.Icon;
@@ -30,6 +31,20 @@ public final class EditorUIUtil {
     g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(true));
 
     UISettings.setupFractionalMetrics(g2d);
+  }
+
+  @ApiStatus.Internal
+  public static void setupEditorPainting(
+    @NotNull Graphics2D g,
+    boolean useEditorAntialiasing
+  ) {
+    if (useEditorAntialiasing) {
+      setupAntialiasing(g);
+    }
+    else {
+      UISettings.setupAntialiasing(g);
+    }
+    g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
   }
 
   public static void hideCursorInEditor(Editor editor) {

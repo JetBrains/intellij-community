@@ -1,5 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.kotlin.codeInsight.structuralSearch` start
 create_kotlinc_options(
@@ -55,6 +56,8 @@ jvm_library(
         "//plugins/kotlin/code-insight/live-templates-k2:kotlin-codeInsight-liveTemplates",
     ],
 )
+
+content_module_jar(module = ":kotlin-codeInsight-structuralSearch")
 
 jvm_library(
     name = "kotlin-codeInsight-structuralSearch_test_lib",

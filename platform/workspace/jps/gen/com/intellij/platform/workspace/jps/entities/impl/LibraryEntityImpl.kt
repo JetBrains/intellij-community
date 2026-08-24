@@ -19,7 +19,6 @@ import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -96,17 +95,6 @@ internal class LibraryEntityImpl(private val dataSource: LibraryEntityData) : Li
       if (!getEntityData().isRootsInitialized()) {
         error("Field LibraryEntity#roots should be initialized")
       }
-// Check initialization for list with ref type
-      if (_diff != null) {
-        if (_diff.instrumentation.getManyChildrenBuilders(EXCLUDEDROOTS_CONNECTION_ID, this) == null) {
-          error("Field LibraryEntity#excludedRoots should be initialized")
-        }
-      }
-      else {
-        if (this.entityLinks[EntityLink(true, EXCLUDEDROOTS_CONNECTION_ID)] == null) {
-          error("Field LibraryEntity#excludedRoots should be initialized")
-        }
-      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -126,7 +114,7 @@ internal class LibraryEntityImpl(private val dataSource: LibraryEntityData) : Li
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.name != dataSource.name) this.name = dataSource.name
       if (this.tableId != dataSource.tableId) this.tableId = dataSource.tableId
-      if (this.typeId != dataSource?.typeId) this.typeId = dataSource.typeId
+      if (this.typeId != dataSource.typeId) this.typeId = dataSource.typeId
       if (this.roots != dataSource.roots) this.roots = dataSource.roots.toMutableList()
       updateChildToParentReferences(parents)
     }

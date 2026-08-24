@@ -17,7 +17,8 @@ internal class ChangesViewPopupJumpToSourceAction : EditSourceAction() {
    * navigation outside the diff editor tab.
    */
   override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project ?: return
     val navigatables = getNavigatables(e.dataContext) ?: return
-    OpenInEditorAction.openEditor(navigatables, null)
+    OpenInEditorAction.openEditor(project, navigatables, null)
   }
 }

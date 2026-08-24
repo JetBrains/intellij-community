@@ -22,8 +22,6 @@ import com.intellij.openapi.extensions.impl.unregisterExtensionsById
 import com.intellij.openapi.extensions.impl.unregisterExtensionsMatching
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.wm.StatusBarWidgetFactory
-import com.intellij.openapi.wm.ToolWindowEP
-import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.psi.search.FileTypeIndexImpl
 import com.intellij.psi.stubs.StubIndexExtension
 import com.intellij.usages.impl.UsageGroupingRuleProviderImpl
@@ -81,13 +79,6 @@ fun unregisterExtensionsForLiteProduct() {
     }.also { reports ->
       if (reports.none { !it.wasUnregistered }) logger.warn("Can't keep FileTypeUsagesCollector - Not Found")
     }
-
-  ToolWindowEP.EP_NAME.appPoint
-    .unregisterExtensionsById(
-      ToolWindowId.BOOKMARKS,
-      "Dependencies",
-      "Problems View",
-    )
 
   Configurable.APPLICATION_CONFIGURABLE.appPoint
     .unregisterExtensionsById(

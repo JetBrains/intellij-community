@@ -17,6 +17,7 @@
     <module name="intellij.libraries.stream"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.codeStyle.impl"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
@@ -35,6 +36,7 @@
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.lvcs"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.structureView"/>
     <module name="intellij.platform.usageView"/>
@@ -80,8 +82,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService
-      serviceInterface="com.intellij.refactoring.introduceVariable.JavaIntroduceVariableService"
-      serviceImplementation="com.intellij.refactoring.introduceVariable.JavaIntroduceVariableServiceImpl"
+      serviceInterface="com.intellij.refactoring.introduceVariable.JavaIntroduceVariableModCommandService"
+      serviceImplementation="com.intellij.refactoring.introduceVariable.JavaIntroduceVariableModCommandServiceImpl"
       overrides="true"/>
 
     <!-- Entry point for intentions declared in intellij.java.impl, which cannot depend on this module -->
@@ -89,8 +91,8 @@
       serviceInterface="com.intellij.refactoring.JavaRefactoringService"
       serviceImplementation="com.intellij.refactoring.JavaRefactoringServiceImpl"/>
     <applicationService
-      serviceInterface="com.intellij.refactoring.introduceField.JavaIntroduceFieldService"
-      serviceImplementation="com.intellij.refactoring.introduceField.JavaIntroduceFieldServiceImpl"
+      serviceInterface="com.intellij.refactoring.introduceField.JavaIntroduceFieldModCommandService"
+      serviceImplementation="com.intellij.refactoring.introduceField.JavaIntroduceFieldModCommandServiceImpl"
       overrides="true"/>
   </extensions>
 </idea-plugin>

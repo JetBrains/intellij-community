@@ -811,11 +811,6 @@ c:com.intellij.openapi.options.ExtendableSettingsEditor
 - p:createEditor():javax.swing.JComponent
 - p:resetEditorFrom(java.lang.Object):V
 com.intellij.openapi.options.ExtensionSettingsEditor
-f:com.intellij.openapi.options.OptionsBundle
-- sf:BUNDLE:java.lang.String
-- sf:INSTANCE:com.intellij.openapi.options.OptionsBundle
-- s:message(java.lang.String,java.lang.Object[]):java.lang.String
-- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 c:com.intellij.openapi.options.SearchableConfigurable$Delegate
 - apply():V
 - createComponent():javax.swing.JComponent

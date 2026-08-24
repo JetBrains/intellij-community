@@ -1,5 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.platform.ide.updateChecker` start
 create_kotlinc_options(
@@ -51,6 +52,8 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
     ],
 )
+
+content_module_jar(module = ":update-checker")
 
 jvm_library(
     name = "update-checker_test_lib",

@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.problemView.plugin` start
@@ -33,7 +34,24 @@ exports_files(
     [
         "intellij.platform.problemView.plugin.iml",
         "resources/META-INF/plugin.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.problemView.plugin` end
+
+### auto-generated section `dev content intellij.platform.problemView.plugin` start
+dev_dist_plugin_content(
+    content_modules = [
+        "//platform/problemsView/collector",
+        "//platform/problemsView/core",
+        "//platform/problemsView/ui",
+    ],
+    descriptor_module = ":plugin",
+    prepacked_content_modules = [
+        "//platform/problemsView/backend:backend_content_module_jar",
+        "//platform/problemsView/frontend:frontend_content_module_jar",
+        "//platform/problemsView/shared:shared_content_module_jar",
+    ],
+)
+### auto-generated section `dev content intellij.platform.problemView.plugin` end

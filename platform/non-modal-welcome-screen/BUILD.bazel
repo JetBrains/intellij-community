@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "ide-nonModalWelcomeScreen-tests_test",
@@ -56,6 +57,8 @@ jvm_library(
         "//fleet/rhizomedb",
     ],
 )
+
+content_module_jar(module = ":non-modal-welcome-screen")
 
 jvm_library(
     name = "non-modal-welcome-screen_test_lib",

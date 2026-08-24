@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceParameterObject;
 
 import com.intellij.lang.LangBundle;
@@ -190,6 +190,7 @@ public abstract class AbstractIntroduceParameterObjectDialog<M extends PsiNamedE
   }
 
   public boolean hasParametersToExtract() {
+    if (myParameterTablePanel == null) return true;
     for (AbstractVariableData info : myParameterTablePanel.getVariableData()) {
       if (info.passAsParameter) {
         return true;

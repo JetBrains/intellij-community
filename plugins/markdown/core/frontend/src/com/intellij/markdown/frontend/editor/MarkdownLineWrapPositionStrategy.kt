@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.GenericLineWrapPositionStrategy
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter
+import org.intellij.plugins.markdown.editor.tables.ui.alignment.isMarkdownTableVisualAlignmentEnabled
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 
@@ -46,6 +47,22 @@ class MarkdownLineWrapPositionStrategy : GenericLineWrapPositionStrategy() {
                                             minOf(maxPreferredOffset, forbiddenStart),
                                             allowToBeyondMaxPreferredOffset, isSoftWrap)
     return if (retry > 0) retry else forbiddenStart
+  }
+
+  override fun isSoftWrappingAllowed(editor: Editor, offset: Int): Boolean {
+    val highlighter = editor.highlighter as? LexerEditorHighlighter ?: return true
+    val document = editor.elfDocument
+    if (document.textLength == 0) return true
+    val line = document.getLineNumber(offset.coerceAtMost(document.textLength - 1))
+    val lineStart = document.getLineStartOffset(line)
+    val lineEnd = document.getLineEndOffset(line)
+    val lookupEnd = minOf(lineEnd, lineStart + MAX_SCAN_DISTANCE)
+    val tokens = highlighter.createIterator(lineStart)
+    while (!tokens.atEnd() && tokens.start < lookupEnd) {
+      if (tokens.tokenType in TABLE_TOKENS) return !isMarkdownTableVisualAlignmentEnabled(editor)
+      tokens.advance()
+    }
+    return true
   }
 
   /**

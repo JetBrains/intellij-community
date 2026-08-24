@@ -20,7 +20,7 @@ import git4idea.GitReference
 import git4idea.GitRemoteBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitUtil
-import git4idea.actions.workingTree.GitCreateWorkingTreeService
+import git4idea.workingTrees.GitCreateWorkingTreeService
 import git4idea.branch.GitBrancher
 import git4idea.branch.GitNewBranchDialog
 import git4idea.branch.GitNewBranchOptions
@@ -147,6 +147,9 @@ object GitRemoteBranchesUtil {
    * @param parentDir directory the worktree is created under.
    * @param worktreeName base name for the worktree directory/project.
    * @param place FUS place identifying the invocation site.
+   * @param newLocalBranchPrefix when a new local branch needs to be created for [remoteBranch] (i.e. no local branch
+   * already tracks it), prefixes its name with this value to disambiguate it from an existing local branch of the
+   * same name (e.g. a fork PR's head branch).
    * @param onProjectOpened invoked with the worktree project once it is opened.
    */
   suspend fun fetchAndCheckoutInNewWorktree(
@@ -156,6 +159,7 @@ object GitRemoteBranchesUtil {
     parentDir: Path,
     worktreeName: String,
     place: String,
+    newLocalBranchPrefix: String? = null,
     onProjectOpened: ((Project) -> Unit)? = null,
   ) {
     withBackgroundProgress(repository.project,
@@ -174,8 +178,9 @@ object GitRemoteBranchesUtil {
                                  ?: repository.branches.findLocalBranch(branch.nameForRemoteOperations)
                                    ?.takeUnless { hasTrackingConflicts(mapOf(repository to it), branch.name) }
       val ref: GitBranch = existingLocalBranch ?: branch
+      val newBranchName = if (existingLocalBranch == null) newLocalBranchPrefix?.let { "$it/${branch.nameForRemoteOperations}" } else null
       GitCreateWorkingTreeService.getInstance()
-        .createOrOpenWorktreeForBranch(repository, ref, parentDir, worktreeName, place, onProjectOpened)
+        .createOrOpenWorktreeForBranch(repository, ref, parentDir, worktreeName, place, newBranchName, onProjectOpened)
     }
   }
 

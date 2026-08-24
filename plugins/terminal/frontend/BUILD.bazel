@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.terminal.frontend` start
 jvm_library(
@@ -65,6 +66,8 @@ jvm_library(
         "//platform/eel-impl",
     ],
 )
+
+content_module_jar(module = ":frontend")
 
 jvm_library(
     name = "frontend_test_lib",

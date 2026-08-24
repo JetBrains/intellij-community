@@ -41,8 +41,10 @@ internal object GitAmendSpecificCommitSquasher {
     check(GitSquashedCommitsMessage.canAutosquash(amendCommit.fullMessage, setOf(targetCommit.subject)))
 
     runBlockingCancellable {
+      // Collect entries down to the target from the amend commit's parent (the amend commit is appended below and is
+      // not in the log yet). If the log doesn't contain that parent, entries are null and the amend is undone.
       val entries = repository.project.service<GitInteractiveRebaseEntriesProvider>()
-        .tryGetEntriesForCommitEditing(repository, targetCommit)
+        .tryGetEntriesForCommitEditing(repository, targetCommit, head = amendCommitParent)
         ?.plus(GitRebaseEntryGeneratedUsingLog(amendCommit)) ?: run {
         undoAmendCommit(repository, amendCommit.id, amendCommitParent)
         throw VcsException(GitBundle.message("git.commit.amend.specific.commit.not.found.error.message"))

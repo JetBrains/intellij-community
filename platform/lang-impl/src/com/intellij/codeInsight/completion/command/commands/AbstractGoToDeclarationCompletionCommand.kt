@@ -37,6 +37,6 @@ abstract class AbstractGoToDeclarationCompletionCommandProvider :
   abstract fun canNavigateToDeclaration(context: PsiElement): Boolean
 
   override fun createCommand(context: CommandCompletionProviderContext): ActionCompletionCommand? {
-    return createCommandWithNameIdentifierAndLastAdjusted(context)
+    return createNavigationCommandWithNameIdentifier(context)
   }
 }

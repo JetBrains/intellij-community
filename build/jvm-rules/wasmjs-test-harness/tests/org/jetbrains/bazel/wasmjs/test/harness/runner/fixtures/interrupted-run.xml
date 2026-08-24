@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="2" failures="0" errors="1" skipped="0" time="0.003">
+  <testsuite name="FAILED_TO_BUILD_CURRENT_CLASS_NAME" tests="2" failures="0" errors="1" skipped="0" time="0.003">
+    <testcase classname="FAILED_TO_BUILD_CURRENT_CLASS_NAME" name="finishes" time="0.003"></testcase>
+    <testcase classname="FAILED_TO_BUILD_CURRENT_CLASS_NAME" name="hangs" time="0.000">
+      <error message="test did not complete">deadline reached</error>
+    </testcase>
+  </testsuite>
+</testsuites>

@@ -22,18 +22,12 @@
 - name: lib/intellij.java.compiler.instrumentationUtil.java8.jar
   contentModules:
   - name: intellij.java.compiler.instrumentationUtil.java8
-- name: lib/intellij.java.debugger.impl.shared.jar
-  contentModules:
-  - name: intellij.java.debugger.impl.shared
 - name: lib/intellij.java.debugger.libraries.jb.jdi.jar
   contentModules:
   - name: intellij.java.debugger.libraries.jb.jdi
     libraries:
       jb-jdi:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2/jb-jdi-2.jar
-- name: lib/intellij.java.execution.impl.shared.jar
-  contentModules:
-  - name: intellij.java.execution.impl.shared
 - name: lib/intellij.java.frontback.impl.jar
   contentModules:
   - name: intellij.java.frontback.impl
@@ -140,6 +134,9 @@
 - name: lib/modules/intellij.java.debugger.impl.jar
   contentModules:
   - name: intellij.java.debugger.impl
+- name: lib/modules/intellij.java.debugger.impl.shared.jar
+  contentModules:
+  - name: intellij.java.debugger.impl.shared
 - name: lib/modules/intellij.java.debugger.jar
   contentModules:
   - name: intellij.java.debugger
@@ -164,6 +161,9 @@
 - name: lib/modules/intellij.java.execution.impl.jar
   contentModules:
   - name: intellij.java.execution.impl
+- name: lib/modules/intellij.java.execution.impl.shared.jar
+  contentModules:
+  - name: intellij.java.execution.impl.shared
 - name: lib/modules/intellij.java.execution.jar
   contentModules:
   - name: intellij.java.execution
@@ -173,6 +173,9 @@
 - name: lib/modules/intellij.java.frontend.jar
   contentModules:
   - name: intellij.java.frontend
+- name: lib/modules/intellij.java.frontend.split.base.jar
+  contentModules:
+  - name: intellij.java.frontend.split.base
 - name: lib/modules/intellij.java.frontend.split.jar
   contentModules:
   - name: intellij.java.frontend.split

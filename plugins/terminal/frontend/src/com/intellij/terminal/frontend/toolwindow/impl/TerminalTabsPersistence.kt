@@ -61,7 +61,10 @@ internal fun installTerminalTabsPersistence(
 @RequiresEdt
 private fun persistTerminalTabs(project: Project, contentManager: ContentManager) {
   try {
-    val tabs = contentManager.getTerminalTabs().map { computePersistedTab(it) }
+    // A tab that opted out of restoring is left out of the stored state entirely: restoring one means
+    // re-running its command, and for a one-shot process that command outlives everything that gave it a
+    // meaning. See TerminalToolWindowTabBuilder.restoreOnProjectReopen.
+    val tabs = contentManager.getTerminalTabs().filter { it.restoreOnProjectReopen }.map { computePersistedTab(it) }
     TerminalTabsStorage.getInstance(project).updateStoredTabs(tabs)
   }
   catch (e: Exception) {

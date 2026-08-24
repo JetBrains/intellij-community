@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -73,10 +74,45 @@ exports_files(
     [
         "intellij.searchEverywhereMl.iml",
         "resources/META-INF/plugin.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.searchEverywhereMl` end
+
+### auto-generated section `dev content intellij.searchEverywhereMl` start
+dev_dist_plugin_content(
+    content_modules = [
+        "//libraries/mlapi/core",
+        "//libraries/search-everywhere-find-all-model",
+        "//libraries/search-everywhere-find-ec-model",
+        "//platform/ml-logs",
+        "//plugins/search-everywhere-ml/ranking/core",
+        "//plugins/search-everywhere-ml/typos",
+    ],
+    descriptor_module = ":search-everywhere-ml",
+    libraries = [
+        "@lib//:libraries-mlapi-core-jetbrains-mlapi-core",
+        "@lib//:libraries-search-everywhere-find-all-model-find-all-model-experimental",
+        "@lib//:libraries-search-everywhere-find-ec-model-find-ec-model-experimental",
+        "@lib//:search_everywhere_ml-ai-grazie-emb",
+        "@lib//:search_everywhere_ml-ai-grazie-model-swagger-annotations-jvm",
+        "@lib//:search_everywhere_ml-ranking-core-find-action-model",
+        "@lib//:search_everywhere_ml-ranking-core-find-action-model-experimental",
+        "@lib//:search_everywhere_ml-ranking-core-find-classes-model",
+        "@lib//:search_everywhere_ml-ranking-core-find-classes-model-experimental",
+        "@lib//:search_everywhere_ml-ranking-core-find-file-model",
+        "@lib//:search_everywhere_ml-ranking-core-find-file-model-experimental",
+        "@lib//:search_everywhere_ml-typos-ai-grazie-spell-gec-engine-local-jvm",
+    ],
+    prepacked_content_modules = [
+        "//plugins/search-everywhere-ml/ranking/ext:ext_content_module_jar",
+        "//plugins/search-everywhere-ml/ranking/java:java_content_module_jar",
+        "//plugins/search-everywhere-ml/ranking/vcs:vcs_content_module_jar",
+        "//plugins/search-everywhere-ml/ranking/yaml:yaml_content_module_jar",
+    ],
+)
+### auto-generated section `dev content intellij.searchEverywhereMl` end
 
 ### auto-generated section `build intellij.searchEverywhereMl.tests` start
 jvm_library(

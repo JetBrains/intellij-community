@@ -89,10 +89,18 @@ private class IdeKotlinDeclarationProvider(
     }
 
     override fun getClassLikeDeclarationByClassId(classId: ClassId): KtClassLikeDeclaration? = withRestrictedDataAccess {
-        val classOrObject = firstMatchingOrNull(KotlinFullClassNameIndex.indexKey, key = classId.asStringForIndexes()) { candidate ->
-            candidate.getClassId() == classId
-        }
-        val typeAlias = getTypeAliasByClassId(classId)
+        val classOrObject = firstMatchingOrNull(
+            stubKey = KotlinFullClassNameIndex.indexKey,
+            key = classId.asStringForIndexes(),
+            filter = { it.getClassId() == classId },
+        )
+
+        val typeAlias = firstMatchingOrNull(
+            stubKey = KotlinFullTypeAliasNameIndex.indexKey,
+            key = classId.asStringForIndexes(),
+            filter = { it.getClassId() == classId },
+        )
+
         selectClassLikeDeclaration(classOrObject, typeAlias)
     }
 
@@ -102,20 +110,26 @@ private class IdeKotlinDeclarationProvider(
                 return typeAlias
             }
         }
+
         return classOrObject ?: typeAlias
     }
 
     override fun getAllClassesByClassId(classId: ClassId): Collection<KtClassOrObject> = withRestrictedDataAccess {
         KotlinFullClassNameIndex.getAllElements(
-            classId.asStringForIndexes(),
-            project,
-            scope
-        ) { it.getClassId() == classId }
-            .toList()
+            key = classId.asStringForIndexes(),
+            project = project,
+            scope = scope,
+            filter = { it.getClassId() == classId },
+        ).toList()
     }
 
     override fun getAllTypeAliasesByClassId(classId: ClassId): Collection<KtTypeAlias> = withRestrictedDataAccess {
-        listOfNotNull(getTypeAliasByClassId(classId)) //todo
+        KotlinFullTypeAliasNameIndex.getAllElements(
+            key = classId.asStringForIndexes(),
+            project = project,
+            scope = scope,
+            filter = { it.getClassId() == classId },
+        ).toList()
     }
 
     override fun getTopLevelCallableNamesInPackage(packageFqName: FqName): Set<Name> = withRestrictedDataAccess {
@@ -150,20 +164,12 @@ private class IdeKotlinDeclarationProvider(
         KotlinScriptFqnIndex[scriptFqName.asString(), project, scope]
     }
 
-    private fun getTypeAliasByClassId(classId: ClassId): KtTypeAlias? {
-        return firstMatchingOrNull(
-            stubKey = KotlinTopLevelTypeAliasFqNameIndex.indexKey,
-            key = classId.asStringForIndexes(),
-            filter = { candidate -> candidate.getClassId() == classId }
-        ) ?: firstMatchingOrNull(stubKey = KotlinInnerTypeAliasClassIdIndex.indexKey, key = classId.asString())
-    }
-
     override fun getTopLevelProperties(callableId: CallableId): Collection<KtProperty> = withRestrictedDataAccess {
-        KotlinTopLevelPropertyFqnNameIndex.get(callableId.asTopLevelStringForIndexes(), project, scope)
+        KotlinTopLevelPropertyFqnNameIndex[callableId.asTopLevelStringForIndexes(), project, scope]
     }
 
     override fun getTopLevelFunctions(callableId: CallableId): Collection<KtNamedFunction> = withRestrictedDataAccess {
-        KotlinTopLevelFunctionFqnNameIndex.get(callableId.asTopLevelStringForIndexes(), project, scope)
+        KotlinTopLevelFunctionFqnNameIndex[callableId.asTopLevelStringForIndexes(), project, scope]
     }
 
     override fun getTopLevelCallableFiles(callableId: CallableId): Collection<KtFile> = withRestrictedDataAccess {

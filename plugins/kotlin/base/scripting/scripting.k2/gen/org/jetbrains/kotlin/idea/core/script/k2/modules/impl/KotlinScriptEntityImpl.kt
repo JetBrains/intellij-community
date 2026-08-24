@@ -109,8 +109,8 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
             if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
             if (this.virtualFileUrl != dataSource.virtualFileUrl) this.virtualFileUrl = dataSource.virtualFileUrl
             if (this.dependencies != dataSource.dependencies) this.dependencies = dataSource.dependencies.toMutableList()
-            if (this.sdkId != dataSource?.sdkId) this.sdkId = dataSource.sdkId
-            if (this.configurationId != dataSource?.configurationId) this.configurationId = dataSource.configurationId
+            if (this.sdkId != dataSource.sdkId) this.sdkId = dataSource.sdkId
+            if (this.configurationId != dataSource.configurationId) this.configurationId = dataSource.configurationId
             if (this.relatedModuleIds != dataSource.relatedModuleIds) this.relatedModuleIds = dataSource.relatedModuleIds.toMutableList()
             if (this.reports != dataSource.reports) this.reports = dataSource.reports.toMutableList()
             updateChildToParentReferences(parents)

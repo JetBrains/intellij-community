@@ -58,7 +58,7 @@ public class GitUncommitAction extends GitSingleCommitEditingAction {
     LocalChangeList targetList;
     if (ChangeListManager.getInstance(project).areChangeListsEnabled()) {
       ChangeListChooser chooser = new MyChangeListChooser(project, GitBundle.message("git.undo.action.select.target.changelist.title"));
-      chooser.setSuggestedName(commit.getSubject());
+      chooser.setSuggestedName(commit.getSubject(), commit.getFullMessage(), false);
       if (!chooser.showAndGet()) return;
 
       targetList = chooser.getSelectedList();

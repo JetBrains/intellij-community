@@ -14,10 +14,12 @@ import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UIComponentsList
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
+import com.intellij.driver.sdk.ui.components.common.JBTabbedPaneUiComponent
 import com.intellij.driver.sdk.ui.components.common.WelcomeScreenUI
 import com.intellij.driver.sdk.ui.components.common.tabbedPane
 import com.intellij.driver.sdk.ui.components.elements.DialogUiComponent
 import com.intellij.driver.sdk.ui.components.elements.JButtonUiComponent
+import com.intellij.driver.sdk.ui.components.elements.JCheckBoxUi
 import com.intellij.driver.sdk.ui.components.elements.JLabelUiComponent
 import com.intellij.driver.sdk.ui.components.elements.JTextComponentUI
 import com.intellij.driver.sdk.ui.components.elements.JTextFieldUI
@@ -27,6 +29,7 @@ import com.intellij.driver.sdk.ui.components.elements.button
 import com.intellij.driver.sdk.ui.components.elements.checkBox
 import com.intellij.driver.sdk.ui.components.elements.dialog
 import com.intellij.driver.sdk.ui.components.elements.fileChooser
+import com.intellij.driver.sdk.ui.components.elements.list
 import com.intellij.driver.sdk.ui.components.elements.popup
 import com.intellij.driver.sdk.ui.components.elements.table
 import com.intellij.driver.sdk.ui.components.elements.textComponent
@@ -83,14 +86,14 @@ abstract class LoadablePluginsUiComponent(data: ComponentData) : UiComponent(dat
 
 class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiComponent(data) {
 
-  val searchPluginTextField = textField("Plugins search textfield") { byAccessibleName("Search plugins") }
+  val searchPluginTextField: JTextFieldUI = textField("Plugins search textfield") { byAccessibleName("Search plugins") }
   val installedTab: JLabelUiComponent =
     x(JLabelUiComponent::class.java, readableName = "Installed tab") { and(byType(JLabel::class.java), byAccessibleName("Installed")) }
   val marketplaceTab: UiComponent = x("Marketplace tab") { and(byType(JLabel::class.java), byAccessibleName("Marketplace")) }
   val gearButton: UiComponent = x("Gear button") { byAccessibleName("Manage Repositories, Configure Proxy or Install Plugin from Disk") }
-  val searchOptionsButton = x("Search filters") { byAccessibleName("Search Options") }
-  val updateAllButton = x("Update All link") { byAccessibleName("Update all") }
-  val pluginsList get() = xx("//*[@javaclass='com.intellij.ide.plugins.newui.ListPluginComponent']", ListPluginComponent::class.java)
+  val searchOptionsButton: UiComponent = x("Search filters") { byAccessibleName("Search Options") }
+  val updateAllButton: UiComponent = x("Update All link") { byAccessibleName("Update all") }
+  val pluginsList: UIComponentsList<ListPluginComponent> get() = xx("//*[@javaclass='com.intellij.ide.plugins.newui.ListPluginComponent']", ListPluginComponent::class.java)
 
   //todo change to open gear method in rd tests
   fun openSettingsPopup() {
@@ -195,17 +198,18 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
     data.copy(readableName = data.readableName ?: "Element in a list of plugins")) {
     private val listPluginComponent get() = driver.cast(component, ListPluginComponentRef::class)
 
-    val name get() = accessibleName
+    val name: String? get() = accessibleName
     val installButton: JButtonUiComponent =
       button("'Install' button") { and(byType(JButton::class.java), byAccessibleName("Install")) }
     val installedButton: UiComponent =
       x("Installed button") { and(byType(JButton::class.java), byAccessibleName("Installed")) }
     val uninstalledButton: UiComponent =
       x("Uninstalled button") { and(byType(JButton::class.java), byAccessibleName("Uninstalled")) }
-    val enabledCheckBox = checkBox("State checkbox") { and(byType(JCheckBox::class.java), byAccessibleName("Enabled")) }
-    val ultimateTagLabel = x("'Ultimate' label") { and(byType("com.intellij.ide.plugins.newui.TagComponent"), byAccessibleName("Ultimate")) }
-    val proTagLabel = x("'Pro' label") { and(byType("com.intellij.ide.plugins.newui.TagComponent"), byAccessibleName("Pro")) }
+    val enabledCheckBox: JCheckBoxUi = checkBox("State checkbox") { and(byType(JCheckBox::class.java), byAccessibleName("Enabled")) }
+    val ultimateTagLabel: UiComponent = x("'Ultimate' label") { and(byType("com.intellij.ide.plugins.newui.TagComponent"), byAccessibleName("Ultimate")) }
+    val proTagLabel: UiComponent = x("'Pro' label") { and(byType("com.intellij.ide.plugins.newui.TagComponent"), byAccessibleName("Pro")) }
     val errorNotice: JTextComponentUI = textComponent("Error notice") { byType("com.intellij.ide.plugins.newui.ErrorComponent") }
+    val unknownUpdateSourceWarning: UiComponent = x("Unknown update source warning") { byType("com.intellij.ui.components.JBTextArea") }
     val updatePluginButton: UiComponent = x("Update button") { byAccessibleName("Update") }
     val restartIdeButton: UiComponent = x("Restart button") { byAccessibleName("Restart IDE") }
 
@@ -314,30 +318,54 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
   }
 
   class PluginDetailsPage(data: ComponentData) : LoadablePluginsUiComponent(data) {
-    val optionButton = x(OptionButtonUiComponent::class.java) { byType("com.intellij.ide.plugins.newui.buttons.OptionButton") }
+    val optionButton: OptionButtonUiComponent = x(OptionButtonUiComponent::class.java) { byType("com.intellij.ide.plugins.newui.buttons.OptionButton") }
     val installButton: UiComponent = x("Install button") { and(byType(JButton::class.java), byAccessibleName("Install")) }
-    val installOptionButton = x("Install btn in plugin description") { byType("com.intellij.ide.plugins.newui.buttons.InstallOptionButton") }
-    val restartButtonDesc = x("Restart btn in plugin description") { byType("com.intellij.ide.plugins.newui.RestartButton") }
-    val uninstallButton = x("Uninstall btn in plugin description") { and(byType(JButton::class.java), byAccessibleName("Uninstall")) }
-    val installedButton = x("Installed btn in plugin description") { and(byType(JButton::class.java), byAccessibleName("Installed")) }
-    val disableButton = x("Disable btn in plugin description") { and(or(byClass("JButton"), byClass("MainButton")), byAccessibleName("Disable")) }
-    val enableButton = x("Enable btn in plugin description") { and(or(byType(JButton::class.java), byClass("MainButton")), byAccessibleName("Enable")) }
-    val updateButton = x("Update btn in plugin description") { and(or(byType(JButton::class.java), byClass("MainButton")), byAccessibleName("Update")) }
+    val installOptionButton: UiComponent = x("Install btn in plugin description") { byType("com.intellij.ide.plugins.newui.buttons.InstallOptionButton") }
+    val restartButtonDesc: UiComponent = x("Restart btn in plugin description") { byType("com.intellij.ide.plugins.newui.RestartButton") }
+    val uninstallButton: UiComponent = x("Uninstall btn in plugin description") { and(byType(JButton::class.java), byAccessibleName("Uninstall")) }
+    val installedButton: UiComponent = x("Installed btn in plugin description") { and(byType(JButton::class.java), byAccessibleName("Installed")) }
+    val disableButton: UiComponent = x("Disable btn in plugin description") { and(or(byClass("JButton"), byClass("MainButton")), byAccessibleName("Disable")) }
+    val enableButton: UiComponent = x("Enable btn in plugin description") { and(or(byType(JButton::class.java), byClass("MainButton")), byAccessibleName("Enable")) }
+    val updateButton: UiComponent = x("Update btn in plugin description") { and(or(byType(JButton::class.java), byClass("MainButton")), byAccessibleName("Update")) }
     val arrowButton: UiComponent =
       x("Uninstall dropdown") { byType($$"com.intellij.ui.components.BasicOptionButtonUI$ArrowButton") }
     val restartIdeButton: UiComponent = x("Restart button") { byAccessibleName("Restart IDE") }
 
-    val tabbedPane = tabbedPane()
-    val overviewTab = tabbedPane.tab("Overview")
-    val whatsNewTab = tabbedPane.tab("What's New")
-    val reviewsTab = tabbedPane.tab("Reviews")
-    val additionalInfoTab = tabbedPane.tab("Additional Info")
+    val tabbedPane: JBTabbedPaneUiComponent = tabbedPane()
+    val overviewTab: UiComponent = tabbedPane.tab("Overview")
+    val whatsNewTab: UiComponent = tabbedPane.tab("What's New")
+    val reviewsTab: UiComponent = tabbedPane.tab("Reviews")
+    val additionalInfoTab: UiComponent = tabbedPane.tab("Additional Info")
     val updateSourceValue: UiComponent =
       x("${xQuery { and(byType(JLabel::class.java), byText("Updates from:")) }}/following-sibling::div[1]")
-    val versionPanel = x { byType("com.intellij.ide.plugins.newui.VersionPanel") }
-    val pluginHomepage = x("Plugin homepage link") { byAccessibleName("Plugin homepage") }
+    val updateSourceBanners: UIComponentsList<UpdateSourceBannerUiComponent> =
+      xx(UpdateSourceBannerUiComponent::class.java) { byType("com.intellij.ide.plugins.newui.UpdateSourceBanner") }
+    val versionPanel: UiComponent = x { byType("com.intellij.ide.plugins.newui.VersionPanel") }
+    val pluginHomepage: UiComponent = x("Plugin homepage link") { byAccessibleName("Plugin homepage") }
+
+    fun hasUnknownUpdateSourceWarningBanner(): Boolean = updateSourceBanners.list().any { it.isWarning() }
+    fun hasUpdateSourceSetBanner(): Boolean = updateSourceBanners.list().any { it.isSuccess() }
 
     fun additionalText(text: String): UiComponent = x { and(byType(JLabel::class.java), byText(text)) }
+
+    fun chooseUpdateSourceFromWarningBanner(updateSource: String): PluginDetailsPage {
+      step("Choose '$updateSource' update source from warning banner") {
+        updateSourceBanners.list().first { it.isWarning() }.chooseUpdateSourceAction.click()
+        driver.ui.popup().list().clickItem(updateSource)
+      }
+      return this
+    }
+
+    fun chooseUpdateSourceFromDescription(updateSource: String): PluginDetailsPage {
+      step("Choose '$updateSource' update source from `Update from` description") {
+        check(tabbedPane.selectedTabName == additionalInfoTab.accessibleName) {
+          "Tab \'${additionalInfoTab.accessibleName}\' is not selected; selected tab\'${tabbedPane.selectedTabName}\'"
+        }
+        updateSourceValue.click()
+        driver.ui.popup().list().clickItem(updateSource)
+      }
+      return this
+    }
 
     fun updatePlugin(): PluginDetailsPage {
       step("Click on 'Update' button in the plugin description") {
@@ -357,8 +385,27 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
     }
 
     class OptionButtonUiComponent(data: ComponentData) : UiComponent(data) {
-      val disableButton = x { and(or(byType(JButton::class.java), byClass("MainButton")), byAccessibleName("Disable")) }
-      val enableButton = x { and(or(byType(JButton::class.java), byClass("MainButton")), byAccessibleName("Enable")) }
+      val disableButton: UiComponent = x { and(or(byType(JButton::class.java), byClass("MainButton")), byAccessibleName("Disable")) }
+      val enableButton: UiComponent = x { and(or(byType(JButton::class.java), byClass("MainButton")), byAccessibleName("Enable")) }
+    }
+
+    class UpdateSourceBannerUiComponent(data: ComponentData) : UiComponent(data) {
+      private val banner get() = driver.cast(component, UpdateSourceBannerRef::class)
+
+      val chooseUpdateSourceAction: UiComponent = x(xQuery { byVisibleText("Choose where to get updates") })
+
+      fun isWarning(): Boolean = banner.getStatus().name() == "Warning"
+      fun isSuccess(): Boolean = banner.getStatus().name() == "Success"
+    }
+
+    @Remote("com.intellij.ide.plugins.newui.UpdateSourceBanner")
+    interface UpdateSourceBannerRef {
+      fun getStatus(): EditorNotificationPanelStatusRef
+    }
+
+    @Remote($$"com.intellij.ui.EditorNotificationPanel$Status")
+    interface EditorNotificationPanelStatusRef {
+      fun name(): String
     }
   }
 }
@@ -368,8 +415,8 @@ fun IdeaFrameUI.shutdownDialog(accessibleName: String, action: RemDevShutdownDia
   x(RemDevShutdownDialog::class.java) { and(byType(JDialog::class.java), byAccessibleName(accessibleName)) }.apply(action)
 
 class RemDevShutdownDialog(data: ComponentData) : DialogUiComponent(data) {
-  val postponeButton = x("Postpone restart button") { and(byType(JButton::class.java), byText("Cancel")) }
-  val shutdownButton = x("Shutdown button") { and(byType(JButton::class.java), byAccessibleName("Shutdown")) }
+  val postponeButton: UiComponent = x("Postpone restart button") { and(byType(JButton::class.java), byText("Cancel")) }
+  val shutdownButton: UiComponent = x("Shutdown button") { and(byType(JButton::class.java), byAccessibleName("Shutdown")) }
 }
 
 fun IdeaFrameUI.restartDialog(action: RestartDialog.() -> Unit = {}): RestartDialog =

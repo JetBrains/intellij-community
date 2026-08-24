@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.qodana.sarif.jar
+  modules:
+  - name: intellij.libraries.qodana.sarif
+    libraries:
+      qodana-sarif:
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/qodana/qodana-sarif/1/qodana-sarif-1.jar

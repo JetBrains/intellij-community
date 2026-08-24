@@ -20,6 +20,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.ThreadContextElement
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -38,6 +39,23 @@ object InternalPsiVersioning {
 
   private const val LOCK_PROHIBITION_FREEZE_PSI_VERSION_ADVICE = "Lock usage is forbidden by `PsiVersioningService#freezePsiVersion`. It is not allowed to use locks while PSI snapshot is frozen"
 
+  // it is important that this property is final so that JIT is able to optimize away such calls in production
+  @TestOnly
+  val IS_UNDER_TESTING: Boolean = System.getProperty("idea.is.unit.tests").toBoolean()
+
+  private val injectionHook: ThreadLocal<Runnable?> = ThreadLocal.withInitial { null }
+
+  @TestOnly
+  fun <T> withInjectionHook(injectionHook: Runnable, computation: () -> T): T {
+    val prev = this.injectionHook.get()
+    this.injectionHook.set(injectionHook)
+    try {
+      return computation()
+    } finally {
+      this.injectionHook.set(prev)
+    }
+  }
+
   // a reading operation with the available psi version
   fun <T> freezePsiVersion(action: () -> T): T {
     if (ApplicationManager.getApplication().isReadAccessAllowed) {
@@ -45,6 +63,7 @@ object InternalPsiVersioning {
     }
     val registry = PsiVersionRegistry.instance
     val latestVersion = registry.latestPublishedVersion
+    // todo: the process of entering into versioned environment should run a double-checked-locking loop where we would be able to avoid concurrent garbage collection of the frozen version.
     return ApplicationManagerEx.getApplicationEx().withLocksProhibited(LOCK_PROHIBITION_FREEZE_PSI_VERSION_ADVICE) {
       registry.rememberFrozenVersion(latestVersion) {
         initFreezePsiVersionSection(false, latestVersion).use {
@@ -106,12 +125,23 @@ object InternalPsiVersioning {
   fun getCurrentPsiVersion(): Long {
     val tlValue = threadLocalVersioningTracker.get()
     if (tlValue != null) {
+      runInjectionHook()
       return tlValue
     }
     // Unfortunately, throughout our codebase we have interactions with PSI that are not protected by any lock, especially in tests
     // Technically, it is possible to wrap all such cases in a read action/freezePsiVersion, but we decided to avoid useless assertions for now
     // also, this is a very hot path, so we'd like to avoid retrieval of service here
-    return PsiVersionRegistry.instance.latestPublishedVersion
+    val returnValue = PsiVersionRegistry.instance.latestPublishedVersion
+
+    runInjectionHook()
+
+    return returnValue
+  }
+
+  fun runInjectionHook() {
+    if (IS_UNDER_TESTING) {
+      injectionHook.get()?.run()
+    }
   }
 
   /**

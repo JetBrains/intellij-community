@@ -8,6 +8,8 @@ import com.intellij.platform.pluginGraph.PluginGraph
 import org.jetbrains.intellij.build.productLayout.model.ModuleSourceInfo
 import org.jetbrains.intellij.build.productLayout.model.getModuleSourceInfo
 import org.jetbrains.intellij.build.productLayout.stats.AnsiStyle
+import org.jetbrains.intellij.build.productLayout.traversal.UnusedEmbeddedLibraryModuleViolation
+import org.jetbrains.intellij.build.productLayout.traversal.UnusedSharedLibraryModuleViolation
 
 data class SelfContainedValidationError(
   override val context: String,
@@ -323,6 +325,88 @@ data class EmbeddedContentModuleDependencyError(
     appendLine("1. Make the dependency embedded in the same product/module-set content, or")
     appendLine("2. Make the depending module non-embedded, or")
     appendLine("3. Move the dependency boundary so embedded code no longer references separately loaded content.")
+    appendLine()
+    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+    appendLine()
+  }
+}
+
+/**
+ * Reported when library content is embedded in a module set without being reachable from
+ * embedded platform content in any product.
+ */
+internal data class UnusedEmbeddedLibraryModuleError(
+  override val context: String,
+  @JvmField val violations: List<UnusedEmbeddedLibraryModuleViolation>,
+  override val ruleName: String = "UnusedEmbeddedLibraryModuleValidation",
+) : ValidationError {
+  override val category: ErrorCategory get() = ErrorCategory.UNUSED_EMBEDDED_LIBRARY_MODULE
+
+  @Suppress("DestructuringDeclaration")
+  override fun format(s: AnsiStyle): String = buildString {
+    appendLine("${s.red}${s.bold}Embedded library modules without embedded platform consumers${s.reset}")
+    appendLine()
+    appendLine("${s.yellow}Plugin, test, optional, and required content does not justify loading a library in the core classloader.${s.reset}")
+    appendLine()
+
+    for (violation in violations.sortedBy { it.module }) {
+      appendLine("  ${s.red}*${s.reset} ${s.bold}${violation.module}${s.reset}")
+      appendLine("    Declared in: ${violation.declaringModuleSets.joinToString()}")
+      if (violation.platformConsumers.isNotEmpty()) {
+        appendLine("    Non-embedded platform consumers: ${violation.platformConsumers.joinToString()}")
+      }
+      if (violation.productionPluginConsumers.isNotEmpty()) {
+        appendLine("    Production plugin consumers: ${violation.productionPluginConsumers.joinToString()}")
+      }
+      if (violation.testPluginConsumers.isNotEmpty()) {
+        appendLine("    Test plugin consumers: ${violation.testPluginConsumers.joinToString()}")
+      }
+    }
+
+    appendLine()
+    appendLine("${s.yellow}Fix:${s.reset}")
+    appendLine("1. Keep the library embedded only if embedded platform content has a production dependency on it.")
+    appendLine("2. Otherwise make it ordinary shared content with module(...), or private content of its owning plugin.")
+    appendLine("3. Remove the module-set declaration if it has no runtime consumers.")
+    appendLine()
+    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+    appendLine()
+  }
+}
+
+/**
+ * Reported when a library module is declared as ordinary module-set content that nothing depends on.
+ *
+ * Companion of [UnusedEmbeddedLibraryModuleError]: that rule keeps unused libraries out of the core
+ * classloader, this one keeps them out of the product entirely.
+ */
+internal data class UnusedSharedLibraryModuleError(
+  override val context: String,
+  @JvmField val violations: List<UnusedSharedLibraryModuleViolation>,
+  override val ruleName: String = "UnusedSharedLibraryModuleValidation",
+) : ValidationError {
+  override val category: ErrorCategory get() = ErrorCategory.UNUSED_SHARED_LIBRARY_MODULE
+
+  @Suppress("DestructuringDeclaration")
+  override fun format(s: AnsiStyle): String = buildString {
+    appendLine("${s.red}${s.bold}Library content modules without any consumer${s.reset}")
+    appendLine()
+    appendLine("${s.yellow}These libraries are shipped as product content, but no module or plugin declares a dependency on them.${s.reset}")
+    appendLine()
+
+    for (violation in violations.sortedBy { it.module }) {
+      appendLine("  ${s.red}*${s.reset} ${s.bold}${violation.module}${s.reset}")
+      appendLine("    Declared in: ${violation.declaringModuleSets.joinToString()}")
+      if (violation.availableProducts.isNotEmpty()) {
+        appendLine("    Shipped in: ${violation.availableProducts.joinToString()}")
+      }
+    }
+
+    appendLine()
+    appendLine("${s.yellow}Fix:${s.reset}")
+    appendLine("1. Declare the dependency on the consumer side, if a module really uses the library at runtime.")
+    appendLine("2. Otherwise remove the module-set declaration - nothing loads this library.")
+    appendLine("3. If only one plugin needs it, make it private content of that plugin instead of shared content.")
     appendLine()
     appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
     appendLine()

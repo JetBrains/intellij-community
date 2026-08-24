@@ -156,6 +156,8 @@ class BazelTargetsInfo {
     @JvmField val testJars: List<String>,
     @JvmField val exports: List<String>,
     @JvmField val moduleLibraries: Map<String, LibraryDescription>,
+    /** The label of this module's `content_module_jar` target, or empty when it packs no `lib/` jar. */
+    @JvmField val contentModuleJarTarget: String = "",
   )
 
   @Serializable
@@ -166,12 +168,38 @@ class BazelTargetsInfo {
     @JvmField val sourceJars: List<String>,
   )
 
+  /**
+   * What Bazel offers for one plugin, by its main module name.
+   *
+   * Every field is optional because the two halves are independent: a plugin whose descriptor opted into `ij_plugin`
+   * has a packaging target and a distribution directory, a plugin whose content report names something beyond its own
+   * main module has a content target, and today those are almost disjoint sets. A consumer tests the field it needs
+   * for emptiness.
+   */
   @Serializable
   data class PluginDistributionTargetDescription(
-    @JvmField val target: String,
-    @JvmField val distributionDirectory: String,
-  )  @Serializable
+    @JvmField val target: String = "",
+    @JvmField val distributionDirectory: String = "",
+    /**
+     * The plugin's `dev_dist_plugin_content` target - what a dev distribution declares to get this plugin's jars.
+     *
+     * Empty when the plugin's content report names nothing beyond its own main module, because then the target would
+     * restate what naming that module's `jvm_library` already says: such a plugin contributes its module target
+     * directly instead. Also empty for a `bazel-targets.json` written before the converter emitted these, so a
+     * consumer that needs it reports the empty value against the file it came from.
+     */
+    @JvmField val contentTarget: String = "",
+    /**
+     * Prepack-eligible content modules of this plugin that its own [contentTarget] could not name.
+     *
+     * Non-empty only for a community plugin that packs ultimate modules: the community repository cannot name an
+     * ultimate label, so the completion set in `//build/dev-dist-content` is what turns these into
+     * `prepacked_content_modules`. Written by `JpsModuleToBazel.PluginDistributionTargetDescription`.
+     */
+    @JvmField val crossRepositoryPrepackedContentModules: List<String> = emptyList(),
+  )
 
+  @Serializable
   data class TargetsFile(
     @JvmField val modules: Map<String, TargetsFileModuleDescription>,
     @JvmField val imlTargets: List<String> = emptyList(),

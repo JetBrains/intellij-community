@@ -16,7 +16,6 @@ a:com.intellij.codeInsight.completion.CompletionService
 *:com.intellij.codeInsight.completion.command.CommandCompletionFactory
 - com.intellij.codeInsight.completion.command.CommandCompletionSuffixProvider
 - com.intellij.openapi.project.PossiblyDumbAware
-- adjustCaret(com.intellij.psi.PsiFile,I):java.lang.Integer
 - commandProviders(com.intellij.openapi.project.Project,com.intellij.lang.Language):java.util.List
 - createFile(com.intellij.psi.PsiFile,java.lang.String):com.intellij.psi.PsiFile
 - isApplicable(com.intellij.psi.PsiFile,I):Z
@@ -461,6 +460,8 @@ a:com.intellij.openapi.fileEditor.FileEditorManager
 - *:getSelectedTextEditorWithRemotes():com.intellij.openapi.editor.Editor[]
 - *:isFileOpenWithRemotes(com.intellij.openapi.vfs.VirtualFile):Z
 - *:requestOpenFile(com.intellij.openapi.vfs.VirtualFile):V
+com.intellij.openapi.fileEditor.FileNavigator
+- *:navigate(com.intellij.openapi.fileEditor.OpenFileDescriptor,Z,com.intellij.openapi.editor.Editor):V
 c:com.intellij.openapi.fileEditor.OpenFileDescriptor
 - com.intellij.openapi.fileEditor.FileEditorNavigatable
 - java.lang.Comparable

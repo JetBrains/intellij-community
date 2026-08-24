@@ -1,6 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "jewel-markdown-extensions-autolink-tests_test",
@@ -52,6 +53,11 @@ jvm_library(
         "@lib//:platform-jewel-markdown-extensions-autolink-commonmark-ext-autolink",
         "//libraries/compose-foundation-desktop",
     ],
+)
+
+content_module_jar(
+    libraries = ["@lib//:platform-jewel-markdown-extensions-autolink-commonmark-ext-autolink"],
+    module = ":autolink",
 )
 
 jvm_library(

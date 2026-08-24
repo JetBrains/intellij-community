@@ -10,19 +10,19 @@ import com.intellij.platform.eel.provider.getResolvedEelMachine
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.impl.conda.icons.PythonCommunityImplCondaIcons
 import com.intellij.python.community.impl.installer.CondaInstallManager
+import com.intellij.python.pytools.PackageManagerPyTool
 import com.intellij.python.pytools.PyExecutableCache
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.PyToolManager
-import com.intellij.python.pytools.PackageManagerPyTool
+import com.intellij.python.pytools.ToolCommandSpec
+import com.intellij.python.pytools.ToolSearchPath
 import com.intellij.python.pytools.pyExecutableSpec
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
-import com.jetbrains.python.sdk.ToolCommandSpec
-import com.jetbrains.python.sdk.ToolSearchPath
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import javax.swing.Icon
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Conda as a [PyTool] + [PackageManagerPyTool], so it appears on the Package Managers settings page and

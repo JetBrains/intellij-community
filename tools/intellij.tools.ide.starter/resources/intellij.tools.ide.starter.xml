@@ -13,6 +13,7 @@
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.opentelemetry"/>
     <module name="intellij.libraries.oshi.core"/>
+    <module name="intellij.libraries.qodana.sarif"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.lang.impl"/>

@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "instanceContainer-tests_test",
@@ -22,6 +23,10 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.platform.instanceContainer",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
@@ -33,6 +38,8 @@ jvm_library(
         "//platform/util/base",
     ],
 )
+
+content_module_jar(module = ":instanceContainer")
 
 jvm_library(
     name = "instanceContainer_test_lib",
@@ -59,6 +66,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.instanceContainer.iml",
+        "resources/intellij.platform.instanceContainer.xml",
     ],
     visibility = ["//visibility:public"],
 )

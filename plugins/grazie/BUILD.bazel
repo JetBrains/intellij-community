@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.grazie` start
@@ -59,7 +60,72 @@ exports_files(
     [
         "intellij.grazie.iml",
         "resources/META-INF/plugin.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.grazie` end
+
+### auto-generated section `dev content intellij.grazie` start
+dev_dist_plugin_content(
+    content_modules = [
+        "//libraries/ai.grazie.spell.gec.engine.local",
+        "//libraries/kotlin/logging",
+        "//plugins/grazie/json",
+        "//plugins/grazie/markdown",
+        "//plugins/grazie/src:core",
+        "//plugins/grazie/xml",
+        "//plugins/grazie/yaml",
+    ],
+    descriptor_module = ":grazie",
+    libraries = [
+        "@lib//:ai-grazie-rule-engine",
+        "@lib//:ai-grazie-semantic-engine",
+        "@lib//:grazie-core-ai-grazie-api-gateway-client-jvm",
+        "@lib//:grazie-core-ai-grazie-client-ktor-jvm",
+        "@lib//:grazie-core-ai-grazie-gec-util",
+        "@lib//:grazie-core-ai-grazie-model-ner-jvm",
+        "@lib//:grazie-core-ai-grazie-nlp-common-jvm",
+        "@lib//:grazie-core-ai-grazie-tasks-library-api-jvm",
+        "@lib//:grazie-core-ai-grazie-tasks-library-model-jvm",
+        "@lib//:grazie-core-cloud-jetbrains-sdk-ml-jbai-ner-api",
+        "@lib//:grazie-core-cloud-jetbrains-sdk-ml-jbai-tree-api",
+        "@lib//:grazie-core-com-carrotsearch-hppc",
+        "@lib//:grazie-core-com-hankcs-aho-corasick-double-array-trie",
+        "@lib//:grazie-core-com-vdurmont-emoji-java",
+        "@lib//:grazie-core-javax-measure-unit-api-1-0",
+        "@lib//:grazie-core-net-loomchild-segment-2-0-1",
+        "@lib//:grazie-core-org-carrot2-morfologik-fsa",
+        "@lib//:grazie-core-org-carrot2-morfologik-fsa-builders",
+        "@lib//:grazie-core-org-carrot2-morfologik-speller",
+        "@lib//:grazie-core-org-carrot2-morfologik-stemming",
+        "@lib//:grazie-core-org-jetbrains-intellij-deps-languagetool-language-en",
+        "@lib//:grazie-core-org-jetbrains-intellij-deps-languagetool-languagetool-core",
+        "@lib//:grazie-core-org-json-json",
+        "@lib//:grazie-core-tech-units-indriya-1-3",
+        "@lib//:grazie-core-tech-uom-lib-uom-lib-common-1-1",
+        "@lib//:grazie-markdown-ai-grazie-tasks-library-model-jvm",
+        "@lib//:jaxb-api",
+        "@lib//:jaxb-runtime",
+        "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-model-common-jvm",
+        "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-model-gec-jvm",
+        "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-model-swagger-annotations-jvm",
+        "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-model-text-jvm",
+        "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-nlp-detect",
+        "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-nlp-langs-jvm",
+        "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-nlp-phonetics-jvm",
+        "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-nlp-similarity-jvm",
+        "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-spell-gec-engine-local",
+        "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-spell-hunspell-en",
+        "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-utils-common-jvm",
+        "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-utils-multiplatform-jvm",
+        "@lib//:libraries-kotlin-logging-io-github-oshai-kotlin-logging-jvm",
+        "@lib//:slf4j-api",
+        "@lib//:slf4j-jdk14",
+    ],
+    prepacked_content_modules = [
+        "//plugins/grazie/java:java_content_module_jar",
+        "//plugins/grazie/properties:properties_content_module_jar",
+    ],
+)
+### auto-generated section `dev content intellij.grazie` end

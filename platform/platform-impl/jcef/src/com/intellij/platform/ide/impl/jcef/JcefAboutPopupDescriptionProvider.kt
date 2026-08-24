@@ -4,13 +4,14 @@ package com.intellij.platform.ide.impl.jcef
 import com.intellij.ide.AboutPopupDescriptionProvider
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.jcef.JBCefApp
 import com.jetbrains.cef.JCefAppConfig
 import com.jetbrains.cef.JCefVersionDetails
 import java.text.MessageFormat
 
 internal class JcefAboutPopupDescriptionProvider : AboutPopupDescriptionProvider {
-  override fun getDescription(): String? {
+  override fun getDescription(): @NlsContexts.DetailedDescription String? {
     val jcefVersion = getJcefVersion() ?: return null
     val nativeBundleVersion = getJcefNativeBundleVersion()
     val value = if (nativeBundleVersion != null && nativeBundleVersion != jcefVersion) {

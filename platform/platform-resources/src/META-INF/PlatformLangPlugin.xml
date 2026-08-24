@@ -25,22 +25,14 @@
     </extensionPoint>
   </extensionPoints>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- registered main-time so product-descriptor overrides="true" registrations see the base first -->
+    <applicationService serviceImplementation="com.intellij.openapi.application.IdeUrlTrackingParametersProvider" open="true"/>
+  </extensions>
+
   <xi:include href="/idea/PriorityEditorLangActions.xml"/>
   <xi:include href="/idea/PlatformActions.xml"/>
   <xi:include href="/idea/ExecutionActions.xml"/>
   <xi:include href="/idea/LangActions.xml"/>
-
-  <xi:include href="/META-INF/Core.xml"/>
-  <xi:include href="/META-INF/CoreImpl.xml"/>
-  <xi:include href="/META-INF/Analysis.xml"/>
-  <xi:include href="/META-INF/AnalysisImpl.xml"/>
-  <xi:include href="/META-INF/Indexing.xml"/>
-  <xi:include href="/META-INF/Editor.xml"/>
-
-  <xi:include href="/META-INF/Refactoring.xml"/>
-  <xi:include href="/META-INF/RefactoringExtensionPoints.xml"/>
-  <xi:include href="/META-INF/CodeStyle.xml"/>
-
-  <xi:include href="/META-INF/WorkspaceModelExtensions.xml"/>
 
 </idea-plugin>

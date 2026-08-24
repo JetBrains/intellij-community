@@ -17,4 +17,14 @@ public interface AbstractPythonRunConfigurationParams extends PythonRunParams {
 
   @ApiStatus.Internal
   void setUseRunTool(@Nullable Boolean useRunTool);
+
+  /**
+   * Whether to hand the script to the run tool as a PEP 723 script; {@code null} lets the presence of a metadata
+   * block decide.
+   */
+  @ApiStatus.Internal
+  @Nullable Boolean getRunAsScript();
+
+  @ApiStatus.Internal
+  void setRunAsScript(@Nullable Boolean runAsScript);
 }

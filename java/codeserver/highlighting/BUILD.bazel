@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.java.codeserver.highlighting` start
 jvm_library(
@@ -38,6 +39,8 @@ jvm_library(
         "//libraries/fastutil",
     ],
 )
+
+content_module_jar(module = ":highlighting")
 
 jvm_library(
     name = "highlighting_test_lib",

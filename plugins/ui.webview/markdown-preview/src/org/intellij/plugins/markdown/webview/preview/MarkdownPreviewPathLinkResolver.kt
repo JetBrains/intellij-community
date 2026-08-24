@@ -20,8 +20,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
-import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
+import com.intellij.platform.ide.navigation.toNavigationOptions
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
@@ -93,10 +93,11 @@ internal class MarkdownPreviewPathLinkResolver(
 
   private suspend fun navigateTo(target: PathNavigationTarget, component: JComponent) {
     val request = readAction { target.navigationRequest() } ?: return
-    withContext(Dispatchers.EDT) {
-      val dataContext = DataManager.getInstance().getDataContext(component)
-      project.serviceAsync<NavigationService>().navigate(request, NavigationOptions.defaultOptions().requestFocus(true), dataContext)
+    val dataContext = withContext(Dispatchers.EDT) {
+      DataManager.getInstance().getDataContext(component)
     }
+    val options = dataContext.toNavigationOptions()
+    project.serviceAsync<NavigationService>().navigate(request, options)
   }
 
   private fun findExactFiles(

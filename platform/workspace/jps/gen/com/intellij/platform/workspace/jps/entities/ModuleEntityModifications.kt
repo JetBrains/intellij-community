@@ -85,8 +85,6 @@ var ModuleEntityBuilder.facetOrder: FacetsOrderEntityBuilder?
 @set:Internal
 var ModuleEntityBuilder.groupPath: ModuleGroupPathEntityBuilder?
   by WorkspaceEntity.extensionBuilder(ModuleGroupPathEntity::class.java)
-var ModuleEntityBuilder.sourceRoots: List<SourceRootEntityBuilder>
-  by WorkspaceEntity.extensionBuilder(SourceRootEntity::class.java)
 
 @get:Internal
 @set:Internal

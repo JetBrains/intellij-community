@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "apiDump-lang-tests_test",
@@ -50,6 +51,8 @@ jvm_library(
         "//java/java-psi-api:psi",
     ],
 )
+
+content_module_jar(module = ":apiDump-lang")
 
 jvm_library(
     name = "apiDump-lang_test_lib",

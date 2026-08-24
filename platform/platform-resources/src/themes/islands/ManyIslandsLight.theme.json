@@ -877,6 +877,14 @@
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorderNew"
     },
 
+    "PillButton": {
+      "blueForeground": "blue-70",
+      "blueBorderColor": "blue-90",
+      "blueHoverForeground": "blue-70",
+      "blueHoverBackground": "blue-150",
+      "blueHoverBorderColor": "blue-90"
+    },
+
     "Plugins": {
       "background": "white",
       "SearchField.background": "control-bg",

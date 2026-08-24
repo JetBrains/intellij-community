@@ -128,5 +128,5 @@ fun LibraryReferenceTester.Companion.knownNames(vararg names: String): LibraryRe
 fun LibraryAvailabilityTester.Companion.knownClassFqn(fqn: String): LibraryAvailabilityTester = LibraryAvailabilityTester { module ->
     val scope = ModulesScope.moduleWithDependenciesAndLibrariesScope(module)
     JavaPsiFacade.getInstance(module.project).findClasses(fqn, scope).isNotEmpty() ||
-            KotlinFullClassNameIndex[fqn, module.project, scope].isNotEmpty()
+            KotlinFullClassNameIndex.hasValue(fqn, module.project, scope)
 }

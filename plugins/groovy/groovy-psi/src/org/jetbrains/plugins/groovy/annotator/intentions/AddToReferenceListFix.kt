@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions
 
 import com.intellij.codeInspection.ProblemDescriptor
@@ -10,6 +10,7 @@ import com.intellij.psi.PsiReferenceList.Role
 import com.intellij.psi.PsiReferenceList.Role.EXTENDS_LIST
 import com.intellij.psi.PsiReferenceList.Role.IMPLEMENTS_LIST
 import com.intellij.psi.PsiReferenceList.Role.PERMITS_LIST
+import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.asSafely
 import org.jetbrains.plugins.groovy.GroovyBundle
@@ -23,7 +24,7 @@ sealed class AddToReferenceListFix(private val role: Role, private val addedName
 
   override fun perform(project: Project, descriptor: ProblemDescriptor): ModCommand {
     val (dependentClass, listToInsert) = generateNewList(descriptor) ?: return ModCommand.nop()
-    return ModCommand.psiUpdate(dependentClass) { cls, updater -> 
+    return ModCommand.psiUpdate(dependentClass) { cls, updater ->
       appendReferenceList(cls, updater.getWritable(listToInsert))
     }
   }
@@ -53,12 +54,11 @@ sealed class AddToReferenceListFix(private val role: Role, private val addedName
 
   private fun appendReferenceList(dependentClass : PsiClass, listToInsert: GrReferenceList) {
     val listToReplace = getReplacedList(dependentClass)
-    if (listToReplace == null) {
-      dependentClass.addAfter(listToInsert, dependentClass.nameIdentifier)
+    val element = when (listToReplace) {
+        null -> dependentClass.addAfter(listToInsert, dependentClass.nameIdentifier)
+        else -> listToReplace.add(listToInsert.referenceElementsGroovy[0])
     }
-    else {
-      listToReplace.replace(listToInsert)
-    }
+    JavaCodeStyleManager.getInstance(dependentClass.project).shortenClassReferences(element)
   }
 
   override fun getFamilyName(): String = GroovyBundle.message("intention.family.name.add.class.to.clause")
@@ -71,7 +71,6 @@ private fun Role.getRepresentation(): String {
     PERMITS_LIST -> "permits"
     else -> error("Unexpected")
   }
-
 }
 
 class AddToPermitsList(addedName: String, hostClassName: String) : AddToReferenceListFix(PERMITS_LIST, addedName, hostClassName)

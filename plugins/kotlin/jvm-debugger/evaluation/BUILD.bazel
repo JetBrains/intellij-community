@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build kotlin.jvm-debugger.evaluation` start
 jvm_library(
@@ -53,6 +54,8 @@ jvm_library(
         "//plugins/kotlin/j2k/k2:kotlin-j2k",
     ],
 )
+
+content_module_jar(module = ":evaluation")
 
 jvm_library(
     name = "evaluation_test_lib",

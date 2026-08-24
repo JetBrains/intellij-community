@@ -12,7 +12,6 @@
     <orderEntry type="module" module-name="intellij.grid.impl.ide" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.grid.types" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.grid.core.plugin" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.libraries.misc.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.recentFiles.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.execution.serviceView.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver.plugin" scope="RUNTIME" />

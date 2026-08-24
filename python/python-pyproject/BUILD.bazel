@@ -1,6 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "pyproject-tests_test",
@@ -70,6 +71,8 @@ jvm_library(
         "//python/python-requirements/backend",
     ],
 )
+
+content_module_jar(module = ":pyproject")
 
 jvm_library(
     name = "pyproject_test_lib",
@@ -242,6 +245,8 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/core-ui",
         "//platform/core-ui:core-ui_test_lib",
+        "//python/python-requirements/common",
+        "//python/python-requirements/common:common_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.pyproject.tests` end

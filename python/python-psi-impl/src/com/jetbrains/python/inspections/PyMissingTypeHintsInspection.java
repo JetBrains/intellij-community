@@ -37,10 +37,10 @@ public final class PyMissingTypeHintsInspection extends PyInspection {
                                                  boolean isOnTheFly,
                                                  @NotNull LocalInspectionToolSession session) {
     TypeEvalContext context = PyInspectionVisitor.getContext(session);
+    if (context.getUsesExternalTypeEngine()) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
     return new PyInspectionVisitor(holder, context) {
-      {
-        downgradeHighlightForTypeEngine = context.getUsesExternalTypeEngine();
-      }
       @Override
       public void visitPyFunction(@NotNull PyFunction function) {
         if (function.getTypeComment() == null &&

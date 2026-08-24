@@ -9,7 +9,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class JvmAnalysisBundle extends DynamicBundle {
+public final class JvmAnalysisBundle {
   public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return ourInstance.getMessage(key, params);
   }
@@ -20,9 +20,5 @@ public final class JvmAnalysisBundle extends DynamicBundle {
   }
 
   public static final @NonNls String BUNDLE = "messages.JvmAnalysisBundle";
-  private static final JvmAnalysisBundle ourInstance = new JvmAnalysisBundle();
-
-  private JvmAnalysisBundle() {
-    super(BUNDLE);
-  }
+  private static final DynamicBundle ourInstance = new DynamicBundle(JvmAnalysisBundle.class, BUNDLE);
 }

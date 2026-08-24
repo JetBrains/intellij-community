@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.java.langInjection.jps` start
 jvm_library(
@@ -32,6 +33,8 @@ jvm_library(
         "//libraries/jetbrains/annotations",
     ],
 )
+
+content_module_jar(module = ":jps")
 
 jvm_library(
     name = "jps_test_lib",

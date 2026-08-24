@@ -220,33 +220,34 @@ public class EditorSearchSession implements SearchSession,
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
         if (event.getEditor() == myEditor) {
-          Disposer.dispose(myDisposable);
           disposeLivePreview();
-          myStartSessionSelectionMarker.dispose();
-          myStartSessionCaretMarker.dispose();
         }
       }
     }, myDisposable);
 
     myEditor.getSelectionModel().addSelectionListener(this, myDisposable);
 
+    Disposer.register(myDisposable, () -> {
+      myStartSessionSelectionMarker.dispose();
+      myStartSessionCaretMarker.dispose();
+    });
+
     FindUsagesCollector.triggerUsedOptionsStats(project, FindUsagesCollector.FIND_IN_FILE, findModel);
   }
 
   public static AnAction @NotNull [] createPrimarySearchActions() {
     if (ExperimentalUI.isNewUI()) {
+      DefaultActionGroup filterGroup = createFilterGroup();
+      filterGroup.add(new ToggleFindInSelectionAction(), Constraints.FIRST);
       return new AnAction[]{
         new StatusTextAction(),
         new PrevOccurrenceAction(),
         new NextOccurrenceAction(),
-        createFilterGroup(),
+        filterGroup,
         createMoreGroup()
       };
     }
     else {
-      ShowFilterPopupGroup filterPopupGroup = new ShowFilterPopupGroup();
-      filterPopupGroup.add(new Separator(ApplicationBundle.message("editorsearch.filter.search.scope")), Constraints.FIRST);
-      filterPopupGroup.add(ActionManager.getInstance().getAction(IdeActions.GROUP_EDITOR_SEARCH_FILTER_RESULTS), Constraints.FIRST);
       return new AnAction[]{
         new StatusTextAction(),
         new PrevOccurrenceAction(),
@@ -258,17 +259,16 @@ public class EditorSearchSession implements SearchSession,
         new SelectAllAction(),
         new Separator(),
         new ToggleFindInSelectionAction(),
-        filterPopupGroup
+        createFilterGroup()
       };
     }
   }
 
-  private static AnAction createFilterGroup() {
-    DefaultActionGroup group = new ShowFilterPopupGroup();
-
-    group.add(new Separator(ApplicationBundle.message("editorsearch.filter.search.scope")), Constraints.FIRST);
-    group.add(ActionManager.getInstance().getAction(IdeActions.GROUP_EDITOR_SEARCH_FILTER_RESULTS), Constraints.FIRST);
-    group.add(new ToggleFindInSelectionAction(), Constraints.FIRST);
+  private static @NotNull DefaultActionGroup createFilterGroup() {
+    AnAction filterGroupOriginal = ActionManager.getInstance().getAction("ShowFilterPopup");
+    ShowFilterPopupGroup group = new ShowFilterPopupGroup();
+    group.setPopup(true);
+    group.copyFromGroup((DefaultActionGroup)filterGroupOriginal);
     return group;
   }
 
@@ -634,8 +634,12 @@ public class EditorSearchSession implements SearchSession,
     myLivePreviewController.clearCursorHighlight();
   }
 
+  /**
+   * Ends the session: everything it holds - the live preview controller with its search results and highlighters, the
+   * editor listeners, the selection markers - hangs off {@link #myDisposable}.
+   */
   protected void disposeLivePreview() {
-    myLivePreviewController.dispose();
+    Disposer.dispose(myDisposable);
   }
 
   private void updateResults(boolean allowedToChangedEditorSelection) {

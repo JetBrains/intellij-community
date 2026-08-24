@@ -129,8 +129,8 @@ sealed interface FieldHelper permits IntroduceFieldHelper, IntroduceConstantHelp
    * @return ready-to-execute settings consumed by {@link BaseExpressionToFieldHandler}
    */
   @NotNull
-  BaseExpressionToFieldHandler.Settings getSettings(@NotNull JavaIntroduceFieldService.ToFieldContext.VariableContext context,
-                                                    @NotNull JavaIntroduceFieldService.InitializationPlace place,
+  BaseExpressionToFieldHandler.Settings getSettings(@NotNull JavaIntroduceFieldModCommandService.ToFieldContext.VariableContext context,
+                                                    @NotNull JavaIntroduceFieldModCommandService.InitializationPlace place,
                                                     @NotNull PsiExpression @NotNull[] occurrences);
 
   /**
@@ -151,7 +151,7 @@ sealed interface FieldHelper permits IntroduceFieldHelper, IntroduceConstantHelp
    * @param parameters auxiliary parameters such as the {@code declareStatic} flag
    * @return suggested field names compliant with the project code style
    */
-  @NotNull SuggestedNameInfo getSuggestedNameInfo(@NotNull JavaIntroduceFieldService.ToFieldContext.ExpressionContext context,
+  @NotNull SuggestedNameInfo getSuggestedNameInfo(@NotNull JavaIntroduceFieldModCommandService.ToFieldContext.ExpressionContext context,
                                                   @NotNull FieldExtractor.SettingParameters parameters);
 
   /**

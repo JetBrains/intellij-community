@@ -1,0 +1,23 @@
+# Build file injected into npm package http_archive repositories (tarballs from
+# registry.npmjs.org, extracted with strip_prefix = "package"). Used by wasmjs_test's
+# npm_packages attribute: `package` is served under /node_modules/<specifier>/, and
+# `package.json` feeds import-map entry resolution.
+
+filegroup(
+    name = "package",
+    srcs = glob(
+        ["**"],
+        exclude = [
+            "BUILD.bazel",
+            "MODULE.bazel",
+            "WORKSPACE",
+        ],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "package_json",
+    srcs = ["package.json"],
+    visibility = ["//visibility:public"],
+)

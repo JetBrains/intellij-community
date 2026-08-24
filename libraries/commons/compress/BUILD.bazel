@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.commons.compress` start
 jvm_library(
@@ -18,7 +19,14 @@ jvm_library(
         # do not sort,
         "@lib//:libraries-commons-compress-commons-compress",
         "//libraries/commons/lang3",
+        "//libraries/commons/codec",
+        "//libraries/commons/io",
     ],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-commons-compress-commons-compress"],
+    module = ":compress",
 )
 
 jvm_library(
@@ -36,6 +44,8 @@ jvm_library(
         # do not sort,
         ":compress",
         "//libraries/commons/lang3:lang3_test_lib",
+        "//libraries/commons/codec:codec_test_lib",
+        "//libraries/commons/io:io_test_lib",
     ],
 )
 ### auto-generated section `build intellij.libraries.commons.compress` end

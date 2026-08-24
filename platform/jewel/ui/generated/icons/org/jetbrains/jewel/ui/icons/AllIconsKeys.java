@@ -4184,14 +4184,6 @@ public final class AllIconsKeys {
     /** 13x13 */
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey WebToolWindow = new IntelliJIconKey("toolwindows/webToolWindow.svg", "expui/toolwindows/web.svg", AllIconsKeys.class);
-
-    /** @deprecated to be removed without replacement */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    /** 16x16 */
-    @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey MeetNewUi = new IntelliJIconKey("expui/toolwindows/meetNewUi.svg", "expui/toolwindows/meetNewUi.svg", AllIconsKeys.class);
   }
 
   @GeneratedFromIntelliJSources
@@ -4519,6 +4511,9 @@ public final class AllIconsKeys {
       /** 16x16 */
       @GeneratedFromIntelliJSources
       public static final @NotNull IntelliJIconKey Safari = new IntelliJIconKey("xml/browsers/safari.svg", "xml/browsers/safari.svg", AllIconsKeys.class);
+      /** 16x16 */
+      @GeneratedFromIntelliJSources
+      public static final @NotNull IntelliJIconKey Vivaldi = new IntelliJIconKey("xml/browsers/vivaldi.svg", "xml/browsers/vivaldi.svg", AllIconsKeys.class);
       /** 16x16 */
       @GeneratedFromIntelliJSources
       public static final @NotNull IntelliJIconKey Yandex = new IntelliJIconKey("xml/browsers/yandex.svg", "xml/browsers/yandex.svg", AllIconsKeys.class);

@@ -7,13 +7,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-public final class JavaFXCommonBundle extends DynamicBundle {
+public final class JavaFXCommonBundle {
   private static final @NonNls String BUNDLE = "messages.JavaFXCommonBundle";
-  private static final JavaFXCommonBundle INSTANCE = new JavaFXCommonBundle();
-
-  private JavaFXCommonBundle() {
-    super(BUNDLE);
-  }
+  private static final DynamicBundle INSTANCE = new DynamicBundle(JavaFXCommonBundle.class, BUNDLE);
 
   public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);

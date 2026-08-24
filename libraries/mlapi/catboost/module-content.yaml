@@ -1,0 +1,8 @@
+- name: dist.all/lib/intellij.libraries.mlapi.catboost.jar
+  modules:
+  - name: intellij.libraries.mlapi.catboost
+    libraries:
+      jetbrains.mlapi.catboost:
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/mlapi/mlapi-catboost/0/mlapi-catboost-0.jar
+      jetbrains.mlapi.catboost.shadow.need.slf4j:
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/mlapi/catboost-shadow-need-slf4j/1/catboost-shadow-need-slf4j-1.jar

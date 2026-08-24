@@ -1,6 +1,7 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.mlapi.catboost"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
@@ -14,8 +15,8 @@
     <module name="intellij.platform.statistics"/>
     <module name="intellij.python.community.impl"/>
     <module name="intellij.python.psi.impl"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <statistics.counterUsagesCollector implementationClass="com.intellij.python.ml.features.imports.PyCharmImportsRankingLogs"/>
     <registryKey

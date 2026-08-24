@@ -2,40 +2,35 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.PluginId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
 class DefaultPluginInitializationErrorHandler : PluginInitializationErrorHandler {
-
-  private val pluginLoadingErrors: List<@Nls String> by lazy {
-    PluginManagerCore.getAndClearPluginLoadingErrors().map { it.message }
-  }
-
-  private val pluginsToEnableDisable: Pair<List<PluginStateChangeData>, List<PluginStateChangeData>> by lazy {
-    PluginManagerCore.getStartupActionsPluginsToEnableDisable()
+  private val pluginManagerState: PluginManagerStateSnapshot by lazy {
+    checkNotNull(service<PluginManagerStateService>().getCurrentState()) { "Plugins are not initialized" }
   }
 
   private val pluginEnabler: PluginEnabler by lazy { PluginEnabler.getInstance() }
 
   override suspend fun getPluginInitializationErrors(): PluginInitializationErrors {
     return PluginInitializationErrors(
-      pluginErrors = pluginLoadingErrors,
-      pluginNamesToEnable = pluginsToEnableDisable.first.map { it.pluginName },
-      pluginNamesToDisable = pluginsToEnableDisable.second.map { it.pluginName }
+      pluginErrors = pluginManagerState.loadingErrors,
+      pluginNamesToEnable = pluginManagerState.pluginsToEnable.values.toList(),
+      pluginNamesToDisable = pluginManagerState.pluginsToDisable.values.toList()
     )
   }
 
-  private fun findDescriptors(data: List<PluginStateChangeData>, markedForLoading: Boolean): List<IdeaPluginDescriptorImpl> {
-    val ids = data.mapTo(HashSet()) { it.pluginId }
+  private fun findDescriptors(ids: Set<PluginId>): List<IdeaPluginDescriptorImpl> {
     return PluginManagerCore.getPluginSet().allPlugins.filter { it.getPluginId() in ids }
   }
 
   override suspend fun enableDeferredPlugins() {
     withContext(Dispatchers.EDT) {
-      if (pluginEnabler.enable(findDescriptors(pluginsToEnableDisable.first, markedForLoading = true))) {
+      if (pluginEnabler.enable(findDescriptors(pluginManagerState.pluginsToEnable.keys))) {
         PluginManagerMain.notifyPluginsUpdated(null)
       }
     }
@@ -43,7 +38,7 @@ class DefaultPluginInitializationErrorHandler : PluginInitializationErrorHandler
 
   override suspend fun disableDeferredPlugins() {
     withContext(Dispatchers.EDT) {
-      pluginEnabler.disable(findDescriptors(pluginsToEnableDisable.second, markedForLoading = false))
+      pluginEnabler.disable(findDescriptors(pluginManagerState.pluginsToDisable.keys))
     }
   }
 }

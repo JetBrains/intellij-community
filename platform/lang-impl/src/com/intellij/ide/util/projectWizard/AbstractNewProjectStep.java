@@ -271,7 +271,10 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       var noText = ActionsBundle.message("action.NewDirectoryProject.not.empty.dialog.open.existing");
       var result = Messages.showYesNoDialog(options.getProjectToClose(), message, title, yesText, noText, Messages.getQuestionIcon());
       if (result == Messages.NO) {
-        return PlatformProjectOpenProcessor.Companion.doOpenProject(location, OpenProjectTask.build().withProjectRootDir(location));
+        return PlatformProjectOpenProcessor.Companion.doOpenProject(location, OpenProjectTask(builder -> {
+          builder.setProjectRootDir(location);
+          return Unit.INSTANCE;
+        }));
       }
     }
 

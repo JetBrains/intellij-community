@@ -1,5 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.platform.indexing` start
 create_kotlinc_options(
@@ -45,6 +46,8 @@ jvm_library(
     ],
 )
 
+content_module_jar(module = ":indexing")
+
 jvm_library(
     name = "indexing_test_lib",
     testonly = True,
@@ -81,7 +84,6 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.indexing.iml",
-        "resources/META-INF/Indexing.xml",
         "resources/intellij.platform.indexing.xml",
     ],
     visibility = ["//visibility:public"],

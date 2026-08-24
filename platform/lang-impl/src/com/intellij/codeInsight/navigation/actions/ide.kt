@@ -14,13 +14,15 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.lang.LanguageNamesValidation
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.navigation.NavigationRequest
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.navigation.NavigationOptions
-import com.intellij.platform.ide.navigation.navigateBlocking
+import com.intellij.platform.ide.navigation.requestNavigate
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
@@ -44,7 +46,12 @@ internal fun navigateToLookupItem(project: Project, editor: Editor): Boolean {
 /**
  * Obtains a [NavigationRequest] instance from [requestor] on a background thread, and calls [navigateRequest].
  */
-internal fun navigateRequestLazy(project: Project, requestor: NavigationRequestor, editor: Editor) {
+internal fun navigateRequestLazy(
+  project: Project,
+  requestor: NavigationRequestor,
+  editor: Editor,
+  options: NavigationOptions = NavigationOptions.requestFocus(),
+) {
   EDT.assertIsEdt()
   @Suppress("DialogTitleCapitalization")
   val request = underModalProgress(project, ActionsBundle.actionText("GotoDeclarationOnly")) {
@@ -52,17 +59,25 @@ internal fun navigateRequestLazy(project: Project, requestor: NavigationRequesto
   }
   if (request != null) {
     val dataContext = editor.component.let { DataManager.getInstance().getDataContext(it) }
-    navigateRequest(project, request, dataContext = dataContext)
+    navigateRequest(project, request, dataContext, options)
   }
 }
 
 @Internal
 @RequiresEdt
 @JvmOverloads
-fun navigateRequest(project: Project, request: NavigationRequest, dataContext: DataContext? = null) {
+fun navigateRequest(
+  project: Project,
+  request: NavigationRequest,
+  dataContext: DataContext? = null,
+  options: NavigationOptions = NavigationOptions.requestFocus(),
+) {
   EDT.assertIsEdt()
-  IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation()
-  navigateBlocking(project, request, NavigationOptions.requestFocus(), dataContext)
+  if (!Registry.`is`("ide.navigation.requests")) {
+    IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation()
+  }
+  val scope = project.service<CoreUiCoroutineScopeHolder>().coroutineScope
+  requestNavigate(project, request, options, dataContext, scope)
 }
 
 internal fun notifyNowhereToGo(project: Project, editor: Editor, file: PsiFile, offset: Int) {

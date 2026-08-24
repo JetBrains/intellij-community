@@ -107,8 +107,8 @@ internal class SdkEntityImpl(private val dataSource: SdkEntityData) : SdkEntity,
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.name != dataSource.name) this.name = dataSource.name
       if (this.type != dataSource.type) this.type = dataSource.type
-      if (this.version != dataSource?.version) this.version = dataSource.version
-      if (this.homePath != dataSource?.homePath) this.homePath = dataSource.homePath
+      if (this.version != dataSource.version) this.version = dataSource.version
+      if (this.homePath != dataSource.homePath) this.homePath = dataSource.homePath
       if (this.roots != dataSource.roots) this.roots = dataSource.roots.toMutableList()
       if (this.additionalData != dataSource.additionalData) this.additionalData = dataSource.additionalData
       updateChildToParentReferences(parents)

@@ -198,7 +198,7 @@ public final class ImmediatePainter {
 
     Caret caret = editor.getCaretModel().getPrimaryCaret();
     //noinspection ConstantConditions
-    final float caretWidth = isBlockCursor ? editor.getCaretLocations(false)[0].myWidth
+    final float caretWidth = isBlockCursor ? editor.getCaretLocations(false)[0].getWidth()
                                          : JBUIScale.scale(caret.getVisualAttributes().getWidth(settings.getLineCursorWidth())) * myEditor.getScale();
     final float caretShift = isBlockCursor ? 0 : caretWidth <= 1 ? 0 : 1 / JBUIScale.sysScale(g);
     final Rectangle2D caretRectangle = new Rectangle2D.Float(p2x + width2 - caretShift, p2y - topOverhang,

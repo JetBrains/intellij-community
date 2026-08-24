@@ -1,5 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.kotlin.j2k` start
 create_kotlinc_options(
@@ -81,6 +82,8 @@ jvm_library(
         "//platform/util/progress",
     ],
 )
+
+content_module_jar(module = ":kotlin-j2k")
 
 jvm_library(
     name = "kotlin-j2k_test_lib",

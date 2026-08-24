@@ -9,6 +9,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.AbstractVcsHelper
@@ -30,6 +31,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.test.VcsPlatformTest
+import com.intellij.vcs.test.VcsPlatformTestContext
 import git4idea.DialogManager
 import git4idea.GitUtil
 import git4idea.GitVcs
@@ -130,13 +132,8 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   /**
    * Clones the given source repository into a bare parent.git and adds the remote origin.
    */
-  protected fun prepareRemoteRepo(source: GitRepository, target: Path = testNioRoot.resolve("parent.git"), remoteName: String = "origin"): Path {
-    cd(testNioRoot)
-    git("clone --bare '${source.root.path}' $target")
-    cd(source)
-    git("remote add $remoteName '$target'")
-    return target
-  }
+  protected fun prepareRemoteRepo(source: GitRepository, target: Path = testNioRoot.resolve("parent.git"), remoteName: String = "origin"): Path =
+    prepareRemoteRepo(project, testNioRoot, source, target, remoteName)
 
   /**
    * Creates 3 repositories: a bare "parent" repository, and two clones of it.
@@ -147,34 +144,10 @@ abstract class GitPlatformTest : VcsPlatformTest() {
    * Parent and bro are created just inside the [testRoot](myTestRoot).
    * The main clone is created at [repoRoot], which is assumed to be inside the project.
    */
-  protected fun setupRepositories(repoRoot: String, parentName: String, broName: String): ReposTrinity {
-    val parentRepo = createParentRepo(parentName)
-    val broRepo = createBroRepo(broName, parentRepo)
+  protected fun setupRepositories(repoRoot: String, parentName: String, broName: String): ReposTrinity =
+    setupRepositories(project, testNioRoot, repoRoot, parentName, broName)
 
-    val repository = createRepository(project, repoRoot)
-    cd(repository)
-    git("remote add origin $parentRepo")
-    git("push --set-upstream origin master:master")
-
-    cd(broRepo)
-    git("pull")
-
-    return ReposTrinity(repository, parentRepo, broRepo)
-  }
-
-  private fun createParentRepo(parentName: String): Path {
-    cd(testNioRoot)
-    gitInit("--bare $parentName.git")
-    return testNioRoot.resolve("$parentName.git")
-  }
-
-  protected fun createBroRepo(broName: String, parentRepo: Path): Path {
-    cd(testNioRoot)
-    git("clone ${parentRepo.fileName} $broName")
-    cd(broName)
-    setupDefaultUsername(project)
-    return testNioRoot.resolve(broName)
-  }
+  protected fun createBroRepo(broName: String, parentRepo: Path): Path = createBroRepo(project, testNioRoot, broName, parentRepo)
 
   private fun doActionSilently(op: VcsConfiguration.StandardConfirmation) {
     AbstractVcsTestCase.setStandardConfirmation(project, GitVcs.NAME, op, VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY)
@@ -186,12 +159,6 @@ abstract class GitPlatformTest : VcsPlatformTest() {
 
   private fun removeSilently() {
     doActionSilently(VcsConfiguration.StandardConfirmation.REMOVE)
-  }
-
-  protected fun installHook(gitDir: Path, hookName: String, hookContent: String) {
-    val hookFile = gitDir.resolve("hooks/$hookName").toFile()
-    FileUtil.writeToFile(hookFile, hookContent)
-    hookFile.setExecutable(true, false)
   }
 
   private fun readAndResetCredentialHelpers(): Map<ConfigScope, List<String>> {
@@ -287,8 +254,6 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     }
   }
 
-  protected data class ReposTrinity(val projectRepo: GitRepository, val parent: Path, val bro: Path)
-
   private enum class ConfigScope {
     SYSTEM,
     GLOBAL;
@@ -324,3 +289,87 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     }
   }
 }
+
+data class ReposTrinity(val projectRepo: GitRepository, val parent: Path, val bro: Path)
+
+/**
+ * Writes an executable Git hook into `<gitDir>/hooks/<hookName>`.
+ */
+internal fun installHook(gitDir: Path, hookName: String, hookContent: String) {
+  val hookFile = gitDir.resolve("hooks/$hookName").toFile()
+  hookFile.writeText(hookContent)
+  hookFile.setExecutable(true, false)
+}
+
+/**
+ * Clones the given source repository into a bare parent.git and adds the remote origin.
+ */
+internal fun prepareRemoteRepo(
+  project: Project,
+  testRoot: Path,
+  source: GitRepository,
+  target: Path = testRoot.resolve("parent.git"),
+  remoteName: String = "origin",
+): Path {
+  cd(testRoot)
+  git(project, "clone --bare '${source.root.path}' $target")
+  cd(source)
+  git(project, "remote add $remoteName '$target'")
+  return target
+}
+
+/**
+ * Creates 3 repositories: a bare "parent" repository, and two clones of it.
+ *
+ * One of the clones - "bro" - is outside of the project.
+ * Another one is inside the project, is registered as a Git root, and is represented by [GitRepository].
+ *
+ * Parent and bro are created just inside the [testRoot].
+ * The main clone is created at [repoRoot], which is assumed to be inside the project.
+ */
+internal fun setupRepositories(
+  project: Project,
+  testRoot: Path,
+  repoRoot: String,
+  parentName: String,
+  broName: String,
+): ReposTrinity {
+  val parentRepo = createParentRepo(project, testRoot, parentName)
+  val broRepo = createBroRepo(project, testRoot, broName, parentRepo)
+
+  val repository = createRepository(project, repoRoot)
+  cd(repository)
+  git(project, "remote add origin $parentRepo")
+  git(project, "push --set-upstream origin master:master")
+
+  cd(broRepo)
+  git(project, "pull")
+
+  return ReposTrinity(repository, parentRepo, broRepo)
+}
+
+private fun createParentRepo(project: Project, testRoot: Path, parentName: String): Path {
+  cd(testRoot)
+  gitInit(project, "--bare", "$parentName.git")
+  return testRoot.resolve("$parentName.git")
+}
+
+internal fun createBroRepo(project: Project, testRoot: Path, broName: String, parentRepo: Path): Path {
+  cd(testRoot)
+  git(project, "clone ${parentRepo.fileName} $broName")
+  cd(broName)
+  setupDefaultUsername(project)
+  return testRoot.resolve(broName)
+}
+
+internal fun VcsPlatformTestContext.prepareRemoteRepo(
+  source: GitRepository,
+  target: Path = testNioRoot.resolve("parent.git"),
+  remoteName: String = "origin",
+): Path = prepareRemoteRepo(project, testNioRoot, source, target, remoteName)
+
+internal fun VcsPlatformTestContext.setupRepositories(repoRoot: String, parentName: String, broName: String): ReposTrinity =
+  setupRepositories(project, testNioRoot, repoRoot, parentName, broName)
+
+internal fun VcsPlatformTestContext.createBroRepo(broName: String, parentRepo: Path): Path =
+  createBroRepo(project, testNioRoot, broName, parentRepo)

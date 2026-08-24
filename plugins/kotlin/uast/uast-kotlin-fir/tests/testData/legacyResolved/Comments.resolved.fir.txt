@@ -16,14 +16,14 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Pi
 UComment -> USimpleNameReferenceExpression (identifier = ingredient) -> VALUE_PARAMETER: ingredient
 UComment -> UQualifiedReferenceExpression -> CLASS: NotImplementedError
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = kotlin) -> PsiPackage:kotlin: kotlin
-UComment -> UQualifiedReferenceExpression -> FUN: contains
+UComment -> UQualifiedReferenceExpression -> FUNCTION: contains
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Margherita) -> CLASS: Margherita
 UTypeReferenceExpression (name = Pizza.Ingredient) -> USimpleNameReferenceExpression (identifier = Ingredient) -> Kotlin_Light_Class:Interface: Ingredient
 UTypeReferenceExpression (name = boolean) -> USimpleNameReferenceExpression (identifier = Boolean) -> Decompiled_Class: Boolean
 UComment -> USimpleNameReferenceExpression (identifier = Pizza) -> CLASS: Pizza
 UComment -> USimpleNameReferenceExpression (identifier = Pizza) -> CLASS: Pizza
 UComment -> USimpleNameReferenceExpression (identifier = P) -> TYPE_PARAMETER: P
-UComment -> USimpleNameReferenceExpression (identifier = self) -> FUN: self
+UComment -> USimpleNameReferenceExpression (identifier = self) -> FUNCTION: self
 UTypeReferenceExpression (name = Pizza.Builder<P>) -> USimpleNameReferenceExpression (identifier = Pizza) -> Kotlin_Light_Class:Interface: Pizza
 UTypeReferenceExpression (name = Pizza.Builder<P>) -> USimpleNameReferenceExpression (identifier = Builder) -> Kotlin_Light_Class:ClassOrObject: Builder
 UTypeReferenceExpression (name = P) -> USimpleNameReferenceExpression (identifier = P) -> Kotlin_Light_Type_Parameter: P

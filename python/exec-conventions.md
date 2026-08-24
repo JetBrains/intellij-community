@@ -41,3 +41,9 @@ When adding a new exec module:
 * add `OWNERSHIP` for exec subteam (unless there's one somewhere up the tree)
 * add `-Werror` to compiler options
 * add opt-in for `PyInternalExecApi` to compiler options.
+
+## Don't use warnings suppression
+
+Avoid using `@Suppress` as much as possible, you should always try to find a better way
+of implementing things. Warnings are there for a reason. Use it only if absolutely
+necessary (or avoiding it creates a huge overhead).

@@ -12,6 +12,7 @@
       <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.test" />
     <orderEntry type="library" name="kotlin-test" level="project" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -33,7 +34,7 @@
     <orderEntry type="module" module-name="intellij.libraries.guava" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="memoryfilesystem" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.memoryfilesystem" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />

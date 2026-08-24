@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring.suggested
 
 import com.intellij.ide.highlighter.JavaFileType
@@ -22,14 +22,15 @@ class JavaSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringChang
 
     perform("editingStarted: 'void foo() '") { myFixture.type("S") }
 
-    perform { myFixture.type("tring") }
-    perform { commitAll() }
-    perform { myFixture.type(" p") }
-    perform("nextSignature: 'void foo(String p) '") { commitAll() }
+    perform {
+      myFixture.type("tring")
+    }
+    perform("nextSignature: 'void foo(String p) '") {
+      myFixture.type(" p")
+    }
 
     perform {
       perform { myFixture.type(", ") }
-      commitAll()
     }
   }
 
@@ -45,18 +46,15 @@ class JavaSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringChang
 
     perform("editingStarted: 'void foo() '") {
       myFixture.type("ArrayList")
-      commitAll()
     }
     perform {
       addImport("java.util")
     }
     perform("nextSignature: 'void foo(ArrayList<String> p) '") {
       myFixture.type("<String> p")
-      commitAll()
     }
     perform("nextSignature: 'void foo(ArrayList<String> p, Object p2) '") {
       myFixture.type(", Object p2")
-      commitAll()
     }
   }
 
@@ -65,37 +63,30 @@ class JavaSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringChang
 
     perform("editingStarted: 'void foo() '", "nextSignature: 'void foo(Object p1) '") {
       myFixture.type("Object p1")
-      commitAll()
     }
 
     perform("inconsistentState") {
       myFixture.type("/*")
-      commitAll()
     }
 
     perform("inconsistentState") {
       myFixture.type(" this is comment for parameter")
-      commitAll()
     }
 
     perform("nextSignature: 'void foo(Object p1/* this is comment for parameter*/) '") {
       myFixture.type("*/")
-      commitAll()
     }
 
     perform("inconsistentState") {
       myFixture.type(", int p2 /*")
-      commitAll()
     }
 
     perform("inconsistentState") {
       myFixture.type("this is comment for another parameter")
-      commitAll()
     }
 
     perform("nextSignature: 'void foo(Object p1/* this is comment for parameter*/, int p2 /*this is comment for another parameter*/) '") {
       myFixture.type("*/")
-      commitAll()
     }
   }
 
@@ -110,7 +101,6 @@ class JavaSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringChang
 
     perform {
       myFixture.type("public void foo_bar123(int _p1)")
-      commitAll()
     }
   }
 
@@ -129,14 +119,12 @@ class JavaSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringChang
       myFixture.type("int a = 10;")
       myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
       myFixture.type("x(a);")
-      commitAll()
     }
 
     perform("editingStarted: 'a'", "nextSignature: 'abcd'") {
       val variable = file.descendantsOfType<PsiLocalVariable>().first()
       myFixture.editor.caretModel.moveToOffset(variable.nameIdentifier!!.endOffset)
       myFixture.type("bcd")
-      commitAll()
     }
   }
 
@@ -145,17 +133,14 @@ class JavaSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringChang
 
     perform("editingStarted: 'void foo() '") {
       myFixture.type("thr")
-      commitAll()
     }
 
-    perform { myFixture.type("ows IO") }
     perform("nextSignature: 'void foo() throws IO'") {
-      commitAll()
+      myFixture.type("ows IO")
     }
 
     perform("nextSignature: 'void foo() throws IOException'") {
       myFixture.type("Exception")
-      commitAll()
     }
   }
 
@@ -168,7 +153,6 @@ class JavaSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringChang
 
     perform("editingStarted: 'String foo()'", "nextSignature: '@Nullable String foo()'") {
       myFixture.type("@Nullable ")
-      commitAll()
     }
   }
 
@@ -181,17 +165,14 @@ class JavaSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringChang
 
     perform("editingStarted: 'String foo()'", "nextSignature: 'String foo()'") {
       myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
-      commitAll()
     }
 
     perform("nextSignature: '@Null\\n    String foo()'") {
       myFixture.type("@Null")
-      commitAll()
     }
 
     perform("nextSignature: '@Nullable\\n    String foo()'") {
       myFixture.type("able")
-      commitAll()
     }
   }
 
@@ -206,7 +187,6 @@ class JavaSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringChang
     perform("editingStarted: '@Nullable\\n    String foo()'", "nextSignature: 'String foo()'") {
       myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION)
       myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DELETE)
-      commitAll()
     }
   }
 
@@ -220,12 +200,10 @@ class JavaSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringChang
 
     perform("editingStarted: 'String foo()'", "nextSignature: '@\\n    String foo()'") {
       myFixture.type("@")
-      commitAll()
     }
 
     perform("nextSignature: '@Nullable\\n    String foo()'") {
       myFixture.type("Nullable")
-      commitAll()
     }
   }
 
@@ -239,12 +217,10 @@ class JavaSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringChang
 
     perform("editingStarted: '@NotNull\\n    public String foo()'", "inconsistentState") {
       myFixture.type("p")
-      commitAll()
     }
 
     perform("nextSignature: '@NotNull\\n    protected String foo()'") {
       myFixture.type("rotected")
-      commitAll()
     }
   }
 

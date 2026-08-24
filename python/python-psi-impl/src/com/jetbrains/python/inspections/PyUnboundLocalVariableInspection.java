@@ -54,6 +54,9 @@ public final class PyUnboundLocalVariableInspection extends PyInspection {
                                                  boolean isOnTheFly,
                                                  final @NotNull LocalInspectionToolSession session) {
     TypeEvalContext context = PyInspectionVisitor.getContext(session);
+    if (context.getUsesExternalTypeEngine()) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
     return new Visitor(holder, context);
   }
 
@@ -156,19 +159,19 @@ public final class PyUnboundLocalVariableInspection extends PyInspection {
             return;
           }
           registerProblem(node, PyPsiBundle.problemMessage("INSP.unbound.name.undefined", name),
-                          effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         }
         else if (scope.isGlobal(name)) {
           registerProblem(node, PyPsiBundle.problemMessage("INSP.unbound.name.undefined", name),
-                          effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         }
         else if (isNonLocal) {
           registerProblem(node, PyPsiBundle.problemMessage("INSP.unbound.local.variable", name),
-                          effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         }
         else {
           registerProblem(node, PyPsiBundle.problemMessage("INSP.unbound.local.variable", node.getName()),
-                          effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING),
+                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                           new AddGlobalQuickFix());
         }
       }

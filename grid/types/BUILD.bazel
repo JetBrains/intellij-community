@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.grid.types` start
 jvm_library(
@@ -24,6 +25,8 @@ jvm_library(
         "//libraries/jetbrains/annotations",
     ],
 )
+
+content_module_jar(module = ":types")
 
 jvm_library(
     name = "types_test_lib",

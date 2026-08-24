@@ -61,7 +61,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
@@ -189,18 +188,16 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   public abstract void processClassPrepare(DebugProcess debuggerProcess, final ReferenceType referenceType);
 
   @Override
-  public void customizeRenderer(SimpleColoredComponent renderer) {
+  public @NotNull OverheadProducer.Presentation computePresentation() {
     if (myXBreakpoint != null) {
-      renderer.setIcon(myXBreakpoint.getType().getEnabledIcon());
-      try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162794")) {
-        renderer.append(XBreakpointUtil.getShortText(myXBreakpoint));
-      }
+      return new OverheadProducer.Presentation(
+        XBreakpointUtil.getShortText(myXBreakpoint),
+        myXBreakpoint.getType().getEnabledIcon());
     }
     else {
-      renderer.setIcon(AllIcons.Debugger.Db_set_breakpoint);
-      try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162794")) {
-        renderer.append(getDisplayName());
-      }
+      return new OverheadProducer.Presentation(
+        getDisplayName(),
+        AllIcons.Debugger.Db_set_breakpoint);
     }
   }
 

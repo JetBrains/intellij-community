@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.netty.handler.proxy` start
 jvm_library(
@@ -20,6 +21,11 @@ jvm_library(
         "//libraries/netty/buffer",
         "//libraries/netty/codec-http:libraries-netty-codec-http",
     ],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-netty-handler-proxy-netty-handler-proxy"],
+    module = ":libraries-netty-handler-proxy",
 )
 
 jvm_library(

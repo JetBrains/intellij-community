@@ -51,16 +51,6 @@ abstract class PyInspectionVisitor(
   protected val myTypeEvalContext: TypeEvalContext,
 ) : PyElementVisitor() {
 
-  /**
-   * When set to `true`, all problems registered by this visitor will use
-   * [ProblemHighlightType.INFORMATION] instead of their original highlight type.
-   * This is used when an external type engine (e.g., Pyrefly) handles error highlighting,
-   * but we still want to keep quick fixes available.
-   */
-  @JvmField
-  @ApiStatus.Internal
-  var downgradeHighlightForTypeEngine: Boolean = false
-
   @Deprecated("use {@link PyInspectionVisitor#PyInspectionVisitor(ProblemsHolder, TypeEvalContext)} instead")
   constructor(holder: ProblemsHolder?, session: LocalInspectionToolSession) : this(holder, getContext(session)) {
     PluginException.reportDeprecatedUsage("this constructor", "")
@@ -68,16 +58,6 @@ abstract class PyInspectionVisitor(
 
   protected val resolveContext: PyResolveContext
     get() = PyResolveContext.defaultContext(myTypeEvalContext)
-
-  /**
-   * Returns [ProblemHighlightType.INFORMATION] when an external type engine handles highlighting,
-   * otherwise returns the original type. Use for specific checks that the type engine covers,
-   * in inspections where only some checks should be downgraded.
-   */
-  @ApiStatus.Internal
-  protected fun effectiveHighlightType(type: ProblemHighlightType): ProblemHighlightType {
-    return if (myTypeEvalContext.usesExternalTypeEngine) ProblemHighlightType.INFORMATION else type
-  }
 
   @get:ApiStatus.Internal
   val isOnTheFly: Boolean
@@ -90,16 +70,7 @@ abstract class PyInspectionVisitor(
     if (!element.canRegisterProblem) {
       return
     }
-    holder?.let { holder ->
-      if (downgradeHighlightForTypeEngine) {
-        holder.registerProblem(
-          holder.manager.createProblemDescriptor(element, message, null as LocalQuickFix?,
-                                                 ProblemHighlightType.INFORMATION, holder.isOnTheFly))
-      }
-      else {
-        holder.registerProblem(element, message)
-      }
-    }
+    holder?.registerProblem(element, message)
   }
 
   protected fun registerProblem(
@@ -110,14 +81,7 @@ abstract class PyInspectionVisitor(
     if (!element.canRegisterProblem) {
       return
     }
-    holder?.let { holder ->
-      if (downgradeHighlightForTypeEngine) {
-        registerProblem(element, message, ProblemHighlightType.INFORMATION, null as HintAction?, *quickFixes)
-      }
-      else {
-        holder.registerProblem(element, message, *quickFixes)
-      }
-    }
+    holder?.registerProblem(element, message, *quickFixes)
   }
 
   @ApiStatus.Internal
@@ -130,9 +94,8 @@ abstract class PyInspectionVisitor(
       return
     }
     holder?.let { holder ->
-      val effectiveType = if (downgradeHighlightForTypeEngine) ProblemHighlightType.INFORMATION else type
       holder.registerProblem(
-        holder.manager.createProblemDescriptor(element, message, null as LocalQuickFix?, effectiveType, holder.isOnTheFly))
+        holder.manager.createProblemDescriptor(element, message, null as LocalQuickFix?, type, holder.isOnTheFly))
     }
   }
 
@@ -177,8 +140,7 @@ abstract class PyInspectionVisitor(
     if (holder == null || element == null || !element.canRegisterProblem) {
       return
     }
-    val effectiveType = if (downgradeHighlightForTypeEngine) ProblemHighlightType.INFORMATION else type
-    holder!!.problem(element, message.description).highlight(effectiveType).tooltip(message.tooltip).fix(fix).register()
+    holder!!.problem(element, message.description).highlight(type).tooltip(message.tooltip).fix(fix).register()
   }
 
   protected fun registerProblem(
@@ -235,10 +197,9 @@ abstract class PyInspectionVisitor(
       return
     }
     holder?.let { holder ->
-      val effectiveType = if (downgradeHighlightForTypeEngine) ProblemHighlightType.INFORMATION else highlightType
       holder.registerProblem(
         ProblemDescriptorImpl(
-          psiElement, psiElement, descriptionTemplate, fixes, effectiveType, false,
+          psiElement, psiElement, descriptionTemplate, fixes, highlightType, false,
           rangeInElement, hintAction, holder.isOnTheFly
         )
       )
@@ -255,8 +216,7 @@ abstract class PyInspectionVisitor(
     if (holder == null || element == null || !element.canRegisterProblem) {
       return
     }
-    val effectiveType = if (downgradeHighlightForTypeEngine) ProblemHighlightType.INFORMATION else type
-    val builder = holder!!.problem(element, message.description).highlight(effectiveType).tooltip(message.tooltip)
+    val builder = holder!!.problem(element, message.description).highlight(type).tooltip(message.tooltip)
     if (rangeInElement != null) {
       builder.range(rangeInElement)
     }
@@ -269,8 +229,7 @@ abstract class PyInspectionVisitor(
   /**
    * Registers a problem whose one-line [message] is the plain-text description, but whose editor hover shows a
    * richer [tooltip] (HTML). Keeping the description and tooltip separate means batch results and golden tests
-   * still see only the plain message. Honors the type-engine downgrade like the other registration helpers; any
-   * quick [fixes] are attached (nulls are ignored).
+   * still see only the plain message. Any quick [fixes] are attached (nulls are ignored).
    */
   @ApiStatus.Internal
   protected fun registerProblemWithTooltip(
@@ -283,8 +242,7 @@ abstract class PyInspectionVisitor(
     if (holder == null || element == null || !element.canRegisterProblem) {
       return
     }
-    val effectiveType = if (downgradeHighlightForTypeEngine) ProblemHighlightType.INFORMATION else type
-    val builder = holder!!.problem(element, message).highlight(effectiveType).tooltip(tooltip)
+    val builder = holder!!.problem(element, message).highlight(type).tooltip(tooltip)
     for (fix in fixes) {
       if (fix != null) builder.fix(fix)
     }

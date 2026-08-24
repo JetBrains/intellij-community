@@ -155,7 +155,8 @@ internal class UpdateableGHPRCompactReviewThreadViewModel(
 
   private fun CoroutineScope.createComment(comment: IndexedValue<GHPullRequestReviewComment>): UpdateableGHPRReviewThreadCommentViewModel =
     UpdateableGHPRReviewThreadCommentViewModel(project, this, dataContext, dataProvider,
-                                               this@UpdateableGHPRCompactReviewThreadViewModel, viewModelWithTextCompletion, comment)
+                                               viewModelWithTextCompletion, comment,
+                                               id, isResolved)
 
   private inner class ReplyViewModel
     : CodeReviewSubmittableTextViewModelBase(project, cs, ""),

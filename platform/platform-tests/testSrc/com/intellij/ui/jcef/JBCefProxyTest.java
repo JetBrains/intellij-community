@@ -1,10 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
+import com.intellij.credentialStore.Credentials;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.testFramework.DisposableRule;
 import com.intellij.ui.scale.TestScaleHelper;
+import com.intellij.util.net.ProxyConfiguration;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandlerAdapter;
@@ -49,8 +51,11 @@ public class JBCefProxyTest {
     assertTrue("cannot parse proxy settings: '" + proxySettings + "'", matcher.matches() && matcher.groupCount() == 4);
 
     var proxyPort = Integer.parseInt(matcher.group(4));
-    JBCefProxySettings.setTestInstance(true, false, false, false, null, matcher.group(3), proxyPort, null, true, matcher.group(1),
-                                       matcher.group(2));
+
+    JBCefProxySettings.setTestInstance(
+      ProxyConfiguration.proxy(ProxyConfiguration.ProxyProtocol.HTTP, matcher.group(3), proxyPort, ""),
+      new Credentials(matcher.group(1), matcher.group(2))
+    );
   }
 
   @After

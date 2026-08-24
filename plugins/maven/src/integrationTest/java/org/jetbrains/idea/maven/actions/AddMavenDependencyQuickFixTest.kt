@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.actions
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.idea.IJIgnore
 import com.intellij.maven.testFramework.fixtures.MavenDomTestFixtureIndices
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.createProjectSubFile
@@ -86,6 +87,7 @@ class AddMavenDependencyQuickFixTest(mavenVersion: String, private val modelVers
 
   }
 
+  @IJIgnore(issue = "IDEA-393053")
   @Test
   fun testAddDependencyTwice() = runBlocking {
     val f = maven.createProjectSubFile("src/main/java/A.java", """

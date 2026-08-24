@@ -20,7 +20,7 @@ import java.nio.file.attribute.PosixFilePermission
 import java.util.LinkedHashSet
 import kotlin.io.path.invariantSeparatorsPathString
 
-private const val DEV_BUILD_COMPONENT_MANIFEST_VERSION = 7
+private const val DEV_BUILD_COMPONENT_MANIFEST_VERSION = 8
 private const val COMPONENT_FILE_ENTRY_TYPE = "component-file"
 private const val COMPONENT_SYMLINK_ENTRY_TYPE = "symlink"
 private const val GENERATED_CORE_CLASSPATH_ENTRY_TYPE = "generated-core-classpath"
@@ -49,7 +49,14 @@ data class DevBuildComponentManifest(
   @JvmField val os: String,
   @JvmField val arch: String,
   @JvmField val additionalModules: List<String>,
-  @JvmField val mainClass: String,
+  /**
+   * The IDE main class, or `null` when this component contributes files and nothing else.
+   *
+   * A component that only carries jars - the content-module jars Bazel packs on their own - knows its product, target
+   * platform and files, but the main class follows from `ProductProperties`, and evaluating a product layout is the
+   * work such a producer exists to avoid. The composer takes it from a component that does declare one.
+   */
+  @JvmField val mainClass: String?,
   @JvmField val coreClassPath: List<String>,
   /**
    * How many plugins this component contributed to `plugin-classpath.txt`.
@@ -74,7 +81,7 @@ fun writeDevBuildComponentManifest(
   os: OsFamily,
   arch: JvmArchitecture,
   additionalModules: List<String>,
-  mainClass: String,
+  mainClass: String?,
   coreClassPath: Collection<Path>,
   pluginCount: Int,
   componentRoot: Path,
@@ -105,14 +112,24 @@ fun readDevBuildComponentManifest(file: Path): DevBuildComponentManifest {
   return manifest
 }
 
+/**
+ * @param additionalModules what the distribution declares it contains, when a caller has that declaration; the
+ *                          components' own sum otherwise. It goes into the launch metadata, so a distribution whose
+ *                          declaration alone changed gets a new fingerprint and is not reused as the previous one.
+ */
 @ApiStatus.Internal
 fun computeIdeFingerprintFromComponents(
   components: Collection<DevBuildComponentManifest>,
   pluginClasspathFile: Path? = null,
+  additionalModules: Collection<String>? = null,
 ): String {
   require(components.isNotEmpty()) { "At least one dev-build component manifest is required" }
   val first = components.first()
-  val additionalModules = components.flatMapTo(LinkedHashSet(), DevBuildComponentManifest::additionalModules)
+  val launchMetadata = requireNotNull(components.firstOrNull { it.mainClass != null }) {
+    "No dev-build component declares an IDE main class"
+  }
+  val declaredModules = additionalModules
+                        ?: components.flatMapTo(LinkedHashSet(), DevBuildComponentManifest::additionalModules)
   val coreClasspath = orderCoreClasspathEntries(components.flatMap(DevBuildComponentManifest::coreClassPath))
   val entries = components.flatMapTo(ArrayList()) { component ->
     component.entries.map { entry -> IdeFingerprintEntry(entry.relativePath, entry.type, entry.hash, entry.executable) }
@@ -125,8 +142,8 @@ fun computeIdeFingerprintFromComponents(
         platformPrefix = first.platformPrefix,
         os = first.os,
         arch = first.arch,
-        mainClass = first.mainClass,
-        additionalModules = additionalModules,
+        mainClass = launchMetadata.mainClass!!,
+        additionalModules = declaredModules,
       ),
     )
   )

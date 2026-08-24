@@ -776,15 +776,8 @@ object PyNames {
   private val INPLACE_OPERATOR_PATTERN = "__i([a-z]+)__".toRegex()
 
   @JvmStatic
-  private fun isInplaceOperatorName(name: String?): Boolean {
+  fun isInplaceOperatorName(name: String?): Boolean {
     return name != null && (name.matches(INPLACE_OPERATOR_PATTERN))
-  }
-
-  @JvmStatic
-  fun isInplaceOperatorName(referencedName: String?, calleeName: String?): Boolean {
-    if (isInplaceOperatorName(calleeName)) return true
-
-    return referencedName != null && calleeName != null && calleeName == leftToRightComparisonOperatorName(referencedName)
   }
 
   @JvmStatic

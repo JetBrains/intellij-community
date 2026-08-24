@@ -1,4 +1,5 @@
 load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//plugins/ui.webview:webview_plugin_zip.bzl", "webview_plugin_zip")
 
@@ -110,6 +111,7 @@ exports_files(
     [
         "intellij.platform.ui.webview.demo.iml",
         "resources/META-INF/plugin.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

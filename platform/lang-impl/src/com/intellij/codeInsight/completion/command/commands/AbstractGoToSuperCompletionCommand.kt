@@ -32,7 +32,12 @@ abstract class AbstractGoToSuperMethodCompletionCommandProvider :
   abstract fun canGoToSuperMethod(element: PsiElement, offset: Int): Boolean
 
 
+  /**
+   * The caret is placed by the navigation itself, which requires the handler of the language to be
+   * a [com.intellij.codeInsight.NavigationOptionsAwareCodeInsightActionHandler]; a handler which navigates on its own
+   * leaves the caret at the target offset.
+   */
   override fun createCommand(context: CommandCompletionProviderContext): ActionCompletionCommand? {
-    return createCommandWithNameIdentifierAndLastAdjusted(context)
+    return createNavigationCommandWithNameIdentifier(context)
   }
 }

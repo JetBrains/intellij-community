@@ -18,6 +18,7 @@ import com.jetbrains.python.psi.PyBoolLiteralExpression
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.PyRecursiveElementVisitor
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PySubscriptionExpression
@@ -160,8 +161,8 @@ private enum class TypedDictMethod(val qualifiedName: String) {
 private fun getTypedDictMemberType(referenceTarget: PsiElement, context: TypeEvalContext): PyCallableType? {
   val callExpression =
     if (context.maySwitchToAST(referenceTarget)) PyCallExpressionNavigator.getPyCallExpressionByCallee(referenceTarget) else null
-  val callee = callExpression?.callee ?: return null
-  val receiver = callExpression.getReceiver(null) ?: return null
+  val callee = callExpression?.callee as? PyQualifiedExpression ?: return null
+  val receiver = callee.qualifier ?: return null
   val receiverType = context.getType(receiver)
   if (receiverType !is PyTypedDictType) return null
 

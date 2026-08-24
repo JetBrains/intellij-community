@@ -3,6 +3,20 @@ package com.intellij.ui.paint
 
 import java.awt.Graphics
 import java.awt.Graphics2D
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
+
+@OptIn(ExperimentalContracts::class)
+inline fun <G : Graphics, R> G.use(block: (G) -> R): R {
+  contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
+  try {
+    return block(this)
+  }
+  finally {
+    dispose()
+  }
+}
 
 inline fun withTxAndClipAligned(
   g: Graphics,

@@ -1,7 +1,6 @@
 - name: dist.all/lib/intellij.platform.ide.impl.jar
   modules:
   - name: intellij.platform.buildData
-  - name: intellij.platform.codeStyle.impl
   - name: intellij.platform.diagnostic.startUpPerformanceReporter
   - name: intellij.platform.ide.impl
   - name: intellij.platform.ide.recentProjects

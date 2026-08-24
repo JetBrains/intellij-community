@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.memoryfilesystem.jar
+  modules:
+  - name: intellij.libraries.memoryfilesystem
+    libraries:
+      memoryfilesystem:
+      - name: $MAVEN_REPOSITORY$/com/github/marschall/memoryfilesystem/2/memoryfilesystem-2.jar

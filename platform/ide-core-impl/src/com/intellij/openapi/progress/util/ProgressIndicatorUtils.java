@@ -97,8 +97,15 @@ public final class ProgressIndicatorUtils {
   @Deprecated
   public static boolean runInReadActionWithWriteActionPriority(@NotNull Runnable action, @Nullable ProgressIndicator progressIndicator) {
     AtomicBoolean readActionAcquired = new AtomicBoolean();
-    boolean executed = runWithWriteActionPriority(() -> readActionAcquired.set(ApplicationManagerEx.getApplicationEx().tryRunReadAction(action)),
-                                           progressIndicator == null ? new ProgressIndicatorBase(false, false) : progressIndicator);
+    ProgressIndicator effectiveIndicator = progressIndicator == null ? new ProgressIndicatorBase(false, false)
+                                                                     : progressIndicator;
+    boolean executed = runWithWriteActionPriority(
+      () -> {
+        boolean started = ApplicationManagerEx.getApplicationEx().tryRunReadAction(action);
+        readActionAcquired.set(started);
+      },
+      effectiveIndicator
+    );
     return readActionAcquired.get() && executed;
   }
 

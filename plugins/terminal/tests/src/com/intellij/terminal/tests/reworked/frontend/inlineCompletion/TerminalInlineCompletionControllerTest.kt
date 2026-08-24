@@ -9,6 +9,7 @@ import com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorT
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.view.TerminalKeyEventImpl
 import com.intellij.terminal.frontend.view.impl.TerminalEditorFactory
@@ -30,6 +31,7 @@ import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.shellIntegration.impl.TerminalShellIntegrationImpl
 import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModelImpl
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModelImpl
+import org.jetbrains.plugins.terminal.session.ShellName
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -308,7 +310,9 @@ internal class TerminalInlineCompletionControllerTest : BasePlatformTestCase() {
     val provider = RecordingInlineCompletionProvider()
     val editor = TerminalEditorFactory.createOutputEditor(project, JBTerminalSystemSettingsProvider(), scope)
     val model = MutableTerminalOutputModelImpl(editor.document, maxOutputLength = 0)
-    private val shellIntegration = TerminalShellIntegrationImpl(model, TerminalSessionModelImpl(), scope.asDisposable())
+    private val shellIntegration = TerminalShellIntegrationImpl(
+      model, TerminalSessionModelImpl(), scope, LocalEelDescriptor, ShellName.of("unknown")
+    )
     val controller = TerminalInlineCompletionController(project, editor, model, shellIntegration, scope)
 
     init {

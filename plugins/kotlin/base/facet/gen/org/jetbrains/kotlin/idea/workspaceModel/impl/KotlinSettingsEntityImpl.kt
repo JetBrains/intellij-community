@@ -279,8 +279,8 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
                 dataSource.dependsOnModuleNames.toMutableList()
             if (this.additionalVisibleModuleNames != dataSource.additionalVisibleModuleNames) this.additionalVisibleModuleNames =
                 dataSource.additionalVisibleModuleNames.toMutableSet()
-            if (this.productionOutputPath != dataSource?.productionOutputPath) this.productionOutputPath = dataSource.productionOutputPath
-            if (this.testOutputPath != dataSource?.testOutputPath) this.testOutputPath = dataSource.testOutputPath
+            if (this.productionOutputPath != dataSource.productionOutputPath) this.productionOutputPath = dataSource.productionOutputPath
+            if (this.testOutputPath != dataSource.testOutputPath) this.testOutputPath = dataSource.testOutputPath
             if (this.sourceSetNames != dataSource.sourceSetNames) this.sourceSetNames = dataSource.sourceSetNames.toMutableList()
             if (this.isTestModule != dataSource.isTestModule) this.isTestModule = dataSource.isTestModule
             if (this.externalProjectId != dataSource.externalProjectId) this.externalProjectId = dataSource.externalProjectId
@@ -288,9 +288,9 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
             if (this.pureKotlinSourceFolders != dataSource.pureKotlinSourceFolders) this.pureKotlinSourceFolders =
                 dataSource.pureKotlinSourceFolders.toMutableList()
             if (this.kind != dataSource.kind) this.kind = dataSource.kind
-            if (this.compilerArguments != dataSource?.compilerArguments) this.compilerArguments = dataSource.compilerArguments
-            if (this.compilerSettings != dataSource?.compilerSettings) this.compilerSettings = dataSource.compilerSettings
-            if (this.targetPlatform != dataSource?.targetPlatform) this.targetPlatform = dataSource.targetPlatform
+            if (this.compilerArguments != dataSource.compilerArguments) this.compilerArguments = dataSource.compilerArguments
+            if (this.compilerSettings != dataSource.compilerSettings) this.compilerSettings = dataSource.compilerSettings
+            if (this.targetPlatform != dataSource.targetPlatform) this.targetPlatform = dataSource.targetPlatform
             if (this.externalSystemRunTasks != dataSource.externalSystemRunTasks) this.externalSystemRunTasks =
                 dataSource.externalSystemRunTasks.toMutableList()
             if (this.version != dataSource.version) this.version = dataSource.version

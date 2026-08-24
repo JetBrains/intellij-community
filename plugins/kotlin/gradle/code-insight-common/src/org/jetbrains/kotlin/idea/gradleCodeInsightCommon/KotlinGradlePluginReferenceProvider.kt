@@ -28,7 +28,7 @@ private val KOTLIN_PROJECT_SCRIPT_TEMPLATE = FqName("KotlinProjectScriptTemplate
 private val PLUGINS: Name = Name.identifier("plugins")
 
 class KotlinGradlePluginReferenceProvider : AbstractKotlinGradleReferenceProvider() {
-    override fun getImplicitReference(
+    override fun getGradleImplicitReference(
         element: PsiElement,
         offsetInElement: Int
     ): PsiSymbolReference? = when (element) {

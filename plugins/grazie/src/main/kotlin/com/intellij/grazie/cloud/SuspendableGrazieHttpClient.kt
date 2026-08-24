@@ -6,7 +6,9 @@ import ai.grazie.utils.http.DefaultHttpClientRequestSetup
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.util.net.HttpConfigurable
+import com.intellij.util.net.ProxyConfiguration
+import com.intellij.util.net.ProxyCredentialStore
+import com.intellij.util.net.ProxySettings
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpTimeout
@@ -24,6 +26,7 @@ import kotlin.time.Duration.Companion.seconds
 /** NB: HTTP client instances should not be cached in the callers. */
 @Service(Service.Level.APP)
 internal class GrazieHttpClientManager : Disposable {
+  @Suppress("SSBasedInspection")
   private val headerLogger =
     com.intellij.openapi.diagnostic.Logger.getInstance("com.intellij.ml.grazie.pro.http.headers")
 
@@ -31,8 +34,9 @@ internal class GrazieHttpClientManager : Disposable {
 
   private val client: HttpClient
     @Synchronized get() {
-      val proxyConfig = HttpConfigurable.getInstance()
-      val proxy = if (proxyConfig.USE_HTTP_PROXY) Proxy(Proxy.Type.HTTP, InetSocketAddress(proxyConfig.PROXY_HOST, proxyConfig.PROXY_PORT)) else null
+      val proxyConfig = ProxySettings.getInstance().getProxyConfiguration()
+      val proxy = if (proxyConfig is ProxyConfiguration.StaticProxyConfiguration)
+        Proxy(Proxy.Type.HTTP, InetSocketAddress(proxyConfig.host, proxyConfig.port)) else null
       var last = lastClient
       if (last == null || last.first != proxy) {
         last?.second?.close()
@@ -44,8 +48,8 @@ internal class GrazieHttpClientManager : Disposable {
     }
 
   private fun createKtorClient(jdkProxy: Proxy?) = HttpClient(CIO) {
-    val proxyConfig = HttpConfigurable.getInstance()
-    if (proxyConfig.USE_HTTP_PROXY) {
+    val proxyConfig = ProxySettings.getInstance().getProxyConfiguration()
+    if (proxyConfig is ProxyConfiguration.StaticProxyConfiguration) {
       engine { proxy = jdkProxy }
     }
     install(Logging) {
@@ -76,10 +80,10 @@ internal class GrazieHttpClientManager : Disposable {
 
   private fun prepare(client: HttpClient): GrazieHttpClientAdaptor {
     val withProxy = client.config {
-      val proxyConfig = HttpConfigurable.getInstance()
-      if (proxyConfig.USE_HTTP_PROXY && proxyConfig.PROXY_AUTHENTICATION) {
-        val proxyLogin = proxyConfig.proxyLogin
-        val proxyPassword = proxyConfig.plainProxyPassword
+      val credentials = ProxyCredentialStore.getInstance().getCredentials(ProxySettings.getInstance().getProxyConfiguration())
+      if (credentials != null) {
+        val proxyLogin = credentials.userName
+        val proxyPassword = credentials.getPasswordAsString()
         thisLogger().debug("Using proxy authentication $proxyLogin ${proxyPassword?.length}")
         val token = Base64.getEncoder().encodeToString("$proxyLogin:$proxyPassword".toByteArray())
         defaultRequest {

@@ -61,7 +61,7 @@ internal class ProjectSettingsEntityImpl(private val dataSource: ProjectSettings
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ProjectSettingsEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.projectSdk != dataSource?.projectSdk) this.projectSdk = dataSource.projectSdk
+      if (this.projectSdk != dataSource.projectSdk) this.projectSdk = dataSource.projectSdk
       updateChildToParentReferences(parents)
     }
 

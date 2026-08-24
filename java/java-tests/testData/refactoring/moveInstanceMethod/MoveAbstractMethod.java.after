@@ -1,0 +1,9 @@
+abstract class Source1 {
+
+}
+
+class Target2 {
+    int calculate(int value) {
+        return 0;
+    }
+}

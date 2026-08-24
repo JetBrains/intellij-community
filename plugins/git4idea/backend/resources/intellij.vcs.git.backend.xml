@@ -101,10 +101,10 @@
     <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction"/>
     <action id="Git.Squash.Commits" class="git4idea.rebase.log.squash.GitSquashLogAction"/>
     <action id="Git.Drop.Commits" class="git4idea.rebase.log.drop.GitDropLogAction"/>
-    <action id="Git.Show.WorkingTrees" class="git4idea.actions.workingTree.ShowWorkingTreesAction">
+    <action id="Git.Show.WorkingTrees" class="git4idea.workingTrees.actions.ShowWorkingTreesAction">
       <add-to-group group-id="Vcs.Log.ToolWindow.TabActions.DropDown" relative-to-action="Vcs.ShowConsoleTab" anchor="after"/>
     </action>
-    <action id="Git.CreateNewWorkingTree" class="git4idea.actions.workingTree.GitCreateWorkingTreeAction"/>
+    <action id="Git.CreateNewWorkingTree" class="git4idea.workingTrees.actions.GitCreateWorkingTreeAction"/>
 
     <action id="Git.Drop.Selected.Changes" class="git4idea.rebase.log.changes.GitDropSelectedChangesAction">
       <add-to-group group-id="Vcs.RepositoryChangesBrowserMenu" relative-to-action="Vcs.ApplySelectedChanges" anchor="after"/>
@@ -294,7 +294,7 @@
 
     <group id="Git.Branch.Backend.Checkout">
       <action class="git4idea.actions.ref.GitCheckoutAction"/>
-      <action class="git4idea.actions.workingTree.GitOpenExistingWorkingTreeForLocalBranchAction"/>
+      <action class="git4idea.workingTrees.actions.GitOpenExistingWorkingTreeForLocalBranchAction"/>
       <action class="git4idea.actions.branch.GitCheckoutAsNewBranch"/>
       <action class="git4idea.actions.branch.GitCheckoutWithRebaseAction"/>
       <add-to-group group-id="Git.Branch.Checkout" anchor="first"/>
@@ -609,14 +609,14 @@
     <action id="Git.Branches.Popup.Fetch"
             class="git4idea.ui.branch.GitBranchPopupFetchAction"/>
 
-    <action id="Git.WorkingTrees.Remove" class="git4idea.workingTrees.ui.RemoveWorkingTreeAction"
+    <action id="Git.WorkingTrees.Remove" class="git4idea.workingTrees.ui.actions.RemoveWorkingTreeAction"
             icon="AllIcons.General.Delete" use-shortcut-of="$Delete"/>
-    <action id="Git.WorkingTrees.Open" class="git4idea.workingTrees.ui.OpenWorkingTreeAction">
+    <action id="Git.WorkingTrees.Open" class="git4idea.workingTrees.ui.actions.OpenWorkingTreeAction">
       <mouse-shortcut keymap="$default" keystroke="button1 doubleClick"/>
     </action>
-    <action id="Git.WorkingTrees.Refresh" class="git4idea.workingTrees.ui.RefreshWorkingTreesAction"
+    <action id="Git.WorkingTrees.Refresh" class="git4idea.workingTrees.ui.actions.RefreshWorkingTreesAction"
             icon="AllIcons.General.Refresh" use-shortcut-of="Synchronize"/>
-    <action id="Git.WorkingTrees.Prune" class="git4idea.workingTrees.ui.PruneWorkingTreesAction"
+    <action id="Git.WorkingTrees.Prune" class="git4idea.workingTrees.ui.actions.PruneWorkingTreesAction"
             icon="AllIcons.Actions.ClearCash"/>
 
     <group id="Git.WorkingTrees.ToolwindowGroup.Toolbar">
@@ -632,6 +632,10 @@
       <reference ref="Git.WorkingTrees.Open"/>
       <separator/>
       <reference ref="Git.WorkingTrees.Remove"/>
+    </group>
+
+    <group id="Git.WorkingTrees.ToolwindowGroup.Popup.Repository" popup="true">
+      <reference ref="Git.CreateNewWorkingTree"/>
     </group>
   </actions>
 

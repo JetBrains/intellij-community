@@ -27,4 +27,12 @@ object PyEvoRegistry {
   /** Seconds a slow tool's environment list stays cached. */
   val slowToolCacheSeconds: Int
     get() = Registry.intValue("python.evolution.widget.slow.cache.seconds")
+
+  /** How many directory levels below a base dir env discovery descends to find nested virtualenvs (a direct child is level 1). */
+  val scanMaxDepth: Int
+    get() = Registry.intValue("python.evolution.widget.scan.depth")
+
+  /** Upper bound on directories examined per env discovery, so a huge project tree can't turn a node expansion into a long walk. */
+  val scanMaxDirs: Int
+    get() = Registry.intValue("python.evolution.widget.scan.max.dirs")
 }

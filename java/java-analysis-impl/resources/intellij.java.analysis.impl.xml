@@ -38,11 +38,13 @@
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.refactoring"/>
+    <module name="intellij.platform.util.ex"/>
     <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.workspace.jps"/>
     <module name="intellij.xml.analysis"/>
     <module name="intellij.xml.psi"/>
     <module name="intellij.xml.psi.impl"/>
-    <module name="intellij.platform.util.ex"/>
   </dependencies>
   <!-- endregion -->
 

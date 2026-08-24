@@ -18,6 +18,7 @@ import git4idea.branch.GitTagType
 import git4idea.repo.GitBranchTrackInfo
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
+import git4idea.repo.isSubmodule
 import git4idea.repo.tags
 import git4idea.ui.branch.GitBranchManager
 import org.jetbrains.annotations.VisibleForTesting
@@ -30,6 +31,8 @@ internal object GitRepositoryToDtoConverter {
       state = convertRepositoryState(repository),
       favoriteRefs = collectFavorites(repository),
       root = FilePathDto.toDto(VcsUtil.getFilePath(repository.root)),
+      isSubmodule = repository.isSubmodule(),
+      commonGitDirPath = repository.repositoryFiles.commonGitDir.path,
     )
   }
 

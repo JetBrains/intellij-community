@@ -98,6 +98,15 @@ internal suspend fun computeModuleSourcesByContent(
       continue
     }
 
+    if (jarPackager.handOffPluginContentModule(
+        pluginLayout = pluginLayout,
+        moduleName = moduleName,
+        relativeOutputFile = relativeOutputFile,
+        searchableOptionSet = searchableOptionSet,
+      )) {
+      continue
+    }
+
     jarPackager.computeSourcesForModule(
       item = ModuleItem(
         moduleName = moduleName,

@@ -495,7 +495,17 @@
       <synonym key="action.SelectOpenedFileInProjectView.text"/>
     </action>
     <action id="SetShortcutAction" class="com.intellij.ide.actions.SetShortcutAction" use-shortcut-of="ShowIntentionActions"/>
-    <group id="ShowFilterPopup" class="com.intellij.find.editorHeaderActions.ShowFilterPopupGroup"/>
+    <group id="ShowFilterPopup" class="com.intellij.find.editorHeaderActions.ShowFilterPopupGroup" popup="true"
+           icon="AllIcons.General.Filter">
+      <reference ref="Editor.Search.Filter.Results"/>
+      <separator key="separator.ShowFilterPopup.searchScope"/>
+      <action id="SearchContext.Anywhere" class="com.intellij.find.editorHeaderActions.ToggleAnywhereAction"/>
+      <action id="SearchContext.InComments" class="com.intellij.find.editorHeaderActions.ToggleInCommentsAction"/>
+      <action id="SearchContext.InStringLiterals" class="com.intellij.find.editorHeaderActions.ToggleInLiteralsOnlyAction"/>
+      <action id="SearchContext.ExceptComments" class="com.intellij.find.editorHeaderActions.ToggleExceptCommentsAction"/>
+      <action id="SearchContext.ExceptStringLiterals" class="com.intellij.find.editorHeaderActions.ToggleExceptLiteralsAction"/>
+      <action id="SearchContext.ExceptCommentsAndStringLiterals" class="com.intellij.find.editorHeaderActions.ToggleExceptCommentsAndLiteralsAction"/>
+    </group>
     <action id="ShowSearchHistory" class="com.intellij.find.actions.ShowSearchHistoryAction"/>
     <action id="NextWindow" class="com.intellij.openapi.wm.impl.NextWindow"/>
     <action id="PreviousWindow" class="com.intellij.openapi.wm.impl.PreviousWindow"/>

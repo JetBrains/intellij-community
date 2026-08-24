@@ -16,6 +16,7 @@ internal class BacktickUsageViewElementsListener: UsageViewElementsListener {
     val references = element.references
     if (references.any { it is BacktickReference }) {
       usage.usageInfo.isDynamicUsage = true
+      usage.usageInfo.priority = Integer.MAX_VALUE
     }
   }
 }

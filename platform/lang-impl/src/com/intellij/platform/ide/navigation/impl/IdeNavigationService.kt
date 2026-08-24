@@ -1,21 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.navigation.impl
 
-import com.intellij.codeInsight.multiverse.isSharedSourceSupportEnabled
-import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.injected.editor.VirtualFileWindow
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.impl.Utils
-import com.intellij.openapi.actionSystem.impl.Utils.isAsyncDataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileNavigator
@@ -23,90 +17,129 @@ import com.intellij.openapi.fileEditor.FileNavigatorImpl
 import com.intellij.openapi.fileEditor.NavigatableFileEditor
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.fileEditor.editorSuppressionCoroutineContext
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorComposite
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.fileEditor.impl.navigateAndSelectEditor
 import com.intellij.openapi.fileEditor.navigateInProjectView
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.INativeFileType
+import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.backend.navigation.impl.DirectoryNavigationRequest
 import com.intellij.platform.backend.navigation.impl.RawNavigationRequest
-import com.intellij.platform.backend.navigation.impl.SharedSourceNavigationRequest
 import com.intellij.platform.backend.navigation.impl.SourceNavigationRequest
-import com.intellij.platform.ide.navigation.NavigationHandler
+import com.intellij.platform.ide.navigation.CaretPlacement
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
-import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
+import com.intellij.platform.ide.navigation.NavigationTaskCoordinator
+import com.intellij.platform.ide.navigation.RequestedEditor
 import com.intellij.platform.util.progress.mapWithProgress
 import com.intellij.pom.Navigatable
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.sequenceOfNotNull
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.asContextElement
 import kotlinx.coroutines.withContext
-import kotlin.coroutines.cancellation.CancellationException
 
 @Service(Service.Level.PROJECT)
 internal class IdeNavigationService(private val project: Project) : NavigationService {
-  /**
-   * - `permits = 1` means at any given time only one request is being handled.
-   * - [BufferOverflow.DROP_OLDEST] makes each new navigation request cancel the previous one.
-   */
-  private val semaphore: OverflowSemaphore = OverflowSemaphore(permits = 1, overflow = BufferOverflow.DROP_OLDEST)
+  private val twoPhaseExecutor: TwoPhaseOverflowExecutor = TwoPhaseOverflowExecutor()
+  private val isInNavigation: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
 
-  override suspend fun navigate(dataContext: DataContext, options: NavigationOptions) {
-    if (!isAsyncDataContext(dataContext)) {
-      LOG.error("Expected async context, got: $dataContext")
-      val asyncContext = withContext(Dispatchers.EDT) {
-        // hope that context component is still available
-        Utils.createAsyncDataContext(dataContext)
-      }
-      navigate(asyncContext, options)
-    }
-    return semaphore.withPermit {
-      val navigatables = readAction {
-        dataContext.getData(CommonDataKeys.NAVIGATABLE_ARRAY)
-      }
-      if (!navigatables.isNullOrEmpty()) {
-        doNavigate(navigatables = navigatables.toList(), options = options, dataContext = dataContext)
-      }
+  private val taskCoordinator: NavigationTaskCoordinator
+    get() = NavigationTaskCoordinator.getInstance(project)
+
+  override suspend fun navigateRequests(options: NavigationOptions, supplier: suspend () -> Collection<NavigationRequest>): Boolean {
+    return doExclusively(options) {
+      withContext(Dispatchers.Default) { supplier() }
     }
   }
 
-  override suspend fun navigate(navigatables: List<Navigatable>, options: NavigationOptions, dataContext: DataContext?): Boolean {
-    return semaphore.withPermit {
-      doNavigate(navigatables, options, dataContext)
+  override suspend fun navigate(options: NavigationOptions, supplier: suspend () -> Collection<Navigatable>): Boolean {
+    return doExclusively(options) {
+      withContext(Dispatchers.Default) { supplier() }.toNavigationRequests()
     }
   }
 
-  private suspend fun doNavigate(navigatables: List<Navigatable>, options: NavigationOptions, dataContext: DataContext?): Boolean {
-    val requests = navigatables.mapWithProgress {
+  override suspend fun navigate(navigatables: List<Navigatable>, options: NavigationOptions): Boolean {
+    return navigatables.isNotEmpty() && doExclusively(options) { navigatables.toNavigationRequests() }
+  }
+
+  override suspend fun navigate(request: NavigationRequest, options: NavigationOptions): Boolean {
+    return navigate(listOf(request), options)
+  }
+
+  override suspend fun navigate(requests: Collection<NavigationRequest>, options: NavigationOptions): Boolean {
+    return requests.isNotEmpty() && doExclusively(options) { requests }
+  }
+
+  private suspend fun Collection<Navigatable>.toNavigationRequests(): List<NavigationRequest> {
+    return mapWithProgress {
       readAction {
         it.navigationRequest()
       }
     }.filterNotNull()
-    return navigate(project = project, requests = requests, options = options, dataContext = dataContext)
   }
 
-  override suspend fun navigate(request: NavigationRequest, options: NavigationOptions, dataContext: DataContext?) {
-    semaphore.withPermit {
-      navigate(project = project, requests = listOf(request), options = options, dataContext = dataContext)
+  /**
+   * Resolves the targets of a navigation and applies them as the latest navigation of this project, see [TwoPhaseOverflowExecutor]
+   */
+  private suspend inline fun doExclusively(options: NavigationOptions, crossinline action: suspend () -> Collection<NavigationRequest>): Boolean {
+    if (isInNavigation.get()) {
+      LOG.error("Navigation is already running: use `NavigationRequest` instead of starting a navigation from `navigate()`")
+      return false
     }
+
+    return taskCoordinator.runWithTracking {
+      withContext(isInNavigation.asContextElement(true)) {
+        twoPhaseExecutor.submit(
+          prepare = { action().takeIf { it.isNotEmpty() } }
+        ) { requests ->
+          withHistoryIfNeeded(options) {
+            navigate(project = project, requests = requests, options = options)
+          }.takeIf { it }
+        }
+      } ?: false
+    }
+  }
+
+  private suspend inline fun <T> withHistoryIfNeeded(options: NavigationOptions, crossinline action: suspend () -> T): T {
+    options as NavigationOptions.Impl
+    if (!options.recordAsBackHistory) {
+      return action()
+    }
+    return performNavigationHistoryAware(project) { action() }
   }
 }
 
 private val LOG: Logger = Logger.getInstance("#com.intellij.platform.ide.navigation.impl")
 
+private suspend fun navigate(project: Project, requests: Collection<NavigationRequest>, options: NavigationOptions): Boolean {
+  options as NavigationOptions.Impl
+  return if (options.requestedEditor != RequestedEditor.None) {
+    doNavigate(project = project, requests = requests, options = options)
+  } // navigating by itself cannot be told which editor to use, so the ambient one is ignored
+  else withContext(editorSuppressionCoroutineContext()) {
+    doNavigate(project = project, requests = requests, options = options)
+  }
+}
+
 /**
  * Navigates to all sources from [requests], or navigates to first non-source request.
  */
-private suspend fun navigate(project: Project, requests: List<NavigationRequest>, options: NavigationOptions, dataContext: DataContext?): Boolean {
+private suspend fun doNavigate(project: Project, requests: Collection<NavigationRequest>, options: NavigationOptions): Boolean {
   val maxSourceRequests = if (requests.size == 1) Int.MAX_VALUE else Registry.intValue("ide.source.file.navigation.limit", 100)
-  var nonSourceRequest: NavigationRequest? = null
+  var nonSourceRequest: Pair<NavigationRequest, NavigationOptions.Impl>? = null
 
   options as NavigationOptions.Impl
   var navigatedSourcesCounter = 0
@@ -114,11 +147,17 @@ private suspend fun navigate(project: Project, requests: List<NavigationRequest>
     if (maxSourceRequests in 1..navigatedSourcesCounter) {
       break
     }
-    if (tryNavigateToSource(project = project, request = requestFromNavigatable, options = options, dataContext = dataContext)) {
+    val requestOptions = if (navigatedSourcesCounter == 0 || !options.openInRightSplit) {
+      options
+    }
+    else {
+      options.openInRightSplit(false) as NavigationOptions.Impl
+    }
+    if (tryNavigateToSource(project = project, request = requestFromNavigatable, options = requestOptions)) {
       navigatedSourcesCounter++
     }
     else if (nonSourceRequest == null) {
-      nonSourceRequest = requestFromNavigatable
+      nonSourceRequest = requestFromNavigatable to requestOptions
     }
   }
 
@@ -126,10 +165,13 @@ private suspend fun navigate(project: Project, requests: List<NavigationRequest>
     return true
   }
   if (nonSourceRequest == null || options.sourceNavigationOnly) {
+    if (nonSourceRequest != null && LOG.isDebugEnabled) {
+      LOG.debug("Skipping non-source request because of sourceNavigationOnly: ${nonSourceRequest.first}")
+    }
     return false
   }
 
-  navigateNonSource(project = project, request = nonSourceRequest, options = options)
+  navigateNonSource(project = project, request = nonSourceRequest.first, options = nonSourceRequest.second)
   return true
 }
 
@@ -137,20 +179,18 @@ private suspend fun tryNavigateToSource(
   project: Project,
   request: NavigationRequest,
   options: NavigationOptions.Impl,
-  dataContext: DataContext?,
 ): Boolean {
-  if (dataContext != null && executeRequestHandler(request, options, dataContext)) {
-    return true
-  }
-
   when (request) {
     is SourceNavigationRequest -> {
+      val caretShift = caretShift(project = project, request = request, placement = options.caretPlacement)
+      val knownType = request.file.knownFileType()
       withContext(Dispatchers.EDT) {
         navigateToSourceImpl(
           request = request,
           options = options,
           project = project,
-          dataContext = dataContext,
+          offset = request.targetOffset(caretShift),
+          knownType = knownType,
         )
       }
       return true
@@ -160,7 +200,9 @@ private suspend fun tryNavigateToSource(
     }
     is RawNavigationRequest -> {
       if (request.canNavigateToSource) {
+        val caretTarget = rawCaretTarget(project = project, request = request, placement = options.caretPlacement)
         project.serviceAsync<IdeNavigationServiceExecutor>().navigate(request = request, requestFocus = options.requestFocus)
+        caretTarget?.let { adjustCaret(project = project, target = it) }
         return true
       }
       else {
@@ -190,33 +232,117 @@ private suspend fun navigateNonSource(project: Project, request: NavigationReque
   }
 }
 
-private val EP_NAME = ExtensionPointName.create<NavigationHandler>("com.intellij.navigation.navigationHandler")
+/**
+ * Computes the distance from [SourceNavigationRequest.offsetMarker] to the offset [placement] asks for.
+ *
+ * A shift rather than a ready offset is computed here so that the target offset itself may be resolved from the marker
+ * on the EDT: the document may change before the navigation gets there, and the marker follows such changes.
+ *
+ * @return `0` when the caret goes right to the target offset
+ */
+private suspend fun caretShift(project: Project, request: SourceNavigationRequest, placement: CaretPlacement): Int {
+  if (placement == CaretPlacement.TARGET_OFFSET) {
+    return 0
+  }
+  val offset = request.offsetMarker?.takeIf { it.isValid }?.startOffset ?: return 0
+  val shift = readAction {
+    val psiFile = request.file.findPsiFile(project) ?: return@readAction null
+    psiFile.findLeafEndAtOffset(offset = offset)?.minus(offset)
+  }
+  return shift ?: 0
+}
 
-private fun executeRequestHandler(request: NavigationRequest, options: NavigationOptions, dataContext: DataContext): Boolean {
-  for (handler in EP_NAME.extensionList) {
-    try {
-      if (handler.navigate(request, options, dataContext)) {
-        return true
-      }
-    }
-    catch (ce: CancellationException) {
-      throw ce
-    }
-    catch (e: Throwable) {
-      LOG.error("Failed to navigate with $handler", e)
+/**
+ * @return the offset in the coordinates of [SourceNavigationRequest.file], or `-1` when the request carries no offset
+ */
+@RequiresEdt
+private fun SourceNavigationRequest.targetOffset(caretShift: Int): Int {
+  val marker = offsetMarker?.takeIf { it.isValid } ?: return -1
+  return (marker.startOffset + caretShift).coerceAtMost(marker.document.textLength)
+}
+
+/**
+ * A [RawNavigationRequest] runs the navigation code of the navigatable itself, so the platform is not told where the navigation lands
+ * and [placement] may only be applied once that navigation is over.
+ *
+ * Only a navigatable which does tell its target upfront is supported, see [targetDescriptor]. For any other navigatable
+ * the [placement] is ignored, because there is nothing to tell a successful navigation from one which did nothing.
+ *
+ * @return the caret target to apply after the navigation, or `null` when the [placement] cannot be honored
+ */
+private suspend fun rawCaretTarget(project: Project, request: RawNavigationRequest, placement: CaretPlacement): RawCaretTarget? {
+  if (placement == CaretPlacement.TARGET_OFFSET) {
+    return null
+  }
+  return readAction {
+    val descriptor = request.navigatable.targetDescriptor() ?: return@readAction null
+    val targetOffset = descriptor.offset.takeIf { it >= 0 } ?: return@readAction null
+    val psiFile = descriptor.file.findPsiFile(project) ?: return@readAction null
+    val caretOffset = psiFile.findLeafEndAtOffset(targetOffset) ?: return@readAction null
+    RawCaretTarget(file = descriptor.file, targetOffset = targetOffset, caretOffset = caretOffset)
+  }
+}
+
+/**
+ * @return the descriptor this navigatable navigates to, or `null` when it does not tell its target
+ */
+private fun Navigatable.targetDescriptor(): OpenFileDescriptor? = when (this) {
+  is OpenFileDescriptor -> this
+  // a PSI element navigates to the descriptor built for it, see com.intellij.psi.impl.source.tree.CompositePsiElement.navigate
+  is PsiElement -> PsiNavigationSupport.getInstance().getDescriptor(this) as? OpenFileDescriptor
+  else -> null
+}
+
+private class RawCaretTarget(val file: VirtualFile, val targetOffset: Int, val caretOffset: Int)
+
+/**
+ * Moves the caret to [RawCaretTarget.caretOffset], but only while the selected editor is the one showing the navigation target:
+ * the navigation may have done nothing at all, may have landed in another editor, or may have scheduled its own asynchronous work
+ * and returned before reaching the target.
+ */
+private suspend fun adjustCaret(project: Project, target: RawCaretTarget) {
+  val fileEditorManager = project.serviceAsync<FileEditorManager>()
+  val fileDocumentManager = serviceAsync<FileDocumentManager>()
+  withContext(Dispatchers.EDT) {
+    val editor = fileEditorManager.selectedTextEditor ?: return@withContext
+    if (fileDocumentManager.getFile(editor.document) == target.file && editor.caretModel.offset == target.targetOffset) {
+      editor.caretModel.moveToOffset(target.caretOffset)
     }
   }
-  return false
+}
+
+/**
+ * @return the end offset of the token starting at [offset], or `null` when [offset] is not a token start
+ */
+private fun PsiFile.findLeafEndAtOffset(offset: Int): Int? {
+  val leaf = findElementAt(offset) ?: return null
+  return leaf.textRange.endOffset.takeIf { leaf.textRange.startOffset == offset }
+}
+
+/**
+ * Resolves the type of the file without the EDT: an unknown type is resolved by the file content, which means reading the file,
+ * and reading it on the EDT freezes the IDE, see IJPL-249536.
+ *
+ * @return the type of the file, or `null` for a directory and for a file whose type stays unknown: asking the user to associate
+ * a type with it is only possible on the EDT
+ */
+private suspend fun VirtualFile.knownFileType(): FileType? {
+  if (isDirectory) {
+    return null
+  }
+  return readAction { fileType.takeIf { it != UnknownFileType.INSTANCE } }
 }
 
 private suspend fun navigateToSourceImpl(
   options: NavigationOptions.Impl,
   request: SourceNavigationRequest,
   project: Project,
-  dataContext: DataContext?,
+  offset: Int,
+  knownType: FileType?,
 ) {
   val file = request.file
-  val type = if (file.isDirectory) null else FileTypeManager.getInstance().getKnownFileTypeOrAssociate(file, project)
+  // the type resolved in the background is reused; the remaining case is a type unknown to the IDE, which the user is asked about
+  val type = knownType ?: if (file.isDirectory) null else FileTypeManager.getInstance().getKnownFileTypeOrAssociate(file, project)
   if (type != null && file.isValid) {
     if (type is INativeFileType) {
       if (type.openFileInAssociatedApplication(project, file)) {
@@ -224,28 +350,17 @@ private suspend fun navigateToSourceImpl(
       }
     }
     else {
-      val offset = request.offsetMarker?.takeIf { it.isValid }?.startOffset ?: -1
-      val inEditorDataContext = dataContext?.let(OpenFileDescriptor.NAVIGATE_IN_EDITOR::getData) != null
-      val descriptor = if (!inEditorDataContext && request is SharedSourceNavigationRequest && isSharedSourceSupportEnabled(project)) {
-        OpenFileDescriptor(project, request.file, request.context, offset)
-      }
-      else {
-        OpenFileDescriptor(project, request.file, offset)
-      }
-      if (UISettings.getInstance().openInPreviewTabIfPossible && Registry.`is`("editor.preview.tab.navigation")) {
-        descriptor.isUsePreviewTab = true
-      }
-
-      if (inEditorDataContext) {
-        descriptor.isUseCurrentWindow = true
+      val requestedEditor = (options.requestedEditor as? RequestedEditor.Specific)?.editor
+      if (requestedEditor != null) {
+        val descriptor = OpenFileDescriptor(project, request.file, offset)
         val fileNavigator = serviceAsync<FileNavigator>()
         if (fileNavigator is FileNavigatorImpl &&
-            fileNavigator.navigateInRequestedEditorAsync(descriptor, dataContext, options.requestFocus)) {
+            fileNavigator.navigateInRequestedEditorAsync(descriptor, requestedEditor, options.requestFocus)) {
           return
         }
       }
 
-      if (openFile(request = request, project = project, options = options)) {
+      if (openFile(request = request, project = project, options = options, offset = offset)) {
         return
       }
     }
@@ -258,15 +373,19 @@ private suspend fun openFile(
   options: NavigationOptions.Impl,
   project: Project,
   request: SourceNavigationRequest,
+  offset: Int,
 ): Boolean {
-  var offset = request.offsetMarker?.takeIf { it.isValid }?.startOffset ?: -1
+  var hostOffset = offset
   val originalFile = request.file
   var file = originalFile
 
   val fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerEx
   if (originalFile is VirtualFileWindow) {
     readAction {
-      offset = originalFile.documentWindow.injectedToHost(offset)
+      if (hostOffset != -1) {
+        // injectedToHost does not preserve the "no offset" marker, it maps a negative offset into the first host range
+        hostOffset = originalFile.documentWindow.injectedToHost(hostOffset)
+      }
       file = originalFile.delegate
     }
   }
@@ -299,11 +418,12 @@ private suspend fun openFile(
   }
 
 
-  if (offset == -1) {
+  if (hostOffset == -1) {
     return true
   }
 
-  val descriptor = OpenFileDescriptor(project, file, offset)
+  val descriptor = OpenFileDescriptor(project, file, hostOffset)
+  val fileNavigator = serviceAsync<FileNavigator>()
   suspend fun tryNavigate(fileEditors: Sequence<FileEditor>): Boolean {
     for (editor in fileEditors) {
       // try to navigate opened editor
@@ -320,8 +440,9 @@ private suspend fun openFile(
               editor.canNavigateTo(descriptor) -> {
                 navigateAndSelectEditor(editor, descriptor, composite as? EditorComposite)
               }
-              FileNavigator.getInstance().canNavigate(descriptor) -> {
-                FileNavigator.getInstance().navigate(descriptor, options.requestFocus)
+              fileNavigator.canNavigate(descriptor) -> {
+                // NAVIGATE_IN_EDITOR of the current data context is unrelated to this navigation
+                fileNavigator.navigate(descriptor, options.requestFocus, requestedEditor = null)
                 true
               }
               else -> false

@@ -4,8 +4,11 @@
     <module name="intellij.json.backend"/>
     <module name="intellij.json.networknt.wrapper.libraries.jsonSchemaValidator"/>
     <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.jackson.annotations"/>
     <module name="intellij.libraries.jackson3"/>
     <module name="intellij.libraries.jackson3.databind"/>
+    <module name="intellij.libraries.jackson3.dataformat.yaml"/>
+    <module name="intellij.libraries.joni"/>
     <module name="intellij.libraries.opentelemetry"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.diagnostic.telemetry"/>

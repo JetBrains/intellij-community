@@ -133,6 +133,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -1143,10 +1144,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     Collection<Document> documentsToProcessForProject = ContainerUtil.filter(documents, docFilter);
 
     if (!documentsToProcessForProject.isEmpty()) {
-      UpdateTask<Document> task = myRegisteredIndexes.getUnsavedDataUpdateTask(indexId);
-      assert task != null : "Task for unsaved data indexing was not initialized for index " + indexId;
+      if (project == null) throw new IllegalArgumentException("project must not be null here");
 
-      if (myStorageBufferingHandler.runUpdate(true, () -> task.processAll(documentsToProcessForProject, project)) &&
+      ExclusiveItemProcessor<Document> processor = myRegisteredIndexes.getUnsavedDataProcessor(indexId);
+      assert processor != null : "Processor for unsaved data indexing was not initialized for index " + indexId;
+
+      if (myStorageBufferingHandler.runUpdate(true, () -> processor.processAll(documentsToProcessForProject, project)) &&
           documentsToProcessForProject.size() == documents.size() &&
           !hasActiveTransactions()
       ) {
@@ -1485,7 +1488,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return ContainerUtil.filter(getAllFilesToUpdate(), filesToBeIndexedForProjectCondition(project)::test);
   }
 
-  private @NotNull Predicate<FileIndexingRequest> filesToBeIndexedForProjectCondition(Project project) {
+  private @NotNull Predicate<FileIndexingRequest> filesToBeIndexedForProjectCondition(@NotNull Project project) {
     return indexingRequest -> {
       if (indexingRequest.isDeleteRequest() || !indexingRequest.getFile().isValid()) {
         return true;
@@ -1909,17 +1912,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
    * It is much more effective for a larger number of files, but for a small number of files a synchronous way is faster
    * and more predictable.
    */
-  private final class VirtualFileUpdateTask extends UpdateTask<FileIndexingRequest> {
-    @Override
-    public void doProcess(FileIndexingRequest item, @Nullable Project project) {
-      // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
-      IndexingRequestToken indexingRequest = project.getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
-      var stamp = indexingRequest.getFileIndexingStamp(item.getFile());
-      processRefreshedFile(project, new CachedFileContent(item.getFile()), item.isDeleteRequest(), stamp);
-    }
-  }
-
-  private final VirtualFileUpdateTask myForceUpdateTask = new VirtualFileUpdateTask();
+  private final ExclusiveItemProcessor<FileIndexingRequest> myForceUpdateProcessor = new ExclusiveItemProcessor<>((item, project) -> {
+    // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
+    IndexingRequestToken indexingRequest = project.getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
+    var stamp = indexingRequest.getFileIndexingStamp(item.getFile());
+    processRefreshedFile(project, new CachedFileContent(item.getFile()), item.isDeleteRequest(), stamp);
+  });
 
   private void forceUpdate(@Nullable Project project,
                            boolean skipUpdatingIfNoNewUpdatesAvailable,
@@ -1939,7 +1937,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
               LOG.debug(message, new Throwable());
             }
 
-            myForceUpdateTask.processAll(virtualFilesToBeUpdatedForProject, project);
+            Objects.requireNonNull(project, "Project can't be null: it is needed to get ProjectIndexingDependenciesService below");
+            myForceUpdateProcessor.processAll(virtualFilesToBeUpdatedForProject, project);
           }
         }
       }

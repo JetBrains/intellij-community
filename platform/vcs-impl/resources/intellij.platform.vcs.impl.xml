@@ -22,6 +22,7 @@
     <module name="intellij.platform.builtInServer"/>
     <module name="intellij.platform.builtInServer.impl"/>
     <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.codeStyle.impl"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
@@ -49,6 +50,7 @@
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.rpc.backend"/>
     <module name="intellij.platform.rpc.topics"/>
     <module name="intellij.platform.statistics"/>
@@ -59,6 +61,7 @@
     <module name="intellij.platform.vcs"/>
     <module name="intellij.platform.vcs.impl.shared"/>
     <module name="intellij.platform.vcs.log"/>
+    <module name="intellij.platform.workspace.jps"/>
   </dependencies>
   <!-- endregion -->
 

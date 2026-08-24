@@ -37,7 +37,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinAp
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.collectReferencesInFile
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtBlockExpression
@@ -133,7 +132,7 @@ class ConvertToExplicitBackingFieldsInspection :
     context(session: KaSession)
     override fun prepareContext(element: KtProperty): Context? {
         if (!element.isEffectivelyFinal()) return null
-
+        if (element.receiverTypeReference != null) return null
         val returnedProperty = getReturnedPropertyFromGetter(element.getter) ?: return null
 
         val allProperties = (element.parent as? KtElement)

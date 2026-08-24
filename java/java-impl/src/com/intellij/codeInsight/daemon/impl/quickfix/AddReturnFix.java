@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -34,7 +34,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
@@ -70,7 +69,7 @@ public class AddReturnFix extends PsiUpdateModCommandAction<PsiParameterListOwne
     String value = suggestReturnValue(method);
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.project());
     PsiReturnStatement returnStatement = (PsiReturnStatement)factory.createStatementFromText("return " + value + ";", method);
-    PsiCodeBlock body = ObjectUtils.tryCast(method.getBody(), PsiCodeBlock.class);
+    PsiCodeBlock body = (PsiCodeBlock)method.getBody();
     assert body != null;
     returnStatement = (PsiReturnStatement) body.addBefore(returnStatement, body.getRBrace());
 
@@ -110,7 +109,7 @@ public class AddReturnFix extends PsiUpdateModCommandAction<PsiParameterListOwne
         return conversion;
       }
     }
-    return PsiTypesUtil.getDefaultValueOfType(type, true);
+    return PsiTypesUtil.getDefaultValueOfType(type, owner);
   }
 
   private static @NonNls String getConversionToType(@NotNull PsiParameterListOwner method,
@@ -127,10 +126,9 @@ public class AddReturnFix extends PsiUpdateModCommandAction<PsiParameterListOwne
       if (!preciseTypeRequired || arrayComponentType.equals(erasedComponentType)) {
         PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(varType, method.getResolveScope());
         if (collectionItemType != null && erasedComponentType.isAssignableFrom(collectionItemType)) {
-          if (erasedComponentType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-            return variable.getName() + ".toArray()";
-          }
-          return variable.getName() + ".toArray(new " + erasedComponentType.getCanonicalText() + "[0])";
+          return erasedComponentType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)
+                 ? variable.getName() + ".toArray()"
+                 : variable.getName() + ".toArray(new " + erasedComponentType.getCanonicalText() + "[0])";
         }
       }
     }
@@ -139,12 +137,11 @@ public class AddReturnFix extends PsiUpdateModCommandAction<PsiParameterListOwne
 
   private static @NotNull List<PsiVariable> getDeclaredVariables(PsiParameterListOwner method) {
     List<PsiVariable> variables = new ArrayList<>();
-    PsiCodeBlock body = ObjectUtils.tryCast(method.getBody(), PsiCodeBlock.class);
-    if (body != null) {
+    if (method.getBody() instanceof PsiCodeBlock body) {
       PsiStatement[] statements = body.getStatements();
       for (PsiStatement statement : statements) {
-        if (statement instanceof PsiDeclarationStatement) {
-          PsiElement[] declaredElements = ((PsiDeclarationStatement)statement).getDeclaredElements();
+        if (statement instanceof PsiDeclarationStatement declaration) {
+          PsiElement[] declaredElements = declaration.getDeclaredElements();
           for (PsiElement declaredElement : declaredElements) {
             if (declaredElement instanceof PsiLocalVariable) variables.add((PsiVariable)declaredElement);
           }
@@ -159,9 +156,7 @@ public class AddReturnFix extends PsiUpdateModCommandAction<PsiParameterListOwne
   private static boolean invokeSingleExpressionLambdaFix(@NotNull PsiParameterListOwner method) {
     if (!(method instanceof PsiLambdaExpression lambda)) return false;
     PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(lambda);
-    if (returnType == null) return false;
-    PsiCodeBlock body = ObjectUtils.tryCast(lambda.getBody(), PsiCodeBlock.class);
-    if (body == null) return false;
+    if (returnType == null || !(lambda.getBody() instanceof PsiCodeBlock body)) return false;
     PsiStatement[] statements = body.getStatements();
     if (statements.length != 1 || !(statements[0] instanceof PsiExpressionStatement expressionStatement)) return false;
     PsiExpression expression = expressionStatement.getExpression();

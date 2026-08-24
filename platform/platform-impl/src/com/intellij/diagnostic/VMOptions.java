@@ -58,12 +58,10 @@ public final class VMOptions {
     }
   }
 
-  /**
-   * Returns a value of the given {@link MemoryKind memory setting} (in MiBs), or {@code -1} when unable to find out
-   * (e.g., a user doesn't have custom memory settings).
-   *
-   * @see #readOption(String, boolean)
-   */
+  /// Returns a value of the given [`memory setting`][MemoryKind] (in MiBs), or `-1` when unable to find out
+  /// (e.g., a user doesn't have custom memory settings).
+  ///
+  /// @see #readOption(String, boolean)
   public static int readOption(@NotNull MemoryKind kind, boolean effective) {
     var strValue = readOption(kind.option, effective);
     if (strValue != null) {
@@ -77,16 +75,14 @@ public final class VMOptions {
     return -1;
   }
 
-  /**
-   * Returns a value of the given option, or {@code null} when unable to find.
-   *
-   * @param effective when {@code true}, the method returns a value for the current JVM (from {@link ManagementFactory#getRuntimeMXBean()}),
-   *                  otherwise it reads a user's .vmoptions {@link #getUserOptionsFile() file}.
-   */
+  /// Returns a value of the given option, or `null` when unable to find.
+  ///
+  /// @param effective when `true`, the method returns a value for the current JVM (from [ManagementFactory#getRuntimeMXBean()]),
+  ///                  otherwise it reads a user's .vmoptions [`file`][#getUserOptionsFile()].
   public static @Nullable String readOption(@NotNull String prefix, boolean effective) {
     var lines = options(effective);
     // the list is iterated in the reverse order, because the last value wins
-    for (int i = lines.size() - 1; i >= 0; i--) {
+    for (var i = lines.size() - 1; i >= 0; i--) {
       var line = lines.get(i).trim();
       if (line.startsWith(prefix)) {
         return line.substring(prefix.length());
@@ -95,11 +91,9 @@ public final class VMOptions {
     return null;
   }
 
-  /**
-   * Returns a (possibly empty) list of the given option's values.
-   *
-   * @see #readOption(String, boolean)
-   */
+  /// Returns a (possibly empty) list of the given option's values.
+  ///
+  /// @see #readOption(String, boolean)
   public static @NotNull List<String> readOptions(@NotNull String prefix, boolean effective) {
     var values = new SmartList<String>();
     for (var s : options(effective)) {
@@ -116,7 +110,8 @@ public final class VMOptions {
       return ManagementFactory.getRuntimeMXBean().getInputArguments();
     }
     else {
-      List<String> platformOptions = List.of(), userOptions = List.of();
+      var platformOptions = List.<String>of();
+      var userOptions = List.<String>of();
 
       var platformFile = getPlatformOptionsFile();
       if (Files.exists(platformFile)) {
@@ -149,19 +144,17 @@ public final class VMOptions {
     }
   }
 
-  /**
-   * Parses VM memory option (such as "-Xmx") string value and returns its numeric value (in bytes).
-   * See <a href="https://docs.oracle.com/en/java/javase/16/docs/specs/man/java.html#extra-options-for-java">'java' command manual</a>
-   * for the syntax.
-   *
-   * @throws IllegalArgumentException when either a number or a unit is invalid
-   */
+  /// Parses VM memory option (such as "-Xmx") string value and returns its numeric value (in bytes).
+  /// See ['java' command manual](https://docs.oracle.com/en/java/javase/16/docs/specs/man/java.html#extra-options-for-java)
+  /// for the syntax.
+  ///
+  /// @throws IllegalArgumentException when either a number or a unit is invalid
   public static long parseMemoryOption(@NotNull String strValue) throws IllegalArgumentException {
-    int p = 0;
+    var p = 0;
     while (p < strValue.length() && Strings.isDecimalDigit(strValue.charAt(p))) p++;
-    long numValue = Long.parseLong(strValue.substring(0, p));
+    var numValue = Long.parseLong(strValue.substring(0, p));
     if (p < strValue.length()) {
-      String unit = strValue.substring(p);
+      var unit = strValue.substring(p);
       if ("k".equalsIgnoreCase(unit)) numValue <<= 10;
       else if ("m".equalsIgnoreCase(unit)) numValue <<= 20;
       else if ("g".equalsIgnoreCase(unit)) numValue <<= 30;
@@ -170,34 +163,26 @@ public final class VMOptions {
     return numValue;
   }
 
-  /**
-   * Sets or deletes a Java memory limit (in MiBs). See {@link #setOption(String, String)} for details.
-   */
+  /// Sets or deletes a Java memory limit (in MiBs). See [#setOption(String, String)] for details.
   public static void setOption(@NotNull MemoryKind option, int value) throws IOException {
     setOption(option.option, value > 0 ? value + "m" : null);
   }
 
-  /**
-   * Sets or deletes a Java system property. See {@link #setOption(String, String)} for details.
-   */
+  /// Sets or deletes a Java system property. See [#setOption(String, String)] for details.
   public static void setProperty(@NotNull String name, @Nullable String newValue) throws IOException {
     setOption("-D" + name + '=', newValue);
   }
 
-  /**
-   * <p>Sets or deletes a VM option in a user's .vmoptions {@link #getUserOptionsFile() file}.</p>
-   *
-   * <p>When {@code newValue} is {@code null}, all options that start with a given prefix are removed from the file.
-   * When {@code newValue} is not {@code null} and an option is present in the file, it's value is replaced, otherwise
-   * the option is added to the file.</p>
-   */
+  /// Sets or deletes a VM option in a user's .vmoptions [`file`][#getUserOptionsFile()].
+  ///
+  /// When `newValue` is `null`, all options that start with a given prefix are removed from the file.
+  /// When `newValue` is not `null` and an option is present in the file, its value is replaced,
+  /// otherwise the option is added to the file.
   public static void setOption(@NotNull String prefix, @Nullable String newValue) throws IOException {
     setOptions(List.of(new Pair<>(prefix, newValue)));
   }
 
-  /**
-   * Sets or deletes multiple options in one pass. See {@link #setOption(String, String)} for details.
-   */
+  /// Sets or deletes multiple options in one pass. See [#setOption(String, String)] for details.
   public static void setOptions(@NotNull List<Pair<@NotNull String, @Nullable String>> options) throws IOException {
     var file = getUserOptionsFile();
     if (file == null) {
@@ -253,10 +238,8 @@ public final class VMOptions {
     }
   }
 
-  /**
-   * Returns {@code true} when user's VM options may be created (or already exists) -
-   * i.e., when the IDE knows a place where a launcher will look for that file.
-   */
+  /// Returns `true` when user's VM options may be created (or already exists) -
+  /// i.e., when the IDE knows a place where a launcher will look for that file.
   public static boolean canWriteOptions() {
     return getUserOptionsFile() != null;
   }
@@ -303,9 +286,11 @@ public final class VMOptions {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated ignores write errors; please use {@link #setProperty} instead */
+  /// @deprecated ignores write errors; please use [#setProperty] instead
   @Deprecated(forRemoval = true)
   public static void writeOption(@NotNull String option, @NotNull String separator, @NotNull String value) {
+    PluginException.reportDeprecatedUsage("VMOptions.writeOption", "Use `#setOption` instead");
+
     try {
       setOption("-D" + option + separator, value);
     }
@@ -314,21 +299,21 @@ public final class VMOptions {
     }
   }
 
-  /**
-   * @deprecated since 2021.3, the result may be incomplete: launchers collect VM options from two files, but this method returns
-   * only one of them (see IDEA-240526 for more details). In addition, clients have to deal with platform-specific line separators and charsets,
-   * and manipulating the whole content of the file cannot guarantee thread-safety.
-   * Please use {@link #readOption}/{@link #setOption} methods instead.
-   */
+  /// @deprecated from 2021.3 on, the result may be incomplete: launchers collect VM options from two files, but this method returns
+  /// only one of them (see IDEA-240526 for more details). In addition, clients have to deal with platform-specific line separators and charsets,
+  /// and manipulating the whole content of the file cannot guarantee thread-safety.
+  /// Please use [#readOption]/[#setOption] methods instead.
   @Deprecated(forRemoval = true)
   public static @Nullable String read() {
+    PluginException.reportDeprecatedUsage("VMOptions.read", "Use `#readOption` instead");
+
     try {
-      Path newFile = getUserOptionsFile();
+      var newFile = getUserOptionsFile();
       if (newFile != null && Files.exists(newFile)) {
         return Files.readString(newFile, getFileCharset());
       }
 
-      String vmOptionsFile = System.getProperty("jb.vmOptionsFile");
+      var vmOptionsFile = System.getProperty("jb.vmOptionsFile");
       if (vmOptionsFile != null) {
         return Files.readString(Path.of(vmOptionsFile), getFileCharset());
       }

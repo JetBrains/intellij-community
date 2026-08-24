@@ -122,6 +122,37 @@ internal class TerminalToolWindowTabsPersistenceTest {
   }
 
   @Test
+  fun `a tab that opted out of restoring is not persisted`() = runBlocking(Dispatchers.EDT) {
+    val storage = TerminalTabsStorage.getInstance(project)
+    storage.updateStoredTabs(emptyList())
+
+    val toolWindow = registerTerminalToolWindow()
+    TerminalToolWindowInitializer.performInitialization(toolWindow)
+
+    withTerminalToolWindowManager(project) { manager ->
+      manager.createTabBuilder()
+        .tabName("One-shot")
+        .shellCommand(listOf("/bin/bash"))
+        .restoreOnProjectReopen(false)
+        .requestFocus(false)
+        .createTab()
+
+      // The second tab is the control: it is what proves persistence is installed and running, so the
+      // absence of the first one is a decision rather than an update that never happened.
+      manager.createTabBuilder()
+        .tabName("Persisted")
+        .shellCommand(listOf("/bin/bash"))
+        .requestFocus(false)
+        .createTab()
+
+      awaitCondition("only the restorable tab should be persisted") {
+        storage.getStoredTabs().map { it.name } == listOf("Persisted")
+      }
+      assertThat(manager.tabs).hasSize(2)
+    }
+  }
+
+  @Test
   fun `tab rename is persisted to storage`() = runBlocking(Dispatchers.EDT) {
     val storage = TerminalTabsStorage.getInstance(project)
     storage.updateStoredTabs(emptyList())

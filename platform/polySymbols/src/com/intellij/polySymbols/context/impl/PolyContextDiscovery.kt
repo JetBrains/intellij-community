@@ -113,7 +113,6 @@ private fun <T> forVfsLocation(
   psiFile: PsiFile? = null,
   action: (LocationInfo) -> T,
 ): T? {
-  ThreadingAssertions.assertReadAccess()
   ProgressManager.checkCanceled()
   if (project.isDisposed) return null
   val virtualFile = findOriginalFile(location)?.takeIf { it.isInLocalFileSystem }

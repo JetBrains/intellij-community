@@ -10,8 +10,7 @@ import com.intellij.openapi.editor.impl.DocumentSnapshotImpl
 import com.intellij.openapi.editor.impl.StripedIDGenerator
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.Processor
-import com.intellij.util.containers.ConcurrentLongObjectMap
-import com.intellij.util.containers.Java11Shim
+import com.intellij.util.containers.ReferenceQueueable
 import org.jetbrains.annotations.TestOnly
 import java.lang.ref.ReferenceQueue
 import java.lang.ref.WeakReference
@@ -29,10 +28,23 @@ import java.util.concurrent.atomic.AtomicReference
  * Creating a child snapshot derives its marker root from the parent's current root. Marker creation, marker removal,
  * and child creation from the same parent are linearized by atomic root operations.
  */
-object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
+object SnapshotMarkerEngineImpl : SnapshotMarkerEngine, ReferenceQueueable {
   private val markerQueue = ReferenceQueue<SnapshotRangeMarkerImpl>()
-  private val markerReferences: ConcurrentLongObjectMap<MarkerReference> = Java11Shim.createConcurrentLongObjectMap()
   private val nextMarkerId: StripedIDGenerator = StripedIDGenerator().also { it.next() /* id must not be 0 */ }
+
+  /**
+   * Canonical weak handle reference retained by persistent marker states until the handle can be queue-purged.
+   * Document and file-root ownership is weak so the cleanup metadata does not extend either lifetime.
+   */
+  private class MarkerReference(
+    marker: SnapshotRangeMarkerImpl,
+    document: DocumentImpl,
+    queue: ReferenceQueue<SnapshotRangeMarkerImpl>,
+  ) : WeakReference<SnapshotRangeMarkerImpl>(marker, queue) {
+    val markerId: Long = marker.markerId
+    val documentReference = WeakReference(document)
+    val fileRootReference = marker.fileRoot?.let(::WeakReference)
+  }
 
   /**
    * Derives and publishes the marker root for [afterSnapshot].
@@ -86,50 +98,30 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
     val markerId = nextMarkerId.next()
     val marker = SnapshotRangeMarkerImpl(document, fileRoot, markerId, spec, TextRange(startOffset, endOffset))
     val markerReference = MarkerReference(marker, documentImpl, markerQueue)
-    check(markerReferences.putIfAbsent(markerId, markerReference) == null) { "Marker $markerId is already registered" }
 
-    var published = false
-    try {
-      while (true) {
-        val oldRoot = rootReference.get()
-        val newRoot = oldRoot.insert(markerId, startOffset, endOffset, spec, marker.flavorFlags)
-        if (rootReference.compareAndSet(oldRoot, newRoot)) {
-          published = true
-          return marker
-        }
-      }
-    }
-    finally {
-      if (!published) {
-        markerReferences.remove(markerId, markerReference)
+    while (true) {
+      val oldRoot = rootReference.get()
+      val newRoot = oldRoot.insert(markerId, startOffset, endOffset, spec, marker.flavorFlags, markerReference)
+      if (rootReference.compareAndSet(oldRoot, newRoot)) {
+        return marker
       }
     }
   }
 
-  private class MarkerReference(
-    marker: SnapshotRangeMarkerImpl,
-    document: DocumentImpl,
-    queue: ReferenceQueue<SnapshotRangeMarkerImpl>,
-  ) : WeakReference<SnapshotRangeMarkerImpl>(marker, queue) {
-    val markerId: Long = marker.markerId
-    val documentReference = WeakReference(document)
-    val fileRootReference = marker.fileRoot?.let(::WeakReference)
-  }
-
-  internal fun processQueue() {
+  override fun processQueue(): Boolean {
+    var ret = false
     while (true) {
       val reference = markerQueue.poll() as MarkerReference? ?: break
-      if (markerReferences.remove(reference.markerId, reference)) {
-        val fileRoot = reference.fileRootReference?.get()
-        val document = reference.documentReference.get()
-        if (document != null) {
-          purgeRangeMarker(markerRoot(document.core.snapshot()), reference.markerId)
-        }
-        else if (fileRoot != null) {
-          purgeRangeMarker(fileRoot.rootReference(), reference.markerId)
-        }
+      val fileRoot = reference.fileRootReference?.get()
+      val document = reference.documentReference.get()
+      if (document != null) {
+        ret = purgeRangeMarker(markerRoot(document.core.snapshot()), reference.markerId)
+      }
+      else if (fileRoot != null) {
+        ret = purgeRangeMarker(fileRoot.rootReference(), reference.markerId)
       }
     }
+    return ret
   }
 
   /**
@@ -146,12 +138,13 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
     val storedMarker = marker as SnapshotRangeMarkerImpl
     val markerId = storedMarker.markerId
     storedMarker.markDisposed()
-    markerReferences.remove(markerId)?.clear()
     val rootReference = snapshot?.let(::markerRoot) ?: storedMarker.currentRootReference()
     while (true) {
       val oldRoot = rootReference.get()
+      val markerReference = oldRoot.markerReference(markerId)
       val newRoot = oldRoot.remove(markerId)
       if (rootReference.compareAndSet(oldRoot, newRoot)) {
+        markerReference?.clear()
         return oldRoot !== newRoot
       }
     }
@@ -179,12 +172,9 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
   ): Boolean {
     processQueue()
     return markerRoot(snapshot).get().processRangeMarkersOverlappingWith(startOffset, endOffset, tastePreference) { entry ->
-      val reference = markerReferences.get(entry.markerId)
-      val marker = reference?.get()
+      val marker = entry.markerReference?.get()
       if (marker == null) {
-        if (reference == null || markerReferences.remove(entry.markerId, reference)) {
-          purgeRangeMarker(markerRoot(snapshot), entry.markerId)
-        }
+        purgeRangeMarker(markerRoot(snapshot), entry.markerId)
         true
       }
       else {
@@ -219,9 +209,6 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
    */
   private fun markerRoot(snapshot: DocumentSnapshot): AtomicReference<PMarkerRoot> =
     (snapshot as DocumentSnapshotImpl).markerRoot
-
-  @TestOnly
-  fun hasMarkerReference(markerId: Long): Boolean = markerReferences.containsKey(markerId)
 
   @TestOnly
   fun containsMarkerId(snapshot: DocumentSnapshot, markerId: Long): Boolean =

@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "discoverability-tests_test",
@@ -44,6 +45,8 @@ jvm_library(
         "//libraries/jackson3/jackson:libraries-jackson3",
     ],
 )
+
+content_module_jar(module = ":discoverability")
 
 jvm_library(
     name = "discoverability_test_lib",

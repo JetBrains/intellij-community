@@ -289,6 +289,7 @@ public final class StartBrowserPanel {
     descriptor.setTitle(IdeBundle.message("javascript.debugger.settings.choose.file.title"));
     descriptor.setDescription(IdeBundle.message("javascript.debugger.settings.choose.file.subtitle"));
     descriptor.setRoots(ProjectRootManager.getInstance(project).getContentRoots());
+    descriptor.setEnvironmentRestricted(true);
 
     field.addBrowseFolderListener(new TextBrowseFolderListener(descriptor, project) {
       @Override

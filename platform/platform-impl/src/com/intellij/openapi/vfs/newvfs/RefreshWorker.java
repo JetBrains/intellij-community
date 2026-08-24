@@ -170,6 +170,28 @@ final class RefreshWorker {
     }
   }
 
+  List<VFileEvent> scanNewFiles(@NotNull Map<NewVirtualFile, ? extends Collection<String>> newFilesCaseSensitive) {
+    var events = new ArrayList<VFileEvent>(newFilesCaseSensitive.size());
+    for (var entry : newFilesCaseSensitive.entrySet()) {
+      var parent = entry.getKey();
+      var fs = parent.getFileSystem();
+      Collection<String> childNames = createFilePathSet(entry.getValue(), parent.isCaseSensitive());
+      for (var childName : childNames) {
+        if (cancelled) return events;
+        if (VfsUtil.isBadName(childName)) continue;
+
+        var fakeChild = new FakeVirtualFile(parent, childName);
+        var attributes = computeAttributesForFile(fs, fakeChild);
+        if (attributes == null) continue;
+
+        var canonicalName = fs.getCanonicallyCasedName(fakeChild);
+        var symlinkTarget = attributes.isSymLink() ? fs.resolveSymLink(fakeChild) : null;
+        scheduleCreation(events, parent, canonicalName, attributes, symlinkTarget);
+      }
+    }
+    return events;
+  }
+
   private void singleThreadScan(List<VFileEvent> events) {
     try {
       processQueue(events);

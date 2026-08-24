@@ -20,6 +20,17 @@ class MarkdownSkillFrontMatterInspectionTest: LightPlatformCodeInsightFixture4Te
   """.trimIndent())
 
   @Test
+  fun `test code fences are not checked as front matter`() = checkHighlighting("""
+    ---
+    name: valid-skill
+    <warning descr="`description` must not be blank">description: </warning>
+    ---
+    ```markdown
+    # Example
+    ```
+  """.trimIndent())
+
+  @Test
   fun `test quoted values`() = checkHighlighting("""
     ---
     name: "valid-skill"

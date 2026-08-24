@@ -1,0 +1,40 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+# Hand-maintained: no gazelle target is wired up in this repository, so adding a `.go` file means editing `srcs` here.
+
+go_library(
+    name = "jarpack",
+    srcs = [
+        "filters.go",
+        "flagfile.go",
+        "index.go",
+        "merge.go",
+        "reader.go",
+        "writer.go",
+    ],
+    importpath = "jetbrains.com/content-module-packer/internal/jarpack",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//build/content-module-packer/internal/mmapfile",
+        "//build/content-module-packer/internal/xxh3",
+    ],
+)
+
+# The byte gate. Every other package under `build/` has one, and this is the one whose output a distribution loads
+# classes from: the digests in `golden_test.go` are the bytes that were proved identical to the Kotlin packer, so a
+# change to any of this fails here in under a second instead of at class-load time in the IDE.
+go_test(
+    name = "jarpack_test",
+    srcs = [
+        "filters_test.go",
+        "flagfile_test.go",
+        "golden_test.go",
+        "index_test.go",
+        "merge_test.go",
+        "reader_test.go",
+        "testjar_test.go",
+        "writer_test.go",
+    ],
+    embed = [":jarpack"],
+    pure = "on",
+)

@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
@@ -55,10 +56,30 @@ exports_files(
     [
         "intellij.vcs.git.iml",
         "resources/META-INF/plugin.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.vcs.git` end
+
+### auto-generated section `dev content intellij.vcs.git` start
+dev_dist_plugin_content(
+    content_modules = [
+        "//plugins/git4idea/backend",
+        "//plugins/git4idea/rt",
+    ],
+    descriptor_module = ":vcs-git",
+    libraries = ["@lib//:cucumber-testing"],
+    prepacked_content_modules = [
+        "//plugins/git4idea/frontend:frontend_content_module_jar",
+        "//plugins/git4idea/intellij.vcs.git.coverage:vcs-git-coverage_content_module_jar",
+        "//plugins/git4idea/localHistory:localHistory_content_module_jar",
+        "//plugins/git4idea/performanceTesting:performanceTesting_content_module_jar",
+        "//plugins/git4idea/shared:shared_content_module_jar",
+        "//plugins/git4idea/terminal:terminal_content_module_jar",
+    ],
+)
+### auto-generated section `dev content intellij.vcs.git` end
 
 ### auto-generated section `build intellij.vcs.git.backend.tests` start
 create_kotlinc_options(

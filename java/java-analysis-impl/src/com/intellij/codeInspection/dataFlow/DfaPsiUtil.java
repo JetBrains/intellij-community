@@ -284,16 +284,27 @@ public final class DfaPsiUtil {
                                                                                   boolean ignoreParameterNullabilityInference) {
     NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
     NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(owner);
-    if (info == null || shouldIgnoreAnnotation(info.getAnnotation())) {
+    if (info != null && shouldIgnoreAnnotation(info.getAnnotation())) {
       return null;
     }
-    if (ignoreParameterNullabilityInference && owner instanceof PsiParameter && info.isInferred()) {
-      List<PsiParameter> supers = AnnotationUtil.getSuperAnnotationOwners((PsiParameter)owner);
-      return StreamEx.of(supers).map(param -> manager.findEffectiveNullabilityInfo(param))
-        .findFirst(i -> i != null && i.getInheritedFrom() == null && i.getNullability() == Nullability.NULLABLE)
-        .orElse(null);
+    if (ignoreParameterNullabilityInference && owner instanceof PsiParameter parameter &&
+        (info == null || info.isInferred())) {
+      // Nullability inferred from the method body is unreliable when the same body is analyzed,
+      // so rely on an explicit @Nullable on a super parameter instead (IDEA-228079).
+      // Note that the parameter may have no inferred annotation at all (e.g., if the inference bailed out),
+      // and the super annotation must be honored in this case as well.
+      return getNullableFromSuperParameter(manager, parameter);
     }
     return info;
+  }
+
+  private static @Nullable NullabilityAnnotationInfo getNullableFromSuperParameter(@NotNull NullableNotNullManager manager,
+                                                                                   @NotNull PsiParameter parameter) {
+    List<PsiParameter> supers = AnnotationUtil.getSuperAnnotationOwners(parameter);
+    return StreamEx.of(supers).map(param -> manager.findEffectiveNullabilityInfo(param))
+      .findFirst(i -> i != null && i.getInheritedFrom() == null && i.getNullability() == Nullability.NULLABLE &&
+                      !shouldIgnoreAnnotation(i.getAnnotation()))
+      .orElse(null);
   }
 
   private static boolean isMapMethodWithUnknownNullity(@NotNull PsiMethod method) {

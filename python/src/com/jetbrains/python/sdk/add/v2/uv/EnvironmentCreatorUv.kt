@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2.uv
 
 import com.intellij.openapi.module.Module
@@ -14,18 +14,21 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
-import com.intellij.python.uv.backend.UvPyTool
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.runtime.PyToolRuntime
+import com.intellij.python.uv.backend.UvPyTool
 import com.intellij.python.uv.backend.runtime.uvCli
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.ui.AsyncProcessIcon
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.withProject
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
 import com.jetbrains.python.sdk.add.v2.CustomNewEnvironmentCreator
 import com.jetbrains.python.sdk.add.v2.PathHolder
@@ -40,13 +43,11 @@ import com.jetbrains.python.sdk.add.v2.VenvAlreadyExistsError
 import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState
 import com.jetbrains.python.sdk.add.v2.persistCustomToolPath
 import com.jetbrains.python.sdk.add.v2.validatablePathField
-import com.jetbrains.python.sdk.uv.impl.createUvCli
+import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
+import com.jetbrains.python.sdk.uv.impl.validateAndCreateUvCli
 import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnv
 import com.jetbrains.python.statistics.InterpreterType
-import com.jetbrains.python.errorProcessing.ErrorSink
-import com.jetbrains.python.errorProcessing.withProject
-import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import io.github.z4kn4fein.semver.Version
 import kotlinx.coroutines.CoroutineScope
@@ -57,8 +58,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
-import kotlin.io.path.exists
-import kotlin.io.path.readText
 
 /**
  * Creates a UV environment creator for the given model.
@@ -81,6 +80,7 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
   override val interpreterType: InterpreterType = InterpreterType.UV
   override val pyTool: PyTool = UvPyTool.getInstance()
   override val toolValidator: ToolValidator<P> = model.uvViewModel.toolValidator
+  override val globalSitePackage: Boolean get() = model.uvViewModel.inheritSitePackages.get()
   private val executableFlow = MutableStateFlow(model.uvViewModel.uvExecutable.get())
   private val pythonVersion: ObservableMutableProperty<Version?> = propertyGraph.property(null)
   private lateinit var versionComboBox: ComboBox<Version?>
@@ -154,6 +154,12 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
           onVenvSelectExisting()
         }
       }
+
+      row("") {
+        checkBox(message("sdk.create.custom.inherit.packages"))
+          .bindSelected(model.uvViewModel.inheritSitePackages)
+          .comment(message("sdk.create.custom.uv.inherit.packages.comment"))
+      }
     }
   }
 
@@ -181,14 +187,9 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
           val pyProjectTomlPath = projectPath.resolve(PY_PROJECT_TOML)
 
           val pythonVersions = withContext(Dispatchers.IO) {
-            val versionRequest = if (pyProjectTomlPath.exists()) {
-              PyProjectToml.parse(pyProjectTomlPath.readText())?.project?.requiresPython
-            }
-            else {
-              null
-            }
+            val versionRequest = PyProjectToml.parseOrNull(pyProjectTomlPath)?.project?.requiresPython
 
-            val cli = createUvCli(executable.pathHolder, model.fileSystem).getOr { return@withContext emptyList() }
+            val cli = validateAndCreateUvCli(executable.pathHolder, model.fileSystem).getOr { return@withContext emptyList() }
             val cwd = Path.of("")
             val uvLowLevel = createUvLowLevel(cwd, cli, model.fileSystem, null)
             uvLowLevel.listSupportedPythonVersions(versionRequest)
@@ -228,6 +229,7 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
       version = pythonVersion.get(),
       errorSink = errorSink,
       overrideExistingEnv = venvAlreadyExistsError.get() != null,
+      inheritSitePackages = model.uvViewModel.inheritSitePackages.get(),
     )
   }
 

@@ -35,6 +35,7 @@ exports_files(
         "resources/META-INF/plugin.xml",
         "resources/keymaps/ReSharper OSX.xml",
         "resources/keymaps/ReSharper.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

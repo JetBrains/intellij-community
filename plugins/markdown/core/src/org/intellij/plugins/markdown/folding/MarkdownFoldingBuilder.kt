@@ -12,7 +12,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveVisitor
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.childrenOfType
-import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.siblings
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.toc.GenerateTableOfContentsAction
@@ -31,6 +30,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownParagraph
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.settings.MarkdownCodeFoldingSettings
+import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.util.MarkdownPsiStructureUtil
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil.WhiteSpaces.isNewLine
 
@@ -58,17 +58,13 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
       }
 
       override fun visitLinkDestination(linkDestination: MarkdownLinkDestination) {
-        if (linkDestination.parentOfType<MarkdownTable>() != null) {
-          super.visitLinkDestination(linkDestination)
-          return
-        }
         val node = linkDestination.node
         val descriptor = FoldingDescriptor(
           node,
           node.textRange,
           null,
           "...",
-          settings.state.collapseLinks && node.textLength > 10,
+          settings.state.collapseLinks && !MarkdownSettings.getInstance(root.project).enableLivePreview && node.textLength > 10,
           emptySet()
         )
         descriptors.add(descriptor)

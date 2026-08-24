@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.lang.injection.InjectedLanguageManager
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFrontMatterHeader
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFrontMatterHeaderContent
@@ -20,7 +21,7 @@ import org.jetbrains.annotations.ApiStatus
 class MarkdownSkillFrontMatterInspection: LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object: PsiElementVisitor() {
     override fun visitFile(file: PsiFile) {
-      if (file !is MarkdownFile || file.name != SKILL_FILE_NAME) return
+      if (file !is MarkdownFile || file.name != SKILL_FILE_NAME || MarkdownCodeFenceUtils.getCodeFence(file) != null) return
 
       val header = file.firstChild as? MarkdownFrontMatterHeader
       if (header == null) {

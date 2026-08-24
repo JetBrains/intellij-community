@@ -1351,6 +1351,7 @@
       MergeAllWindowsAction
       <separator>
   HelpMenu
+    OpenWelcome
     GotoAction
     <separator>
     HelpTopics
@@ -2310,6 +2311,7 @@
   DiagnosticGroup
   KotlinCriDiagnostics
 [group HelpMenu]
+  OpenWelcome
   GotoAction
   <separator>
   HelpTopics
@@ -3012,6 +3014,14 @@
   ChangeKeymap
   ChangeView
 [group ShowFilterPopup]
+  Editor.Search.Filter.Results
+  <separator>
+  SearchContext.Anywhere
+  SearchContext.InComments
+  SearchContext.InStringLiterals
+  SearchContext.ExceptComments
+  SearchContext.ExceptStringLiterals
+  SearchContext.ExceptCommentsAndStringLiterals
 [group ShowIntentionsGroup]
   ShowIntentionActions
   <separator>

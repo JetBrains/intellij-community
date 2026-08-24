@@ -308,7 +308,6 @@ a:com.intellij.openapi.progress.util.ReadTask
 f:com.intellij.openapi.progress.util.ReadTask$Continuation
 - <init>(java.lang.Runnable):V
 - getAction():java.lang.Runnable
-f:com.intellij.openapi.progress.util.UtilKt
 com.intellij.openapi.project.ex.ProjectEx
 - com.intellij.openapi.project.Project
 - sf:NAME_FILE:java.lang.String

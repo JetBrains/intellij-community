@@ -2,14 +2,6 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 ### auto-generated section `build intellij.terminal.tests` start
-resourcegroup(
-    name = "tests_test_resources",
-    srcs = glob(
-        ["testResources/**/*"],
-    ),
-    strip_prefix = "testResources",
-)
-
 jvm_library(
     name = "tests",
     srcs = glob(
@@ -70,7 +62,6 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.terminal.tests",
-    resource_jars = [":tests_test_resources"],
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],

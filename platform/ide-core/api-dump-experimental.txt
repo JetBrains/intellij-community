@@ -128,6 +128,7 @@ f:com.intellij.util.ui.update.UiNotifyConnector$Companion
 *:com.intellij.util.ui.update.UpdateQueue
 - a:awaitAllExecuted(kotlin.coroutines.Continuation):java.lang.Object
 - a:cancelOnDispose(com.intellij.openapi.Disposable):com.intellij.util.ui.update.UpdateQueue
+- a:cancelPending():V
 - a:isAllExecuted():Z
 - a:queue(java.lang.Object):V
 - a:waitForAllExecuted(J):V

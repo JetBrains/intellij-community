@@ -11,18 +11,25 @@
 
   <dependencies>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="fleet.rpc"/>
     <module name="intellij.java.frontback.psi"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.nonModalWelcomeScreen"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.project"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.welcomeScreen"/>
     <!-- endregion -->
   </dependencies>
 
   <content namespace="jetbrains">
     <module name="intellij.java.ide.customization.training"/>
+    <module name="intellij.java.ide.customization.backend"/>
   </content>
 
   <resource-bundle>messages.ActionsBundle</resource-bundle>
@@ -31,5 +38,14 @@
     <applicationService serviceInterface="com.intellij.lang.IdeLanguageCustomization"
                         serviceImplementation="com.intellij.ide.customization.java.JavaIdeLanguageCustomization"
                         overrides="true"/>
+
+    <platform.ide.welcomeScreenContentProvider implementation="com.intellij.ide.customization.java.welcomeScreen.IdeaWelcomeRightTabContentProvider"/>
+
+    <welcomeScreenProjectProvider implementation="com.intellij.ide.customization.java.welcomeScreen.IdeaWelcomeScreenProjectProvider" order="first"/>
+
+    <platform.ide.welcomeScreenAccessProvider implementation="com.intellij.ide.customization.java.welcomeScreen.IdeaWelcomeScreenAccessProvider"/>
+
+    <registryKey key="idea.welcome.screen.non.modal.enabled" defaultValue="false" restartRequired="true"
+                 description="Show the Welcome screen in non-modal mode for IDEA"/>
   </extensions>
 </idea-plugin>

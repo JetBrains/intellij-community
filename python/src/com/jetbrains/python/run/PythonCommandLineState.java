@@ -89,10 +89,10 @@ import com.jetbrains.python.run.target.PySdkTargetPaths;
 import com.jetbrains.python.run.target.PythonCommandLineTargetEnvironmentProvider;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonEnvUtil;
-import com.jetbrains.python.sdk.SdkExtKt;
-import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonInterpreter;
 import com.jetbrains.python.sdk.PythonInterpreterKt;
+import com.jetbrains.python.sdk.PythonSdkAdditionalData;
+import com.jetbrains.python.sdk.SdkExtKt;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.conda.CondaPythonExecKt;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
@@ -397,8 +397,11 @@ public abstract class PythonCommandLineState extends CommandLineState {
     if (sdk != null && getEnableRunTool()) {
       PyRunToolProvider runToolProvider = PyRunToolProvider.forSdk(sdk);
       if (runToolProvider != null && useRunTool(myConfig, sdk)) {
-        runToolParameters = PythonCommandLineStateExKt.getRunToolParametersForJvm(runToolProvider, sdk);
-        PyRunToolUsageCollector.logRun(myConfig.getProject(), PyRunToolIds.idOf(runToolProvider));
+        // Resolved here rather than in the tool: only the configuration knows whether it runs a bare script.
+        PyBareScriptConfiguration bareScript = myConfig.asBareScriptConfiguration();
+        Path scriptModeTarget = bareScript == null ? null : bareScript.getInlineScriptTarget();
+        runToolParameters = PythonCommandLineStateExKt.getRunToolParametersForJvm(runToolProvider, sdk, scriptModeTarget);
+        PyRunToolUsageCollector.logRun(myConfig.getProject(), PyRunToolIds.idOf(runToolProvider), scriptModeTarget != null);
       }
     }
 

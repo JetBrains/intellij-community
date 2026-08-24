@@ -1,5 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.notebooks.ui` start
 create_kotlinc_options(
@@ -43,6 +44,8 @@ jvm_library(
         "//platform/editor-ui-ex:editor-ex",
     ],
 )
+
+content_module_jar(module = ":ui")
 
 jvm_library(
     name = "ui_test_lib",

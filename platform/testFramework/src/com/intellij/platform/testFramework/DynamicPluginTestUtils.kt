@@ -5,7 +5,6 @@ import com.intellij.ide.plugins.DynamicPlugins
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginDescriptorLoadingContext
 import com.intellij.ide.plugins.PluginMainDescriptor
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.loadDescriptorFromFileOrDirInTests
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -33,15 +32,13 @@ fun loadDescriptorInTest(
   loadingContext: PluginDescriptorLoadingContext = StubPluginDescriptorLoadingContext
 ): PluginMainDescriptor {
   assertThat(fileOrDir).exists()
-  PluginManagerCore.getAndClearPluginLoadingErrors()
   val result = loadDescriptorFromFileOrDirInTests(
     file = fileOrDir,
     loadingContext = loadingContext,
     isBundled = isBundled,
   )
   if (result == null) {
-    assertThat(PluginManagerCore.getAndClearPluginLoadingErrors()).isNotEmpty()
-    throw AssertionError("Cannot load plugin from $fileOrDir")
+    throw AssertionError("Cannot load plugin from $fileOrDir", loadingContext.copyDescriptorLoadingErrors().lastOrNull()?.error)
   }
   return result
 }

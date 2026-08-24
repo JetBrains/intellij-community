@@ -28,6 +28,8 @@
     <module name="intellij.gradle.completion.ex"/>
     <module name="intellij.gradle.properties"/>
     <module name="intellij.gradle.settings" loading="embedded"/>
+
+    <module name="intellij.gradle.backend"/>
   </content>
 
 </idea-plugin>

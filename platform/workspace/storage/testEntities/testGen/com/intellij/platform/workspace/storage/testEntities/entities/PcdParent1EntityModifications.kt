@@ -7,6 +7,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.impl.PcdParent1EntityImpl
 
@@ -40,6 +41,9 @@ fun MutableEntityStorage.modifyPcdParent1Entity(
   entity: PcdParent1Entity,
   modification: PcdParent1EntityBuilder.() -> Unit,
 ): PcdParent1Entity = modifyEntity(PcdParent1EntityBuilder::class.java, entity, modification)
+
+var PcdParent1EntityBuilder.extensionChildren: List<PcdExtensionChildBuilder>
+  by WorkspaceEntity.extensionBuilder(PcdExtensionChild::class.java)
 
 @JvmOverloads
 @JvmName("createPcdParent1Entity")

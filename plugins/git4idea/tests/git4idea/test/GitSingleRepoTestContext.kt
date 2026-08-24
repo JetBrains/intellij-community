@@ -25,16 +25,6 @@ fun TestFixture<GitPlatformTestContext>.gitSingleRepoFixture(makeInitialCommit: 
   initialized(gitPlatformContext.withRepo(repo)) {}
 }
 
-/**
- * Same as [gitSingleRepoFixture], but for a project whose repository already exists on disk, e.g. a clone
- * or a linked working tree prepared before the project was opened. The root is only registered as a VCS root.
- */
-fun TestFixture<GitPlatformTestContext>.gitExistingSingleRepoFixture(): TestFixture<GitSingleRepoContext> = testFixture {
-  val gitPlatformContext = init()
-  val repo = registerRepo(gitPlatformContext.project, gitPlatformContext.projectNioRoot)
-  initialized(gitPlatformContext.withRepo(repo)) {}
-}
-
 private fun GitPlatformTestContext.withRepo(repo: GitRepository): GitSingleRepoContext =
   object : GitSingleRepoContext, GitPlatformTestContext by this {
     override val repo = repo

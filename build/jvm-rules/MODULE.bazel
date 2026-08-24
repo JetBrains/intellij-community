@@ -631,3 +631,158 @@ http_file(
     sha256 = "48e2df636cab6563ced64dcdff8abb2355627cb236ef0bf37598682ddf742f1b",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar",
 )
+
+# -----------------------------------------------------------------------------------------------
+# wasmjs-test-harness (the wasmjs_test browser test runner) dependencies
+# -----------------------------------------------------------------------------------------------
+
+# Playwright's prebuilt chromium headless-shell, the browser the wasmjs_test rule drives (see
+# rules/test-wasmjs.bzl). The revision comes from playwright 1.56.1's browsers.json and pins
+# chromium 141.0.7390.37; bump the revision and all hashes together.
+# Playwright publishes no arm64 Windows build, so Windows-on-ARM runs the win64 shell under x64
+# emulation — see the select in wasmjs-test-harness/BUILD.bazel.
+CHROMIUM_HEADLESS_SHELL_REVISION = "1194"
+
+# platform -> (archive infix, archive top-level directory, sha256)
+CHROMIUM_HEADLESS_SHELL_PLATFORMS = {
+    "arm64-macos": ("mac-arm64", "chrome-mac", "c4c97caab34c16f9a2bb411da0e68505deacb35c86d70db63dc117381a5e6d60"),
+    "x86_64-macos": ("mac", "chrome-mac", "a84cf791a7c7d195c3fdfced9e28c591383522d396a15242602304587b825755"),
+    "x86_64-linux": ("linux", "chrome-linux", "d745c7210cc88b73c7991a22c9624819960d84bc3de77ac7336d2de841a8c91f"),
+    "aarch64-linux": ("linux-arm64", "chrome-linux", "6b963b7651119c81fa51312c1176429d3235bbefb56d5c687730cf44a5b1fdd7"),
+    "x86_64-windows": ("win64", "chrome-win", "c745ef87016c69b11f461ca5eced32c69abcf1ae450e37b450585de9f446e103"),
+}
+
+[
+    http_archive(
+        name = "chromium_headless_shell_%s" % platform,
+        build_file = "//:BUILD.chromium-headless-shell.bazel",
+        sha256 = sha256,
+        strip_prefix = archive_root,
+        url = "https://playwright.azureedge.net/builds/chromium/%s/chromium-headless-shell-%s.zip" % (
+            CHROMIUM_HEADLESS_SHELL_REVISION,
+            archive,
+        ),
+    )
+    for platform, (archive, archive_root, sha256) in CHROMIUM_HEADLESS_SHELL_PLATFORMS.items()
+]
+
+# TeamCity service message parsing (kotlin-test browser output); published on
+# intellij-dependencies, not Maven Central.
+http_file(
+    name = "teamcity-service-messages_http",
+    downloaded_file_path = "serviceMessages-2024.07.jar",
+    sha256 = "5280d3e4bae23c4f1cc59bab77dab9f7a9626aeceeaa0bb07a9868bcedae2da9",
+    url = "https://cache-redirector.jetbrains.com/intellij-dependencies/org/jetbrains/teamcity/serviceMessages/2024.07/serviceMessages-2024.07.jar",
+)
+
+http_file(
+    name = "teamcity-service-messages-sources_http",
+    downloaded_file_path = "serviceMessages-2024.07-sources.jar",
+    sha256 = "38f4ec9c53269331a3e0c399b0cc8d74f75087cae6c998f15634da0fbf9be591",
+    url = "https://cache-redirector.jetbrains.com/intellij-dependencies/org/jetbrains/teamcity/serviceMessages/2024.07/serviceMessages-2024.07-sources.jar",
+)
+
+# Coroutine/cancellation-friendly process handling (browser process ownership).
+http_file(
+    name = "amper-async-processes_http",
+    downloaded_file_path = "async-processes-0.12.0-dev-4182.jar",
+    sha256 = "bbb677483c0b429b4648e1ca312fbd571e97b0b69369da32a07ce43c0184cef7",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/async-processes/0.12.0-dev-4182/async-processes-0.12.0-dev-4182.jar",
+)
+
+http_file(
+    name = "amper-async-processes-sources_http",
+    downloaded_file_path = "async-processes-0.12.0-dev-4182-sources.jar",
+    sha256 = "e086386fee69098e87839a732776fe1506a529121410c71d9de5c6c7723d19a4",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper/org/jetbrains/amper/async-processes/0.12.0-dev-4182/async-processes-0.12.0-dev-4182-sources.jar",
+)
+
+# chrome-devtools-kotlin (Chrome DevTools protocol client) and its ktor/kotlinx closure.
+# Keyed by repo name (an `_http` suffix is added); the version alignment notes live next to
+# the conflicting entries.
+WASMJS_TEST_HARNESS_JARS = {
+    "chrome-devtools-kotlin": ("org/hildan/chrome/chrome-devtools-kotlin-jvm/8.3.0-1589152/chrome-devtools-kotlin-jvm-8.3.0-1589152.jar", "f89f9b12d590a7786f90b10fbcda4a8d19dfb29fbad3699a860854fbb73d02d5"),
+    "ktor-client-core-jvm": ("io/ktor/ktor-client-core-jvm/3.3.3/ktor-client-core-jvm-3.3.3.jar", "6c403b39cac342892839c251275cc441b27c7f194983b9226cb46bc3a44259f9"),
+    # JDK HttpClient engine: websocket-capable, no native dependencies.
+    "ktor-client-java-jvm": ("io/ktor/ktor-client-java-jvm/3.3.3/ktor-client-java-jvm-3.3.3.jar", "09d0e87fcd17ca3dde4b9f1f50fc54894eb89cb07784081eb7d69ca29e7da306"),
+    "ktor-client-content-negotiation-jvm": ("io/ktor/ktor-client-content-negotiation-jvm/3.3.3/ktor-client-content-negotiation-jvm-3.3.3.jar", "e9fecc899324b16811961dd46bedd2fd190691337ebc95cb6dc29c8385af7ad8"),
+    "ktor-events-jvm": ("io/ktor/ktor-events-jvm/3.3.3/ktor-events-jvm-3.3.3.jar", "0d786a12576309dedc16f9a2ff464016d51cfc1fe20d7890912200ff2abce0ea"),
+    "ktor-http-jvm": ("io/ktor/ktor-http-jvm/3.3.3/ktor-http-jvm-3.3.3.jar", "7f70cf5011d9cbafc0a2cc8dc51943e47aea5b25d6fb20b2dfb8b5dc6d591085"),
+    "ktor-http-cio-jvm": ("io/ktor/ktor-http-cio-jvm/3.3.3/ktor-http-cio-jvm-3.3.3.jar", "ff43508bf8fcc179bf672ac6e5e058f8010a62adf944a1e0cf0982b6657e064f"),
+    "ktor-io-jvm": ("io/ktor/ktor-io-jvm/3.3.3/ktor-io-jvm-3.3.3.jar", "c1bead8c0a2218456a3b7c2bdfea79ac1395ad5b20f2c502a7f39e35911b2710"),
+    "ktor-network-jvm": ("io/ktor/ktor-network-jvm/3.3.3/ktor-network-jvm-3.3.3.jar", "f50c3898289c2bfb76aae862b4fa1b19de32e11ed5e3d8090b49eeb57ddf6626"),
+    "ktor-serialization-jvm": ("io/ktor/ktor-serialization-jvm/3.3.3/ktor-serialization-jvm-3.3.3.jar", "5a77106c9737f5abe3a13c41e567148eb9f3d7223fb2bc9613ec28175920fdf7"),
+    "ktor-serialization-kotlinx-jvm": ("io/ktor/ktor-serialization-kotlinx-jvm/3.3.3/ktor-serialization-kotlinx-jvm-3.3.3.jar", "6d5366c19b87a681a8feefec7358e91fbc70559055137ec474a9b2a8bb84be17"),
+    "ktor-serialization-kotlinx-json-jvm": ("io/ktor/ktor-serialization-kotlinx-json-jvm/3.3.3/ktor-serialization-kotlinx-json-jvm-3.3.3.jar", "f29c0b2be7ec7dea560c19ebe5a0442fa2736d90c5078b249d6c7bca80245b94"),
+    "ktor-sse-jvm": ("io/ktor/ktor-sse-jvm/3.3.3/ktor-sse-jvm-3.3.3.jar", "a87a8a0168671af46bdc762d9f345daca1ea8133a9c9d367334cc1e9b2c4ae2c"),
+    "ktor-utils-jvm": ("io/ktor/ktor-utils-jvm/3.3.3/ktor-utils-jvm-3.3.3.jar", "ad020bd9cd5cae0f5f5d743fc8786dfbffb9dc1d8efb76a6b1972b3578c81d7a"),
+    "ktor-websocket-serialization-jvm": ("io/ktor/ktor-websocket-serialization-jvm/3.3.3/ktor-websocket-serialization-jvm-3.3.3.jar", "3fc9047c79ca3f174d86c37855ea846025d56341f7774addd1d369668fcb4f82"),
+    "ktor-websockets-jvm": ("io/ktor/ktor-websockets-jvm/3.3.3/ktor-websockets-jvm-3.3.3.jar", "129cf6de3ee4ef12ad2a265acb932056eac9243ab6e5f053e8eb02e9cb14d894"),
+    "kotlinx-atomicfu-jvm": ("org/jetbrains/kotlinx/atomicfu-jvm/0.31.0/atomicfu-jvm-0.31.0.jar", "23d7df008cb51a2012fc17ee72919aee860a103a4e5539bd983021f21f32e46c"),
+    "kotlinx-coroutines-jdk8": ("org/jetbrains/kotlinx/kotlinx-coroutines-jdk8/1.10.2/kotlinx-coroutines-jdk8-1.10.2.jar", "f861f9fa3b3088e6f7c59bc92a91adacf687b5bdeb081cf3608c5454f7739625"),
+    "kotlinx-coroutines-slf4j": ("org/jetbrains/kotlinx/kotlinx-coroutines-slf4j/1.10.2/kotlinx-coroutines-slf4j-1.10.2.jar", "d65dee3cafa6f7bfaefedb493fc68b5c63abe750734fb8af92fac7a0d3101457"),
+    "kotlinx-io-core-jvm": ("org/jetbrains/kotlinx/kotlinx-io-core-jvm/0.8.0/kotlinx-io-core-jvm-0.8.0.jar", "610770cc855edf1c57d9fcd7c69fd040af57adaf8834505f91805de680783d13"),
+    "kotlinx-io-bytestring-jvm": ("org/jetbrains/kotlinx/kotlinx-io-bytestring-jvm/0.8.0/kotlinx-io-bytestring-jvm-0.8.0.jar", "3da805e9da2ff3cb119f744dcd11de6a18e32a5b933518f17418ba5795cfa775"),
+    # Serialization family aligned to 1.10.0 (chrome-devtools-kotlin's pin; ktor declares 1.9.0).
+    "kotlinx-serialization-core-jvm": ("org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1.10.0/kotlinx-serialization-core-jvm-1.10.0.jar", "14d6f27ce28f61ebc4a516d562f911b7bc01cfbe5397fb884c45ea0db044c635"),
+    "kotlinx-serialization-json-jvm": ("org/jetbrains/kotlinx/kotlinx-serialization-json-jvm/1.10.0/kotlinx-serialization-json-jvm-1.10.0.jar", "af1e3e1e8ee3176468e1ec729df853b2066071de94a84c412ad9fa135cb37f3a"),
+    "kotlinx-serialization-json-io-jvm": ("org/jetbrains/kotlinx/kotlinx-serialization-json-io-jvm/1.10.0/kotlinx-serialization-json-io-jvm-1.10.0.jar", "6fc1a9f0e2bbc2d48c6602ce5ad2d83ef6ed6cf3a349c90f5691e824cf0b4821"),
+    "slf4j-api": ("org/slf4j/slf4j-api/2.0.17/slf4j-api-2.0.17.jar", "7b751d952061954d5abfed7181c1f645d336091b679891591d63329c622eb832"),
+    "slf4j-nop": ("org/slf4j/slf4j-nop/2.0.17/slf4j-nop-2.0.17.jar", "3716f83649ec66161a2edefd4f49df34d1dd1c51cdcf941996c6987260f0a829"),
+}
+
+[
+    http_file(
+        name = "%s_http" % name,
+        downloaded_file_path = path.rpartition("/")[2],
+        sha256 = sha256,
+        url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/%s" % path,
+    )
+    for name, (path, sha256) in WASMJS_TEST_HARNESS_JARS.items()
+]
+
+# Kotlin wasmJs klibs for the wasmjs_test e2e module; must match _KOTLIN_VERSION.
+http_file(
+    name = "kotlin-stdlib-wasm-js_http",
+    downloaded_file_path = "kotlin-stdlib-wasm-js-%s.klib" % _KOTLIN_VERSION,
+    sha256 = "3af345d72a5fb90fc7eb2d1dea56159f74c7e7f1b123cef92d44bc1a1181ba7d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-wasm-js/%s/kotlin-stdlib-wasm-js-%s.klib" % (_KOTLIN_VERSION, _KOTLIN_VERSION),
+)
+
+http_file(
+    name = "kotlin-test-wasm-js_http",
+    downloaded_file_path = "kotlin-test-wasm-js-%s.klib" % _KOTLIN_VERSION,
+    sha256 = "4778108d19305a97e389db787b79bc244b42e7c96ca5a6b0d6408b1dbd1f5002",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-test-wasm-js/%s/kotlin-test-wasm-js-%s.klib" % (_KOTLIN_VERSION, _KOTLIN_VERSION),
+)
+
+_KOTLIN_DATETIME_VERSION = "0.8.0"  # The version does not matter here, it's only used in WasmJS e2e tests to exercise a klib-declared npm dependency (@js-joda/core)
+
+http_file(
+    name = "kotlinx-datetime-wasm-js_http",
+    downloaded_file_path = "kotlinx-datetime-wasm-js-%s.klib" % _KOTLIN_DATETIME_VERSION,
+    sha256 = "5d84e1a3fb30f15337bf78259ca76ca4bba67a7690d9ae07da9bdbc75b88b5ed",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-datetime-wasm-js/%s/kotlinx-datetime-wasm-js-%s.klib" % (_KOTLIN_DATETIME_VERSION, _KOTLIN_DATETIME_VERSION),
+)
+
+# npm packages consumable through the npm_packages attributes of the wasmjs rules; only for the
+# e2e tests — in the monorepo, klib-declared npm dependencies are resolved by the kmp_deps
+# extension. The kotlinx-datetime klib requests @js-joda/core 3.2.0; 5.7.0 is a deliberately
+# newer, API-compatible version.
+http_archive(
+    name = "js_joda_core",
+    build_file = "//:BUILD.npm.bazel",
+    sha256 = "c603b2ca15a1304b9b5107019c5847a3f74a89873ac694589836959867ef9b90",
+    strip_prefix = "package",
+    url = "https://registry.npmjs.org/@js-joda/core/-/core-5.7.0.tgz",
+)
+
+# Only used in WasmJS e2e tests to validate the explicit npm_packages import-map path
+# (and the `exports`-map branch of npm entry resolution, which @js-joda/core does not cover).
+http_archive(
+    name = "nanoid",
+    build_file = "//:BUILD.npm.bazel",
+    sha256 = "5cade80a39ccf4fd174c8e412eca13accfce36c9c2a0982b4ea23403d729a8d8",
+    strip_prefix = "package",
+    url = "https://registry.npmjs.org/nanoid/-/nanoid-6.0.0.tgz",
+)

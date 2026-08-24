@@ -81,6 +81,17 @@ public abstract class GroovyFormatterTestCase extends LightJavaCodeInsightFixtur
     }), null, null);
   }
 
+  protected void doFormatRange(final PsiFile file, int start, int end) {
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        CodeStyleManager.getInstance(file.getProject()).reformatText(file, start, end);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }), null, null);
+  }
+
   protected void checkFormatting(String expected) {
     doFormat(myFixture.getFile());
     myFixture.checkResult(expected);

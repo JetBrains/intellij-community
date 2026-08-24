@@ -15,7 +15,10 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class VcsConsoleView(project: Project) : ConsoleViewImpl(project = project, viewer = true) {
+class VcsConsoleView(
+  project: Project,
+  private val onClear: () -> Unit,
+) : ConsoleViewImpl(project = project, viewer = true) {
   companion object {
     private val LOG = logger<VcsConsoleView>()
 
@@ -29,6 +32,11 @@ class VcsConsoleView(project: Project) : ConsoleViewImpl(project = project, view
     val switchSoftWrapsAction = ToggleUseSoftWrapsToolbarAction(SoftWrapAppliancePlaces.CONSOLE)
     val scrollToTheEndToolbarAction = ScrollToTheEndToolbarAction(editor)
     return arrayOf(switchSoftWrapsAction, scrollToTheEndToolbarAction, clearThisConsoleAction())
+  }
+
+  override fun clear() {
+    super.clear()
+    onClear()
   }
 
   override fun updateFoldings(startLine: Int, endLine: Int) {

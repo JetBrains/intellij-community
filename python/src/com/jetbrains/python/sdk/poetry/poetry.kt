@@ -4,7 +4,7 @@ package com.jetbrains.python.sdk.poetry
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.util.progress.withProgressText
-import com.intellij.python.pyproject.PyProjectToml
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
@@ -17,8 +17,11 @@ import com.jetbrains.python.sdk.add.v2.toEelFileSystem
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.target.ui.TargetPanelExtension
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import java.util.regex.Pattern
+import kotlin.io.path.isRegularFile
 import kotlin.io.path.pathString
 
 
@@ -99,7 +102,7 @@ private suspend fun <P : PathHolder> setUpPoetry(
   errorSink: ErrorSink,
   inProjectEnv: Boolean,
 ): PyResult<P> {
-  val init = PyProjectToml.findInRoot(moduleBasePath) == null
+  val init = findInRoot(moduleBasePath) == null
   val pythonHomePath = setupPoetry(
     projectPath = moduleBasePath,
     fileSystem = fileSystem,
@@ -124,4 +127,8 @@ internal fun parsePoetryShowOutdated(input: String): Map<String, PythonOutdatedP
       line.split(Pattern.compile(" +"))
         .takeIf { it.size > 3 }?.let { it[0] to PythonOutdatedPackage(it[0], it[1], it[2]) }
     }.toMap()
+}
+
+private suspend fun findInRoot(moduleBasePath: Path): Path? = withContext(Dispatchers.IO) {
+  moduleBasePath.resolve(PY_PROJECT_TOML).takeIf { it.isRegularFile() }
 }

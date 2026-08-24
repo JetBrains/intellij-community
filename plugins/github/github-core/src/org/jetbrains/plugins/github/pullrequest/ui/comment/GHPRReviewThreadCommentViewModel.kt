@@ -58,9 +58,10 @@ internal class UpdateableGHPRReviewThreadCommentViewModel(
   parentCs: CoroutineScope,
   dataContext: GHPRDataContext,
   dataProvider: GHPRDataProvider,
-  thread: GHPRReviewThreadViewModel,
   viewModelWithTextCompletion: GHViewModelWithTextCompletion,
-  initialDataWithIndex: IndexedValue<GHPullRequestReviewComment>
+  initialDataWithIndex: IndexedValue<GHPullRequestReviewComment>,
+  threadId: String,
+  threadIsResolvedFlow: StateFlow<Boolean>,
 ) : GHPRReviewThreadCommentViewModel, GHViewModelWithTextCompletion by viewModelWithTextCompletion {
   private val cs = parentCs.childScope("GitHub Pull Request Thread Comment View Model")
   private val reviewData = dataProvider.reviewData
@@ -78,12 +79,12 @@ internal class UpdateableGHPRReviewThreadCommentViewModel(
   override val createdAt: Date = initialData.createdAt
 
   override val isPending: StateFlow<Boolean> = dataState.mapState { it.value.state == GHPullRequestReviewCommentState.PENDING }
-  override val isFirstInResolvedThread: StateFlow<Boolean> = dataState.combineState(thread.isResolved) { (index, _), resolved ->
+  override val isFirstInResolvedThread: StateFlow<Boolean> = dataState.combineState(threadIsResolvedFlow) { (index, _), resolved ->
     index == 0 && resolved
   }
 
   override val bodyVm: GHPRReviewCommentBodyViewModel =
-    GHPRReviewCommentBodyViewModel(cs, project, dataContext, dataProvider, thread.id, id)
+    GHPRReviewCommentBodyViewModel(cs, project, dataContext, dataProvider, threadId, id)
 
   override val isBusy: StateFlow<Boolean> = taskLauncher.busy
 

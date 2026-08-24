@@ -179,6 +179,13 @@ internal class Target(private val type: String) : Renderable {
       if (type.isEmpty()) {
         appendLine(renderedAttributes)
       }
+      else if (attributes.size == 1 && !renderedAttributes.contains('\n')) {
+        // One scalar attribute, one line - which is what buildifier leaves a single-argument call as, so a regeneration
+        // needs no reformat. It matters at this repository's scale: `content_module_jar(module = ":x")` is the whole
+        // target for about 2 000 of the 2 524 content modules, and three lines each of `(`, the attribute and `)` would
+        // be 4 000 lines of generated punctuation.
+        appendLine("$type(${renderedAttributes.trim().removeSuffix(",")})")
+      }
       else {
         appendLine("$type(")
         appendLine(renderedAttributes)

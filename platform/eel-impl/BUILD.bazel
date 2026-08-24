@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.platform.eel.impl` start
 jvm_library(
@@ -26,6 +27,7 @@ jvm_library(
         "//platform/extensions",
         "//platform/util",
         "//platform/platform-util-io:ide-util-io",
+        "//platform/util/annotations",
         "//platform/util/coroutines",
         "//platform/util/multiplatform",
         "//platform/core-api:core",
@@ -39,6 +41,11 @@ jvm_library(
         "//platform/eel-impl-base",
         "//platform/external-process-auth-helper/rt",
     ],
+)
+
+content_module_jar(
+    module = ":eel-impl",
+    modules_after = ["//platform/eel-impl-base"],
 )
 
 jvm_library(
@@ -59,6 +66,7 @@ jvm_library(
         "//platform/extensions:extensions_test_lib",
         "//platform/util:util_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
+        "//platform/util/annotations:annotations_test_lib",
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/util/multiplatform:multiplatform_test_lib",
         "//platform/core-api:core_test_lib",

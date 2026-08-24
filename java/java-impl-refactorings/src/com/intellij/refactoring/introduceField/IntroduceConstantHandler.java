@@ -75,8 +75,8 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler imple
 
   @Override
   protected boolean invokeImpl(final Project project, final PsiLocalVariable localVariable, final Editor editor) {
-    JavaIntroduceFieldService.ToFieldContext context = FieldExtractor.getContext(myHelper, localVariable, false);
-    if (context instanceof JavaIntroduceFieldService.ToFieldContext.Error(String errorMessage)) {
+    JavaIntroduceFieldModCommandService.ToFieldContext context = FieldExtractor.getContext(myHelper, localVariable, false);
+    if (context instanceof JavaIntroduceFieldModCommandService.ToFieldContext.Error(String errorMessage)) {
       CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, getRefactoringNameText(), getHelpID());
       return false;
     }
@@ -153,7 +153,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler imple
         IntroduceConstantDialog.createNameSuggestionGenerator(null, expr, JavaCodeStyleManager.getInstance(project), enteredName,
                                                               getParentClass());
       return new Settings(generator.getSuggestedNameInfo(defaultType).names[0], expr, occurrences, replaceAllOccurrences, true, true,
-                          JavaIntroduceFieldService.InitializationPlace.IN_FIELD_DECLARATION,
+                          JavaIntroduceFieldModCommandService.InitializationPlace.IN_FIELD_DECLARATION,
                           ObjectUtils.notNull(JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY, PsiModifier.PUBLIC),
                           localVariable, defaultType, localVariable != null, getParentClass(), preselectNonNls, false);
     }
@@ -169,7 +169,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler imple
       return null;
     }
     return new Settings(dialog.getEnteredName(), expr, occurrences, dialog.isReplaceAllOccurrences(), true, true,
-                        JavaIntroduceFieldService.InitializationPlace.IN_FIELD_DECLARATION, dialog.getFieldVisibility(), localVariable,
+                        JavaIntroduceFieldModCommandService.InitializationPlace.IN_FIELD_DECLARATION, dialog.getFieldVisibility(), localVariable,
                         dialog.getSelectedType(), dialog.isDeleteVariable(), dialog.getDestinationClass(),
                         dialog.isAnnotateAsNonNls(),
                         dialog.introduceEnumConstant());

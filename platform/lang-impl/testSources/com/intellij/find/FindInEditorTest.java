@@ -56,10 +56,7 @@ public class FindInEditorTest extends LightPlatformCodeInsightTestCase {
     try {
       myFindModel = null;
       myOutputStream = null;
-      if (myLivePreviewController != null) {
-        myLivePreviewController.dispose();
-        myLivePreviewController = null;
-      }
+      myLivePreviewController = null;
     }
     catch (Throwable e) {
       addSuppressedException(e);

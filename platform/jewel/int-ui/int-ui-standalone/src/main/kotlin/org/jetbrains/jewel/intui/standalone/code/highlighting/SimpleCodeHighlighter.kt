@@ -28,8 +28,8 @@ import org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighter
  * [additionalGrammars]; these are searched first, so they can override built-in behavior for a given language name.
  *
  * Token colors are controlled by [SyntaxHighlightColors]. Use [SyntaxHighlightColors.Companion.light] and
- * [SyntaxHighlightColors.Companion.dark] for palettes matching IntelliJ's Default and Darcula editor schemes, or supply
- * your own. Theme changes are handled at the call site via `remember(isDark)` in `ProvideMarkdownStyling` — this class
+ * [SyntaxHighlightColors.Companion.dark] for palettes matching IntelliJ's Light and Dark editor schemes, or supply your
+ * own. Theme changes are handled at the call site via `remember(isDark)` in `ProvideMarkdownStyling` — this class
  * itself is stateless and always emits a single [AnnotatedString].
  *
  * @param colors The token color palette to use for styling.
@@ -87,13 +87,33 @@ public class SimpleCodeHighlighter(
         val spans = mutableListOf<Span>()
         var i = 0
 
+        // Cache each rule's next match. Without this, rules with nothing left to match rescan to end-of-input
+        // at every cursor position and tokenizing goes quadratic.
+        //
+        // Safe because find() returns the leftmost match at or after the start index, so a cached match that
+        // still starts at or after `i` is what a fresh find would return. Re-find only once the cursor passes it.
+        // This would break for \G, which anchors to the search start, but ported grammars have to strip \G.
+        val nextMatch = arrayOfNulls<MatchResult>(grammar.rules.size)
+        val exhausted = BooleanArray(grammar.rules.size)
+
         while (i < code.length) {
             // Find the rule whose match starts earliest; ties broken by rule order
             var bestMatch: MatchResult? = null
             var bestRule: TokenRule? = null
 
-            for (rule in grammar.rules) {
-                val match = rule.find(code, i) ?: continue
+            for ((ruleIndex, rule) in grammar.rules.withIndex()) {
+                if (exhausted[ruleIndex]) continue
+
+                var match = nextMatch[ruleIndex]
+                if (match == null || match.range.first < i) {
+                    match = rule.find(code, i)
+                    nextMatch[ruleIndex] = match
+                    if (match == null) {
+                        exhausted[ruleIndex] = true
+                        continue
+                    }
+                }
+
                 if (bestMatch == null || match.range.first < bestMatch.range.first) {
                     bestMatch = match
                     bestRule = rule

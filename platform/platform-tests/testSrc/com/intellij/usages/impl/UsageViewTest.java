@@ -132,6 +132,23 @@ public class UsageViewTest extends BasePlatformTestCase {
     assertEquals(psiFile.getText().indexOf("xxx"), navigationOffset);
   }
 
+  public void testUsagePriorityIsComparedBeforeFileAndOffset() {
+    PsiFile psiFile = myFixture.addFileToProject("X.java", "class X{}");
+    UsageInfo defaultPriorityInfo = new UsageInfo(psiFile, 5, 6);
+    UsageInfo lowPriorityInfo = new UsageInfo(psiFile, 0, 1);
+    UsageInfo samePriorityEarlierInfo = new UsageInfo(psiFile, 1, 2);
+    lowPriorityInfo.setPriority(1);
+
+    Usage defaultPriorityUsage = new UsageInfo2UsageAdapter(defaultPriorityInfo);
+    Usage lowPriorityUsage = new UsageInfo2UsageAdapter(lowPriorityInfo);
+    Usage samePriorityEarlierUsage = new UsageInfo2UsageAdapter(samePriorityEarlierInfo);
+
+    assertEquals(0, defaultPriorityInfo.getPriority());
+    assertTrue(UsageViewImpl.USAGE_COMPARATOR_BY_FILE_AND_OFFSET.compare(defaultPriorityUsage, lowPriorityUsage) < 0);
+    assertTrue(UsageViewImpl.USAGE_COMPARATOR_BY_FILE_AND_OFFSET.compare(lowPriorityUsage, defaultPriorityUsage) > 0);
+    assertTrue(UsageViewImpl.USAGE_COMPARATOR_BY_FILE_AND_OFFSET.compare(samePriorityEarlierUsage, defaultPriorityUsage) < 0);
+  }
+
   private static Usage createUsage(PsiFile psiFile, int offset) {
     PsiElement element = psiFile.findElementAt(offset % psiFile.getTextLength());
     assertNotNull(element);

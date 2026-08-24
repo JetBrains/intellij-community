@@ -24,6 +24,7 @@ import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.fileEditor.createdFileEditorSink
 import com.intellij.openapi.fileEditor.ex.StructureViewFileEditorProvider
 import com.intellij.openapi.fileEditor.impl.DefaultPlatformFileEditorProvider
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
@@ -118,13 +119,15 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
       fileForTelemetry = file,
       editorCoroutineScope = editorCoroutineScope,
     )
+    // if cancellation lands between the editor creation and the consumption of the result, withContext discards the created editor
+    val createdEditors = createdFileEditorSink()
     return withContext(Dispatchers.EDT) {
       val editor = createEditorImpl(project = project, file = file, asyncLoader = asyncLoader).first
       TextEditorImpl(
         project = project,
         file = file,
         componentAndLoader = TextEditorComponent(file = file, editorImpl = editor) to asyncLoader,
-      )
+      ).also { createdEditors?.register(it) }
     }
   }
 

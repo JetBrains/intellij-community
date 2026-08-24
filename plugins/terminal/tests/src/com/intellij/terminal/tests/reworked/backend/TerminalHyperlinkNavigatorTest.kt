@@ -3,7 +3,6 @@ package com.intellij.terminal.tests.reworked.backend
 
 import com.intellij.execution.filters.FileHyperlinkInfoBase
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.navigation.NavigationRequest
@@ -61,15 +60,20 @@ private class RecordingNavigationService : NavigationService {
   var navigatableCalls: Int = 0
     private set
 
-  override suspend fun navigate(dataContext: DataContext, options: NavigationOptions) {
-    error("Unexpected data-context navigation")
-  }
-
-  override suspend fun navigate(request: NavigationRequest, options: NavigationOptions, dataContext: DataContext?) {
+  override suspend fun navigate(request: NavigationRequest, options: NavigationOptions): Boolean {
     requestCalls++
+    return true
   }
 
-  override suspend fun navigate(navigatables: List<Navigatable>, options: NavigationOptions, dataContext: DataContext?): Boolean {
+  override suspend fun navigate(
+    requests: Collection<NavigationRequest>,
+    options: NavigationOptions,
+  ): Boolean {
+    requestCalls += requests.size
+    return requests.isNotEmpty()
+  }
+
+  override suspend fun navigate(navigatables: List<Navigatable>, options: NavigationOptions): Boolean {
     navigatableCalls++
     return true
   }

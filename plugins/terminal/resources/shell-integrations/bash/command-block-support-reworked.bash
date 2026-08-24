@@ -45,7 +45,10 @@ __jetbrains_intellij_command_precmd() {
   if [[ -z "$__jetbrains_intellij_initialized" ]]; then
     __jetbrains_intellij_install_debug_trap
     __jetbrains_intellij_initialized="1"
-    builtin printf '\e]1341;initialized;current_directory=%s\a' "$(__jetbrains_intellij_encode "$PWD")"
+    builtin local history_path="${HISTFILE:-}"
+    builtin printf '\e]1341;initialized;current_directory=%s;history_path=%s\a' \
+      "$(__jetbrains_intellij_encode "$PWD")" \
+      "$(__jetbrains_intellij_encode "$history_path")"
     __jetbrains_intellij_get_aliases
   elif [[ -n "$__jetbrains_intellij_command_running" ]]; then
     builtin local current_directory="$PWD"

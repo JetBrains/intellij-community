@@ -52,8 +52,12 @@ public class ChangeListChooser extends DialogWrapper {
   }
 
   public void setSuggestedName(@Nls @Nullable String suggestedName, boolean forceCreate) {
+    setSuggestedName(suggestedName, null, forceCreate);
+  }
+
+  public void setSuggestedName(@Nls @Nullable String suggestedName, @Nls @Nullable String comment, boolean forceCreate) {
     if (suggestedName == null) return;
-    myPanel.setSuggestedName(suggestedName, forceCreate);
+    myPanel.setSuggestedName(suggestedName, comment, forceCreate);
   }
 
   @Override

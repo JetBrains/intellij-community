@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.collections
 
-import org.jetbrains.kotlin.resolution.KtResolvable
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
@@ -16,8 +15,8 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parents
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.classId
@@ -34,14 +33,13 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinAp
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.ThisRebinderForAddingNewReceiver
 import org.jetbrains.kotlin.idea.codeinsight.utils.getTopmostParenthesizedExpressionOrSelf
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtLabeledExpression
@@ -192,7 +190,7 @@ class CollectionConcatenationToBuildCollectionInspection :
     context(_: KaSession)
     private fun KtExpression.isBuildCollectionCall(collectionType: Context.CollectionType): Boolean {
         val callExpression = transformingCallExpression() ?: return false
-        val resolvedTo = callExpression.resolveSymbol() as? KaCallableSymbol ?: return false
+        val resolvedTo = callExpression.resolveSymbol() ?: return false
         return resolvedTo.callableId?.asSingleFqName()?.asString() == collectionType.buildCallFqName
     }
 
@@ -244,7 +242,7 @@ class CollectionConcatenationToBuildCollectionInspection :
     private fun KtExpression.toTransformingOperation(): Context.Operation.TransformingOperation? {
         if (this !is KtQualifiedExpression) return null
         val callExpression = selectorExpression as? KtCallExpression ?: return null
-        val resolvedTo = callExpression.resolveSymbol() as? KaCallableSymbol ?: return null
+        val resolvedTo = callExpression.resolveSymbol() ?: return null
         val fqName = resolvedTo.callableId?.asSingleFqName()?.asString() ?: return null
         val kind = Context.Operation.TransformingOperation.Kind.byCallFqName(fqName) ?: return null
         return Context.Operation.TransformingOperation(createSmartPointer(), kind)

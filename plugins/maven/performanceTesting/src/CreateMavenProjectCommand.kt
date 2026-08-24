@@ -71,14 +71,13 @@ class CreateMavenProjectCommand(text: String, line: Int) : PerformanceCommandCor
     suspend fun runNewProject(projectPath: Path, newProject: Project, oldProject: Project, context: PlaybackContext) {
       ProjectUtil.updateLastProjectLocation(projectPath)
       val fileName = projectPath.fileName
-      val options = OpenProjectTask
-        .build()
-        .withProject(newProject)
-        .withProjectName(fileName.toString())
-        .withProjectToClose(oldProject)
+      val options = OpenProjectTask {
+        project = newProject
+        projectName = fileName.toString()
+        projectToClose = oldProject
+      }
       TrustedPaths.getInstance().setProjectPathTrusted(projectPath, true)
       GeneralSettings.getInstance().confirmOpenNewProject = GeneralSettings.OPEN_PROJECT_SAME_WINDOW
-
       ProjectManagerEx.getInstanceEx().openProjectAsync(projectIdentityFile = projectPath, options = options)
       context.setProject(newProject)
     }

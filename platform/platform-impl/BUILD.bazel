@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 # The `--add-opens` inventory a distribution's vmoptions are generated from, read off disk by
 # `getCommandLineArgumentsForOpenPackages` - so a dev assembly with no checkout has to declare it.
@@ -205,6 +206,33 @@ jvm_library(
         "//fleet/rhizomedb",
         "@lib//:jetbrains-intellij-deps-java-atk-wrapper-linux",
         "//platform/eel-nioFs-impl",
+    ],
+)
+
+content_module_jar(
+    libraries = ["@lib//:diogen-analysis"],
+    module = ":ide-impl",
+    modules_after = [
+        # do not sort,
+        "//platform/platform-impl/recentProjects",
+        "//platform/platform-impl/rpc",
+        "//platform/platform-impl/ui",
+        "//platform/platform-util-io-impl:ide-util-io-impl",
+        "//platform/platform-util-netty:ide-util-netty",
+        "//platform/ijent",
+        "//platform/ijent/buildConstants",
+        "//platform/ijent/impl",
+        "//platform/jbr",
+        "//platform/object-serializer",
+        "//platform/pratt",
+        "//platform/platform-resources:resources",
+        "//platform/platform-resources-en:resources-en",
+        "//platform/syntax/syntax-tree:tree",
+    ],
+    modules_before = [
+        # do not sort,
+        "//platform/buildData",
+        "//platform/diagnostic/startUpPerformanceReporter",
     ],
 )
 
@@ -414,7 +442,6 @@ jvm_library(
         "//platform/syntax/syntax-util:util",
         "//platform/syntax/syntax-tree:tree",
         "//platform/syntax/syntax-extensions:extensions",
-        "//fleet/rhizomedb",
     ],
 )
 
@@ -467,7 +494,6 @@ jvm_library(
         "//platform/platform-impl/concurrency:concurrency_test_lib",
         "//platform/platform-impl/recentProjects:recentProjects_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
     ],
     deps = [
         # do not sort,
@@ -698,6 +724,8 @@ jvm_library(
         "//platform/kernel/pasta:pasta_test_lib",
         "//platform/workspace/storage",
         "//platform/workspace/storage:storage_test_lib",
+        "//platform/pluginSystem/testFramework",
+        "//platform/pluginSystem/testFramework:testFramework_test_lib",
         "//platform/pluginSystem/parser/impl",
         "//platform/pluginSystem/parser/impl:impl_test_lib",
         "//platform/eel",
@@ -721,6 +749,8 @@ jvm_library(
         "//libraries/rd/core:core_test_lib",
         "//platform/forms_rt:java-guiForms-rt",
         "//platform/forms_rt:java-guiForms-rt_test_lib",
+        "//fleet/rhizomedb",
+        "//fleet/rhizomedb:rhizomedb_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//platform/testFramework/junit5",

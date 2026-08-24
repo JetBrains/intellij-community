@@ -1,6 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.kotlin.projectStructure` start
 create_kotlinc_options(
@@ -58,6 +59,8 @@ jvm_library(
         "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting",
     ],
 )
+
+content_module_jar(module = ":project-structure")
 
 jvm_library(
     name = "project-structure_test_lib",

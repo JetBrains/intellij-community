@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.markdown.jcef.preview
 
+import com.intellij.find.FindManager
 import com.intellij.markdown.frontend.preview.jcef.zoomIndicator.PreviewZoomIndicatorManager
 import com.intellij.markdown.jcef.preview.impl.FileSchemeResourcesProcessor
 import com.intellij.markdown.jcef.preview.impl.IncrementalDOMBuilder
@@ -9,9 +10,13 @@ import com.intellij.markdown.jcef.preview.impl.addRequestHandler
 import com.intellij.markdown.jcef.preview.impl.executeCancellableJavaScript
 import com.intellij.markdown.jcef.preview.impl.waitForPageLoad
 import com.intellij.markdown.jcef.preview.impl.waitForReloadIgnoringCache
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.BaseProjectDirectories
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
@@ -37,6 +42,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.handler.CefRequestHandlerAdapter
@@ -172,18 +178,24 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
 
       loadIndexContent()
       updateHandler.requests.collectLatest { request ->
-        when (request) {
-          is PreviewRequest.Update -> {
-            val (html, initialScrollOffset, document) = request
-            val baseFile = document?.parent
-            val builder = IncrementalDOMBuilder(html, baseFile, projectRoot, fileSchemeResourcesProcessor)
-            val renderClosure = builder.generateRenderClosure()
-            updateDom(renderClosure, initialScrollOffset, previousRenderClosure.isEmpty())
+        try {
+          when (request) {
+            is PreviewRequest.Update -> {
+              val (html, initialScrollOffset, document) = request
+              val baseFile = document?.parent
+              val builder = IncrementalDOMBuilder(html, baseFile, projectRoot, fileSchemeResourcesProcessor)
+              val renderClosure = builder.generateRenderClosure()
+              updateDom(renderClosure, initialScrollOffset, previousRenderClosure.isEmpty())
+            }
+            is PreviewRequest.ReloadWithOffset -> {
+              reloadIndexContent()
+              updateDom(previousRenderClosure, request.offset, firstUpdate = true)
+            }
           }
-          is PreviewRequest.ReloadWithOffset -> {
-            reloadIndexContent()
-            updateDom(previousRenderClosure, request.offset, firstUpdate = true)
-          }
+        }
+        catch (e: Exception) {
+          rethrowControlFlowException(e)
+          thisLogger().error(e)
         }
       }
     }
@@ -325,17 +337,24 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
       balloon?.show(RelativePoint.getSouthOf(previewInnerComponent), Balloon.Position.below)
     }
 
-    coroutineScope.async(context = Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
+    // MarkdownPreviewSearchSession requires EDT context to update actions in SearchReplaceComponent.updateBindingsActionsAndFocus
+    coroutineScope.launch(context = Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
       panel.startLoading()
-      val session = MarkdownPreviewSearchSession(project, cefBrowser, previewInnerComponent)
+      // preload it before we hit it on EDT from MarkdownPreviewSearchSession
+      val findManager = withContext(Dispatchers.Default) { project.serviceAsync<FindManager>() }
+
+      val session = MarkdownPreviewSearchSession(project, findManager, cefBrowser, previewInnerComponent)
       previewInnerComponent.add(session.getComponent(), BorderLayout.NORTH)
       searchSession = session
       val viewPort = ViewPort()
       viewPort.add(previewInnerComponent, BorderLayout.CENTER)
       panel.add(viewPort)
+
       projectRoot.await()
+
       panel.stopLoading()
     }
+
     return panel
   }
 

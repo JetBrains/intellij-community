@@ -28,16 +28,21 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
 import com.intellij.openapi.actionSystem.UiDataProvider
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState.stateForComponent
 import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.client.currentSession
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.Companion.OPEN_IN_PREVIEW_TAB
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.validOrNull
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.platform.ide.navigation.NavigationOptions
+import com.intellij.platform.ide.navigation.requestNavigate
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
@@ -48,11 +53,11 @@ import com.intellij.ui.tree.RestoreSelectionListener
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.EditSourceOnDoubleClickHandler
-import com.intellij.util.OpenSourceUtil
 import com.intellij.util.SingleAlarm
 import com.intellij.util.containers.toArray
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
+import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.Nls
 import org.jetbrains.concurrency.Promise
 import java.awt.event.FocusEvent
@@ -83,6 +88,10 @@ class BookmarksView(val project: Project, val isPopup: Boolean)
   private val structure = BookmarksTreeStructure(this)
   internal val model: StructureTreeModel<BookmarksTreeStructure> = StructureTreeModel(structure, FolderNodeComparator(project), this)
   val tree: DnDAwareTree = DnDAwareTree(AsyncTreeModel(model, this))
+  private val coroutineScope = lazy {
+    val parentScope = project.service<CoreUiCoroutineScopeHolder>().coroutineScope
+    parentScope.childScope("${javaClass.name}.navigation", stateForComponent(tree).asContextElement())
+  }
   private val treeExpander = DefaultTreeExpander(tree)
   private val panel = BorderLayoutPanel()
   private val updater = FolderNodeUpdater(this)
@@ -105,8 +114,12 @@ class BookmarksView(val project: Project, val isPopup: Boolean)
       else -> occurrence.nextLineBookmark()
     }
 
-
-  override fun dispose(): Unit = preview.close()
+  override fun dispose() {
+    if (coroutineScope.isInitialized()) {
+      coroutineScope.value.cancel()
+    }
+    preview.close()
+  }
 
   override fun uiDataSnapshot(sink: DataSink) {
     val selection = selectedNodes
@@ -229,8 +242,9 @@ class BookmarksView(val project: Project, val isPopup: Boolean)
   private fun navigateToSource(requestFocus: Boolean) {
     val node = selectedNode ?: return
     if (node.asVirtualFile()?.fileType == FileTypes.UNKNOWN) { return }
-    val task = Runnable { OpenSourceUtil.navigateToSource(requestFocus, false, node) }
-    ApplicationManager.getApplication()?.invokeLater(task, stateForComponent(tree)) { project.isDisposed }
+
+    val navOptions = NavigationOptions.defaultOptions().requestFocus(requestFocus).preserveCaret(false)
+    requestNavigate(project, node, navOptions, coroutineScope = coroutineScope.value)
   }
 
   fun addEditSourceListener(listener: EditSourceListener) {

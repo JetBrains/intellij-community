@@ -226,7 +226,7 @@ public final class ConfigurableExtensionPointUtil {
     String id = CONFIGURABLE_ID_PREFIX + groupId;
     ResourceBundle bundle = ep != null ? ep.getResourceBundle() : getBundle(id + ".settings.display.name", configurables, alternative);
     if (bundle == null) {
-      bundle = OptionsBundle.INSTANCE.getResourceBundle();
+      bundle = OptionsBundle.getResourceBundle();
       if (!root) {
         LOG.warn("use other group instead of unexpected one: " + groupId);
         groupId = OTHER_ID;
@@ -437,7 +437,7 @@ public final class ConfigurableExtensionPointUtil {
   public static @Nullable ResourceBundle getBundle(@NonNls @NotNull String resource,
                                                    @Nullable Iterable<? extends Configurable> configurables,
                                                    @Nullable ResourceBundle alternative) {
-    ResourceBundle bundle = OptionsBundle.INSTANCE.getResourceBundle();
+    ResourceBundle bundle = OptionsBundle.getResourceBundle();
     if (getString(bundle, resource) != null) {
       return bundle;
     }

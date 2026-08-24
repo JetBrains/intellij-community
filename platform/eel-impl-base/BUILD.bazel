@@ -18,6 +18,7 @@ jvm_library(
         "//platform/eel-nioFs",
         "//libraries/kotlinx/coroutines/core",
         "@lib//:kotlin-stdlib",
+        "//platform/util/annotations",
         "//libraries/jetbrains/annotations",
     ],
 )
@@ -36,6 +37,7 @@ jvm_library(
         ":eel-impl-base",
         "//platform/eel-nioFs:eel-nioFs_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/util/annotations:annotations_test_lib",
         "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )

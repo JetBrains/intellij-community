@@ -223,8 +223,8 @@ f:git4idea.remote.hosting.GitHostingUrlUtil
 - sf:getUriFromRemoteUrl(java.lang.String):java.net.URI
 - sf:removeProtocolPrefix(java.lang.String):java.lang.String
 f:git4idea.remote.hosting.GitRemoteBranchesUtil
-- f:fetchAndCheckoutInNewWorktree(git4idea.repo.GitRepository,git4idea.remote.hosting.HostedGitRepositoryRemote,java.lang.String,java.nio.file.Path,java.lang.String,java.lang.String,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
-- bs:fetchAndCheckoutInNewWorktree$default(git4idea.remote.hosting.GitRemoteBranchesUtil,git4idea.repo.GitRepository,git4idea.remote.hosting.HostedGitRepositoryRemote,java.lang.String,java.nio.file.Path,java.lang.String,java.lang.String,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- f:fetchAndCheckoutInNewWorktree(git4idea.repo.GitRepository,git4idea.remote.hosting.HostedGitRepositoryRemote,java.lang.String,java.nio.file.Path,java.lang.String,java.lang.String,java.lang.String,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- bs:fetchAndCheckoutInNewWorktree$default(git4idea.remote.hosting.GitRemoteBranchesUtil,git4idea.repo.GitRepository,git4idea.remote.hosting.HostedGitRepositoryRemote,java.lang.String,java.nio.file.Path,java.lang.String,java.lang.String,java.lang.String,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - f:testRemoteBranchCheckedOut(git4idea.repo.GitRepository,git4idea.GitRemoteBranch,kotlin.coroutines.Continuation):java.lang.Object
 - f:testRemoteBranchCheckedOut(git4idea.repo.GitRepository,git4idea.remote.hosting.HostedGitRepositoryRemote,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 f:git4idea.remote.hosting.HostedGitRepositoriesManagerKt
@@ -257,6 +257,8 @@ git4idea.repo.GitRepository
 - getFullHashLength():I
 git4idea.repo.GitRepositoryChangeListener
 - a:repositoryChanged(git4idea.repo.GitRepository):V
+f:git4idea.repo.GitRepositoryFiles
+- getCommonGitDir():com.intellij.openapi.vfs.VirtualFile
 f:git4idea.repo.GitRepositoryImpl
 - getFullHashLength():I
 f:git4idea.repo.GitRepositoryManager

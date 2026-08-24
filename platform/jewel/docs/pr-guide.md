@@ -8,8 +8,13 @@ these steps:
 
 1. Make sure your commit message first line starts with `[JEWEL-<Jewel YouTrack Id>] `, and squash all the changes in a
    single commit
-2. Prefix the PR title with `[JEWEL-<Jewel YouTrack Id>] `, add the `jewel` label, assign yourself and pick at least two
+2. Prefix the PR title with `[JEWEL-<Jewel YouTrack Id>] `, add the `jewel` label, assign yourself and request three
    reviewers from the Jewel team
+   * The reviewer roster is published at [jewel-ui.dev/data/maintainers.json](https://jewel-ui.dev/data/maintainers.json)
+   * Always request three reviewers, but note that how many approvals are needed to merge depends on the change: one
+     Jewel team approval is enough for a small or simple change, or for one confined to `platform/jewel`; anything else
+     needs two approvals, at least one of them from a JetBrains maintainer
+   * See the [approval rules](jewel-contribution-guide.md#approval-rules) for the details
 3. Avoid creating pull requests from chains of feature branches (branching from feature branches) if at all possible, as
    this can create issues when cherry-picking for a release
    * If this can't be avoided, open the PR as a draft

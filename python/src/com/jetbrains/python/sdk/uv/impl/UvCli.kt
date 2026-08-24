@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.uv.impl
 
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.platform.eel.provider.localEel
+import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.DownloadConfig
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
 import com.intellij.python.pyproject.PY_PROJECT_TOML
@@ -41,7 +42,7 @@ private suspend fun <P : PathHolder> runUv(
   venvPath: P?,
   fileSystem: FileSystem<P>,
   canChangeTomlOrLock: Boolean,
-  vararg args: String,
+  args: Args,
 ): PyResult<String> {
   val env = buildMap {
     if (venvPath == null) {
@@ -64,10 +65,13 @@ private suspend fun <P : PathHolder> runUv(
 
 private class UvCliImpl<P : PathHolder>(val dispatcher: CoroutineDispatcher, val uv: P, private val fileSystem: FileSystem<P>) : UvCli<P> {
 
-  override suspend fun runUv(workingDir: Path, venvPath: P?, canChangeTomlOrLock: Boolean, vararg args: String): PyResult<String> =
+  override suspend fun runUv(workingDir: Path, venvPath: P?, canChangeTomlOrLock: Boolean, args: Args): PyResult<String> =
     withContext(dispatcher) {
-      runUv(uv, workingDir, venvPath, fileSystem, canChangeTomlOrLock, *args)
+      runUv(uv, workingDir, venvPath, fileSystem, canChangeTomlOrLock, args)
     }
+
+  override suspend fun runUv(workingDir: Path, venvPath: P?, canChangeTomlOrLock: Boolean, vararg args: String): PyResult<String> =
+    runUv(workingDir, venvPath, canChangeTomlOrLock, Args(*args))
 }
 
 suspend fun hasUvExecutableLocal(): Boolean {
@@ -75,10 +79,13 @@ suspend fun hasUvExecutableLocal(): Boolean {
 }
 
 internal suspend fun createUvCliLocal(uv: Path? = null, dispatcher: CoroutineDispatcher = Dispatchers.IO): PyResult<UvCli<PathHolder.Eel>> {
-  return createUvCli(uv?.let { PathHolder.Eel(it) }, EelFileSystem(localEel), dispatcher)
+  return validateAndCreateUvCli(uv?.let { PathHolder.Eel(it) }, EelFileSystem(localEel), dispatcher)
 }
 
-internal suspend fun <P : PathHolder> createUvCli(
+internal fun <P : PathHolder> createUvCli(uv: P, fileSystem: FileSystem<P>, dispatcher: CoroutineDispatcher = Dispatchers.IO): UvCli<P> =
+  UvCliImpl(dispatcher, uv, fileSystem)
+
+internal suspend fun <P : PathHolder> validateAndCreateUvCli(
   uv: P?,
   fileSystem: FileSystem<P>,
   dispatcher: CoroutineDispatcher = Dispatchers.IO,

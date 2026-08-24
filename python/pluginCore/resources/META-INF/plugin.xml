@@ -44,7 +44,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
 
     <!-- Backend-only modules: load only when intellij.platform.backend is available -->
     <module name="intellij.python.psi"/>
-    <module name="intellij.python.psi.impl"/>
+    <module name="intellij.python.psi.impl" required-if-available="intellij.platform.backend"/>
     <module name="intellij.python.sdk.common"/>
     <module name="intellij.python.sdk.backend"/>
     <module name="intellij.python.sdk.frontend"/>
@@ -107,6 +107,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
   </content>
   <content>
     <module name="intellij.libraries.jsr305"/>
+    <module name="intellij.libraries.mlapi.catboost" loading="required"/>
     <module name="intellij.libraries.tuweni.toml"/>
   </content>
 </idea-plugin>

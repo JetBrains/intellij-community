@@ -1,5 +1,6 @@
 package com.intellij.python.junit5Tests.unit
 
+import com.intellij.python.sdk.backend.evolution.toSectionLabel
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.sdk.PythonInterpreterPresentation
 import com.jetbrains.python.sdk.impl.isNameDerivedFromHomePath
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import java.nio.file.Path
 import javax.swing.Icon
 import javax.swing.ImageIcon
 
@@ -156,6 +158,30 @@ class ShortenPathTest {
     assertTrue(pres.shortName.startsWith("SSH"), "must preserve the SSH prefix")
     assertTrue(pres.shortName.contains('…'), "must contain the middle-ellipsis marker")
     assertTrue(pres.shortName.length <= 50)
+  }
+
+  // --- toSectionLabel: the Evo widget's section headers ---
+
+  @Test
+  @DisplayName("a section label short enough to fit is left alone")
+  fun `short section label is unchanged`() {
+    assertEquals("/opt/envs", Path.of("/opt/envs").toSectionLabel())
+  }
+
+  @Test
+  @DisplayName("a long section label keeps its prefix and last segment, eliding the middle")
+  fun `long section label is elided in the middle`() {
+    val label = Path.of("/opt/.cache/intellij-python-test-env/conda/Miniconda3-py312_24.9.2-0-MacOSX-arm64/envs/child").toSectionLabel()
+    assertEquals("/opt/.cache/intellij-python-test-env/conda/…/child", label)
+    assertTrue(label.length <= 50, "section labels must not exceed the header budget, was ${label.length}")
+  }
+
+  @Test
+  @DisplayName("sibling folders stay distinguishable after eliding")
+  fun `elided section labels keep their last segment`() {
+    val base = "/opt/.cache/intellij-python-test-env/conda/Miniconda3-py312_24.9.2-0-MacOSX-arm64"
+    assertTrue(Path.of("$base/envs/child").toSectionLabel().endsWith("/child"))
+    assertTrue(Path.of("$base/envsSibling").toSectionLabel().endsWith("/envsSibling"))
   }
 
   private val noIcon: Icon = ImageIcon()

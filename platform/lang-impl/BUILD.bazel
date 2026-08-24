@@ -2,6 +2,7 @@ load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 filegroup(
     name = "testData",
@@ -183,6 +184,15 @@ jvm_library(
         "//platform/testIntegration",
         "//platform/testIntegration-ui",
         "//platform/eel-nioFs",
+    ],
+)
+
+content_module_jar(
+    module = ":lang-impl",
+    modules_before = [
+        # do not sort,
+        "//platform/foldings",
+        "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
     ],
 )
 

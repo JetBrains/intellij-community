@@ -4,13 +4,9 @@
   <name>Library Modules: Misc</name>
   <description>Provides miscellaneous library content modules for IntelliJ-based IDEs.</description>
   <vendor>JetBrains</vendor>
+
+  <!-- kept temporary for compatibility with 2026.2, delete for 2026.3 -->
+  <!--suppress PluginXmlValidity -->
   <content namespace="jetbrains">
-    <module name="intellij.libraries.javax.activation"/>
-    <module name="intellij.libraries.opencsv"/>
-    <module name="intellij.libraries.lucene.common"/>
-    <module name="intellij.libraries.jettison"/>
-    <module name="intellij.libraries.oshi.core"/>
-    <module name="intellij.libraries.xstream"/>
-    <module name="intellij.libraries.commons.text" loading="required"/>
   </content>
 </idea-plugin>

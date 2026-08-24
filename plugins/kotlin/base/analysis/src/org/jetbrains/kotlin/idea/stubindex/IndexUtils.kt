@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 @file:OptIn(UnsafeCastFunction::class)
 
@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.idea.stubindex
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.NamedStub
 import com.intellij.psi.stubs.StubElement
-import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -24,11 +23,9 @@ import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.stubs.KotlinAnnotationEntryStub
 import org.jetbrains.kotlin.psi.stubs.KotlinCallableStubBase
 import org.jetbrains.kotlin.psi.stubs.KotlinFileStub
-import org.jetbrains.kotlin.psi.stubs.KotlinModifierListStub
 import org.jetbrains.kotlin.psi.stubs.KotlinPlaceHolderStub
 import org.jetbrains.kotlin.psi.stubs.KotlinPropertyAccessorStub
 import org.jetbrains.kotlin.psi.stubs.KotlinPropertyStub
-import org.jetbrains.kotlin.psi.stubs.KotlinStubWithFqName
 import org.jetbrains.kotlin.psi.stubs.KotlinTypeAliasStub
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -125,20 +122,6 @@ private fun KtTypeElement.index(
     indexWithVisited(declaration, containingTypeReference, mutableSetOf(), occurrence)
 }
 
-fun indexInternals(stub: KotlinCallableStubBase<*>, sink: IndexSink) {
-    val name = stub.name ?: return
-
-    val modifierListStub = stub.modifierList ?: return
-
-    if (!modifierListStub.hasModifier(KtTokens.INTERNAL_KEYWORD)) return
-
-    if (stub.isTopLevel) return
-
-    if (modifierListStub.hasModifier(KtTokens.OPEN_KEYWORD) || modifierListStub.hasModifier(KtTokens.ABSTRACT_KEYWORD)) {
-        sink.occurrence(KotlinOverridableInternalMembersShortNameIndex.indexKey, name)
-    }
-}
-
 fun indexJvmNameAnnotation(stub: KotlinAnnotationEntryStub, sink: IndexSink) {
     if (stub.shortName != JvmFileClassUtil.JVM_NAME_SHORT) return
     val jvmName = JvmFileClassUtil.getLiteralStringFromAnnotation(stub.psi) ?: return
@@ -157,9 +140,6 @@ private val StubElement<*>.annotatedJvmNameElementName: String?
         is KotlinPlaceHolderStub -> parentStub?.annotatedJvmNameElementName
         else -> null
     }
-
-private val KotlinStubWithFqName<*>.modifierList: KotlinModifierListStub?
-    get() = findChildStubByElementType(KtNodeTypes.MODIFIER_LIST) as? KotlinModifierListStub
 
 fun <TDeclaration : KtCallableDeclaration> KotlinCallableStubBase<TDeclaration>.isDeclaredInObject(): Boolean {
     if (isTopLevel) return false

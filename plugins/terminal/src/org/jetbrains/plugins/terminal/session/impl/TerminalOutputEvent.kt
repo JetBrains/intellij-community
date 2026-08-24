@@ -89,3 +89,7 @@ data class TerminalAliasesReceivedEvent(val aliasesRaw: String) : TerminalShellI
 @ApiStatus.Internal
 @Serializable
 data class TerminalCompletionFinishedEvent(val result: String) : TerminalShellIntegrationEvent
+
+@ApiStatus.Internal
+@Serializable
+data class TerminalCommandHistoryPathReceivedEvent(val path: String?) : TerminalShellIntegrationEvent

@@ -100,7 +100,6 @@ class BlockTerminalSearchSession(
       override fun editorReleased(event: EditorFactoryEvent) {
         if (event.editor === editor) {
           Disposer.dispose(disposable)
-          livePreviewController.dispose()
         }
       }
     }, disposable)
@@ -260,7 +259,6 @@ class BlockTerminalSearchSession(
 
   override fun close() {
     Disposer.dispose(disposable)
-    livePreviewController.dispose()
     closeCallback()
   }
 

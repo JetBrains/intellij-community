@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.zxing.core.jar
+  modules:
+  - name: intellij.libraries.zxing.core
+    libraries:
+      zxing-core:
+      - name: $MAVEN_REPOSITORY$/com/google/zxing/core/3/core-3.jar

@@ -1,5 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.kotlin.devkit.k2` start
 create_kotlinc_options(
@@ -48,6 +49,8 @@ jvm_library(
         "//plugins/kotlin/code-insight/intentions-k2:kotlin-codeInsight-intentions",
     ],
 )
+
+content_module_jar(module = ":k2")
 
 jvm_library(
     name = "k2_test_lib",

@@ -70,8 +70,8 @@ import com.intellij.ui.DirtyUI;
 import com.intellij.ui.Grayer;
 import com.intellij.ui.components.Magnificator;
 import com.intellij.ui.paint.PaintUtil;
-import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.EdtInvocationManager;
@@ -126,6 +126,7 @@ import java.awt.event.InputMethodListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
 import java.awt.im.InputMethodRequests;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -143,6 +144,8 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   private final EditorImpl editor;
 
   private @Nullable Runnable myRepaintCallback;
+
+  private @NotNull Point2D alignment = new Point2D.Double();
 
   public EditorComponentImpl(@NotNull EditorImpl editor) {
     this.editor = editor;
@@ -349,14 +352,11 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     editor.measureTypingLatency();
 
     Graphics2D gg = (Graphics2D)g;
-    if (editor.useEditorAntialiasing()) {
-      EditorUIUtil.setupAntialiasing(gg);
+    EditorUIUtil.setupEditorPainting(gg, editor.useEditorAntialiasing());
+    AffineTransform origTx = PaintUtil.alignTxToInt(gg, PaintUtil.insets2offset(getInsets()), true, false, PaintUtil.RoundingMode.FLOOR);
+    if (!editor.isStickyLinePainting() && !editor.isPaintingDumbBuffer()) { // sticky lines and the offscreen dumb buffer might have a different alignment from the main area
+      alignment = ObjectUtils.notNull(PaintUtil.getUserSpacePixelOffset(gg), Point2D.Double::new);
     }
-    else {
-      UISettings.setupAntialiasing(gg);
-    }
-    gg.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
-    AffineTransform origTx = PaintUtil.alignTxToInt(gg, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.FLOOR);
 
     ApplicationManagerEx.getApplicationEx().withLocksSoftlyProhibited(
       "The Read/Write lock is disallowed during paint. Usage of the R/W lock can lead to UI freezes.\n" +
@@ -396,6 +396,20 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     }
   }
 
+  /**
+   * Returns the offset from the nearest device pixel coordinate to the editor painting origin.
+   * <p>
+   *   Note that the current implementation always aligns X to an integer coordinate, so only the Y can be non-zero.
+   *   But as this can change at any moment, it's best to use both coordinates.
+   * </p>
+   * @return the unscaled (user space) offset used for the last painting operation, zero if no painting was performed yet or no fractional scaling is used
+   * @see PaintUtil#getUserSpacePixelOffset(Graphics2D)
+   */
+  @ApiStatus.Internal
+  public @NotNull Point2D getCurrentAlignment() {
+    return alignment;
+  }
+
   public void repaintEditorComponent(int x, int y, int width, int height) {
     int topOverhang = Math.max(0, editor.myView.getTopOverhang());
     int bottomOverhang = Math.max(0, editor.myView.getBottomOverhang());
@@ -403,6 +417,19 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     if (myRepaintCallback != null && isShowing() && width > 0 && height > 0) {
       myRepaintCallback.run();
     }
+  }
+
+  @Override
+  public void repaint(long tm, int x, int y, int width, int height) {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      editor.invalidateAnimationCaches(new Rectangle(x, y, width, height));
+    });
+    super.repaint(tm, x, y, width, height);
+  }
+
+  @ApiStatus.Internal
+  public void repaintCaret(int x, int y, int width, int height) {
+    super.repaint(0L, x, y, width, height);
   }
 
   //--implementation of Scrollable interface--------------------------------------

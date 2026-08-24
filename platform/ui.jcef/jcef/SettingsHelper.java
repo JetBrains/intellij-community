@@ -10,6 +10,7 @@ import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.net.ProxyConfiguration;
 import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
 import org.cef.CefSettings;
@@ -119,9 +120,8 @@ final class SettingsHelper {
     return settings;
   }
 
-  @NotNull
   static String @NotNull [] loadArgs(@NotNull CefSettings settings, @Nullable BoolRef doTrackGPUCrashes) {
-    String[] args = JBCefAppRequiredArgumentsProvider
+    var args = JBCefAppRequiredArgumentsProvider
       .getProviders()
       .stream()
       .flatMap(p -> {
@@ -131,38 +131,30 @@ final class SettingsHelper {
       .distinct()
       .toArray(String[]::new);
 
-    JBCefProxySettings proxySettings = JBCefProxySettings.getInstance();
-    String[] proxyArgs = null;
-    if (proxySettings.USE_PROXY_PAC) {
-      if (proxySettings.USE_PAC_URL) {
-        proxyArgs = new String[] {"--proxy-pac-url=" + proxySettings.PAC_URL};
-      }
-      else {
-        // when "Auto-detect proxy settings" proxy option is enabled in IntelliJ:
-        //   IntelliJ's behavior: use system proxy settings or an automatically detected the proxy auto-config (PAC) file
-        //   CEF's behavior     : use system proxy settings
-        //     When no proxy flag passes to CEF, it uses the system proxy by default and detected the proxy auto-config (PAC) file
-        //     when "--proxy-auto-detect" flag passed.
-        //     CEF doesn't have any proxy flag that checks both system proxy settings and automatically detects proxy auto-config,
-        //     so we let the CEF uses the system proxy here because this is more useful for users and users can also manually
-        //     configure the PAC file in IntelliJ setting if they need to use PAC file.
-      }
+    //noinspection ExtractMethodRecommender
+    var proxyArgs = (String[])null;
+    var proxyConfiguration = JBCefProxySettings.getInstance().configuration;
+    if (proxyConfiguration instanceof ProxyConfiguration.ProxyAutoConfiguration pac) {
+      proxyArgs = new String[]{"--proxy-pac-url=" + pac.getPacUrl()};
     }
-    else if (proxySettings.USE_HTTP_PROXY) {
-      String proxyScheme;
-      if (proxySettings.PROXY_TYPE_IS_SOCKS) {
-        proxyScheme = "socks";
-      }
-      else {
-        proxyScheme = "http";
-      }
-      String proxyServer = "--proxy-server=" + proxyScheme + "://" + proxySettings.PROXY_HOST + ":" + proxySettings.PROXY_PORT;
-      if (StringUtil.isEmptyOrSpaces(proxySettings.PROXY_EXCEPTIONS)) {
+    else if (proxyConfiguration instanceof ProxyConfiguration.AutoDetectProxy) {
+      // when "Auto-detect proxy settings" proxy option is enabled in IntelliJ:
+      //   IntelliJ's behavior: use system proxy settings or an automatically detected the proxy auto-config (PAC) file
+      //   CEF's behavior     : use system proxy settings
+      //     When no proxy flag passes to CEF, it uses the system proxy by default and detected the proxy auto-config (PAC) file
+      //     when "--proxy-auto-detect" flag passed.
+      //     CEF doesn't have any proxy flag that checks both system proxy settings and automatically detects proxy auto-config,
+      //     so we let the CEF uses the system proxy here because this is more useful for users and users can also manually
+      //     configure the PAC file in IntelliJ setting if they need to use PAC file.
+    }
+    else if (proxyConfiguration instanceof ProxyConfiguration.StaticProxyConfiguration http) {
+      var proxyScheme = http.getProtocol().name().toLowerCase(Locale.ROOT);
+      var proxyServer = "--proxy-server=" + proxyScheme + "://" + http.getHost() + ":" + http.getPort();
+      if (StringUtil.isEmptyOrSpaces(http.getExceptions())) {
         proxyArgs = new String[]{proxyServer};
       }
       else {
-        String proxyBypassList = "--proxy-bypass-list=" + proxySettings.PROXY_EXCEPTIONS;
-        proxyArgs = new String[]{proxyServer, proxyBypassList};
+        proxyArgs = new String[]{proxyServer, "--proxy-bypass-list=" + http.getExceptions()};
       }
     }
     else {

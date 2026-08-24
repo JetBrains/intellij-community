@@ -1,7 +1,7 @@
 package com.jetbrains.python.sdk.add.v2
 
+import com.intellij.python.pytools.ToolCommandSpec
 import com.jetbrains.python.PyInternalExecApi
-import com.jetbrains.python.sdk.ToolCommandSpec
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

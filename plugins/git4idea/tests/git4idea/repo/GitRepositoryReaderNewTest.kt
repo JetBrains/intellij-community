@@ -1,106 +1,100 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
 import com.intellij.dvcs.repo.Repository.State
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vcs.Executor.cd
-import com.intellij.openapi.vcs.Executor.overwrite
-import com.intellij.openapi.vcs.Executor.rm
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.junit5.TestApplication
 import git4idea.GitLocalBranch
 import git4idea.GitUtil
 import git4idea.branch.GitBranchUtil
 import git4idea.config.GitExecutableManager
 import git4idea.config.GitVersionSpecialty
-import git4idea.test.GitPlatformTest
+import git4idea.test.GitPlatformTestContext
 import git4idea.test.GitScenarios.conflict
 import git4idea.test.addCommit
 import git4idea.test.git
 import git4idea.test.gitInit
+import git4idea.test.gitPlatformContextFixture
 import git4idea.test.last
 import git4idea.test.makeCommit
 import git4idea.test.registerRepo
 import git4idea.test.setupDefaultUsername
 import git4idea.test.setupLocalIgnore
 import git4idea.test.tac
-import org.junit.Assume.assumeFalse
-import org.junit.Assume.assumeTrue
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assumptions.assumeFalse
+import org.junit.jupiter.api.Assumptions.assumeTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.io.File
 import java.nio.file.Files
-import kotlin.test.assertNotEquals
 
 /**
  * [GitRepositoryReaderTest] reads information from the pre-created .git directory from a real project.
  * This one, on the other hand, operates on a live Git repository, putting it to various situations and checking the results.
  */
-abstract class GitRepositoryReaderNewTest(val usingReftable: Boolean) : GitPlatformTest() {
-  class UsingReftable() : GitRepositoryReaderNewTest(usingReftable = true)
-  class UsingPackedRefs() : GitRepositoryReaderNewTest(usingReftable = false)
+@TestApplication
+abstract class GitRepositoryReaderNewTest(private val usingReftable: Boolean) {
+  class UsingReftable : GitRepositoryReaderNewTest(usingReftable = true)
+  class UsingPackedRefs : GitRepositoryReaderNewTest(usingReftable = false)
 
-  protected lateinit var repo: GitRepository
+  private val contextFixture = gitPlatformContextFixture()
+  private val context: GitPlatformTestContext get() = contextFixture.get()
 
-  override fun setUp() {
-    super.setUp()
-    repo = createTestRepository()
-    cd(projectPath)
+  private lateinit var repo: GitRepository
+
+  @BeforeEach
+  fun setUp() {
+    with(context) {
+      repo = initRepositoryWithRefFormat(usingReftable)
+      cd(projectPath)
+    }
   }
 
-  private fun createTestRepository(): GitRepository {
+  private fun GitPlatformTestContext.initRepositoryWithRefFormat(usingReftable: Boolean): GitRepository {
     Files.createDirectories(projectNioRoot)
-    cd(projectNioRoot.toString())
+    cd(projectNioRoot)
 
     val version = GitExecutableManager.getInstance().tryGetVersion(project)
     val supportsReftable = version != null && GitVersionSpecialty.INIT_SUPPORTS_REFTABLE_FORMAT.existsIn(version)
 
-    if (usingReftable) {
-      assumeTrue("Unsupported git version: $version", supportsReftable)
-      gitInit(project, "--ref-format=reftable")
-    }
-    else {
-      if (supportsReftable) {
-        gitInit(project, "--ref-format=files")
+    when {
+      usingReftable -> {
+        assumeTrue(supportsReftable, "Unsupported git version: $version")
+        gitInit(project, "--ref-format=reftable")
       }
-      else {
-        gitInit(project)
-      }
+      supportsReftable -> gitInit(project, "--ref-format=files")
+      else -> gitInit(project)
     }
-    setupDefaultUsername(project)
+    setupDefaultUsername()
     setupLocalIgnore(projectNioRoot)
 
-    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectNioRoot.resolve(GitUtil.DOT_GIT))!!
+    checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectNioRoot.resolve(GitUtil.DOT_GIT))) {
+      "${GitUtil.DOT_GIT} was not created in $projectPath"
+    }
     return registerRepo(project, projectNioRoot)
   }
 
   // IDEA-152632
-  fun `test current branch is known during rebase`() {
+  @Test
+  fun `test current branch is known during rebase`(): Unit = with(context) {
     makeCommit("file.txt")
     conflict(repo, "feature")
     git("checkout feature")
     git("rebase master", true)
 
     val state = readState()
-    assertEquals("State value is incorrect", State.REBASING, state.state)
+    assertThat(state.state).describedAs("State value is incorrect").isEqualTo(State.REBASING)
     val currentBranch = state.currentBranch
-    assertNotNull("Current branch should be known during rebase", currentBranch)
-    assertEquals("Current branch is incorrect", "feature", currentBranch!!.name)
+    assertThat(currentBranch).describedAs("Current branch should be known during rebase").isNotNull()
+    assertThat(currentBranch!!.name).describedAs("Current branch is incorrect").isEqualTo("feature")
   }
 
-  fun `test rebase with conflicts while being on detached HEAD`() {
+  @Test
+  fun `test rebase with conflicts while being on detached HEAD`(): Unit = with(context) {
     makeCommit("file.txt")
     conflict(repo, "feature")
     makeCommit("file2.txt")
@@ -108,40 +102,46 @@ abstract class GitRepositoryReaderNewTest(val usingReftable: Boolean) : GitPlatf
     git("rebase feature", true)
 
     val state = readState()
-    assertNull("Current branch can't be identified for this case", state.currentBranch)
-    assertEquals("State value is incorrect", State.REBASING, state.state)
+    assertThat(state.currentBranch).describedAs("Current branch can't be identified for this case").isNull()
+    assertThat(state.state).describedAs("State value is incorrect").isEqualTo(State.REBASING)
   }
 
   // IDEA-124052
-  fun `test remote reference without remote`() {
+  @Test
+  fun `test remote reference without remote`(): Unit = with(context) {
     makeCommit("file.txt")
-    val INVALID_REMOTE = "invalid-remote"
-    val INVALID_REMOTE_BRANCH = "master"
-    git("update-ref refs/remotes/$INVALID_REMOTE/$INVALID_REMOTE_BRANCH HEAD")
+    val invalidRemote = "invalid-remote"
+    val invalidRemoteBranch = "master"
+    git("update-ref refs/remotes/$invalidRemote/$invalidRemoteBranch HEAD")
 
     val remoteBranches = readState().remoteBranches.keys
-    assertTrue("Remote branch not found", remoteBranches.any { it.nameForLocalOperations == "$INVALID_REMOTE/$INVALID_REMOTE_BRANCH" })
+    assertThat(remoteBranches)
+      .describedAs("Remote branch not found")
+      .anyMatch { it.nameForLocalOperations == "$invalidRemote/$invalidRemoteBranch" }
   }
 
   // IDEA-134286
-  fun `test detached HEAD`() {
+  @Test
+  fun `test detached HEAD`(): Unit = with(context) {
     val head = moveToDetachedHead()
     val state = readState()
-    assertEquals("Detached HEAD is not detected", State.DETACHED, state.state)
-    assertEquals("Detached HEAD hash is incorrect", head, state.currentRevision)
+    assertThat(state.state).describedAs("Detached HEAD is not detected").isEqualTo(State.DETACHED)
+    assertThat(state.currentRevision).describedAs("Detached HEAD hash is incorrect").isEqualTo(head)
   }
 
   // IDEA-135966
-  fun `test no local branches`() {
+  @Test
+  fun `test no local branches`(): Unit = with(context) {
     val head = moveToDetachedHead()
     git("branch -D master")
     val state = readState()
-    assertEquals("Detached HEAD is not detected", State.DETACHED, state.state)
-    assertEquals("Detached HEAD hash is incorrect", head, state.currentRevision)
-    assertTrue("There should be no local branches", state.localBranches.isEmpty())
+    assertThat(state.state).describedAs("Detached HEAD is not detected").isEqualTo(State.DETACHED)
+    assertThat(state.currentRevision).describedAs("Detached HEAD hash is incorrect").isEqualTo(head)
+    assertThat(state.localBranches).describedAs("There should be no local branches").isEmpty()
   }
 
-  fun `test tracking remote with complex name`() {
+  @Test
+  fun `test tracking remote with complex name`(): Unit = with(context) {
     makeCommit("file.txt")
     git("remote add my/remote http://my.remote.git")
     git("update-ref refs/remotes/my/remote/master HEAD")
@@ -151,42 +151,47 @@ abstract class GitRepositoryReaderNewTest(val usingReftable: Boolean) : GitPlatf
 
     val trackInfo = GitBranchUtil.getTrackInfoForBranch(repo, repo.currentBranch!!)!!
     val remote = trackInfo.remote
-    assertEquals("my/remote", remote.name)
-    assertEquals("http://my.remote.git", remote.firstUrl)
+    assertThat(remote.name).isEqualTo("my/remote")
+    assertThat(remote.firstUrl).isEqualTo("http://my.remote.git")
   }
 
   // IDEA-134412
-  fun `test fresh repository is on branch`() {
+  @Test
+  fun `test fresh repository is on branch`(): Unit = with(context) {
     val currentBranch = readState().currentBranch
-    assertNotNull("Current branch shouldn't be null in a fresh repository", currentBranch)
-    assertEquals("Fresh repository should be on master", "master", currentBranch!!.name)
+    assertThat(currentBranch).describedAs("Current branch shouldn't be null in a fresh repository").isNotNull()
+    assertThat(currentBranch!!.name).describedAs("Fresh repository should be on master").isEqualTo("master")
   }
 
   // IDEA-101222
-  fun `test non-ascii current branch name`() {
+  @Test
+  fun `test non-ascii current branch name`(): Unit = with(context) {
     makeCommit("file.txt")
     val branch = "teslá"
     git("checkout -b $branch")
     val state = readState()
-    assertEquals(branch, state.currentBranch!!.name)
+    assertThat(state.currentBranch!!.name).isEqualTo(branch)
   }
 
   // IDEA-143791
-  fun `test branches are case-insensitive on case-insensitive systems`() {
-    assumeTrue("case-insensitive FS only", !SystemInfo.isFileSystemCaseSensitive)
+  @Test
+  fun `test branches are case-insensitive on case-insensitive systems`(): Unit = with(context) {
+    assumeFalse(SystemInfo.isFileSystemCaseSensitive, "case-insensitive FS only")
+    assumeFalse(usingReftable, "Reftable branch names are case-sensitive")
 
     makeCommit("file.txt")
     git("branch UpperCase")
     git("checkout uppercase")
 
     repo.update()
-    assertEquals("UpperCase", repo.currentBranchName)
-    assertEquals(repo.branches.findBranchByName("UpperCase"), repo.branches.findBranchByName("uppercase"))
-    assertEquals(GitLocalBranch("UpperCase"), GitLocalBranch("uppercase"))
+    assertThat(repo.currentBranchName).isEqualTo("UpperCase")
+    assertThat(repo.branches.findBranchByName("uppercase")).isEqualTo(repo.branches.findBranchByName("UpperCase"))
+    assertThat(GitLocalBranch("uppercase")).isEqualTo(GitLocalBranch("UpperCase"))
   }
 
-  fun `test branches are case-sensitive on case-sensitive systems`() {
-    assumeTrue("Not tested: this test is for case sensitive FS only", SystemInfo.isFileSystemCaseSensitive)
+  @Test
+  fun `test branches are case-sensitive on case-sensitive systems`(): Unit = with(context) {
+    assumeTrue(SystemInfo.isFileSystemCaseSensitive, "Not tested: this test is for case sensitive FS only")
 
     makeCommit("file.txt")
     git("branch uppercase")
@@ -194,23 +199,26 @@ abstract class GitRepositoryReaderNewTest(val usingReftable: Boolean) : GitPlatf
     git("checkout UpperCase")
 
     repo.update()
-    assertEquals("UpperCase", repo.currentBranchName)
-    assertEquals(3, repo.branches.localBranches.size)
-    assertNotEquals(repo.branches.findBranchByName("uppercase"), repo.branches.findBranchByName("UpperCase"))
-    assertNotEquals(GitLocalBranch("UpperCase"), GitLocalBranch("uppercase"))
+    assertThat(repo.currentBranchName).isEqualTo("UpperCase")
+    assertThat(repo.branches.localBranches).hasSize(3)
+    assertThat(repo.branches.findBranchByName("uppercase")).isNotEqualTo(repo.branches.findBranchByName("UpperCase"))
+    assertThat(GitLocalBranch("uppercase")).isNotEqualTo(GitLocalBranch("UpperCase"))
   }
 
-  fun `test non-branch files are ignored`() {
+  @Test
+  fun `test non-branch files are ignored`(): Unit = with(context) {
     assumeFalse(usingReftable)
 
     tac("f.txt")
-    assertTrue(File(repo.repositoryFiles.refsHeadsFile, "master.lock").createNewFile())
+    assertThat(File(repo.repositoryFiles.refsHeadsFile, "master.lock").createNewFile()).isTrue()
 
     repo.update()
-    assertSameElements(listOf("master"), repo.branches.localBranches.map { it.name })
+    assertThat(repo.branches.localBranches.map { it.name }).containsExactlyInAnyOrder("master")
   }
 
-  fun `test current branch is known even if deleted`() {
+  @Test
+  @RegistryKey(key = "git.read.branches.from.disk", value = "true")
+  fun `test current branch is known even if deleted`(): Unit = with(context) {
     assumeTrue(!usingReftable && Registry.`is`("git.read.branches.from.disk"))
 
     makeCommit("file.txt")
@@ -218,65 +226,60 @@ abstract class GitRepositoryReaderNewTest(val usingReftable: Boolean) : GitPlatf
     git("checkout -b $branch")
     rm(".git/refs/heads/$branch")
     val state = readState()
-    assertEquals(GitLocalBranch(branch), state.currentBranch)
-    assertNull(state.currentRevision)
+    assertThat(state.currentBranch).isEqualTo(GitLocalBranch(branch))
+    assertThat(state.currentRevision).isNull()
   }
 
+  @Test
   fun `test fresh repository`() {
-    assertTrue(repo.isFresh)
-    assertNull(repo.currentRevision)
-    assertEquals("master", repo.currentBranch?.name)
+    assertThat(repo.isFresh).isTrue()
+    assertThat(repo.currentRevision).isNull()
+    assertThat(repo.currentBranch?.name).isEqualTo("master")
   }
 
-  fun `test cherry-pick state without CHERRY_PICK_HEAD`() {
+  @Test
+  fun `test cherry-pick state without CHERRY_PICK_HEAD`(): Unit = with(context) {
     val file = "file.txt"
     prepareStateForApplyChangesTest("cherry-pick", file)
 
-    val stateWithConflict = readState()
-    assertEquals(State.GRAFTING, stateWithConflict.state)
+    assertThat(readState().state).isEqualTo(State.GRAFTING)
 
     makeCommit(file)
 
-    val stateAfterConflict = readState()
-    assertEquals(State.GRAFTING, stateAfterConflict.state)
+    assertThat(readState().state).isEqualTo(State.GRAFTING)
   }
 
-  fun `test revert state without REVERT_HEAD`() {
+  @Test
+  fun `test revert state without REVERT_HEAD`(): Unit = with(context) {
     val file = "file.txt"
     prepareStateForApplyChangesTest("revert", file)
 
-    val stateWithConflict = readState()
-    assertEquals(State.REVERTING, stateWithConflict.state)
+    assertThat(readState().state).isEqualTo(State.REVERTING)
 
     makeCommit(file)
 
-    val stateAfterConflict = readState()
-    assertEquals(State.REVERTING, stateAfterConflict.state)
+    assertThat(readState().state).isEqualTo(State.REVERTING)
   }
 
-  private fun prepareStateForApplyChangesTest(command: String, file: String) {
-    makeCommit(file)
-    overwrite(file, "new content")
-    val commit = addCommit("modified $file 1")
-    overwrite(file, "newer content")
-    val commit2 = addCommit("modified $file 2")
-    git("$command $commit $commit2", ignoreNonZeroExitCode = true)
-  }
-
-  private fun moveToDetachedHead(): String {
-    makeCommit("file.txt")
-    makeCommit("file.txt")
-    git("checkout HEAD^")
-    return last()
-  }
-
-  private fun readState(): GitBranchState {
-    val gitFiles = repo.repositoryFiles
+  private fun GitPlatformTestContext.readState(): GitBranchState {
     val config = GitConfig.read(project, projectNioRoot)
-    val reader = GitRepositoryReader(myProject, gitFiles)
-    val remotes = config.parseRemotes()
-    return reader.readState(remotes)
+    val reader = GitRepositoryReader(project, repo.repositoryFiles)
+    return reader.readState(config.parseRemotes())
   }
+}
 
-  private fun git(command: String) = repo.git(command)
+private fun GitPlatformTestContext.prepareStateForApplyChangesTest(command: String, file: String) {
+  makeCommit(file)
+  overwrite(file, "new content")
+  val commit = addCommit("modified $file 1")
+  overwrite(file, "newer content")
+  val commit2 = addCommit("modified $file 2")
+  git("$command $commit $commit2", true)
+}
+
+private fun GitPlatformTestContext.moveToDetachedHead(): String {
+  makeCommit("file.txt")
+  makeCommit("file.txt")
+  git("checkout HEAD^")
+  return last()
 }

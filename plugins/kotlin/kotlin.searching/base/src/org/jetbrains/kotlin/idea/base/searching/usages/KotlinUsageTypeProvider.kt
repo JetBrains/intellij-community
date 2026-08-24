@@ -44,6 +44,7 @@ import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtIsExpression
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtPackageDirective
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
@@ -75,6 +76,7 @@ abstract class KotlinUsageTypeProvider : UsageTypeProviderEx {
             is KtPropertyDelegate -> return PROPERTY_DELEGATION
             is KtStringTemplateExpression -> return USAGE_IN_STRING_LITERAL
             is KtConstructorDelegationReferenceExpression -> return CONSTRUCTOR_DELEGATION_REFERENCE
+            is KtObjectDeclaration -> return null
         }
 
         val refExpr = element?.getNonStrictParentOfType<KtReferenceExpression>() ?: return null

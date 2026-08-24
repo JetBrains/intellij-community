@@ -292,7 +292,9 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
         val startTime = System.currentTimeMillis()
         WhatsNewCounterUsageCollector.openedPerformed(project, startPageId, triggeredByUser)
 
-        WhatsNewContentVersionChecker.saveLastShownContent(this@WhatsNewVisionContent)
+        if (WhatsNewContentVersionChecker.saveLastShownContent(this@WhatsNewVisionContent)) {
+          reactionChecker.clearLikenessState()
+        }
 
         val busConnection = application.messageBus.connect(disposable)
         busConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {

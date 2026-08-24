@@ -19,11 +19,20 @@ import com.intellij.platform.ide.progress.statuses
 import com.intellij.platform.ide.progress.suspender.TaskSuspension
 import com.intellij.platform.ide.progress.suspensionState
 import com.intellij.platform.ide.progress.updates
+import com.intellij.platform.project.ProjectEntity
+import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.projectId
+import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.entities
+import com.jetbrains.rhizomedb.exists
+import fleet.kernel.change
+import fleet.kernel.delete
 import fleet.kernel.rete.asValuesFlow
 import fleet.kernel.rete.collect
 import fleet.kernel.rete.collectLatest
+import fleet.kernel.rete.each
 import fleet.kernel.rete.filter
+import fleet.kernel.rete.tokenSetsFlow
 import fleet.kernel.tryWithEntities
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.awaitCancellation
@@ -38,6 +47,7 @@ internal class TaskInfoEntityCollector(cs: CoroutineScope) {
   init {
     LOG.trace { "TaskInfoEntityCollector started for application"}
     collectActiveTasks(cs, project = null)
+    collectStaleProjectTasks(cs)
   }
 }
 
@@ -52,11 +62,53 @@ internal class PerProjectTaskInfoEntityCollector(private val project: Project, p
 private fun collectActiveTasks(cs: CoroutineScope, project: Project?) {
   cs.launch {
     activeTasks
-      .filter { it.projectEntity?.projectId == project?.projectId() }
+      .filter { it.projectId == project?.projectId() }
       .collect { task ->
         showTaskIndicator(cs, project, task)
       }
   }
+}
+
+/**
+ * Tasks reference their project by a plain id (see [TaskInfoEntity.projectId]), so nothing cascades
+ * when a `ProjectEntity` disappears. This watches project entities and removes the tasks of a project
+ * that is truly unregistered — as opposed to one whose entity got replaced by another with the same id
+ * (both peers create one; in IJ Light the id itself is re-bound on connect), which used to trip the
+ * cascade delete and silently wipe the tasks.
+ */
+internal fun collectStaleProjectTasks(cs: CoroutineScope) {
+  val projectIdsByEntity = mutableMapOf<EID, ProjectId>()
+  cs.launch {
+    ProjectEntity.each().tokenSetsFlow().collect { tokenSet ->
+      val removedProjectIds = tokenSet.retracted
+        .map { it.value }
+        .mapNotNull { projectEntity ->
+          projectIdsByEntity.remove(projectEntity.eid) ?: run {
+            LOG.warn("Can't remove project entity with id ${projectEntity.eid}. It's already removed")
+            null
+          }
+        }.toSet()
+
+      tokenSet.asserted
+        .map { it.value }
+        .filter { it.exists() }
+        .forEach { projectEntity ->
+          projectIdsByEntity[projectEntity.eid] = projectEntity.projectId
+        }
+
+      removeTasksForUnregisteredProjects(removedProjectIds)
+    }
+  }
+}
+
+internal suspend fun removeTasksForUnregisteredProjects(projectIds: Set<ProjectId>) {
+  projectIds
+    .filter { projectId -> entities(ProjectEntity.ProjectIdValue, projectId).isEmpty() }
+    .forEach { projectId ->
+      change {
+        entities(TaskInfoEntity.ProjectIdType, projectId).forEach { delete(it) }
+      }
+    }
 }
 
 private fun showTaskIndicator(cs: CoroutineScope, project: Project?, task: TaskInfoEntity) {

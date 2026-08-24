@@ -11,7 +11,6 @@ import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -163,17 +162,6 @@ internal class EntityWithSoftLinksImpl(private val dataSource: EntityWithSoftLin
       if (!getEntityData().isDeepSealedClassInitialized()) {
         error("Field EntityWithSoftLinks#deepSealedClass should be initialized")
       }
-// Check initialization for list with ref type
-      if (_diff != null) {
-        if (_diff.instrumentation.getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this) == null) {
-          error("Field EntityWithSoftLinks#children should be initialized")
-        }
-      }
-      else {
-        if (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] == null) {
-          error("Field EntityWithSoftLinks#children should be initialized")
-        }
-      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -209,16 +197,16 @@ internal class EntityWithSoftLinksImpl(private val dataSource: EntityWithSoftLin
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.link != dataSource.link) this.link = dataSource.link
       if (this.manyLinks != dataSource.manyLinks) this.manyLinks = dataSource.manyLinks.toMutableList()
-      if (this.optionalLink != dataSource?.optionalLink) this.optionalLink = dataSource.optionalLink
+      if (this.optionalLink != dataSource.optionalLink) this.optionalLink = dataSource.optionalLink
       if (this.inContainer != dataSource.inContainer) this.inContainer = dataSource.inContainer
-      if (this.inOptionalContainer != dataSource?.inOptionalContainer) this.inOptionalContainer = dataSource.inOptionalContainer
+      if (this.inOptionalContainer != dataSource.inOptionalContainer) this.inOptionalContainer = dataSource.inOptionalContainer
       if (this.inContainerList != dataSource.inContainerList) this.inContainerList = dataSource.inContainerList.toMutableList()
       if (this.deepContainer != dataSource.deepContainer) this.deepContainer = dataSource.deepContainer.toMutableList()
       if (this.sealedContainer != dataSource.sealedContainer) this.sealedContainer = dataSource.sealedContainer
       if (this.listSealedContainer != dataSource.listSealedContainer) this.listSealedContainer =
         dataSource.listSealedContainer.toMutableList()
       if (this.justProperty != dataSource.justProperty) this.justProperty = dataSource.justProperty
-      if (this.justNullableProperty != dataSource?.justNullableProperty) this.justNullableProperty = dataSource.justNullableProperty
+      if (this.justNullableProperty != dataSource.justNullableProperty) this.justNullableProperty = dataSource.justNullableProperty
       if (this.justListProperty != dataSource.justListProperty) this.justListProperty = dataSource.justListProperty.toMutableList()
       if (this.deepSealedClass != dataSource.deepSealedClass) this.deepSealedClass = dataSource.deepSealedClass
       updateChildToParentReferences(parents)

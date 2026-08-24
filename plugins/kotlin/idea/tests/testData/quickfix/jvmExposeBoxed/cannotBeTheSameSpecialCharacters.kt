@@ -1,0 +1,9 @@
+// "Change name in @JvmExposeBoxed" "true"
+// WITH_STDLIB
+// K2_ERROR: JVM_EXPOSE_BOXED_CANNOT_BE_THE_SAME
+@file:OptIn(ExperimentalStdlibApi::class)
+
+@JvmExposeBoxed("fo<caret>o\"bar")
+fun `foo"bar`(x: UInt) {}
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeJvmExposeBoxedNameFix

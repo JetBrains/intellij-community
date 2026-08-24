@@ -1,5 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.python.pytools.ui` start
 create_kotlinc_options(
@@ -59,6 +60,8 @@ jvm_library(
         "//python/python-pyproject:pyproject",
     ],
 )
+
+content_module_jar(module = ":pytools-ui")
 
 jvm_library(
     name = "pytools-ui_test_lib",

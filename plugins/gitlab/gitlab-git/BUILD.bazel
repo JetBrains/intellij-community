@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.vcs.gitlab.git` start
 jvm_library(
@@ -45,6 +46,8 @@ jvm_library(
         "//plugins/gitlab/gitlab-core:vcs-gitlab",
     ],
 )
+
+content_module_jar(module = ":vcs-gitlab-git")
 
 jvm_library(
     name = "vcs-gitlab-git_test_lib",

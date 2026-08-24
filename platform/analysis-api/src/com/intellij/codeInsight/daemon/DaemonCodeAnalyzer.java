@@ -6,9 +6,11 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.messages.Topic;
@@ -22,6 +24,24 @@ import java.util.Collection;
  * Manages the background highlighting and auto-import for files displayed in editors.
  */
 public abstract class DaemonCodeAnalyzer {
+  /**
+   * Declares that a non-physical {@link Document} - one whose file is a {@link com.intellij.testFramework.LightVirtualFile},
+   * as an {@code EditorTextField}'s own document is - is an interactive editing surface of the given project.
+   * <p>
+   * The daemon creates highlighting passes for such a document anyway, because {@link #isHighlightingAvailable} only asks
+   * whether the PSI file sends events. What it does not do is invalidate the result the way it does for an editor: every
+   * listener that marks a file dirty on an edit skips a document backed by a light file, so all that reaches the file
+   * status map is the narrow range of the typed characters. An annotator that looks wider than that range - a spell
+   * checker, a grammar checker, anything reporting on a word or a sentence - never runs again, and its highlighting stays
+   * on screen until something unrelated restarts the daemon. That is why a stale warning in such a field used to go away
+   * only when a quick fix was applied. This marker opts one document into the invalidation an editor gets.
+   * <p>
+   * Set it on the document, not on the file, and name the project the surface belongs to: the daemon cannot derive that
+   * from a light file without guessing, and it must not act on another project's document.
+   */
+  @ApiStatus.Internal
+  public static final Key<Project> INTERACTIVE_NON_PHYSICAL_DOCUMENT = Key.create("daemon.interactive.non.physical.document");
+
   public static DaemonCodeAnalyzer getInstance(Project project) {
     return project.getService(DaemonCodeAnalyzer.class);
   }

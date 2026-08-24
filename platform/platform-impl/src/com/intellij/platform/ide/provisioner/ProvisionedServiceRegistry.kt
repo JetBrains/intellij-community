@@ -1,7 +1,7 @@
 package com.intellij.platform.ide.provisioner
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.ExtensionPointName
 
 interface ProvisionedServiceRegistry {
   /**
@@ -14,7 +14,18 @@ interface ProvisionedServiceRegistry {
   fun getServiceById(id: String): ProvisionedServiceDescriptor?
 
   companion object {
-    fun getInstance(): ProvisionedServiceRegistry = ApplicationManager.getApplication().service()
+    @JvmField
+    val EP: ExtensionPointName<ProvisionedServiceRegistry> = ExtensionPointName("com.intellij.provisionedServiceRegistry")
+
+    @JvmStatic
+    fun getInstance(): ProvisionedServiceRegistry = CompositeProvisionedServiceRegistry
+  }
+}
+
+internal object CompositeProvisionedServiceRegistry : ProvisionedServiceRegistry {
+  override fun getServiceById(id: String): ProvisionedServiceDescriptor? {
+    return ProvisionedServiceRegistry.EP.computeSafeIfAny { it.getServiceById(id) }
+           ?: service<ProvisionedServiceRegistry>().getServiceById(id)
   }
 }
 

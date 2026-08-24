@@ -21,7 +21,7 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
-    <orderEntry type="library" name="memoryfilesystem" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.memoryfilesystem" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" />
     <orderEntry type="module" module-name="intellij.libraries.assertj.core" />
     <orderEntry type="module" module-name="intellij.libraries.snakeyaml" />

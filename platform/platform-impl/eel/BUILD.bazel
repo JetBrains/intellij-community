@@ -1,5 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.platform.ide.impl.wsl` start
 create_kotlinc_options(
@@ -49,6 +50,8 @@ jvm_library(
         "//platform/util:util-ui",
     ],
 )
+
+content_module_jar(module = ":ide-impl-wsl")
 
 jvm_library(
     name = "ide-impl-wsl_test_lib",

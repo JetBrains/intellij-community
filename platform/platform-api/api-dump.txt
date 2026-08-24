@@ -2329,6 +2329,7 @@ com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 a:com.intellij.openapi.fileEditor.AsyncFileEditorProvider$Builder
 - <init>():V
 - a:build():com.intellij.openapi.fileEditor.FileEditor
+f:com.intellij.openapi.fileEditor.CreatedFileEditorSinkKt
 com.intellij.openapi.fileEditor.DocumentsEditor
 - com.intellij.openapi.fileEditor.FileEditor
 - a:getDocuments():com.intellij.openapi.editor.Document[]
@@ -5417,9 +5418,13 @@ f:com.intellij.platform.ide.navigation.NavigationOptions$Companion
 com.intellij.platform.ide.navigation.NavigationService
 - sf:Companion:com.intellij.platform.ide.navigation.NavigationService$Companion
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.ide.navigation.NavigationService
-- a:navigate(com.intellij.openapi.actionSystem.DataContext,com.intellij.platform.ide.navigation.NavigationOptions,kotlin.coroutines.Continuation):java.lang.Object
-- a:navigate(com.intellij.platform.backend.navigation.NavigationRequest,com.intellij.platform.ide.navigation.NavigationOptions,com.intellij.openapi.actionSystem.DataContext,kotlin.coroutines.Continuation):java.lang.Object
-- bs:navigate$default(com.intellij.platform.ide.navigation.NavigationService,com.intellij.platform.backend.navigation.NavigationRequest,com.intellij.platform.ide.navigation.NavigationOptions,com.intellij.openapi.actionSystem.DataContext,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- navigate(com.intellij.platform.backend.navigation.NavigationRequest,com.intellij.platform.ide.navigation.NavigationOptions,com.intellij.openapi.actionSystem.DataContext,kotlin.coroutines.Continuation):java.lang.Object
+- a:navigate(com.intellij.platform.backend.navigation.NavigationRequest,com.intellij.platform.ide.navigation.NavigationOptions,kotlin.coroutines.Continuation):java.lang.Object
+- navigate(com.intellij.platform.backend.navigation.NavigationRequest,kotlin.coroutines.Continuation):java.lang.Object
+- a:navigate(java.util.Collection,com.intellij.platform.ide.navigation.NavigationOptions,kotlin.coroutines.Continuation):java.lang.Object
+- navigate(java.util.Collection,kotlin.coroutines.Continuation):java.lang.Object
+- navigateRequests(com.intellij.platform.ide.navigation.NavigationOptions,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- navigateRequests(kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.platform.ide.navigation.NavigationService$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.ide.navigation.NavigationService
 com.intellij.platform.ide.productMode.IdeProductMode
@@ -11028,8 +11033,6 @@ c:com.intellij.util.net.HttpConfigurable
 - prepareURL(java.lang.String):V
 - putGenericPassword(java.lang.String,I,java.net.PasswordAuthentication,Z):V
 - removeGeneric(com.intellij.util.proxy.CommonProxy$HostInfo):V
-- setPlainProxyPassword(java.lang.String):V
-- setProxyLogin(java.lang.String):V
 f:com.intellij.util.net.HttpConnectionUtils
 - sf:INSTANCE:com.intellij.util.net.HttpConnectionUtils
 - sf:openConnection(java.lang.String):java.net.URLConnection

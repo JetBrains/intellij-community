@@ -12,11 +12,12 @@
   module: intellij.searchEverywhereMl
   files:
   - name: $MAVEN_REPOSITORY$/ai/grazie/model/swagger-annotations-jvm/0/swagger-annotations-jvm-0.jar
-- name: lib/jetbrains.mlapi.core.jar
-  library: jetbrains.mlapi.core
-  files:
-  - name: $MAVEN_REPOSITORY$/com/jetbrains/mlapi/mlapi-core/0/mlapi-core-0.jar
-  reason: <- intellij.platform.ml.logs
+- name: lib/modules/intellij.libraries.mlapi.core.jar
+  contentModules:
+  - name: intellij.libraries.mlapi.core
+    libraries:
+      jetbrains.mlapi.core:
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/mlapi/mlapi-core/0/mlapi-core-0.jar
 - name: lib/modules/intellij.libraries.search.everywhere.find.all.model.jar
   contentModules:
   - name: intellij.libraries.search.everywhere.find.all.model

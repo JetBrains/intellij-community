@@ -198,7 +198,7 @@ class MavenCommandLineSetup(
       commandLine.addParameter(runnerParameters.pomFileName)
     }
 
-    val encodeProfiles = encodeProfiles(runnerParameters.profilesMap)
+    val encodeProfiles = encodeProfiles(runnerParameters.profilesMap, defaultMavenRuntimeConfiguration?.versionString)
     if (encodeProfiles.isNotEmpty()) {
       commandLine.addParameters("-P", encodeProfiles)
     }

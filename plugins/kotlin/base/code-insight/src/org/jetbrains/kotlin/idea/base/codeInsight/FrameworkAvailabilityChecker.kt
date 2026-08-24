@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.codeInsight
 
 import com.intellij.openapi.module.Module
@@ -10,7 +10,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.util.caching.ModuleEntityChangeListener
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
-import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinFullTypeAliasNameIndex
 
 abstract class FrameworkAvailabilityChecker(
     project: Project
@@ -44,8 +44,8 @@ abstract class FrameworkAvailabilityChecker(
 
         return fqNames.any { fqName ->
             (javaClassLookup && javaPsiFacade.findClass(fqName, moduleScope) != null)
-                    || (aliasLookup && KotlinTopLevelTypeAliasFqNameIndex.get(fqName, project, moduleScope).isNotEmpty())
-                    || (kotlinFullClassLookup && KotlinFullClassNameIndex.get(fqName, project, moduleScope).isNotEmpty())
+                    || (aliasLookup && KotlinFullTypeAliasNameIndex.hasValue(fqName, project, moduleScope))
+                    || (kotlinFullClassLookup && KotlinFullClassNameIndex.hasValue(fqName, project, moduleScope))
         }
     }
 

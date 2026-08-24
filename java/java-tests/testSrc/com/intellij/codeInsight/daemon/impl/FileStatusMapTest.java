@@ -6,12 +6,14 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.ProductionDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.configurationStore.StoreUtilKt;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ReadAction;
@@ -19,12 +21,16 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorMouseHoverPopupManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -33,6 +39,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiWhiteSpace;
@@ -43,6 +50,7 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FileContentUtilCore;
+import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ref.GCWatcher;
@@ -461,5 +469,97 @@ public class FileStatusMapTest extends ProductionDaemonAnalyzerTestCase {
     type('3');
 
     assertEquals(psiFile.getTextRange(), FileStatusMap.getDirtyTextRange(document, psiFile, Pass.UPDATE_ALL));
+  }
+
+  // An EditorTextField's own document is backed by a light file. The daemon highlights it, but the only invalidation it gets
+  // for an edit is the narrow typing scope, so an annotator that looks wider than the typed characters never runs again and
+  // its warning goes stale. Only a document its owner declared an interactive editing surface is invalidated like an
+  // editor's. See IJAI-1049.
+  public void testEditInNonPhysicalDocumentDeclaredAnInteractiveEditingSurface() {
+    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(PlainTextLanguage.INSTANCE,
+                                                        new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyTyppoAnnotator()},
+                                                        () -> {
+      Document document = configureNonPhysicalLightFile();
+      try {
+        document.putUserData(DaemonCodeAnalyzer.INTERACTIVE_NON_PHYSICAL_DOCUMENT, getProject());
+        myDaemonCodeAnalyzer.restart(getTestName(false));
+        myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
+        assertOneElement(MyTyppoAnnotator.myHighlights(getProject(), document));
+        assertNull(myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, getFile(), Pass.UPDATE_ALL));
+
+        // spell the flagged word differently, the way a user corrects a typo by hand
+        typeInsideTheFlaggedWord(document);
+
+        // the edit alone invalidated the document - no restart(), no doHighlighting(), nothing that marks it dirty for the test
+        assertNotNull(myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, getFile(), Pass.UPDATE_ALL));
+        myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
+        assertEmpty(MyTyppoAnnotator.myHighlights(getProject(), document));
+      }
+      finally {
+        EditorFactory.getInstance().releaseEditor(myEditor);
+      }
+    });
+  }
+
+  // the other half of the contract, and the bug the declaration above fixes: a light document that declared nothing keeps its
+  // stale warning, so a preview or a console pays nothing for invalidation it never asked for
+  public void testEditInNonPhysicalDocumentThatDeclaredNothingKeepsItsStaleHighlighting() {
+    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(PlainTextLanguage.INSTANCE,
+                                                        new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyTyppoAnnotator()},
+                                                        () -> {
+      Document document = configureNonPhysicalLightFile();
+      try {
+        myDaemonCodeAnalyzer.restart(getTestName(false));
+        myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
+        assertOneElement(MyTyppoAnnotator.myHighlights(getProject(), document));
+
+        typeInsideTheFlaggedWord(document);
+        myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
+
+        assertOneElement(MyTyppoAnnotator.myHighlights(getProject(), document));
+      }
+      finally {
+        EditorFactory.getInstance().releaseEditor(myEditor);
+      }
+    });
+  }
+
+  // exactly how EditorTextField.createDocument() builds its document: a light file with the event system on
+  private @NotNull Document configureNonPhysicalLightFile() {
+    PsiFile lightFile = PsiFileFactory.getInstance(getProject())
+      .createFileFromText("Dummy.txt", PlainTextFileType.INSTANCE, "a " + MyTyppoAnnotator.TYPPO + " here",
+                          LocalTimeCounter.currentTime(), true, false);
+    configureByExistingFile(lightFile.getVirtualFile());
+    assertFalse(getFile().getViewProvider().correspondsToRealFile());
+    Document document = getEditor().getDocument();
+    VisibleHighlightingPassFactory.setVisibleRangeForHeadlessMode(myEditor, new ProperTextRange(0, document.getTextLength()));
+    return document;
+  }
+
+  private void typeInsideTheFlaggedWord(@NotNull Document document) {
+    getEditor().getCaretModel().moveToOffset(document.getText().indexOf(MyTyppoAnnotator.TYPPO) + 1);
+    type('x');
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    myTestDaemonCodeAnalyzer.waitForUpdateFileStatusBackgroundQueueInTests();
+  }
+
+  // flags one misspelled word - the smallest stand-in for the spell checker and the grammar checker, which report through annotators
+  public static class MyTyppoAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
+    static final String TYPPO = "typpo";
+    private static final String MSG = "Typo: " + TYPPO;
+
+    @Override
+    public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+      iDidIt();
+      if (!(element instanceof PsiFile)) return;
+      int start = element.getText().indexOf(TYPPO);
+      if (start < 0) return;
+      holder.newAnnotation(HighlightSeverity.WARNING, MSG).range(TextRange.from(start, TYPPO.length())).create();
+    }
+
+    static @NotNull List<HighlightInfo> myHighlights(@NotNull Project project, @NotNull Document document) {
+      return ContainerUtil.filter(DaemonCodeAnalyzerImpl.getHighlights(document, HighlightSeverity.WARNING, project),
+                                  info -> MSG.equals(info.getDescription()));
+    }
   }
 }

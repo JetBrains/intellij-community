@@ -3,23 +3,34 @@ package git4idea.workingTrees
 
 import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.TestFixture
 import git4idea.GitTag
 import git4idea.GitWorkingTree
-import git4idea.actions.workingTree.GitWorkingTreeDialogData
+import git4idea.workingTrees.dialog.GitWorktreeCreationRequest
+import git4idea.workingTrees.dialog.WorktreeBranchSpec
 import git4idea.repo.GitRefUtil
+import git4idea.repo.GitRepository
+import git4idea.test.GitPlatformTestContext
+import git4idea.test.createRepository
 import git4idea.test.git
+import git4idea.test.gitPlatformContextFixture
 import git4idea.test.tac
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.nio.file.Path
 
 @TestApplication
-internal class GitWorkingTreeFromTagTest : GitWorkingTreeTestBase(gitWorkingTreeSingleRepoFixture()) {
+internal class GitWorkingTreeFromTagTest : GitWorkingTreeTestBase() {
+  private val fixture: TestFixture<GitPlatformTestContext> = gitPlatformContextFixture()
+  private val context: GitPlatformTestContext get() = fixture.get()
+  private lateinit var repo: GitRepository
 
-  override val mainRepoPath: Path
-    get() = repo.root.toNioPath()
-
-  override fun getExpectedDefaultWorkingTrees(): List<GitWorkingTree> {
+  private fun getExpectedDefaultWorkingTrees(): List<GitWorkingTree> {
     return listOf(GitWorkingTree(repo.root.path, repo.currentBranch!!.fullName, true, true))
+  }
+
+  @BeforeEach
+  fun setUp() {
+    repo = createRepository(context.project, context.projectNioRoot, true)
   }
 
   @Test
@@ -30,13 +41,15 @@ internal class GitWorkingTreeFromTagTest : GitWorkingTreeTestBase(gitWorkingTree
 
     val treeRoot = "treeRoot"
     val workingTreeDataPath = LocalFilePath(testNioRoot.resolve(treeRoot), true)
-    val data = GitWorkingTreeDialogData.createForExistingBranch(workingTreeDataPath, GitTag(tagName))
+    val data = GitWorktreeCreationRequest(repo, workingTreeDataPath, WorktreeBranchSpec.CheckoutExisting(GitTag(tagName)))
 
-    doTestWorkingTreeCreation(
+    repo.doTestWorkingTreeCreation(
       data,
+      projectNioRoot,
       GitWorkingTree(workingTreeDataPath.path, null, false, false, headHash = commit),
       expectedWorkingTreeBranchName = null,
       expectedWorkingTreeLastCommit = commit,
+      getExpectedDefaultWorkingTrees()
     )
   }
 
@@ -48,13 +61,15 @@ internal class GitWorkingTreeFromTagTest : GitWorkingTreeTestBase(gitWorkingTree
 
     val treeRoot = "treeRoot"
     val workingTreeDataPath = LocalFilePath(testNioRoot.resolve(treeRoot), true)
-    val data = GitWorkingTreeDialogData.createForExistingBranch(workingTreeDataPath, GitTag(tagName))
+    val data = GitWorktreeCreationRequest(repo, workingTreeDataPath, WorktreeBranchSpec.CheckoutExisting(GitTag(tagName)))
 
-    doTestWorkingTreeCreation(
+    repo.doTestWorkingTreeCreation(
       data,
+      projectNioRoot,
       GitWorkingTree(workingTreeDataPath.path, null, false, false, headHash = commit),
       expectedWorkingTreeBranchName = null,
       expectedWorkingTreeLastCommit = commit,
+      getExpectedDefaultWorkingTrees()
     )
   }
 
@@ -67,15 +82,17 @@ internal class GitWorkingTreeFromTagTest : GitWorkingTreeTestBase(gitWorkingTree
     val treeRoot = "treeRoot"
     val newBranchName = "branch-from-tag"
     val workingTreeDataPath = LocalFilePath(testNioRoot.resolve(treeRoot), true)
-    val data = GitWorkingTreeDialogData.createForNewBranch(workingTreeDataPath, GitTag(tagName), newBranchName)
+    val data = GitWorktreeCreationRequest(repo, workingTreeDataPath, WorktreeBranchSpec.CreateNewBranch(GitTag(tagName), newBranchName))
 
-    doTestWorkingTreeCreation(
+    repo.doTestWorkingTreeCreation(
       data,
+      projectNioRoot,
       GitWorkingTree(workingTreeDataPath.path,
                      GitRefUtil.addRefsHeadsPrefixIfNeeded(newBranchName)!!,
                      false, false),
       expectedWorkingTreeBranchName = newBranchName,
       expectedWorkingTreeLastCommit = commit,
+      getExpectedDefaultWorkingTrees()
     )
   }
 }

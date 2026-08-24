@@ -621,6 +621,12 @@ public final class DaemonListeners implements Disposable {
       // if the document is from the debugger evaluate window, even if it contains a light file, it needs to be highlighted
       return true;
     }
+    if (document.getUserData(DaemonCodeAnalyzer.INTERACTIVE_NON_PHYSICAL_DOCUMENT) == myProject) {
+      // an editing surface built on a light file - an EditorTextField's own document - which its owner declared interactive.
+      // The daemon highlights such a document, so it must invalidate it too; the clauses below have nothing left to decide,
+      // because the marker already named the project and asserted that the document is edited on the write thread.
+      return true;
+    }
 
     if (virtualFile == null || virtualFile instanceof LightVirtualFile) {
       return false;

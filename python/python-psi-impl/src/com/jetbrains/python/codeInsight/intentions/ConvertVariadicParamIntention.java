@@ -159,7 +159,8 @@ public final class ConvertVariadicParamIntention extends PyBaseIntentionAction {
           }
           else if (isKeywordContainerCall(e, keywordContainer)) {
             final PyCallExpression call = (PyCallExpression)e;
-            referencesAsOperandOrReceiver.add(call.getReceiver(null));
+            PyExpression receiver = call.getCallee() instanceof PyQualifiedExpression callee ? callee.getQualifier() : null;
+            referencesAsOperandOrReceiver.add(receiver);
 
             final String name = getIndexValueToReplace(call);
             if (name != null) {

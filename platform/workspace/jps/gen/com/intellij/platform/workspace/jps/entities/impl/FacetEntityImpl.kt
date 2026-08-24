@@ -118,7 +118,7 @@ internal class FacetEntityImpl(private val dataSource: FacetEntityData) : FacetE
       if (this.moduleId != dataSource.moduleId) this.moduleId = dataSource.moduleId
       if (this.name != dataSource.name) this.name = dataSource.name
       if (this.typeId != dataSource.typeId) this.typeId = dataSource.typeId
-      if (this.configurationXmlTag != dataSource?.configurationXmlTag) this.configurationXmlTag = dataSource.configurationXmlTag
+      if (this.configurationXmlTag != dataSource.configurationXmlTag) this.configurationXmlTag = dataSource.configurationXmlTag
       updateChildToParentReferences(parents)
     }
 

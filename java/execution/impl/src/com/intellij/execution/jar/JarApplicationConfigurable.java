@@ -45,7 +45,8 @@ public class JarApplicationConfigurable extends SettingsEditor<JarApplicationCon
       myJarPathComponent = new LabeledComponent<>();
       var textFieldWithBrowseButton = new TextFieldWithBrowseButton();
       textFieldWithBrowseButton.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleFileDescriptor("jar")
-        .withTitle(ExecutionBundle.message("choose.jar.file")));
+        .withTitle(ExecutionBundle.message("choose.jar.file"))
+        .withEnvironmentRestricted(true));
       myJarPathComponent.setComponent(textFieldWithBrowseButton);
     }
     {

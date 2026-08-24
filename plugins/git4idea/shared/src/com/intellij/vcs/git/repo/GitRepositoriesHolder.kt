@@ -184,6 +184,8 @@ class GitRepositoriesHolder(
         state = state.toRepositoryStateImpl(),
         favoriteRefs = favoriteRefs,
         root = root.filePath,
+        isSubmodule = isSubmodule,
+        commonGitDirPath = commonGitDirPath,
       )
 
     private fun GitRepositoryStateDto.toRepositoryStateImpl(): GitRepositoryStateImpl =
@@ -225,6 +227,8 @@ private open class GitRepositoryModelImpl(
   override var state: GitRepositoryStateImpl,
   override var favoriteRefs: GitFavoriteRefs,
   override val root: FilePath,
+  override val isSubmodule: Boolean,
+  override val commonGitDirPath: @NlsSafe String,
 ) : GitRepositoryModel
 
 private class GitRepositoryStateImpl(

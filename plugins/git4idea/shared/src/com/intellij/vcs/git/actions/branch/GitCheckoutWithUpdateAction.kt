@@ -84,7 +84,7 @@ class GitCheckoutWithUpdateAction : GitBranchActionToBeWrapped, DumbAwareAction(
 
       private fun isAlreadyCheckedOut(repositories: List<GitRepositoryModel>, branch: GitStandardLocalBranch): Boolean {
         if (repositories.any {
-            GitWorkingTreesUtil.getWorkingTreeWithRef(branch, it, true) != null
+            GitWorkingTreesUtil.findCheckedOutWorkingTree(branch, it.state.workingTrees, true) != null
           }) {
           return true
         }

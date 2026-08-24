@@ -83,6 +83,7 @@ internal class MiddleEntityImpl(private val dataSource: MiddleEntityData) : Midd
         changedProperty.add("entitySource")
       }
     override var parentEntity: CompositeBaseEntityBuilder<out CompositeBaseEntity>?
+      @Suppress("UNCHECKED_CAST")
       get() = getParent(PARENTENTITY_CONNECTION_ID) as? CompositeBaseEntityBuilder<out CompositeBaseEntity>?
               ?: error("parentEntity is null for BaseEntity")
       set(value) {

@@ -302,7 +302,7 @@ data class IDERunContext(
       isAlive = { process.isAlive },
       javaHome = jdkHome,
       javaProcessId = collectingProcessId,
-      threadDumpsDir = { lastIdeReportingData.logsDir.resolve("monitoring-thread-dumps-${processName}") } ,
+      threadDumpsDir = { lastIdeReportingData.logsDir.resolve("thread-dumps-${processName}") } ,
     )
   }
 

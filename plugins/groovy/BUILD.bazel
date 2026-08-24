@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 # Checkout directories that plugin layouts copy into a distribution verbatim (`withResource*`). They are
@@ -212,10 +213,44 @@ exports_files(
         "resources/META-INF/groovy-templates.xml",
         "resources/META-INF/plugin.xml",
         "resources/org/jetbrains/plugins/groovy/config/groovy.sdk.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.groovy` end
+
+### auto-generated section `dev content intellij.groovy` start
+dev_dist_plugin_content(
+    content_modules = [
+        "//libraries/hamcrest",
+        "//libraries/junit4",
+        "//libraries/opentest4j",
+        "//plugins/groovy/git",
+        "//plugins/groovy/groovy-psi:psi",
+        "//plugins/groovy/jps-plugin:jps",
+        "//plugins/groovy/rt",
+        "//plugins/groovy/rt-constants:constants-rt",
+        "//plugins/groovy/rt/classLoader",
+        "//plugins/groovy/spock-rt",
+    ],
+    descriptor_module = ":groovy",
+    libraries = [
+        "@lib//:eclipse",
+        "@lib//:groovy-spock-rt-spockframework-spock-core",
+        "@lib//:libraries-hamcrest-hamcrest",
+        "@lib//:libraries-junit4-_j_unit4",
+        "@lib//:libraries-opentest4j-opentest4j",
+    ],
+    prepacked_content_modules = [
+        "//plugins/groovy/ant:ant_content_module_jar",
+        "//plugins/groovy/byteCodeViewer:byteCodeViewer_content_module_jar",
+        "//plugins/groovy/intellij.groovy.copyright:copyright_content_module_jar",
+        "//plugins/groovy/langInjection:langInjection_content_module_jar",
+        "//plugins/groovy/spock:spock_content_module_jar",
+        "//plugins/groovy/structuralsearch-groovy:structuralSearch_content_module_jar",
+    ],
+)
+### auto-generated section `dev content intellij.groovy` end
 
 ### auto-generated section `build intellij.groovy.tests` start
 jvm_library(

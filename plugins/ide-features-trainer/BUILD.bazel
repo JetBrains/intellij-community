@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -144,10 +145,31 @@ exports_files(
     [
         "intellij.featuresTrainer.iml",
         "res/META-INF/plugin.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.featuresTrainer` end
+
+### auto-generated section `dev content intellij.featuresTrainer` start
+dev_dist_plugin_content(
+    content_modules = [
+        "//libraries/assertj-core",
+        "//plugins/git-features-trainer:vcs-git-featuresTrainer",
+        "//plugins/ide-features-trainer/onboarding",
+    ],
+    descriptor_module = ":featuresTrainer",
+    libraries = [
+        "@lib//:assertj-swing",
+        "@lib//:git-learning-project",
+        "@lib//:libraries-assertj-core-assert_j",
+    ],
+    prepacked_content_modules = [
+        "//plugins/ide-features-trainer/tips:tips_content_module_jar",
+        "//plugins/kotlin/onboarding-promoter:onboarding-promoter_content_module_jar",
+    ],
+)
+### auto-generated section `dev content intellij.featuresTrainer` end
 
 ### auto-generated section `build intellij.featuresTrainer.tests` start
 jvm_library(

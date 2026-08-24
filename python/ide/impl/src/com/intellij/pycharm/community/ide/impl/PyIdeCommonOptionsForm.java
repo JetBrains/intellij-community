@@ -187,6 +187,17 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   }
 
+  @ApiStatus.Internal
+  @Override
+  public @Nullable Boolean getRunAsScript() {
+    return null;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void setRunAsScript(@Nullable Boolean runAsScript) {
+  }
+
   @Override
   public void setModule(Module module) {
     content.moduleCombo.setSelectedModule(module);

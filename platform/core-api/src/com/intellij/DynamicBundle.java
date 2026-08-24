@@ -262,14 +262,6 @@ public class DynamicBundle extends AbstractBundle {
   /**
    * @deprecated use {@link #getResourceBundle(ClassLoader, String)}
    */
-  @Deprecated
-  @ScheduledForRemoval
-  public static final DynamicBundle INSTANCE = new DynamicBundle("") {
-  };
-
-  /**
-   * @deprecated use {@link #getResourceBundle(ClassLoader, String)}
-   */
   @SuppressWarnings("MethodMayBeStatic")
   @Deprecated
   @ScheduledForRemoval

@@ -1,0 +1,12 @@
+[tool.uv.workspace]
+members = [
+    "pkg_core",
+    "pkg_app",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.13",
+    "ty>=0.0.36",
+    "pytest>=8.0",
+]

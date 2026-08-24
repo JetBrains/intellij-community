@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.groovy.ant` start
 jvm_library(
@@ -15,6 +16,11 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-groovy-ant-groovy-ant"],
     runtime_deps = ["@lib//:libraries-groovy-ant-groovy-ant"],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-groovy-ant-groovy-ant"],
+    module = ":ant",
 )
 
 jvm_library(

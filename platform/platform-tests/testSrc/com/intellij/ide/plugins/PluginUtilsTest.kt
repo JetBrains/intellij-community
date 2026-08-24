@@ -180,7 +180,7 @@ internal class PluginUtilsTest {
         pluginDescriptor(BUNDLED_PLUGIN, isBundled = true),
         pluginDescriptor(THIRD_PARTY_PLUGIN, isBundled = false),
       )
-    }.buildState(configureClassLoaders = false).pluginSet
+    }.build(configureClassLoaders = false)
     pluginSet.getEnabledPlugin(BUNDLED_PLUGIN).setPluginClassLoader(PluginClassesLoader(setOf(BUNDLED_CLASS)))
     pluginSet.getEnabledPlugin(THIRD_PARTY_PLUGIN).setPluginClassLoader(PluginClassesLoader(setOf(THIRD_PARTY_CLASS)))
     return pluginSet

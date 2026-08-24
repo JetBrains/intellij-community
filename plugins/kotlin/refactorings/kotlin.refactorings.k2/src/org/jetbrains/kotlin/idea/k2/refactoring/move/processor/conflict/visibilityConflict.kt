@@ -20,10 +20,10 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -50,15 +50,15 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRena
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.willNotBeMoved
 import org.jetbrains.kotlin.idea.refactoring.getContainer
 import org.jetbrains.kotlin.idea.refactoring.pullUp.willBeMoved
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
-import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.resolution.KtResolvable
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 
 private fun PsiElement.createVisibilityConflict(referencedDeclaration: PsiElement): Pair<PsiElement, String> {
@@ -92,7 +92,7 @@ fun PsiNamedElement.isVisibleTo(usage: PsiElement): Boolean {
     }
 }
 
-@OptIn(KaExperimentalApi::class)
+@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
 context(_: KaSession)
 private fun PsiNamedElement.isVisibleTo(usage: KtElement): Boolean {
     val file = (usage.containingFile as? KtFile)?.symbol ?: return false
@@ -100,7 +100,7 @@ private fun PsiNamedElement.isVisibleTo(usage: KtElement): Boolean {
         symbol
     } else {
         if (this !is PsiMember) return false // get Java symbol through resolve because it is not possible through getSymbol
-        usage.mainReference?.resolveToSymbol() as? KaDeclarationSymbol ?: return false
+        (usage as? KtResolvable)?.resolveSymbol() as? KaDeclarationSymbol ?: return false
     }
     return createUseSiteVisibilityChecker(file, receiverExpression = null, usage).isVisible(symbol)
 }
@@ -212,6 +212,7 @@ private fun KaSymbol.isProtectedVisibleFrom(refererSymbol: KaSymbol): Boolean {
 /**
  * Check whether the moved internal usages are still visible towards their physical declaration.
  */
+@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
 fun checkVisibilityConflictsForInternalUsages(
     topLevelDeclarationsToMove: Collection<KtNamedDeclaration>,
     allDeclarationsToMove: Collection<KtNamedDeclaration>,
@@ -276,7 +277,7 @@ fun checkVisibilityConflictsForInternalUsages(
                                         // to reuse the same code as for Kotlin.
                                         val refererSymbol =
                                             usageElement.getStrictParentOfType<KtNamedDeclaration>()?.symbol ?: return@analyze false
-                                        val referencedSymbol = (usageElement as? KtReferenceExpression)?.mainReference?.resolveToSymbol()
+                                        val referencedSymbol = (usageElement as? KtResolvable)?.resolveSymbol()
                                             ?: usageElement.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.symbol
                                             ?: return@analyze false
                                         referencedSymbol.isProtectedVisibleFrom(refererSymbol)

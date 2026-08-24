@@ -8,7 +8,7 @@ import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
-import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinFullTypeAliasNameIndex
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtTypeAlias
 
@@ -25,8 +25,8 @@ private fun Project.resolveFqNameOfJavaClassByIndex(fqNameString: String, scope:
 }
 
 private fun Project.resolveFqNameOfKtClassByIndex(fqNameString: String, scope: GlobalSearchScope): KtDeclaration? {
-    val classesPsi = KotlinFullClassNameIndex.get(fqNameString, this, scope)
-    val typeAliasesPsi = KotlinTopLevelTypeAliasFqNameIndex.get(fqNameString, this, scope)
+    val classesPsi = KotlinFullClassNameIndex[fqNameString, this, scope]
+    val typeAliasesPsi = KotlinFullTypeAliasNameIndex[fqNameString, this, scope]
 
     return scope.selectNearest(classesPsi, typeAliasesPsi)
 }

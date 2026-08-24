@@ -11,6 +11,7 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -167,6 +168,13 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return null;
   }
 
+  /**
+   * A custom panel placed at the very top of the breakpoint properties editor, above the "Enabled" checkbox and the
+   * breakpoint name. Use it for information that identifies the breakpoint itself (e.g. the watched address and size
+   * of a data breakpoint), as opposed to editable settings which belong to {@link #createCustomPropertiesPanel}.
+   * If the panel fully identifies the breakpoint, it may override
+   * {@link XBreakpointCustomPropertiesPanel#hidesBreakpointNameLabel()} to hide the generic name label.
+   */
   public @Nullable XBreakpointCustomPropertiesPanel<B> createCustomTopPropertiesPanel(@NotNull Project project) {
     return null;
   }
@@ -198,6 +206,15 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
    * @return {@code true} if "Add" button should be visible in "Breakpoints" dialog
    */
   public boolean isAddBreakpointButtonVisible() {
+    return false;
+  }
+
+  /**
+   * Override to return {@code true} while this type is newly added — the add-breakpoint "+" popup then shows a "New"
+   * badge on its item (time-limited on the client: it disappears about a month after the user first sees it).
+   */
+  @ApiStatus.Internal
+  public boolean isNewBadgeVisible() {
     return false;
   }
 

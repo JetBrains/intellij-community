@@ -1214,6 +1214,7 @@ com.intellij.openapi.actionSystem.remoting.ActionWithMergeId
 com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 - sf:AUTOLAYOUT_STRATEGY:com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 - sf:COMPRESSING_STRATEGY:com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
+- sf:EQUAL_SIZE_WRAP_STRATEGY:com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 - sf:NOWRAP_STRATEGY:com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 - sf:WRAP_STRATEGY:com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 - a:calcMinimumSize(com.intellij.openapi.actionSystem.ActionToolbar):java.awt.Dimension

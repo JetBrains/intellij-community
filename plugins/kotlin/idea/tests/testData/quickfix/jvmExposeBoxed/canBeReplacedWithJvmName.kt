@@ -1,0 +1,7 @@
+// "Replace with '@JvmName'" "true"
+// WITH_STDLIB
+@file:OptIn(ExperimentalStdlibApi::class)
+
+@JvmE<caret>xposeBoxed("fooJvm") fun foo(x: Int) {}
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ReplaceWithJvmNameFix

@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -160,10 +161,30 @@ exports_files(
     [
         "intellij.java.coverage.iml",
         "resources/META-INF/plugin.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.coverage` end
+
+### auto-generated section `dev content intellij.java.coverage` start
+dev_dist_plugin_content(
+    content_modules = [
+        "//libraries/test-discovery",
+        "//plugins/coverage/coverage_rt:java-coverage-rt",
+    ],
+    descriptor_module = ":coverage",
+    libraries = [
+        "@lib//:java-coverage-_ja_co_co",
+        "@lib//:java-coverage-coverage-report",
+        "@lib//:libraries-test-discovery-intellij-test-discovery",
+    ],
+    prepacked_content_modules = [
+        "//plugins/coverage/junit:junit_content_module_jar",
+        "//plugins/coverage/testng:testng_content_module_jar",
+    ],
+)
+### auto-generated section `dev content intellij.java.coverage` end
 
 ### auto-generated section `build intellij.java.coverage.tests` start
 jvm_library(

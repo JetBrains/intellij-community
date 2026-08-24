@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.platform.backend.workspace.impl` start
 jvm_library(
@@ -37,6 +38,8 @@ jvm_library(
         "//platform/diagnostic/telemetry-impl",
     ],
 )
+
+content_module_jar(module = ":workspace.impl")
 
 jvm_library(
     name = "workspace.impl_test_lib",

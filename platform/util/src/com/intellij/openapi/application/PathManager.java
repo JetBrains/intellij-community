@@ -429,7 +429,7 @@ public final class PathManager {
   public static synchronized @NotNull Path getCommonDataPath() {
     Path path = ourCommonDataPath;
     if (path == null) {
-      path = Paths.get(platformPath("", "Application Support", "", "APPDATA", "", "XDG_DATA_HOME", ".local/share", ""));
+      path = Paths.get(getDefaultCommonDataPathFor(OS.CURRENT, System.getProperty("user.home"), System.getenv()));
       if (!Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
         try {
           Files.createDirectories(path);
@@ -441,6 +441,13 @@ public final class PathManager {
       ourCommonDataPath = path;
     }
     return path;
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull String getDefaultCommonDataPathFor(@NotNull OS os,
+                                                             @NotNull String userHome,
+                                                             @NotNull Map<String, String> env) {
+    return platformPath(os, env, userHome, "", "Application Support", "", "APPDATA", "", "XDG_DATA_HOME", ".local/share", "");
   }
 
   /**

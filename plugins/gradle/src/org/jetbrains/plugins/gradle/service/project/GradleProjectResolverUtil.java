@@ -32,12 +32,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.platform.workspace.jps.entities.ModuleId;
 import com.intellij.platform.workspace.storage.EntityStorage;
-import com.intellij.platform.workspace.storage.ImmutableEntityStorage;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.io.DigestUtil;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.tooling.model.BuildIdentifier;
@@ -52,7 +52,6 @@ import org.jetbrains.plugins.gradle.DefaultExternalDependencyId;
 import org.jetbrains.plugins.gradle.ExternalDependencyId;
 import org.jetbrains.plugins.gradle.issue.UnresolvedDependencySyncIssue;
 import org.jetbrains.plugins.gradle.model.DefaultExternalMultiLibraryDependency;
-import org.jetbrains.plugins.gradle.model.DefaultFileCollectionDependency;
 import org.jetbrains.plugins.gradle.model.ExternalDependency;
 import org.jetbrains.plugins.gradle.model.ExternalLibraryDependency;
 import org.jetbrains.plugins.gradle.model.ExternalMultiLibraryDependency;
@@ -81,6 +80,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -90,6 +90,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -835,7 +836,8 @@ public final class GradleProjectResolverUtil {
           depOwnerDataNode = createDependencyDataNode(multiDep, ownerDataNode, classpathOrderShift);
         }
         else if (mergedDependency instanceof FileCollectionDependency fileCollectionDependency) {
-          depOwnerDataNode = createDependencyDataNode(fileCollectionDependency, ownerDataNode, classpathOrderShift);
+          depOwnerDataNode = createDependencyDataNode(fileCollectionDependency, ownerDataNode, ideProject, artifactsMap,
+                                                      classpathOrderShift);
         }
         else if (mergedDependency instanceof UnresolvedExternalDependency unresolvedDep) {
           depOwnerDataNode = createDependencyDataNode(unresolvedDep, resolverCtx, ownerDataNode, ideProject, classpathOrderShift);
@@ -1047,41 +1049,134 @@ public final class GradleProjectResolverUtil {
 
   private static @Nullable DataNode<? extends ExternalEntityData> createDependencyDataNode(FileCollectionDependency fileCollectionDependency,
                                                                                            @NotNull DataNode<? extends ExternalEntityData> ownerDataNode,
+                                                                                           @Nullable DataNode<ProjectData> ideProject,
+                                                                                           @NotNull ArtifactMappingService artifactsMap,
                                                                                            AtomicInteger classpathOrderShift) {
     final ModuleData ownerModule = getOwnerModule(ownerDataNode);
     DependencyScope dependencyScope = getDependencyScope(fileCollectionDependency.getScope());
 
-    final LibraryLevel level = LibraryLevel.MODULE;
-    String libraryName = "";
-    final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, libraryName);
+    String libraryName;
+    LibraryLevel level = LibraryLevel.MODULE;
+    if (ideProject != null && isProjectLevelDependencyCandidate(fileCollectionDependency, artifactsMap)) {
+      libraryName = getFileCollectionDependencyProjectLevelLibraryName(fileCollectionDependency, ideProject);
+      if (!StringUtil.isEmptyOrSpaces(libraryName)) {
+        level = LibraryLevel.PROJECT;
+      }
+    }
+    else {
+      libraryName = getFileCollectionDependencyLibraryName(fileCollectionDependency);
+    }
+
+    final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, Objects.requireNonNullElse(libraryName, ""));
+    for (File file : fileCollectionDependency.getFiles()) {
+      library.addPath(LibraryPathType.BINARY, file.getPath());
+      if (fileCollectionDependency.isExcludedFromIndexing()) {
+        library.addPath(LibraryPathType.EXCLUDED, file.getPath());
+      }
+    }
+
+    if (level == LibraryLevel.PROJECT) {
+      if (!linkProjectLibrary(ideProject, library)) {
+        level = LibraryLevel.MODULE;
+      }
+    }
+
     LibraryDependencyData libraryDependencyData = new LibraryDependencyData(ownerModule, library, level);
     libraryDependencyData.setScope(dependencyScope);
     libraryDependencyData.setOrder(fileCollectionDependency.getClasspathOrder() + classpathOrderShift.get());
     libraryDependencyData.setExported(fileCollectionDependency.getExported());
 
-    for (File file : fileCollectionDependency.getFiles()) {
-      library.addPath(LibraryPathType.BINARY, file.getPath());
-      if (fileCollectionDependency instanceof DefaultFileCollectionDependency defaultFCDep &&
-          defaultFCDep.isExcludedFromIndexing()) {
-        library.addPath(LibraryPathType.EXCLUDED, file.getPath());
-      }
-    }
-
-    if (fileCollectionDependency.getFiles().size() == 1) {
-      fileCollectionDependency.getFiles().stream()
-        .findFirst()
-        .filter(file -> file.getName().endsWith(".jar"))
-        .ifPresent(file -> {
-          String fileName = file.getName();
-          library.setInternalName("Gradle: " + fileName);//
-          library.setExternalName(fileName);
-        });
-    }
-
     ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);
     return null;
   }
 
+  private static boolean isProjectLevelDependencyCandidate(
+    @NotNull FileCollectionDependency dependency,
+    @NotNull ArtifactMappingService artifactsMap
+  ) {
+    Collection<File> files = dependency.getFiles();
+    if (files.isEmpty()) {
+      return false;
+    }
+    for (File file : files) {
+      if (!file.getName().endsWith(".jar")) {
+        return false;
+      }
+      if (artifactsMap.getModuleMapping(ExternalSystemApiUtil.toCanonicalPath(file.getPath())) != null) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static @Nullable String getFileCollectionDependencyProjectLevelLibraryName(
+    @NotNull FileCollectionDependency fileCollectionDependency,
+    @Nullable DataNode<ProjectData> ideProject
+  ) {
+    String libraryName = getFileCollectionDependencyLibraryName(fileCollectionDependency);
+    if (libraryName == null) {
+      return null;
+    }
+    Map<String, DataNode<LibraryData>> cache = getLibraryByNameCache(ideProject);
+    if (cache == null) {
+      return null;
+    }
+    DataNode<LibraryData> existingEntry = cache.get(libraryName);
+    if (existingEntry == null) {
+      return libraryName;
+    }
+    Set<String> cachedLibraryPaths = existingEntry.getData()
+      .getPaths(LibraryPathType.BINARY);
+    Set<String> newLibraryPaths = fileCollectionDependency.getFiles()
+      .stream()
+      .map(it -> it.toString())
+      .collect(Collectors.toSet());
+    if (cachedLibraryPaths.equals(newLibraryPaths)) {
+      return libraryName;
+    }
+
+    String hashSource = newLibraryPaths.stream()
+      .sorted(Comparator.naturalOrder())
+      .collect(Collectors.joining(";"));
+
+    String suffix = DigestUtil.sha1Hex(hashSource).substring(0, 8);
+
+    return libraryName + " (" + suffix + ")";
+  }
+
+  private static @Nullable String getFileCollectionDependencyLibraryName(@NotNull FileCollectionDependency fileCollectionDependency) {
+    Collection<File> files = fileCollectionDependency.getFiles();
+    if (files.isEmpty()) {
+      return null;
+    }
+    // a single jar
+    if (files.size() == 1) {
+      String fileName = files.iterator().next().getName();
+      if (fileName.endsWith(".jar")) {
+        return fileName;
+      }
+      else {
+        return null;
+      }
+    }
+    // a set of jars in a folder
+    File ancestor = null;
+    for (File file : files) {
+      if (!file.getName().endsWith(".jar")) {
+        return null;
+      }
+      File parent = file.getParentFile();
+      if (parent == null) {
+        return null;
+      }
+      ancestor = ancestor == null ? parent : FileUtil.findAncestor(ancestor, parent);
+      if (ancestor == null) {
+        return null;
+      }
+    }
+    String name = ancestor.getName();
+    return StringUtil.isEmpty(name) ? null : name;
+  }
 
   private static @Nullable DataNode<? extends ExternalEntityData> createDependencyDataNode(UnresolvedExternalDependency unresolvedDep,
                                                                                            @NotNull ProjectResolverContext resolverCtx,
@@ -1160,17 +1255,11 @@ public final class GradleProjectResolverUtil {
   private static final Key<Map<String, DataNode<LibraryData>>> LIBRARIES_BY_NAME_CACHE =
     Key.create("GradleProjectResolverUtil.FOUND_LIBRARIES");
 
-  public static boolean linkProjectLibrary(
-    @Nullable DataNode<ProjectData> ideProject,
-    final @NotNull LibraryData library) {
-    if (ideProject == null) return false;
-
-    Map<String, DataNode<LibraryData>> cache = ideProject.getUserData(LIBRARIES_BY_NAME_CACHE);
+  public static boolean linkProjectLibrary(@Nullable DataNode<ProjectData> ideProject, final @NotNull LibraryData library) {
+    Map<String, DataNode<LibraryData>> cache = getLibraryByNameCache(ideProject);
     if (cache == null) {
-      cache = new HashMap<>();
-      ideProject.putUserData(LIBRARIES_BY_NAME_CACHE, cache);
+      return false;
     }
-
     String libraryName = library.getExternalName();
 
     DataNode<LibraryData> libraryData = cache.computeIfAbsent(libraryName, (String name) -> {
@@ -1183,6 +1272,18 @@ public final class GradleProjectResolverUtil {
     });
 
     return libraryData.getData().equals(library);
+  }
+
+  private static @Nullable Map<String, DataNode<LibraryData>> getLibraryByNameCache(@Nullable DataNode<ProjectData> ideProject) {
+    if (ideProject == null) {
+      return null;
+    }
+    Map<String, DataNode<LibraryData>> cache = ideProject.getUserData(LIBRARIES_BY_NAME_CACHE);
+    if (cache == null) {
+      cache = new HashMap<>();
+      ideProject.putUserData(LIBRARIES_BY_NAME_CACHE, cache);
+    }
+    return cache;
   }
 
   public static boolean isIdeaTask(final String taskName, @Nullable String group) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.suggested
 
 import com.intellij.openapi.application.runWriteAction
@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.utils.coroutines.waitCoroutinesBlocking
 import junit.framework.TestCase
 
 abstract class BaseSuggestedRefactoringChangeListenerTest : LightJavaCodeInsightFixtureTestCase() {
@@ -59,11 +60,13 @@ abstract class BaseSuggestedRefactoringChangeListenerTest : LightJavaCodeInsight
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
       }
     }
+    waitForSignatureAnalysis()
     watcher.check(expectedLog.joinToString(separator = "\n"))
   }
 
-  protected fun commitAll() {
+  private fun waitForSignatureAnalysis() {
     PsiDocumentManager.getInstance(project).commitAllDocuments()
+    waitCoroutinesBlocking(SuggestedRefactoringChangeListener.getSignatureAnalysisScope(project), 5000)
   }
 
   protected fun insertString(offset: Int, text: String) {

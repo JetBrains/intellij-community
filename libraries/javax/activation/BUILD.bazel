@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.javax.activation` start
 jvm_library(
@@ -16,6 +17,8 @@ jvm_library(
     exports = ["@lib//:javax-activation"],
     runtime_deps = ["@lib//:javax-activation"],
 )
+
+content_module_jar(module = ":activation")
 
 jvm_library(
     name = "activation_test_lib",

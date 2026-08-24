@@ -2,6 +2,7 @@ package com.intellij.workspaceModel.codegen.impl.writer.entityApi
 
 import com.intellij.workspaceModel.codegen.deft.meta.ExtProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
+import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.impl.dsl.CodeContext
 import com.intellij.workspaceModel.codegen.impl.dsl.additionalAnnotations
 import com.intellij.workspaceModel.codegen.impl.dsl.annotation
@@ -49,6 +50,7 @@ fun CodeContext.generateModifyAndExtensionCode(objClass: ObjClass<*>) {
 }
 
 private fun CodeContext.extensionCode(extProperty: ExtProperty<*, *>) {
+  if (extProperty.valueKind is ObjProperty.ValueKind.Computable) return
   val isChild = unwrapReferenceType(extProperty.valueType)?.child
   if (isChild == null) {
     notReferenceError("extension ws code", extProperty)

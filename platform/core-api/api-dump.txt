@@ -3526,6 +3526,7 @@ c:com.intellij.usageView.UsageInfo
 - getIcon():javax.swing.Icon
 - getNavigationOffset():I
 - getNavigationRange():com.intellij.openapi.util.Segment
+- getPriority():I
 - getProject():com.intellij.openapi.project.Project
 - getPsiFileRange():com.intellij.psi.SmartPsiFileRange
 - getRangeInElement():com.intellij.openapi.util.ProperTextRange
@@ -3539,6 +3540,7 @@ c:com.intellij.usageView.UsageInfo
 - isDynamicUsage():Z
 - isValid():Z
 - f:isWritable():Z
+- setPriority(I):V
 a:com.intellij.util.AbstractQuery
 - com.intellij.util.Query
 - <init>():V

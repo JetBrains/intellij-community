@@ -110,7 +110,9 @@ internal fun getAllProblems(file: PsiFile, checkedDomains: Set<TextDomain>, allC
 
 private fun getAllProblems(texts: List<TextContent>, checkedDomains: Set<TextDomain>, allCheckers: List<TextChecker>): List<TextProblem> =
   buildProblemMap(allCheckers, texts, checkedDomains)
-    .flatMap { (text, problems) -> TextProblemAggregator.aggregate(problems, toTokens(text), false) }
+    .flatMap { (text, problems) ->
+      TextProblemAggregator.aggregate(problems, text.toString(), toTokens(text).map { it.range }, false)
+    }
 
 private fun buildProblemMap(
   allCheckers: List<TextChecker>,

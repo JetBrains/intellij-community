@@ -97,7 +97,7 @@ public class IdeUiService {
     return null;
   }
 
-  public @Nullable Pair<String, String> getProxyCredentials() {
+  public @Nullable Pair<String, char[]> getProxyCredentials() {
     return null;
   }
 

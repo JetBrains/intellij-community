@@ -22,6 +22,7 @@
       <module name="intellij.platform.lang.impl"/>
       <module name="intellij.platform.project"/>
       <module name="intellij.platform.projectModel"/>
+      <module name="intellij.platform.refactoring"/>
       <module name="intellij.platform.rpc.backend"/>
       <module name="intellij.platform.statistics"/>
       <module name="intellij.platform.util.coroutines"/>
@@ -30,6 +31,7 @@
     </dependencies>
     <!-- endregion -->
     <extensions defaultExtensionNs="com.intellij">
+      <highlightingPassFactory implementation="com.intellij.markdown.backend.editor.livepreview.MarkdownLivePreviewPassFactory"/>
       <completion.contributor
         language="Markdown" implementationClass="com.intellij.markdown.backend.completion.MarkdownAtPathCompletionContributor"/>
       <platform.rpc.backend.remoteApiProvider

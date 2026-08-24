@@ -387,8 +387,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       }
 
       PsiExpression newArgument = null;
-
-      if (classReferencedByThis != null) {
+      if (classReferencedByThis != null && !myOldClassParameterNames.isEmpty()) {
         @NonNls String thisArgumentText = null;
         if (manager.areElementsEquivalent(myMethod.getContainingClass(), classReferencedByThis)) {
           if (myOldClassParameterNames.containsKey(myMethod.getContainingClass())) {
@@ -419,7 +418,6 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
           }
         }
       }
-
 
       if (newArgument != null) {
         expression.getArgumentList().add(newArgument);
@@ -498,10 +496,12 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       final PsiCodeBlock body = myMethod.getBody();
       if (body != null) {
         replaceReferences(body);
-      } else {
+      }
+      else {
         if (myMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
             !myTargetClass.isInterface() && !myTargetClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
           CreateFromUsageUtils.setupMethodBody(myMethod);
+          PsiUtil.setModifierProperty(myMethod, PsiModifier.ABSTRACT, false);
         }
       }
 
@@ -648,7 +648,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     }
   }
 
-  private String getParameterNameToCreate(@NotNull PsiClass aClass) {
+  private String getParameterNameToCreate(PsiClass aClass) {
     return myOldClassParameterNames.get(aClass);
   }
 }

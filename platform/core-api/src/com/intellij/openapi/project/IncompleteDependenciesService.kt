@@ -23,6 +23,9 @@ interface IncompleteDependenciesService {
   @RequiresReadLock
   fun getState(): DependenciesState
 
+  @ApiStatus.Internal
+  fun getStateUnsafe(): DependenciesState
+
   @RequiresWriteLock
   fun enterIncompleteState(requestor: Any): IncompleteDependenciesAccessToken
 

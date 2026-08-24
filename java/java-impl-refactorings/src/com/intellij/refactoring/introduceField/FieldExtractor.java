@@ -25,7 +25,6 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiMember;
@@ -61,10 +60,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.refactoring.introduceField.IntroduceFieldCentralPanel.getInitializationPlaceParameters;
-import static com.intellij.refactoring.introduceField.JavaIntroduceFieldService.AvailableSettings;
-import static com.intellij.refactoring.introduceField.JavaIntroduceFieldService.InitializationPlace;
-import static com.intellij.refactoring.introduceField.JavaIntroduceFieldService.ToFieldContext;
-import static com.intellij.refactoring.introduceField.JavaIntroduceFieldService.VariableToFieldCandidatesContext;
+import static com.intellij.refactoring.introduceField.JavaIntroduceFieldModCommandService.AvailableSettings;
+import static com.intellij.refactoring.introduceField.JavaIntroduceFieldModCommandService.InitializationPlace;
+import static com.intellij.refactoring.introduceField.JavaIntroduceFieldModCommandService.ToFieldContext;
+import static com.intellij.refactoring.introduceField.JavaIntroduceFieldModCommandService.VariableToFieldCandidatesContext;
 
 
 /**
@@ -167,25 +166,8 @@ final class FieldExtractor {
     return expressionAfter;
   }
 
-  @Nullable PsiField extractField(@NotNull PsiJavaFile file,
-                                  @NotNull TextRange range,
+  @Nullable PsiField extractField(@NotNull ToFieldContext.VariableContext context,
                                   @NotNull InitializationPlace place) {
-    ToFieldContext context = getContext(file, range);
-    return switch (context) {
-      case ToFieldContext.Error _ -> {
-        yield null;
-      }
-      case ToFieldContext.ExpressionContext expressionContext -> {
-        yield extractField(expressionContext, place);
-      }
-      case ToFieldContext.VariableContext variableContext -> {
-        yield extractField(variableContext, place);
-      }
-    };
-  }
-
-  private @Nullable PsiField extractField(@NotNull ToFieldContext.VariableContext context,
-                                          @NotNull InitializationPlace place) {
     PsiLocalVariable local = context.localVariable();
     VariableToFieldCandidatesContext variableToFieldCandidatesContext = context.variableToFieldCandidatesContext();
     if (variableToFieldCandidatesContext.classes().isEmpty()) {

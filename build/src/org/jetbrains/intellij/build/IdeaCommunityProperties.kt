@@ -224,6 +224,10 @@ fun intellijCommunityBaseFragment(platformPrefix: String? = null): ProductModule
   moduleSet(CommunityModuleSets.rdCommon())
 
   deprecatedInclude("intellij.idea.community.customization", "META-INF/community-customization.xml")
+
+  module("intellij.platform.ide.nonModalWelcomeScreen")
+  module("intellij.platform.ide.nonModalWelcomeScreen.frontend")
+  module("intellij.platform.ide.nonModalWelcomeScreen.backend")
 }
 
 inline fun ideaCommunityWindowsCustomizer(

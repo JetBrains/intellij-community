@@ -10,6 +10,8 @@ import org.jetbrains.intellij.build.productLayout.tooling.ProductUsageAnalysis
 import org.jetbrains.intellij.build.productLayout.tooling.UnificationSuggestion
 import org.jetbrains.intellij.build.productLayout.traversal.DependencyPathResult
 import org.jetbrains.intellij.build.productLayout.traversal.EmbeddedDependencyClosureResult
+import org.jetbrains.intellij.build.productLayout.traversal.UnusedEmbeddedLibraryModulesResult
+import org.jetbrains.intellij.build.productLayout.traversal.UnusedSharedLibraryModulesResult
 import org.jetbrains.intellij.build.productLayout.traversal.ModuleDependenciesResult
 import org.jetbrains.intellij.build.productLayout.traversal.ModuleOwnersResult
 import org.jetbrains.intellij.build.productLayout.traversal.ModuleReachabilityResult
@@ -169,6 +171,20 @@ internal fun writeProductUsageAnalysis(
 internal fun writeEmbeddedDependencyClosureResult(
   gen: JsonGenerator,
   result: EmbeddedDependencyClosureResult,
+) {
+  gen.writeRawValue(kotlinxJson.encodeToString(result))
+}
+
+internal fun writeUnusedEmbeddedLibraryModulesResult(
+  gen: JsonGenerator,
+  result: UnusedEmbeddedLibraryModulesResult,
+) {
+  gen.writeRawValue(kotlinxJson.encodeToString(result))
+}
+
+internal fun writeUnusedSharedLibraryModulesResult(
+  gen: JsonGenerator,
+  result: UnusedSharedLibraryModulesResult,
 ) {
   gen.writeRawValue(kotlinxJson.encodeToString(result))
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
+import com.intellij.ide.RegionSettingsService
 import com.intellij.ide.actions.WhatsNewAction
 import com.intellij.ide.actions.WhatsNewUtil
 import com.intellij.openapi.application.ApplicationManager
@@ -21,6 +22,9 @@ internal class JcefWhatsNewProjectActivity : ProjectActivity {
 
     val app = ApplicationManager.getApplication()
     if (app.isCommandLine || app.isHeadlessEnvironment || app.isUnitTestMode) return
+
+    // refresh Region settings
+    RegionSettingsService.getInstanceAsync()
 
     val url = ExternalProductResourceUrls.getInstance().whatIsNewPageUrl
     val appInfo = ApplicationInfoEx.getInstanceEx()

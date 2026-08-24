@@ -56,8 +56,7 @@ object DynamicPlugins {
       forceExclude = true,
       pretendEnabled = pretendEnabled,
       pretendDisabled = pretendDisabled,
-    )
-    // old plugin set resolver is already dropped, so with new dynamic plugins support this thing is expected to be always present
+    ) ?: return false
     val resolvedPluginSet = newState.resolvedPluginSet
     extraStateValidator.validate(resolvedPluginSet)?.let {
       LOG.info("new plugins state did not meet expectations: $it")
@@ -106,7 +105,7 @@ object DynamicPlugins {
       cancellation = TaskCancellation.nonCancellable()
     ) {
       val newState = computeNewPluginsState(addNewCustomPlugins, forceRemovePlugins, forceExclude = true)
-      // old plugin set resolver is already dropped, so with new dynamic plugins support this thing is expected to be always present
+                     ?: return@withModalProgress false
       val resolvedPluginSet = newState.resolvedPluginSet
       extraStateValidator.validate(resolvedPluginSet)?.let {
         LOG.info("new plugins state did not meet expectations: $it")
@@ -154,7 +153,7 @@ object DynamicPlugins {
       cancellation = TaskCancellation.nonCancellable()
     ) {
       val newState = computeNewPluginsState(plugins, emptyList())
-      // old plugin set resolver is already dropped, so with new dynamic plugins support this thing is expected to be always present
+                     ?: return@runWithModalProgressBlocking false
       val resolvedPluginSet = newState.resolvedPluginSet
       expectPluginsState(expectToLoad = plugins.map { it.pluginId }).validate(resolvedPluginSet)?.let {
         LOG.info("new plugins state did not meet expectations: $it")
@@ -174,7 +173,7 @@ object DynamicPlugins {
       cancellation = TaskCancellation.nonCancellable()
     ) {
       val newState = computeNewPluginsState(listOf(pluginDescriptor), emptyList())
-      // old plugin set resolver is already dropped, so with new dynamic plugins support this thing is expected to be always present
+                     ?: return@runWithModalProgressBlocking false
       val resolvedPluginSet = newState.resolvedPluginSet
       expectPluginsState(expectToLoad = listOf(pluginDescriptor.pluginId)).validate(resolvedPluginSet)?.let {
         LOG.info("new plugins state did not meet expectations: $it")
@@ -199,7 +198,7 @@ object DynamicPlugins {
       cancellation = TaskCancellation.nonCancellable()
     ) {
       val newState = computeNewPluginsState(emptyList(), plugins)
-      // old plugin set resolver is already dropped, so with new dynamic plugins support this thing is expected to be always present
+                     ?: return@runWithModalProgressBlocking false
       val resolvedPluginSet = newState.resolvedPluginSet
       expectPluginsState(expectNotToLoad = plugins.map { it.pluginId }).validate(resolvedPluginSet)?.let {
         LOG.info("new plugins state did not meet expectations: $it")
@@ -218,7 +217,7 @@ object DynamicPlugins {
       cancellation = TaskCancellation.nonCancellable()
     ) {
       val newState = computeNewPluginsState(emptyList(), listOf(pluginDescriptor))
-      // old plugin set resolver is already dropped, so with new dynamic plugins support this thing is expected to be always present
+                     ?: return@runWithModalProgressBlocking false
       val resolvedPluginSet = newState.resolvedPluginSet
       expectPluginsState(expectNotToLoad = listOf(pluginDescriptor.pluginId)).validate(resolvedPluginSet)?.let {
         LOG.info("new plugins state did not meet expectations: $it")
@@ -235,7 +234,7 @@ object DynamicPlugins {
   @RequiresBackgroundThread(generateAssertion = false)
   fun validateCanUnloadWithoutRestart(plugin: PluginMainDescriptor): String? {
     val newState = computeNewPluginsState(emptyList(), listOf(plugin), pretendDisabled = listOf(plugin.pluginId))
-    // old plugin set resolver is already dropped, so with new dynamic plugins support this thing is expected to be always present
+                   ?: return "Target state is missing essential plugins"
     val resolvedPluginSet = newState.resolvedPluginSet
     expectPluginsState(expectNotToLoad = listOf(plugin.pluginId)).validate(resolvedPluginSet)?.let {
       return it
@@ -251,7 +250,7 @@ object DynamicPlugins {
   @RequiresBackgroundThread(generateAssertion = false)
   fun validateCanLoadWithoutRestart(plugin: PluginMainDescriptor): String? {
     val newState = computeNewPluginsState(listOf(plugin), listOf(), pretendEnabled = listOf(plugin.pluginId))
-    // old plugin set resolver is already dropped, so with new dynamic plugins support this thing is expected to be always present
+                     ?: return "Target state is missing essential plugins"
     val resolvedPluginSet = newState.resolvedPluginSet
     expectPluginsState(expectToLoad = listOf(plugin.pluginId)).validate(resolvedPluginSet)?.let {
       return it
@@ -338,7 +337,7 @@ object DynamicPlugins {
         exclude = emptyList(),
         pretendEnabled = candidates.toList(),
         pretendDisabled = emptyList(),
-      )
+      ) ?: return externalConflict
       val excludedCandidates: List<PluginId> = candidates.filter { candidateId ->
         val candidate = newState.resolvedPluginSet.candidateSet.resolvePluginId(candidateId)
         candidate == null || !newState.resolvedPluginSet.isResolved(candidate)
@@ -382,7 +381,7 @@ object DynamicPlugins {
     forceExclude: Boolean = false,
     pretendEnabled: List<PluginId> = emptyList(),
     pretendDisabled: List<PluginId> = emptyList(),
-  ): PluginSet {
+  ): PluginSet? {
     LOG.info(buildString {
       append("Computing new plugins state with")
       append(" include=${include.joinToString(prefix = "[", postfix = "]") { it.shortLogDescription }}")
@@ -435,6 +434,12 @@ object DynamicPlugins {
       descriptorLoadingErrors = currentSet.input.discoveryResult.descriptorLoadingErrors,
     )
 
-    return newInitContext.computeTargetState(newDiscoveryResult, isStartupInit = false, parentActivity = null)
+    try {
+      return newInitContext.computeTargetState(newDiscoveryResult, isStartupInit = false, parentActivity = null)
+    }
+    catch (e: EssentialPluginMissingException) {
+      LOG.warn("target plugin set is missing essential plugins", e)
+      return null // TODO not the best way to handle this, but it'll do for now
+    }
   }
 }

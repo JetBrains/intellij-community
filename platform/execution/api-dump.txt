@@ -82,8 +82,6 @@ c:com.intellij.execution.DefaultExecutionResult
 - setRestartActions(com.intellij.openapi.actionSystem.AnAction[]):V
 f:com.intellij.execution.DefaultExecutionTarget
 - com.intellij.execution.ExecutionTarget
-f:com.intellij.execution.ExecutionBundle
-- com.intellij.DynamicBundle
 com.intellij.execution.ExecutionListener
 - java.util.EventListener
 - processNotStarted(java.lang.String,com.intellij.execution.runners.ExecutionEnvironment):V

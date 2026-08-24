@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.ktor.client.cio` start
 jvm_library(
@@ -25,6 +26,11 @@ jvm_library(
         "//libraries/ktor/client",
         "//libraries/ktor/network-tls:libraries-ktor-network-tls",
     ],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-ktor-client-cio-ktor-client-cio-internal"],
+    module = ":libraries-ktor-client-cio",
 )
 
 jvm_library(

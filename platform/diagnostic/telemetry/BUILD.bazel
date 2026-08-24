@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.platform.diagnostic.telemetry` start
 jvm_provided_library(
@@ -52,6 +53,8 @@ jvm_library(
         ":libraries_opentelemetry-extension-kotlin_provided",
     ],
 )
+
+content_module_jar(module = ":telemetry")
 
 jvm_library(
     name = "telemetry_test_lib",

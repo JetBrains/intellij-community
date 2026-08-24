@@ -4,6 +4,7 @@ package com.jetbrains.performancePlugin.remotedriver.fixtures
 import com.intellij.driver.model.TreePath
 import com.intellij.driver.model.TreePathToRow
 import com.intellij.driver.model.TreePathToRowList
+import com.intellij.ui.LoadingNode
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.ReflectionUtil
@@ -85,9 +86,11 @@ open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeF
 
   fun areTreeNodesLoaded(): Boolean {
     var isLoaded = true
+    val loadingText = LoadingNode.getText().trim()
     computeOnEdt {
       TreeUtil.visitVisibleRows(component) { path ->
-        isLoaded = !TreeUtil.isLoadingPath(path)
+        isLoaded = !TreeUtil.isLoadingPath(path) &&
+                   !cellReader.valueAt(component, path.lastPathComponent).equals(loadingText, ignoreCase = true)
         if (!isLoaded) TreeVisitor.Action.INTERRUPT else TreeVisitor.Action.CONTINUE
       }
     }

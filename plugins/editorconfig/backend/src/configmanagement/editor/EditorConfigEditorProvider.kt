@@ -14,6 +14,7 @@ import com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.fileEditor.createdFileEditorSink
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.fileTypes.FileTypeRegistry
@@ -58,6 +59,8 @@ internal class EditorConfigEditorProvider : AsyncFileEditorProvider {
     val result: FileEditor
     val contextFile = precomputedState.contextFile
     if (contextFile != null && Utils.isEnabled(project)) {
+      // cancellation would discard everything created in the block below, and the preview editor is not owned by anything else yet
+      val createdEditors = createdFileEditorSink()
       withContext(Dispatchers.EDT) {
         @Suppress("NAME_SHADOWING") val document = EditorFactory.getInstance().createDocument(getPreviewText(contextFile))
         val disposable = Disposer.newDisposable()
@@ -66,6 +69,7 @@ internal class EditorConfigEditorProvider : AsyncFileEditorProvider {
         val ecTextEditor = TextEditorProvider.getInstance().createEditor(project, file) as TextEditor
         result = EditorConfigEditorWithPreview(file, project, ecTextEditor, previewEditor)
         Disposer.register(result, disposable)
+        createdEditors?.register(result)
       }
     }
     else {

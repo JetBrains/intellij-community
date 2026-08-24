@@ -72,7 +72,7 @@ local_path_override(
     path = "build/jvm-rules",
 )
 
-bazel_dep(name = "windows_support", version = "0.2.0")
+bazel_dep(name = "windows_support", version = "0.2.1")
 bazel_dep(name = "llvm", version = "0.8.9")
 single_version_override(
     module_name = "llvm",
@@ -80,6 +80,9 @@ single_version_override(
     patches = [
         "//:build/llvm_msvc.patch",  # TODO: remove that once merged to upstream
     ],
+    # Kept in sync with the `ultimate` root, which has to hold `llvm` at 0.8.9 because `llvm_msvc.patch` does not
+    # apply to the 0.8.18 that `rules_rs` asks for. `BazelProjectStructureTest` requires identical overrides.
+    version = "0.8.9",
 )
 
 register_toolchains(
@@ -219,5 +222,23 @@ use_repo(
     "nodejs_windows_amd64",
     "nodejs_windows_arm64",
 )
+
+# Go, for //build/content-module-packer - the tool behind `content_module_jar`, one static binary that Bazel runs as a
+# multiplex worker. It is the only Go in this module, and the SDK version tracks the `go` directive of its `go.mod`.
+bazel_dep(name = "rules_go", version = "0.63.0")
+bazel_dep(name = "gazelle", version = "0.53.0")
+
+# No `name` on the download: `rules_go` rejects one from a non-root module, and this module is not the root when the
+# ultimate repository builds it. Nothing here names the SDK repo, so it does not need one.
+go_sdk = use_extension("@rules_go//go:extensions.bzl", "go_sdk")
+go_sdk.download(version = "1.27.0")
+
+# XXH3-64 keys the `__index__` of every jar the packer writes, and it has to be the reference algorithm bit for bit or
+# those jars differ from the ones `JarPackager` produces - which is what the 2 050 reference vectors in
+# //build/content-module-packer/internal/xxh3 hold it to. cpuid is its only dependency, for runtime CPU dispatch, and
+# both versions come from the packer's `go.mod`, which is also what the IDE and a plain `go build` read.
+go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
+go_deps.from_file(go_mod = "//build/content-module-packer:go.mod")
+use_repo(go_deps, "com_github_zeebo_xxh3")
 
 include("//:fleet/kmp.MODULE.bazel")

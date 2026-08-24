@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @see Region
+ * @see RegionSettingsService for more convenient access from EDT and read actions
  */
 public final class RegionSettings {
   /**
@@ -32,6 +33,9 @@ public final class RegionSettings {
     }
   }
 
+  /**
+   * @see RegionSettingsService for more convenient access from EDT and read actions
+   */
   @RequiresReadLockAbsence(generateAssertion = false)
   @RequiresBackgroundThread(generateAssertion = false)
   public static @NotNull Region getRegion() {

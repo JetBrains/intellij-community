@@ -92,7 +92,7 @@ internal class GradleScriptDefinitionEntityImpl(private val dataSource: GradleSc
             if (this.compilationConfigurationData != dataSource.compilationConfigurationData) this.compilationConfigurationData =
                 dataSource.compilationConfigurationData
             if (this.hostConfiguration != dataSource.hostConfiguration) this.hostConfiguration = dataSource.hostConfiguration
-            if (this.evaluationConfiguration != dataSource?.evaluationConfiguration) this.evaluationConfiguration =
+            if (this.evaluationConfiguration != dataSource.evaluationConfiguration) this.evaluationConfiguration =
                 dataSource.evaluationConfiguration
             updateChildToParentReferences(parents)
         }

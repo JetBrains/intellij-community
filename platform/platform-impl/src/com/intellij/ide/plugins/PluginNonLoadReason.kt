@@ -1,0 +1,313 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.plugins
+
+import com.intellij.core.CoreBundle
+import com.intellij.idea.AppMode
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.PlatformUtils
+import com.intellij.util.system.CpuArch
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
+
+@ApiStatus.Experimental
+sealed interface PluginNonLoadReason {
+  val plugin: IdeaPluginDescriptor
+  val detailedMessage: @NlsContexts.DetailedDescription String
+  val shortMessage: @NlsContexts.Label String
+  val shouldNotifyUser: Boolean
+}
+
+@ApiStatus.Internal
+fun DescriptorExclusionReason.toSelectionPluginNonLoadReason(): PluginNonLoadReason? {
+  val plugin = descriptor.getMainDescriptor()
+  return when (this) {
+    is PluginIsIncompatibleWithProduct -> incompatibilityReason.convertToUIError(descriptor)
+    is IncompatibleWithAnotherModule -> PluginIsIncompatibleWithAnotherPlugin(plugin, preferredIncompatibleModule, true)
+    is PluginDeclaresConflictingId -> PluginIdConflictNonLoadReason(this)
+    is PluginIsMarkedDisabled,
+    is PluginVersionIsSuperseded -> null
+    is ProductRulesImposedExclusion -> when (productReason) {
+      is LegacyPluginIsCompatibleOnlyWithIntelliJIDEA -> PluginIsCompatibleOnlyWithIntelliJIDEA(plugin)
+      is NonBundledPluginsLoadingIsDisabled -> NonBundledPluginsAreExplicitlyDisabled(plugin)
+      is PluginIsNotContainedInTheExplicitlyConfiguredSubsetOfPluginsForLoading ->
+        PluginIsNotRequiredForLoadingTheExplicitlyConfiguredSubsetOfPlugins(plugin)
+      is PluginLoadingIsDisabledCompletelyExceptCore -> PluginLoadingIsDisabledCompletely(plugin)
+      else -> null
+    }
+    else -> null
+  }
+}
+
+/** temporary migration helper */
+internal fun PluginIncompatibilityReason.convertToUIError(descriptor: IdeaPluginDescriptorImpl): PluginNonLoadReason {
+  return when (this) {
+    is PluginIncompatibilityReason.IncompatibleWithCpuArch -> PluginIsIncompatibleWithHostCpu(descriptor, requiredArch, hostArch)
+    is PluginIncompatibilityReason.IncompatibleWithHostPlatform -> PluginIsIncompatibleWithHostPlatform(descriptor, requiredOS, hostOS.name)
+    PluginIncompatibilityReason.MalformedSinceUntilConstraints -> PluginMalformedSinceUntilConstraints(descriptor)
+    is PluginIncompatibilityReason.SinceBuildConstraintViolation -> PluginSinceBuildConstraintViolation(descriptor, productBuildNumber)
+    is PluginIncompatibilityReason.UntilBuildConstraintViolation -> PluginUntilBuildConstraintViolation(descriptor, productBuildNumber)
+    is PluginIncompatibilityReason.PluginIsMarkedBroken -> PluginIsMarkedBroken(descriptor)
+  }
+}
+
+private class PluginIdConflictNonLoadReason(
+  private val reason: PluginDeclaresConflictingId,
+) : PluginNonLoadReason {
+  override val plugin: PluginMainDescriptor get() = reason.descriptor
+
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message(
+      "plugin.loading.error.long.declares.conflicting.id",
+      plugin.name,
+      reason.conflictingId,
+      reason.conflictingModule.getMainDescriptor().name,
+    )
+
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.declares.conflicting.id", reason.conflictingId)
+
+  override val shouldNotifyUser: Boolean = true
+}
+
+@ApiStatus.Internal
+class PluginDependencyIsDisabled(
+  override val plugin: IdeaPluginDescriptor,
+  val dependencyId: PluginId, // TODO id is not enough, should show name instead; requires name resolution context
+  override val shouldNotifyUser: Boolean,
+) : PluginNonLoadReason {
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.depends.on.disabled.plugin", plugin.name, dependencyId)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", dependencyId)
+}
+
+@ApiStatus.Internal
+class NonBundledPluginsAreExplicitlyDisabled(
+  override val plugin: IdeaPluginDescriptor
+): PluginNonLoadReason {
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.custom.plugin.loading.disabled", plugin.name)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.custom.plugin.loading.disabled")
+  override val shouldNotifyUser: Boolean = false
+}
+
+@ApiStatus.Internal
+class PluginIsMarkedBroken(
+  override val plugin: IdeaPluginDescriptor,
+): PluginNonLoadReason {
+  // FIXME confusing messages
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.marked.as.broken", plugin.name, plugin.version)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.marked.as.broken")
+  override val shouldNotifyUser: Boolean = true
+}
+
+@ApiStatus.Internal
+class PluginIsCompatibleOnlyWithIntelliJIDEA(
+  override val plugin: IdeaPluginDescriptor,
+): PluginNonLoadReason {
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.compatible.with.intellij.idea.only", plugin.name)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.compatible.with.intellij.idea.only")
+  override val shouldNotifyUser: Boolean = true
+}
+
+@ApiStatus.Internal
+class PluginIsIncompatibleWithHostPlatform(
+  override val plugin: IdeaPluginDescriptor,
+  val requiredOs: IdeaPluginOsRequirement,
+  val hostOs: @NlsSafe String,
+): PluginNonLoadReason {
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.incompatible.with.platform", plugin.name, plugin.version, requiredOs, hostOs)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.incompatible.with.platform", requiredOs)
+  override val shouldNotifyUser: Boolean = true
+}
+
+@ApiStatus.Internal
+class PluginIsIncompatibleWithHostCpu(
+  override val plugin: IdeaPluginDescriptor,
+  val requiredCpuArch: PluginCpuArchRequirement,
+  val hostCpu: @NlsSafe CpuArch,
+): PluginNonLoadReason {
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.incompatible.with.cpu", plugin.name, plugin.version, requiredCpuArch, hostCpu)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.incompatible.with.platform", requiredCpuArch)
+  override val shouldNotifyUser: Boolean = true
+}
+
+@ApiStatus.Internal
+class PluginSinceBuildConstraintViolation(
+  override val plugin: IdeaPluginDescriptor,
+  val productBuildNumber: BuildNumber,
+): PluginNonLoadReason {
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = buildCompatibilityDetailedMessage("plugin.loading.error.long.incompatible.since.build",
+                                              "plugin.loading.error.long.incompatible.since.build.on.remote.dev.side",
+                                              plugin,
+                                              plugin.sinceBuild,
+                                              productBuildNumber)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.incompatible.since.build", plugin.sinceBuild)
+  override val shouldNotifyUser: Boolean = true
+}
+
+@ApiStatus.Internal
+class PluginUntilBuildConstraintViolation(
+  override val plugin: IdeaPluginDescriptor,
+  val productBuildNumber: BuildNumber,
+): PluginNonLoadReason {
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = buildCompatibilityDetailedMessage("plugin.loading.error.long.incompatible.until.build",
+                                              "plugin.loading.error.long.incompatible.until.build.on.remote.dev.side",
+                                              plugin,
+                                              plugin.untilBuild,
+                                              productBuildNumber)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.incompatible.until.build", plugin.untilBuild)
+  override val shouldNotifyUser: Boolean = true
+}
+
+private fun buildCompatibilityDetailedMessage(
+  regularMessageKey: @NonNls String,
+  remoteDevMessageKey: @NonNls String,
+  plugin: IdeaPluginDescriptor,
+  requiredBuild: String?,
+  productBuildNumber: BuildNumber,
+): @NlsContexts.DetailedDescription String {
+  val remoteDevSide = remoteDevPluginLoadingSide()
+  return if (remoteDevSide == null) {
+    CoreBundle.message(regularMessageKey, plugin.name, plugin.version, requiredBuild, productBuildNumber)
+  }
+  else {
+    CoreBundle.message(remoteDevMessageKey, plugin.name, plugin.version, requiredBuild, productBuildNumber, remoteDevSide)
+  }
+}
+
+private fun remoteDevPluginLoadingSide(): @Nls String? {
+  return when {
+    AppMode.isRemoteDevHost() -> CoreBundle.message("plugin.loading.error.remote.dev.side.backend")
+    PlatformUtils.isJetBrainsClient() -> CoreBundle.message("plugin.loading.error.remote.dev.side.client")
+    else -> null
+  }
+}
+
+@ApiStatus.Internal
+class PluginMalformedSinceUntilConstraints(
+  override val plugin: IdeaPluginDescriptor,
+): PluginNonLoadReason {
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.failed.to.load.requirements.for.ide.version", plugin.name)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.failed.to.load.requirements.for.ide.version")
+  override val shouldNotifyUser: Boolean = true
+}
+
+@ApiStatus.Internal
+class PluginLoadingIsDisabledCompletely(
+  override val plugin: IdeaPluginDescriptor,
+): PluginNonLoadReason {
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.plugin.loading.disabled", plugin.name)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.plugin.loading.disabled")
+  override val shouldNotifyUser: Boolean = true
+}
+
+@ApiStatus.Internal
+class PluginPackagePrefixConflict(
+  override val plugin: PluginModuleDescriptor,
+  val module: PluginModuleDescriptor,
+  val conflictingModule: PluginModuleDescriptor,
+): PluginNonLoadReason {
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message(
+      "plugin.loading.error.long.package.prefix.conflict",
+      plugin.getMainDescriptor().name,
+      conflictingModule.getMainDescriptor().name,
+      getPackagePrefixConflictModuleId(module),
+      getPackagePrefixConflictNamespace(module),
+      getPackagePrefixConflictModuleId(conflictingModule),
+      getPackagePrefixConflictNamespace(conflictingModule),
+      module.packagePrefix ?: conflictingModule.packagePrefix ?: "<none>",
+    )
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message(
+      "plugin.loading.error.short.package.prefix.conflict",
+      plugin.getMainDescriptor().name,
+      conflictingModule.getMainDescriptor().name,
+    )
+  override val shouldNotifyUser: Boolean = true
+
+  private fun getPackagePrefixConflictModuleId(descriptor: PluginModuleDescriptor): String {
+    return when (descriptor) {
+      is PluginMainDescriptor -> descriptor.pluginId.idString
+      is ContentModuleDescriptor -> descriptor.moduleId.name
+    }
+  }
+
+  private fun getPackagePrefixConflictNamespace(descriptor: PluginModuleDescriptor): String {
+    return when (descriptor) {
+      is PluginMainDescriptor -> descriptor.implicitNamespaceForPluginDescriptorModule ?: "<none>"
+      is ContentModuleDescriptor -> descriptor.moduleId.namespace
+    }
+  }
+}
+
+@ApiStatus.Internal
+class PluginIsIncompatibleWithAnotherPlugin(
+  override val plugin: IdeaPluginDescriptor,
+  val incompatiblePlugin: IdeaPluginDescriptor,
+  override val shouldNotifyUser: Boolean,
+): PluginNonLoadReason {
+  // FIXME confusing message
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.ide.contains.conflicting.module", plugin.name, incompatiblePlugin.pluginId)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.ide.contains.conflicting.module", incompatiblePlugin.pluginId)
+}
+
+@ApiStatus.Internal
+class PluginDependencyCannotBeLoaded(
+  override val plugin: IdeaPluginDescriptor,
+  val dependency: IdeaPluginDescriptor,
+  override val shouldNotifyUser: Boolean
+): PluginNonLoadReason {
+  private val dependencyName: @NlsSafe String get() = dependency.name ?: dependency.pluginId.idString
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.depends.on.failed.to.load.plugin", plugin.name, dependencyName)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.depends.on.failed.to.load.plugin", dependencyName)
+}
+
+@ApiStatus.Internal
+class PluginDependencyIsNotInstalled(
+  override val plugin: IdeaPluginDescriptor,
+  val dependencyNameOrId: @NlsSafe String,
+  override val shouldNotifyUser: Boolean
+): PluginNonLoadReason {
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.depends.on.not.installed.plugin", plugin.name, dependencyNameOrId)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.depends.on.not.installed.plugin", dependencyNameOrId)
+}
+
+@ApiStatus.Internal
+class PluginIsNotRequiredForLoadingTheExplicitlyConfiguredSubsetOfPlugins(
+  override val plugin: IdeaPluginDescriptor,
+): PluginNonLoadReason {
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.not.required.for.explicitly.configured.subset", plugin.name)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.not.required.for.explicitly.configured.subset")
+  override val shouldNotifyUser: Boolean = false
+}

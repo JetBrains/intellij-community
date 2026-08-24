@@ -33,6 +33,7 @@
     <module name="intellij.libraries.xstream"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.codeStyle.impl"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
@@ -60,6 +61,7 @@
     <module name="intellij.platform.ml"/>
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.remote.core"/>
     <module name="intellij.platform.rpc.backend"/>
     <module name="intellij.platform.smRunner"/>
@@ -76,6 +78,7 @@
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.vcs"/>
     <module name="intellij.platform.welcomeScreen.impl"/>
+    <module name="intellij.platform.workspace.jps"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.common"/>
     <module name="intellij.python.community.core.impl"/>
@@ -898,9 +901,6 @@
 
     <registryKey key="python.typing.strict.unions" defaultValue="true" description="Enable strict union types semantics"/>
 
-    <!-- uv -->
-    <configurationType implementation="com.jetbrains.python.sdk.uv.run.UvRunConfigurationType"/>
-
     <python.processOutput.common.processOutputIconMapping implementation="com.jetbrains.python.sdk.SdkIconMapping"/>
 
     <!-- Debugger Show value tooltip -->
@@ -1054,8 +1054,9 @@
     <evoEnvironmentProvider id="CondaEvoProvider"
                             implementation="com.jetbrains.python.conda.sdk.evolution.CondaEvoEnvironmentProvider"/>
 
+    <evoEnvironmentProvider implementation="com.jetbrains.python.venv.sdk.evolution.VenvEvoEnvironmentProvider"/>
     <evoEnvironmentProvider id="AdvancedEvoProvider"
-                            order="before AutoconfigEvoProvider,last"
+                            order="last"
                             implementation="com.jetbrains.python.sdk.evolution.AdvancedEvoEnvironmentProvider"/>
 
     <pyReferenceCustomTargetChecker implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureTargetChecker"/>
@@ -1430,5 +1431,7 @@
       implementation="com.jetbrains.python.pipenv.PipEnvDependenciesPsiProvider"/>
     <python.inspections.dependencies.dependenciesInspectionProvider
       implementation="com.jetbrains.python.sdk.poetry.LegacyPoetryDependenciesPsiProvider"/>
+    <python.inspections.dependencies.dependenciesInspectionProvider
+      implementation="com.jetbrains.python.packaging.setupPy.SetupPyDependenciesPsiProvider"/>
   </extensions>
 </idea-plugin>

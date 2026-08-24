@@ -29,6 +29,6 @@ class PropertiesGoToDeclarationOrUsagesActionCompletionCommandProvider :
   }
 
   override fun createCommand(context: CommandCompletionProviderContext): ActionCompletionCommand? {
-    return createCommandWithNameIdentifierAndLastAdjusted(context)
+    return createNavigationCommandWithNameIdentifier(context)
   }
 }

@@ -92,9 +92,9 @@ internal class JavaProjectSettingsEntityImpl(private val dataSource: JavaProject
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as JavaProjectSettingsEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.compilerOutput != dataSource?.compilerOutput) this.compilerOutput = dataSource.compilerOutput
-      if (this.languageLevelId != dataSource?.languageLevelId) this.languageLevelId = dataSource.languageLevelId
-      if (this.languageLevelDefault != dataSource?.languageLevelDefault) this.languageLevelDefault = dataSource.languageLevelDefault
+      if (this.compilerOutput != dataSource.compilerOutput) this.compilerOutput = dataSource.compilerOutput
+      if (this.languageLevelId != dataSource.languageLevelId) this.languageLevelId = dataSource.languageLevelId
+      if (this.languageLevelDefault != dataSource.languageLevelDefault) this.languageLevelDefault = dataSource.languageLevelDefault
       updateChildToParentReferences(parents)
     }
 

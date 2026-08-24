@@ -14,8 +14,10 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.DevBuildFragment
 import org.jetbrains.intellij.build.dev.DevBuildOutput
-import org.jetbrains.intellij.build.dev.PlatformFragmentSelector
+import org.jetbrains.intellij.build.dev.PlatformJarSelector
 import org.jetbrains.intellij.build.dev.PluginFragmentSelector
+import org.jetbrains.intellij.build.dev.PrepackedPluginContentJar
+import org.jetbrains.intellij.build.dev.PrepackedPluginContentKey
 import org.jetbrains.intellij.build.dev.buildProductInProcess
 import org.jetbrains.intellij.build.dev.materializeProjectModelTree
 import org.jetbrains.intellij.build.impl.BazelBuildInputs
@@ -92,8 +94,10 @@ fun main(args: Array<String>) {
   val componentManifest = options.optionalPath("--component-manifest")
   val pluginClasspathPart = options.optionalPath("--plugin-classpath-part")
   val pluginClasspathPrefix = options.optionalPath("--plugin-classpath-prefix")
+  val prepackedPluginContent = options.optionalPath("--prepacked-plugin-jars")?.let(::readPrepackedPluginContentPlan).orEmpty()
+  val prepackedPluginContentPlacement = options.optionalPath("--prepacked-plugin-jars-placement")
   val output = if (fragment.isComplete) {
-    require(componentManifest == null && pluginClasspathPart == null && pluginClasspathPrefix == null) {
+    require(componentManifest == null && pluginClasspathPart == null && pluginClasspathPrefix == null && prepackedPluginContentPlacement == null) {
       "Component output options require --fragment"
     }
     DevBuildOutput.Complete
@@ -104,6 +108,7 @@ fun main(args: Array<String>) {
       manifestFile = checkNotNull(componentManifest) { "--component-manifest is required for fragment '$fragment'" },
       pluginClasspathPartFile = pluginClasspathPart,
       pluginClasspathPrefixFile = pluginClasspathPrefix,
+      prepackedPluginContentPlacementFile = prepackedPluginContentPlacement,
     )
   }
   options.optionalPath("--bazel-targets-json")?.let { path ->
@@ -152,6 +157,7 @@ fun main(args: Array<String>) {
         buildDateInSeconds = buildDateInSeconds,
         jarCacheDir = jarCacheDir,
         output = output,
+        prepackedPluginContent = prepackedPluginContent,
       )
     )
 
@@ -177,6 +183,25 @@ fun main(args: Array<String>) {
   exitProcess(0)
 }
 
+private fun readPrepackedPluginContentPlan(file: Path): Map<PrepackedPluginContentKey, PrepackedPluginContentJar> {
+  val result = LinkedHashMap<PrepackedPluginContentKey, PrepackedPluginContentJar>()
+  for ((index, line) in Files.readAllLines(file).withIndex()) {
+    if (line.isBlank()) {
+      continue
+    }
+    val fields = line.split('\t')
+    require(fields.size == 3) { "$file:${index + 1}: expected plugin, content module and relative output path" }
+    val jar = PrepackedPluginContentJar(
+      pluginMainModule = fields[0],
+      contentModule = fields[1],
+      relativeOutputFile = fields[2],
+    )
+    val previous = result.put(jar.key, jar)
+    require(previous == null) { "$file:${index + 1}: duplicate prepacked plugin relation ${jar.key}" }
+  }
+  return result
+}
+
 /**
  * Reads which slice of a distribution to assemble.
  *
@@ -186,20 +211,21 @@ fun main(args: Array<String>) {
 private fun parseFragment(options: CommandLineOptions): DevBuildFragment {
   val name = options.optional("--fragment")
   val platform = options.optional("--platform")?.let { value ->
+    // The jars are named rather than derived: a fragment must own exactly the complement of what the distribution
+    // composes in as the packed-jars component, and both sides read one generated list.
+    val jars = options.list("--platform-jar").toSet()
     when (value) {
-      "all" -> PlatformFragmentSelector.All
-      "core" -> PlatformFragmentSelector.Core
-      "content-modules" -> PlatformFragmentSelector.ContentModules
-      else -> error("Unknown --platform value '$value', expected all, core or content-modules")
+      "except" -> PlatformJarSelector(jars = jars, mode = PlatformJarSelector.Mode.EXCLUDE)
+      "only" -> PlatformJarSelector(jars = jars, mode = PlatformJarSelector.Mode.ONLY)
+      else -> error("Unknown --platform value '$value', expected except or only")
     }
   }
   val platformResources = options.optionalBoolean("--platform-resources") ?: false
   val plugins = options.optional("--plugins")?.let { value ->
     when (value) {
-      "all" -> PluginFragmentSelector.All
       "named" -> PluginFragmentSelector.Named(options.list("--plugin").toSet())
       "remaining" -> PluginFragmentSelector.Remaining(options.list("--claimed-plugin").toSet())
-      else -> error("Unknown --plugins value '$value', expected all, named or remaining")
+      else -> error("Unknown --plugins value '$value', expected named or remaining")
     }
   }
 
@@ -250,12 +276,12 @@ private fun dropEmptyTempDir(runDir: Path) {
   }
 }
 
-private fun parseOs(value: String): OsFamily {
+internal fun parseOs(value: String): OsFamily {
   return OsFamily.entries.firstOrNull { it.name.equals(value, ignoreCase = true) || it.osId.equals(value, ignoreCase = true) || it.dirName.equals(value, ignoreCase = true) }
          ?: error("Unknown --os value '$value', expected one of ${OsFamily.entries.joinToString { it.osId }}")
 }
 
-private fun parseArch(value: String): JvmArchitecture {
+internal fun parseArch(value: String): JvmArchitecture {
   return JvmArchitecture.entries.firstOrNull {
     it.name.equals(value, ignoreCase = true) || it.archName.equals(value, ignoreCase = true) ||
     it.dirName.equals(value, ignoreCase = true) || it.marketplaceName.equals(value, ignoreCase = true)

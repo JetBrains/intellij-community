@@ -6,7 +6,7 @@ import org.jetbrains.intellij.build.io.runProcess
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
 
-internal suspend fun runBazelBuild(targets: List<String>, buildContext: BuildContext) {
+internal suspend fun runBazelBuild(targets: List<String>, additionalArguments: List<String>, buildContext: BuildContext) {
   val projectHome = buildContext.paths.projectHome
   val bazelExecutable = projectHome.resolve("bazel.cmd")
   require(bazelExecutable.exists()) { "Bazel executable not found at ${bazelExecutable.pathString}" }
@@ -15,5 +15,6 @@ internal suspend fun runBazelBuild(targets: List<String>, buildContext: BuildCon
     "build",
   )
   args.addAll(targets)
+  args.addAll(additionalArguments)
   runProcess(args, projectHome)
 }

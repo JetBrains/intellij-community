@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.ift
 
 import com.intellij.ide.impl.NewProjectUtil
@@ -12,30 +12,32 @@ import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.PROJECT_OPENED_BY_PLATFORM_PROCESSOR
 import training.lang.AbstractLangSupport
 import training.project.ProjectUtils
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 abstract class JavaBasedLangSupport : AbstractLangSupport() {
   protected val sourcesDirectoryPath: String = "src"
 
-  override fun installAndOpenLearningProject(contentRoot: Path,
-                                             projectToClose: Project?,
-                                             postInitCallback: (learnProject: Project) -> Unit) {
+  override fun installAndOpenLearningProject(
+    contentRoot: Path,
+    projectToClose: Project?,
+    postInitCallback: (learnProject: Project) -> Unit,
+  ) {
     val openProjectTask = OpenProjectTask {
       this.projectToClose = projectToClose
       // It is required to not run SetupJavaProjectFromSourcesActivity because
       // Projects created from wizard do not use it now
-      this.beforeOpen = { project ->
+      this.beforeOpenTasks += { project ->
         project.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, false)
         true
       }
     }
     ProjectUtils.simpleInstallAndOpenLearningProject(contentRoot, this, openProjectTask) { project ->
-      val projectPath = FileUtil.toSystemIndependentName(contentRoot.toString())
+      val projectPath = contentRoot.invariantSeparatorsPathString
       val outputPath = projectPath.removeSuffix("/") + "/out"
       NewProjectUtil.setCompilerOutputPath(project, outputPath)
 

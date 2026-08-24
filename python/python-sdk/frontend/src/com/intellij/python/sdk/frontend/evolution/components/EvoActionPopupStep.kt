@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil.lastUpdateAndCheckDumb
 import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
+import com.intellij.openapi.actionSystem.ex.ActionUtil.updateAction
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.ListPopupStepEx
 import com.intellij.openapi.ui.popup.ListSeparator
@@ -35,6 +36,17 @@ open class EvoActionPopupStep(
   private val listeners: MutableList<ListPopupStep.ListPopupModelListener> = arrayListOf()
 
   init {
+    // Rows that gate themselves (the package-manager actions) get their own update() run against this popup's data
+    // context — which carries the project's dependency file — so their presentation is truthful before anything is
+    // painted; getValues() then drops the ones that reported themselves invisible.
+    node.sections.asSequence()
+      .flatMap { it.elements }
+      .filterIsInstance<EvoTreeActionLeafElement>()
+      .forEach { element ->
+        // The event carries the element's own presentation (not a copy), so update() writes straight into the row.
+        val event = AnActionEvent.createEvent(dataContext, element.presentation, ActionPlaces.POPUP, ActionUiKind.POPUP, null)
+        updateAction(element.action, event)
+      }
     CommonDataKeys.PROJECT.getData(dataContext)?.let { project ->
       node.sections.forEach { section ->
         section.elements.filter { it.state == State.CREATED }.forEach { it.load(project, scope, listeners) }
@@ -49,6 +61,9 @@ open class EvoActionPopupStep(
   /** The chosen leaf's action, queued to run once the popup has closed (see [getFinalRunnable]); null for a node. */
   private var finalRunnable: Runnable? = null
 
+  /** The editable env-name holder for an add-new submenu, or null when the name is fixed — see [EvoTreeNodeElement]. */
+  val editableName: EvoEditableName? get() = node.editableName
+
   override fun onChosen(
     selectedValue: EvoTreeItem,
     finalChoice: Boolean
@@ -57,10 +72,14 @@ open class EvoActionPopupStep(
     if (!node.isEnabled) return PopupStep.FINAL_CHOICE
 
     return when (val element = selectedValue.element) {
-      // Only open a submenu for a loaded, non-empty node — an empty popup crashes Swing layout (AIOOBE 0).
+      // Only open a submenu for a loaded, non-empty node — an empty popup crashes Swing layout (AIOOBE 0). The
+      // "add new environment" node is handled here too; EvoTreePopup repositions its submenu to the left.
       is EvoTreeNodeElement ->
         if (element.isEnabled && element.hasContent()) EvoActionPopupStep(null, element, dataContext, scope) else null
       is EvoTreeLeafElement -> {
+        // In an add-new submenu with an invalid name (blank/taken) the version rows are inert: don't select or close —
+        // keep the popup open so the user can fix the name (the field is red with an explaining tooltip).
+        if (editableName?.isValid == false) return null
         // Run the action only after the whole popup closes (via getFinalRunnable), so a tool window or dialog
         // it opens never appears behind a still-visible popup. FINAL_CHOICE is null; see EvoTreePopup.handleNextStep.
         finalRunnable = Runnable { performActionItem(element, null) }
@@ -86,18 +105,21 @@ open class EvoActionPopupStep(
 
   override fun setEmptyText(emptyText: StatusText) {}
 
-  override fun getValues(): List<EvoTreeItem> {
-    val result = node.sections.flatMap { section ->
-      val items = section.elements.mapIndexed { index, element ->
-        EvoTreeItem(element, section.label?.takeIf { index == 0 })
+  override fun getValues(): List<EvoTreeItem> =
+    node.sections.flatMap { section ->
+      // A self-gating action that reported itself inapplicable is dropped before indexing, so the separator still
+      // lands on the first row actually shown.
+      val elements = section.elements.filter { it !is EvoTreeActionLeafElement || it.presentation.isVisible }
+      // A section's header is painted into its first row's cell, so only that row carries the separator and its tooltip.
+      elements.mapIndexed { index, element ->
+        EvoTreeItem(element, section.label?.takeIf { index == 0 }, section.labelTooltip?.takeIf { index == 0 })
       }
-      items
     }
-    return result
-  }
 
   // set to true if we need actions '...' on disabled items too
-  override fun isSelectable(value: EvoTreeItem?): Boolean = value != null && value.element.state == State.DONE && value.isEnabled
+  override fun isSelectable(value: EvoTreeItem?): Boolean =
+    // An invalid add-new name makes its version rows non-selectable (not just no-op) so nav/hover/click can't pick them.
+    editableName?.isValid != false && value != null && value.element.state == State.DONE && value.isEnabled
 
   override fun getIconFor(value: EvoTreeItem?): Icon? = value?.icon
 
@@ -137,7 +159,8 @@ open class EvoActionPopupStep(
 
   override fun getMnemonicNavigationFilter(): MnemonicNavigationFilter<EvoTreeItem?>? = null
 
-  override fun isSpeedSearchEnabled(): Boolean = true
+  // Off for an editable add-new submenu, so typed characters reach its name field instead of the list's speed search.
+  override fun isSpeedSearchEnabled(): Boolean = editableName == null
 
   // Filter the list as you type — match the row title and (once resolved) its secondary text.
   override fun getSpeedSearchFilter(): SpeedSearchFilter<EvoTreeItem?> = SpeedSearchFilter { value ->

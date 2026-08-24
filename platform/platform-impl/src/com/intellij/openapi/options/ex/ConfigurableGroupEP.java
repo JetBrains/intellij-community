@@ -99,7 +99,7 @@ public final class ConfigurableGroupEP implements PluginAware {
     String pathToBundle = bundle;
     if (pathToBundle == null) {
       if (descriptor != null) pathToBundle = descriptor.getResourceBundleBaseName();
-      if (pathToBundle == null) return OptionsBundle.INSTANCE.getResourceBundle();
+      if (pathToBundle == null) return OptionsBundle.getResourceBundle();
     }
     ClassLoader classLoader = descriptor != null ? descriptor.getPluginClassLoader() : null;
     return DynamicBundle.getResourceBundle(classLoader != null ? classLoader : getClass().getClassLoader(), pathToBundle);

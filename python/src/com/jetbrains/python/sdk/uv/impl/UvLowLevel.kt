@@ -1,11 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv.impl
 
+import com.fasterxml.jackson.core.JacksonException
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.RuntimeJsonMappingException
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.intellij.platform.eel.provider.localEel
+import com.intellij.python.community.execService.Args
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.pyproject.PyDependencyGroupKind
 import com.jetbrains.python.PyBundle
@@ -28,6 +30,7 @@ import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.uv.ScriptSyncCheckResult
 import com.jetbrains.python.sdk.uv.UvCli
 import com.jetbrains.python.sdk.uv.UvLowLevel
+import com.jetbrains.python.sdk.uv.UvScriptEnvironment
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.venvReader.tryResolvePath
 import io.github.z4kn4fein.semver.Version
@@ -37,6 +40,7 @@ import kotlin.io.path.pathString
 
 private const val NO_METADATA_MESSAGE = "does not contain a PEP 723 metadata tag"
 private const val OUTDATED_ENV_MESSAGE = "The environment is outdated"
+private const val SUPPORTED_SYNC_SCHEMA_VERSION = "preview"
 private val versionRegex = Regex("(\\d+\\.\\d+)\\.\\d+-.+\\s")
 
 private class UvLowLevelImpl<P : PathHolder>(
@@ -45,7 +49,12 @@ private class UvLowLevelImpl<P : PathHolder>(
   private val uvCli: UvCli<P>,
   private val fileSystem: FileSystem<P>,
 ) : UvLowLevel<P> {
-  override suspend fun initializeEnvironment(init: Boolean, version: Version?, clearExisting: Boolean): PyResult<P> {
+  override suspend fun initializeEnvironment(
+    init: Boolean,
+    version: Version?,
+    clearExisting: Boolean,
+    inheritSitePackages: Boolean,
+  ): PyResult<P> {
     val addPythonArg: (MutableList<String>) -> Unit = { args ->
       version?.let {
         args.add("--python")
@@ -70,6 +79,15 @@ private class UvLowLevelImpl<P : PathHolder>(
     venvPath?.also { venvArgs += it.toString() }
     if (clearExisting) {
       venvArgs.add("--clear")
+    }
+    // `uv venv` accepts these, `uv init` does not, so they belong to this branch only.
+    if (inheritSitePackages) {
+      venvArgs.add("--system-site-packages")
+      // uv defaults to `python-preference = managed`, so it would base the env on a uv-downloaded
+      // interpreter whose site-packages is empty, making the inherited packages nothing at all. The
+      // user asked to inherit the *system* packages, so the base has to be the system interpreter.
+      venvArgs.add("--python-preference")
+      venvArgs.add("system")
     }
     addPythonArg(venvArgs)
     uvCli.runUv(cwd, null, true, *venvArgs.toTypedArray()).onFailure {
@@ -259,9 +277,9 @@ private class UvLowLevelImpl<P : PathHolder>(
   }
 
   override suspend fun isScriptSynced(inexact: Boolean, scriptPath: Path): PyResult<ScriptSyncCheckResult> {
-    val args = constructSyncArgs(inexact) + listOf("--script", scriptPath.pathString)
+    val args = Args(*constructSyncArgs(inexact).toTypedArray(), "--script").addLocalFile(scriptPath)
 
-    uvCli.runUv(cwd, venvPath, false, *args.toTypedArray())
+    uvCli.runUv(cwd, venvPath, false, args)
       .onFailure {
         val stderr = tryExtractStderr(it)
 
@@ -277,16 +295,6 @@ private class UvLowLevelImpl<P : PathHolder>(
       }
 
     return PyExecResult.success(ScriptSyncCheckResult.Synced)
-  }
-
-  fun constructSyncArgs(inexact: Boolean): MutableList<String> {
-    val args = mutableListOf("sync", "--check", "--all-packages")
-
-    if (inexact) {
-      args += "--inexact"
-    }
-
-    return args
   }
 
   fun PythonPackageInstallRequest.formatPackageName(): Array<String> = when (this) {
@@ -330,6 +338,50 @@ private class UvLowLevelImpl<P : PathHolder>(
   override suspend fun lock(): PyResult<String> {
     return uvCli.runUv(cwd, venvPath, true, "lock")
   }
+
+  override suspend fun syncScript(scriptPath: Path): PyResult<UvScriptEnvironment> {
+    val args = Args("sync", "--script").addLocalFile(scriptPath).addArgs("--output-format", "json")
+    val out = uvCli.runUv(cwd, venvPath, true, args)
+      .getOr { return it }
+
+    val report = try {
+      jacksonObjectMapper().readTree(out)
+    }
+    catch (e: JacksonException) {
+      return PyResult.localizedError(e.message ?: e.localizedMessage ?: e.toString())
+    }
+
+    // uv calls this schema a preview and has already revised it, so refuse an unfamiliar one rather than guess.
+    val schemaVersion = report.path("schema").path("version").textValue()
+    if (schemaVersion != SUPPORTED_SYNC_SCHEMA_VERSION) {
+      return PyResult.localizedError(
+        PyBundle.message("uv.script.sync.unsupported.schema", schemaVersion ?: "", SUPPORTED_SYNC_SCHEMA_VERSION)
+      )
+    }
+
+    val environment = report.path("sync").path("environment")
+    val environmentPath = environment.path("path").textValue()
+    val pythonPath = environment.path("python").path("path").textValue()
+    if (environmentPath.isNullOrBlank() || pythonPath.isNullOrBlank()) {
+      return PyResult.localizedError(PyBundle.message("uv.script.sync.no.environment", scriptPath.pathString))
+    }
+
+    return PyResult.success(UvScriptEnvironment(environmentPath, pythonPath))
+  }
+}
+
+/**
+ * Arguments of the `uv sync --check` used to ask whether an environment is up to date. Lifted out of the
+ * implementation so that the flags it builds can be asserted directly.
+ */
+internal fun constructSyncArgs(inexact: Boolean): MutableList<String> {
+  val args = mutableListOf("sync", "--check", "--all-packages")
+
+  if (inexact) {
+    args += "--inexact"
+  }
+
+  return args
 }
 
 internal fun createUvLowLevelLocal(cwd: Path, uvCli: UvCli<PathHolder.Eel>): UvLowLevel<PathHolder.Eel> =
@@ -339,7 +391,7 @@ internal fun <P : PathHolder> createUvLowLevel(cwd: Path, uvCli: UvCli<P>, fileS
   UvLowLevelImpl(cwd, venvPath, uvCli, fileSystem)
 
 internal suspend fun createUvLowLevelLocal(cwd: Path): PyResult<UvLowLevel<PathHolder.Eel>> =
-  createUvCli(null, EelFileSystem(localEel)).mapSuccess { createUvLowLevelLocal(cwd, it) }
+  validateAndCreateUvCli(null, EelFileSystem(localEel)).mapSuccess { createUvLowLevelLocal(cwd, it) }
 
 private fun tryExtractStderr(err: PyError): String? =
   when (err) {

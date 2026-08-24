@@ -7,6 +7,7 @@ import kotlinx.coroutines.CancellationException
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
 import org.jetbrains.plugins.terminal.session.impl.TerminalAliasesReceivedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCommandFinishedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalCommandHistoryPathReceivedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCommandStartedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCompletionFinishedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalPromptFinishedEvent
@@ -52,7 +53,8 @@ internal class TerminalShellIntegrationController {
   private fun processInitializedEvent(args: List<String>) {
     isShellIntegrationEnabled = true
     val currentDirectory = Param.CURRENT_DIRECTORY.getDecodedValueOrNull(args.getOrNull(1))
-    dispatcher.multicaster.initialized(currentDirectory)
+    val historyPath = Param.HISTORY_PATH.getDecodedNotEmptyValueOrNull(args.getOrNull(2))
+    dispatcher.multicaster.initialized(currentDirectory, historyPath)
   }
 
   private fun processCommandStartedEvent(args: List<String>) {
@@ -87,13 +89,16 @@ internal class TerminalShellIntegrationController {
   }
 
   /**
-   * Registers a listener that projects the shell-integration callbacks into the corresponding
-   * [TerminalShellIntegrationEvent]s and passes them to [sink], synchronously on the
-   * [processCustomCommand] thread. `initialized` produces no event — observe it via
-   * [isShellIntegrationEnabled] or a plain [addListener].
-   */
+    * Registers a listener that projects the shell-integration callbacks into the corresponding
+    * [TerminalShellIntegrationEvent]s and passes them to [sink], synchronously on the
+    * [processCustomCommand] thread.
+    */
   fun addEventSink(sink: (TerminalShellIntegrationEvent) -> Unit) {
     addListener(object : TerminalShellIntegrationEventsListener {
+      override fun initialized(currentDirectory: String?, historyPath: String?) {
+        sink(TerminalCommandHistoryPathReceivedEvent(historyPath))
+      }
+
       override fun commandStarted(command: String) {
         sink(TerminalCommandStartedEvent(command))
       }
@@ -128,7 +133,8 @@ internal class TerminalShellIntegrationController {
     COMMAND,
     EXIT_CODE,
     CURRENT_DIRECTORY,
-    RESULT;
+    RESULT,
+    HISTORY_PATH;
 
     private val paramNameWithSeparator: String = "${paramName()}="
 

@@ -208,6 +208,12 @@ fun GitPlatformTest.makeCommit(file: String): String {
   return last()
 }
 
+fun GitPlatformTestContext.makeCommit(file: String): String {
+  append(file, "some content")
+  addCommit("some message")
+  return last()
+}
+
 fun GitPlatformTest.makeCommit(author: VcsUser, file: String): String {
   setupUsername(project, author.name, author.email)
   val commit = modify(file)

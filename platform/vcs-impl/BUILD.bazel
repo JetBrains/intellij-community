@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "vcs-impl-tests_test",
@@ -112,6 +113,8 @@ jvm_library(
         "//platform/remote-topics/shared:rpc-topics",
     ],
 )
+
+content_module_jar(module = ":vcs-impl")
 
 jvm_library(
     name = "vcs-impl_test_lib",

@@ -56,6 +56,7 @@ kt_jvm_library(
     runtime_deps = [],
     deps = [
         ":kotlin_serialization",
+        "@j2b_maven//:com_charleskorn_kaml_kaml_jvm",
         "@j2b_maven//:com_intellij_platform_kotlinx_coroutines_core_jvm",
         "@j2b_maven//:com_jetbrains_intellij_platform_build_scripts_downloader",
         "@j2b_maven//:com_jetbrains_intellij_platform_jps_model",
@@ -115,6 +116,13 @@ java_test(
         "BAZEL_GENERATOR_KOTLINC_DEFAULTS_TEST_DATA_MARKER": "$(rlocationpath testData/kotlinc-defaults/marker.txt)",
     },
     test_class = "org.jetbrains.intellij.build.bazel.KotlincProjectDefaultsTest",
+    runtime_deps = [":bazel-generator-integration-tests-lib"],
+)
+
+java_test(
+    name = "plugin-content-module-jar-tests",
+    size = "small",
+    test_class = "org.jetbrains.intellij.build.bazel.PluginContentModuleJarTest",
     runtime_deps = [":bazel-generator-integration-tests-lib"],
 )
 

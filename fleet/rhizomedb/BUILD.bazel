@@ -1,6 +1,7 @@
 load("@community//fleet/build:fleet.bzl", "fleet_wasmjs_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 fleet_wasmjs_module(
     name = "wasmjs_module",
@@ -67,6 +68,8 @@ jvm_library(
         "//fleet/openmap",
     ],
 )
+
+content_module_jar(module = ":rhizomedb")
 
 jvm_library(
     name = "rhizomedb_test_lib",

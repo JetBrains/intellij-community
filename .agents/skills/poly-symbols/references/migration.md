@@ -91,15 +91,17 @@ switched from `element.references` + `ref.resolve()` to `psiSymbolReferences()` 
 `resolveReference()`; direct legacy-reference-class construction in
 `ResolveNestedClassMethodsTest` and `RenameTest.renameElementAtCaret()` were replaced the same way;
 dictionary-key tests (`GdDictionaryLuaStyleKeyTest`/`GdDictionaryStringKeyTest`, a reference kind
-with **no** PolySymbols coverage planned at all) and TSCN↔GDScript cross-language rename tests
-(`ScriptClassRenamingTest`/`ResourceFieldRenamingTest`, likewise no PolySymbols coverage yet) all
-migrated cleanly with zero behavior change, proving the classic-fallback design works even for
-kinds that will *never* get a PolySymbols implementation. Separately, the rewrite of
-`ResolveTestBase` surfaced 4 genuinely new test failures purely by switching the resolve mechanism
-on already-partially-migrated kinds (`GdRefIdRef`/`GdSetGetMethodIdRef`) — static-access filtering
-and constructor-qualifier-chain resolution gaps that the classic-only dumper had never exercised.
-Those were left as an open, explicitly-tracked decision rather than papered over — exactly the
-step-5 discipline above.
+with **no** PolySymbols coverage planned at all) migrated cleanly with zero behavior change, proving
+the classic-fallback design works even for kinds that will *never* get a PolySymbols implementation.
+Separately, the rewrite of `ResolveTestBase` surfaced 4 genuinely new test failures purely by
+switching the resolve mechanism on already-partially-migrated kinds (`GdRefIdRef`/`GdSetGetMethodIdRef`)
+— static-access filtering and constructor-qualifier-chain resolution gaps that the classic-only
+dumper had never exercised. Those were left as an open, explicitly-tracked decision rather than
+papered over — exactly the step-5 discipline above. (TSCN↔GDScript cross-language rename tests,
+`ScriptClassRenamingTest`/`ResourceFieldRenamingTest`, were in the same "no PolySymbols coverage yet,
+classic-fallback only" bucket at the time this migration ran — that has since changed: TSCN's
+`TscnNamedElement` gained its own own-references implementation, and these two tests now exercise
+real PolySymbols resolve/rename, not fallback. See [case-studies.md](case-studies.md#gdscript).)
 
 ## Phase B — per-kind production migration unit
 
@@ -107,7 +109,12 @@ Only start once Phase A's tests are green or their divergences are explicitly tr
 PSI element kind (or symbol kind) at a time; for each, do **all** of the following in the same
 change:
 
-1. Implement `PolySymbolOwnReferencesHost.buildOwnReferences()` on the host PSI class.
+1. Make the host PSI class's own interface implement `PolySymbolOwnReferenceHost`, then override
+   `getOwnReferences()` on the impl class and build the result with the `polySymbolOwnReferences { ... }`
+   DSL — see [query-model.md](query-model.md#references--own-references-polysymbolownreferences) for
+   the exact shape. (An older iteration of this API had you implement a since-deleted
+   `PolySymbolOwnReferencesHost.buildOwnReferences()` method instead — if you see that name in old
+   code/notes, it's stale; the direct-override form is current.)
 2. Delete the matching legacy `PsiReferenceContributor` + its `PsiReference` class.
 3. Delete the corresponding `polySymbols.psiReferenceProvider` EP registration + provider class
    (own-references pre-empt EP-registered external references once non-empty — see
@@ -116,7 +123,12 @@ change:
 4. If declarations for that kind still lean on `PsiLinkedPolySymbol` purely as a bridge to the
    legacy PSI-reference mechanism you just deleted, switch them onto `PolySymbolDeclaredInPsi` + a
    hand-written `PolySymbolDeclarationProvider` instead — the bridge has no reason to exist once
-   nothing needs it.
+   nothing needs it. **Expect to lose "usage search finds the raw PSI declaration" behavior when you
+   do this** (`PolySymbolDeclaredInPsi`'s own doc comment says so explicitly) — if that matters for
+   the kind you're migrating, budget for a hand-written `ReferencesSearch` executor to recover it.
+   GDScript's real migration hit exactly this and wrote `GdOwnReferencesSearcher` (a generic
+   word-search-then-resolve-own-references executor) to close the gap; see
+   [case-studies.md](case-studies.md#gdscript).
 5. Update the Phase-A-ported test for that kind to assert fully through the Symbol API (drop any
    remaining plain-PSI fallback assertion for that kind specifically).
 

@@ -236,7 +236,12 @@ object CodeWriter {
     val apiVersionFromDownloadedJar = getApiVersionFromManifest(codeGeneratorFromDownloadedJar::class.java)
     if (apiVersionInDevkit == null || apiVersionFromDownloadedJar == null) {
       val where = if (apiVersionInDevkit == null) "devkit plugin" else "codegen-impl"
-      DevKitWorkspaceModelBundle.message("notification.workspace.incompatible.codegen.api.versions.content.none", where)
+      val groupId = DevKitWorkspaceModelBundle.message("notification.workspace.code.generation.not.available")
+      val message = DevKitWorkspaceModelBundle.message("notification.workspace.incompatible.codegen.api.versions.content.none", where)
+      NotificationGroupManager.getInstance()
+        .getNotificationGroup(groupId)
+        .createNotification(title = groupId, message, NotificationType.ERROR)
+        .notify(project)
       return false
     }
 

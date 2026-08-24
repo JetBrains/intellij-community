@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.platform.projectModel.impl` start
 jvm_library(
@@ -48,9 +49,14 @@ jvm_library(
         "//platform/util/coroutines",
         "//platform/util/multiplatform",
         "//platform/util/base",
-        "//platform/diagnostic/telemetry-impl",
         "//platform/analysis-api:analysis",
     ],
+)
+
+content_module_jar(
+    module = ":projectModel-impl",
+    modules_after = ["//platform/util/annotations"],
+    modules_before = ["//platform/eel-provider"],
 )
 
 jvm_library(
@@ -91,7 +97,6 @@ jvm_library(
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/util/multiplatform:multiplatform_test_lib",
         "//platform/util/base:base_test_lib",
-        "//platform/diagnostic/telemetry-impl:telemetry-impl_test_lib",
         "//platform/analysis-api:analysis_test_lib",
     ],
 )

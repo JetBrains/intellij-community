@@ -30,8 +30,10 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.GHRepository
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
+import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
@@ -45,6 +47,7 @@ class GHPRBranchesViewModel internal constructor(
   parentCs: CoroutineScope,
   private val project: Project,
   private val mapping: GHGitRepositoryMapping,
+  private val account: GithubAccount,
   private val detailsState: StateFlow<GHPullRequest>
 ) : CodeReviewBranchesViewModel {
   private val cs = parentCs.childScope(this::class)
@@ -89,7 +92,11 @@ class GHPRBranchesViewModel internal constructor(
   override fun checkoutInNewWorktree() {
     val details = detailsState.value
     cs.launch {
-      fetchAndCheckoutBranchInNewWorktree(mapping.remote, details)
+      fetchAndCheckoutBranchInNewWorktree(
+        remoteUrlCoordinates = mapping.remote,
+        details = details,
+        preferredRepoAndAccount = mapping.repository to account,
+      )
       GHPRStatisticsCollector.logDetailsBranchCheckedOut(project)
     }
   }
@@ -167,11 +174,21 @@ class GHPRBranchesViewModel internal constructor(
                                                          localPrefix)
     }
 
-    internal suspend fun fetchAndCheckoutBranchInNewWorktree(remoteUrlCoordinates: GitRemoteUrlCoordinates, details: GHPullRequest) {
+    internal suspend fun fetchAndCheckoutBranchInNewWorktree(
+      remoteUrlCoordinates: GitRemoteUrlCoordinates,
+      details: GHPullRequest,
+      preferredRepoAndAccount: Pair<GHRepositoryCoordinates, GithubAccount>,
+    ) {
+      val baseRepository = details.baseRepository ?: run {
+        LOG.warn("Can't checkout remote branch in a new worktree for PR ${details.number} because base repository is missing")
+        return
+      }
       val headRepository = details.headRepository ?: run {
         LOG.warn("Can't checkout remote branch in a new worktree for PR ${details.number} because head repository is missing")
         return
       }
+      val isFork = headRepository != baseRepository && details.headRepository.isFork
+      val localPrefix = if (isFork) "fork/${details.headRepository.owner.login}" else null
       val remoteDescriptor = headRepository.getRemoteDescriptor(remoteUrlCoordinates)
       val prId = details.prId
       val worktreeName = "${remoteUrlCoordinates.repository.root.name}_PR_${details.number}"
@@ -183,8 +200,9 @@ class GHPRBranchesViewModel internal constructor(
                                                           details.headRefName,
                                                           parentDir,
                                                           worktreeName,
-                                                          WORKTREE_FROM_REVIEW_PLACE) { worktreeProject ->
-        worktreeProject.service<GHPRProjectViewModel>().activateAndAwaitProject {
+                                                          WORKTREE_FROM_REVIEW_PLACE,
+                                                          localPrefix) { worktreeProject ->
+        worktreeProject.service<GHPRProjectViewModel>().activateAndAwaitProject(preferredRepoAndAccount) {
           openPullRequestInfoAndDiff(prId)
         }
       }

@@ -47,6 +47,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.Topic;
 import com.intellij.vcs.commit.CommitMode;
+import com.intellij.vcs.console.VcsConsoleTabService;
 import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.CoroutineScopeKt;
@@ -304,7 +305,7 @@ public final class HgVcs extends AbstractVcs {
     if (message.length() > MAX_CONSOLE_OUTPUT_SIZE) {
       message = message.substring(0, MAX_CONSOLE_OUTPUT_SIZE);
     }
-    ProjectLevelVcsManager.getInstance(myProject).addMessageToConsoleWindow(message, contentType);
+    VcsConsoleTabService.getInstance(myProject).addMessage(message, contentType);
   }
 
   public HgExecutableValidator getExecutableValidator() {

@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -146,10 +147,21 @@ exports_files(
         "resources/META-INF/plugin.xml",
         "resources/org/jetbrains/idea/eclipse/conversion/template.empty.project.xml",
         "resources/org/jetbrains/idea/eclipse/conversion/template.project.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.eclipse` end
+
+### auto-generated section `dev content intellij.eclipse` start
+dev_dist_plugin_content(
+    content_modules = [
+        "//plugins/eclipse/common-eclipse-util:common",
+        "//plugins/eclipse/jps-plugin:jps",
+    ],
+    descriptor_module = ":eclipse",
+)
+### auto-generated section `dev content intellij.eclipse` end
 
 ### auto-generated section `build intellij.eclipse.tests` start
 jvm_library(

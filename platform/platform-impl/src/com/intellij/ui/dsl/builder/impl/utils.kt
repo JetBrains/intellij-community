@@ -6,7 +6,9 @@ package com.intellij.ui.dsl.builder.impl
 import com.intellij.BundleBase
 import com.intellij.ide.TooltipTitle
 import com.intellij.ide.ui.laf.darcula.ui.DarculaScrollPaneBorder
+import com.intellij.internal.inspector.UiInspectorUtil
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.TextWithMnemonic
@@ -160,6 +162,10 @@ private fun getLabelComponentFor(component: JComponent): JComponent? {
     return component
   }
   return null
+}
+
+internal fun isSaveStacktraces(): Boolean {
+  return ApplicationManager.getApplication()?.isInternal == true && UiInspectorUtil.isSaveStacktraces()
 }
 
 internal fun registerCreationStacktrace(component: JComponent) {

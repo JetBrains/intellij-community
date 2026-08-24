@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.maven.resolver.transport` start
 jvm_library(
@@ -25,6 +26,16 @@ jvm_library(
         "@lib//:libraries-maven-resolver-transport-org-apache-maven-resolver-maven-resolver-transport-file",
         "@lib//:libraries-maven-resolver-transport-org-apache-maven-resolver-maven-resolver-transport-http",
     ],
+)
+
+content_module_jar(
+    libraries = [
+        # do not sort,
+        "@lib//:libraries-maven-resolver-transport-org-apache-maven-resolver-maven-resolver-connector-basic",
+        "@lib//:libraries-maven-resolver-transport-org-apache-maven-resolver-maven-resolver-transport-file",
+        "@lib//:libraries-maven-resolver-transport-org-apache-maven-resolver-maven-resolver-transport-http",
+    ],
+    module = ":maven-resolver-transport",
 )
 
 jvm_library(

@@ -114,15 +114,15 @@ internal class ExternalSystemModuleOptionsEntityImpl(private val dataSource: Ext
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ExternalSystemModuleOptionsEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.externalSystem != dataSource?.externalSystem) this.externalSystem = dataSource.externalSystem
-      if (this.externalSystemModuleVersion != dataSource?.externalSystemModuleVersion) this.externalSystemModuleVersion =
+      if (this.externalSystem != dataSource.externalSystem) this.externalSystem = dataSource.externalSystem
+      if (this.externalSystemModuleVersion != dataSource.externalSystemModuleVersion) this.externalSystemModuleVersion =
         dataSource.externalSystemModuleVersion
-      if (this.linkedProjectPath != dataSource?.linkedProjectPath) this.linkedProjectPath = dataSource.linkedProjectPath
-      if (this.linkedProjectId != dataSource?.linkedProjectId) this.linkedProjectId = dataSource.linkedProjectId
-      if (this.rootProjectPath != dataSource?.rootProjectPath) this.rootProjectPath = dataSource.rootProjectPath
-      if (this.externalSystemModuleGroup != dataSource?.externalSystemModuleGroup) this.externalSystemModuleGroup =
+      if (this.linkedProjectPath != dataSource.linkedProjectPath) this.linkedProjectPath = dataSource.linkedProjectPath
+      if (this.linkedProjectId != dataSource.linkedProjectId) this.linkedProjectId = dataSource.linkedProjectId
+      if (this.rootProjectPath != dataSource.rootProjectPath) this.rootProjectPath = dataSource.rootProjectPath
+      if (this.externalSystemModuleGroup != dataSource.externalSystemModuleGroup) this.externalSystemModuleGroup =
         dataSource.externalSystemModuleGroup
-      if (this.externalSystemModuleType != dataSource?.externalSystemModuleType) this.externalSystemModuleType =
+      if (this.externalSystemModuleType != dataSource.externalSystemModuleType) this.externalSystemModuleType =
         dataSource.externalSystemModuleType
       updateChildToParentReferences(parents)
     }

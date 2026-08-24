@@ -2,7 +2,6 @@
 package com.intellij.execution.filters
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.platform.backend.navigation.NavigationRequest
@@ -85,16 +84,22 @@ private class RecordingNavigationService : NavigationService {
   var lastNavigatables: List<Navigatable> = emptyList()
     private set
 
-  override suspend fun navigate(dataContext: DataContext, options: NavigationOptions) {
-    error("Unexpected data-context navigation")
-  }
-
-  override suspend fun navigate(request: NavigationRequest, options: NavigationOptions, dataContext: DataContext?) {
+  override suspend fun navigate(request: NavigationRequest, options: NavigationOptions): Boolean {
     requestCalls++
     lastRequest = request
+    return true
   }
 
-  override suspend fun navigate(navigatables: List<Navigatable>, options: NavigationOptions, dataContext: DataContext?): Boolean {
+  override suspend fun navigate(
+    requests: Collection<NavigationRequest>,
+    options: NavigationOptions,
+  ): Boolean {
+    requestCalls += requests.size
+    lastRequest = requests.lastOrNull()
+    return requests.isNotEmpty()
+  }
+
+  override suspend fun navigate(navigatables: List<Navigatable>, options: NavigationOptions): Boolean {
     navigatableCalls++
     lastNavigatables = navigatables
     return true

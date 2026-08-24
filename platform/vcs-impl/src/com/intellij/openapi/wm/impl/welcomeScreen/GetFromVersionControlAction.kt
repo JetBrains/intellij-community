@@ -32,6 +32,10 @@ internal open class GetFromVersionControlAction : DumbAwareAction() {
         presentation.icon = AllIcons.Welcome.FromVCSTab
         presentation.selectedIcon = AllIcons.Welcome.FromVCSTabSelected
         presentation.text = ActionsBundle.message("Vcs.VcsClone.Tabbed.Welcome.text")
+        presentation.putClientProperty(
+          WelcomeScreenActionsUtil.LARGE_BUTTON_TEXT,
+          ActionsBundle.message("Vcs.VcsClone.Tabbed.Welcome.Large.text"),
+        )
       }
       else {
         presentation.icon = AllIcons.Vcs.Branch

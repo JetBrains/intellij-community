@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "externalProcessAuthHelper-tests_test",
@@ -48,6 +49,8 @@ jvm_library(
         "//platform/util/coroutines",
     ],
 )
+
+content_module_jar(module = ":external-process-auth-helper")
 
 jvm_library(
     name = "external-process-auth-helper_test_lib",

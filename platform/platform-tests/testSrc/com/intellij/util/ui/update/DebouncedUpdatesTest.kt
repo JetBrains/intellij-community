@@ -15,7 +15,6 @@ import com.intellij.util.ui.withForcedRespectIsShowingClientProperty
 import com.intellij.util.ui.withShowingChanged
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
@@ -37,7 +36,6 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
 @TestApplication
-@OptIn(DelicateCoroutinesApi::class)
 class DebouncedUpdatesTest {
 
   @BeforeEach
@@ -1006,6 +1004,255 @@ class DebouncedUpdatesTest {
 
         assertEquals(listOf(1), awaitValue(listOf(1)) { executedValues.toList() })
       }
+    }
+  }
+
+  @Test
+  fun `test cancelPending drops items waiting for the delay`() {
+    timeoutRunBlocking {
+      val executedValues = CopyOnWriteArrayList<Int>()
+      val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+      try {
+        val queue = DebouncedUpdates.forScope<Int>(scope, "test-cancel-pending", 200.milliseconds)
+          .runLatest { value ->
+            executedValues.add(value)
+          }
+
+        queue.queue(1)
+        queue.cancelPending()
+        delay(300.milliseconds)
+
+        assertEquals(emptyList<Int>(), executedValues.toList(), "Pending item should not be processed")
+      }
+      finally {
+        scope.cancel()
+      }
+    }
+  }
+
+  @Test
+  fun `test cancelPending drops the item already claimed by the collector`() {
+    timeoutRunBlocking {
+      val executedValues = CopyOnWriteArrayList<Int>()
+      val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+      try {
+        val queue = DebouncedUpdates.forScope<Int>(scope, "test-cancel-claimed", 200.milliseconds)
+          .runLatest { value ->
+            executedValues.add(value)
+          }
+
+        queue.queue(1)
+        // The collector has taken the item out of the channel and is waiting for the delay to expire.
+        delay(80.milliseconds)
+        queue.cancelPending()
+        delay(300.milliseconds)
+
+        assertEquals(emptyList<Int>(), executedValues.toList(), "Item claimed by the collector should be dropped too")
+      }
+      finally {
+        scope.cancel()
+      }
+    }
+  }
+
+  @Test
+  fun `test items queued after cancelPending are processed`() {
+    timeoutRunBlocking {
+      val executedValues = CopyOnWriteArrayList<Int>()
+      val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+      try {
+        val queue = DebouncedUpdates.forScope<Int>(scope, "test-cancel-then-queue", 200.milliseconds)
+          .runLatest { value ->
+            executedValues.add(value)
+          }
+
+        queue.queue(1)
+        delay(80.milliseconds)
+        queue.cancelPending()
+        // Queued during the same collection cycle: must survive the cancellation of item 1.
+        queue.queue(2)
+        delay(300.milliseconds)
+
+        assertEquals(listOf(2), executedValues.toList(), "Item queued after cancelPending should be processed")
+      }
+      finally {
+        scope.cancel()
+      }
+    }
+  }
+
+  @Test
+  fun `test cancelPending does not stop the running action`() {
+    timeoutRunBlocking {
+      val executedValues = CopyOnWriteArrayList<Int>()
+      val started = AtomicInteger(0)
+      val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+      try {
+        val queue = DebouncedUpdates.forScope<Int>(scope, "test-cancel-running", 50.milliseconds)
+          .runLatest { value ->
+            started.incrementAndGet()
+            delay(200.milliseconds)
+            executedValues.add(value)
+          }
+
+        queue.queue(1)
+        assertEquals(1, awaitValue(1) { started.get() }, "Action should have started")
+
+        queue.cancelPending()
+
+        assertEquals(listOf(1), awaitValue(listOf(1)) { executedValues.toList() },
+                     "An action that already started must not be interrupted")
+      }
+      finally {
+        scope.cancel()
+      }
+    }
+  }
+
+  @Test
+  fun `test cancelPending on an empty queue does not schedule anything`() {
+    timeoutRunBlocking {
+      val executedValues = CopyOnWriteArrayList<Int>()
+      val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+      try {
+        val queue = DebouncedUpdates.forScope<Int>(scope, "test-cancel-empty", 100.milliseconds)
+          .runLatest { value ->
+            executedValues.add(value)
+          }
+
+        queue.cancelPending()
+        delay(200.milliseconds)
+        assertEquals(emptyList<Int>(), executedValues.toList(), "cancelPending must not start a processing cycle")
+
+        // The queue stays usable
+        queue.queue(1)
+        delay(200.milliseconds)
+        assertEquals(listOf(1), executedValues.toList(), "Queue should still work after cancelPending")
+      }
+      finally {
+        scope.cancel()
+      }
+    }
+  }
+
+  @Test
+  fun `test cancelPending does not reset the throttle timer`() {
+    timeoutRunBlocking {
+      val executedValues = CopyOnWriteArrayList<Int>()
+      val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+      try {
+        val queue = DebouncedUpdates.forScope<Int>(scope, "test-cancel-keeps-timer", 300.milliseconds)
+          .runLatest { value ->
+            executedValues.add(value)
+          }
+
+        queue.queue(1)
+        delay(150.milliseconds)
+        queue.cancelPending()
+
+        // The current window still expires 300ms after item 1, so item 2 is processed ~150ms from now.
+        val mark = TimeSource.Monotonic.markNow()
+        queue.queue(2)
+
+        assertEquals(listOf(2), awaitValue(listOf(2)) { executedValues.toList() })
+        assertTrue(mark.elapsedNow() < 300.milliseconds,
+                   "cancelPending must not restart the delay, but item 2 took ${mark.elapsedNow()}")
+      }
+      finally {
+        scope.cancel()
+      }
+    }
+  }
+
+  @Test
+  fun `test cancelPending drops the collected batch`() {
+    timeoutRunBlocking {
+      val batches = CopyOnWriteArrayList<List<Int>>()
+      val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+      try {
+        val queue = DebouncedUpdates.forScope<Int>(scope, "test-cancel-batched", 200.milliseconds)
+          .runBatched { batch ->
+            batches.add(batch)
+          }
+
+        queue.queue(1)
+        queue.queue(2)
+        delay(80.milliseconds)
+        queue.cancelPending()
+        queue.queue(3)
+        delay(300.milliseconds)
+
+        assertEquals(listOf(listOf(3)), batches.toList(), "Only the item queued after cancelPending should be batched")
+      }
+      finally {
+        scope.cancel()
+      }
+    }
+  }
+
+  @Test
+  fun `test cancelPending drops the item awaiting the component to show`() {
+    edtTest {
+      val component = JLabel()
+      val executedValues = CopyOnWriteArrayList<Int>()
+
+      val queue = DebouncedUpdates.forComponent<Int>(component, "test-cancel-component", 50.milliseconds)
+        .runLatest { value ->
+          executedValues.add(value)
+        }
+
+      // The item passes the delay and waits for the component to become showing.
+      queue.queue(1)
+      delay(150.milliseconds)
+      assertEquals(emptyList<Int>(), executedValues.toList(), "precondition: component is not showing")
+
+      queue.cancelPending()
+
+      withShowingChanged { container.add(component) }
+      yield()
+      delay(150.milliseconds)
+
+      assertEquals(emptyList<Int>(), executedValues.toList(), "Item cancelled while hidden must not be delivered on show")
+
+      // The queue stays usable once the component is showing
+      queue.queue(2)
+      assertEquals(listOf(2), awaitValue(listOf(2)) { executedValues.toList() })
+    }
+  }
+
+  @Test
+  fun `test the modality component is not retained after the scope is cancelled`() {
+    timeoutRunBlocking {
+      // The component is stored by the queue to resolve its modality state on every dispatch,
+      // so it must be released together with the queue.
+      class ModalityComponent : JLabel()
+
+      val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+      val executedValues = CopyOnWriteArrayList<Int>()
+
+      val queue = DebouncedUpdates.forScope<Int>(scope, "test-modality-retention", 50.milliseconds)
+        .withContext(Dispatchers.EDT)
+        .withComponentModality(ModalityComponent())
+        .runLatest { value ->
+          executedValues.add(value)
+        }
+
+      queue.queue(1)
+      assertEquals(listOf(1), awaitValue(listOf(1)) { executedValues.toList() })
+
+      scope.cancel()
+      delay(100.milliseconds)
+
+      // The queue itself keeps the component until it is collected, but nothing must keep the queue:
+      // once the scope is cancelled, the component is reachable neither from the scope nor from its jobs.
+      LeakHunter.checkLeak(scope, ModalityComponent::class.java)
     }
   }
 

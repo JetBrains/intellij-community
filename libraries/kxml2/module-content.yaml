@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kxml2.jar
+  modules:
+  - name: intellij.libraries.kxml2
+    libraries:
+      kxml2:
+      - name: $MAVEN_REPOSITORY$/net/sf/kxml/kxml2/2/kxml2-2.jar

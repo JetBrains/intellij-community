@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
@@ -21,6 +22,7 @@ import java.awt.event.ActionEvent;
 
 public final class IOExceptionDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(IOExceptionDialog.class);
+
   private final JTextArea myErrorLabel;
 
   public IOExceptionDialog(@NlsContexts.DialogTitle String title, String errorText)  {
@@ -50,28 +52,30 @@ public final class IOExceptionDialog extends DialogWrapper {
     return new Action[] {
       new AbstractAction(UIBundle.message("io.error.dialog.no.proxy")) {
         @Override
+        @SuppressWarnings("SSBasedInspection")
         public void actionPerformed(@NotNull ActionEvent e) {
-          HttpConfigurable.editConfigurable(ObjectUtils.tryCast(e.getSource(), JComponent.class));
+          HttpProxyConfigurable.editConfigurable(ObjectUtils.tryCast(e.getSource(), JComponent.class));
         }
       }
     };
   }
 
-  /**
-   * Show the dialog
-   * @return {@code true} if "Try Again" button pressed and {@code false} if "Cancel" button pressed
-   */
+  /// Show the dialog.
+  /// @return `true` if "Try Again" button pressed, `false` otherwise.
   public static boolean showErrorDialog(@NlsContexts.DialogTitle String title, @NlsContexts.DetailedDescription String text) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       throw new RuntimeException(title + ": " + text);
     }
-    Ref<Boolean> ok = new Ref<>(false);
+    var ok = new Ref<>(false);
     try {
       ApplicationManager.getApplication().invokeAndWait(() -> {
-          IOExceptionDialog dialog = new IOExceptionDialog(title, text);
-          dialog.show();
-          ok.set(dialog.isOK());
-        });
+        var dialog = new IOExceptionDialog(title, text);
+        dialog.show();
+        ok.set(dialog.isOK());
+      });
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (RuntimeException e) {
       LOG.info(e);

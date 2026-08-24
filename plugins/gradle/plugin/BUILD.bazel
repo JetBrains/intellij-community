@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.gradle.plugin` start
@@ -33,7 +34,40 @@ exports_files(
     [
         "intellij.gradle.plugin.iml",
         "resources/META-INF/plugin.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.gradle.plugin` end
+
+### auto-generated section `dev content intellij.gradle.plugin` start
+dev_dist_plugin_content(
+    content_modules = [
+        "//libraries/gradle",
+        "//libraries/groovy",
+        "//libraries/groovy/ant",
+        "//plugins/gradle",
+        "//plugins/gradle/settings",
+        "//plugins/gradle/tooling-extension-api:toolingExtension",
+        "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+        "//plugins/gradle/tooling-proxy",
+        "//plugins/gradle:gradle-common",
+    ],
+    descriptor_module = ":plugin",
+    libraries = [
+        "@lib//:libraries-gradle-_gradle",
+        "@lib//:libraries-groovy-ant-groovy-ant",
+        "@lib//:libraries-groovy-groovy",
+        "@lib//:slf4j-api",
+        "@lib//:slf4j-jdk14",
+        "@lib//ant/lib:ant",
+    ],
+    prepacked_content_modules = [
+        "//plugins/gradle/backend:backend_content_module_jar",
+        "//plugins/gradle/completion/kotlin:kotlin_content_module_jar",
+        "//plugins/gradle/completion/toml:toml_content_module_jar",
+        "//plugins/gradle/completion:completion_content_module_jar",
+        "//plugins/gradle/properties:properties_content_module_jar",
+    ],
+)
+### auto-generated section `dev content intellij.gradle.plugin` end

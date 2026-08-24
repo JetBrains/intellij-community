@@ -203,6 +203,12 @@ test --cache_test_results=auto
 # Limit concurrent local test actions on CI to avoid OOM from multiple heavy test JVMs.
 test:ci --local_test_jobs=1
 
+# Aliases for flags used by ij_plugin rule
+build --flag_alias=ide_build_number=@community//platform/build-scripts/bazel-rules/ij-ide-build-settings:ide_build_number
+build --flag_alias=ide_stability_level=@community//platform/build-scripts/bazel-rules/ij-ide-build-settings:ide_stability_level
+build --flag_alias=ij_plugin_version=@community//platform/build-scripts/bazel-rules/ij-ide-build-settings:ij_plugin_version
+build --flag_alias=ij_plugin_force_exact_build_compatibility=@community//platform/build-scripts/bazel-rules/ij-ide-build-settings:ij_plugin_force_exact_build_compatibility
+
 # A workaround for https://github.com/bazelbuild/rules_kotlin/issues/1352
 common --repo_env=ANDROID_HOME=
 
@@ -238,3 +244,35 @@ common --repo_env=COURSIER_OPTS=-Dcoursier.exception-retry-backoff-initial-delay
 common --http_timeout_scaling=2.0
 
 common --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1
+
+# `--worker_max_multiplex_instances` is how many WorkRequests a multiplex worker may be given *in parallel*, and its
+# fallback is far below `--jobs=HOST_CPUS*2`. Left unset, the packer would be a worker pool of a handful while 2 524
+# actions queue behind it - which is what the JVM worker this replaced was doing.
+common --worker_max_multiplex_instances=PackContentModuleJar=HOST_CPUS*2
+
+
+# Do not cache a packing action. Measured over all 2 524 jars on one laptop, warm tree, one genuine packer change per
+# row so that every row is a real cold pack and no row pays for an analysis-cache discard:
+#
+#   | what the action is allowed to do        | wall clock |
+#   | nothing cached, packs every jar         |     6.7 s  |
+#   | disk cache only                         |     9.3 s  |
+#   | disk cache and the remote cache         |    26.0 s  |
+#   | served from the disk cache, packs none  |     5.3 s  |
+#
+# The remote leg is 16.7 s of that, for an action that does about a millisecond of work: `--remote_cache_async=false`
+# (above) makes the lookup block a jobs slot, and the cache is a WAN host. This is why the scrubbing
+# route was not taken - making the key platform-independent would have turned those misses into *hits*, and the hit path
+# is a round trip plus the download of a 0.25-1 MB jar, which cannot beat merging one locally.
+#
+# The disk leg is the closer call, and it is a loss too: populating it costs 2.6 s and writes 3.3 GB into a 32 GB shared
+# cache on every cold pack, to save the 1.4 s that a hit is worth. It only ever wins on a fresh output base holding this
+# exact packer and these exact module jars, because every other case is already answered - for free - by Bazel's own
+# action cache, which `no-cache` does not touch: verified, the second identical build packs nothing. And 3.3 GB of jars
+# per cold pack evicts entries for actions that do pay a cache back, such as compilation.
+#
+# It also stops CI uploading those 3.3 GB per build for results nobody should take.
+#
+# Revisit if `--remote_download_outputs=minimal` is ever adopted (see the note above): with outputs
+# left remote, a hit costs no download and the arithmetic changes.
+common --modify_execution_info=PackContentModuleJar=+no-cache

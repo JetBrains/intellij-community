@@ -29,6 +29,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.ClientFileEditorManager.Companion.assignClientId
+import com.intellij.openapi.fileEditor.CreatedFileEditorSink
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorComposite
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -128,6 +129,10 @@ private val LOG = logger<EditorComposite>()
 data class EditorCompositeModel internal constructor(
   @JvmField val fileEditorAndProviderList: List<FileEditorWithProvider>,
   @JvmField internal val state: FileEntry?,
+  /**
+   * Holds the editors until this composite adopts them, so that an open cancelled before that still releases them.
+   */
+  @JvmField internal val createdEditors: CreatedFileEditorSink? = null,
 ) {
   @Internal
   constructor(fileEditorAndProviderList: List<FileEditorWithProvider>)
@@ -286,6 +291,7 @@ open class EditorComposite internal constructor(
         compositePanel.removeAll()
         setFileEditors(fileEditors = emptyList(), selectedEditor = null)
       }
+      model.createdEditors?.claim()
       return
     }
 
@@ -334,6 +340,8 @@ open class EditorComposite internal constructor(
           fileEditorWithProviders = fileEditorWithProviders,
           selectedFileEditorProvider = selectedFileEditor,
         )
+        // from here on the editors are listed by this composite, so `dispose` is what releases them
+        model.createdEditors?.claim()
         afterFileOpen(this, model)
         shownDeferred.complete(Unit)
 

@@ -13,7 +13,6 @@ import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Type;
@@ -161,8 +160,9 @@ public abstract class NodeRendererImpl implements NodeRenderer {
     }
 
     @Override
-    public void customizeRenderer(SimpleColoredComponent renderer) {
-      renderer.append(JavaDebuggerBundle.message("renderer.name", myRenderer.getName()));
+    public @NotNull OverheadProducer.Presentation computePresentation() {
+      return new OverheadProducer.Presentation(
+        JavaDebuggerBundle.message("renderer.name", myRenderer.getName()));
     }
 
     @Override

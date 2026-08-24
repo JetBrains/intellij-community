@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.dotenv` start
@@ -78,7 +79,19 @@ exports_files(
         "intellij.dotenv.iml",
         "src/main/resources/META-INF/js.xml",
         "src/main/resources/META-INF/plugin.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.dotenv` end
+
+### auto-generated section `dev content intellij.dotenv` start
+dev_dist_plugin_content(
+    content_modules = [
+        "//plugins/env-files-support/java",
+        "//plugins/env-files-support/kotlin",
+        "//plugins/env-files-support/python",
+    ],
+    descriptor_module = ":dotenv",
+)
+### auto-generated section `dev content intellij.dotenv` end

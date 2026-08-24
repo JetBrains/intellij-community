@@ -5,8 +5,6 @@ f:com.intellij.ui.ComponentUtil
 *:com.intellij.ui.icons.IconWithShape
 - javax.swing.Icon
 - a:getShape():java.awt.Shape
-f:com.intellij.ui.render.RenderingUtil
-- *sf:PAINT_HOVERED_BACKGROUND:com.intellij.openapi.util.Key
 *f:com.intellij.util.ui.JLabelUtil
 - sf:INSTANCE:com.intellij.util.ui.JLabelUtil
 - sf:setTrimOverflow(javax.swing.JLabel,Z):V

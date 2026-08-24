@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.platform.progress.backend` start
 jvm_library(
@@ -26,9 +27,15 @@ jvm_library(
         "//platform/progress/shared:ide-progress",
         "//platform/kernel/shared:kernel",
         "//platform/core-api:core",
+        "//platform/project/shared:project",
+        "//platform/kernel/rpc.backend",
+        "//platform/util/progress",
         "//fleet/rhizomedb",
+        "//fleet/rpc",
     ],
 )
+
+content_module_jar(module = ":backend")
 
 jvm_library(
     name = "backend_test_lib",
@@ -48,7 +55,11 @@ jvm_library(
         "//platform/progress/shared:ide-progress_test_lib",
         "//platform/kernel/shared:kernel_test_lib",
         "//platform/core-api:core_test_lib",
+        "//platform/project/shared:project_test_lib",
+        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
+        "//platform/util/progress:progress_test_lib",
         "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//fleet/rpc:rpc_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.progress.backend` end

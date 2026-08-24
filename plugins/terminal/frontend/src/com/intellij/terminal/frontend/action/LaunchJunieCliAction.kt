@@ -6,8 +6,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.terminal.agent.TerminalAgent
-import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
-import org.jetbrains.plugins.terminal.fus.TerminalTabOpeningWay
 
 /**
  * Launches the Junie CLI agent in a new terminal session.
@@ -22,14 +20,12 @@ internal class LaunchJunieCliAction : DumbAwareAction(), ActionRemoteBehaviorSpe
   override fun update(e: AnActionEvent) {
     val project = e.project
     e.presentation.isEnabledAndVisible = project != null &&
-                                         isTerminalAgentsEnabled() &&
                                          findAvailableTerminalAgentEntry(project, TerminalAgent.AgentKey(JUNIE_AGENT_KEY)) != null
 
     // Best-effort: warm the availability cache when it is cold, so a subsequent (re)check by the
     // caller reflects the real availability. Guarded to the empty-cache case to avoid overwriting
     // seeded state and to avoid frequent refreshes.
-    if (project != null && isTerminalAgentsEnabled() &&
-        TerminalAgentsAvailabilityService.getInstance(project).getAvailableAgents().isEmpty()) {
+    if (project != null && TerminalAgentsAvailabilityService.getInstance(project).getAvailableAgents().isEmpty()) {
       TerminalAgentsAvailabilityService.getInstance(project).prewarm()
     }
   }
@@ -40,9 +36,7 @@ internal class LaunchJunieCliAction : DumbAwareAction(), ActionRemoteBehaviorSpe
     // Defensive re-check to cover a possible TOCTOU between update() and actionPerformed().
     if (findAvailableTerminalAgentEntry(project, junieAgentKey) == null) return
 
-    // Launch Junie directly via the shared helper (which also records it as the last launched agent),
-    // instead of re-dispatching LaunchSelectedAgentAction.
-    launchTerminalAgent(project, junieAgentKey, null, TerminalStartupFusInfo(TerminalTabOpeningWay.AI_AGENTS_BUTTON))
+    launchTerminalAgent(project, junieAgentKey, null)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

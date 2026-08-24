@@ -29,9 +29,9 @@ import java.util.concurrent.TimeUnit;
 /**
  * Measures complete fixed-size snapshot-marker-engine workloads.
  *
- * <p>Every benchmark invocation performs exactly the number of operations stated in its method name. Because the
- * class uses {@link Mode#SingleShotTime} and does not use {@code OperationsPerInvocation}, JMH reports the total time
- * for the complete batch in milliseconds.</p>
+ * <p>Every benchmark invocation performs either the number of operations stated in its method name or the number
+ * selected by its load parameter. Because the class uses {@link Mode#SingleShotTime} and does not use
+ * {@code OperationsPerInvocation}, JMH reports the total time for the complete batch in milliseconds.</p>
  *
  * <p>Suggested profiler options:</p>
  *
@@ -127,7 +127,7 @@ public class SnapshotMarkerEngineBenchmark {
    *
    * <p>This uses the same marker population and query workload as {@link #reportIntersecting2MQueries}, but creates
    * and retains real marker handles and enumerates them through the engine. The timed path therefore includes the
-   * marker-reference lookup and weak-reference dereference for every reported marker.</p>
+   * embedded weak-reference dereference and marker-handle materialization for every reported marker.</p>
    */
   @Benchmark
   public long enumerateIntersecting2MQueries(EngineIntersectionState state) {
@@ -337,7 +337,7 @@ public class SnapshotMarkerEngineBenchmark {
    * SnapshotMarkerEngineBenchmark .*resolve4MMarkers.* -f 1 -wi 1 -i 3
    * </pre>
    */
-  static void main(String[] args) throws Exception {
+  static void main() throws Exception {
     System.setProperty("jmh.separateClasspathJAR", "true");
 
     final Options opt = new OptionsBuilder()

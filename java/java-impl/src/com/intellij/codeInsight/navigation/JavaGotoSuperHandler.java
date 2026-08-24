@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.NavigationOptionsAwareCodeInsightActionHandler;
 import com.intellij.codeInsight.generation.actions.PresentableCodeInsightActionHandler;
 import com.intellij.codeInsight.navigation.actions.GotoSuperAction;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -13,6 +14,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.ide.navigation.NavigationOptions;
 import com.intellij.psi.LambdaUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -30,9 +32,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-public class JavaGotoSuperHandler implements PresentableCodeInsightActionHandler {
+public class JavaGotoSuperHandler implements PresentableCodeInsightActionHandler, NavigationOptionsAwareCodeInsightActionHandler {
   @Override
-  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile) {
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile, @NotNull NavigationOptions options) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(GotoSuperAction.FEATURE_ID);
 
     int offset = editor.getCaretModel().getOffset();
@@ -48,7 +50,7 @@ public class JavaGotoSuperHandler implements PresentableCodeInsightActionHandler
           navigator.title(JavaBundle.message("goto.super.class.chooser.title"));
         }
       })
-      .navigate(editor, null, element -> EditSourceUtil.navigateToPsiElement(element));
+      .navigate(editor, null, element -> EditSourceUtil.navigateToPsiElement(element, options));
   }
 
   private PsiElement @NotNull [] findSuperElements(@NotNull PsiFile file, int offset) {

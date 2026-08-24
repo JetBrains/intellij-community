@@ -43,7 +43,6 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" name="jetbrains.mlapi.catboost" level="project" />
-    <orderEntry type="library" name="jetbrains.mlapi.catboost.shadow.need.slf4j" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.mlapi.catboost" />
   </component>
 </module>

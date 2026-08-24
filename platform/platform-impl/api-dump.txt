@@ -2656,6 +2656,7 @@ f:com.intellij.openapi.editor.impl.EditorComponentImpl
 - getCaretPosition():I
 - getEditor():com.intellij.openapi.editor.impl.EditorImpl
 - paint(java.awt.Graphics):V
+- repaint(J,I,I,I,I):V
 f:com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl
 - com.intellij.openapi.editor.EditorCopyPasteHelper
 - s:getCopiedFromEmptySelectionPasteMode():com.intellij.openapi.editor.impl.CopiedFromEmptySelectionPasteMode
@@ -4114,6 +4115,7 @@ f:com.intellij.openapi.wm.impl.WindowManagerImpl
 - com.intellij.openapi.wm.ex.WindowManagerEx
 - com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
 - getIdeFrame(com.intellij.openapi.project.Project):com.intellij.openapi.wm.IdeFrame
+- getIdeFrameDeferred(com.intellij.openapi.project.Project):kotlinx.coroutines.Deferred
 - getMostRecentFocusedWindow():java.awt.Window
 c:com.intellij.openapi.wm.impl.content.BaseLabel
 - javax.swing.JLabel

@@ -52,11 +52,35 @@
     <extensionPoint qualifiedName="com.intellij.bidiRegionsSeparator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.editor.bidi.BidiRegionsSeparator"/>
     </extensionPoint>
+    <extensionPoint name="editorFactoryListener" interface="com.intellij.openapi.editor.event.EditorFactoryListener" dynamic="true"/>
+    <extensionPoint name="syntaxHighlighter"
+                    beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.SyntaxHighlighter"/>
+    </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.mergeableGutterIconRendererProvider" interface="com.intellij.openapi.editor.MergeableGutterIconRendererProvider" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.openapi.editor.ClientEditorManager"
                         client="all"/>
     <syntaxHighlighter factoryClass="com.intellij.openapi.fileTypes.LanguageFileTypeHighlighterProvider"/>
+    <applicationService serviceImplementation="com.intellij.ide.ui.UISettingsStateDefaultsProviderImpl"
+                        serviceInterface="com.intellij.ide.ui.UISettingsStateDefaultsProvider" />
+    <applicationService serviceImplementation="com.intellij.ide.ui.UISettings"/>
+    <!--suppress PluginXmlRegistrationCheck -->
+    <applicationSettings service="com.intellij.ide.ui.UISettings"/>
+
+    <projectService
+      serviceInterface="com.intellij.openapi.vcs.FileStatusManager" open="true"
+      serviceImplementation="com.intellij.openapi.vcs.DefaultFileStatusManager" />
+    <projectService
+      serviceInterface="com.intellij.openapi.vcs.ElementStatusTracker" open="true"
+      serviceImplementation="com.intellij.openapi.vcs.DefaultElementStatusTracker" />
+    <applicationService serviceImplementation="com.intellij.ide.ui.NotRoamableUiSettings" />
+    <applicationService serviceImplementation="com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorCustomizer" open="true"/>
+    <!--suppress PluginXmlRegistrationCheck -->
+    <applicationSettings service="com.intellij.ide.ui.NotRoamableUiSettings"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.openapi.vcs.FileStatusCleaner"

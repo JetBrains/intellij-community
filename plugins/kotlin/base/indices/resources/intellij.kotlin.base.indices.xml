@@ -18,10 +18,6 @@
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinExactPackagesIndex"/>
-    <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelClassByPackageIndex"/>
-    <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionByPackageIndex"/>
-    <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyByPackageIndex"/>
-    <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasByPackageIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinPrimeSymbolNameIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex"/>
@@ -33,24 +29,18 @@
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelExpectPropertyFqNameIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex"/>
-    <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex"/>
-    <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinInnerTypeAliasClassIdIndex"/>
+    <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinFullTypeAliasNameIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelExtensionsByReceiverTypeIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinExtensionsInObjectsByReceiverTypeIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinAnnotationsIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinJvmNameAnnotationIndex"/>
-    <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinProbablyNothingFunctionShortNameIndex"/>
-    <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinProbablyNothingPropertyShortNameIndex"/>
-    <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinProbablyContractedFunctionShortNameIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinProbablyInjectedFunctionShortNameIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex"/>
-    <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinFilePartClassIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeClassByPackageIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeShortNameIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinMultiFileClassPartIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinScriptFqnIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasByExpansionShortNameIndex"/>
-    <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinOverridableInternalMembersShortNameIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinSubclassObjectNameIndex"/>
 
     <fileBasedIndex implementation="org.jetbrains.kotlin.idea.vfilefinder.KotlinPartialPackageNamesIndex"/>
@@ -58,7 +48,6 @@
     <fileBasedIndex implementation="org.jetbrains.kotlin.idea.vfilefinder.KotlinMetadataFileIndex"/>
     <fileBasedIndex implementation="org.jetbrains.kotlin.idea.vfilefinder.KotlinMetadataFilePackageIndex"/>
     <fileBasedIndex implementation="org.jetbrains.kotlin.idea.vfilefinder.KotlinModuleMappingIndex"/>
-    <fileBasedIndex implementation="org.jetbrains.kotlin.idea.vfilefinder.KotlinPackageSourcesMemberNamesIndex"/>
     <fileBasedIndex implementation="org.jetbrains.kotlin.idea.vfilefinder.KotlinJvmModuleAnnotationsIndex"/>
     <fileBasedIndex implementation="org.jetbrains.kotlin.idea.vfilefinder.KotlinBuiltInsMetadataIndex"/>
     <fileBasedIndex implementation="org.jetbrains.kotlin.idea.vfilefinder.KotlinStdlibIndex"/>

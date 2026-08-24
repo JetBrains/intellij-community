@@ -3,31 +3,30 @@
 package org.jetbrains.kotlin.idea.stubindex;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.stubs.IndexSink;
+import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.KtNodeTypes;
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics;
-import org.jetbrains.kotlin.idea.base.psi.KotlinStubUtils;
 import org.jetbrains.kotlin.lexer.KtTokens;
 import org.jetbrains.kotlin.load.java.JvmAbi;
-import org.jetbrains.kotlin.name.ClassId;
 import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.name.Name;
 import org.jetbrains.kotlin.psi.KtAnnotationEntry;
 import org.jetbrains.kotlin.psi.KtClassOrObject;
+import org.jetbrains.kotlin.psi.KtFile;
 import org.jetbrains.kotlin.psi.KtNamedFunction;
 import org.jetbrains.kotlin.psi.KtParameter;
 import org.jetbrains.kotlin.psi.KtProperty;
-import org.jetbrains.kotlin.psi.KtTypeReference;
 import org.jetbrains.kotlin.psi.psiUtil.KtPsiUtilKt;
 import org.jetbrains.kotlin.psi.stubs.KotlinAnnotationEntryStub;
 import org.jetbrains.kotlin.psi.stubs.KotlinClassOrObjectStub;
 import org.jetbrains.kotlin.psi.stubs.KotlinClassStub;
 import org.jetbrains.kotlin.psi.stubs.KotlinFileStub;
 import org.jetbrains.kotlin.psi.stubs.KotlinFunctionStub;
-import org.jetbrains.kotlin.psi.stubs.KotlinImportDirectiveStub;
 import org.jetbrains.kotlin.psi.stubs.KotlinModifierListStub;
 import org.jetbrains.kotlin.psi.stubs.KotlinObjectStub;
 import org.jetbrains.kotlin.psi.stubs.KotlinParameterStub;
@@ -39,6 +38,7 @@ import org.jetbrains.kotlin.psi.stubs.elements.StubIndexService;
 import org.jetbrains.kotlin.psi.stubs.impl.KotlinFileStubImpl;
 
 import java.lang.annotation.Annotation;
+import java.util.Collection;
 import java.util.List;
 
 public class IdeStubIndexService extends StubIndexService {
@@ -58,12 +58,6 @@ public class IdeStubIndexService extends StubIndexService {
             sink.occurrence(KotlinFileFacadeClassByPackageIndex.Helper.getIndexKey(), packageFqName.asString());
         }
 
-        String partSimpleName = fileStub.getPartSimpleName();
-        if (partSimpleName != null) {
-            FqName partFqName = packageFqName.child(Name.identifier(partSimpleName));
-            sink.occurrence(KotlinFilePartClassIndex.Helper.getIndexKey(), partFqName.asString());
-        }
-
         List<String> partNames = fileStub.getFacadePartSimpleNames();
         if (partNames != null) {
             for (String partName : partNames) {
@@ -75,7 +69,7 @@ public class IdeStubIndexService extends StubIndexService {
 
     @Override
     public void indexClass(@NotNull KotlinClassStub stub, @NotNull IndexSink sink) {
-        processNames(sink, stub.getName(), stub.getFqName(), stub.isTopLevel());
+        processNames(sink, stub.getName(), stub.getFqName());
 
         if (stub.isInterface()) {
             sink.occurrence(KotlinClassShortNameIndex.Helper.getIndexKey(), JvmAbi.DEFAULT_IMPLS_CLASS_NAME);
@@ -118,7 +112,7 @@ public class IdeStubIndexService extends StubIndexService {
     @Override
     public void indexObject(@NotNull KotlinObjectStub stub, @NotNull IndexSink sink) {
         String shortName = stub.getName();
-        processNames(sink, shortName, stub.getFqName(), stub.isTopLevel());
+        processNames(sink, shortName, stub.getFqName());
 
         indexSuperNames(stub, sink);
 
@@ -132,18 +126,14 @@ public class IdeStubIndexService extends StubIndexService {
     private static void processNames(
             @NotNull IndexSink sink,
             String shortName,
-            FqName fqName,
-            boolean level) {
+            FqName fqName
+    ) {
         if (shortName != null) {
             sink.occurrence(KotlinClassShortNameIndex.Helper.getIndexKey(), shortName);
         }
 
         if (fqName != null) {
             sink.occurrence(KotlinFullClassNameIndex.Helper.getIndexKey(), fqName.asString());
-
-            if (level) {
-                sink.occurrence(KotlinTopLevelClassByPackageIndex.Helper.getIndexKey(), fqName.parent().asString());
-            }
         }
     }
 
@@ -187,11 +177,6 @@ public class IdeStubIndexService extends StubIndexService {
             }
 
             KtNamedFunction ktNamedFunction = stub.getPsi();
-            KtTypeReference typeReference = ktNamedFunction.getTypeReference();
-            if (typeReference != null && KotlinPsiHeuristics.isProbablyNothing(typeReference)) {
-                sink.occurrence(KotlinProbablyNothingFunctionShortNameIndex.Helper.getIndexKey(), name);
-            }
-
             List<KtParameter> parameters = ktNamedFunction.getValueParameters();
             boolean injectedCandidate = false;
             parameterLoop: for (KtParameter parameter : parameters) {
@@ -210,10 +195,6 @@ public class IdeStubIndexService extends StubIndexService {
                 sink.occurrence(KotlinProbablyInjectedFunctionShortNameIndex.Helper.getIndexKey(), name);
             }
 
-            if (stub.getMayHaveContract()) {
-                sink.occurrence(KotlinProbablyContractedFunctionShortNameIndex.Helper.getIndexKey(), name);
-            }
-
             indexPrime(stub, sink);
         }
 
@@ -227,12 +208,9 @@ public class IdeStubIndexService extends StubIndexService {
                 }
 
                 sink.occurrence(KotlinTopLevelFunctionFqnNameIndex.Helper.getIndexKey(), fqName.asString());
-                sink.occurrence(KotlinTopLevelFunctionByPackageIndex.Helper.getIndexKey(), fqName.parent().asString());
                 IndexUtilsKt.indexTopLevelExtension(stub, sink);
             }
         }
-
-        IndexUtilsKt.indexInternals(stub, sink);
     }
 
     @Override
@@ -247,15 +225,7 @@ public class IdeStubIndexService extends StubIndexService {
 
         FqName fqName = stub.getFqName();
         if (fqName != null) {
-            if (stub.isTopLevel()) {
-                sink.occurrence(KotlinTopLevelTypeAliasFqNameIndex.Helper.getIndexKey(), fqName.asString());
-                sink.occurrence(KotlinTopLevelTypeAliasByPackageIndex.Helper.getIndexKey(), fqName.parent().asString());
-            }
-        }
-
-        ClassId classId = stub.getClassId();
-        if (classId != null && !stub.isTopLevel()) {
-            sink.occurrence(KotlinInnerTypeAliasClassIdIndex.Helper.getIndexKey(), classId.asString());
+            sink.occurrence(KotlinFullTypeAliasNameIndex.Helper.getIndexKey(), fqName.asString());
         }
     }
 
@@ -269,10 +239,6 @@ public class IdeStubIndexService extends StubIndexService {
                 IndexUtilsKt.indexExtensionInObject(stub, sink);
             }
 
-            KtTypeReference typeReference = stub.getPsi().getTypeReference();
-            if (typeReference != null && KotlinPsiHeuristics.isProbablyNothing(typeReference)) {
-                sink.occurrence(KotlinProbablyNothingPropertyShortNameIndex.Helper.getIndexKey(), name);
-            }
             indexPrime(stub, sink);
         }
 
@@ -286,12 +252,9 @@ public class IdeStubIndexService extends StubIndexService {
                 }
 
                 sink.occurrence(KotlinTopLevelPropertyFqnNameIndex.Helper.getIndexKey(), fqName.asString());
-                sink.occurrence(KotlinTopLevelPropertyByPackageIndex.Helper.getIndexKey(), fqName.parent().asString());
                 IndexUtilsKt.indexTopLevelExtension(stub, sink);
             }
         }
-
-        IndexUtilsKt.indexInternals(stub, sink);
     }
 
     @Override
@@ -310,13 +273,13 @@ public class IdeStubIndexService extends StubIndexService {
         }
         sink.occurrence(KotlinAnnotationsIndex.Helper.getIndexKey(), name);
 
-        KotlinFileStub fileStub = KotlinStubUtils.getContainingKotlinFileStub(stub);
+        PsiFileStub<?> fileStub = stub.getContainingFileStub();
         if (fileStub != null) {
-            List<KotlinImportDirectiveStub> aliasImportStubs = fileStub.findImportsByAlias(name);
-            for (KotlinImportDirectiveStub importStub : aliasImportStubs) {
-                FqName importedFqName = importStub.getImportedFqName();
-                if (importedFqName != null) {
-                    sink.occurrence(KotlinAnnotationsIndex.Helper.getIndexKey(), importedFqName.shortName().asString());
+            PsiFile file = fileStub.getPsi();
+            if (file instanceof KtFile) {
+                Collection<@NotNull String> shortImportedName = KotlinPsiHeuristics.unwrapImportAlias((KtFile) file, name);
+                for (String importedName : shortImportedName) {
+                    sink.occurrence(KotlinAnnotationsIndex.Helper.getIndexKey(), importedName);
                 }
             }
         }

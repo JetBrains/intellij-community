@@ -234,11 +234,15 @@ referenced by unrelated framework support.
 
 `PsiElement.getOwnReferences(): Collection<PsiSymbolReference>` is a default method on `PsiElement`
 itself (`community/platform/core-api/src/com/intellij/psi/PsiElement.java`, defaults to empty) — every
-PSI element already has it; there is no marker interface to implement. Override it directly and build
-the result with the `polySymbolOwnReferences` DSL:
+PSI element already has it and can override it directly. **Building the result via the
+`polySymbolOwnReferences` DSL, however, requires the host element's own type to implement
+`PolySymbolOwnReferenceHost`** (`community/platform/polySymbols/src/com/intellij/polySymbols/references/PolySymbolOwnReferenceHost.kt`),
+a marker interface extending `PsiElement`:
 
 ```kotlin
-fun polySymbolOwnReferences(element: PsiElement, configure: PolySymbolOwnReferencesBuilder.() -> Unit): List<PolySymbolReference>
+interface PolySymbolOwnReferenceHost : PsiElement
+
+fun polySymbolOwnReferences(element: PolySymbolOwnReferenceHost, configure: PolySymbolOwnReferencesBuilder.() -> Unit): List<PolySymbolReference>
 
 interface PolySymbolOwnReferencesBuilder {
   fun resolveFromNameMatchQuery(kind: PolySymbolKind, name: String)
@@ -249,14 +253,25 @@ interface PolySymbolOwnReferencesBuilder {
 }
 ```
 (`community/platform/polySymbols/backend/src/com/intellij/polySymbols/references/PolySymbolOwnReferences.kt`)
-`polySymbolOwnReferences(...)` returns the `List<PolySymbolReference>` directly — return it straight
-from your override:
+`polySymbolOwnReferences(element, ...)` won't compile against a plain `PsiElement`-typed host — make
+the PSI element's own interface extend `PolySymbolOwnReferenceHost`, then override `getOwnReferences()`
+on the impl class and return the DSL result straight from it:
 ```kotlin
-override fun getOwnReferences(): Collection<PsiSymbolReference> =
-  polySymbolOwnReferences(this) {
-    resolveFromNameMatchQuery(MY_KIND, text)   // or the raw reference(range, kind) { ... } form
-  }
+interface MyRefElement : PolySymbolOwnReferenceHost   // was `: PsiElement`
+
+abstract class MyRefElementImpl(node: ASTNode) : ASTWrapperPsiElement(node), MyRefElement {
+  override fun getOwnReferences(): Collection<PsiSymbolReference> =
+    polySymbolOwnReferences(this) {
+      resolveFromNameMatchQuery(MY_KIND, text)   // or the raw reference(range, kind) { ... } form
+    }
+}
 ```
+This isn't just a compile-time formality — see
+[the annotator-gating note below](#polysymbolhighlightingannotator-only-processes-marked-hosts) for why
+skipping the marker interface means the override is never actually reached by highlighting/diagnostics.
+GDScript's `GdRefElement` and Tscn's `TscnNamedElement` are the worked examples of adding this marker to
+an existing element interface.
+
 `resolveFromNameMatchQuery` is a convenience wrapper around
 `PolySymbolQueryExecutorFactory.create(element, true).nameMatchQuery(kind, name).run()`, optionally
 `.filter`ed; reach for the lower-level `reference(range, kind, resolver)` when the resolve logic is
@@ -268,9 +283,30 @@ query+filter, all inside one `reference(...)` call).
 `PsiSymbolReferenceServiceImpl.getReferences()`, own references — once non-empty — are used *instead
 of* external ones for resolve/search/rename, so a `PsiPolySymbolReferenceProvider` registered for a
 host that also overrides `getOwnReferences()` is dead code, not a supplement. (An older `iteration`
-of this API had you implement a now-deleted `PolySymbolOwnReferencesHost` interface instead of
-overriding `getOwnReferences()` directly — if you see that name in old code/docs, it's stale;
-the direct-override form above is current.)
+of this API had you implement a now-deleted `PolySymbolOwnReferencesHost` interface — plural
+"References" — instead of overriding `getOwnReferences()` directly; if you see that name in old
+code/docs, it's stale, the direct-override form above is current. Don't confuse it with the
+similarly-named but current `PolySymbolOwnReferenceHost` — singular "Reference" — described above,
+which is the marker interface the `polySymbolOwnReferences` DSL's `element` parameter requires.)
+
+### PolySymbolHighlightingAnnotator only processes marked hosts
+
+`PolySymbolHighlightingAnnotator.annotate()` gates its *entire* body — reference-problem annotation,
+own/external reference resolution for symbol-kind highlighting, **and** declaration highlighting via
+`PolySymbolDeclarationProvider.getAllDeclarations(element, -1)` — behind a single check:
+`element is PsiExternalReferenceHost || element is PolySymbolOwnReferenceHost`. Before this check was
+added (WEB-78948), the annotator ran that whole body — including a declaration-provider lookup and a
+reference-service call — unconditionally for *every* `PsiElement` in a file, which was a real
+performance regression on large files.
+
+Practical consequence: a PSI element that declares a `PolySymbol` (via `PolySymbolDeclaredInPsi`/a
+`PolySymbolDeclarationProvider`) or resolves one (via own or external references) must implement
+`PsiExternalReferenceHost` or `PolySymbolOwnReferenceHost` for this annotator to look at it at all.
+Implementing neither means silently getting no highlighting and no reference-problem diagnostics from
+`PolySymbolHighlightingAnnotator`, even if the declaration/reference wiring itself is otherwise
+correct — there's no separate opt-in, this `is` check is the only gate. See also
+[the `PolySymbolHighlightingCustomizer` section](#polysymbolhighlightingcustomizer) below for what the
+annotator does once it decides to process an element.
 
 **Hard constraint: the resolved symbol's `name` must equal the referencing element's text at the
 given range, exactly.** `PolySymbolOwnReference.resolveReference()`/`getProblems()` asserts
@@ -331,7 +367,11 @@ searcher; that workaround is no longer necessary — the searcher now checks own
 **This does not mean "full automatic highlighting with no extra work," though — two corrections to a
 common misreading:** (1) `PolySymbolHighlightingAnnotator` picks up highlighting from **either**
 own-references **or** EP-provided (`PsiExternalReferenceHost`) references — own-references is not
-the exclusive source, it's one of two equally-supported paths. (2) Neither path produces *any* actual
+the exclusive source, it's one of two equally-supported paths, and it's also the *only* condition the
+annotator checks before running at all (see
+[the annotator-gating note above](#polysymbolhighlightingannotator-only-processes-marked-hosts): no
+`PolySymbolOwnReferenceHost`/`PsiExternalReferenceHost` means the annotator skips the element
+entirely, not just the highlighting). (2) Neither path produces *any* actual
 color by itself. Confirmed by reading the annotator's attribute-lookup chain directly
 (`PolySymbolHighlightingAnnotator.highlightSymbols()`): for every resolved symbol it tries, in order,
 `PolySymbolHighlightingCustomizer.getSymbolTextAttributes(host, symbol, level)`, then

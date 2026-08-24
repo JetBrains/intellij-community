@@ -14,7 +14,7 @@ internal class ShowVcsConsoleTabAction : DumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    val project = e.project
+    val project = e.project?.takeIf { !it.isDefault }
     if (project == null) {
       e.presentation.isEnabledAndVisible = false
       return
@@ -33,6 +33,7 @@ internal class ShowVcsConsoleTabAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    VcsConsoleTabService.getInstance(e.project!!).showConsoleTabAndScrollToTheEnd()
+    val project = e.project?.takeIf { !it.isDefault } ?: return
+    VcsConsoleTabService.getInstance(project).showConsoleTabAndScrollToTheEnd()
   }
 }

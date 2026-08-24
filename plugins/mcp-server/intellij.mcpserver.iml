@@ -44,14 +44,12 @@
     <orderEntry type="module" module-name="fleet.rhizomedb.transactor" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
     <orderEntry type="module" module-name="intellij.platform.util" />
-    <orderEntry type="library" name="io.github.oshai.kotlin.logging.jvm" level="project" />
-    <orderEntry type="library" name="ktor-server-sse-jvm" level="project" />
-    <orderEntry type="library" name="ktor-server-content-negotiation" level="project" />
-    <orderEntry type="library" name="io.github.smiley4.schema.kenerator.jsonschema" level="project" />
-    <orderEntry type="library" name="io.github.smiley4.schema.kenerator.serialization" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.logging" />
+    <orderEntry type="module" module-name="intellij.libraries.ktor.server.sse" />
+    <orderEntry type="module" module-name="intellij.libraries.ktor.server.content.negotiation" />
+    <orderEntry type="module" module-name="intellij.libraries.schema.kenerator" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
-    <orderEntry type="library" name="io.github.smiley4.schema.kenerator.core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
@@ -84,5 +82,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
+    <orderEntry type="module" module-name="intellij.platform.builtInServer" />
+    <orderEntry type="module" module-name="intellij.platform.execution" />
   </component>
 </module>

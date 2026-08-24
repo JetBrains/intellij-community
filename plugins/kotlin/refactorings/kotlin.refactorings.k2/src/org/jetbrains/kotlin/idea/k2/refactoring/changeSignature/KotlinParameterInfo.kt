@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -31,13 +32,13 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinModifiablePar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.setValOrVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.toValVar
-import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
@@ -238,14 +239,15 @@ class KotlinParameterInfo(
     ) : KtTreeVisitorVoid() {
         override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
             val ref = expression.mainReference
-            val parameterIndex = targetToCollect(expression, ref) ?: return
+            val parameterIndex = targetToCollect(expression) ?: return
             defaultValueParameterReferences[ref] = parameterIndex
         }
 
-        private fun targetToCollect(expression: KtSimpleNameExpression, ref: KtReference): Int? {
+        @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+        private fun targetToCollect(expression: KtSimpleNameExpression): Int? {
 
             analyze(expression) {
-                val target = ref.resolveToSymbol()
+                val target = expression.resolveSymbol()
                 val declarationSymbol = callableDeclaration.symbol as? KaCallableSymbol ?: return null
                 if (target is KaValueParameterSymbol) {
                     if (declarationSymbol is KaFunctionSymbol && target.containingDeclaration == declarationSymbol) {

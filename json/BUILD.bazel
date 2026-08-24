@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.json` start
@@ -89,7 +90,29 @@ exports_files(
         "intellij.json.iml",
         "resources/META-INF/plugin.xml",
         "resources/intellij.json.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.json` end
+
+### auto-generated section `dev content intellij.json` start
+dev_dist_plugin_content(
+    content_modules = [
+        "//json/networknt.wrapper/libraries:json-networknt-wrapper-libraries-jsonSchemaValidator",
+        "//json/syntax",
+        "//libraries/joni",
+    ],
+    descriptor_module = ":json",
+    libraries = [
+        "@lib//:json-networknt-wrapper-libraries-json_schema_validator-json-schema-validator-jetbrains",
+        "@lib//:libraries-joni-joni",
+    ],
+    prepacked_content_modules = [
+        "//json/backend/regexp:regexp_content_module_jar",
+        "//json/backend:backend_content_module_jar",
+        "//json/networknt.wrapper:networknt.wrapper_content_module_jar",
+        "//json/structureView:structureView_content_module_jar",
+    ],
+)
+### auto-generated section `dev content intellij.json` end

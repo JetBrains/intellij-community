@@ -64,9 +64,9 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.ex.ProjectFrameTypeService
 import com.intellij.openapi.wm.ex.ProjectFrameUiPolicy
-import com.intellij.openapi.wm.ex.normalizeProjectFrameKey
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.WelcomeScreenTabService
+import com.intellij.openapi.wm.ex.normalizeProjectFrameKey
 import com.intellij.openapi.wm.impl.FrameBoundsConverter
 import com.intellij.openapi.wm.impl.FrameInfo
 import com.intellij.openapi.wm.impl.FrameInfoHelper
@@ -96,8 +96,8 @@ import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
@@ -171,12 +171,13 @@ internal class IdeProjectFrameAllocator(
           resolveFrameSettings()
         }
 
-        launch(CoroutineName("project frame creating")) {
+        val frameInitJob = launch(CoroutineName("project frame creating")) {
           val loadingState = MutableLoadingState(done = job)
           span("frame creation") {
             createFrameManager(loadingState, frameSettingsDeferred.await())
           }
-        }.invokeOnCompletion { cause ->
+        }
+        frameInitJob.invokeOnCompletion { cause ->
           if (cause is CancellationException) {
             job.cancel(cause)
           }
@@ -254,6 +255,14 @@ internal class IdeProjectFrameAllocator(
               }
             }
           }
+        }
+
+        launch {
+          val project = projectInitObservable.awaitProjectInit()
+          val frameHelper = deferredProjectFrameHelper.await()
+          frameInitJob.join() // StatusBar needs to be created
+          frameHelperInitJob.join()
+          project.getOrCreateIdeFrameDeferred().complete(frameHelper)
         }
 
         launch {

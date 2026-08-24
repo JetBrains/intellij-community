@@ -13,15 +13,22 @@ import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceInitializer
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
 import java.nio.file.Files
 
 internal class PluginsUsagesCollector : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("plugins", 12)
+  private val GROUP = EventLogGroup("plugins", 13)
   private val DISABLED_PLUGIN = GROUP.registerEvent("disabled.plugin", EventFields.PluginInfo)
   private val ENABLED_NOT_BUNDLED_PLUGIN = GROUP.registerEvent("enabled.not.bundled.plugin", EventFields.PluginInfo)
-  private val UNSAFE_PLUGIN = GROUP.registerEvent("unsafe.plugin", EventFields.String("unsafe_id", emptyList(), defaultValue = "Unsafe plugin"), EventFields.Boolean("enabled"))
+  private val UNSAFE_PLUGIN = GROUP.registerEvent("unsafe.plugin",
+                                                  EventFields.String("unsafe_id", emptyList(), defaultValue = "Unsafe plugin"),
+                                                  EventFields.Boolean("enabled"))
   private val MIGRATION_INSTALLED_PLUGIN = GROUP.registerEvent("migration.installed.plugin", EventFields.PluginInfo)
   private val INCOMPATIBLE_PLUGIN = GROUP.registerEvent("incompatible.plugin", EventFields.PluginInfo)
+  private val PLUGINS_WITHOUT_PLUGIN_UPDATE_SOURCE = GROUP.registerEvent("plugins.without.plugin.update.source",
+                                                                         EventFields.LogarithmicInt("number_of_plugins"),
+                                                                         EventFields.Boolean("initialization_has_happened"))
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -31,6 +38,7 @@ internal class PluginsUsagesCollector : ApplicationUsagesCollector() {
     addAll(getNotBundledPlugins())
     addAll(getMigrationInstalledPlugins())
     addAll(getIncompatiblePlugins())
+    add(getPluginUpdateSourcesMetric())
   }
 
   private fun getIncompatiblePlugins(): Collection<MetricEvent> =
@@ -74,4 +82,15 @@ internal class PluginsUsagesCollector : ApplicationUsagesCollector() {
       // and ONLY provided ids will be reported
       .map { UNSAFE_PLUGIN.metric(it.pluginId.idString, it.isEnabled) }
       .toSet()
+
+  private fun getPluginUpdateSourcesMetric(): MetricEvent {
+    val service = PluginUpdateSourceService.getInstance()
+    val pluginNumber = PluginManagerCore.plugins.asSequence().count {
+      !it.isBundled &&
+      PluginManagerCore.isDevelopedByJetBrains(it) &&
+      service.getPluginUpdateSourceId(it.pluginId) == null
+    }
+    val initializationHappened = PluginUpdateSourceInitializer.hasInitializationHappened()
+    return PLUGINS_WITHOUT_PLUGIN_UPDATE_SOURCE.metric(pluginNumber, initializationHappened)
+  }
 }

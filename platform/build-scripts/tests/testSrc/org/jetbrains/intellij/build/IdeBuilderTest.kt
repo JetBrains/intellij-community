@@ -12,9 +12,8 @@ import org.jetbrains.intellij.build.dev.DevBuildComponentManifest
 import org.jetbrains.intellij.build.dev.DevBuildFragment
 import org.jetbrains.intellij.build.dev.DevBuildOutput
 import org.jetbrains.intellij.build.dev.IdeFingerprintEntry
-import org.jetbrains.intellij.build.dev.PlatformFragmentSelector
+import org.jetbrains.intellij.build.dev.PlatformJarSelector
 import org.jetbrains.intellij.build.dev.PluginFragmentSelector
-import org.jetbrains.intellij.build.dev.PlatformJarOwnership
 import org.jetbrains.intellij.build.dev.accepts
 import org.jetbrains.intellij.build.dev.checkNamesAreKnown
 import org.jetbrains.intellij.build.dev.computeIdeFingerprintFromComponents
@@ -26,8 +25,6 @@ import org.jetbrains.intellij.build.dev.createDevBuildPaths
 import org.jetbrains.intellij.build.dev.formatCoreClasspath
 import org.jetbrains.intellij.build.dev.prepareOverriddenRunDir
 import org.jetbrains.intellij.build.dev.prepareScratchDir
-import org.jetbrains.intellij.build.impl.ModuleIncludeReasons
-import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -45,13 +42,13 @@ class IdeBuilderTest {
     val complete = DevBuildFragment.COMPLETE
 
     assertThat(complete.isComplete).isTrue()
-    assertThat(complete.platform).isEqualTo(PlatformFragmentSelector.All)
+    assertThat(complete.platform).isEqualTo(PlatformJarSelector.ALL)
     assertThat(complete.platformResources).isTrue()
     assertThat(complete.plugins).isEqualTo(PluginFragmentSelector.All)
     assertThat(
       DevBuildFragment(
-        name = "platform_core",
-        platform = PlatformFragmentSelector.Core,
+        name = "platform_lib",
+        platform = PlatformJarSelector(jars = setOf("intellij.charts.jar"), mode = PlatformJarSelector.Mode.EXCLUDE),
         platformResources = false,
         plugins = null,
       ).isComplete
@@ -86,14 +83,10 @@ class IdeBuilderTest {
   }
 
   @Test
-  fun platformSelectorsPartitionLibJarsIntoCoreAndContentModules() {
-    val layout = listOf(
-      platformModule(),
-      contentModule("intellij.libraries.asm"),
-      contentModule("intellij.platform.lang.impl"),
-      contentModule("intellij.charts"),
-    )
-    val ownership = PlatformJarOwnership.of(layout)
+  fun theFragmentAndThePackedJarsComponentPartitionLibJars() {
+    val packed = setOf("intellij.libraries.asm.jar", "intellij.charts.jar")
+    val fragment = PlatformJarSelector(jars = packed, mode = PlatformJarSelector.Mode.EXCLUDE)
+    val reference = PlatformJarSelector(jars = packed, mode = PlatformJarSelector.Mode.ONLY)
     val jars = listOf(
       "app-backend.jar",
       // Named by no module: a project library, or one packing kept in its own jar. The layout never mentions it.
@@ -103,34 +96,34 @@ class IdeBuilderTest {
       "intellij.charts.jar",
     )
 
-    val core = PlatformFragmentSelector.Core
-    val contentModules = PlatformFragmentSelector.ContentModules
-
-    // Every jar belongs to exactly one of the two, so the fragments partition `lib` instead of overlapping or losing a jar.
+    // Every jar belongs to exactly one side, so the fragment and the packed jars partition `lib` instead of
+    // overlapping or losing a jar.
     for (jar in jars) {
-      val owners = listOf(core, contentModules).filter { it.accepts(ownership, jar) }
+      val owners = listOf(fragment, reference).filter { it.accepts(jar) }
       assertThat(owners).describedAs(jar).hasSize(1)
-      assertThat(PlatformFragmentSelector.All.accepts(ownership, jar)).describedAs(jar).isTrue()
+      assertThat(PlatformJarSelector.ALL.accepts(jar)).describedAs(jar).isTrue()
     }
 
-    assertThat(core.accepts(ownership, "app-backend.jar")).isTrue()
-    // A jar the layout does not name is the core fragment's, which is what keeps it out of no fragment at all.
-    assertThat(core.accepts(ownership, "swingx.jar")).isTrue()
-    assertThat(core.accepts(ownership, "")).isTrue()
-    assertThat(contentModules.accepts(ownership, "intellij.libraries.asm.jar")).isTrue()
-    assertThat(contentModules.accepts(ownership, "intellij.charts.jar")).isTrue()
-    assertThat(contentModules.accepts(ownership, "intellij.platform.lang.impl.jar")).isTrue()
+    assertThat(fragment.accepts("app-backend.jar")).isTrue()
+    // A jar nobody named is the fragment's, which is what keeps it out of no fragment at all - and is why ownership
+    // no longer has to be derived from what a jar holds.
+    assertThat(fragment.accepts("swingx.jar")).isTrue()
+    assertThat(fragment.accepts("")).isTrue()
+    assertThat(fragment.accepts("intellij.libraries.asm.jar")).isFalse()
+    assertThat(reference.accepts("intellij.charts.jar")).isTrue()
+    assertThat(reference.accepts("app-backend.jar")).isFalse()
   }
 
   @Test
-  fun oneJarHoldingSeveralContentModulesIsStillOneContentModuleJar() {
-    val ownership = PlatformJarOwnership.of(listOf(
-      contentModule("intellij.platform.lang.impl").withOutputFile("shared.jar"),
-      contentModule("intellij.libraries.asm").withOutputFile("shared.jar"),
-    ))
-
-    assertThat(PlatformFragmentSelector.ContentModules.accepts(ownership, "shared.jar")).isTrue()
-    assertThat(PlatformFragmentSelector.Core.accepts(ownership, "shared.jar")).isFalse()
+  fun onlyASelectorThatOwnsEveryJarMakesADistributionComplete() {
+    assertThat(PlatformJarSelector.ALL.isEverything).isTrue()
+    assertThat(
+      PlatformJarSelector(jars = setOf("intellij.charts.jar"), mode = PlatformJarSelector.Mode.EXCLUDE).isEverything
+    ).isFalse()
+    // A selector that owns only what it names and names nothing owns nothing, which is never what a caller meant.
+    assertThatThrownBy { PlatformJarSelector(jars = emptySet(), mode = PlatformJarSelector.Mode.ONLY) }
+      .isInstanceOf(IllegalArgumentException::class.java)
+      .hasMessageContaining("must name at least one")
   }
 
   @Test
@@ -152,23 +145,6 @@ class IdeBuilderTest {
     assertThat(remaining.accepts("intellij.air.plugin")).isFalse()
     assertThat(remaining.accepts("intellij.vcs.git")).isTrue()
     assertThat(PluginFragmentSelector.All.accepts("intellij.air.plugin")).isTrue()
-  }
-
-  /** A module the platform merges into a shared jar, which is what makes that jar the core fragment's. */
-  private fun platformModule(): ModuleItem {
-    return ModuleItem(moduleName = "intellij.platform.ide.impl", relativeOutputFile = "app-backend.jar", reason = "addModule")
-  }
-
-  private fun contentModule(moduleName: String): ModuleItem {
-    return ModuleItem(
-      moduleName = moduleName,
-      relativeOutputFile = "$moduleName.jar",
-      reason = ModuleIncludeReasons.PRODUCT_MODULES,
-    )
-  }
-
-  private fun ModuleItem.withOutputFile(relativeOutputFile: String): ModuleItem {
-    return ModuleItem(moduleName = moduleName, relativeOutputFile = relativeOutputFile, reason = reason, moduleSet = moduleSet)
   }
 
   @Test
@@ -262,15 +238,15 @@ class IdeBuilderTest {
   }
 
   @Test
-  fun contentModuleFragmentDoesNotInlineTheProductDescriptor() {
+  fun theReferenceFragmentDoesNotInlineTheProductDescriptor() {
     val options = BuildOptions()
 
     configureDevModeBuildOptions(
       options = options,
       request = createBuildRequest(
         fragment = DevBuildFragment(
-          name = "platform_content_modules",
-          platform = PlatformFragmentSelector.ContentModules,
+          name = "platform_lib",
+          platform = PlatformJarSelector(jars = setOf("intellij.charts.jar"), mode = PlatformJarSelector.Mode.ONLY),
           platformResources = false,
           plugins = null,
         ),
@@ -282,15 +258,15 @@ class IdeBuilderTest {
   }
 
   @Test
-  fun coreFragmentInlinesTheProductDescriptorBecauseItPacksTheJarThatCarriesIt() {
+  fun thePlatformFragmentInlinesTheProductDescriptorBecauseItPacksTheJarThatCarriesIt() {
     val options = BuildOptions()
 
     configureDevModeBuildOptions(
       options = options,
       request = createBuildRequest(
         fragment = DevBuildFragment(
-          name = "platform_core",
-          platform = PlatformFragmentSelector.Core,
+          name = "platform_lib",
+          platform = PlatformJarSelector(jars = setOf("intellij.charts.jar"), mode = PlatformJarSelector.Mode.EXCLUDE),
           platformResources = false,
           plugins = null,
         ),
@@ -309,8 +285,8 @@ class IdeBuilderTest {
       options = options,
       request = createBuildRequest(
         fragment = DevBuildFragment(
-          name = "platform_content_modules",
-          platform = PlatformFragmentSelector.ContentModules,
+          name = "platform_lib",
+          platform = PlatformJarSelector(jars = setOf("intellij.charts.jar"), mode = PlatformJarSelector.Mode.ONLY),
           platformResources = false,
           plugins = null,
         ),

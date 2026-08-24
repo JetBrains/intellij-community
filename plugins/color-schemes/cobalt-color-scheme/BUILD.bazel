@@ -34,6 +34,7 @@ exports_files(
         "intellij.color.scheme.cobalt.iml",
         "resources/META-INF/plugin.xml",
         "resources/colorSchemes/cobalt.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

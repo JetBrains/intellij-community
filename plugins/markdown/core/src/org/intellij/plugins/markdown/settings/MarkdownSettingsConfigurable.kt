@@ -115,6 +115,10 @@ internal class MarkdownSettingsConfigurable(private val project: Project) : Boun
         }
       }
       row {
+        checkBox(MarkdownBundle.message("markdown.settings.enable.live.preview"))
+          .bindSelected(settings::enableLivePreview)
+      }
+      row {
         checkBox(MarkdownBundle.message("markdown.settings.enable.injections"))
           .bindSelected(settings::areInjectionsEnabled)
       }

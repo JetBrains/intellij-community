@@ -482,8 +482,8 @@ open class PredefinedSearchScopeProviderImpl : PredefinedSearchScopeProvider() {
         return
       }
 
-      val contentManager = toolWindow.getContentManager()
-      val content = contentManager.getSelectedContent()
+      val contentManager = toolWindow.getContentManagerIfCreated()
+      val content = contentManager?.getSelectedContent()
       if (content == null) {
         return
       }

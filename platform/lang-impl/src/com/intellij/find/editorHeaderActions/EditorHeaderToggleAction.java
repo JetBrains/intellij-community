@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +16,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 
-public abstract class EditorHeaderToggleAction extends CheckboxAction implements DumbAware, LightEditCompatible {
+public abstract class EditorHeaderToggleAction extends CheckboxAction
+  implements DumbAware, LightEditCompatible, ActionRemoteBehaviorSpecification.Frontend {
+
   protected EditorHeaderToggleAction(@NotNull @NlsContexts.Checkbox String text) {
     this(text, null, null, null);
   }
@@ -43,6 +46,14 @@ public abstract class EditorHeaderToggleAction extends CheckboxAction implements
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.EDT;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    if (e.getData(SearchSession.KEY) == null) {
+      e.getPresentation().setEnabled(false);
+    }
   }
 
   @Override

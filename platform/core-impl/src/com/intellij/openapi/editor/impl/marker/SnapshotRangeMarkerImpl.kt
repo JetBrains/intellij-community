@@ -99,8 +99,8 @@ class SnapshotRangeMarkerImpl internal constructor(
       val rootReference = currentRootReference()
       while (!disposed) {
         val oldRoot = rootReference.get()
-        val range = oldRoot.resolve(markerId, initialRange) as? PMarkerResolution.Valid ?: return
-        val newRoot = oldRoot.remove(markerId).insert(markerId, range.startOffset, range.endOffset, newSpec, flavorFlags)
+        val newRoot = oldRoot.updateSpec(markerId, newSpec)
+        if (newRoot === oldRoot) return
         if (rootReference.compareAndSet(oldRoot, newRoot)) {
           spec = newSpec
           return

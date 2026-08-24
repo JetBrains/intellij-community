@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
 import com.intellij.configurationStore.StoreReloadManager
@@ -73,20 +73,20 @@ fun createTestOpenProjectOptions(runPostStartUpActivities: Boolean = true, befor
   // Also, cleanPersistedContents is called on start test application.
   return OpenProjectTask {
     forceOpenInNewFrame = true
-
     runConversionBeforeOpen = false
     runConfigurators = false
     showWelcomeScreen = false
     useDefaultProjectAsTemplate = false
+
     if (beforeOpen != null) {
-      this.beforeOpen = {
+      beforeOpenTasks += {
         beforeOpen.accept(it)
         true
       }
     }
 
     if (!runPostStartUpActivities) {
-      beforeInit = {
+      beforeInitTasks += {
         it.putUserData(ProjectImpl.RUN_START_UP_ACTIVITIES, false)
       }
     }

@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(ExperimentalCoroutinesApi::class)
 
 package com.intellij.grazie.spellcheck.engine
 
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.LanguageISO
+import ai.grazie.nlp.langs.LanguageWithVariant
 import ai.grazie.nlp.utils.normalization.StripAccentsNormalizer
 import ai.grazie.rules.common.KnownPhrases
 import ai.grazie.spell.GrazieSpeller
@@ -41,7 +41,6 @@ import com.intellij.spellchecker.engine.Transformation
 import com.intellij.spellchecker.settings.CustomDictionarySettingsListener
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -105,7 +104,6 @@ class GrazieSpellCheckerEngine(private val project: Project, private val corouti
     }
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   private val suggestionCache = Caffeine.newBuilder().maximumSize(1024).build<SuggestionRequest, List<String>> { request ->
     val speller = speller!!
     manager.updateBundledDictionaries()
@@ -133,7 +131,9 @@ class GrazieSpellCheckerEngine(private val project: Project, private val corouti
   @ApiStatus.Internal
   fun initializeSpeller(project: Project) {
     val speller = GrazieSplittingSpeller(
-      speller = GrazieSpeller(createSpellerConfig()),
+      speller = object : GrazieSpeller(createSpellerConfig()) {
+        override fun languages(): List<LanguageWithVariant> = GrazieConfig.get().enabledLanguages.mapNotNull { it.withVariant }
+      },
       config = GrazieSplittingSpeller.UserConfig()
     )
     if (this.speller == null) {

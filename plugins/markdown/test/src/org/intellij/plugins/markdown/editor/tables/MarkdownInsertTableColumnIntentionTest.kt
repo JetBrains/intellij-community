@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.editor.tables
 
+import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.formatter.settings.TableStyle
@@ -30,12 +31,7 @@ class MarkdownInsertTableColumnIntentionTest: LightPlatformCodeInsightFixture4Te
 
   @Test
   fun `insert column to the right in CJK table produces display-aligned text`() {
-    // The display-aligned post-action text below renders correctly in editors that have
-    // character-grid mode active (CJK chars at 2 grid cells, ASCII at 1). The bug the user
-    // reported — pipes drifting left on CJK rows in the IntentionPreview popup — is fixed
-    // by enabling grid mode on the preview popup's editor (see MarkdownCharacterGridEditorFactoryListener),
-    // not by changing the action's output. This test pins the unchanged output so that the
-    // grid-mode listener stays the only moving piece for the fix.
+    // Visual alignment fixes the rendered output without changing the formatter's character-counted text.
     // language=Markdown
     val before = """
     | 名字 | 年龄 |
@@ -108,6 +104,8 @@ class MarkdownInsertTableColumnIntentionTest: LightPlatformCodeInsightFixture4Te
 
   private fun doTest(content: String, after: String, insertRight: Boolean) {
     myFixture.configureByText("some.md", content)
+    EditorTestUtil.configureSoftWraps(myFixture.editor, 6)
+    assertEmpty(myFixture.editor.softWrapModel.getSoftWrapsForRange(0, myFixture.editor.document.textLength))
     val key = when {
       insertRight -> "markdown.insert.table.column.to.the.right.intention.text"
       else -> "markdown.insert.table.column.to.the.left.intention.text"

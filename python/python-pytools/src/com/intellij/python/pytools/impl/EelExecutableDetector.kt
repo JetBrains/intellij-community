@@ -8,14 +8,14 @@ import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.where
-import com.jetbrains.python.sdk.ToolCommandSpec
-import com.jetbrains.python.sdk.ToolSearchPath
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.python.pytools.ToolCommandSpec
+import com.intellij.python.pytools.ToolSearchPath
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import kotlin.io.path.isExecutable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Detects a tool executable on the machine [eelApi] describes: first on `PATH` (via `where`), then in

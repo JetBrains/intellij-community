@@ -361,7 +361,7 @@ public final class StartupErrorReporter {
 
     var essentialPluginMissingException = findCause(t, EssentialPluginMissingException.class);
     if (essentialPluginMissingException != null) {
-      var pluginIds = essentialPluginMissingException.pluginIds;
+      var pluginIds = essentialPluginMissingException.getPluginIds();
       showError(
         message("bootstrap.error.title.corrupted"),
         message("bootstrap.error.essential.plugins", pluginIds.size(), "  " + String.join("\n  ", pluginIds) + "\n\n")

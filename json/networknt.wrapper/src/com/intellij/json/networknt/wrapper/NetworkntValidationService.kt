@@ -4,6 +4,7 @@ package com.intellij.json.networknt.wrapper
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
@@ -21,6 +22,8 @@ import com.networknt.schema.Schema
 import com.networknt.schema.SpecificationVersion
 import com.networknt.schema.path.NodePath
 import com.networknt.schema.path.PathType
+import kotlinx.coroutines.runInterruptible
+import tools.jackson.databind.JsonNode
 import java.util.concurrent.CancellationException
 
 /**
@@ -91,11 +94,7 @@ class NetworkntValidationService(private val project: Project) {
 
         val errors: Collection<com.networknt.schema.Error> = jsonSchemaTracer.spanBuilder("networknt.validation").use {
           try {
-            schema.validate(instanceNode) { executionContext ->
-              executionContext.executionConfig { configBuilder ->
-                configBuilder.cancellationChecker { ProgressManager.checkCanceled() }
-              }
-            }
+            validate(schema, instanceNode)
           } catch (e: CancellationException) {
             throw e
           } catch (e: InvalidSchemaRefException) {
@@ -198,11 +197,7 @@ class NetworkntValidationService(private val project: Project) {
         val branchIndex = PsiLocationIndex.build(walker, rootElement, selector)
 
         val branchErrors = try {
-          schema.validate(branchTree) { executionContext ->
-            executionContext.executionConfig { configBuilder ->
-              configBuilder.cancellationChecker { ProgressManager.checkCanceled() }
-            }
-          }
+          validate(schema, branchTree)
         } catch (e: CancellationException) {
           throw e
         } catch (e: InvalidSchemaRefException) {
@@ -249,6 +244,19 @@ class NetworkntValidationService(private val project: Project) {
       JsonSchemaVersion.SCHEMA_2020_12 -> SpecificationVersion.DRAFT_2020_12
       else -> SpecificationVersion.DRAFT_7 // Default fallback to draft-07
     }
+  }
+
+  private fun validate(schema: Schema, instanceNode: JsonNode): Collection<com.networknt.schema.Error> = runInterruptibleValidation {
+    schema.validate(instanceNode) { executionContext ->
+      executionContext.executionConfig { configBuilder ->
+        configBuilder.cancellationChecker { ProgressManager.checkCanceled() }
+      }
+    }
+  }
+
+  // Bridge progress cancellation to coroutine cancellation, then interrupt Joni's blocking matcher.
+  private fun <T> runInterruptibleValidation(action: () -> T): T = runBlockingCancellable {
+    runInterruptible { action() }
   }
 }
 

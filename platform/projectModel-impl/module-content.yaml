@@ -2,3 +2,4 @@
   modules:
   - name: intellij.platform.eel.provider
   - name: intellij.platform.projectModel.impl
+  - name: intellij.platform.util.annotations

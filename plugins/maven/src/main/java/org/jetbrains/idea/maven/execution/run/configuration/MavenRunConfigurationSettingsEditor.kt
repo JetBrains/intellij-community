@@ -522,7 +522,9 @@ class MavenRunConfigurationSettingsEditor(
         override val settingsGroup: String = MavenConfigurableBundle.message("maven.run.configuration.general.options.group")
 
         override val fileChooserDescriptor
-          get() = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withTitle(MavenConfigurableBundle.message("maven.run.configuration.user.settings.title"))
+          get() = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+            .withTitle(MavenConfigurableBundle.message("maven.run.configuration.user.settings.title"))
+            .withEnvironmentRestricted(true)
         override val fileChooserMacroFilter = FileChooserInfo.DIRECTORY_PATH
       },
       { generalSettingsOrDefault.userSettingsFile },
@@ -547,7 +549,9 @@ class MavenRunConfigurationSettingsEditor(
       override val settingsGroup: String = MavenConfigurableBundle.message("maven.run.configuration.general.options.group")
 
       override val fileChooserDescriptor
-        get() = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(MavenConfigurableBundle.message("maven.run.configuration.local.repository.title"))
+        get() = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+          .withTitle(MavenConfigurableBundle.message("maven.run.configuration.local.repository.title"))
+          .withEnvironmentRestricted(true)
       override val fileChooserMacroFilter = FileChooserInfo.DIRECTORY_PATH
     },
     { generalSettingsOrDefault.localRepository },
@@ -590,7 +594,9 @@ class MavenRunConfigurationSettingsEditor(
         override val settingsHint: String? = null
         override val settingsActionHint: String = MavenConfigurableBundle.message("maven.run.configuration.multimoduledir.tooltip")
         override val fileChooserDescriptor
-          get() = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(MavenConfigurableBundle.message("maven.run.configuration.multimoduledir.title"))
+          get() = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+            .withTitle(MavenConfigurableBundle.message("maven.run.configuration.multimoduledir.title"))
+            .withEnvironmentRestricted(true)
         override val fileChooserMacroFilter = FileChooserInfo.DIRECTORY_PATH
       },
       { runnerParameters.multimoduleDir ?: "" },

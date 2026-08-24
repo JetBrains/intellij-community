@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.handlers
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.types.isFunctionType
 import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
@@ -12,7 +11,6 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.types.isFunctionType
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.MultipleArgumentsLookupObject
@@ -99,14 +97,7 @@ private fun calculateTailForCall(argumentExpression: KtExpression, call: KaCall)
     val isArrayAccess = argument.parent is KtArrayAccessExpression
     val rparenthTail = if (isArrayAccess) Tail.RBRACKET else Tail.RPARENTH
 
-    var parameters = call.signature.valueParameters
-    if (isArrayAccess && call.valueArgumentMapping.size == 2) {
-        // last parameter in set is used for value assigned
-        if (parameter.isLastParameter(parameters)) {
-            return null
-        }
-        parameters = parameters.dropLast(1)
-    }
+    val parameters = call.signature.valueParameters
 
     val tail = if (argumentName == null) {
         when {
@@ -133,7 +124,6 @@ private fun calculateTailForCall(argumentExpression: KtExpression, call: KaCall)
     }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun ValueParameter.needsComma(parameters: List<ValueParameter>, isArrayAccess: Boolean): Boolean {
     if (symbol.hasDefaultValue) return false // parameter is optional

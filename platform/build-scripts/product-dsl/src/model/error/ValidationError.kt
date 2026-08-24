@@ -65,6 +65,10 @@ enum class ErrorCategory {
   IMPLICIT_EMBEDDED_CONTENT_MODULE,
   /** [EmbeddedContentModuleDependencyError] - hard failure, not suppressible */
   EMBEDDED_CONTENT_MODULE_DEPENDENCY,
+  /** [UnusedEmbeddedLibraryModuleError] - hard failure, not suppressible */
+  UNUSED_EMBEDDED_LIBRARY_MODULE,
+  /** [UnusedSharedLibraryModuleError] - hard failure, not suppressible */
+  UNUSED_SHARED_LIBRARY_MODULE,
 }
 
 /**
@@ -124,5 +128,7 @@ fun ValidationError.errorId(): String {
     is MissingContentModuleBackingError -> "content-module-backing:$context"
     is ImplicitEmbeddedContentModuleError -> "implicit-embedded-content:$context"
     is EmbeddedContentModuleDependencyError -> "embedded-content-dependency:$context"
+    is UnusedEmbeddedLibraryModuleError -> "unused-embedded-library:$context"
+    is UnusedSharedLibraryModuleError -> "unused-shared-library:$context"
   }
 }

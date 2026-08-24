@@ -81,6 +81,9 @@ internal open class MarkdownFormattingBlock(
   override fun getTextRange(): TextRange = actualTextRange
 
   override fun getSpacing(child1: Block?, child2: Block): Spacing? {
+    if (node.elementType == MarkdownElementTypes.CODE_FENCE) {
+      return Spacing.getReadOnlySpacing()
+    }
     val continuation = (child1 as? AbstractBlock)?.node?.takeIf { it.isBlockQuoteContinuationWhitespace() }
     if (node.elementType == MarkdownElementTypes.LIST_ITEM && continuation != null
         && (child2 as? AbstractBlock)?.node?.elementType in MarkdownTokenTypeSets.LISTS) {

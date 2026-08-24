@@ -72,9 +72,10 @@ internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
       setOf(ownStyleKey)
     }
     else {
+      val isDefinitionListTerm = element.parentOfType(MarkdownElementTypes.DEFINITION_TERM) != null
       val codeSpan = element.parents(withSelf = false)
         .firstOrNull { it.elementType == MarkdownElementTypes.CODE_SPAN }
-      if (codeSpan != null) {
+      if (codeSpan != null && !isDefinitionListTerm) {
         setOf(MarkdownHighlighterColors.CODE_SPAN)
       }
       else element.parents(withSelf = false)

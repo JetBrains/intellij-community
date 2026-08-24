@@ -231,7 +231,8 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
     PROJECT_UV -> InterpreterStatisticsInfo(
       type = InterpreterType.UV,
       target = InterpreterTarget.LOCAL,
-      globalSitePackage = false,
+      // The uv page shows the "inherit packages" checkbox in this flow too, so report the real value.
+      globalSitePackage = model.uvViewModel.inheritSitePackages.get(),
       makeAvailableToAllProjects = false,
       previouslyConfigured = false,
       isWSLContext = false,

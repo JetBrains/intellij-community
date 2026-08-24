@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.junit` start
@@ -140,7 +141,26 @@ exports_files(
         "intellij.junit.iml",
         "resources/META-INF/plugin.xml",
         "resources/com/intellij/execution/junit2/refactoring/JUnit4__5.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.junit` end
+
+### auto-generated section `dev content intellij.junit` start
+dev_dist_plugin_content(
+    content_modules = [
+        "//libraries/hamcrest",
+        "//libraries/junit4",
+        "//plugins/junit5_rt:junit-v5-rt",
+        "//plugins/junit6_rt:junit-v6-rt",
+        "//plugins/junit_rt:junit-rt",
+    ],
+    descriptor_module = ":junit",
+    libraries = [
+        "@lib//:libraries-hamcrest-hamcrest",
+        "@lib//:libraries-junit4-_j_unit4",
+    ],
+    prepacked_content_modules = ["//plugins/junit/properties:properties_content_module_jar"],
+)
+### auto-generated section `dev content intellij.junit` end

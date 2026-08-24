@@ -87,6 +87,7 @@ internal class DirectoryCopyPackagingElementEntityImpl(private val dataSource: D
         changedProperty.add("entitySource")
       }
     override var parentEntity: CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
+      @Suppress("UNCHECKED_CAST")
       get() = getParent(PARENTENTITY_CONNECTION_ID) as? CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
               ?: error("parentEntity is null for PackagingElementEntity")
       set(value) {

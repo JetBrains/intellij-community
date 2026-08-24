@@ -70,7 +70,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.intellij.platform.ide.navigation.NavigationServiceKt.navigateBlocking;
+import static com.intellij.platform.ide.navigation.NavigateUtil.requestNavigate;
 
 public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance(GotoTargetHandler.class);
@@ -319,7 +319,15 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   @ApiStatus.Internal
   protected void navigateToElement(@Nullable Project project, @NotNull Navigatable descriptor) {
     if (project == null) return;
-    navigateBlocking(project, descriptor, NavigationOptions.requestFocus(), null);
+    requestNavigate(project, descriptor, navigationOptions(), null);
+  }
+
+  /**
+   * @return the options every navigation started by this handler is performed with
+   */
+  @ApiStatus.Internal
+  protected @NotNull NavigationOptions navigationOptions() {
+    return NavigationOptions.requestFocus();
   }
 
   protected boolean shouldSortTargets() {

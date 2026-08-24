@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.suggested
 
 import com.intellij.openapi.actionSystem.IdeActions
@@ -8,15 +8,17 @@ import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.suggested.SuggestedRefactoringChangeListener
 import com.intellij.refactoring.suggested.SuggestedRefactoringExecution
 import com.intellij.refactoring.suggested._suggestedChangeSignatureNewParameterValuesForTests
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
+import com.intellij.testFramework.utils.coroutines.waitCoroutinesBlocking
 import com.jetbrains.python.PythonFileType
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyElementGenerator
-import com.jetbrains.python.allure.Layers
-import com.jetbrains.python.allure.Subsystems
 
 @Subsystems.Refactoring
 @Layers.Functional
@@ -913,6 +915,7 @@ class PySuggestedRefactoringTest : PyTestCase() {
   private fun performAction(actionId: String) {
     myFixture.performEditorAction(actionId)
     PsiDocumentManager.getInstance(myFixture.project).commitDocument(myFixture.editor.document)
+    waitCoroutinesBlocking(SuggestedRefactoringChangeListener.getSignatureAnalysisScope(myFixture.project), 5000)
   }
 
   private fun changeSignatureIntention(): String {

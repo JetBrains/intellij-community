@@ -21,7 +21,9 @@ class ExternalSystemWorkingDirectoryInfo(
   override val settingsName: String = ExternalSystemBundle.message("run.configuration.project.path.name", readableName)
 
   override val fileChooserDescriptor: FileChooserDescriptor =
-    ExternalSystemApiUtil.getExternalProjectConfigDescriptor(externalSystemId).withTitle(ExternalSystemBundle.message("settings.label.select.project", readableName))
+    ExternalSystemApiUtil.getExternalProjectConfigDescriptor(externalSystemId)
+      .withTitle(ExternalSystemBundle.message("settings.label.select.project", readableName))
+      .withEnvironmentRestricted(true)
 
   override val emptyFieldError: String = ExternalSystemBundle.message("run.configuration.project.path.empty.error", readableName)
 

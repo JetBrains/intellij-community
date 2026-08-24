@@ -58,6 +58,7 @@ private class LoggingTest {
         @Test
         fun `logged process gets created correctly`() = timeoutRunBlocking(timeout = 1.minutes) {
             val traceContext = TraceContext("some trace")
+            val exe = Exe.fromString("/usr/bin/exe")
             val loggingProcess = fakeLoggingProcess(
                 stdout = "stdout text",
                 stderr = "stderr text",
@@ -66,7 +67,7 @@ private class LoggingTest {
                 traceContext = traceContext,
                 startedAt = Instant.fromEpochSeconds(100),
                 cwd = "/some/cwd",
-                pathToExe = "/usr/bin/exe",
+                exe = exe,
                 args = listOf("foo", "bar"),
                 env = mapOf("foo" to "bar"),
             )
@@ -83,8 +84,8 @@ private class LoggingTest {
             assert("/some/cwd" == loggedProcess.cwd)
             assert(
                 ExecutableDto(
-                    path = "/usr/bin/exe",
-                    listOf("usr", "bin", "exe"),
+                    path = exe.toString(),
+                    parts = exe.pathParts(),
                 ) == loggedProcess.exe,
             )
             assert(listOf("foo", "bar") == loggedProcess.args)
@@ -128,7 +129,7 @@ private class LoggingTest {
             traceContext: TraceContext? = null,
             startedAt: Instant = Instant.fromEpochSeconds(0),
             cwd: String? = "/some/cwd",
-            pathToExe: String = "/usr/bin/exe",
+            exe: Exe = Exe.fromString("/usr/bin/exe"),
             args: List<String> = listOf("foo", "bar"),
             env: Map<String, String> = mapOf("foo" to "bar"),
         ) =
@@ -168,7 +169,7 @@ private class LoggingTest {
                 traceContext,
                 startedAt,
                 cwd,
-                Exe.fromString(pathToExe),
+                exe,
                 args,
                 env,
                 "Local",

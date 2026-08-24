@@ -93,6 +93,17 @@ interface TerminalToolWindowTabBuilder {
   fun closeOnProcessTermination(shouldClose: Boolean): TerminalToolWindowTabBuilder
 
   /**
+   * Whether this tab is remembered in the project's terminal tab state and re-created — re-running its
+   * command — the next time the project is opened.
+   * True by default.
+   *
+   * Pass `false` for a one-shot process whose command is only meaningful for the request that started it:
+   * an authentication command, or anything started with an environment that dies with the current session.
+   * Such a tab is restored as a command re-run with nothing waiting for its result.
+   */
+  fun restoreOnProjectReopen(restore: Boolean): TerminalToolWindowTabBuilder
+
+  /**
    * Whether to add the tab to the Terminal tool window or create the detached tab.
    * True by default.
    *

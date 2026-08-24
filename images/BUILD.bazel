@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -108,10 +109,22 @@ exports_files(
     [
         "intellij.platform.images.iml",
         "resources/META-INF/plugin.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.images` end
+
+### auto-generated section `dev content intellij.platform.images` start
+dev_dist_plugin_content(
+    descriptor_module = ":images",
+    prepacked_content_modules = [
+        "//images/intellij.platform.images.copyright:copyright_content_module_jar",
+        "//images/intellij.platform.images.xdebugger:xdebugger_content_module_jar",
+        "//images/jcef:jcef_content_module_jar",
+    ],
+)
+### auto-generated section `dev content intellij.platform.images` end
 
 ### auto-generated section `build intellij.platform.images.tests` start
 jvm_library(

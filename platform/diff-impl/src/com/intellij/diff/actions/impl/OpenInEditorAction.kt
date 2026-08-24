@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.actions.impl
 
 import com.intellij.diff.tools.util.DiffDataKeys
@@ -10,12 +10,17 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil.copyFrom
-import com.intellij.openapi.fileEditor.FileNavigator.Companion.getInstance
-import com.intellij.openapi.fileEditor.FileNavigatorImpl
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.navigation.NavigationOptions
+import com.intellij.platform.ide.navigation.NavigationService
+import com.intellij.platform.ide.navigation.NavigationTaskCoordinator
+import com.intellij.platform.ide.navigation.RequestedEditor
 import com.intellij.pom.Navigatable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 open class OpenInEditorAction : EditSourceAction(), DumbAware, ActionPromoter {
   init {
@@ -69,30 +74,21 @@ open class OpenInEditorAction : EditSourceAction(), DumbAware, ActionPromoter {
 
   companion object {
     @JvmStatic
-    @Deprecated("Use openEditor(navigatable, callback)")
-    fun openEditor(project: Project, navigatable: Navigatable, callback: Runnable?): Boolean = openEditor(navigatable, callback)
+    fun openEditor(project: Project, navigatable: Navigatable, callback: Runnable?) {
+      openEditor(project, arrayOf(navigatable), callback)
+    }
 
     @JvmStatic
-    fun openEditor(navigatable: Navigatable, callback: Runnable?): Boolean = openEditor(arrayOf(navigatable), callback)
-
-    @JvmStatic
-    @Deprecated("Use openEditor(navigatables, callback)")
-    fun openEditor(project: Project, navigatables: Array<Navigatable>, callback: Runnable?): Boolean = openEditor(navigatables, callback)
-
-    /**
-     * Performs navigation ignoring [OpenFileDescriptor.NAVIGATE_IN_EDITOR]
-     */
-    @JvmStatic
-    fun openEditor(navigatables: Array<Navigatable>, callback: Runnable?): Boolean {
-      val fileNavigator = getInstance() as FileNavigatorImpl
-      var success = false
-      for (navigatable in navigatables) {
-        success = success or fileNavigator.navigateIgnoringContextEditor(navigatable)
+    fun openEditor(project: Project, navigatables: Array<Navigatable>, callback: Runnable?) {
+      val targets = navigatables.toList()
+      val options = NavigationOptions.requestFocus().requestedEditor(RequestedEditor.None)
+      NavigationTaskCoordinator.getInstance(project).dispatchNavigation {
+        if (project.serviceAsync<NavigationService>().navigate(targets, options) && callback != null) {
+          withContext(Dispatchers.EDT) {
+            callback.run()
+          }
+        }
       }
-      if (success && callback != null) {
-        callback.run()
-      }
-      return success
     }
   }
 }

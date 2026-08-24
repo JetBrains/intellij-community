@@ -40,6 +40,20 @@ suspend fun <T> runExecutableWithProgress(
   processWeight: ConcurrentProcessWeight = ConcurrentProcessWeight.LIGHT,
   uploadConfig: UploadConfig? = null,
   downloadConfig: DownloadConfig? = null,
+): PyResult<T> =
+  runExecutableWithProgress(binaryToExec, timeout, env, Args(*args), transformer, execService, processWeight, uploadConfig, downloadConfig)
+
+@Internal
+suspend fun <T> runExecutableWithProgress(
+  binaryToExec: BinaryToExec,
+  timeout: Duration = 10.minutes,
+  env: Map<String, String> = emptyMap(),
+  args: Args,
+  transformer: ProcessOutputTransformer<T>,
+  execService: ExecService = ExecService(),
+  processWeight: ConcurrentProcessWeight = ConcurrentProcessWeight.LIGHT,
+  uploadConfig: UploadConfig? = null,
+  downloadConfig: DownloadConfig? = null,
 ): PyResult<T> {
   val execOptions = ExecOptions(
     timeout = timeout,
@@ -58,7 +72,7 @@ suspend fun <T> runExecutableWithProgress(
 
   return execService.execute(
     binary = binaryToExec,
-    args = Args(*args),
+    args = args,
     options = execOptions,
     processOutputTransformer = errorHandlerTransformer
   )

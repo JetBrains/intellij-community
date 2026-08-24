@@ -2,7 +2,7 @@
 package com.intellij.platform.ide.impl.customization
 
 import com.intellij.ide.Region
-import com.intellij.ide.RegionSettings
+import com.intellij.ide.RegionSettingsService
 import com.intellij.l10n.LocalizationStateService
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.updateSettings.impl.PatchInfo
@@ -71,8 +71,8 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
         "de" to "de-de"
       )
 
-      val currentRegion = RegionSettings.getRegion()
       val selectedLocale = LocalizationStateService.getInstance()?.selectedLocale?.lowercase()
+      val currentRegion = RegionSettingsService.getInstance().getCurrentRegionIfKnown() ?: Region.NOT_SET
 
       return Urls.newFromEncoded(
         buildString {

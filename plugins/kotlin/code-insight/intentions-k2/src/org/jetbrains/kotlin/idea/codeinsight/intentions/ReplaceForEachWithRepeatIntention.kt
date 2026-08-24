@@ -4,8 +4,9 @@ package org.jetbrains.kotlin.idea.codeinsight.intentions
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -16,7 +17,6 @@ import org.jetbrains.kotlin.idea.codeinsight.intentions.ForLoopUtils.isZeroBased
 import org.jetbrains.kotlin.idea.codeinsight.intentions.ForLoopUtils.relabelReturns
 import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
@@ -70,9 +70,10 @@ internal class ReplaceForEachWithRepeatIntention :
         return lambda.bodyExpression != null && lambda.valueParameters.size <= 1
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): Context? {
-        val callee = element.calleeExpression?.mainReference?.resolveToSymbol() as? KaNamedFunctionSymbol ?: return null
+        val callee = element.resolveSymbol() as? KaNamedFunctionSymbol ?: return null
         if (callee.callableId !in FOR_EACH_CALLABLE_IDS) return null
 
         val qualified = element.getQualifiedExpressionForSelector() as? KtDotQualifiedExpression ?: return null

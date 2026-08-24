@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.ExceptionUtil
@@ -36,6 +36,7 @@ import com.intellij.psi.PsiThisExpression
 import com.intellij.psi.PsiTypes
 import com.intellij.psi.PsiVariable
 import com.intellij.psi.PsiYieldStatement
+import com.intellij.psi.SyntheticElement
 import com.intellij.psi.controlFlow.AnalysisCanceledException
 import com.intellij.psi.controlFlow.BranchingInstruction
 import com.intellij.psi.controlFlow.ConditionalThrowToInstruction
@@ -233,10 +234,6 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
     return ExceptionUtil.getThrownCheckedExceptions(*elements.toTypedArray())
   }
 
-  fun findWrittenVariables(): List<PsiVariable> {
-    return ControlFlowUtil.getWrittenVariables(flow, flowRange.first, flowRange.last, false).toList()
-  }
-
   private fun isExitInside(statement: PsiStatement): Boolean {
     return when (statement) {
       is PsiBreakStatement -> contains(statement.findExitedStatement())
@@ -247,7 +244,7 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
   }
 
   operator fun contains(element: PsiElement?): Boolean {
-    if (element == null) return false
+    if (element == null || element is SyntheticElement) return false
     val textRange = TextRange(elements.first().textRange.startOffset, elements.last().textRange.endOffset)
     return element.textRange in textRange
   }
@@ -308,7 +305,7 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
       return try {
         CodeFragmentAnalyzer(elements)
       }
-      catch (e: ExtractException) {
+      catch (_: ExtractException) {
         null
       }
     }

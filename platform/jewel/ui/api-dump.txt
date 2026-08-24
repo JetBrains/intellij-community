@@ -3913,7 +3913,6 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Toolwindows
 - sf:ErrorEvents:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:InfoEvents:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Learn:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:MeetNewUi:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:NoEvents:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Notifications:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:NotificationsNew:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -4080,6 +4079,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Xml$Browsers
 - sf:Nwjs:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Opera:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Safari:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Vivaldi:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Yandex:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - <init>():V
 f:org.jetbrains.jewel.ui.painter.BadgePainter

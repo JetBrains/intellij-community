@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.platform.eel.tcp` start
 jvm_library(
@@ -29,6 +30,7 @@ jvm_library(
         "//platform/ijent/impl",
         "//platform/util-ex",
         "//platform/util",
+        "//platform/util/annotations",
         "//platform/util/coroutines",
         "//platform/core-api:core",
         "//platform/core-nio-fs",
@@ -41,6 +43,8 @@ jvm_library(
         "//platform/statistics",
     ],
 )
+
+content_module_jar(module = ":eel-tcp")
 
 jvm_library(
     name = "eel-tcp_test_lib",
@@ -63,6 +67,7 @@ jvm_library(
         "//platform/ijent/impl:impl_test_lib",
         "//platform/util-ex:util-ex_test_lib",
         "//platform/util:util_test_lib",
+        "//platform/util/annotations:annotations_test_lib",
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/core-nio-fs:core-nio-fs_test_lib",

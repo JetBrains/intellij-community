@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "inspect-tests_test",
@@ -65,6 +66,8 @@ jvm_library(
         "//platform/backend/observation",
     ],
 )
+
+content_module_jar(module = ":inspect")
 
 jvm_library(
     name = "inspect_test_lib",

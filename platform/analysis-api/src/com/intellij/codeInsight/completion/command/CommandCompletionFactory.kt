@@ -70,16 +70,6 @@ interface CommandCompletionFactory : CommandCompletionSuffixProvider, PossiblyDu
    *
    */
   fun createFile(originalFile: PsiFile, text: String): PsiFile? = null
-
-  /**
-   * Adjust the caret position after GoTo command completion.
-   * @return the new caret position or null if no adjustment is needed
-   */
-  fun adjustCaret(psiFile: PsiFile, offset: Int): Int? {
-    val element = psiFile.findElementAt(offset) ?: return null
-    if (element.textRange.startOffset != offset) return null
-    return element.textRange.endOffset
-  }
 }
 
 private val EP_NAME = LanguageExtension<CommandProvider>("com.intellij.codeInsight.completion.command.provider")

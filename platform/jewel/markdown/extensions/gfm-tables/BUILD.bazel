@@ -1,6 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "jewel-markdown-extensions-gfmTables-tests_test",
@@ -53,6 +54,11 @@ jvm_library(
         "//libraries/compose-runtime-desktop",
         "@lib//:platform-jewel-markdown-extensions-gfm_tables-commonmark-ext-gfm-tables",
     ],
+)
+
+content_module_jar(
+    libraries = ["@lib//:platform-jewel-markdown-extensions-gfm_tables-commonmark-ext-gfm-tables"],
+    module = ":gfm-tables",
 )
 
 jvm_library(

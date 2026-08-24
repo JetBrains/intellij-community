@@ -29,7 +29,9 @@ import com.intellij.openapi.editor.impl.FocusModeModel;
 import com.intellij.openapi.editor.impl.FoldingModelInternal;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
+import com.intellij.openapi.editor.impl.caret.model.CaretRectangle;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
+import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCache;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -52,13 +54,17 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
 import java.awt.font.FontRenderContext;
 import java.awt.font.LineMetrics;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.text.Bidi;
+import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * A facade for components responsible for drawing editor contents, managing editor size 
@@ -80,6 +86,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   private final TextLayoutCache myTextLayoutCache;
   private final LogicalPositionCache myLogicalPositionCache;
   private final CharWidthCache myCharWidthCache;
+  private final @Nullable EditorAnimationCache myContentAnimationCache;
   private final TabFragment myTabFragment;
   private final SelectionVisualModel mySelectionVisualModel;
 
@@ -117,12 +124,16 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     myTextLayoutCache = new TextLayoutCache(this, new ComponentVisibilityTracker(myEditor.getContentComponent()));
     myLogicalPositionCache = new LogicalPositionCache(myDocument, () -> myEditor.throwDisposalError("Editor is already disposed"));
     myCharWidthCache = new CharWidthCache(this);
+    myContentAnimationCache = EditorAnimationCache.createAnimationCache(editor);
     myTabFragment = new TabFragment(this);
     mySelectionVisualModel = new SelectionVisualModel(myEditor);
 
     myEditor.getContentComponent().addHierarchyListener(this);
     getScrollingModel().addVisibleAreaListener(this);
 
+    if (myContentAnimationCache != null) {
+      Disposer.register(this, myContentAnimationCache);
+    }
     Disposer.register(this, myLogicalPositionCache);
     Disposer.register(this, myTextLayoutCache);
     Disposer.register(this, mySizeManager);
@@ -249,9 +260,66 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   public void paint(Graphics2D g) {
     getSoftWrapModel().prepareToMapping();
     checkFontRenderContext(g.getFontRenderContext());
+
+    Rectangle clip = g.getClipBounds();
+    EditorAnimationCache cache = myContentAnimationCache;
+    if (cache != null && clip != null && canPaintFromContentAnimationCache() && cache.paintFromCache(g, clip)) {
+      runPaintCallback();
+      return;
+    }
+
     myPainter.paint(g);
-    if (myPaintCallback != null) {
+    runPaintCallback();
+  }
+
+  private boolean canPaintFromContentAnimationCache() {
+    return !myEditor.isCurrentlyBuildingCache() &&
+           !myEditor.isStickyLinePainting() &&
+           !myEditor.isPaintingDumbBuffer() &&
+           !myEditor.isPurePaintingMode();
+  }
+
+  @ApiStatus.Internal
+  public void paintCaretFrame(Graphics2D graphics) {
+    CaretRectangle[] locations = myEditor.getCaretLocations(true);
+    if (locations == null) return;
+
+    Rectangle clip = graphics.getClipBounds();
+    if (clip == null) return;
+
+    myPainter.paintCaret(graphics, locations, clip.y);
+  }
+
+  private void runPaintCallback() {
+    if (!myEditor.isCurrentlyBuildingCache() && myPaintCallback != null) {
       myPaintCallback.run();
+    }
+  }
+
+  @ApiStatus.Internal
+  @RequiresEdt
+  public void cacheAreasForRepaint(@NotNull Object key, @NotNull Supplier<List<Rectangle2D>> rectangles) {
+    if (myContentAnimationCache != null) {
+      myContentAnimationCache.cacheAreasForRepaint(key, rectangles);
+    }
+  }
+
+  @ApiStatus.Internal
+  @RequiresEdt
+  public Rectangle @NotNull [] caretRectanglesForLocations(CaretRectangle @NotNull [] locations, int grow) {
+    return myPainter.caretRectanglesForLocations(locations, grow);
+  }
+
+  @ApiStatus.Internal
+  public void invalidateContentAnimationCache(@Nullable Rectangle clip) {
+    if (myContentAnimationCache != null) {
+      myContentAnimationCache.invalidate(clip);
+    }
+  }
+
+  void clearContentAnimationCache() {
+    if (myContentAnimationCache != null) {
+      myContentAnimationCache.clear();
     }
   }
 
@@ -262,7 +330,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
 
   @ApiStatus.Internal
   @RequiresEdt
-  public void repaintCarets(EditorImpl.CaretRectangle @NotNull [] locations) {
+  public void repaintCarets(CaretRectangle @NotNull [] locations) {
     myPainter.repaintCarets(locations);
   }
 
@@ -311,6 +379,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
 
   @RequiresEdt
   public void reinitSettings() {
+    clearContentAnimationCache();
     synchronized (myLock) {
       myPlainSpaceWidth = -1;
       myTabSize = -1;
@@ -331,6 +400,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
 
   @RequiresEdt
   public void invalidateRange(int startOffset, int endOffset, boolean invalidateSize) {
+    clearContentAnimationCache();
     int textLength = myDocument.getTextLength();
     if (startOffset > endOffset || startOffset >= textLength || endOffset < 0) {
       return;
@@ -348,6 +418,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
    */
   @RequiresEdt
   public void reset() {
+    clearContentAnimationCache();
     myLogicalPositionCache.reset(true, getTabSize());
     myTextLayoutCache.resetToDocumentSize(true);
     mySizeManager.reset();
@@ -543,6 +614,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
 
   @Override
   public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
+    clearContentAnimationCache();
     checkFontRenderContext(null);
   }
 
@@ -835,6 +907,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
       }
     }
     if (contextUpdated) {
+      clearContentAnimationCache();
       myTextLayoutCache.resetToDocumentSize(false);
       invalidateFoldRegionLayouts();
       myCharWidthCache.clear();

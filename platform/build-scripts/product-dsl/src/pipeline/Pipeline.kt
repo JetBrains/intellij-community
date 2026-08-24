@@ -47,6 +47,8 @@ import org.jetbrains.intellij.build.productLayout.validator.SelfContainedModuleS
 import org.jetbrains.intellij.build.productLayout.validator.SuppressionConfigValidator
 import org.jetbrains.intellij.build.productLayout.validator.TestLibraryScopeValidator
 import org.jetbrains.intellij.build.productLayout.validator.TestPluginPluginDependencyValidator
+import org.jetbrains.intellij.build.productLayout.validator.UnusedEmbeddedLibraryModuleValidator
+import org.jetbrains.intellij.build.productLayout.validator.UnusedSharedLibraryModuleValidator
 import java.nio.file.Path
 
 /**
@@ -537,6 +539,8 @@ internal class GenerationPipeline(
           SelfContainedModuleSetValidator,
           ContentModuleBackingValidator,
           EmbeddedContentModuleDependencyValidator,
+          UnusedEmbeddedLibraryModuleValidator,
+          UnusedSharedLibraryModuleValidator,
           ProductModuleSetValidator,
           PluginContentDuplicatesValidator,
           PluginDescriptorIdConflictValidator,

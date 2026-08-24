@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "vcs-core-tests_test",
@@ -41,6 +42,8 @@ jvm_library(
         "//libraries/kotlinx/serialization/core",
     ],
 )
+
+content_module_jar(module = ":vcs-core")
 
 jvm_library(
     name = "vcs-core_test_lib",

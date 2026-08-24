@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.java.compiler.instrumentationUtil` start
 jvm_library(
@@ -20,6 +21,8 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = ["//libraries/asm"],
 )
+
+content_module_jar(module = ":instrumentation-util")
 
 jvm_library(
     name = "instrumentation-util_test_lib",

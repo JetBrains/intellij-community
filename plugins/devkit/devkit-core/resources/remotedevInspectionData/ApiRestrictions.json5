@@ -199,7 +199,6 @@
   {"apiName": "com.intellij.find.usages.symbol.SymbolSearchTargetFactory", "extensionPointNames": ["com.intellij.lang.symbolSearchTarget"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.find.findUsages.FindUsagesHandlerFactory", "extensionPointNames": ["com.intellij.findUsagesHandlerFactory"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.find.findUsages.CustomUsageSearcher", "extensionPointNames": ["com.intellij.customUsageSearcher"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
-  {"apiName": "com.intellij.platform.ide.navigation.NavigationHandler", "extensionPointNames": ["com.intellij.navigation.navigationHandler"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.execution.impl.RunConfigurationTemplateProvider", "extensionPointNames": ["com.intellij.runConfigurationTemplateProvider"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.execution.configurations.RunConfigurationsSettings", "extensionPointNames": ["com.intellij.runConfigurationsSettings"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.execution.runners.ProgramRunner", "extensionPointNames": ["com.intellij.programRunner"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},

@@ -485,18 +485,12 @@ a:git4idea.actions.ref.GitSingleRefAction
 - f:update(com.intellij.openapi.actionSystem.AnActionEvent):V
 - updateIfEnabledAndVisible(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.project.Project,java.util.List,git4idea.GitReference):V
 f:git4idea.actions.ref.GitSingleRefAction$Companion
-- f:getWorkingTreeWithRef(git4idea.GitReference,git4idea.repo.GitRepository,Z):git4idea.GitWorkingTree
 - f:isCurrentRefInAnyOtherWorkingTree(git4idea.GitReference,java.util.List):Z
 f:git4idea.actions.tag.GitPushTagActionWrapper
 - com.intellij.openapi.actionSystem.AnActionWrapper
 - com.intellij.openapi.actionSystem.DataSnapshotProvider
 - <init>(com.intellij.openapi.actionSystem.AnAction,git4idea.repo.GitRepository,git4idea.repo.GitRemote):V
 - dataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
-f:git4idea.actions.workingTree.GitOpenExistingWorkingTreeForLocalBranchAction
-- git4idea.actions.ref.GitSingleRefAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.project.Project,java.util.List,git4idea.GitReference):V
-- updateIfEnabledAndVisible(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.project.Project,java.util.List,git4idea.GitReference):V
 f:git4idea.annotate.GitAdvancedSettingsListener
 - sf:INSTANCE:git4idea.annotate.GitAdvancedSettingsListener
 - sf:registerListener(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
@@ -5188,3 +5182,8 @@ f:git4idea.vfs.GitVFSListener
 - com.intellij.openapi.vcs.VcsVFSListener
 - s:createInstance(git4idea.GitVcs,kotlinx.coroutines.CoroutineScope):git4idea.vfs.GitVFSListener
 - waitForExternalFilesEventsProcessedInTestMode():V
+f:git4idea.workingTrees.actions.GitOpenExistingWorkingTreeForLocalBranchAction
+- git4idea.actions.ref.GitSingleRefAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.project.Project,java.util.List,git4idea.GitReference):V
+- updateIfEnabledAndVisible(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.project.Project,java.util.List,git4idea.GitReference):V

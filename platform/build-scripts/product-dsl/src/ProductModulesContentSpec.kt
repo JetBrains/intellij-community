@@ -361,7 +361,11 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
    * @param allowedMissingPluginIds Plugin IDs that are allowed to be missing for auto-added dependencies
    *   discovered from this module (DSL test plugins only).
    */
-  fun embeddedModule(name: String, namespace: String? = PluginModuleId.DEFAULT_NAMESPACE, allowedMissingPluginIds: List<String> = emptyList()) {
+  fun embeddedModule(
+    name: String,
+    namespace: String? = PluginModuleId.DEFAULT_NAMESPACE,
+    allowedMissingPluginIds: List<String> = emptyList(),
+  ) {
     additionalModules.add(
       ContentModule(
         moduleId = PluginModuleId(name, namespace),

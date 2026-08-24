@@ -18,6 +18,7 @@ import com.intellij.devkit.uiDsl.sandbox.components.JRadioButtonPanel
 import com.intellij.devkit.uiDsl.sandbox.components.JSpinnerPanel
 import com.intellij.devkit.uiDsl.sandbox.components.JTextFieldPanel
 import com.intellij.devkit.uiDsl.sandbox.components.OnOffButtonPanel
+import com.intellij.devkit.uiDsl.sandbox.components.PillButtonPanel
 import com.intellij.devkit.uiDsl.sandbox.components.SearchTextFieldPanel
 import com.intellij.devkit.uiDsl.sandbox.components.ShimmerLabelPanel
 import com.intellij.devkit.uiDsl.sandbox.components.ThreeStateCheckBoxPanel
@@ -155,6 +156,7 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
     JSpinnerPanel(),
     JTextFieldPanel(),
     OnOffButtonPanel(),
+    PillButtonPanel(),
     SearchTextFieldPanel(),
     ShimmerLabelPanel(),
     ThreeStateCheckBoxPanel(),

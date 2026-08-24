@@ -32,7 +32,7 @@ internal fun getCanonicalNames(reference: PsiReference, context: TypeEvalContext
   val result: MutableList<QualifiedName> = SmartList()
   when {
     reference is PyOperatorReference && element is PyQualifiedExpression -> {
-      val receiver = reference.receiver ?: return result
+      val receiver = reference.getReceiver(null) ?: return result
       val type = context.getType(receiver) as? PyClassType ?: return result
       ContainerUtil.addIfNotNull(result, extractAttributeQNameFromClassType(element.referencedName, type))
     }

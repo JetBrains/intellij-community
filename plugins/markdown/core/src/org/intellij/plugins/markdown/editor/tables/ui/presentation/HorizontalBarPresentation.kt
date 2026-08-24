@@ -22,10 +22,8 @@ import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.util.EditorUtil
-import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.annotations.ApiStatus
 import com.intellij.psi.PsiElement
@@ -94,7 +92,7 @@ class HorizontalBarPresentation(private val editor: Editor, private val table: M
       invokeLater(ModalityState.stateForComponent(editor.contentComponent)) {
         if (isInvalid || table.isSoftWrapping(editor)) return@invokeLater
         val previous = boundsState
-        val calculated = calculateCurrentBoundsState(document)
+        val calculated = calculateCurrentBoundsState()
         if (calculated == previous) return@invokeLater
         boundsState = calculated
         val previousSize = Dimension(previous.width, previous.height)
@@ -149,32 +147,31 @@ class HorizontalBarPresentation(private val editor: Editor, private val table: M
     updateSelectedIndexIfNeeded(null)
   }
 
-  private fun calculateCurrentBoundsState(document: Document): BoundsState {
+  private fun calculateCurrentBoundsState(): BoundsState {
     if (isInvalid) {
       return emptyBoundsState
     }
     val fontsMetrics = obtainFontMetrics(editor)
-    val width = calculateRowWidth(fontsMetrics, document)
-    val barsModel = buildBarsModel(fontsMetrics, document)
+    val width = calculateRowWidth()
+    val barsModel = buildBarsModel(fontsMetrics)
     return BoundsState(width, barHeight, barsModel)
   }
 
-  private val gridActive: Boolean
-    get() = (editor as? EditorImpl)?.characterGrid != null
-
-  private fun calculateRowWidth(fontMetrics: FontMetrics, document: Document): Int {
+  private fun calculateRowWidth(): Int {
     if (isInvalid) {
       return 0
     }
     val header = table.headerRow ?: return 0
-    return if (gridActive) {
-      val range = header.textRange
-      val start = editor.offsetToXY(range.startOffset)
-      val end = editor.offsetToXY(range.endOffset)
-      if (start.y != end.y) 0 else (end.x - start.x).coerceAtLeast(0)
-    } else {
-      fontMetrics.stringWidth(document.getText(header.textRange))
+    val range = header.textRange
+    if (editor.offsetToXY(range.startOffset).y != editor.offsetToXY(range.endOffset).y) {
+      return 0
     }
+    return (renderedX(range.endOffset) - renderedX(range.startOffset)).coerceAtLeast(0)
+  }
+
+  private fun renderedX(offset: Int): Int {
+    return editor.offsetToXY(offset, false, false).x +
+           editor.inlayModel.getInlineElementsInRange(offset, offset).sumOf { it.widthInPixels }
   }
 
   private fun updateSelectedIndexIfNeeded(index: Int?) {
@@ -185,33 +182,26 @@ class HorizontalBarPresentation(private val editor: Editor, private val table: M
     }
   }
 
-  private fun buildBarsModel(fontMetrics: FontMetrics, document: Document): List<Rectangle> {
+  private fun buildBarsModel(fontMetrics: FontMetrics): List<Rectangle> {
     val header = requireNotNull(table.headerRow)
-    val positions = calculatePositions(header, document, fontMetrics)
+    val positions = calculatePositions(header, fontMetrics)
     val sectors = buildSectors(positions)
     return sectors.map { (offset, width) -> Rectangle(offset - barHeight / 2, 0, width + barHeight, barHeight) }
   }
 
-  private fun calculatePositions(header: MarkdownTableRow, document: Document, fontMetrics: FontMetrics): List<Int> {
+  private fun calculatePositions(header: MarkdownTableRow, fontMetrics: FontMetrics): List<Int> {
     require(barHeight % 2 == 0) { "barHeight value should be even" }
     val separators = header.firstChild.siblings(forward = true, withSelf = true)
       .filter { it.hasType(MarkdownTokenTypes.TABLE_SEPARATOR) && it !is MarkdownTableSeparatorRow }
       .map { it.startOffset }
     val separatorWidth = fontMetrics.charWidth('|')
     val firstOffset = separators.firstOrNull() ?: return emptyList()
-    val gridActive = gridActive
-    val inlineInlayShift = if (gridActive) editor.inlayModel.getInlineElementsInRange(firstOffset, firstOffset).sumOf { it.widthInPixels } else 0
     val result = ArrayList<Int>()
-    var position = editor.offsetToXY(firstOffset).x + separatorWidth / 2 - inlineInlayShift
+    var position = editor.offsetToXY(firstOffset).x + separatorWidth / 2
     var lastOffset = firstOffset
     result.add(position)
     for (offset in separators.drop(1)) {
-      val length = if (gridActive) {
-        editor.offsetToXY(offset).x - editor.offsetToXY(lastOffset).x
-      } else {
-        fontMetrics.stringWidth(document.getText(TextRange(lastOffset, offset)))
-      }
-      position += length
+      position += renderedX(offset) - renderedX(lastOffset)
       result.add(position)
       lastOffset = offset
     }

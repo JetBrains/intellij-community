@@ -8,6 +8,7 @@ import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,6 +44,16 @@ public final class VcsApplicationSettings implements PersistentStateComponent<Vc
    * Option to show editor diff preview in modal commit interface with Local Changes toolwindow tab.
    */
   public boolean SHOW_DIFF_ON_DOUBLE_CLICK = false;
+
+  @Transient
+  public boolean isCreateChangeListsAutomatically() {
+    return CREATE_CHANGELISTS_AUTOMATICALLY;
+  }
+
+  @Transient
+  public void setCreateChangeListsAutomatically(boolean value) {
+    CREATE_CHANGELISTS_AUTOMATICALLY = value;
+  }
 
   public static VcsApplicationSettings getInstance() {
     return ApplicationManager.getApplication().getService(VcsApplicationSettings.class);

@@ -32,6 +32,15 @@ public class UsageInfo {
   private @Nullable Class<? extends PsiReference> myReferenceClass;
 
   public final boolean isNonCodeUsage;
+  /**
+   * An ordering hint for usage views. Usages with lower values have higher display priority and are shown first;
+   * the default value is {@code 0}. This allows valid but less relevant usages, such as dynamically resolved
+   * secondary usages, to remain visible without competing with ordinary usages.
+   *
+   * <p>{@link Integer#MAX_VALUE} is the largest possible value and therefore places a usage last among usages
+   * with lower priority values. Usages with equal priorities retain the usual file and offset ordering.
+   */
+  private int myPriority;
   protected boolean myDynamicUsage;
 
   public UsageInfo(@NotNull PsiElement originalElement, final int startOffset, final int endOffset, boolean isNonCodeUsage) {
@@ -167,6 +176,14 @@ public class UsageInfo {
 
   public boolean isNonCodeUsage() {
     return isNonCodeUsage;
+  }
+
+  public int getPriority() {
+    return myPriority;
+  }
+
+  public void setPriority(int priority) {
+    myPriority = priority;
   }
 
   public void setDynamicUsage(boolean dynamicUsage) {

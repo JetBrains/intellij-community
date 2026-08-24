@@ -24,6 +24,7 @@
     <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.codeStyle.impl"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
@@ -38,6 +39,7 @@
     <module name="intellij.platform.problemView.shared"/>
     <module name="intellij.platform.problemView.ui"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.workspace.jps"/>
   </dependencies>
   <!-- endregion -->
 
@@ -88,6 +90,9 @@
     <notificationGroup id="Incompatible codegen api versions"
                        displayType="BALLOON"
                        key="notification.workspace.incompatible.codegen.api.versions"/>
+    <notificationGroup id="Different codegen api versions"
+                       displayType="BALLOON"
+                       key="notification.workspace.compatible.but.different.codegen.api.versions"/>
     <notificationGroup id="Workspace code generation not available"
                        displayType="BALLOON"
                        key="notification.workspace.code.generation.not.available"/>

@@ -11,66 +11,132 @@ authoritative" rule).
 ## GDScript
 
 **Where**: `dotnet/Plugins/godot-support/gdscript/src/main/kotlin/gdscript/polySymbols/` (`psi/`,
-`sdk/`, `scope/`, `reference/`, `completion/`, `index/`, `config/`). **Read the module's own
-`polySymbols/README.md` first** — it documents its partial-adoption state directly.
+`sdk/`, `scope/`, `reference/`, `completion/`, `index/`, `config/`), plus own-references wiring on
+the ref PSI classes themselves (`gdscript/psi/impl/`) and on TSCN (`tscn/psi/impl/TscnNamedElementImpl.kt`).
+The module's own `polySymbols/README.md` is a snapshot from the initial partial-adoption phase
+(2026-03) and is now stale on several points superseded below (e.g. it still lists local
+variables/parameters/for-loop bindings as unimplemented) — treat it as historical color, not current
+truth; this section reflects the codebase as of the `RIDER-140303` own-references migration
+(completed 2026-07-22).
 
-**EPs registered** (`.../gdscript/src/main/resources/META-INF/plugin.xml`): `enableInLanguage`
-for `GdScript`; a single `queryScopeContributor` (`GdPolySymbolQueryScopeContributor`); five
-`psiReferenceProvider`s, one per leaf ref PSI type (`GdTypeHintRef`, `GdInheritanceIdRef`,
-`GdRefIdRef`, `GdGetMethodIdRef`, `GdSetMethodIdRef`); `psiLinkedSymbol` for `GdNamedIdElement` and
-`GdFile`; one `declarationProvider` (`GdSdkPolySymbolDeclarationProvider`, for synthetic SDK files
-only). No `queryConfigurator`. Completion is **not** a PolySymbols EP — five plain
-`completion.contributor`s each extend `PolySymbolsCompletionProviderBase` by hand.
+**EPs registered** (`.../gdscript/src/main/resources/META-INF/plugin.xml`): `enableInLanguage` for
+**both** `GdScript` and `Tscn`; a single `queryScopeContributor` (`GdPolySymbolQueryScopeContributor`);
+**zero** `psiReferenceProvider`s and **zero** `psiLinkedSymbol` registrations (both existed during the
+initial implementation and were removed once own references took over — see "Verdict" below); two
+`declarationProvider`s (`GdSdkPolySymbolDeclarationProvider` for synthetic SDK files,
+`GdPsiPolySymbolDeclarationProvider` for real PSI); a `highlightingCustomizer`
+(`GdPolySymbolHighlightingCustomizer`); an `inspectionToolMapping` suppressing the generic
+unresolved-reference warning for the `qualifiable-symbol` kind (backed by the intentionally inert
+`GdUnrecognizedIdentifierInspection`, see [query-model.md](query-model.md#references--own-references-polysymbolownreferences));
+two `referencesSearch` executors, `GdOwnReferencesSearcher` and `GdConstructorReferencesSearcher`
+(see below). No `queryConfigurator`. Completion is still **not** a PolySymbols EP — five plain
+`completion.contributor`s (`gdscript.polySymbols.completion.*`) each extend
+`PolySymbolsCompletionProviderBase` by hand.
 
-**Two symbol hierarchies**, both `abstract class GdPolySymbol : PolySymbol`:
-- `GdPsiPolySymbol : PsiLinkedPolySymbol` — real PSI-backed (classes, methods, properties, signals,
-  enums, autoloads, loaded-class aliases). It uses the `PsiLinkedPolySymbol` *bridge* (see
-  [query-model.md](query-model.md#declarations)), not the plain `PolySymbolDeclaredInPsi` path,
-  precisely because it has to: the legacy `psi.referenceContributor`/`PsiReferenceBase` reference
-  providers registered on the same host elements (below) still resolve directly to the underlying
-  `PsiElement`, and `PsiLinkedPolySymbol` is what keeps that legacy resolve target recognized as a
-  usage/rename target of the new `PolySymbol` too — the registered `psiLinkedSymbol host="..."`
-  entries for `GdNamedIdElement`/`GdFile` exist for exactly this reason. Several subtypes
-  (`GdPsiLocalVariableSymbol`, `GdPsiParameterSymbol`, `GdPsiBindingPatternSymbol`,
-  `GdPsiForVariableSymbol`) exist but are **unreachable** — no scope ever produces them.
+**Two symbol hierarchies**, both `abstract class GdPolySymbol : PolySymbol`
+(`gdscript/polySymbols/GdPolySymbols.kt`):
+- `GdPsiPolySymbol : PolySymbolDeclaredInPsi` (`gdscript/polySymbols/psi/GdPsiPolySymbol.kt`) — real
+  PSI-backed (classes, methods, properties, signals, enums, autoloads, loaded-class aliases, locals,
+  parameters, for-loop/binding-pattern variables). It used to implement the `PsiLinkedPolySymbol`
+  *bridge* (see [query-model.md](query-model.md#declarations)) instead of plain
+  `PolySymbolDeclaredInPsi`, because the legacy `psi.referenceContributor`/`PsiReferenceBase`
+  providers that used to be registered on the same host elements resolved directly to the underlying
+  `PsiElement`, and the bridge was what kept that legacy resolve target recognized as a usage/rename
+  target of the new `PolySymbol` too. Once those legacy contributors were deleted in favor of own
+  references, the bridge's *raison d'être* went with them: `PolySymbolDeclaredInPsi`'s own doc
+  comment spells out the tradeoff it accepts instead — "any usage or rename searches for the
+  `PsiElement` returned by `sourceElement` will not result in the symbol being recognized as a usage
+  or rename target." **`GdOwnReferencesSearcher`** (`gdscript/search/GdOwnReferencesSearcher.kt`) is
+  the generalized fix for exactly that gap: a `ReferencesSearch` executor that classic word-searches
+  for the declaration's name, resolves each text occurrence's own-references, and matches against the
+  target — recovering the "recognized as a usage" behavior `PsiLinkedPolySymbol` used to provide for
+  free, without the bridge itself. `GdConstructorReferencesSearcher` is the earlier, narrower
+  special-case this generalizes from: it makes Find Usages on a constructor (`_init`) also surface
+  `ClassName.new(...)` call sites, which don't textually contain `_init` at all.
 - `GdSdkPolySymbol` — synthetic, XML-doc-backed (Godot engine classes/methods/signals/annotations/
   operators). No real `PsiElement`; navigation lazily generates a synthetic GDScript file
   (`GdSdkSyntheticPsiCache`) and navigates there. `renameTarget = null` (SDK code isn't renamable).
+  Implements neither `PolySymbolDeclaredInPsi` nor `PsiLinkedPolySymbol` — it never had a real
+  declaration site to link.
 
-**Scope hierarchy**: `GdPolySymbolQueryScopeContributor` maps 5 PSI locations (get/set-method-id
-refs, inheritance refs, type-hint refs, ref-id refs, annotation types) to scope lists — SDK scopes
-(`GdSdkClassesPolySymbolScope`, `GdSdkGlobalPolySymbolScope`, `GdSdkAnnotationsPolySymbolScope`) are
-parsed on demand from Godot doctool XML via `GdSdkXmlParser`, cached through
-`PolySymbolScopeWithCache`. Qualified references (`a.b`) delegate to `PolySymbolCompoundScope`
-subclasses (`GdQualifiedRefIdResolveScope`, `GdQualifiedTypeHintResolveScope`) that resolve the
-qualifier to one symbol and re-expose *its* `queryScope` — the `queryScope`-chaining pattern from
-[query-model.md](query-model.md).
+**Local variables, parameters, for-loop bindings, and binding patterns are now reachable** —
+`GdPsiPolySymbolDeclarationProvider` produces `GdPsiLocalVariableSymbol`/`GdPsiParameterSymbol`/
+`GdPsiForVariableSymbol`/`GdPsiBindingPatternSymbol` from real PSI, and a dedicated
+`GdLocalSymbolsStructuredScope` walks each file's method/lambda/loop/conditional blocks to expose
+them with proper nesting, wired into the unqualified `GdRefIdRef` scope list alongside the
+`QUALIFIABLE_SYMBOLS` pattern group. (This closes the gap the platform-generic
+`PolySymbolDeclarationProvider`/scope story in [query-model.md](query-model.md) doesn't otherwise
+cover: unqualified local resolution needs its own per-file structural scope, not just a
+declaration provider.)
 
-**Verdict — dual-track, and it's known/acknowledged**: `plugin.xml` registers **both** a legacy
-`psi.referenceContributor` (`GdInheritanceReferenceContributor`, `GdTypeHintReferenceContributor`,
-`GdSetGetMethodIdReferenceContributor`, `GdRefIdReferenceContributor`, lines 128-134) **and** the
-new `polySymbols.psiReferenceProvider` (lines 322-336) for the **same host element classes**,
-unconditionally, with no gate between them. The module's README states plainly that this causes
-duplicate Find Usages results until the legacy path is deleted. Concretely:
-- The legacy `GdClassMemberReference.resolveId()` resolves to for-loop variables, parameters,
-  binding patterns, and dict keys in addition to classes/methods/properties; the PolySymbols
-  `QUALIFIABLE_SYMBOLS` pattern group covers only `CLASS, METHOD, PROPERTY, CONSTANT, ENUM, SIGNAL,
-  LOADED_CLASS_ALIAS, AUTOLOAD` — no locals at all.
-- Nested-class qualifiers in `extends Outer.Inner` (`GdInheritanceSubIdRef`) and all resource-path
-  references (`GdResourceReferenceContributor`) have **zero** PolySymbols coverage.
-- Completion is not a PolySymbols EP integration point — five plain `completion.contributor`s each
-  call `PolySymbolsCompletionProviderBase`'s query helpers by hand, then rely on the platform default
-  `getCodeCompletions()` (derived from `getSymbols()`) plus a `GdPolySymbolCodeCompletionItemCustomizer`
-  (EP `com.intellij.polySymbols.codeCompletionItemCustomizer`, see [query-model.md](query-model.md))
-  to populate `icon`/`priority`/`tailText`/`typeText` from `GdPolySymbol`. This covers SDK and
-  user-defined/PSI symbols uniformly — the once-present SDK-only completion filter is gone.
-- The TSCN language (`.tscn`/resource references) has no PolySymbols involvement whatsoever.
+**Own references, not EP-registered external references, are now GDScript's canonical resolve
+mechanism** for every ref PSI kind except one: `GdRefElement`
+(`gdscript/psi/GdRefElement.kt`) — the shared base interface for all leaf ref types — implements
+`PolySymbolOwnReferenceHost` directly (see
+[query-model.md](query-model.md#references--own-references-polysymbolownreferences) for the marker
+interface itself). `GdRefIdRef`, `GdTypeHintRef`, `GdInheritanceIdRef`, `GdInheritanceSubIdRef`,
+`GdGetMethodIdRef`, and `GdSetMethodIdRef` all override `getOwnReferences()` on their `*Impl` class
+and build the result via `polySymbolOwnReferences { ... }` — `GdRefIdRefImpl` is the query-model
+doc's own worked example of the lower-level `reference(range, kind, resolver)` form (branching on
+`new`/`self`/`super`/math-constant tokens before falling back to a name-match query). The one
+holdout is `GdStringValRef` (resource-path string literals): it has no `getOwnReferences()` override
+and resolves purely through the still-registered legacy `GdResourceReferenceContributor`
+(`psi.referenceContributor` on `GdTypes.STRING_VAL_NM`) — resource paths have **zero** PolySymbols
+coverage, same as before.
 
-**Worth reading**: `test/.../polySymbols/model/GdCoreSdkPolySymbolModelTest.kt` (SDK query executor
-construction, inheritance/member scope queries); `GdInheritancePolySymbolReferenceTest.kt` (clean
-resolve-test pattern); `GdPolySymbolsCompletionTest.kt` (its one test is
-`@Ignore("Completion not implemented yet")` — itself evidence); `GdSdkPolySymbolRefactoringTest.kt`
-(synthetic-file Find Usages end to end).
+**Scope hierarchy**: `GdPolySymbolQueryScopeContributor` maps PSI locations (get/set-method-id refs,
+inheritance refs including nested `extends Outer.Inner` sub-refs, type-hint refs, ref-id refs
+[layering `GdLocalSymbolsStructuredScope` on top for locals], annotation types) to scope lists — SDK
+scopes (`GdSdkClassesPolySymbolScope`, `GdSdkGlobalPolySymbolScope`, `GdSdkAnnotationsPolySymbolScope`)
+are parsed on demand from Godot doctool XML via `GdSdkXmlParser`, cached through
+`PolySymbolScopeWithCache`. Qualified references (`a.b`, `Outer.Inner`) delegate to
+`PolySymbolCompoundScope` subclasses (`GdQualifiedRefIdResolveScope`, `GdQualifiedTypeHintResolveScope`,
+`GdQualifiedInheritanceResolveScope`) that resolve the qualifier to one symbol and re-expose *its*
+`queryScope` — the `queryScope`-chaining pattern from [query-model.md](query-model.md).
+
+**TSCN now has own-references-only PolySymbols coverage** (added 2026-07-18, after this case study
+was first written — TSCN previously had none at all). `TscnNamedElement` implements
+`PolySymbolOwnReferenceHost`; `TscnNamedElementImpl.getOwnReferences()` resolves two specific things
+into GDScript-side symbols: a `script_class="MyClass"` header value → the matching `GdClassSymbol`,
+and a `.tres` data-line key → the matching `@export var` field's `GdPsiPropertySymbol` on the script
+referenced by the containing `ExtResource`. Nothing else in TSCN participates — no scope contributor,
+no declaration provider, no PolySymbols-driven completion; plain `res://` resource-path values on the
+same host element stay on the classic `TscnResourceReferenceContributor`, deliberately left alone
+(see the comment in `TscnNamedElementImpl.kt`).
+
+**Verdict — still dual-track by design, but the shape of the split changed**: the *reference*
+half of the original "both mechanisms registered on the same host, unconditionally" problem is
+resolved — own references now fully replace the legacy `psi.referenceContributor`s for every ref
+kind except resource paths (`GdStringValRef`/TSCN `res://`), which remain the one deliberate,
+un-migrated legacy island. What's still true and load-bearing:
+- Completion is still not a PolySymbols EP integration point — five plain `completion.contributor`s
+  each call `PolySymbolsCompletionProviderBase`'s query helpers by hand, then rely on the platform
+  default `getCodeCompletions()` (derived from `getSymbols()`) plus a
+  `GdPolySymbolCodeCompletionItemCustomizer` (EP `com.intellij.polySymbols.codeCompletionItemCustomizer`,
+  see [query-model.md](query-model.md)) to populate `icon`/`priority`/`tailText`/`typeText` from
+  `GdPolySymbol`. This covers SDK and user-defined/PSI symbols uniformly — the once-present SDK-only
+  completion filter is gone.
+- Resource-path references (`GdResourceReferenceContributor`, and TSCN's mirror) remain fully
+  legacy, by deliberate choice, not oversight — the current `GdStringValRef` design simply never
+  routes them through PolySymbols at all.
+- The move off `PsiLinkedPolySymbol` traded one problem (duplicate Find Usages results between two
+  live resolution mechanisms, which the module's README used to call out) for a narrower one (needing
+  a hand-written `ReferencesSearch` executor, `GdOwnReferencesSearcher`, to recover usage-search
+  parity) — read as confirmation that `PolySymbolDeclaredInPsi`'s "no usage-search bridge" tradeoff
+  (see [query-model.md](query-model.md#declarations)) is a real cost every adopter must pay one way
+  or another, not a corner nobody hits in practice.
+
+**Worth reading** (current file names — the ones previously listed here no longer exist, renamed/
+replaced during the own-references migration): `test/.../gdscript/model/GdCoreSdkModelTest.kt` (SDK
+query executor construction, inheritance/member scope queries); `test/.../gdscript/resolve/ResolveTestBase.kt`
++ `ResolveInSingleFileTest.kt`/`ResolveMultiFileTest.kt` (the Symbol-API-first resolve-dumper pattern
+from [migration.md](migration.md)); `test/.../gdscript/completion/GdCompletionTest.kt` (completion is
+actively tested now, not the `@Ignore`d placeholder this pointer used to cite);
+`test/.../tscn/refactoring/rename/ScriptClassRenamingTest.kt` +
+`ResourceFieldRenamingTest.kt` (own-references end to end — rename purely through
+`CodeInsightTestFixture.renameSymbolAtCaret(...)`, no own-references-specific plumbing, see
+[testing.md](testing.md)); `test/.../gdscript/highlight/GdPolySymbolHighlightingCustomizerTest.kt`
+(the `GdPolySymbolHighlightingCustomizer` from above).
 
 ## JS/TS, HTML, CSS
 

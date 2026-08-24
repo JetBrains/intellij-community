@@ -385,8 +385,15 @@ public final class VariableExtractor {
                                                    @NotNull PsiElement anchor,
                                                    PsiExpression @NotNull [] occurrences) {
     if (!expr.isPhysical()) {
-      expr = ObjectUtils.tryCast(expr.getUserData(ElementToWorkOn.PARENT), PsiExpression.class);
-      if (expr == null) return anchor;
+      PsiExpression parent = ObjectUtils.tryCast(expr.getUserData(ElementToWorkOn.PARENT), PsiExpression.class);
+      if (parent != null) {
+        expr = parent;
+      }
+      // Not being physical does not mean living outside the tree being modified: that tree may be a non-physical copy of
+      // the file, like the one a ModCommand updates, and an expression of it the caller marked is corrected as usual.
+      else if (expr.getUserData(ElementToWorkOn.REPLACE_NON_PHYSICAL) == null) {
+        return anchor;
+      }
     }
     if (anchor instanceof PsiSwitchLabelStatementBase) {
       PsiSwitchBlock block = ((PsiSwitchLabelStatementBase)anchor).getEnclosingSwitchBlock();
@@ -502,7 +509,17 @@ public final class VariableExtractor {
     return child;
   }
 
-  static @Nullable PsiVariable introduceInReadAction(final @NotNull Project project,
+  /**
+   * Performs the non-interactive variable extraction without acquiring a write action of its own, unlike
+   * {@link #introduceVariableWithExpression}. Intended for extracting inside a non-physical copy of a file, which
+   * the caller is already allowed to modify, e.g. from inside
+   * {@link com.intellij.modcommand.ModCommand#psiUpdate(com.intellij.modcommand.ActionContext, java.util.function.Consumer)}.
+   * Non-physical {@code expr}, {@code anchorStatement} and {@code occurrences} are replaced only when they are
+   * marked with {@link ElementToWorkOn#REPLACE_NON_PHYSICAL}.
+   *
+   * @return created variable or null if the refactoring cannot be performed
+   */
+  public static @Nullable PsiVariable introduceInReadAction(final @NotNull Project project,
                                                             final @NotNull PsiExpression expr,
                                                             final @NotNull PsiElement anchorStatement,
                                                             final PsiExpression @NotNull [] occurrences,

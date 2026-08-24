@@ -133,7 +133,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
   ) {
     ThreadingAssertions.assertEventDispatchThread()
 
-    if (!isIncludedInHistory(file)) {
+    if (project.isDisposed || !isIncludedInHistory(file)) {
       return
     }
 
@@ -410,6 +410,9 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
       // updateHistoryEntry does commitDocument, which is 1) costly and 2) cannot be performed from within PSI change listener
       // so defer updating history entry until documents are committed to improve responsiveness
       PsiDocumentManager.getInstance(project).performWhenAllCommitted {
+        if (project.isDisposed) {
+          return@performWhenAllCommitted
+        }
         val newEditor = event.newEditor
         if (newEditor != null && !newEditor.isValid) {
           return@performWhenAllCommitted

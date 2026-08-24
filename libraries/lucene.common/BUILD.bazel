@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.lucene.common` start
 jvm_library(
@@ -23,6 +24,15 @@ jvm_library(
         "@lib//:libraries-lucene-common-lucene-analysis-common",
         "@lib//:libraries-lucene-common-lucene-core",
     ],
+)
+
+content_module_jar(
+    libraries = [
+        # do not sort,
+        "@lib//:libraries-lucene-common-lucene-analysis-common",
+        "@lib//:libraries-lucene-common-lucene-core",
+    ],
+    module = ":lucene.common",
 )
 
 jvm_library(

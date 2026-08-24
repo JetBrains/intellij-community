@@ -3,7 +3,11 @@
 package org.jetbrains.kotlin.idea.searching.usages
 
 import com.intellij.psi.PsiPackage
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.resolution.KaSingleCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -33,6 +37,7 @@ import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtSuperExpression
@@ -41,10 +46,12 @@ import org.jetbrains.kotlin.psi.KtUnaryExpression
 import org.jetbrains.kotlin.psi.KtWhenConditionInRange
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 internal class KotlinK2UsageTypeProvider : KotlinUsageTypeProvider() {
 
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     override fun getUsageTypeEnumByReference(refExpr: KtReferenceExpression): UsageTypeEnum? {
         val reference = refExpr.mainReference
         check(reference is KtSimpleReference<*>) { "Reference should be KtSimpleReference but not ${reference::class}" }
@@ -87,10 +94,12 @@ internal class KotlinK2UsageTypeProvider : KotlinUsageTypeProvider() {
         }
 
         return analyze(refExpr) {
-            when (val targetElement = reference.resolveToSymbol()) {
+            val targetSymbol = ((refExpr as? KtResolvableCall)?.resolveCall() as? KaSingleCall<*, *>)?.symbol
+                ?: refExpr.resolveSymbol()
+            when (targetSymbol) {
                 is KaClassifierSymbol ->
-                    when (targetElement) {
-                        is KaClassSymbol -> when (targetElement.classKind) {
+                    when (targetSymbol) {
+                        is KaClassSymbol -> when (targetSymbol.classKind) {
                           KaClassKind.COMPANION_OBJECT -> COMPANION_OBJECT_ACCESS
                           KaClassKind.OBJECT -> getVariableUsageType(refExpr)
                           else -> getClassUsageType(refExpr)
@@ -98,10 +107,10 @@ internal class KotlinK2UsageTypeProvider : KotlinUsageTypeProvider() {
                         else -> getClassUsageType(refExpr)
                     }
                 is KaPackageSymbol ->
-                    if (targetElement.psi is PsiPackage) getPackageUsageType(refExpr) else getClassUsageType(refExpr)
+                    if (targetSymbol.psi is PsiPackage) getPackageUsageType(refExpr) else getClassUsageType(refExpr)
 
                 is KaVariableSymbol -> getVariableUsageType(refExpr)
-                is KaFunctionSymbol -> getFunctionUsageType(targetElement)
+                is KaFunctionSymbol -> getFunctionUsageType(targetSymbol)
                 else -> null
             }
         }

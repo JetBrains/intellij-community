@@ -256,19 +256,19 @@
     </orderEntry>
     <orderEntry type="module-library" exported="">
       <library name="ai.grazie.nlp.common.jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-common-jvm:0.9.2">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-common-jvm:0.9.5">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0.9.2/nlp-common-jvm-0.9.2.jar">
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0.9.5/nlp-common-jvm-0.9.5.jar">
               <sha256sum>81c136c9aed0e9be274920371c519b8e0e7a8c1cdfe7bf11a01fbbbbd0631ec2</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0.9.2/nlp-common-jvm-0.9.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0.9.5/nlp-common-jvm-0.9.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0.9.2/nlp-common-jvm-0.9.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0.9.5/nlp-common-jvm-0.9.5-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -342,19 +342,19 @@
     </orderEntry>
     <orderEntry type="module-library" exported="">
       <library name="ai.grazie.gec.util" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.gec:gec-util:0.9.2">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.gec:gec-util:0.9.5">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/gec/gec-util/0.9.2/gec-util-0.9.2.jar">
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/gec/gec-util/0.9.5/gec-util-0.9.5.jar">
               <sha256sum>f10519c0285c371ac0dcdd984a050d85409920281ee4fa0610f5a5f282e48608</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/gec/gec-util/0.9.2/gec-util-0.9.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/gec/gec-util/0.9.5/gec-util-0.9.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/gec/gec-util/0.9.2/gec-util-0.9.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/gec/gec-util/0.9.5/gec-util-0.9.5-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -758,6 +758,8 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.ide.progress" />
-    <orderEntry type="library" name="io.github.oshai.kotlin.logging.jvm" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.logging" />
+    <orderEntry type="module" module-name="intellij.platform.credentialStore" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.dataformat.yaml" scope="RUNTIME" />
   </component>
 </module>

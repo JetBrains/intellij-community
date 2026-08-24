@@ -6,6 +6,7 @@ import com.jetbrains.python.requirements.PyDependenciesFile
 import javax.swing.Icon
 
 
-data class PyProjectTomlFile(override val virtualFile: VirtualFile) : PyDependenciesFile {
+@ConsistentCopyVisibility
+data class PyProjectTomlFile internal constructor(override val virtualFile: VirtualFile) : PyDependenciesFile {
   override val icon: Icon = PythonPyprojectIcons.Toml
 }

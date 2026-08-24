@@ -1,5 +1,3 @@
 - name: dist.all/lib/intellij.platform.ide.progress.jar
   modules:
   - name: intellij.platform.ide.progress
-  - name: intellij.platform.instanceContainer
-  - name: intellij.platform.serviceContainer

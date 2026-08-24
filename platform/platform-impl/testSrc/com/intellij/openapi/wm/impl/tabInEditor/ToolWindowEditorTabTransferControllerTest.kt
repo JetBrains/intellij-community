@@ -41,7 +41,7 @@ class ToolWindowEditorTabTransferControllerTest {
 
   private val projectFixture = projectFixture(
     openProjectTask = OpenProjectTask {
-      beforeInit = { it.putUserData(FileEditorManagerKeys.ALLOW_IN_LIGHT_PROJECT, true) }
+      beforeInitTasks += { it.putUserData(FileEditorManagerKeys.ALLOW_IN_LIGHT_PROJECT, true) }
     },
     openAfterCreation = true,
   )

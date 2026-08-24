@@ -104,17 +104,6 @@ internal class GradleBuildEntityImpl(private val dataSource: GradleBuildEntityDa
       if (!getEntityData().isUrlInitialized()) {
         error("Field GradleBuildEntity#url should be initialized")
       }
-// Check initialization for list with ref type
-      if (_diff != null) {
-        if (_diff.instrumentation.getManyChildrenBuilders(PROJECTS_CONNECTION_ID, this) == null) {
-          error("Field GradleBuildEntity#projects should be initialized")
-        }
-      }
-      else {
-        if (this.entityLinks[EntityLink(true, PROJECTS_CONNECTION_ID)] == null) {
-          error("Field GradleBuildEntity#projects should be initialized")
-        }
-      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {

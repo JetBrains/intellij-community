@@ -2,6 +2,7 @@
 package com.intellij.openapi.application
 
 import com.intellij.ide.plugins.DiscoveredPluginsList
+import com.intellij.ide.plugins.EssentialPluginMissingException
 import com.intellij.ide.plugins.PluginInitContextFactory
 import com.intellij.ide.plugins.PluginInitializationContext
 import com.intellij.ide.plugins.PluginInitializationDiagnosticUtils
@@ -21,6 +22,7 @@ import com.intellij.openapi.application.PluginAutoUpdateRepository.getAutoUpdate
 import com.intellij.openapi.application.PluginAutoUpdateRepository.safeConsumeUpdates
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrHandleException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
@@ -146,46 +148,52 @@ object PluginAutoUpdater {
     val composedDiscoveryResult = PluginsDiscoveryResult.build(
       discoveredPlugins + DiscoveredPluginsList(updates.values.toList(), PluginsSourceContext.Custom)
     )
-    val pluginSet = initContext.computeTargetState(composedDiscoveryResult, isStartupInit = false, parentActivity = null)
-    val excludedDescriptors = pluginSet.excludedFromCandidateSubset
-    for ((id, updateDesc) in updates) {
-      // no third-party plugin check, settings are not available at this point; that check must be done when downloading the updates
-      if (initContext.validatePluginIsCompatible(updateDesc) != null) {
-        rejectedUpdates[id] = "plugin ${updateDesc.shortLogDescription} is not compatible with current IDE build"
-        continue
+    try {
+      val pluginSet = initContext.computeTargetState(composedDiscoveryResult, isStartupInit = false, parentActivity = null)
+      val excludedDescriptors = pluginSet.excludedFromCandidateSubset
+      for ((id, updateDesc) in updates) {
+        // no third-party plugin check, settings are not available at this point; that check must be done when downloading the updates
+        if (initContext.validatePluginIsCompatible(updateDesc) != null) {
+          rejectedUpdates[id] = "${updateDesc.shortLogDescription} is not compatible with current IDE build"
+          continue
+        }
+        if (initContext.isPluginBroken(updateDesc.pluginId, updateDesc.version)) {
+          rejectedUpdates[id] = "${updateDesc.shortLogDescription} is known to be broken"
+          continue
+        }
+        if (id in initContext.essentialPlugins) {
+          rejectedUpdates[id] = "${updateDesc.shortLogDescription} is part of the IDE distribution and cannot be updated without IDE update"
+          continue
+        }
+        // I guess a more robust way to check which updates should be applied and which not is the following.
+        // Greedily try to apply all the updates and then exclude those which turn out to be incompatible (on the module graph level).
+        // Repeat until the set of updates doesn't produce incompatibilities.
+        // We have to keep in mind that the set of dependencies may change arbitrarily with the plugin update.
+        //
+        // But for now we just check that each of the updates is compatible. Formally speaking, we don't fully check this condition and
+        // the behavior may actually differ from the honest check. To implement it better, the plugin loading implementation should be a little
+        // bit more formalized and a bit more flexible to be reused here (TODO).
+        val plugin = pluginSet.candidateSubset.resolvePluginId(id)
+        if (plugin == null || plugin !== updateDesc) {
+          val nonLoadReason = excludedDescriptors[updateDesc]
+          rejectedUpdates[id] = "${updateDesc.shortLogDescription} would not load after the update" +
+                                (nonLoadReason?.let { ": ${PluginInitializationDiagnosticUtils.getLogMessage(it)}" } ?:
+                                 plugin?.let { ": version ${it.version} is selected for loading instead" }.orEmpty())
+          continue
+        }
+        if (pluginSet.resolvedPluginSet.isExcluded(plugin)) {
+          rejectedUpdates[id] = "${updateDesc.shortLogDescription} would not load after the update:\n" +
+                                PluginInitializationDiagnosticUtils.buildSingleExclusionChainMessage(pluginSet.resolvedPluginSet, plugin)
+          continue
+        }
+        updatesToApply.add(id)
       }
-      if (initContext.isPluginBroken(updateDesc.pluginId, updateDesc.version)) {
-        rejectedUpdates[id] = "plugin ${updateDesc.shortLogDescription} is known to be broken"
-        continue
-      }
-      if (id in initContext.essentialPlugins) {
-        rejectedUpdates[id] = "plugin ${updateDesc.shortLogDescription} is part of the IDE distribution and cannot be updated without IDE update"
-        continue
-      }
-      // I guess a more robust way to check which updates should be applied and which not is the following.
-      // Greedily try to apply all the updates and then exclude those which turn out to be incompatible (on the module graph level).
-      // Repeat until the set of updates doesn't produce incompatibilities.
-      // We have to keep in mind that the set of dependencies may change arbitrarily with the plugin update.
-      //
-      // But for now we just check that each of the updates is compatible. Formally speaking, we don't fully check this condition and
-      // the behavior may actually differ from the honest check. To implement it better, the plugin loading implementation should be a little
-      // bit more formalized and a bit more flexible to be reused here (TODO).
-      val plugin = pluginSet.candidateSubset.resolvePluginId(id)
-      if (plugin == null || plugin !== updateDesc) {
-        val nonLoadReason = excludedDescriptors[updateDesc]
-        rejectedUpdates[id] = "plugin ${updateDesc.shortLogDescription} would not load after the update" +
-                              (nonLoadReason?.let { ": ${PluginInitializationDiagnosticUtils.getLogMessageForRootExclusionReason(it)}" } ?:
-                               plugin?.let { ": version ${it.version} is selected for loading instead" }.orEmpty())
-        continue
-      }
-      if (pluginSet.resolvedPluginSet.isExcluded(plugin)) {
-        rejectedUpdates[id] = "plugin ${updateDesc.shortLogDescription} would not load after the update:\n" +
-          PluginInitializationDiagnosticUtils.buildSingleExclusionChainMessage(pluginSet.resolvedPluginSet, plugin)
-        continue
-      }
-      updatesToApply.add(id)
+      return UpdateCheckResult(updatesToApply, rejectedUpdates)
     }
-    return UpdateCheckResult(updatesToApply, rejectedUpdates)
+    catch (e: EssentialPluginMissingException) {
+      logger<PluginAutoUpdater>().error("plugin set is missing essential plugins, rejecting updates", e)
+      return UpdateCheckResult(emptySet(), updates.mapValues { "failed to construct target plugins state" })
+    }
   }
 
   /**

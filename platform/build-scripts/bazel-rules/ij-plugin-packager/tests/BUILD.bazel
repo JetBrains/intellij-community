@@ -8,11 +8,30 @@ kt_jvm_library(
     kotlinc_opts = "@rules_jvm//:rules_jvm_bootstrap_kotlinc_options",
     deps = [
         "//libraries/junit5",
+        "//platform/bazel-runfiles",
         "//platform/testFramework",
+        "//platform/util/jdom",
+        "@rules_jvm//:kotlinx-coroutines-core_import",
+        "@rules_jvm//:opentelemetry-api_import",
+        "@rules_jvm//worker-framework",
     ],
 )
 
 jps_test(
     name = "ij-plugin-packager-tests",
+    data = [
+        "//platform/build-scripts/bazel-rules/ij-plugin-packager/tests/smoke:smoke-plugin-default-settings",
+        "//platform/build-scripts/bazel-rules/ij-plugin-packager/tests/smoke:smoke-plugin-exact-settings",
+        "//platform/build-scripts/bazel-rules/ij-plugin-packager/tests/smoke:smoke-plugin-nightly-settings",
+        "//platform/build-scripts/bazel-rules/ij-plugin-packager/tests/smoke:smoke-plugin-release-settings",
+        "@community//:build.txt",
+    ],
+    jvm_flags = [
+        "-Dij.plugin.packager.test.build-number-file=$(rlocationpath @community//:build.txt)",
+        "-Dij.plugin.packager.test.default=$(rlocationpath //platform/build-scripts/bazel-rules/ij-plugin-packager/tests/smoke:smoke-plugin-default-settings)",
+        "-Dij.plugin.packager.test.exact=$(rlocationpath //platform/build-scripts/bazel-rules/ij-plugin-packager/tests/smoke:smoke-plugin-exact-settings)",
+        "-Dij.plugin.packager.test.nightly=$(rlocationpath //platform/build-scripts/bazel-rules/ij-plugin-packager/tests/smoke:smoke-plugin-nightly-settings)",
+        "-Dij.plugin.packager.test.release=$(rlocationpath //platform/build-scripts/bazel-rules/ij-plugin-packager/tests/smoke:smoke-plugin-release-settings)",
+    ],
     runtime_deps = [":ij-plugin-packager-tests-lib"],
 )

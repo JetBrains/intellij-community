@@ -1,5 +1,4 @@
 c:com.intellij.DynamicBundle
-- sf:INSTANCE:com.intellij.DynamicBundle
 - <init>(java.lang.Class,java.lang.String):V
 - p:findBundle(java.lang.String,java.lang.ClassLoader,java.util.ResourceBundle$Control):java.util.ResourceBundle
 - s:getBundle(java.lang.String):java.util.ResourceBundle

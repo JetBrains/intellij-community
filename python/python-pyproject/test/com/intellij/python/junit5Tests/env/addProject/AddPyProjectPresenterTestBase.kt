@@ -73,7 +73,7 @@ abstract class AddPyProjectPresenterTestBase protected constructor(
     val tempDir = pathFixture.get()
     // For no projectName we create project in the same dir
     val projectDir = if (projectName != null) tempDir.resolve(sut.projectName) else tempDir
-    val toml = PyProjectToml.parse(projectDir.resolve("pyproject.toml").readText())!!
+    val toml = PyProjectToml.parse(tomlFileContent = projectDir.resolve("pyproject.toml").readText(), "someProject")!!
     val expectedProjectName = projectName ?: projectDir.fileName.pathString
     if (' ' !in expectedProjectName || !spacesInProjectNamesLeadToBug) {
       Assertions.assertEquals(PyPackageName.normalizeProjectName(expectedProjectName), toml.project.name)

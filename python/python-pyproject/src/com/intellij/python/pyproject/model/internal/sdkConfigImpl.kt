@@ -58,12 +58,14 @@ internal sealed interface SdkSetupCallBack<T : Any> {
   /**
    * SDK creation is not allowed due to [reason]
    */
-  data class Denied<T : Any>(val reason: T) : SdkSetupCallBack<T>
+  @ConsistentCopyVisibility
+  data class Denied<T : Any> internal constructor(val reason: T) : SdkSetupCallBack<T>
 
   /**
    * SDK creation is allowed, but when it failed, error mapped using [sdkResultMapper]
    */
-  data class Accepted<T : Any>(val sdkResultMapper: (PyError) -> T) : SdkSetupCallBack<T>
+  @ConsistentCopyVisibility
+  data class Accepted<T : Any> internal constructor(val sdkResultMapper: (PyError) -> T) : SdkSetupCallBack<T>
 }
 
 

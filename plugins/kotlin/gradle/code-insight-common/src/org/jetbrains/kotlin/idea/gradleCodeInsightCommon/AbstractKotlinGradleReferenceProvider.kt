@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.gradleCodeInsightCommon
 
 import com.intellij.model.psi.ImplicitReferenceProvider
+import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -16,6 +17,8 @@ import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
+private const val GRADLE_KTS_EXTENSION = ".gradle.kts"
+
 abstract class AbstractKotlinGradleReferenceProvider: ImplicitReferenceProvider {
     companion object {
         @JvmStatic
@@ -25,6 +28,15 @@ abstract class AbstractKotlinGradleReferenceProvider: ImplicitReferenceProvider 
         @JvmStatic
         protected val KGP_PACKAGE: FqName = FqName("org.jetbrains.kotlin.gradle.plugin")
     }
+
+    final override fun getImplicitReference(element: PsiElement, offsetInElement: Int): PsiSymbolReference? {
+        val file = element.containingFile ?: return null
+        if (!file.name.endsWith(GRADLE_KTS_EXTENSION)) return null
+
+        return getGradleImplicitReference(element, offsetInElement)
+    }
+
+    protected abstract fun getGradleImplicitReference(element: PsiElement, offsetInElement: Int): PsiSymbolReference?
 
     protected fun getTextFromLiteralEntry(element: PsiElement?) : String? {
         return (element as? KtLiteralStringTemplateEntry)

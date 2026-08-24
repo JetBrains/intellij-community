@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "java-guiForms-compiler-tests_test",
@@ -38,6 +39,8 @@ jvm_library(
         "//libraries/jetbrains/annotations",
     ],
 )
+
+content_module_jar(module = ":java-guiForms-compiler")
 
 jvm_library(
     name = "java-guiForms-compiler_test_lib",

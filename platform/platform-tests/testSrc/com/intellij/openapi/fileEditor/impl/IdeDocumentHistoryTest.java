@@ -221,6 +221,17 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
     assertFalse(myHistory.isForwardAvailable());
   }
 
+  public void testNavigationHistorySnapshotsDoNotSuppressCommandHistory() {
+    var outerSnapshot = myHistory.prepareHistorySnapshot();
+    var innerSnapshot = myHistory.prepareHistorySnapshot();
+
+    innerSnapshot.commitIfChanged();
+    makeNavigationChange(new MyState(false, "state2"));
+
+    assertTrue(myHistory.isBackAvailable());
+    outerSnapshot.commitIfChanged();
+  }
+
   private void pushTwoStates() {
     myState1 = new MyState(false, "state1");
     myState2 = new MyState(false, "state2");

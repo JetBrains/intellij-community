@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.ivy` start
 jvm_library(
@@ -14,7 +15,16 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-ivy-ivy"],
-    runtime_deps = ["@lib//:libraries-ivy-ivy"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-ivy-ivy",
+        "//libraries/jsch-agent-proxy",
+    ],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-ivy-ivy"],
+    module = ":ivy",
 )
 
 jvm_library(
@@ -28,7 +38,11 @@ jvm_library(
     module_name = "intellij.libraries.ivy",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-ivy-ivy"],
-    runtime_deps = [":ivy"],
+    runtime_deps = [
+        # do not sort,
+        ":ivy",
+        "//libraries/jsch-agent-proxy:jsch-agent-proxy_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.ivy` end
 

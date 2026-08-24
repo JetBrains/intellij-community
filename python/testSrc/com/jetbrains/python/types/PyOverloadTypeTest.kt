@@ -10,6 +10,7 @@ import com.jetbrains.python.psi.LanguageLevel
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
+
 /**
  * Type and type-checker tests for [overloads](https://docs.python.org/3/library/typing.html#typing.overload):
  * overload resolution and matching, overloaded return types, and `Overload[...]` type assignability.
@@ -320,6 +321,71 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       A[float]().foo()
       #^^^^^^^^^^^^^ WARNING Invalid self argument 'A[float | int]' to method 'A.foo' with type '(self: A[int]) -> None'
       """.trimIndent())
+  }
+
+  @Nested
+  inner class IncompleteAndSurplusArgumentMappings {
+    @Test
+    @TestFor(issues = ["PY-91247"])
+    fun `no type error for mismatched extra argument if there is complete type matching overload`() {
+      test(
+        """
+        from typing import overload
+        @overload
+        def f(x: int, y: int): ...
+        @overload
+        def f(x: str, y: str): ...
+        @overload
+        def f(x: int): ...
+        def f(x, y=None): ...
+        f("foo", "bar")
+        """)
+    }
+
+    @Test
+    @TestFor(issues = ["PY-91247"])
+    fun `extra argument to an overloaded function is not reported by the type checker`() = test(
+      """
+      from typing import overload
+      @overload
+      def f(x: int) -> int: ...
+      @overload
+      def f(x: str) -> str: ...
+      def f(x): ...
+      f(1, 2)
+      #^^^^^^ WARNING No overload of 'f' matches the arguments. Argument types: (Literal[1], Literal[2]). Expected one of: (x: int), (x: str)
+      """,
+    )
+
+    @Test
+    @TestFor(issues = ["PY-91247"])
+    fun `complete overload still reports mismatch when a sibling overload has surplus arguments`() = test(
+      """
+      from typing import overload
+      @overload
+      def f(x: int) -> int: ...
+      @overload
+      def f(x: int, y: int) -> str: ...
+      def f(x, y=0): ...
+      f(1, "s") # WARNING Expected type 'int', got 'Literal["s"]' instead
+      """,
+    )
+
+    @Test
+    @TestFor(issues = ["PY-91247"])
+    fun `no type error when a type matching overload expects more arguments than the call passes`() = test(
+      """
+      from typing import overload
+      @overload
+      def f(x: int): ...
+      @overload
+      def f(x: str, y: str, z: str): ...
+      #   └ WARNING Signature of this @overload-decorated function is not compatible with the implementation
+      def f(x, y=0): ...
+      f("foo", "bar")
+      #^^^^^^^^^^^^^^ WARNING No overload of 'f' matches the arguments. Argument types: (Literal["foo"], Literal["bar"]). Expected one of: (x: int), (x: str, y: str, z: str)
+      """,
+    )
   }
 
   @Nested

@@ -11,7 +11,9 @@ import com.intellij.codeInsight.navigation.GotoImplementationHandler;
 import com.intellij.codeInsight.navigation.ImplementationSearcher;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.platform.ide.navigation.NavigationOptions;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -31,7 +33,17 @@ public class GotoImplementationAction extends BaseCodeInsightAction implements C
 
   @Override
   protected @NotNull CodeInsightActionHandler getHandler() {
-    return new GotoImplementationHandler();
+    return getHandler(DataContext.EMPTY_CONTEXT);
+  }
+
+  @Override
+  protected @NotNull CodeInsightActionHandler getHandler(@NotNull DataContext dataContext) {
+    return new GotoImplementationHandler() {
+      @Override
+      protected @NotNull NavigationOptions navigationOptions() {
+        return NavigationOptions.fromContext(dataContext);
+      }
+    };
   }
 
   @Override

@@ -6,15 +6,14 @@ import com.intellij.psi.util.descendantsOfType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaSingleCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenOptionsForIde
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExperimentalApi
@@ -93,7 +92,7 @@ fun KtSimpleNameExpression.canBeRedundantCompanionReference(): Boolean {
  *
  * For that, it is required to do resolve to ensure that the semantics of the code do not change.
  */
-@OptIn(KtExperimentalApi::class, KaExperimentalApi::class)
+@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
 @ApiStatus.Internal
 context(_: KaSession)
 fun KtSimpleNameExpression.isRedundantCompanionReference(): Boolean {
@@ -101,7 +100,7 @@ fun KtSimpleNameExpression.isRedundantCompanionReference(): Boolean {
 
     val referenceName = this.text
 
-    val symbol = this.mainReference.resolveToSymbol()
+    val symbol = this.resolveSymbol()
     val objectDeclaration =
         if (symbol is KaNamedClassSymbol && symbol.classKind == KaClassKind.COMPANION_OBJECT) {
             // Try to get the PSI for the companion object

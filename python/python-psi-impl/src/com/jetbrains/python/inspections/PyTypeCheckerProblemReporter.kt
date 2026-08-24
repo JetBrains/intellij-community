@@ -19,9 +19,6 @@ import com.jetbrains.python.psi.PyFile
  *    ([PySuppressionUtil]); the broad `# noinspection PyTypeChecker` is still handled afterwards by
  *    the platform via [PyInspectionsSuppressor];
  *  - carries a [PyTypeCheckerSuppressableProblemGroup] so Alt-Enter offers the per-code suppress actions.
- *
- * `PyTypeCheckerInspection` never enables `downgradeHighlightForTypeEngine`; callers already pass the
- * engine-effective highlight type (via `effectiveHighlightType`), so this reporter uses it verbatim.
  */
 internal object PyTypeCheckerProblemReporter {
   /** Reports a message that has a distinct plain description and HTML tooltip. */

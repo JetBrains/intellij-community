@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.json.structureView` start
 jvm_library(
@@ -29,6 +30,8 @@ jvm_library(
         "//platform/util",
     ],
 )
+
+content_module_jar(module = ":structureView")
 
 jvm_library(
     name = "structureView_test_lib",

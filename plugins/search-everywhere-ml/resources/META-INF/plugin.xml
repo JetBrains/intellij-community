@@ -35,6 +35,7 @@
     <module name="intellij.searchEverywhereMl.ranking.vcs"/>
   </content>
   <content>
+    <module name="intellij.libraries.mlapi.core" loading="required"/>
     <module name="intellij.libraries.search.everywhere.find.all.model" loading="required"/>
     <module name="intellij.libraries.search.everywhere.find.ec.model" loading="required"/>
   </content>

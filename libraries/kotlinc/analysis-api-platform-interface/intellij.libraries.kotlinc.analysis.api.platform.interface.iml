@@ -25,19 +25,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinc.analysis-api-platform-interface" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-api-platform-interface-for-ide:2.5.0-dev-4232">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-api-platform-interface-for-ide:2.5.0-dev-5423">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2.5.0-dev-4232/analysis-api-platform-interface-for-ide-2.5.0-dev-4232.jar">
-              <sha256sum>ba7ac74621dd665e1585788e4ed317d22d4b5801bbad43874df04e9c76694077</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2.5.0-dev-5423/analysis-api-platform-interface-for-ide-2.5.0-dev-5423.jar">
+              <sha256sum>858ede43020292c8e7253c9b2f168093d3f48066ec42a4f61f0a36c98a14fce3</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2.5.0-dev-4232/analysis-api-platform-interface-for-ide-2.5.0-dev-4232.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2.5.0-dev-5423/analysis-api-platform-interface-for-ide-2.5.0-dev-5423.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2.5.0-dev-4232/analysis-api-platform-interface-for-ide-2.5.0-dev-4232-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2.5.0-dev-5423/analysis-api-platform-interface-for-ide-2.5.0-dev-5423-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

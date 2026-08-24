@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>wasmjs_test</title>
+</head>
+<body>
+<script type="module">
+  const includes = new URLSearchParams(window.location.search).getAll("include");
+  const filterArguments = includes.length === 0 ? [] : ["--include", includes.join(",")];
+  globalThis.process = { argv: ["NEVER_PROCESSED", "NEVER_PROCESSED", ...filterArguments], env: {}, release: {} };
+  globalThis.addEventListener("error", (event) => {
+    console.error(`wasmjs_test page error: ${event.message}`);
+  });
+  globalThis.addEventListener("unhandledrejection", (event) => {
+    console.error(`wasmjs_test page error: ${event.reason}`);
+  });
+  const awaitedExport = (module, path, member) => {
+    if (!(member in module)) {
+      throw new Error(`awaited import ${path} has no export '${member}'`);
+    }
+    return module[member];
+  };
+  const testStartedAt = new Map();
+  const testNameOf = (line) => {
+    const name = /\sname='((?:[^'|]|\|.)*)'/.exec(line);
+    return name === null ? null : name[1];
+  };
+  const timed = (line) => {
+    if (line.startsWith("##teamcity[testStarted ")) {
+      const name = testNameOf(line);
+      if (name !== null) testStartedAt.set(name, performance.now());
+      return line;
+    }
+    if (!line.startsWith("##teamcity[testFinished ") || line.includes(" duration='") || !line.endsWith("]")) {
+      return line;
+    }
+    const name = testNameOf(line);
+    const startedAt = testStartedAt.get(name);
+    if (startedAt === undefined) return line;
+    testStartedAt.delete(name);
+    return line.slice(0, -1) + " duration='" + Math.round(performance.now() - startedAt) + "']";
+  };
+  ["log", "info", "debug"].forEach((method) => {
+    const original = console[method].bind(console);
+    console[method] = (...args) => original(...(typeof args[0] === "string" ? [timed(args[0]), ...args.slice(1)] : args));
+  });
+  globalThis.__kotlinTestRun = (async () => {
+    return (await import("./my-module-js/my-module.mjs")).startUnitTests?.();
+  })();
+</script>
+</body>
+</html>

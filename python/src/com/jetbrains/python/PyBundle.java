@@ -9,17 +9,16 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class PyBundle extends DynamicBundle {
+public final class PyBundle {
   public static final @NonNls String BUNDLE = "messages.PyBundle";
-  public static final PyBundle INSTANCE = new PyBundle();
-
-  private PyBundle() { super(BUNDLE); }
+  public static final DynamicBundle INSTANCE = new DynamicBundle(PyBundle.class, BUNDLE);
 
   public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
-  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
+                                                              Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 }

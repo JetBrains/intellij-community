@@ -86,6 +86,19 @@ Similar to createTemporaryFile, but creates a directory instead.
 val buildDir = EelProjectUtils.createTemporaryDirectory(project, "build-", "-temp")
 ```
 
+#### getCommonDataFolder
+
+```kotlin
+fun getCommonDataFolder(project: Project): Path
+```
+
+Gets the OS-specific directory where data shared between IntelliJ-based IDEs is stored in the selected execution environment.
+
+```kotlin
+val commonDataFolder = EelSystemFolderUtils.getCommonDataFolder(project)
+val machineIdFile = commonDataFolder.resolve(".rdMachineId")
+```
+
 #### getSystemFolder
 
 ```kotlin

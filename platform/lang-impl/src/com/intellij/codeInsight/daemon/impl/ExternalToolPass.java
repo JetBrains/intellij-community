@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.progress.Cancellation;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -309,7 +308,9 @@ final class ExternalToolPass extends ProgressableTextEditorHighlightingPass impl
   }
 
   private static void processError(@NotNull Throwable t, @NotNull ExternalAnnotator<?,?> annotator, @NotNull PsiFile root) {
-    if (t instanceof ProcessCanceledException pce) throw pce;
+    if (Logger.shouldRethrow(t)) {
+      throw (RuntimeException)t;
+    }
 
     VirtualFile file = root.getVirtualFile();
     String path = file != null ? file.getPath() : root.getName();

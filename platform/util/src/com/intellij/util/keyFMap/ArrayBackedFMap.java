@@ -3,17 +3,19 @@ package com.intellij.util.keyFMap;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-final class ArrayBackedFMap implements KeyFMap {
-  static final int ARRAY_THRESHOLD = 8;
+@ApiStatus.Internal
+public class ArrayBackedFMap implements KeyFMap {
+  public static final int ARRAY_THRESHOLD = 8;
   // Invariant: keys are always sorted, never mutated inplace
-  private final int[] keys;
-  private final @NotNull Object @NotNull [] values; //never mutated inplace
+  protected final int[] keys;
+  protected final @NotNull Object @NotNull [] values; //never mutated inplace
 
-  ArrayBackedFMap(int @NotNull [] keys, @NotNull Object @NotNull [] values) {
+  protected ArrayBackedFMap(int @NotNull [] keys, @NotNull Object @NotNull [] values) {
     this.keys = keys;
     this.values = values;
   }
@@ -31,7 +33,7 @@ final class ArrayBackedFMap implements KeyFMap {
       // Can reuse keys as it is never mutated
       return new ArrayBackedFMap(keys, newValues);
     }
-    if (size() < ARRAY_THRESHOLD) {
+    if (keys.length < ARRAY_THRESHOLD) {
       int[] newKeys = ArrayUtil.insert(keys, -keyPos - 1, keyCode);
       Object[] newValues = ArrayUtil.insert(values, -keyPos - 1, value);
       return new ArrayBackedFMap(newKeys, newValues);
@@ -57,15 +59,15 @@ final class ArrayBackedFMap implements KeyFMap {
   public @NotNull KeyFMap minus(@NotNull Key<?> key) {
     int i = indexOf(key.hashCode());
     if (i >= 0) {
-      if (size() == 3) {
+      if (keys.length == 3) {
         int otherI1 = (2 - i) / 2;
         int otherI2 = 3 - (i + 2) / 2;
         Key<Object> key1 = Key.getKeyByIndex(keys[otherI1]);
         Key<Object> key2 = Key.getKeyByIndex(keys[otherI2]);
         if (key1 == null && key2 == null) return EMPTY_MAP;
-        if (key1 == null) return new OneElementFMap<>(key2, values[otherI2]);
-        if (key2 == null) return new OneElementFMap<>(key1, values[otherI1]);
-        return new PairElementsFMap<>(key1, values[otherI1], key2, values[otherI2]);
+        if (key1 == null) return new OneElementFMap(key2, values[otherI2]);
+        if (key2 == null) return new OneElementFMap(key1, values[otherI1]);
+        return new PairElementsFMap(key1, values[otherI1], key2, values[otherI2]);
       }
       int[] newKeys = ArrayUtil.remove(keys, i);
       Object[] newValues = ArrayUtil.remove(values, i, ArrayUtil.OBJECT_ARRAY_FACTORY);
@@ -112,7 +114,7 @@ final class ArrayBackedFMap implements KeyFMap {
     return getKeysByIndices(keys);
   }
 
-  static @NotNull Key<?> @NotNull [] getKeysByIndices(int @NotNull [] indexes) {
+  public static @NotNull Key<?> @NotNull [] getKeysByIndices(int @NotNull [] indexes) {
     Key<?>[] result = new Key[indexes.length];
 
     int o = 0;
@@ -139,10 +141,10 @@ final class ArrayBackedFMap implements KeyFMap {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ArrayBackedFMap)) return false;
+    if (o == null || o.getClass() != ArrayBackedFMap.class) return false;
 
     ArrayBackedFMap map = (ArrayBackedFMap)o;
-    if (map.size() != size()) return false;
+    if (map.keys.length != keys.length) return false;
 
     int length = keys.length;
     for (int i = 0; i < length; i++) {
@@ -154,10 +156,10 @@ final class ArrayBackedFMap implements KeyFMap {
   @Override
   public boolean equalsByReference(@NotNull KeyFMap o) {
     if (this == o) return true;
-    if (!(o instanceof ArrayBackedFMap)) return false;
+    if (o.getClass() != ArrayBackedFMap.class) return false;
 
     ArrayBackedFMap map = (ArrayBackedFMap)o;
-    if (map.size() != size()) return false;
+    if (map.keys.length != keys.length) return false;
 
     int length = keys.length;
     for (int i = 0; i < length; i++) {

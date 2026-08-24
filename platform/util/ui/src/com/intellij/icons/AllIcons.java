@@ -1521,12 +1521,6 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon ToolWindowVariableView = load("expui/toolwindows/toolWindowVariableView.svg", "toolwindows/toolWindowVariableView.svg", 684149723, 2);
     /** 13x13 */ public static final @NotNull Icon WarningEvents = load("toolwindows/warningEvents.svg", 249706562, 2);
     /** 13x13 */ public static final @NotNull Icon WebToolWindow = load("expui/toolwindows/web.svg", "toolwindows/webToolWindow.svg", -1935851554, 2);
-
-    /** @deprecated to be removed without replacement */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    /** 16x16 */ public static final @NotNull Icon MeetNewUi = load("expui/toolwindows/meetNewUi.svg", -215928280, 2);
   }
 
   public static final class TransferSettings {
@@ -1656,6 +1650,7 @@ public class AllIcons {
       /** 16x16 */ public static final @NotNull Icon Nwjs = load("xml/browsers/nwjs.svg", -953920925, 0);
       /** 16x16 */ public static final @NotNull Icon Opera = load("xml/browsers/opera.svg", -120244371, 0);
       /** 16x16 */ public static final @NotNull Icon Safari = load("xml/browsers/safari.svg", -1238351338, 0);
+      /** 16x16 */ public static final @NotNull Icon Vivaldi = load("xml/browsers/vivaldi.svg", 1640214623, 0);
       /** 16x16 */ public static final @NotNull Icon Yandex = load("xml/browsers/yandex.svg", 1087269231, 0);
     }
 

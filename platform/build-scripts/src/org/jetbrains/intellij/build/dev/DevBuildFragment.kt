@@ -4,23 +4,41 @@ package org.jetbrains.intellij.build.dev
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.ModuleItem
 
+/** Stable key of one plugin content-module jar handed from JarPackager to a Bazel packing action. */
+@ApiStatus.Internal
+data class PrepackedPluginContentKey(
+  @JvmField val pluginMainModule: String,
+  @JvmField val contentModule: String,
+)
+
+/** The product-independent jar relation. Placement is validated against the product layout before it is used. */
+@ApiStatus.Internal
+data class PrepackedPluginContentJar(
+  @JvmField val pluginMainModule: String,
+  @JvmField val contentModule: String,
+  /** Path below the plugin's `lib/` directory. */
+  @JvmField val relativeOutputFile: String,
+) {
+  val key: PrepackedPluginContentKey
+    get() = PrepackedPluginContentKey(pluginMainModule = pluginMainModule, contentModule = contentModule)
+}
+
 /**
  * Which independently cacheable slice of a dev distribution one assembly produces.
  *
  * A complete distribution is [COMPLETE] - one assembly, everything in it. Anything else is a fragment: a caller
  * assembles several of them, each cached and invalidated on its own, and composes the results with
- * `composeDevBuildComponents`. The fragments of one distribution must partition it exactly, so every selector here
- * is defined as a predicate over what the layout produced rather than as a list of files someone maintains, and what
- * nobody claimed is assembled by a complement fragment instead of being silently dropped:
- * [PlatformFragmentSelector.ContentModules] takes every `lib/` jar [PlatformFragmentSelector.Core] does not, and
- * [PluginFragmentSelector.Remaining] every bundled plugin the named plugin fragments did not claim.
+ * `composeDevBuildComponents`. The producers of one distribution must partition it exactly, so what nobody claimed is
+ * assembled by a complement instead of being silently dropped: [PlatformJarSelector.Mode.EXCLUDE] takes every
+ * `lib/` jar the per-module packing actions do not pack, and [PluginFragmentSelector.Remaining] every bundled plugin
+ * the named plugin fragments did not claim.
  */
 @ApiStatus.Internal
 data class DevBuildFragment(
-  /** Identifies the fragment in its component manifest and in diagnostics; `platform_core`, `platform_content_modules`, `plugins_air`. */
+  /** Identifies the fragment in its component manifest and in diagnostics; `platform_lib`, `platform_resources`, `plugins_air`. */
   @JvmField val name: String,
   /** The `lib/` jars this fragment owns, or `null` if it owns none. */
-  @JvmField val platform: PlatformFragmentSelector?,
+  @JvmField val platform: PlatformJarSelector?,
   /** Whether this fragment owns `bin`, the product metadata, the launchers and the copied product files. */
   @JvmField val platformResources: Boolean,
   /** The bundled plugin directories this fragment owns, or `null` if it owns none. */
@@ -31,7 +49,7 @@ data class DevBuildFragment(
     @JvmField
     val COMPLETE: DevBuildFragment = DevBuildFragment(
       name = "all",
-      platform = PlatformFragmentSelector.All,
+      platform = PlatformJarSelector.ALL,
       platformResources = true,
       plugins = PluginFragmentSelector.All,
     )
@@ -45,7 +63,7 @@ data class DevBuildFragment(
    * fragment that genuinely owns everything is not treated as a piece of something larger.
    */
   val isComplete: Boolean
-    get() = platform == PlatformFragmentSelector.All && platformResources && plugins == PluginFragmentSelector.All
+    get() = platform?.isEverything == true && platformResources && plugins == PluginFragmentSelector.All
 
   internal val ownsPlatformJars: Boolean
     get() = platform != null
@@ -56,37 +74,83 @@ data class DevBuildFragment(
   /**
    * Whether this fragment packs the jars that the inlined product descriptor ends up in.
    *
-   * Those are the flat core jars: the application-info module is not a content module, so the jar holding it holds
-   * none, and falls to [PlatformFragmentSelector.Core]. A fragment that owns only content-module jars has no use for
-   * the inlined descriptors and does not resolve them - see
+   * A fragment that owns `lib/` by exclusion holds the application-info module - that module is not a content module,
+   * so no other producer packs its jar - and needs the descriptors inlined into it. A fragment that owns only the jars
+   * another producer packs holds none of them and does not resolve them, see
    * [org.jetbrains.intellij.build.BuildOptions.embedProductContentModuleDescriptors]. `layoutPlatform` re-checks this
-   * conclusion against the layout it actually got, so a product that puts its application-info module elsewhere fails
-   * instead of shipping a descriptor with nothing inlined into it.
+   * conclusion against the layout it actually got, so a product that puts its application-info module in a jar this
+   * fragment does not own fails instead of shipping a descriptor with nothing inlined into it.
    */
   internal val ownsProductDescriptorJars: Boolean
-    get() = platform == PlatformFragmentSelector.All || platform == PlatformFragmentSelector.Core
+    get() = platform?.mode == PlatformJarSelector.Mode.EXCLUDE
 
   override fun toString(): String = name
 }
 
 /**
- * Which `lib/` jars a fragment owns.
+ * Which `lib/` jars a fragment owns: a set of jar names, and how to read it.
  *
- * The split follows the plugin model: `processAndGetProductPluginContentModules` gives every content module of the
- * product's core plugin a jar of its own, so those jars are separable, while everything else - the flat core jars that
- * merge many modules, and project libraries not yet converted to content modules - has to stay together. The
- * content-module jar is therefore the finest unit the layout offers, and [Core] and [ContentModules] are its two sides.
+ * Ownership is decided per **jar**, not per module: [org.jetbrains.intellij.build.impl.PlatformLayout.withProductModuleOutputFile]
+ * can rename a content module into another jar, so the jar as a whole belongs to one owner. Packing also creates `lib/`
+ * jars the layout never named - for a library that has to stay in its own jar
+ * (`org.jetbrains.intellij.build.impl.isSeparateLibraryJar`) or for a project library - and those hold no module at all.
+ * Both facts are why the selector is a name set with a default rather than a classification of what a jar contains: a
+ * jar nobody named is simply not excluded, so it has an owner without anyone having to decide what it holds.
  */
 @ApiStatus.Internal
-sealed interface PlatformFragmentSelector {
-  /** Every `lib/` jar. */
-  data object All : PlatformFragmentSelector
+data class PlatformJarSelector(
+  /** The `lib/`-relative jar names this selector names - `ModuleItem.relativeOutputFile`. */
+  @JvmField val jars: Set<String>,
+  @JvmField val mode: Mode,
+) {
+  enum class Mode {
+    /**
+     * Every `lib/` jar except [jars].
+     *
+     * [jars] are jar names another producer packs and the distribution composes in as a component of its own:
+     * `jvm_library` packs a content module's jar from the jars it merges alone, declaring no project model, so those
+     * jars survive a model edit that re-keys every fragment. A fragment must not pack them too - the composer fails on
+     * a path two components both provide - and must not resolve their modules either, since a declared module output is
+     * what makes a source edit re-run this action.
+     *
+     * The layout still knows those jars exist, which is what keeps the core classpath complete: see
+     * `contentModuleJarCoreClasspathEntries`.
+     */
+    EXCLUDE,
 
-  /** The jars that hold no content module: the flat platform core, and the project libraries packed beside it. */
-  data object Core : PlatformFragmentSelector
+    /**
+     * Only [jars], and nothing else.
+     *
+     * What the reference target of `./build/dev-dist.cmd jars` assembles: the same jars the other producer
+     * packs, packed the way `JarPackager` packs them, so the two can be compared byte for byte. It is composed into no
+     * distribution.
+     */
+    ONLY,
+  }
 
-  /** Every jar that holds a content module - the complement of [Core]. */
-  data object ContentModules : PlatformFragmentSelector
+  init {
+    require(mode == Mode.EXCLUDE || jars.isNotEmpty()) {
+      "A selector that owns only the jars it names must name at least one"
+    }
+  }
+
+  /** Whether this selector owns every `lib/` jar, which is what a complete distribution needs. */
+  val isEverything: Boolean
+    get() = mode == Mode.EXCLUDE && jars.isEmpty()
+
+  /** Whether the `lib/` jar at [relativeOutputFile] belongs to this fragment. */
+  fun accepts(relativeOutputFile: String): Boolean {
+    return when (mode) {
+      Mode.EXCLUDE -> !jars.contains(relativeOutputFile)
+      Mode.ONLY -> jars.contains(relativeOutputFile)
+    }
+  }
+
+  companion object {
+    /** Every `lib/` jar. */
+    @JvmField
+    val ALL: PlatformJarSelector = PlatformJarSelector(jars = emptySet(), mode = Mode.EXCLUDE)
+  }
 }
 
 /** Which bundled plugin directories a fragment owns. */
@@ -108,74 +172,18 @@ sealed interface PluginFragmentSelector {
 }
 
 /**
- * Who owns each `lib/` jar, decided once from the whole platform layout.
- *
- * Both halves of the split read this one answer: the layout filter, which decides what a fragment resolves and packs,
- * and the asset filter, which decides what it writes. Deciding twice - once over the layout, once over the jars packing
- * produced - is how a jar could pass one and fail the other and end up in no fragment at all: packing creates `lib/`
- * jars the layout never named, for a library that has to stay in its own jar
- * (`org.jetbrains.intellij.build.impl.isSeparateLibraryJar`) or for a project library, and those hold no module for the
- * asset filter to recognize. A jar this does not know is [JarOwnership.PlatformCore], which is what `Core` means: the
- * complement of what the content-module fragments claimed.
- */
-internal class PlatformJarOwnership private constructor(private val byJar: Map<String, JarOwnership>) {
-  fun of(relativeOutputFile: String): JarOwnership = byJar[relativeOutputFile] ?: JarOwnership.PlatformCore
-
-  companion object {
-    fun of(includedModules: Collection<ModuleItem>): PlatformJarOwnership {
-      val byJar = HashMap<String, JarOwnership>()
-      for ((relativeOutputFile, modules) in includedModules.groupBy(ModuleItem::relativeOutputFile)) {
-        byJar[relativeOutputFile] = jarOwnership(modules)
-      }
-      return PlatformJarOwnership(byJar)
-    }
-  }
-}
-
-/**
- * What owns one `lib/` jar: [JarOwnership.ContentModule] when it holds a content module, [JarOwnership.PlatformCore]
- * when it holds none.
- *
- * A jar is the unit, not a module: [org.jetbrains.intellij.build.impl.PlatformLayout.withProductModuleOutputFile] lets a
- * content module be renamed into another jar, so ownership has to be decided for the jar as a whole. One content module
- * is enough - a jar holding several of them, as `includeDependencies` on an embedded module produces, is still one jar
- * and still belongs to the content-module fragment.
- */
-private fun jarOwnership(includedModules: Collection<ModuleItem>): JarOwnership {
-  return if (includedModules.any(ModuleItem::isProductModule)) JarOwnership.ContentModule else JarOwnership.PlatformCore
-}
-
-/**
- * The modules of [includedModules] whose jars this fragment owns, according to [ownership].
+ * The modules of [includedModules] whose jars this fragment owns.
  *
  * Filtering the layout, and not only the jars it produced, is what makes the split pay: a module the fragment does not
  * pack is never resolved to its Bazel output, so it does not end up in the action's used-input set and cannot invalidate
  * this fragment. The jar stays the unit - filtering module by module would split one jar between two fragments, and the
  * composer would then find both of them providing it.
  */
-internal fun PlatformFragmentSelector.selectModules(
-  includedModules: Collection<ModuleItem>,
-  ownership: PlatformJarOwnership,
-): Collection<ModuleItem> {
-  if (this == PlatformFragmentSelector.All) {
+internal fun PlatformJarSelector.selectModules(includedModules: Collection<ModuleItem>): Collection<ModuleItem> {
+  if (isEverything) {
     return includedModules
   }
-  return includedModules.filter { accepts(ownership, it.relativeOutputFile) }
-}
-
-internal sealed interface JarOwnership {
-  data object PlatformCore : JarOwnership
-
-  data object ContentModule : JarOwnership
-}
-
-/** Whether the `lib/` jar at [relativeOutputFile] belongs to this fragment. */
-internal fun PlatformFragmentSelector.accepts(ownership: PlatformJarOwnership, relativeOutputFile: String): Boolean {
-  return when (this) {
-    PlatformFragmentSelector.All -> true
-    PlatformFragmentSelector.Core -> ownership.of(relativeOutputFile) == JarOwnership.PlatformCore
-    PlatformFragmentSelector.ContentModules -> ownership.of(relativeOutputFile) != JarOwnership.PlatformCore
-  }
+  return includedModules.filter { accepts(it.relativeOutputFile) }
 }
 
 /** Whether the plugin with [mainModule] belongs to this fragment. */

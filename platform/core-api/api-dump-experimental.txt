@@ -275,6 +275,10 @@ a:com.intellij.openapi.progress.Task
 - com.intellij.openapi.progress.Progressive
 - com.intellij.openapi.progress.TaskInfo
 - *:getId():java.lang.Object
+f:com.intellij.openapi.progress.util.ProgressIndicatorUtilsCore
+- *sf:awaitWithCheckCanceled(kotlinx.coroutines.Deferred):java.lang.Object
+- *sf:runWithCheckCanceled(kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2):java.lang.Object
+- *bs:runWithCheckCanceled$default(kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,I,java.lang.Object):java.lang.Object
 f:com.intellij.openapi.project.DumbKt
 - *sf:waitForSmartMode(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.openapi.project.DumbModeListenerBackgroundable

@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
-import com.intellij.util.ReflectionUtil
 import com.intellij.vcs.git.actions.GitSingleRefActions
 import com.intellij.vcs.git.actions.branch.GitBranchActionToBeWrapped
 import com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil
@@ -22,8 +21,6 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
 import java.util.function.Supplier
-import kotlin.reflect.KClass
-import kotlin.reflect.safeCast
 
 abstract class GitSingleRefAction<T : GitReference>(
   dynamicText: Supplier<@NlsActions.ActionText String>,
@@ -88,28 +85,20 @@ abstract class GitSingleRefAction<T : GitReference>(
     }
 
     /**
-     * @return true if there is at least one repository having a working tree (excluding the repository itself) with the given reference checked out.
+     * @return true if [ref] is checked out in a linked working tree of any of [repositories], excluding the
+     * worktree the caller is currently in.
      */
-    fun isCurrentRefInAnyOtherWorkingTree(ref: GitReference, repositories: List<GitRepository>): Boolean {
-      // Only local branches are checked for working trees.
-      // Tags are immutable and therefore may be easily used in multiple working trees simultaneously.
-      return if (!GitWorkingTreesUtil.isWorkingTreesFeatureEnabled() || ref !is GitLocalBranch) false
-      else repositories.any { repository -> getWorkingTreeWithRef(ref, repository, true) != null }
-    }
+    fun isCurrentRefInAnyOtherWorkingTree(ref: GitReference, repositories: List<GitRepository>): Boolean =
+      findCheckedOutWorkingTree(ref, repositories, skipCurrentWorkingTree = true) != null
 
     /**
-     * See [com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil.getWorkingTreeWithRef]
+     * Finds the linked working tree that currently has [reference] checked out across [repositories], or `null`.
+     * See [com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil.findCheckedOutWorkingTree].
      */
-    fun getWorkingTreeWithRef(reference: GitReference, repository: GitRepository, skipCurrentWorkingTree: Boolean): GitWorkingTree? {
-      return GitWorkingTreesUtil.getWorkingTreeWithRef(reference, repository, skipCurrentWorkingTree) {
-        repository.workingTreeHolder.getWorkingTrees()
+    internal fun findCheckedOutWorkingTree(reference: GitReference, repositories: List<GitRepository>, skipCurrentWorkingTree: Boolean): GitWorkingTree? =
+      repositories.firstNotNullOfOrNull {
+        GitWorkingTreesUtil.findCheckedOutWorkingTree(reference, it.workingTreeHolder.getWorkingTrees(), skipCurrentWorkingTree)
       }
-    }
-
-    internal fun getWorkingTreeWithRef(reference: GitReference, repositories: List<GitRepository>, skipCurrentWorkingTree: Boolean): GitWorkingTree? {
-      val repository = repositories.singleOrNull() ?: return null
-      return getWorkingTreeWithRef(reference, repository, skipCurrentWorkingTree)
-    }
   }
 }
 

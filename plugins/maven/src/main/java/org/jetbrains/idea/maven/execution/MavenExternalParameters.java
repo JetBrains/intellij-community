@@ -437,7 +437,7 @@ public final class MavenExternalParameters {
       parametersList.add(parameters.getPomFileName());
     }
 
-    addOption(parametersList, "P", encodeProfiles(parameters.getProfilesMap()));
+    addOption(parametersList, "P", encodeProfiles(parameters.getProfilesMap(), MavenUtil.getMavenVersion(mavenHome)));
   }
 
   private static void addOption(ParametersList cmdList, @NonNls String key, @NonNls String value) {
@@ -580,6 +580,19 @@ public final class MavenExternalParameters {
 
   @ApiStatus.Internal
   public static String encodeProfiles(Map<String, Boolean> profiles) {
+    return encodeProfiles(profiles, null);
+  }
+
+  /**
+   * Maven 4 fails the build when {@code -P} names a profile that is not defined in any of the built projects, which happens whenever
+   * profiles are enabled in the whole reactor but the build is started on a submodule (IDEA-378318). Maven 4 marks a profile as optional
+   * with a {@code ?} prefix, turning that error into a warning; Maven 3 has no such syntax and does not fail either way.
+   *
+   * @param mavenVersion version of the Maven distribution the command line is built for, {@code null} if unknown
+   */
+  @ApiStatus.Internal
+  public static String encodeProfiles(Map<String, Boolean> profiles, @Nullable String mavenVersion) {
+    String optionalPrefix = mavenVersion != null && mavenVersion.startsWith("4.") ? "?" : "";
     StringBuilder stringBuilder = new StringBuilder();
     for (Map.Entry<String, Boolean> entry : profiles.entrySet()) {
       if (!stringBuilder.isEmpty()) {
@@ -588,6 +601,7 @@ public final class MavenExternalParameters {
       if (!entry.getValue()) {
         stringBuilder.append("!");
       }
+      stringBuilder.append(optionalPrefix);
       stringBuilder.append(entry.getKey());
     }
     return stringBuilder.toString();

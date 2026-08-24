@@ -9,6 +9,7 @@ import com.intellij.ide.starter.ide.onRemDevContext
 import com.intellij.ide.starter.project.NoProject
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
+import com.intellij.ide.starter.utils.catchAll
 import com.intellij.lambda.testFramework.testApi.waitForProject
 import com.intellij.lambda.testFramework.utils.LambdaTestPluginHolder.LoadingInSplitMode.All
 import com.intellij.lambda.testFramework.utils.LambdaTestPluginHolder.LoadingInSplitMode.OnlyFrontend
@@ -64,7 +65,17 @@ internal fun IDETestContext.runIdeWithLambda(
                                                     expectedExitCode,
                                                     collectNativeThreads = collectNativeThreads,
                                                     configure = configure)
-  monolithRdSession.awaitLambdaSessionReady()
+  // Killed rather than leaked when the session never answers. Nothing else holds this run — the caller only
+  // ever sees the `IdeWithLambda` below — so an IDE left behind here is a process no one can address and no one
+  // can stop, which then contends with the relaunch that follows for the remote driver's fixed ports. The kill
+  // is forced because an IDE whose lambda channel never came up is not reliably able to quit gracefully.
+  try {
+    monolithRdSession.awaitLambdaSessionReady()
+  }
+  catch (notReady: Throwable) {
+    catchAll("Killing the IDE whose lambda session never became ready") { backgroundRun.forceKill() }
+    throw notReady
+  }
   return IdeWithLambda(backgroundRun, monolithRdSession, null)
 }
 
@@ -94,8 +105,15 @@ internal fun IDERemDevTestContext.runIdeWithLambda(
                                                     collectNativeThreads = collectNativeThreads,
                                                     pauseOnIndexing = null,
                                                     configure = configure)
-  listOf(backendRdSession, frontendRdSession)
-    .forEach { it.awaitLambdaSessionReady(if (this.frontendIDEContext.ide.vmOptions.hasHeadlessMode()) 15.seconds else 30.seconds) }
+  // Killed rather than leaked, for the reason the monolith launch above states.
+  try {
+    listOf(backendRdSession, frontendRdSession)
+      .forEach { it.awaitLambdaSessionReady(if (this.frontendIDEContext.ide.vmOptions.hasHeadlessMode()) 15.seconds else 30.seconds) }
+  }
+  catch (notReady: Throwable) {
+    catchAll("Killing the IDEs whose lambda sessions never became ready") { backgroundRun.forceKill() }
+    throw notReady
+  }
   return IdeWithLambda(backgroundRun,
                        rdSession = frontendRdSession,
                        backendIdeWithLambda = if (backgroundRun is RemoteDevBackgroundRun)

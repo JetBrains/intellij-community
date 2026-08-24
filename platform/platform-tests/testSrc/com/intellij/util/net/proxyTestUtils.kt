@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net
 
 import com.intellij.credentialStore.Credentials
@@ -27,7 +27,7 @@ internal fun <T> withProxySettingsOverride(proxySettingsOverrideProvider: ProxyS
 internal fun <T> withProxyConfiguration(proxyConf: ProxyConfiguration, body: () -> T): T {
   val previous = ProxySettings.getInstance().getProxyConfiguration()
   ProxySettings.getInstance().setProxyConfiguration(proxyConf)
-  assertEquals(ProxySettings.getInstance().getProxyConfiguration(), proxyConf)
+  assertEquals(proxyConf, ProxySettings.getInstance().getProxyConfiguration())
   try {
     return body()
   }
@@ -41,10 +41,11 @@ internal fun <T> withKnownProxyCredentials(host: String, port: Int, credentials:
   val previousCreds = store.getCredentials(host, port)
   val previousRemembered = store.areCredentialsRemembered(host, port)
   store.setCredentials(host, port, credentials, false)
-  assertEquals(store.getCredentials(host, port), credentials)
+  assertEquals(credentials, store.getCredentials(host, port))
   try {
     return body()
-  } finally {
+  }
+  finally {
     store.setCredentials(host, port, previousCreds, previousRemembered)
   }
 }

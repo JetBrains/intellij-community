@@ -16,6 +16,7 @@ import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.awaitPendingNavigation
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -922,4 +923,5 @@ internal fun selectItem(fixture: JavaCodeInsightTestFixture,
     }
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    awaitPendingNavigation(fixture.project)
 }

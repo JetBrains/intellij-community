@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor
 
 import com.intellij.ide.actions.Switcher
@@ -7,7 +7,9 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsState
 import com.intellij.mock.Mock
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -48,13 +50,19 @@ import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.executeSomeCoroutineTasksAndDispatchAllInvocationEvents
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.io.write
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.jetbrains.jps.model.serialization.PathMacroUtil
@@ -78,7 +86,7 @@ class FileEditorManagerTest {
 
   private val projectFixture = projectFixture(
     openProjectTask = OpenProjectTask {
-      beforeInit = { it.putUserData(FileEditorManagerKeys.ALLOW_IN_LIGHT_PROJECT, true) }
+      beforeInitTasks += { it.putUserData(FileEditorManagerKeys.ALLOW_IN_LIGHT_PROJECT, true) }
     },
     openAfterCreation = true,
   )
@@ -549,6 +557,161 @@ class FileEditorManagerTest {
         .withRequestFocus(true),
     )
     exManager.closeFile(file, secondaryWindow)
+  }
+
+  @Test
+  fun testCloseFileWhileEditorIsBeingCreated(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    val file = getSourceFile("1.txt")
+    val creationStarted = CompletableDeferred<Unit>()
+    val proceedWithCreation = CompletableDeferred<Unit>()
+    val createdEditor = CompletableDeferred<Editor>()
+
+    registerProvider(object : AsyncFileEditorProvider {
+      override fun accept(project: Project, fileToAccept: VirtualFile): Boolean = fileToAccept == file
+
+      override fun acceptRequiresReadAction(): Boolean = false
+
+      override fun getEditorTypeId(): String = "close-while-loading"
+
+      override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
+
+      override fun createEditor(project: Project, file: VirtualFile): FileEditor = throw UnsupportedOperationException()
+
+      override suspend fun createFileEditor(
+        project: Project,
+        file: VirtualFile,
+        document: Document?,
+        editorCoroutineScope: CoroutineScope,
+      ): FileEditor {
+        // NonCancellable makes the race deterministic: the editor creation finishes after the file is already closed
+        return withContext(NonCancellable) {
+          creationStarted.complete(Unit)
+          proceedWithCreation.await()
+          withContext(Dispatchers.EDT) {
+            val textEditor = MyTextEditor(file, checkNotNull(document), "close-while-loading", 0)
+            createdEditor.complete(textEditor.editor)
+            textEditor
+          }
+        }
+      }
+    })
+
+    // the window must exist before the non-waiting open below
+    openSourceFile("2.txt", focusEditor = false)
+    val window = currentWindow()
+    manager.openFileImpl2(window, file, FileEditorOpenOptions(waitForCompositeOpen = false))
+    creationStarted.await()
+    manager.closeFile(file, window)
+    proceedWithCreation.complete(Unit)
+
+    val editor = createdEditor.await()
+    waitUntil("editor created after the file was closed must be released") {
+      !EditorFactory.getInstance().allEditors.contains(editor)
+    }
+  }
+
+  /**
+   * The real text editor path: [TextEditorWithPreviewProvider] creates the main editor first and only then suspends to build the
+   * preview, so a close landing in between used to abandon a fully created `EditorImpl`.
+   */
+  @Test
+  fun testCloseFileWhileSplitPreviewEditorIsBeingCreated(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    val file = getSourceFile("1.txt")
+    val previewCreationStarted = CompletableDeferred<Unit>()
+
+    val previewProvider = object : AsyncFileEditorProvider {
+      override fun accept(project: Project, fileToAccept: VirtualFile): Boolean = fileToAccept == file
+
+      override fun acceptRequiresReadAction(): Boolean = false
+
+      override fun getEditorTypeId(): String = "split-preview-never-finishes"
+
+      override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.NONE
+
+      override fun createEditor(project: Project, file: VirtualFile): FileEditor = throw UnsupportedOperationException()
+
+      override suspend fun createFileEditor(
+        project: Project,
+        file: VirtualFile,
+        document: Document?,
+        editorCoroutineScope: CoroutineScope,
+      ): FileEditor {
+        previewCreationStarted.complete(Unit)
+        // the main editor already exists at this point, so cancelling here is exactly the window that used to leak it
+        awaitCancellation()
+      }
+    }
+    registerProvider(object : TextEditorWithPreviewProvider(previewProvider) {})
+
+    // the window must exist before the non-waiting open below
+    openSourceFile("2.txt", focusEditor = false)
+    val window = currentWindow()
+    manager.openFileImpl2(window, file, FileEditorOpenOptions(waitForCompositeOpen = false))
+    previewCreationStarted.await()
+
+    val document = readAction { checkNotNull(FileDocumentManager.getInstance().getDocument(file)) }
+    assertThat(EditorFactory.getInstance().allEditors.filter { it.document == document }).isNotEmpty()
+
+    manager.closeFile(file, window)
+    waitUntil("the main editor of a cancelled split open must be released") {
+      EditorFactory.getInstance().allEditors.none { it.document == document }
+    }
+  }
+
+  /**
+   * The non-[AsyncFileEditorProvider] branch of the composite open: the editor is created in one EDT block, and a cancellation
+   * arriving right after that block used to discard it.
+   */
+  @Test
+  fun testCloseFileWhileNonAsyncEditorIsBeingCreated(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    val file = getSourceFile("1.txt")
+    val blockingEditorCreated = CompletableDeferred<Editor>()
+
+    registerProvider(object : FileEditorProvider, DumbAware {
+      override fun accept(project: Project, fileToAccept: VirtualFile): Boolean = fileToAccept == file
+
+      override fun acceptRequiresReadAction(): Boolean = false
+
+      override fun getEditorTypeId(): String = "non-async-close-while-loading"
+
+      override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
+
+      override fun createEditor(project: Project, file: VirtualFile): FileEditor {
+        val document = checkNotNull(FileDocumentManager.getInstance().getDocument(file))
+        return MyTextEditor(file, document, "non-async-close-while-loading", 0)
+          .also { blockingEditorCreated.complete(it.editor) }
+      }
+    })
+    // a sibling that never finishes keeps the composite open cancellable after the editor above already exists
+    registerProvider(object : AsyncFileEditorProvider {
+      override fun accept(project: Project, fileToAccept: VirtualFile): Boolean = fileToAccept == file
+
+      override fun acceptRequiresReadAction(): Boolean = false
+
+      override fun getEditorTypeId(): String = "sibling-never-finishes"
+
+      override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.NONE
+
+      override fun createEditor(project: Project, file: VirtualFile): FileEditor = throw UnsupportedOperationException()
+
+      override suspend fun createFileEditor(
+        project: Project,
+        file: VirtualFile,
+        document: Document?,
+        editorCoroutineScope: CoroutineScope,
+      ): FileEditor = awaitCancellation()
+    })
+
+    // the window must exist before the non-waiting open below
+    openSourceFile("2.txt", focusEditor = false)
+    val window = currentWindow()
+    manager.openFileImpl2(window, file, FileEditorOpenOptions(waitForCompositeOpen = false))
+
+    val editor = blockingEditorCreated.await()
+    manager.closeFile(file, window)
+    waitUntil("editor of a cancelled open must be released even for a non-async provider") {
+      !EditorFactory.getInstance().allEditors.contains(editor)
+    }
   }
 
   @Test

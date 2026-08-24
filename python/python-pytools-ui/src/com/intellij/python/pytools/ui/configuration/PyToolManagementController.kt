@@ -284,11 +284,8 @@ internal class PyToolManagementController(
         return
       }
     }
-    // Don't persist the installed path; drop the detection cache so the next lookup finds uv (and the
-    // uvx it ships) immediately.
-    val eelDescriptor = project.getEelDescriptor()
-    PyExecutableCache.getInstance().invalidate(eelDescriptor, UvPyTool.getInstance())
-    PyTool.findExecutable(UVX_EXECUTABLE)?.let { PyExecutableCache.getInstance().invalidate(eelDescriptor, it) }
+    // performToolInstallation already dropped the detection cache for every executable uv ships (uv and the uvx it
+    // brings), so the next lookup finds them immediately. Don't persist the installed path.
     uvAvailable.set(true)
     onStateChanged()
     // Now that uv exists, reload the outdated set so upgrade affordances light up.

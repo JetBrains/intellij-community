@@ -7,6 +7,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 public final class ExceptionUtilRt {
 
@@ -25,16 +27,78 @@ public final class ExceptionUtilRt {
     }
   }
 
+  /**
+   * Walks {@code e}'s cause chain looking for an instance of {@code klass}, using {@link #cycleAwareCauseChain} so a chain
+   * that loops back on itself terminates instead of spinning forever.
+   * <p>
+   * Returns {@code null} on a cycle: {@code klass} was never found before the chain looped back, which is the
+   * same answer as "not found" for an acyclic chain.
+   */
   public static <T> T findCause(Throwable e, Class<T> klass) {
-    while (e != null && !klass.isInstance(e)) {
-      e = e.getCause();
+    if (klass.isInstance(e)) {
+      //noinspection unchecked
+      return (T)e;
     }
-    //noinspection unchecked
-    return (T)e;
+    for (Throwable t : cycleAwareCauseChain(e)) {
+      if (klass.isInstance(t)) {
+        //noinspection unchecked
+        return (T)t;
+      }
+    }
+    return null;
   }
 
   public static boolean causedBy(Throwable e, Class<?> klass) {
     return findCause(e, klass) != null;
+  }
+
+  /**
+   * The causes strictly after {@code start} (not {@code start} itself), stopping when the chain ends or Floyd's
+   * two-pointer ("tortoise and hare") cycle detection catches it looping back on an earlier node. Single-use: the
+   * result is its own {@link Iterator}, so iterating it twice yields nothing the second time.
+   */
+  static Iterable<Throwable> cycleAwareCauseChain(@Nullable Throwable start) {
+    return new CauseChain(start);
+  }
+
+  private static final class CauseChain implements Iterable<Throwable>, Iterator<Throwable> {
+    private Throwable current;
+    private Throwable slow;
+    private boolean advanceSlow;
+
+    private CauseChain(@Nullable Throwable start) {
+      current = start;
+      slow = start;
+    }
+
+    @Override
+    public Iterator<Throwable> iterator() {
+      return this;
+    }
+
+    @Override
+    public boolean hasNext() {
+      if (current == null) return false;
+      Throwable cause = current.getCause();
+      return cause != null && cause != current;
+    }
+
+    @Override
+    public Throwable next() {
+      if (!hasNext()) {
+        throw new NoSuchElementException();
+      }
+      Throwable cause = current.getCause();
+      current = cause;
+      if (advanceSlow) {
+        slow = slow.getCause();
+        if (slow == current) {
+          current = null; // cycle detected: stop the walk here, same as reaching the end of the chain
+        }
+      }
+      advanceSlow = !advanceSlow;
+      return cause;
+    }
   }
 
   @NotNull
@@ -58,10 +122,13 @@ public final class ExceptionUtilRt {
    */
   @NotNull
   public static Throwable unwrapException(@NotNull Throwable throwable, @NotNull Class<? extends Throwable> classToUnwrap) {
-    while (classToUnwrap.isInstance(throwable) && throwable.getCause() != null && throwable.getCause() != throwable) {
-      throwable = throwable.getCause();
+    // If the cause chain ends in a cycle, returns the last exception visited.
+    Throwable last = throwable;
+    for (Throwable cause : cycleAwareCauseChain(throwable)) {
+      if (!classToUnwrap.isInstance(last)) break;
+      last = cause;
     }
-    return throwable;
+    return last;
   }
 
   @NotNull

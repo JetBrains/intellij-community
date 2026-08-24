@@ -8,6 +8,7 @@ package org.jetbrains.intellij.build.productLayout
  *
  * This file contains the base module sets that provide the platform infrastructure:
  * - **libraries***: Library modules (platform, IDE, ktor, Jackson)
+ * - **telemetry***: OpenTelemetry libraries plus the platform telemetry API and its implementation
  * - **corePlatform**: Base platform without IDE (for analysis tools)
  * - **coreIde**: Platform + basic IDE functionality
  * - **coreLang**: Platform + IDE + language support
@@ -30,9 +31,16 @@ object CoreModuleSets {
    *
    * **Typical users:** All products (CodeServer, IDEA, PyCharm, etc.)
    *
-   * **Note:** UI/IDE-specific libraries (JCEF, Jediterm, PTY4J, SSH) have been moved to `librariesIde()`
+   * **Membership vs loading:** membership in this set means "available in every product"; `embeddedModule`
+   * versus `module` decides whether the library *also* enters the core classloader. Demote a library in
+   * place — keep it next to its family instead of moving it to another set.
+   *
+   * **Note:** UI/IDE-specific libraries (JCEF, Jediterm, PTY4J, SSH) have been moved to `librariesIde()`,
+   * and the OpenTelemetry wrappers to `telemetry()` / `telemetryImpl()` - they belong next to the telemetry
+   * modules that are their only reason to exist.
    *
    * @see librariesIde for UI and IDE-specific libraries
+   * @see telemetry for the OpenTelemetry API/SDK wrappers and the telemetry API
    */
   fun librariesPlatform(): ModuleSet = moduleSet("libraries.platform") {
     embeddedModule("intellij.libraries.java.compatibility")
@@ -42,8 +50,9 @@ object CoreModuleSets {
     // intellij.platform.wsl.impl and intellij.platform.util.http uses it
     embeddedModule("intellij.libraries.kotlinx.io")
 
-    // todo - JB Client should not embed intellij.platform.split
-    embeddedModule("intellij.libraries.kotlinx.serialization.cbor")
+    // not embedded: only plugin content needs CBOR, which also settles the old
+    // "JB Client should not embed intellij.platform.split" todo for the core classloader
+    module("intellij.libraries.kotlinx.serialization.cbor")
 
     embeddedModule("intellij.libraries.kotlinx.serialization.core")
     embeddedModule("intellij.libraries.kotlinx.serialization.json")
@@ -54,8 +63,6 @@ object CoreModuleSets {
     // kotlinx-coroutines libraries
     embeddedModule("intellij.libraries.kotlinx.coroutines.core")
     embeddedModule("intellij.libraries.kotlinx.coroutines.debug")
-    module("intellij.libraries.kotlinx.coroutines.guava")
-    @Suppress("GrazieInspection")
     // Space plugin uses it and bundles into IntelliJ IDEA, but not bundles into DataGrip, so, or Space plugin should bundle this lib,
     // or IJ Platform. As it is a small library and consistency is important across other coroutine libs, bundle to IJ Platform.
     // note 2: despite what we use as "used by", AIA tests broken —
@@ -64,9 +71,10 @@ object CoreModuleSets {
     //      at io.ktor.client.plugins.observer.ResponseObserverContextJvmKt.getResponseObserverContext(ResponseObserverContextJvm.kt:11)
     // so, we embed it
     embeddedModule("intellij.libraries.kotlinx.coroutines.slf4j")
+    module("intellij.libraries.kotlinx.coroutines.guava")
     embeddedModule("intellij.libraries.aalto.xml")
     embeddedModule("intellij.libraries.asm")
-    embeddedModule("intellij.libraries.asm.tools")
+    module("intellij.libraries.asm.tools")
     embeddedModule("intellij.libraries.automaton")
     embeddedModule("intellij.libraries.bouncy.castle.provider")
     embeddedModule("intellij.libraries.bouncy.castle.pgp")
@@ -75,6 +83,9 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.classgraph")
     embeddedModule("intellij.libraries.cli.parser")
     embeddedModule("intellij.libraries.commons.cli")
+    // embedded because embedded library content needs them in the core classloader:
+    // `commons-compress` calls into both (`ArchiveInputStream`, `FramedLZ4CompressorInputStream`) and `batik`
+    // (via `xmlgraphics-commons`) calls into commons-io. Both exclude the artifacts and depend on these wrappers.
     embeddedModule("intellij.libraries.commons.codec")
     embeddedModule("intellij.libraries.commons.compress")
     embeddedModule("intellij.libraries.commons.io")
@@ -91,11 +102,11 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.imgscalr")
     embeddedModule("intellij.libraries.ini4j")
     embeddedModule("intellij.libraries.ion")
-
     moduleSet(librariesJackson2())
     moduleSet(librariesJackson3())
+    moduleSet(librariesKtor())
 
-    embeddedModule("intellij.libraries.java.websocket")
+    module("intellij.libraries.java.websocket")
     embeddedModule("intellij.libraries.javax.annotation")
     // used by intellij.platform.util.jdom, so, embedded
     embeddedModule("intellij.libraries.jaxen")
@@ -103,10 +114,10 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.jcip")
     embeddedModule("intellij.libraries.jna")
     embeddedModule("intellij.libraries.jsoup")
-    embeddedModule("intellij.libraries.jsonpath")
+    module("intellij.libraries.jsonpath")
     embeddedModule("intellij.libraries.jsvg")
     embeddedModule("intellij.libraries.jvm.native.trusted.roots")
-    embeddedModule("intellij.libraries.jzlib")
+    module("intellij.libraries.jzlib")
     embeddedModule("intellij.libraries.kryo5")
     embeddedModule("intellij.libraries.lz4")
     embeddedModule("intellij.libraries.markdown")
@@ -116,25 +127,93 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.netty.codec.compression")
     embeddedModule("intellij.libraries.netty.codec.http")
     embeddedModule("intellij.libraries.netty.codec.protobuf")
-    embeddedModule("intellij.libraries.netty.handler.proxy")
+    module("intellij.libraries.netty.handler.proxy")
 
     embeddedModule("intellij.libraries.oro.matcher")
     embeddedModule("intellij.libraries.protobuf")
-    embeddedModule("intellij.libraries.protobuf.kotlin")
+    module("intellij.libraries.protobuf.kotlin")
     embeddedModule("intellij.libraries.proxy.vole")
     embeddedModule("intellij.libraries.rhino")
-    embeddedModule("intellij.libraries.semver")
+    module("intellij.libraries.semver")
     embeddedModule("intellij.libraries.snakeyaml")
     embeddedModule("intellij.libraries.snakeyaml.engine")
     embeddedModule("intellij.libraries.stream")
+    // not embedded: consumed by non-embedded platform content (smRunner, buildScripts.downloader) and by plugins
+    module("intellij.libraries.teamcity.service.messages")
     embeddedModule("intellij.libraries.velocity")
     embeddedModule("intellij.libraries.xtext.xbase")
     embeddedModule("intellij.libraries.xz")
+  }
 
+  /**
+   * OpenTelemetry API/SDK wrappers and the platform telemetry API.
+   *
+   * **Typical users:** every product - `intellij.platform.core.impl`, `intellij.platform.analysis.impl`,
+   * `intellij.platform.projectModel.impl` and `intellij.platform.workspace.jps` compile against the telemetry
+   * API, and so do util-jar modules outside the content model (`intellij.platform.util.io.storages`,
+   * `intellij.platform.workspace.storage`, `intellij.platform.jps.model.serialization`).
+   *
+   * Embedded, and nested in `corePlatform()`: `intellij.platform.diagnostic.telemetry` exposes OpenTelemetry
+   * types (`Tracer`, `Meter`) in its own signatures, so the API and its libraries must share the core
+   * classloader with it.
+   *
+   * The exporting half lives in `telemetryImpl()` - nothing in `corePlatform()` needs it.
+   *
+   * @see telemetryImpl for the OTLP exporters and `TelemetryManager` implementation
+   */
+  fun telemetry(): ModuleSet = moduleSet("telemetry", includeDependencies = true) {
+    moduleSet(librariesOpenTelemetry())
+
+    embeddedModule("intellij.platform.diagnostic.telemetry")
+  }
+
+  /**
+   * OpenTelemetry API and SDK library wrappers.
+   *
+   * A nested set rather than plain members of `telemetry()`, because `includeDependencies` is a per-set default:
+   * the telemetry modules need it (packaging packs their JPS runtime deps into their own jars, e.g.
+   * `intellij.platform.diagnostic.telemetry.exporters` into the telemetry.impl jar), library wrappers must not
+   * have it - their JPS deps are other wrappers, and packing those would bundle them twice. Same reason
+   * `corePlatform()` nests `librariesDap()` instead of listing it inline.
+   */
+  fun librariesOpenTelemetry(): ModuleSet = moduleSet("libraries.opentelemetry") {
     embeddedModule("intellij.libraries.opentelemetry")
     embeddedModule("intellij.libraries.opentelemetry.extension.kotlin")
-    embeddedModule("intellij.libraries.opentelemetry.exporter.otlp.common")
     embeddedModule("intellij.libraries.opentelemetry.semconv")
+  }
+
+  /**
+   * The telemetry implementation: `TelemetryManagerImpl`, the OTLP/Jaeger exporters, and the OpenTelemetry
+   * exporter libraries only they use.
+   *
+   * **Typical users:** products that configure telemetry at startup, i.e. everything with
+   * `intellij.platform.ide.bootstrap` - hence nesting in `coreLang()` rather than in `corePlatform()`.
+   * **Typical NON-users:** CodeServer and other `corePlatform()`-only tools; they need the API, not the export
+   * pipeline.
+   *
+   * `intellij.libraries.opentelemetry.sdk.autoconfigure.spi` and
+   * `intellij.libraries.opentelemetry.exporter.sender.jdk` are here because the OTLP exporter needs them at
+   * runtime, not because any platform module compiles against them.
+   *
+   * `intellij.platform.diagnostic.telemetry.exporters` is not listed: it is merged into
+   * `intellij.platform.diagnostic.telemetry.impl.jar` by the module's `module-content.yaml`, so it follows
+   * `intellij.platform.diagnostic.telemetry.impl` automatically.
+   *
+   * @see telemetry for the API and the OpenTelemetry API/SDK wrappers
+   */
+  fun telemetryImpl(): ModuleSet = moduleSet("telemetry.impl", includeDependencies = true) {
+    moduleSet(librariesOpenTelemetryExporter())
+
+    embeddedModule("intellij.platform.diagnostic.telemetry.impl")
+  }
+
+  /**
+   * OpenTelemetry exporter library wrappers - the OTLP exporter plus the SPI and HTTP sender it loads at runtime.
+   *
+   * Nested in `telemetryImpl()` for the same `includeDependencies` reason as `librariesOpenTelemetry()`.
+   */
+  fun librariesOpenTelemetryExporter(): ModuleSet = moduleSet("libraries.opentelemetry.exporter") {
+    embeddedModule("intellij.libraries.opentelemetry.exporter.otlp.common")
     embeddedModule("intellij.libraries.opentelemetry.sdk.autoconfigure.spi")
     embeddedModule("intellij.libraries.opentelemetry.exporter.sender.jdk")
   }
@@ -147,9 +226,21 @@ object CoreModuleSets {
    */
   fun librariesLsp4j(): ModuleSet = moduleSet("libraries.lsp4j", outputModule = "intellij.platform.lsp") {
     embeddedModule("intellij.libraries.eclipse.lsp4j")
-    embeddedModule("intellij.libraries.eclipse.lsp4j.debug")
     embeddedModule("intellij.libraries.eclipse.lsp4j.jsonrpc")
-    embeddedModule("intellij.libraries.eclipse.lsp4j.jsonrpc.debug")
+  }
+
+  /**
+   * Eclipse LSP4J debug (DAP) library wrapper modules.
+   *
+   * Separate from `librariesLsp4j()` on purpose: these wrappers back `intellij.platform.dap`, not
+   * `intellij.platform.lsp`, and their consumers (CLion, Rider, PyCharm, R, and the dotnet debugger plugins)
+   * are far wider than the products that include `lsp()`.
+   *
+   * Not embedded, and nested in `corePlatform()`: available everywhere, outside the core classloader.
+   */
+  fun librariesDap(): ModuleSet = moduleSet("libraries.dap") {
+    module("intellij.libraries.eclipse.lsp4j.debug")
+    module("intellij.libraries.eclipse.lsp4j.jsonrpc.debug")
   }
 
   /**
@@ -166,7 +257,7 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.jackson.databind")
 
     module("intellij.libraries.jackson.dataformat.xml")
-    embeddedModule("intellij.libraries.jackson.dataformat.yaml")
+    module("intellij.libraries.jackson.dataformat.yaml")
     module("intellij.libraries.jackson.dataformat.toml")
 
     module("intellij.libraries.jackson.datatype.jdk8")
@@ -186,7 +277,7 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.jackson3")
     embeddedModule("intellij.libraries.jackson3.jr.objects")
     embeddedModule("intellij.libraries.jackson3.databind")
-    embeddedModule("intellij.libraries.jackson3.dataformat.yaml")
+    module("intellij.libraries.jackson3.dataformat.yaml")
     embeddedModule("intellij.libraries.jackson3.module.kotlin")
   }
 
@@ -204,10 +295,10 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.jediterm.ui")
     embeddedModule("intellij.libraries.jgoodies.common")
     embeddedModule("intellij.libraries.jgoodies.forms")
-    embeddedModule("intellij.libraries.jsch.agent.proxy")
+    module("intellij.libraries.jsch.agent.proxy")
     embeddedModule("intellij.libraries.miglayout.swing")
     embeddedModule("intellij.libraries.pty4j")
-    embeddedModule("intellij.libraries.sshj")
+    module("intellij.libraries.sshj")
     embeddedModule("intellij.libraries.swingx")
     embeddedModule("intellij.libraries.winp")
 
@@ -218,18 +309,25 @@ object CoreModuleSets {
   }
 
   /**
-   * Ktor library modules for HTTP client communication.
+   * Ktor library wrapper modules.
    *
    * **Typical use cases:** RPC infrastructure, Remote Dev, Fleet backend, HTTP-based integrations
-   * **Typical NON-users:** CodeServer (analysis-only, no RPC), minimal IDEs without remote features
+   *
+   * Kept as a dedicated module set so the family stays bumpable and reviewable in one place, and so a
+   * product can reason about Ktor as a unit.
+   *
+   * The CIO engines are not embedded: only plugin content instantiates them, so they stay available
+   * everywhere without occupying the core classloader.
+   *
+   * Included transitively by `librariesPlatform()`.
    */
   fun librariesKtor(): ModuleSet = moduleSet("libraries.ktor") {
     embeddedModule("intellij.libraries.ktor.io")
     embeddedModule("intellij.libraries.ktor.utils")
     embeddedModule("intellij.libraries.ktor.network.tls")
-    embeddedModule("intellij.libraries.ktor.server.cio")
     embeddedModule("intellij.libraries.ktor.client")
-    embeddedModule("intellij.libraries.ktor.client.cio")
+    module("intellij.libraries.ktor.client.cio")
+    module("intellij.libraries.ktor.server.cio")
   }
 
   // endregion
@@ -256,17 +354,14 @@ object CoreModuleSets {
    */
   fun corePlatform(): ModuleSet = moduleSet("core.platform", selfContained = true, outputModule = "intellij.platform.ide.core", includeDependencies = true) {
     moduleSet(librariesPlatform())
+    moduleSet(librariesDap())
+    moduleSet(telemetry())
 
     embeddedModule("intellij.platform.runtime.product")
-
-    embeddedModule("intellij.platform.diagnostic.telemetry")
-    embeddedModule("intellij.platform.diagnostic.telemetry.impl")
 
     embeddedModule("intellij.platform.util.ex")
     embeddedModule("intellij.platform.util.ui")
     embeddedModule("intellij.platform.util.coroutines")
-
-    embeddedModule("intellij.platform.icons.impl.intellij")
 
     embeddedModule("intellij.platform.locking.impl")
 
@@ -274,9 +369,9 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.core.ui")
     embeddedModule("intellij.platform.core.impl")
     embeddedModule("intellij.platform.indexing")
+    // stays here: intellij.codeServer.core needs it directly, and so does the
+    // intellij.platform.editor.ex -> intellij.platform.indexing.impl runtime closure
     embeddedModule("intellij.platform.projectFrame")
-    embeddedModule("intellij.platform.welcomeScreen")
-    embeddedModule("intellij.platform.welcomeScreen.impl")
 
     embeddedModule("intellij.platform.codeStyle")
     embeddedModule("intellij.platform.editor.ex")
@@ -284,6 +379,9 @@ object CoreModuleSets {
 
     embeddedModule("intellij.platform.projectModel")
     embeddedModule("intellij.platform.projectModel.impl")
+    embeddedModule("intellij.platform.instanceContainer")
+    embeddedModule("intellij.platform.serviceContainer")
+    embeddedModule("intellij.platform.workspace.jps")
 
     // Analysis modules needed by core platform modules
     embeddedModule("intellij.platform.analysis")
@@ -321,6 +419,9 @@ object CoreModuleSets {
 
     // Add basic IDE functionality on top of platform
     embeddedModule("intellij.platform.ide")
+
+    // consumed by intellij.platform.ide - not by anything in corePlatform()
+    embeddedModule("intellij.platform.welcomeScreen")
 
     embeddedModule("intellij.platform.remoteServers.agent.rt")
     embeddedModule("intellij.platform.remoteServers")
@@ -361,8 +462,16 @@ object CoreModuleSets {
     // Include core IDE (corePlatform + intellij.platform.ide)
     moduleSet(coreIde())
 
+    // telemetry export pipeline - required by intellij.platform.ide.bootstrap, which configures it at startup
+    moduleSet(telemetryImpl())
+
     embeddedModule("intellij.platform.macro")
     embeddedModule("intellij.platform.usageView.impl")
+
+    // consumed by intellij.platform.ide.impl and intellij.platform.lang.impl
+    embeddedModule("intellij.platform.welcomeScreen.impl")
+    // consumed by intellij.platform.ide.bootstrap; also PROVIDED-depends on intellij.platform.ide.impl
+    embeddedModule("intellij.platform.icons.impl.intellij")
 
     embeddedModule("intellij.platform.execution")
     embeddedModule("intellij.platform.execution.impl")
@@ -385,6 +494,8 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.experiment")
     embeddedModule("intellij.platform.project")
     embeddedModule("intellij.platform.ide.progress")
+    embeddedModule("intellij.platform.codeStyle.impl")
+    embeddedModule("intellij.platform.refactoring")
     embeddedModule("intellij.platform.ide.impl")
     // keeps marketplace-zip-signer out of the core classloader - loaded only when a plugin signature is verified
     module("intellij.platform.ide.pluginSignatureVerifier")

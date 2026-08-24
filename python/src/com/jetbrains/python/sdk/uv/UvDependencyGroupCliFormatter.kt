@@ -22,7 +22,7 @@ internal object UvDependencyGroupSupport : PySdkDependencyGroupSupport {
     group: PyDependencyGroup,
     pyProjectToml: PyProjectToml?,
   ): List<String> {
-    val isOptional = pyProjectToml?.project?.dependencies?.optional?.containsKey(group.name) == true
+    val isOptional = pyProjectToml?.project?.dependencies?.extras?.contains(group.name) == true
     val flag = if (isOptional) "--optional" else "--group"
     return listOf(flag, group.name)
   }

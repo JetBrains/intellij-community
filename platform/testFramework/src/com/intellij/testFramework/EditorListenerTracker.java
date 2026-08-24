@@ -28,7 +28,7 @@ public final class EditorListenerTracker {
   private static final Set<String> APP_LEVEL_LISTENERS = Set.of(
     "com.intellij.copyright.CopyrightManagerDocumentListener$",
     "com.intellij.model.BranchServiceImpl$",
-    "com.jetbrains.liveEdit.highlighting.ElementHighlighterCaretListener",
+    "com.intellij.javascript.debugger.elementInspector.highlighting.ElementHighlighterCaretListener",
     "com.intellij.grazie.ide.inspection.auto.ChangeTracker$",
     "com.intellij.ml.llm.nextEdits.backend.logs.statistics.components.NextEditCaretFeatures$"
   );

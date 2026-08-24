@@ -83,17 +83,6 @@ internal class ContentRootTestEntityImpl(private val dataSource: ContentRootTest
           error("Field ContentRootTestEntity#module should be initialized")
         }
       }
-// Check initialization for list with ref type
-      if (_diff != null) {
-        if (_diff.instrumentation.getManyChildrenBuilders(SOURCEROOTS_CONNECTION_ID, this) == null) {
-          error("Field ContentRootTestEntity#sourceRoots should be initialized")
-        }
-      }
-      else {
-        if (this.entityLinks[EntityLink(true, SOURCEROOTS_CONNECTION_ID)] == null) {
-          error("Field ContentRootTestEntity#sourceRoots should be initialized")
-        }
-      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {

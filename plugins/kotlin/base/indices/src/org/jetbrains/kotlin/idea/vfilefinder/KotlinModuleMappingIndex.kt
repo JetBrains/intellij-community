@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.vfilefinder
 
@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.metadata.jvm.deserialization.PackageParts
 import java.io.DataInput
 import java.io.DataOutput
 
-internal const val MAPPING_FILE_DOT_FILE_EXTENSION = ".${ModuleMapping.MAPPING_FILE_EXT}"
 class KotlinModuleMappingIndex internal constructor() : FileBasedIndexExtension<String, PackageParts>() {
     companion object {
         val NAME: ID<String, PackageParts> = ID.create(KotlinModuleMappingIndex::class.java.canonicalName)

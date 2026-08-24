@@ -15,13 +15,16 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.AsyncFileEditorProvider
+import com.intellij.openapi.fileEditor.CreatedFileEditorSink
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.fileEditor.FileEntry
@@ -30,6 +33,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -125,44 +129,71 @@ internal class EditorCompositeModelManager(
     state: FileEntry? = null,
     flowCollector: FlowCollector<EditorCompositeModel>,
   ) {
-    val editorsWithProviders = coroutineScope {
-      providers.map { provider ->
-        async(ModalityState.any().asContextElement()) {
-          try {
-            val editor = span("Creating file editor for $provider") {
-              if (provider is AsyncFileEditorProvider) {
-                provider.createFileEditor(
-                  project = project,
-                  file = file,
-                  document = document,
-                  editorCoroutineScope = editorCoroutineScope,
-                )
-              }
-              else {
-                withContext(Dispatchers.EDT) {
-                  writeIntentReadAction {
-                    provider.createEditor(project, file)
+    // Cancellation (e.g., the file is closed while the composite is still loading) discards the result of async/withContext,
+    // and such editors are not yet registered in the composite, so EditorComposite.dispose cannot release them.
+    // The sink collects both what the providers return and what they create internally before suspending again.
+    val createdEditors = CreatedFileEditorSink()
+    try {
+      val editorsWithProviders = coroutineScope {
+        providers.map { provider ->
+          async(ModalityState.any().asContextElement() + createdEditors) {
+            try {
+              span("Creating file editor for $provider") {
+                if (provider is AsyncFileEditorProvider) {
+                  val editor = provider.createFileEditor(
+                    project = project,
+                    file = file,
+                    document = document,
+                    editorCoroutineScope = editorCoroutineScope,
+                  )
+                  // register for cleanup immediately - any later suspension point may discard the result on cancellation.
+                  // What a provider creates internally is registered by the provider itself, see AsyncFileEditorProvider.createFileEditor.
+                  createdEditors.register(editor)
+                  FileEditorWithProvider(editor, provider)
+                }
+                else {
+                  withContext(Dispatchers.EDT) {
+                    writeIntentReadAction {
+                      val editor = provider.createEditor(project, file)
+                      createdEditors.register(editor)
+                      FileEditorWithProvider(editor, provider)
+                    }
                   }
                 }
               }
             }
-
-            FileEditorWithProvider(editor, provider)
-          }
-          catch (e: CancellationException) {
-            throw e
-          }
-          catch (e: Throwable) {
-            val pluginDescriptor = PluginManager.getPluginByClass(provider.javaClass)
-            LOG.error(PluginException("Cannot create editor by provider ${provider.javaClass.name}", e, pluginDescriptor?.pluginId))
-            null
+            catch (e: CancellationException) {
+              throw e
+            }
+            catch (e: Throwable) {
+              val pluginDescriptor = PluginManager.getPluginByClass(provider.javaClass)
+              LOG.error(PluginException("Cannot create editor by provider ${provider.javaClass.name}", e, pluginDescriptor?.pluginId))
+              null
+            }
           }
         }
-      }
-    }.mapNotNull { it.getCompleted() }
+      }.mapNotNull { it.getCompleted() }
 
-    postProcessFileEditorWithProviderList(editorsWithProviders)
-    flowCollector.emit(EditorCompositeModel(fileEditorAndProviderList = editorsWithProviders, state = state))
+      postProcessFileEditorWithProviderList(editorsWithProviders)
+      flowCollector.emit(EditorCompositeModel(
+        fileEditorAndProviderList = editorsWithProviders,
+        state = state,
+        createdEditors = createdEditors,
+      ))
+      // The collector is not necessarily the composite: the startup path shares this flow, so `emit` can merely put the model into a
+      // replay cache and return, leaving the editors with no owner. Stay around until a composite actually adopts them, so that a
+      // scope cancelled in between (the tab is closed before it is ever shown) still runs the cleanup below.
+      createdEditors.awaitClaimed()
+    }
+    catch (e: Throwable) {
+      // Whatever is still in the sink has no owner: a composite that adopted the editors has claimed and thereby emptied it, so this
+      // releases exactly the abandoned ones and never an editor a live composite is using. Catching Throwable and not only
+      // cancellation matters because postProcess and the collector both run plugin code that can throw.
+      for (editor in createdEditors.toList()) {
+        disposeAbandonedFileEditor(editor)
+      }
+      throw e
+    }
   }
 
   fun blockingFileEditorWithProviderFlow(
@@ -178,6 +209,22 @@ internal class EditorCompositeModelManager(
   private fun postProcessFileEditorWithProviderList(editorsWithProviders: List<FileEditorWithProvider>) {
     for (editorWithProvider in editorsWithProviders) {
       postProcessFileEditorWithProvider(editorWithProvider, editorPropertyChangeListener)
+    }
+  }
+}
+
+/**
+ * Disposes a file editor that was created for a composite whose opening got cancelled before the editor was registered
+ * in the composite (e.g., the file was closed while still loading) - otherwise the backing `EditorImpl` is never released.
+ */
+@ApiStatus.Internal
+suspend fun disposeAbandonedFileEditor(editor: FileEditor) {
+  withContext(NonCancellable + Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    writeIntentReadAction {
+      @Suppress("DEPRECATION")
+      if (!Disposer.isDisposed(editor)) {
+        Disposer.dispose(editor)
+      }
     }
   }
 }

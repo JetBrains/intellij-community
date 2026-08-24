@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
 import com.intellij.platform.runtime.product.ProductMode
@@ -31,7 +32,6 @@ class ConditionalModuleLoadingRuleValueTest {
 
   private val rootPath get() = inMemoryFs.fs.getPath("/")
   private val pluginsDirPath get() = rootPath.resolve("wd/plugins")
-  private var loadingErrors: List<PluginLoadingError> = emptyList()
 
   @ParameterizedTest
   @ValueSource(strings = ["monolith", "frontend", "backend"])
@@ -48,8 +48,7 @@ class ConditionalModuleLoadingRuleValueTest {
       assertThat(pluginSet).hasExactlyEnabledPlugins("foo")
     } else {
       assertThat(pluginSet).doesNotHaveEnabledPlugins()
-      assertThat(loadingErrors).hasSizeGreaterThan(0)
-      assertThat(loadingErrors[0].htmlMessage.toString()).contains("foo", "requires plugin", "unavailable", "to be installed")
+      assertThat(pluginSet.getRootExclusionReason("foo")).isInstanceOf(DependencyIsNotResolved::class.java)
     }
   }
 
@@ -68,8 +67,7 @@ class ConditionalModuleLoadingRuleValueTest {
       assertThat(pluginSet).hasExactlyEnabledPlugins("foo")
     } else {
       assertThat(pluginSet).doesNotHaveEnabledPlugins()
-      assertThat(loadingErrors).hasSizeGreaterThan(0)
-      assertThat(loadingErrors[0].htmlMessage.toString()).contains("foo", "requires plugin", "unavailable", "to be installed")
+      assertThat(pluginSet.getRootExclusionReason("foo")).isInstanceOf(DependencyIsNotResolved::class.java)
     }
   }
 
@@ -88,8 +86,7 @@ class ConditionalModuleLoadingRuleValueTest {
       assertThat(pluginSet).hasExactlyEnabledPlugins("foo")
     } else {
       assertThat(pluginSet).doesNotHaveEnabledPlugins()
-      assertThat(loadingErrors).hasSizeGreaterThan(0)
-      assertThat(loadingErrors[0].htmlMessage.toString()).contains("foo", "requires plugin", "unavailable", "to be installed")
+      assertThat(pluginSet.getRootExclusionReason("foo")).isInstanceOf(DependencyIsNotResolved::class.java)
     }
   }
 
@@ -110,12 +107,15 @@ class ConditionalModuleLoadingRuleValueTest {
     val pluginSetMonolith = buildPluginSet { withProductMode(ProductMode.findById("monolith")!!) }
     assertThat(pluginSetMonolith).hasExactlyEnabledPlugins("foo")
     assertThat(pluginSetMonolith.getEnabledModules()).hasSize(3)
-    assertThat(loadingErrors).isEmpty()
   }
 
   private fun buildPluginSet(builder: PluginSetTestBuilder.() -> Unit = {}): PluginSet {
-    val state = PluginSetTestBuilder.fromPath(pluginsDirPath).apply(builder).buildState()
-    loadingErrors = state.loadingErrors
-    return state.pluginSet
+    return PluginSetTestBuilder.fromPath(pluginsDirPath).apply(builder).build()
+  }
+
+  private fun PluginSet.getRootExclusionReason(pluginId: String): DescriptorExclusionReason? {
+    val plugin = resolvedPluginSet.candidateSet.resolvePluginId(PluginId(pluginId)) ?: return null
+    val rootCauseDescriptor = plugin.sequenceDescriptorExclusionChain { resolvedPluginSet.getExclusionReason(it) }.last()
+    return resolvedPluginSet.getExclusionReason(rootCauseDescriptor)
   }
 }

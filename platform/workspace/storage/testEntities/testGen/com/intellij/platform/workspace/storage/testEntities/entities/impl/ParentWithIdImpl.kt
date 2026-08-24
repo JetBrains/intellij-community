@@ -82,17 +82,6 @@ internal class ParentWithIdImpl(private val dataSource: ParentWithIdData) : Pare
           error("Field ParentWithId#parent should be initialized")
         }
       }
-// Check initialization for list with ref type
-      if (_diff != null) {
-        if (_diff.instrumentation.getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this) == null) {
-          error("Field ParentWithId#children should be initialized")
-        }
-      }
-      else {
-        if (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] == null) {
-          error("Field ParentWithId#children should be initialized")
-        }
-      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {

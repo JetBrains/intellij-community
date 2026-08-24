@@ -28,6 +28,7 @@
     <module name="intellij.platform.builtInServer"/>
     <module name="intellij.platform.builtInServer.impl"/>
     <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.codeStyle.impl"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
@@ -47,6 +48,7 @@
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.rpc.lite"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.usageView"/>
@@ -191,7 +193,7 @@
     <codeInsight.fillParagraph language="Markdown"
                                implementationClass="org.intellij.plugins.markdown.editor.MarkdownParagraphFillHandler"/>
 
-    <fileType name="Markdown" extensions="markdown;md" language="Markdown"
+    <fileType name="Markdown" extensions="markdown;md;mdc" language="Markdown"
               implementationClass="org.intellij.plugins.markdown.lang.MarkdownFileType" fieldName="INSTANCE"/>
     <liveTemplateContext contextId="MARKDOWN" implementation="org.intellij.plugins.markdown.lang.MarkdownContextType"/>
     <lang.fileViewProviderFactory language="Markdown"
@@ -224,8 +226,6 @@
                             implementationClass="org.intellij.plugins.markdown.editor.MarkdownFenceLangCompletionContributor"/>
 
     <textEditorCustomizer implementation="org.intellij.plugins.markdown.ui.floating.AddFloatingToolbarTextEditorCustomizer"/>
-    <textEditorCustomizer implementation="org.intellij.plugins.markdown.editor.MarkdownCharacterGridCustomizer"/>
-    <editorFactoryListener implementation="org.intellij.plugins.markdown.editor.MarkdownCharacterGridEditorFactoryListener"/>
 
     <fileDropHandler implementation="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownDocxFileDropHandler"/>
 
@@ -327,7 +327,7 @@
                  defaultValue="600000"
                  description="Interval in milliseconds defining how often Markdown plugin caches (e.g. PlantUML diagrams) should be cleared"/>
     <registryKey key="markdown.plantuml.download.link"
-                 defaultValue="https://download.jetbrains.com/grazie/markdown/extensions/plantuml/plantuml-1.2023.10-15.jar"
+                 defaultValue="https://github.com/plantuml/plantuml/releases/download/v1.2026.6/plantuml-1.2026.6.jar"
                  description="Link which Markdown plugin will use to download PlantUML JAR"/>
     <registryKey key="markdown.open.link.in.external.browser"
                  defaultValue="true"

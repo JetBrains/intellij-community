@@ -21,7 +21,6 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.TableView;
@@ -47,8 +46,10 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
@@ -58,10 +59,12 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, UiDat
   private final @NotNull DebugProcessImpl myProcess;
 
   static final EnabledColumnInfo ENABLED_COLUMN = new EnabledColumnInfo();
-  static final NameColumnInfo NAME_COLUMN = new NameColumnInfo();
 
   private final TableView<OverheadProducer> myTable;
   private final ListTableModel<OverheadProducer> myModel;
+
+  // It's filled in the background
+  private final Map<OverheadProducer, OverheadProducer.Presentation> myPresentations = new HashMap<>();
 
   private final UpdateQueue<OverheadProducer> myUpdateQueue;
   private Runnable myBouncer;
@@ -71,17 +74,19 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, UiDat
   public OverheadView(@NotNull DebugProcessImpl process) {
     myProcess = process;
 
+    List<OverheadProducer> initialProducers = new ArrayList<>(OverheadTimings.getProducers(process));
     myModel = new ListTableModel<>(new ColumnInfo[]{
       ENABLED_COLUMN,
-      NAME_COLUMN,
+      new NameColumnInfo(),
       new TimingColumnInfo(JavaDebuggerBundle.message("column.name.hits"), s -> OverheadTimings.getHits(myProcess, s)),
       new TimingColumnInfo(JavaDebuggerBundle.message("column.name.time.ms"), s -> OverheadTimings.getTime(myProcess, s))},
-                                   new ArrayList<>(OverheadTimings.getProducers(process)),
+                                   initialProducers,
                                    3, SortOrder.DESCENDING);
     myModel.setSortable(true);
     myTable = new TableView<>(myModel);
     addToCenter(ScrollPaneFactory.createScrollPane(myTable, true));
     TableUtil.setupCheckboxColumn(myTable.getColumnModel().getColumn(0));
+    updatePresentations(initialProducers);
 
     myUpdateQueue = DebouncedUpdates.<OverheadProducer>forScope(process.getChildScope("OverheadView"), "OverheadView", 500)
       .withContext(CoroutinesKt.getEDT(Dispatchers.INSTANCE))
@@ -91,7 +96,9 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, UiDat
         for (OverheadProducer o : distinctProducers) {
           int idx = myModel.indexOf(o);
           if (idx == -1) {
-            myModel.setItems(new ArrayList<>(OverheadTimings.getProducers(process)));
+            List<OverheadProducer> updatedProducers = new ArrayList<>(OverheadTimings.getProducers(process));
+            myModel.setItems(updatedProducers);
+            updatePresentations(updatedProducers);
             return;
           }
           indices.add(idx);
@@ -151,6 +158,22 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, UiDat
     }.installOn(myTable);
   }
 
+  private void updatePresentations(@NotNull List<OverheadProducer> producers) {
+    for (OverheadProducer producer : producers) {
+      ModalityState modality = ModalityState.defaultModalityState();
+      ReadAction.nonBlocking(producer::computePresentation)
+        .coalesceBy(this, producer)
+        .expireWith(this)
+        .finishOnUiThread(modality, presentation -> {
+          myPresentations.put(producer, presentation);
+          int index = myModel.indexOf(producer);
+          if (index >= 0) {
+            myModel.fireTableRowsUpdated(index, index);
+          }
+        })
+        .submit(AppExecutorUtil.getAppExecutorService());
+    }
+  }
 
   private List<XBreakpoint> getSelectedBreakpoints() {
     return StreamEx.of(myTable.getSelection())
@@ -199,7 +222,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, UiDat
     }
   }
 
-  private static class NameColumnInfo extends ColumnInfo<OverheadProducer, OverheadProducer> {
+  private class NameColumnInfo extends ColumnInfo<OverheadProducer, OverheadProducer> {
     NameColumnInfo() {
       super(CommonBundle.message("title.name"));
     }
@@ -221,23 +244,24 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, UiDat
         protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
           if (value instanceof OverheadProducer overheadProducer) {
             if (overheadProducer.isObsolete()) {
-              overrideAttributes(overheadProducer, STRIKEOUT_ATTRIBUTES);
+              applyPresentation(overheadProducer, STRIKEOUT_ATTRIBUTES);
             }
             else if (!overheadProducer.isEnabled()) {
-              overrideAttributes(overheadProducer, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+              applyPresentation(overheadProducer, SimpleTextAttributes.GRAYED_ATTRIBUTES);
             }
             else {
-              overheadProducer.customizeRenderer(this);
+              applyPresentation(overheadProducer, SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
             }
           }
           setTransparentIconBackground(true);
         }
 
-        private void overrideAttributes(OverheadProducer overhead, SimpleTextAttributes attributes) {
-          SimpleColoredComponent component = new SimpleColoredComponent();
-          overhead.customizeRenderer(component);
-          component.iterator().forEachRemaining(f -> append(f, attributes));
-          setIcon(component.getIcon());
+        private void applyPresentation(OverheadProducer overhead, SimpleTextAttributes attributes) {
+          OverheadProducer.Presentation presentation = myPresentations.get(overhead);
+          if (presentation != null) {
+            append(presentation.text(), attributes);
+            setIcon(presentation.icon());
+          }
         }
       };
     }

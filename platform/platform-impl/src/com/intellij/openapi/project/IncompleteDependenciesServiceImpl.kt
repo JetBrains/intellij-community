@@ -24,6 +24,11 @@ class IncompleteDependenciesServiceImpl(private val project: Project) : Incomple
     return stateFlow.value
   }
 
+  @ApiStatus.Internal
+  override fun getStateUnsafe(): DependenciesState {
+    return stateFlow.value
+  }
+
   @RequiresWriteLock
   override fun enterIncompleteState(requestor: Any): IncompleteDependenciesAccessToken {
     return issueToken(requestor.javaClass)

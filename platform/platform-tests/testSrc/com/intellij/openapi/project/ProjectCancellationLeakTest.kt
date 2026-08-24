@@ -83,7 +83,7 @@ class ProjectCancellationLeakTest {
       useDefaultProjectAsTemplate = true  // forces templateAsync to be non-null
       projectName = "template-hang-leak-test"
       projectRootDir = projectFile
-      beforeInit = { project -> captured = project }
+      beforeInitTasks += { project -> captured = project }
     }
 
     @Suppress("RAW_SCOPE_CREATION")
@@ -144,7 +144,7 @@ class ProjectCancellationLeakTest {
       useDefaultProjectAsTemplate = false
       projectName = "beforeInit-throw-leak-test"
       projectRootDir = projectFile
-      beforeInit = { project ->
+      beforeInitTasks += { project ->
         captured = project
         throw RuntimeException("test-induced beforeInit failure")
       }

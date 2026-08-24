@@ -1,5 +1,5 @@
 load("@rules_java//java:defs.bzl", "JavaInfo")
-load("@rules_jvm//:wasmjs.bzl", "KtWasmJsInfo", "wasmjs_binary", "wasmjs_library")
+load("@rules_jvm//:wasmjs.bzl", "KtWasmJsInfo", "wasmjs_binary", "wasmjs_library", "wasmjs_test")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KOTLIN_TOOLCHAIN = "TOOLCHAIN_TYPE", _KtCompilerPluginInfo = "KtCompilerPluginInfo")
 load("//fleet/build/rules:haven_cli.bzl", "HAVEN_CLI_ATTR", "run_haven_cli")
 
@@ -84,6 +84,13 @@ def fleet_wasmjs_module(
         test_exported_deps = [],
         runtime_deps = [],
         plugins = [],
+        test_data = [],
+        test_configuration_scripts = [],
+        test_npm_packages = {},
+        test_size = None,
+        test_timeout = None,
+        test_skiko_runtime = False,
+        test_completion_grace_period_ms = 0,
         binary = False,
         binary_source_maps = None,
         binary_source_map_prefix = None,
@@ -122,17 +129,16 @@ def fleet_wasmjs_module(
         srcs = wasmjs_main_sources,
     )
 
-    # TODO: wire `wasmjs_test` using `test_deps` once that rule is introduced in the monorepo
-
     # The Gradle KMP build emits modules as `fleet.build-<jpsModuleName>.*` (root project name prefix);
     # fleet.dock.bootstrapWasm's dynamicImport and the webpack config key on that naming. A linked binary
     # must use the same name, so both take it from here.
     ir_output_name = "fleet.build-%s" % module_name
 
+    wasmjs_library_target_name = "%s_lib" % name
     wasmjs_library(
         # `<name>_lib`: keep the suffix in sync with the target name the BUILD generator emits as a dependency
         # label (fleet/build/generator .../wasm/DependenciesGeneratorExtensions.kt, bazelWasmJsTarget).
-        name = "%s_lib" % name,
+        name = wasmjs_library_target_name,
         module_name = module_name,
         ir_output_name = ir_output_name,
         fragment_refines = {"commonMain": [], "wasmJsMain": ["commonMain"]},
@@ -155,4 +161,64 @@ def fleet_wasmjs_module(
             source_map_prefix = binary_source_map_prefix,
             source_map_base_dirs = binary_source_map_base_dirs,
             visibility = visibility,
+        )
+
+    common_test_sources = native.glob([
+        "genCommonTest/**/*.kt",
+        "srcCommonTest/**/*.kt",
+    ], allow_empty = True)
+    wasmjs_test_sources = native.glob(["srcWasmJsTest/**/*.kt"], allow_empty = True)
+    if common_test_sources or wasmjs_test_sources:
+        common_test_sourceset_target_name = "%s_commonTest" % name
+        native.filegroup(
+            name = common_test_sourceset_target_name,
+            srcs = common_test_sources,
+        )
+        wasmjs_test_sourceset_target_name = "%s_wasmJsTest" % name
+        native.filegroup(
+            name = wasmjs_test_sourceset_target_name,
+            srcs = wasmjs_test_sources,
+        )
+        wasmjs_library(
+            name = "%s_test_lib" % name,
+            testonly = True,
+            # Distinct from the main lib's `fleet.build-<module_name>` naming, which
+            # fleet.dock.bootstrapWasm's dynamicImport keys on: tests must not collide.
+            module_name = "%s.tests" % module_name,
+            fragment_refines = {
+                "commonTest": [],
+                "wasmJsTest": ["commonTest"],
+            },
+            fragment_sources = {
+                "commonTest": common_test_sourceset_target_name,
+                "wasmJsTest": wasmjs_test_sourceset_target_name,
+            },
+            deps = deps + test_deps + [wasmjs_library_target_name],
+            exports = test_exported_deps,
+            plugins = plugins,
+            kotlinc_opts = kotlinc_opts,
+        )
+        wasmjs_test(
+            name = "%s_test" % name,
+            module = ":%s_test_lib" % name,
+            module_name = "%s.tests" % module_name,
+            kotlinc_opts = kotlinc_opts,
+            testdata = test_data,
+            test_completion_grace_period_ms = test_completion_grace_period_ms,
+            configuration_scripts = test_configuration_scripts,
+            npm_packages = test_npm_packages,
+            # skiko/Compose modules import `./skiko.mjs` (which loads skiko.wasm) relative to the
+            # linked module; wasmjs_test serves those runtime files and remaps the module-adjacent
+            # URLs. See @skiko_js_wasm_runtime_extracted in fleet/fleet.MODULE.bazel.
+            module_runtime_files = [
+                "@skiko_js_wasm_runtime_extracted//:skiko.mjs",
+                "@skiko_js_wasm_runtime_extracted//:skiko.wasm",
+            ] if test_skiko_runtime else [],
+            # skiko's skia bindings are lazy stubs backed by skiko.wasm; the UI test framework
+            # calls skia synchronously, so await its readiness promise before the entrypoint runs
+            # (the same await production does in fleet.dock.desktop's WebFontLoading).
+            awaited_imports = {"skiko.mjs": "awaitSkiko"} if test_skiko_runtime else {},
+            tags = ["fleet-browser-test"],
+            size = test_size,
+            timeout = test_timeout,
         )

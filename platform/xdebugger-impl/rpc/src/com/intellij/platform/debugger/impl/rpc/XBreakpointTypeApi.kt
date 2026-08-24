@@ -90,6 +90,7 @@ data class XBreakpointTypeDto(
   val defaultSuspendPolicy: SuspendPolicy,
   val standardPanels: Set<XBreakpointTypeSerializableStandardPanels>,
   val isAddBreakpointButtonVisible: Boolean,
+  val isNewBadgeVisible: Boolean,
   val icons: XBreakpointTypeIcons,
 )
 

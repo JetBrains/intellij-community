@@ -915,7 +915,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       }
       writeState(indicator);
       indicator.checkCanceled();
-      DaemonCodeAnalyzer.getInstance(myProject).restart(this);
+      DaemonCodeAnalyzer daemonCodeAnalyzer = myProject == null ? null : myProject.getServiceIfCreated(DaemonCodeAnalyzer.class);
+      if (daemonCodeAnalyzer != null && isActiveTask()) {
+        daemonCodeAnalyzer.restart(this);
+      }
       try {
         SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newDefaultInstance();
         TransformerHandler handler = transformerFactory.newTransformerHandler();

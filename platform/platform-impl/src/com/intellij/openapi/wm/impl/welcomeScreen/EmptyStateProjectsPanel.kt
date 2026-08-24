@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.dsl.builder.AlignX
@@ -181,7 +180,7 @@ private fun createActionsToolbar(actionGroup: ActionGroup): ActionToolbarImpl {
       }
     }
   }
-  actionToolbar.setLayoutStrategy(ToolbarLayoutStrategy.WRAP_STRATEGY)
+  actionToolbar.setLayoutStrategy(ToolbarLayoutStrategy.EQUAL_SIZE_WRAP_STRATEGY)
   actionToolbar.setTargetComponent(actionToolbar.component)
   actionToolbar.setOpaque(false)
   return actionToolbar

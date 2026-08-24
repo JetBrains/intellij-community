@@ -16,14 +16,16 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.imports.getDefaultImports
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.projectStructure.kaModule
 import org.jetbrains.kotlin.analysis.api.resolution.KaDelegatedConstructorCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaSingleCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.session.canBeAnalysed
@@ -74,6 +76,7 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDeclarationWithReturnType
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -87,18 +90,21 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.util.match
 
 internal class KotlinK2SearchUsagesSupport(private val project: Project) : KotlinSearchUsagesSupport {
+    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     override fun isInvokeOfCompanionObject(psiReference: PsiReference, searchTarget: KtNamedDeclaration): Boolean {
         if (searchTarget is KtObjectDeclaration && searchTarget.isCompanion() && psiReference is KtReference) {
-            analyze(psiReference.element) {
+            val element = psiReference.element
+            analyze(element) {
                 //don't resolve to psi to avoid symbol -> psi, psi -> symbol conversion
                 //which doesn't work well for e.g. kotlin.FunctionN classes due to mapping in
                 //`org.jetbrains.kotlin.analysis.api.fir.FirDeserializedDeclarationSourceProvider`
-                val invokeSymbol = psiReference.resolveToSymbol() ?: return false
+                val invokeSymbol = ((element as? KtResolvableCall)?.resolveCall() as? KaSingleCall<*, *>)?.symbol ?: return false
                 if (invokeSymbol is KaNamedFunctionSymbol && invokeSymbol.name == OperatorNameConventions.INVOKE) {
                     val searchTargetContainerSymbol = searchTarget.symbol
 

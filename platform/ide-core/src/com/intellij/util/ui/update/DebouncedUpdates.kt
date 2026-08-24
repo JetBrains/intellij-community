@@ -33,6 +33,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 import javax.swing.JComponent
@@ -140,6 +141,9 @@ object DebouncedUpdates {
    * Use [forScope] if batching is required.
    *
    * Actions run on `Dispatchers.UI` by default. Use [ComponentBuilder.withContext] to override.
+   *
+   * The component visibility gates the processing only, it is not a lifetime.
+   * Add [UpdateQueue.cancelOnDispose] if the action touches anything outside the component.
    *
    * @param component The UI component whose visibility controls when items are processed
    * @param name Debug name for the coroutine
@@ -251,8 +255,14 @@ object DebouncedUpdates {
      * Adds the modality state derived from the given component to the current context.
      * The modality state is combined with any previously set context.
      *
+     * The modality state is resolved right before every dispatch, not when the queue is created:
+     * a queue is usually created in a constructor, when the component has no window yet and therefore
+     * reports [ModalityState.nonModal].
+     *
      * Call `withContext()` first to set the dispatcher (e.g., Dispatchers.EDT), then call this method
      * to add the component's modality state.
+     *
+     * The component is retained for the lifetime of the queue, so the scope of the queue must not outlive it.
      *
      * Example:
      * ```kotlin
@@ -373,6 +383,7 @@ object DebouncedUpdates {
 
     private var context: CoroutineContext = EmptyCoroutineContext
     private var restartTimerOnAdd: Boolean = false
+    private var modalityComponent: JComponent? = null
 
     override fun withContext(context: CoroutineContext): ScopeBuilderImpl<T> {
       this.context = context
@@ -380,7 +391,7 @@ object DebouncedUpdates {
     }
 
     override fun withComponentModality(component: JComponent): ScopeBuilderImpl<T> {
-      this.context += ModalityState.stateForComponent(component).asContextElement()
+      this.modalityComponent = component
       return this
     }
 
@@ -391,7 +402,7 @@ object DebouncedUpdates {
 
     @JvmSynthetic
     override fun runLatest(action: suspend (T) -> Unit): UpdateQueue<T> {
-      return SingleScopeQueue(scope, name, delay, context, restartTimerOnAdd, action)
+      return SingleScopeQueue(scope, name, delay, context, restartTimerOnAdd, action, modalityComponent)
     }
 
     override fun runLatest(action: Consumer<T>): UpdateQueue<T> {
@@ -400,7 +411,7 @@ object DebouncedUpdates {
 
     @JvmSynthetic
     override fun runBatched(action: suspend (List<T>) -> Unit): UpdateQueue<T> {
-      return BatchedScopeQueue(scope, name, delay, context, restartTimerOnAdd, action)
+      return BatchedScopeQueue(scope, name, delay, context, restartTimerOnAdd, action, modalityComponent)
     }
 
     override fun runBatched(action: Consumer<List<T>>): UpdateQueue<T> {
@@ -409,7 +420,7 @@ object DebouncedUpdates {
 
     @JvmSynthetic
     override fun runBatchedDistinct(action: suspend (Set<T>) -> Unit): UpdateQueue<T> {
-      return BatchedDistinctScopeQueue(scope, name, delay, context, restartTimerOnAdd, action)
+      return BatchedDistinctScopeQueue(scope, name, delay, context, restartTimerOnAdd, action, modalityComponent)
     }
 
     override fun runBatchedDistinct(action: Consumer<Set<T>>): UpdateQueue<T> {
@@ -469,6 +480,20 @@ sealed interface UpdateQueue<T> {
    * Cancels the queue when the given [Disposable] is disposed.
    */
   fun cancelOnDispose(disposable: Disposable): UpdateQueue<T>
+
+  /**
+   * Drops all items that were queued but not yet passed to the action.
+   *
+   * This includes items that are still waiting for the debounce delay to expire, so it is safe to call
+   * at any moment after [queue].
+   *
+   * An action that has already started is **not** interrupted: use a cancellable action or a separate
+   * [Job] if the running work has to be stopped as well.
+   *
+   * The debounce timer is not reset, and the queue stays usable: items queued after this call are
+   * processed as usual.
+   */
+  fun cancelPending()
 
   /**
    * Waits for all queued items to be processed.
@@ -537,6 +562,10 @@ private abstract class BaseUpdateQueue<T>(
   // Notifies the processor that a new item was queued, before it is consumed from the main channel.
   protected val notifyChannel: Channel<Unit> = Channel(capacity = channelCapacity)
 
+  // Incremented by cancelPending() to invalidate items that were already taken out of the channel
+  // by the collector but not yet dispatched to the action.
+  private val epoch = AtomicLong(0)
+
   protected abstract val job: Job
 
   // Track the currently running processing job for tests
@@ -561,6 +590,21 @@ private abstract class BaseUpdateQueue<T>(
   override fun cancelOnDispose(disposable: Disposable): UpdateQueue<T> {
     job.cancelOnDispose(disposable)
     return this
+  }
+
+  override fun cancelPending() {
+    // Invalidate the items the collector is holding before draining, so that an item claimed
+    // concurrently with the drain is dropped instead of being dispatched.
+    epoch.incrementAndGet()
+
+    // Signals must be drained first: the reverse order could leave a concurrently queued item
+    // with no signal, and nothing would wake the collector up for it.
+    while (notifyChannel.tryReceive().isSuccess) {
+      // drop
+    }
+    while (channel.tryReceive().isSuccess) {
+      // drop
+    }
   }
 
   /**
@@ -655,19 +699,39 @@ private abstract class BaseUpdateQueue<T>(
    * @param onReceive Called when a new item is received. Should either add to the buffer or replace the current item.
    * @param onPrepare Called to prepare the batch after delay expires. Runs in the collector coroutine to ensure happens-before.
    * @param onProcess Called to process the prepared batch. Runs in a separate coroutine with the specified context.
+   * @param onCancel Called instead of [onPrepare] when [cancelPending] invalidated the collected items. Should discard them.
+   * @param modalityComponent If not null, the modality state of this component is resolved right before every
+   *                          dispatch and added to [context]. Resolving it once upfront would be wrong: a queue is
+   *                          usually created in a constructor, when the component has no window yet and therefore
+   *                          reports [ModalityState.nonModal].
    */
-  @OptIn(ExperimentalCoroutinesApi::class)
   protected suspend fun <R> processWithDelay(
     delay: Duration,
     context: CoroutineContext,
     restartTimerOnAdd: Boolean,
     onReceive: (T) -> Unit,
     onPrepare: () -> R,
-    onProcess: suspend (R) -> Unit
+    onProcess: suspend (R) -> Unit,
+    onCancel: () -> Unit,
+    modalityComponent: JComponent? = null
   ) {
     while (true) {
       // Wait for sync signal that indicates an item was queued
       notifyChannel.receive()
+
+      // Taken before claiming an item, so that a concurrent cancelPending() is always observed below.
+      var cycleEpoch = epoch.get()
+
+      // Discards the items collected so far when cancelPending() was called after they were claimed,
+      // and keeps the ones that arrived after the cancellation.
+      fun receiveItem(item: T) {
+        val currentEpoch = epoch.get()
+        if (currentEpoch != cycleEpoch) {
+          onCancel()
+          cycleEpoch = currentEpoch
+        }
+        onReceive(item)
+      }
 
       // Must be set before reading the channel to avoid a window where channel.isEmpty=true and isCollecting=false.
       isCollecting = true
@@ -681,7 +745,7 @@ private abstract class BaseUpdateQueue<T>(
         isCollecting = false
         continue
       }
-      onReceive(first.getOrThrow())
+      receiveItem(first.getOrThrow())
 
       if (restartTimerOnAdd) {
         // Debounce mode: restart timer on each new item
@@ -697,7 +761,7 @@ private abstract class BaseUpdateQueue<T>(
           // Wait for remaining delay or new item, whichever comes first
           withTimeoutOrNull(remainingDelay.nanoseconds) {
             notifyChannel.receive()
-            onReceive(channel.receive())
+            receiveItem(channel.receive())
             lastItemTime = System.nanoTime()
           } ?: break // Timeout - process collected items
         }
@@ -711,20 +775,28 @@ private abstract class BaseUpdateQueue<T>(
         while (notifyChannel.tryReceive().isSuccess) {
           val next = channel.tryReceive()
           if (next.isSuccess) {
-            onReceive(next.getOrThrow())
+            receiveItem(next.getOrThrow())
           }
         }
+      }
+
+      // cancelPending() dropped the items of this cycle: discard them instead of running the action.
+      if (epoch.get() != cycleEpoch) {
+        onCancel()
+        isCollecting = false
+        continue
       }
 
       // Prepare the data in the current coroutine (ensures happens-before with onReceive)
       val data = onPrepare()
 
+      val dispatchContext = if (modalityComponent == null) context
+      else context + ModalityState.stateForComponent(modalityComponent).asContextElement()
+
       // Process the data in a separate coroutine
       supervisorScope {
-        val job = launch(CoroutineExceptionHandler { _, e -> logger<DebouncedUpdates>().error(e) }) {
-          withContext(context) {
-            onProcess(data)
-          }
+        val job = launch(dispatchContext + CoroutineExceptionHandler { _, e -> logger<DebouncedUpdates>().error(e) }) {
+          onProcess(data)
         }
 
         // Must set processingJob before clearing isCollecting to avoid a window where both are false/null.
@@ -743,12 +815,12 @@ private abstract class BaseUpdateQueue<T>(
   /**
    * Process latest item only (replaces previous item with new one).
    */
-  @OptIn(ExperimentalCoroutinesApi::class)
   protected suspend fun processLatest(
     delay: Duration,
     context: CoroutineContext,
     restartTimerOnAdd: Boolean,
-    action: suspend (T) -> Unit
+    action: suspend (T) -> Unit,
+    modalityComponent: JComponent? = null
   ) {
     var latestItem: T? = null
 
@@ -764,19 +836,21 @@ private abstract class BaseUpdateQueue<T>(
       onProcess = { item ->
         action(item)
         latestItem = null
-      }
+      },
+      onCancel = { latestItem = null },
+      modalityComponent = modalityComponent
     )
   }
 
   /**
    * Process all items as a batch (collects all items into a list).
    */
-  @OptIn(ExperimentalCoroutinesApi::class)
   protected suspend fun processBatched(
     delay: Duration,
     context: CoroutineContext,
     restartTimerOnAdd: Boolean,
-    action: suspend (List<T>) -> Unit
+    action: suspend (List<T>) -> Unit,
+    modalityComponent: JComponent? = null
   ) {
     val buffer = mutableListOf<T>()
 
@@ -790,19 +864,21 @@ private abstract class BaseUpdateQueue<T>(
         buffer.clear()
         batch
       },
-      onProcess = { batch -> action(batch) }
+      onProcess = { batch -> action(batch) },
+      onCancel = { buffer.clear() },
+      modalityComponent = modalityComponent
     )
   }
 
   /**
    * Process all items as a deduplicated batch (collects all items into a set).
    */
-  @OptIn(ExperimentalCoroutinesApi::class)
   protected suspend fun processBatchedDistinct(
     delay: Duration,
     context: CoroutineContext,
     restartTimerOnAdd: Boolean,
-    action: suspend (Set<T>) -> Unit
+    action: suspend (Set<T>) -> Unit,
+    modalityComponent: JComponent? = null
   ) {
     val buffer = HashSet<T>()
 
@@ -816,7 +892,9 @@ private abstract class BaseUpdateQueue<T>(
         buffer.clear()
         batch
       },
-      onProcess = { batch -> action(batch) }
+      onProcess = { batch -> action(batch) },
+      onCancel = { buffer.clear() },
+      modalityComponent = modalityComponent
     )
   }
 }
@@ -831,11 +909,12 @@ private class SingleScopeQueue<T>(
   delay: Duration,
   context: CoroutineContext,
   restartTimerOnAdd: Boolean,
-  action: suspend (T) -> Unit
+  action: suspend (T) -> Unit,
+  modalityComponent: JComponent?
 ) : BaseUpdateQueue<T>(name, context, channelCapacity = 1) {
 
   override val job: Job = scope.launch(CoroutineName(name)) {
-    processLatest(delay, context, restartTimerOnAdd, action)
+    processLatest(delay, context, restartTimerOnAdd, action, modalityComponent)
   }
 }
 
@@ -849,11 +928,12 @@ private class BatchedScopeQueue<T>(
   delay: Duration,
   context: CoroutineContext,
   restartTimerOnAdd: Boolean,
-  action: suspend (List<T>) -> Unit
+  action: suspend (List<T>) -> Unit,
+  modalityComponent: JComponent?
 ) : BaseUpdateQueue<T>(name, context, channelCapacity = Channel.UNLIMITED) {
 
   override val job: Job = scope.launch(CoroutineName(name)) {
-    processBatched(delay, context, restartTimerOnAdd, action)
+    processBatched(delay, context, restartTimerOnAdd, action, modalityComponent)
   }
 }
 
@@ -901,6 +981,17 @@ private class SingleComponentQueue<T>(
     }
   }
 
+  override fun cancelPending() {
+    super.cancelPending()
+
+    // The action processor has its own stage: items already forwarded to it are waiting for the
+    // component to show, and pendingItem is kept to retry an action canceled by hiding the component.
+    while (processingChannel.tryReceive().isSuccess) {
+      // drop
+    }
+    pendingItem = null
+  }
+
   /**
    * Process items from the main channel and forward to the processing channel.
    * Runs in global scope, never canceled.
@@ -924,7 +1015,8 @@ private class SingleComponentQueue<T>(
       onProcess = { item ->
         processingChannel.send(item)
         latestItem = null
-      }
+      },
+      onCancel = { latestItem = null }
     )
   }
 
@@ -980,10 +1072,11 @@ private class BatchedDistinctScopeQueue<T>(
   delay: Duration,
   context: CoroutineContext,
   restartTimerOnAdd: Boolean,
-  action: suspend (Set<T>) -> Unit
+  action: suspend (Set<T>) -> Unit,
+  modalityComponent: JComponent?
 ) : BaseUpdateQueue<T>(name, context, channelCapacity = Channel.UNLIMITED) {
 
   override val job: Job = scope.launch(CoroutineName(name)) {
-    processBatchedDistinct(delay, context, restartTimerOnAdd, action)
+    processBatchedDistinct(delay, context, restartTimerOnAdd, action, modalityComponent)
   }
 }

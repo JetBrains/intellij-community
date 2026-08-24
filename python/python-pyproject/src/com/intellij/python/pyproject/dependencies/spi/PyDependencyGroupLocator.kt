@@ -2,7 +2,7 @@
 package com.intellij.python.pyproject.dependencies.spi
 
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.python.pyproject.dependencies.PyProjectDependencyGroupLocator
+import com.intellij.python.pyproject.dependencies.impl.PyProjectDependencyGroupLocator
 import com.intellij.python.pyproject.model.spi.PyProjectManager
 import org.jetbrains.annotations.ApiStatus
 import org.toml.lang.psi.TomlKeySegment

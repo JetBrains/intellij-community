@@ -1,5 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build kotlin.jvm.shared` start
 create_kotlinc_options(
@@ -65,7 +66,6 @@ jvm_library(
         "//platform/external-system-api:externalSystem",
         "//java/idea-ui:ui",
         "//platform/boot",
-        "//platform/diff-impl",
         "//platform/vcs-impl",
         "//platform/external-system-impl:externalSystem-impl",
         "//platform/lvcs-impl",
@@ -93,12 +93,13 @@ jvm_library(
         "//platform/util",
         "//platform/util:util-ui",
         "//platform/editor-ui-api:editor-ui",
-        "//plugins/kotlin/base/scripting/scripting.shared",
         "//platform/execution",
         "//platform/statistics",
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     ],
 )
+
+content_module_jar(module = ":shared")
 
 jvm_library(
     name = "shared_test_lib",
@@ -145,7 +146,6 @@ jvm_library(
         "//platform/external-system-api:externalSystem_test_lib",
         "//java/idea-ui:ui_test_lib",
         "//platform/boot:boot_test_lib",
-        "//platform/diff-impl:diff-impl_test_lib",
         "//platform/vcs-impl:vcs-impl_test_lib",
         "//platform/external-system-impl:externalSystem-impl_test_lib",
         "//platform/lvcs-impl:lvcs-impl_test_lib",
@@ -173,7 +173,6 @@ jvm_library(
         "//platform/util:util_test_lib",
         "//platform/util:util-ui_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
-        "//plugins/kotlin/base/scripting/scripting.shared:scripting.shared_test_lib",
         "//platform/execution:execution_test_lib",
         "//platform/statistics:statistics_test_lib",
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared_test_lib",
