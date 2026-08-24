@@ -71,7 +71,6 @@ public class TryStatementPostfixTemplate extends PostfixTemplate implements Dumb
     PsiStatement statement = PsiTreeUtil.getNonStrictParentOfType(context, PsiStatement.class);
     JavaWithTryCatchSurrounder surrounder = new JavaWithTryCatchSurrounder();
     surrounder.doSurround(actionContext, statement, updater);
-    updater.select(new TextRange(keyRange.getStartOffset(), keyRange.getStartOffset()));
     PsiElement element = file.findElementAt(updater.getCaretOffset());
     PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class);
     assert tryStatement != null;
@@ -81,6 +80,7 @@ public class TryStatementPostfixTemplate extends PostfixTemplate implements Dumb
     if (null != statementInTry) {
       updater.moveCaretTo(statementInTry.getTextRange().getEndOffset());
     }
+    updater.select(new TextRange(updater.getCaretOffset(), updater.getCaretOffset()));
   }
 
   @Override
