@@ -19,7 +19,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
@@ -44,6 +43,8 @@ import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.intellij.platform.vcs.changes.ChangesUtil.isScopeNavigationToGroupEnabled;
 
 public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestProcessor.Simple
   implements DiffPreviewUpdateProcessor, DiffRequestProcessorWithProducers {
@@ -259,7 +260,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   @Override
   protected @Nullable AnAction createGoToChangeAction() {
     Supplier<ListSelection<? extends Wrapper>> changesSupplier =
-      Registry.is("vcs.diff.preview.scope.navigation.to.group")
+      isScopeNavigationToGroupEnabled()
       ? this::getGroupOrMultiSelectionListSelection
       : this::getChanges;
     return PresentableGoToChangePopupAction.create(changesSupplier::get, new MyGoToChangePopupController());

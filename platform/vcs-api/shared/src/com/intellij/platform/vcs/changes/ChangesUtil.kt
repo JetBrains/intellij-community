@@ -3,6 +3,7 @@ package com.intellij.platform.vcs.changes
 
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.Change
@@ -85,4 +86,11 @@ object ChangesUtil {
 
   @JvmStatic
   fun matches(change: Change, path: FilePath): Boolean = path == getAfterPath(change) || path == getBeforePath(change)
+
+  /**
+   * Whether diff file navigation (the "Go to change" popup and the file counter) is scoped to the current change's
+   * group (e.g. changelist or unversioned files). When disabled, navigation spans all changes.
+   */
+  @JvmStatic
+  fun isScopeNavigationToGroupEnabled(): Boolean = Registry.`is`("vcs.diff.preview.scope.navigation.to.group", true)
 }
