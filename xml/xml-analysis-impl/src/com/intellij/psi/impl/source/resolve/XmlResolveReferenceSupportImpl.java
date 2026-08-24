@@ -26,7 +26,7 @@ public class XmlResolveReferenceSupportImpl implements XmlResolveReferenceSuppor
   }
 
   @Override
-  public @Nullable XmlEntityDecl resolveReference(XmlEntityRef element, PsiFile targetFile) {
+  public @Nullable XmlEntityDecl resolveReference(@NotNull XmlEntityRef element, PsiFile targetFile) {
     return XmlEntityRefUtil.resolveEntity(element, targetFile);
   }
 

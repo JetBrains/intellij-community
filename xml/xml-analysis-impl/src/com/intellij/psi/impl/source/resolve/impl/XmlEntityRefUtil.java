@@ -38,7 +38,7 @@ public final class XmlEntityRefUtil {
   private static final @NonNls String GT_ENTITY = "&gt;";
   private static final @NonNls String QUOT_ENTITY = "&quot;";
 
-  public static @Nullable XmlEntityDecl resolveEntity(XmlEntityRef element, PsiFile targetFile) {
+  public static @Nullable XmlEntityDecl resolveEntity(@NotNull XmlEntityRef element, PsiFile targetFile) {
     String text = element.getText();
     if (text.equals(GT_ENTITY) || text.equals(QUOT_ENTITY)) return null;
     return resolveEntity(element, text, targetFile);
