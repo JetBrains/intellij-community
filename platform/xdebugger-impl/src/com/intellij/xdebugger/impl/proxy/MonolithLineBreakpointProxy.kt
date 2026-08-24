@@ -51,12 +51,6 @@ internal class MonolithLineBreakpointProxy @Deprecated("Use breakpoint.asProxy()
     return XLineBreakpointHighlighterRange.Available(range)
   }
 
-  override fun isTemporary(): Boolean = breakpoint.isTemporary
-
-  override fun setTemporary(isTemporary: Boolean) {
-    breakpoint.isTemporary = isTemporary
-  }
-
   override fun updateIcon() {
     breakpoint.clearIcon()
   }

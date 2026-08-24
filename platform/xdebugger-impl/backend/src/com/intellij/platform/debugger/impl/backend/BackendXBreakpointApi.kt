@@ -19,7 +19,6 @@ import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
 import com.intellij.xdebugger.evaluation.EvaluationMode
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
@@ -110,7 +109,7 @@ internal class BackendXBreakpointApi : XBreakpointApi {
   }
 
   override suspend fun setTemporary(breakpointId: XBreakpointId, requestId: Long, isTemporary: Boolean) {
-    val breakpoint = breakpointId.findValue() as? XBreakpointBase<*, *, *> ?: return
+    val breakpoint = breakpointId.findValue() ?: return
     breakpoint.setTemporary(requestId, isTemporary)
   }
 

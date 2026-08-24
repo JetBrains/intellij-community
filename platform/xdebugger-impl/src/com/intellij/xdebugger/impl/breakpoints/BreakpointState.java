@@ -52,7 +52,6 @@ public class BreakpointState {
     myEnabled = enabled;
   }
 
-  @Tag("temporary")
   public boolean isTemporary() {
     return myTemporary;
   }

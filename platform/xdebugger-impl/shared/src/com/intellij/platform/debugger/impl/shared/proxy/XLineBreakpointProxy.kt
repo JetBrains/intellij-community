@@ -8,9 +8,6 @@ import org.jetbrains.annotations.ApiStatus
 interface XLineBreakpointProxy : XBreakpointProxy, XLightLineBreakpointProxy {
   override val type: XLineBreakpointTypeProxy
 
-  override fun isTemporary(): Boolean
-  override fun setTemporary(isTemporary: Boolean)
-
   fun setFileUrl(url: String)
   fun getFileUrl(): String
   fun setLine(line: Int)

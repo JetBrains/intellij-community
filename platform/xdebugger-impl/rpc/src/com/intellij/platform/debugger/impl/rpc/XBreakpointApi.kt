@@ -119,7 +119,6 @@ data class XBreakpointDtoState(
 @ApiStatus.Internal
 @Serializable
 data class XLineBreakpointInfo(
-  val isTemporary: Boolean,
   val line: Int,
   val fileUrl: String,
   val placement: XLineBreakpointVerticalPlacement,
