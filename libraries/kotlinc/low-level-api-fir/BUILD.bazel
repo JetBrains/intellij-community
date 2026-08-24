@@ -14,10 +14,10 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-kotlinc-low-level-api-fir-kotlinc-low-level-api-fir"],
+    exports = ["@lib//:kotlinc-low-level-api-fir"],
     runtime_deps = [
         # do not sort,
-        "@lib//:libraries-kotlinc-low-level-api-fir-kotlinc-low-level-api-fir",
+        "@lib//:kotlinc-low-level-api-fir",
         "//platform/backend",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
@@ -40,7 +40,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.kotlinc.low.level.api.fir",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-kotlinc-low-level-api-fir-kotlinc-low-level-api-fir"],
+    exports = ["@lib//:kotlinc-low-level-api-fir"],
     runtime_deps = [
         # do not sort,
         ":libraries-kotlinc-low-level-api-fir",

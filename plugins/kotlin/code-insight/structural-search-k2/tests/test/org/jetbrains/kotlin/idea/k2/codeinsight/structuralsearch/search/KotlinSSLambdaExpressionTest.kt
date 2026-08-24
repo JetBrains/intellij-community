@@ -35,7 +35,7 @@ class KotlinSSLambdaExpressionTest : KotlinStructuralSearchTest() {
         @Target(AnnotationTarget.FUNCTION)
         annotation class Ann
 
-        fun annotatedLambda() = <warning descr="SSR">@Ann { println() }</warning>
+        fun annotatedLambda() = <warning descr="SSR"><warning descr="[RUNTIME_ANNOTATION_ON_LAMBDA_IS_NOT_RETAINED]">@Ann</warning> { println() }</warning>
         fun notAnnotatedLambda() = { println() }
     """.trimIndent()) }
 }

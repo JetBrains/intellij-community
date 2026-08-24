@@ -11,7 +11,7 @@ UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identif
     UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = x) -> SymbolLightValueParameter: x
     UReturnExpression -> USimpleNameReferenceExpression (identifier = privateProp) -> SymbolLightFieldForProperty of SymbolLightClassForClassOrObject: privateProp
     UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to SymbolLightConstructor of SymbolLightClassForClassOrObject) -> USimpleNameReferenceExpression (identifier = A) -> SymbolLightConstructor of SymbolLightClassForClassOrObject: A
-    UPrefixExpression (operator = -) -> USimpleNameReferenceExpression (identifier = -) -> FUN: unaryMinus
+    UPrefixExpression (operator = -) -> USimpleNameReferenceExpression (identifier = -) -> FUNCTION: unaryMinus
     UPrefixExpression (operator = -) -> UQualifiedReferenceExpression -> SymbolLightAccessorMethod of SymbolLightClassForClassOrObject: getMutableProp
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = a) -> LightVariableBuilder:a: a
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = mutableProp) -> SymbolLightAccessorMethod of SymbolLightClassForClassOrObject: getMutableProp
@@ -22,25 +22,25 @@ UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identif
     UBinaryExpression (operator = +=) -> UQualifiedReferenceExpression -> SymbolLightAccessorMethod of SymbolLightClassForClassOrObject: setMutableProp
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = a) -> LightVariableBuilder:a: a
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = mutableProp) -> SymbolLightAccessorMethod of SymbolLightClassForClassOrObject: setMutableProp
-    UBinaryExpression (operator = +=) -> USimpleNameReferenceExpression (identifier = +=) -> FUN: plus
+    UBinaryExpression (operator = +=) -> USimpleNameReferenceExpression (identifier = +=) -> FUNCTION: plus
     UBinaryExpression (operator = +=) -> USimpleNameReferenceExpression (identifier = x) -> LightVariableBuilder:x: x
-    UPrefixExpression (operator = ++) -> USimpleNameReferenceExpression (identifier = ++) -> FUN: inc
+    UPrefixExpression (operator = ++) -> USimpleNameReferenceExpression (identifier = ++) -> FUNCTION: inc
     UPrefixExpression (operator = ++) -> UQualifiedReferenceExpression -> SymbolLightAccessorMethod of SymbolLightClassForClassOrObject: setMutableProp
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = a) -> LightVariableBuilder:a: a
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = mutableProp) -> SymbolLightAccessorMethod of SymbolLightClassForClassOrObject: setMutableProp
     UPostfixExpression (operator = --) -> UQualifiedReferenceExpression -> SymbolLightAccessorMethod of SymbolLightClassForClassOrObject: setMutableProp
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = a) -> LightVariableBuilder:a: a
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = mutableProp) -> SymbolLightAccessorMethod of SymbolLightClassForClassOrObject: setMutableProp
-    UPostfixExpression (operator = --) -> USimpleNameReferenceExpression (identifier = --) -> FUN: dec
+    UPostfixExpression (operator = --) -> USimpleNameReferenceExpression (identifier = --) -> FUNCTION: dec
 UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> SymbolLightClassForClassOrObject: A
-    UPrefixExpression (operator = -) -> USimpleNameReferenceExpression (identifier = -) -> FUN: unaryMinus
+    UPrefixExpression (operator = -) -> USimpleNameReferenceExpression (identifier = -) -> FUNCTION: unaryMinus
     UPrefixExpression (operator = -) -> USimpleNameReferenceExpression (identifier = mutableProp) -> SymbolLightAccessorMethod of SymbolLightClassForClassOrObject: getMutableProp
     UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = mutableProp) -> SymbolLightAccessorMethod of SymbolLightClassForClassOrObject: setMutableProp
     UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = =) -> null: null
     UBinaryExpression (operator = +=) -> USimpleNameReferenceExpression (identifier = mutableProp) -> SymbolLightAccessorMethod of SymbolLightClassForClassOrObject: setMutableProp
-    UBinaryExpression (operator = +=) -> USimpleNameReferenceExpression (identifier = +=) -> FUN: plus
+    UBinaryExpression (operator = +=) -> USimpleNameReferenceExpression (identifier = +=) -> FUNCTION: plus
     UBinaryExpression (operator = +=) -> USimpleNameReferenceExpression (identifier = x) -> LightVariableBuilder:x: x
-    UPrefixExpression (operator = ++) -> USimpleNameReferenceExpression (identifier = ++) -> FUN: inc
+    UPrefixExpression (operator = ++) -> USimpleNameReferenceExpression (identifier = ++) -> FUNCTION: inc
     UPrefixExpression (operator = ++) -> USimpleNameReferenceExpression (identifier = mutableProp) -> SymbolLightAccessorMethod of SymbolLightClassForClassOrObject: setMutableProp
     UPostfixExpression (operator = --) -> USimpleNameReferenceExpression (identifier = mutableProp) -> SymbolLightAccessorMethod of SymbolLightClassForClassOrObject: setMutableProp
-    UPostfixExpression (operator = --) -> USimpleNameReferenceExpression (identifier = --) -> FUN: dec
+    UPostfixExpression (operator = --) -> USimpleNameReferenceExpression (identifier = --) -> FUNCTION: dec
