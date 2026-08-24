@@ -1,0 +1,49 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.libraries.sqlite` start
+jvm_library(
+    name = "sqlite",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.sqlite",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-sqlite-sqlite"],
+    runtime_deps = ["@lib//:libraries-sqlite-sqlite"],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-sqlite-sqlite"],
+    module = ":sqlite",
+)
+
+jvm_library(
+    name = "sqlite_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.sqlite",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-sqlite-sqlite"],
+    runtime_deps = [":sqlite"],
+)
+### auto-generated section `build intellij.libraries.sqlite` end
+
+### auto-generated section `iml intellij.libraries.sqlite` start
+exports_files(
+    [
+        "intellij.libraries.sqlite.iml",
+        "resources/intellij.libraries.sqlite.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.sqlite` end

@@ -67,6 +67,8 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
     // Content modules
     module("intellij.platform.ide.newUiOnboarding")
     module("intellij.ide.startup.importSettings")
+    // the sqlite JDBC driver `importSettings` needs; private, so plugins bundle their own copy of it
+    privateModule("intellij.libraries.sqlite")
 
     // Module sets
     moduleSet(CommunityModuleSets.ideCommon())

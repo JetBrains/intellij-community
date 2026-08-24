@@ -15052,6 +15052,21 @@ jvm_import(
 )
 
 copy_file(
+    name = "org.xerial/sqlite-jdbc-3.53.2.1.jar_copy",
+    src = "@org_xerial-sqlite-jdbc-3_53_2_1_http//file",
+    out = "org.xerial/sqlite-jdbc-3.53.2.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-sqlite-sqlite",
+    jar = "@org_xerial-sqlite-jdbc-3_53_2_1_http//file",
+    source_jar = "@org_xerial-sqlite-jdbc-3_53_2_1-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "org.apache.sshd/sshd-osgi-2.15.0.jar_copy",
     src = "@org_apache_sshd-sshd-osgi-2_15_0_http//file",
     out = "org.apache.sshd/sshd-osgi-2.15.0.jar",
@@ -21295,21 +21310,6 @@ jvm_import(
     name = "slf4j-jdk14",
     jar = "@org_slf4j-slf4j-jdk14-2_0_13_http//file",
     source_jar = "@org_slf4j-slf4j-jdk14-2_0_13-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.xerial/sqlite-jdbc-3.53.2.1.jar_copy",
-    src = "@org_xerial-sqlite-jdbc-3_53_2_1_http//file",
-    out = "org.xerial/sqlite-jdbc-3.53.2.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "sqlite",
-    jar = "@org_xerial-sqlite-jdbc-3_53_2_1_http//file",
-    source_jar = "@org_xerial-sqlite-jdbc-3_53_2_1-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

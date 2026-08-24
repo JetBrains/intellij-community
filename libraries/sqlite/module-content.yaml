@@ -1,9 +1,6 @@
-- name: lib/intellij.libraries.sqlite.jar
-  contentModules:
+- name: dist.all/lib/intellij.libraries.sqlite.jar
+  modules:
   - name: intellij.libraries.sqlite
     libraries:
       sqlite:
       - name: $MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3/sqlite-jdbc-3.jar
-- name: lib/vcs-svn.jar
-  modules:
-  - name: intellij.vcs.svn

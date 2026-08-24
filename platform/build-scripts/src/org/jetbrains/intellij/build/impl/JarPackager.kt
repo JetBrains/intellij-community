@@ -147,8 +147,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "org.scilab.forge:jlatexmath",
   "package-search-api-client",
   "software.amazon.awssdk.glue",
-  // see the comment for `flexmark`
-  "sqlite",
   "sqlite-native",
   "squareup.okio.jvm",
   // declared by the android plugin layout, so the Rider android plugin needs its own copy

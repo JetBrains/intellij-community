@@ -108,17 +108,20 @@ class ModuleSetBuilder(private val defaultIncludeDependencies: Boolean = false) 
 
   /**
    * Add a single module.
+   *
+   * Module-set members are always in the shared `jetbrains` namespace: [buildModuleSetXml] emits a single
+   * `<content namespace="jetbrains">` block. A module set therefore cannot hold a private module - use
+   * `ProductModulesContentSpecBuilder.privateModule` in a product or plugin spec for that.
    */
   fun module(
     name: String,
-    namespace: String? = PluginModuleId.DEFAULT_NAMESPACE,
     loading: ModuleLoadingRuleValue = ModuleLoadingRuleValue.OPTIONAL,
     requiredIfAvailable: PluginModuleId? = null,
     allowedMissingPluginIds: List<String> = emptyList(),
   ) {
     modules.add(
       ContentModule(
-        moduleId = PluginModuleId(name, namespace),
+        moduleId = PluginModuleId(name, PluginModuleId.DEFAULT_NAMESPACE),
         loading = loading,
         requiredIfAvailable = requiredIfAvailable,
         includeDependencies = defaultIncludeDependencies,
@@ -130,10 +133,10 @@ class ModuleSetBuilder(private val defaultIncludeDependencies: Boolean = false) 
   /**
    * Add a single module with EMBEDDED loading.
    */
-  fun embeddedModule(name: String, namespace: String? = PluginModuleId.DEFAULT_NAMESPACE, allowedMissingPluginIds: List<String> = emptyList()) {
+  fun embeddedModule(name: String, allowedMissingPluginIds: List<String> = emptyList()) {
     modules.add(
       ContentModule(
-        moduleId = PluginModuleId(name, namespace),
+        moduleId = PluginModuleId(name, PluginModuleId.DEFAULT_NAMESPACE),
         loading = ModuleLoadingRuleValue.EMBEDDED,
         includeDependencies = defaultIncludeDependencies,
         allowedMissingPluginIds = allowedMissingPluginIds.map { PluginId(it) },
@@ -144,10 +147,10 @@ class ModuleSetBuilder(private val defaultIncludeDependencies: Boolean = false) 
   /**
    * Add a single module with REQUIRED loading.
    */
-  fun requiredModule(name: String, namespace: String? = PluginModuleId.DEFAULT_NAMESPACE, allowedMissingPluginIds: List<String> = emptyList()) {
+  fun requiredModule(name: String, allowedMissingPluginIds: List<String> = emptyList()) {
     modules.add(
       ContentModule(
-        moduleId = PluginModuleId(name, namespace),
+        moduleId = PluginModuleId(name, PluginModuleId.DEFAULT_NAMESPACE),
         loading = ModuleLoadingRuleValue.REQUIRED,
         includeDependencies = defaultIncludeDependencies,
         allowedMissingPluginIds = allowedMissingPluginIds.map { PluginId(it) },

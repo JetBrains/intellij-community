@@ -57,7 +57,7 @@ jvm_library(
         "//libraries/kotlinx/serialization/json",
         "//libraries/kotlinx/serialization/core",
         "//libraries/jna",
-        "@lib//:sqlite",
+        "//libraries/sqlite",
         "//libraries/classgraph",
         "//platform/util:util-ui",
         "//platform/lang-impl",
@@ -70,10 +70,7 @@ jvm_library(
     ],
 )
 
-content_module_jar(
-    libraries = ["@lib//:sqlite"],
-    module = ":importSettings",
-)
+content_module_jar(module = ":importSettings")
 
 jvm_library(
     name = "importSettings_test_lib",
@@ -114,6 +111,7 @@ jvm_library(
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/jna:jna_test_lib",
+        "//libraries/sqlite:sqlite_test_lib",
         "//libraries/classgraph:classgraph_test_lib",
         "//platform/util:util-ui_test_lib",
         "//platform/testFramework",
@@ -229,7 +227,8 @@ jvm_library(
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/jna",
         "//libraries/jna:jna_test_lib",
-        "@lib//:sqlite",
+        "//libraries/sqlite",
+        "//libraries/sqlite:sqlite_test_lib",
         "//libraries/classgraph",
         "//libraries/classgraph:classgraph_test_lib",
         "//platform/util:util-ui",

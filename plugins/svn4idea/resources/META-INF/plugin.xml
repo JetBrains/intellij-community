@@ -52,6 +52,14 @@
     <!-- The implicit main module of the plugin depends on internal modules (intellij.libraries.javax.activation), so it's required to set the namespace for it
          todo: extract elements and dependencies to an explicit content module (see IJPL-212351) -->
   </content>
+  <!-- Library wrapper module used only by this plugin. The <content> tag has no 'namespace' attribute on purpose:
+       that registers the module in this plugin's implicit private namespace, so other plugins may bundle their own
+       copy without a runtime module ID clash. loading="embedded" is required because SvnUtil resolves the driver
+       reflectively (Class.forName("org.sqlite.JDBC")) from intellij.vcs.svn, the implicit main module, so the classes
+       must be on the plugin's main classloader. -->
+  <content>
+    <module name="intellij.libraries.sqlite" loading="embedded"/>
+  </content>
 
   <actions>
     <action id="Subversion.ImportToSVNRepository" class="org.jetbrains.idea.svn.actions.ImportToRepositoryAction">

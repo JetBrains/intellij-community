@@ -356,6 +356,30 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
   }
 
   /**
+   * Add a private module: a module registered in this spec's implicit namespace instead of the shared `jetbrains` one.
+   *
+   * Use it for library wrapper modules (`visibility="private"` descriptors) that only a closed set of consumers needs.
+   * Every owner declares its own copy, and the implicit namespace keeps those copies from clashing at runtime, so the
+   * module does not have to be added to a shared module set to be reachable.
+   *
+   * Note that a module set cannot express this - [ModuleSetBuilder] always emits `<content namespace="jetbrains">` -
+   * so a private module belongs in a product or plugin spec.
+   */
+  fun privateModule(name: String, allowedMissingPluginIds: List<String> = emptyList()) {
+    module(name, namespace = null, allowedMissingPluginIds = allowedMissingPluginIds)
+  }
+
+  /**
+   * Add a private module (see [privateModule]) with EMBEDDED loading.
+   *
+   * Needed when the consumer reaches the library from the main classloader - for example a plain module packed into the
+   * plugin jar, or code that resolves classes reflectively - rather than through its own declared dependency.
+   */
+  fun embeddedPrivateModule(name: String, allowedMissingPluginIds: List<String> = emptyList()) {
+    embeddedModule(name, namespace = null, allowedMissingPluginIds = allowedMissingPluginIds)
+  }
+
+  /**
    * Add an individual module with EMBEDDED loading to additionalModules.
    *
    * @param allowedMissingPluginIds Plugin IDs that are allowed to be missing for auto-added dependencies

@@ -18,5 +18,8 @@
     <module name="intellij.ide.startup.importSettings"/>
     <module name="intellij.platform.remoteServers.impl" loading="embedded"/>
   </content>
+  <content>
+    <module name="intellij.libraries.sqlite"/>
+  </content>
   <!-- endregion -->
 </idea-plugin>

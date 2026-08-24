@@ -212,6 +212,8 @@ fun intellijCommunityBaseFragment(platformPrefix: String? = null): ProductModule
   module("intellij.platform.ide.newUiOnboarding")
   module("intellij.platform.ide.newUsersOnboarding")
   module("intellij.ide.startup.importSettings")
+  // the sqlite JDBC driver `importSettings` needs; private, so plugins bundle their own copy of it
+  privateModule("intellij.libraries.sqlite")
   module("intellij.platform.customization.min")
   module("intellij.idea.customization.base")
   module("intellij.idea.customization.backend")

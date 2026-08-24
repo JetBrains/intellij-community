@@ -621,6 +621,7 @@ libraries/semver4j
 libraries/skiko
 libraries/snakeyaml
 libraries/snakeyaml-engine
+libraries/sqlite
 libraries/sshd-osgi
 libraries/sshj
 libraries/stream

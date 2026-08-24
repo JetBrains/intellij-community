@@ -38,5 +38,8 @@
     <module name="intellij.platform.ide.nonModalWelcomeScreen.frontend"/>
     <module name="intellij.platform.ide.nonModalWelcomeScreen.backend"/>
   </content>
+  <content>
+    <module name="intellij.libraries.sqlite"/>
+  </content>
   <!-- endregion -->
 </idea-plugin>

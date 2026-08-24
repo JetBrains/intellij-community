@@ -197,6 +197,8 @@ class MPSProperties : JetBrainsProductProperties() {
 
         module("intellij.platform.whatsNew")
         module("intellij.ide.startup.importSettings")
+        // the sqlite JDBC driver `importSettings` needs; private, so plugins bundle their own copy of it
+        privateModule("intellij.libraries.sqlite")
 
         module("intellij.platform.customization.min")
         module("intellij.idea.customization.base")

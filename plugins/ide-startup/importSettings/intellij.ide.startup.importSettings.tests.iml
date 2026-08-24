@@ -56,7 +56,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jna" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="sqlite" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.sqlite" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.classgraph" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />

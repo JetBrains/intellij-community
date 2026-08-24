@@ -12034,6 +12034,20 @@ http_file(
 )
 
 http_file(
+    name = "org_xerial-sqlite-jdbc-3_53_2_1_http",
+    downloaded_file_path = "sqlite-jdbc-3.53.2.1.jar",
+    sha256 = "f55e405ed96d5ffe629e05b7b51b059e1c7d64527c0cc90a972fbac06730ccc1",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.53.2.1/sqlite-jdbc-3.53.2.1.jar",
+)
+
+http_file(
+    name = "org_xerial-sqlite-jdbc-3_53_2_1-sources_http",
+    downloaded_file_path = "sqlite-jdbc-3.53.2.1-sources.jar",
+    sha256 = "b391339a7928f148bc489506cef28a35a2c6400c661f8f936583732008c4d017",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.53.2.1/sqlite-jdbc-3.53.2.1-sources.jar",
+)
+
+http_file(
     name = "org_apache_sshd-sshd-osgi-2_15_0_http",
     downloaded_file_path = "sshd-osgi-2.15.0.jar",
     sha256 = "3c8a183f81e176d9c452c9bb94007574bc8188446b4fc98b527aa79074cd0dda",
@@ -16735,20 +16749,6 @@ http_file(
     downloaded_file_path = "slf4j-jdk14-2.0.13-sources.jar",
     sha256 = "8bd6a94a7f610ea9f0180f8b6832bd8b4398f123bea8ad8febe00c36c49e1d1e",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/slf4j/slf4j-jdk14/2.0.13/slf4j-jdk14-2.0.13-sources.jar",
-)
-
-http_file(
-    name = "org_xerial-sqlite-jdbc-3_53_2_1_http",
-    downloaded_file_path = "sqlite-jdbc-3.53.2.1.jar",
-    sha256 = "f55e405ed96d5ffe629e05b7b51b059e1c7d64527c0cc90a972fbac06730ccc1",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.53.2.1/sqlite-jdbc-3.53.2.1.jar",
-)
-
-http_file(
-    name = "org_xerial-sqlite-jdbc-3_53_2_1-sources_http",
-    downloaded_file_path = "sqlite-jdbc-3.53.2.1-sources.jar",
-    sha256 = "b391339a7928f148bc489506cef28a35a2c6400c661f8f936583732008c4d017",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.53.2.1/sqlite-jdbc-3.53.2.1-sources.jar",
 )
 
 http_file(
