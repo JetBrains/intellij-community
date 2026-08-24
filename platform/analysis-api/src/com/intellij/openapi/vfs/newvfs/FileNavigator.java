@@ -23,6 +23,10 @@ public interface FileNavigator<F extends VirtualFile> {
 
   @Nullable F parentOf(@NotNull F file);
 
+  /**
+   * @return a child file with a given childName, or null, if a child can't be resolved for given childName;
+   *         (definition of 'resolved' is implementation-dependent)
+   */
   @Nullable F childOf(@NotNull F parent,
                       @NotNull String childName);
 

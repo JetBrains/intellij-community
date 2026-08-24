@@ -246,7 +246,12 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
             return child;
           }
         }
-        return new TransientVirtualFileImpl(childName, path, fileSystem, parent);
+        String childPath = parent.getPath() + '/' + childName;
+        TransientVirtualFileImpl child = new TransientVirtualFileImpl(childName, childPath, fileSystem, parent);
+        if (child.exists()) {
+          return child;
+        }
+        return null;
       }
     };
 

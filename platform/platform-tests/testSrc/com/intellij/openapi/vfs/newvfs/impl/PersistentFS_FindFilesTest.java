@@ -2,6 +2,8 @@
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.FileNavigator;
@@ -36,6 +38,7 @@ import java.util.function.BiConsumer;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -47,6 +50,8 @@ public class PersistentFS_FindFilesTest {
 
   private static final int MAX_FILES_TO_TRIAL = 1_000_000;
 
+  @TempDir
+  Path tempDir;
 
   @BeforeAll
   static void createSymlinkToChallengeSymlinkProcessingBranches(@TempDir Path tempDir) throws IOException {
@@ -186,6 +191,54 @@ public class PersistentFS_FindFilesTest {
         () -> ".findCachedOrTransientFileByPath( " + fileSystem + ", file.getPath(=" + path + ") ) should resolve to the file itself"
       );
     });
+  }
+
+  @Test
+  void findFileByPathWithoutCaching_preservesTransientParentPaths() throws IOException {
+    Path filePath = tempDir.resolve("uncached-parent/uncached-child/file.txt");
+    Files.createDirectories(filePath.getParent());
+    Files.writeString(filePath, "content");
+
+    NewVirtualFile root = (NewVirtualFile)VirtualFileManager.getInstance().refreshAndFindFileByNioPath(tempDir);
+    assertNotNull(root, "The temporary directory must be available as a VFS root for the cache-avoiding lookup");
+    assertNull(root.findChildIfCached("uncached-parent"), "The first path segment must not be cached before the lookup");
+
+    NewVirtualFileSystem fileSystem = root.getFileSystem();
+    FileNavigator.NavigateResult<VirtualFile> result = NewVirtualFileSystem.findCachedOrTransientFileByPath(
+      fileSystem, FileUtilRt.toSystemIndependentName(filePath.toString())
+    );
+    VirtualFile file = result.resolvedFileOr(null);
+    assertNotNull(file, "The existing file must be resolved without caching its path");
+
+    VirtualFile parent = file.getParent();
+    assertNotNull(parent, "The resolved file must retain its transient parent");
+    assertEquals(
+      FileUtilRt.toSystemIndependentName(filePath.getParent().toString()), parent.getPath(),
+      "A transient parent must report the path of its own directory"
+    );
+    assertTrue(parent.isDirectory(), "The transient parent must be recognized as a directory");
+
+    VirtualFile grandParent = parent.getParent();
+    assertNotNull(grandParent, "The intermediate transient directory must retain its parent");
+    assertEquals(
+      FileUtilRt.toSystemIndependentName(filePath.getParent().getParent().toString()), grandParent.getPath(),
+      "Each transient path segment must report its own path"
+    );
+  }
+
+  @Test
+  void findFileByPathWithoutCaching_returnsNullForMissingFile() {
+    NewVirtualFile root = (NewVirtualFile)VirtualFileManager.getInstance().refreshAndFindFileByNioPath(tempDir);
+    assertNotNull(root, "The temporary directory must be available as a VFS root for the cache-avoiding lookup");
+    assertNull(root.findChildIfCached("missing-parent"), "The first missing path segment must not be cached before the lookup");
+
+    Path missingPath = tempDir.resolve("missing-parent/missing-child/file.txt");
+    NewVirtualFileSystem fileSystem = root.getFileSystem();
+    FileNavigator.NavigateResult<VirtualFile> result = NewVirtualFileSystem.findCachedOrTransientFileByPath(
+      fileSystem, FileUtilRt.toSystemIndependentName(missingPath.toString())
+    );
+
+    assertFalse(result.isResolved(), "A cache-avoiding lookup must not resolve a file that does not exist");
   }
 
   @Test
