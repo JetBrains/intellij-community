@@ -823,6 +823,41 @@
       <reference ref="OpenInAssociatedApplication"/>
     </group>
     <action id="WhatsNewAction" class="com.intellij.ide.actions.WhatsNewAction"/>
+    <group id="FileChooserToolbar">
+      <reference ref="FileChooser.GoBackward"/>
+      <reference ref="FileChooser.GoForward"/>
+      <reference ref="FileChooser.GoToParent"/>
+      <reference ref="FileChooser.GoToRoot"/>
+      <separator/>
+      <reference ref="FileChooser.GotoHome"/>
+      <reference ref="FileChooser.GoToWslHome"/>
+      <reference ref="FileChooser.GotoDesktop"/>
+      <reference ref="FileChooser.GotoProject"/>
+      <separator/>
+      <reference ref="FileChooser.NewFile"/>
+      <reference ref="FileChooser.NewFolder"/>
+      <reference ref="FileChooser.Delete"/>
+      <separator/>
+      <reference ref="FileChooser.Refresh"/>
+
+    </group>
+    <group id="FileChooserSettings">
+      <reference ref="FileChooser.ShowHidden"/>
+      <reference ref="FileChooser.TogglePathBar"/>
+      <reference ref="FileChooser.ToggleDetection"/>
+
+    </group>
+    <group id="OpenInBrowserEditorContextBarGroup" />
+    <group id="RemoveBom.Group">
+      <reference ref="RemoveBom"/>
+    </group>
+    <group id="AddBom.Group">
+      <reference ref="AddBom"/>
+    </group>
+    <group id="EncodingPanelActions">
+      <reference ref="RemoveBom"/>
+      <reference ref="AddBom"/>
+    </group>
   </actions>
   <actions resource-bundle="messages.WorkspaceModelIdeBundle">
     <action id="WorkspaceEntitiesJsonClipboard" internal="true"

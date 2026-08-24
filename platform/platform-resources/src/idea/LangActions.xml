@@ -105,21 +105,11 @@
       <add-to-group group-id="Copy.Paste.Special" anchor="after" relative-to-action="CopyReference"/>
     </reference>
 
-    <group id="ShowUsagesPinGroup"/>
+    <reference ref="ShowUsagesPinGroup"/>
 
-    <group id="FindUsagesMenuGroup" popup="true">
-      <reference ref="FindUsages"/>
-      <reference ref="ShowSettingsAndFindUsages"/>
-      <reference ref="ShowUsages"/>
-      <separator/>
-      <reference ref="FindUsagesInFile"/>
-      <reference ref="HighlightUsagesInFile"/>
-      <reference ref="GotoNextElementUnderCaretUsage"/>
-      <reference ref="GotoPrevElementUnderCaretUsage"/>
-      <reference ref="ShowRecentFindUsagesGroup"/>
-
+    <reference ref="FindUsagesMenuGroup">
       <add-to-group group-id="EditMenu" anchor="after" relative-to-action="FindMenuGroup"/>
-    </group>
+    </reference>
 
     <group id="EditSelectWordGroup">
       <reference ref="EditorSelectWord"/>
@@ -141,23 +131,11 @@
       <add-to-group group-id="ViewMenu" anchor="after" relative-to-action="ViewAppearanceGroup"/>
     </group>
 
-    <group id="Documentation.Navigation">
-      <reference ref="Documentation.Back"/>
-      <reference ref="Documentation.Forward"/>
-      <reference ref="Documentation.EditSource"/>
-
+    <reference ref="Documentation.Navigation">
       <add-to-group group-id="Other.KeymapGroup"/>
-    </group>
+    </reference>
     <reference ref="Documentation.ViewExternal"/>
-    <group id="Documentation.PrimaryGroup">
-      <!--
-      These actions are added to the context menu, to the popup menu, and to the toolbar.
-      This group should be used to register additional documentation actions.
-      -->
-      <reference ref="QuickDocCopy"/>
-      <reference ref="Documentation.Navigation"/>
-      <reference ref="Documentation.ViewExternal"/>
-    </group>
+    <reference ref="Documentation.PrimaryGroup"/>
     <reference ref="Documentation.ToggleShowInPopup"/>
     <reference ref="Documentation.ToggleAutoShow"/>
     <reference ref="Documentation.ToggleAutoUpdate"/>
@@ -218,11 +196,7 @@
       <reference ref="ShowFilePath">
         <add-to-group group-id="RevealGroup" anchor="last"/>
       </reference>
-      <group id="HierarchyGroup">
-        <reference ref="TypeHierarchy"/>
-        <reference ref="MethodHierarchy"/>
-        <reference ref="CallHierarchy"/>
-      </group>
+      <reference ref="HierarchyGroup"/>
       <separator/>
 
       <add-to-group group-id="GoToMenu" anchor="after" relative-to-action="NavigateInFileGroup"/>
@@ -243,16 +217,7 @@
     <reference ref="CodeFloatingToolbar.GotoPrevMenu"/>
     <reference ref="Floating.CodeToolbar.Disable"/>
 
-    <group id="InlineCompletion" popup="true">
-      <reference ref="CallInlineCompletionAction"/>
-      <reference ref="InsertInlineCompletionAction"/>
-      <reference ref="InsertInlineCompletionWordAction"/>
-      <reference ref="InsertInlineCompletionLineAction"/>
-      <reference ref="NextInlineCompletionSuggestionAction"/>
-      <reference ref="PrevInlineCompletionSuggestionAction"/>
-      <separator/>
-      <group id="InlineCompletion.Settings" popup="true" internal="true"/>
-    </group>
+    <reference ref="InlineCompletion"/>
 
     <group id="CodeMenu" popup="true">
       <reference ref="OverrideMethods"/>
@@ -540,19 +505,14 @@
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
     </group>
 
-    <group id="RemoveBom.Group">
-      <reference ref="RemoveBom"/>
+    <reference ref="RemoveBom.Group">
       <add-to-group group-id="FilePropertiesGroup" anchor="after" relative-to-action="ChangeFileEncodingAction"/>
-    </group>
-    <group id="AddBom.Group">
-      <reference ref="AddBom"/>
+    </reference>
+    <reference ref="AddBom.Group">
       <add-to-group group-id="FilePropertiesGroup" anchor="after" relative-to-action="RemoveBom.Group"/>
-    </group>
+    </reference>
 
-    <group id="EncodingPanelActions">
-      <reference ref="RemoveBom"/>
-      <reference ref="AddBom"/>
-    </group>
+    <reference ref="EncodingPanelActions"/>
 
     <group id="NavbarPopupMenu">
       <reference ref="WeighingNewGroup"/>
@@ -626,25 +586,11 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
-    <group id="Structure.ViewOptions" searchable="false" popup="true" icon="AllIcons.Actions.GroupBy"/>
-    <group id="StructureViewToolbar"/>
-    <group id="StructureViewFloatingToolbar" popup="true"/>
+    <reference ref="Structure.ViewOptions"/>
+    <reference ref="StructureViewToolbar"/>
+    <reference ref="StructureViewFloatingToolbar"/>
 
-    <group id="StructureViewPopupMenu">
-      <reference ref="EditSource"/>
-      <separator/>
-      <reference ref="FindUsages"/>
-      <reference ref="RenameElement"/>
-      <reference ref="RefactoringMenu"/>
-      <separator/>
-      <reference ref="CutCopyPasteGroup"/>
-      <separator/>
-      <reference ref="RunContextPopupGroup"/>
-      <reference ref="SplitRevealGroup"/>
-      <reference ref="VersionControlsGroup"/>
-      <separator/>
-      <reference ref="CompareTwoFiles"/>
-    </group>
+    <reference ref="StructureViewPopupMenu"/>
 
     <group id="EditorPopupMenu1.FindRefactor" compact="true">
       <reference ref="FindUsages"/>
@@ -697,25 +643,9 @@
       <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
     </group>
 
-    <group id="TreeNodeExclusion">
-      <reference ref="UsageView.Include"/>
-      <reference ref="UsageView.Exclude"/>
-    </group>
+    <reference ref="TreeNodeExclusion"/>
 
-    <group id="UsageView.Popup">
-      <reference ref="UsageView.Rerun"/>
-      <separator/>
-      <reference ref="EditSource"/>
-      <reference ref="OpenInRightSplit"/>
-      <reference ref="TreeNodeExclusion"/>
-      <reference ref="UsageView.Remove"/>
-      <separator/>
-      <reference ref="UsageView.ShowRecentFindUsages"/>
-      <separator/>
-      <reference ref="RunContextGroup"/>
-      <separator/>
-      <reference ref="ExportToTextFile"/>
-    </group>
+    <reference ref="UsageView.Popup"/>
 
     <reference ref="NewElementSamePlace"/>
 
@@ -733,45 +663,16 @@
     <reference ref="TypeHierarchy.Subtypes"/>
     <reference ref="TypeHierarchy.Supertypes"/>
 
-    <group id="TypeHierarchyPopupMenu">
-      <reference ref="TypeHierarchyBase.BaseOnThisType"/>
-      <reference ref="TypeHierarchy.Class"/>
-      <reference ref="TypeHierarchy.Subtypes"/>
-      <reference ref="TypeHierarchy.Supertypes"/>
-      <separator/>
-    </group>
+    <reference ref="TypeHierarchyPopupMenu"/>
 
-    <group id="MethodHierarchyPopupMenu">
-      <reference ref="MethodHierarchy.BaseOnThisMethod"/>
-    </group>
-    <group id="CallHierarchyPopupMenu">
-      <reference ref="CallHierarchy.BaseOnThisMethod"/>
-    </group>
+    <reference ref="MethodHierarchyPopupMenu"/>
+    <reference ref="CallHierarchyPopupMenu"/>
 
-    <group id="HierarchyPopupMenu.Common" searchable="false">
+    <reference ref="HierarchyPopupMenu.Common">
       <add-to-group group-id="TypeHierarchyPopupMenu"/>
       <add-to-group group-id="MethodHierarchyPopupMenu"/>
       <add-to-group group-id="CallHierarchyPopupMenu"/>
-
-      <reference ref="EditSource"/>
-      <separator/>
-      <reference ref="FindUsages"/>
-      <reference ref="RefactoringMenu"/>
-      <separator/>
-      <reference ref="RunContextPopupGroup"/>
-      <reference ref="SplitRevealGroup"/>
-      <separator/>
-      <reference ref="ReformatCode"/>
-      <reference ref="OptimizeImports"/>
-      <reference ref="$Delete"/>
-      <separator/>
-      <reference ref="VersionControlsGroup"/>
-      <separator/>
-      <reference ref="ExternalToolsGroup"/>
-      <separator/>
-      <reference ref="CompareTwoFiles"/>
-      <reference ref="CompareFileWithEditor"/>
-    </group>
+    </reference>
 
     <group id="EditorPopupMenuDebug">
       <separator/>
@@ -797,60 +698,19 @@
 
     <reference ref="JumpToColorsAndFonts"/>
 
-    <!-- Arrangement rules -->
-    <group id="ArrangementRulesGroup">
-      <reference ref="Arrangement.Rule.Add"/>
-      <reference ref="Arrangement.Rule.Section.Add"/>
-      <reference ref="Arrangement.Rule.Remove"/>
-      <reference ref="Arrangement.Rule.Edit"/>
-      <reference ref="Arrangement.Rule.Match.Condition.Move.Up"/>
-      <reference ref="Arrangement.Rule.Match.Condition.Move.Down"/>
-      <reference ref="Arrangement.Custom.Token.Rule.Edit"/>
-      <reference ref="Arrangement.Rule.Group.Condition.Move.Up"/>
-      <reference ref="Arrangement.Rule.Group.Condition.Move.Down"/>
-
-      <reference ref="Arrangement.Alias.Rule.Add"/>
-      <reference ref="Arrangement.Alias.Rule.Remove"/>
-      <reference ref="Arrangement.Alias.Rule.Edit"/>
-      <reference ref="Arrangement.Alias.Rule.Match.Condition.Move.Up"/>
-      <reference ref="Arrangement.Alias.Rule.Match.Condition.Move.Down"/>
-
+    <reference ref="ArrangementRulesGroup">
       <add-to-group group-id="Other.KeymapGroup"/>
-    </group>
+    </reference>
 
-    <group id="Arrangement.Alias.Rule.ToolBar">
-      <reference ref="Arrangement.Alias.Rule.Add"/>
-      <reference ref="Arrangement.Alias.Rule.Remove"/>
-      <reference ref="Arrangement.Alias.Rule.Match.Condition.Move.Up"/>
-      <reference ref="Arrangement.Alias.Rule.Match.Condition.Move.Down"/>
-    </group>
+    <reference ref="Arrangement.Alias.Rule.ToolBar"/>
 
-    <group id="Arrangement.Alias.Rule.Context.Menu">
-      <reference ref="Arrangement.Alias.Rule.Add"/>
-      <reference ref="Arrangement.Alias.Rule.Remove"/>
-      <reference ref="Arrangement.Alias.Rule.Edit"/>
-    </group>
+    <reference ref="Arrangement.Alias.Rule.Context.Menu"/>
 
-    <group id="Arrangement.Rule.Match.Control.Context.Menu">
-      <reference ref="Arrangement.Rule.Add"/>
-      <reference ref="Arrangement.Rule.Section.Add"/>
-      <reference ref="Arrangement.Rule.Remove"/>
-      <reference ref="Arrangement.Rule.Edit"/>
-    </group>
+    <reference ref="Arrangement.Rule.Match.Control.Context.Menu"/>
 
-    <group id="Arrangement.Rule.Match.Control.ToolBar">
-      <reference ref="Arrangement.Rule.Add"/>
-      <reference ref="Arrangement.Rule.Section.Add"/>
-      <reference ref="Arrangement.Rule.Remove"/>
-      <reference ref="Arrangement.Rule.Match.Condition.Move.Up"/>
-      <reference ref="Arrangement.Rule.Match.Condition.Move.Down"/>
-      <reference ref="Arrangement.Custom.Token.Rule.Edit"/>
-    </group>
+    <reference ref="Arrangement.Rule.Match.Control.ToolBar"/>
 
-    <group id="Arrangement.Rule.Group.Control.ToolBar">
-      <reference ref="Arrangement.Rule.Group.Condition.Move.Up"/>
-      <reference ref="Arrangement.Rule.Group.Condition.Move.Down"/>
-    </group>
+    <reference ref="Arrangement.Rule.Group.Control.ToolBar"/>
 
     <reference ref="SeverityEditorDialog"/>
 
@@ -929,44 +789,20 @@
     <reference ref="ToggleFileBasedIndexes"/>
     <reference ref="PauseScanningAndIndexing"/>
 
-    <group id="Internal.Dump" internal="true" popup="true">
-      <reference ref="DumpExtensions"/>
-      <reference ref="DumpInspectionDescriptions"/>
-      <reference ref="DumpIntentionsDescriptions"/>
-      <reference ref="ScanSourceCommentsAction"/>
-      <reference ref="DumpScreenConfiguration"/>
-      <reference ref="DumpIElementTypesAction"/>
-      <reference ref="DumpLoadedInspectionsAction"/>
-      <reference ref="DumpPluginDescriptorsAction"/>
-      <reference ref="DumpRunConfigurationTypesAction"/>
-      <reference ref="DumpFormattingModel"/>
-      <reference ref="CheckClassLoading"/>
-      <reference ref="DumpCodeStyleCache"/>
+    <reference ref="Internal.Dump">
       <add-to-group group-id="Internal" anchor="last"/>
-    </group>
+    </reference>
 
     <group id="Jcef.ContextMenuGroup" popup="true"/>
   </actions>
   <actions resource-bundle="messages.UsageViewBundle">
     <reference ref="UsageGrouping.ShortFilePath"/>
 
-    <group id="UsageGroupingActionGroup">
-      <reference ref="UsageGrouping.Module"/>
-      <reference ref="UsageGrouping.Scope"/>
-      <reference ref="UsageGrouping.Directory"/>
-      <reference ref="UsageGrouping.UsageType"/>
-      <reference ref="UsageGrouping.FlattenModules"/>
-      <reference ref="UsageGrouping.FileStructure"/>
-      <reference ref="UsageGrouping.DirectoryStructure"/>
+    <reference ref="UsageGroupingActionGroup">
       <add-to-group group-id="Other.KeymapGroup" anchor="last"/>
-    </group>
-    <group id="UsageFilteringActionGroup">
-      <reference ref="UsageFiltering.ReadAccess"/>
-      <reference ref="UsageFiltering.WriteAccess"/>
-      <reference ref="UsageFiltering.GeneratedCode"/>
-      <reference ref="UsageFiltering.Imports"/>
-      <reference ref="UsageFiltering.Comments"/>
+    </reference>
+    <reference ref="UsageFilteringActionGroup">
       <add-to-group group-id="Other.KeymapGroup" anchor="after" relative-to-action="UsageGroupingActionGroup"/>
-    </group>
+    </reference>
   </actions>
 </idea-plugin>

@@ -44,5 +44,49 @@
     <action id="SwapSidesInDiffWindow" class="com.intellij.diff.actions.impl.SwapDiffSidesAction" icon="AllIcons.Actions.SwapPanels"/>
     <action id="ToggleThreeSideInBlankDiffWindow" class="com.intellij.diff.actions.BlankToggleThreeSideModeAction"/>
     <action id="SwapThreeWayColorModeInDiffWindow" class="com.intellij.diff.actions.impl.SwapThreeWayColorModeAction"/>
+    <group id="Diff.EditorPopupMenu">
+      <reference ref="CompareClipboardWithSelection"/>
+    </group>
+    <group id="Diff.ViewerPopupMenu"/>
+    <group id="Diff.ViewerToolbar"/>
+    <group id="Diff.DiffModes"/>
+    <group id="Diff.ViewerSettings"/>
+    <group id="Diff.EditorGutterPopupMenu">
+      <group id="Diff.EditorGutterPopupMenu.EditorSettings"/>
+    </group>
+    <group id="Diff.Binary.Settings" popup="true" icon="AllIcons.General.GearPlain" searchable="false"/>
+    <group id="DirDiffMenu">
+      <reference ref="DirDiffMenu.SynchronizeDiff"/>
+      <reference ref="DirDiffMenu.SynchronizeDiff.All"/>
+      <group id="DirDiffOperationsMenu" compact="true">
+        <separator/>
+        <reference ref="DirDiffMenu.SetCopyToRight"/>
+        <reference ref="DirDiffMenu.SetCopyToLeft"/>
+        <reference ref="DirDiffMenu.SetDelete"/>
+        <reference ref="DirDiffMenu.SetNoOperation"/>
+        <separator/>
+        <reference ref="DirDiffMenu.MirrorToRight"/>
+        <reference ref="DirDiffMenu.MirrorToLeft"/>
+        <separator/>
+        <reference ref="DirDiffMenu.Exclude"/>
+        <reference ref="DirDiffMenu.SetDefault"/>
+        <reference ref="DirDiffMenu.WarnOnDeletion"/>
+      </group>
+      <separator/>
+      <reference ref="DirDiffMenu.EnableLeft"/>
+      <reference ref="DirDiffMenu.EnableRight"/>
+      <reference ref="DirDiffMenu.EnableEqual"/>
+      <reference ref="DirDiffMenu.EnableNotEqual"/>
+      <separator/>
+      <reference ref="DirDiffMenu.CompareNewFilesWithEachOtherAction"/>
+      <reference ref="DirDiffMenu.CancelComparingNewFilesWithEachOther"/>
+    </group>
+    <group id="BlankDiffViewerEditorPopupMenu">
+      <reference ref="OpenBlankEditorInBlankDiffWindow"/>
+      <reference ref="OpenFileEditorInBlankDiffWindow"/>
+      <reference ref="OpenRecentEditorInBlankDiffWindow"/>
+      <reference ref="ToggleThreeSideInBlankDiffWindow"/>
+
+    </group>
   </actions>
 </idea-plugin>

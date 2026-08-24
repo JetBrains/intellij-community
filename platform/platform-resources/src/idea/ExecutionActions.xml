@@ -14,14 +14,9 @@
       <add-to-group group-id="WelcomeScreen.Configure" anchor="before" relative-to-action="WelcomeScreen.Configure.Import"/>
     </reference>
 
-    <group id="ExecutionTargets.Additional" searchable="false"/>
+    <reference ref="ExecutionTargets.Additional"/>
 
-    <group id="RunToolbarSlotContextMenuGroup" popup="false">
-      <reference ref="RunToolbarMoveToTopAction"/>
-      <reference ref="RunToolbarEditConfigurationAction"/>
-      <reference ref="RunToolbarRemoveSlotAction"/>
-      <reference ref="RunToolbarShowToolWindowTab"/>
-    </group>
+    <reference ref="RunToolbarSlotContextMenuGroup"/>
 
     <group id="RunToolbarActionsGroup" popup="false">
       <reference ref="RunToolbarProcessStartedAction"/>
@@ -52,22 +47,18 @@
 
     <reference ref="RunToolbarRollbackToPrevious"/>
 
-    <group id="RunTab.TopToolbar.Old"/>
-    <group id="RunTab.TopToolbar"/>
+    <reference ref="RunTab.TopToolbar.Old"/>
+    <reference ref="RunTab.TopToolbar"/>
 
-    <!-- New UI Run Widget -->
-    <group id="AdditionalRunningOptionsGroup" popup="false"/>
-    <group id="AdditionalRunningOptionsGroupMain" popup="false"/>
+    <reference ref="AdditionalRunningOptionsGroup"/>
+    <reference ref="AdditionalRunningOptionsGroupMain"/>
 
     <reference ref="RunConfiguration"/>
     <reference ref="ChooseRunConfiguration"/>
     <reference ref="ChooseDebugConfiguration"/>
     <reference ref="CreateRunConfiguration"/>
 
-    <group id="RunConfiguration.Group">
-      <reference ref="SaveTemporaryRunConfiguration"/>
-      <reference ref="DeleteRunConfiguration"/>
-    </group>
+    <reference ref="RunConfiguration.Group"/>
 
     <group id="RunContextGroup" popup="false">
       <group id="RunContextGroupInner">
@@ -82,17 +73,11 @@
       <separator/>
     </group>
 
-    <group id="RunContextPopupGroup" popup="false">
-      <reference ref="RunContextGroup"/>
-    </group>
+    <reference ref="RunContextPopupGroup"/>
 
-    <group id="ProjectViewPopupMenuRunGroup">
-      <reference ref="RunContextPopupGroup"/>
-    </group>
+    <reference ref="ProjectViewPopupMenuRunGroup"/>
 
-    <group id="RunLineMarkerExtraActions">
-      <reference ref="CreateRunConfiguration"/>
-    </group>
+    <reference ref="RunLineMarkerExtraActions"/>
 
     <reference ref="Rerun">
       <add-to-group group-id="RunTab.TopToolbar"/>
@@ -141,93 +126,30 @@
     <reference ref="AllRunConfigurationsToggle"/>
     <reference ref="RunConfigurationsActionGroup"/>
 
-    <group id="ExecutionTargetsToolbarGroup" searchable="false" popup="false">
-      <reference ref="ExecutionTargets"/>
+    <reference ref="ExecutionTargetsToolbarGroup">
       <add-to-group group-id="MainToolbarRight" anchor="before" relative-to-action="NewUiRunWidget"/>
-    </group>
+    </reference>
 
-    <!--region Main Toolbar -->
-    <group id="ToolbarRunGroup">
-      <reference ref="RunConfiguration"/>
-      <reference ref="RunnerActions"/>
-      <reference ref="Stop"/>
+    <reference ref="ToolbarRunGroup">
       <add-to-group group-id="MainToolBar" relative-to-action="Forward" anchor="after"/>
-    </group>
+    </reference>
     <!--endregion-->
 
     <reference ref="EditBreakpoint"/>
-    <group id="Resume.Ref">
-      <reference ref="Resume"/>
-    </group>
-    <group id="Pause.Ref">
-      <reference ref="Pause"/>
-    </group>
-    <group id="StepOver.Ref">
-      <reference ref="StepOver"/>
-    </group>
-    <group id="DebugMainMenu">
-      <separator/>
-      <group id="DebuggingActionsGroup" popup="true">
-        <group id="DebugReloadGroup"/>
-        <separator/>
-        <reference ref="StepOver.Ref"/>
-        <reference ref="ForceStepOver"/>
-        <reference ref="StepInto"/>
-        <reference ref="ForceStepInto"/>
-        <reference ref="SmartStepInto"/>
-        <reference ref="StepOut"/>
-        <reference ref="RunToCursor"/>
-        <reference ref="ForceRunToCursor"/>
-        <reference ref="Debugger.PopFrame"/>
-        <reference ref="Pause.Ref"/>
-        <reference ref="Resume.Ref"/>
-        <separator/>
-        <reference ref="EvaluateExpression"/>
-        <reference ref="ShowExecutionPoint"/>
-        <separator/>
-      </group>
-      <group id="BreakpointActionsGroup" popup="true">
-        <reference ref="Debugger.RestoreBreakpoint"/>
-        <reference ref="ToggleLineBreakpoint"/>
-        <reference ref="ToggleTemporaryLineBreakpoint"/>
-        <reference ref="ToggleBreakpointEnabled"/>
-      </group>
-      <reference ref="ViewBreakpoints"/>
-      <separator/>
-
+    <reference ref="Resume.Ref"/>
+    <reference ref="Pause.Ref"/>
+    <reference ref="StepOver.Ref"/>
+    <reference ref="DebugMainMenu">
       <add-to-group group-id="RunMenu" anchor="last"/>
-    </group>
+    </reference>
 
-    <group id="RunnerLayoutActions">
-      <reference ref="Runner.ToggleTabLabels"/>
-      <group id="Runner.Layout">
-        <reference ref="Runner.RestoreLayout"/>
-      </group>
-      <group id="Runner.View.Close.Group" popup="false">
-        <reference ref="Runner.CloseView"/>
-        <reference ref="Runner.CloseOtherViews"/>
-        <reference ref="Runner.CloseAllViews"/>
-        <reference ref="Runner.CloseAllUnpinnedViews"/>
-      </group>
-      <group id="Runner.View.Popup">
-        <reference ref="Runner.View.Close.Group"/>
-        <separator/>
-        <group id="Runner.Focus">
-          <reference ref="Runner.FocusOnStartup"/>
-        </group>
-      </group>
-
-
-      <group id="Runner.View.Toolbar">
-        <reference ref="Runner.CloseView"/>
-      </group>
-    </group>
+    <reference ref="RunnerLayoutActions"/>
 
     <reference ref="SendEOF"/>
 
-    <group id="RunTestGroup">
+    <reference ref="RunTestGroup">
       <add-to-group group-id="RunMenu" anchor="after" relative-to-action="DebugMainMenu"/>
-    </group>
+    </reference>
 
     <reference ref="ActivateRunToolWindow">
       <add-to-group group-id="ActivateToolWindowActions"/>

@@ -76,5 +76,64 @@
     <group id="RunContextGroupMore" class="com.intellij.ide.actions.SmartPopupActionGroup" overrides="true" keep-content="true"/>
     <group id="BuildMenu" class="com.intellij.ide.actions.NonEmptyActionGroup" overrides="true" keep-content="true"/>
     <group id="RunTab.TopToolbar.More" class="com.intellij.openapi.actionSystem.impl.MoreActionGroup"/>
+    <group id="RunnerLayoutActions">
+      <reference ref="Runner.ToggleTabLabels"/>
+      <group id="Runner.Layout">
+        <reference ref="Runner.RestoreLayout"/>
+      </group>
+      <group id="Runner.View.Close.Group" popup="false">
+        <reference ref="Runner.CloseView"/>
+        <reference ref="Runner.CloseOtherViews"/>
+        <reference ref="Runner.CloseAllViews"/>
+        <reference ref="Runner.CloseAllUnpinnedViews"/>
+      </group>
+      <group id="Runner.View.Popup">
+        <reference ref="Runner.View.Close.Group"/>
+        <separator/>
+        <group id="Runner.Focus">
+          <reference ref="Runner.FocusOnStartup"/>
+        </group>
+      </group>
+
+
+      <group id="Runner.View.Toolbar">
+        <reference ref="Runner.CloseView"/>
+      </group>
+    </group>
+    <group id="ExecutionTargets.Additional" searchable="false"/>
+    <group id="RunToolbarSlotContextMenuGroup" popup="false">
+      <reference ref="RunToolbarMoveToTopAction"/>
+      <reference ref="RunToolbarEditConfigurationAction"/>
+      <reference ref="RunToolbarRemoveSlotAction"/>
+      <reference ref="RunToolbarShowToolWindowTab"/>
+    </group>
+    <group id="RunTab.TopToolbar.Old"/>
+    <group id="RunTab.TopToolbar"/>
+    <!-- New UI Run Widget -->
+    <group id="AdditionalRunningOptionsGroup" popup="false"/>
+    <group id="AdditionalRunningOptionsGroupMain" popup="false"/>
+    <group id="RunConfiguration.Group">
+      <reference ref="SaveTemporaryRunConfiguration"/>
+      <reference ref="DeleteRunConfiguration"/>
+    </group>
+    <group id="RunContextPopupGroup" popup="false">
+      <reference ref="RunContextGroup"/>
+    </group>
+    <group id="ProjectViewPopupMenuRunGroup">
+      <reference ref="RunContextPopupGroup"/>
+    </group>
+    <group id="RunLineMarkerExtraActions">
+      <reference ref="CreateRunConfiguration"/>
+    </group>
+    <group id="ExecutionTargetsToolbarGroup" searchable="false" popup="false">
+      <reference ref="ExecutionTargets"/>
+    </group>
+    <!--region Main Toolbar -->
+    <group id="ToolbarRunGroup">
+      <reference ref="RunConfiguration"/>
+      <reference ref="RunnerActions"/>
+      <reference ref="Stop"/>
+    </group>
+    <group id="RunTestGroup"/>
   </actions>
 </idea-plugin>

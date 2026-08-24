@@ -8,9 +8,56 @@
     <action class="com.intellij.usages.impl.actions.FlattenModulesAction" id="UsageGrouping.FlattenModules"/>
     <action class="com.intellij.usages.impl.UsageGroupingRuleProviderImpl$GroupByFileStructureAction" id="UsageGrouping.FileStructure"/>
     <action class="com.intellij.usages.impl.actions.GroupByDirectoryStructureAction" id="UsageGrouping.DirectoryStructure"/>
+    <group id="UsageGroupingActionGroup">
+      <reference ref="UsageGrouping.Module"/>
+      <reference ref="UsageGrouping.Scope"/>
+      <reference ref="UsageGrouping.Directory"/>
+      <reference ref="UsageGrouping.UsageType"/>
+      <reference ref="UsageGrouping.FlattenModules"/>
+      <reference ref="UsageGrouping.FileStructure"/>
+      <reference ref="UsageGrouping.DirectoryStructure"/>
+    </group>
+    <group id="UsageFilteringActionGroup">
+      <reference ref="UsageFiltering.ReadAccess"/>
+      <reference ref="UsageFiltering.WriteAccess"/>
+      <reference ref="UsageFiltering.GeneratedCode"/>
+      <reference ref="UsageFiltering.Imports"/>
+      <reference ref="UsageFiltering.Comments"/>
+    </group>
   </actions>
   <actions>
     <action id="UsageView.Rerun" class="com.intellij.usages.actions.RerunSearchAction" icon="AllIcons.Actions.Refresh" use-shortcut-of="Rerun"/>
     <action id="UsageView.Remove" class="com.intellij.usages.actions.RemoveUsageAction" use-shortcut-of="$Cut"/>
+    <group id="ShowUsagesPinGroup"/>
+    <group id="FindUsagesMenuGroup" popup="true">
+      <reference ref="FindUsages"/>
+      <reference ref="ShowSettingsAndFindUsages"/>
+      <reference ref="ShowUsages"/>
+      <separator/>
+      <reference ref="FindUsagesInFile"/>
+      <reference ref="HighlightUsagesInFile"/>
+      <reference ref="GotoNextElementUnderCaretUsage"/>
+      <reference ref="GotoPrevElementUnderCaretUsage"/>
+      <reference ref="ShowRecentFindUsagesGroup"/>
+
+    </group>
+    <group id="TreeNodeExclusion">
+      <reference ref="UsageView.Include"/>
+      <reference ref="UsageView.Exclude"/>
+    </group>
+    <group id="UsageView.Popup">
+      <reference ref="UsageView.Rerun"/>
+      <separator/>
+      <reference ref="EditSource"/>
+      <reference ref="OpenInRightSplit"/>
+      <reference ref="TreeNodeExclusion"/>
+      <reference ref="UsageView.Remove"/>
+      <separator/>
+      <reference ref="UsageView.ShowRecentFindUsages"/>
+      <separator/>
+      <reference ref="RunContextGroup"/>
+      <separator/>
+      <reference ref="ExportToTextFile"/>
+    </group>
   </actions>
 </idea-plugin>

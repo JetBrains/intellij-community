@@ -342,17 +342,13 @@
       <separator/>
       <add-to-group group-id="Vcs.KeymapGroup"/>
     </group>
-    <group id="Diff.EditorPopupMenu">
-      <reference ref="CompareClipboardWithSelection"/>
-    </group>
-    <group id="Diff.ViewerPopupMenu"/>
-    <group id="Diff.ViewerToolbar"/>
-    <group id="Diff.DiffModes"/>
-    <group id="Diff.ViewerSettings"/>
-    <group id="Diff.EditorGutterPopupMenu">
-      <group id="Diff.EditorGutterPopupMenu.EditorSettings"/>
-    </group>
-    <group id="Diff.Binary.Settings" popup="true" icon="AllIcons.General.GearPlain" searchable="false"/>
+    <reference ref="Diff.EditorPopupMenu"/>
+    <reference ref="Diff.ViewerPopupMenu"/>
+    <reference ref="Diff.ViewerToolbar"/>
+    <reference ref="Diff.DiffModes"/>
+    <reference ref="Diff.ViewerSettings"/>
+    <reference ref="Diff.EditorGutterPopupMenu"/>
+    <reference ref="Diff.Binary.Settings"/>
 
     <reference ref="ScrollTreeToCenter"/>
 
@@ -1067,33 +1063,13 @@
       <reference ref="EditorGutterPopupMenu.Appearance"/>
     </group>
 
-    <group id="FileChooserToolbar">
-      <reference ref="FileChooser.GoBackward"/>
-      <reference ref="FileChooser.GoForward"/>
-      <reference ref="FileChooser.GoToParent"/>
-      <reference ref="FileChooser.GoToRoot"/>
-      <separator/>
-      <reference ref="FileChooser.GotoHome"/>
-      <reference ref="FileChooser.GoToWslHome"/>
-      <reference ref="FileChooser.GotoDesktop"/>
-      <reference ref="FileChooser.GotoProject"/>
-      <separator/>
-      <reference ref="FileChooser.NewFile"/>
-      <reference ref="FileChooser.NewFolder"/>
-      <reference ref="FileChooser.Delete"/>
-      <separator/>
-      <reference ref="FileChooser.Refresh"/>
-
+    <reference ref="FileChooserToolbar">
       <add-to-group group-id="Other.KeymapGroup"/>
-    </group>
+    </reference>
 
-    <group id="FileChooserSettings">
-      <reference ref="FileChooser.ShowHidden"/>
-      <reference ref="FileChooser.TogglePathBar"/>
-      <reference ref="FileChooser.ToggleDetection"/>
-
+    <reference ref="FileChooserSettings">
       <add-to-group group-id="Other.KeymapGroup"/>
-    </group>
+    </reference>
 
     <group id="ChangeScheme">
       <reference ref="ChangeLaf"/>
@@ -1205,33 +1181,9 @@
       <separator/>
     </group>
 
-    <group id="DirDiffMenu">
-      <reference ref="DirDiffMenu.SynchronizeDiff"/>
-      <reference ref="DirDiffMenu.SynchronizeDiff.All"/>
-      <group id="DirDiffOperationsMenu" compact="true">
-        <separator/>
-        <reference ref="DirDiffMenu.SetCopyToRight"/>
-        <reference ref="DirDiffMenu.SetCopyToLeft"/>
-        <reference ref="DirDiffMenu.SetDelete"/>
-        <reference ref="DirDiffMenu.SetNoOperation"/>
-        <separator/>
-        <reference ref="DirDiffMenu.MirrorToRight"/>
-        <reference ref="DirDiffMenu.MirrorToLeft"/>
-        <separator/>
-        <reference ref="DirDiffMenu.Exclude"/>
-        <reference ref="DirDiffMenu.SetDefault"/>
-        <reference ref="DirDiffMenu.WarnOnDeletion"/>
-      </group>
-      <separator/>
-      <reference ref="DirDiffMenu.EnableLeft"/>
-      <reference ref="DirDiffMenu.EnableRight"/>
-      <reference ref="DirDiffMenu.EnableEqual"/>
-      <reference ref="DirDiffMenu.EnableNotEqual"/>
-      <separator/>
-      <reference ref="DirDiffMenu.CompareNewFilesWithEachOtherAction"/>
-      <reference ref="DirDiffMenu.CancelComparingNewFilesWithEachOther"/>
+    <reference ref="DirDiffMenu">
       <add-to-group group-id="Diff.KeymapGroup" anchor="last"/>
-    </group>
+    </reference>
 
     <reference ref="OpenBlankEditorInBlankDiffWindow"/>
     <reference ref="OpenFileEditorInBlankDiffWindow"/>
@@ -1246,15 +1198,10 @@
       <add-to-group group-id="Diff.KeymapGroup" relative-to-action="BlankDiffViewerEditorPopupMenu" anchor="after"/>
     </reference>
 
-    <group id="BlankDiffViewerEditorPopupMenu">
-      <reference ref="OpenBlankEditorInBlankDiffWindow"/>
-      <reference ref="OpenFileEditorInBlankDiffWindow"/>
-      <reference ref="OpenRecentEditorInBlankDiffWindow"/>
-      <reference ref="ToggleThreeSideInBlankDiffWindow"/>
-
+    <reference ref="BlankDiffViewerEditorPopupMenu">
       <add-to-group group-id="Diff.EditorPopupMenu" anchor="last"/>
       <add-to-group group-id="Diff.KeymapGroup" relative-to-action="ShowBlankDiffWindow" anchor="after"/>
-    </group>
+    </reference>
 
     <reference ref="IncrementWindowWidth"/>
     <reference ref="DecrementWindowWidth"/>
@@ -1508,7 +1455,7 @@
       <add-to-group group-id="ViewMenu" anchor="after" relative-to-action="ViewSource"/>
       <add-to-group group-id="RevealGroup" anchor="last"/>
     </reference>
-    <group id="OpenInBrowserEditorContextBarGroup" />
+    <reference ref="OpenInBrowserEditorContextBarGroup"/>
     <reference ref="OpenInBrowserEditorContextBarGroupAction">
       <add-to-group group-id="OpenInBrowserEditorContextBarGroup" anchor="last"/>
     </reference>

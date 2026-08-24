@@ -544,5 +544,148 @@
     <action id="NewElementSamePlace" class="com.intellij.ide.actions.NewElementSamePlaceAction"/>
     <action id="OptimizeImports" class="com.intellij.codeInsight.actions.OptimizeImportsAction"/>
     <action id="RearrangeCode" class="com.intellij.application.options.codeStyle.arrangement.action.RearrangeCodeAction"/>
+    <group id="Documentation.Navigation">
+      <reference ref="Documentation.Back"/>
+      <reference ref="Documentation.Forward"/>
+      <reference ref="Documentation.EditSource"/>
+
+    </group>
+    <group id="Documentation.PrimaryGroup">
+      <!--
+      These actions are added to the context menu, to the popup menu, and to the toolbar.
+      This group should be used to register additional documentation actions.
+      -->
+      <reference ref="QuickDocCopy"/>
+      <reference ref="Documentation.Navigation"/>
+      <reference ref="Documentation.ViewExternal"/>
+    </group>
+    <group id="InlineCompletion" popup="true">
+      <reference ref="CallInlineCompletionAction"/>
+      <reference ref="InsertInlineCompletionAction"/>
+      <reference ref="InsertInlineCompletionWordAction"/>
+      <reference ref="InsertInlineCompletionLineAction"/>
+      <reference ref="NextInlineCompletionSuggestionAction"/>
+      <reference ref="PrevInlineCompletionSuggestionAction"/>
+      <separator/>
+      <group id="InlineCompletion.Settings" popup="true" internal="true"/>
+    </group>
+    <!-- Arrangement rules -->
+    <group id="ArrangementRulesGroup">
+      <reference ref="Arrangement.Rule.Add"/>
+      <reference ref="Arrangement.Rule.Section.Add"/>
+      <reference ref="Arrangement.Rule.Remove"/>
+      <reference ref="Arrangement.Rule.Edit"/>
+      <reference ref="Arrangement.Rule.Match.Condition.Move.Up"/>
+      <reference ref="Arrangement.Rule.Match.Condition.Move.Down"/>
+      <reference ref="Arrangement.Custom.Token.Rule.Edit"/>
+      <reference ref="Arrangement.Rule.Group.Condition.Move.Up"/>
+      <reference ref="Arrangement.Rule.Group.Condition.Move.Down"/>
+
+      <reference ref="Arrangement.Alias.Rule.Add"/>
+      <reference ref="Arrangement.Alias.Rule.Remove"/>
+      <reference ref="Arrangement.Alias.Rule.Edit"/>
+      <reference ref="Arrangement.Alias.Rule.Match.Condition.Move.Up"/>
+      <reference ref="Arrangement.Alias.Rule.Match.Condition.Move.Down"/>
+
+    </group>
+    <group id="Arrangement.Alias.Rule.ToolBar">
+      <reference ref="Arrangement.Alias.Rule.Add"/>
+      <reference ref="Arrangement.Alias.Rule.Remove"/>
+      <reference ref="Arrangement.Alias.Rule.Match.Condition.Move.Up"/>
+      <reference ref="Arrangement.Alias.Rule.Match.Condition.Move.Down"/>
+    </group>
+    <group id="Arrangement.Alias.Rule.Context.Menu">
+      <reference ref="Arrangement.Alias.Rule.Add"/>
+      <reference ref="Arrangement.Alias.Rule.Remove"/>
+      <reference ref="Arrangement.Alias.Rule.Edit"/>
+    </group>
+    <group id="Arrangement.Rule.Match.Control.Context.Menu">
+      <reference ref="Arrangement.Rule.Add"/>
+      <reference ref="Arrangement.Rule.Section.Add"/>
+      <reference ref="Arrangement.Rule.Remove"/>
+      <reference ref="Arrangement.Rule.Edit"/>
+    </group>
+    <group id="Arrangement.Rule.Match.Control.ToolBar">
+      <reference ref="Arrangement.Rule.Add"/>
+      <reference ref="Arrangement.Rule.Section.Add"/>
+      <reference ref="Arrangement.Rule.Remove"/>
+      <reference ref="Arrangement.Rule.Match.Condition.Move.Up"/>
+      <reference ref="Arrangement.Rule.Match.Condition.Move.Down"/>
+      <reference ref="Arrangement.Custom.Token.Rule.Edit"/>
+    </group>
+    <group id="Arrangement.Rule.Group.Control.ToolBar">
+      <reference ref="Arrangement.Rule.Group.Condition.Move.Up"/>
+      <reference ref="Arrangement.Rule.Group.Condition.Move.Down"/>
+    </group>
+    <group id="Internal.Dump" internal="true" popup="true">
+      <reference ref="DumpExtensions"/>
+      <reference ref="DumpInspectionDescriptions"/>
+      <reference ref="DumpIntentionsDescriptions"/>
+      <reference ref="ScanSourceCommentsAction"/>
+      <reference ref="DumpScreenConfiguration"/>
+      <reference ref="DumpIElementTypesAction"/>
+      <reference ref="DumpLoadedInspectionsAction"/>
+      <reference ref="DumpPluginDescriptorsAction"/>
+      <reference ref="DumpRunConfigurationTypesAction"/>
+      <reference ref="DumpFormattingModel"/>
+      <reference ref="CheckClassLoading"/>
+      <reference ref="DumpCodeStyleCache"/>
+    </group>
+    <group id="HierarchyGroup">
+      <reference ref="TypeHierarchy"/>
+      <reference ref="MethodHierarchy"/>
+      <reference ref="CallHierarchy"/>
+    </group>
+    <group id="Structure.ViewOptions" searchable="false" popup="true" icon="AllIcons.Actions.GroupBy"/>
+    <group id="StructureViewToolbar"/>
+    <group id="StructureViewFloatingToolbar" popup="true"/>
+    <group id="StructureViewPopupMenu">
+      <reference ref="EditSource"/>
+      <separator/>
+      <reference ref="FindUsages"/>
+      <reference ref="RenameElement"/>
+      <reference ref="RefactoringMenu"/>
+      <separator/>
+      <reference ref="CutCopyPasteGroup"/>
+      <separator/>
+      <reference ref="RunContextPopupGroup"/>
+      <reference ref="SplitRevealGroup"/>
+      <reference ref="VersionControlsGroup"/>
+      <separator/>
+      <reference ref="CompareTwoFiles"/>
+    </group>
+    <group id="TypeHierarchyPopupMenu">
+      <reference ref="TypeHierarchyBase.BaseOnThisType"/>
+      <reference ref="TypeHierarchy.Class"/>
+      <reference ref="TypeHierarchy.Subtypes"/>
+      <reference ref="TypeHierarchy.Supertypes"/>
+      <separator/>
+    </group>
+    <group id="MethodHierarchyPopupMenu">
+      <reference ref="MethodHierarchy.BaseOnThisMethod"/>
+    </group>
+    <group id="CallHierarchyPopupMenu">
+      <reference ref="CallHierarchy.BaseOnThisMethod"/>
+    </group>
+    <group id="HierarchyPopupMenu.Common" searchable="false">
+      <reference ref="EditSource"/>
+      <separator/>
+      <reference ref="FindUsages"/>
+      <reference ref="RefactoringMenu"/>
+      <separator/>
+      <reference ref="RunContextPopupGroup"/>
+      <reference ref="SplitRevealGroup"/>
+      <separator/>
+      <reference ref="ReformatCode"/>
+      <reference ref="OptimizeImports"/>
+      <reference ref="$Delete"/>
+      <separator/>
+      <reference ref="VersionControlsGroup"/>
+      <separator/>
+      <reference ref="ExternalToolsGroup"/>
+      <separator/>
+      <reference ref="CompareTwoFiles"/>
+      <reference ref="CompareFileWithEditor"/>
+    </group>
   </actions>
 </idea-plugin>

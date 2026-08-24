@@ -248,5 +248,45 @@
     <action id="ToggleBreakpointEnabled" class="com.intellij.xdebugger.impl.actions.ToggleBreakpointEnabledAction"/>
     <action id="ViewBreakpoints" class="com.intellij.xdebugger.impl.actions.ViewBreakpointsAction" icon="AllIcons.Debugger.ViewBreakpoints"/>
     <action id="ForceStepInto" class="com.intellij.xdebugger.impl.actions.ForceStepIntoAction" icon="AllIcons.Debugger.ForceStepInto"/>
+    <group id="Resume.Ref">
+      <reference ref="Resume"/>
+    </group>
+    <group id="Pause.Ref">
+      <reference ref="Pause"/>
+    </group>
+    <group id="StepOver.Ref">
+      <reference ref="StepOver"/>
+    </group>
+    <group id="DebugMainMenu">
+      <separator/>
+      <group id="DebuggingActionsGroup" popup="true">
+        <group id="DebugReloadGroup"/>
+        <separator/>
+        <reference ref="StepOver.Ref"/>
+        <reference ref="ForceStepOver"/>
+        <reference ref="StepInto"/>
+        <reference ref="ForceStepInto"/>
+        <reference ref="SmartStepInto"/>
+        <reference ref="StepOut"/>
+        <reference ref="RunToCursor"/>
+        <reference ref="ForceRunToCursor"/>
+        <reference ref="Debugger.PopFrame"/>
+        <reference ref="Pause.Ref"/>
+        <reference ref="Resume.Ref"/>
+        <separator/>
+        <reference ref="EvaluateExpression"/>
+        <reference ref="ShowExecutionPoint"/>
+        <separator/>
+      </group>
+      <group id="BreakpointActionsGroup" popup="true">
+        <reference ref="Debugger.RestoreBreakpoint"/>
+        <reference ref="ToggleLineBreakpoint"/>
+        <reference ref="ToggleTemporaryLineBreakpoint"/>
+        <reference ref="ToggleBreakpointEnabled"/>
+      </group>
+      <reference ref="ViewBreakpoints"/>
+      <separator/>
+
+    </group>
   </actions>
 </idea-plugin>
