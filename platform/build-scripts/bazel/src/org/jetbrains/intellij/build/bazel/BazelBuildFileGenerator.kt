@@ -69,7 +69,7 @@ internal class ModuleList(
    * `module-content.yaml` records, and a module has one exactly when some product ships it as a content module.
    */
   val contentModuleNames: Set<String> by lazy {
-    allModules.mapNotNullTo(HashSet()) { if (hasContentModuleRecipe(it)) it.module.name else null }
+    allModules.mapNotNullTo(HashSet()) { if (it.contentModuleRecipeFile != null) it.module.name else null }
   }
 }
 
@@ -150,15 +150,14 @@ internal class BazelBuildFileGenerator(
    * only in generated output keeps the module on the JarPackager path.
    */
   val pluginContentModuleJarCandidates: Set<String> by lazy {
-    // The set is an AND over every checked-in report, and a community-only run does not have the ultimate ones - so it
-    // reads what an ultimate run recorded instead of computing a different answer from a smaller world.
-    if (ultimateRoot == null) {
-      readPluginContentModuleJarCandidates(communityRoot.resolve("build/$PLUGIN_CONTENT_CANDIDATES_FILE_NAME"))
-      ?: indexPluginContentModuleJarCandidates(communityRoot)
-    }
-    else {
-      indexPluginContentModuleJarCandidates(ultimateRoot)
-    }
+    // The set is an AND over every checked-in report, recorded by `plugin-model-tool` beside the vetoes it already
+    // owns - so every run reads the answer instead of walking the whole tree for 500 files (measured at ~70 s of
+    // mostly system time on an ultimate checkout). A community-only run could not even compute it: it does not have
+    // the ultimate reports. Indexing survives only as the fallback for a project no plugin-model-tool run has ever
+    // recorded - the generator's own throwaway test projects, a community checkout predating the file.
+    val projectRoot = ultimateRoot ?: communityRoot
+    readPluginContentModuleJarCandidates((ultimateRoot?.resolve("community") ?: communityRoot).resolve("build/$PLUGIN_CONTENT_CANDIDATES_FILE_NAME"))
+    ?: indexPluginContentModuleJarCandidates(projectRoot)
   }
 
   /** Product/plugin layout transformations that make a raw module-output jar ineligible for direct handoff. */

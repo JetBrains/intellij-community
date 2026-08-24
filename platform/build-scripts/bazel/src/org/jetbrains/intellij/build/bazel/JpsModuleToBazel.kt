@@ -163,11 +163,6 @@ internal class JpsModuleToBazel {
         )
 
         saveDevServerRunConfigurations(ultimateRoot = ultimateRoot, targetFilePath = ultimateRoot.resolve("build").resolve("dev_server_run_configurations.bzl"))
-        // Recorded for the community-only run, which cannot see the ultimate reports this set is an AND over.
-        savePluginContentModuleJarCandidates(
-          file = communityRoot.resolve("build").resolve(PLUGIN_CONTENT_CANDIDATES_FILE_NAME),
-          candidates = generator.pluginContentModuleJarCandidates,
-        )
       }
       else {
         check(bazelWorkspaceRoot == null || bazelWorkspaceRoot == communityRoot) { "Bazel workspace root ($bazelWorkspaceRoot) must be community root ($communityRoot)" }

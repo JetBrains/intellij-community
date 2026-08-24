@@ -8,7 +8,6 @@ import org.jetbrains.jps.model.module.JpsModuleReference
 import java.nio.file.Path
 import java.util.TreeSet
 import kotlin.io.path.invariantSeparatorsPathString
-import kotlin.io.path.isRegularFile
 import kotlin.io.path.readText
 import kotlin.io.path.relativeTo
 
@@ -71,7 +70,7 @@ internal class PluginContentResult(
   @JvmField val crossRepositoryPrepackedModules: List<String>,
 )
 
-private const val PLUGIN_CONTENT_REPORT_FILE_NAME = "plugin-content.yaml"
+internal const val PLUGIN_CONTENT_REPORT_FILE_NAME: String = "plugin-content.yaml"
 
 /**
  * The one library `dev_dist_plugin_content` declares implicitly, so a content target never names it.
@@ -146,7 +145,7 @@ internal fun BuildFile.emitPluginContent(module: ModuleDescriptor, content: Plug
  * of every fragment that depends on it.
  */
 internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleList, context: BazelBuildFileGenerator): PluginContentResult {
-  val entries = readPluginContentReport(module) ?: return EMPTY_PLUGIN_CONTENT_RESULT
+  val entries = module.pluginContentReport ?: return EMPTY_PLUGIN_CONTENT_RESULT
   val moduleName = module.module.name
 
   // The report does not record its own main module - only its location does, and a directory is the first content root
@@ -442,38 +441,26 @@ private fun recordedLibraries(entries: List<RecipeEntry>): Set<RecordedLibrary> 
 }
 
 /**
- * The content report file of the plugin whose main module is [module], if the module has one.
- *
- * The report sits in the module's first content root, which is where the content-report writer puts it
- * (`contentChecker.kt` resolves `module.contentRootsList.urls.first()`), and is the same rule [readRecipe] follows.
- *
- * Existence only, deliberately. The Bazel side probes for exactly these files
- * (`_find_plugin_content_report_rel_path` in `@community//build:jps_model.bzl`) so that the hermetic
- * `bazel-targets.json` run is handed the same reports the full-checkout run reads, and it cannot parse YAML. Both
- * sides therefore have to agree only on *which file is a plugin's report*, which [JpsModuleToBazelTargetsOnly]
- * asserts; whether that report then yields a content target is this side's business alone.
- */
-internal fun pluginContentReportFile(module: ModuleDescriptor): Path? {
-  return module.contentRoots.firstOrNull()?.resolve(PLUGIN_CONTENT_REPORT_FILE_NAME)?.takeIf { it.isRegularFile() }
-}
-
-/**
- * [pluginContentReportFile] as a path inside the module's own Bazel package, so that it can be exported and named by a
- * label. `null` when the module has no report, or when the report is outside the package - `../` is not a label.
+ * [ModuleDescriptor.pluginContentReportFile] as a path inside the module's own Bazel package, so that it can be
+ * exported and named by a label. `null` when the module has no report, or when the report is outside the package -
+ * `../` is not a label.
  */
 internal fun pluginContentReportPackagePath(module: ModuleDescriptor): String? {
-  val file = pluginContentReportFile(module) ?: return null
+  val file = module.pluginContentReportFile ?: return null
   return file.relativeTo(module.bazelBuildFileDir).invariantSeparatorsPathString.takeIf { !it.startsWith("../") }
 }
 
 /**
- * The report of the plugin whose main module is [module], parsed, if there is one.
+ * Parses [ModuleDescriptor.pluginContentReportFile]; reached only through [ModuleDescriptor.pluginContentReport].
  *
  * Unlike a `module-content.yaml`, a plugin's report has one entry per jar or file of the plugin, and most plugins have
  * several - so every entry is read, not just a single one.
  */
-private fun readPluginContentReport(module: ModuleDescriptor): List<RecipeEntry>? {
-  val file: Path = pluginContentReportFile(module) ?: return null
+internal fun parsePluginContentReport(file: Path?): List<RecipeEntry>? {
+  if (file == null) {
+    return null
+  }
+
   val text = file.readText()
   if (text.isBlank()) {
     return null

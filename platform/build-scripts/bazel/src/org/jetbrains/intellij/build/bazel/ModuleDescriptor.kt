@@ -46,6 +46,40 @@ internal data class ModuleDescriptor(
   }
 
   val targetAsLabel = BazelLabel(targetName, this)
+
+  /**
+   * The `module-content.yaml` recipe beside this module's first content root - which is where the content-report
+   * writer puts it (`contentChecker.kt` resolves `module.contentRootsList.urls.first()`), and not always the directory
+   * holding the `.iml`. Existence and parse are cached separately because they answer different questions:
+   * `ModuleList.contentModuleNames` needs only existence, while a recipe that exists but holds several entries still
+   * parses to a `null` [contentModuleRecipe].
+   */
+  val contentModuleRecipeFile: Path? by lazy(LazyThreadSafetyMode.NONE) {
+    contentRoots.firstOrNull()?.resolve(CONTENT_MODULE_RECIPE_FILE_NAME)?.takeIf { it.isRegularFile() }
+  }
+
+  /**
+   * [contentModuleRecipeFile], parsed at most once per module. Cached here because the plugin-content pass asks per
+   * (plugin, member) relation, so an uncached read would re-parse the same file once per plugin shipping the module.
+   */
+  val contentModuleRecipe: RecipeEntry? by lazy(LazyThreadSafetyMode.NONE) { parseContentModuleRecipe(contentModuleRecipeFile) }
+
+  /**
+   * The content report of the plugin whose main module this is, if it has one; beside the first content root, the same
+   * rule [contentModuleRecipeFile] follows.
+   *
+   * Existence only, deliberately. The Bazel side probes for exactly these files
+   * (`_find_plugin_content_report_rel_path` in `@community//build:jps_model.bzl`) so that the hermetic
+   * `bazel-targets.json` run is handed the same reports the full-checkout run reads, and it cannot parse YAML. Both
+   * sides therefore have to agree only on *which file is a plugin's report*, which [JpsModuleToBazelTargetsOnly]
+   * asserts; whether that report then yields a content target is [pluginContentReport]'s business alone.
+   */
+  val pluginContentReportFile: Path? by lazy(LazyThreadSafetyMode.NONE) {
+    contentRoots.firstOrNull()?.resolve(PLUGIN_CONTENT_REPORT_FILE_NAME)?.takeIf { it.isRegularFile() }
+  }
+
+  /** [pluginContentReportFile], parsed at most once per module. */
+  val pluginContentReport: List<RecipeEntry>? by lazy(LazyThreadSafetyMode.NONE) { parsePluginContentReport(pluginContentReportFile) }
 }
 
 internal data class ResourceDescriptor(
