@@ -265,9 +265,7 @@
     <extensionPoint qualifiedName="com.intellij.fileTypeOverrider" interface="com.intellij.openapi.fileTypes.impl.FileTypeOverrider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.colorPickerListenerFactory" interface="com.intellij.ui.ColorPickerListenerFactory" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.search.projectOptionsTopHitProvider" interface="com.intellij.ide.ui.OptionsSearchTopHitProvider$ProjectLevelProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.pluginInitializationErrorHandler"
-                    interface="com.intellij.ide.plugins.PluginInitializationErrorHandler"
-                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.pluginLoadingProblemsNotificationHandler" interface="com.intellij.ide.plugins.PluginLoadingProblemsNotificationHandler" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.pluginSuggestionProvider" dynamic="true"
                     interface="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestionProvider"/>
     <extensionPoint qualifiedName="com.intellij.pluginAdvertiserSuppressor" dynamic="true"
@@ -721,7 +719,7 @@
         Enable new inspection widget experiment
       </description>
     </experimentalFeature>
-    <pluginInitializationErrorHandler implementation="com.intellij.ide.plugins.DefaultPluginInitializationErrorHandler"/>
+    <pluginLoadingProblemsNotificationHandler implementation="com.intellij.ide.plugins.DefaultPluginLoadingProblemsNotificationHandler"/>
     <applicationService serviceInterface="com.intellij.execution.wsl.WslDistributionManager"
                         serviceImplementation="com.intellij.execution.wsl.WslDistributionManagerImpl"/>
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.local.AsyncableLocalFileSystemImpl" key="file" physical="true"/>
@@ -1962,7 +1960,7 @@
               class="com.intellij.internal.statistic.StatisticsRegionSettingsListener"/>
     <listener class="com.intellij.ide.plugins.DynamicPluginsFrameStateListener"
               topic="com.intellij.openapi.application.ApplicationActivationListener"/>
-    <listener class="com.intellij.ide.plugins.PluginInitializationErrorStartupReporter"
+    <listener class="com.intellij.ide.plugins.PluginLoadingProblemsStartupReporter"
               topic="com.intellij.ide.AppLifecycleListener"/>
     <listener class="com.intellij.openapi.updateSettings.impl.PluginAutoUpdateService$PluginAutoUpdateAppLifecycleListener"
               topic="com.intellij.ide.AppLifecycleListener"/>

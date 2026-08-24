@@ -54,7 +54,7 @@ internal class PluginManagerStateServiceTest {
     assertThat(reason).isInstanceOf(PluginDependencyIsDisabled::class.java)
     reason as PluginDependencyIsDisabled
     assertThat(reason.dependencyId).isEqualTo(dependencyId)
-    assertThat(initialState.loadingErrors).containsExactly(reason.detailedMessage)
+    assertThat(initialState.pluginLoadingProblemsForNotification).containsExactly(reason.detailedMessage)
     assertThat(initialState.pluginsToEnable).containsExactlyEntriesOf(mapOf(dependencyId to "Bar"))
     assertThat(initialState.pluginsToDisable).containsExactlyEntriesOf(mapOf(dependentId to "Foo"))
 
@@ -64,7 +64,7 @@ internal class PluginManagerStateServiceTest {
     assertThat(loadedState).isNotSameAs(initialState)
     assertThat(loadedPluginSet.enabledPlugins.map { it.pluginId }).contains(dependencyId, dependentId)
     assertThat(loadedState.pluginNonLoadReasons).isEmpty()
-    assertThat(loadedState.loadingErrors).isEmpty()
+    assertThat(loadedState.pluginLoadingProblemsForNotification).isEmpty()
     assertThat(loadedState.pluginsToEnable).isEmpty()
     assertThat(loadedState.pluginsToDisable).isEmpty()
   }
@@ -94,9 +94,9 @@ internal class PluginManagerStateServiceTest {
     val visibleState = checkNotNull(service.getCurrentState(USER_REPORTING_POLICY))
     val hiddenState = checkNotNull(service.getCurrentState(SILENT_REPORTING_POLICY))
 
-    assertThat(visibleState.loadingErrors).isNotEmpty()
+    assertThat(visibleState.pluginLoadingProblemsForNotification).isNotEmpty()
     assertThat(hiddenState).isNotSameAs(visibleState)
-    assertThat(hiddenState.loadingErrors).isEmpty()
+    assertThat(hiddenState.pluginLoadingProblemsForNotification).isEmpty()
     assertThat(reasonTypes(hiddenState)).isEqualTo(reasonTypes(visibleState))
     assertThat(reasonMessages(hiddenState)).isEqualTo(reasonMessages(visibleState))
     assertThat(hiddenState.pluginsToEnable).isEqualTo(visibleState.pluginsToEnable)
@@ -119,7 +119,7 @@ internal class PluginManagerStateServiceTest {
     assertThat(reason.dependencyNameOrId).isEqualTo("missing")
     assertThat(reason.shouldNotifyUser).isTrue()
     assertThat(reason.shortMessage).isNotBlank()
-    assertThat(state.loadingErrors).containsExactly(reason.detailedMessage)
+    assertThat(state.pluginLoadingProblemsForNotification).containsExactly(reason.detailedMessage)
     assertThat(state.pluginsToEnable).isEmpty()
     assertThat(state.pluginsToDisable).containsExactlyEntriesOf(mapOf(pluginId to "Foo"))
     assertThat(service.getPluginNonLoadReason(pluginId)).isSameAs(reason)
@@ -139,7 +139,7 @@ internal class PluginManagerStateServiceTest {
 
     assertThat(reason).isInstanceOf(PluginDependencyIsNotInstalled::class.java)
     assertThat(reason!!.shouldNotifyUser).isFalse()
-    assertThat(state.loadingErrors).isEmpty()
+    assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
     assertThat(state.pluginsToDisable).containsExactlyEntriesOf(mapOf(pluginId to "Foo"))
   }
 
@@ -150,7 +150,7 @@ internal class PluginManagerStateServiceTest {
     val state = publishAndGetState(buildPluginSet(disabledPluginIds = arrayOf("foo")))
 
     assertThat(state.pluginNonLoadReasons).isEmpty()
-    assertThat(state.loadingErrors).isEmpty()
+    assertThat(state.pluginLoadingProblemsForNotification).isEmpty()
     assertThat(state.pluginsToEnable).isEmpty()
     assertThat(state.pluginsToDisable).isEmpty()
   }

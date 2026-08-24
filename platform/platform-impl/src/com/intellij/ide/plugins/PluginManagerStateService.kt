@@ -15,7 +15,7 @@ internal data class PluginManagerStateSnapshot(
   val pluginNonLoadReasons: Map<PluginId, PluginNonLoadReason>,
   val pluginsToDisable: Map<PluginId, String>,
   val pluginsToEnable: Map<PluginId, String>,
-  val loadingErrors: List<@Nls String>,
+  val pluginLoadingProblemsForNotification: List<@Nls String>,
 )
 
 // for now this is a temporary place to store state that previously lived in PluginManagerCore, how it properly should be stored is not clear atm
@@ -136,7 +136,7 @@ class PluginManagerStateService {
       pluginNonLoadReasons = pluginNonLoadReasons.toMap(),
       pluginsToDisable = pluginsToDisable.toMap(),
       pluginsToEnable = pluginsToEnable.toMap(),
-      loadingErrors = loadingErrors,
+      pluginLoadingProblemsForNotification = loadingErrors,
     )
   }
 

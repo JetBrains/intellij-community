@@ -23,7 +23,7 @@
                                             apiInterfaces="com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi,
                                                            com.intellij.platform.pluginManager.shared.rpc.PluginInstallerApi,
                                                            com.intellij.platform.pluginManager.shared.baseline.rpc.PluginUpdaterApi,
-                                                           com.intellij.platform.pluginManager.shared.rpc.PluginErrorReporterApi,
+                                                           com.intellij.platform.pluginManager.shared.rpc.PluginLoadingProblemsNotificationHandlerApi,
                                                            com.intellij.platform.pluginManager.shared.rpc.PluginUpdatesProviderApi"/>
   </extensions>
 </idea-plugin>
