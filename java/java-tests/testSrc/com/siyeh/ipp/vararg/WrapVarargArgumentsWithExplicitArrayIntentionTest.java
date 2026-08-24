@@ -146,4 +146,19 @@ public class WrapVarargArgumentsWithExplicitArrayIntentionTest extends IPPTestCa
       "}"
     );
   }
+  
+  /// See IDEA-393105
+  public void testArrayWithComment() {
+    doTest("""
+      class X { void x() {
+          java.util.Arrays.asList("one", "tw/*_Wrap vararg arguments with explicit array creation*/o", "three" // NON-NLS
+          );
+      }}""", """
+      class X { void x() {
+          java.util.Arrays.asList(
+                  new String[]{"one", "two", "three" // NON-NLS
+                  });
+      }}"""
+    );
+  }
 }

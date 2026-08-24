@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiCall;
 import com.intellij.psi.PsiCapturedWildcardType;
@@ -198,6 +199,9 @@ public final class VarargParameterInspection extends BaseInspection {
         element = element.getNextSibling();
       }
       argumentList.deleteChildRange(start, end);
+      if (isEndOfLineComment(end)) {
+        builder.append("\n");
+      }
     }
     builder.append('}');
     final Project project = call.getProject();
@@ -215,6 +219,10 @@ public final class VarargParameterInspection extends BaseInspection {
       if (sibling instanceof PsiComment) return skipToIncludeComments(sibling, forward);
     }
     return element;
+  }
+
+  private static boolean isEndOfLineComment(PsiElement element) {
+    return element instanceof PsiComment comment && JavaTokenType.END_OF_LINE_COMMENT.equals(comment.getTokenType());
   }
 
   @Override
