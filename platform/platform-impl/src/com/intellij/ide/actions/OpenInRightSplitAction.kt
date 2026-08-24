@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.MouseShortcut
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
@@ -22,8 +23,13 @@ import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.navigation.NavigationRequest
+import com.intellij.platform.ide.navigation.NavigationOptions
+import com.intellij.platform.ide.navigation.RequestedEditor
+import com.intellij.platform.ide.navigation.requestNavigate
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiFile
+import kotlinx.coroutines.Job
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.JComponent
 
@@ -87,6 +93,23 @@ class OpenInRightSplitAction : AnAction(), DumbAware, ActionRemoteBehaviorSpecif
   companion object {
     private fun getVirtualFile(e: AnActionEvent): VirtualFile? = e.getData(CommonDataKeys.VIRTUAL_FILE)
 
+    /**
+     * Submits [files] opening into a single new right split, the first of them being the one the split is created for.
+     */
+    @JvmStatic
+    @JvmOverloads
+    fun openInRightSplit(project: Project, files: List<VirtualFile>, requestFocus: Boolean = true): Job {
+      return requestNavigate(project, rightSplitOptions(requestFocus)) {
+        readAction {
+          files.mapNotNull { NavigationRequest.sourceNavigationRequest(project, file = it, offset = -1) }
+        }
+      }
+    }
+
+    @Deprecated(
+      "Resolves the file type on the calling thread; use the overload which submits a navigation instead",
+      ReplaceWith("openInRightSplit(project, listOf(file), requestFocus)"),
+    )
     @JvmOverloads
     fun openInRightSplit(project: Project, file: VirtualFile, element: Navigatable? = null, requestFocus: Boolean = true): EditorWindow? {
       val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
@@ -126,6 +149,12 @@ class OpenInRightSplitAction : AnAction(), DumbAware, ActionRemoteBehaviorSpecif
     }
   }
 }
+
+private fun rightSplitOptions(requestFocus: Boolean = true) = NavigationOptions
+  .defaultOptions()
+  .requestFocus(requestFocus)
+  .openInRightSplit(true)
+  .requestedEditor(RequestedEditor.None)
 
 @Internal
 interface OpenInRightSplitActionProvider {
