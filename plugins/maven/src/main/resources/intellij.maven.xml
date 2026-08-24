@@ -431,8 +431,10 @@
     <registryKey key="maven.use.scripts.debug.agent" defaultValue="true"
                  description="Use instrumentation agent when debugging with maven"/>
 
-    <registryKey key="maven.delegate.build.phase" defaultValue="process-test-classes"
-                 description="Maven lifecycle phase executed when the IDE build is delegated to Maven"/>
+    <advancedSetting id="maven.delegate.build.phase" default="PROCESS_TEST_CLASSES"
+                     enumClass="org.jetbrains.idea.maven.execution.build.MavenDelegateBuildPhase"
+                     bundle="messages.MavenConfigurableBundle"
+                     groupKey="group.advanced.settings.maven"/>
 
     <registryKey key="maven.dedicated.indexer.vmargs" defaultValue="-Xmx1024m"
                  description="Dedicated maven indexer VM arguments, restart maven server or IDEA after changing this parameter"/>
