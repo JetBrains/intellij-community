@@ -1,7 +1,0 @@
-version = "2.8.4"
-upstream-repository = "https://github.com/py-pdf/fpdf2"
-dependencies = ["Pillow>=10.3.0"]
-obsolete-since = { version = "2.8.6", date = "2026-02-19" }
-
-[tool.stubtest]
-stubtest-dependencies = ["cryptography"]

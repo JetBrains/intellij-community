@@ -66,7 +66,7 @@ _NestedFlowable: TypeAlias = Flowable | Sequence[_NestedFlowable]
 
 @type_check_only
 class _StyledFlowableFactory(Protocol):
-    # NOTE: We leave style at Any so people can specify a specifc property set
+    # NOTE: We leave style at Any so people can specify a specific property set
     def __call__(self, value: str, /, *, style: Any) -> Flowable: ...
 
 class TraceInfo:
@@ -147,7 +147,7 @@ class Image(Flowable):
     def __init__(
         self,
         # TODO: I think this might also accept a PIL.Image and other
-        #       kinds of path represenations, should be kept in sync
+        #       kinds of path representations, should be kept in sync
         #       with reportlab.lib.utils.ImageReader, except for the
         #       potential PIL.Image shortcut
         filename: str | SupportsRead[bytes] | Incomplete,

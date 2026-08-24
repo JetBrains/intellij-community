@@ -1,2 +1,2 @@
-version = "2.6.*"
+version = "2.8.*"
 upstream-repository = "https://github.com/scoder/lupa"

@@ -1,6 +1,5 @@
 # Stubs-only helper modules with no runtime counterpart.
 rasterio\._typing
-rasterio\._affine_types
 
 # Stubs-only type aliases referenced in signatures only.
 rasterio\.merge\.MethodFunction

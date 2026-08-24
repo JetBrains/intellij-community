@@ -77,6 +77,7 @@ class PreambleCmds:
     admonition: ClassVar[str]
     fieldlist: ClassVar[str]
     footnotes: ClassVar[str]
+    bracket_footnoterefs: ClassVar[str]
     inline: ClassVar[str]
     legend: ClassVar[str]
     lineblock: ClassVar[str]

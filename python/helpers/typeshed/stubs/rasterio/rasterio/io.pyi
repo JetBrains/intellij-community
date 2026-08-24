@@ -3,8 +3,8 @@ from types import TracebackType
 from typing import Any, Final
 from typing_extensions import Self, deprecated
 
+from affine import Affine as Affine
 from numpy.typing import DTypeLike
-from rasterio._affine_types import Affine
 from rasterio._filepath import FilePathBase as FilePathBase
 from rasterio._io import (
     BufferedDatasetWriterBase as BufferedDatasetWriterBase,

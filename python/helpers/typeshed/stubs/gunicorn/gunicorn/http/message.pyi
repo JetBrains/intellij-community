@@ -36,6 +36,7 @@ METHOD_BADCHAR_RE: Final[re.Pattern[str]]
 VERSION_RE: Final[re.Pattern[str]]
 RFC9110_5_5_INVALID_AND_DANGEROUS: Final[re.Pattern[str]]
 RFC9110_6_5_1_FORBIDDEN_TRAILER: Final[frozenset[str]]
+RFC9110_5_3_SINGLETON_FIELDS: Final[frozenset[str]]
 
 class Message:
     cfg: Config

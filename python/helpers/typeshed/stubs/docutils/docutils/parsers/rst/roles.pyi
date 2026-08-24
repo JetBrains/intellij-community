@@ -102,7 +102,7 @@ def raw_role(
     content: Sequence[str] | None = None,
 ) -> tuple[list[Node], list[system_message]]: ...
 def code_role(
-    role: str,
+    role_name: str,
     rawtext: str,
     text: str,
     lineno: int,

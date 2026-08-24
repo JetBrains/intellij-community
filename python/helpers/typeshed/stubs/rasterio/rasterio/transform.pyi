@@ -2,7 +2,7 @@ from collections.abc import Callable, Sequence
 from typing import Final, Literal, TypeAlias, overload
 from typing_extensions import Self, deprecated
 
-from rasterio._affine_types import Affine as Affine
+from affine import Affine as Affine
 from rasterio._transform import GCPTransformerBase, RPCTransformerBase
 from rasterio._typing import _GDALOption
 from rasterio.control import GroundControlPoint

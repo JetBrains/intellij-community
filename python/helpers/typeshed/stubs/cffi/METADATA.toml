@@ -1,4 +1,4 @@
-version = "2.0.*"
+version = "2.1.*"
 upstream-repository = "https://github.com/python-cffi/cffi/"
 dependencies = ["types-setuptools"]
 

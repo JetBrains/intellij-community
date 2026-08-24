@@ -5,8 +5,8 @@ from typing import Any, Final, overload
 from typing_extensions import deprecated
 
 import numpy as np
+from affine import Affine as Affine
 from numpy.typing import DTypeLike, NDArray
-from rasterio._affine_types import Affine
 from rasterio._typing import Geometry as Geometry
 from rasterio.enums import MergeAlg as MergeAlg
 from rasterio.io import DatasetReaderBase

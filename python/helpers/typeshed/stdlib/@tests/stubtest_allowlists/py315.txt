@@ -2,32 +2,13 @@
 # TODO: Allowlist entries that should be fixed
 # ============================================
 
-_frozen_importlib.BuiltinImporter.load_module
-_frozen_importlib.FrozenImporter.load_module
-_frozen_importlib_external.FileFinder.discover
-_frozen_importlib_external.NamespaceLoader.load_module
-_frozen_importlib_external.NamespacePath
 _frozen_importlib_external.PathFinder.discover
 _frozen_importlib_external.SourceFileLoader.source_to_code
 _frozen_importlib_external.SourceLoader.source_to_code
-_frozen_importlib_external._LoaderBasics.load_module
-_frozen_importlib_external.cache_from_source
-_struct.Struct.pack_into
-_struct.pack
-_struct.pack_into
-_thread.RLock.__exit__
-_thread.lock.__exit__
 dataclasses.MISSING
 dataclasses._MISSING_TYPE
 dataclasses.field
-importlib._abc.Loader.load_module
-importlib._bootstrap_external.NamespacePath
-importlib.abc.MetaPathFinder.discover
-importlib.abc.PathEntryFinder.discover
-importlib.resources._common.package_to_anchor
 mailbox._ProxyFile.__class_getitem__
-multiprocessing.process.BaseProcess.__init__
-threading.Condition.locked
 
 # =============================================================
 # Allowlist entries that cannot or should not be fixed; >= 3.15
@@ -90,6 +71,9 @@ concurrent.interpreters._crossinterp.UnboundItem.singleton
 concurrent.interpreters._crossinterp.UNBOUND_ERROR
 concurrent.interpreters._crossinterp.UNBOUND_REMOVE
 
+# Condition functions are exported in __init__
+threading.Condition.locked
+
 # Assigning `__new__` causes `func` not to get recognized.
 functools.partialmethod.__new__
 
@@ -150,9 +134,6 @@ typing_extensions.Protocol  # Super-special typing primitive
 # =============================================================
 # Allowlist entries that cannot or should not be fixed; >= 3.12
 # =============================================================
-
-# Deprecated argument is supported at runtime by renaming it through a decorator.
-importlib.resources._common.files
 
 sys._monitoring  # Doesn't really exist. See comments in the stub.
 sys.__jit  # Similar to sys._monitoring

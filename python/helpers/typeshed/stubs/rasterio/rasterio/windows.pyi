@@ -2,8 +2,8 @@ from collections.abc import Callable, Sequence
 from typing import Any, TypeAlias, overload
 from typing_extensions import Self, deprecated
 
+from affine import Affine as Affine
 from numpy.typing import NDArray
-from rasterio._affine_types import Affine
 from rasterio.errors import RasterioDeprecationWarning as RasterioDeprecationWarning, WindowError as WindowError
 
 _Bounds: TypeAlias = tuple[float, float, float, float]

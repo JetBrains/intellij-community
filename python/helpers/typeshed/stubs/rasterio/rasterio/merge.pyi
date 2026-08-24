@@ -4,8 +4,8 @@ from collections.abc import Callable, Sequence
 from typing import Any, Final, Literal, TypeAlias, overload
 from typing_extensions import deprecated
 
+from affine import Affine as Affine
 from numpy.typing import DTypeLike, NDArray
-from rasterio._affine_types import Affine
 from rasterio.enums import Resampling
 from rasterio.io import DatasetReaderBase
 

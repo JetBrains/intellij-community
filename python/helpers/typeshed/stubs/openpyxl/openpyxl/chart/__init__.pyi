@@ -11,5 +11,8 @@ from .pie_chart import (
 from .radar_chart import RadarChart as RadarChart
 from .reference import Reference as Reference
 from .scatter_chart import ScatterChart as ScatterChart
+from .series_factory import SeriesFactory as _SeriesFactory
 from .stock_chart import StockChart as StockChart
 from .surface_chart import SurfaceChart as SurfaceChart, SurfaceChart3D as SurfaceChart3D
+
+Series = _SeriesFactory

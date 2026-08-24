@@ -1,6 +1,3 @@
-# TODO: missing from stub
-psutil.__all__
-
 # Stubtest does not support these platforms
 psutil._psaix
 psutil._psbsd

@@ -6,6 +6,7 @@ from typing_extensions import Self
 
 from pyasn1.type.base import Asn1Item
 
+from ..protocol.convert import _ControlSequence
 from .pooling import ServerPool
 from .server import Server
 
@@ -15,6 +16,11 @@ CLIENT_STRATEGIES: Incomplete
 _ServerSequence: TypeAlias = (
     set[Server] | list[Server] | tuple[Server, ...] | Generator[Server, None, None] | dict_keys[Server, Incomplete]
 )
+# TODO: Construct full request and response types. This is non-trivial because there are many different request/response types and
+# the libary was written async (not thread-safe) design.
+_Request: TypeAlias = Incomplete
+_Response: TypeAlias = Incomplete
+_Result: TypeAlias = Incomplete
 
 class Connection:
     connection_lock: Incomplete
@@ -25,9 +31,9 @@ class Connection:
     authentication: Incomplete
     version: Incomplete
     auto_referrals: Incomplete
-    request: Incomplete
-    response: Incomplete | None
-    result: Incomplete
+    request: _Request
+    response: _Response | None
+    result: _Result
     bound: bool
     listening: bool
     closed: bool
@@ -133,7 +139,10 @@ class Connection:
         read_server_info: bool = True,
         controls=None,
     ): ...
-    def unbind(self, controls=None): ...
+    # Thread safe strategies return a (status, result, response, request) tuple instead of a bare status
+    def unbind(
+        self, controls: _ControlSequence | None = None
+    ) -> Literal[True] | tuple[Literal[True], _Result, _Response, _Request]: ...
     def search(
         self,
         search_base: str,

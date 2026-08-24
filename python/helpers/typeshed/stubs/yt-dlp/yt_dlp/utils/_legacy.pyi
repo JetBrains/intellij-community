@@ -6,6 +6,7 @@ from http.client import HTTPResponse
 from http.cookiejar import CookieJar
 from subprocess import Popen
 from typing import Any, AnyStr, TypeVar
+from typing_extensions import deprecated
 
 has_certifi: bool
 has_websockets: bool
@@ -52,8 +53,13 @@ def make_HTTPS_handler(
 def process_communicate_or_kill(
     p: Popen[Any], *args: Any, **kwargs: Any  # args/kwargs passed to Popen.__init__().
 ) -> tuple[AnyStr, AnyStr]: ...
+@deprecated("Do not use.")
 def encodeFilename(s: str, for_subprocess: Unused = False) -> bytes: ...
+@deprecated("Do not use.")
 def decodeFilename(b: bytes, for_subprocess: Unused = False) -> str: ...
+@deprecated("Do not use.")
 def decodeArgument(b: _T) -> _T: ...
+@deprecated("Do not use.")
 def decodeOption(optval: AnyStr) -> str: ...
+@deprecated("Use `str` instead.")
 def error_to_compat_str(err: Any) -> str: ...  # Calls str(err).
