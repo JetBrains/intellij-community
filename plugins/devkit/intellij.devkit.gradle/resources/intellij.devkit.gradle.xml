@@ -25,6 +25,7 @@
     <module name="intellij.platform.smRunner"/>
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.workspace.jps"/>
+    <plugin id="org.jetbrains.kotlin"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
@@ -36,5 +37,14 @@
   <extensions defaultExtensionNs="com.intellij">
     <attachSourcesProvider implementation="org.jetbrains.idea.devkit.gradle.IntelliJPlatformAttachSourcesProvider"/>
     <consoleFilterProvider implementation="org.jetbrains.idea.devkit.gradle.GradlePluginConsoleFilterProvider"/>
+    <completion.contributor language="kotlin"
+                            implementationClass="org.jetbrains.idea.devkit.gradle.IntelliJPlatformVersionsCompletionContributor"/>
+    <projectService serviceInterface="org.jetbrains.idea.devkit.gradle.IntelliJPlatformGradleModelProvider"
+                    serviceImplementation="org.jetbrains.idea.devkit.gradle.IntelliJPlatformGradleModelProviderImpl"/>
   </extensions>
+
+  <applicationListeners>
+    <listener class="org.jetbrains.idea.devkit.gradle.IntelliJPlatformGradleSyncListener"
+              topic="org.jetbrains.plugins.gradle.service.syncAction.GradleSyncListener"/>
+  </applicationListeners>
 </idea-plugin>
