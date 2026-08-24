@@ -58,6 +58,13 @@ class UiAutomationService {
     return resolve(locator, timeoutMs)?.node
   }
 
+  fun activateWindow(locator: UiLocator, timeoutMs: Long): UiNode? {
+    require(timeoutMs >= 0) { "timeoutMs must be >= 0, got $timeoutMs" }
+    val resolved = resolve(locator, timeoutMs) ?: return null
+    activateWindow(resolved.component)
+    return resolve(locator, 0)?.node ?: error("UI element ${describe(locator)} disappeared after its window was activated")
+  }
+
   fun click(request: UiClickRequest): UiActionResult {
     require(request.clickCount >= 1) { "clickCount must be >= 1, got ${request.clickCount}" }
     return perform(request.locator, request.timeoutMs) { resolved ->
@@ -339,10 +346,10 @@ class UiAutomationService {
 
   private fun activateWindow(component: Component) {
     val focusTarget = onEdt {
-      val window = SwingUtilities.getWindowAncestor(component) ?: error("component has no window")
-      if (component.isFocusable) component
-      else window.focusOwner?.takeIf { it.isShowing && it.isEnabled }
-           ?: window.mostRecentFocusOwner?.takeIf { it.isShowing && it.isEnabled }
+      val window = component.containingWindow() ?: error("component has no window")
+      if (component !is Window && component.isFocusable) component
+      else window.focusOwner?.takeIf { it.isUsableFocusTarget(window) }
+           ?: window.mostRecentFocusOwner?.takeIf { it.isUsableFocusTarget(window) }
            ?: window.firstFocusableDescendant()
            ?: error("window has no focusable component")
     }
@@ -351,7 +358,7 @@ class UiAutomationService {
 
   private fun activateAndFocus(component: Component) {
     onEdt {
-      val window = SwingUtilities.getWindowAncestor(component) ?: error("component has no window")
+      val window = component.containingWindow() ?: error("component has no window")
       requestForeground(window)
     }
     robot.waitForIdle()
@@ -384,6 +391,10 @@ class UiAutomationService {
       return null
     }
     return find(this)
+  }
+
+  private fun Component.isUsableFocusTarget(window: Window): Boolean {
+    return this !== window && isShowing && isEnabled && isFocusable
   }
 
   private fun <T> onEdt(action: () -> T): T = GuiActionRunner.execute(object : GuiQuery<T>() {

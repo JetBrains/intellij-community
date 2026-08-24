@@ -187,6 +187,10 @@ internal abstract class AbstractIdeRobot(
 
   override fun makeScreenshot(): ByteArray {
     val area = Rectangle(Toolkit.getDefaultToolkit().screenSize)
+    return makeScreenshot(area)
+  }
+
+  override fun makeScreenshot(area: Rectangle): ByteArray {
     return ByteArrayOutputStream().use { b ->
       ImageIO.write(awtRobot.createScreenCapture(area), "png", b)
       b.toByteArray()

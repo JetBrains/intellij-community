@@ -9,6 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Component
 import java.awt.Point
+import java.awt.Rectangle
 
 @ApiStatus.Internal
 interface IdeRobot : Robot {
@@ -17,6 +18,8 @@ interface IdeRobot : Robot {
   fun getColor(component: Component, point: Point? = null): Color
 
   fun makeScreenshot(): ByteArray
+
+  fun makeScreenshot(area: Rectangle): ByteArray
 
   fun dragAndDrop(fromComponent: Component, fromPoint: Point, toComponent: Component, toPoint: Point)
 
