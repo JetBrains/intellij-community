@@ -182,6 +182,9 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
       requestEvoPyProjects(project.projectId()).collect { dtos ->
         structure = Structure(dtos)
         evictUnknown()
+        // Also retire the built tree outright: it was built against the previous structure — its popup title names the
+        // workspace a target takes part in — so reusing it would show what the project looked like a moment ago.
+        dropPopupTree()
         update()
       }
     }
