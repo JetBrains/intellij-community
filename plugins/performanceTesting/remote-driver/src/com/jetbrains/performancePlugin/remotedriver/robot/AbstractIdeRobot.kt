@@ -16,6 +16,7 @@ import java.awt.Component
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.Toolkit
+import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.io.ByteArrayOutputStream
@@ -101,6 +102,31 @@ internal abstract class AbstractIdeRobot(
     click(c, MouseButton.LEFT_BUTTON, 3)
   }
 
+  /**
+   * Implemented here, once, for every robot: an addressed post names its recipient instead of describing a
+   * screen position, so it never reaches the input backend that [doClick] abstracts over. There is nothing for a
+   * subclass to specialize — a native-pointer robot and an event-synthesizing one would write the same body.
+   */
+  override fun postGesture(component: Component, where: Point?, button: RemoteMouseButton, times: Int) {
+    val mouseButton = button.toMouseButton()
+    val awtButton = mouseButton.awtButton
+    val point = performOnEdt {
+      check(component.isShowing) { "Component is not showing: $component" }
+      check(component.isEnabled) { "Component is not enabled: $component" }
+      where ?: Point(component.width / 2, component.height / 2)
+    }!!
+    val queue = IdeEventQueue.getInstance()
+    // One timestamp for the whole gesture: `ClickListener` derives a multi-click from the gap between consecutive
+    // presses, so a gesture that spans the multi-click interval arrives as separate clicks instead of one.
+    val timestamp = System.currentTimeMillis()
+    for (count in 1..times) {
+      queue.postEvent(MouseEvent(component, MouseEvent.MOUSE_PRESSED, timestamp, mouseButton.awtButtonDownMask,
+                                 point.x, point.y, count, awtButton == MouseEvent.BUTTON3, awtButton))
+      queue.postEvent(MouseEvent(component, MouseEvent.MOUSE_RELEASED, timestamp, 0, point.x, point.y, count, false, awtButton))
+      queue.postEvent(MouseEvent(component, MouseEvent.MOUSE_CLICKED, timestamp, 0, point.x, point.y, count, false, awtButton))
+    }
+  }
+
   override fun pressMouse(mouseButton: RemoteMouseButton) {
     pressMouse(mouseButton.toMouseButton())
   }
@@ -182,6 +208,13 @@ internal abstract class AbstractIdeRobot(
         MouseButton.LEFT_BUTTON -> MouseEvent.BUTTON1
         MouseButton.MIDDLE_BUTTON -> MouseEvent.BUTTON2
         MouseButton.RIGHT_BUTTON -> MouseEvent.BUTTON3
+      }
+
+    val MouseButton.awtButtonDownMask
+      get() = when (this) {
+        MouseButton.LEFT_BUTTON -> InputEvent.BUTTON1_DOWN_MASK
+        MouseButton.MIDDLE_BUTTON -> InputEvent.BUTTON2_DOWN_MASK
+        MouseButton.RIGHT_BUTTON -> InputEvent.BUTTON3_DOWN_MASK
       }
 
     private fun RemoteMouseButton.toMouseButton(): MouseButton = when (this) {

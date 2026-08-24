@@ -171,11 +171,7 @@ internal class InputEventsRobot(
 
   private fun postClickEvent(component: Component, button: MouseButton = MouseButton.LEFT_BUTTON, clickCount: Int = 1, where: Point? = null) {
     val awtBtn = button.awtButton
-    val buttonDownMask = when (button) {
-      MouseButton.LEFT_BUTTON -> InputEvent.BUTTON1_DOWN_MASK
-      MouseButton.RIGHT_BUTTON -> InputEvent.BUTTON3_DOWN_MASK
-      MouseButton.MIDDLE_BUTTON -> InputEvent.BUTTON2_DOWN_MASK
-    }
+    val buttonDownMask = button.awtButtonDownMask
     @Suppress("DEPRECATION")
     val buttonLegacyMask = when (button) {
       MouseButton.LEFT_BUTTON -> InputEvent.BUTTON1_MASK

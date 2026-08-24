@@ -42,6 +42,37 @@ interface IdeRobot : Robot {
 
   fun strictClick(component: Component, point: Point? = null)
 
+  /**
+   * Enqueues a click **addressed to [component]** and returns: `times` x (`MOUSE_PRESSED`, `MOUSE_RELEASED`,
+   * `MOUSE_CLICKED`), sourced at [component] itself, at coordinates relative to it ([where] `== null` — its centre).
+   * No mouse move precedes them, and nothing waits for them.
+   *
+   * This is the gesture for a click whose effect cannot be awaited from the caller — the classic case being a click
+   * that opens a modal dialog, which blocks the dispatching thread for as long as the dialog is up, so any robot
+   * call that waits for its own event to be dispatched deadlocks instead of returning. Test frameworks reach for a
+   * hand-rolled `postEvent(MouseEvent(...))` at exactly this point; this is that primitive, shared.
+   *
+   * Addressing is the difference from the ordinary [click] family. A [click] describes *where on the screen* the
+   * gesture happens and lets AWT decide who receives it, so a balloon or popup that appears in between silently
+   * takes it. An addressed post names the recipient, and dispatch to a named source cannot be stolen. It also
+   * needs no input backend: no native pointer, no window-sourced synthesis, so every [IdeRobot] behaves the same.
+   *
+   * Only [component]`.isShowing` and `isEnabled` are checked, on the EDT, before the events are queued. Everything
+   * else is explicitly **not** guaranteed:
+   * - **No delivery observation.** Dispatch happens after this call returns. Nothing here reports whether
+   *   [component] received the gesture, acted on it, or was disposed first.
+   * - **The aim can go stale.** [where] is resolved before posting; a component that moves, resizes, or hides
+   *   before dispatch is clicked at a point that no longer means what it meant.
+   * - **A post into a modally blocked window is dropped silently.** The event queue filters it by modality state
+   *   and no failure surfaces.
+   * - **No ordering against later driver calls.** Post an explicit barrier if a subsequent step depends on this
+   *   gesture having been dispatched (`IdeEventQueue.flushQueue`, exposed to the driver SDK).
+   *
+   * Delivery semantics that observe the click, retry, or route the gesture natively are tracked separately
+   * in AT-5091.
+   */
+  fun postGesture(component: Component, where: Point? = null, button: RemoteMouseButton = RemoteMouseButton.LEFT, times: Int = 1)
+
   fun pressMouse(mouseButton: RemoteMouseButton)
 
   fun pressMouse(component: Component, point: Point, mouseButton: RemoteMouseButton)

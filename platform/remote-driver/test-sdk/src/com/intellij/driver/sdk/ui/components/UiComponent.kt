@@ -437,6 +437,20 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     }
   }
 
+  /**
+   * Posts a click addressed to this component and returns without waiting for it to be dispatched.
+   *
+   * Use it for a click whose effect cannot be awaited — a click that opens a modal dialog, most of all: the dialog
+   * blocks the dispatching thread while it is up, so [click] would wait for its own event forever. In exchange
+   * nothing is verified past the component being shown and enabled — not delivery, not the effect. Assert on what
+   * the click was supposed to produce, and use `IdeEventQueue.flushQueue` if a later step needs the gesture
+   * dispatched first. `Robot.postGesture` documents the full contract.
+   */
+  fun postClick(where: Point? = null) {
+    LOG.info("Post click at $this${where?.let { ": $it" } ?: ""}")
+    withComponent { robot.postGesture(it, where, RemoteMouseButton.LEFT, 1) }
+  }
+
   fun strictClick(point: Point? = null, mouseButton: RemoteMouseButton = RemoteMouseButton.LEFT) {
     LOG.info("strictClick at $this${point?.let { ": $it" } ?: ""}")
     if (point != null) {
