@@ -22,11 +22,14 @@ import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.testDiscovery.JvmToggleAutoTestAction
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil
 import com.intellij.execution.util.JavaParametersUtil
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import java.io.OutputStream
 import java.nio.file.Path
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.deleteRecursively
 
 class MavenSurefireConfigurationFactory(
   private val configurationName: String,
@@ -131,6 +134,8 @@ private class SurefireTestRunProfileState(
  *   proxy signals its own termination.  This keeps everything in a single Run toolwindow tab.
  * - `destroyProcess()` / `detachProcess()` delegate to the Maven handler so the Stop button works.
  */
+private val LOG = logger<SurefireProcessProxy>()
+
 private class SurefireProcessProxy(
   private val mavenHandler: ProcessHandler,
   private val testModuleDirectory: String,
@@ -161,6 +166,15 @@ private class SurefireProcessProxy(
   }
 
   override fun startNotify() {
+    // Clear stale Surefire XML reports before Maven runs so the SM console never shows results from a previous run.
+    // Ignore errors (e.g. locked files on Windows) — stale reports are a minor nuisance, but aborting the run is worse.
+    @OptIn(ExperimentalPathApi::class)
+    try {
+      Path.of(testModuleDirectory).resolve(SurefireReportParser.SUREFIRE_REPORTS_PATH).deleteRecursively()
+    }
+    catch (e: Exception) {
+      LOG.warn("Could not clear stale surefire-reports in $testModuleDirectory", e)
+    }
     super.startNotify()           // fires startNotified on proxy listeners (SM console)
     mavenHandler.startNotify()    // starts event dispatching on the Maven process
   }

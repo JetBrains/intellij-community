@@ -20,8 +20,10 @@ private val LOG = logger<SurefireReportParser>()
  */
 internal object SurefireReportParser {
 
+  const val SUREFIRE_REPORTS_PATH = "target/surefire-reports"
+
   fun collectMessages(testModuleDirectory: Path): List<String> {
-    val reportsDir = testModuleDirectory.resolve("target/surefire-reports")
+    val reportsDir = testModuleDirectory.resolve(SUREFIRE_REPORTS_PATH)
     if (!reportsDir.exists() || !reportsDir.isDirectory()) return emptyList()
 
     val xmlFiles = try {
