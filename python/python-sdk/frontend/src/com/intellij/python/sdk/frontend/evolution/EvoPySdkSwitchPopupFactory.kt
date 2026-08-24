@@ -33,7 +33,7 @@ import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
 import com.intellij.python.sdk.common.evolution.EvoNodeDto
 import com.intellij.python.sdk.common.evolution.EvoNodeIds
 import com.intellij.python.sdk.common.evolution.EvoSectionDto
-import com.intellij.python.sdk.common.evolution.EvoWorkspaceDto
+import com.intellij.python.sdk.common.evolution.EvoPyProjectDto
 import com.intellij.python.sdk.common.evolution.PyInterpreterDto
 import com.intellij.python.sdk.common.evolution.PyInterpreterRef
 import com.intellij.python.sdk.common.evolution.evoRpc
@@ -55,6 +55,7 @@ import com.intellij.python.sdk.frontend.evolution.components.EvoWarningException
 import com.intellij.python.sdk.frontend.icons.PythonSdkFrontendIcons
 import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.NonNls
 
 private val managePackagesAction = object : AnAction(
   { PySdkFrontendBundle.message("evo.sdk.python.packaging.interpreter.widget.manage.packages") },
@@ -99,10 +100,13 @@ private fun <T : Any> SimpleDataContext.Builder.addOrNull(key: DataKey<T>, value
 
 internal class EvoPySdkSwitchPopupFactory(
   val project: Project,
-  val moduleName: @NlsSafe String,
+  /** Wire identity of the `PyProject` every backend call below is addressed to — see [EvoPyProjectDto.key]. */
+  val pyProjectKey: @NonNls String,
+  /** Its display name — the popup title, never an address. */
+  val displayName: @NlsSafe String,
+  /** Display name of the workspace it takes part in, or `null` when it is standalone — see [popupTitle]. */
+  val workspaceRootName: @NlsSafe String?,
   val currentInterpreter: PyInterpreterDto?,
-  /** The workspace [moduleName] takes part in, or `null` when it is standalone — see [popupTitle]. */
-  val workspace: EvoWorkspaceDto?,
   val nodes: List<EvoNodeDto>,
   val associated: List<PyInterpreterDto>,
   /** The "Shortcuts" rows shown when there is no current interpreter — the IDE's autoconfigure suggestion(s). */
@@ -125,10 +129,10 @@ internal class EvoPySdkSwitchPopupFactory(
       )
     }
     return when (kind) {
-      EvoLeafKind.SELECT_ENV -> EvoTreeLeafElement(selectEnvAction(project, moduleName, this, nodeId, traceId, scope))
+      EvoLeafKind.SELECT_ENV -> EvoTreeLeafElement(selectEnvAction(project, pyProjectKey, this, nodeId, traceId, scope))
       // A runnable backend action (advanced add-interpreter) carries an actionId; a display-only row stays a no-op stub.
       EvoLeafKind.ACTION -> EvoTreeLeafElement(
-        if (actionId != null) evoBackendActionLeaf(project, moduleName, nodeId, this, scope) else toStubAction()
+        if (actionId != null) evoBackendActionLeaf(project, pyProjectKey, nodeId, this, scope) else toStubAction()
       )
     }
   }
@@ -192,7 +196,7 @@ internal class EvoPySdkSwitchPopupFactory(
       override fun actionPerformed(e: AnActionEvent) {
         // A taken/blank name can't back a new env (the field shows it in red) — don't create.
         if (editableName != null && !editableName.isValid) return
-        createEvoEnv(project, moduleName, nodeId, option.token, path, editableName?.value ?: defaultName, scope)
+        createEvoEnv(project, pyProjectKey, nodeId, option.token, path, editableName?.value ?: defaultName, scope)
       }
     }
 
@@ -236,7 +240,7 @@ internal class EvoPySdkSwitchPopupFactory(
       sections = listOf(
         EvoTreeSection(
           label = null,
-          elements = associated.map { EvoTreeLeafElement(selectEnvAction(project, moduleName, it, ASSOCIATED_NODE_ID, traceId, scope)) },
+          elements = associated.map { EvoTreeLeafElement(selectEnvAction(project, pyProjectKey, it, ASSOCIATED_NODE_ID, traceId, scope)) },
         ),
       ),
     )
@@ -258,7 +262,7 @@ internal class EvoPySdkSwitchPopupFactory(
       for (node in nodes) {
         if (node.id == ADVANCED_NODE_ID && associated.isNotEmpty()) add(associatedInterpretersNode(traceId))
         add(EvoTreeLazyNodeElement(node.label, node.icon.icon()) { force ->
-          val result = evoRpc { requestEvoNode(projectId, moduleName, node.id, traceId, force) }
+          val result = evoRpc { requestEvoNode(projectId, pyProjectKey, node.id, traceId, force) }
           val refreshable = (result as? EvoLoadResultDto.Ok)?.refreshable == true
           EvoLoadedNode(result.toSections(node.id, traceId), refreshable).withoutLoneAddNewStep()
         })
@@ -277,7 +281,7 @@ internal class EvoPySdkSwitchPopupFactory(
       null -> shortcuts.takeIf { it.isNotEmpty() }?.let { leaves ->
         EvoTreeSection(
           label = ListSeparator(PySdkFrontendBundle.message("evo.sdk.status.bar.popup.shortcuts")),
-          elements = leaves.map { EvoTreeLeafElement(selectEnvAction(project, moduleName, it, SHORTCUTS_NODE_ID, traceId, scope)) },
+          elements = leaves.map { EvoTreeLeafElement(selectEnvAction(project, pyProjectKey, it, SHORTCUTS_NODE_ID, traceId, scope)) },
         )
       }
       else -> EvoTreeSection(
@@ -299,11 +303,10 @@ internal class EvoPySdkSwitchPopupFactory(
    * module taking part in one is titled by its workspace: `monorepo` at the root, `monorepo[pkg-a]` for a member.
    * A standalone module keeps its plain name.
    */
-  private fun popupTitle(): @PopupTitle String = when {
-    workspace == null -> moduleName
-    workspace.rootModuleName == moduleName -> workspace.rootModuleName
-    else -> PySdkFrontendBundle.message("evo.sdk.status.bar.popup.title.workspace", workspace.rootModuleName, moduleName)
-  }
+  private fun popupTitle(): @PopupTitle String =
+    // Standalone, or the workspace's own root (where the two names are the same string): the plain name.
+    if (workspaceRootName == null || workspaceRootName == displayName) displayName
+    else PySdkFrontendBundle.message("evo.sdk.status.bar.popup.title.workspace", workspaceRootName, displayName)
 
   /**
    * The data context the popup's actions see: [context] with the interpreter's dependency file put in front of it.
