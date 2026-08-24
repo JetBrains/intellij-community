@@ -834,6 +834,11 @@ open class FileEditorManagerImpl(
            COMPOSITE_PROVIDER_EP.extensionList.any { it.canOpenFile(file) }
   }
 
+  override suspend fun canOpenFileAsync(file: VirtualFile): Boolean {
+    return super.canOpenFileAsync(file) ||
+           COMPOSITE_PROVIDER_EP.extensionList.any { it.canOpenFile(file) }
+  }
+
   override fun hasOpenedFile(): Boolean = splitters.currentWindow?.selectedComposite != null
 
   override fun getCurrentFile(): VirtualFile? {
