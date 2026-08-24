@@ -49,7 +49,6 @@ jvm_library(
         "//platform/util/coroutines",
         "//platform/util/multiplatform",
         "//platform/util/base",
-        "//platform/diagnostic/telemetry-impl",
         "//platform/analysis-api:analysis",
     ],
 )
@@ -98,7 +97,6 @@ jvm_library(
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/util/multiplatform:multiplatform_test_lib",
         "//platform/util/base:base_test_lib",
-        "//platform/diagnostic/telemetry-impl:telemetry-impl_test_lib",
         "//platform/analysis-api:analysis_test_lib",
     ],
 )

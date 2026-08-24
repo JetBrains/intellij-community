@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
+import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceAsync
@@ -18,7 +19,6 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.diagnostic.telemetry.helpers.Nanoseconds
-import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -69,11 +69,12 @@ internal suspend fun initWorkspaceFileIndexData(
   WorkspaceFileIndexDataMetrics.instancesCounter.incrementAndGet()
   val start = Nanoseconds.now()
 
-  span("register main entities") {
+  val coroutineTracer = CoroutineTracerShim.coroutineTracer
+  coroutineTracer.span("register main entities") {
     val registrar = StoreFileSetsRegistrarImpl(EntityStorageKind.MAIN, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
     WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
       for ((entityClass, contributors) in contributors) {
-        span("register file sets by ${entityClass.name.substringAfterLast('.')}") {
+        coroutineTracer.span("register file sets by ${entityClass.name.substringAfterLast('.')}") {
           for (entity in workspaceModel.currentSnapshot.entities(entityClass)) {
             registerFileSets(entity = entity, storage = workspaceModel.currentSnapshot, contributors = contributors, registrar = registrar)
           }
@@ -81,7 +82,7 @@ internal suspend fun initWorkspaceFileIndexData(
       }
     }
   }
-  span("register unloaded entities") {
+  coroutineTracer.span("register unloaded entities") {
     val registrar = StoreFileSetsRegistrarImpl(EntityStorageKind.UNLOADED, nonExistingFilesRegistry, fileSets, fileSetsByPackagePrefix)
     registerAllEntities(
       registrar = registrar,

@@ -8,6 +8,7 @@ package org.jetbrains.intellij.build.productLayout
  *
  * This file contains the base module sets that provide the platform infrastructure:
  * - **libraries***: Library modules (platform, IDE, ktor, Jackson)
+ * - **telemetry***: OpenTelemetry libraries plus the platform telemetry API and its implementation
  * - **corePlatform**: Base platform without IDE (for analysis tools)
  * - **coreIde**: Platform + basic IDE functionality
  * - **coreLang**: Platform + IDE + language support
@@ -34,9 +35,12 @@ object CoreModuleSets {
    * versus `module` decides whether the library *also* enters the core classloader. Demote a library in
    * place — keep it next to its family instead of moving it to another set.
    *
-   * **Note:** UI/IDE-specific libraries (JCEF, Jediterm, PTY4J, SSH) have been moved to `librariesIde()`
+   * **Note:** UI/IDE-specific libraries (JCEF, Jediterm, PTY4J, SSH) have been moved to `librariesIde()`,
+   * and the OpenTelemetry wrappers to `telemetry()` / `telemetryImpl()` - they belong next to the telemetry
+   * modules that are their only reason to exist.
    *
    * @see librariesIde for UI and IDE-specific libraries
+   * @see telemetry for the OpenTelemetry API/SDK wrappers and the telemetry API
    */
   fun librariesPlatform(): ModuleSet = moduleSet("libraries.platform") {
     embeddedModule("intellij.libraries.java.compatibility")
@@ -139,11 +143,77 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.velocity")
     embeddedModule("intellij.libraries.xtext.xbase")
     embeddedModule("intellij.libraries.xz")
+  }
 
+  /**
+   * OpenTelemetry API/SDK wrappers and the platform telemetry API.
+   *
+   * **Typical users:** every product - `intellij.platform.core.impl`, `intellij.platform.analysis.impl`,
+   * `intellij.platform.projectModel.impl` and `intellij.platform.workspace.jps` compile against the telemetry
+   * API, and so do util-jar modules outside the content model (`intellij.platform.util.io.storages`,
+   * `intellij.platform.workspace.storage`, `intellij.platform.jps.model.serialization`).
+   *
+   * Embedded, and nested in `corePlatform()`: `intellij.platform.diagnostic.telemetry` exposes OpenTelemetry
+   * types (`Tracer`, `Meter`) in its own signatures, so the API and its libraries must share the core
+   * classloader with it.
+   *
+   * The exporting half lives in `telemetryImpl()` - nothing in `corePlatform()` needs it.
+   *
+   * @see telemetryImpl for the OTLP exporters and `TelemetryManager` implementation
+   */
+  fun telemetry(): ModuleSet = moduleSet("telemetry", includeDependencies = true) {
+    moduleSet(librariesOpenTelemetry())
+
+    embeddedModule("intellij.platform.diagnostic.telemetry")
+  }
+
+  /**
+   * OpenTelemetry API and SDK library wrappers.
+   *
+   * A nested set rather than plain members of `telemetry()`, because `includeDependencies` is a per-set default:
+   * the telemetry modules need it (packaging packs their JPS runtime deps into their own jars, e.g.
+   * `intellij.platform.diagnostic.telemetry.exporters` into the telemetry.impl jar), library wrappers must not
+   * have it - their JPS deps are other wrappers, and packing those would bundle them twice. Same reason
+   * `corePlatform()` nests `librariesDap()` instead of listing it inline.
+   */
+  fun librariesOpenTelemetry(): ModuleSet = moduleSet("libraries.opentelemetry") {
     embeddedModule("intellij.libraries.opentelemetry")
     embeddedModule("intellij.libraries.opentelemetry.extension.kotlin")
-    embeddedModule("intellij.libraries.opentelemetry.exporter.otlp.common")
     embeddedModule("intellij.libraries.opentelemetry.semconv")
+  }
+
+  /**
+   * The telemetry implementation: `TelemetryManagerImpl`, the OTLP/Jaeger exporters, and the OpenTelemetry
+   * exporter libraries only they use.
+   *
+   * **Typical users:** products that configure telemetry at startup, i.e. everything with
+   * `intellij.platform.ide.bootstrap` - hence nesting in `coreLang()` rather than in `corePlatform()`.
+   * **Typical NON-users:** CodeServer and other `corePlatform()`-only tools; they need the API, not the export
+   * pipeline.
+   *
+   * `intellij.libraries.opentelemetry.sdk.autoconfigure.spi` and
+   * `intellij.libraries.opentelemetry.exporter.sender.jdk` are here because the OTLP exporter needs them at
+   * runtime, not because any platform module compiles against them.
+   *
+   * `intellij.platform.diagnostic.telemetry.exporters` is not listed: it is merged into
+   * `intellij.platform.diagnostic.telemetry.impl.jar` by the module's `module-content.yaml`, so it follows
+   * `intellij.platform.diagnostic.telemetry.impl` automatically.
+   *
+   * @see telemetry for the API and the OpenTelemetry API/SDK wrappers
+   */
+  fun telemetryImpl(): ModuleSet = moduleSet("telemetry.impl", includeDependencies = true) {
+    moduleSet(librariesOpenTelemetryExporter())
+
+    embeddedModule("intellij.platform.diagnostic.telemetry.impl")
+  }
+
+  /**
+   * OpenTelemetry exporter library wrappers - the OTLP exporter plus the SPI and HTTP sender it loads at runtime.
+   *
+   * Nested in `telemetryImpl()` for the same `includeDependencies` reason as `librariesOpenTelemetry()`.
+   */
+  fun librariesOpenTelemetryExporter(): ModuleSet = moduleSet("libraries.opentelemetry.exporter") {
+    embeddedModule("intellij.libraries.opentelemetry.exporter.otlp.common")
     embeddedModule("intellij.libraries.opentelemetry.sdk.autoconfigure.spi")
     embeddedModule("intellij.libraries.opentelemetry.exporter.sender.jdk")
   }
@@ -285,17 +355,13 @@ object CoreModuleSets {
   fun corePlatform(): ModuleSet = moduleSet("core.platform", selfContained = true, outputModule = "intellij.platform.ide.core", includeDependencies = true) {
     moduleSet(librariesPlatform())
     moduleSet(librariesDap())
+    moduleSet(telemetry())
 
     embeddedModule("intellij.platform.runtime.product")
-
-    embeddedModule("intellij.platform.diagnostic.telemetry")
-    embeddedModule("intellij.platform.diagnostic.telemetry.impl")
 
     embeddedModule("intellij.platform.util.ex")
     embeddedModule("intellij.platform.util.ui")
     embeddedModule("intellij.platform.util.coroutines")
-
-    embeddedModule("intellij.platform.icons.impl.intellij")
 
     embeddedModule("intellij.platform.locking.impl")
 
@@ -303,9 +369,9 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.core.ui")
     embeddedModule("intellij.platform.core.impl")
     embeddedModule("intellij.platform.indexing")
+    // stays here: intellij.codeServer.core needs it directly, and so does the
+    // intellij.platform.editor.ex -> intellij.platform.indexing.impl runtime closure
     embeddedModule("intellij.platform.projectFrame")
-    embeddedModule("intellij.platform.welcomeScreen")
-    embeddedModule("intellij.platform.welcomeScreen.impl")
 
     embeddedModule("intellij.platform.codeStyle")
     embeddedModule("intellij.platform.editor.ex")
@@ -354,6 +420,9 @@ object CoreModuleSets {
     // Add basic IDE functionality on top of platform
     embeddedModule("intellij.platform.ide")
 
+    // consumed by intellij.platform.ide - not by anything in corePlatform()
+    embeddedModule("intellij.platform.welcomeScreen")
+
     embeddedModule("intellij.platform.remoteServers.agent.rt")
     embeddedModule("intellij.platform.remoteServers")
 
@@ -393,8 +462,16 @@ object CoreModuleSets {
     // Include core IDE (corePlatform + intellij.platform.ide)
     moduleSet(coreIde())
 
+    // telemetry export pipeline - required by intellij.platform.ide.bootstrap, which configures it at startup
+    moduleSet(telemetryImpl())
+
     embeddedModule("intellij.platform.macro")
     embeddedModule("intellij.platform.usageView.impl")
+
+    // consumed by intellij.platform.ide.impl and intellij.platform.lang.impl
+    embeddedModule("intellij.platform.welcomeScreen.impl")
+    // consumed by intellij.platform.ide.bootstrap; also PROVIDED-depends on intellij.platform.ide.impl
+    embeddedModule("intellij.platform.icons.impl.intellij")
 
     embeddedModule("intellij.platform.execution")
     embeddedModule("intellij.platform.execution.impl")

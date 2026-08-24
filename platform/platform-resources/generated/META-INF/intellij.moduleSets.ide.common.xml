@@ -118,18 +118,24 @@
     <module name="intellij.libraries.velocity" loading="embedded"/>
     <module name="intellij.libraries.xtext.xbase" loading="embedded"/>
     <module name="intellij.libraries.xz" loading="embedded"/>
-    <module name="intellij.libraries.opentelemetry" loading="embedded"/>
-    <module name="intellij.libraries.opentelemetry.extension.kotlin" loading="embedded"/>
-    <module name="intellij.libraries.opentelemetry.exporter.otlp.common" loading="embedded"/>
-    <module name="intellij.libraries.opentelemetry.semconv" loading="embedded"/>
-    <module name="intellij.libraries.opentelemetry.sdk.autoconfigure.spi" loading="embedded"/>
-    <module name="intellij.libraries.opentelemetry.exporter.sender.jdk" loading="embedded"/>
     <!-- endregion -->
     <!-- endregion -->
 
     <!-- region nested: essential > essential.minimal > core.lang > core.ide > core.platform > libraries.dap -->
     <module name="intellij.libraries.eclipse.lsp4j.debug"/>
     <module name="intellij.libraries.eclipse.lsp4j.jsonrpc.debug"/>
+    <!-- endregion -->
+
+    <!-- region nested: essential > essential.minimal > core.lang > core.ide > core.platform > telemetry -->
+    <!-- region nested: essential > essential.minimal > core.lang > core.ide > core.platform > telemetry > libraries.opentelemetry -->
+    <module name="intellij.libraries.opentelemetry" loading="embedded"/>
+    <module name="intellij.libraries.opentelemetry.extension.kotlin" loading="embedded"/>
+    <module name="intellij.libraries.opentelemetry.semconv" loading="embedded"/>
+    <!-- endregion -->
+
+    <!-- region direct modules -->
+    <module name="intellij.platform.diagnostic.telemetry" loading="embedded"/>
+    <!-- endregion -->
     <!-- endregion -->
 
     <!-- region nested: essential > essential.minimal > core.lang > core.ide > core.platform > rpc.minimal -->
@@ -163,20 +169,15 @@
 
     <!-- region direct modules -->
     <module name="intellij.platform.runtime.product" loading="embedded"/>
-    <module name="intellij.platform.diagnostic.telemetry" loading="embedded"/>
-    <module name="intellij.platform.diagnostic.telemetry.impl" loading="embedded"/>
     <module name="intellij.platform.util.ex" loading="embedded"/>
     <module name="intellij.platform.util.ui" loading="embedded"/>
     <module name="intellij.platform.util.coroutines" loading="embedded"/>
-    <module name="intellij.platform.icons.impl.intellij" loading="embedded"/>
     <module name="intellij.platform.locking.impl" loading="embedded"/>
     <module name="intellij.platform.core" loading="embedded"/>
     <module name="intellij.platform.core.ui" loading="embedded"/>
     <module name="intellij.platform.core.impl" loading="embedded"/>
     <module name="intellij.platform.indexing" loading="embedded"/>
     <module name="intellij.platform.projectFrame" loading="embedded"/>
-    <module name="intellij.platform.welcomeScreen" loading="embedded"/>
-    <module name="intellij.platform.welcomeScreen.impl" loading="embedded"/>
     <module name="intellij.platform.codeStyle" loading="embedded"/>
     <module name="intellij.platform.editor.ex" loading="embedded"/>
     <module name="intellij.platform.editor.ui" loading="embedded"/>
@@ -212,6 +213,7 @@
 
     <!-- region direct modules -->
     <module name="intellij.platform.ide" loading="embedded"/>
+    <module name="intellij.platform.welcomeScreen" loading="embedded"/>
     <module name="intellij.platform.remoteServers.agent.rt" loading="embedded"/>
     <module name="intellij.platform.remoteServers" loading="embedded"/>
     <module name="intellij.platform.usageView" loading="embedded"/>
@@ -219,9 +221,23 @@
     <!-- endregion -->
     <!-- endregion -->
 
+    <!-- region nested: essential > essential.minimal > core.lang > telemetry.impl -->
+    <!-- region nested: essential > essential.minimal > core.lang > telemetry.impl > libraries.opentelemetry.exporter -->
+    <module name="intellij.libraries.opentelemetry.exporter.otlp.common" loading="embedded"/>
+    <module name="intellij.libraries.opentelemetry.sdk.autoconfigure.spi" loading="embedded"/>
+    <module name="intellij.libraries.opentelemetry.exporter.sender.jdk" loading="embedded"/>
+    <!-- endregion -->
+
+    <!-- region direct modules -->
+    <module name="intellij.platform.diagnostic.telemetry.impl" loading="embedded"/>
+    <!-- endregion -->
+    <!-- endregion -->
+
     <!-- region direct modules -->
     <module name="intellij.platform.macro" loading="embedded"/>
     <module name="intellij.platform.usageView.impl" loading="embedded"/>
+    <module name="intellij.platform.welcomeScreen.impl" loading="embedded"/>
+    <module name="intellij.platform.icons.impl.intellij" loading="embedded"/>
     <module name="intellij.platform.execution" loading="embedded"/>
     <module name="intellij.platform.execution.impl" loading="embedded"/>
     <module name="intellij.platform.lvcs" loading="embedded"/>
