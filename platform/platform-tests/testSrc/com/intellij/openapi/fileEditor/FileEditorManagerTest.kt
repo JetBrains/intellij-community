@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.FoldingModel
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
+import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileEditor.impl.DefaultPlatformFileEditorProvider
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.EditorSplitterState
@@ -42,8 +43,10 @@ import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePreCloseCheck
+import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.pom.Navigatable
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
@@ -247,6 +250,24 @@ class FileEditorManagerTest {
 
     openSourceFile("2.txt")
     assertThat(selectedEditorName(file)).isEqualTo(MockFileEditorProvider.DEFAULT_FILE_EDITOR_NAME)
+  }
+
+  @Test
+  fun testStaleSelectionNotificationDoesNotReturnClosedFileToHistory(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    val file = openSourceFile("1.txt", focusEditor = false)
+    val staleEditor = staleEditorWithProvider(file)
+    val history = EditorHistoryManager.getInstance(project)
+
+    manager.closeFile(file)
+    assertThat(manager.isFileOpen(file)).isFalse()
+    history.removeAllFiles()
+    assertThat(history.fileList).isEmpty()
+
+    // no entry created should own a pointer nobody could dispose anymore
+    val pointerTracker = VirtualFilePointerTracker()
+    publishSelectionChangedFrom(staleEditor)
+    pointerTracker.assertPointersAreDisposed()
+    assertThat(history.fileList).isEmpty()
   }
 
   @Test
@@ -736,6 +757,23 @@ class FileEditorManagerTest {
       }
       VfsTestUtil.deleteFile(file!!)
     }
+  }
+
+  /**
+   * An editor a deferred selection notification can still reference after the file has been closed:
+   * unlike a real text editor, [Mock.MyFileEditor] never becomes invalid.
+   */
+  private fun staleEditorWithProvider(file: VirtualFile): FileEditorWithProvider {
+    val provider = MockFileEditorProvider()
+    return FileEditorWithProvider(fileEditor = provider.createEditor(project, file), provider = provider)
+  }
+
+  private fun publishSelectionChangedFrom(oldEditorWithProvider: FileEditorWithProvider) {
+    // the history update is postponed until all documents are committed, so commit first to get the notification handled synchronously
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).selectionChanged(
+      FileEditorManagerEvent(manager = manager, oldEditorWithProvider = oldEditorWithProvider, newEditorWithProvider = null)
+    )
   }
 
   private fun registerProvider(provider: FileEditorProvider) {

@@ -206,10 +206,13 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
     fallback: FileEditorWithProvider?,
     changeEntryOrderOnly: Boolean,
   ) {
+    val composite = fileEditorManager.getComposite(file)
     val list: List<FileEditorWithProvider>
     var preview = false
     if (fallback == null) {
-      val composite = fileEditorManager.getComposite(file) ?: return
+      if (composite == null) {
+        return
+      }
       list = composite.allEditorsWithProviders
       preview = composite.isPreview
     }
@@ -225,7 +228,8 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
     val entry = getEntry(file)
     if (entry == null) {
       // The size of an entry list can be less than the number of opened editors (some entries can be removed)
-      if (file.isValid) {
+      // the composite check keeps a deferred selection notification from re-creating an entry for an already closed file
+      if (file.isValid && composite != null) {
         // the file could have been deleted, so the isValid() check is essential
         fileOpenedImpl(
           file = file,
