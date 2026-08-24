@@ -1005,13 +1005,14 @@ private suspend fun crossPlatformZip(
       }
     }
 
-  val executablePatterns = distPatterns + crossPlatformPluginPatterns
-
-  val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, _, _ ->
-    // relativePath for plugins comes relative to "plugins" directory,
-    // so it's better to use full path relative to zip root
-    val relativePath = Path.of(entry.name)
-    if (executablePatterns.any { it.matches(relativePath) }) {
+  val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, _, relativePathString ->
+    // distPatterns are authored flat relative to a per-OS dist root (e.g. "bin/fsnotifier"), matching the
+    // caller-supplied relative path, while bin content is written under a nested "bin/<os>/<arch>/" prefix in the zip.
+    // crossPlatformPluginPatterns are authored relative to the zip root ("plugins/<dir>/<pattern>"), so they must
+    // match the full entry name instead. Matching both families against the same path breaks one of them.
+    val relativePath = Path.of(relativePathString)
+    val entryPath = Path.of(entry.name)
+    if (distPatterns.any { it.matches(relativePath) } || crossPlatformPluginPatterns.any { it.matches(entryPath) }) {
       entry.unixMode = executableFileUnixMode
     }
   }
