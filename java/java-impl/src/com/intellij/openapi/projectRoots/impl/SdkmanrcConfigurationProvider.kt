@@ -14,16 +14,35 @@ public data class SdkmanReleaseData(val target: String,
                                     val flavour: String? = null,
                                     val vendor: String? = null) : JdkReleaseData {
   public companion object {
-    private val regex: Regex = Regex("(\\d+(?:\\.\\d+)*)(?:\\.([^-]+))?-?(\\S*)?")
+    private val versionRegex: Regex = Regex("\\d+(?:\\.\\d+)*")
+    private val vendorRegex: Regex = Regex("[a-z]+")
 
+    /**
+     * Parses a SDKMAN! java candidate identifier, as listed by `sdk list java`.
+     *
+     * An identifier consists of a dot-separated [version], an optional [flavour] holding the remaining
+     * qualifiers and build metadata (`fx`, `ea.11`, `hs`, `+1.1`, `r25`, ...),
+     * and an optional [vendor] suffix separated by the last `-`.
+     *
+     * For example: `8.0.504-amzn`, `28.0.0+ea.11-open`, `25.0.4-fx+1.1-librca`, `16.0.1.hs-adpt`.
+     */
     public fun parse(text: String): SdkmanReleaseData? {
-      val matchResult = regex.matchEntire(text) ?: return null
-      return SdkmanReleaseData(
-        text,
-        matchResult.groups[1]?.value ?: return null,
-        matchResult.groups[2]?.value,
-        matchResult.groups[3]?.value
-      )
+      if (text.isEmpty() || !text[0].isDigit()) return null
+
+      var rest = text
+      var vendor: String? = null
+      val separatorIndex = text.lastIndexOf('-')
+      if (separatorIndex > 0) {
+        val suffix = text.substring(separatorIndex + 1)
+        if (vendorRegex.matches(suffix)) {
+          vendor = suffix
+          rest = text.substring(0, separatorIndex)
+        }
+      }
+
+      val version = versionRegex.matchAt(rest, 0)?.value ?: return null
+      val flavour = rest.substring(version.length).trimStart('.', '-', '+').takeIf { it.isNotEmpty() }
+      return SdkmanReleaseData(text, version, flavour, vendor)
     }
   }
 
@@ -39,14 +58,14 @@ public data class SdkmanReleaseData(val target: String,
       "graalce" -> JdkVersionDetector.Variant.GraalVMCE
       "jbr" -> JdkVersionDetector.Variant.JBR
       "kona" -> JdkVersionDetector.Variant.Kona
-      "librca" -> JdkVersionDetector.Variant.Liberica
+      "librca", "librcafx", "nik" -> JdkVersionDetector.Variant.Liberica
       "ms" -> JdkVersionDetector.Variant.Microsoft
       "oracle" -> JdkVersionDetector.Variant.Oracle
       "open" -> JdkVersionDetector.Variant.Oracle
       "sapmchn" -> JdkVersionDetector.Variant.SapMachine
       "sem" -> JdkVersionDetector.Variant.Semeru
       "tem" -> JdkVersionDetector.Variant.Temurin
-      "zulu" -> JdkVersionDetector.Variant.Zulu
+      "zulu", "zulufx" -> JdkVersionDetector.Variant.Zulu
       else -> JdkVersionDetector.Variant.Unknown
   }
 }
