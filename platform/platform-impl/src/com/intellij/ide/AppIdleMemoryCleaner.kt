@@ -129,7 +129,7 @@ class AppIdleMemoryCleaner(private val cs: CoroutineScope) {
     stats.measureGc {
       runGc()
     }
-    if (!Registry.`is`("ide.idle.memory.cleaner.enabled.page.cache.release")) {
+    if (Registry.`is`("ide.idle.memory.cleaner.enabled.page.cache.release")) {
       stats.measureDirectBuffers {
         releaseIndexCachedDirectBuffers()
       }
