@@ -8,6 +8,9 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Same as {@link com.intellij.codeInsight.intention.IntentionActionWithModCommandFallback} but for {@link LocalQuickFix}.
+ * <p>
+ * Before using this interface, please consider rewriting the fix to {@link ModCommandAction} or
+ * {@link ModCommandQuickFix} completely. Use this interface only if the fix cannot be rewritten for some reason.
  */
 @ApiStatus.Experimental
 public interface LocalQuickFixWithModCommandFallback extends LocalQuickFix {
