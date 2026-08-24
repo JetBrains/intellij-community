@@ -123,7 +123,8 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     var scriptPath = myScriptPathComponent.getComponent();
     scriptPath.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileDescriptor(GroovyFileType.GROOVY_FILE_TYPE)
       .withTitle(GroovyBundle.message("script.runner.chooser.title"))
-      .withDescription(GroovyBundle.message("script.runner.chooser.description")));
+      .withDescription(GroovyBundle.message("script.runner.chooser.description"))
+      .withEnvironmentRestricted(true));
 
     final ModulesComboBox modulesComboBox = myModulesComboBoxComponent.getComponent();
     modulesComboBox.addActionListener(e -> myCommonJavaParametersPanel.setModuleContext(modulesComboBox.getSelectedModule()));
