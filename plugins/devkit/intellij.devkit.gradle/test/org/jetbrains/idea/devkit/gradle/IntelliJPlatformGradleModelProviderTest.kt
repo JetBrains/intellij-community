@@ -91,11 +91,19 @@ internal class IntelliJPlatformGradleModelProviderTest : LightJavaCodeInsightFix
       val model = object : IntelliJPlatformGradleModel {
         override fun getDependencyHelperProductCodes() = mapOf("intellijIdea" to "IU")
         override fun getProductReleasesFile() = releasesFile.toString()
+        override fun getCurrentPluginVersion() = "2.14.0"
+        override fun getLatestPluginVersion() = "2.19.0"
       }
 
       assertEquals(1, provider.importProjectModels(projectPath, mapOf(projectPath to model)))
 
-      assertEquals(gradleData("2026.1"), provider.getModel(file))
+      assertEquals(
+        gradleData("2026.1").copy(
+          currentPluginVersion = "2.14.0",
+          latestPluginVersion = "2.19.0",
+        ),
+        provider.getModel(file),
+      )
     }
     finally {
       Files.deleteIfExists(releasesFile)

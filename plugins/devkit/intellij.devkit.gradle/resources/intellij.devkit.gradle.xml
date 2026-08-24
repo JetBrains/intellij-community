@@ -36,6 +36,7 @@
     <frameworkSupport implementation="org.jetbrains.idea.devkit.gradle.GradleIntellijPluginFrameworkSupportProvider"/>
     <kotlinDslFrameworkSupport implementation="org.jetbrains.idea.devkit.gradle.KdslGradleIntellijPluginFrameworkSupportProvider"/>
     <projectResolve implementation="org.jetbrains.idea.devkit.gradle.DevKitGradleProjectResolverExtension"/>
+    <executionChecker implementation="org.jetbrains.idea.devkit.gradle.OutdatedIntelliJPlatformGradlePluginVersionChecker"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

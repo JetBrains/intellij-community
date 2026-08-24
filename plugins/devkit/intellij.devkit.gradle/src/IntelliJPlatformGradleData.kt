@@ -13,6 +13,8 @@ import kotlin.io.path.readLines
 internal data class IntelliJPlatformGradleData(
   val dependencyHelperProductCodes: Map<String, String> = emptyMap(),
   val productReleases: Map<String, List<IntelliJPlatformProductRelease>> = emptyMap(),
+  val currentPluginVersion: String = "0.0.0",
+  val latestPluginVersion: String = "0.0.0",
 ) : Serializable {
   companion object {
     @JvmField
@@ -29,6 +31,8 @@ internal data class IntelliJPlatformProductRelease(
 internal fun IntelliJPlatformGradleModel.toIntelliJPlatformGradleData() = IntelliJPlatformGradleData(
   dependencyHelperProductCodes = dependencyHelperProductCodes,
   productReleases = productReleasesFile.readProductReleases(),
+  currentPluginVersion = currentPluginVersion,
+  latestPluginVersion = latestPluginVersion,
 )
 
 /** Reads `product-code<TAB>version<TAB>channel` records written by the Gradle task. */

@@ -17,20 +17,30 @@ public interface IntelliJPlatformGradleModel extends Model, Serializable {
   @NotNull Map<String, String> getDependencyHelperProductCodes();
 
   @Nullable String getProductReleasesFile();
+
+  @NotNull String getCurrentPluginVersion();
+
+  @NotNull String getLatestPluginVersion();
 }
 
 final class IntelliJPlatformGradleModelImpl implements IntelliJPlatformGradleModel {
-  private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 2L;
 
   private final @NotNull Map<String, String> dependencyHelperProductCodes;
   private final @Nullable String productReleasesFile;
+  private final @NotNull String currentPluginVersion;
+  private final @NotNull String latestPluginVersion;
 
   IntelliJPlatformGradleModelImpl(
     @NotNull Map<String, String> dependencyHelperProductCodes,
-    @Nullable String productReleasesFile
+    @Nullable String productReleasesFile,
+    @NotNull String currentPluginVersion,
+    @NotNull String latestPluginVersion
   ) {
     this.dependencyHelperProductCodes = dependencyHelperProductCodes;
     this.productReleasesFile = productReleasesFile;
+    this.currentPluginVersion = currentPluginVersion;
+    this.latestPluginVersion = latestPluginVersion;
   }
 
   @Override
@@ -41,5 +51,15 @@ final class IntelliJPlatformGradleModelImpl implements IntelliJPlatformGradleMod
   @Override
   public @Nullable String getProductReleasesFile() {
     return productReleasesFile;
+  }
+
+  @Override
+  public @NotNull String getCurrentPluginVersion() {
+    return currentPluginVersion;
+  }
+
+  @Override
+  public @NotNull String getLatestPluginVersion() {
+    return latestPluginVersion;
   }
 }

@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
 
 /** Resolves imported metadata for the closest Gradle module containing a physical PSI file. */
@@ -61,8 +62,8 @@ internal class IntelliJPlatformGradleModelProviderImpl : IntelliJPlatformGradleM
   }
 }
 
-private fun findCachedModel(project: Project, filePath: String): Pair<String, IntelliJPlatformGradleData>? {
-  return ProjectDataManager.getInstance()
+private fun findCachedModel(project: Project, filePath: String) =
+  ProjectDataManager.getInstance()
     .getExternalProjectsData(project, GradleConstants.SYSTEM_ID)
     .asSequence()
     .mapNotNull { it.externalProjectStructure }
@@ -72,10 +73,12 @@ private fun findCachedModel(project: Project, filePath: String): Pair<String, In
       modulePath to node.data
     }
     .closestModel(filePath)
-}
 
 private fun Sequence<Pair<String, IntelliJPlatformGradleData>>.closestModel(
   filePath: String,
-): Pair<String, IntelliJPlatformGradleData>? =
-  filter { (modulePath) -> FileUtil.isAncestor(modulePath, filePath, false) }
-    .maxByOrNull { (modulePath) -> modulePath.length }
+): Pair<String, IntelliJPlatformGradleData>? {
+  val file = Path.of(filePath).normalize()
+  return filter { (modulePath) ->
+    file.startsWith(Path.of(modulePath).normalize())
+  }.maxByOrNull { (modulePath) -> modulePath.length }
+}

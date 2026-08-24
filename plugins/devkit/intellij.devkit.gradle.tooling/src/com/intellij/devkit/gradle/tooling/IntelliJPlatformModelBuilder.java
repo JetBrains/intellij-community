@@ -3,6 +3,7 @@ package com.intellij.devkit.gradle.tooling;
 
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.provider.Provider;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +31,7 @@ public final class IntelliJPlatformModelBuilder extends AbstractModelBuilderServ
     "org.jetbrains.intellij.platform.gradle.extensions.IntelliJPlatformDependencyConfiguration";
   private static final String INTELLIJ_PLATFORM_TYPE_CLASS = "org.jetbrains.intellij.platform.gradle.IntelliJPlatformType";
   private static final String DUMP_PRODUCTS_RELEASES_TASK_NAME = "dumpProductsReleases";
+  private static final String INITIALIZE_INTELLIJ_PLATFORM_PLUGIN_TASK_NAME = "initializeIntellijPlatformPlugin";
   private static final String GRADLE_ACTION_CLASS = "org.gradle.api.Action";
   private static final String PRODUCT_CODE_GETTER = "getCode";
 
@@ -47,22 +49,48 @@ public final class IntelliJPlatformModelBuilder extends AbstractModelBuilderServ
     Object extension = project.getDependencies().getExtensions().findByName(INTELLIJ_PLATFORM_EXTENSION_NAME);
     if (extension == null) return null;
 
+    Set<String> taskNames = new LinkedHashSet<>(project.getGradle().getStartParameter().getTaskNames());
+
     Task dumpTask = project.getTasks().findByName(DUMP_PRODUCTS_RELEASES_TASK_NAME);
     if (dumpTask != null) {
-      Set<String> taskNames = new LinkedHashSet<>(project.getGradle().getStartParameter().getTaskNames());
       taskNames.add(dumpTask.getPath());
-      project.getGradle().getStartParameter().setTaskNames(taskNames);
     }
 
+    Task initializeTask = project.getTasks().findByName(INITIALIZE_INTELLIJ_PLATFORM_PLUGIN_TASK_NAME);
+    if (initializeTask == null) return null;
+    taskNames.add(initializeTask.getPath());
+
+    project.getGradle().getStartParameter().setTaskNames(taskNames);
+
     try {
+      @NotNull Map<String, String> dependencyHelperProductCodes = loadDependencyHelperProductCodes(extension.getClass());
+      @Nullable String productReleasesFile = dumpTask == null ? null : dumpTask.getOutputs().getFiles().getSingleFile().getAbsolutePath();
+      @NotNull String currentPluginVersion = readProvider(initializeTask, "getPluginVersion");
+      @NotNull String latestPluginVersion = readProvider(initializeTask, "getLatestPluginVersion");
+
       return new IntelliJPlatformGradleModelImpl(
-        loadDependencyHelperProductCodes(extension.getClass()),
-        dumpTask == null ? null : dumpTask.getOutputs().getFiles().getSingleFile().getAbsolutePath()
+        dependencyHelperProductCodes,
+        productReleasesFile,
+        currentPluginVersion,
+        latestPluginVersion
       );
     }
     catch (ReflectiveOperationException exception) {
       throw new IllegalStateException(exception);
     }
+  }
+
+  private static @NotNull String readProvider(@NotNull Task task, @NotNull String getterName)
+    throws ReflectiveOperationException {
+    Object value = task.getClass().getMethod(getterName).invoke(task);
+    if (!(value instanceof Provider<?>)) {
+      throw new IllegalStateException(getterName + " did not return a Gradle provider");
+    }
+    Object resolvedValue = ((Provider<?>)value).get();
+    if (resolvedValue == null) {
+      throw new IllegalStateException(getterName + " returned a provider without a value");
+    }
+    return resolvedValue.toString();
   }
 
   @Override
