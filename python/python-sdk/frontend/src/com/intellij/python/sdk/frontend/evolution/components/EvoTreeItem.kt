@@ -47,6 +47,17 @@ class EvoTreeItem(
   val tooltip: @NlsContexts.Tooltip String?
     get() = element.presentation.getClientProperty(ActionUtil.TOOLTIP_TEXT)
 
+  /** Opens this row's process output, for a row reporting a failure; null when it has no process behind it. */
+  val showOutput: (() -> Unit)?
+    get() = (element as? EvoTreeLazyNodeElement)?.showOutput
+
+  /**
+   * True when clicking this row opens the output of what it ran — a row that failed or came back with nothing, and has a
+   * process behind it to show. Such a row does nothing else when clicked, which is why the whole of it is the target.
+   */
+  val opensProcessOutput: Boolean
+    get() = showOutput != null && (element.state == State.ERROR || element.state == State.NOT_AVAILABLE)
+
   /** The finer choices this row stands for, or null when it stands only for itself — see [EvoAlternatives]. */
   val alternatives: EvoAlternatives?
     get() = ((element as? EvoTreeLeafElement)?.action as? EvoAlternatives)?.takeIf { it.alternatives.size > 1 }

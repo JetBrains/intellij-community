@@ -89,6 +89,7 @@ private const val NAME_FIELD_COLUMNS = 14
  */
 private const val VERSION_RESERVE_SAMPLE = "0.00.00rc0"
 
+
 /** Gap between the footer strip's caption and its chevron. */
 private const val FOOTER_ICON_GAP = 2
 
@@ -500,11 +501,11 @@ open class EvoTreePopup private constructor(
           overGear -> gearTooltip
           overMore -> moreTooltip
           // The header strip is painted inside the top cell of its section, so it is checked before the row under it.
-          else -> separatorTooltipAt(e.point) ?: rowTooltipAt(e.point)
+          else -> separatorTooltipAt(e.point)
         }
         if (tooltip != shownTooltip) {
           shownTooltip = tooltip
-          list.setToolTipText(tooltip?.let { HtmlChunk.text(it) })
+          list.setToolTipText(tooltip?.let { HtmlChunk.raw(multiLineTooltip(it)) })
         }
       }
     })
@@ -531,8 +532,9 @@ open class EvoTreePopup private constructor(
   // Don't let a click on one of the inline icons or the settings gear select/expand a row — the mouse listener handles
   // all three.
   override fun isActionClick(e: MouseEvent): Boolean =
-    reloadIconItemAt(e.point) == null && moreIconItemAt(e.point) == null && !settingsGearAt(e.point) &&
-    super.isActionClick(e)
+    reloadIconItemAt(e.point) == null && moreIconItemAt(e.point) == null &&
+    !settingsGearAt(e.point) && super.isActionClick(e)
+
 
   /** True when [item]'s row should carry the inline "…" that opens its finer choices. */
   fun hasAlternatives(item: EvoTreeItem?): Boolean = item?.alternatives != null
@@ -557,10 +559,11 @@ open class EvoTreePopup private constructor(
     inlineIconItemAt(point, AllIcons.Actions.More) { hasAlternatives(it) }
 
   /**
-   * The item at [point] whose row carries [icon] under the pointer, or null.
+   * The item at [point] whose row carries [icon] under the pointer, or null. [applies] is the row's own precondition for
+   * having the icon at all — checked before the cell is laid out, which is the expensive part.
    *
-   * Only the hovered row is considered, because that is the only row an inline icon is painted on. [applies] is the
-   * row's own precondition for having the icon at all — checked before the cell is laid out, which is the expensive part.
+   * Only the hovered row answers, since both inline icons are painted only there. That also means the cell can be laid
+   * out as selected, which is how it is actually painted — an icon located in an unselected cell would land elsewhere.
    */
   private fun inlineIconItemAt(point: Point, icon: Icon, applies: (EvoTreeItem) -> Boolean): EvoTreeItem? {
     val row = list.locationToIndex(point)
@@ -571,7 +574,10 @@ open class EvoTreePopup private constructor(
     return if (bounds.contains(point)) item else null
   }
 
-  /** Bounds (in list coordinates) of [icon] in [row], found by laying out the row's rendered cell. */
+  /**
+   * Bounds (in list coordinates) of [icon] in [row], found by laying out the row's rendered cell as selected — which is
+   * the only state these icons are painted in, and so the only layout their position can be read from.
+   */
   private fun inlineIconBounds(row: Int, item: EvoTreeItem, icon: Icon): Rectangle? {
     val cell = list.getCellBounds(row, row) ?: return null
     @Suppress("UNCHECKED_CAST")
@@ -595,21 +601,6 @@ open class EvoTreePopup private constructor(
     if (c is JLabel && c.icon === icon) return c
     if (c is Container) c.components.forEach { child -> findLabelWithIcon(child, icon)?.let { return it } }
     return null
-  }
-
-  /**
-   * The tooltip of the row under [point] — the full path behind an elided interpreter path, or a disabled node's reason.
-   *
-   * Read here rather than left to the platform's renderer-side tooltip: this popup drives the list's own tooltip from
-   * its mouse-motion listener (for the gear, the "…" and elided section headers), and whichever writes last on a move
-   * wins. Routing every tooltip through the one listener is what stops them clearing each other.
-   */
-  private fun rowTooltipAt(point: Point): @NlsSafe String? {
-    val model = list.model ?: return null
-    val row = list.locationToIndex(point)
-    if (row < 0 || row >= model.size) return null
-    if (list.getCellBounds(row, row)?.contains(point) != true) return null
-    return (model.getElementAt(row) as? EvoTreeItem)?.tooltip
   }
 
   /**

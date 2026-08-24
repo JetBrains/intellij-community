@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.ui.popup.MnemonicNavigationFilter
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.SpeedSearchFilter
+import com.intellij.python.sdk.frontend.PySdkFrontendBundle
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.ListItem
 import com.intellij.openapi.util.NlsContexts.PopupTitle
@@ -106,6 +107,13 @@ open class EvoActionPopupStep(
     finalChoice: Boolean
   ): PopupStep<*>? {
     finalRunnable = null
+    // A row that only reports a failure: the one thing to do with it is see what happened. Queued like a leaf's action
+    // so the tool window opens once the popup has closed, rather than behind it.
+    if (selectedValue.opensProcessOutput) {
+      val showOutput = selectedValue.showOutput
+      finalRunnable = Runnable { showOutput?.invoke() }
+      return PopupStep.FINAL_CHOICE
+    }
     if (!node.isEnabled) return PopupStep.FINAL_CHOICE
 
     return when (val element = selectedValue.element) {
@@ -138,7 +146,17 @@ open class EvoActionPopupStep(
     node.reload(project, scope, listeners)
   }
 
-  override fun getTooltipTextFor(value: EvoTreeItem?): @NlsContexts.Tooltip String? = value?.tooltip
+  /**
+   * The row's tooltip. This is the one the user sees: [javax.swing.JList.getToolTipText] asks the renderer first and
+   * only falls back to the list's own, so anything the popup sets on the list is ignored wherever a row answers here.
+   */
+  override fun getTooltipTextFor(value: EvoTreeItem?): @NlsContexts.Tooltip String? {
+    val tooltip = value?.tooltip ?: return null
+    // A row that can open its process output says so, since nothing else about it suggests it is a control.
+    val text = if (value.opensProcessOutput) PySdkFrontendBundle.message("evo.sdk.status.bar.popup.failure.tooltip", tooltip)
+    else tooltip
+    return multiLineTooltip(text)
+  }
 
   override fun setEmptyText(emptyText: StatusText) {}
 
@@ -156,7 +174,12 @@ open class EvoActionPopupStep(
   // set to true if we need actions '...' on disabled items too
   override fun isSelectable(value: EvoTreeItem?): Boolean =
     // An invalid add-new name makes its version rows non-selectable (not just no-op) so nav/hover/click can't pick them.
-    editableName?.isValid != false && value != null && value.element.state == State.DONE && value.isEnabled
+    editableName?.isValid != false && value != null &&
+    // A row reporting a failure is selectable so its output can be reached — and it has to be, since the platform
+    // delivers a click only to the row that is already selected (`ListPopupImpl.MyList.processMouseEvent`), leaving an
+    // unselectable row unclickable however precisely it is hit. It still reads as disabled: its presentation stays so,
+    // and `hasSubstep` keeps the submenu arrow off it.
+    (value.opensProcessOutput || (value.element.state == State.DONE && value.isEnabled))
 
   override fun getIconFor(value: EvoTreeItem?): Icon? = value?.icon
 
@@ -167,6 +190,9 @@ open class EvoActionPopupStep(
   override fun getSecondaryIconFor(t: EvoTreeItem?): @Nls Icon? = when (t?.element?.state) {
     State.LOADING -> AnimatedIcon.Default.INSTANCE
     State.ERROR -> AllIcons.General.Error
+    // A tool that is simply unavailable, or answered with nothing, is not a failure — but it did not work either, so it
+    // gets a sign of its own rather than looking like an ordinary disabled row with nothing to say.
+    State.NOT_AVAILABLE -> AllIcons.General.Warning
     else -> null
   }
 

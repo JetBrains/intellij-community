@@ -2,6 +2,7 @@
 
 package com.intellij.python.sdk.backend.evolution
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fileLogger
@@ -475,6 +476,23 @@ fun evoActionLeaf(title: @Nls String, description: @Nls String? = title, seconda
   EvoLeafDto(title = title, description = description, secondaryText = secondaryText, icon = icon.rpcId(), kind = EvoLeafKind.ACTION, actionId = actionId)
 
 /**
+ * Builds a leaf for a Python version that is not on the machine: selecting it installs that version and then creates the
+ * environment from it. The download icon and hint say so up front, matching the v2 "Add Interpreter" dialog's entries.
+ *
+ * For a tool whose rows are per-version create rows rather than an "add new" version list (poetry's cache section), which
+ * is why this exists alongside [EvoAddNewOptionDto.installable] rather than instead of it.
+ */
+@ApiStatus.Internal
+fun evoInstallPythonLeaf(title: @Nls String, version: @NlsSafe String): EvoLeafDto =
+  EvoLeafDto(
+    title = title,
+    secondaryText = PySdkBundle.message("evolution.base.python.installable"),
+    icon = AllIcons.Actions.Download.rpcId(),
+    kind = EvoLeafKind.SELECT_ENV,
+    ref = PyInterpreterRef.CreateEnv(token = version, installPythonVersion = version),
+  )
+
+/**
  * Builds a leaf for a declared-but-not-yet-materialized env (poetry per-version row, hatch declared env). Selecting
  * it creates the env via the tool's create logic and then assigns it; [token] is tool-specific — see
  * [com.intellij.python.sdk.common.evolution.PyInterpreterRef.CreateEnv].
@@ -497,6 +515,7 @@ fun evoEnvLeaf(title: @Nls String, pythonBinary: Path?, icon: Icon, version: @Nl
   return EvoLeafDto(
     title = title,
     description = pythonBinary.toDisplayPath(),
+    descriptionElided = pythonBinary.toSectionLabel(),
     secondaryText = version,
     icon = icon.rpcId(),
     kind = EvoLeafKind.SELECT_ENV,

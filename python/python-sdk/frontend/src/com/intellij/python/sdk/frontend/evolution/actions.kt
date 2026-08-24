@@ -49,10 +49,21 @@ internal class EvoConfiguringTracker {
  * specific) and [name] the user-editable env name from the add-new field (uv/pip: the env folder name; conda: the env
  * name; null keeps the tool default). The widget refreshes itself on the resulting `rootsChanged`.
  */
-internal fun createEvoEnv(project: Project, pyProjectKey: String, nodeId: String, token: String, folder: String, name: String?, scope: CoroutineScope) {
+internal fun createEvoEnv(
+  project: Project,
+  pyProjectKey: String,
+  nodeId: String,
+  token: String,
+  folder: String,
+  name: String?,
+  /** Set for a row that offered an interpreter the machine lacks: the version to install before creating anything. */
+  installPythonVersion: String?,
+  scope: CoroutineScope,
+) {
   project.service<EvoConfiguringTracker>().nodeId = nodeId   // so the widget fades this tool's logo while configuring
   scope.launch {
-    when (val result = requestEvoSelectInterpreter(project.projectId(), pyProjectKey, PyInterpreterRef.CreateEnv(token, folder, name), nodeId)) {
+    val ref = PyInterpreterRef.CreateEnv(token, folder, name, installPythonVersion)
+    when (val result = requestEvoSelectInterpreter(project.projectId(), pyProjectKey, ref, nodeId)) {
       is EvoSelectResultDto.Ok -> Unit
       is EvoSelectResultDto.Error -> LOG.warn("Evo: failed to create '$nodeId' environment for '$pyProjectKey': ${result.message}")
     }
@@ -185,6 +196,33 @@ internal fun baseInterpreterRows(
   return leaf.bases.map { base ->
     baseInterpreterRow(base) { selectInterpreter(project, pyProjectKey, create.copy(token = base.token), nodeId, scope) }
   }
+}
+
+/**
+ * The single row an installable version expands into, or null when [leaf] is not one.
+ *
+ * Titled by the action rather than by the version, because in the expanded list the version is already the header above
+ * it — see `EvoPySdkSwitchPopupFactory.toExpandedSections`.
+ */
+internal fun installInterpreterRow(
+  project: Project,
+  pyProjectKey: String,
+  leaf: EvoLeafDto,
+  nodeId: String,
+  scope: CoroutineScope,
+): EvoTreeLeafElement? {
+  val create = leaf.ref as? PyInterpreterRef.CreateEnv ?: return null
+  if (create.installPythonVersion == null) return null
+  return installActionRow { selectInterpreter(project, pyProjectKey, create, nodeId, scope) }
+}
+
+/** The "download and install" row itself: the download icon and the action, with [onChosen] run when picked. */
+internal fun installActionRow(onChosen: () -> Unit): EvoTreeLeafElement {
+  val action = object : AnAction({ PySdkFrontendBundle.message("evo.sdk.status.bar.popup.add.new.install.action") },
+                                 { "" }, AllIcons.Actions.Download), DumbAware {
+    override fun actionPerformed(e: AnActionEvent) = onChosen()
+  }
+  return EvoTreeLeafElement(action)
 }
 
 /**
