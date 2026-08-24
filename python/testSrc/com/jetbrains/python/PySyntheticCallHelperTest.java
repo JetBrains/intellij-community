@@ -6,21 +6,23 @@ import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.types.PyCallableArgument;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,9 +40,9 @@ public class PySyntheticCallHelperTest extends PyTestCase {
       def foo(x) -> int:
         pass
       """, () -> {
-      PyFunction function = myFixture.findElementByText("foo", PyFunction.class);
-      return getCallType(function, List.of(PyBuiltinCache.getInstance(function).getNoneType()),
-                         TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile()));
+      TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
+      return getCallType(context.getType((PyFile)myFixture.getFile()), "foo",
+                         List.of(PyBuiltinCache.getInstance(myFixture.getFile()).getNoneType()), context);
     });
   }
 
@@ -49,9 +51,9 @@ public class PySyntheticCallHelperTest extends PyTestCase {
       def foo(x, y, z) -> int:
         pass
       """, () -> {
-      PyFunction function = myFixture.findElementByText("foo", PyFunction.class);
-      return getCallType(function, List.of(PyBuiltinCache.getInstance(function).getNoneType()),
-                         TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile()));
+      TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
+      return getCallType(context.getType((PyFile)myFixture.getFile()), "foo",
+                         List.of(PyBuiltinCache.getInstance(myFixture.getFile()).getNoneType()), context);
     });
   }
 
@@ -60,11 +62,11 @@ public class PySyntheticCallHelperTest extends PyTestCase {
       def foo(x) -> int:
         pass
       """, () -> {
-      PyFunction function = myFixture.findElementByText("foo", PyFunction.class);
-      return getCallType(function, List.of(PyBuiltinCache.getInstance(function).getNoneType(),
-                                           PyBuiltinCache.getInstance(myFixture.getFile()).getStrType(),
-                                           PyBuiltinCache.getInstance(myFixture.getFile()).getStrType()),
-                         TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile()));
+      TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
+      return getCallType(context.getType((PyFile)myFixture.getFile()), "foo",
+                         List.of(PyBuiltinCache.getInstance(myFixture.getFile()).getNoneType(),
+                                 PyBuiltinCache.getInstance(myFixture.getFile()).getStrType(),
+                                 PyBuiltinCache.getInstance(myFixture.getFile()).getStrType()), context);
     });
   }
 
@@ -80,9 +82,9 @@ public class PySyntheticCallHelperTest extends PyTestCase {
       def foo(x: Any) -> Any:
         pass
       """, () -> {
-      PyFunction function = myFixture.findElementByText("foo", PyFunction.class);
-      return getCallType(function, List.of(PyBuiltinCache.getInstance(myFixture.getFile()).getStrType()),
-                         TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile()));
+      TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
+      return getCallType(context.getType((PyFile)myFixture.getFile()), "foo",
+                         List.of(PyBuiltinCache.getInstance(myFixture.getFile()).getStrType()), context);
     });
   }
 
@@ -107,10 +109,9 @@ public class PySyntheticCallHelperTest extends PyTestCase {
       def foo[T](x: T) -> T:
           pass
       """, () -> {
-      PyFunction function = myFixture.findElementByText("foo", PyFunction.class);
-      return getCallType(function,
-                         List.of(PyBuiltinCache.getInstance(myFixture.getFile()).getStrType()),
-                         TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile()));
+      TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
+      return getCallType(context.getType((PyFile)myFixture.getFile()), "foo",
+                         List.of(PyBuiltinCache.getInstance(myFixture.getFile()).getStrType()), context);
     });
   }
 
@@ -203,12 +204,8 @@ public class PySyntheticCallHelperTest extends PyTestCase {
       from lib import foo
       """, () -> {
       TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
-      PyReferenceExpression functionRef = myFixture.findElementByText("foo", PyReferenceExpression.class);
-      assertInstanceOf(functionRef, PyReferenceExpression.class);
-      PsiElement resolveResult = functionRef.getReference(PyResolveContext.defaultContext(context)).resolve();
-      assertInstanceOf(resolveResult, PyFunction.class);
-      return getCallType((PyFunction)resolveResult, List.of(PyBuiltinCache.getInstance(functionRef).getNoneType()),
-                         TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile()));
+      return getCallType(context.getType((PyFile)myFixture.getFile()), "foo",
+                         List.of(PyBuiltinCache.getInstance(myFixture.getFile()).getNoneType()), context);
     });
   }
 
@@ -252,20 +249,17 @@ public class PySyntheticCallHelperTest extends PyTestCase {
     });
   }
 
-
-  private static @Nullable PyType getCallType(@NotNull PyFunction function,
+  private static @Nullable PyType getCallType(@NotNull PyType type,
+                                              @SuppressWarnings("SameParameterValue") @NotNull String functionName,
                                               @NotNull List<PyType> argumentTypes,
                                               @NotNull TypeEvalContext context) {
+    List<? extends RatedResolveResult> resolveResults = type.resolveMember(functionName, null, AccessDirection.READ,
+                                                                           PyResolveContext.defaultContext(context));
+    PyType memberType = type instanceof PyClassLikeType classType
+                        ? PyTypeUtil.getTypeOfBoundMember(classType, resolveResults, context)
+                        : PyTypeUtil.getTypeOfMember(resolveResults, context);
     List<PyCallableArgument> arguments = ContainerUtil.map(argumentTypes, PyCallableArgument::new);
-    return PyCallExpressionHelper.getCallType(context.getType(function), arguments, context);
-  }
-
-  private static @Nullable PyType getCallType(@NotNull PyClassLikeType type,
-                                              @SuppressWarnings("SameParameterValue") @NotNull String methodName,
-                                              @NotNull List<PyType> argumentTypes,
-                                              @NotNull TypeEvalContext context) {
-    List<PyCallableArgument> arguments = ContainerUtil.map(argumentTypes, PyCallableArgument::new);
-    return PyCallExpressionHelper.getCallType(type, methodName, arguments, PyResolveContext.defaultContext(context));
+    return PyCallExpressionHelper.getCallType(memberType, arguments, context);
   }
 
   private void doTest(@NotNull String expectedType, @NotNull String text, Supplier<PyType> actualType) {

@@ -719,6 +719,15 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
+    fun `dunder getattr not called for access via class`() = test("""
+      class MyClass:
+          def __getattr__(self, item) -> int: ...
+
+      expr = MyClass.attr
+      #└ TYPE Unknown
+      """.trimIndent())
+
+    @Test
     @TestFor(issues = ["PY-28017"])
     fun `module with get attr`() = test("""
       import mymod
@@ -2068,5 +2077,31 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
 
           eggs = False
           spam = classmethod(spam)
+      """.trimIndent())
+
+  @Test
+  fun `__get__ not called when attribute value is a class`() = test("""
+      class Descriptor:
+          def __get__(self, instance, owner) -> int: ...
+
+      class C:
+          attr = Descriptor
+
+      expr = C().attr
+      #└ TYPE type[Descriptor]
+      """.trimIndent())
+
+  @Test
+  fun `metaclass __get__ called when attribute value is a class`() = test("""
+      class Meta(type):
+          def __get__(self, instance, owner) -> int: ...
+
+      class Descriptor(metaclass=Meta): ...
+
+      class C:
+          attr = Descriptor
+
+      expr = C().attr
+      #└ TYPE int
       """.trimIndent())
 }

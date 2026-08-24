@@ -27,7 +27,6 @@ import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
-import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyAssignmentExpression;
 import com.jetbrains.python.psi.PyAssignmentStatement;
@@ -368,11 +367,9 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
                                                           boolean isAsync,
                                                           @NotNull TypeEvalContext context) {
     final String enterName = isAsync ? PyNames.AENTER : PyNames.ENTER;
-    final List<? extends RatedResolveResult> enterMethods =
-      withType.resolveMember(enterName, null, AccessDirection.READ, PyResolveContext.defaultContext(context));
-    if (!ContainerUtil.isEmpty(enterMethods)) {
-      final PyType enterMethodType = PyTypeUtil.getTypeOfBoundMember(withType, enterMethods, context);
-      final PyType enterType = PyCallExpressionHelper.getCallType(enterMethodType, List.of(), context);
+    final Ref<PyType> enterCallType = PyCallExpressionHelper.getSpecialMethodCallType(withType, enterName, List.of(), context);
+    if (enterCallType != null) {
+      final PyType enterType = enterCallType.get();
       if (!isUnknown(enterType)) {
         return isAsync ? Ref.deref(PyTypingTypeProvider.coroutineOrGeneratorElementType(enterType)) : enterType;
       }
@@ -491,7 +488,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     }
     if (!isAsync) {
       if (!isUnknown(iterableType) && PyABCUtil.isSubtype(iterableType, PyNames.ITERABLE, context)) {
-        final Ref<PyType> iterateCallType = getSpecialMethodCallType(iterableType, PyNames.ITER, context);
+        final Ref<PyType> iterateCallType = PyCallExpressionHelper.getSpecialMethodCallType(iterableType, PyNames.ITER, List.of(), context);
         if (iterateCallType != null) {
           return getIteratedItemType(iterateCallType.get(), anchor, context, false);
         }
@@ -499,7 +496,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         if (nextMethodCallType != null) {
           return nextMethodCallType.get();
         }
-        final Ref<PyType> getItemCallType = getSpecialMethodCallType(iterableType, PyNames.GETITEM, context);
+        final Ref<PyType> getItemCallType = PyCallExpressionHelper.getSpecialMethodCallType(iterableType, PyNames.GETITEM,
+                                                                                            List.of(), context);
         if (getItemCallType != null) {
           return getItemCallType.get();
         }
@@ -507,7 +505,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     }
     else {
       if (iterableType != null && PyABCUtil.isSubtype(iterableType, PyNames.ASYNC_ITERABLE, context)) {
-        final Ref<PyType> iterateCallType = getSpecialMethodCallType(iterableType, PyNames.AITER, context);
+        final Ref<PyType> iterateCallType = PyCallExpressionHelper.getSpecialMethodCallType(iterableType, PyNames.AITER,
+                                                                                            List.of(), context);
         if (iterateCallType != null) {
           return getIteratedItemType(iterateCallType.get(), anchor, context, true);
         }
@@ -537,35 +536,12 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
                                                              @NotNull PsiElement anchor,
                                                              @NotNull TypeEvalContext context,
                                                              boolean async) {
-    if (type == null) return null;
-
     final String nextMethodName = async
                                   ? PyNames.ANEXT
                                   : !LanguageLevel.forElement(anchor).isPython2()
                                     ? PyNames.DUNDER_NEXT
                                     : PyNames.NEXT;
-    return getSpecialMethodCallType(type, nextMethodName, context);
-  }
-
-  private static @Nullable Ref<PyType> getSpecialMethodCallType(@NotNull PyType type, @NotNull String name, @NotNull TypeEvalContext context) {
-    if (!(type instanceof PyClassType classType)) return null;
-    final PyClassType actualType;
-    if (classType.isDefinition()) {
-      if (!(classType.getMetaClassType(context, true) instanceof PyClassType metaclassType)) {
-        return null;
-      }
-      actualType = metaclassType;
-    }
-    else {
-      actualType = classType;
-    }
-    final List<? extends RatedResolveResult> resolveResults =
-      actualType.resolveMember(name, null, AccessDirection.READ, PyResolveContext.defaultContext(context));
-    if (!ContainerUtil.isEmpty(resolveResults)) {
-      final PyType boundMemberType = PyTypeUtil.getTypeOfBoundMember(actualType, resolveResults, context, null, classType);
-      return Ref.create(PyCallExpressionHelper.getCallType(boundMemberType, List.of(), context));
-    }
-    return null;
+    return PyCallExpressionHelper.getSpecialMethodCallType(type, nextMethodName, List.of(), context);
   }
 
   private @Nullable PyType getTypeFromExcept() {

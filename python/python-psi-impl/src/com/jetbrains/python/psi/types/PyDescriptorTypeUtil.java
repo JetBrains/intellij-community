@@ -35,19 +35,10 @@ public final class PyDescriptorTypeUtil {
       return mapDescriptorUnion(unionType, member -> getDunderGetReturnType(expression, instanceType, member, context));
     }
 
-    final PyClassLikeType targetType = as(attributeType, PyClassLikeType.class);
-    if (targetType == null || targetType.isDefinition()) return null;
-
-    final List<? extends RatedResolveResult> resolvedDunderGet = targetType.resolveMember(PyNames.DUNDER_GET, expression,
-                                                                                          AccessDirection.READ,
-                                                                                          PyResolveContext.noProperties(context));
-    if (ContainerUtil.isEmpty(resolvedDunderGet)) return null;
-
-    PyType dunderGetType = PyTypeUtil.getTypeOfBoundMember(targetType, resolvedDunderGet, context);
     List<PyCallableArgument> arguments = instanceType.isDefinition()
                                          ? List.of(new PyCallableArgument(noneType), new PyCallableArgument(instanceType))
                                          : List.of(new PyCallableArgument(instanceType), new PyCallableArgument(instanceType.toClass()));
-    return Ref.create(PyCallExpressionHelper.getCallType(dunderGetType, arguments, context));
+    return PyCallExpressionHelper.getSpecialMethodCallType(attributeType, PyNames.DUNDER_GET, arguments, context);
   }
 
   public static @Nullable Ref<PyType> getExpectedValueTypeForDunderSet(@NotNull PyQualifiedExpression expression,

@@ -516,8 +516,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       classType.resolveMember(name, null, AccessDirection.READ, PyResolveContext.noProperties(context));
     if (ContainerUtil.isEmpty(resolveResults)) {
       PyType nameArg = Optional.<PyType>ofNullable(PyLiteralType.stringLiteral(anchor, name)).orElse(PyAnyType.getUnknown());
-      return PyCallExpressionHelper.getCallType(classType, PyNames.GETATTR, List.of(new PyCallableArgument(nameArg)),
-                                                PyResolveContext.defaultContext(context));
+      return PyTypeUtil.derefOrUnknown(
+        PyCallExpressionHelper.getSpecialMethodCallType(classType, PyNames.GETATTR, List.of(new PyCallableArgument(nameArg)), context));
     }
 
     PyType memberType = PyTypeUtil.getTypeOfMember(resolveResults, context, anchor);
