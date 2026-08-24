@@ -25,8 +25,18 @@ import kotlin.io.path.readText
  * a params file specified as the only `--flagfile=path` argument. There is no standalone mode: without `--persistent_worker` the process
  * reports an error and exits, so it cannot be run via `bazel run`.
  *
- * Arguments format: `output_directory [--plugin_content_yaml path] --descriptor_module module_name:path_to_jar
- * [--content_module module_name:path_to_jar]...`. All paths are relative to the base directory of the request.
+ * The first argument is the path to the output directory where the distribution should be generated.
+ * Other arguments are:
+ * * `--descriptor_module module_name:path_to_jar` (mandatory): specifies the name of a JPS module containing the plugin descriptor and path to its JAR file;
+ * * `--content_module module_name:path_to_jar` (multiple entries are allowed): includes a plugin content module to the plugin distribution;
+ * * `--plugin_content_yaml path`: enables generation of `plugin-content.yaml` file with a human-readable description of modules included in the distribution;
+ * * `--plugin_version version`: updates `<version>` tag in `plugin.xml` with the provided version;
+ * * `--since_build build`: updates `since-build` attribute in `<idea-version>` tag in `plugin.xml` with the provided value;
+ * * `--until_build build`: updates `until-build` attribute in `<idea-version>` tag in `plugin.xml` with the provided value;
+ * * `--build_number_file path`: provides a path to a file with a build number that will be used as a value for `--plugin_version`, `--since_build` and `--until_build` if the
+ *   corresponding arguments use `$build_number_from_file` placeholder.
+ *
+ * All paths are relative to the base directory of the request.
  */
 object IjPluginPackager {
   @JvmStatic
