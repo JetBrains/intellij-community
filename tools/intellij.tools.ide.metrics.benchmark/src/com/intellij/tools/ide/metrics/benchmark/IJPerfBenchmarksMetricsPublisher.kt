@@ -97,9 +97,15 @@ internal class IJPerfBenchmarksMetricsPublisher {
       }
 
       if (metrics == null) {
+        // archive the telemetry file we failed to parse, so the on-disk evidence survives the build (AT-1875);
+        // the writer may finalize it between now and the agent picking it up, but the failed-attempt states
+        // logged above keep the read-time truth either way
+        runCatching {
+          teamCityClient.publishTeamCityArtifacts(source = telemetryJsonFile, artifactPath = uniqueTestIdentifier)
+        }.onFailure { logOutput("Failed to archive $telemetryJsonFile: ${it.message}") }
         // do not mask: surface the real cause and the failure-time telemetry file state (size/finalized/tail).
         // Per-failed-attempt state is logged above (build log) and distinguishes a write/read race from a
-        // never-written file; the exception carries it to the dashboard without archiving a huge file. See AT-1875.
+        // never-written file; the exception carries it to the dashboard.
         throw IllegalStateException(
           "Failed to extract perf metrics for '$uniqueTestIdentifier' after $attempt attempts. $lastFileState",
           lastFailure,
