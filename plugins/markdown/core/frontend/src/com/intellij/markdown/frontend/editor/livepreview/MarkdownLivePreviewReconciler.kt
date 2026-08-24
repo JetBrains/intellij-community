@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.editor.impl.FoldingKeys
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
@@ -37,8 +38,8 @@ private val AllowedEditorKinds = setOf(EditorKind.MAIN_EDITOR, EditorKind.UNTYPE
 /**
  * Keeps one editor's concealing fold regions in step with the caret.
  *
- * Concealment is an empty, never-expanding fold region. The platform never expands one of those, so
- * revealing markup means removing the region, and this class owns the regions outright.
+ * Concealment is a never-expanding fold region. Revealing markup means removing the region, and this class
+ * owns the regions outright.
  */
 @ApiStatus.Internal
 class MarkdownLivePreviewReconciler private constructor(private val editor: EditorEx): Disposable {
@@ -74,6 +75,9 @@ class MarkdownLivePreviewReconciler private constructor(private val editor: Edit
     editor.selectionModel.addSelectionListener(object: SelectionListener {
       override fun selectionChanged(event: SelectionEvent) = onCaretChanged()
     }, this)
+    editor.project?.messageBus?.connect(this)?.subscribe(MarkdownSettings.ChangeListener.TOPIC, object: MarkdownSettings.ChangeListener {
+      override fun settingsChanged(settings: MarkdownSettings) = scheduleReconcile()
+    })
   }
 
   /**
@@ -104,10 +108,10 @@ class MarkdownLivePreviewReconciler private constructor(private val editor: Edit
     if (specSet.documentStamp != editor.document.modificationStamp) return
 
     val revealed = revealedElementIndices(specSet)
-    val desired = HashSet<TextRange>()
+    val desired = HashMap<TextRange, String?>()
     specSet.elements.forEachIndexed { index, element ->
       if (index !in revealed) {
-        desired.addAll(element.conceals)
+        element.conceals.forEach { desired[it] = element.placeholderText }
       }
     }
 
@@ -118,15 +122,17 @@ class MarkdownLivePreviewReconciler private constructor(private val editor: Edit
       if (region.isValid) existing[region.currentRange()] = region
     }
 
-    val toRemove = existing.entries.filter { it.key !in desired }.map { it.value }
-    val toAdd = desired.filterNot { it in existing }
+    val toRemove = existing.entries
+      .filter { it.key !in desired || desired[it.key].orEmpty() != it.value.placeholderText }
+      .map { it.value }
+    val toAdd = desired.filter { existing[it.key]?.placeholderText != it.value.orEmpty() }
     val next = HashMap(existing)
     if (toRemove.isNotEmpty() || toAdd.isNotEmpty()) {
       toRemove.forEach { next.remove(it.currentRange()) }
       runFoldBatch {
         toRemove.forEach { editor.foldingModel.removeFoldRegion(it) }
-        for (range in toAdd) {
-          concealRange(range)?.let { next[range] = it }
+        for ((range, placeholderText) in toAdd) {
+          concealRange(range, placeholderText)?.let { next[range] = it }
         }
       }
     }
@@ -208,22 +214,26 @@ class MarkdownLivePreviewReconciler private constructor(private val editor: Edit
     return revealed
   }
 
-  private fun concealRange(range: TextRange): FoldRegion? {
+  private fun concealRange(range: TextRange, placeholderText: String?): FoldRegion? {
     val foldingModel = editor.foldingModel
+    val foldedText = placeholderText.orEmpty()
     val existing = foldingModel.getFoldRegion(range.startOffset, range.endOffset)
     if (existing != null) {
       // A region is already here, most likely restored from the clipboard together with pasted text. The
       // folding model refuses a second region over the same range, so adopt this one instead.
-      if (!existing.isValid || existing is CustomFoldRegion || !existing.shouldNeverExpand() || existing.placeholderText.isNotEmpty()) {
+      if (!existing.isValid || existing is CustomFoldRegion || !existing.shouldNeverExpand() ||
+          existing.placeholderText != foldedText) {
         return null
       }
       existing.putUserData(MARKDOWN_LIVE_PREVIEW_REGION, true)
+      if (placeholderText != null) existing.putUserData(FoldingKeys.HIDE_PLACEHOLDER_BACKGROUND, true)
       return existing
     }
     // Can come back null for reasons beyond a caret being in the way - folding switched off, or a boundary
     // that would split a character pair - so never assume the region exists.
-    val region = foldingModel.createFoldRegion(range.startOffset, range.endOffset, "", null, true) ?: return null
+    val region = foldingModel.createFoldRegion(range.startOffset, range.endOffset, foldedText, null, true) ?: return null
     region.putUserData(MARKDOWN_LIVE_PREVIEW_REGION, true)
+    if (placeholderText != null) region.putUserData(FoldingKeys.HIDE_PLACEHOLDER_BACKGROUND, true)
     return region
   }
 

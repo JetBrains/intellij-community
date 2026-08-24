@@ -1895,7 +1895,20 @@ public final class EditorPainter implements TextDrawingCallback {
       if (foldAttributes != null) {
         foldAttributes = debugZombieFoldRegion(foldRegion, foldAttributes);
       }
-      return mergeAttributes(mergeAttributes(selectionAttributes, foldAttributes), defaultAttributes);
+      TextAttributes result = mergeAttributes(mergeAttributes(selectionAttributes, foldAttributes), defaultAttributes);
+      if (selectionAttributes == null && FoldingKeys.HIDE_PLACEHOLDER_BACKGROUND.isIn(foldRegion)) {
+        result = result.clone();
+        result.setBackgroundColor(ObjectUtils.notNull(getCaretRowBackground(foldRegion), defaultAttributes.getBackgroundColor()));
+      }
+      return result;
+    }
+
+    private @Nullable Color getCaretRowBackground(FoldRegion foldRegion) {
+      if (myCaretData == null || myEditor.isRendererMode() || myEditor.isStickyLinePainting()) return null;
+      int offset = foldRegion.getStartOffset();
+      return myCaretData.caretRowStart() <= offset && offset < myCaretData.caretRowEnd()
+             ? myCaretModel.getTextAttributes().getBackgroundColor()
+             : null;
     }
 
     @SuppressWarnings("UseJBColor")

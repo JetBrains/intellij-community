@@ -99,6 +99,30 @@ class MarkdownConcealSpecTest: BasePlatformTestCase() {
     assertEquals(listOf("*", "*"), concealed("### Deep *header*"))
   }
 
+  fun testUnorderedListBulletsUseDepthPlaceholders() {
+    val content = """
+      |- one
+      |  * two
+      |    + three
+      |      - four
+    """.trimMargin()
+    val elements = elements(content)
+    assertEquals(listOf("-", "*", "+", "-"), concealed(content))
+    assertEquals(listOf("- ", "* ", "+ ", "- "), revealRanges(content))
+    assertEquals(listOf("•", "◦", "▪", "•"), elements.map { it.placeholderText })
+  }
+
+  fun testOrderedListParentsCountTowardsBulletDepth() {
+    val content = "1. one\n   - two"
+    val elements = elements(content)
+    assertEquals(listOf("-"), concealed(content))
+    assertEquals(listOf("◦"), elements.map { it.placeholderText })
+  }
+
+  fun testOrderedAndTaskListMarkersAreNotConcealed() {
+    assertEmpty(elements("1. ordered\n- [ ] todo\n- [x] done"))
+  }
+
   fun testTableCellInlineMarkersAreNotConcealed() {
     val content = """
       || Name |

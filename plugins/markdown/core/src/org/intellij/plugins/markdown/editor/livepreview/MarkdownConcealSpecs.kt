@@ -45,8 +45,10 @@ private val LeafAutolinkTypes: Set<IElementType> = setOf(
   MarkdownTokenTypes.GFM_AUTOLINK,
 )
 
+private const val BULLET_PLACEHOLDERS = "•◦▪"
+
 /**
- * The inline markup live preview can hide in [file], sorted by element start offset.
+ * The markup live preview can hide in [file], sorted by element start offset.
  *
  * Pure function of the PSI: which of these are actually hidden depends on where the carets are, and that
  * is decided when the specs are applied.
@@ -76,8 +78,27 @@ private fun PsiElement.toConcealElement(): MarkdownConcealElement? {
     // flat and keeps them as siblings, so the two forms need different lookups.
     MarkdownElementTypes.AUTOLINK -> wrappedAutolinkConceals()
     in LeafAutolinkTypes -> bracketedSiblingAutolinkConceals()
+    MarkdownTokenTypes.LIST_BULLET -> unorderedListBulletConceal()
     else -> null
   }
+}
+
+private fun PsiElement.unorderedListBulletConceal(): MarkdownConcealElement? {
+  val listItem = parent?.takeIf { PsiUtilCore.getElementType(it) == MarkdownElementTypes.LIST_ITEM } ?: return null
+  if (PsiUtilCore.getElementType(listItem.parent) != MarkdownElementTypes.UNORDERED_LIST ||
+      PsiUtilCore.getElementType(nextSibling) == MarkdownTokenTypes.CHECK_BOX) {
+    return null
+  }
+  val markerOffset = text.indexOfFirst { it in "-*+" }
+  if (markerOffset < 0) return null
+  val depth = generateSequence(listItem) { it.parent }
+    .count { PsiUtilCore.getElementType(it) == MarkdownElementTypes.LIST_ITEM }
+  val markerStart = textRange.startOffset + markerOffset
+  return MarkdownConcealElement(
+    range = textRange,
+    conceals = listOf(TextRange(markerStart, markerStart + 1)),
+    placeholderText = BULLET_PLACEHOLDERS[(depth - 1) % BULLET_PLACEHOLDERS.length].toString(),
+  )
 }
 
 /** Hides the runs of [delimiter] that open and close this element, as in `**bold**` or `` `code` ``. */
@@ -132,12 +153,13 @@ private fun PsiElement.bracketedSiblingAutolinkConceals(): MarkdownConcealElemen
   return MarkdownConcealElement(
     range = TextRange(openBracket.textRange.startOffset, closeBracket.textRange.endOffset),
     conceals = listOf(openBracket.textRange, closeBracket.textRange),
+    placeholderText = null
   )
 }
 
 private fun PsiElement.concealElement(vararg conceals: TextRange): MarkdownConcealElement? {
   val ranges = conceals.filterNot { it.isEmpty }
-  return if (ranges.isEmpty()) null else MarkdownConcealElement(textRange, ranges)
+  return if (ranges.isEmpty()) null else MarkdownConcealElement(textRange, ranges, null)
 }
 
 private fun PsiElement.childList(): List<PsiElement> = node.getChildren(null).map { it.psi }

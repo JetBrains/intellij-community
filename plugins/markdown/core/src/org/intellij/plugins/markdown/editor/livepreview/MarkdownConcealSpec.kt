@@ -5,22 +5,23 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * One inline element (`**bold**`, `` `code` ``, `[title](url)`, ...) together with the markup inside it
- * that live preview hides.
+ * One Markdown element (`**bold**`, `` `code` ``, `[title](url)`, a list bullet, ...) together with the
+ * markup inside it that live preview hides. [placeholderText] replaces each concealed range.
  *
  * [range] covers the whole element, including markers, and is the range that controls revealing: while a
  * caret or selection touches it, none of the [conceals] is hidden. Because the range covers the markers,
  * a caret sitting exactly at either edge of the element already reveals it, which is what keeps a fold
  * from ever ending up under a caret.
  *
- * Nested elements are separate entries, so revealing an inner element automatically reveals its ancestors:
- * an inner element's range is contained in the outer one's, so any caret touching the inner touches the
- * outer as well.
+ * Nested inline elements are separate entries, so revealing an inner element automatically reveals its
+ * ancestors: an inner element's range is contained in the outer one's, so any caret touching the inner
+ * touches the outer as well.
  */
 @ApiStatus.Internal
 data class MarkdownConcealElement(
   val range: TextRange,
   val conceals: List<TextRange>,
+  val placeholderText: String?,
 )
 
 /**

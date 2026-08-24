@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.FoldRegion
+import com.intellij.openapi.editor.impl.FoldingKeys
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.PlatformTestUtil
@@ -28,6 +29,7 @@ class MarkdownLivePreviewFoldingTest: BasePlatformTestCase() {
   fun testMarkupIsHiddenWhileTheCaretIsElsewhere() {
     configure("Some **bold**, *italic* and `code` here<caret>")
     assertEquals("Some bold, italic and code here", visibleText())
+    assertTrue(concealedLivePreviewRegions(myFixture.editor).none { FoldingKeys.HIDE_PLACEHOLDER_BACKGROUND.isIn(it) })
   }
 
   fun testInlineLinkShowsOnlyItsTitle() {
@@ -38,6 +40,21 @@ class MarkdownLivePreviewFoldingTest: BasePlatformTestCase() {
   fun testAutolinksShowOnlyTheirTarget() {
     configure("See <https://example.org> or mail <team@example.org> here<caret>\n\ntail")
     assertEquals("See https://example.org or mail team@example.org here\n\ntail", visibleText())
+  }
+
+  fun testUnorderedListMarkersUseDepthPlaceholders() {
+    val content = """
+      |- one
+      |  * two
+      |    + three
+      |      - four
+      |
+      |tail
+    """.trimMargin()
+    configure("$content<caret>")
+    assertEquals("• one\n  ◦ two\n    ▪ three\n      • four\n\ntail", visibleText())
+    assertEquals(listOf("-" to "•", "*" to "◦", "+" to "▪", "-" to "•"), concealedWithPlaceholders())
+    assertTrue(concealedLivePreviewRegions(myFixture.editor).all { FoldingKeys.HIDE_PLACEHOLDER_BACKGROUND.isIn(it) })
   }
 
   fun testCaretOnTheElementRevealsItsMarkers() {
@@ -69,6 +86,48 @@ class MarkdownLivePreviewFoldingTest: BasePlatformTestCase() {
         assertEquals("Caret at $offset is outside the element, which must stay hidden", listOf("**", "**"), concealed())
       }
     }
+  }
+
+  fun testCaretOnEitherListMarkerBoundaryRevealsMarker() {
+    val content = "- item\n\ntail"
+    configure("$content<caret>")
+    assertEquals(listOf("-" to "•"), concealedWithPlaceholders())
+
+    moveCaretTo(0)
+    assertEmpty(concealed())
+    moveCaretTo(content.length)
+    assertEquals(listOf("-"), concealed())
+    moveCaretTo(2)
+    assertEmpty(concealed())
+  }
+
+  fun testIndentingMarkerReplacesItsStalePlaceholder() {
+    val content = "- parent\n- child\n\ntail"
+    configure("$content<caret>")
+    assertEquals(listOf("-" to "•", "-" to "•"), concealedWithPlaceholders())
+    val staleChildRegion = concealedLivePreviewRegions(myFixture.editor)[1]
+
+    val childText = content.indexOf("child")
+    select(childText + 1, childText + 2)
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_INDENT_SELECTION)
+    myFixture.doHighlighting()
+    myFixture.editor.selectionModel.removeSelection()
+    moveCaretTo(myFixture.editor.document.textLength)
+
+    assertEquals(listOf("-" to "•", "-" to "◦"), concealedWithPlaceholders())
+    assertNotSame(staleChildRegion, concealedLivePreviewRegions(myFixture.editor)[1])
+  }
+
+  fun testListMarkerConcealmentDoesNotMoveItemText() {
+    val content = "- bullet\n1. ordered\n\ntail"
+    configure("$content<caret>")
+    val offsets = listOf(content.indexOf("bullet"), content.indexOf("ordered"))
+    val concealedPositions = offsets.map { myFixture.editor.offsetToXY(it) }
+
+    moveCaretTo(0)
+
+    assertEmpty(concealed())
+    assertEquals(concealedPositions, offsets.map { myFixture.editor.offsetToXY(it) })
   }
 
   fun testNestedElementRevealsItsAncestor() {
@@ -156,12 +215,16 @@ class MarkdownLivePreviewFoldingTest: BasePlatformTestCase() {
     assertEquals("**bold**x", myFixture.editor.document.text)
   }
 
-  fun testDisablingLivePreviewRemovesEveryRegion() {
+  fun testLivePreviewSettingReconcilesImmediately() {
     configure("Some **bold** text<caret>")
     assertFalse(concealed().isEmpty())
-    settings.enableLivePreview = false
-    moveCaretTo(0)
+    settings.update { it.enableLivePreview = false }
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
     assertEmpty(concealed())
+
+    settings.update { it.enableLivePreview = true }
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    assertEquals(listOf("**", "**"), concealed())
   }
 
   fun testDiffEditorHidesNothing() {
@@ -230,7 +293,14 @@ class MarkdownLivePreviewFoldingTest: BasePlatformTestCase() {
     return concealedLivePreviewRegions(editor).map { text.subSequence(it.startOffset, it.endOffset).toString() }
   }
 
-  /** What the reader sees: the document with every concealed region left out. */
+  private fun concealedWithPlaceholders(editor: Editor = myFixture.editor): List<Pair<String, String>> {
+    val text = editor.document.charsSequence
+    return concealedLivePreviewRegions(editor).map {
+      text.subSequence(it.startOffset, it.endOffset).toString() to it.placeholderText
+    }
+  }
+
+  /** What the reader sees: every concealed range replaced by its fold placeholder. */
   private fun visibleText(): String {
     val editor = myFixture.editor
     val text = editor.document.charsSequence
@@ -238,6 +308,7 @@ class MarkdownLivePreviewFoldingTest: BasePlatformTestCase() {
     var offset = 0
     for (region in concealedLivePreviewRegions(editor)) {
       if (region.startOffset > offset) result.append(text, offset, region.startOffset)
+      result.append(region.placeholderText)
       offset = maxOf(offset, region.endOffset)
     }
     result.append(text, offset, text.length)
