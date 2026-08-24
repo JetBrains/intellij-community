@@ -1,8 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.debugger;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.debugger
 
 interface PyXDebugValue {
   fun getName(): String
   val type: String?
   var frameAccessor: PyFrameAccessor
+  fun toPyDebugValue(): PyDebugValue
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2026 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeBackendOnlyActio
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.NodeTypes;
 import com.jetbrains.python.debugger.PyDebugValue;
+import com.jetbrains.python.debugger.PyXDebugValue;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -35,13 +36,17 @@ public class PyViewNumericContainerAction extends XDebuggerTreeBackendOnlyAction
   @Override
   protected void perform(@NotNull XValue value, @NlsSafe @NotNull String nodeName, @NotNull AnActionEvent e) {
     Project p = e.getProject();
-    if (p != null && value instanceof PyDebugValue debugValue) {
+    if (p != null && value instanceof PyXDebugValue debugValue) {
       showNumericViewer(p, debugValue);
     }
   }
 
   public static void showNumericViewer(Project project, PyDebugValue debugValue) {
     PyDataView.Companion.getInstance(project).show(debugValue);
+  }
+
+  private static void showNumericViewer(Project project, PyXDebugValue debugValue) {
+    showNumericViewer(project, debugValue.toPyDebugValue());
   }
 
   @Override
@@ -52,33 +57,55 @@ public class PyViewNumericContainerAction extends XDebuggerTreeBackendOnlyAction
   @Override
   public void update(@NotNull AnActionEvent e) {
     XValue value = getSelectedValue(e.getDataContext());
-    if (!(value instanceof PyDebugValue debugValue)) {
+    if (!(value instanceof PyXDebugValue debugValue)) {
+      e.getPresentation().setVisible(false);
+      return;
+    }
+
+    if (!isViewNumericContainerSupported(debugValue)) {
       e.getPresentation().setVisible(false);
       return;
     }
 
     String nodeType = debugValue.getType();
-    if (NodeTypes.NDARRAY_NODE_TYPE.equals(nodeType) ||
-        NodeTypes.RECARRAY_NODE_TYPE.equals(nodeType) ||
-        NodeTypes.EAGER_TENSOR_NODE_TYPE.equals(nodeType) ||
-        NodeTypes.RESOURCE_VARIABLE_NODE_TYPE.equals(nodeType) ||
-        NodeTypes.SPARSE_TENSOR_NODE_TYPE.equals(nodeType) ||
-        NodeTypes.TENSOR_NODE_TYPE.equals(nodeType)) {
+    if (isArrayNodeType(nodeType)) {
       e.getPresentation().setText(PyBundle.message("debugger.numeric.view.as.array"));
       e.getPresentation().setVisible(true);
     }
-    else if (NodeTypes.DATA_FRAME_NODE_TYPE.equals(nodeType) ||
-             NodeTypes.GEO_DATA_FRAME_NODE_TYPE.equals(nodeType) ||
-             NodeTypes.DATASET_NODE_TYPE.equals(nodeType)) {
+    else if (isDataFrameNodeType(nodeType)) {
       e.getPresentation().setText(PyBundle.message("debugger.numeric.view.as.dataframe"));
       e.getPresentation().setVisible(true);
     }
-    else if (NodeTypes.SERIES_NODE_TYPE.equals(nodeType) || NodeTypes.GEO_SERIES_NODE_TYPE.equals(nodeType)) {
+    else if (isSeriesNodeType(nodeType)) {
       e.getPresentation().setText(PyBundle.message("debugger.numeric.view.as.series"));
       e.getPresentation().setVisible(true);
     }
     else {
       e.getPresentation().setVisible(false);
     }
+  }
+
+  public static boolean isViewNumericContainerSupported(@NotNull PyXDebugValue debugValue) {
+    String nodeType = debugValue.getType();
+    return isArrayNodeType(nodeType) || isDataFrameNodeType(nodeType) || isSeriesNodeType(nodeType);
+  }
+
+  private static boolean isArrayNodeType(String nodeType) {
+    return NodeTypes.NDARRAY_NODE_TYPE.equals(nodeType) ||
+        NodeTypes.RECARRAY_NODE_TYPE.equals(nodeType) ||
+        NodeTypes.EAGER_TENSOR_NODE_TYPE.equals(nodeType) ||
+        NodeTypes.RESOURCE_VARIABLE_NODE_TYPE.equals(nodeType) ||
+        NodeTypes.SPARSE_TENSOR_NODE_TYPE.equals(nodeType) ||
+        NodeTypes.TENSOR_NODE_TYPE.equals(nodeType);
+  }
+
+  private static boolean isDataFrameNodeType(String nodeType) {
+    return NodeTypes.DATA_FRAME_NODE_TYPE.equals(nodeType) ||
+           NodeTypes.GEO_DATA_FRAME_NODE_TYPE.equals(nodeType) ||
+           NodeTypes.DATASET_NODE_TYPE.equals(nodeType);
+  }
+
+  private static boolean isSeriesNodeType(String nodeType) {
+    return NodeTypes.SERIES_NODE_TYPE.equals(nodeType) || NodeTypes.GEO_SERIES_NODE_TYPE.equals(nodeType);
   }
 }
