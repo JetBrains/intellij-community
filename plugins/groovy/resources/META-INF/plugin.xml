@@ -65,6 +65,7 @@
     <module name="intellij.platform.jps.build.javac.rt"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.macro"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.refactoring"/>
