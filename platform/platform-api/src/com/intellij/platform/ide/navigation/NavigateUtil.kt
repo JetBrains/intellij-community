@@ -105,6 +105,33 @@ fun requestNavigate(
   }
 }
 
+/**
+ * Submits navigation to the requests resolved by [supplier] without waiting for it to finish.
+ *
+ * The supplier runs inside the navigation task, off the EDT, so it may resolve the targets with `ReadAction`s.
+ * Use it whenever building the requests is too expensive for the EDT, which is where an action is dispatched from.
+ *
+ * @see [requestNavigate] for the dispatch and completion semantics.
+ * @see [NavigationService.navigateRequests]
+ */
+@ApiStatus.Internal
+fun requestNavigate(
+  project: Project,
+  options: NavigationOptions = NavigationOptions.defaultOptions(),
+  dataContext: DataContext? = null,
+  coroutineScope: CoroutineScope? = null,
+  supplier: suspend () -> Collection<NavigationRequest>,
+): Job {
+  return dispatchNavigateRequest(
+    project,
+    options,
+    dataContext,
+    coroutineScope
+  ) { ctx ->
+    navigateRequests(ctx.navigationOptions, supplier)
+  }
+}
+
 @ApiStatus.Internal
 @JvmOverloads
 fun requestNavigate(
