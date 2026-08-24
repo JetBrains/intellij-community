@@ -186,12 +186,14 @@ class EvoTreeAddNewNode(
   icon: Icon,
   versionRows: EvoVersionRows,
   editableName: EvoEditableName? = null,
+  fixedName: @NlsSafe String? = null,
   secondaryText: @Nls String? = null,
 ) : EvoTreeNodeElement(text, icon) {
   init {
     sections.addAll(versionRows.sections())
     this.versionRows = versionRows
     this.editableName = editableName
+    this.fixedName = fixedName
     secondaryText?.let { presentation.putClientProperty(ActionUtil.SECONDARY_TEXT, it) }
   }
 }
@@ -217,6 +219,12 @@ sealed class EvoTreeNodeElement(
    * field from whichever node it is showing, so the holder has to travel with the sections.
    */
   var editableName: EvoEditableName? = null
+
+  /**
+   * The name this node's submenu shows in its header when there is nothing to edit — hatch's declared environment, named
+   * in `pyproject.toml` and not ours to rename. Null when the node has an [editableName] instead, or no header at all.
+   */
+  var fixedName: @NlsSafe String? = null
 
   /**
    * The collapsed/expanded views of this node's version list, or null when it has none. Set by [EvoTreeAddNewNode] and,
@@ -252,6 +260,8 @@ class EvoLoadedNode(
   val sections: List<EvoTreeSection>,
   val refreshable: Boolean,
   val editableName: EvoEditableName? = null,
+  /** See [EvoTreeNodeElement.fixedName] — carried for the same reason [editableName] is. */
+  val fixedName: @NlsSafe String? = null,
   val versionRows: EvoVersionRows? = null,
 )
 
@@ -308,6 +318,7 @@ class EvoTreeLazyNodeElement(
           withContext(Dispatchers.EDT) {
             refreshable = loaded.refreshable
             editableName = loaded.editableName
+            fixedName = loaded.fixedName
             versionRows = loaded.versionRows
             // Swap in the new data only once it's ready, so an open submenu never flashes empty during a reload.
             sections.clear()

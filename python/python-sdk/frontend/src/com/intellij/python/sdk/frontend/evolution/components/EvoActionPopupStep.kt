@@ -102,6 +102,9 @@ open class EvoActionPopupStep(
   /** The editable env-name holder for an add-new submenu, or null when the name is fixed — see [EvoTreeNodeElement]. */
   val editableName: EvoEditableName? get() = node.editableName
 
+  /** The name to show in this submenu's header when it cannot be edited (hatch's declared env) — see [EvoTreeNodeElement]. */
+  val fixedName: String? get() = node.fixedName
+
   override fun onChosen(
     selectedValue: EvoTreeItem,
     finalChoice: Boolean

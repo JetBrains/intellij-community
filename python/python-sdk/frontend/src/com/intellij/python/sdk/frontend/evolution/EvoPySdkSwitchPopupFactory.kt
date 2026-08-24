@@ -151,6 +151,9 @@ internal class EvoPySdkSwitchPopupFactory(
           { base -> baseInterpreterRow(base) { createEnv(nodeId, base.token, createToken, null, null) } },
           { option -> installActionRow { createEnv(nodeId, option.token, createToken, null, null, option.installVersion()) } },
         ),
+        // The env this is picking a base for, for the submenu's header. Declared in pyproject.toml, so it is shown
+        // rather than offered for editing — unlike the name uv and pip make up for a folder they are about to create.
+        fixedName = title,
         // There is no interpreter to probe yet, so the row carries the backend's "n/a" in the same column where the
         // already-materialized envs show their resolved version.
         secondaryText = secondaryText,
@@ -398,14 +401,16 @@ internal class EvoPySdkSwitchPopupFactory(
   /**
    * Drops the intermediate one-row popup from a tool whose entire node is a single "add new environment" row (a tool with
    * no environments yet): with nothing to choose between, that step is pure friction, so expanding the tool lands straight
-   * on the name field + Python versions. The row's name holder and its version rows are carried over, since the popup
-   * renders the field — and the caption above it, the only thing left saying what the step does, and the
-   * expand/collapse toggle below it — from the node it is showing. A node with any environment of its own keeps its
-   * normal listing.
+   * on the name field + Python versions.
+   *
+   * The row's name — the editable holder, or the fixed label of a hatch env — and its version rows are carried over,
+   * since the popup renders the header (the name and the caption beside it, the only thing left saying what the step
+   * does) and the expand/collapse toggle below it from the node it is showing. A node with any environment of its own
+   * keeps its normal listing.
    */
   private fun EvoLoadedNode.withoutLoneAddNewStep(): EvoLoadedNode {
     val onlyRow = sections.singleOrNull()?.elements?.singleOrNull() as? EvoTreeAddNewNode ?: return this
-    return EvoLoadedNode(onlyRow.sections.toList(), refreshable, onlyRow.editableName, onlyRow.versionRows)
+    return EvoLoadedNode(onlyRow.sections.toList(), refreshable, onlyRow.editableName, onlyRow.fixedName, onlyRow.versionRows)
   }
 
   /**
