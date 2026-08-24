@@ -519,6 +519,7 @@ public final class TableResultView extends JBTableWithResizableCells
    * selection to the clicked pinned column; Ctrl/Shift gestures stay additive. */
   @Override
   public void changeSelection(int rowIndex, int columnIndex, boolean toggle, boolean extend) {
+    if (extend && myFrozenColumnsController.handleCellRangeSelection(this, rowIndex, columnIndex, toggle)) return;
     super.changeSelection(rowIndex, columnIndex, toggle, extend);
     myFrozenColumnsController.afterChangeSelection(this, columnIndex, toggle, extend);
   }
@@ -1164,37 +1165,7 @@ public final class TableResultView extends JBTableWithResizableCells
         startEditing.actionPerformed(e);
       }
     });
-    // Cross the pin divider: TAB and Right arrow move last pinned column -> first main column; Shift-TAB and Left
-    // arrow go back. The *ExtendSelection variants grow the selection across the divider instead of collapsing it.
-    wrapColumnCrossing(actionMap, "selectNextColumnCell", true, false);
-    wrapColumnCrossing(actionMap, "selectPreviousColumnCell", false, false);
-    wrapColumnCrossing(actionMap, "selectNextColumn", true, false);
-    wrapColumnCrossing(actionMap, "selectPreviousColumn", false, false);
-    wrapColumnCrossing(actionMap, "selectNextColumnExtendSelection", true, true);
-    wrapColumnCrossing(actionMap, "selectPreviousColumnExtendSelection", false, true);
-  }
-
-  private void wrapColumnCrossing(@NotNull ActionMap actionMap, @NotNull String name, boolean forward, boolean extend) {
-    Action original = actionMap.get(name);
-    if (original == null) return;
-    actionMap.put(name, new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        boolean crossed = forward ? crossForwardAtPinBoundary(extend) : crossBackwardAtPinBoundary(extend);
-        if (!crossed) original.actionPerformed(e);
-      }
-    });
-  }
-
-  // Moving right off the last pinned column goes to the first visible main-view column on the same row. Only the frozen
-  // strip crosses forward; the main view keeps its default wrap so its last column still advances to the next row.
-  private boolean crossForwardAtPinBoundary(boolean extend) {
-    return myFrozenColumnsController.crossForwardAtPinBoundary(this, extend);
-  }
-
-  // Moving left off the first visible main-view column returns to the last pinned column on the same row.
-  private boolean crossBackwardAtPinBoundary(boolean extend) {
-    return myFrozenColumnsController.crossBackwardAtPinBoundary(this, extend);
+    myFrozenColumnsController.installColumnNavigationActions(this, actionMap);
   }
 
   @Override
@@ -2350,60 +2321,37 @@ public final class TableResultView extends JBTableWithResizableCells
     return ownerColumn >= 0 && owner.getColumnModel().getSelectionModel().isSelectedIndex(ownerColumn);
   }
 
-  /** Pinned columns are adjacent in the strip but not in the column order, so a range there is applied one by one. */
-  private void selectStripColumnRange(int viewColumn, @NotNull TableResultView primaryView, boolean exclusive) {
+  private void selectViewColumnInterval(int viewColumn, @NotNull MouseEvent e) {
+    boolean interval = GridUtil.isIntervalModifierSet(e);
+    boolean exclusive = GridUtil.isExclusiveModifierSet(e);
+    TableResultView primaryView = getUnifiedSelectionView();
     TableSelectionModel selectionModel =
       ObjectUtils.tryCast(SelectionModelUtil.get(myResultPanel, primaryView), TableSelectionModel.class);
-    if (selectionModel == null) return;
-    int lead = getColumnModel().getSelectionModel().getLeadSelectionIndex();
-    // Shift-click can be the first column selection gesture; use the clicked column as the range anchor.
-    if (lead < 0) lead = viewColumn;
-    int from = Math.min(viewColumn, lead);
-    int to = Math.max(viewColumn, lead);
-    if (exclusive) selectionModel.addRowSelectionInterval(primaryView.getRowCount() - 1, 0);
-    else selectionModel.setRowSelectionInterval(primaryView.getRowCount() - 1, 0);
-    boolean replaceSelection = !exclusive;
-    for (int stripColumn = from; stripColumn <= to; stripColumn++) {
-      int primaryColumn = toViewColumnIn(stripColumn, primaryView);
-      if (primaryColumn < 0) continue;
-      if (replaceSelection) {
-        selectionModel.setColumnSelectionInterval(primaryColumn, primaryColumn);
-        replaceSelection = false;
-      }
-      else {
-        selectionModel.addColumnSelectionInterval(primaryColumn, primaryColumn);
-      }
+    if (interval && selectionModel != null &&
+        myFrozenColumnsController.selectDisplayedColumnRange(this, viewColumn, exclusive)) {
+      if (exclusive) selectionModel.addRowSelectionInterval(primaryView.getRowCount() - 1, 0);
+      else selectionModel.setRowSelectionInterval(primaryView.getRowCount() - 1, 0);
+      return;
     }
-  }
-
-  private void selectViewColumnInterval(int viewColumn, @NotNull MouseEvent e) {
     if (myIsFrozenStrip) {
       // The frozen view has only a no-op selection model, so whole-column selection goes through the primary view.
-      TableResultView primaryView = getPrimaryView();
-      if (primaryView == null) return;
-      if (GridUtil.isIntervalModifierSet(e)) {
-        selectStripColumnRange(viewColumn, primaryView, GridUtil.isExclusiveModifierSet(e));
-        return;
-      }
+      if (primaryView == this) return;
       int primaryColumn = toViewColumnIn(viewColumn, primaryView);
       if (primaryColumn >= 0) primaryView.selectViewColumnInterval(primaryColumn, e);
       return;
     }
-    boolean interval = GridUtil.isIntervalModifierSet(e);
-    boolean exclusive = GridUtil.isExclusiveModifierSet(e);
-    TableSelectionModel selectionModel1 = ObjectUtils.tryCast(SelectionModelUtil.get(myResultPanel, this), TableSelectionModel.class);
-    if (selectionModel1 == null) return;
+    if (selectionModel == null) return;
     if (interval) {
       int lead = getColumnModel().getSelectionModel().getLeadSelectionIndex();
       // Shift-click can be the first column selection gesture; use the clicked column as the range anchor.
       if (lead == -1) lead = viewColumn;
       if (exclusive) {
-        selectionModel1.addRowSelectionInterval(getRowCount() - 1, 0);
-        selectionModel1.addColumnSelectionInterval(viewColumn, lead);
+        selectionModel.addRowSelectionInterval(getRowCount() - 1, 0);
+        selectionModel.addColumnSelectionInterval(viewColumn, lead);
       }
       else {
-        selectionModel1.setRowSelectionInterval(getRowCount() - 1, 0);
-        selectionModel1.setColumnSelectionInterval(viewColumn, lead);
+        selectionModel.setRowSelectionInterval(getRowCount() - 1, 0);
+        selectionModel.setColumnSelectionInterval(viewColumn, lead);
       }
     }
     else if (exclusive) {
@@ -2411,13 +2359,13 @@ public final class TableResultView extends JBTableWithResizableCells
         removeColumnSelectionInterval(viewColumn, viewColumn);
       }
       else {
-        selectionModel1.addRowSelectionInterval(getRowCount() - 1, 0);
-        selectionModel1.addColumnSelectionInterval(viewColumn, viewColumn);
+        selectionModel.addRowSelectionInterval(getRowCount() - 1, 0);
+        selectionModel.addColumnSelectionInterval(viewColumn, viewColumn);
       }
     }
     else {
-      selectionModel1.setRowSelectionInterval(getRowCount() - 1, 0);
-      selectionModel1.setColumnSelectionInterval(viewColumn, viewColumn);
+      selectionModel.setRowSelectionInterval(getRowCount() - 1, 0);
+      selectionModel.setColumnSelectionInterval(viewColumn, viewColumn);
     }
   }
 

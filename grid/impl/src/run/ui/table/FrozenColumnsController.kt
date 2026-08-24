@@ -12,6 +12,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ComponentUtil
+import com.intellij.ui.JBAutoScroller
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Color
@@ -19,9 +20,12 @@ import java.awt.Component
 import java.awt.Cursor
 import java.awt.Dimension
 import java.awt.Point
+import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
+import javax.swing.AbstractAction
+import javax.swing.ActionMap
 import javax.swing.DefaultListSelectionModel
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -76,6 +80,37 @@ internal class FrozenColumnsController(
   fun isCellComponent(component: Component?): Boolean = component === primaryView || component === frozenView
 
   fun isEditingInFrozenView(): Boolean = frozenView?.isEditing == true
+
+  /** Installs navigation that treats the frozen strip and the primary table as one displayed column sequence. */
+  fun installColumnNavigationActions(view: TableResultView, actionMap: ActionMap) {
+    wrapColumnMoveAction(view, actionMap, "selectNextColumnCell", forward = true, extend = false)
+    wrapColumnMoveAction(view, actionMap, "selectPreviousColumnCell", forward = false, extend = false)
+    wrapColumnMoveAction(view, actionMap, "selectNextColumn", forward = true, extend = false)
+    wrapColumnMoveAction(view, actionMap, "selectPreviousColumn", forward = false, extend = false)
+    wrapColumnMoveAction(view, actionMap, "selectNextColumnExtendSelection", forward = true, extend = true)
+    wrapColumnMoveAction(view, actionMap, "selectPreviousColumnExtendSelection", forward = false, extend = true)
+    wrapColumnEdgeAction(view, actionMap, "selectFirstColumn", first = true, extend = false)
+    wrapColumnEdgeAction(view, actionMap, "selectLastColumn", first = false, extend = false)
+    wrapColumnEdgeAction(view, actionMap, "selectFirstColumnExtendSelection", first = true, extend = true)
+    wrapColumnEdgeAction(view, actionMap, "selectLastColumnExtendSelection", first = false, extend = true)
+  }
+
+  private fun wrapColumnMoveAction(view: TableResultView, actionMap: ActionMap, name: String, forward: Boolean, extend: Boolean) {
+    wrapNavigationAction(actionMap, name) { handleColumnMove(view, forward, extend) }
+  }
+
+  private fun wrapColumnEdgeAction(view: TableResultView, actionMap: ActionMap, name: String, first: Boolean, extend: Boolean) {
+    wrapNavigationAction(actionMap, name) { handleColumnEdgeMove(view, first, extend) }
+  }
+
+  private fun wrapNavigationAction(actionMap: ActionMap, name: String, handler: () -> Boolean) {
+    val original = actionMap[name] ?: return
+    actionMap.put(name, object : AbstractAction() {
+      override fun actionPerformed(event: ActionEvent) {
+        if (!handler()) original.actionPerformed(event)
+      }
+    })
+  }
 
   /**
    * Keeps a dragged column after the pinned ones, which sit here at zero width: dropping in front of them looks like a
@@ -446,11 +481,21 @@ internal class FrozenColumnsController(
     mirroringSelection = true
     // Mirroring is derived, so it must not scroll: the autoscroller would follow the lead row of the selection.
     try {
-      resultPanel.autoscrollLocker.runWithLock {
+      runWithAutoscrollLocked {
         // Map by model identity: a frozen-column reorder can reach one column model before the other.
         val sourceView = if (toMain) frozen else primaryView
         val targetView = if (toMain) primaryView else frozen
         val modelToTarget = targetView.rawIndexConverter.column2View()
+        val sourceAnchor = from.anchorSelectionIndex
+        val targetAnchor = if (sourceAnchor in 0 until sourceView.columnCount) {
+          modelToTarget.applyAsInt(sourceView.columnModel.getColumn(sourceAnchor).modelIndex)
+        }
+        else -1
+        val sourceLead = from.leadSelectionIndex
+        val targetLead = if (sourceLead in 0 until sourceView.columnCount) {
+          modelToTarget.applyAsInt(sourceView.columnModel.getColumn(sourceLead).modelIndex)
+        }
+        else -1
         to.valueIsAdjusting = true
         if (toMain) {
           for (index in 0 until frozen.columnCount) {
@@ -468,6 +513,10 @@ internal class FrozenColumnsController(
           }
           index++
         }
+        // Adding the lead once more moves Swing's lead without changing the selection; restore the mapped anchor after
+        // that. The primary model remains the source of truth when its anchor is not representable in the strip.
+        if (targetLead >= 0 && to.isSelectedIndex(targetLead)) to.addSelectionInterval(targetLead, targetLead)
+        if (targetAnchor >= 0) to.anchorSelectionIndex = targetAnchor
         to.valueIsAdjusting = false
       }
     }
@@ -488,7 +537,7 @@ internal class FrozenColumnsController(
   fun processMouseEvent(view: TableResultView, event: MouseEvent, defaultProcessor: Runnable) {
     // Selection in the fixed strip must not scroll the main viewport. Keep the lock for the full mouse gesture.
     if (view !== primaryView) {
-      resultPanel.autoscrollLocker.runWithLock {
+      runWithAutoscrollLocked {
         defaultProcessor.run()
         if (event.id == MouseEvent.MOUSE_RELEASED) primaryView.columnModel.selectionModel.valueIsAdjusting = false
       }
@@ -507,7 +556,8 @@ internal class FrozenColumnsController(
   }
 
   private fun extendDragAcrossFrozenRegion(view: TableResultView, event: MouseEvent) {
-    if (frozenView == null || dragAnchorColumn < 0 || dragAnchorRow < 0) return
+    val frozen = frozenView ?: return
+    if (dragAnchorColumn < 0 || dragAnchorRow < 0) return
     if (GridUtil.isIntervalModifierSet(event) || GridUtil.isExclusiveModifierSet(event)) return
     if (!isDragOverOtherRegion(view, event)) return
     val targetColumn = unifiedMainColumn(view, event)
@@ -517,7 +567,9 @@ internal class FrozenColumnsController(
     val selection = SelectionModelUtil.get<GridRow, GridColumn>(resultPanel, primaryView) as? TableSelectionModel ?: return
     if (view !== primaryView) primaryView.columnModel.selectionModel.valueIsAdjusting = true
     selection.setRowSelectionInterval(dragAnchorRow, targetRow)
-    selection.setColumnSelectionInterval(dragAnchorColumn, targetColumn)
+    // A column interval runs in main view order, where a pinned column keeps the index it had before it moved into the
+    // strip, so the columns the drag swept are the ones between the anchor and the target on screen.
+    selectDisplayedColumnRange(displayedColumnOrder(frozen), targetColumn, add = false, anchorOverride = dragAnchorColumn)
   }
 
   private fun isDragOverOtherRegion(view: TableResultView, event: MouseEvent): Boolean {
@@ -546,46 +598,133 @@ internal class FrozenColumnsController(
     return view.rowAtPoint(Point(0, event.y.coerceIn(0, view.height - 1)))
   }
 
-  fun crossForwardAtPinBoundary(view: TableResultView, extend: Boolean): Boolean {
+  /** Handles horizontal moves while a strip exists, skipping hidden placeholders and retaining one unified anchor. */
+  fun handleColumnMove(view: TableResultView, forward: Boolean, extend: Boolean): Boolean {
     val frozen = frozenView ?: return false
-    if (view !== frozen || leadColumn(view) != view.columnCount - 1) return false
-    val row = leadRow(view)
-    val mainColumn = firstVisibleColumn(primaryView)
-    if (row < 0 || mainColumn < 0) return false
-    if (extend) {
-      val anchor = view.columnModel.selectionModel.anchorSelectionIndex
-      // The anchor is a strip index; the primary view needs the same column, which sits elsewhere there.
-      if (anchor in 0 until view.columnCount) {
-        val mainAnchor = primaryView.viewColumnOf(view.columnModel.getColumn(anchor).modelIndex)
-        if (mainAnchor >= 0) primaryView.columnModel.selectionModel.anchorSelectionIndex = mainAnchor
-      }
-    }
-    primaryView.changeSelection(row, mainColumn, false, extend)
-    primaryView.requestFocusInWindow()
-    return true
-  }
-
-  fun crossBackwardAtPinBoundary(view: TableResultView, extend: Boolean): Boolean {
-    val frozen = frozenView ?: return false
-    if (view !== primaryView || frozen.columnCount == 0 || leadColumn(view) != firstVisibleColumn(view)) return false
+    if (view !== frozen && view !== primaryView) return false
+    val lead = leadColumn(view)
+    if (lead !in 0 until view.columnCount) return false
+    val order = displayedColumnOrder(frozen)
+    val current = if (view === primaryView) lead else order.primaryIndexOfFrozen(lead) ?: return false
+    val target = order.adjacent(current, forward) ?: return false
     val row = leadRow(view)
     if (row < 0) return false
-    frozen.changeSelection(row, frozen.columnCount - 1, false, extend)
-    frozen.requestFocusInWindow()
+    val focusTarget = if (isPinnedPlaceholder(primaryView.columnModel, target)) frozen else primaryView
+    return (extend || focusTarget !== view) && changeColumnSelection(order, row, target, extend, focusTarget)
+  }
+
+  /** Handles moves to the first or last displayed column, including their selection-extending variants. */
+  fun handleColumnEdgeMove(view: TableResultView, first: Boolean, extend: Boolean): Boolean {
+    val frozen = frozenView ?: return false
+    if (view !== frozen && view !== primaryView) return false
+    val order = displayedColumnOrder(frozen)
+    val target = order.edge(first) ?: return false
+    val row = leadRow(view)
+    if (row < 0) return false
+    val focusTarget = if (isPinnedPlaceholder(primaryView.columnModel, target)) frozen else primaryView
+    return changeColumnSelection(order, row, target, extend, focusTarget)
+  }
+
+  /** Applies a Shift+click cell range in displayed order, even when its anchor is in the other table. */
+  fun handleCellRangeSelection(view: TableResultView, row: Int, column: Int, add: Boolean): Boolean {
+    val frozen = frozenView ?: return false
+    if ((view !== frozen && view !== primaryView) || row !in 0 until view.rowCount) return false
+    val order = displayedColumnOrder(frozen)
+    val target = mainColumnOfView(order, view, column)
+    if (target < 0) return false
+
+    val rows = primaryView.selectionModel
+    val rowAnchor = rows.anchorSelectionIndex.takeIf { it in 0 until primaryView.rowCount } ?: row
+    if (add) rows.addSelectionInterval(rowAnchor, row)
+    else rows.setSelectionInterval(rowAnchor, row)
+    return selectDisplayedColumnRange(order, target, add)
+  }
+
+  /** Applies a whole-column Shift range from the unified anchor to a column in either table. */
+  fun selectDisplayedColumnRange(view: TableResultView, column: Int, add: Boolean): Boolean {
+    val frozen = frozenView ?: return false
+    if (view !== frozen && view !== primaryView) return false
+    val order = displayedColumnOrder(frozen)
+    val target = mainColumnOfView(order, view, column)
+    return target >= 0 && selectDisplayedColumnRange(order, target, add)
+  }
+
+  private fun changeColumnSelection(order: DisplayedColumnOrder,
+                                    row: Int,
+                                    target: Int,
+                                    extend: Boolean,
+                                    focusTarget: TableResultView): Boolean {
+    if (extend) {
+      if (!selectDisplayedColumnRange(order, target, false)) return false
+      if (focusTarget === primaryView) primaryView.scrollRectToVisible(primaryView.getCellRect(row, target, true))
+    }
+    else if (focusTarget === primaryView) primaryView.changeSelection(row, target, false, false)
+    else runWithAutoscrollLocked {
+      // The selected placeholder is already represented in the fixed strip, so it must not move the main viewport.
+      primaryView.changeSelection(row, target, false, false)
+    }
+    focusTarget.requestFocusInWindow()
     return true
   }
 
-  private fun firstVisibleColumn(view: TableResultView): Int {
-    for (index in 0 until view.columnModel.columnCount) {
-      val column = view.columnModel.getColumn(index)
-      if (column !is TableResultViewColumn || !column.isFrozenHidden) return index
+  /** Applies a Shift range in screen order: the frozen strip followed by the visible columns in the main table. */
+  private fun selectDisplayedColumnRange(order: DisplayedColumnOrder,
+                                         target: Int,
+                                         add: Boolean,
+                                         anchorOverride: Int? = null): Boolean {
+    val frozen = frozenView ?: return false
+    val selection = primaryView.columnModel.selectionModel
+    val anchor = (anchorOverride ?: selection.anchorSelectionIndex).takeIf(order::contains) ?: target
+    val range = order.range(anchor, target) ?: return false
+
+    mirroringSelection = true
+    try {
+      // A drag keeps the selection adjusting until the mouse is released, so restore what the caller had rather than
+      // announcing a settled selection mid-gesture, which scrolls the main view to the column under the pointer.
+      val wasAdjusting = selection.valueIsAdjusting
+      selection.valueIsAdjusting = true
+      try {
+        if (!add) selection.clearSelection()
+        for (column in range) {
+          selection.addSelectionInterval(column, column)
+        }
+        selection.addSelectionInterval(target, target)
+        selection.anchorSelectionIndex = anchor
+      }
+      finally {
+        selection.valueIsAdjusting = wasAdjusting
+      }
     }
-    return -1
+    finally {
+      mirroringSelection = false
+    }
+    mirrorColumnSelection(selection, frozen.columnModel.selectionModel, false)
+    return true
   }
+
+  private fun mainColumnOfView(order: DisplayedColumnOrder, view: TableResultView, viewColumn: Int): Int {
+    if (viewColumn !in 0 until view.columnCount) return -1
+    val frozen = frozenView ?: return -1
+    return if (view === primaryView) viewColumn
+    else if (view === frozen) order.primaryIndexOfFrozen(viewColumn) ?: -1
+    else -1
+  }
+
+  private fun displayedColumnOrder(frozen: TableResultView): DisplayedColumnOrder = DisplayedColumnOrder(
+    primaryModelOrder = (0 until primaryView.columnCount).map { primaryView.columnModel.getColumn(it).modelIndex },
+    frozenModelOrder = (0 until frozen.columnCount).map { frozen.columnModel.getColumn(it).modelIndex },
+  )
 
   private fun leadColumn(view: TableResultView): Int = view.columnModel.selectionModel.leadSelectionIndex
 
   private fun leadRow(view: TableResultView): Int = view.selectionModel.leadSelectionIndex
+
+  /** [JBAutoScroller.AutoscrollLocker] is not reentrant: an inner lock would otherwise release its outer caller. */
+  private fun runWithAutoscrollLocked(action: () -> Unit) {
+    val locker = resultPanel.autoscrollLocker
+    if (locker.locked()) action()
+    else locker.runWithLock { action() }
+  }
 
   fun columnMarginChanged(view: TableResultView) {
     if (view !== frozenView) return
