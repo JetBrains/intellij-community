@@ -133,7 +133,6 @@ internal class EditorCompositeModelManager(
     // and such editors are not yet registered in the composite, so EditorComposite.dispose cannot release them.
     // The sink collects both what the providers return and what they create internally before suspending again.
     val createdEditors = CreatedFileEditorSink()
-    var handedOverToComposite = false
     try {
       val editorsWithProviders = coroutineScope {
         providers.map { provider ->
@@ -176,19 +175,22 @@ internal class EditorCompositeModelManager(
       }.mapNotNull { it.getCompleted() }
 
       postProcessFileEditorWithProviderList(editorsWithProviders)
-      handedOverToComposite = true
-      flowCollector.emit(EditorCompositeModel(fileEditorAndProviderList = editorsWithProviders, state = state))
+      flowCollector.emit(EditorCompositeModel(
+        fileEditorAndProviderList = editorsWithProviders,
+        state = state,
+        createdEditors = createdEditors,
+      ))
+      // The collector is not necessarily the composite: the startup path shares this flow, so `emit` can merely put the model into a
+      // replay cache and return, leaving the editors with no owner. Stay around until a composite actually adopts them, so that a
+      // scope cancelled in between (the tab is closed before it is ever shown) still runs the cleanup below.
+      createdEditors.awaitClaimed()
     }
     catch (e: Throwable) {
-      // On cancellation, dispose unconditionally - this scope is cancelled only when the composite itself is going away,
-      // so even editors the composite has already adopted (EditorComposite.handleModel keeps suspending after setFileEditors)
-      // must be released; both dispose sites skip an already-disposed editor.
-      // A non-cancellation failure raised by the collector is different: the composite may have adopted the editors and keeps
-      // using them, so only the failures before the hand-off are cleaned up here.
-      if (e is CancellationException || !handedOverToComposite) {
-        for (editor in createdEditors.toList()) {
-          disposeAbandonedFileEditor(editor)
-        }
+      // Whatever is still in the sink has no owner: a composite that adopted the editors has claimed and thereby emptied it, so this
+      // releases exactly the abandoned ones and never an editor a live composite is using. Catching Throwable and not only
+      // cancellation matters because postProcess and the collector both run plugin code that can throw.
+      for (editor in createdEditors.toList()) {
+        disposeAbandonedFileEditor(editor)
       }
       throw e
     }

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor
 
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.currentCoroutineContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -23,12 +24,32 @@ class CreatedFileEditorSink : AbstractCoroutineContextElement(Key) {
   companion object Key : CoroutineContext.Key<CreatedFileEditorSink>
 
   private val editors = ConcurrentLinkedQueue<FileEditor>()
+  private val claimed = CompletableDeferred<Unit>()
 
   /**
    * Takes responsibility for [editor] until the composite adopts it. Registering the same editor more than once is harmless.
    */
   fun register(editor: FileEditor) {
     editors.add(editor)
+  }
+
+  /**
+   * Signals that the composite has taken over the editors and is now the one that releases them.
+   */
+  @ApiStatus.Internal
+  fun claim() {
+    editors.clear()
+    claimed.complete(Unit)
+  }
+
+  /**
+   * Suspends until [claim] is called. The collector of the model flow is not necessarily the composite - the startup path shares
+   * the flow, so the model can sit in a replay cache with no owner - and until someone claims the editors, this sink is still the
+   * only thing that can release them.
+   */
+  @ApiStatus.Internal
+  suspend fun awaitClaimed() {
+    claimed.await()
   }
 
   @ApiStatus.Internal
