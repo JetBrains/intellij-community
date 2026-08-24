@@ -1,1 +1,8 @@
-<idea-plugin visibility="private"/>
+<idea-plugin visibility="private">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.kotlinc.kotlin.script.runtime"/>
+    <module name="intellij.libraries.kotlinc.kotlin.scripting.common"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

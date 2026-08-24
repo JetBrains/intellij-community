@@ -15,7 +15,12 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlinc-kotlin-scripting-compiler-impl-kotlinc-kotlin-scripting-compiler-impl"],
-    runtime_deps = ["@lib//:libraries-kotlinc-kotlin-scripting-compiler-impl-kotlinc-kotlin-scripting-compiler-impl"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-kotlinc-kotlin-scripting-compiler-impl-kotlinc-kotlin-scripting-compiler-impl",
+        "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common",
+        "//libraries/kotlinc/kotlin-scripting-jvm:libraries-kotlinc-kotlin-scripting-jvm",
+    ],
 )
 
 content_module_jar(
@@ -34,7 +39,12 @@ jvm_library(
     module_name = "intellij.libraries.kotlinc.kotlin.scripting.compiler.impl",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlinc-kotlin-scripting-compiler-impl-kotlinc-kotlin-scripting-compiler-impl"],
-    runtime_deps = [":libraries-kotlinc-kotlin-scripting-compiler-impl"],
+    runtime_deps = [
+        # do not sort,
+        ":libraries-kotlinc-kotlin-scripting-compiler-impl",
+        "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common_test_lib",
+        "//libraries/kotlinc/kotlin-scripting-jvm:libraries-kotlinc-kotlin-scripting-jvm_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.kotlinc.kotlin.scripting.compiler.impl` end
 

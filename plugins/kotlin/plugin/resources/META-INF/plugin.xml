@@ -205,8 +205,6 @@
     <module name="intellij.libraries.kotlinc.kotlin.compiler.fir" loading="embedded"/>
     <module name="intellij.libraries.kotlinc.kotlin.scripting.dependencies" loading="embedded"/>
     <module name="intellij.libraries.kotlinc.kotlin.jps.common" loading="embedded"/>
-    <module name="intellij.libraries.kotlinc.kotlin.scripting.common" loading="embedded"/>
-    <module name="intellij.libraries.kotlinc.kotlin.scripting.compiler.impl" loading="embedded"/>
 
     <!-- ultimate part -->
     <module name="intellij.kotlin.ultimate.common.native" loading="optional"/>
@@ -226,9 +224,10 @@
     <module name="intellij.libraries.completion.ranking.kotlin" loading="required"/>
     <!-- kotlin.jsr223 is included in kotlin plugin as well. To avoid conflicts, it's private and is not included in the common namespace -->
     <module name="intellij.kotlin.jsr223" loading="embedded"/>
-    <!-- several plugins include this wrapper. To avoid conflicts, it's private and is not included in the common namespace -->
-    <module name="intellij.libraries.kotlinc.kotlin.script.runtime" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.kotlin.scripting.compiler.impl" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.kotlin.scripting.common" loading="embedded"/>
     <module name="intellij.libraries.kotlinc.kotlin.scripting.jvm" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.kotlin.script.runtime" loading="embedded"/>
   </content>
   <!-- IJ/AS-INCOMPATIBLE-PLACEHOLDER -->
 </idea-plugin>

@@ -12,6 +12,7 @@
     <module name="intellij.kotlin.jsr223" loading="embedded"/>
     <!-- several plugins include this wrapper. To avoid conflicts, it's private and is not included in the common namespace -->
     <module name="intellij.libraries.kotlinc.kotlin.script.runtime" loading="embedded"/>
+    <module name="intellij.libraries.kotlinc.kotlin.scripting.common" loading="embedded"/>
     <module name="intellij.libraries.kotlinc.kotlin.scripting.jvm" loading="embedded"/>
   </content>
 </idea-plugin>

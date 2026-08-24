@@ -68,6 +68,7 @@ dev_dist_plugin(
     content_modules = [
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/kotlin-script-runtime:libraries-kotlinc-kotlin-script-runtime",
+        "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common",
         "//libraries/kotlinc/kotlin-scripting-jvm:libraries-kotlinc-kotlin-scripting-jvm",
     ],
     descriptor_module = ":jsr223-plugin",
@@ -75,6 +76,7 @@ dev_dist_plugin(
         "@lib//:kotlinc-kotlin-compiler-fe10",
         "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common",
         "@lib//:libraries-kotlinc-kotlin-script-runtime-kotlinc-kotlin-script-runtime",
+        "@lib//:libraries-kotlinc-kotlin-scripting-common-kotlinc-kotlin-scripting-common",
         "@lib//:libraries-kotlinc-kotlin-scripting-jvm-kotlinc-kotlin-scripting-jvm",
     ],
     prepacked_jars = {
