@@ -26,7 +26,6 @@ import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,23 +48,6 @@ public class SplitButtonAction extends ActionGroupWrapper implements CustomCompo
   public SplitButtonAction(@NotNull ActionGroup actionGroup) {
     super(actionGroup);
     setPopup(true);
-  }
-
-  /**
-   * The half of {@code component} a press runs the main action from, or {@code null} when it is not a split button.
-   * <p>
-   * Prefer asking the component for {@link SplitButtonZones#splitButtonZone} directly, which every split-button
-   * family answers; these two exist only until their last caller is migrated.
-   */
-  @ApiStatus.Internal
-  public static @Nullable Rectangle getActionZone(@NotNull Component component) {
-    return component instanceof SplitButton splitButton ? splitButton.splitButtonZone(SplitButtonHalf.ACTION) : null;
-  }
-
-  /** The chevron half of {@code component}, which opens the popup. See {@link #getActionZone}. */
-  @ApiStatus.Internal
-  public static @Nullable Rectangle getPopupZone(@NotNull Component component) {
-    return component instanceof SplitButton splitButton ? splitButton.splitButtonZone(SplitButtonHalf.EXPAND) : null;
   }
 
   public @NotNull ActionGroup getActionGroup() {
