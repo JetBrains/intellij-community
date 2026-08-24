@@ -39,6 +39,12 @@ internal class IjPluginBuildSettingsTest {
       expectedSinceBuild = "263.12345.67",
       expectedUntilBuild = "263.12345.67",
     )
+    assertPluginDescriptor(
+      configuration = "restricted.range.in.release",
+      expectedVersion = "263.12345.67",
+      expectedSinceBuild = "263.12345.67",
+      expectedUntilBuild = "263.12345.67",
+    )
   }
 
   private fun assertPluginDescriptor(

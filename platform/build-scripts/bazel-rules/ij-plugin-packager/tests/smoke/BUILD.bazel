@@ -35,6 +35,16 @@ ij_plugin(
     ],
 )
 
+ij_plugin(
+    name = "smoke-plugin-with-restricted-compatibility-range",
+    descriptor_module = ":descriptor-module",
+    content_modules = [
+        ":embedded-content-module",
+        ":optional-content-module",
+    ],
+    until_build = "$since_build",
+)
+
 ij_plugin_settings_test_target(
     name = "smoke-plugin-default-settings",
     plugin = ":smoke-plugin",
@@ -61,6 +71,13 @@ ij_plugin_settings_test_target(
     ide_build_number = "263.12345.67",
     ide_stability_level = "EAP",
     plugin = ":smoke-plugin",
+)
+
+ij_plugin_settings_test_target(
+    name = "smoke-plugin-with-restricted-compatibility-range-in-release",
+    ide_build_number = "263.12345.67",
+    ide_stability_level = "release",
+    plugin = ":smoke-plugin-with-restricted-compatibility-range",
 )
 
 build_test(

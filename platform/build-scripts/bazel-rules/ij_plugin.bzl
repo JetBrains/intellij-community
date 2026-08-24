@@ -22,8 +22,9 @@ def _ij_plugin_impl(ctx):
     force_exact_build_compatibility = ctx.attr._force_exact_build_compatibility[BuildSettingInfo].value
 
     plugin_version = _computePluginVersion(explicit_plugin_version, ide_build_number)
-    since_build = _computeSinceBuild(ctx.attr.since_build, ide_build_number, ide_stability_level)
-    until_build = _computeUntilBuild(ctx.attr.until_build, since_build, ide_build_number, ide_stability_level, force_exact_build_compatibility)
+    use_exact_build_compatibility = force_exact_build_compatibility or ctx.attr.until_build == "$since_build"
+    since_build = _computeSinceBuild(ctx.attr.since_build, ide_build_number, ide_stability_level, use_exact_build_compatibility)
+    until_build = _computeUntilBuild(ctx.attr.until_build, since_build, ide_build_number, ide_stability_level, use_exact_build_compatibility)
 
     plugin_descriptor_jar = plugin_descriptor_module_info.all_output_jars[0]
     inputs = [plugin_descriptor_jar]
@@ -99,23 +100,21 @@ def _computePluginVersion(explicit_plugin_version, ide_build_number):
         return ide_build_number
     return _build_number_from_file
 
-def _computeSinceBuild(since_build, ide_build_number, ide_stability_level):
+def _computeSinceBuild(since_build, ide_build_number, ide_stability_level, use_exact_build_compatibility):
     if since_build != "$auto":
         return since_build
     if not ide_build_number:
         return _build_number_from_file
     components = ide_build_number.split(".")
-    if ide_stability_level != "release" or len(components) <= 2:
+    if use_exact_build_compatibility or ide_stability_level != "release" or len(components) <= 2:
         return ide_build_number
     return ".".join(components[:-1])
 
-def _computeUntilBuild(until_build, since_build, ide_build_number, ide_stability_level, force_exact_build_compatibility):
-    if until_build == "$since_build":
+def _computeUntilBuild(until_build, since_build, ide_build_number, ide_stability_level, use_exact_build_compatibility):
+    if use_exact_build_compatibility:
         return since_build
     if until_build != "$auto":
         return until_build
-    if force_exact_build_compatibility:
-        return since_build
     if not ide_build_number:
         return _build_number_from_file
     components = ide_build_number.split(".")
@@ -184,10 +183,12 @@ The minimum IDE build number compatible with the plugin.
 
 The value is used as the `since-build` attribute in the `idea-version` tag in `plugin.xml`.
 
-The default value, `$auto`, is computed from the target IDE's build number and stability level, as specified by the `ide_build_number` and `ide_stability_level` settings:
+The default value, `$auto`, is computed from the target IDE's build number and stability level, as specified by the `ide_build_number` and `ide_stability_level` settings,
+and also depends on the value of `ij_plugin_force_exact_build_compatibility` setting and `until_build` attribute:
 
-- For `release` builds, the value is the build number without its third component. This makes the plugin compatible with other builds from the release branch.
-- For other builds, the value is the exact build number.
+- For `release` builds the value is the build number without its third component, if the compatibility range isn't limited to the single IDE build
+  via `ij_plugin_force_exact_build_compatibility` setting or `until_build` attribute. This makes the plugin compatible with other builds from the release branch.
+- In other cases, the value is the exact build number.
 """,
             default = "$auto",
         ),
