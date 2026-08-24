@@ -80,7 +80,7 @@ object IjPluginPackager {
         }
         "--build_number_file" -> {
           require(buildNumberFile == null) { "--build_number_file must be specified only once" }
-          buildNumberFile = Path.of(args[index + 1])
+          buildNumberFile = baseDir.resolve(args[index + 1])
         }
         else -> error("Unknown option: ${args[index]}")
       }
