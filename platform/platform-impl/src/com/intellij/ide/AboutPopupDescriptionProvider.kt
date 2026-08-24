@@ -1,10 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.openapi.util.NlsContexts.DetailedDescription
 
 /**
- * Allows plugins to add additional details to display in *Help | About* popup.
+ * Allows plugins to add additional details to display in the * Help | About* popup.
  *
  * Register in `com.intellij.aboutPopupDescriptionProvider` extension point.
  */
@@ -23,5 +23,5 @@ interface AboutPopupDescriptionProvider {
    * Return additional info which should be only added to the text copied with the action in the "About" dialog. Defaults to the value
    * returned by [getDescription]. Should be plain text, since it's not going to be shown in the UI but only copied to the clipboard.
    */
-  fun getExtendedDescription(): @DetailedDescription String? = getDescription()
+  fun getExtendedDescription(): String? = getDescription()
 }

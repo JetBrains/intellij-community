@@ -194,8 +194,7 @@ object ExceptionAutoReportUtil {
 
 internal class ReporterIdForEAAutoReporters : AboutPopupDescriptionProvider {
   override fun getDescription(): @NlsContexts.DetailedDescription String? = null
-  override fun getExtendedDescription(): @NlsContexts.DetailedDescription String =
-    DiagnosticBundle.message("about.dialog.text.ea.reporting.id", ITNProxy.DEVICE_ID)
+  override fun getExtendedDescription(): String = DiagnosticBundle.message("about.dialog.text.ea.reporting.id", ITNProxy.DEVICE_ID)
 }
 
 internal class ReporterIdLoggerActivity : ProjectActivity {

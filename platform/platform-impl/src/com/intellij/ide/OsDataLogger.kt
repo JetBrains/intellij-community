@@ -7,6 +7,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsContexts.DetailedDescription
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.intellij.util.ui.UnixDesktopEnv
 import kotlinx.coroutines.CoroutineScope
@@ -15,6 +16,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Service(Service.Level.APP)
+@OptIn(LowLevelLocalMachineAccess::class)
 private class OsDataLogger(val coroutineScope: CoroutineScope) {
   @Volatile
   var osInfoAboutString: String? = null
@@ -26,7 +28,8 @@ private class OsDataLogger(val coroutineScope: CoroutineScope) {
       var info = ""
       if (osInfo.prettyName != null) {
         info += osInfo.prettyName
-      } else {
+      }
+      else {
         info += osInfo.distro ?: "Unknown Distro"
         if (osInfo.release != null) {
           info += " " + osInfo.release
@@ -62,7 +65,5 @@ private class OsDataLoggerApplicationInitializedListener : AppLifecycleListener 
 
 internal class OsDataLoggerAboutPopupDescriptionProvider : AboutPopupDescriptionProvider {
   override fun getDescription(): @DetailedDescription String? = null
-
-  override fun getExtendedDescription(): @DetailedDescription String? =
-    if (OS.isGenericUnix()) service<OsDataLogger>().osInfoAboutString else null
+  override fun getExtendedDescription(): String? = if (OS.isGenericUnix()) service<OsDataLogger>().osInfoAboutString else null
 }
