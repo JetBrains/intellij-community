@@ -84,7 +84,7 @@ internal class ConvertTypeOfToCollectionLiteralInspection :
         if (functionSymbol.name.asString() != "of" || !functionSymbol.isOperator) return null
         val expressionType = element.expressionType ?: return null
         val parent = element.getTopmostParenthesizedExpressionOrSelf().parent
-        if (parent is KtValueArgument && !isCollectionLiteralSafeAsArgument(callExpr, expressionType)) return null
+        if (parent is KtValueArgument && !isCollectionLiteralSafeAsArgument(element, expressionType)) return null
         if (isTypeChanged(parent, expressionType)) return null
         val typeText = expressionType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, Variance.OUT_VARIANCE)
 
