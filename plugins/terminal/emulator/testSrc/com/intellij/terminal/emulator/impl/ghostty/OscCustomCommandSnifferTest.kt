@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
+import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CancellationException
 
@@ -63,7 +64,7 @@ internal class OscCustomCommandSnifferTest {
       received.add(command)
     }
 
-    sniffer.feed((osc("1341;fails") + osc("1341;after")).toByteArray(StandardCharsets.UTF_8))
+    sniffer.feed((osc("1341;fails") + osc("1341;after")).toByteArray(StandardCharsets.UTF_8), IGNORE_WRITES)
 
     assertThat(received).containsExactly(listOf("after"))
   }
@@ -73,7 +74,7 @@ internal class OscCustomCommandSnifferTest {
     val sniffer = OscCustomCommandSniffer { throw CancellationException("expected") }
 
     assertThrows<CancellationException> {
-      sniffer.feed(osc("1341;command").toByteArray(StandardCharsets.UTF_8))
+      sniffer.feed(osc("1341;command").toByteArray(StandardCharsets.UTF_8), IGNORE_WRITES)
     }
   }
 
@@ -230,6 +231,105 @@ internal class OscCustomCommandSnifferTest {
     assertThat(sniff(osc("52;c;$huge"), osc("1341;a"))).containsExactly(listOf("a"))
   }
 
+  // ---- relaying the stream: the emulator gets everything up to the terminator before the listener runs ----
+
+  @ParameterizedTest
+  @EnumSource(OscTerminator::class)
+  fun theCommandAndWhatPrecedesItAreWrittenBeforeTheListenerRuns(terminator: OscTerminator) {
+    val command = osc("1341;a", terminator)
+    assertThat(traceSniffer("before" + command + "after")).containsExactly(
+      SniffEvent.Written("before$command"),
+      SniffEvent.Command(listOf("a")),
+      SniffEvent.Written("after"),
+    )
+  }
+
+  /** Each command splits the write at its own terminator, so the slices stay in stream order. */
+  @Test
+  fun severalCommandsSplitTheWriteAtEachTerminator() {
+    val first = osc("1341;one")
+    val second = osc("1341;two", OscTerminator.ST)
+    assertThat(traceSniffer("head$first" + "middle$second" + "tail")).containsExactly(
+      SniffEvent.Written("head$first"),
+      SniffEvent.Command(listOf("one")),
+      SniffEvent.Written("middle$second"),
+      SniffEvent.Command(listOf("two")),
+      SniffEvent.Written("tail"),
+    )
+  }
+
+  /** Nothing follows the terminator, so there is no trailing slice to write. */
+  @Test
+  fun aCommandEndingTheChunkIsTheLastEvent() {
+    val command = osc("1341;a")
+    assertThat(traceSniffer("before$command")).containsExactly(
+      SniffEvent.Written("before$command"),
+      SniffEvent.Command(listOf("a")),
+    )
+  }
+
+  /** A command split across feeds is delivered once its final chunk — the one holding the terminator — is written. */
+  @Test
+  fun aCommandSplitAcrossFeedsIsDeliveredAfterItsLastChunk() {
+    val recorder = SnifferRecorder()
+    recorder.feed("before$ESC_STR]1341;a")
+    recorder.feed("$BELL_CHAR" + "after")
+
+    assertThat(recorder.events).containsExactly(
+      SniffEvent.Written("before$ESC_STR]1341;a"),
+      SniffEvent.Written("$BELL_CHAR"),
+      SniffEvent.Command(listOf("a")),
+      SniffEvent.Written("after"),
+    )
+  }
+
+  /** Without a command there is nothing to split at, so the chunk reaches the emulator in one piece. */
+  @Test
+  fun aStreamWithoutCommandsIsWrittenAsOneSlice() {
+    val stream = "text" + osc("52;c;SGVsbG8=") + csi("31m") + "$ESC_STR]1341;never terminated"
+    assertThat(traceSniffer(stream)).containsExactly(SniffEvent.Written(stream))
+  }
+
+  /** An oversized payload yields no command, so it also causes no split. */
+  @Test
+  fun anOversizedPayloadIsWrittenAsOneSlice() {
+    val stream = osc("1341;" + "a".repeat(OscCustomCommandSniffer.MAX_BUFFER_BYTES + 1))
+    assertThat(traceSniffer(stream)).containsExactly(SniffEvent.Written(stream))
+  }
+
+  @Test
+  fun anEmptyFeedStillReachesTheEmulator() {
+    assertThat(traceSniffer("")).containsExactly(SniffEvent.Written(""))
+  }
+
+  @Test
+  fun aThrowingListenerDoesNotStopTheRelay() {
+    val recorder = SnifferRecorder { throw IllegalStateException("expected") }
+    val command = osc("1341;a")
+
+    recorder.feed("before$command" + "after")
+
+    assertThat(recorder.events).containsExactly(
+      SniffEvent.Written("before$command"),
+      SniffEvent.Command(listOf("a")),
+      SniffEvent.Written("after"),
+    )
+  }
+
+  /** Cancellation propagates out of [OscCustomCommandSniffer.feed], so the bytes after the command are never relayed. */
+  @Test
+  fun listenerCancellationLeavesTheRestOfTheChunkUnwritten() {
+    val recorder = SnifferRecorder { throw CancellationException("expected") }
+    val command = osc("1341;a")
+
+    assertThrows<CancellationException> { recorder.feed("before$command" + "after") }
+
+    assertThat(recorder.events).containsExactly(
+      SniffEvent.Written("before$command"),
+      SniffEvent.Command(listOf("a")),
+    )
+  }
+
   // ---- end to end, through TerminalEmulator.write ----
 
   @Test
@@ -256,17 +356,74 @@ internal class OscCustomCommandSnifferTest {
 
     assertThat(received).containsExactly(listOf("split", "here"))
   }
+
+  @Test
+  fun theListenerSeesTheScreenAsOfItsCommandsPosition() = session(20, 3) { session ->
+    val screenWhenNotified = ArrayList<String>()
+    session.customCommandListener = TerminalCustomCommandListener {
+      screenWhenNotified.add(session.screenLine(0).toStyledText().text)
+    }
+
+    session.write("a" + osc("1341;one") + "bb" + osc("1341;two") + "ccc")
+
+    assertThat(screenWhenNotified).containsExactly("a", "abb")
+    session.assertScreenLines("abbccc")
+  }
 }
 
-/** Encodes each string separately; use [sniffBytes] for boundaries inside UTF-8 characters. */
+/** The commands sniffed out of [chunks]; encodes each string separately, so a chunk boundary never splits a character. */
 private fun sniff(vararg chunks: String): List<List<String>> {
   return sniffBytes(*Array(chunks.size) { chunks[it].toByteArray(StandardCharsets.UTF_8) })
 }
 
 /** [sniff] over raw bytes, so a chunk boundary may fall anywhere — including inside a character. */
 private fun sniffBytes(vararg chunks: ByteArray): List<List<String>> {
-  val received = ArrayList<List<String>>()
-  val sniffer = OscCustomCommandSniffer { received.add(it) }
-  for (chunk in chunks) sniffer.feed(chunk)
-  return received
+  val recorder = SnifferRecorder()
+  for (chunk in chunks) recorder.feed(chunk)
+  // The other half of feed()'s contract, and it holds whatever the stream contains: the emulator is
+  // handed every fed byte exactly once, in order.
+  assertThat(recorder.relayedBytes())
+    .describedAs("bytes relayed to the emulator")
+    .isEqualTo(chunks.fold(ByteArray(0)) { all, chunk -> all + chunk })
+  return recorder.commands()
 }
+
+/** The [SniffEvent]s of a single-chunk [SnifferRecorder.feed]. */
+private fun traceSniffer(chunk: String): List<SniffEvent> = SnifferRecorder().apply { feed(chunk) }.events
+
+/** What one [OscCustomCommandSniffer] handed over, in the order it happened. */
+private sealed interface SniffEvent {
+  /** One slice of the fed data relayed to the emulator, decoded as UTF-8. */
+  data class Written(val text: String) : SniffEvent
+
+  /** One command delivered to the listener. */
+  data class Command(val arguments: List<String>) : SniffEvent
+}
+
+/** Records the [SniffEvent]s of one sniffer across any number of [feed] calls. [onCommand] runs inside the listener. */
+private class SnifferRecorder(onCommand: (List<String>) -> Unit = {}) {
+  val events: MutableList<SniffEvent> = ArrayList()
+
+  private val relayed = ByteArrayOutputStream()
+  private val sniffer = OscCustomCommandSniffer { command ->
+    events.add(SniffEvent.Command(command))
+    onCommand(command)
+  }
+
+  fun feed(chunk: String) = feed(chunk.toByteArray(StandardCharsets.UTF_8))
+
+  fun feed(chunk: ByteArray) {
+    sniffer.feed(chunk) { offset, length ->
+      events.add(SniffEvent.Written(String(chunk, offset, length, StandardCharsets.UTF_8)))
+      relayed.write(chunk, offset, length)
+    }
+  }
+
+  fun commands(): List<List<String>> = events.filterIsInstance<SniffEvent.Command>().map { it.arguments }
+
+  /** Every relayed byte concatenated, so a character split across slices still decodes. */
+  fun relayedBytes(): ByteArray = relayed.toByteArray()
+}
+
+/** For the tests that only care about the commands; [SnifferRecorder] covers the relayed bytes. */
+private val IGNORE_WRITES: (Int, Int) -> Unit = { _, _ -> }

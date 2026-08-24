@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.terminal.emulator.TerminalCustomCommandListener
+import com.intellij.terminal.emulator.impl.ghostty.OscCustomCommandSniffer.Companion.PREFIX
 import com.intellij.util.io.UnsyncByteArrayOutputStream
 import java.nio.charset.StandardCharsets
 
@@ -14,6 +15,9 @@ import java.nio.charset.StandardCharsets
  * Ghostty treats OSC 1341 as unknown and drops it, so this class scans the PTY byte
  * stream for `ESC ] 1341 ; arg1 ; ... ; argN <terminator>`.
  * Complete sequences are handed to [commandListener].
+ *
+ * [feed] also relays the stream to the emulator, splitting it at each command's terminator, so a listener
+ * runs with everything that preceded its command already applied and nothing that follows it.
  *
  * Matching state persists across [feed] calls, so a sequence may be split arbitrarily across chunks.
  * Listener exceptions are logged and ignored; cancellation and control-flow exceptions propagate.
@@ -29,28 +33,49 @@ internal class OscCustomCommandSniffer(private val commandListener: TerminalCust
 
   private var previousByteEscape: Boolean = false
 
-  fun feed(data: ByteArray) {
-    for (b in data) {
-      if (previousByteEscape) {
-        if (b == BACKSLASH) {
-          finishAndReset()
-        }
-        reset()
-        matchedPrefixCount = 1 // matched ESC
-      }
-      if (matchedPrefixCount > 0) {
-        if (b == BEL) {
-          finishAndReset()
-        }
-        else {
-          processByte(b)
-        }
-      }
-      previousByteEscape = b == ESC
+  /**
+   * Scans [data] for commands and hands it to [writeToEmulator] as slices (`offset` and `length` into [data]).
+   *
+   * A command's terminator ends a slice: it and everything before it is written, then [commandListener] is
+   * notified, then the rest of [data] follows. Every byte is relayed exactly once and in order.
+   * [writeToEmulator] is called at least once, so an empty [data] still reaches the emulator.
+   */
+  fun feed(data: ByteArray, writeToEmulator: (offset: Int, length: Int) -> Unit) {
+    var relayed = 0
+    for (i in data.indices) {
+      val command = feedByte(data[i]) ?: continue
+      writeToEmulator(relayed, i + 1 - relayed)
+      relayed = i + 1
+      notifyListener(command)
+    }
+    if (relayed < data.size || data.isEmpty()) {
+      writeToEmulator(relayed, data.size - relayed)
     }
   }
 
-  private fun processByte(b: Byte) {
+  /** Advances the match by [b], returning the command that [b] terminates, if any. */
+  private fun feedByte(b: Byte): List<String>? {
+    var command: List<String>? = null
+    if (previousByteEscape) {
+      if (b == BACKSLASH) {
+        command = takeCommand()
+      }
+      reset()
+      matchedPrefixCount = 1 // matched ESC
+    }
+    if (matchedPrefixCount > 0) {
+      if (b == BEL) {
+        command = takeCommand()
+      }
+      else {
+        matchPrefixOrCollect(b)
+      }
+    }
+    previousByteEscape = b == ESC
+    return command
+  }
+
+  private fun matchPrefixOrCollect(b: Byte) {
     if (isPrefixMatched()) {
       appendBuffer(b)
     }
@@ -80,27 +105,26 @@ internal class OscCustomCommandSniffer(private val commandListener: TerminalCust
     }
   }
 
-  private fun finishAndReset() {
-    if (isPrefixMatched()) {
-      val content = buffer?.toString().orEmpty() // toString() decodes as UTF-8
-      val command = content.split(';')
-      reset()
-      try {
-        commandListener.onCustomCommand(command)
-      }
-      catch (e: Exception) {
-        rethrowControlFlowException(e)
-        val message = "Custom terminal command listener failed"
-        if (ApplicationManager.getApplication()?.isUnitTestMode == false) {
-          LOG.error(message, e)
-        }
-        else {
-          LOG.info(message, e)
-        }
-      }
+  /** Resets the match, returning the collected command if a full [PREFIX] had been matched. */
+  private fun takeCommand(): List<String>? {
+    val content = if (isPrefixMatched()) buffer?.toString().orEmpty() else null // toString() decodes as UTF-8
+    reset()
+    return content?.split(';')
+  }
+
+  private fun notifyListener(command: List<String>) {
+    try {
+      commandListener.onCustomCommand(command)
     }
-    else {
-      reset()
+    catch (e: Exception) {
+      rethrowControlFlowException(e)
+      val message = "Custom terminal command listener failed"
+      if (ApplicationManager.getApplication()?.isUnitTestMode == false) {
+        LOG.error(message, e)
+      }
+      else {
+        LOG.info(message, e)
+      }
     }
   }
 

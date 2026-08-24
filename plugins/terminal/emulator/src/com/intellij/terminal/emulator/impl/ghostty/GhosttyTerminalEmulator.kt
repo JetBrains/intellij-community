@@ -3,6 +3,30 @@ package com.intellij.terminal.emulator.impl.ghostty
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.terminal.emulator.Cell
+import com.intellij.terminal.emulator.CellStyle
+import com.intellij.terminal.emulator.CellWidth
+import com.intellij.terminal.emulator.Cursor
+import com.intellij.terminal.emulator.CursorShape
+import com.intellij.terminal.emulator.HistoryMark
+import com.intellij.terminal.emulator.MouseEncoding
+import com.intellij.terminal.emulator.MouseProtocol
+import com.intellij.terminal.emulator.ScreenChange
+import com.intellij.terminal.emulator.TerminalColor
+import com.intellij.terminal.emulator.TerminalCustomCommandListener
+import com.intellij.terminal.emulator.TerminalEmulator
+import com.intellij.terminal.emulator.TerminalInputModifier
+import com.intellij.terminal.emulator.TerminalKeyAction
+import com.intellij.terminal.emulator.TerminalKeyEvent
+import com.intellij.terminal.emulator.TerminalListener
+import com.intellij.terminal.emulator.TerminalMouseAction
+import com.intellij.terminal.emulator.TerminalMouseButton
+import com.intellij.terminal.emulator.TerminalMouseEvent
+import com.intellij.terminal.emulator.TerminalProgress
+import com.intellij.terminal.emulator.TerminalProgressState
+import com.intellij.terminal.emulator.TerminalRow
+import com.intellij.terminal.emulator.TerminalSize
+import com.intellij.terminal.emulator.Underline
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyCellContentTag
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyCellData
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyCellWide
@@ -56,30 +80,6 @@ import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyTerminalData
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyTerminalOption
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyTerminalProgressState
 import com.intellij.terminal.emulator.impl.ghostty.bindings.LibGhosttyVt
-import com.intellij.terminal.emulator.Cell
-import com.intellij.terminal.emulator.CellStyle
-import com.intellij.terminal.emulator.CellWidth
-import com.intellij.terminal.emulator.Cursor
-import com.intellij.terminal.emulator.CursorShape
-import com.intellij.terminal.emulator.HistoryMark
-import com.intellij.terminal.emulator.MouseEncoding
-import com.intellij.terminal.emulator.MouseProtocol
-import com.intellij.terminal.emulator.ScreenChange
-import com.intellij.terminal.emulator.TerminalColor
-import com.intellij.terminal.emulator.TerminalCustomCommandListener
-import com.intellij.terminal.emulator.TerminalEmulator
-import com.intellij.terminal.emulator.TerminalInputModifier
-import com.intellij.terminal.emulator.TerminalKeyAction
-import com.intellij.terminal.emulator.TerminalKeyEvent
-import com.intellij.terminal.emulator.TerminalListener
-import com.intellij.terminal.emulator.TerminalMouseAction
-import com.intellij.terminal.emulator.TerminalMouseButton
-import com.intellij.terminal.emulator.TerminalMouseEvent
-import com.intellij.terminal.emulator.TerminalProgress
-import com.intellij.terminal.emulator.TerminalProgressState
-import com.intellij.terminal.emulator.TerminalRow
-import com.intellij.terminal.emulator.TerminalSize
-import com.intellij.terminal.emulator.Underline
 import java.lang.foreign.Arena
 import java.lang.foreign.MemorySegment
 import java.lang.invoke.MethodHandles
@@ -456,22 +456,32 @@ internal class GhosttyTerminalEmulator(
   override fun write(data: ByteArray) {
     ensureOpen()
     if (customCommandListener != null) {
-      customCommandSniffer.feed(data)
+      // The sniffer relays the data itself, splitting it at each custom command so that the listener runs
+      // with the preceding output already applied and the following output not yet.
+      customCommandSniffer.feed(data) { offset, length -> writeToVt(data, offset, length) }
     }
+    else {
+      writeToVt(data, 0, data.size)
+    }
+    paletteDirty = true // only a write (OSC 4 / 104 / RIS) may change palette
+  }
+
+  /** Feeds `data[offset, offset + length)` to the engine. */
+  private fun writeToVt(data: ByteArray, offset: Int, length: Int) {
     // Feed [scratchWrite]-sized chunks.
     // An empty write still reaches the engine.
-    var offset = 0
+    var written = 0
     do {
-      val chunk = minOf(data.size - offset, WRITE_BUFFER_BYTES.toInt())
-      MemorySegment.copy(data, offset, scratchWrite, C_BYTE, 0L, chunk)
+      val chunk = minOf(length - written, WRITE_BUFFER_BYTES.toInt())
+      MemorySegment.copy(data, offset + written, scratchWrite, C_BYTE, 0L, chunk)
       try {
         LibGhosttyVt.terminalVtWrite(terminal, scratchWrite, chunk.toLong())
       } catch (t: Throwable) {
         throw RuntimeException("ghostty_terminal_vt_write failed", t)
       }
-      offset += chunk
-    } while (offset < data.size)
-    paletteDirty = true // only a write (OSC 4 / 104 / RIS) may change palette
+      written += chunk
+    }
+    while (written < length)
   }
 
   override fun resize(size: TerminalSize) {
