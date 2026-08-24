@@ -29,9 +29,6 @@ import java.util.List;
 @State(name = "TodoConfiguration", storages = @Storage("editor.xml"), category = SettingsCategory.CODE)
 public class TodoConfiguration implements PersistentStateComponent<Element> {
 
-  @Topic.ProjectLevel
-  public static final Topic<PropertyChangeListener> PROPERTY_CHANGE = new Topic<>("TodoConfiguration changes", PropertyChangeListener.class);
-
   public static TodoConfiguration getInstance() {
     return ApplicationManager.getApplication().getService(TodoConfiguration.class);
   }
@@ -105,11 +102,11 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
 
     // only trigger gui and code daemon refresh when either the index patterns or presentation attributes have changed
     if (!Arrays.deepEquals(myTodoPatterns, oldTodoPatterns)) {
-      getPublisher(PROPERTY_CHANGE).propertyChange(new PropertyChangeEvent(this, PROP_TODO_PATTERNS, oldTodoPatterns, todoPatterns));
+      getPublisher(TodoConfigurationPropertyChangeListener.TOPIC).propertyChange(new PropertyChangeEvent(this, PROP_TODO_PATTERNS, oldTodoPatterns, todoPatterns));
     }
   }
 
-  private static @NotNull PropertyChangeListener getPublisher(@NotNull Topic<PropertyChangeListener> topic) {
+  private static <T> @NotNull T getPublisher(@NotNull Topic<T> topic) {
     return ApplicationManager.getApplication().getMessageBus().syncPublisher(topic);
   }
 
@@ -140,14 +137,14 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
   public void setMultiLine(boolean multiLine) {
     if (multiLine != myMultiLine) {
       myMultiLine = multiLine;
-      getPublisher(PROPERTY_CHANGE).propertyChange(new PropertyChangeEvent(this, PROP_MULTILINE, !multiLine, multiLine));
+      getPublisher(TodoConfigurationPropertyChangeListener.TOPIC).propertyChange(new PropertyChangeEvent(this, PROP_MULTILINE, !multiLine, multiLine));
     }
   }
 
   public void setTodoFilters(TodoFilter @NotNull [] filters) {
     TodoFilter[] oldFilters = myTodoFilters;
     myTodoFilters = filters;
-    getPublisher(PROPERTY_CHANGE).propertyChange(new PropertyChangeEvent(this, PROP_TODO_FILTERS, oldFilters, filters));
+    getPublisher(TodoConfigurationPropertyChangeListener.TOPIC).propertyChange(new PropertyChangeEvent(this, PROP_TODO_FILTERS, oldFilters, filters));
   }
 
   @Override

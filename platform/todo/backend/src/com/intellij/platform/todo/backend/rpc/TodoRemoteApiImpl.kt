@@ -2,6 +2,7 @@
 package com.intellij.platform.todo.backend.rpc
 
 import com.intellij.ide.todo.TodoConfiguration
+import com.intellij.ide.todo.TodoConfigurationPropertyChangeListener
 import com.intellij.ide.todo.TodoFilter
 import com.intellij.ide.todo.model.TodoScope
 import com.intellij.ide.todo.rpc.TodoEvent
@@ -82,8 +83,8 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
     }
 
     project.messageBus.connect(flowDisposable).subscribe(
-      TodoConfiguration.PROPERTY_CHANGE,
-      PropertyChangeListener { event ->
+      TodoConfigurationPropertyChangeListener.TOPIC,
+      TodoConfigurationPropertyChangeListener { event ->
         if (event.propertyName == TodoConfiguration.PROP_TODO_PATTERNS ||
             event.propertyName == TodoConfiguration.PROP_TODO_FILTERS ||
             event.propertyName == TodoConfiguration.PROP_MULTILINE) {

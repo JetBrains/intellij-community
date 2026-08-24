@@ -24,7 +24,7 @@
                         serviceImplementation="com.intellij.codeInsight.folding.CodeFoldingSettingsImpl"/>
     <applicationService serviceInterface="com.intellij.psi.search.searches.IndexPatternSearch"
                         serviceImplementation="com.intellij.psi.impl.search.IndexPatternSearchImpl"/>
-    <applicationService serviceImplementation="com.intellij.ide.todo.TodoConfiguration" open="true"/>
+    <applicationService serviceImplementation="com.intellij.ide.todo.TodoConfiguration"/>
     <indexPatternSearch implementation="com.intellij.psi.impl.search.IndexPatternSearcher"/>
     <indexPatternProvider implementation="com.intellij.ide.todo.TodoIndexPatternProvider"/>
     <applicationService serviceImplementation="com.intellij.openapi.editor.colors.impl.AppEditorFontOptions"/>

@@ -20,6 +20,7 @@ import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.ide.todo.TodoConfiguration;
+import com.intellij.ide.todo.TodoConfigurationPropertyChangeListener;
 import com.intellij.lang.ExternalLanguageAnnotators;
 import com.intellij.lang.LanguageAnnotators;
 import com.intellij.openapi.Disposable;
@@ -381,7 +382,7 @@ public final class DaemonListeners implements Disposable {
       }
     }, this);
 
-    connection.subscribe(TodoConfiguration.PROPERTY_CHANGE, new MyTodoListener());
+    connection.subscribe(TodoConfigurationPropertyChangeListener.TOPIC, new MyTodoListener());
 
     connection.subscribe(AnActionListener.TOPIC, new MyAnActionListener());
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
@@ -793,7 +794,7 @@ public final class DaemonListeners implements Disposable {
     return cutActionName;
   }
 
-  private final class MyTodoListener implements PropertyChangeListener {
+  private final class MyTodoListener implements TodoConfigurationPropertyChangeListener {
     @Override
     public void propertyChange(@NotNull PropertyChangeEvent evt) {
       if (TodoConfiguration.PROP_TODO_PATTERNS.equals(evt.getPropertyName())) {

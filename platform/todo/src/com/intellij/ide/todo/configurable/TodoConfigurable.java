@@ -105,7 +105,6 @@ public class TodoConfigurable implements SearchableConfigurable, Configurable.No
       var filters = myFilters.toArray(new TodoFilter[0]);
       TodoConfiguration.getInstance().setTodoFilters(filters);
     }
-    TodoConfigurableProductCallbackService.getInstance(myProject).applyCallback();
   }
 
   @Override

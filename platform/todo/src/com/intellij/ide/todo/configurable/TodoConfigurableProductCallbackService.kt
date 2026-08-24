@@ -12,10 +12,7 @@ interface TodoConfigurableProductCallbackService {
     @JvmStatic
     fun getInstance(project: Project): TodoConfigurableProductCallbackService = project.service()
   }
-
-  fun applyCallback()
 }
 
 internal class DefaultTodoConfigurableProductCallbackService(private val project: Project) : TodoConfigurableProductCallbackService {
-  override fun applyCallback() { /*noop*/ }
 }
