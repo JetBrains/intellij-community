@@ -30,7 +30,9 @@ class MavenDistributionsInfo(private val project: Project) : AsyncDistributionsI
   override val comboBoxActionName: String = MavenConfigurableBundle.message("maven.run.configuration.specify.distribution.action.name")
 
   override val fileChooserDescriptor: FileChooserDescriptor
-    get() = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(MavenProjectBundle.message("maven.select.maven.home.directory"))
+    get() = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(MavenProjectBundle.message("maven.select.maven.home.directory"))
+      .withEnvironmentRestricted(true)
 
 
   override val distributions: List<DistributionInfo>

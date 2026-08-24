@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.execution;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -25,7 +26,7 @@ public class MavenPomFileChooserDescriptor extends FileChooserDescriptor {
 
   private final Project myProject;
 
-  public MavenPomFileChooserDescriptor(Project project) {
+  public MavenPomFileChooserDescriptor(@NotNull Project project) {
     super(false, true, false, false, false, false);
     myProject = project;
   }

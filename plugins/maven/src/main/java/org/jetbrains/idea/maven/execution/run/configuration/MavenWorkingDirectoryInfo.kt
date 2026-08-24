@@ -17,7 +17,9 @@ class MavenWorkingDirectoryInfo(private val project: Project) : WorkingDirectory
   override val settingsName: String = ExecutionBundle.message("run.configuration.working.directory.name")
 
   override val fileChooserDescriptor: FileChooserDescriptor
-    get() = MavenPomFileChooserDescriptor(project).withTitle(RunnerBundle.message("maven.select.working.directory"))
+    get() = MavenPomFileChooserDescriptor(project)
+      .withTitle(RunnerBundle.message("maven.select.working.directory"))
+      .withEnvironmentRestricted(true)
 
   override val emptyFieldError: String = ExecutionBundle.message("run.configuration.working.directory.empty.error")
 
