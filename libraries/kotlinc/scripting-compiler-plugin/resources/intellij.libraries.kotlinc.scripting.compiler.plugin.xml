@@ -1,1 +1,8 @@
-<idea-plugin visibility="internal" />
+<idea-plugin visibility="internal">
+  <dependencies>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinc.kotlin.scripting.common"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.fir"/>
+    <module name="intellij.libraries.kotlinc.kotlin.scripting.compiler.impl"/>
+  </dependencies>
+</idea-plugin>
