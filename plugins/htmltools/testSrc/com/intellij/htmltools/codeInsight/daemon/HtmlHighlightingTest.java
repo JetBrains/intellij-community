@@ -29,7 +29,7 @@ import com.intellij.htmltools.lang.annotation.HtmlNonExistentInternetResourcesAn
 import com.intellij.htmltools.xml.util.CheckImageSizeInspection;
 import com.intellij.ide.highlighter.HtmlHighlighterFactory;
 import com.intellij.javaee.ExternalResourceManagerEx;
-import com.intellij.javaee.ExternalResourceManagerExImpl;
+import com.intellij.javaee.ExternalResourceManagerExBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -450,7 +450,7 @@ public class HtmlHighlightingTest extends BasePlatformTestCase {
     final String location = "XInclude.xsd";
     final String url = "http://www.w3.org/2001/XInclude";
 
-    ExternalResourceManagerExImpl.registerResourceTemporarily(url, location, getTestRootDisposable());
+    ExternalResourceManagerExBase.registerResourceTemporarily(url, location, getTestRootDisposable());
 
     myFixture.configureByFiles(testName + ".xhtml", location);
     myFixture.checkHighlighting(true, false, false);

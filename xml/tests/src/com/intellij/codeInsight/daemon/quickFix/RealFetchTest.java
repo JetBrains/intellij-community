@@ -6,7 +6,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspe
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.javaee.ExternalResourceManager;
-import com.intellij.javaee.ExternalResourceManagerExImpl;
+import com.intellij.javaee.ExternalResourceManagerExBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.testFramework.io.ExternalResourcesChecker;
@@ -122,7 +122,7 @@ public class RealFetchTest extends BasePlatformTestCase {
   public void testOverwriteFetchDtd() throws Exception {
     final String url = "http://java.sun.com/dtd/preferences.dtd";
     VirtualFile virtualFile = myFixture.getTempDirFixture().createFile("images.dtd", "");
-    ExternalResourceManagerExImpl.registerResourceTemporarily(url, virtualFile.getPath(), getTestRootDisposable());
+    ExternalResourceManagerExBase.registerResourceTemporarily(url, virtualFile.getPath(), getTestRootDisposable());
 
     myFixture.enableInspections(new XmlUnresolvedReferenceInspection());
     myFixture.configureByText(XmlFileType.INSTANCE, """

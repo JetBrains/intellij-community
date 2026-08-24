@@ -17,7 +17,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.javaee.ExternalResourceManagerExImpl;
+import com.intellij.javaee.ExternalResourceManagerExBase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
@@ -123,7 +123,7 @@ public class XmlSmartCompletionTest extends BasePlatformTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    ExternalResourceManagerExImpl.registerResourceTemporarily("http://java.sun.com/j2ee/dtds/web-app_2_3.dtd",
+    ExternalResourceManagerExBase.registerResourceTemporarily("http://java.sun.com/j2ee/dtds/web-app_2_3.dtd",
                                                               getTestDataPath() + "/web-app_2_3.dtd", myFixture.getTestRootDisposable());
   }
 

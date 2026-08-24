@@ -15,7 +15,7 @@
  */
 package org.intellij.plugins.relaxNG;
 
-import com.intellij.javaee.ExternalResourceManagerExImpl;
+import com.intellij.javaee.ExternalResourceManagerExBase;
 import org.intellij.plugins.testUtil.CopyFile;
 
 public class RngXmlValidationTest extends HighlightingTestBase {
@@ -79,8 +79,8 @@ public class RngXmlValidationTest extends HighlightingTestBase {
   protected void init() {
     super.init();
 
-    ExternalResourceManagerExImpl.registerResourceTemporarily("urn:test:simple.rng", toAbsolutePath("validation/simple.rng"), getTestRootDisposable());
-    ExternalResourceManagerExImpl.registerResourceTemporarily("urn:test:simple.rnc", toAbsolutePath("validation/simple.rnc"), getTestRootDisposable());
+    ExternalResourceManagerExBase.registerResourceTemporarily("urn:test:simple.rng", toAbsolutePath("validation/simple.rng"), getTestRootDisposable());
+    ExternalResourceManagerExBase.registerResourceTemporarily("urn:test:simple.rnc", toAbsolutePath("validation/simple.rnc"), getTestRootDisposable());
   }
 
   @Override

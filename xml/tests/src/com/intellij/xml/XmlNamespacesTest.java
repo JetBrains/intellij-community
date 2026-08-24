@@ -20,7 +20,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.XmlUnusedNamespaceInspectio
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.htmlInspections.XmlInspectionToolProvider;
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.javaee.ExternalResourceManagerExImpl;
+import com.intellij.javaee.ExternalResourceManagerExBase;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -334,11 +334,11 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myFixture.enableInspections(new XmlInspectionToolProvider());
-    ExternalResourceManagerExImpl.registerResourceTemporarily("http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd",
+    ExternalResourceManagerExBase.registerResourceTemporarily("http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd",
                                                               getTestDataPath() + "/web-app_2_5.xsd", myFixture.getTestRootDisposable());
-    ExternalResourceManagerExImpl.registerResourceTemporarily("http://xml.apache.org/axis/wsdd/",
+    ExternalResourceManagerExBase.registerResourceTemporarily("http://xml.apache.org/axis/wsdd/",
                                                               getTestDataPath() + "/wsdd.dtd", myFixture.getTestRootDisposable());
-    ExternalResourceManagerExImpl.registerResourceTemporarily("http://xml.apache.org/axis/wsdd/providers/java",
+    ExternalResourceManagerExBase.registerResourceTemporarily("http://xml.apache.org/axis/wsdd/providers/java",
                                                               getTestDataPath() + "/wsdd_provider_java.xsd", myFixture.getTestRootDisposable());
   }
 

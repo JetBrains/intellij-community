@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring;
 
-import com.intellij.javaee.ExternalResourceManagerExImpl;
+import com.intellij.javaee.ExternalResourceManagerExBase;
 import com.intellij.psi.PsiReference;
 
 /**
@@ -56,7 +56,7 @@ public class XmlRenameTest extends XmlRenameTestCase {
   public void testSchemaRename() throws Exception {
     String location = "SchemaRename.xsd";
     String url = "http://aaa.bbb";
-    ExternalResourceManagerExImpl.registerResourceTemporarily(url, location, getTestRootDisposable());
+    ExternalResourceManagerExBase.registerResourceTemporarily(url, location, getTestRootDisposable());
 
     doTest("New-Company",new String[] {"SchemaRename.xml",location},"SchemaRename_after.xml");
 
@@ -70,7 +70,7 @@ public class XmlRenameTest extends XmlRenameTestCase {
   public void testSchemaRename2() throws Exception {
     String location = "SchemaRename2.xsd";
     String url = "http://aaa.bbb";
-    ExternalResourceManagerExImpl.registerResourceTemporarily(url, location, getTestRootDisposable());
+    ExternalResourceManagerExBase.registerResourceTemporarily(url, location, getTestRootDisposable());
 
     doTest(
     "NewCompany",

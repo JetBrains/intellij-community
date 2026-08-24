@@ -4,7 +4,7 @@ package com.intellij.xml;
 import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
-import com.intellij.javaee.ExternalResourceManagerExImpl;
+import com.intellij.javaee.ExternalResourceManagerExBase;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -142,7 +142,7 @@ public class ValidateXmlTest extends JavaCodeInsightTestCase {
       "http://www.w3.org/TR/xhtml1/dtd/_xhtml-special.ent"
     };
 
-    ExternalResourceManagerExImpl.getInstanceEx().addIgnoredResources(Arrays.asList(urls), getTestRootDisposable());
+    ExternalResourceManagerExBase.getInstanceEx().addIgnoredResources(Arrays.asList(urls), getTestRootDisposable());
     perform("xhtml.xhtml", "");
   }
 
@@ -247,7 +247,7 @@ public class ValidateXmlTest extends JavaCodeInsightTestCase {
       for(int i = 0; i< urls.length; ++i) {
         final VirtualFile vFile = root.findChild(files[i]);
         assertNotNull(files[i], vFile);
-        ExternalResourceManagerExImpl.registerResourceTemporarily(urls[i], vFile.getPath(), getTestRootDisposable());
+        ExternalResourceManagerExBase.registerResourceTemporarily(urls[i], vFile.getPath(), getTestRootDisposable());
       }
     }
 
@@ -286,16 +286,16 @@ public class ValidateXmlTest extends JavaCodeInsightTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     String BASE_PATH = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/xml/";
-    ExternalResourceManagerExImpl.registerResourceTemporarily("http://java.sun.com/dtd/ejb-jar_2_0.dtd",
+    ExternalResourceManagerExBase.registerResourceTemporarily("http://java.sun.com/dtd/ejb-jar_2_0.dtd",
                                                               BASE_PATH + "ejb-jar_2_0.dtd",
                                                               getTestRootDisposable());
-    ExternalResourceManagerExImpl.registerResourceTemporarily("http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd",
+    ExternalResourceManagerExBase.registerResourceTemporarily("http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd",
                                                               BASE_PATH + "web-app_2_4.xsd",
                                                               getTestRootDisposable());
-    ExternalResourceManagerExImpl.registerResourceTemporarily("http://java.sun.com/xml/ns/j2ee/jsp_2_0.xsd",
+    ExternalResourceManagerExBase.registerResourceTemporarily("http://java.sun.com/xml/ns/j2ee/jsp_2_0.xsd",
                                                               BASE_PATH + "jsp_2_0.xsd",
                                                               getTestRootDisposable());
-    ExternalResourceManagerExImpl.registerResourceTemporarily("http://www.ibm.com/webservices/xsd/j2ee_web_services_client_1_1.xsd",
+    ExternalResourceManagerExBase.registerResourceTemporarily("http://www.ibm.com/webservices/xsd/j2ee_web_services_client_1_1.xsd",
                                                               BASE_PATH + "j2ee_web_services_client_1_1.xsd",
                                                               getTestRootDisposable());
   }

@@ -16,7 +16,7 @@
 package org.intellij.plugins.relaxNG;
 
 import com.intellij.javaee.ExternalResourceManagerEx;
-import com.intellij.javaee.ExternalResourceManagerExImpl;
+import com.intellij.javaee.ExternalResourceManagerExBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import org.intellij.plugins.testUtil.CopyFile;
@@ -35,18 +35,18 @@ public class RngXmlHighlightingTest extends HighlightingTestBase {
     super.init();
 
     ApplicationManager.getApplication().runWriteAction(() -> {
-      ExternalResourceManagerExImpl
+      ExternalResourceManagerExBase
         .registerResourceTemporarily("urn:test:simple.rng", toAbsolutePath("highlighting/simple.rng"), getTestRootDisposable());
-      ExternalResourceManagerExImpl.registerResourceTemporarily("urn:test:addressBook", toAbsolutePath("highlighting/rnc/addressbook.rnc"),
+      ExternalResourceManagerExBase.registerResourceTemporarily("urn:test:addressBook", toAbsolutePath("highlighting/rnc/addressbook.rnc"),
                                                     getTestRootDisposable());
       //m.addResource("http://www.w3.org/1999/XSL/Transform", toAbsolutePath("highlighting/relaxng.rng"));
-      ExternalResourceManagerExImpl.registerResourceTemporarily("http://www.w3.org/1999/XSL/Format", toAbsolutePath("highlighting/rnc/fo/main.rnc"),
+      ExternalResourceManagerExBase.registerResourceTemporarily("http://www.w3.org/1999/XSL/Format", toAbsolutePath("highlighting/rnc/fo/main.rnc"),
                                                     getTestRootDisposable());
-      ExternalResourceManagerExImpl.registerResourceTemporarily("http://docbook.org/ns/docbook", toAbsolutePath("highlighting/docbook.rng"),
+      ExternalResourceManagerExBase.registerResourceTemporarily("http://docbook.org/ns/docbook", toAbsolutePath("highlighting/docbook.rng"),
                                                     getTestRootDisposable());
-      ExternalResourceManagerExImpl.registerResourceTemporarily("urn:intelliForm:AttachmentFilter",
+      ExternalResourceManagerExBase.registerResourceTemporarily("urn:intelliForm:AttachmentFilter",
                                                     toAbsolutePath("highlighting/attachment-filter.rng"), getTestRootDisposable());
-      ExternalResourceManagerExImpl
+      ExternalResourceManagerExBase
         .registerResourceTemporarily("http://www.w3.org/1999/xhtml", toAbsolutePath("highlighting/html5/xhtml5.rnc"), getTestRootDisposable());
 
       List<String> list = new ArrayList<>();

@@ -3,7 +3,7 @@ package com.intellij.psi.resolve;
 
 import com.intellij.codeInsight.completion.TagNameReferenceCompletionProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.javaee.ExternalResourceManagerExImpl;
+import com.intellij.javaee.ExternalResourceManagerExBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -78,7 +78,7 @@ public class XmlResolveTest extends JavaResolveTestCase {
 
   public void testSimpleSchemaFromResources() throws Exception{
     final String url = "http://test";
-    ExternalResourceManagerExImpl.registerResourceTemporarily(
+    ExternalResourceManagerExBase.registerResourceTemporarily(
       url,
       PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/psi/resolve/schema/simple.xsd",
       getTestRootDisposable());

@@ -15,7 +15,7 @@
  */
 package com.intellij.xml;
 
-import com.intellij.javaee.ExternalResourceManagerExImpl;
+import com.intellij.javaee.ExternalResourceManagerExBase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.xml.util.CheckXmlFileWithXercesValidatorInspection;
@@ -25,9 +25,9 @@ import java.io.File;
 public class XmlEntityManagerCachingTest extends BasePlatformTestCase {
 
   public void testXmlEntityManagerCaching() {
-    ExternalResourceManagerExImpl.registerResourceTemporarily("http://dl.google.com/gwt/DTD/xhtml.ent",
+    ExternalResourceManagerExBase.registerResourceTemporarily("http://dl.google.com/gwt/DTD/xhtml.ent",
                                                               getTestDataPath() + "xhtml.ent", myFixture.getTestRootDisposable());
-    ExternalResourceManagerExImpl.registerResourceTemporarily("urn:ui:com.google.gwt.uibinder",
+    ExternalResourceManagerExBase.registerResourceTemporarily("urn:ui:com.google.gwt.uibinder",
                                                               getTestDataPath() + "UiBinder.xsd", myFixture.getTestRootDisposable());
 
     myFixture.enableInspections(CheckXmlFileWithXercesValidatorInspection.class);

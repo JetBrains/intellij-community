@@ -12,7 +12,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
-import com.intellij.javaee.ExternalResourceManagerExImpl;
+import com.intellij.javaee.ExternalResourceManagerExBase;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -70,7 +70,7 @@ public class XmlCompletionTest extends LightJavaCodeInsightFixtureTestCase {
       return;
     }
 
-    ExternalResourceManagerExImpl.registerResourceTemporarily(url, location, myFixture.getTestRootDisposable());
+    ExternalResourceManagerExBase.registerResourceTemporarily(url, location, myFixture.getTestRootDisposable());
   }
 
   public void testCompleteWithAnyInSchema() {
