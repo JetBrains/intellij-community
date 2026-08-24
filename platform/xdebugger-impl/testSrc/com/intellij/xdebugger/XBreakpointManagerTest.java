@@ -397,7 +397,7 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
     "<breakpoints>" +
     "<line-breakpoint enabled=\"true\" type=\"" + MY_LINE_BREAKPOINT_TYPE.getId() + "\">" +
     "      <condition>" + condition + "</condition>" +
-    "      <temporary>true</temporary>" +
+    "      <option name=\"temporary\" value=\"true\" />" +
     "      <url>url</url>" +
     "      <log-expression>" + logExpression + "</log-expression>" +
     "</line-breakpoint>" +

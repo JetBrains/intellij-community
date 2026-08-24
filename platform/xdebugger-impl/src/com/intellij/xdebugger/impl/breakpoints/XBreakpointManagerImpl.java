@@ -418,8 +418,9 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
                                                                                          final @NotNull XLineBreakpointAdditionalInfo additionalInfo,
                                                                                          boolean initUI) {
     return withLockMaybeCancellable(myLock, () -> {
-      LineBreakpointState state = new LineBreakpointState(true, type.getId(), fileUrl, line, additionalInfo.isTemporary(), additionalInfo.getVerticalPlacement(),
-                                                               ++myTime, type.getDefaultSuspendPolicy());
+      LineBreakpointState state = new LineBreakpointState(true, type.getId(), fileUrl, line, additionalInfo.getVerticalPlacement(),
+                                                          ++myTime, type.getDefaultSuspendPolicy());
+      state.setTemporary(additionalInfo.isTemporary());
       getBreakpointDefaults(type).applyDefaults(state);
       state.setGroup(myDefaultGroup);
       XLineBreakpointImpl<T> breakpoint = new XLineBreakpointImpl<>(type, this, properties,
