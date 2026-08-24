@@ -299,6 +299,9 @@ interface ThreadingSupport {
       return NAME
     }
   }
+
+  @ApiStatus.Internal
+  fun dumpSomeDiagnosticInfo(thread: Thread): List<String>
 }
 
 typealias CleanupAction = () -> Unit
