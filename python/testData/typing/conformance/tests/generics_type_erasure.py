@@ -43,7 +43,7 @@ Node[int].label = 1  # E
 Node[int].label      # E
 Node.label = 1       # E
 Node.label           # E
-type(n1).label       # E
+type(n1).label       # E?
 assert_type(n1.label, int)
 assert_type(Node[int]().label, int)
 n1.label = 1         # OK
