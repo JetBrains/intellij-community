@@ -23,6 +23,7 @@ import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
+import com.intellij.python.community.services.systemPython.SystemPython
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.hatch.impl.HATCH_TOOL_ID
 import com.intellij.python.pyproject.PY_PROJECT_TOML
@@ -34,7 +35,10 @@ import com.intellij.python.sdk.backend.evolution.EvoToolContext
 import com.intellij.python.sdk.backend.evolution.PyEvoEnvironmentProvider
 import com.intellij.python.sdk.backend.evolution.discoverVenvs
 import com.intellij.python.sdk.backend.evolution.getPythonVersion
+import com.intellij.python.sdk.backend.evolution.toDisplayPath
+import com.intellij.python.sdk.backend.evolution.toSectionLabel
 import com.intellij.python.sdk.common.evolution.EvoAddNewOptionDto
+import com.intellij.python.sdk.common.evolution.EvoBasePythonDto
 import com.intellij.python.sdk.common.evolution.EvoLeafDto
 import com.intellij.python.sdk.common.evolution.EvoLeafKind
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
@@ -129,6 +133,10 @@ internal suspend fun requiresPython(baseDir: Path): String? = withContext(Dispat
  *
  * Filtered to what can actually work: at least 3.8, the bundled virtualenv's minimum, and within the project's
  * `requires-python`. Each option's token is the interpreter's own path, which is what the create step consumes.
+ *
+ * A version the machine has several installs of stays *one* option — the version is what the user picks first — but the
+ * installs travel with it in [EvoAddNewOptionDto.bases], so the widget can offer the finer choice. The option's own
+ * token is the first of them, keeping the plain "pick a version" click exactly as it was.
  */
 internal suspend fun systemPythonOptions(baseDir: Path, fileSystem: FileSystem<PathHolder.Eel>): List<EvoAddNewOptionDto> {
   // A machine-less (legacy Target) filesystem has no descriptor; fall back to the local machine, as the poetry node did.
@@ -136,9 +144,34 @@ internal suspend fun systemPythonOptions(baseDir: Path, fileSystem: FileSystem<P
   val spec = PyVersionSpecifiers(requiresPython(baseDir) ?: "")
   return SystemPythonService().findSystemPythons(eelApi)
     .filter { it.pythonInfo.languageLevel.isAtLeast(LanguageLevel.PYTHON38) && spec.isValid(it.pythonInfo.languageLevel) }
-    .distinctBy { it.pythonInfo.languageLevel }
     .sortedByDescending { it.pythonInfo.languageLevel }
-    .map { EvoAddNewOptionDto(title = it.pythonInfo.languageLevel.toPythonVersion(), token = it.pythonBinary.pathString) }
+    // groupBy keeps both the group order and the order within each group, so "newest version first, and within it the
+    // interpreter the service listed first" holds — the latter being the representative the option's token names.
+    .groupBy { it.pythonInfo.languageLevel }
+    .map { (level, pythons) ->
+      EvoAddNewOptionDto(
+        title = level.toPythonVersion(),
+        token = pythons.first().pythonBinary.pathString,
+        bases = pythons.map { it.toBaseDto() },
+      )
+    }
+}
+
+/** One install as an [EvoBasePythonDto]: the path identifies it, its tool's icon and free-threadedness qualify it. */
+private fun SystemPython.toBaseDto(): EvoBasePythonDto {
+  val full = pythonBinary.toDisplayPath()
+  val elided = pythonBinary.toSectionLabel()
+  return EvoBasePythonDto(
+    title = elided,
+    // Only when the elision actually dropped something: a tooltip repeating the visible text is noise.
+    titleTooltip = full.takeIf { it != elided },
+    // The scan already ran `--version` to build the PythonInfo, so the exact version is free here; the language level
+    // is the fallback for a PythonInfo that was derived rather than probed.
+    version = pythonInfo.version ?: pythonInfo.languageLevel.toPythonVersion(),
+    icon = ui?.icon?.rpcId(),
+    qualifier = PySdkBundle.message("evolution.base.python.free.threaded").takeIf { pythonInfo.freeThreaded },
+    token = pythonBinary.pathString,
+  )
 }
 
 internal class PyEvoSdkApiProvider : RemoteApiProvider {

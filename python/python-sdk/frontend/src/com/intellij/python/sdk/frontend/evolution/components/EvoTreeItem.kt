@@ -46,4 +46,8 @@ class EvoTreeItem(
 
   val tooltip: @NlsContexts.Tooltip String?
     get() = element.presentation.getClientProperty(ActionUtil.TOOLTIP_TEXT)
+
+  /** The finer choices this row stands for, or null when it stands only for itself — see [EvoAlternatives]. */
+  val alternatives: EvoAlternatives?
+    get() = ((element as? EvoTreeLeafElement)?.action as? EvoAlternatives)?.takeIf { it.alternatives.size > 1 }
 }

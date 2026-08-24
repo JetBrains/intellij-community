@@ -18,6 +18,7 @@ import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.sdk.common.evolution.EvoAddNewDto
 import com.intellij.python.sdk.common.evolution.EvoAddNewOptionDto
+import com.intellij.python.sdk.common.evolution.EvoBasePythonDto
 import com.intellij.python.sdk.common.evolution.EvoLeafDto
 import com.intellij.python.sdk.common.evolution.EvoLeafKind
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
@@ -479,8 +480,8 @@ fun evoActionLeaf(title: @Nls String, description: @Nls String? = title, seconda
  * [com.intellij.python.sdk.common.evolution.PyInterpreterRef.CreateEnv].
  */
 @ApiStatus.Internal
-fun evoCreateEnvLeaf(title: @Nls String, token: String, icon: Icon): EvoLeafDto =
-  EvoLeafDto(title = title, icon = icon.rpcId(), kind = EvoLeafKind.SELECT_ENV, ref = PyInterpreterRef.CreateEnv(token))
+fun evoCreateEnvLeaf(title: @Nls String, token: String, icon: Icon, bases: List<EvoBasePythonDto> = emptyList()): EvoLeafDto =
+  EvoLeafDto(title = title, icon = icon.rpcId(), kind = EvoLeafKind.SELECT_ENV, ref = PyInterpreterRef.CreateEnv(token), bases = bases)
 
 /**
  * Builds a leaf for a *tool-enumerated* environment (conda/hatch/poetry-per-version) identified by [pythonBinary].
