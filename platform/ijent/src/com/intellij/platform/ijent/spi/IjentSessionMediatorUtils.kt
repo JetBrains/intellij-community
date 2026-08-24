@@ -67,6 +67,9 @@ object IjentSessionMediatorUtils {
       // teardown mid-bootstrap with no trace of what felled the scope.
       IjentLogger.LIFETIME_LOG.debug { "$ijentLabel session scope completed, cause: $err" }
 
+      // Has to be read before the scope is cancelled below, otherwise every teardown looks application-initiated.
+      val closedByApplication = trickySupervisorScope.coroutineContext.job.isCancelled
+
       trickySupervisorScope.cancel()
 
       if (err != null) {
@@ -82,7 +85,7 @@ object IjentSessionMediatorUtils {
             is IjentUnavailableException.ClosedByApplication -> false
             is IjentUnavailableException.CommunicationFailure -> !err.exitedExpectedly
           }
-          else -> true
+          else -> !closedByApplication
         }
 
         if (propagateToParentScope) {
@@ -95,10 +98,13 @@ object IjentSessionMediatorUtils {
           catch (_: Throwable) {
             // It seems that the scope has already been canceled with something else.
           }
-        }
 
-        // TODO Callers should be able to define their own exception handlers.
-        logIjentError(ijentLabel, err)
+          // TODO Callers should be able to define their own exception handlers.
+          logIjentError(ijentLabel, err)
+        }
+        else {
+          IjentLogger.LIFETIME_LOG.debug(err) { "Ignored a failure of IJent $ijentLabel, its scope was already being shut down" }
+        }
       }
     }
     @OptIn(EelDelicateApi::class)
