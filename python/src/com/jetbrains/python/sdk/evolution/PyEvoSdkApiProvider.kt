@@ -9,11 +9,9 @@ import com.github.benmanes.caffeine.cache.Expiry
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.toNioPathOrNull
@@ -29,12 +27,10 @@ import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.hatch.impl.HATCH_TOOL_ID
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
-import com.intellij.python.pyproject.model.internal.workspaceBridge.getWorkspaceLayout
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.performToolInstallation
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
 import com.intellij.python.sdk.backend.evolution.EvoToolContext
-import com.intellij.python.sdk.backend.evolution.EvoWorkspace
 import com.intellij.python.sdk.backend.evolution.PyEvoEnvironmentProvider
 import com.intellij.python.sdk.backend.evolution.discoverVenvs
 import com.intellij.python.sdk.backend.evolution.getPythonVersion
@@ -44,8 +40,8 @@ import com.intellij.python.sdk.common.evolution.EvoLeafKind
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
 import com.intellij.python.sdk.common.evolution.EvoNodeDto
 import com.intellij.python.sdk.common.evolution.EvoNodeIds
+import com.intellij.python.sdk.common.evolution.EvoPyProjectDto
 import com.intellij.python.sdk.common.evolution.EvoSelectResultDto
-import com.intellij.python.sdk.common.evolution.EvoWorkspaceDto
 import com.intellij.python.sdk.common.evolution.PyEvoRegistry
 import com.intellij.python.sdk.common.evolution.PyEvoSdkApi
 import com.intellij.python.sdk.common.evolution.PyInterpreterDto
@@ -62,8 +58,6 @@ import com.jetbrains.python.module.PyModuleService
 import com.jetbrains.python.packaging.PyVersionSpecifiers
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.project.PyProject
-import com.jetbrains.python.project.PyProject.Companion.asPyProject
-import com.jetbrains.python.project.PyProject.Companion.getPyProjects
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker
@@ -223,7 +217,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
   }
 
   /**
-   * Cached env-list result for tools measured as slow (see [slowLoadThreshold]), keyed by `projectId|moduleName|nodeId`
+   * Cached env-list result for tools measured as slow (see [slowLoadThreshold]), keyed by `projectId|pyProjectKey|nodeId`
    * and kept for 10 min. Fast tools are not cached here — the frontend's short-lived popup-tree cache covers them. A
    * forced reload (the tool's reload icon) refills this entry.
    */
@@ -239,7 +233,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     })
     .build()
 
-  /** Keys (`projectId|moduleName|nodeId`) whose last scan was slow — they use the long-cache + reload-icon strategy. */
+  /** Keys (`projectId|pyProjectKey|nodeId`) whose last scan was slow — they use the long-cache + reload-icon strategy. */
   private val slowTools: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
   /** A tool whose env scan takes longer than this is treated as "slow" (long cache + reload icon). Registry-tunable. */
@@ -250,11 +244,11 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
   private val slowCacheDuration: kotlin.time.Duration
     get() = PyEvoRegistry.slowToolCacheSeconds.seconds
 
-  override suspend fun isPythonModule(projectId: ProjectId, moduleName: String): Boolean =
-    resolvePyProject(projectId, moduleName) != null
+  override suspend fun pyProjects(projectId: ProjectId): Flow<List<EvoPyProjectDto>> =
+    projectId.findProjectOrNull()?.service<EvoPyProjectModel>()?.dtos() ?: flowOf(emptyList())
 
-  override suspend fun getCurrentInterpreter(projectId: ProjectId, moduleName: String): PyInterpreterDto? {
-    val pyProject = resolvePyProject(projectId, moduleName) ?: return null
+  override suspend fun getCurrentInterpreter(projectId: ProjectId, pyProjectKey: String): PyInterpreterDto? {
+    val pyProject = resolvePyProject(projectId, pyProjectKey) ?: return null
     val sdk = PythonSdkUtil.findPythonSdk(pyProject.module) ?: return null
     // The current-interpreter display works with Eel-based interpreters; remote/target SDKs surface only in the associated list.
     if (sdk.sdkAdditionalData is PyRemoteSdkAdditionalDataMarker) return null
@@ -272,13 +266,8 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     )
   }
 
-  override suspend fun getWorkspace(projectId: ProjectId, moduleName: String): EvoWorkspaceDto? {
-    val workspace = resolvePyProject(projectId, moduleName)?.workspace ?: return null
-    return EvoWorkspaceDto(rootModuleName = workspace.root.residesOnModule.name)
-  }
-
-  override suspend fun listNodes(projectId: ProjectId, moduleName: String): List<EvoNodeDto> {
-    val pyProject = resolvePyProject(projectId, moduleName) ?: return emptyList()
+  override suspend fun listNodes(projectId: ProjectId, pyProjectKey: String): List<EvoNodeDto> {
+    val pyProject = resolvePyProject(projectId, pyProjectKey) ?: return emptyList()
     val fileSystem = eelFileSystem(pyProject)
     // Availability is probed before any popup tree exists, so use a transient root with one child coroutine per tool.
     val root = newRootScope(pyProject.project)
@@ -299,8 +288,8 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     }
   }
 
-  override suspend fun listShortcuts(projectId: ProjectId, moduleName: String): List<EvoLeafDto> {
-    val pyProject = resolvePyProject(projectId, moduleName) ?: return emptyList()
+  override suspend fun listShortcuts(projectId: ProjectId, pyProjectKey: String): List<EvoLeafDto> {
+    val pyProject = resolvePyProject(projectId, pyProjectKey) ?: return emptyList()
     val module = pyProject.module
     // Only at setup time (no interpreter yet): listing evaluates every configurator, so we never do it once an SDK is set.
     if (PythonSdkUtil.findPythonSdk(module) != null) return emptyList()
@@ -324,16 +313,16 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
 
   override suspend fun loadNode(
     projectId: ProjectId,
-    moduleName: String,
+    pyProjectKey: String,
     nodeId: String,
     traceId: String,
     forceRefresh: Boolean,
   ): EvoLoadResultDto {
-    val pyProject = resolvePyProject(projectId, moduleName)
-                    ?: return EvoLoadResultDto.Error(PySdkBundle.message("evolution.error.module.not.found", moduleName))
+    val pyProject = resolvePyProject(projectId, pyProjectKey)
+                    ?: return EvoLoadResultDto.Error(PySdkBundle.message("evolution.error.pyproject.not.found", pyProjectKey))
     val provider = providers.firstOrNull { it.toolId.id == nodeId }
                    ?: return EvoLoadResultDto.Error(PySdkBundle.message("evolution.error.unknown.node", nodeId))
-    val cacheKey = "$projectId|$moduleName|$nodeId"
+    val cacheKey = "$projectId|$pyProjectKey|$nodeId"
     if (cacheKey in slowTools && !forceRefresh) {
       envListCache.getIfPresent(cacheKey)?.let { return it }
     }
@@ -358,8 +347,8 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     return result
   }
 
-  override suspend fun listAssociatedInterpreters(projectId: ProjectId, moduleName: String): List<PyInterpreterDto> {
-    val pyProject = resolvePyProject(projectId, moduleName) ?: return emptyList()
+  override suspend fun listAssociatedInterpreters(projectId: ProjectId, pyProjectKey: String): List<PyInterpreterDto> {
+    val pyProject = resolvePyProject(projectId, pyProjectKey) ?: return emptyList()
     val module = pyProject.module
     // Only interpreters actually associated with this module (its own envs) — not every configured SDK, which for a
     // fresh project would be a huge global list. De-duplicated like the classic popup.
@@ -379,12 +368,12 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
 
   override suspend fun selectInterpreter(
     projectId: ProjectId,
-    moduleName: String,
+    pyProjectKey: String,
     ref: PyInterpreterRef,
     nodeId: String,
   ): EvoSelectResultDto {
-    val pyProject = resolvePyProject(projectId, moduleName)
-                    ?: return EvoSelectResultDto.Error(PySdkBundle.message("evolution.error.module.not.found", moduleName))
+    val pyProject = resolvePyProject(projectId, pyProjectKey)
+                    ?: return EvoSelectResultDto.Error(PySdkBundle.message("evolution.error.pyproject.not.found", pyProjectKey))
     val fileSystem = eelFileSystem(pyProject)
     if (ref is PyInterpreterRef.Autoconfigure) return autoconfigureInterpreter(pyProject, fileSystem, ref.toolId)
     val homePath = when (ref) {
@@ -525,7 +514,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
 
   override suspend fun resolveInterpreterVersion(
     projectId: ProjectId,
-    moduleName: String,
+    pyProjectKey: String,
     nodeId: String,
     homePath: String,
     traceId: String,
@@ -537,9 +526,9 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     return toolScope(project, traceId, nodeId, label).async { binary.getPythonVersion() }.await()
   }
 
-  override suspend fun addInterpreter(projectId: ProjectId, moduleName: String, nodeId: String): EvoSelectResultDto {
-    val pyProject = resolvePyProject(projectId, moduleName)
-                    ?: return EvoSelectResultDto.Error(PySdkBundle.message("evolution.error.module.not.found", moduleName))
+  override suspend fun addInterpreter(projectId: ProjectId, pyProjectKey: String, nodeId: String): EvoSelectResultDto {
+    val pyProject = resolvePyProject(projectId, pyProjectKey)
+                    ?: return EvoSelectResultDto.Error(PySdkBundle.message("evolution.error.pyproject.not.found", pyProjectKey))
     val presenter = PythonAddLocalInterpreterPresenter(
       moduleOrProject = ModuleOrProject.ModuleAndProject(pyProject.module),
       errorSink = ErrorSink(),
@@ -554,9 +543,9 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     return EvoSelectResultDto.Ok
   }
 
-  override suspend fun performNodeAction(projectId: ProjectId, moduleName: String, nodeId: String, actionId: String): EvoSelectResultDto {
-    val pyProject = resolvePyProject(projectId, moduleName)
-                    ?: return EvoSelectResultDto.Error(PySdkBundle.message("evolution.error.module.not.found", moduleName))
+  override suspend fun performNodeAction(projectId: ProjectId, pyProjectKey: String, nodeId: String, actionId: String): EvoSelectResultDto {
+    val pyProject = resolvePyProject(projectId, pyProjectKey)
+                    ?: return EvoSelectResultDto.Error(PySdkBundle.message("evolution.error.pyproject.not.found", pyProjectKey))
     // Only the "advanced" node (AdvancedEvoEnvironmentProvider) exposes backend actions today; its actionId is the
     // index into collectAddInterpreterActions.
     val index = actionId.toIntOrNull()?.takeIf { nodeId == EvoNodeIds.ADVANCED }
@@ -601,7 +590,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
   private suspend fun excludedRoots(pyProject: EvoPyProject): Set<Path> {
     // Ours are the module's own dir and the workspace root we scan from — neither may exclude itself from the walk.
     val own = setOf(pyProject.moduleBaseDir, pyProject.baseDir)
-    return pyProject.project.getPyProjects().map { it.baseDir }.filterNot { it in own }.toSet()
+    return pyProject.project.service<EvoPyProjectModel>().snapshot().baseDirs - own
   }
 
   private suspend fun eelFileSystem(pyProject: EvoPyProject): EelFileSystem = pyProject.baseDir.toEelFileSystem()
@@ -618,19 +607,15 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
   }
 
   /**
-   * The module's project, resolved against its workspace: when the module is a member of a uv/poetry workspace, the
-   * root's [PyProject] comes along so every directory the widget works in is the workspace root's (see [EvoPyProject]).
+   * The target [pyProjectKey] addresses, already resolved against its workspace: a member of a uv/poetry workspace
+   * carries the root's [PyProject] along, so every directory the widget works in is the workspace root's (see
+   * [EvoPyProject]).
+   *
+   * A lookup, not a computation — [EvoPyProjectModel] holds the whole structure per project-model generation, so this
+   * costs nothing per call even though every entry point starts here.
    */
-  private suspend fun resolvePyProject(projectId: ProjectId, moduleName: String): EvoPyProject? {
-    val project = projectId.findProjectOrNull() ?: return null
-    val module = ModuleManager.getInstance(project).findModuleByName(moduleName) ?: return null
-    val pyProject = module.asPyProject() ?: return null
-    // Root and members alike take part in the workspace; a non-python (or disposed) root leaves the module standalone
-    // rather than dropping it entirely.
-    val layout = readAction { module.getWorkspaceLayout() }
-    val workspace = layout?.rootModule?.asPyProject()?.let { EvoWorkspace(it, layout.tool, layout.allModules) }
-    return EvoPyProject(pyProject, workspace)
-  }
+  private suspend fun resolvePyProject(projectId: ProjectId, pyProjectKey: String): EvoPyProject? =
+    projectId.findProjectOrNull()?.service<EvoPyProjectModel>()?.resolve(pyProjectKey)
 }
 
 /** Owns the project-level parent scope for the widget's per-tree root coroutines, so they are never unparented. */

@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
@@ -14,32 +13,27 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
 import com.intellij.platform.project.projectId
 import com.intellij.python.sdk.common.evolution.EvoLeafDto
 import com.intellij.python.sdk.common.evolution.EvoNodeDto
-import com.intellij.python.sdk.common.evolution.EvoWorkspaceDto
+import com.intellij.python.sdk.common.evolution.EvoPyProjectDto
 import com.intellij.python.sdk.common.evolution.PyEvoRegistry
 import com.intellij.python.sdk.common.evolution.PyInterpreterDto
 import com.intellij.python.sdk.common.evolution.evoRpcOrNull
 import com.intellij.python.sdk.common.evolution.requestEvoAssociatedInterpreters
 import com.intellij.python.sdk.common.evolution.requestEvoCurrentInterpreter
-import com.intellij.python.sdk.common.evolution.requestEvoIsPythonModule
 import com.intellij.python.sdk.common.evolution.requestEvoNodes
+import com.intellij.python.sdk.common.evolution.requestEvoPyProjects
 import com.intellij.python.sdk.common.evolution.requestEvoSdkConfigurationInProgress
 import com.intellij.python.sdk.common.evolution.requestEvoShortcuts
-import com.intellij.python.sdk.common.evolution.requestEvoWorkspace
 import com.intellij.python.sdk.frontend.PySdkFrontendBundle
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeStaticNodeElement
 import com.intellij.ui.AnimatedIcon
-import com.intellij.util.Function
 import com.intellij.util.IconUtil
-import com.intellij.util.PlatformUtils
 import com.intellij.util.messages.MessageBusConnection
-import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 import kotlinx.coroutines.CoroutineScope
@@ -52,9 +46,6 @@ private fun popupTreeTtlMs(): Long = PyEvoRegistry.popupTreeCacheSeconds.toLong(
 
 /** Fading Python logo for the neutral "loading" state (no specific tool yet); configuring uses the tool's own logo. */
 private val PYTHON_FADING_ICON: Icon = AnimatedIcon.Fading(AllIcons.Language.Python)
-
-/** A stamp no real project-model generation can equal (they count up from zero), i.e. "refetch this on sight". */
-private const val NEVER_A_GENERATION: Long = Long.MIN_VALUE
 
 internal class PySdkStatusBarWidgetFactory : StatusBarWidgetFactory {
   override fun getId(): String = ID
@@ -71,85 +62,96 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
   isWriteableFileRequired = false,
   scope = scope,
 ) {
+  /**
+   * The project's Python structure, as the backend pushes it: every `PyProject` that exists, which one is the project's
+   * own, and how they group into tool workspaces.
+   *
+   * The frontend cannot derive any of this — `PyProject` is a backend notion — so until the first emission arrives the
+   * widget knows of no target at all and stays hidden. Every later emission replaces this wholesale, so the three
+   * questions below are always answered from one consistent generation.
+   */
+  private class Structure(dtos: List<EvoPyProjectDto>) {
+    private val byKey: Map<String, EvoPyProjectDto> = dtos.associateBy { it.key }
+
+    /** The `PyProject` rooted at the project's own base dir; `null` when the project root is not a Python one. */
+    val main: EvoPyProjectDto? = dtos.firstOrNull { it.isMain }
+
+    val keys: Set<String> get() = byKey.keys
+
+    operator fun get(key: String): EvoPyProjectDto? = byKey[key]
+
+    /**
+     * The `PyProject` [module] is, or `null` when it is not a Python module at all.
+     *
+     * Matched by content root rather than by module name: a `PyProject`'s key *is* one of its module's content roots
+     * (see `PyProjectImpl`), and a path — unlike a name — is not reassigned by a rename. Both sides spell it
+     * system-independently, so this is plain string equality.
+     */
+    fun of(module: Module): EvoPyProjectDto? =
+      ModuleRootManager.getInstance(module).contentRoots.firstNotNullOfOrNull { byKey[it.path] }
+
+    /** Display name of the workspace [target] takes part in, or `null` when it is standalone. */
+    fun workspaceRootName(target: EvoPyProjectDto): String? = target.workspaceRootKey?.let { byKey[it] }?.name
+  }
+
   /** Current Eel interpreter (for display) + popup data (nodes, associated interpreters, shortcuts), fetched asynchronously over RPC. */
   private data class Cached(
     /**
-     * The module this data belongs to, held by identity rather than by name alone: a name is not a durable key, since
-     * removing a module frees its name for another one, and the entry must not then be served to that impostor.
-     */
-    val module: Module,
-    val moduleName: String,
-    /**
-     * The [ProjectRootModificationTracker] value this was computed at. Anything that could change the answers — a
-     * Python facet added to or removed from a module, a module renamed, an SDK reassigned — bumps that counter, so a
-     * mismatch means the entry is out of date and gets refetched (while still being shown, so nothing blinks).
+     * The [ProjectRootModificationTracker] value this was computed at. Anything that could change the answers — an SDK
+     * reassigned, a root added — bumps that counter, so a mismatch means the entry is out of date and gets refetched
+     * (while still being shown, so nothing blinks). Changes to the *set* of `PyProject`s do not come through here:
+     * those arrive as a new [Structure].
      */
     val stamp: Long,
-    /**
-     * Whether the module is a Python one (a `PyProject`). False keeps the widget hidden and leaves every other field
-     * empty — nothing else is worth asking the backend for.
-     */
-    val isPyProject: Boolean,
     val current: PyInterpreterDto?,
-    /** The tool workspace the module takes part in (`null` when standalone) — named in the popup title. */
-    val workspace: EvoWorkspaceDto?,
     val nodes: List<EvoNodeDto>,
     val associated: List<PyInterpreterDto>,
     /** "Shortcuts" rows (autoconfigure suggestions), fetched only when there is no current interpreter. */
     val shortcuts: List<EvoLeafDto>,
-  ) {
-    /**
-     * Whether this entry can still be acted on. [moduleName] is what every backend call is addressed to, and the
-     * backend resolves it by name — so once the module is renamed or removed, that name resolves to nothing and every
-     * call made with it fails with "module not found". Such an entry is dead, not merely stale.
-     */
-    val isUsable: Boolean get() = !module.isDisposed && module.name == moduleName
-  }
+  )
 
   /**
-   * Data for every module the user has visited, by name — so switching back and forth between two modules' files
-   * renders from memory instead of re-running the whole fetch each time. Entries are validated on read against both
-   * the module's identity and the project-model [Cached.stamp], and evicted when their module is disposed.
+   * Data for every target the user has visited, by [EvoPyProjectDto.key] — so switching back and forth between two
+   * files' projects renders from memory instead of re-running the whole fetch each time. Entries are validated on read
+   * against the project-model [Cached.stamp], and evicted when their key leaves the [Structure].
    */
   private val cache = ConcurrentHashMap<String, Cached>()
 
-  /** Modules a load is currently in flight for. Guards against redundant re-fetches. */
+  /** Targets a load is currently in flight for. Guards against redundant re-fetches. */
   private val loading: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
-  /** The module [getWidgetState] last rendered a visible state for — the one a popup would be about. */
+  /** The pushed project structure; `null` until the backend's first emission. */
   @Volatile
-  private var shownModule: String? = null
+  private var structure: Structure? = null
+
+  /** The target [getWidgetState] last rendered a visible state for — the one a popup would be about. */
+  @Volatile
+  private var shownKey: String? = null
 
   /** Current project-model generation; see [Cached.stamp]. */
   private fun modelStamp(): Long = ProjectRootModificationTracker.getInstance(project).modificationCount
 
-  /** Hidden, and no module is on show — so a popup cannot be opened against a stale one. */
+  /** Hidden, and no target is on show — so a popup cannot be opened against a stale one. */
   private fun hidden(): WidgetState {
-    shownModule = null
+    shownKey = null
     return WidgetState.HIDDEN
   }
 
   /** Forgets the built tree, so the next open rebuilds it against current data. */
   private fun dropPopupTree() {
     popupTree = null
-    popupTreeModule = null
+    popupTreeKey = null
   }
 
   /**
-   * Drops every entry that can no longer be acted on (see [Cached.isUsable]) — and the built tree with them, when it
-   * was built from one.
+   * Drops every entry whose target no longer exists — and the built tree with it, when it was built from one. Called on
+   * each new [Structure], which is the only thing that can retire a key.
    */
-  private fun evictUnusable() {
-    cache.values.removeIf { !it.isUsable }
-    if (popupTreeModule?.let { !cache.containsKey(it) } == true) dropPopupTree()
+  private fun evictUnknown() {
+    val known = structure?.keys ?: return
+    cache.keys.removeIf { it !in known }
+    if (popupTreeKey?.let { it !in known } == true) dropPopupTree()
   }
-
-  /**
-   * The remembered data for [module], or `null` when there is none. An entry filed under the same name but belonging
-   * to a *different* module is not it — see [Cached.module]. A stale entry is still returned: the caller shows it and
-   * refreshes behind it.
-   */
-  private fun cachedFor(module: Module): Cached? = cache[module.name]?.takeIf { it.module == module && it.isUsable }
 
   /**
    * The popup tree built from the current [cache] data, reused when the widget is re-opened within the reuse window
@@ -161,12 +163,11 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
   private var popupTree: EvoTreeStaticNodeElement? = null
 
   /**
-   * The module [popupTree] was built for. Its nodes address the backend by that name (their lazy loaders captured it),
-   * so a tree is only ever reusable for the very module it was built from — never for the next one the user looks at,
-   * and never after that module was renamed.
+   * The target [popupTree] was built for. Its nodes address the backend by that key (their lazy loaders captured it),
+   * so a tree is only ever reusable for the very target it was built from, never for the next one the user looks at.
    */
   @Volatile
-  private var popupTreeModule: String? = null
+  private var popupTreeKey: String? = null
 
   /** When the popup was last closed (epoch ms); the [popupTreeTtlMs] reuse window is measured from this moment. */
   @Volatile
@@ -177,6 +178,13 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
   private var configuring: Boolean = false
 
   init {
+    scope.launch {
+      requestEvoPyProjects(project.projectId()).collect { dtos ->
+        structure = Structure(dtos)
+        evictUnknown()
+        update()
+      }
+    }
     // Mirror the backend SDK-configuration lock: while held, show a spinner and disable the popup (no stale
     // interpreter/actions while a create-or-select is running).
     scope.launch {
@@ -193,28 +201,21 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
    * (recorded by the select/create action in [EvoConfiguringTracker]), or the Python logo when the tool is unknown
    * (e.g. autoconfigure / associated interpreters).
    */
-  private fun configuringIcon(cached: Cached): Icon {
+  private fun configuringIcon(cached: Cached?): Icon {
     val nodeId = project.service<EvoConfiguringTracker>().nodeId
-    val toolIcon = nodeId?.let { id -> cached.nodes.firstOrNull { it.id == id }?.icon?.icon() }
+    val toolIcon = nodeId?.let { id -> cached?.nodes?.firstOrNull { it.id == id }?.icon?.icon() }
     return AnimatedIcon.Fading(toolIcon ?: AllIcons.Language.Python)
   }
 
   override fun getWidgetState(file: VirtualFile?): WidgetState {
-    val module = moduleFor(file) ?: return hidden()
-    val moduleName = module.name
+    val target = targetFor(file) ?: return hidden()
+    shownKey = target.key
 
-    val current = cachedFor(module)
-    // Whether the module is Python at all is only known once the backend has answered, and a Python interpreter widget
-    // has no business appearing over a Java file in the meantime — so stay hidden until then, rather than flashing.
-    if (current == null) {
-      refresh(module)
-      return hidden()
-    }
-    // Out of date (a facet or an SDK changed under us): keep showing what we have and refetch behind it, so the widget
-    // never blinks out on a project-model change.
-    if (current.stamp != modelStamp()) refresh(module)
-    if (!current.isPyProject) return hidden()
-    shownModule = moduleName
+    val cached = cache[target.key]
+    // Nothing fetched yet, or out of date (an SDK changed under us) — fetch behind whatever we are showing, so the
+    // widget never blinks out. Unlike before, there is no "is this Python at all" question to wait on: the target came
+    // out of the structure, so it *is* a PyProject and the widget can show its loading state right away.
+    if (cached == null || cached.stamp != modelStamp()) refresh(target.key)
 
     if (configuring) {
       // Keep the widget enabled so its dynamic (self-animating) icon is painted directly — a disabled widget would
@@ -223,12 +224,12 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
         PySdkFrontendBundle.message("evo.sdk.status.bar.configuring.description"),
         PySdkFrontendBundle.message("evo.sdk.status.bar.configuring.title"),
         true,
-      ).apply { icon = configuringIcon(current) }
+      ).apply { icon = configuringIcon(cached) }
     }
 
-    if (moduleName in loading && current.current == null) {
-      // The module is Python, but its interpreter is still being fetched — a neutral animated "loading" state, not
-      // the "No interpreter" warning.
+    val interpreter = cached?.current
+    if (interpreter == null && target.key in loading) {
+      // The interpreter is still being fetched — a neutral animated "loading" state, not the "No interpreter" warning.
       return WidgetState(
         PySdkFrontendBundle.message("evo.sdk.loading.description"),
         PySdkFrontendBundle.message("evo.sdk.status.bar.loading.title"),
@@ -236,7 +237,6 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
       ).apply { icon = PYTHON_FADING_ICON }
     }
 
-    val interpreter = current.current
     if (interpreter == null) {
       return WidgetState(
         PySdkFrontendBundle.message("evo.sdk.undefined.description"),
@@ -251,47 +251,35 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
   }
 
   /**
-   * (Re)loads the widget data. Whether the module is Python at all is settled first, and a non-Python one stops right
-   * there — it costs one call instead of the four below, none of which (tool probing, a full SDK scan) mean anything
-   * for a Java module. Then the current interpreter — all the status bar needs to render — is fetched and shown
-   * immediately, and the slower popup data loads afterwards. The previous value stays visible until the new one
-   * arrives, so neither the initial load nor a refresh ever flashes "No interpreter".
+   * (Re)loads the widget data for [key]. The current interpreter — all the status bar needs to render — is fetched
+   * first and shown immediately, and the slower popup data loads afterwards. The previous value stays visible until the
+   * new one arrives, so neither the initial load nor a refresh ever flashes "No interpreter".
    */
-  private fun refresh(module: Module) {
-    val moduleName = module.name
-    if (!loading.add(moduleName)) return // already in flight
+  private fun refresh(key: String) {
+    if (!loading.add(key)) return // already in flight
     scope.launch {
       // Read the generation before fetching, so a model change *during* the fetch leaves the result marked stale
       // rather than passing for current.
       val stamp = modelStamp()
       val projectId = project.projectId()
-      val prev = cachedFor(module)
+      val prev = cache[key]
       fun publish(entry: Cached) {
-        cache[moduleName] = entry
-        if (popupTreeModule == moduleName) dropPopupTree() // the tree was built from what we just replaced
+        cache[key] = entry
+        if (popupTreeKey == key) dropPopupTree() // the tree was built from what we just replaced
         update()
       }
       try {
-        // Treat an RPC failure as "not Python": staying hidden is the safe way to be wrong, and the stamp check or the
-        // next module change retries.
-        if (evoRpcOrNull { requestEvoIsPythonModule(projectId, moduleName) } != true) {
-          publish(Cached(module, moduleName, stamp, isPyProject = false, null, null, emptyList(), emptyList(), emptyList()))
-          return@launch
-        }
+        val interpreter = evoRpcOrNull { requestEvoCurrentInterpreter(projectId, key) }
+        publish(Cached(stamp, interpreter, prev?.nodes.orEmpty(), prev?.associated.orEmpty(), prev?.shortcuts.orEmpty()))
 
-        val interpreter = evoRpcOrNull { requestEvoCurrentInterpreter(projectId, moduleName) }
-        publish(Cached(module, moduleName, stamp, true, interpreter,
-                       prev?.workspace, prev?.nodes.orEmpty(), prev?.associated.orEmpty(), prev?.shortcuts.orEmpty()))
-
-        val workspace = evoRpcOrNull { requestEvoWorkspace(projectId, moduleName) }
-        val nodes = evoRpcOrNull { requestEvoNodes(projectId, moduleName) }.orEmpty()
-        val associated = evoRpcOrNull { requestEvoAssociatedInterpreters(projectId, moduleName) }.orEmpty()
+        val nodes = evoRpcOrNull { requestEvoNodes(projectId, key) }.orEmpty()
+        val associated = evoRpcOrNull { requestEvoAssociatedInterpreters(projectId, key) }.orEmpty()
         // The "Shortcuts" autoconfigure suggestions are only shown (and only worth computing) when there is no interpreter.
-        val shortcuts = if (interpreter == null) evoRpcOrNull { requestEvoShortcuts(projectId, moduleName) }.orEmpty() else emptyList()
-        publish(Cached(module, moduleName, stamp, true, interpreter, workspace, nodes, associated, shortcuts))
+        val shortcuts = if (interpreter == null) evoRpcOrNull { requestEvoShortcuts(projectId, key) }.orEmpty() else emptyList()
+        publish(Cached(stamp, interpreter, nodes, associated, shortcuts))
       }
       finally {
-        loading.remove(moduleName)
+        loading.remove(key)
         update()
       }
     }
@@ -302,23 +290,23 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
   private var refreshingNodes: Boolean = false
 
   /**
-   * Re-probes just the available tool nodes for [moduleName] (keeping the shown interpreter and the associated
-   * list), so a tool installed since the last scan appears without redoing the heavier current-interpreter and
-   * associated-SDK scans of a full [refresh]. If the node set actually changed, the built tree is dropped so the
-   * next open rebuilds from the fresh nodes. Skipped while a full refresh or another node re-probe is in flight.
+   * Re-probes just the available tool nodes for [key] (keeping the shown interpreter and the associated list), so a
+   * tool installed since the last scan appears without redoing the heavier current-interpreter and associated-SDK
+   * scans of a full [refresh]. If the node set actually changed, the built tree is dropped so the next open rebuilds
+   * from the fresh nodes. Skipped while a full refresh or another node re-probe is in flight.
    */
-  private fun refreshNodes(moduleName: String) {
-    if (moduleName in loading || refreshingNodes) return
+  private fun refreshNodes(key: String) {
+    if (key in loading || refreshingNodes) return
     refreshingNodes = true
     scope.launch {
       try {
-        val nodes = evoRpcOrNull { requestEvoNodes(project.projectId(), moduleName) }.orEmpty()
-        val base = cache[moduleName] ?: return@launch
+        val nodes = evoRpcOrNull { requestEvoNodes(project.projectId(), key) }.orEmpty()
+        val base = cache[key] ?: return@launch
         // Compare by node ids (stable identity) — a newly available or removed tool changes this set; icon/label
         // identity is irrelevant and IconId equality is not guaranteed across fetches.
         if (base.nodes.map { it.id } == nodes.map { it.id }) return@launch
-        cache[moduleName] = base.copy(nodes = nodes)
-        if (popupTreeModule == moduleName) dropPopupTree()
+        cache[key] = base.copy(nodes = nodes)
+        if (popupTreeKey == key) dropPopupTree()
         update()
       }
       finally {
@@ -332,32 +320,9 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
   override fun registerCustomListeners(connection: MessageBusConnection) {
     connection.subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) {
-        // Every entry is now behind the project-model generation, so the next getWidgetState refetches the module in
-        // front of the user while still showing what it has. Entries whose module this change left unaddressable are
-        // a different matter — drop those outright.
-        evictUnusable()
-        update()
-      }
-    })
-    // A module rename does not go through rootsChanged, so without this the widget would only notice at the next
-    // click — which would find its data addressed to a name the backend can no longer resolve, and open nothing.
-    connection.subscribe(ModuleListener.TOPIC, object : ModuleListener {
-      override fun modulesRenamed(project: Project, modules: List<Module>, oldNameProvider: Function<in Module, String>) {
-        for (module in modules) {
-          val oldName = oldNameProvider.`fun`(module)
-          val entry = cache.remove(oldName)?.takeIf { it.module == module } ?: continue
-          // The data still describes this module — only the name the backend is addressed by changed. Re-file it under
-          // the new one and mark it stale, so the widget keeps rendering instead of blinking out while it refetches.
-          cache[module.name] = entry.copy(moduleName = module.name, stamp = NEVER_A_GENERATION)
-          // Follow the rename here too, so a click landing before the next render still finds the module on show.
-          if (shownModule == oldName) shownModule = module.name
-          if (popupTreeModule == oldName) dropPopupTree() // its nodes captured the old name
-        }
-        update()
-      }
-
-      override fun moduleRemoved(project: Project, module: Module) {
-        evictUnusable()
+        // Every entry is now behind the project-model generation, so the next getWidgetState refetches the target in
+        // front of the user while still showing what it has. Nothing needs evicting here: a key can only be retired by
+        // a new Structure, and that arrives on its own.
         update()
       }
     })
@@ -365,21 +330,23 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
 
   override fun createPopup(context: DataContext): ListPopup? {
     if (configuring) return null // no popup while a configuration is in progress
-    // The popup belongs to the module the widget is currently showing; a non-Python one is hidden by getWidgetState
-    // and has no data behind it, so it can never open one. [Cached.isUsable] is re-checked here rather than trusted
-    // from the last render: a rename between that render and this click leaves the entry addressing a name the backend
-    // can no longer resolve, and opening it would fail every row with "module not found".
-    val current = shownModule?.let { cache[it] }?.takeIf { it.isPyProject && it.isUsable } ?: return null
-    // Reuse the tree only for the module it was built from, and only within the window measured from the last close,
+    // The popup belongs to the target the widget is currently showing. It is re-resolved against the current structure
+    // rather than trusted from the last render: a change between that render and this click may have retired the key,
+    // and opening it would fail every row with "Python project not found".
+    val structure = this.structure ?: return null
+    val target = shownKey?.let { structure[it] } ?: return null
+    val cached = cache[target.key] ?: return null
+    // Reuse the tree only for the target it was built from, and only within the window measured from the last close,
     // so a quick reopen after a mis-click doesn't rescan; otherwise rebuild. The window restarts on each close.
-    val reusable = popupTree?.takeIf { popupTreeModule == current.moduleName && System.currentTimeMillis() - popupClosedAt < popupTreeTtlMs() }
+    val reusable = popupTree?.takeIf { popupTreeKey == target.key && System.currentTimeMillis() - popupClosedAt < popupTreeTtlMs() }
     // Outside the reuse window, also re-probe the available tools so one installed since the last scan (e.g. via
     // Settings | Python | Tools) shows up — otherwise the node list would stay cached for the widget's whole life.
     // The re-probe is async (takes effect from the next open) and availability is backed by PyExecutableCache, so a
     // warm cache makes it near-instant; it only does real work after an install invalidated that cache.
-    if (reusable == null) refreshNodes(current.moduleName)
-    val factory = EvoPySdkSwitchPopupFactory(project, current.moduleName, current.current, current.workspace, current.nodes, current.associated, current.shortcuts, scope)
-    val tree = reusable ?: factory.buildTree(context).also { popupTree = it; popupTreeModule = current.moduleName }
+    if (reusable == null) refreshNodes(target.key)
+    val factory = EvoPySdkSwitchPopupFactory(project, target.key, target.name, structure.workspaceRootName(target),
+                                             cached.current, cached.nodes, cached.associated, cached.shortcuts, scope)
+    val tree = reusable ?: factory.buildTree(context).also { popupTree = it; popupTreeKey = target.key }
     return factory.createPopup(tree, context) { popupClosedAt = System.currentTimeMillis() }
   }
 
@@ -388,36 +355,22 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
   override fun createInstance(project: Project): StatusBarWidget = EvoPySdkStatusBarWidget(project, scope)
 
   /**
-   * The module the widget speaks for: the one owning [file], falling back in PyCharm to the project's root module.
+   * The `PyProject` the widget speaks for: the one owning [file], falling back to the project's own.
    *
-   * That fallback is what keeps the widget in the status bar when the focused file belongs to no module — a file dragged
-   * in from outside the project, a scratch — or when no file is focused at all. Without it the widget vanished until a
-   * module's file was focused again, and the interpreter could be neither seen nor switched (PY-90708).
+   * A file that belongs to a module speaks for that module's `PyProject` and for nothing else — so in a mixed project a
+   * Java file leaves the widget hidden rather than borrowing an unrelated interpreter.
    *
-   * PyCharm only, deliberately: there the project *is* the Python project, so the root module's interpreter is the one
-   * the user means. In IDEA a Python module is one of many, and claiming one for an unrelated file would hang a Python
-   * interpreter widget over, say, a Java file.
+   * The fallback covers a file that belongs to no module — one dragged in from outside the project, a scratch — and the
+   * case of no file being focused at all. Without it the widget vanished until a module's file was focused again, and
+   * the interpreter could be neither seen nor switched (PY-90708). It applies whenever the project *is* a Python
+   * project, i.e. whenever a `PyProject` is rooted at the project's base dir: in PyCharm that is always (a plain Python
+   * module is kept at the project root even with no `pyproject.toml` declaring one), and in IDEA exactly when the
+   * project root really is Python — which is what the widget used to approximate with a PyCharm-only check.
    */
-  private fun moduleFor(file: VirtualFile?): Module? {
-    file?.let { findModule(it) }?.let { return it }
-    if (!PlatformUtils.isPyCharm()) return null
-    return rootModule()
-  }
-
-  /**
-   * The module rooted *at* the project root — not merely the first one the model lists, which in a multi-module project
-   * would be an arbitrary answer for a file that belongs to none of them.
-   *
-   * "Root module" is defined the same way `preserveRootModule` in `python-pyproject` defines it: the module one of whose
-   * content roots is the project base path. [Project.getBasePath] is that same path — both it and
-   * `IProjectStore.projectBasePath` return `storeDescriptor.historicalProjectBasePath` — so the two agree on which
-   * module this is. `null` when the project root belongs to no module, which leaves the widget hidden as before.
-   */
-  private fun rootModule(): Module? {
-    val projectRoot = project.basePath?.let { Path.of(it) } ?: return null
-    return ModuleManager.getInstance(project).modules.firstOrNull { module ->
-      ModuleRootManager.getInstance(module).contentRoots.any { it.toNioPathOrNull() == projectRoot }
-    }
+  private fun targetFor(file: VirtualFile?): EvoPyProjectDto? {
+    val structure = this.structure ?: return null
+    val module = file?.let { findModule(it) }
+    return if (module != null) structure.of(module) else structure.main
   }
 
   private fun findModule(file: VirtualFile): Module? =

@@ -43,12 +43,12 @@ internal class EvoConfiguringTracker {
  * specific) and [name] the user-editable env name from the add-new field (uv/pip: the env folder name; conda: the env
  * name; null keeps the tool default). The widget refreshes itself on the resulting `rootsChanged`.
  */
-internal fun createEvoEnv(project: Project, moduleName: String, nodeId: String, token: String, folder: String, name: String?, scope: CoroutineScope) {
+internal fun createEvoEnv(project: Project, pyProjectKey: String, nodeId: String, token: String, folder: String, name: String?, scope: CoroutineScope) {
   project.service<EvoConfiguringTracker>().nodeId = nodeId   // so the widget fades this tool's logo while configuring
   scope.launch {
-    when (val result = requestEvoSelectInterpreter(project.projectId(), moduleName, PyInterpreterRef.CreateEnv(token, folder, name), nodeId)) {
+    when (val result = requestEvoSelectInterpreter(project.projectId(), pyProjectKey, PyInterpreterRef.CreateEnv(token, folder, name), nodeId)) {
       is EvoSelectResultDto.Ok -> Unit
-      is EvoSelectResultDto.Error -> LOG.warn("Evo: failed to create '$nodeId' environment for '$moduleName': ${result.message}")
+      is EvoSelectResultDto.Error -> LOG.warn("Evo: failed to create '$nodeId' environment for '$pyProjectKey': ${result.message}")
     }
   }
 }
@@ -59,7 +59,7 @@ internal fun createEvoEnv(project: Project, moduleName: String, nodeId: String, 
  */
 internal fun evoBackendActionLeaf(
   project: Project,
-  moduleName: String,
+  pyProjectKey: String,
   nodeId: String,
   leaf: EvoLeafDto,
   scope: CoroutineScope,
@@ -71,9 +71,9 @@ internal fun evoBackendActionLeaf(
   override fun actionPerformed(e: AnActionEvent) {
     val actionId = leaf.actionId ?: return
     scope.launch {
-      when (val result = requestEvoPerformNodeAction(project.projectId(), moduleName, nodeId, actionId)) {
+      when (val result = requestEvoPerformNodeAction(project.projectId(), pyProjectKey, nodeId, actionId)) {
         is EvoSelectResultDto.Ok -> Unit
-        is EvoSelectResultDto.Error -> LOG.warn("Evo: failed to perform '${leaf.title}' for '$moduleName': ${result.message}")
+        is EvoSelectResultDto.Error -> LOG.warn("Evo: failed to perform '${leaf.title}' for '$pyProjectKey': ${result.message}")
       }
     }
   }
@@ -85,7 +85,7 @@ internal fun evoBackendActionLeaf(
  */
 internal class SelectEnvAction(
   private val project: Project,
-  private val moduleName: String,
+  private val pyProjectKey: String,
   private val ref: PyInterpreterRef,
   /** Tool node this row came from; nests its version probe under that tool's trace context (e.g. conda). */
   private val nodeId: String,
@@ -107,9 +107,9 @@ internal class SelectEnvAction(
   override fun actionPerformed(e: AnActionEvent) {
     project.service<EvoConfiguringTracker>().nodeId = nodeId   // so the widget fades this tool's logo while configuring
     scope.launch {
-      when (val result = requestEvoSelectInterpreter(project.projectId(), moduleName, ref, nodeId)) {
+      when (val result = requestEvoSelectInterpreter(project.projectId(), pyProjectKey, ref, nodeId)) {
         is EvoSelectResultDto.Ok -> Unit
-        is EvoSelectResultDto.Error -> LOG.warn("Evo: failed to select interpreter for '$moduleName': ${result.message}")
+        is EvoSelectResultDto.Error -> LOG.warn("Evo: failed to select interpreter for '$pyProjectKey': ${result.message}")
       }
     }
   }
@@ -120,7 +120,7 @@ internal class SelectEnvAction(
     if (versionRequested || templatePresentation.getClientProperty(ActionUtil.SECONDARY_TEXT) != null) return
     versionRequested = true
     scope.launch {
-      val version = evoRpcOrNull { requestEvoResolveVersion(project.projectId(), moduleName, nodeId, detected.homePath, traceId) } ?: "n/a"
+      val version = evoRpcOrNull { requestEvoResolveVersion(project.projectId(), pyProjectKey, nodeId, detected.homePath, traceId) } ?: "n/a"
       withContext(Dispatchers.EDT) {
         templatePresentation.putClientProperty(ActionUtil.SECONDARY_TEXT, version)
         onResolved()
@@ -131,10 +131,10 @@ internal class SelectEnvAction(
 
 private val LOG = logger<SelectEnvAction>()
 
-internal fun selectEnvAction(project: Project, moduleName: String, leaf: EvoLeafDto, nodeId: String, traceId: String, scope: CoroutineScope): SelectEnvAction =
+internal fun selectEnvAction(project: Project, pyProjectKey: String, leaf: EvoLeafDto, nodeId: String, traceId: String, scope: CoroutineScope): SelectEnvAction =
   SelectEnvAction(
     project = project,
-    moduleName = moduleName,
+    pyProjectKey = pyProjectKey,
     ref = requireNotNull(leaf.ref) { "SELECT_ENV leaf without a ref" },
     nodeId = nodeId,
     traceId = traceId,
@@ -145,10 +145,10 @@ internal fun selectEnvAction(project: Project, moduleName: String, leaf: EvoLeaf
     scope = scope,
   )
 
-internal fun selectEnvAction(project: Project, moduleName: String, interpreter: PyInterpreterDto, nodeId: String, traceId: String, scope: CoroutineScope): SelectEnvAction =
+internal fun selectEnvAction(project: Project, pyProjectKey: String, interpreter: PyInterpreterDto, nodeId: String, traceId: String, scope: CoroutineScope): SelectEnvAction =
   SelectEnvAction(
     project = project,
-    moduleName = moduleName,
+    pyProjectKey = pyProjectKey,
     ref = interpreter.ref,
     nodeId = nodeId,
     traceId = traceId,
