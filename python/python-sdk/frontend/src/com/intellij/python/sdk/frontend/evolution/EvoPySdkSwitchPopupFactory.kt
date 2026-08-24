@@ -27,18 +27,20 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.platform.project.projectId
 import com.intellij.psi.PsiManager
 import com.intellij.python.sdk.common.evolution.EvoAddNewOptionDto
+import com.intellij.python.sdk.common.evolution.EvoBasePythonDto
 import com.intellij.python.sdk.common.evolution.EvoLeafDto
 import com.intellij.python.sdk.common.evolution.EvoLeafKind
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
 import com.intellij.python.sdk.common.evolution.EvoNodeDto
 import com.intellij.python.sdk.common.evolution.EvoNodeIds
-import com.intellij.python.sdk.common.evolution.EvoSectionDto
 import com.intellij.python.sdk.common.evolution.EvoPyProjectDto
+import com.intellij.python.sdk.common.evolution.EvoSectionDto
 import com.intellij.python.sdk.common.evolution.PyInterpreterDto
 import com.intellij.python.sdk.common.evolution.PyInterpreterRef
 import com.intellij.python.sdk.common.evolution.evoRpc
 import com.intellij.python.sdk.common.evolution.requestEvoNode
 import com.intellij.python.sdk.frontend.PySdkFrontendBundle
+import com.intellij.python.sdk.frontend.evolution.components.EvoAlternatives
 import com.intellij.python.sdk.frontend.evolution.components.EvoEditableName
 import com.intellij.python.sdk.frontend.evolution.components.EvoErrorException
 import com.intellij.python.sdk.frontend.evolution.components.EvoLoadedNode
@@ -51,6 +53,7 @@ import com.intellij.python.sdk.frontend.evolution.components.EvoTreeNodeElement
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreePopup
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeSection
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeStaticNodeElement
+import com.intellij.python.sdk.frontend.evolution.components.EvoVersionRows
 import com.intellij.python.sdk.frontend.evolution.components.EvoWarningException
 import com.intellij.python.sdk.frontend.icons.PythonSdkFrontendIcons
 import java.util.UUID
@@ -122,7 +125,11 @@ internal class EvoPySdkSwitchPopupFactory(
       return EvoTreeAddNewNode(
         text = title,
         icon = icon.icon(),
-        versions = versions.map { EvoTreeLeafElement(addVersionAction(nodeId, it, createToken)) },
+        versionRows = versionRows(
+          versions,
+          { addVersionAction(nodeId, it, createToken) },
+          { base -> baseInterpreterRow(base) { createEnv(nodeId, base.token, createToken, null, null) } },
+        ),
         // There is no interpreter to probe yet, so the row carries the backend's "n/a" in the same column where the
         // already-materialized envs show their resolved version.
         secondaryText = secondaryText,
@@ -156,6 +163,44 @@ internal class EvoPySdkSwitchPopupFactory(
   }
 
   /**
+   * The node's sections restructured so that every row standing for several interpreters becomes a header over them —
+   * the expanded half of [EvoVersionRows] for a *tool* node, the way the add-new version list already has one. Poetry's
+   * per-version cache rows are what this is for: each is a Python version that may have more than one install behind it.
+   *
+   * Empty when nothing here has more than one interpreter behind it, which is what tells the caller not to offer the
+   * toggle at all.
+   *
+   * Rows that stand only for themselves (an existing environment) keep their original section and its header, and are
+   * emitted before the expanded ones. That reordering is only theoretical for the tools that send interpreters today —
+   * poetry's per-version section is entirely expandable rows, and its in-project section entirely plain ones.
+   */
+  private fun EvoLoadResultDto.toExpandedSections(nodeId: String, traceId: String): List<EvoTreeSection> {
+    if (this !is EvoLoadResultDto.Ok) return emptyList()
+    if (sections.none { section -> section.leaves.any { it.bases.size > 1 } }) return emptyList()
+    val takenNames = sections.flatMap { it.leaves }.mapTo(mutableSetOf()) { it.title }
+    return sections.flatMap { section ->
+      val (expandable, plain) = section.leaves.partition { it.bases.isNotEmpty() }
+      buildList {
+        val plainElements = plain.map { it.toElement(nodeId, traceId) } +
+                            listOfNotNull(addNewElement(section, nodeId, takenNames))
+        if (plainElements.isNotEmpty()) {
+          add(EvoTreeSection(
+            label = section.label?.let { ListSeparator(it) },
+            elements = plainElements,
+            labelTooltip = section.labelTooltip?.takeIf { it != section.label },
+          ))
+        }
+        for (leaf in expandable) {
+          add(EvoTreeSection(
+            label = ListSeparator(leaf.title),
+            elements = baseInterpreterRows(project, pyProjectKey, leaf, nodeId, scope),
+          ))
+        }
+      }
+    }
+  }
+
+  /**
    * The section's trailing "add new environment" element: for uv/pip (version options present) an expandable node whose
    * submenu lists the Python versions above the pre-filled env name. When it ends up being a node's only row, the row
    * itself is dropped and its submenu becomes the node's ([withoutLoneAddNewStep]); or null when the tool offers no
@@ -174,7 +219,11 @@ internal class EvoPySdkSwitchPopupFactory(
         EvoTreeAddNewNode(
           text = PySdkFrontendBundle.message("evo.sdk.status.bar.popup.add.new.title"),
           icon = AllIcons.General.Add,
-          versions = addNewEnv.options.map { EvoTreeLeafElement(addVersionAction(nodeId, it, addNewEnv.path, editable, addNewEnv.name)) },
+          versionRows = versionRows(
+            addNewEnv.options,
+            { addVersionAction(nodeId, it, addNewEnv.path, editable, addNewEnv.name) },
+            { base -> baseInterpreterRow(base) { createEnv(nodeId, base.token, addNewEnv.path, editable, addNewEnv.name) } },
+          ),
           editableName = editable,
         )
       }
@@ -182,8 +231,38 @@ internal class EvoPySdkSwitchPopupFactory(
   }
 
   /**
+   * The two views of the version list: collapsed, one row per Python version, and expanded, each version a header over
+   * its actual installs. Both are built here from the same options so the toggle between them is instant.
+   *
+   * The expanded view is left empty — and so the toggle is not offered — unless some version really has more than one
+   * install. Otherwise it would show exactly the rows the collapsed view already shows, each under a header repeating
+   * what the row says.
+   */
+  private fun versionRows(
+    options: List<EvoAddNewOptionDto>,
+    versionRow: (EvoAddNewOptionDto) -> AnAction,
+    baseRow: (EvoBasePythonDto) -> EvoTreeLeafElement,
+  ): EvoVersionRows {
+    val collapsed = listOf(EvoTreeSection(elements = options.map { EvoTreeLeafElement(versionRow(it)) }))
+    val expanded = when {
+      options.none { it.bases.size > 1 } -> emptyList()
+      else -> options.map { option ->
+        EvoTreeSection(
+          label = ListSeparator(addVersionText(option)),
+          elements = option.bases.map { baseRow(it) },
+        )
+      }
+    }
+    return EvoVersionRows(collapsed, expanded)
+  }
+
+  /**
    * A single Python-version row in the "add new environment" submenu: on click creates that version's env with the
    * (possibly user-edited) name — from [editableName] when present, else [defaultName] — in the base location [path].
+   *
+   * When the machine has several installs of that version, the row also offers them behind its inline "…" ([EvoAlternatives]).
+   * The row itself keeps creating from [EvoAddNewOptionDto.token], the IDE's pick among them, so the choice is there for
+   * whoever wants it and invisible to everyone else.
    */
   private fun addVersionAction(
     nodeId: String,
@@ -192,13 +271,27 @@ internal class EvoPySdkSwitchPopupFactory(
     editableName: EvoEditableName? = null,
     defaultName: String? = null,
   ): AnAction =
-    object : AnAction({ addVersionText(option) }, { "" }, AllIcons.Language.Python), DumbAware {
-      override fun actionPerformed(e: AnActionEvent) {
-        // A taken/blank name can't back a new env (the field shows it in red) — don't create.
-        if (editableName != null && !editableName.isValid) return
-        createEvoEnv(project, pyProjectKey, nodeId, option.token, path, editableName?.value ?: defaultName, scope)
+    object : AnAction({ addVersionText(option) }, { "" }, AllIcons.Language.Python), DumbAware, EvoAlternatives {
+      override fun actionPerformed(e: AnActionEvent) = createEnv(nodeId, option.token, path, editableName, defaultName)
+
+      override val alternativesTitle: String
+        get() = PySdkFrontendBundle.message("evo.sdk.status.bar.popup.add.new.base.title")
+
+      // Built once: the renderer asks whether this row has alternatives on every repaint, and the hit-test on every
+      // mouse move. Each lambda still reads the edited name when it runs, not now.
+      override val alternatives: List<EvoTreeLeafElement> by lazy {
+        option.bases.map { base ->
+          baseInterpreterRow(base) { createEnv(nodeId, base.token, path, editableName, defaultName) }
+        }
       }
     }
+
+  /** Creates the environment a version or base-interpreter row stands for, unless the typed name rules it out. */
+  private fun createEnv(nodeId: String, token: String, path: String, editableName: EvoEditableName?, defaultName: String?) {
+    // A taken/blank name can't back a new env (the field shows it in red) — don't create.
+    if (editableName != null && !editableName.isValid) return
+    createEvoEnv(project, pyProjectKey, nodeId, token, path, editableName?.value ?: defaultName, scope)
+  }
 
   /** Version row text: "Default" for uv's default (blank token), otherwise "Python <version>". */
   private fun addVersionText(option: EvoAddNewOptionDto): @NlsActions.ActionText String =
@@ -208,13 +301,14 @@ internal class EvoPySdkSwitchPopupFactory(
   /**
    * Drops the intermediate one-row popup from a tool whose entire node is a single "add new environment" row (a tool with
    * no environments yet): with nothing to choose between, that step is pure friction, so expanding the tool lands straight
-   * on the name field + Python versions. The row's name holder is carried over, since the popup renders the field — and
-   * the caption above it, the only thing left saying what the step does — from the node it is showing. A node with any
-   * environment of its own keeps its normal listing.
+   * on the name field + Python versions. The row's name holder and its version rows are carried over, since the popup
+   * renders the field — and the caption above it, the only thing left saying what the step does, and the
+   * expand/collapse toggle below it — from the node it is showing. A node with any environment of its own keeps its
+   * normal listing.
    */
   private fun EvoLoadedNode.withoutLoneAddNewStep(): EvoLoadedNode {
     val onlyRow = sections.singleOrNull()?.elements?.singleOrNull() as? EvoTreeAddNewNode ?: return this
-    return EvoLoadedNode(onlyRow.sections.toList(), refreshable, onlyRow.editableName)
+    return EvoLoadedNode(onlyRow.sections.toList(), refreshable, onlyRow.editableName, onlyRow.versionRows)
   }
 
   /**
@@ -264,7 +358,13 @@ internal class EvoPySdkSwitchPopupFactory(
         add(EvoTreeLazyNodeElement(node.label, node.icon.icon()) { force ->
           val result = evoRpc { requestEvoNode(projectId, pyProjectKey, node.id, traceId, force) }
           val refreshable = (result as? EvoLoadResultDto.Ok)?.refreshable == true
-          EvoLoadedNode(result.toSections(node.id, traceId), refreshable).withoutLoneAddNewStep()
+          val collapsed = result.toSections(node.id, traceId)
+          // A tool whose rows carry interpreters (poetry) can be expanded like the add-new list; one whose rows do not
+          // gets no toggle, since toExpandedSections is then empty.
+          val expanded = result.toExpandedSections(node.id, traceId)
+          val versionRows = if (expanded.isEmpty()) null else EvoVersionRows(collapsed, expanded)
+          EvoLoadedNode(versionRows?.sections() ?: collapsed, refreshable, versionRows = versionRows)
+            .withoutLoneAddNewStep()
         })
       }
       if (associated.isNotEmpty() && nodes.none { it.id == ADVANCED_NODE_ID }) add(associatedInterpretersNode(traceId))

@@ -75,7 +75,7 @@ internal class PoetryEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
       val title = PySdkBundle.message("evolution.python.version", versionStr)
       val existingBinary = poetryEnvRoots.firstOrNull { it.name.endsWith(versionStr) }?.resolvePythonExecutable()
       if (existingBinary != null) evoEnvLeaf(title = title, pythonBinary = existingBinary, icon = icon)
-      else evoCreateEnvLeaf(title = title, token = option.token, icon = icon)
+      else evoCreateEnvLeaf(title = title, token = option.token, icon = icon, bases = option.bases)
     }
     val virtualenvsDir = runPoetry(projectDir, "config", "virtualenvs.path").getOrNull()?.trim()?.takeIf { it.isNotBlank() }
       ?.let { Path.of(it) }

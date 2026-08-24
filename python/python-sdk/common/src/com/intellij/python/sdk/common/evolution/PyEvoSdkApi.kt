@@ -387,6 +387,12 @@ data class EvoLeafDto(
    * option's token is the chosen base Python — passed back as [PyInterpreterRef.CreateEnv] `token`/`folder`.
    */
   val createVersions: List<EvoAddNewOptionDto>? = null,
+  /**
+   * For a [PyInterpreterRef.CreateEnv] row whose token *is* a base interpreter (poetry's per-version cache rows): the
+   * other installs of that same version, so the row can offer the finer choice the same way an "add new" version row
+   * does. Empty everywhere else — including a hatch declared env, whose token is an env name and not an interpreter.
+   */
+  val bases: List<EvoBasePythonDto> = emptyList(),
 )
 
 @ApiStatus.Internal
@@ -458,6 +464,54 @@ data class EvoAddNewOptionDto(
   /** Short version label, e.g. `3.13`; empty for uv's "default" (uv picks the version). */
   val title: @NlsSafe String,
   /** Tool-specific creation token passed back as [PyInterpreterRef.CreateEnv.token] (uv: version, empty = default; pip: python path). */
+  val token: @NonNls String,
+  /**
+   * The individual interpreters this one version stands for, when the machine has several of it (a `pyenv` 3.12 and a
+   * python.org 3.12), newest-listed first. [token] is the first of them — the one the row creates from when the user
+   * does not choose — so this list is a refinement of that choice, never a replacement for it.
+   *
+   * Empty when there is nothing to choose: only tools that build an environment *from* an existing interpreter (pip,
+   * poetry, hatch) can offer it. uv and conda provide the interpreter themselves, so their [token] is a version rather
+   * than a path and a base interpreter is not a thing the user could pick.
+   */
+  val bases: List<EvoBasePythonDto> = emptyList(),
+)
+
+/**
+ * One concrete interpreter behind an [EvoAddNewOptionDto] — see [EvoAddNewOptionDto.bases].
+ *
+ * The path is the title because that is what actually tells two installs of the same version apart; the version is
+ * already known from the option this belongs to.
+ */
+@ApiStatus.Internal
+@Serializable
+data class EvoBasePythonDto(
+  /**
+   * The interpreter binary for display: home-shortened and, past the row budget, middle-elided the same way a section
+   * header's folder path is (`~/.cache/…/conda/Min…/envs/child/bin/python`). A full interpreter path is far wider than
+   * a popup row, and widening the row would push the whole popup off the widget.
+   */
+  val title: @NlsSafe String,
+  /** The un-elided form of [title], shown as the row's tooltip. `null` when [title] is already the whole path. */
+  val titleTooltip: @NlsSafe String? = null,
+  /**
+   * The interpreter's version, patch included (`3.15.0`) — taken from the `--version` output the backend's scan already
+   * ran, so it costs nothing here. Falls back to major.minor for an interpreter whose version was never captured.
+   */
+  val version: @NlsSafe String,
+  /**
+   * The icon of the tool this interpreter came from (uv, Homebrew, pyenv, …), which is how the v2 "Add Interpreter"
+   * dialog distinguishes them — one glance instead of a word per row. `null` when the tool is unknown, and the frontend
+   * then falls back to the plain Python logo.
+   */
+  val icon: IconId? = null,
+  /**
+   * What qualifies this interpreter beyond its version and its tool — currently only whether it is free-threaded, which
+   * is a property of the build rather than of where it came from and so has no icon of its own. `null` when there is
+   * nothing to add.
+   */
+  val qualifier: @NlsSafe String? = null,
+  /** Creation token: this interpreter's binary path, passed back as [PyInterpreterRef.CreateEnv.token]. */
   val token: @NonNls String,
 )
 

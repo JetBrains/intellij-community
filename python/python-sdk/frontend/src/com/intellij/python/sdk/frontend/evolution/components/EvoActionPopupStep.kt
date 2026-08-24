@@ -47,11 +47,48 @@ open class EvoActionPopupStep(
         val event = AnActionEvent.createEvent(dataContext, element.presentation, ActionPlaces.POPUP, ActionUiKind.POPUP, null)
         updateAction(element.action, event)
       }
-    CommonDataKeys.PROJECT.getData(dataContext)?.let { project ->
-      node.sections.forEach { section ->
-        section.elements.filter { it.state == State.CREATED }.forEach { it.load(project, scope, listeners) }
-      }
+    loadNewElements()
+  }
+
+  /**
+   * Loads every element not loaded yet. A leaf's load only marks it [State.DONE] — but that is what [isSelectable]
+   * requires, so rows swapped in later (see [toggleExpanded]) are inert until this has run over them.
+   */
+  private fun loadNewElements() {
+    val project = CommonDataKeys.PROJECT.getData(dataContext) ?: return
+    node.sections.forEach { section ->
+      section.elements.filter { it.state == State.CREATED }.forEach { it.load(project, scope, listeners) }
     }
+  }
+
+  /** The collapsed/expanded views of this step's version list, or null when it is not an add-new step. */
+  val versionRows: EvoVersionRows? get() = node.versionRows
+
+  /**
+   * A child step listing [alternatives] as its rows — the "…" menu of a row that stands for several choices.
+   *
+   * Built here rather than in the popup so it inherits this step's data context and scope: the rows it produces run the
+   * same creation the parent row would have run, only with a different interpreter, and that closure was captured when
+   * the parent row was built.
+   */
+  fun alternativesStep(alternatives: EvoAlternatives): EvoActionPopupStep {
+    val node = EvoTreeStaticNodeElement(alternatives.alternativesTitle, AllIcons.Language.Python,
+                                        listOf(EvoTreeSection(elements = alternatives.alternatives)))
+    return EvoActionPopupStep(alternatives.alternativesTitle, node, dataContext, scope)
+  }
+
+  /**
+   * Expands the version list into its individual interpreters, or collapses it back.
+   *
+   * Only the node's sections are updated — no listener is notified and nothing is loaded — because the caller rebuilds
+   * the popup around this node rather than refreshing the open one, and the step built for the new popup loads its own
+   * elements. See `EvoTreePopup.toggleExpandedAndReopen`.
+   */
+  fun toggleExpanded() {
+    val versionRows = node.versionRows ?: return
+    versionRows.toggle()
+    node.sections.clear()
+    node.sections.addAll(versionRows.sections())
   }
 
   override fun addListener(listener: ListPopupStep.ListPopupModelListener) {
