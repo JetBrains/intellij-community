@@ -1142,6 +1142,8 @@
 - a:getSymbol():com.intellij.polySymbols.PolySymbol
 *f:com.intellij.polySymbols.refactoring.PolySymbolRenameTarget$Companion
 - f:create(com.intellij.polySymbols.PolySymbol):com.intellij.polySymbols.refactoring.PolySymbolRenameTarget
+*:com.intellij.polySymbols.references.PolySymbolOwnReferenceHost
+- com.intellij.psi.PsiElement
 *:com.intellij.polySymbols.references.PolySymbolReference
 - com.intellij.model.psi.PsiSymbolReference
 - getProblems():java.util.Collection

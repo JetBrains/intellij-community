@@ -8,6 +8,7 @@ import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.PolySymbolNameSegment.MatchProblem
 import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
+import com.intellij.polySymbols.references.PolySymbolOwnReferenceHost
 import com.intellij.polySymbols.references.PolySymbolOwnReferencesBuilder
 import com.intellij.polySymbols.references.PolySymbolReference
 import com.intellij.polySymbols.references.PolySymbolReferenceProblem
@@ -17,7 +18,7 @@ import com.intellij.polySymbols.utils.unwrapMatchedSymbols
 import com.intellij.psi.PsiElement
 import com.intellij.util.SmartList
 
-internal class PolySymbolOwnReferencesBuilderImpl(private val element: PsiElement) : PolySymbolOwnReferencesBuilder {
+internal class PolySymbolOwnReferencesBuilderImpl(private val element: PolySymbolOwnReferenceHost) : PolySymbolOwnReferencesBuilder {
 
   private val references = SmartList<PolySymbolReference>()
 

@@ -18,7 +18,7 @@ import com.intellij.psi.PsiElement
  * and implement [com.intellij.model.psi.PsiExternalReferenceHost], which provide more flexibility through
  * eager reference resolution.
  */
-fun polySymbolOwnReferences(element: PsiElement, configure: PolySymbolOwnReferencesBuilder.() -> Unit): List<PolySymbolReference> =
+fun polySymbolOwnReferences(element: PolySymbolOwnReferenceHost, configure: PolySymbolOwnReferencesBuilder.() -> Unit): List<PolySymbolReference> =
   PolySymbolOwnReferencesBuilderImpl(element).also { it.configure() }.build()
 
 interface PolySymbolOwnReferencesBuilder {
