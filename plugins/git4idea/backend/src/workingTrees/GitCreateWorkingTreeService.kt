@@ -95,7 +95,7 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
     val branchSpec = if (newBranchName != null) WorktreeBranchSpec.CreateNewBranch(branch, newBranchName) else WorktreeBranchSpec.CheckoutExisting(branch)
     val request = GitWorktreeCreationRequest(repository, VcsUtil.getFilePath(worktreeDir, true), branchSpec)
     val ideActivity = GitOperationsCollector.logCreateWorktreeActionInvoked(repository.project, place, branch)
-    doCreateWorkingTree(ideActivity, request, onProjectOpened)
+    doCreateWorkingTree(ideActivity, request, onProjectOpened, reportOwnProgress = false)
   }
 
   private fun loadLastParentPath(project: Project): String? =
@@ -165,6 +165,7 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
     ideActivity: StructuredIdeActivity,
     request: GitWorktreeCreationRequest,
     onProjectOpened: ((Project) -> Unit)? = null,
+    reportOwnProgress: Boolean = true,
   ) {
     GitOperationsCollector.logWorktreeCreationDialogExitedWithOk(ideActivity, request)
 
@@ -182,7 +183,7 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
     rootsUnderCreation.add(request.workingTreePath)
     val gitWTService = GitWorkingTreesService.getInstance(project)
     val result = try {
-      gitWTService.createWorkingTree(request)
+      gitWTService.createWorkingTree(request, reportOwnProgress)
     }
     finally {
       rootsUnderCreation.remove(request.workingTreePath)

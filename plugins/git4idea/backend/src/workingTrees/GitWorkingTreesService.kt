@@ -230,8 +230,13 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
     }
   }
 
-  internal suspend fun createWorkingTree(request: GitWorktreeCreationRequest): Result {
-    return withBackgroundProgress(project, GitBundle.message("progress.title.creating.worktree"), cancellable = true) {
+  /**
+   * @param reportOwnProgress whether to open a new top-level background progress for this operation. Pass `false`
+   * when the caller already runs its own background progress (e.g. checking out a PR branch into a new worktree),
+   * so this step just runs as part of it instead of opening a second progress window.
+   */
+  internal suspend fun createWorkingTree(request: GitWorktreeCreationRequest, reportOwnProgress: Boolean = true): Result {
+    val runCommand: suspend () -> Result = {
       val branch = request.branch
       val newBranchName = when (branch) {
         is WorktreeBranchSpec.CreateNewBranch -> branch.newBranchName
@@ -245,6 +250,12 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
       else {
         Result.createFailure(commandResult.errorOutputAsHtmlString)
       }
+    }
+    if (!reportOwnProgress) {
+      return runCommand()
+    }
+    return withBackgroundProgress(project, GitBundle.message("progress.title.creating.worktree"), cancellable = true) {
+      runCommand()
     }
   }
 
