@@ -52,3 +52,5 @@ c:com.intellij.psi.codeStyle.PackageEntry
 - mayOverrideSettingsOf(com.intellij.openapi.project.Project):Z
 - a:modifySettings(com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings,com.intellij.psi.PsiFile):Z
 - modifySettingsAndUiCustomization(com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings,com.intellij.psi.PsiFile):Z
+com.intellij.psi.impl.source.codeStyle.PreFormatProcessor
+- *:adjustRange(com.intellij.lang.ASTNode,com.intellij.openapi.util.TextRange):com.intellij.openapi.util.TextRange

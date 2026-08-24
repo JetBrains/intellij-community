@@ -335,6 +335,11 @@ public final class CodeFormatterFacade {
             TextRange injectedRange = initialInjectedRange;
             for (PreFormatProcessor processor : PreFormatProcessor.EP_NAME.getExtensionList()) {
               if (processor.changesWhitespacesOnly() || !myCanChangeWhitespaceOnly) {
+                injectedRange = processor.adjustRange(injected.getNode(), injectedRange);
+              }
+            }
+            for (PreFormatProcessor processor : PreFormatProcessor.EP_NAME.getExtensionList()) {
+              if (processor.changesWhitespacesOnly() || !myCanChangeWhitespaceOnly) {
                 injectedRange = processor.process(injected.getNode(), injectedRange);
               }
             }
@@ -349,6 +354,12 @@ public final class CodeFormatterFacade {
             }
           }
         }
+      }
+    }
+
+    for (PreFormatProcessor processor : PreFormatProcessor.EP_NAME.getExtensionList()) {
+      if (processor.changesWhitespacesOnly() || !myCanChangeWhitespaceOnly) {
+        result = processor.adjustRange(node, result);
       }
     }
 
