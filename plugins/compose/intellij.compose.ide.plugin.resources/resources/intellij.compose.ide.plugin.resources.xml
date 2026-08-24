@@ -127,6 +127,20 @@
             icon="com.intellij.compose.ide.plugin.shared.icons.ComposeIdePluginSharedIcons.ComposeMultiplatform">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
     </action>
+    <group id="compose.resource.preview.Toolbar">
+      <group id="compose.resource.preview.background"
+             popup="true"
+             icon="com.intellij.compose.ide.plugin.shared.icons.ComposeIdePluginSharedIcons.ViewMode">
+        <action id="compose.resource.preview.background.none"
+                class="com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.ComposeResourcePreviewBackgroundAction$None"/>
+        <action id="compose.resource.preview.background.white"
+                class="com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.ComposeResourcePreviewBackgroundAction$White"/>
+        <action id="compose.resource.preview.background.black"
+                class="com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.ComposeResourcePreviewBackgroundAction$Black"/>
+        <action id="compose.resource.preview.background.checkered"
+                class="com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.ComposeResourcePreviewBackgroundAction$Checkered"/>
+      </group>
+    </group>
   </actions>
   <projectListeners>
     <listener class="com.intellij.compose.ide.plugin.resources.gradle.GradleComposeResourcesManager$ComposeResourcesProjectDataImportListener"

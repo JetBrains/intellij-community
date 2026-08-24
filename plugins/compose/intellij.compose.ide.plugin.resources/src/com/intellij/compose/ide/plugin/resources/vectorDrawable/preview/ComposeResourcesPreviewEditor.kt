@@ -19,6 +19,12 @@ package com.intellij.compose.ide.plugin.resources.vectorDrawable.preview
 
 import com.intellij.compose.ide.plugin.resources.vectorDrawable.rendering.use
 import com.intellij.compose.ide.plugin.shared.ComposeIdeBundle
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.diagnostic.rethrowControlFlowException
@@ -63,11 +69,16 @@ internal class ComposeResourcePreviewEditor(
   coroutineScope: CoroutineScope,
 ) : UserDataHolderBase(), FileEditor {
 
-  private val rootPanel = JBPanel<JBPanel<*>>(BorderLayout()).apply {
-    isFocusable = true
+  companion object {
+    val DATA_KEY: DataKey<ComposeResourcePreviewEditor> =
+      DataKey.create("compose.resource.preview.editor")
   }
 
-  private val imageCanvas = FitCenterImagePanel()
+  private val rootPanel = PreviewRootPanel()
+
+  private val contentPanel = JBPanel<JBPanel<*>>(BorderLayout()).apply { isOpaque = false }
+
+  private val imageCanvas = FitCenterImagePanel(ComposeResourcePreviewBackground.CHECKERED)
 
   private val updateRequests = MutableSharedFlow<Unit>(
     replay = 1,
@@ -75,7 +86,9 @@ internal class ComposeResourcePreviewEditor(
   )
 
   init {
-    rootPanel.add(imageCanvas, BorderLayout.CENTER)
+    contentPanel.add(imageCanvas, BorderLayout.CENTER)
+    rootPanel.add(createToolbar().component, BorderLayout.NORTH)
+    rootPanel.add(contentPanel, BorderLayout.CENTER)
 
     updateRequests
       .debounce(100.milliseconds)
@@ -96,6 +109,18 @@ internal class ComposeResourcePreviewEditor(
     }, this)
   }
 
+  var previewBackground: ComposeResourcePreviewBackground by imageCanvas::previewBackground
+
+  private fun createToolbar(): ActionToolbar {
+    val actionManager = ActionManager.getInstance()
+    val group = actionManager.getAction("compose.resource.preview.Toolbar") as ActionGroup
+    return actionManager.createActionToolbar("ComposeResourcePreviewToolbar", group, true).apply {
+      targetComponent = rootPanel
+      setReservePlaceAutoPopupIcon(false)
+      component.isOpaque = false
+    }
+  }
+
   private suspend fun renderAndUpdatePreview() {
     val text = readAction { document?.text }
     if (text.isNullOrBlank()) {
@@ -103,8 +128,8 @@ internal class ComposeResourcePreviewEditor(
       return
     }
 
-    val targetWidth = rootPanel.width
-    val targetHeight = rootPanel.height
+    val targetWidth = contentPanel.width
+    val targetHeight = contentPanel.height
 
     if (targetWidth <= 0 || targetHeight <= 0) {
       clearUI()
@@ -141,28 +166,35 @@ internal class ComposeResourcePreviewEditor(
 
   private suspend fun showImage(image: BufferedImage) = withContext(Dispatchers.EDT) {
     imageCanvas.image = image
-
-    if (rootPanel.components.firstOrNull() != imageCanvas) {
-      rootPanel.removeAll()
-      rootPanel.add(imageCanvas, BorderLayout.CENTER)
-      rootPanel.revalidate()
-      rootPanel.repaint()
-    }
+    setContent(imageCanvas)
   }
 
   private suspend fun showMessage(message: @NlsContexts.DialogMessage String) = withContext(Dispatchers.EDT) {
     imageCanvas.image = null
-    val label = JBLabel(message, SwingConstants.CENTER)
+    setContent(JBLabel(message, SwingConstants.CENTER))
+  }
 
-    rootPanel.removeAll()
-    rootPanel.add(label, BorderLayout.CENTER)
-    rootPanel.revalidate()
-    rootPanel.repaint()
+  private fun setContent(component: JComponent) {
+    if (contentPanel.components.firstOrNull() === component) return
+    contentPanel.removeAll()
+    contentPanel.add(component, BorderLayout.CENTER)
+    contentPanel.revalidate()
+    contentPanel.repaint()
   }
 
   private sealed class RenderResult {
     data class Success(val image: BufferedImage) : RenderResult()
     data class Error(val message: @NlsContexts.DialogMessage String) : RenderResult()
+  }
+
+  private inner class PreviewRootPanel : JBPanel<PreviewRootPanel>(BorderLayout()), UiDataProvider {
+    init {
+      isFocusable = true
+    }
+
+    override fun uiDataSnapshot(sink: DataSink) {
+      sink[DATA_KEY] = this@ComposeResourcePreviewEditor
+    }
   }
 
   override fun getComponent(): JComponent = rootPanel
@@ -178,10 +210,17 @@ internal class ComposeResourcePreviewEditor(
 }
 
 /** Lightweight canvas that smoothly stretches the image */
-private class FitCenterImagePanel : JPanel() {
+private class FitCenterImagePanel(background: ComposeResourcePreviewBackground) : JPanel() {
   var image: BufferedImage? = null
     set(value) {
       if (field === value) return
+      field = value
+      repaint()
+    }
+
+  var previewBackground: ComposeResourcePreviewBackground = background
+    set(value) {
+      if (field == value) return
       field = value
       repaint()
     }
@@ -192,9 +231,11 @@ private class FitCenterImagePanel : JPanel() {
 
   override fun paintComponent(g: Graphics) {
     super.paintComponent(g)
-    val img = image ?: return
 
     (g.create() as Graphics2D).use { g2d ->
+      ComposeResourcePreviewBackgroundPainter.paint(g2d, previewBackground, width, height)
+
+      val img = image ?: return
       val availableW = width
       val availableH = height
 

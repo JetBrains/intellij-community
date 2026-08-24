@@ -15,4 +15,5 @@ public final class ComposeIdePluginSharedIcons {
     return IconManager.getInstance().loadRasterizedIcon(path, ComposeIdePluginSharedIcons.class.getClassLoader(), cacheKey, flags);
   }
   /** 16x16 */ public static final @NotNull Icon ComposeMultiplatform = load("icons/compose-multiplatform.svg", -388692493, 0);
+  /** 16x16 */ public static final @NotNull Icon ViewMode = load("icons/view-mode.svg", 1931495303, 0);
 }
