@@ -55,6 +55,7 @@ import com.intellij.openapi.progress.impl.ProgressRunner;
 import com.intellij.openapi.progress.util.PotemkinProgress;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.SuvorovProgress;
+import com.intellij.openapi.progress.util.UtilKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -637,7 +638,9 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       return captured.getFirst();
     }, locked);
 
-    LaterInvocator.invokeAndWait(state, wrapWithLocks, finalRunnable, Objects.requireNonNull(contextCleanup.get()));
+    UtilKt.waitWithParallelismCompensation(() -> {
+      LaterInvocator.invokeAndWait(state, wrapWithLocks, finalRunnable, Objects.requireNonNull(contextCleanup.get()));
+    });
   }
 
   private @NotNull Runnable wrapWithRunIntendedWriteActionAndModality(@NotNull Runnable runnable,

@@ -2,9 +2,11 @@
 package com.intellij.openapi.progress.util
 
 import com.intellij.util.IntelliJCoroutinesFacade
+import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration.Companion.milliseconds
 
-internal fun waitWithParallelismCompensation(runnable: Runnable) {
+@ApiStatus.Internal
+fun waitWithParallelismCompensation(runnable: Runnable) {
   IntelliJCoroutinesFacade.runAndCompensateParallelism(500.milliseconds, runnable::run)
 }
 
