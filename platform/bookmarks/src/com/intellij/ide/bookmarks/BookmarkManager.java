@@ -77,7 +77,7 @@ public final class BookmarkManager implements PersistentStateComponent<Element>,
   private boolean mySortedState;
   private final AtomicReference<List<Bookmark>> myPendingState = new AtomicReference<>();
 
-  public static BookmarkManager getInstance(@NotNull Project project) {
+  public static @Nullable BookmarkManager getInstance(@NotNull Project project) {
     return project.getService(BookmarkManager.class);
   }
 

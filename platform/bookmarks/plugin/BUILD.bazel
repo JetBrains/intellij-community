@@ -46,7 +46,16 @@ dev_dist_plugin(
         "//platform/bookmarks/frontend",
         "//platform/xdebugger-impl/bookmarks",
     ],
+    descriptor = "resources/META-INF/plugin.xml",
     descriptor_module = ":plugin",
+    descriptors = {
+        "@community//platform/bookmarks/backend:resources/intellij.platform.bookmarks.backend.xml": "intellij.platform.bookmarks.backend.xml",
+        "@community//platform/bookmarks/frontend:resources/intellij.platform.bookmarks.frontend.xml": "intellij.platform.bookmarks.frontend.xml",
+        "@community//platform/bookmarks:resources/intellij.platform.bookmarks.xml": "intellij.platform.bookmarks.xml",
+        "@community//platform/vcs-log/impl/bookmarks:resources/intellij.platform.vcs.log.impl.bookmarks.xml": "intellij.platform.vcs.log.impl.bookmarks.xml",
+        "@community//platform/xdebugger-impl/bookmarks:resources/intellij.platform.debugger.impl.bookmarks.xml": "intellij.platform.debugger.impl.bookmarks.xml",
+    },
+    main_module = "intellij.platform.bookmarks.plugin",
     prepacked_content_modules = [
         "//platform/bookmarks:bookmarks_content_module_jar",
         "//platform/vcs-log/impl/bookmarks:bookmarks_content_module_jar",

@@ -16,7 +16,7 @@ class MigrationTest : AbstractEditorTest() {
     assertNull(manager.defaultGroup)
 
     initText("point me")
-    BookmarkManager.getInstance(project).apply {
+    BookmarkManager.getInstance(project)!!.apply {
       val bookmark = addTextBookmark(file.virtualFile, 0, "description")
       manager.noStateLoaded()
       waitForAlarm(50)

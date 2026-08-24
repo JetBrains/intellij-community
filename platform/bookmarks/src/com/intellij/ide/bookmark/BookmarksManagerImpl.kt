@@ -100,8 +100,11 @@ class BookmarksManagerImpl @ApiStatus.Internal constructor(private val project: 
     project.messageBus.connect().subscribe(BookmarksListener.TOPIC, listener)
     StartupManager.getInstance(project).runAfterOpened {
       LOG.info("no state loaded for new bookmarks")
-      com.intellij.ide.bookmarks.BookmarkManager.getInstance(project).allBookmarks.forEach { listener.bookmarkAdded(it) }
-      invoker.invokeLater { noStateLoaded(FavoritesManager.getInstance(project)) }
+      val oldBookmarkManager = com.intellij.ide.bookmarks.BookmarkManager.getInstance(project)
+      if (oldBookmarkManager != null) {
+        oldBookmarkManager.allBookmarks.forEach { listener.bookmarkAdded(it) }
+        invoker.invokeLater { noStateLoaded(FavoritesManager.getInstance(project)) }
+      }
     }
   }
 

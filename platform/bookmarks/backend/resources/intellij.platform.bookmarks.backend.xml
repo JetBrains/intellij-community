@@ -16,5 +16,7 @@
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.bookmarks.backend.BookmarksServiceProvider"/>
+
+    <projectService serviceImplementation="com.intellij.ide.bookmarks.BookmarkManager"/>
   </extensions>
 </idea-plugin>
