@@ -195,6 +195,286 @@ class DirtyFilesQueueTest {
     }
   }
 
+  /** Verifies that advancing one project cursor does not consume an indexable request owned by another project. */
+  @Test
+  fun `project processes request left pending by another project cursor`() {
+    runBlocking {
+      val filetype = FakeFileType()
+      registerFiletype(filetype)
+      openProject("${testNameRule.methodName}-A") { projectA, moduleA ->
+        val srcA = tempDir.createVirtualDir("src-owned-A")
+        moduleA.createContentRoot(projectA, srcA)
+        IndexingTestUtil.waitUntilIndexesAreReady(projectA)
+
+        openProject("${testNameRule.methodName}-B") { projectB, moduleB ->
+          val srcB = tempDir.createVirtualDir("src-owned-B")
+          moduleB.createContentRoot(projectB, srcB)
+          IndexingTestUtil.waitUntilIndexesAreReady(projectB)
+
+          val ownedFile = edtWriteAction { srcB.createFile("owned.${filetype.defaultExtension}") }
+          IndexingTestUtil.waitUntilIndexesAreReady(projectB)
+          val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
+          waitForVfsEvents(fileBasedIndex)
+          forceUpdate(fileBasedIndex, projectB)
+
+          val collector = fileBasedIndex.filesToUpdateCollector
+          val request = FileIndexingRequest.updateRequest(ownedFile)
+          val projectAVisits = AtomicInteger()
+          val projectBVisits = AtomicInteger()
+          fileBasedIndex.installForceUpdateTestHook(testRootDisposable) { project, requests ->
+            if (requests.any { it === request }) {
+              when (project) {
+                projectA -> projectAVisits.incrementAndGet()
+                projectB -> projectBVisits.incrementAndGet()
+              }
+            }
+          }
+          collector.scheduleForUpdate(request, setOf(projectB), emptyList())
+
+          forceUpdate(fileBasedIndex, projectA)
+          assertThat(collector.isCurrent(request))
+            .describedAs { "The first project's cursor must not consume a request belonging only to the second project" }
+            .isTrue()
+
+          forceUpdate(fileBasedIndex, projectB)
+          assertThat(collector.isCurrent(request))
+            .describedAs { "The owning project must process and remove its pending request" }
+            .isFalse()
+          assertThat(projectAVisits.get())
+            .describedAs { "The first project must advance past the request after rejecting it by project scope" }
+            .isEqualTo(1)
+          assertThat(projectBVisits.get())
+            .describedAs { "The owning project must independently visit the request from its own cursor" }
+            .isEqualTo(1)
+        }
+      }
+    }
+  }
+
+  /** Verifies that a newly registered project starts before requests published prior to its first cursor advancement. */
+  @Test
+  fun `new project observes request published before its registration`() {
+    assumeProjectRequestCursorFeaturesEnabled()
+    runBlocking {
+      openProject("${testNameRule.methodName}-A") { projectA, moduleA ->
+        val srcA = tempDir.createVirtualDir("src-new-project-A")
+        moduleA.createContentRoot(projectA, srcA)
+        IndexingTestUtil.waitUntilIndexesAreReady(projectA)
+
+        val foreignFile = edtWriteAction { tempDir.createVirtualDir("outside-new-project").createFile("foreign.txt") }
+        val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
+        waitForVfsEvents(fileBasedIndex)
+        forceUpdate(fileBasedIndex, projectA)
+        val collector = fileBasedIndex.filesToUpdateCollector
+        collector.removeScheduledFileFromUpdate(foreignFile)
+        val request = FileIndexingRequest.updateRequest(foreignFile)
+        collector.scheduleForUpdate(request, setOf(projectA), emptyList())
+        try {
+          val newProjectVisits = AtomicInteger()
+          fileBasedIndex.installForceUpdateTestHook(testRootDisposable) { project, requests ->
+            if (project != projectA && requests.any { it === request }) {
+              newProjectVisits.incrementAndGet()
+            }
+          }
+
+          openProject("${testNameRule.methodName}-B") { projectB, moduleB ->
+            val srcB = tempDir.createVirtualDir("src-new-project-B")
+            moduleB.createContentRoot(projectB, srcB)
+            IndexingTestUtil.waitUntilIndexesAreReady(projectB)
+            forceUpdate(fileBasedIndex, projectB)
+
+            assertThat(newProjectVisits.get())
+              .describedAs { "A new project must observe the pre-existing request exactly once before its cursor catches up" }
+              .isEqualTo(1)
+            assertThat(collector.isCurrent(request))
+              .describedAs { "The request must remain until the older project also advances past it" }
+              .isTrue()
+
+            forceUpdate(fileBasedIndex, projectA)
+          }
+        }
+        finally {
+          collector.removeScheduledFileFromUpdate(foreignFile)
+        }
+      }
+    }
+  }
+
+  /** Verifies that completing an older request cannot remove a replacement published after the processing snapshot. */
+  @Test
+  fun `rescheduled request remains pending after older request completes`() {
+    runBlocking {
+      val filetype = FakeFileType()
+      registerFiletype(filetype)
+      openProject(testNameRule.methodName) { project, module ->
+        val src = tempDir.createVirtualDir("src-rescheduled")
+        module.createContentRoot(project, src)
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
+        val file = edtWriteAction { src.createFile("rescheduled.${filetype.defaultExtension}") }
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
+
+        val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
+        waitForVfsEvents(fileBasedIndex)
+        forceUpdate(fileBasedIndex, project)
+        val collector = fileBasedIndex.filesToUpdateCollector
+        val originalRequest = FileIndexingRequest.updateRequest(file)
+        var replacementRequest: FileIndexingRequest? = null
+        val observedRequests = mutableListOf<FileIndexingRequest>()
+        fileBasedIndex.installForceUpdateTestHook(testRootDisposable) { observedProject, requests ->
+          if (observedProject == project) {
+            requests.firstOrNull { it === originalRequest || it === replacementRequest }?.let(observedRequests::add)
+          }
+          if (replacementRequest == null && requests.any { it === originalRequest }) {
+            replacementRequest = FileIndexingRequest.updateRequest(file).also {
+              collector.scheduleForUpdate(it, setOf(project), emptyList())
+            }
+          }
+        }
+        collector.scheduleForUpdate(originalRequest, setOf(project), emptyList())
+
+        forceUpdate(fileBasedIndex, project)
+        val replacement = checkNotNull(replacementRequest) { "The controlled processing window must publish a replacement request" }
+        assertThat(collector.isCurrent(replacement))
+          .describedAs { "Completion of the older request must leave its replacement pending" }
+          .isTrue()
+
+        forceUpdate(fileBasedIndex, project)
+        assertThat(collector.isCurrent(replacement))
+          .describedAs { "The next project update must process the replacement generation" }
+          .isFalse()
+        assertThat(observedRequests)
+          .describedAs { "Successive cursor snapshots must expose exactly two request generations" }
+          .hasSize(2)
+        assertThat(observedRequests[0])
+          .describedAs { "The first snapshot must expose the original request instance" }
+          .isSameAs(originalRequest)
+        assertThat(observedRequests[1])
+          .describedAs { "The next snapshot must expose the replacement request instance" }
+          .isSameAs(replacement)
+      }
+    }
+  }
+
+  /** Verifies that a request published after snapshot capture remains beyond the cursor committed for that snapshot. */
+  @Test
+  fun `request published while snapshot is processed is visited by next update`() {
+    runBlocking {
+      openProject(testNameRule.methodName) { project, _ ->
+        val firstFile = edtWriteAction { tempDir.createVirtualDir("outside-snapshot").createFile("first.txt") }
+        val secondFile = edtWriteAction { firstFile.parent.createFile("second.txt") }
+        val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
+        waitForVfsEvents(fileBasedIndex)
+        forceUpdate(fileBasedIndex, project)
+
+        val collector = fileBasedIndex.filesToUpdateCollector
+        collector.removeScheduledFileFromUpdate(firstFile)
+        collector.removeScheduledFileFromUpdate(secondFile)
+        val firstRequest = FileIndexingRequest.updateRequest(firstFile)
+        var secondRequest: FileIndexingRequest? = null
+        val observedBatches = mutableListOf<List<FileIndexingRequest>>()
+        fileBasedIndex.installForceUpdateTestHook(testRootDisposable) { observedProject, requests ->
+          if (observedProject != project) return@installForceUpdateTestHook
+          val controlledRequests = requests.filter { it === firstRequest || it === secondRequest }
+          if (controlledRequests.isNotEmpty()) {
+            observedBatches += controlledRequests
+          }
+          if (secondRequest == null && requests.any { it === firstRequest }) {
+            secondRequest = FileIndexingRequest.updateRequest(secondFile).also {
+              collector.scheduleForUpdate(it, setOf(project), emptyList())
+            }
+          }
+        }
+        collector.scheduleForUpdate(firstRequest, setOf(project), emptyList())
+        try {
+          forceUpdate(fileBasedIndex, project)
+          val publishedAfterSnapshot = checkNotNull(secondRequest) { "The first snapshot must publish a later request" }
+          forceUpdate(fileBasedIndex, project)
+
+          val filterByRequestVersion = SystemProperties.getBooleanProperty(
+            "FileBasedIndexImpl.USE_REQUEST_VERSION_TO_SKIP_REPEATING_UPDATES",
+            false,
+          )
+          val cleanupVisitedRequests = SystemProperties.getBooleanProperty(
+            "FileBasedIndexImpl.CLEAN_REQUESTS_VISITED_BY_ALL_PROJECTS",
+            true,
+          )
+          val expectedSecondBatch = if (filterByRequestVersion || cleanupVisitedRequests) {
+            listOf(publishedAfterSnapshot)
+          }
+          else {
+            listOf(firstRequest, publishedAfterSnapshot)
+          }
+          assertThat(observedBatches)
+            .describedAs { "The project cursor must retain requests published after the captured boundary" }
+            .hasSize(2)
+          assertThat(observedBatches[0])
+            .describedAs { "The first update must expose the request published before its boundary" }
+            .containsExactly(firstRequest)
+          assertThat(observedBatches[1])
+            .describedAs { "The next update must apply the configured request retention rules" }
+            .containsExactlyInAnyOrderElementsOf(expectedSecondBatch)
+        }
+        finally {
+          collector.removeScheduledFileFromUpdate(firstFile)
+          collector.removeScheduledFileFromUpdate(secondFile)
+        }
+      }
+    }
+  }
+
+  /** Verifies that an aborted update retains its request and a later successful pass retries the same cursor suffix. */
+  @Test
+  fun `failed request is retried before project cursor advances`() {
+    assumeProjectRequestCursorFeaturesEnabled()
+    runBlocking {
+      openProject(testNameRule.methodName) { project, _ ->
+        val file = edtWriteAction { tempDir.createVirtualDir("outside-retry").createFile("retry.txt") }
+        val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
+        waitForVfsEvents(fileBasedIndex)
+        forceUpdate(fileBasedIndex, project)
+
+        val collector = fileBasedIndex.filesToUpdateCollector
+        collector.removeScheduledFileFromUpdate(file)
+        val request = FileIndexingRequest.updateRequest(file)
+        val visits = AtomicInteger()
+        var failFirstAttempt = true
+        fileBasedIndex.installForceUpdateTestHook(testRootDisposable) { observedProject, requests ->
+          if (observedProject == project && requests.any { it === request }) {
+            visits.incrementAndGet()
+            if (failFirstAttempt) {
+              failFirstAttempt = false
+              error("Controlled forceUpdate failure before request completion")
+            }
+          }
+        }
+        collector.scheduleForUpdate(request, setOf(project), emptyList())
+
+        try {
+          val firstFailure = runCatching { forceUpdate(fileBasedIndex, project) }.exceptionOrNull()
+          assertThat(firstFailure)
+            .describedAs { "The controlled first update must abort before committing its cursor" }
+            .isInstanceOf(IllegalStateException::class.java)
+          assertThat(collector.isCurrent(request))
+            .describedAs { "An aborted update must retain the request for a retry" }
+            .isTrue()
+
+          forceUpdate(fileBasedIndex, project)
+          assertThat(visits.get())
+            .describedAs { "The same cursor suffix must be visited once for the failed attempt and once for its retry" }
+            .isEqualTo(2)
+
+          forceUpdate(fileBasedIndex, project)
+          assertThat(visits.get())
+            .describedAs { "A successful retry must advance the project cursor past the retried request" }
+            .isEqualTo(2)
+        }
+        finally {
+          collector.removeScheduledFileFromUpdate(file)
+        }
+      }
+    }
+  }
+
   @Test
   fun `test queues removed from disk after invalidating caches`() {
     runBlocking {
@@ -248,6 +528,13 @@ class DirtyFilesQueueTest {
     }
   }
 
+  /** Runs the unrestricted synchronous update path used to verify project cursor advancement. */
+  private suspend fun forceUpdate(fileBasedIndex: FileBasedIndexImpl, project: Project) {
+    smartReadAction(project) {
+      fileBasedIndex.forceUpdateProjectInTest(project)
+    }
+  }
+
   /** Skips cursor-cleanup contract tests when either independently configurable production feature is disabled. */
   private fun assumeProjectRequestCursorFeaturesEnabled() {
     assumeTrue(
@@ -258,6 +545,12 @@ class DirtyFilesQueueTest {
       "Cleanup by project request cursors is disabled",
       FileBasedIndexImpl.CLEAN_REQUESTS_VISITED_BY_ALL_PROJECTS
     )
+  }
+
+  /** Delivers queued VFS events into the request collector before a test installs controlled requests. */
+  private fun waitForVfsEvents(fileBasedIndex: FileBasedIndexImpl) {
+    fileBasedIndex.changedFilesCollector.waitForVfsEventsExecuted(10, SECONDS) { }
+    fileBasedIndex.changedFilesCollector.ensureUpToDate()
   }
 
   internal class BadFileBasedIndexExtension : FileBasedIndexExtension<String, String>() {
@@ -591,16 +884,4 @@ class DirtyFilesQueueTest {
     }
   }
 
-  /** Delivers queued VFS events into the request collector. */
-  private fun waitForVfsEvents(fileBasedIndex: FileBasedIndexImpl) {
-    fileBasedIndex.changedFilesCollector.waitForVfsEventsExecuted(10, SECONDS) { }
-    fileBasedIndex.changedFilesCollector.ensureUpToDate()
-  }
-
-  /** Runs the unrestricted update path that advances the project cursor. */
-  private suspend fun forceUpdate(fileBasedIndex: FileBasedIndexImpl, project: Project) {
-    smartReadAction(project) {
-      fileBasedIndex.forceUpdateProjectInTest(project)
-    }
-  }
 }
