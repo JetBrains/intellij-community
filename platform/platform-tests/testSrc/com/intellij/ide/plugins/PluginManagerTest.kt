@@ -2,9 +2,8 @@
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.DisabledPluginsState.Companion.saveDisabledPluginsAndInvalidate
+import com.intellij.ide.plugins.ProductPluginInitContext.Companion.computeEssentialPlugins
 import com.intellij.ide.plugins.ProductPluginInitContext.Companion.configureProductModeModules
-import com.intellij.idea.AppMode
-import com.intellij.idea.WellKnownCommand
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsSafe
@@ -158,21 +157,6 @@ class PluginManagerTest {
   }
 
   @Test
-  fun `remote development plugin is essential only in remote dev host mode`() {
-    val remoteDevelopmentPlugin = PluginId.getId("com.jetbrains.remoteDevelopment")
-    try {
-      AppMode.setFlags(listOf(WellKnownCommand.SERVER_MODE))
-      assertThat(ProductPluginInitContext().essentialPlugins).contains(remoteDevelopmentPlugin)
-
-      AppMode.setFlags(emptyList())
-      assertThat(ProductPluginInitContext().essentialPlugins).doesNotContain(remoteDevelopmentPlugin)
-    }
-    finally {
-      AppMode.setFlags(emptyList())
-    }
-  }
-
-  @Test
   fun `product mode modules match the gold data`() {
     val modes = listOf(
       ProductMode.MONOLITH to listOf(
@@ -241,6 +225,20 @@ class PluginManagerTest {
         .joinToString("\n") { (if (it.second) "+ " else "- ") + it.first }
       val expected = expectedValues.joinToString("\n")
       assertEquals("Product modules for '${currentMode.id}' do not match gold data", expected, actual)
+    }
+  }
+
+  @Test
+  fun `essential plugins are derived from the product mode`() {
+    val remoteDev = PluginId.getId("com.jetbrains.remoteDevelopment")
+    val declared = listOf(PluginId.getId("com.intellij.java"))
+    val modesWithRemoteDev = setOf(ProductMode.BACKEND, ProductMode.FRONTEND, ProductMode.LIGHT, ProductMode.LIGHT_WITH_RD_CONNECTION)
+    listOf(ProductMode.MONOLITH, ProductMode.FRONTEND, ProductMode.BACKEND,
+           ProductMode.LIGHT, ProductMode.LIGHT_WITH_RD_CONNECTION, ProductMode.LANGUAGE_SERVER).forEach { mode ->
+      val expected = listOf(PluginManagerCore.CORE_ID, declared.single()) + listOfNotNull(remoteDev.takeIf { mode in modesWithRemoteDev })
+      assertThat(computeEssentialPlugins(declared, productModeId = mode.id))
+        .describedAs("essential plugins for '${mode.id}'")
+        .containsExactlyInAnyOrderElementsOf(expected)
     }
   }
 
