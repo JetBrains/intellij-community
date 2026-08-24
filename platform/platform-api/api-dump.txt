@@ -2329,6 +2329,7 @@ com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 a:com.intellij.openapi.fileEditor.AsyncFileEditorProvider$Builder
 - <init>():V
 - a:build():com.intellij.openapi.fileEditor.FileEditor
+f:com.intellij.openapi.fileEditor.CreatedFileEditorSinkKt
 com.intellij.openapi.fileEditor.DocumentsEditor
 - com.intellij.openapi.fileEditor.FileEditor
 - a:getDocuments():com.intellij.openapi.editor.Document[]

@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
+import com.intellij.openapi.fileEditor.createdFileEditorSink
 import com.intellij.openapi.fileEditor.ex.StructureViewFileEditorProvider
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.project.Project
@@ -57,11 +58,13 @@ internal class KotlinScratchFileEditorProvider : AsyncFileEditorProvider, Struct
 
         val editorFactory = serviceAsync<EditorFactory>()
 
+        // mainEditor is registered by TextEditorProvider; the wrapper below is discarded by a cancellation landing on this withContext
+        val createdEditors = createdFileEditorSink()
         return withContext(Dispatchers.EDT) {
             val viewer = editorFactory.createViewer(editorFactory.createDocument(""), scratchFile.project, EditorKind.PREVIEW)
             Disposer.register(mainEditor, Disposable { editorFactory.releaseEditor(viewer) })
             val previewEditor = textEditorProvider.getTextEditor(viewer)
-            KotlinScratchFileEditorWithPreview(scratchFile, mainEditor, previewEditor)
+            KotlinScratchFileEditorWithPreview(scratchFile, mainEditor, previewEditor).also { createdEditors?.register(it) }
         }
     }
 }

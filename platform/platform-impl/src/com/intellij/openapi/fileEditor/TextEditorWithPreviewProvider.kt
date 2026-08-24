@@ -130,10 +130,15 @@ abstract class TextEditorWithPreviewProvider(private val previewProvider: FileEd
     targetElement.setAttribute(SPLIT_LAYOUT, value)
   }
 
+  /**
+   * An override that creates the split editor across a suspension point must register it with [registerCreatedFileEditor], the way
+   * this implementation does - otherwise a cancelled open discards the wrapper without releasing what it already holds.
+   */
   @ApiStatus.Experimental
   protected open suspend fun createSplitEditorAsync(project: Project, firstEditor: TextEditor, secondEditor: FileEditor): FileEditor {
+    val createdEditors = createdFileEditorSink()
     return withContext(Dispatchers.EDT) {
-      createSplitEditor(firstEditor, secondEditor)
+      createSplitEditor(firstEditor, secondEditor).also { createdEditors?.register(it) }
     }
   }
 
@@ -152,11 +157,13 @@ private suspend fun createEditorBuilder(
   editorCoroutineScope: CoroutineScope,
 ): FileEditor {
   return if (provider is AsyncFileEditorProvider) {
+    // an async provider registers what it creates itself
     provider.createFileEditor(project, file, document, editorCoroutineScope = editorCoroutineScope)
   }
   else {
+    val createdEditors = createdFileEditorSink()
     withContext(Dispatchers.EDT) {
-      provider.createEditor(project, file)
+      provider.createEditor(project, file).also { createdEditors?.register(it) }
     }
   }
 }
