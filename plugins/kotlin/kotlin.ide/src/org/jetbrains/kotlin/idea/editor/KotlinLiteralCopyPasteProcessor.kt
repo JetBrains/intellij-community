@@ -64,14 +64,7 @@ private fun deduceBlockSelectionWidth(startOffsets: IntArray, endOffsets: IntArr
     }
 }
 
-@ApiStatus.Internal
-abstract class KotlinLiteralCopyPasteProcessor : CopyPastePreProcessor {
-    enum class EntryProcessingMode {
-        NOT_ESCAPED, ESCAPED
-    }
-
-    abstract val singleQuotedEntryProcessingMode: EntryProcessingMode
-
+internal class KotlinLiteralCopyPasteProcessor : CopyPastePreProcessor {
     override fun preprocessOnCopy(file: PsiFile, startOffsets: IntArray, endOffsets: IntArray, text: String): String? {
         if (file !is KtFile) {
             return null
@@ -160,11 +153,7 @@ abstract class KotlinLiteralCopyPasteProcessor : CopyPastePreProcessor {
             when (it) {
                 is LiteralChunk -> StringUtil.escapeStringCharacters(it.text.length, it.text, additionalEscapedChars, res)
                 is EntryChunk -> {
-                    when (singleQuotedEntryProcessingMode) {
-                        EntryProcessingMode.NOT_ESCAPED -> res.append(it.text)
-                        EntryProcessingMode.ESCAPED ->
-                            StringUtil.escapeStringCharacters(it.text.length, it.text, additionalEscapedChars, res)
-                    }
+                    StringUtil.escapeStringCharacters(it.text.length, it.text, additionalEscapedChars, res)
                 }
                 is NewLineChunk -> res.append(lineBreak)
             }
