@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.typeInformation
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.CommonBundle
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -9,7 +8,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.DumbAwareAction
@@ -18,12 +17,12 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.Messages
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.cancellation.CancellationException
 
 internal class PyGenerateTypeInformationAction : DumbAwareAction(
   PyBundle.message("action.Python.GenerateTypeInformation.text"),
@@ -31,7 +30,8 @@ internal class PyGenerateTypeInformationAction : DumbAwareAction(
   null,
 ) {
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = findSdk(e) != null
+    e.presentation.isEnabledAndVisible =
+      PyTypeInformationGenerator.EP_NAME.extensionList.isNotEmpty() && findSdk(e) != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -39,8 +39,9 @@ internal class PyGenerateTypeInformationAction : DumbAwareAction(
     val sdk = findSdk(e) ?: return
 
     PyPackageCoroutine.launch(project, Dispatchers.IO) {
-      val packageManager = PythonPackageManager.forSdk(project, sdk)
-      val generator = PyTypeInformationGenerator.EP_NAME.extensionList.firstOrNull { it.isApplicable(packageManager) }
+      val generator = findApplicableTypeInformationGenerator(PyTypeInformationGenerator.EP_NAME.extensionList) {
+        it.isApplicable(project, sdk)
+      }
       if (generator == null) {
         notify(
           project,
@@ -56,9 +57,8 @@ internal class PyGenerateTypeInformationAction : DumbAwareAction(
           project,
           PyBundle.message(
             "python.type.information.confirmation.message",
-            generator.enginePackageName,
-            sdk.name,
             generator.presentableName,
+            sdk.name,
           ),
           PyBundle.message("python.type.information.confirmation.title"),
           PyBundle.message("python.type.information.confirmation.generate"),
@@ -73,13 +73,20 @@ internal class PyGenerateTypeInformationAction : DumbAwareAction(
         PyBundle.message("python.type.information.progress", generator.presentableName),
         cancellable = true,
       ) {
-        generator.generate(project, sdk)
+        try {
+          generator.generate(project, sdk)
+        }
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (e: Exception) {
+          PyTypeInformationGenerationResult.Failure(e.message ?: e.javaClass.simpleName)
+        }
       }
 
       when (result) {
         PyTypeInformationGenerationResult.Success -> {
           PythonSdkUpdater.scheduleUpdate(sdk, project)
-          DaemonCodeAnalyzer.getInstance(project).restart()
           notify(
             project,
             NotificationType.INFORMATION,
@@ -88,16 +95,12 @@ internal class PyGenerateTypeInformationAction : DumbAwareAction(
           )
         }
         is PyTypeInformationGenerationResult.Failure -> {
-          thisLogger().warn("${generator.presentableName} type information generation failed: ${result.details}")
-          val messageKey = when (result.stage) {
-            PyTypeInformationGenerationResult.Stage.INSTALL_ENGINE -> "python.type.information.install.failed.message"
-            PyTypeInformationGenerationResult.Stage.GENERATE -> "python.type.information.generate.failed.message"
-          }
+          fileLogger().warn("${generator.presentableName} type information generation failed: ${result.details}")
           notify(
             project,
             NotificationType.ERROR,
             PyBundle.message("python.type.information.failed.title"),
-            PyBundle.message(messageKey, generator.presentableName),
+            PyBundle.message("python.type.information.failed.message", generator.presentableName),
           )
         }
       }
@@ -123,4 +126,22 @@ internal class PyGenerateTypeInformationAction : DumbAwareAction(
   companion object {
     private const val NOTIFICATION_GROUP_ID = "Python type information"
   }
+}
+
+internal suspend fun findApplicableTypeInformationGenerator(
+  generators: Iterable<PyTypeInformationGenerator>,
+  isApplicable: suspend (PyTypeInformationGenerator) -> Boolean,
+): PyTypeInformationGenerator? {
+  for (generator in generators) {
+    try {
+      if (isApplicable(generator)) return generator
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Exception) {
+      fileLogger().warn("Failed to check ${generator.presentableName} type information generator", e)
+    }
+  }
+  return null
 }

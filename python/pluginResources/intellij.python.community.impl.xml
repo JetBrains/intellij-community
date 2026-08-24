@@ -1127,8 +1127,6 @@
 
     <pythonSdkReadOnlyProvider implementation="com.jetbrains.python.sdk.readOnly.PythonSystemSdkReadOnlyProvider"/>
 
-    <typeInformationGenerator implementation="com.jetbrains.python.codeInsight.typeInformation.SageMathTypeInformationGenerator"/>
-
     <pythonPackageManagerProvider implementation="com.jetbrains.python.sdk.poetry.PoetryPackageManagerProvider"/>
 
     <pySdkProvider implementation="com.jetbrains.python.sdk.uv.UvSdkProvider"/>
@@ -1215,11 +1213,6 @@
 
     <action id="Python.GenerateTypeInformation"
             class="com.jetbrains.python.codeInsight.typeInformation.PyGenerateTypeInformationAction">
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
-    </action>
-
-    <action id="Python.PreparseSageFile"
-            class="com.jetbrains.python.codeInsight.typeInformation.PyPreparseSageFileAction">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
 
