@@ -30,6 +30,10 @@ object CoreModuleSets {
    *
    * **Typical users:** All products (CodeServer, IDEA, PyCharm, etc.)
    *
+   * **Membership vs loading:** membership in this set means "available in every product"; `embeddedModule`
+   * versus `module` decides whether the library *also* enters the core classloader. Demote a library in
+   * place — keep it next to its family instead of moving it to another set.
+   *
    * **Note:** UI/IDE-specific libraries (JCEF, Jediterm, PTY4J, SSH) have been moved to `librariesIde()`
    *
    * @see librariesIde for UI and IDE-specific libraries
@@ -42,8 +46,9 @@ object CoreModuleSets {
     // intellij.platform.wsl.impl and intellij.platform.util.http uses it
     embeddedModule("intellij.libraries.kotlinx.io")
 
-    // todo - JB Client should not embed intellij.platform.split
-    embeddedModule("intellij.libraries.kotlinx.serialization.cbor")
+    // not embedded: only plugin content needs CBOR, which also settles the old
+    // "JB Client should not embed intellij.platform.split" todo for the core classloader
+    module("intellij.libraries.kotlinx.serialization.cbor")
 
     embeddedModule("intellij.libraries.kotlinx.serialization.core")
     embeddedModule("intellij.libraries.kotlinx.serialization.json")
@@ -54,8 +59,6 @@ object CoreModuleSets {
     // kotlinx-coroutines libraries
     embeddedModule("intellij.libraries.kotlinx.coroutines.core")
     embeddedModule("intellij.libraries.kotlinx.coroutines.debug")
-    module("intellij.libraries.kotlinx.coroutines.guava")
-    @Suppress("GrazieInspection")
     // Space plugin uses it and bundles into IntelliJ IDEA, but not bundles into DataGrip, so, or Space plugin should bundle this lib,
     // or IJ Platform. As it is a small library and consistency is important across other coroutine libs, bundle to IJ Platform.
     // note 2: despite what we use as "used by", AIA tests broken —
@@ -64,9 +67,10 @@ object CoreModuleSets {
     //      at io.ktor.client.plugins.observer.ResponseObserverContextJvmKt.getResponseObserverContext(ResponseObserverContextJvm.kt:11)
     // so, we embed it
     embeddedModule("intellij.libraries.kotlinx.coroutines.slf4j")
+    module("intellij.libraries.kotlinx.coroutines.guava")
     embeddedModule("intellij.libraries.aalto.xml")
     embeddedModule("intellij.libraries.asm")
-    embeddedModule("intellij.libraries.asm.tools")
+    module("intellij.libraries.asm.tools")
     embeddedModule("intellij.libraries.automaton")
     embeddedModule("intellij.libraries.bouncy.castle.provider")
     embeddedModule("intellij.libraries.bouncy.castle.pgp")
@@ -75,6 +79,9 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.classgraph")
     embeddedModule("intellij.libraries.cli.parser")
     embeddedModule("intellij.libraries.commons.cli")
+    // embedded because embedded library content needs them in the core classloader:
+    // `commons-compress` calls into both (`ArchiveInputStream`, `FramedLZ4CompressorInputStream`) and `batik`
+    // (via `xmlgraphics-commons`) calls into commons-io. Both exclude the artifacts and depend on these wrappers.
     embeddedModule("intellij.libraries.commons.codec")
     embeddedModule("intellij.libraries.commons.compress")
     embeddedModule("intellij.libraries.commons.io")
@@ -91,11 +98,11 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.imgscalr")
     embeddedModule("intellij.libraries.ini4j")
     embeddedModule("intellij.libraries.ion")
-
     moduleSet(librariesJackson2())
     moduleSet(librariesJackson3())
+    moduleSet(librariesKtor())
 
-    embeddedModule("intellij.libraries.java.websocket")
+    module("intellij.libraries.java.websocket")
     embeddedModule("intellij.libraries.javax.annotation")
     // used by intellij.platform.util.jdom, so, embedded
     embeddedModule("intellij.libraries.jaxen")
@@ -103,10 +110,10 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.jcip")
     embeddedModule("intellij.libraries.jna")
     embeddedModule("intellij.libraries.jsoup")
-    embeddedModule("intellij.libraries.jsonpath")
+    module("intellij.libraries.jsonpath")
     embeddedModule("intellij.libraries.jsvg")
     embeddedModule("intellij.libraries.jvm.native.trusted.roots")
-    embeddedModule("intellij.libraries.jzlib")
+    module("intellij.libraries.jzlib")
     embeddedModule("intellij.libraries.kryo5")
     embeddedModule("intellij.libraries.lz4")
     embeddedModule("intellij.libraries.markdown")
@@ -116,17 +123,19 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.netty.codec.compression")
     embeddedModule("intellij.libraries.netty.codec.http")
     embeddedModule("intellij.libraries.netty.codec.protobuf")
-    embeddedModule("intellij.libraries.netty.handler.proxy")
+    module("intellij.libraries.netty.handler.proxy")
 
     embeddedModule("intellij.libraries.oro.matcher")
     embeddedModule("intellij.libraries.protobuf")
-    embeddedModule("intellij.libraries.protobuf.kotlin")
+    module("intellij.libraries.protobuf.kotlin")
     embeddedModule("intellij.libraries.proxy.vole")
     embeddedModule("intellij.libraries.rhino")
-    embeddedModule("intellij.libraries.semver")
+    module("intellij.libraries.semver")
     embeddedModule("intellij.libraries.snakeyaml")
     embeddedModule("intellij.libraries.snakeyaml.engine")
     embeddedModule("intellij.libraries.stream")
+    // not embedded: consumed by non-embedded platform content (smRunner, buildScripts.downloader) and by plugins
+    module("intellij.libraries.teamcity.service.messages")
     embeddedModule("intellij.libraries.velocity")
     embeddedModule("intellij.libraries.xtext.xbase")
     embeddedModule("intellij.libraries.xz")
@@ -147,9 +156,21 @@ object CoreModuleSets {
    */
   fun librariesLsp4j(): ModuleSet = moduleSet("libraries.lsp4j", outputModule = "intellij.platform.lsp") {
     embeddedModule("intellij.libraries.eclipse.lsp4j")
-    embeddedModule("intellij.libraries.eclipse.lsp4j.debug")
     embeddedModule("intellij.libraries.eclipse.lsp4j.jsonrpc")
-    embeddedModule("intellij.libraries.eclipse.lsp4j.jsonrpc.debug")
+  }
+
+  /**
+   * Eclipse LSP4J debug (DAP) library wrapper modules.
+   *
+   * Separate from `librariesLsp4j()` on purpose: these wrappers back `intellij.platform.dap`, not
+   * `intellij.platform.lsp`, and their consumers (CLion, Rider, PyCharm, R, and the dotnet debugger plugins)
+   * are far wider than the products that include `lsp()`.
+   *
+   * Not embedded, and nested in `corePlatform()`: available everywhere, outside the core classloader.
+   */
+  fun librariesDap(): ModuleSet = moduleSet("libraries.dap") {
+    module("intellij.libraries.eclipse.lsp4j.debug")
+    module("intellij.libraries.eclipse.lsp4j.jsonrpc.debug")
   }
 
   /**
@@ -166,7 +187,7 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.jackson.databind")
 
     module("intellij.libraries.jackson.dataformat.xml")
-    embeddedModule("intellij.libraries.jackson.dataformat.yaml")
+    module("intellij.libraries.jackson.dataformat.yaml")
     module("intellij.libraries.jackson.dataformat.toml")
 
     module("intellij.libraries.jackson.datatype.jdk8")
@@ -186,7 +207,7 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.jackson3")
     embeddedModule("intellij.libraries.jackson3.jr.objects")
     embeddedModule("intellij.libraries.jackson3.databind")
-    embeddedModule("intellij.libraries.jackson3.dataformat.yaml")
+    module("intellij.libraries.jackson3.dataformat.yaml")
     embeddedModule("intellij.libraries.jackson3.module.kotlin")
   }
 
@@ -204,10 +225,10 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.jediterm.ui")
     embeddedModule("intellij.libraries.jgoodies.common")
     embeddedModule("intellij.libraries.jgoodies.forms")
-    embeddedModule("intellij.libraries.jsch.agent.proxy")
+    module("intellij.libraries.jsch.agent.proxy")
     embeddedModule("intellij.libraries.miglayout.swing")
     embeddedModule("intellij.libraries.pty4j")
-    embeddedModule("intellij.libraries.sshj")
+    module("intellij.libraries.sshj")
     embeddedModule("intellij.libraries.swingx")
     embeddedModule("intellij.libraries.winp")
 
@@ -218,18 +239,25 @@ object CoreModuleSets {
   }
 
   /**
-   * Ktor library modules for HTTP client communication.
+   * Ktor library wrapper modules.
    *
    * **Typical use cases:** RPC infrastructure, Remote Dev, Fleet backend, HTTP-based integrations
-   * **Typical NON-users:** CodeServer (analysis-only, no RPC), minimal IDEs without remote features
+   *
+   * Kept as a dedicated module set so the family stays bumpable and reviewable in one place, and so a
+   * product can reason about Ktor as a unit.
+   *
+   * The CIO engines are not embedded: only plugin content instantiates them, so they stay available
+   * everywhere without occupying the core classloader.
+   *
+   * Included transitively by `librariesPlatform()`.
    */
   fun librariesKtor(): ModuleSet = moduleSet("libraries.ktor") {
     embeddedModule("intellij.libraries.ktor.io")
     embeddedModule("intellij.libraries.ktor.utils")
     embeddedModule("intellij.libraries.ktor.network.tls")
-    embeddedModule("intellij.libraries.ktor.server.cio")
     embeddedModule("intellij.libraries.ktor.client")
-    embeddedModule("intellij.libraries.ktor.client.cio")
+    module("intellij.libraries.ktor.client.cio")
+    module("intellij.libraries.ktor.server.cio")
   }
 
   // endregion
@@ -256,6 +284,7 @@ object CoreModuleSets {
    */
   fun corePlatform(): ModuleSet = moduleSet("core.platform", selfContained = true, outputModule = "intellij.platform.ide.core", includeDependencies = true) {
     moduleSet(librariesPlatform())
+    moduleSet(librariesDap())
 
     embeddedModule("intellij.platform.runtime.product")
 

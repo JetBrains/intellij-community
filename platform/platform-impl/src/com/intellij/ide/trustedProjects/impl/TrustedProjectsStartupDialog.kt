@@ -86,6 +86,10 @@ class TrustedProjectStartupDialog private constructor(
   private var trustAction: Action? = null
 
   init {
+    // The dialog renders myTitle as content text (createCenterPanel), but the window itself must carry it too:
+    // an undecorated window shows no title bar, while accessibility and UI tests address a dialog by its title.
+    title = myTitle
+
     @OptIn(LowLevelLocalMachineAccess::class)
     if (OS.CURRENT == OS.macOS) {
       setInitialLocationCallback {

@@ -52,6 +52,7 @@ exports_files(
         "generated/META-INF/intellij.moduleSets.fleet.xml",
         "generated/META-INF/intellij.moduleSets.ide.common.xml",
         "generated/META-INF/intellij.moduleSets.jsp.base.xml",
+        "generated/META-INF/intellij.moduleSets.libraries.dap.xml",
         "generated/META-INF/intellij.moduleSets.libraries.ide.common.xml",
         "generated/META-INF/intellij.moduleSets.libraries.ide.xml",
         "generated/META-INF/intellij.moduleSets.libraries.jackson2.xml",

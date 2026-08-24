@@ -30,5 +30,6 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.eclipse.lsp4j.jsonrpc.debug" scope="RUNTIME" />
   </component>
 </module>

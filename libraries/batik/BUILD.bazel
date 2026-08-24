@@ -23,6 +23,7 @@ jvm_library(
         # do not sort,
         "@lib//:libraries-batik-batik-transcoder",
         "@lib//:libraries-batik-xml-apis-ext",
+        "//libraries/commons/io",
     ],
 )
 
@@ -49,7 +50,11 @@ jvm_library(
         "@lib//:libraries-batik-batik-transcoder",
         "@lib//:libraries-batik-xml-apis-ext",
     ],
-    runtime_deps = [":batik"],
+    runtime_deps = [
+        # do not sort,
+        ":batik",
+        "//libraries/commons/io:io_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.batik` end
 

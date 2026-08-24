@@ -17,6 +17,8 @@ import org.jetbrains.intellij.build.productLayout.tooling.analyzeProductUsage
 import org.jetbrains.intellij.build.productLayout.tooling.detectModuleSetOverlap
 import org.jetbrains.intellij.build.productLayout.tooling.suggestModuleSetUnification
 import org.jetbrains.intellij.build.productLayout.traversal.analyzeEmbeddedDependencyClosure
+import org.jetbrains.intellij.build.productLayout.traversal.analyzeUnusedEmbeddedLibraryModules
+import org.jetbrains.intellij.build.productLayout.traversal.analyzeUnusedSharedLibraryModules
 import org.jetbrains.intellij.build.productLayout.traversal.collectDirectProductModuleNames
 import org.jetbrains.intellij.build.productLayout.traversal.collectModuleSetDirectModuleNames
 import org.jetbrains.intellij.build.productLayout.traversal.collectModuleSetDirectNestedNames
@@ -542,6 +544,19 @@ internal fun writeValidationQuery(
         moduleName = filter.module,
         pluginSourceOnly = filter.pluginSourceOnly,
       ))
+    }
+    "unused_embedded_library_modules" -> {
+      gen.writeName("result")
+      writeUnusedEmbeddedLibraryModulesResult(gen, analyzeUnusedEmbeddedLibraryModules(
+        graph = pluginGraph,
+        productSpecsByName = products.mapNotNull { product ->
+          product.contentSpec?.let { product.name to it }
+        }.toMap(),
+      ))
+    }
+    "unused_shared_library_modules" -> {
+      gen.writeName("result")
+      writeUnusedSharedLibraryModulesResult(gen, analyzeUnusedSharedLibraryModules(pluginGraph))
     }
     else -> gen.writeStringProperty("error", "Unknown validation check: $check")
   }

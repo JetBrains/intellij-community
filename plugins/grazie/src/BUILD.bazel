@@ -36,6 +36,7 @@ jvm_library(
         "//libraries/guava",
         "//libraries/jetbrains/annotations",
         "//libraries/commons/lang3",
+        "//libraries/jackson/dataformat-yaml:libraries-jackson-dataformat-yaml",
     ],
     deps = [
         # do not sort,
@@ -206,6 +207,7 @@ jvm_library(
         "//platform/progress/shared:ide-progress_test_lib",
         "//libraries/kotlin/logging:logging_test_lib",
         "//platform/credential-store:credential-store_test_lib",
+        "//libraries/jackson/dataformat-yaml:libraries-jackson-dataformat-yaml_test_lib",
     ],
 )
 ### auto-generated section `build intellij.grazie.core` end

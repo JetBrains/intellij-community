@@ -15,7 +15,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-ivy-ivy"],
-    runtime_deps = ["@lib//:libraries-ivy-ivy"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-ivy-ivy",
+        "//libraries/jsch-agent-proxy",
+    ],
 )
 
 content_module_jar(
@@ -34,7 +38,11 @@ jvm_library(
     module_name = "intellij.libraries.ivy",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-ivy-ivy"],
-    runtime_deps = [":ivy"],
+    runtime_deps = [
+        # do not sort,
+        ":ivy",
+        "//libraries/jsch-agent-proxy:jsch-agent-proxy_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.ivy` end
 

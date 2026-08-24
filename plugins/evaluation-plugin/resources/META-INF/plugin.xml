@@ -46,6 +46,7 @@
   </content>
 
   <dependencies>
+    <module name="intellij.libraries.commons.io"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.commons.text"/>
     <module name="intellij.libraries.gson"/>

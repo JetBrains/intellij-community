@@ -15,7 +15,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-sshd-osgi-apache-sshd-osgi"],
-    runtime_deps = ["@lib//:libraries-sshd-osgi-apache-sshd-osgi"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-sshd-osgi-apache-sshd-osgi",
+        "//libraries/sshj",
+    ],
 )
 
 content_module_jar(
@@ -33,7 +37,11 @@ jvm_library(
     module_name = "intellij.libraries.sshd.osgi",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-sshd-osgi-apache-sshd-osgi"],
-    runtime_deps = [":sshd-osgi"],
+    runtime_deps = [
+        # do not sort,
+        ":sshd-osgi",
+        "//libraries/sshj:sshj_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.sshd.osgi` end
 

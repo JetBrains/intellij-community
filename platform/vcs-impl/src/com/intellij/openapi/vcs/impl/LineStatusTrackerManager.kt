@@ -567,7 +567,7 @@ class LineStatusTrackerManager(
   ) {
     if (isDisposed) return
     if (provider !is LineStatusTrackerContentLoader) return
-    loader.scheduleRefresh(RefreshRequest(tracker.document, provider))
+    loader.scheduleRefresh(RefreshRequest(tracker.document, tracker.virtualFile, provider))
 
     log("Refresh queued", tracker.virtualFile)
   }
@@ -580,12 +580,12 @@ class LineStatusTrackerManager(
     override fun loadRequest(request: RefreshRequest): Result<RefreshData> {
       if (isDisposed) return Result.Canceled()
       val document = request.document
-      val virtualFile = FileDocumentManager.getInstance().getFile(document)
+      val virtualFile = request.virtualFile
       val loader = request.loader
 
       log("Loading started", virtualFile)
 
-      if (virtualFile == null || !virtualFile.isValid) {
+      if (!virtualFile.isValid) {
         log("Loading error: virtual file is not valid", virtualFile)
         return Result.Error()
       }
@@ -654,11 +654,7 @@ class LineStatusTrackerManager(
     }
 
     private fun handleSuccess(request: RefreshRequest, document: Document, refreshData: RefreshData) {
-      val virtualFile = FileDocumentManager.getInstance().getFile(document)
-      if (virtualFile == null) {
-        log("Loading finished: document is not bound", null)
-        return
-      }
+      val virtualFile = request.virtualFile
 
       val loader = request.loader
 
@@ -1034,7 +1030,7 @@ class LineStatusTrackerManager(
     var clmFilePath: FilePath? = null,
   )
 
-  private class RefreshRequest(val document: Document, val loader: LineStatusTrackerContentLoader) {
+  private class RefreshRequest(val document: Document, val virtualFile: VirtualFile, val loader: LineStatusTrackerContentLoader) {
     override fun equals(other: Any?): Boolean = other is RefreshRequest && document == other.document
     override fun hashCode(): Int = document.hashCode()
     override fun toString(): String {

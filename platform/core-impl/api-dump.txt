@@ -448,7 +448,7 @@ c:com.intellij.openapi.editor.ex.util.ShortBasedStorage
 - <init>():V
 - p:<init>(S[]):V
 f:com.intellij.openapi.editor.impl.DocumentImpl
-- com.intellij.openapi.util.UserDataHolderBase
+- com.intellij.psi.impl.source.tree.mvcc.userData.VersionedUserDataHolderBase
 - com.intellij.openapi.editor.ex.DocumentEx
 - <init>(java.lang.String):V
 - acceptsSlashR():Z
@@ -751,7 +751,7 @@ f:com.intellij.psi.impl.DebugUtil
 - s:onInvalidated(com.intellij.psi.PsiElement):java.lang.Object
 - s:psiToStringIgnoringNonCode(com.intellij.psi.PsiElement):java.lang.String
 a:com.intellij.psi.impl.ElementBase
-- com.intellij.openapi.util.UserDataHolderBase
+- com.intellij.psi.impl.source.tree.mvcc.userData.VersionedUserDataHolderBase
 - com.intellij.openapi.util.Iconable
 a:com.intellij.psi.impl.FakePsiElement
 - com.intellij.psi.impl.PsiElementBase
@@ -1252,7 +1252,6 @@ a:com.intellij.psi.impl.source.tree.TreeElement
 - f:getTreeNext():com.intellij.psi.impl.source.tree.TreeElement
 - f:getTreeParent():com.intellij.psi.impl.source.tree.CompositeElement
 - f:getTreePrev():com.intellij.psi.impl.source.tree.TreeElement
-- getUserData(com.intellij.openapi.util.Key):java.lang.Object
 - rawInsertAfterMe(com.intellij.psi.impl.source.tree.TreeElement):V
 - rawInsertBeforeMe(com.intellij.psi.impl.source.tree.TreeElement):V
 - rawRemove():V

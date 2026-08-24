@@ -28,6 +28,7 @@ internal class TrustedProjectStartupDialogTest {
       Assertions.assertFalse(buttonTexts.contains(CANCEL_BUTTON_TEXT))
       Assertions.assertFalse(dialog.hasImplicitCancelActionInTests())
       Assertions.assertFalse(dialog.shouldCloseOnCross())
+      Assertions.assertEquals("Trust Project?", dialog.title)
     }
     finally {
       dialog.disposeIfNeeded()

@@ -4,4 +4,3 @@
     libraries:
       ktor-utils:
       - name: $MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/3/ktor-utils-jvm-3.jar
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1/kotlinx-serialization-core-jvm-1.jar

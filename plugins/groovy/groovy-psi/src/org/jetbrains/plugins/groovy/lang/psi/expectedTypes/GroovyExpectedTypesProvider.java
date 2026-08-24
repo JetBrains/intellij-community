@@ -404,6 +404,16 @@ public final class GroovyExpectedTypesProvider {
 
       if (otherType == null) return;
 
+      if (type == GroovyTokenTypes.mEQUAL || type == GroovyTokenTypes.mNOT_EQUAL) {
+        if (otherType instanceof PsiClassType classType) {
+          final PsiClass resolved = classType.resolve();
+          if (resolved != null && resolved.isEnum()) {
+            myResult = createSimpleSubTypeResult(classType);
+            return;
+          }
+        }
+      }
+
       final GroovyResolveResult[] callVariants = PsiUtilKt.multiResolve(expression);
       if (myExpression == left || callVariants.length == 0) {
         if (type == GroovyTokenTypes.mPLUS && otherType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {

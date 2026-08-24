@@ -78,6 +78,8 @@ public class GroovySmartCompletionTest extends GroovyCompletionTestBase {
     doSmartCompletion("IN_STOCK", "NOWHERE", "ORDERED", "next", "previous", "valueOf");
   }
 
+  public void testEnumMembersInComparison() { doSmartCompletion("status", "IN_STOCK", "NOWHERE", "ORDERED", "valueOf"); }
+
   public void testPreferVarargElement() {
     doCompletionTest(null, null, "\n", CompletionType.SMART);
   }

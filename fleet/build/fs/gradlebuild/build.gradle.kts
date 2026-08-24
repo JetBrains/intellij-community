@@ -81,6 +81,7 @@ kotlin {
     implementation(jps.org.apache.commons.commons.lang3579297339.get().let { "${it.group}:${it.name}:${it.version}" }) {
       isTransitive = false
     }
+    implementation(jps.commons.codec.commons.codec1670051051.get())
     implementation(jps.commons.io.commons.io645698317.get())
   }
   // KOTLIN__MARKER_END

@@ -26,14 +26,17 @@ public final class WindowRoundedCornersManager {
   private static final String PARAMS_KEY = "WindowRoundedCorners.parameters";
 
   public static void configure(@NotNull DialogWrapper dialog) {
-    if (isAvailable()) {
-      if ((OS.CURRENT == OS.macOS && StartupUiUtil.INSTANCE.isDarkTheme()) || OS.CURRENT == OS.Windows || StartupUiUtil.isWaylandToolkit()) {
-        setRoundedCorners(dialog.getWindow(), JBUI.CurrentTheme.Popup.borderColor(true));
-        dialog.getRootPane().setBorder(PopupBorder.Factory.createEmpty());
-      }
-      else {
-        setRoundedCorners(dialog.getWindow());
-      }
+    Window window = dialog.getWindow();
+    // A headless dialog peer has no window to round.
+    if (window == null || !isAvailable()) {
+      return;
+    }
+    if ((OS.CURRENT == OS.macOS && StartupUiUtil.INSTANCE.isDarkTheme()) || OS.CURRENT == OS.Windows || StartupUiUtil.isWaylandToolkit()) {
+      setRoundedCorners(window, JBUI.CurrentTheme.Popup.borderColor(true));
+      dialog.getRootPane().setBorder(PopupBorder.Factory.createEmpty());
+    }
+    else {
+      setRoundedCorners(window);
     }
   }
 

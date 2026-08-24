@@ -15,7 +15,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-ktor-server-content-negotiation-ktor-server-content-negotiation"],
-    runtime_deps = ["@lib//:libraries-ktor-server-content-negotiation-ktor-server-content-negotiation"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-ktor-server-content-negotiation-ktor-server-content-negotiation",
+        "//libraries/ktor/server-cio:libraries-ktor-server-cio",
+    ],
 )
 
 content_module_jar(
@@ -34,7 +38,11 @@ jvm_library(
     module_name = "intellij.libraries.ktor.server.content.negotiation",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-ktor-server-content-negotiation-ktor-server-content-negotiation"],
-    runtime_deps = [":libraries-ktor-server-content-negotiation"],
+    runtime_deps = [
+        # do not sort,
+        ":libraries-ktor-server-content-negotiation",
+        "//libraries/ktor/server-cio:libraries-ktor-server-cio_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.ktor.server.content.negotiation` end
 
