@@ -29,7 +29,7 @@ class UtilsTest {
   }
 
   @Test
-  fun `sha256 should not be modified as it will break dockApiVersion generation`() {
+  fun `sha256 should not be modified as it will break S3 upload and bundle hashing`() {
     assertEquals(
       "3202d841030f0606d93ea9e89aa06261a784615c961c94bfd92286d30538e8c8",
       sha256(resourceAsFile("example-abi-lf.txt").readBytesForSha256())
