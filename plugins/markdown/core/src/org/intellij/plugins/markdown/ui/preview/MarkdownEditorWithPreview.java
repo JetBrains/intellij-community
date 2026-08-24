@@ -6,9 +6,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.TextEditorWithPreview;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.JBSplitter;
 import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.settings.MarkdownSettings;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.Point;
 
 public final class MarkdownEditorWithPreview extends TextEditorWithPreview implements MarkdownHeaderNavigationHandler {
+  private final MarkdownSettings settings;
   private boolean autoScrollPreview;
 
   /**
@@ -37,6 +40,8 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview imple
       Layout.SHOW_EDITOR_AND_PREVIEW,
       !settings.isVerticalSplit()
     );
+
+    this.settings = settings;
 
     // allow launching actions while in preview mode;
     // FIXME: better solution IDEA-354102
@@ -62,6 +67,22 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview imple
       }
     });
     editor.getEditor().getScrollingModel().addVisibleAreaListener(new MyVisibleAreaListener(), this);
+  }
+
+  @Override
+  protected @NotNull JBSplitter createSplitter() {
+    JBSplitter splitter = super.createSplitter();
+    // "Preview layout" must apply to a freshly created editor, not just to an already open one.
+    splitter.setOrientation(!settings.isVerticalSplit());
+    return splitter;
+  }
+
+  @Override
+  public void setState(@NotNull FileEditorState state) {
+    super.setState(state);
+    // "Preview layout" is a global default, so it must win over the per-file orientation
+    // that super.setState() restores from the editor state. See IJPL-253568.
+    handleLayoutChange(!settings.isVerticalSplit());
   }
 
   @Override
