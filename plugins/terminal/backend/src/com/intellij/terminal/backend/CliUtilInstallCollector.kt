@@ -13,7 +13,7 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
 internal class CliUtilInstallCollector : ApplicationUsagesCollector() {
-  private val GROUP: EventLogGroup = EventLogGroup("cli.tools", 1)
+  private val GROUP: EventLogGroup = EventLogGroup("cli.tools", 2)
 
   @Suppress("SpellCheckingInspection")
   private val CLI_EXECUTABLES: List<String> = listOf(
@@ -107,6 +107,7 @@ internal class CliUtilInstallCollector : ApplicationUsagesCollector() {
     "otel",
     "pack", //CLI tool maintained by the CNB project to support the use of buildpacks.
     "packer",
+    "pi",
     "pip",
     "pnpm",
     "podman",
@@ -171,10 +172,12 @@ internal class CliUtilInstallCollector : ApplicationUsagesCollector() {
   private val CODEX_ID: String = ".codex"
   private val COPILOT_ID: String = ".copilot"
   private val CURSOR_ID: String = ".cursor"
+  private val JUNIE_ID: String = ".junie"
+  private val PI_ID: String = ".pi"
 
   private val CONFIG_EXISTS: EventId1<String> = GROUP.registerEvent(
     "config.exists",
-    EventFields.String("config", listOf(KUBECONFIG_ID, CLAUDE_ID))
+    EventFields.String("config", listOf(KUBECONFIG_ID, CLAUDE_ID, CODEX_ID, COPILOT_ID, CURSOR_ID, JUNIE_ID, PI_ID))
   )
 
   override fun getGroup(): EventLogGroup = GROUP
@@ -201,6 +204,12 @@ internal class CliUtilInstallCollector : ApplicationUsagesCollector() {
     }
     if (userPathExists(Path.of(".cursor"))) {
       metrics.add(CONFIG_EXISTS.metric(CURSOR_ID))
+    }
+    if (userPathExists(Path.of(".pi"))) {
+      metrics.add(CONFIG_EXISTS.metric(PI_ID))
+    }
+    if (userPathExists(Path.of(".junie"))) {
+      metrics.add(CONFIG_EXISTS.metric(JUNIE_ID))
     }
 
     return metrics.toSet()
