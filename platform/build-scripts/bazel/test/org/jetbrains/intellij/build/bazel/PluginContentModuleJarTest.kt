@@ -3,17 +3,9 @@ package org.jetbrains.intellij.build.bazel
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TemporaryFolder
-import kotlin.io.path.createDirectories
-import kotlin.io.path.writeText
 
 internal class PluginContentModuleJarTest {
-  @JvmField
-  @Rule
-  val tempDir: TemporaryFolder = TemporaryFolder()
-
   @Test
   fun `simple plugin content module is eligible`() {
     val entry = RecipeEntry(
@@ -73,38 +65,5 @@ internal class PluginContentModuleJarTest {
       name = "lib/other.jar",
       contentModules = listOf(RecipeModule(name = "intellij.example")),
     )))
-  }
-
-  @Test
-  fun `candidate index accepts identical occurrences and rejects a conflicting one`() {
-    writeReport(
-      directory = "first",
-      text = """
-        - name: lib/modules/intellij.shared.jar
-          contentModules:
-            - name: intellij.shared
-        - name: lib/modules/intellij.conflicting.jar
-          contentModules:
-            - name: intellij.conflicting
-      """,
-    )
-    writeReport(
-      directory = "second",
-      text = """
-        - name: lib/modules/intellij.shared.jar
-          contentModules:
-            - name: intellij.shared
-        - name: lib/combined.jar
-          contentModules:
-            - name: intellij.conflicting
-            - name: intellij.other
-      """,
-    )
-
-    assertEquals(setOf("intellij.shared"), indexPluginContentModuleJarCandidates(tempDir.root.toPath()))
-  }
-
-  private fun writeReport(directory: String, text: String) {
-    tempDir.root.toPath().resolve(directory).createDirectories().resolve("plugin-content.yaml").writeText(text.trimIndent())
   }
 }

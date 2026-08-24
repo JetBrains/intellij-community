@@ -13,11 +13,8 @@ import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
-import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.SimpleFileVisitor
-import java.nio.file.attribute.BasicFileAttributes
 import kotlin.io.path.readText
 
 /**
@@ -467,116 +464,39 @@ private fun isCompatibleSingleModuleRecipe(entry: RecipeEntry, moduleName: Strin
 }
 
 /**
- * Directories this walk never enters.
- *
- * Four walks read these reports - this one, `indexPluginContentReports` and `collectContentRecipeOrphans` through
- * `isPrunedReportDirectory` in `platform/buildScripts/src/productLayout/contentReportWalk.kt`, and `isPrunedDirectory`
- * in `build/content-report/internal/content/discover.go` - and they prune the same names, because a report one reader
- * cannot see is a fact that reader silently does not have.
- *
- * Other dot-directories are deliberately *not* pruned. `plugins/.remdev/remDevFeatureSample/plugin-content.yaml` is a
- * real checked-in report, and skipping dot-directories wholesale - the default in most glob implementations, and the
- * trap this repository's own search wrappers document - silently loses it. That cost nothing while that report held
- * one main-jar entry, but the two halves of this index fail in opposite directions: a missed
- * `lib/modules/<module>.jar` entry only declines to pack a jar, while a missed taken-out-library entry declines to
- * *veto* one, and a wrongly prepacked module loses bytes that no byte comparison can see. The readers of these reports
- * agreeing on which files exist is cheaper than rediscovering that.
- */
-private fun isPrunedReportDirectory(name: String): Boolean {
-  return name == "out" || name == "node_modules" || name == ".git" || name == ".idea" || name.startsWith("bazel-")
-}
-
-/**
- * The repo-global candidates for the first plugin tranche.
- *
- * A module is selected only when every `contentModules` occurrence agrees on the same plain, product-independent
- * recipe. An occurrence in a main plugin jar (`modules:`) is irrelevant: `content_module_jar` is an extra output and
- * does not change that plugin's normal module jar.
- */
-/**
  * The file the repo-global candidate set is recorded in, so that every generator run reaches the same answer.
  *
- * [indexPluginContentModuleJarCandidates] is a repo-global AND over *every* checked-in `plugin-content.yaml`, and a
- * community checkout does not contain the ultimate ones. The set it computes there is therefore a different set, in both
- * directions: a module whose only report is in ultimate is not a candidate at all, and a module whose ultimate report
- * disagrees is not vetoed. Either way the community run generates `content_module_jar` and `prepacked_content_modules`
- * attributes that differ from the checked-in ones, which is what `Assert Bazel Files Are In Sync With JPS Model
- * (Community Only)` fails on.
+ * The set is an AND over *every* checked-in `plugin-content.yaml`, which is a question this generator cannot answer
+ * for itself: a community checkout does not contain the ultimate reports, so computing it here would produce a
+ * different set in both directions - a module whose only report is in ultimate would not be a candidate at all, and a
+ * module whose ultimate report disagrees would not be vetoed. Either way the community run would generate
+ * `content_module_jar` and `prepacked_content_modules` attributes that differ from the checked-in ones, which is what
+ * `Assert Bazel Files Are In Sync With JPS Model (Community Only)` fails on.
  *
  * `plugin-model-tool` records it (`renderPluginContentCandidates` in `devDistPlanGenerator.kt`), exactly as it records
- * the layout-exclusion vetoes in `dev_dist_plugin_content_vetoes.txt` beside it, from the same report walk its own plan
- * generation already pays for - so this generator never has to walk the tree, on any checkout. A plain text file for
- * the same reason as the vetoes: it keeps this reader independent of Starlark. Staleness is caught where the other
- * plan files' is: the blocking `model-generation` validation of `AllProductsPackagingTest` regenerates and diffs it.
+ * the layout-exclusion vetoes in `dev_dist_plugin_content_vetoes.txt` beside it, out of the report index its own plan
+ * generation already builds. A plain text file for the same reason as the vetoes: it keeps this reader independent of
+ * Starlark. Staleness is caught where the other plan files' is: the blocking `model-generation` validation of
+ * `AllProductsPackagingTest` regenerates and diffs it.
  */
 internal const val PLUGIN_CONTENT_CANDIDATES_FILE_NAME: String = "dev_dist_plugin_content_candidates.txt"
 
 /**
- * Reads what `plugin-model-tool` recorded, or `null` when no run has recorded it.
+ * Reads what `plugin-model-tool` recorded, or nothing when no run has recorded it.
  *
- * `null` rather than a failure, because a project the tool has never run over is a real case and not a mistake:
- * the generator's own integration tests each build a throwaway community project, and so would a community checkout
- * predating this file. The caller falls back to indexing the reports it can see - which is what every run did before
- * this file existed, and is right for a project that has no recorded answer to disagree with.
+ * An empty set rather than a failure, because a project the tool has never run over is a real case and not a mistake:
+ * the generator's own integration tests each build a throwaway community project, and so would a checkout predating
+ * this file. There is nothing to fall back to and nothing is lost by that - no candidates means every module stays on
+ * the `JarPackager` path, which is what every run did before the feature existed. On a real checkout that would
+ * generate BUILD files differing from the checked-in ones, so the sync assertion says so loudly. Note the direction:
+ * missing candidates prepack less, never more, unlike the sibling vetoes reader whose absence would prepack a module a
+ * layout transforms.
  */
-internal fun readPluginContentModuleJarCandidates(file: Path): Set<String>? {
+internal fun readPluginContentModuleJarCandidates(file: Path): Set<String> {
   if (!Files.exists(file)) {
-    return null
+    return emptySet()
   }
   return Files.readAllLines(file).asSequence().map(String::trim).filter { it.isNotEmpty() && !it.startsWith('#') }.toSet()
-}
-
-internal fun indexPluginContentModuleJarCandidates(projectRoot: Path): Set<String> {
-  val eligibility = HashMap<String, Boolean>()
-  Files.walkFileTree(projectRoot, object : SimpleFileVisitor<Path>() {
-    override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
-      if (dir != projectRoot && isPrunedReportDirectory(dir.fileName.toString())) {
-        return FileVisitResult.SKIP_SUBTREE
-      }
-      return FileVisitResult.CONTINUE
-    }
-
-    override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-      if (file.fileName.toString() != "plugin-content.yaml") {
-        return FileVisitResult.CONTINUE
-      }
-      val text = file.readText()
-      if (text.isBlank()) {
-        return FileVisitResult.CONTINUE
-      }
-      for (entry in recipeYaml.decodeFromString(ListSerializer(RecipeEntry.serializer()), text)) {
-        if (entry.contentModules.isEmpty()) {
-          // A bare library jar laid beside a module's own jar - `lib/debugger-memory-agent.jar`, `lib/sa-jdwp.jar` -
-          // which [RecipeEntry.module] names the owner of. Two mechanisms produce one, and only the first loses bytes
-          // to a hand-off, so this veto is loss-detecting for it and deliberately conservative for the other:
-          //
-          // - `isSeparateLibraryJar` inside `JarPackager.computeSourcesForModuleLibs`, which runs *inside*
-          //   `computeSourcesForModule`. That one call both removes the file from the module jar and emits the sibling,
-          //   so a prepacked module - which skips `computeSourcesForModule` entirely - never writes it. Silently:
-          //   nothing else asks for that jar. `lib/debugger-memory-agent.jar` is the measured case.
-          // - `withModuleLibrary`, i.e. `layout.includedModuleLibraries`, which `computeModuleCustomLibrarySources`
-          //   walks on its own. `lib/sa-jdwp.jar` survives a hand-off, and the same call would have kept the library
-          //   out of the module jar anyway - which is what the Bazel-packed jar does too. Refused all the same: telling
-          //   the variants apart needs `extraCopy`, which does lose bytes, and the report records neither.
-          //
-          // The owner's own `lib/modules/<module>.jar` entry looks perfectly simple, and looks that way *because* the
-          // library was taken out of it; the taken-out jar is a separate entry keyed by `library:` + `module:` with no
-          // `contentModules:` at all, which is why walking only `contentModules` cannot see the coupling. Vetoing on
-          // sight is cheap and needs no cross-entry bookkeeping: eligibility is a repo-global AND, so this holds
-          // however the entries are ordered and whichever report the pair is split across.
-          entry.module?.let { eligibility.put(it, false) }
-          continue
-        }
-        for (contentModule in entry.contentModules) {
-          val moduleName = contentModule.moduleName
-          val simple = simplePluginContentModuleName(entry) == moduleName
-          eligibility.put(moduleName, eligibility.getOrDefault(moduleName, true) && simple)
-        }
-      }
-      return FileVisitResult.CONTINUE
-    }
-  })
-  return eligibility.filterValues { it }.keys
 }
 
 /** The module of a first-tranche plugin entry, or `null` when the entry needs JarPackager. */
