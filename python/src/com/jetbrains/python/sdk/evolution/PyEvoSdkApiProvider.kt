@@ -149,7 +149,8 @@ internal class PyEvoSdkApiProvider : RemoteApiProvider {
 
 private object PyEvoSdkApiImpl : PyEvoSdkApi {
   /**
-   * The contributed providers, minus any whose id cannot address a node.
+   * The contributed providers, in the order the widget shows them — which is the order they are registered in, pinned by
+   * the `order` attributes on those registrations — minus any whose id cannot address a node.
    *
    * A node id is resolved by lookup ([PyEvoEnvironmentProvider.toolId]), so two providers sharing one id would make
    * the loser unreachable — every request for that id would land on the winner — and a provider claiming a reserved

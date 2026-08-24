@@ -1049,12 +1049,20 @@
                             implementation="com.jetbrains.python.uv.sdk.evolution.UvEvoEnvironmentProvider"/>
 
     <evoEnvironmentProvider id="PoetryEvoProvider"
+                            order="after UvEvoProvider"
                             implementation="com.jetbrains.python.poetry.sdk.evolution.PoetryEvoEnvironmentProvider"/>
 
     <evoEnvironmentProvider id="CondaEvoProvider"
+                            order="after PoetryEvoProvider"
                             implementation="com.jetbrains.python.conda.sdk.evolution.CondaEvoEnvironmentProvider"/>
 
-    <evoEnvironmentProvider implementation="com.jetbrains.python.venv.sdk.evolution.VenvEvoEnvironmentProvider"/>
+    <!-- pip is last of the tools: it is the one every machine has, so it is the fallback rather than a preference.
+         Anchored on conda rather than on hatch, which is optional: an anchor that does not resolve is ignored, so
+         naming hatch would leave pip unconstrained whenever that module is absent. Hatch inserts itself between the
+         two from its own registration. -->
+    <evoEnvironmentProvider id="PipEvoProvider"
+                            order="after CondaEvoProvider"
+                            implementation="com.jetbrains.python.venv.sdk.evolution.VenvEvoEnvironmentProvider"/>
     <evoEnvironmentProvider id="AdvancedEvoProvider"
                             order="last"
                             implementation="com.jetbrains.python.sdk.evolution.AdvancedEvoEnvironmentProvider"/>

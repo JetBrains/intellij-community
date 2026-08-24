@@ -23,8 +23,10 @@
   <!-- endregion -->
 
   <extensions defaultExtensionNs="Pythonid">
+    <!-- Between conda and pip. Declared from this side because this is the optional module: both anchors it names are
+         in the python plugin, which is always loaded when this one is. -->
     <evoEnvironmentProvider id="HatchEvoProvider"
-                            order="after CondaEvoProvider"
+                            order="after CondaEvoProvider, before PipEvoProvider"
                             implementation="com.intellij.python.hatch.sdk.evolution.HatchEvoEnvironmentProvider"/>
 
     <pySdkProvider implementation="com.intellij.python.hatch.impl.sdk.HatchSdkProvider"/>
