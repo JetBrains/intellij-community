@@ -33,6 +33,7 @@ import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition.T
 import com.intellij.gradle.completion.GradleScriptDependencyCompletionPosition.VERSION
 import com.intellij.gradle.completion.getCompletionContext
 import com.intellij.gradle.completion.icon
+import com.intellij.gradle.completion.isBelowDependencyAutoPopupThreshold
 import com.intellij.gradle.completion.kotlin.insertHandler.KotlinGradleConfigurationInsertHandler
 import com.intellij.gradle.completion.lookup.DependencyReturningMethodLookupProvider
 import com.intellij.gradle.completion.removeDummySuffix
@@ -214,8 +215,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
     val startOffset = getDependencyCompletionStartOffset(documentText, offset)
     val text = documentText.substring(startOffset, offset)
 
-    // Autocomplete the dependency coordinate only after 3 or more characters are typed
-    if (parameters.isAutoPopup && text.length < 3) return
+    if (parameters.isBelowDependencyAutoPopupThreshold(text)) return
     result.restartCompletionOnAnyPrefixChange()
 
     val loadingAdvertiser = DependencyCompletionLoadingAdvertiser()
@@ -259,11 +259,15 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
     version: String,
     invokePosition: GradleScriptDependencyCompletionPosition,
   ) {
+    val dummyText = parameters.position.parent.text
+    val text = removeDummySuffix(dummyText)
+
+    if (parameters.isBelowDependencyAutoPopupThreshold(text)) return
+    result.restartCompletionOnAnyPrefixChange()
+
     val loadingAdvertiser = DependencyCompletionLoadingAdvertiser()
     loadingAdvertiser.showSearchingStatus()
 
-    val dummyText = parameters.position.parent.text
-    val text = removeDummySuffix(dummyText)
     val completionService = service<DependencyCompletionService>()
     val completionContext = parameters.getCompletionContext()
     val itemFlow = when {
@@ -320,11 +324,15 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
     result: CompletionResultSet,
     parameters: CompletionParameters,
   ) {
+    val dummyText = parameters.position.parent.text
+    val text = removeDummySuffix(dummyText)
+
+    if (parameters.isBelowDependencyAutoPopupThreshold(text)) return
+    result.restartCompletionOnAnyPrefixChange()
+
     val loadingAdvertiser = DependencyCompletionLoadingAdvertiser()
     loadingAdvertiser.showSearchingStatus()
 
-    val dummyText = parameters.position.parent.text
-    val text = removeDummySuffix(dummyText)
     val completionService = service<DependencyCompletionService>()
     val request = DependencyCompletionRequest(
       "$KOTLIN_SHORTCUT_GROUP:$KOTLIN_SHORTCUT_ARTIFACT_PREFIX$text",
@@ -360,11 +368,15 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
     parameters: CompletionParameters,
     moduleName: String,
   ) {
+    val dummyText = parameters.position.parent.text
+    val text = removeDummySuffix(dummyText)
+
+    if (parameters.isBelowDependencyAutoPopupThreshold(text)) return
+    result.restartCompletionOnAnyPrefixChange()
+
     val loadingAdvertiser = DependencyCompletionLoadingAdvertiser()
     loadingAdvertiser.showSearchingStatus()
 
-    val dummyText = parameters.position.parent.text
-    val text = removeDummySuffix(dummyText)
     val completionService = service<DependencyCompletionService>()
     val request = DependencyVersionCompletionRequest(
       KOTLIN_SHORTCUT_GROUP,
@@ -399,11 +411,15 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
     result: CompletionResultSet,
     parameters: CompletionParameters,
   ) {
+    val dummyText = parameters.position.parent.text
+    val text = removeDummySuffix(dummyText)
+
+    if (parameters.isBelowDependencyAutoPopupThreshold(text)) return
+    result.restartCompletionOnAnyPrefixChange()
+
     val loadingAdvertiser = DependencyCompletionLoadingAdvertiser()
     loadingAdvertiser.showSearchingStatus()
 
-    val dummyText = parameters.position.parent.text
-    val text = removeDummySuffix(dummyText)
     val completionService = service<DependencyCompletionService>()
     val request = DependencyArtifactCompletionRequest(
       KOTLIN_SHORTCUT_GROUP,

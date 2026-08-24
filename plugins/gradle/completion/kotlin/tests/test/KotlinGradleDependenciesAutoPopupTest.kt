@@ -49,8 +49,10 @@ class KotlinGradleDependenciesAutoPopupTest : K2GradleCodeInsightTestCase() {
         DependencyCompletionEvent.Item(DependencyPartCompletionResult("kotlin-stdlib", LOCAL)),
       )
 
+    // Longer than the 3 characters the auto-popup threshold requires: an auto-popup whose only item is exactly
+    // the typed prefix is not shown, so the suggestion has to stay distinguishable from what the test types.
     override fun suggestVersionCompletions(request: DependencyVersionCompletionRequest): Flow<DependencyCompletionEvent<DependencyPartCompletionResult>> =
-      flowOf(DependencyCompletionEvent.Item(DependencyPartCompletionResult("1.0", LOCAL)))
+      flowOf(DependencyCompletionEvent.Item(DependencyPartCompletionResult("1.0.0", LOCAL)))
   }
 
   @TestDisposable
@@ -148,91 +150,103 @@ class KotlinGradleDependenciesAutoPopupTest : K2GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun testAutoPopupOnQuoteInDependencyNamedGroup(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+  fun testNoAutoPopupUntilThreeCharsInDependencyNamedGroup(gradleVersion: GradleVersion) = runTest(gradleVersion) {
     val file = writeTextAndCommit("build.gradle.kts", """
       dependencies {
           implementation(group = <caret>, name = "myArtifact")
       }
     """.trimIndent())
     codeInsightFixture.configureFromExistingVirtualFile(file)
-    autoPopupTester.typeWithPauses("\"")
-    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside of dependency's group argument" }
+    autoPopupTester.typeWithPauses("\"my")
+    assertNull(autoPopupTester.lookup) { "Auto popup should not be triggered until 3 characters are typed" }
+    autoPopupTester.typeWithPauses("G")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered after 3 characters inside of dependency's group argument" }
     assertEquals("myGroup", autoPopupTester.lookup?.currentItem?.lookupString)
   }
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun testAutoPopupOnQuoteInDependencyPositionalGroup(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+  fun testNoAutoPopupUntilThreeCharsInDependencyPositionalGroup(gradleVersion: GradleVersion) = runTest(gradleVersion) {
     val file = writeTextAndCommit("build.gradle.kts", """
       dependencies {
           implementation(<caret>, "myArtifact")
       }
     """.trimIndent())
     codeInsightFixture.configureFromExistingVirtualFile(file)
-    autoPopupTester.typeWithPauses("\"")
-    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside of dependency's group argument" }
+    autoPopupTester.typeWithPauses("\"my")
+    assertNull(autoPopupTester.lookup) { "Auto popup should not be triggered until 3 characters are typed" }
+    autoPopupTester.typeWithPauses("G")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered after 3 characters inside of dependency's group argument" }
     assertEquals("myGroup", autoPopupTester.lookup?.currentItem?.lookupString)
   }
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun testAutoPopupOnQuoteInDependencyNamedName(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+  fun testNoAutoPopupUntilThreeCharsInDependencyNamedName(gradleVersion: GradleVersion) = runTest(gradleVersion) {
     val file = writeTextAndCommit("build.gradle.kts", """
       dependencies {
           implementation(group = "myGroup", name = <caret>)
       }
     """.trimIndent())
     codeInsightFixture.configureFromExistingVirtualFile(file)
-    autoPopupTester.typeWithPauses("\"")
-    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside of dependency's name argument" }
+    autoPopupTester.typeWithPauses("\"my")
+    assertNull(autoPopupTester.lookup) { "Auto popup should not be triggered until 3 characters are typed" }
+    autoPopupTester.typeWithPauses("A")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered after 3 characters inside of dependency's name argument" }
     assertEquals("myArtifact", autoPopupTester.lookup?.currentItem?.lookupString)
   }
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun testAutoPopupOnQuoteInDependencyPositionalName(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+  fun testNoAutoPopupUntilThreeCharsInDependencyPositionalName(gradleVersion: GradleVersion) = runTest(gradleVersion) {
     val file = writeTextAndCommit("build.gradle.kts", """
       dependencies {
           implementation("myGroup", <caret>)
       }
     """.trimIndent())
     codeInsightFixture.configureFromExistingVirtualFile(file)
-    autoPopupTester.typeWithPauses("\"")
-    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside of dependency's name argument" }
+    autoPopupTester.typeWithPauses("\"my")
+    assertNull(autoPopupTester.lookup) { "Auto popup should not be triggered until 3 characters are typed" }
+    autoPopupTester.typeWithPauses("A")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered after 3 characters inside of dependency's name argument" }
     assertEquals("myArtifact", autoPopupTester.lookup?.currentItem?.lookupString)
   }
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun testAutoPopupOnQuoteInDependencyNamedVersion(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+  fun testNoAutoPopupUntilThreeCharsInDependencyNamedVersion(gradleVersion: GradleVersion) = runTest(gradleVersion) {
     val file = writeTextAndCommit("build.gradle.kts", """
       dependencies {
           implementation(group = "myGroup", name = "myArtifact", version = <caret>)
       }
     """.trimIndent())
     codeInsightFixture.configureFromExistingVirtualFile(file)
-    autoPopupTester.typeWithPauses("\"")
-    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside of dependency's version argument" }
-    assertEquals("1.0", autoPopupTester.lookup?.currentItem?.lookupString)
+    autoPopupTester.typeWithPauses("\"1.")
+    assertNull(autoPopupTester.lookup) { "Auto popup should not be triggered until 3 characters are typed" }
+    autoPopupTester.typeWithPauses("0")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered after 3 characters inside of dependency's version argument" }
+    assertEquals("1.0.0", autoPopupTester.lookup?.currentItem?.lookupString)
   }
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun testAutoPopupOnQuoteInDependencyPositionalVersion(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+  fun testNoAutoPopupUntilThreeCharsInDependencyPositionalVersion(gradleVersion: GradleVersion) = runTest(gradleVersion) {
     val file = writeTextAndCommit("build.gradle.kts", """
       dependencies {
           implementation("myGroup", "myArtifact", <caret>)
       }
     """.trimIndent())
     codeInsightFixture.configureFromExistingVirtualFile(file)
-    autoPopupTester.typeWithPauses("\"")
-    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside of dependency's version argument" }
-    assertEquals("1.0", autoPopupTester.lookup?.currentItem?.lookupString)
+    autoPopupTester.typeWithPauses("\"1.")
+    assertNull(autoPopupTester.lookup) { "Auto popup should not be triggered until 3 characters are typed" }
+    autoPopupTester.typeWithPauses("0")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered after 3 characters inside of dependency's version argument" }
+    assertEquals("1.0.0", autoPopupTester.lookup?.currentItem?.lookupString)
   }
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun testAutoPopupOnQuoteInExcludeNamedGroup(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+  fun testNoAutoPopupUntilThreeCharsInExcludeNamedGroup(gradleVersion: GradleVersion) = runTest(gradleVersion) {
     val file = writeTextAndCommit("build.gradle.kts", """
       dependencies {
           implementation("myGroup:myArtifact:1.0") {
@@ -241,14 +255,16 @@ class KotlinGradleDependenciesAutoPopupTest : K2GradleCodeInsightTestCase() {
       }
     """.trimIndent())
     codeInsightFixture.configureFromExistingVirtualFile(file)
-    autoPopupTester.typeWithPauses("\"")
-    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside of exclude's group argument" }
+    autoPopupTester.typeWithPauses("\"my")
+    assertNull(autoPopupTester.lookup) { "Auto popup should not be triggered until 3 characters are typed" }
+    autoPopupTester.typeWithPauses("G")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered after 3 characters inside of exclude's group argument" }
     assertEquals("myGroup", autoPopupTester.lookup?.currentItem?.lookupString)
   }
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun testAutoPopupOnQuoteInExcludePositionalGroup(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+  fun testNoAutoPopupUntilThreeCharsInExcludePositionalGroup(gradleVersion: GradleVersion) = runTest(gradleVersion) {
     val file = writeTextAndCommit("build.gradle.kts", """
       dependencies {
           implementation("myGroup:myArtifact:1.0") {
@@ -257,14 +273,16 @@ class KotlinGradleDependenciesAutoPopupTest : K2GradleCodeInsightTestCase() {
       }
     """.trimIndent())
     codeInsightFixture.configureFromExistingVirtualFile(file)
-    autoPopupTester.typeWithPauses("\"")
-    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside of exclude's group argument" }
+    autoPopupTester.typeWithPauses("\"my")
+    assertNull(autoPopupTester.lookup) { "Auto popup should not be triggered until 3 characters are typed" }
+    autoPopupTester.typeWithPauses("G")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered after 3 characters inside of exclude's group argument" }
     assertEquals("myGroup", autoPopupTester.lookup?.currentItem?.lookupString)
   }
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun testAutoPopupOnQuoteInExcludeNamedModule(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+  fun testNoAutoPopupUntilThreeCharsInExcludeNamedModule(gradleVersion: GradleVersion) = runTest(gradleVersion) {
     val file = writeTextAndCommit("build.gradle.kts", """
       dependencies {
           implementation("myGroup:myArtifact:1.0") {
@@ -273,14 +291,16 @@ class KotlinGradleDependenciesAutoPopupTest : K2GradleCodeInsightTestCase() {
       }
     """.trimIndent())
     codeInsightFixture.configureFromExistingVirtualFile(file)
-    autoPopupTester.typeWithPauses("\"")
-    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside of exclude's module argument" }
+    autoPopupTester.typeWithPauses("\"my")
+    assertNull(autoPopupTester.lookup) { "Auto popup should not be triggered until 3 characters are typed" }
+    autoPopupTester.typeWithPauses("A")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered after 3 characters inside of exclude's module argument" }
     assertEquals("myArtifact", autoPopupTester.lookup?.currentItem?.lookupString)
   }
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun testAutoPopupOnQuoteInExcludePositionalModule(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+  fun testNoAutoPopupUntilThreeCharsInExcludePositionalModule(gradleVersion: GradleVersion) = runTest(gradleVersion) {
     val file = writeTextAndCommit("build.gradle.kts", """
       dependencies {
           implementation("myGroup:myArtifact:1.0") {
@@ -289,8 +309,10 @@ class KotlinGradleDependenciesAutoPopupTest : K2GradleCodeInsightTestCase() {
       }
     """.trimIndent())
     codeInsightFixture.configureFromExistingVirtualFile(file)
-    autoPopupTester.typeWithPauses("\"")
-    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside of exclude's module argument" }
+    autoPopupTester.typeWithPauses("\"my")
+    assertNull(autoPopupTester.lookup) { "Auto popup should not be triggered until 3 characters are typed" }
+    autoPopupTester.typeWithPauses("A")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered after 3 characters inside of exclude's module argument" }
     assertEquals("myArtifact", autoPopupTester.lookup?.currentItem?.lookupString)
   }
 
@@ -424,63 +446,71 @@ class KotlinGradleDependenciesAutoPopupTest : K2GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun `test auto popup on quote in kotlin shortcut module positional`(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+  fun `test no auto popup until three chars in kotlin shortcut module positional`(gradleVersion: GradleVersion) = runTest(gradleVersion) {
     val file = writeTextAndCommit("build.gradle.kts", """
       dependencies {
           implementation(kotlin(<caret>))
       }
     """.trimIndent())
     codeInsightFixture.configureFromExistingVirtualFile(file)
-    autoPopupTester.typeWithPauses("\"")
-    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside kotlin() module argument" }
+    autoPopupTester.typeWithPauses("\"st")
+    assertNull(autoPopupTester.lookup) { "Auto popup should not be triggered until 3 characters are typed" }
+    autoPopupTester.typeWithPauses("d")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered after 3 characters inside kotlin() module argument" }
     assertEquals("stdlib:2.0.21", autoPopupTester.lookup?.currentItem?.lookupString)
   }
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun `test auto popup on quote in kotlin shortcut module named`(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+  fun `test no auto popup until three chars in kotlin shortcut module named`(gradleVersion: GradleVersion) = runTest(gradleVersion) {
     val file = writeTextAndCommit("build.gradle.kts", """
       dependencies {
           implementation(kotlin(module = <caret>))
       }
     """.trimIndent())
     codeInsightFixture.configureFromExistingVirtualFile(file)
-    autoPopupTester.typeWithPauses("\"")
-    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside kotlin(module = ...) argument" }
+    autoPopupTester.typeWithPauses("\"st")
+    assertNull(autoPopupTester.lookup) { "Auto popup should not be triggered until 3 characters are typed" }
+    autoPopupTester.typeWithPauses("d")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered after 3 characters inside kotlin(module = ...) argument" }
     assertEquals("stdlib:2.0.21", autoPopupTester.lookup?.currentItem?.lookupString)
   }
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun `test auto popup on quote in kotlin shortcut version positional`(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+  fun `test no auto popup until three chars in kotlin shortcut version positional`(gradleVersion: GradleVersion) = runTest(gradleVersion) {
     val file = writeTextAndCommit("build.gradle.kts", """
       dependencies {
           implementation(kotlin("stdlib", <caret>))
       }
     """.trimIndent())
     codeInsightFixture.configureFromExistingVirtualFile(file)
-    autoPopupTester.typeWithPauses("\"")
-    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside kotlin() version argument" }
-    assertEquals("1.0", autoPopupTester.lookup?.currentItem?.lookupString)
+    autoPopupTester.typeWithPauses("\"1.")
+    assertNull(autoPopupTester.lookup) { "Auto popup should not be triggered until 3 characters are typed" }
+    autoPopupTester.typeWithPauses("0")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered after 3 characters inside kotlin() version argument" }
+    assertEquals("1.0.0", autoPopupTester.lookup?.currentItem?.lookupString)
   }
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun `test auto popup on quote in kotlin shortcut version named`(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+  fun `test no auto popup until three chars in kotlin shortcut version named`(gradleVersion: GradleVersion) = runTest(gradleVersion) {
     val file = writeTextAndCommit("build.gradle.kts", """
       dependencies {
           implementation(kotlin(module = "stdlib", version = <caret>))
       }
     """.trimIndent())
     codeInsightFixture.configureFromExistingVirtualFile(file)
-    autoPopupTester.typeWithPauses("\"")
-    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside kotlin(version = ...) argument" }
-    assertEquals("1.0", autoPopupTester.lookup?.currentItem?.lookupString)
+    autoPopupTester.typeWithPauses("\"1.")
+    assertNull(autoPopupTester.lookup) { "Auto popup should not be triggered until 3 characters are typed" }
+    autoPopupTester.typeWithPauses("0")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered after 3 characters inside kotlin(version = ...) argument" }
+    assertEquals("1.0.0", autoPopupTester.lookup?.currentItem?.lookupString)
   }
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun `test no auto popup on quote in kotlin shortcut version when module has version`(gradleVersion: GradleVersion) =
+  fun `test no auto popup in kotlin shortcut version when module has version`(gradleVersion: GradleVersion) =
     runTest(gradleVersion) {
       val file = writeTextAndCommit("build.gradle.kts", """
         dependencies {
@@ -488,7 +518,8 @@ class KotlinGradleDependenciesAutoPopupTest : K2GradleCodeInsightTestCase() {
         }
       """.trimIndent())
       codeInsightFixture.configureFromExistingVirtualFile(file)
-      autoPopupTester.typeWithPauses("\"")
+      // 3 characters, so the auto-popup threshold is not what suppresses the lookup here
+      autoPopupTester.typeWithPauses("\"1.0")
       assertNull(autoPopupTester.lookup) {
         "Auto popup should not be triggered for kotlin() version argument when module already has version"
       }
@@ -496,36 +527,40 @@ class KotlinGradleDependenciesAutoPopupTest : K2GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun `test auto popup on quote in embeddedKotlin shortcut module positional`(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+  fun `test no auto popup until three chars in embeddedKotlin shortcut module positional`(gradleVersion: GradleVersion) = runTest(gradleVersion) {
     val file = writeTextAndCommit("build.gradle.kts", """
       dependencies {
           implementation(embeddedKotlin(<caret>))
       }
     """.trimIndent())
     codeInsightFixture.configureFromExistingVirtualFile(file)
-    autoPopupTester.typeWithPauses("\"")
-    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside embeddedKotlin() module argument" }
+    autoPopupTester.typeWithPauses("\"st")
+    assertNull(autoPopupTester.lookup) { "Auto popup should not be triggered until 3 characters are typed" }
+    autoPopupTester.typeWithPauses("d")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered after 3 characters inside embeddedKotlin() module argument" }
     // `embeddedKotlin` accepts no version argument, so the lookup string must contain only the module name.
     assertEquals("stdlib", autoPopupTester.lookup?.currentItem?.lookupString)
   }
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun `test auto popup on quote in embeddedKotlin shortcut module named`(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+  fun `test no auto popup until three chars in embeddedKotlin shortcut module named`(gradleVersion: GradleVersion) = runTest(gradleVersion) {
     val file = writeTextAndCommit("build.gradle.kts", """
       dependencies {
           implementation(embeddedKotlin(module = <caret>))
       }
     """.trimIndent())
     codeInsightFixture.configureFromExistingVirtualFile(file)
-    autoPopupTester.typeWithPauses("\"")
-    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside embeddedKotlin(module = ...) argument" }
+    autoPopupTester.typeWithPauses("\"st")
+    assertNull(autoPopupTester.lookup) { "Auto popup should not be triggered until 3 characters are typed" }
+    autoPopupTester.typeWithPauses("d")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered after 3 characters inside embeddedKotlin(module = ...) argument" }
     assertEquals("stdlib", autoPopupTester.lookup?.currentItem?.lookupString)
   }
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun `test no auto popup on quote in embeddedKotlin shortcut second positional argument`(gradleVersion: GradleVersion) =
+  fun `test no auto popup in embeddedKotlin shortcut second positional argument`(gradleVersion: GradleVersion) =
     runTest(gradleVersion) {
       val file = writeTextAndCommit("build.gradle.kts", """
         dependencies {
@@ -533,7 +568,8 @@ class KotlinGradleDependenciesAutoPopupTest : K2GradleCodeInsightTestCase() {
         }
       """.trimIndent())
       codeInsightFixture.configureFromExistingVirtualFile(file)
-      autoPopupTester.typeWithPauses("\"")
+      // 3 characters, so the auto-popup threshold is not what suppresses the lookup here
+      autoPopupTester.typeWithPauses("\"1.0")
       assertNull(autoPopupTester.lookup) {
         "Auto popup should not be triggered for embeddedKotlin() second positional argument because it does not accept a version"
       }
@@ -541,14 +577,15 @@ class KotlinGradleDependenciesAutoPopupTest : K2GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun `test no auto popup on quote in embedded kotlin shortcut named version`(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+  fun `test no auto popup in embedded kotlin shortcut named version`(gradleVersion: GradleVersion) = runTest(gradleVersion) {
     val file = writeTextAndCommit("build.gradle.kts", """
       dependencies {
           implementation(embeddedKotlin(module = "stdlib", version = <caret>))
       }
     """.trimIndent())
     codeInsightFixture.configureFromExistingVirtualFile(file)
-    autoPopupTester.typeWithPauses("\"")
+    // 3 characters, so the auto-popup threshold is not what suppresses the lookup here
+    autoPopupTester.typeWithPauses("\"1.0")
     assertNull(autoPopupTester.lookup) {
       "Auto popup should not be triggered for embeddedKotlin() version argument because it does not accept a version"
     }
@@ -577,9 +614,9 @@ class KotlinGradleDependenciesAutoPopupTest : K2GradleCodeInsightTestCase() {
       }
     """.trimIndent())
     codeInsightFixture.configureFromExistingVirtualFile(file)
-    autoPopupTester.typeFast("\"1")
+    autoPopupTester.typeFast("\"1.0")
     assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered and stay inside of kotlin's version argument" }
-    assertEquals("1.0", autoPopupTester.lookup?.currentItem?.lookupString)
+    assertEquals("1.0.0", autoPopupTester.lookup?.currentItem?.lookupString)
   }
 
   @ParameterizedTest

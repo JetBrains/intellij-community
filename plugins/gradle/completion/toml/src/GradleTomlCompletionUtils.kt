@@ -59,11 +59,15 @@ internal fun TomlLiteral.getSiblingValue(siblingKey: String): String {
   return siblingKeyValue.value?.text?.removeWrappingQuotes() ?: ""
 }
 
+/**
+ * Strips the quotes of a string literal's text.
+ *
+ * The closing quote is optional: while a coordinate is being typed the literal under the caret is often still
+ * unterminated (`"my`), and the opening quote must not leak into the completion prefix — it would both offset
+ * the auto-popup character threshold and be sent to the dependency search as part of the query.
+ */
 internal fun String.removeWrappingQuotes(): String {
-  val s = this
-  return if (s.length >= 2 &&
-             ((s.startsWith('"') && s.endsWith('"')) ||
-              (s.startsWith('\'') && s.endsWith('\'')))) {
-    s.substring(1, s.length - 1)
-  } else s
+  val quote = firstOrNull()?.takeIf { it == '"' || it == '\'' } ?: return this
+  val end = if (length > 1 && this[length - 1] == quote) length - 1 else length
+  return substring(1, end)
 }

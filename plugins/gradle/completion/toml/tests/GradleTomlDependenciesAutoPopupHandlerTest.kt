@@ -39,8 +39,10 @@ internal class GradleTomlDependenciesAutoPopupHandlerTest : GradleCodeInsightBas
     override fun suggestArtifactCompletions(request: DependencyArtifactCompletionRequest): Flow<DependencyCompletionEvent<DependencyPartCompletionResult>> =
       flowOf(DependencyCompletionEvent.Item(DependencyPartCompletionResult("myArtifact", LOCAL)))
 
+    // Longer than the 3 characters the auto-popup threshold requires: an auto-popup whose only item is exactly
+    // the typed prefix is not shown, so the suggestion has to stay distinguishable from what the test types.
     override fun suggestVersionCompletions(request: DependencyVersionCompletionRequest): Flow<DependencyCompletionEvent<DependencyPartCompletionResult>> =
-      flowOf(DependencyCompletionEvent.Item(DependencyPartCompletionResult("1.0", LOCAL)))
+      flowOf(DependencyCompletionEvent.Item(DependencyPartCompletionResult("1.0.0", LOCAL)))
   }
 
   @TestDisposable
@@ -90,50 +92,58 @@ internal class GradleTomlDependenciesAutoPopupHandlerTest : GradleCodeInsightBas
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun testAutoPopupOnQuoteInGroupKey(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+  fun testAutoPopupAfterThreeCharsInGroupKey(gradleVersion: GradleVersion) = runTest(gradleVersion) {
     codeInsightFixture.configureByText("gradle/libs.versions.toml", """
       [libraries]
       my-lib = { group = <caret>, name = "myArtifact" }
     """.trimIndent())
-    autoPopupTester.typeWithPauses("\"")
-    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside of library's group key" }
+    autoPopupTester.typeWithPauses("\"my")
+    assertNull(autoPopupTester.lookup) { "Auto popup should not be triggered until 3 characters are typed" }
+    autoPopupTester.typeWithPauses("G")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered after 3 characters inside of library's group key" }
     assertEquals("myGroup", autoPopupTester.lookup?.currentItem?.lookupString)
   }
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun testAutoPopupOnQuoteInNameKey(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+  fun testAutoPopupAfterThreeCharsInNameKey(gradleVersion: GradleVersion) = runTest(gradleVersion) {
     codeInsightFixture.configureByText("gradle/libs.versions.toml", """
       [libraries]
       my-lib = { group = "myGroup", name = <caret> }
     """.trimIndent())
-    autoPopupTester.typeWithPauses("\"")
-    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside of library's name key" }
+    autoPopupTester.typeWithPauses("\"my")
+    assertNull(autoPopupTester.lookup) { "Auto popup should not be triggered until 3 characters are typed" }
+    autoPopupTester.typeWithPauses("A")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered after 3 characters inside of library's name key" }
     assertEquals("myArtifact", autoPopupTester.lookup?.currentItem?.lookupString)
   }
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun testAutoPopupOnQuoteInVersionKeyWithModule(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+  fun testAutoPopupAfterThreeCharsInVersionKeyWithModule(gradleVersion: GradleVersion) = runTest(gradleVersion) {
     codeInsightFixture.configureByText("gradle/libs.versions.toml", """
       [libraries]
       my-lib = { module = "myGroup:myArtifact", version = <caret> }
     """.trimIndent())
-    autoPopupTester.typeWithPauses("\"")
-    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside of library's version key" }
-    assertEquals("1.0", autoPopupTester.lookup?.currentItem?.lookupString)
+    autoPopupTester.typeWithPauses("\"1.")
+    assertNull(autoPopupTester.lookup) { "Auto popup should not be triggered until 3 characters are typed" }
+    autoPopupTester.typeWithPauses("0")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered after 3 characters inside of library's version key" }
+    assertEquals("1.0.0", autoPopupTester.lookup?.currentItem?.lookupString)
   }
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun testAutoPopupOnQuoteInVersionKeyWithGroupAndName(gradleVersion: GradleVersion) = runTest(gradleVersion) {
+  fun testAutoPopupAfterThreeCharsInVersionKeyWithGroupAndName(gradleVersion: GradleVersion) = runTest(gradleVersion) {
     codeInsightFixture.configureByText("gradle/libs.versions.toml", """
       [libraries]
       my-lib = { group = "myGroup", name = "myArtifact", version = <caret> }
     """.trimIndent())
-    autoPopupTester.typeWithPauses("\"")
-    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered inside of library's version key" }
-    assertEquals("1.0", autoPopupTester.lookup?.currentItem?.lookupString)
+    autoPopupTester.typeWithPauses("\"1.")
+    assertNull(autoPopupTester.lookup) { "Auto popup should not be triggered until 3 characters are typed" }
+    autoPopupTester.typeWithPauses("0")
+    assertNotNull(autoPopupTester.lookup) { "Auto popup should be triggered after 3 characters inside of library's version key" }
+    assertEquals("1.0.0", autoPopupTester.lookup?.currentItem?.lookupString)
   }
 
   @ParameterizedTest

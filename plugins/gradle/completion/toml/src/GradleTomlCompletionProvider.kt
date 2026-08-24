@@ -17,6 +17,7 @@ import com.intellij.gradle.completion.GRADLE_DEPENDENCY_COMPLETION
 import com.intellij.gradle.completion.GradleDependencyCompletionFuzzyMatcher
 import com.intellij.gradle.completion.getCompletionContext
 import com.intellij.gradle.completion.icon
+import com.intellij.gradle.completion.isBelowDependencyAutoPopupThreshold
 import com.intellij.gradle.completion.removeDummySuffix
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -58,10 +59,7 @@ internal class GradleTomlCompletionProvider : CompletionProvider<CompletionParam
     val tomlKey = tomlLiteral.getTomlKey() ?: return
     val key = tomlKey.getLastSegmentName()
 
-    // Autocomplete the combined coordinate (module / direct GAV) only after 3 or more characters are typed
-    if (parameters.isAutoPopup && text.length < 3 && (key == moduleKey || tomlKey.isDirectlyInLibrariesTable())) {
-      return
-    }
+    if (parameters.isBelowDependencyAutoPopupThreshold(text)) return
 
     result.restartCompletionOnAnyPrefixChange()
 

@@ -15,6 +15,16 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import javax.swing.Icon
 
+private const val MIN_DEPENDENCY_AUTO_POPUP_PREFIX_LENGTH = 3
+
+/**
+ * Whether an auto-popup has to be suppressed because too few characters of the dependency coordinate have been
+ * typed yet. Explicitly invoked completion is never suppressed, so this is always `false` for it.
+ */
+@ApiStatus.Internal
+fun CompletionParameters.isBelowDependencyAutoPopupThreshold(prefix: String): Boolean =
+  isAutoPopup && prefix.length < MIN_DEPENDENCY_AUTO_POPUP_PREFIX_LENGTH
+
 @ApiStatus.Internal
 fun removeDummySuffix(value: String?): String {
   if (value == null) {
