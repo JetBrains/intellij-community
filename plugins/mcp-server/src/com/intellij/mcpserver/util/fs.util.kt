@@ -4,6 +4,7 @@ import com.intellij.mcpserver.mcpFail
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.io.FileUtilRt
@@ -61,6 +62,30 @@ fun resolveInProject(pathInProject: String, projectDirectory: Path, throwWhenOut
   return filePath
 }
 
+/**
+ * The roots [BaseProjectDirectories] reports for this project, or an empty list when they cannot be obtained.
+ */
+private fun Project.baseProjectDirectories(): List<Path> =
+  readSafely("the base directories", emptyList()) {
+    getBaseDirectories().mapNotNull { it.toNioPathOrNull()?.normalize() }
+  }
+
+/**
+ * Reads a part of the project state, and returns [fallback] when the project cannot supply it. A project that is
+ * disposed in parallel throws from every service it owns, and one failed project must not break the whole lookup.
+ */
+private fun <T> Project.readSafely(what: String, fallback: T, action: () -> T): T =
+  try {
+    action()
+  }
+  catch (ce: CancellationException) {
+    throw ce
+  }
+  catch (error: Throwable) {
+    logger.warn("Failed to read $what of the project '$name'", error)
+    fallback
+  }
+
 suspend fun findMostRelevantProjectForRoots(roots: Collection<String>): Project? {
   return roots.firstNotNullOfOrNull { findMostRelevantProject (it) }
 }
@@ -99,18 +124,61 @@ private suspend fun findMostRelevantProject(path: Path): Project? {
   val targetNormalizedPath = path.normalize()
   val openProjects = serviceAsync<ProjectManager>().openProjects
 
+  // a project is matched not only by its own directory, but by every directory `BaseProjectDirectories` reports for it:
+  // a solution opened from a repository subdirectory keeps the repository root attached, and that root is a valid
+  // location of the project even though the project directory is below it
+  //
   // prefer most inner directories
   // let's say we have
   // - frontend (a project)
   // - frontend/common (also a separate project but in the inner dir)
   // - frontend/common/src  <-- this path passed as `path`
   // here we will have 2 project matches: `frontend/common` and `frontend` and better to prefer `frontend/common`
-  val pairs = openProjects.mapNotNull { project ->
-    val openProjectPath = if (project is ProjectStoreOwner) project.componentStore.projectBasePath.normalize() else return@mapNotNull null
-    if (targetNormalizedPath.startsWith(openProjectPath)) project to path else null
-  }.sortedByDescending { it.second.nameCount }
-  logger.trace { "Found projects for path $path: ${pairs.joinToString { it.first.basePath ?: "null"}}" }
-  return pairs.firstOrNull()?.first
+  val matches = openProjects.flatMap { it.matchingDirectories(targetNormalizedPath) }.sortedWith(MOST_INNER_MATCH_FIRST)
+  logger.trace { "Found projects for path $path: ${matches.joinToString { "${it.project.basePath} (matched by ${it.directory})" }}" }
+  val bestMatch = matches.firstOrNull() ?: return null
+
+  // two projects opened from the same repository report the same repository root, and the root alone does not tell one
+  // from the other: report no project, so that the caller asks for an explicit project path
+  if (!bestMatch.isProjectDirectory &&
+      matches.any { it.project !== bestMatch.project && it.directory == bestMatch.directory }) {
+    logger.trace { "The path $path matches the directory ${bestMatch.directory} of more than one project" }
+    return null
+  }
+  return bestMatch.project
+}
+
+/**
+ * A directory of [project] that contains the looked-up path. [isProjectDirectory] tells the project's own directory from
+ * a base directory of the project.
+ */
+private class ProjectDirectoryMatch(val project: Project, val directory: Path, val isProjectDirectory: Boolean)
+
+/**
+ * Orders matches from the most to the least specific: a deeper directory wins, and the project's own directory wins over
+ * a base directory pointing at the very same place.
+ */
+private val MOST_INNER_MATCH_FIRST: Comparator<ProjectDirectoryMatch> =
+  compareByDescending<ProjectDirectoryMatch> { it.directory.nameCount }.thenByDescending { it.isProjectDirectory }
+
+/**
+ * The directories of this project that contain [targetNormalizedPath].
+ */
+private fun Project.matchingDirectories(targetNormalizedPath: Path): List<ProjectDirectoryMatch> {
+  if (isDisposed) return emptyList()
+
+  return readSafely("the directories", emptyList()) {
+    val projectPath = if (this is ProjectStoreOwner) componentStore.projectBasePath.normalize() else null
+
+    val directories = LinkedHashSet<Path>()
+    projectPath?.let(directories::add)
+    directories.addAll(baseProjectDirectories())
+
+    directories.mapNotNull { directory ->
+      if (!targetNormalizedPath.startsWith(directory)) return@mapNotNull null
+      ProjectDirectoryMatch(project = this, directory = directory, isProjectDirectory = directory == projectPath)
+    }
+  }
 }
 
 /**
