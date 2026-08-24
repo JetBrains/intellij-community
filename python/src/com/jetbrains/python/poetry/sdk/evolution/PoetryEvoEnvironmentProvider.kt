@@ -11,6 +11,7 @@ import com.intellij.python.sdk.backend.evolution.EvoToolContext
 import com.intellij.python.sdk.backend.evolution.PyToolEvoEnvironmentProvider
 import com.intellij.python.sdk.backend.evolution.defaultVenvDir
 import com.intellij.python.sdk.backend.evolution.evoCreateEnvLeaf
+import com.intellij.python.sdk.backend.evolution.evoInstallPythonLeaf
 import com.intellij.python.sdk.backend.evolution.evoEnvLeaf
 import com.intellij.python.sdk.backend.evolution.resolvePythonExecutable
 import com.intellij.python.sdk.backend.evolution.toDisplayPath
@@ -74,8 +75,16 @@ internal class PoetryEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
       // below still matches on the plain version, which is what poetry puts at the end of the cache env's folder name.
       val title = PySdkBundle.message("evolution.python.version", versionStr)
       val existingBinary = poetryEnvRoots.firstOrNull { it.name.endsWith(versionStr) }?.resolvePythonExecutable()
-      if (existingBinary != null) evoEnvLeaf(title = title, pythonBinary = existingBinary, icon = icon)
-      else evoCreateEnvLeaf(title = title, token = option.token, icon = icon, bases = option.bases)
+      val leaf = when {
+        // Not on the machine: offer to install it. Its token is the version rather than an interpreter path, so it
+        // cannot be handed to the create step as-is — evoInstallPythonLeaf is what asks for the install first.
+        option.installable -> evoInstallPythonLeaf(title = title, version = versionStr)
+        existingBinary != null -> evoEnvLeaf(title = title, pythonBinary = existingBinary, icon = icon)
+        else -> evoCreateEnvLeaf(title = title, token = option.token, icon = icon, bases = option.bases)
+      }
+      // Every row here is a Python version, whichever of the three it turned out to be — so the expanded view heads
+      // them all the same way instead of grouping only the ones that happen to have interpreters behind them.
+      leaf.copy(versionGroup = title)
     }
     val virtualenvsDir = runPoetry(projectDir, "config", "virtualenvs.path").getOrNull()?.trim()?.takeIf { it.isNotBlank() }
       ?.let { Path.of(it) }

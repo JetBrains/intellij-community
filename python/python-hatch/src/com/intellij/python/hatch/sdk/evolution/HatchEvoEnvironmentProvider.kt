@@ -98,11 +98,19 @@ internal class HatchEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
    */
   override suspend fun decorate(context: EvoToolContext, result: EvoLoadResultDto): EvoLoadResultDto {
     if (result !is EvoLoadResultDto.Ok) return result
-    val options = context.systemPythonOptions().takeIf { it.isNotEmpty() } ?: return result
+    val options = context.systemPythonOptions()
     return result.copy(sections = result.sections.map { section ->
       section.copy(leaves = section.leaves.map { leaf ->
-        if (leaf.ref is PyInterpreterRef.CreateEnv) leaf.copy(createVersions = options, secondaryText = leaf.secondaryText ?: NO_VERSION)
-        else leaf
+        when {
+          leaf.ref !is PyInterpreterRef.CreateEnv -> leaf
+          // Declared in pyproject.toml but nothing on the machine to build it from: creating it would fail, so the row
+          // says so up front instead of looking creatable.
+          options.isEmpty() -> leaf.copy(
+            unavailable = PySdkBundle.message("evolution.error.no.base.python"),
+            secondaryText = leaf.secondaryText ?: NO_VERSION,
+          )
+          else -> leaf.copy(createVersions = options, secondaryText = leaf.secondaryText ?: NO_VERSION)
+        }
       })
     })
   }

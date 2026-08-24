@@ -62,6 +62,24 @@ open class EvoTreeLeafElement(
 ) : EvoTreeElement(presentation)
 
 /**
+ * A leaf that cannot be acted on, and says why: disabled, with a warning sign carrying [reason], instead of looking
+ * selectable and failing only once clicked.
+ *
+ * It reports [State.NOT_AVAILABLE] rather than [State.DONE], which is what makes it unselectable and gives it the sign —
+ * the same state a tool node in that position reports.
+ */
+class EvoTreeUnavailableLeafElement(action: AnAction, reason: @Nls String) : EvoTreeLeafElement(action) {
+  init {
+    presentation.isEnabled = false
+    presentation.putClientProperty(ActionUtil.TOOLTIP_TEXT, reason)
+  }
+
+  override fun load(project: Project, scope: CoroutineScope, listeners: List<ListPopupStep.ListPopupModelListener>) {
+    state = State.NOT_AVAILABLE
+  }
+}
+
+/**
  * A leaf whose action decides for itself whether it applies: [EvoActionPopupStep] runs the action's own `update()`
  * against the popup's data context before the list is shown, and drops the row when the action reports itself
  * invisible. Used for the package-manager rows, which are shared platform actions gated on the project's dependency
@@ -240,6 +258,11 @@ class EvoLoadedNode(
 class EvoTreeLazyNodeElement(
   text: String,
   icon: Icon,
+  /**
+   * Opens the process output for this node's last run, for when the row reports a failure. Null when the node has no
+   * process behind it at all.
+   */
+  val showOutput: (() -> Unit)? = null,
   val loader: suspend (forceRefresh: Boolean) -> EvoLoadedNode,
 ) : EvoTreeNodeElement(text, icon) {
   /** Set from the last load: true once the backend measured this tool as slow, so it shows an inline reload icon. */

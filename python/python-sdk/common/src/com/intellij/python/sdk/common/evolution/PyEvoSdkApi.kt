@@ -124,6 +124,17 @@ interface PyEvoSdkApi : RemoteApi<Unit> {
   suspend fun performNodeAction(projectId: ProjectId, pyProjectKey: String, nodeId: String, actionId: String): EvoSelectResultDto
 
   /**
+   * Opens the Python Process Output tool window on the process a tool's last run produced, addressed by that run's
+   * trace — what the widget offers when a tool node reports a failure.
+   *
+   * Done from the backend because that is where the trace is: the widget's `traceId` keys the coroutine scope a tool
+   * runs in, and the [com.jetbrains.python.TraceContext] in that scope is what the tool window knows the process by.
+   * `false` when that run is gone (an expired scope) or the window could not find it, which the frontend answers by
+   * opening the window without a selection.
+   */
+  suspend fun showToolProcessOutput(projectId: ProjectId, nodeId: String, traceId: String): Boolean
+
+  /**
    * A flow of the project's SDK-configuration lock state (`com.jetbrains.python.sdk.isSdkConfigurationInProgress`):
    * `true` while any interpreter configuration (create/select) holds the lock. The widget shows a spinner and
    * disables its popup while `true`, instead of the current interpreter and its actions.
@@ -221,6 +232,10 @@ suspend fun requestEvoPerformNodeAction(projectId: ProjectId, pyProjectKey: Stri
   PyEvoSdkApi().performNodeAction(projectId, pyProjectKey, nodeId, actionId)
 
 @ApiStatus.Internal
+suspend fun requestEvoShowToolProcessOutput(projectId: ProjectId, nodeId: String, traceId: String): Boolean =
+  PyEvoSdkApi().showToolProcessOutput(projectId, nodeId, traceId)
+
+@ApiStatus.Internal
 suspend fun requestEvoSdkConfigurationInProgress(projectId: ProjectId): Flow<Boolean> =
   PyEvoSdkApi().sdkConfigurationInProgress(projectId)
 
@@ -280,7 +295,17 @@ sealed interface PyInterpreterRef {
    * default (the pre-filled name).
    */
   @Serializable
-  data class CreateEnv(val token: @NonNls String, val folder: @NonNls String? = null, val name: @NonNls String? = null) : PyInterpreterRef
+  data class CreateEnv(
+    val token: @NonNls String,
+    val folder: @NonNls String? = null,
+    val name: @NonNls String? = null,
+    /**
+     * The Python version to install before creating anything, for a row that offered an interpreter the machine does
+     * not have (see [EvoAddNewOptionDto.installable]). The backend installs it and then carries on with [token] pointing
+     * at what landed, so a tool never has to know that installation was involved.
+     */
+    val installPythonVersion: @NonNls String? = null,
+  ) : PyInterpreterRef
 
   /**
    * Configure the module's interpreter using one of the IDE's setup options (the "Shortcuts" rows — the same options
@@ -370,6 +395,13 @@ data class EvoNodeDto(
 data class EvoLeafDto(
   val title: @Nls String,
   val description: @Nls String? = null,
+  /**
+   * A shortened form of [description] for the places this row is titled by its path rather than by its name — under a
+   * version header in the expanded view, where the version is already written above it. Middle-elided the same way a
+   * section header's folder path is, since a full interpreter path is wider than a popup row and widening the row would
+   * push the whole popup off the widget. `null` when the row has no path to show.
+   */
+  val descriptionElided: @NlsSafe String? = null,
   val secondaryText: @Nls String? = null,
   val icon: IconId,
   val kind: EvoLeafKind,
@@ -387,6 +419,24 @@ data class EvoLeafDto(
    * option's token is the chosen base Python — passed back as [PyInterpreterRef.CreateEnv] `token`/`folder`.
    */
   val createVersions: List<EvoAddNewOptionDto>? = null,
+  /**
+   * Why this row cannot be acted on, when it cannot — a hatch environment declared in `pyproject.toml` with no
+   * interpreter on the machine to build it from, say.
+   *
+   * The row is then shown disabled with a warning sign carrying this text, rather than looking selectable and failing
+   * only once the user clicks it.
+   */
+  val unavailable: @Nls String? = null,
+  /**
+   * The Python version this row stands for, when it stands for a version rather than for one concrete environment —
+   * poetry's per-version cache rows, each of which may already have an environment, may still need one, or may need the
+   * interpreter installed first.
+   *
+   * In the expanded view it becomes the header the row sits under, so every version reads the same way regardless of
+   * which of those three it is. `null` for a row that is already a concrete thing (an existing environment), which stays
+   * a plain row under its own section's header.
+   */
+  val versionGroup: @NlsSafe String? = null,
   /**
    * For a [PyInterpreterRef.CreateEnv] row whose token *is* a base interpreter (poetry's per-version cache rows): the
    * other installs of that same version, so the row can offer the finer choice the same way an "add new" version row
@@ -475,6 +525,15 @@ data class EvoAddNewOptionDto(
    * than a path and a base interpreter is not a thing the user could pick.
    */
   val bases: List<EvoBasePythonDto> = emptyList(),
+  /**
+   * This version is not on the machine, but the IDE can install it — so the row offers to, the way the v2 "Add
+   * Interpreter" dialog offers its download entries. [bases] is then empty (there is no install to choose between) and
+   * [token] is the version to install rather than a path to one.
+   *
+   * Only set for tools that build an environment *from* an existing interpreter, and only where installing is possible
+   * at all: uv and conda fetch their own interpreters, and a remote machine cannot be installed onto from here.
+   */
+  val installable: Boolean = false,
 )
 
 /**

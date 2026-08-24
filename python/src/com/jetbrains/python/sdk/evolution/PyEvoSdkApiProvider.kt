@@ -23,9 +23,13 @@ import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
+import com.intellij.python.community.impl.installer.PySdkToInstallManager
 import com.intellij.python.community.services.systemPython.SystemPython
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.hatch.impl.HATCH_TOOL_ID
+import com.intellij.python.processOutput.common.ProcessOutputQuery
+import com.intellij.python.processOutput.common.QueryResponse
+import com.intellij.python.processOutput.common.sendProcessOutputQuery
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pytools.PyTool
@@ -142,19 +146,42 @@ internal suspend fun systemPythonOptions(baseDir: Path, fileSystem: FileSystem<P
   // A machine-less (legacy Target) filesystem has no descriptor; fall back to the local machine, as the poetry node did.
   val eelApi = fileSystem.eelDescriptor?.toEelApi() ?: localEel
   val spec = PyVersionSpecifiers(requiresPython(baseDir) ?: "")
-  return SystemPythonService().findSystemPythons(eelApi)
+  val installed = SystemPythonService().findSystemPythons(eelApi)
     .filter { it.pythonInfo.languageLevel.isAtLeast(LanguageLevel.PYTHON38) && spec.isValid(it.pythonInfo.languageLevel) }
-    .sortedByDescending { it.pythonInfo.languageLevel }
-    // groupBy keeps both the group order and the order within each group, so "newest version first, and within it the
-    // interpreter the service listed first" holds — the latter being the representative the option's token names.
+    // groupBy keeps the order within each group, so the option's token names the interpreter the service listed first.
     .groupBy { it.pythonInfo.languageLevel }
-    .map { (level, pythons) ->
+  return (installed.keys + installableLevels(fileSystem, spec, installed.keys))
+    .sortedDescending()
+    .map { level ->
+      val pythons = installed[level]
+                    // Not here, but obtainable: the row offers to install it, and carries the version as its token.
+                    ?: return@map EvoAddNewOptionDto(title = level.toPythonVersion(), token = level.toPythonVersion(), installable = true)
       EvoAddNewOptionDto(
         title = level.toPythonVersion(),
         token = pythons.first().pythonBinary.pathString,
         bases = pythons.map { it.toBaseDto() },
       )
     }
+}
+
+/**
+ * Versions the IDE could install and that are not in [installedLevels] — what turns "you do not have 3.12" from a gap
+ * in the list into a row offering to get it.
+ *
+ * Empty when installing is not possible at all: the installer is local-machine only, so a remote interpreter list never
+ * offers a download it could not perform.
+ */
+private suspend fun installableLevels(
+  fileSystem: FileSystem<PathHolder.Eel>,
+  spec: PyVersionSpecifiers,
+  installedLevels: Set<LanguageLevel>,
+): Set<LanguageLevel> {
+  val eelApi = fileSystem.eelDescriptor?.toEelApi() ?: localEel
+  if (SystemPythonService().getInstaller(eelApi) == null) return emptySet()
+  val available = withContext(Dispatchers.IO) { PySdkToInstallManager.getAvailableVersionsToInstall().keys }
+  return available.filterTo(mutableSetOf()) {
+    it !in installedLevels && it.isAtLeast(LanguageLevel.PYTHON38) && spec.isValid(it)
+  }
 }
 
 /** One install as an [EvoBasePythonDto]: the path identifies it, its tool's icon and free-threadedness qualify it. */
@@ -421,6 +448,11 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     // configuration and (via withBackgroundProgress) shows a visible task; the widget spinners on the same lock
     // (see isSdkConfigurationInProgress). The tool creators' own withProgressText steps attach to that progress.
     return withSdkConfigurationLock(pyProject.project) {
+      // A row that offered an interpreter the machine does not have: install it first, then carry on with the ref
+      // pointing at what landed. Done here rather than in a provider — which interpreter backs a new environment is the
+      // core's business, so every tool gets "install it if it is missing" without knowing installation exists.
+      val ref = installBaseIfRequested(ref, fileSystem)
+        .getOr { return@withSdkConfigurationLock it.error.toSelectError(pyProject.project) }
       val sdk = when (ref) {
         is PyInterpreterRef.ExistingSdk ->
           PythonSdkUtil.getAllSdks().find { it.name == ref.sdkName }
@@ -440,6 +472,28 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
       pyProject.applySdk(sdk)
       EvoSelectResultDto.Ok
     }
+  }
+
+  /**
+   * Installs the base interpreter a [PyInterpreterRef.CreateEnv] asks for, and returns the ref pointing at what landed.
+   * Any other ref, and any `CreateEnv` that already names an interpreter, is returned untouched.
+   *
+   * The install only reports success, so the interpreter has to be found by re-scanning afterwards — and the scan must
+   * be forced, since the cached list is the one the options were built from and predates the install.
+   */
+  private suspend fun installBaseIfRequested(ref: PyInterpreterRef, fileSystem: EelFileSystem): PyResult<PyInterpreterRef> {
+    val create = ref as? PyInterpreterRef.CreateEnv ?: return PyResult.success(ref)
+    val version = create.installPythonVersion ?: return PyResult.success(ref)
+    // An EelFileSystem always has a descriptor, unlike the generic FileSystem the option listing works with.
+    val eelApi = fileSystem.eelDescriptor.toEelApi()
+    val installer = SystemPythonService().getInstaller(eelApi)
+                    ?: return PyResult.localizedError(PySdkBundle.message("evolution.error.install.unavailable", version))
+    installer.installLatestPython(PyVersionSpecifiers("==$version.*"))
+      .getOr { return PyResult.localizedError(PySdkBundle.message("evolution.error.install.failed", version, it.error)) }
+    val installed = SystemPythonService().findSystemPythons(eelApi, forceRefresh = true)
+                      .firstOrNull { it.pythonInfo.languageLevel.toPythonVersion() == version }
+                    ?: return PyResult.localizedError(PySdkBundle.message("evolution.error.install.not.found", version))
+    return PyResult.success(create.copy(token = installed.pythonBinary.pathString, installPythonVersion = null))
   }
 
   /** Runs [build] on the provider owning [nodeId], or fails when no provider claims it (an unknown or removed tool). */
@@ -528,6 +582,16 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     module.getRootModuleOrNull(option.toolId)?.also { configurePythonSdk(it.project, it, sdk) }
     applySdk(sdk)
     return true
+  }
+
+  override suspend fun showToolProcessOutput(projectId: ProjectId, nodeId: String, traceId: String): Boolean {
+    // Only a scope that already exists: toolScope would mint a fresh trace, which no process was ever run under.
+    val trace = toolScopes.getIfPresent("$traceId|$nodeId")?.coroutineContext?.get(TraceContext) ?: return false
+    val response = sendProcessOutputQuery(ProcessOutputQuery.OpenToolWindowByTraceUuid(trace.uuid.toString()))
+    return when (response) {
+      is QueryResponse.Timeout -> false
+      is QueryResponse.Completed -> response.payload.value
+    }
   }
 
   override suspend fun sdkConfigurationInProgress(projectId: ProjectId): Flow<Boolean> =

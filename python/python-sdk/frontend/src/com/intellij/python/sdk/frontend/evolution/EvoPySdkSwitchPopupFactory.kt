@@ -38,6 +38,7 @@ import com.intellij.python.sdk.common.evolution.EvoSectionDto
 import com.intellij.python.sdk.common.evolution.PyInterpreterDto
 import com.intellij.python.sdk.common.evolution.PyInterpreterRef
 import com.intellij.python.sdk.common.evolution.evoRpc
+import com.intellij.python.sdk.common.evolution.evoRpcOrNull
 import com.intellij.python.sdk.common.evolution.requestEvoNode
 import com.intellij.python.sdk.frontend.PySdkFrontendBundle
 import com.intellij.python.sdk.frontend.evolution.components.EvoAlternatives
@@ -53,12 +54,20 @@ import com.intellij.python.sdk.frontend.evolution.components.EvoTreeNodeElement
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreePopup
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeSection
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeStaticNodeElement
+import com.intellij.python.sdk.frontend.evolution.components.EvoTreeUnavailableLeafElement
 import com.intellij.python.sdk.frontend.evolution.components.EvoVersionRows
 import com.intellij.python.sdk.frontend.evolution.components.EvoWarningException
 import com.intellij.python.sdk.frontend.icons.PythonSdkFrontendIcons
 import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import javax.swing.Icon
+import com.intellij.python.sdk.common.evolution.requestEvoShowToolProcessOutput
+import com.intellij.openapi.application.EDT
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private val managePackagesAction = object : AnAction(
   { PySdkFrontendBundle.message("evo.sdk.python.packaging.interpreter.widget.manage.packages") },
@@ -76,6 +85,13 @@ private val managePackagesAction = object : AnAction(
 private const val ADVANCED_NODE_ID: String = EvoNodeIds.ADVANCED
 
 /** Synthetic node id for the frontend-only "Associated environments" node (its rows are existing SDKs, never version-probed). */
+/**
+ * The Python Process Output tool window, opened by a failed row's sign when the backend could not address the run's
+ * process. A literal because the constant declaring it is internal to the process-output module — the packaging tool
+ * window is reached the same way elsewhere in this plugin.
+ */
+private const val PROCESS_OUTPUT_TOOL_WINDOW_ID: String = "PythonProcessOutput"
+
 private const val ASSOCIATED_NODE_ID: String = EvoNodeIds.ASSOCIATED
 
 private fun EvoLeafDto.toStubAction(): AnAction = object : AnAction({ title }, { description ?: "" }, icon.icon()), DumbAware {
@@ -117,6 +133,10 @@ internal class EvoPySdkSwitchPopupFactory(
   val scope: CoroutineScope,
 ) {
   private fun EvoLeafDto.toElement(nodeId: String, traceId: String): EvoTreeElement {
+    // Checked first: a row that cannot be acted on has no version picker to offer either.
+    unavailable?.let { reason ->
+      return EvoTreeUnavailableLeafElement(selectEnvAction(project, pyProjectKey, this, nodeId, traceId, scope), reason)
+    }
     // A version-picker row (hatch not-yet-created env): a node whose submenu is the versions; choosing one creates the
     // env with that Python. The row's ref (CreateEnv) carries the per-row create token (hatch: the env name) → folder.
     val versions = createVersions
@@ -129,6 +149,7 @@ internal class EvoPySdkSwitchPopupFactory(
           versions,
           { addVersionAction(nodeId, it, createToken) },
           { base -> baseInterpreterRow(base) { createEnv(nodeId, base.token, createToken, null, null) } },
+          { option -> installActionRow { createEnv(nodeId, option.token, createToken, null, null, option.installVersion()) } },
         ),
         // There is no interpreter to probe yet, so the row carries the backend's "n/a" in the same column where the
         // already-materialized envs show their resolved version.
@@ -178,26 +199,65 @@ internal class EvoPySdkSwitchPopupFactory(
     if (this !is EvoLoadResultDto.Ok) return emptyList()
     if (sections.none { section -> section.leaves.any { it.bases.size > 1 } }) return emptyList()
     val takenNames = sections.flatMap { it.leaves }.mapTo(mutableSetOf()) { it.title }
-    return sections.flatMap { section ->
-      val (expandable, plain) = section.leaves.partition { it.bases.isNotEmpty() }
-      buildList {
-        val plainElements = plain.map { it.toElement(nodeId, traceId) } +
-                            listOfNotNull(addNewElement(section, nodeId, takenNames))
-        if (plainElements.isNotEmpty()) {
-          add(EvoTreeSection(
-            label = section.label?.let { ListSeparator(it) },
-            elements = plainElements,
-            labelTooltip = section.labelTooltip?.takeIf { it != section.label },
-          ))
-        }
-        for (leaf in expandable) {
-          add(EvoTreeSection(
-            label = ListSeparator(leaf.title),
-            elements = baseInterpreterRows(project, pyProjectKey, leaf, nodeId, scope),
-          ))
-        }
-      }
+    return sections.flatMap { section -> section.toExpandedSections(nodeId, traceId, takenNames) }
+  }
+
+  /**
+   * One section's expanded form: every row that stands for a Python version ([EvoLeafDto.versionGroup]) becomes a header
+   * over what that version offers — the interpreters it could be built from, the single "download and install" row when
+   * the version is not on the machine, or the environment it already has.
+   *
+   * All three get a header, so the list does not alternate between headed groups and bare rows depending on which case a
+   * version happens to be in. Rows that are not versions at all (an existing environment in its own right) stay plain
+   * under the section's own header, and that group is flushed whenever a version header interrupts it — which is what
+   * keeps every version in the order it arrived in.
+   */
+  private fun EvoSectionDto.toExpandedSections(nodeId: String, traceId: String, takenNames: Set<String>): List<EvoTreeSection> {
+    val out = mutableListOf<EvoTreeSection>()
+    var plain = mutableListOf<EvoTreeElement>()
+    // The section's own header belongs to the first plain group; later ones have nothing left to be titled by.
+    var plainLabel: @Nls String? = label
+    fun flushPlain() {
+      if (plain.isEmpty()) return
+      out += EvoTreeSection(
+        label = plainLabel?.let { ListSeparator(it) },
+        elements = plain.toList(),
+        labelTooltip = labelTooltip?.takeIf { it != label && plainLabel == label },
+      )
+      plain = mutableListOf()
+      plainLabel = null
     }
+    for (leaf in leaves) {
+      val header = leaf.versionGroup
+      if (header == null) {
+        plain += leaf.toElement(nodeId, traceId)
+        continue
+      }
+      val rows = installInterpreterRow(project, pyProjectKey, leaf, nodeId, scope)?.let { listOf(it) }
+                 ?: baseInterpreterRows(project, pyProjectKey, leaf, nodeId, scope).takeIf { it.isNotEmpty() }
+                 // Nothing to choose between: the version already has its environment, so the row is that environment.
+                 ?: listOf(leaf.asPathTitledRow(nodeId, traceId))
+      flushPlain()
+      out += EvoTreeSection(label = ListSeparator(header), elements = rows)
+    }
+    // The add-new row closes the section, as it does in the collapsed form.
+    plain += listOfNotNull(addNewElement(this, nodeId, takenNames))
+    flushPlain()
+    return out
+  }
+
+  /**
+   * A version row as it reads *under* its own version header: titled by what distinguishes it from the header — its
+   * interpreter path — rather than repeating the version that is already written above it.
+   *
+   * The elided path is what the row shows, for the same reason the base-interpreter rows show one; the un-elided form
+   * becomes the row's tooltip, so a path the elision cut through can still be read in full.
+   */
+  private fun EvoLeafDto.asPathTitledRow(nodeId: String, traceId: String): EvoTreeElement {
+    val path = descriptionElided ?: description
+    val row = (if (path == null) this else copy(title = path)).toElement(nodeId, traceId)
+    description?.takeIf { it != path }?.let { row.presentation.putClientProperty(ActionUtil.TOOLTIP_TEXT, it) }
+    return row
   }
 
   /**
@@ -223,6 +283,11 @@ internal class EvoPySdkSwitchPopupFactory(
             addNewEnv.options,
             { addVersionAction(nodeId, it, addNewEnv.path, editable, addNewEnv.name) },
             { base -> baseInterpreterRow(base) { createEnv(nodeId, base.token, addNewEnv.path, editable, addNewEnv.name) } },
+            { option ->
+              installActionRow {
+                createEnv(nodeId, option.token, addNewEnv.path, editable, addNewEnv.name, option.installVersion())
+              }
+            },
           ),
           editableName = editable,
         )
@@ -242,6 +307,7 @@ internal class EvoPySdkSwitchPopupFactory(
     options: List<EvoAddNewOptionDto>,
     versionRow: (EvoAddNewOptionDto) -> AnAction,
     baseRow: (EvoBasePythonDto) -> EvoTreeLeafElement,
+    installRow: (EvoAddNewOptionDto) -> EvoTreeLeafElement,
   ): EvoVersionRows {
     val collapsed = listOf(EvoTreeSection(elements = options.map { EvoTreeLeafElement(versionRow(it)) }))
     val expanded = when {
@@ -249,7 +315,9 @@ internal class EvoPySdkSwitchPopupFactory(
       else -> options.map { option ->
         EvoTreeSection(
           label = ListSeparator(addVersionText(option)),
-          elements = option.bases.map { baseRow(it) },
+          // A version with no interpreters behind it is one offering to install itself: the header names the version, so
+          // the single row under it names the action instead of repeating it.
+          elements = if (option.bases.isEmpty()) listOf(installRow(option)) else option.bases.map { baseRow(it) },
         )
       }
     }
@@ -271,8 +339,17 @@ internal class EvoPySdkSwitchPopupFactory(
     editableName: EvoEditableName? = null,
     defaultName: String? = null,
   ): AnAction =
-    object : AnAction({ addVersionText(option) }, { "" }, AllIcons.Language.Python), DumbAware, EvoAlternatives {
-      override fun actionPerformed(e: AnActionEvent) = createEnv(nodeId, option.token, path, editableName, defaultName)
+    object : AnAction({ addVersionText(option) }, { "" }, versionIcon(option)), DumbAware, EvoAlternatives {
+      init {
+        // Says what picking this row will do before it does it, the way the v2 dialog labels its download entries.
+        if (option.installable) {
+          templatePresentation.putClientProperty(
+            ActionUtil.SECONDARY_TEXT, PySdkFrontendBundle.message("evo.sdk.status.bar.popup.add.new.installable"))
+        }
+      }
+
+      override fun actionPerformed(e: AnActionEvent) =
+        createEnv(nodeId, option.token, path, editableName, defaultName, installVersion = option.installVersion())
 
       override val alternativesTitle: String
         get() = PySdkFrontendBundle.message("evo.sdk.status.bar.popup.add.new.base.title")
@@ -287,11 +364,25 @@ internal class EvoPySdkSwitchPopupFactory(
     }
 
   /** Creates the environment a version or base-interpreter row stands for, unless the typed name rules it out. */
-  private fun createEnv(nodeId: String, token: String, path: String, editableName: EvoEditableName?, defaultName: String?) {
+  private fun createEnv(
+    nodeId: String,
+    token: String,
+    path: String,
+    editableName: EvoEditableName?,
+    defaultName: String?,
+    installVersion: String? = null,
+  ) {
     // A taken/blank name can't back a new env (the field shows it in red) — don't create.
     if (editableName != null && !editableName.isValid) return
-    createEvoEnv(project, pyProjectKey, nodeId, token, path, editableName?.value ?: defaultName, scope)
+    createEvoEnv(project, pyProjectKey, nodeId, token, path, editableName?.value ?: defaultName, installVersion, scope)
   }
+
+  /** A version the machine has gets the Python logo; one it would have to fetch gets the download icon. */
+  private fun versionIcon(option: EvoAddNewOptionDto): Icon =
+    if (option.installable) AllIcons.Actions.Download else AllIcons.Language.Python
+
+  /** The version to install before creating, or null when the interpreter is already here. */
+  private fun EvoAddNewOptionDto.installVersion(): String? = token.takeIf { installable }
 
   /** Version row text: "Default" for uv's default (blank token), otherwise "Python <version>". */
   private fun addVersionText(option: EvoAddNewOptionDto): @NlsActions.ActionText String =
@@ -355,7 +446,7 @@ internal class EvoPySdkSwitchPopupFactory(
     val toolNodeElements = buildList<EvoTreeElement> {
       for (node in nodes) {
         if (node.id == ADVANCED_NODE_ID && associated.isNotEmpty()) add(associatedInterpretersNode(traceId))
-        add(EvoTreeLazyNodeElement(node.label, node.icon.icon()) { force ->
+        add(EvoTreeLazyNodeElement(node.label, node.icon.icon(), showOutput = { showToolOutput(node.id, traceId) }) { force ->
           val result = evoRpc { requestEvoNode(projectId, pyProjectKey, node.id, traceId, force) }
           val refreshable = (result as? EvoLoadResultDto.Ok)?.refreshable == true
           val collapsed = result.toSections(node.id, traceId)
@@ -363,8 +454,14 @@ internal class EvoPySdkSwitchPopupFactory(
           // gets no toggle, since toExpandedSections is then empty.
           val expanded = result.toExpandedSections(node.id, traceId)
           val versionRows = if (expanded.isEmpty()) null else EvoVersionRows(collapsed, expanded)
-          EvoLoadedNode(versionRows?.sections() ?: collapsed, refreshable, versionRows = versionRows)
+          val loaded = EvoLoadedNode(versionRows?.sections() ?: collapsed, refreshable, versionRows = versionRows)
             .withoutLoneAddNewStep()
+          // A tool that answered, but with nothing to offer, is not an error — and not something to leave as a row that
+          // opens an empty submenu either. Report it the way a backend warning is reported: disabled, with a sign.
+          if (loaded.sections.none { it.elements.isNotEmpty() }) {
+            throw EvoWarningException(PySdkFrontendBundle.message("evo.sdk.status.bar.popup.node.empty"))
+          }
+          loaded
         })
       }
       if (associated.isNotEmpty() && nodes.none { it.id == ADVANCED_NODE_ID }) add(associatedInterpretersNode(traceId))
@@ -387,6 +484,9 @@ internal class EvoPySdkSwitchPopupFactory(
       else -> EvoTreeSection(
         label = ListSeparator(currentInterpreter.title, currentInterpreter.icon.icon()),
         elements = packageManagerActions(context) + EvoTreeLeafElement(managePackagesAction),
+        // The header names the interpreter by its short name, which does not say where it is. Its full path on hover,
+        // the same thing the widget itself shows in the status bar.
+        labelTooltip = currentInterpreter.description,
       )
     }
 
@@ -396,6 +496,24 @@ internal class EvoPySdkSwitchPopupFactory(
       icon = AllIcons.Language.Python,
       sections = listOfNotNull(externalToolsSection, currentEnvSection),
     )
+  }
+
+  /**
+   * Opens the Python Process Output tool window on what this tool's last run produced — the failure sign's action.
+   *
+   * The backend does the addressing, since the trace the tool window knows the process by lives there. When it reports
+   * that it found nothing — a run whose scope has since expired, or a failure with no process behind it at all, like a
+   * tool that simply offered nothing — the window is opened without a selection, which is still better than a sign that
+   * does nothing when clicked.
+   */
+  private fun showToolOutput(nodeId: String, traceId: String) {
+    scope.launch {
+      val opened = evoRpcOrNull { requestEvoShowToolProcessOutput(project.projectId(), nodeId, traceId) } == true
+      if (opened) return@launch
+      withContext(Dispatchers.EDT) {
+        ToolWindowManager.getInstance(project).getToolWindow(PROCESS_OUTPUT_TOOL_WINDOW_ID)?.activate(null)
+      }
+    }
   }
 
   /**
