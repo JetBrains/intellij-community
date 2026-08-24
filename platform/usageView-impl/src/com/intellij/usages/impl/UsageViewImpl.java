@@ -195,11 +195,53 @@ import static com.intellij.openapi.actionSystem.impl.Utils.createAsyncDataContex
 import static com.intellij.usages.impl.UsageFilteringRuleActions.usageFilteringRuleActions;
 
 public class UsageViewImpl implements UsageViewEx {
+  
+  // ========== static stuff ============
+  
   private static final String DUMB_AWARE_KEY = "DumbAware";
-  private final int myUniqueIdentifier;
   private static final GroupNode.NodeComparator NODE_COMPARATOR = new GroupNode.NodeComparator();
   private static final Logger LOG = Logger.getInstance(UsageViewImpl.class);
   public static final @NonNls String SHOW_RECENT_FIND_USAGES_ACTION_ID = "UsageView.ShowRecentFindUsages";
+  public static final @NonNls String HELP_ID = "ideaInterface.find";
+  public static final UsageNode NULL_NODE = new UsageNode(null, NullUsage.INSTANCE);
+  public static final Comparator<Usage> USAGE_COMPARATOR_BY_FILE_AND_OFFSET = (o1, o2) -> {
+    if (o1 == o2) return 0;
+    if (o1 == null) return -1;
+    if (o2 == null) return 1;
+    if (o1 == NullUsage.INSTANCE) return -1;
+    if (o2 == NullUsage.INSTANCE) return 1;
+
+    int c = Integer.compare(getUsagePriority(o1), getUsagePriority(o2));
+    if (c != 0) {
+      return c;
+    }
+    c = compareByFileAndOffset(o1, o2);
+    if (c != 0) {
+      return c;
+    }
+    return o1.toString().compareTo(o2.toString());
+  };
+
+  private static int compareByFileAndOffset(@NotNull Usage o1, @NotNull Usage o2) {
+    VirtualFile file1 = o1 instanceof UsageInFile inFile1 ? inFile1.getFile() : null;
+    VirtualFile file2 = o2 instanceof UsageInFile inFile2 ? inFile2.getFile() : null;
+    if (file1 == null) return file2 == null ? 0 : -1;
+    if (file2 == null) return 1;
+    if (file1.equals(file2)) {
+      return Integer.compare(o1.getNavigationOffset(), o2.getNavigationOffset());
+    }
+    return VfsUtilCore.compareByPath(file1, file2);
+  }
+
+  private static int getUsagePriority(@NotNull Usage usage) {
+    return usage instanceof UsageInfo2UsageAdapter usageInfo ? usageInfo.getUsageInfo().getPriority() : 0;
+  }
+
+  // ========== non-static stuff ============
+  
+  // This is a legacy complicated class. Please keep all the fields here to make it easier to reason about the constructor's correctness.
+  
+  private final int myUniqueIdentifier;
 
   private final UsageNodeTreeBuilder myBuilder;
   private final @NotNull CoroutineScope coroutineScope;
@@ -222,7 +264,6 @@ public class UsageViewImpl implements UsageViewEx {
 
   private final ExclusionHandlerEx<DefaultMutableTreeNode> myExclusionHandler;
   private final Map<Usage, UsageNode> myUsageNodes = new ConcurrentHashMap<>();
-  public static final UsageNode NULL_NODE = new UsageNode(null, NullUsage.INSTANCE);
   private final ButtonPanel myButtonPanel;
   private boolean myNeedUpdateButtons;
   private final JComponent myAdditionalComponent = new JPanel(new BorderLayout());
@@ -231,52 +272,6 @@ public class UsageViewImpl implements UsageViewEx {
   private @Nullable GroupNode myAutoSelectedGroupNode;
   private final AtomicReference<@NotNull Set<UsageInfo>> myNonDisposableUsageInfos = new AtomicReference<>(Collections.emptySet());
 
-  public static final Comparator<Usage> USAGE_COMPARATOR_BY_FILE_AND_OFFSET = (o1, o2) -> {
-    if (o1 == o2) return 0;
-    if (o1 == null) return -1;
-    if (o2 == null) return 1;
-    if (o1 == NullUsage.INSTANCE) return -1;
-    if (o2 == NullUsage.INSTANCE) return 1;
-
-    int c = Integer.compare(getUsagePriority(o1), getUsagePriority(o2));
-    if (c != 0) {
-      return c;
-    }
-    c = compareByFileAndOffset(o1, o2);
-    if (c != 0) {
-      return c;
-    }
-    return o1.toString().compareTo(o2.toString());
-  };
-
-  @ApiStatus.Internal
-  public int getFilteredOutNodeCount() {
-    return myBuilder.getFilteredUsagesCount();
-  }
-
-  @ApiStatus.Internal
-  public void setFilteringRules(UsageFilteringRule @NotNull [] rules) {
-    myFilteringRules = rules;
-    myBuilder.setFilteringRules(rules);
-    rulesChanged();
-  }
-
-  private static int compareByFileAndOffset(@NotNull Usage o1, @NotNull Usage o2) {
-    VirtualFile file1 = o1 instanceof UsageInFile inFile1 ? inFile1.getFile() : null;
-    VirtualFile file2 = o2 instanceof UsageInFile inFile2 ? inFile2.getFile() : null;
-    if (file1 == null) return file2 == null ? 0 : -1;
-    if (file2 == null) return 1;
-    if (file1.equals(file2)) {
-      return Integer.compare(o1.getNavigationOffset(), o2.getNavigationOffset());
-    }
-    return VfsUtilCore.compareByPath(file1, file2);
-  }
-
-  private static int getUsagePriority(@NotNull Usage usage) {
-    return usage instanceof UsageInfo2UsageAdapter usageInfo ? usageInfo.getUsageInfo().getPriority() : 0;
-  }
-
-  public static final @NonNls String HELP_ID = "ideaInterface.find";
   private UsageContextPanel myCurrentUsageContextPanel; // accessed in EDT only
   private final List<UsageContextPanel> myAllUsageContextPanels = new ArrayList<>(); // accessed in EDT only
   private UsageContextPanel.Provider myCurrentUsageContextProvider; // accessed in EDT only
@@ -312,6 +307,61 @@ public class UsageViewImpl implements UsageViewEx {
         });
     }
   };
+
+  // nodes just changed: parent node -> changed child
+  // this collection is needed for firing javax.swing.tree.DefaultTreeModel.nodesChanged() events in batch
+  // has to be linked because events for child nodes should be fired after events for parent nodes
+  private final MultiMap<Node, Node> fireTreeNodesChangedMap = MultiMap.createLinked(); // guarded by fireTreeNodesChangedMap
+
+  private final Consumer<Node> edtFireTreeNodesChangedQueue = node -> {
+    if (!getPresentation().isDetachedMode()) {
+      synchronized (fireTreeNodesChangedMap) {
+        Node parent = (Node)node.getParent();
+        if (parent != null) {
+          fireTreeNodesChangedMap.putValue(parent, node);
+        }
+      }
+    }
+  };
+
+  /**
+   * Set of node changes coming from the model to be applied to the Swing elements
+   */
+  private final Set<NodeChange> modelToSwingNodeChanges = new LinkedHashSet<>(); //guarded by modelToSwingNodeChanges
+
+  private final Consumer<NodeChange> edtModelToSwingNodeChangesQueue = (@NotNull NodeChange parent) -> {
+    if (!getPresentation().isDetachedMode()) {
+      synchronized (modelToSwingNodeChanges) {
+        modelToSwingNodeChanges.add(parent);
+      }
+    }
+  };
+
+  protected final TreeExpander treeExpander = new TreeExpander() {
+    @Override
+    public void expandAll() {
+      UsageViewImpl.this.expandAll();
+      getUsageViewSettings().setExpanded(true);
+    }
+
+    @Override
+    public boolean canExpand() {
+      return true;
+    }
+
+    @Override
+    public void collapseAll() {
+      UsageViewImpl.this.collapseAll(3);
+      getUsageViewSettings().setExpanded(false);
+    }
+
+    @Override
+    public boolean canCollapse() {
+      return true;
+    }
+  };
+
+  private boolean rulesChanged; // accessed in EDT only
 
   @ApiStatus.Internal
   public UsageViewImpl(@NotNull Project project,
@@ -451,6 +501,18 @@ public class UsageViewImpl implements UsageViewEx {
     scheduleUpdateTargetNodes();
   }
 
+  @ApiStatus.Internal
+  public int getFilteredOutNodeCount() {
+    return myBuilder.getFilteredUsagesCount();
+  }
+
+  @ApiStatus.Internal
+  public void setFilteringRules(UsageFilteringRule @NotNull [] rules) {
+    myFilteringRules = rules;
+    myBuilder.setFilteringRules(rules);
+    rulesChanged();
+  }
+
   private void scheduleUpdateTargetNodes() {
     addUpdateRequest(() -> {
       ReadAction.runBlocking(() -> {
@@ -553,22 +615,6 @@ public class UsageViewImpl implements UsageViewEx {
     return UsageViewSettings.getInstance();
   }
 
-  // nodes just changed: parent node -> changed child
-  // this collection is needed for firing javax.swing.tree.DefaultTreeModel.nodesChanged() events in batch
-  // has to be linked because events for child nodes should be fired after events for parent nodes
-  private final MultiMap<Node, Node> fireTreeNodesChangedMap = MultiMap.createLinked(); // guarded by fireTreeNodesChangedMap
-
-  private final Consumer<Node> edtFireTreeNodesChangedQueue = node -> {
-    if (!getPresentation().isDetachedMode()) {
-      synchronized (fireTreeNodesChangedMap) {
-        Node parent = (Node)node.getParent();
-        if (parent != null) {
-          fireTreeNodesChangedMap.putValue(parent, node);
-        }
-      }
-    }
-  };
-
   /**
    * Type of change that occurs in the GroupNode.myChildren
    * and has to be applied to the swing children list
@@ -592,19 +638,6 @@ public class UsageViewImpl implements UsageViewEx {
      */
     @Nullable Node childNode
   ) {}
-
-  /**
-   * Set of node changes coming from the model to be applied to the Swing elements
-   */
-  private final Set<NodeChange> modelToSwingNodeChanges = new LinkedHashSet<>(); //guarded by modelToSwingNodeChanges
-
-  private final Consumer<NodeChange> edtModelToSwingNodeChangesQueue = (@NotNull NodeChange parent) -> {
-    if (!getPresentation().isDetachedMode()) {
-      synchronized (modelToSwingNodeChanges) {
-        modelToSwingNodeChanges.add(parent);
-      }
-    }
-  };
 
 
   /**
@@ -1019,30 +1052,6 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  protected final TreeExpander treeExpander = new TreeExpander() {
-    @Override
-    public void expandAll() {
-      UsageViewImpl.this.expandAll();
-      getUsageViewSettings().setExpanded(true);
-    }
-
-    @Override
-    public boolean canExpand() {
-      return true;
-    }
-
-    @Override
-    public void collapseAll() {
-      UsageViewImpl.this.collapseAll(3);
-      getUsageViewSettings().setExpanded(false);
-    }
-
-    @Override
-    public boolean canCollapse() {
-      return true;
-    }
-  };
-
   @RequiresEdt
   protected AnAction @NotNull [] createActions() {
     ThreadingAssertions.assertEventDispatchThread();
@@ -1182,8 +1191,6 @@ public class UsageViewImpl implements UsageViewEx {
     ThreadingAssertions.assertEventDispatchThread();
     return myPresentation.isDetachedMode() || myTree.isShowing();
   }
-
-  private boolean rulesChanged; // accessed in EDT only
 
   private void rulesChanged() {
     try (AccessToken ignore = SlowOperations.knownIssue("IJPL-164976")) {
