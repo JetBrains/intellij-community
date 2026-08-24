@@ -88,7 +88,7 @@ internal class ArtifactPropertiesEntityImpl(private val dataSource: ArtifactProp
       dataSource as ArtifactPropertiesEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.providerType != dataSource.providerType) this.providerType = dataSource.providerType
-      if (this.propertiesXmlTag != dataSource?.propertiesXmlTag) this.propertiesXmlTag = dataSource.propertiesXmlTag
+      if (this.propertiesXmlTag != dataSource.propertiesXmlTag) this.propertiesXmlTag = dataSource.propertiesXmlTag
       updateChildToParentReferences(parents)
     }
 

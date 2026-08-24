@@ -75,7 +75,7 @@ internal class ModuleTestOutputPackagingElementEntityImpl(private val dataSource
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ModuleTestOutputPackagingElementEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.module != dataSource?.module) this.module = dataSource.module
+      if (this.module != dataSource.module) this.module = dataSource.module
       updateChildToParentReferences(parents)
     }
 
@@ -87,6 +87,7 @@ internal class ModuleTestOutputPackagingElementEntityImpl(private val dataSource
         changedProperty.add("entitySource")
       }
     override var parentEntity: CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
+      @Suppress("UNCHECKED_CAST")
       get() = getParent(PARENTENTITY_CONNECTION_ID) as? CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
               ?: error("parentEntity is null for PackagingElementEntity")
       set(value) {

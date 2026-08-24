@@ -80,8 +80,8 @@ internal class NotNullToNullEntityImpl(private val dataSource: NotNullToNullEnti
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as NotNullToNullEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.nullInt != dataSource?.nullInt) this.nullInt = dataSource.nullInt
-      if (this.notNullString != dataSource?.notNullString) this.notNullString = dataSource.notNullString
+      if (this.nullInt != dataSource.nullInt) this.nullInt = dataSource.nullInt
+      if (this.notNullString != dataSource.notNullString) this.notNullString = dataSource.notNullString
       if (this.notNullList != dataSource.notNullList) this.notNullList = dataSource.notNullList.toMutableList()
       updateChildToParentReferences(parents)
     }

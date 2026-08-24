@@ -98,28 +98,6 @@ internal class ContentRootEntityImpl(private val dataSource: ContentRootEntityDa
           error("Field ContentRootEntity#module should be initialized")
         }
       }
-// Check initialization for list with ref type
-      if (_diff != null) {
-        if (_diff.instrumentation.getManyChildrenBuilders(SOURCEROOTS_CONNECTION_ID, this) == null) {
-          error("Field ContentRootEntity#sourceRoots should be initialized")
-        }
-      }
-      else {
-        if (this.entityLinks[EntityLink(true, SOURCEROOTS_CONNECTION_ID)] == null) {
-          error("Field ContentRootEntity#sourceRoots should be initialized")
-        }
-      }
-// Check initialization for list with ref type
-      if (_diff != null) {
-        if (_diff.instrumentation.getManyChildrenBuilders(EXCLUDEDURLS_CONNECTION_ID, this) == null) {
-          error("Field ContentRootEntity#excludedUrls should be initialized")
-        }
-      }
-      else {
-        if (this.entityLinks[EntityLink(true, EXCLUDEDURLS_CONNECTION_ID)] == null) {
-          error("Field ContentRootEntity#excludedUrls should be initialized")
-        }
-      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {

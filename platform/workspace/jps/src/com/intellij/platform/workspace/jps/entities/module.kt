@@ -33,7 +33,6 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
   val contentRoots: List<ContentRootEntity>
   val facets: List<FacetEntity>
 
-  //region generated code
   @Deprecated(message = "Use ModuleEntityBuilder instead")
   interface Builder : ModuleEntityBuilder
   companion object : EntityType<ModuleEntity, Builder>() {
@@ -49,11 +48,8 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
       init: (Builder.() -> Unit)? = null,
     ): Builder = ModuleEntityType.compatibilityInvoke(name, dependencies, entitySource, init)
   }
-  //endregion
-
 }
 
-//region generated code
 @ApiStatus.ScheduledForRemoval
 @Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyModuleEntity(
@@ -99,17 +95,6 @@ var ModuleEntity.Builder.groupPath: ModuleGroupPathEntity.Builder?
     (this as ModuleEntityBuilder).groupPath = value
   }
 
-@Deprecated(message = "Use new API instead")
-var ModuleEntity.Builder.sourceRoots: List<SourceRootEntity.Builder>
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated(message = "Use new API instead")
-  get() = (this as ModuleEntityBuilder).sourceRoots as List<SourceRootEntity.Builder>
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated(message = "Use new API instead")
-  set(value) {
-    (this as ModuleEntityBuilder).sourceRoots = value
-  }
-
 @get:Internal
 @set:Internal
 @Deprecated(message = "Use new API instead")
@@ -118,8 +103,6 @@ var ModuleEntity.Builder.testProperties: TestModulePropertiesEntity.Builder?
   set(value) {
     (this as ModuleEntityBuilder).testProperties = value
   }
-//endregion
-
 
 val ModuleEntity.sdkId: SdkId?
   get() = dependencies.sdk?.sdk

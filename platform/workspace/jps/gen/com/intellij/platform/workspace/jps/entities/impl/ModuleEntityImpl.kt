@@ -26,7 +26,6 @@ import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -100,28 +99,6 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
       if (!getEntityData().isDependenciesInitialized()) {
         error("Field ModuleEntity#dependencies should be initialized")
       }
-// Check initialization for list with ref type
-      if (_diff != null) {
-        if (_diff.instrumentation.getManyChildrenBuilders(CONTENTROOTS_CONNECTION_ID, this) == null) {
-          error("Field ModuleEntity#contentRoots should be initialized")
-        }
-      }
-      else {
-        if (this.entityLinks[EntityLink(true, CONTENTROOTS_CONNECTION_ID)] == null) {
-          error("Field ModuleEntity#contentRoots should be initialized")
-        }
-      }
-// Check initialization for list with ref type
-      if (_diff != null) {
-        if (_diff.instrumentation.getManyChildrenBuilders(FACETS_CONNECTION_ID, this) == null) {
-          error("Field ModuleEntity#facets should be initialized")
-        }
-      }
-      else {
-        if (this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] == null) {
-          error("Field ModuleEntity#facets should be initialized")
-        }
-      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -140,7 +117,7 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
       dataSource as ModuleEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.name != dataSource.name) this.name = dataSource.name
-      if (this.type != dataSource?.type) this.type = dataSource.type
+      if (this.type != dataSource.type) this.type = dataSource.type
       if (this.dependencies != dataSource.dependencies) this.dependencies = dataSource.dependencies.toMutableList()
       updateChildToParentReferences(parents)
     }

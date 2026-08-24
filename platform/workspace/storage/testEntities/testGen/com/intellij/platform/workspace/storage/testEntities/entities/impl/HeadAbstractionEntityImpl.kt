@@ -95,6 +95,7 @@ internal class HeadAbstractionEntityImpl(private val dataSource: HeadAbstraction
         changedProperty.add("data")
       }
     override var child: CompositeBaseEntityBuilder<out CompositeBaseEntity>?
+      @Suppress("UNCHECKED_CAST")
       get() = getChild(CHILD_CONNECTION_ID) as? CompositeBaseEntityBuilder<out CompositeBaseEntity>?
       set(value) {
         changeChild(value, CHILD_CONNECTION_ID)

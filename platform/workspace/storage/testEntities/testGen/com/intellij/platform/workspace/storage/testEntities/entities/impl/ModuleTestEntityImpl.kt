@@ -10,7 +10,6 @@ import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
@@ -73,28 +72,6 @@ internal class ModuleTestEntityImpl(private val dataSource: ModuleTestEntityData
       }
       if (!getEntityData().isNameInitialized()) {
         error("Field ModuleTestEntity#name should be initialized")
-      }
-// Check initialization for list with ref type
-      if (_diff != null) {
-        if (_diff.instrumentation.getManyChildrenBuilders(CONTENTROOTS_CONNECTION_ID, this) == null) {
-          error("Field ModuleTestEntity#contentRoots should be initialized")
-        }
-      }
-      else {
-        if (this.entityLinks[EntityLink(true, CONTENTROOTS_CONNECTION_ID)] == null) {
-          error("Field ModuleTestEntity#contentRoots should be initialized")
-        }
-      }
-// Check initialization for list with ref type
-      if (_diff != null) {
-        if (_diff.instrumentation.getManyChildrenBuilders(FACETS_CONNECTION_ID, this) == null) {
-          error("Field ModuleTestEntity#facets should be initialized")
-        }
-      }
-      else {
-        if (this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] == null) {
-          error("Field ModuleTestEntity#facets should be initialized")
-        }
       }
     }
 

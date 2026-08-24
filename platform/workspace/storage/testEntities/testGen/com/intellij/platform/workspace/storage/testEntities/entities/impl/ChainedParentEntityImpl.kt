@@ -10,7 +10,6 @@ import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
@@ -55,17 +54,6 @@ internal class ChainedParentEntityImpl(private val dataSource: ChainedParentEnti
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
-      }
-// Check initialization for list with ref type
-      if (_diff != null) {
-        if (_diff.instrumentation.getManyChildrenBuilders(CHILD_CONNECTION_ID, this) == null) {
-          error("Field ChainedParentEntity#child should be initialized")
-        }
-      }
-      else {
-        if (this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] == null) {
-          error("Field ChainedParentEntity#child should be initialized")
-        }
       }
     }
 

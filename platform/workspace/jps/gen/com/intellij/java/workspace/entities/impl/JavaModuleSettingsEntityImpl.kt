@@ -104,9 +104,9 @@ internal class JavaModuleSettingsEntityImpl(private val dataSource: JavaModuleSe
       if (this.inheritedCompilerOutput != dataSource.inheritedCompilerOutput) this.inheritedCompilerOutput =
         dataSource.inheritedCompilerOutput
       if (this.excludeOutput != dataSource.excludeOutput) this.excludeOutput = dataSource.excludeOutput
-      if (this.compilerOutput != dataSource?.compilerOutput) this.compilerOutput = dataSource.compilerOutput
-      if (this.compilerOutputForTests != dataSource?.compilerOutputForTests) this.compilerOutputForTests = dataSource.compilerOutputForTests
-      if (this.languageLevelId != dataSource?.languageLevelId) this.languageLevelId = dataSource.languageLevelId
+      if (this.compilerOutput != dataSource.compilerOutput) this.compilerOutput = dataSource.compilerOutput
+      if (this.compilerOutputForTests != dataSource.compilerOutputForTests) this.compilerOutputForTests = dataSource.compilerOutputForTests
+      if (this.languageLevelId != dataSource.languageLevelId) this.languageLevelId = dataSource.languageLevelId
       if (this.manifestAttributes != dataSource.manifestAttributes) this.manifestAttributes = dataSource.manifestAttributes.toMutableMap()
       updateChildToParentReferences(parents)
     }

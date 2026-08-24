@@ -91,7 +91,7 @@ internal class VFUEntity2Impl(private val dataSource: VFUEntity2Data) : VFUEntit
       dataSource as VFUEntity2
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.data != dataSource.data) this.data = dataSource.data
-      if (this.filePath != dataSource?.filePath) this.filePath = dataSource.filePath
+      if (this.filePath != dataSource.filePath) this.filePath = dataSource.filePath
       if (this.directoryPath != dataSource.directoryPath) this.directoryPath = dataSource.directoryPath
       if (this.notNullRoots != dataSource.notNullRoots) this.notNullRoots = dataSource.notNullRoots.toMutableList()
       updateChildToParentReferences(parents)

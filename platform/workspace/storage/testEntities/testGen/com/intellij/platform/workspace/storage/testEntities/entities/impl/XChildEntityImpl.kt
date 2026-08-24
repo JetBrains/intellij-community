@@ -86,17 +86,6 @@ internal class XChildEntityImpl(private val dataSource: XChildEntityData) : XChi
           error("Field XChildEntity#parentEntity should be initialized")
         }
       }
-// Check initialization for list with ref type
-      if (_diff != null) {
-        if (_diff.instrumentation.getManyChildrenBuilders(CHILDCHILD_CONNECTION_ID, this) == null) {
-          error("Field XChildEntity#childChild should be initialized")
-        }
-      }
-      else {
-        if (this.entityLinks[EntityLink(true, CHILDCHILD_CONNECTION_ID)] == null) {
-          error("Field XChildEntity#childChild should be initialized")
-        }
-      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -108,7 +97,7 @@ internal class XChildEntityImpl(private val dataSource: XChildEntityData) : XChi
       dataSource as XChildEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.childProperty != dataSource.childProperty) this.childProperty = dataSource.childProperty
-      if (this.dataClass != dataSource?.dataClass) this.dataClass = dataSource.dataClass
+      if (this.dataClass != dataSource.dataClass) this.dataClass = dataSource.dataClass
       updateChildToParentReferences(parents)
     }
 

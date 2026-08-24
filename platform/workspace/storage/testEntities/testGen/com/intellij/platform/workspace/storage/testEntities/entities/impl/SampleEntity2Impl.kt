@@ -72,7 +72,7 @@ internal class SampleEntity2Impl(private val dataSource: SampleEntity2Data) : Sa
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.data != dataSource.data) this.data = dataSource.data
       if (this.boolData != dataSource.boolData) this.boolData = dataSource.boolData
-      if (this.optionalData != dataSource?.optionalData) this.optionalData = dataSource.optionalData
+      if (this.optionalData != dataSource.optionalData) this.optionalData = dataSource.optionalData
       updateChildToParentReferences(parents)
     }
 

@@ -77,6 +77,7 @@ internal class SimpleChildAbstractEntityImpl(private val dataSource: SimpleChild
         changedProperty.add("entitySource")
       }
     override var parentInList: CompositeAbstractEntityBuilder<out CompositeAbstractEntity>?
+      @Suppress("UNCHECKED_CAST")
       get() = getParent(PARENTINLIST_CONNECTION_ID) as? CompositeAbstractEntityBuilder<out CompositeAbstractEntity>?
               ?: error("parentInList is null for SimpleAbstractEntity")
       set(value) {

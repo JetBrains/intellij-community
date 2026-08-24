@@ -67,7 +67,7 @@ internal class NullableVFUEntityImpl(private val dataSource: NullableVFUEntityDa
       dataSource as NullableVFUEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.data != dataSource.data) this.data = dataSource.data
-      if (this.fileProperty != dataSource?.fileProperty) this.fileProperty = dataSource.fileProperty
+      if (this.fileProperty != dataSource.fileProperty) this.fileProperty = dataSource.fileProperty
       updateChildToParentReferences(parents)
     }
 

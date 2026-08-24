@@ -57,7 +57,7 @@ internal class OptionalIntEntityImpl(private val dataSource: OptionalIntEntityDa
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as OptionalIntEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.data != dataSource?.data) this.data = dataSource.data
+      if (this.data != dataSource.data) this.data = dataSource.data
       updateChildToParentReferences(parents)
     }
 

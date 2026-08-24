@@ -75,6 +75,7 @@ internal class ParentChainEntityImpl(private val dataSource: ParentChainEntityDa
         changedProperty.add("entitySource")
       }
     override var root: CompositeAbstractEntityBuilder<out CompositeAbstractEntity>?
+      @Suppress("UNCHECKED_CAST")
       get() = getChild(ROOT_CONNECTION_ID) as? CompositeAbstractEntityBuilder<out CompositeAbstractEntity>?
       set(value) {
         changeChild(value, ROOT_CONNECTION_ID)

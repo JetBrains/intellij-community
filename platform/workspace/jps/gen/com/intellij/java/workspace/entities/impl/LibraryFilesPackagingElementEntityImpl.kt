@@ -75,7 +75,7 @@ internal class LibraryFilesPackagingElementEntityImpl(private val dataSource: Li
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as LibraryFilesPackagingElementEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.library != dataSource?.library) this.library = dataSource.library
+      if (this.library != dataSource.library) this.library = dataSource.library
       updateChildToParentReferences(parents)
     }
 
@@ -87,6 +87,7 @@ internal class LibraryFilesPackagingElementEntityImpl(private val dataSource: Li
         changedProperty.add("entitySource")
       }
     override var parentEntity: CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
+      @Suppress("UNCHECKED_CAST")
       get() = getParent(PARENTENTITY_CONNECTION_ID) as? CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
               ?: error("parentEntity is null for PackagingElementEntity")
       set(value) {

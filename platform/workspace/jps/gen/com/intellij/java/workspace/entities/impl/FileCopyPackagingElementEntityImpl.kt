@@ -81,7 +81,7 @@ internal class FileCopyPackagingElementEntityImpl(private val dataSource: FileCo
       dataSource as FileCopyPackagingElementEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.filePath != dataSource.filePath) this.filePath = dataSource.filePath
-      if (this.renamedOutputFileName != dataSource?.renamedOutputFileName) this.renamedOutputFileName = dataSource.renamedOutputFileName
+      if (this.renamedOutputFileName != dataSource.renamedOutputFileName) this.renamedOutputFileName = dataSource.renamedOutputFileName
       updateChildToParentReferences(parents)
     }
 
@@ -93,6 +93,7 @@ internal class FileCopyPackagingElementEntityImpl(private val dataSource: FileCo
         changedProperty.add("entitySource")
       }
     override var parentEntity: CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
+      @Suppress("UNCHECKED_CAST")
       get() = getParent(PARENTENTITY_CONNECTION_ID) as? CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
               ?: error("parentEntity is null for PackagingElementEntity")
       set(value) {
