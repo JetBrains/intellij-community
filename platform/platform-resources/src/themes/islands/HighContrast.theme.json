@@ -320,6 +320,14 @@
       "currentParameterForeground": "#FFFFFF"
     },
 
+    "PillButton": {
+      "blueForeground": "#80F4FF",
+      "blueBorderColor": "#1AEBFF",
+      "blueHoverForeground": "#B2F8FF",
+      "blueHoverBackground": "#09656E",
+      "blueHoverBorderColor": "#1AEBFF"
+    },
+
     "Plugins": {
       "Tab": {
         "selectedForeground": "#FFFFFF",

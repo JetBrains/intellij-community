@@ -1799,6 +1799,36 @@
       "description": "Separator lines between text lines"
     },
     {
+      "key": "PillButton.blueBackground",
+      "description": "Background color for blue pill button",
+      "since": "2026.3"
+    },
+    {
+      "key": "PillButton.blueBorderColor",
+      "description": "Border color for blue pill button",
+      "since": "2026.3"
+    },
+    {
+      "key": "PillButton.blueForeground",
+      "description": "Text color for blue pill button",
+      "since": "2026.3"
+    },
+    {
+      "key": "PillButton.blueHoverBackground",
+      "description": "Background color for blue pill button on hover",
+      "since": "2026.3"
+    },
+    {
+      "key": "PillButton.blueHoverBorderColor",
+      "description": "Border color for blue pill button on hover",
+      "since": "2026.3"
+    },
+    {
+      "key": "PillButton.blueHoverForeground",
+      "description": "Text color for blue pill button on hover",
+      "since": "2026.3"
+    },
+    {
       "key": "Plugins.background",
       "description": "The Settings | Plugins dialog"
     },
