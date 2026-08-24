@@ -13,7 +13,7 @@ import com.intellij.util.indexing.IndexableSetContributor
 
 internal class ExternalResourcesRootsProvider : IndexableSetContributor() {
   private val myStandardResources: CachedValue<MutableSet<VirtualFile>> = CachedValueImpl(CachedValueProvider {
-    val manager = ExternalResourceManager.getInstance() as ExternalResourceManagerExImpl
+    val manager = ExternalResourceManager.getInstance() as ExternalResourceManagerExBase
     val duplicateCheck = HashSet<String>()
     val set = HashSet<VirtualFile>()
     for (map in manager.getStandardResources()) {

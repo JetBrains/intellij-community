@@ -77,6 +77,9 @@
     <standardResourceProvider implementation="com.intellij.javaee.InternalResourceProvider"/>
 
     <projectService serviceInterface="com.intellij.javaee.ExternalResourceManagerExBase" serviceImplementation="com.intellij.javaee.ProjectResources"/>
+    <applicationService serviceInterface="com.intellij.javaee.ExternalResourceManager"
+                        serviceImplementation="com.intellij.javaee.ExternalResourceManagerExBase"/>
+    <applicationSettings service="com.intellij.javaee.ExternalResourceManagerExBase"/>
 
     <projectService serviceInterface="com.intellij.psi.XmlElementFactory" serviceImplementation="com.intellij.psi.XmlElementFactoryImpl"/>
 

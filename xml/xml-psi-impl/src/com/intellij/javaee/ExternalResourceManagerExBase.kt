@@ -472,8 +472,8 @@ open class ExternalResourceManagerExBase(coroutineScope: CoroutineScope) : Exter
     incModificationCount()
   }
 
-  override fun getUrlsByNamespace(project: Project): MultiMap<String, String>? {
-    return MultiMap()
+  override fun getUrlsByNamespace(project: Project): MultiMap<String, String> {
+    return UrlByNamespaceProvider.getInstance().getUrlsByNamespace(project)
   }
 
   private fun getCatalogManager(): XMLCatalogManager? {

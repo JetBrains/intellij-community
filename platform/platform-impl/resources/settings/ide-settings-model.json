@@ -4371,7 +4371,7 @@
       "name": "ExternalResourceManagerImpl",
       "scope": "app",
       "pluginId": "com.intellij",
-      "classFqn": "com.intellij.javaee.ExternalResourceManagerExImpl",
+      "classFqn": "com.intellij.javaee.ExternalResourceManagerExBase",
       "storage": "javaeeExternalResources.xml"
     },
     {

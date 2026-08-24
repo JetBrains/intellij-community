@@ -7,12 +7,13 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.MultiMap
 import com.intellij.xml.index.XmlNamespaceIndex
-import kotlinx.coroutines.CoroutineScope
 
-class ExternalResourceManagerExImpl(coroutineScope: CoroutineScope): ExternalResourceManagerExBase(coroutineScope) {
+class UrlByNamespaceProviderImpl : UrlByNamespaceProvider {
   private val urlByNamespaceProvider = CachedValueProvider {
     val result = MultiMap<String, String>()
-    for (map in standardResources.value.values) {
+
+    val manager = ExternalResourceManager.getInstance() as ExternalResourceManagerExBase
+    for (map in manager.getStandardResources()) {
       for (entry in map.entries) {
         val url = entry.value.getResourceUrl() ?: continue
         val file = VfsUtilCore.findRelativeFile(url, null) ?: continue
@@ -20,10 +21,10 @@ class ExternalResourceManagerExImpl(coroutineScope: CoroutineScope): ExternalRes
         result.putValue(namespace, entry.key)
       }
     }
-    CachedValueProvider.Result.create(result, this)
+    CachedValueProvider.Result.create(result, manager)
   }
 
-  override fun getUrlsByNamespace(project: Project): MultiMap<String, String>? {
+  override fun getUrlsByNamespace(project: Project): MultiMap<String, String> {
     return CachedValuesManager.getManager(project).getCachedValue(project, urlByNamespaceProvider)
   }
 }
