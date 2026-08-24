@@ -12,7 +12,7 @@ object ProgressIndicatorDumper {
   private const val PROGRESS_INDICATOR_DUMP_HEADER: @NonNls String = "---------- ProgressIndicator dump ----------"
 
   @Volatile
-  private var PROGRESS_INDICATOR_DUMPER: Supplier<String?>? = null
+  private var PROGRESS_INDICATOR_DUMPER: Supplier<String>? = null
 
   fun dumpProgressIndicatorState(): String {
     return (PROGRESS_INDICATOR_DUMPER?.get() ?: "No progress indicator dump")
@@ -26,7 +26,7 @@ object ProgressIndicatorDumper {
     return PROGRESS_INDICATOR_DUMP_HEADER + "\n" + this
   }
 
-  fun setProgressIndicatorDumper(dumpProvider: Supplier<String?>?) {
+  fun setProgressIndicatorDumper(dumpProvider: Supplier<String>?) {
     PROGRESS_INDICATOR_DUMPER = dumpProvider
   }
 
