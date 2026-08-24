@@ -5,7 +5,6 @@ import com.intellij.platform.bazel.runfiles.BazelRunfilesManifest;
 import com.intellij.tests.bazel.BazelJUnitOutputListener;
 import com.intellij.tests.bazel.IjSmTestExecutionListener;
 import com.intellij.tests.bazel.TestExecutionOutputDecorator;
-import com.intellij.tests.bazel.bucketing.BucketsPostDiscoveryFilter;
 import com.intellij.util.ArrayUtil;
 import org.junit.platform.engine.DiscoverySelector;
 import org.junit.platform.engine.Filter;
@@ -104,11 +103,18 @@ public final class JUnit5BazelRunner {
   private static final ClassLoader ourClassLoader = Thread.currentThread().getContextClassLoader();
   private static final Launcher launcher = LauncherFactory.create();
 
-  private static final BucketsPostDiscoveryFilter bucketingPostDiscoveryFilter = new BucketsPostDiscoveryFilter();
+  private static JUnit5TeamCityRunner.BucketingClassNameFilter bucketingClassNameFilter;
   private static final PostDiscoveryFilter performancePostDiscoveryFilter = new JUnit5TeamCityRunner.PerformancePostDiscoveryFilter();
   private static final PostDiscoveryFilter ignorePostDiscoveryFilter = new JUnit5TeamCityRunner.IgnorePostDiscoveryFilter();
   private static final PostDiscoveryFilter headlessPostDiscoveryFilter = new JUnit5TeamCityRunner.HeadlessPostDiscoveryFilter();
   private static final PostDiscoveryFilter shardFilter = ShardFilter.create();
+
+  private static JUnit5TeamCityRunner.BucketingClassNameFilter getBucketingClassNameFilter() {
+    if (bucketingClassNameFilter == null) {
+      bucketingClassNameFilter = new JUnit5TeamCityRunner.BucketingClassNameFilter();
+    }
+    return bucketingClassNameFilter;
+  }
 
   private static LauncherDiscoveryRequest getDiscoveryRequest() throws Throwable {
     List<? extends DiscoverySelector> bazelTestSelectors = getTestsSelectors(ourClassLoader);
@@ -240,12 +246,13 @@ public final class JUnit5BazelRunner {
       System.out.println("Number of test engines: " + ServiceLoader.load(TestEngine.class).stream().count());
 
       var xmlOutputFile = getXmlOutputFile();
+      var bucketingClassNameFilter = getBucketingClassNameFilter();
 
       // If bucketing filters out all tests, we emit a minimal JUnit XML with a single testsuite named "Bucketing".
       // See: com.intellij.tests.JUnit5BazelRunner.xmlReportBucketingTestsFilteringOut
       TestPlan testPlan = getTestPlan();
       if (!testPlan.containsTests()) {
-        if (!bucketingPostDiscoveryFilter.hasExcludedClasses() && !bucketingPostDiscoveryFilter.hasIncludedClasses()) {
+        if (!bucketingClassNameFilter.hasExcludedClasses() && !bucketingClassNameFilter.hasIncludedClasses()) {
           //see org.jetbrains.intellij.build.impl.TestingTasksImpl.NO_TESTS_ERROR
           System.err.println("No tests found");
           System.exit(42);
@@ -416,7 +423,7 @@ public final class JUnit5BazelRunner {
       }
       filters.add(new JUnit5TeamCityRunner.CommonTestClassesFilter());
     }
-    filters.add(bucketingPostDiscoveryFilter);
+    filters.add(getBucketingClassNameFilter()); // bucketing
     filters.add(performancePostDiscoveryFilter);
     filters.add(headlessPostDiscoveryFilter);
     if (shardFilter != null) {

@@ -929,12 +929,25 @@ public final class JUnit5TeamCityRunner {
       }
     }
 
+    private final Set<String> includedClasses = new HashSet<>();
+    private final Set<String> excludedClasses = new HashSet<>();
+
+    public Boolean hasExcludedClasses() {
+      return !excludedClasses.isEmpty();
+    }
+
+    public Boolean hasIncludedClasses() {
+      return !includedClasses.isEmpty();
+    }
+
     @Override
     public FilterResult apply(String className) {
       try {
         if ((boolean)matchesCurrentBucket.invokeExact(className)) {
+          includedClasses.add(className);
           return FilterResult.included(null);
         }
+        excludedClasses.add(className);
         return FilterResult.excluded(null);
       }
       catch (Throwable e) {
