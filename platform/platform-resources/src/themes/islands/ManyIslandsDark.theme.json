@@ -871,6 +871,14 @@
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorderNew"
     },
 
+    "PillButton": {
+      "blueForeground": "blue-100",
+      "blueBorderColor": "blue-90",
+      "blueHoverForeground": "blue-100",
+      "blueHoverBackground": "blue-40",
+      "blueHoverBorderColor": "blue-90"
+    },
+
     "Plugins": {
       "SectionHeader.background": "dialog-bg-inline",
       "hoverBackground": "selection-bg-hovered",

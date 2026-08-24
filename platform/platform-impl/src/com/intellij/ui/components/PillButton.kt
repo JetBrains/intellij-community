@@ -32,28 +32,22 @@ class PillButton(text: @NlsContexts.Button String? = null) : JComponent() {
     @JvmField
     val BLUE: ColorState = object : ColorState {
       override val foreground: Color
-        get() = JBColor.namedColor(
-          "PillButton.blueForeground",
-          JBColor.namedColor("ColorPalette.blue-100", 0x71A1FE, 0x71A1FE))
+        get() = JBColor.namedColor("PillButton.blueForeground", 0x2F5EB9, 0x71A1FE)
+
       override val background: Color
-        get() = JBColor.namedColor(
-          "PillButton.blueBackground")
+        get() = JBColor.namedColor("PillButton.blueBackground") // Default transparent
+
       override val borderColor: Color
-        get() = JBColor.namedColor(
-          "PillButton.blueBorderColor",
-          JBColor.namedColor("ColorPalette.blue-90", 0x538AF9, 0x538AF9))
+        get() = JBColor.namedColor("PillButton.blueBorderColor", 0x538AF9, 0x538AF9)
+
       override val hoverForeground: Color
-        get() = JBColor.namedColor(
-          "PillButton.blueHoverForeground",
-          JBColor.namedColor("ColorPalette.blue-100", 0x71A1FE, 0x71A1FE))
+        get() = JBColor.namedColor("PillButton.blueHoverForeground", 0x2F5EB9, 0x71A1FE)
+
       override val hoverBackground: Color
-        get() = JBColor.namedColor(
-          "PillButton.blueHoverBackground",
-          JBColor.namedColor("ColorPalette.blue-40", 0x233558, 0x233558))
+        get() = JBColor.namedColor("PillButton.blueHoverBackground", 0xE3EBFE, 0x233558)
+
       override val hoverBorderColor: Color
-        get() = JBColor.namedColor(
-          "PillButton.blueHoverBorderColor",
-          JBColor.namedColor("ColorPalette.blue-90", 0x538AF9, 0x538AF9))
+        get() = JBColor.namedColor("PillButton.blueHoverBorderColor", 0x538AF9, 0x538AF9)
     }
   }
 
