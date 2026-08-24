@@ -293,12 +293,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     final @NonNls LightVirtualFile virtualFile =
       new LightVirtualFile("foo", createTemplateFakeFileType(language), sourceCode, LocalTimeCounter.currentTime());
 
-    FileViewProvider viewProvider = new SingleRootFileViewProvider(manager, virtualFile, false) {
-      @Override
-      public @NotNull Language getBaseLanguage() {
-        return language;
-      }
-    };
+    FileViewProvider viewProvider = new SingleRootFileViewProvider(manager, virtualFile, false, language) {};
 
     // Since we're already inside a template language PSI that was built regardless of the file size (for whatever reason),
     // there should also be no file size checks for template data files.
