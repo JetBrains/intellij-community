@@ -67,13 +67,15 @@ targets:
 # Unified Plugin Manager UI
 
 Status: Active
-Date: 2026-09-29
+Date: 2026-10-13
 
 ## Purpose
 
 The unified Plugins page presents installed and available plugins from several sources in one searchable page.
 
 This specification defines stable page behavior. [Plugin Operations](./plugin-operations.spec.md) defines changes to installed plugins.
+
+[Plugin Loading Problems](./plugin-loading-problems.spec.md) defines loading explanations and offered recovery actions.
 
 ## Scope
 
@@ -91,6 +93,7 @@ This specification covers the page structure, section model, search, source load
 - This specification does not require the legacy search completion popup or its shortcut.
 - This specification does not define the rollout mechanism.
 - This specification does not assign classes to architecture layers.
+- This specification does not define loading problem classification or notification reporting.
 
 ## Page Structure
 

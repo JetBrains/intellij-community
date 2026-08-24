@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.findSuggestedPlugins
 import com.intellij.openapi.util.text.HtmlChunk
+import org.jetbrains.annotations.Nls
 import com.intellij.util.io.URLUtil
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -52,6 +53,7 @@ internal interface UnifiedPluginRemoteDataEnricher {
 internal data class UnifiedPluginRemoteSharedFacts(
   val errors: Map<PluginId, List<HtmlChunk>>,
   val installationStates: Map<PluginId, PluginInstallationState>,
+  val expectedExplanations: Map<PluginId, List<@Nls String>> = emptyMap(),
 ) {
   companion object {
     val EMPTY = UnifiedPluginRemoteSharedFacts(emptyMap(), emptyMap())
@@ -174,9 +176,13 @@ internal class DefaultUnifiedPluginMarketplaceDataProvider(
   }
 
   override suspend fun loadSharedFacts(): UnifiedPluginRemoteSharedFacts = coroutineScope {
-    val errors = async { MyPluginModel.getErrors(pluginManager.loadErrors(host.sessionId)) }
+    val problems = async { pluginManager.loadErrors(host.sessionId) }
     val installationStates = async { pluginManager.getInstallationStates() }
-    UnifiedPluginRemoteSharedFacts(errors.await(), installationStates.await())
+    UnifiedPluginRemoteSharedFacts(
+      MyPluginModel.getErrors(problems.await()),
+      installationStates.await(),
+      MyPluginModel.getExpectedExplanations(problems.await()),
+    )
   }
 
   override suspend fun enrich(
@@ -210,6 +216,7 @@ internal class DefaultUnifiedPluginMarketplaceDataProvider(
       installedModels = installed,
       enabledStates = enabledStates.await(),
       errors = sharedFacts.errors,
+      expectedExplanations = sharedFacts.expectedExplanations,
       installationStates = sharedFacts.installationStates,
       restrictions = restrictions.await(),
     )
@@ -366,6 +373,7 @@ internal fun buildMarketplaceSnapshot(
   errors: Map<PluginId, List<HtmlChunk>>,
   installationStates: Map<PluginId, PluginInstallationState>,
   restrictions: Map<PluginId, Boolean>,
+  expectedExplanations: Map<PluginId, List<@Nls String>> = emptyMap(),
 ): UnifiedPluginMarketplaceSnapshot {
   val normalizedModels = normalizeMarketplaceModels(models)
   val updatesById = updates?.all.orEmpty().associateBy(PluginUiModel::pluginId)
@@ -381,6 +389,7 @@ internal fun buildMarketplaceSnapshot(
       installedPlugin = installedModel,
       installationState = effectiveStates.getValue(pluginId),
       errors = errors[pluginId].orEmpty().toList(),
+      expectedExplanations = expectedExplanations[pluginId].orEmpty().toList(),
       updateDescriptor = updatesById[pluginId],
       enabled = installedModel?.let {
         checkNotNull(enabledStates[pluginId]) { "Missing enabled state for installed Marketplace plugin $pluginId" }
@@ -404,6 +413,7 @@ internal fun buildMarketplaceSnapshot(
     listModelData = PluginListModelData(
       installedModels = installedModels.filterKeys(resultIds::contains),
       errors = errors.filterKeys(resultIds::contains),
+      expectedExplanations = expectedExplanations.filterKeys(resultIds::contains),
       installationStates = effectiveStates,
       updateSources = emptyMap(),
     ),

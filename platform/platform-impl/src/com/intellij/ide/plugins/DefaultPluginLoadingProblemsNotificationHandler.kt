@@ -9,16 +9,16 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class DefaultPluginInitializationErrorHandler : PluginInitializationErrorHandler {
+class DefaultPluginLoadingProblemsNotificationHandler : PluginLoadingProblemsNotificationHandler {
   private val pluginManagerState: PluginManagerStateSnapshot by lazy {
     checkNotNull(service<PluginManagerStateService>().getCurrentState()) { "Plugins are not initialized" }
   }
 
   private val pluginEnabler: PluginEnabler by lazy { PluginEnabler.getInstance() }
 
-  override suspend fun getPluginInitializationErrors(): PluginInitializationErrors {
-    return PluginInitializationErrors(
-      pluginErrors = pluginManagerState.loadingErrors,
+  override suspend fun getPluginLoadingProblemsForNotification(): PluginLoadingProblemsNotificationData {
+    return PluginLoadingProblemsNotificationData(
+      pluginLoadingProblemsForNotification = pluginManagerState.pluginLoadingProblemsForNotification,
       pluginNamesToEnable = pluginManagerState.pluginsToEnable.values.toList(),
       pluginNamesToDisable = pluginManagerState.pluginsToDisable.values.toList()
     )
@@ -28,7 +28,7 @@ class DefaultPluginInitializationErrorHandler : PluginInitializationErrorHandler
     return PluginManagerCore.getPluginSet().allPlugins.filter { it.getPluginId() in ids }
   }
 
-  override suspend fun enableDeferredPlugins() {
+  override suspend fun onEnableClickInNotification() {
     withContext(Dispatchers.EDT) {
       if (pluginEnabler.enable(findDescriptors(pluginManagerState.pluginsToEnable.keys))) {
         PluginManagerMain.notifyPluginsUpdated(null)
@@ -36,7 +36,7 @@ class DefaultPluginInitializationErrorHandler : PluginInitializationErrorHandler
     }
   }
 
-  override suspend fun disableDeferredPlugins() {
+  override suspend fun onDisableClickInNotification() {
     withContext(Dispatchers.EDT) {
       pluginEnabler.disable(findDescriptors(pluginManagerState.pluginsToDisable.keys))
     }

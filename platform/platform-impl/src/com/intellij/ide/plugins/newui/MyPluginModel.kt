@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui
 
+import com.intellij.core.CoreBundle
 import com.intellij.externalDependencies.DependencyOnPlugin
 import com.intellij.externalDependencies.ExternalDependenciesManager
 import com.intellij.ide.IdeBundle
@@ -12,6 +13,7 @@ import com.intellij.ide.plugins.PluginEnableDisableAction
 import com.intellij.ide.plugins.PluginEnabledState
 import com.intellij.ide.plugins.PluginEnabler
 import com.intellij.ide.plugins.PluginInstallCallbackData
+import com.intellij.ide.plugins.PluginLoadingProblem
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.ide.plugins.marketplace.ApplyPluginsStateResult
@@ -1159,17 +1161,18 @@ open class MyPluginModel @JvmOverloads constructor(
       val errorCheckResult = UiPluginManager.getInstance().loadErrors(sessionId)
       needRestart = needRestart or (descriptor.isEnabled && needRestartForUninstall)
       val errors = getErrors(errorCheckResult)
+      val expectedExplanations = getExpectedExplanations(errorCheckResult)
       if (myPluginManagerCustomizer != null) {
         myPluginManagerCustomizer.updateAfterModificationAsync {
           hideProgresses(descriptor.pluginId)
-          updateUiAfterUninstall(descriptor, needRestartForUninstall, errors, completelyUninstalled)
+          updateUiAfterUninstall(descriptor, needRestartForUninstall, errors, completelyUninstalled, expectedExplanations)
           myEventPublisher.inventoryInvalidated(PluginInventoryChangeReason.UNINSTALL, listOf(descriptor.pluginId))
           callback?.run()
         }
       }
       else {
         hideProgresses(descriptor.pluginId)
-        updateUiAfterUninstall(descriptor, needRestartForUninstall, errors, completelyUninstalled)
+        updateUiAfterUninstall(descriptor, needRestartForUninstall, errors, completelyUninstalled, expectedExplanations)
         myEventPublisher.inventoryInvalidated(PluginInventoryChangeReason.UNINSTALL, listOf(descriptor.pluginId))
         callback?.run()
       }
@@ -1183,6 +1186,7 @@ open class MyPluginModel @JvmOverloads constructor(
     descriptor: PluginUiModel, needRestartForUninstall: Boolean,
     errors: Map<PluginId, List<HtmlChunk>>,
     completelyUninstalled: Boolean,
+    expectedExplanations: Map<PluginId, List<@Nls String>>,
   ) {
     val pluginId = descriptor.pluginId
     myTopController!!.showProgress(false)
@@ -1214,11 +1218,13 @@ open class MyPluginModel @JvmOverloads constructor(
     }
     for (component in myInstalledPluginComponents) {
       component.updateErrors(errors[component.getPluginModel().pluginId] ?: emptyList())
+      component.updateExpectedExplanations(expectedExplanations[component.getPluginModel().pluginId].orEmpty())
     }
     for (plugins in myMarketplacePluginComponentMap.values) {
       for (plugin in plugins) {
         if (plugin.myInstalledDescriptorForMarketplace != null) {
           plugin.updateErrors(errors[plugin.getPluginModel().pluginId] ?: emptyList())
+          plugin.updateExpectedExplanations(expectedExplanations[plugin.getPluginModel().pluginId].orEmpty())
         }
       }
     }
@@ -1366,9 +1372,76 @@ open class MyPluginModel @JvmOverloads constructor(
     }
 
     fun getErrors(checkErrorsResult: CheckErrorsResult): List<HtmlChunk> {
-      if (checkErrorsResult.isDisabledDependencyError) {
-        val loadingError = checkErrorsResult.loadingError
-        return if (loadingError != null) listOf<HtmlChunk>(createTextChunk(loadingError)) else emptyList()
+      return presentedLoadingProblems(checkErrorsResult).flatMap { (side, problem) ->
+        val errors = getSingleProblemErrors(problem)
+        if (side == null || errors.isEmpty()) errors
+        else listOf(HtmlChunk.span().addText(loadingProblemSidePrefix(side)).children(errors.first())) + errors.drop(1)
+      }
+    }
+
+    fun getExpectedExplanations(results: Map<PluginId, CheckErrorsResult>): Map<PluginId, List<@Nls String>> =
+      results.mapValues { (_, result) -> getExpectedExplanations(result) }
+
+    fun getExpectedExplanations(result: CheckErrorsResult): List<@Nls String> =
+      presentedLoadingProblems(result).mapNotNull { (side, problem) ->
+        val message = getSingleProblemExpectedExplanation(problem)
+        message?.let { if (side == null) it else loadingProblemSidePrefix(side) + it }
+      }
+
+    private fun getSingleProblemExpectedExplanation(problem: CheckErrorsResult): @Nls String? = when (problem.severity) {
+      PluginLoadingProblem.Severity.UNEXPECTED -> null
+      PluginLoadingProblem.Severity.EXPECTED -> when (problem.kind) {
+        PluginLoadingProblem.Kind.OTHER, PluginLoadingProblem.Kind.PRODUCT_MODE_MISMATCH -> problem.loadingError
+        PluginLoadingProblem.Kind.ULTIMATE_DISABLED -> null
+      }
+    }
+
+    private data class LoadingProblemPresentationKey(
+      val kind: PluginLoadingProblem.Kind,
+      val severity: PluginLoadingProblem.Severity,
+      val errors: List<String>,
+      val expectedExplanation: @Nls String?,
+    )
+
+    private fun loadingProblemPresentationKey(problem: CheckErrorsResult): LoadingProblemPresentationKey =
+      LoadingProblemPresentationKey(
+        kind = problem.kind,
+        severity = problem.severity,
+        errors = getSingleProblemErrors(problem).map { it.toString() },
+        expectedExplanation = getSingleProblemExpectedExplanation(problem),
+      )
+
+    private fun presentedLoadingProblems(result: CheckErrorsResult): List<Pair<PluginSource?, CheckErrorsResult>> {
+      if (result.problemsBySide.isEmpty()) return listOf(null to result)
+      val local = result.problemsBySide[PluginSource.LOCAL]
+      val remote = result.problemsBySide[PluginSource.REMOTE]
+      if (local != null && remote != null && loadingProblemPresentationKey(local) == loadingProblemPresentationKey(remote)) {
+        return listOf(null to local)
+      }
+      val bothPresent = local?.pluginPresent == true && remote?.pluginPresent == true
+      return listOf(PluginSource.LOCAL, PluginSource.REMOTE).mapNotNull { side ->
+        result.problemsBySide[side]?.let { (if (bothPresent) side else null) to it }
+      }
+    }
+
+    private fun loadingProblemSidePrefix(side: PluginSource): @Nls String = when (side) {
+      PluginSource.LOCAL -> CoreBundle.message("plugin.loading.problem.side.client") + " "
+      PluginSource.REMOTE -> CoreBundle.message("plugin.loading.problem.side.host") + " "
+      PluginSource.BOTH -> error("A shared explanation needs no side prefix")
+    }
+
+    private fun getSingleProblemErrors(checkErrorsResult: CheckErrorsResult): List<HtmlChunk> {
+      when (checkErrorsResult.severity) {
+        PluginLoadingProblem.Severity.EXPECTED -> return emptyList()
+        PluginLoadingProblem.Severity.UNEXPECTED -> {}
+      }
+      when (checkErrorsResult.kind) {
+        PluginLoadingProblem.Kind.ULTIMATE_DISABLED -> return emptyList()
+        PluginLoadingProblem.Kind.OTHER, PluginLoadingProblem.Kind.PRODUCT_MODE_MISMATCH -> {}
+      }
+      val loadingError = checkErrorsResult.loadingError
+      if (loadingError != null) {
+        return listOf(createTextChunk(loadingError))
       }
 
       val errors = mutableListOf<HtmlChunk>()

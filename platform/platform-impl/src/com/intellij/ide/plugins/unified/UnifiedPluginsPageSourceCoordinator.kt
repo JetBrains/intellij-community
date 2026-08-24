@@ -648,6 +648,7 @@ internal fun mergePluginListModelData(
   return PluginListModelData(
     installedModels = remote.installedModels + local.installedModels,
     errors = remote.errors + local.errors,
+    expectedExplanations = remote.expectedExplanations + local.expectedExplanations,
     installationStates = remote.installationStates + local.installationStates,
     updateSources = remote.updateSources + local.updateSources,
   )

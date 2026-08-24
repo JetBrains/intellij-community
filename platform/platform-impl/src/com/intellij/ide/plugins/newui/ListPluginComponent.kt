@@ -58,6 +58,7 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus
@@ -276,6 +277,8 @@ class ListPluginComponent private constructor(
   @JvmField
   var myUpdateButton: JButton? = null
   private var myEnableDisableButton: JToggleButton? = null
+  private var myHasErrors = false
+  private var myExpectedExplanations: List<@Nls String> = emptyList()
   private var myChooseUpdateButton: JCheckBox? = null
   private var myAlignButton: JComponent? = null
   private var myMetricsPanel: JPanel? = null
@@ -339,6 +342,7 @@ class ListPluginComponent private constructor(
     }
     else {
       updateErrors(listModel.errors.getOrDefault(pluginId, Collections.emptyList()))
+      updateExpectedExplanations(listModel.expectedExplanations[pluginId].orEmpty())
     }
 
     createUnknownUpdateSourceWarningPanel(listModel.updateSources[pluginId], pluginInstallationState)
@@ -857,7 +861,8 @@ class ListPluginComponent private constructor(
     if (calcColor && (!myMarketplace || myInstalledDescriptorForMarketplace != null)) {
       val plugin = getDescriptorForActions()
       val disabled =
-        myModelFacade.isUninstalled(plugin.pluginId) || !myModelFacade.isPluginInstallingOrUpdating(myPlugin) && !isEnabledState()
+        myModelFacade.isUninstalled(plugin.pluginId) || myExpectedExplanations.isNotEmpty() ||
+        !myModelFacade.isPluginInstallingOrUpdating(myPlugin) && !isEnabledState()
       if (disabled) {
         nameForeground = DisabledColor
         otherForeground = DisabledColor
@@ -884,6 +889,7 @@ class ListPluginComponent private constructor(
   fun updateErrors(errors: List<out HtmlChunk>) {
     val plugin = getDescriptorForActions()
     val hasErrors = errors.isNotEmpty() && !myIsNotFreeInFreeMode
+    myHasErrors = hasErrors
     updateIcon(hasErrors, myModelFacade.isUninstalled(plugin.pluginId) || !isEnabledState() || !myIsAvailable)
 
     if (myAlignButton != null) {
@@ -923,6 +929,20 @@ class ListPluginComponent private constructor(
       myUpdateLicensePanel!!.isVisible = !hasErrors && !myIsNotFreeInFreeMode
     }
   }
+
+  internal fun updateExpectedExplanations(explanations: List<@Nls String>) {
+    myExpectedExplanations = if (myIsNotFreeInFreeMode) emptyList() else explanations.toList()
+    val description = myExpectedExplanations.takeIf { it.isNotEmpty() }?.let {
+      AccessibleContextUtil.joinAccessibleStrings(" ", *it.toTypedArray())
+    }
+    myEnableDisableButton?.accessibleContext?.accessibleDescription = description
+    updateIcon(myHasErrors, myModelFacade.isUninstalled(getDescriptorForActions().pluginId) || !isEnabledState() || !myIsAvailable)
+    updateColors(mySelection)
+    revalidate()
+    repaint()
+  }
+
+  internal fun getExpectedExplanations(): List<@Nls String> = myExpectedExplanations
 
   private fun createUnknownUpdateSourceWarningPanel(
     pluginUpdateSource: PluginUpdateSource?,
@@ -968,10 +988,12 @@ class ListPluginComponent private constructor(
     val plugin = getDescriptorForActions()
     if (myOnlyUpdateMode) {
       updateErrors(emptyList())
+      updateExpectedExplanations(emptyList())
     }
     else {
-      PluginModelAsyncOperationsExecutor.updateErrors(myUiCoroutineScope, myModelFacade.getModel().sessionId, plugin.pluginId) { res ->
-        updateErrors(res)
+      PluginModelAsyncOperationsExecutor.updateLoadingProblems(myUiCoroutineScope, myModelFacade.getModel().sessionId, plugin.pluginId) { res ->
+        updateErrors(MyPluginModel.getErrors(res))
+        updateExpectedExplanations(MyPluginModel.getExpectedExplanations(res))
       }
     }
   }
@@ -990,7 +1012,7 @@ class ListPluginComponent private constructor(
   }
 
   private fun updateIcon(errors: Boolean, disabled: Boolean) {
-    myIconComponent.icon = scalePluginIcon(myModelFacade.getIcon(myPlugin, false, errors, disabled))
+    myIconComponent.icon = scalePluginIcon(myModelFacade.getIcon(myPlugin, false, errors, disabled || myExpectedExplanations.isNotEmpty()))
   }
 
   private fun scalePluginIcon(icon: Icon): Icon {
@@ -1092,6 +1114,7 @@ class ListPluginComponent private constructor(
         if (myEnableDisableButton != null) {
           myLayout.removeButtonComponent(myEnableDisableButton!!)
           myEnableDisableButton = null
+          updateExpectedExplanations(emptyList())
 
           if (myAlignButton != null) {
             myAlignButton!!.isVisible = true
@@ -2095,6 +2118,8 @@ class ListPluginComponent private constructor(
         val key = if (myEnableDisableButton!!.isSelected) "plugins.configurable.enabled" else "plugins.configurable.disabled"
         description.add(IdeBundle.message(key))
       }
+
+      myExpectedExplanations.forEach(description::add)
 
       if (isNotNullAndVisible(myInstallButton)) {
         val isDefaultText = IdeBundle.message("action.AnActionButton.text.install") == myInstallButton!!.text

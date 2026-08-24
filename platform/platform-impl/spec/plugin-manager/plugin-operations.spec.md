@@ -43,6 +43,8 @@ The Plugins page starts and presents plugin installation, update, state, and rem
 
 This specification defines their stable lifecycle. The [UI contract](./unified-plugin-manager-ui.spec.md) defines their page presentation.
 
+[Plugin Loading Problems](./plugin-loading-problems.spec.md) defines loading explanations and offered recovery actions.
+
 ## Scope
 
 This specification covers plugin operations that the Plugins page starts or presents.
@@ -58,6 +60,7 @@ This specification covers plugin operations that the Plugins page starts or pres
 - This specification does not define download or installation mechanics.
 - This specification does not require one transaction across multiple plugins.
 - This specification does not define split-mode routing.
+- This specification does not define loading problem classification or reporting.
 
 ## Operation Lifecycle
 
