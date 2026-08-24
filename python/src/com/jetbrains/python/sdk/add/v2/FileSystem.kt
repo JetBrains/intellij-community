@@ -35,6 +35,7 @@ import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.community.execService.python.getLanguageLevelFromVersionStringSafe
+import com.intellij.python.community.execService.python.getVersionFromVersionStringSafe
 import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.python.community.services.internal.impl.VanillaPythonWithPythonInfoImpl
 import com.intellij.python.community.services.shared.VanillaPythonWithPythonInfo
@@ -700,8 +701,9 @@ data class TargetFileSystem(
   }
 
   private fun TargetPythonProbe.Executable.toPythonInfo(): PythonInfo? {
-    val languageLevel = getLanguageLevelFromVersionStringSafe(versionOutput.trim()) ?: return null
-    return PythonInfo(languageLevel, freeThreaded)
+    val trimmed = versionOutput.trim()
+    val languageLevel = getLanguageLevelFromVersionStringSafe(trimmed) ?: return null
+    return PythonInfo(languageLevel, freeThreaded, getVersionFromVersionStringSafe(trimmed))
   }
 
   override suspend fun getFullPath(prefixEnvVar: String, pathComponents: List<String>): PathHolder.Target? {

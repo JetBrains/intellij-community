@@ -16,6 +16,7 @@ import com.intellij.python.community.execService.impl.transformerToHandler
 import com.intellij.python.community.execService.python.advancedApi.ExecutablePython
 import com.intellij.python.community.execService.python.advancedApi.executePythonAdvanced
 import com.intellij.python.community.execService.python.getLanguageLevelFromVersionStringSafe
+import com.intellij.python.community.execService.python.getVersionFromVersionStringSafe
 import com.intellij.python.community.execService.python.impl.PyExecPythonBundle.message
 import com.jetbrains.python.PYTHON_VERSION_ARG
 import com.jetbrains.python.PythonInfo
@@ -44,12 +45,13 @@ internal suspend fun ExecService.validatePythonAndGetInfoImpl(python: Executable
   val versionString = versionOutput.stdoutString.let { stdout ->
     stdout.ifBlank { versionOutput.stderrString.lineSequence().lastOrNull { it.isNotBlank() } ?: "" }
   }
-  val languageLevel = getLanguageLevelFromVersionStringSafe(versionString.trim())
+  val trimmedVersionString = versionString.trim()
+  val languageLevel = getLanguageLevelFromVersionStringSafe(trimmedVersionString)
   if (languageLevel == null) {
     return@withContext PyResult.localizedError(message("python.get.version.wrong.version", python.userReadableName, versionString))
   }
 
-  return@withContext Result.success(PythonInfo(languageLevel, freeThreaded))
+  return@withContext Result.success(PythonInfo(languageLevel, freeThreaded, getVersionFromVersionStringSafe(trimmedVersionString)))
 }
 
 @ApiStatus.Internal

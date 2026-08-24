@@ -11,6 +11,16 @@ private val VERSION_RE = "((Python|GraalPy) (\\S+)).*".toRegex(RegexOption.DOT_M
 fun getVersionStringFromOutput(output: String): String? =
   PatternUtil.getFirstMatch(output.lines(), VERSION_RE.toPattern())
 
+/**
+ * The interpreter's own full version out of its `--version` output — `3.15.0`, patch and any suffix included.
+ *
+ * [getLanguageLevelFromVersionStringSafe] narrows the very same capture to a [LanguageLevel], which keeps only
+ * major.minor; this is here so a caller that wants the exact version does not have to run the interpreter again.
+ */
+@ApiStatus.Internal
+fun getVersionFromVersionStringSafe(versionString: String): String? =
+  VERSION_RE.matchEntire(versionString)?.destructured?.component3()
+
 @ApiStatus.Internal
 fun getLanguageLevelFromVersionStringSafe(versionString: String): LanguageLevel? {
   val matchResult = VERSION_RE.matchEntire(versionString)
