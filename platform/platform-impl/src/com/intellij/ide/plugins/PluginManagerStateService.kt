@@ -92,10 +92,38 @@ class PluginManagerStateService {
       }
     }
 
-    val cycleErrors = adaptDescriptorExclusionReasonAsPluginNonLoadReason(
-      resolvedPluginSet = resolvedPluginSet,
-      registerLoadingError = ::registerLoadingError,
-    )
+    val cycleErrors = ArrayList<@Nls String>()
+    for (plugin in resolvedPluginSet.candidateSet.plugins) {
+      for (descriptor in plugin.sequenceAllDescriptors()) {
+        if (!resolvedPluginSet.isResolved(descriptor)) {
+          adaptExclusionReasonAsCycleError(resolvedPluginSet = resolvedPluginSet, descriptor = descriptor, cycleErrors = cycleErrors)
+        }
+      }
+      val exclusionReason = resolvedPluginSet.getExclusionReason(plugin)
+      if (exclusionReason != null) {
+        adaptExclusionReasonAsNonLoadReason(
+          exclusionReason,
+          plugin,
+          resolvedPluginSet = resolvedPluginSet,
+          registerLoadingError = ::registerLoadingError,
+          candidateSet = resolvedPluginSet.candidateSet,
+        )
+      }
+      else {
+        // TODO do we want to somehow report conflicts for optional content modules? or message in the log is enough?
+        for (contentModule in plugin.contentModules) {
+          val contentModuleExclusionReason = resolvedPluginSet.getExclusionReason(contentModule)
+          if (contentModuleExclusionReason is PackagePrefixConflictWithAnotherModule) {
+            registerLoadingError(PluginPackagePrefixConflict(
+              plugin,
+              contentModuleExclusionReason.descriptor,
+              contentModuleExclusionReason.preferredConflictingModule,
+            ))
+          }
+        }
+      }
+    }
+
     val loadingErrors = preparePluginErrors(
       pluginNonLoadReasons,
       discoveredPlugins.descriptorLoadingErrors,
@@ -143,34 +171,6 @@ class PluginManagerStateService {
       .filter { it.shouldNotifyUser }
       .map { it.detailedMessage }
       .toList()
-
-  private fun adaptDescriptorExclusionReasonAsPluginNonLoadReason(
-    resolvedPluginSet: ResolvedPluginSet,
-    registerLoadingError: (PluginNonLoadReason) -> Unit,
-  ): List<@Nls String> {
-    val cycleErrors = ArrayList<@Nls String>()
-    for (plugin in resolvedPluginSet.candidateSet.plugins) {
-      for (descriptor in plugin.sequenceAllDescriptors()) {
-        if (!resolvedPluginSet.isResolved(descriptor)) {
-          adaptExclusionReasonAsCycleError(resolvedPluginSet, descriptor, cycleErrors)
-        }
-      }
-      val exclusionReason = resolvedPluginSet.getExclusionReason(plugin)
-      if (exclusionReason != null) {
-        adaptExclusionReasonAsNonLoadReason(exclusionReason, plugin, resolvedPluginSet, registerLoadingError, resolvedPluginSet.candidateSet)
-      }
-      else {
-        // TODO do we want to somehow report conflicts for optional content modules? or message in the log is enough?
-        for (contentModule in plugin.contentModules) {
-          val contentModuleExclusionReason = resolvedPluginSet.getExclusionReason(contentModule)
-          if (contentModuleExclusionReason is PackagePrefixConflictWithAnotherModule) {
-            registerLoadingError(PluginPackagePrefixConflict(plugin, contentModuleExclusionReason.descriptor, contentModuleExclusionReason.preferredConflictingModule))
-          }
-        }
-      }
-    }
-    return cycleErrors
-  }
 
   private fun adaptExclusionReasonAsCycleError(
     resolvedPluginSet: ResolvedPluginSet,
