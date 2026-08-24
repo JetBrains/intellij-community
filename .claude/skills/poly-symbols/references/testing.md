@@ -180,11 +180,15 @@ doConfiguredTest(dir = true, configureFileName = "Node2D.gd") {
 - **`Angular2CodeCompletionTest`** (`contrib/Angular/angular-tests/test/org/angular2/resharper/`)
   is an unrelated ReSharper-style legacy completion harness (`Angular2ReSharperCompletionTestBase`)
   — don't confuse it with real PolySymbols completion tests despite the similar name.
-- **`PolySymbolOwnReferencesHost` currently has zero test coverage anywhere in the repo**, and no
-  implementer either, as of this writing. The helpers above *should* work unchanged against an
-  own-references host by construction (they resolve via generic `PsiSymbolReference`/`Symbol`
-  machinery, not EP-specific plumbing) — but this is unverified until a first real adopter proves
-  it. Flag it as such rather than asserting it "just works."
+- **Own references (`PolySymbolOwnReferenceHost`, see [query-model.md](query-model.md#references--own-references-polysymbolownreferences))
+  now has real adopters and real test coverage**, superseding older guidance in this file that called
+  it untested. GDScript's `GdRefElement` hierarchy and TSCN's `TscnNamedElement` both resolve via own
+  references (`polySymbolOwnReferences { ... }`), and the generic helpers above work unchanged against
+  them — confirmed by TSCN's `ScriptClassRenamingTest`/`ResourceFieldRenamingTest`
+  (`dotnet/Plugins/godot-support/gdscript/src/test/kotlin/com/jetbrains/godot/tscn/refactoring/rename/`),
+  which drive an own-references-backed rename purely through `CodeInsightTestFixture.renameSymbolAtCaret(...)`
+  with no own-references-specific test plumbing at all. This is exactly what "resolve via generic
+  `PsiSymbolReference`/`Symbol` machinery, not EP-specific plumbing" predicted.
 
 ## Related skills
 
