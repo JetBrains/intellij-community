@@ -4,8 +4,8 @@ package com.intellij.terminal.frontend.session.ghostty
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
-import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.emulator.ScreenChange
 import com.intellij.terminal.emulator.TerminalCustomCommandListener
 import com.intellij.terminal.emulator.TerminalEmulator
@@ -33,6 +33,8 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.LocalTerminalTtyConnector
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.TerminalEmulatorType
@@ -42,7 +44,6 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalBeepEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalClearBufferEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCloseEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCursorPositionChangedEvent
-import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalResizeEvent
@@ -52,6 +53,7 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalStateChangedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalWriteBytesEvent
 import org.jetbrains.plugins.terminal.session.impl.dto.KeyEventProcessingResultDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalStateDto
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.util.concurrent.locks.ReentrantLock
@@ -98,7 +100,9 @@ import kotlin.time.Duration.Companion.milliseconds
  *   emitted — the old buffer's last pre-switch changes are not (the JediTerm pipeline
  *   flushes before switching; the emulator has no such hook).
  */
-internal class GhosttyTerminalSession(
+@ApiStatus.Internal
+@VisibleForTesting
+class GhosttyTerminalSession internal constructor(
   private val ttyConnector: TtyConnector,
   initialSize: TerminalSize,
   initialWorkingDirectory: String?,

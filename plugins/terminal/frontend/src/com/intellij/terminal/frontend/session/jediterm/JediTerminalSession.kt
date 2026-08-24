@@ -19,6 +19,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.LocalTerminalTtyConnector
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.original
@@ -32,7 +34,9 @@ import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.awt.event.MouseWheelEvent
 
-internal class JediTerminalSession(
+@ApiStatus.Internal
+@VisibleForTesting
+class JediTerminalSession internal constructor(
   private val inputChannel: SendChannel<TerminalInputEvent>,
   outputFlow: Flow<List<TerminalOutputEvent>>,
   override val coroutineScope: CoroutineScope,

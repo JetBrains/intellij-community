@@ -2,6 +2,8 @@
 package com.intellij.terminal.tests.reworked.frontend.session
 
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.terminal.frontend.session.ghostty.GhosttyTerminalSession
+import com.intellij.terminal.frontend.session.jediterm.JediTerminalSession
 import com.intellij.terminal.tests.reworked.util.TerminalSessionTestUtil
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.ProjectRule
@@ -64,11 +66,11 @@ internal class TerminalEmulatorTypeResolutionTest {
       try {
         val (session, _) =
           TerminalSessionTestUtil.createLoopbackTerminalSession(projectRule.project, sessionScope, emulatorType = requested)
-        val expectedClassName = when (expected) {
-          TerminalEmulatorType.Ghostty -> "GhosttyTerminalSession"
-          TerminalEmulatorType.JediTerm -> "TerminalSessionImpl"
+        val expectedClass = when (expected) {
+          TerminalEmulatorType.JediTerm -> JediTerminalSession::class
+          TerminalEmulatorType.Ghostty -> GhosttyTerminalSession::class
         }
-        assertThat(session.javaClass.simpleName).isEqualTo(expectedClassName)
+        assertThat(session::class).isEqualTo(expectedClass)
       }
       finally {
         sessionScope.cancel()
