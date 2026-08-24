@@ -28,7 +28,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.vfs.DiskQueryRelay;
@@ -323,7 +322,7 @@ public final class AboutDialog extends DialogWrapper {
 
     myInfo.forEach(s -> text.append(s).append('\n'));
 
-    text.append("Toolkit: ").append(Toolkit.getDefaultToolkit().getClass().getName()).append("\n");
+    text.append("Toolkit: ").append(Toolkit.getDefaultToolkit().getClass().getName()).append('\n');
 
     text.append(OS.CURRENT.name()).append(' ').append(OS.CURRENT.version()).append('\n');
 
@@ -348,10 +347,10 @@ public final class AboutDialog extends DialogWrapper {
 
     if (JBR.isVulkanSupported()) {
       text.append("Vulkan Rendering is ON:\n");
-      text.append("  Presentation is ").append(JBR.getVulkan().isPresentationEnabled() ? "ON" : "OFF").append("\n");
+      text.append("  Presentation is ").append(JBR.getVulkan().isPresentationEnabled() ? "ON" : "OFF").append('\n');
       for (var device : JBR.getVulkan().getDevices()) {
         text.append("  ").append(device.getName()).append(" (").append(device.getTypeString()).append("), caps=0x")
-          .append(Integer.toHexString(device.getCapabilities())).append("\n");
+          .append(Integer.toHexString(device.getCapabilities())).append('\n');
       }
     }
 
@@ -388,7 +387,7 @@ public final class AboutDialog extends DialogWrapper {
       }
     }
 
-    if (SystemInfo.isUnix && !SystemInfo.isMac) {
+    if (OS.isGenericUnix()) {
       text.append("Current Desktop: ").append(requireNonNullElse(System.getenv("XDG_CURRENT_DESKTOP"), "Undefined")).append('\n');
     }
 
@@ -401,7 +400,7 @@ public final class AboutDialog extends DialogWrapper {
       var title = IdeBundle.message("progress.third.party.software");
       licenseText = ProgressManager.getInstance().run(new Task.WithResult<String, IOException>(null, component, title, true) {
         @Override
-        protected String compute(@NotNull ProgressIndicator indicator) throws IOException {
+        protected String compute(@NotNull ProgressIndicator indicator) {
           return DiskQueryRelay.compute(() -> {
             var content = Files.readString(PathManager.getHomeDir().resolve(THIRD_PARTY_LIBRARIES_FILE));
             var matcher = Pattern.compile("(\\d+)px").matcher(content);
@@ -470,5 +469,4 @@ public final class AboutDialog extends DialogWrapper {
            ? IdeBundle.message("dialog.message.jetbrains.client.for.ide", ApplicationNamesInfo.getInstance().getFullProductName())
            : ApplicationNamesInfo.getInstance().getFullProductName();
   }
-
 }
