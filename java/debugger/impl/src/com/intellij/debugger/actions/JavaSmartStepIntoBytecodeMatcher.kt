@@ -113,17 +113,18 @@ class JavaSmartStepIntoBytecodeMatcher(
       if (!lineMatch) return
 
       assert(offset != -1)
-      val key = "$owner.$name$descriptor"
+      val typeName = Type.getObjectType(owner).className
+      val referenceType = location.virtualMachine().classesByName(typeName).firstOrNull()
+      val method = referenceType?.let { DebuggerUtils.findMethod(it, name, descriptor) }
+      val keyOwner = method?.declaringType()?.name() ?: owner
+      val key = "$keyOwner.$name$descriptor"
       // PSI target ordinals are counted separately for every method signature; mirror that ordering while scanning bytecode.
       val ordinal = counter.getInt(key)
       counter.put(key, Math.addExact(ordinal, 1))
       if (name.startsWith("access") && name.getOrNull(6) == '$') {
         // javac access$ bridges hide the source-level call one level deeper, so match the method invoked by the bridge instead.
-        val typeName = Type.getObjectType(owner).className
-        val referenceType = location.virtualMachine().classesByName(typeName).firstOrNull()
-        val bridgeMethod = referenceType?.let { DebuggerUtils.findMethod(it, name, descriptor) }
-        if (bridgeMethod != null) {
-          MethodBytecodeUtil.visit(bridgeMethod, object : MethodVisitor(Opcodes.API_VERSION) {
+        if (method != null) {
+          MethodBytecodeUtil.visit(method, object : MethodVisitor(Opcodes.API_VERSION) {
             override fun visitMethodInsn(opcode: Int, owner: String, name: String, descriptor: String, isInterface: Boolean) {
               if (owner == "java/lang/AbstractMethodError") return
               matchMethodInstruction(owner, name, descriptor, ordinal, offset)
