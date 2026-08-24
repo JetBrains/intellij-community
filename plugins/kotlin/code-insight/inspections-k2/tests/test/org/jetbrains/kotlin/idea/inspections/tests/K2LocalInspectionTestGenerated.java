@@ -16282,6 +16282,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/convertToExplicitBackingFields/delegatedProperties.kt");
             }
 
+            @TestMetadata("extensions.kt")
+            public void testExtensions() throws Exception {
+                runTest("testData/inspectionsLocal/convertToExplicitBackingFields/extensions.kt");
+            }
+
             @TestMetadata("finalProperty.kt")
             public void testFinalProperty() throws Exception {
                 runTest("testData/inspectionsLocal/convertToExplicitBackingFields/finalProperty.kt");
