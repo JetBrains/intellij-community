@@ -4,6 +4,7 @@ package com.intellij.python.pyproject.model.internal.workspaceBridge
 import com.intellij.openapi.module.Module
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.workspaceModel.ide.legacyBridge.findModule
@@ -60,6 +61,18 @@ fun Module.getToolWorkspaceLayout(toolId: ToolId): ToolWorkspaceLayout? {
   if (members.isEmpty()) return null
   return ToolWorkspaceLayout(toolId, rootModule, members)
 }
+
+/**
+ * Whether [this] workspace-model change can have altered any module's [ToolWorkspaceLayout].
+ *
+ * A layout is read off [PyProjectTomlWorkspaceEntity.participatedTools], which is internal to this module — so a caller
+ * that caches layouts cannot watch that entity itself and has to ask here instead. Membership changes on their own:
+ * dropping a member from `[tool.uv.workspace]` and putting it back leaves the same modules with the same content roots,
+ * so nothing but this entity moves and a cache keyed on the module set would never notice.
+ */
+@ApiStatus.Internal
+fun VersionedStorageChange.affectsWorkspaceLayout(): Boolean =
+  getChanges(PyProjectTomlWorkspaceEntity::class.java).isNotEmpty()
 
 /**
  * Workspace layout for the first tool this module participates in, whether as the root or as a member; `null` when it

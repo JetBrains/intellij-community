@@ -12,6 +12,7 @@ import com.intellij.platform.workspace.jps.entities.FacetEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.python.pyproject.model.internal.workspaceBridge.affectsWorkspaceLayout
 import com.intellij.python.pyproject.model.internal.workspaceBridge.getWorkspaceLayout
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
 import com.intellij.python.sdk.backend.evolution.EvoWorkspace
@@ -38,8 +39,14 @@ import kotlinx.coroutines.launch
 private val PY_PROJECT_ENTITIES: List<Class<out WorkspaceEntity>> =
   listOf(ModuleEntity::class.java, FacetEntity::class.java, ContentRootEntity::class.java)
 
+/**
+ * Whether this change can alter anything [EvoPyProjectModel.computeSnapshot] reads: the entities a [PyProject] is
+ * derived from, or the workspace membership the clusters are built from. The latter moves entirely on its own — a member
+ * dropped from `[tool.uv.workspace]` and added back changes no module and no content root — so watching only the former
+ * leaves a stale cluster behind.
+ */
 private fun VersionedStorageChange.affectsPyProjects(): Boolean =
-  PY_PROJECT_ENTITIES.any { getChanges(it).isNotEmpty() }
+  PY_PROJECT_ENTITIES.any { getChanges(it).isNotEmpty() } || affectsWorkspaceLayout()
 
 /**
  * The project's Python structure — every [PyProject], which one is the *main* one, and how they cluster into tool
