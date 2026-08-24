@@ -14,8 +14,8 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlinc-kotlinx-serialization-compiler-plugin"],
-    runtime_deps = ["@lib//:kotlinc-kotlinx-serialization-compiler-plugin"],
+    exports = ["@lib//:libraries-kotlinc-kotlinx-serialization-compiler-plugin-kotlinc-kotlinx-serialization-compiler-plugin"],
+    runtime_deps = ["@lib//:libraries-kotlinc-kotlinx-serialization-compiler-plugin-kotlinc-kotlinx-serialization-compiler-plugin"],
 )
 
 content_module_jar(
@@ -33,7 +33,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlinc-kotlinx-serialization-compiler-plugin"],
+    exports = ["@lib//:libraries-kotlinc-kotlinx-serialization-compiler-plugin-kotlinc-kotlinx-serialization-compiler-plugin"],
     runtime_deps = [":libraries-kotlinc-kotlinx-serialization-compiler-plugin"],
 )
 ### auto-generated section `build intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin` end
