@@ -306,6 +306,8 @@ public final class VMOptions {
   /** @deprecated ignores write errors; please use {@link #setProperty} instead */
   @Deprecated(forRemoval = true)
   public static void writeOption(@NotNull String option, @NotNull String separator, @NotNull String value) {
+    PluginException.reportDeprecatedUsage("VMOptions.writeOption", "Use `#setOption` instead");
+
     try {
       setOption("-D" + option + separator, value);
     }
@@ -322,6 +324,8 @@ public final class VMOptions {
    */
   @Deprecated(forRemoval = true)
   public static @Nullable String read() {
+    PluginException.reportDeprecatedUsage("VMOptions.read", "Use `#readOption` instead");
+
     try {
       Path newFile = getUserOptionsFile();
       if (newFile != null && Files.exists(newFile)) {
