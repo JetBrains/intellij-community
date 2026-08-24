@@ -179,7 +179,8 @@ internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleLi
       println("WARN: $moduleName content target: no Bazel target for member module $memberName")
       continue
     }
-    val isPrepacked = memberName in prepackedMemberNames && isPrepackedPluginContentModule(module = member, context = context)
+    val isPrepacked = memberName in prepackedMemberNames &&
+                      isPrepackedPluginContentModule(module = member, moduleList = moduleList, context = context)
     if (module.isCommunity && !member.isCommunity) {
       // `getBazelDependencyLabel` fails outright on this edge, and a main-repository label is unreachable from the
       // community repository anyway. The member is still packed - the completion set in `//build/dev-dist-content` sees

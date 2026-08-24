@@ -47,6 +47,7 @@ internal class ModuleList(
   @JvmField val community: List<ModuleDescriptor>,
   @JvmField val ultimate: List<ModuleDescriptor>,
   @JvmField val skipped: List<ModuleDescriptor>,
+  private val pluginContentCandidateOverrides: Map<String, Boolean>,
 ) {
   @JvmField val allModules = community + ultimate + skipped
   val skippedModules = skipped.map { it.module.name }
@@ -70,6 +71,22 @@ internal class ModuleList(
    */
   val contentModuleNames: Set<String> by lazy {
     allModules.mapNotNullTo(HashSet()) { if (it.contentModuleRecipeFile != null) it.module.name else null }
+  }
+
+  /**
+   * Modules whose checked-in plugin content reports agree that they are a plain `lib/modules/<module>.jar` containing
+   * only that module's production output.
+   *
+   * Folded once for the whole run over every report the model reaches, then corrected by what a community-only run
+   * cannot see; see [foldPluginContentCandidacy]. The per-module recipe still gets the final veto in
+   * [isPrepackedPluginContentModule]: a conflicting platform recipe, an excluded module, or a descriptor that exists
+   * only in generated output keeps the module on the JarPackager path.
+   *
+   * [skipped] modules count like any other: a report is a report wherever its plugin's own target ends up, and leaving
+   * them out would make the fold depend on which modules this generator converts.
+   */
+  val pluginContentModuleJarCandidates: Set<String> by lazy {
+    foldPluginContentCandidacy(modules = allModules, overrides = pluginContentCandidateOverrides)
   }
 }
 
@@ -142,19 +159,17 @@ internal class BazelBuildFileGenerator(
   private val moduleToDescriptor = IdentityHashMap<JpsModule, ModuleDescriptor>()
 
   /**
-   * Modules whose checked-in plugin content reports agree that they are a plain
-   * `lib/modules/<module>.jar` containing only that module's production output.
+   * The candidacy answers a run cannot fold for itself, by module name; see
+   * [PLUGIN_CONTENT_CANDIDATE_OVERRIDES_FILE_NAME].
    *
-   * Indexed once for the whole generator run. The per-module recipe still gets the final veto in
-   * [isPrepackedPluginContentModule]: a conflicting platform recipe, an excluded module, or a descriptor that exists
-   * only in generated output keeps the module on the JarPackager path.
+   * Only a community-only run needs them, and only for the handful of community modules whose deciding report is in
+   * ultimate. An ultimate run folds the same answer out of the reports it can see, so reading them unconditionally
+   * changes nothing there and keeps the two runs on one code path.
    */
-  val pluginContentModuleJarCandidates: Set<String> by lazy {
-    // The set is an AND over every checked-in report, recorded by `plugin-model-tool` beside the vetoes it already
-    // owns - so every run reads the answer instead of walking the whole tree for 500 files (measured at ~70 s of
-    // mostly system time on an ultimate checkout). A community-only run could not even compute it: it does not have
-    // the ultimate reports.
-    readPluginContentModuleJarCandidates((ultimateRoot?.resolve("community") ?: communityRoot).resolve("build/$PLUGIN_CONTENT_CANDIDATES_FILE_NAME"))
+  private val pluginContentCandidateOverrides: Map<String, Boolean> by lazy {
+    readPluginContentCandidateOverrides(
+      (ultimateRoot?.resolve("community") ?: communityRoot).resolve("build/$PLUGIN_CONTENT_CANDIDATE_OVERRIDES_FILE_NAME")
+    )
   }
 
   /** Product/plugin layout transformations that make a raw module-output jar ineligible for direct handoff. */
@@ -512,7 +527,12 @@ internal class BazelBuildFileGenerator(
     ultimate.sortBy { it.module.name }
     skippedModules.sortBy { it.module.name }
 
-    val result = ModuleList(community = community, ultimate = ultimate, skipped = skippedModules)
+    val result = ModuleList(
+      community = community,
+      ultimate = ultimate,
+      skipped = skippedModules,
+      pluginContentCandidateOverrides = pluginContentCandidateOverrides,
+    )
     for (module in (community + ultimate)) {
       val hasSources = module.sources.isNotEmpty()
       result.deps.put(module, generateDeps(m2Repo = m2Repo, module = module, hasSources = hasSources, isTest = false, context = this))

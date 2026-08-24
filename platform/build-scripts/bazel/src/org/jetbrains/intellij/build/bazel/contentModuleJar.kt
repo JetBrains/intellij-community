@@ -303,7 +303,7 @@ internal fun computeContentModuleJar(module: ModuleDescriptor, moduleList: Modul
 
   val entry = module.contentModuleRecipe
   if (entry == null) {
-    return if (isPrepackedPluginContentModule(module = module, context = context)) {
+    return if (isPrepackedPluginContentModule(module = module, moduleList = moduleList, context = context)) {
       ContentModuleJar(
         libraryTargetLabels = emptyList(),
         modulesBefore = emptyList(),
@@ -422,13 +422,14 @@ internal fun computeContentModuleJar(module: ModuleDescriptor, moduleList: Modul
 /**
  * Whether [module] may use its `content_module_jar` output for a plugin-content relation.
  *
- * The report index proves the plugin jar is a single-module self-named jar. The checks here cover facts local to the
- * module target: a platform recipe must not ask the same output group to produce different bytes, and the descriptor
- * used by `computeModuleSourcesByContent` must remain readable after the raw module jar stops being a fragment input.
+ * [ModuleList.pluginContentModuleJarCandidates] proves the plugin jar is a single-module self-named jar. The checks
+ * here cover facts local to the module target: a platform recipe must not ask the same output group to produce
+ * different bytes, and the descriptor used by `computeModuleSourcesByContent` must remain readable after the raw module
+ * jar stops being a fragment input.
  */
-internal fun isPrepackedPluginContentModule(module: ModuleDescriptor, context: BazelBuildFileGenerator): Boolean {
+internal fun isPrepackedPluginContentModule(module: ModuleDescriptor, moduleList: ModuleList, context: BazelBuildFileGenerator): Boolean {
   val moduleName = module.module.name
-  if (moduleName !in context.pluginContentModuleJarCandidates ||
+  if (moduleName !in moduleList.pluginContentModuleJarCandidates ||
       moduleName in context.pluginContentModuleJarVetoes ||
       moduleName in EXCLUDED_CONTENT_MODULES ||
       moduleName == BOOT_CLASS_PATH_MODULE) {
@@ -464,39 +465,95 @@ private fun isCompatibleSingleModuleRecipe(entry: RecipeEntry, moduleName: Strin
 }
 
 /**
- * The file the repo-global candidate set is recorded in, so that every generator run reaches the same answer.
+ * The repo-global candidate set: every module whose every `contentModules:` occurrence agrees on a plain,
+ * product-independent `lib/modules/<module>.jar`, with [overrides] applied last.
  *
- * The set is an AND over *every* checked-in `plugin-content.yaml`, which is a question this generator cannot answer
- * for itself: a community checkout does not contain the ultimate reports, so computing it here would produce a
- * different set in both directions - a module whose only report is in ultimate would not be a candidate at all, and a
- * module whose ultimate report disagrees would not be vetoed. Either way the community run would generate
- * `content_module_jar` and `prepacked_content_modules` attributes that differ from the checked-in ones, which is what
+ * Folded over the reports this run can see, which is every report the JPS model reaches - `pluginContentReport` is
+ * parsed at most once per module and generation parses all of them anyway, so the fold is free. An occurrence in a
+ * main plugin jar (`modules:`) is irrelevant: `content_module_jar` is an extra output and does not change that jar.
+ *
+ * An entry with no `contentModules:` but a `module:` is a bare library jar taken out of that module's own jar
+ * (`lib/debugger-memory-agent.jar`); a prepacked module skips `computeSourcesForModule` and would silently never write
+ * it, so the owner is vetoed on sight. The veto needs no cross-entry bookkeeping: this is an AND, so once a module is
+ * recorded ineligible no later occurrence can bring it back, whatever order the reports are read in.
+ *
+ * [overrides] is what a community-only run cannot fold for itself; see [PLUGIN_CONTENT_CANDIDATE_OVERRIDES_FILE_NAME].
+ * It is applied after the fold, so it decides both directions.
+ *
+ * `foldPrepackedCandidateEligibility` in `devDistPlanGenerator.kt` is the same fold over `FileEntry` instead of
+ * [RecipeEntry] - it is the half that can see both repositories, and it is what records [overrides]. A rule changed
+ * here belongs there too; until then the two runs disagree and the sync assertion says which files.
+ */
+internal fun foldPluginContentCandidacy(modules: List<ModuleDescriptor>, overrides: Map<String, Boolean>): Set<String> {
+  val eligibility = HashMap<String, Boolean>()
+  for (module in modules) {
+    for (entry in module.pluginContentReport ?: continue) {
+      if (entry.contentModules.isEmpty()) {
+        entry.module?.let { eligibility.put(it, false) }
+        continue
+      }
+      for (contentModule in entry.contentModules) {
+        val name = contentModule.moduleName
+        eligibility.put(name, eligibility.getOrDefault(name, true) && simplePluginContentModuleName(entry) == name)
+      }
+    }
+  }
+  eligibility.putAll(overrides)
+  return eligibility.asSequence().filter { it.value }.mapTo(HashSet()) { it.key }
+}
+
+/**
+ * The file the answers this generator cannot fold for itself are recorded in.
+ *
+ * [foldPluginContentCandidacy] is an AND over every checked-in `plugin-content.yaml`, and a community checkout does not
+ * contain the ultimate ones. So a community-only run folds a different answer for a community module the ultimate half
+ * has an opinion about, in both directions - a module whose only report is in ultimate is not a candidate at all, and a
+ * module whose *ultimate* report disagrees is not vetoed. Either way that run generates `content_module_jar` and
+ * `prepacked_content_modules` attributes differing from the checked-in ones, which is what
  * `Assert Bazel Files Are In Sync With JPS Model (Community Only)` fails on.
  *
- * `plugin-model-tool` records it (`renderPluginContentCandidates` in `devDistPlanGenerator.kt`), exactly as it records
- * the layout-exclusion vetoes in `dev_dist_plugin_content_vetoes.txt` beside it, out of the report index its own plan
- * generation already builds. A plain text file for the same reason as the vetoes: it keeps this reader independent of
- * Starlark. Staleness is caught where the other plan files' is: the blocking `model-generation` validation of
- * `AllProductsPackagingTest` regenerates and diffs it.
+ * Only those modules are recorded, not the whole set: `plugin-model-tool` folds both worlds and records the global
+ * answer for the community modules they disagree about - roughly a dozen lines, where the whole set was 1892. The sign
+ * is that answer, so `+` and `-` both occur. An override always agrees with what an ultimate run folds for itself, by
+ * construction, so no run needs to know which kind of checkout it is in.
+ *
+ * A plain text file for the same reason as the sibling `dev_dist_plugin_content_vetoes.txt`: it keeps this reader
+ * independent of Starlark. Staleness is caught where the other plan files' is: the blocking `model-generation`
+ * validation of `AllProductsPackagingTest` regenerates and diffs it.
  */
-internal const val PLUGIN_CONTENT_CANDIDATES_FILE_NAME: String = "dev_dist_plugin_content_candidates.txt"
+internal const val PLUGIN_CONTENT_CANDIDATE_OVERRIDES_FILE_NAME: String = "dev_dist_plugin_content_candidate_overrides.txt"
 
 /**
  * Reads what `plugin-model-tool` recorded, or nothing when no run has recorded it.
  *
- * An empty set rather than a failure, because a project the tool has never run over is a real case and not a mistake:
- * the generator's own integration tests each build a throwaway community project, and so would a checkout predating
- * this file. There is nothing to fall back to and nothing is lost by that - no candidates means every module stays on
- * the `JarPackager` path, which is what every run did before the feature existed. On a real checkout that would
- * generate BUILD files differing from the checked-in ones, so the sync assertion says so loudly. Note the direction:
- * missing candidates prepack less, never more, unlike the sibling vetoes reader whose absence would prepack a module a
- * layout transforms.
+ * Nothing rather than a failure, because a project the tool has never run over is a real case and not a mistake: the
+ * generator's own integration tests each build a throwaway community project. Those hold no `plugin-content.yaml` at
+ * all, so the fold is empty there with or without this file. What an absent file costs a real checkout is only the
+ * modules it would have corrected, which the sync assertion then reports.
+ *
+ * A line without a sign is a hard error, unlike a missing file: it would silently change how a module is packed, and a
+ * jar that differs from the distribution's is not noticed until class-load time.
  */
-internal fun readPluginContentModuleJarCandidates(file: Path): Set<String> {
+internal fun readPluginContentCandidateOverrides(file: Path): Map<String, Boolean> {
   if (!Files.exists(file)) {
-    return emptySet()
+    return emptyMap()
   }
-  return Files.readAllLines(file).asSequence().map(String::trim).filter { it.isNotEmpty() && !it.startsWith('#') }.toSet()
+
+  val result = HashMap<String, Boolean>()
+  for (line in Files.readAllLines(file)) {
+    val trimmed = line.trim()
+    if (trimmed.isEmpty() || trimmed.startsWith('#')) {
+      continue
+    }
+
+    val isCandidate = when (trimmed.first()) {
+      '+' -> true
+      '-' -> false
+      else -> error("$file: a line must start with `+` (a candidate) or `-` (not a candidate), got `$trimmed`")
+    }
+    result.put(trimmed.substring(1), isCandidate)
+  }
+  return result
 }
 
 /** The module of a first-tranche plugin entry, or `null` when the entry needs JarPackager. */
