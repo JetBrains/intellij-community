@@ -1536,6 +1536,7 @@ f:com.intellij.icons.AllIcons$Xml$Browsers
 - sf:Nwjs:javax.swing.Icon
 - sf:Opera:javax.swing.Icon
 - sf:Safari:javax.swing.Icon
+- sf:Vivaldi:javax.swing.Icon
 - sf:Yandex:javax.swing.Icon
 - <init>():V
 f:com.intellij.openapi.ui.CheckBoxWithDescription

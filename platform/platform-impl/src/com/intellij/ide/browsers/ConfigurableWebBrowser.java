@@ -71,6 +71,9 @@ final class ConfigurableWebBrowser extends WebBrowser {
       else if (WebBrowserManager.isOpera(this)) {
         return AllIcons.Xml.Browsers.Opera;
       }
+      else if (checkNameAndPath("Vivaldi")) {
+        return AllIcons.Xml.Browsers.Vivaldi;
+      }
       else if (checkNameAndPath("node-webkit") || checkNameAndPath("nw") || checkNameAndPath("nwjs")) {
         return AllIcons.Xml.Browsers.Nwjs;
       }
