@@ -7780,8 +7780,8 @@ pc:com.intellij.ui.components.JBMenu$AccessibleJBMenu
 - p:<init>(com.intellij.ui.components.JBMenu):V
 - getAccessibleStateSet():javax.accessibility.AccessibleStateSet
 c:com.intellij.ui.components.JBOptionButton
-- javax.swing.JButton
 - com.intellij.openapi.util.Weighted
+- javax.swing.JButton
 - sf:Companion:com.intellij.ui.components.JBOptionButton$Companion
 - sf:PLACE:java.lang.String
 - sf:PROP_OPTIONS:java.lang.String

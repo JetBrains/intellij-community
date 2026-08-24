@@ -54,6 +54,7 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
 import java.beans.PropertyChangeListener
+import javax.swing.AbstractButton
 import javax.swing.AbstractButton.ICON_CHANGED_PROPERTY
 import javax.swing.AbstractButton.MNEMONIC_CHANGED_PROPERTY
 import javax.swing.AbstractButton.TEXT_CHANGED_PROPERTY
@@ -103,6 +104,16 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     uninstallPopup()
 
     _optionButton = null
+  }
+
+  /**
+   * Reads the nullable backing fields rather than [mainButton] and [arrowButton]: those throw once the UI is
+   * uninstalled, and a caller asking where the halves are must be told "nowhere" instead.
+   */
+  @ApiStatus.Internal
+  override fun splitButtonHalfButton(half: SplitButtonHalf): AbstractButton? = when (half) {
+    SplitButtonHalf.ACTION -> _mainButton
+    SplitButtonHalf.EXPAND -> _arrowButton?.takeIf { it.isVisible }
   }
 
   override fun getPreferredSize(c: JComponent): Dimension {
