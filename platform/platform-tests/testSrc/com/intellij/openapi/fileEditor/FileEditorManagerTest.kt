@@ -7,6 +7,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsState
 import com.intellij.mock.Mock
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.editor.Document
@@ -48,13 +49,18 @@ import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.executeSomeCoroutineTasksAndDispatchAllInvocationEvents
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.io.write
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.jetbrains.jps.model.serialization.PathMacroUtil
@@ -549,6 +555,57 @@ class FileEditorManagerTest {
         .withRequestFocus(true),
     )
     exManager.closeFile(file, secondaryWindow)
+  }
+
+  @Test
+  fun testCloseFileWhileEditorIsBeingCreated(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    val file = getSourceFile("1.txt")
+    val creationStarted = CompletableDeferred<Unit>()
+    val proceedWithCreation = CompletableDeferred<Unit>()
+    val createdEditor = CompletableDeferred<Editor>()
+
+    registerProvider(object : AsyncFileEditorProvider {
+      override fun accept(project: Project, fileToAccept: VirtualFile): Boolean = fileToAccept == file
+
+      override fun acceptRequiresReadAction(): Boolean = false
+
+      override fun getEditorTypeId(): String = "close-while-loading"
+
+      override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
+
+      override fun createEditor(project: Project, file: VirtualFile): FileEditor = throw UnsupportedOperationException()
+
+      override suspend fun createFileEditor(
+        project: Project,
+        file: VirtualFile,
+        document: Document?,
+        editorCoroutineScope: CoroutineScope,
+      ): FileEditor {
+        // NonCancellable makes the race deterministic: the editor creation finishes after the file is already closed
+        return withContext(NonCancellable) {
+          creationStarted.complete(Unit)
+          proceedWithCreation.await()
+          withContext(Dispatchers.EDT) {
+            val textEditor = MyTextEditor(file, checkNotNull(document), "close-while-loading", 0)
+            createdEditor.complete(textEditor.editor)
+            textEditor
+          }
+        }
+      }
+    })
+
+    // the window must exist before the non-waiting open below
+    openSourceFile("2.txt", focusEditor = false)
+    val window = currentWindow()
+    manager.openFileImpl2(window, file, FileEditorOpenOptions(waitForCompositeOpen = false))
+    creationStarted.await()
+    manager.closeFile(file, window)
+    proceedWithCreation.complete(Unit)
+
+    val editor = createdEditor.await()
+    waitUntil("editor created after the file was closed must be released") {
+      !EditorFactory.getInstance().allEditors.contains(editor)
+    }
   }
 
   @Test

@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.fileEditor.impl.disposeAbandonedFileEditor
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
 import com.intellij.openapi.project.Project
@@ -43,6 +44,7 @@ import kotlinx.coroutines.coroutineScope
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import kotlin.coroutines.cancellation.CancellationException
 
 private const val FOLDING_ELEMENT: @NonNls String = "folding"
 
@@ -70,58 +72,67 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
       editorCoroutineScope = editorCoroutineScope,
     )
 
-    return coroutineScope {
-      val effectiveDocument = document!!
+    // if cancellation lands between the editor creation and the consumption of the result, coroutineScope discards the created editor
+    var createdEditor: TextEditor? = null
+    try {
+      return coroutineScope {
+        val effectiveDocument = document!!
 
-      // trigger opening of persistent maps in advance
-      span("editor necropolis preload") {
-        Necropolis.getInstanceAsync(project)
-      }
-
-      val highlighterDeferred = async(CoroutineName("editor highlighter creating")) {
-        val scheme = serviceAsync<EditorColorsManager>().globalScheme
-        val editorHighlighterFactory = serviceAsync<EditorHighlighterFactory>()
-        // two separate read actions to avoid one long-running - https://youtrack.jetbrains.com/issue/IJPL-796
-        val highlighter = readActionBlocking {
-          editorHighlighterFactory.createEditorHighlighter(file = file, editorColorScheme = scheme, project = project)
+        // trigger opening of persistent maps in advance
+        span("editor necropolis preload") {
+          Necropolis.getInstanceAsync(project)
         }
-        // editor.setHighlighter also sets text, but we set it here to avoid executing related work in EDT
-        // (the document text is compared, so, double work is not performed)
-        highlighter.setText(effectiveDocument.immutableCharSequence)
-        if (effectiveDocument.immutableCharSequence.isNotEmpty()) {
-          // preload the syntax highlighter in BGT because it's expensive
-          // - to classload all highlighters and
-          // - enumerate and handle all extensions (see e.g. [com.intellij.ide.highlighter.XmlFileHighlighter.EMBEDDED_HIGHLIGHTERS])
-          highlighter.createIterator(0).textAttributes
+
+        val highlighterDeferred = async(CoroutineName("editor highlighter creating")) {
+          val scheme = serviceAsync<EditorColorsManager>().globalScheme
+          val editorHighlighterFactory = serviceAsync<EditorHighlighterFactory>()
+          // two separate read actions to avoid one long-running - https://youtrack.jetbrains.com/issue/IJPL-796
+          val highlighter = readActionBlocking {
+            editorHighlighterFactory.createEditorHighlighter(file = file, editorColorScheme = scheme, project = project)
+          }
+          // editor.setHighlighter also sets text, but we set it here to avoid executing related work in EDT
+          // (the document text is compared, so, double work is not performed)
+          highlighter.setText(effectiveDocument.immutableCharSequence)
+          if (effectiveDocument.immutableCharSequence.isNotEmpty()) {
+            // preload the syntax highlighter in BGT because it's expensive
+            // - to classload all highlighters and
+            // - enumerate and handle all extensions (see e.g. [com.intellij.ide.highlighter.XmlFileHighlighter.EMBEDDED_HIGHLIGHTERS])
+            highlighter.createIterator(0).textAttributes
+          }
+          highlighter
         }
-        highlighter
-      }
 
-      val editorDeferred = CompletableDeferred<EditorEx>()
+        val editorDeferred = CompletableDeferred<EditorEx>()
 
-      val task = createInitTask(
-        asyncLoader = asyncLoader,
-        editorDeferred = editorDeferred,
-        highlighterDeferred = highlighterDeferred,
-        project = project,
-        file = file,
-        document = effectiveDocument,
-      )
+        val task = createInitTask(
+          asyncLoader = asyncLoader,
+          editorDeferred = editorDeferred,
+          highlighterDeferred = highlighterDeferred,
+          project = project,
+          file = file,
+          document = effectiveDocument,
+        )
 
-      val factory = serviceAsync<EditorFactory>() as EditorFactoryImpl
-      val highlighter = highlighterDeferred.await()
+        val factory = serviceAsync<EditorFactory>() as EditorFactoryImpl
+        val highlighter = highlighterDeferred.await()
 
-      span("initialize text editor on EDT", Dispatchers.EDT) {
-        writeIntentReadAction {
-          val editor = initializeEditor(factory, effectiveDocument, project, file, highlighter, asyncLoader)
-          editorDeferred.complete(editor)
-          editor.gutterComponentEx.setInitialIconAreaWidth(EditorGutterLayout.getInitialGutterWidth())
-          val component = createPsiAwareTextEditorComponent(file = file, editor = editor)
-          val textEditor = PsiAwareTextEditorImpl(project = project, file = file, component = component, asyncLoader = asyncLoader)
-          asyncLoader.start(textEditor = textEditor, task = task)
-          textEditor
+        span("initialize text editor on EDT", Dispatchers.EDT) {
+          writeIntentReadAction {
+            val editor = initializeEditor(factory, effectiveDocument, project, file, highlighter, asyncLoader)
+            editorDeferred.complete(editor)
+            editor.gutterComponentEx.setInitialIconAreaWidth(EditorGutterLayout.getInitialGutterWidth())
+            val component = createPsiAwareTextEditorComponent(file = file, editor = editor)
+            val textEditor = PsiAwareTextEditorImpl(project = project, file = file, component = component, asyncLoader = asyncLoader)
+            createdEditor = textEditor
+            asyncLoader.start(textEditor = textEditor, task = task)
+            textEditor
+          }
         }
       }
+    }
+    catch (e: CancellationException) {
+      createdEditor?.let { disposeAbandonedFileEditor(it) }
+      throw e
     }
   }
 

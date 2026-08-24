@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.ex.StructureViewFileEditorProvider
 import com.intellij.openapi.fileEditor.impl.DefaultPlatformFileEditorProvider
+import com.intellij.openapi.fileEditor.impl.disposeAbandonedFileEditor
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -45,6 +46,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
+import kotlin.coroutines.cancellation.CancellationException
 
 private val TEXT_EDITOR_KEY = Key.create<TextEditor>("textEditor")
 internal const val TEXT_EDITOR_PROVIDER_TYPE_ID: @NonNls String = "text-editor"
@@ -118,13 +120,21 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
       fileForTelemetry = file,
       editorCoroutineScope = editorCoroutineScope,
     )
-    return withContext(Dispatchers.EDT) {
-      val editor = createEditorImpl(project = project, file = file, asyncLoader = asyncLoader).first
-      TextEditorImpl(
-        project = project,
-        file = file,
-        componentAndLoader = TextEditorComponent(file = file, editorImpl = editor) to asyncLoader,
-      )
+    // if cancellation lands between the editor creation and the consumption of the result, withContext discards the created editor
+    var createdEditor: TextEditorImpl? = null
+    try {
+      return withContext(Dispatchers.EDT) {
+        val editor = createEditorImpl(project = project, file = file, asyncLoader = asyncLoader).first
+        TextEditorImpl(
+          project = project,
+          file = file,
+          componentAndLoader = TextEditorComponent(file = file, editorImpl = editor) to asyncLoader,
+        ).also { createdEditor = it }
+      }
+    }
+    catch (e: CancellationException) {
+      createdEditor?.let { disposeAbandonedFileEditor(it) }
+      throw e
     }
   }
 
