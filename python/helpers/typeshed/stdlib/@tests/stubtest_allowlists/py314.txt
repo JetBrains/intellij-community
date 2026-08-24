@@ -24,13 +24,6 @@ concurrent.interpreters._crossinterp.UNBOUND_REMOVE
 # Condition functions are exported in __init__
 threading.Condition.locked
 
-# Starting with Python 3.14.1, these methods accept None for some of their
-# parameters, but would raise a TypeError with Python 3.14.0.
-mmap.mmap.find
-mmap.mmap.flush
-mmap.mmap.rfind
-multiprocessing.process.BaseProcess.__init__
-
 # ====================================
 # Pre-existing errors from Python 3.13
 # ====================================
@@ -90,6 +83,10 @@ typing(_extensions)?\.IO\.writelines
 # These have a pos-or-keyword first parameter at runtime, but deliberately have a pos-only first parameter in the stub. #6812
 posixpath.join
 ntpath.join
+
+# runtime is *args, **kwargs due to a wrapper; we have more accurate signatures in the stubs
+_frozen_importlib_external.FileLoader.load_module
+importlib.abc.FileLoader.load_module
 
 
 # =============================================================

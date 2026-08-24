@@ -235,6 +235,12 @@ when running stubtest. For example: `mypy-plugins = ["mypy_django_plugin.main"]`
 * `mypy-plugins-config` (default: `{}`): A dictionary mapping plugin names to their
 configuration dictionaries for use by mypy plugins. For example:
 `mypy-plugins-config = {"django-stubs" = {"django_settings_module" = "@tests.django_settings"}}`
+* `install-environment` (default: `{}`): A dictionary of environment variables
+  to set while `pip install`ing the package and its dependencies for stubtest.
+  Useful for packages that read build-time options from the environment, for
+  example to disable CPU-specific compiler flags that do not survive CI's
+  shared wheel cache. For example:
+  `install-environment = { HNSWLIB_NO_NATIVE = "1" }`
 
 `*-dependencies` are usually packages needed to `pip install` the implementation
 distribution.
@@ -370,7 +376,7 @@ Use `@deprecated` if and only if
 
 - a feature is deprecated at runtime (either using `@deprecated` or with a
   runtime warning); or
-- a feature is documented to be deprecated (e.g. in API documention,
+- a feature is documented to be deprecated (e.g. in API documentation,
   docstrings, or comments).
 
 For standard library features that are not deprecated in all Python versions

@@ -6,3 +6,4 @@ psutil._psutil_windows
 # not always available on ARM64, but we test there
 psutil.cpu_freq
 psutil._psosx.cpu_freq
+psutil.__all__  # cpu_freq is only added to __all__ at runtime when it is available

@@ -1,2 +1,0 @@
-# Tests should not be part of the stubs
-webencodings.tests

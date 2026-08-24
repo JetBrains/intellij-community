@@ -4,6 +4,8 @@ upstream-repository = "https://github.com/nmslib/hnswlib"
 dependencies = ["numpy>=1.21"]
 
 [tool.stubtest]
-# TODO: stubtest fails on Linux because it gets killed with a SIGILL
-# for unknown reasons. See https://github.com/python/typeshed/issues/16100
-ci-platforms = ["darwin"]
+# hnswlib is source-only and compiles with -march=native by default. CI
+# restores pip's wheel cache across runners with different CPUs, so a wheel
+# built on one machine can SIGILL on the next. See
+# https://github.com/python/typeshed/issues/16100
+install-environment = { HNSWLIB_NO_NATIVE = "1" }

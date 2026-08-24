@@ -1,2 +1,2 @@
-version = "0.4.*"
+version = "0.5.*"
 upstream-repository = "https://github.com/veelion/python-farmhash"

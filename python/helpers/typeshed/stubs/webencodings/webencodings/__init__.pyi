@@ -3,6 +3,7 @@ from collections.abc import Iterable, Iterator
 from typing import Final
 
 VERSION: Final[str]
+__version__: Final[str]
 PYTHON_NAMES: Final[dict[str, str]]
 CACHE: dict[str, Encoding]
 

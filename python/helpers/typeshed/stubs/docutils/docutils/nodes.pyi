@@ -1,6 +1,6 @@
 import sys
 import xml.dom.minidom
-from _typeshed import Incomplete
+from _typeshed import Incomplete, StrPath
 from abc import abstractmethod
 from collections import Counter
 from collections.abc import Callable, Generator, Iterable, Iterator, Mapping, Sequence
@@ -63,7 +63,12 @@ class Node:
 
     @overload
     def findall(
-        self, condition: type[_N], include_self: bool = True, descend: bool = True, siblings: bool = False, ascend: bool = False
+        self,
+        condition: type[_N] | tuple[type[_N], ...],
+        include_self: bool = True,
+        descend: bool = True,
+        siblings: bool = False,
+        ascend: bool = False,
     ) -> Generator[_N]: ...
     @overload
     def findall(
@@ -78,7 +83,12 @@ class Node:
     @overload
     @deprecated("The `nodes.Node.traverse()` is deprecated. Use `Node.findall()` instead.")
     def traverse(
-        self, condition: type[_N], include_self: bool = True, descend: bool = True, siblings: bool = False, ascend: bool = False
+        self,
+        condition: type[_N] | tuple[type[_N], ...],
+        include_self: bool = True,
+        descend: bool = True,
+        siblings: bool = False,
+        ascend: bool = False,
     ) -> list[_N]: ...
     @overload
     @deprecated("The `nodes.Node.traverse()` is deprecated. Use `Node.findall()` instead.")
@@ -93,7 +103,12 @@ class Node:
 
     @overload
     def next_node(
-        self, condition: type[_N], include_self: bool = False, descend: bool = True, siblings: bool = False, ascend: bool = False
+        self,
+        condition: type[_N] | tuple[type[_N], ...],
+        include_self: bool = False,
+        descend: bool = True,
+        siblings: bool = False,
+        ascend: bool = False,
     ) -> _N | None: ...
     @overload
     def next_node(
@@ -309,6 +324,7 @@ class document(Root, Structural, Element):
     substitution_names: dict[str, str]
     refnames: dict[str, list[Element]]
     refids: dict[str, list[Element]]
+    names: dict[str, Element | None]
     nameids: dict[str, str]
     nametypes: dict[str, bool]
     ids: dict[str, Element]
@@ -322,17 +338,21 @@ class document(Root, Structural, Element):
     citations: list[citation]
     autofootnote_start: int
     symbol_footnote_start: int
-    id_counter: Counter[int]
+    id_counter: Counter[str]
     parse_messages: list[system_message]
     transform_messages: list[system_message]
     transformer: Transformer
+    include_log: list[tuple[StrPath, tuple[Incomplete, ...]]]
     decoration: decoration | None
     document: Self
     def __init__(self, settings: Values, reporter: Reporter, *args: Node, **kwargs: Any) -> None: ...
     def asdom(self, dom: Any | None = None) -> Any: ...
     def set_id(self, node: Element, msgnode: Element | None = None, suggested_prefix: str = "") -> str: ...
+    def create_id(self, node: Element, suggested_prefix: str = "") -> str: ...
+    @deprecated("`nodes.document.set_name_id_map()` will be removed in Docutils 1.0.")
     def set_name_id_map(self, node: Element, id: str, msgnode: Element | None = None, explicit: bool = False) -> None: ...
-    def set_duplicate_name_id(self, node: Element, id: str, name: str, msgnode: Element, explicit: bool) -> None: ...
+    def set_duplicate_name(self, node: Element, name: str, msgnode: Element, explicit: bool) -> None: ...
+    def note_names(self, node: Element, msgnode: Element | None = None, explicit: bool = False) -> None: ...
     def has_name(self, name: str) -> bool: ...
     def note_implicit_target(self, target: Element, msgnode: Element | None = None) -> None: ...
     def note_explicit_target(self, target: Element, msgnode: Element | None = None) -> None: ...
@@ -395,7 +415,9 @@ class footer(Decorative, Element): ...
 class section(Structural, Element): ...
 class topic(Structural, Element): ...
 class sidebar(Structural, Element): ...
-class transition(Structural, Element): ...
+
+class transition(Structural, Element):
+    ignored_siblings: ClassVar[tuple[type[Element], ...]]
 
 # Body Elements
 # ===============

@@ -5,7 +5,7 @@ from types import TracebackType
 from typing import Any, Final
 from typing_extensions import Self, deprecated
 
-from rasterio._affine_types import Affine
+from affine import Affine as Affine
 from rasterio._path import _ParsedPath, _UnparsedPath
 from rasterio._typing import Colormap, CRSInput, _OpenOption
 from rasterio.control import GroundControlPoint
@@ -55,6 +55,7 @@ class DatasetBase:
     def start(self) -> None: ...
     def stop(self) -> None: ...
     def close(self) -> None: ...
+    def __del__(self) -> None: ...
     @property
     def closed(self) -> bool: ...
     @property

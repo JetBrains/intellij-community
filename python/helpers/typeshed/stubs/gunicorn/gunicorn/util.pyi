@@ -1,16 +1,19 @@
 import types
 from _typeshed import FileDescriptorLike, FileDescriptorOrPath, StrOrBytesPath
 from inspect import _IntrospectableCallable, _ParameterKind
+from re import Pattern
 from socket import socket
-from typing import Any, Literal
+from typing import Any, Final, Literal
 from typing_extensions import Never
 from urllib.parse import SplitResult
 
 from ._types import _AddressType, _WSGIAppType
 
-REDIRECT_TO: str
+REDIRECT_TO: Final[str]
+GLOB_MAGIC_RE: Final[Pattern[str]]
 hop_headers: set[str]
 
+def is_glob_pattern(value: str) -> bool: ...
 def load_entry_point(distribution: str, group: str, name: str) -> type[object]: ...
 def load_class(
     uri: str | object, default: str = "gunicorn.workers.sync.SyncWorker", section: str = "gunicorn.workers"

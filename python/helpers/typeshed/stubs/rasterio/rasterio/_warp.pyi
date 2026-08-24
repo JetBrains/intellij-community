@@ -1,12 +1,13 @@
 from collections.abc import Sequence
 from typing import Any, Final
 
+from affine import Affine as Affine
 from numpy.typing import DTypeLike, NDArray
-from rasterio._affine_types import Affine
 from rasterio._io import DatasetReaderBase
 from rasterio._typing import CRSInput, Geometry, Indexes, ShapeND, WindowInput, _GDALOption, _NestedScalar
 from rasterio.control import GroundControlPoint
 from rasterio.crs import CRS
+from rasterio.dtypes import dtype_ranges as dtype_ranges
 from rasterio.enums import Resampling
 from rasterio.io import DatasetReader
 from rasterio.rpc import RPC

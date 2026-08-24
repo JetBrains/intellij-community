@@ -3,8 +3,8 @@ from collections.abc import Mapping, Sequence
 from typing import Any, Final, TypeAlias, overload
 from typing_extensions import deprecated
 
+from affine import Affine as Affine
 from numpy.typing import ArrayLike, NDArray
-from rasterio._affine_types import Affine
 from rasterio._typing import CRSInput, Geometry, _GDALOption
 from rasterio.control import GroundControlPoint
 from rasterio.enums import Resampling
@@ -60,6 +60,7 @@ def reproject(
     resampling: Resampling = ...,
     num_threads: int = 1,
     init_dest_nodata: bool = True,
+    tolerance: float = 0.125,
     warp_mem_limit: int = 0,
     src_geoloc_array: NDArray[Any] | None = None,
     **kwargs: _GDALOption,

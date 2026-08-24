@@ -2,8 +2,8 @@ import logging
 from collections.abc import Mapping, Sequence
 from typing import Any, Final, Literal
 
+from affine import Affine as Affine
 from numpy.typing import NDArray
-from rasterio._affine_types import Affine
 from rasterio.io import DatasetReader as DatasetReader
 from rasterio.transform import guard_transform as guard_transform
 
@@ -25,7 +25,7 @@ def show(
     title: str | None = None,
     transform: Affine | None = None,
     percent_range: tuple[float, float] | None = None,
-    adjust: bool = True,
+    adjust: bool = False,
     **kwargs: Any,
 ) -> Any: ...
 def plotting_extent(

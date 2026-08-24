@@ -1,0 +1,2 @@
+# typing the tests would present a requiremnt of effort with zero gain for the end user
+titlecase.tests

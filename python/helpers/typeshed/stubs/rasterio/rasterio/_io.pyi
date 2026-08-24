@@ -4,8 +4,8 @@ from typing import Any, BinaryIO, Final
 from typing_extensions import Self, deprecated
 
 import numpy as np
+from affine import Affine as Affine
 from numpy.typing import DTypeLike, NDArray
-from rasterio._affine_types import Affine
 from rasterio._base import DatasetBase
 from rasterio._path import _ParsedPath, _UnparsedPath
 from rasterio._typing import Colormap, CRSInput, Indexes, NumType, ShapeND, WindowInput, _GDALOption, _OpenOption

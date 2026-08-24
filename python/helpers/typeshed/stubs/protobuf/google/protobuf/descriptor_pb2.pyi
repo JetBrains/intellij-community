@@ -52,6 +52,9 @@ class _EditionEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTy
     comparison.
     """
     EDITION_2024: _Edition.ValueType  # 1001
+    EDITION_2026: _Edition.ValueType  # 1002
+    EDITION_UNSTABLE: _Edition.ValueType  # 9999
+    """A placeholder edition for developing and testing unscheduled features."""
     EDITION_1_TEST_ONLY: _Edition.ValueType  # 1
     """Placeholder editions for testing feature resolution.  These should not be
     used or relied on outside of tests.
@@ -88,6 +91,9 @@ should not be depended on, but they will always be time-ordered for easy
 comparison.
 """
 EDITION_2024: Edition.ValueType  # 1001
+EDITION_2026: Edition.ValueType  # 1002
+EDITION_UNSTABLE: Edition.ValueType  # 9999
+"""A placeholder edition for developing and testing unscheduled features."""
 EDITION_1_TEST_ONLY: Edition.ValueType  # 1
 """Placeholder editions for testing feature resolution.  These should not be
 used or relied on outside of tests.
@@ -1649,6 +1655,7 @@ class FieldOptions(google.protobuf.message.Message):
         EDITION_DEPRECATED_FIELD_NUMBER: builtins.int
         DEPRECATION_WARNING_FIELD_NUMBER: builtins.int
         EDITION_REMOVED_FIELD_NUMBER: builtins.int
+        REMOVAL_ERROR_FIELD_NUMBER: builtins.int
         edition_introduced: global___Edition.ValueType
         """The edition that this feature was first available in.  In editions
         earlier than this one, the default assigned to EDITION_LEGACY will be
@@ -1667,6 +1674,10 @@ class FieldOptions(google.protobuf.message.Message):
         this one, the last default assigned will be used, and proto files will
         not be able to override it.
         """
+        removal_error: builtins.str
+        """The removal error text if this feature is used after the edition it was
+        removed in.
+        """
         def __init__(
             self,
             *,
@@ -1674,6 +1685,7 @@ class FieldOptions(google.protobuf.message.Message):
             edition_deprecated: global___Edition.ValueType | None = ...,
             deprecation_warning: builtins.str | None = ...,
             edition_removed: global___Edition.ValueType | None = ...,
+            removal_error: builtins.str | None = ...,
         ) -> None: ...
         def HasField(
             self,
@@ -1686,6 +1698,8 @@ class FieldOptions(google.protobuf.message.Message):
                 b"edition_introduced",
                 "edition_removed",
                 b"edition_removed",
+                "removal_error",
+                b"removal_error",
             ],
         ) -> builtins.bool: ...
         def ClearField(
@@ -1699,6 +1713,8 @@ class FieldOptions(google.protobuf.message.Message):
                 b"edition_introduced",
                 "edition_removed",
                 b"edition_removed",
+                "removal_error",
+                b"removal_error",
             ],
         ) -> None: ...
 
@@ -2460,11 +2476,13 @@ class FeatureSet(google.protobuf.message.Message):
         ENFORCE_NAMING_STYLE_UNKNOWN: FeatureSet._EnforceNamingStyle.ValueType  # 0
         STYLE2024: FeatureSet._EnforceNamingStyle.ValueType  # 1
         STYLE_LEGACY: FeatureSet._EnforceNamingStyle.ValueType  # 2
+        STYLE2026: FeatureSet._EnforceNamingStyle.ValueType  # 3
 
     class EnforceNamingStyle(_EnforceNamingStyle, metaclass=_EnforceNamingStyleEnumTypeWrapper): ...
     ENFORCE_NAMING_STYLE_UNKNOWN: FeatureSet.EnforceNamingStyle.ValueType  # 0
     STYLE2024: FeatureSet.EnforceNamingStyle.ValueType  # 1
     STYLE_LEGACY: FeatureSet.EnforceNamingStyle.ValueType  # 2
+    STYLE2026: FeatureSet.EnforceNamingStyle.ValueType  # 3
 
     @typing.final
     class VisibilityFeature(google.protobuf.message.Message):

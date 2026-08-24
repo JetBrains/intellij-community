@@ -154,7 +154,7 @@ class NestedMultiDict(MultiDict[_KT, _VT]):
     # NOTE: These methods all return exceptions, so this will give us
     #       somewhat sane type checker errors, we would prefer to use
     #       something like @type_error here, if it existed.
-    #       This is only really necessary, because the inheritance hierachy
+    #       This is only really necessary, because the inheritance hierarchy
     #       is a mess.
     __setitem__: None  # type: ignore[assignment]
     add: None  # type: ignore[assignment]

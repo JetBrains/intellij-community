@@ -66,7 +66,7 @@ class _TqdmProcessKwargs(_TqdmKwargs, total=False):
 @type_check_only
 class _TqdmThreadKwargs(_TqdmKwargs, total=False):
     thread_name_prefix: str | None
-    # Not techically for threading, but just a signature difference:
+    # Not technically for threading, but just a signature difference:
     lock_name: str
 
 @contextmanager

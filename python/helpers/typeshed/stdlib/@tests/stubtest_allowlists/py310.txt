@@ -162,6 +162,10 @@ typing(_extensions)?\.IO\.writelines
 posixpath.join
 ntpath.join
 
+# runtime is *args, **kwargs due to a wrapper; we have more accurate signatures in the stubs
+_frozen_importlib_external.FileLoader.load_module
+importlib.abc.FileLoader.load_module
+
 
 # ===============================================================
 # Allowlist entries that cannot or should not be fixed; 3.10 only

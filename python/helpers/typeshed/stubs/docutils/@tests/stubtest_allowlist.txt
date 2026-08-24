@@ -14,6 +14,7 @@ docutils.transforms.Transform.apply # method apply is not implemented
 docutils.transforms.Transform.__getattr__
 docutils.TransformSpec.unknown_reference_resolvers
 docutils.writers.latex2e.PreambleCmds... contents
+docutils.writers.latex2e.PreambleCmds.inline role \w+  # attribute names with spaces, set with setattr() from docutils.sty
 
 # Files that don't exist at runtime of stubtests, raises ImportError:
 docutils.parsers.commonmark_wrapper

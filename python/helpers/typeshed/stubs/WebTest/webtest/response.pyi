@@ -32,7 +32,7 @@ class _PostParams(_GetParams, total=False):
     content_type: str
 
 class TestResponse(Response):
-    # NOTE: The way WebTest creates reponses the request is always set
+    # NOTE: The way WebTest creates responses the request is always set
     #       we could've used `MaybeNone`, but it seems more pragmatic
     #       to just assume that this is always set.
     request: TestRequest  # type: ignore[assignment]

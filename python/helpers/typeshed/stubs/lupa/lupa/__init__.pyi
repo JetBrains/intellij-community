@@ -1,7 +1,7 @@
-from .lua54 import *
+from .lua55 import *
 
 __all__ = [
-    # from lua54 (newest lib)
+    # from lua55 (newest lib)
     "LUA_VERSION",
     "LUA_MAXINTEGER",
     "LUA_MININTEGER",

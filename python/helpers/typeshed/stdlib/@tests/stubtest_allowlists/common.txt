@@ -157,7 +157,6 @@ _ctypes.CFuncPtr  # stubtest erroneously thinks it can't be subclassed
 _frozen_importlib_external.ExtensionFileLoader.get_filename
 _frozen_importlib_external.FileLoader.get_filename
 _frozen_importlib_external.FileLoader.get_resource_reader
-_frozen_importlib_external.FileLoader.load_module
 
 # Mismatch of default values of `report` parameter:
 _markupbase.ParserBase.parse_comment
@@ -277,7 +276,6 @@ importlib._abc.Loader.exec_module  # See Lib/importlib/_abc.py. Might be defined
 
 # runtime is *args, **kwargs due to a wrapper; we have more accurate signatures in the stubs
 importlib.abc.FileLoader.get_filename
-importlib.abc.FileLoader.load_module
 
 importlib.metadata._meta.SimplePath.joinpath  # Runtime definition of protocol is incorrect
 

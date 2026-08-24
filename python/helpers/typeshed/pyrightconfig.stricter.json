@@ -38,7 +38,6 @@
         "stubs/docker",
         "stubs/docutils",
         "stubs/Flask-SocketIO",
-        "stubs/fpdf2",
         "stubs/gdb",
         "stubs/geojson",
         "stubs/geopandas",

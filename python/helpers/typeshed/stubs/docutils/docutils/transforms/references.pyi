@@ -7,6 +7,10 @@ from docutils.transforms import Transform
 
 __docformat__: Final = "reStructuredText"
 
+class SectionIDs(Transform):
+    default_priority: ClassVar[int]
+    def apply(self) -> None: ...
+
 class PropagateTargets(Transform):
     default_priority: ClassVar[int]
     def apply(self) -> None: ...

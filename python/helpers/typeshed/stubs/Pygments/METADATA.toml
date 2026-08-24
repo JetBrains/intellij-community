@@ -1,4 +1,4 @@
-version = "2.20.*"
+version = "2.21.*"
 upstream-repository = "https://github.com/pygments/pygments"
 optional-dependencies = ["types-docutils"]
 partial-stub = true
