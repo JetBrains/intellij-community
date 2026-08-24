@@ -18,7 +18,8 @@ import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.milliseconds
 
-internal fun waitWithParallelismCompensation(runnable: Runnable) {
+@ApiStatus.Internal
+fun waitWithParallelismCompensation(runnable: Runnable) {
   IntelliJCoroutinesFacade.runAndCompensateParallelism(500.milliseconds, runnable::run)
 }
 

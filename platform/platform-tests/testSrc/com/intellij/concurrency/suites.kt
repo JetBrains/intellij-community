@@ -7,6 +7,7 @@ import com.intellij.openapi.application.impl.CancellableReadActionWithIndicatorT
 import com.intellij.openapi.application.impl.CancellableReadActionWithJobTest
 import com.intellij.openapi.application.impl.EdtCoroutineDispatcherTest
 import com.intellij.openapi.application.impl.ImplicitReadTest
+import com.intellij.openapi.application.impl.InvokeAndWaitStarvationTest
 import com.intellij.openapi.application.impl.LaterInvocatorTest
 import com.intellij.openapi.application.impl.LockDowngradingTest
 import com.intellij.openapi.application.impl.ModalCoroutineTest
@@ -51,6 +52,7 @@ import org.junit.platform.suite.api.Suite
   ProgressRunnerTest::class,
   EdtCoroutineDispatcherTest::class,
   ImplicitReadTest::class,
+  InvokeAndWaitStarvationTest::class,
   LaterInvocatorTest::class,
   ModalCoroutineTest::class,
   ReadWritePropagationTest::class,

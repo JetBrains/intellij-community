@@ -55,6 +55,7 @@ import com.intellij.openapi.progress.impl.ProgressRunner;
 import com.intellij.openapi.progress.util.PotemkinProgress;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.SuvorovProgress;
+import com.intellij.openapi.progress.util.UtilKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -627,7 +628,9 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     // Outer layer context capture & reset
     final var finalRunnable = AppImplKt.rethrowExceptions(AppScheduledExecutorService::captureContextCancellationForRunnableThatDoesNotOutliveContextScope, locked);
 
-    LaterInvocator.invokeAndWait(state, wrapWithLocks, finalRunnable);
+    UtilKt.waitWithParallelismCompensation(() -> {
+      LaterInvocator.invokeAndWait(state, wrapWithLocks, finalRunnable);
+    });
   }
 
   private @NotNull Runnable wrapWithRunIntendedWriteActionAndModality(@NotNull Runnable runnable,
