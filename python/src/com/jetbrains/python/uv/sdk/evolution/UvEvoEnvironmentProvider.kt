@@ -2,7 +2,9 @@ package com.jetbrains.python.uv.sdk.evolution
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.common.tools.ToolId
+import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.pytools.PyTool
+import com.intellij.python.pytools.runtime.PyToolRuntime
 import com.intellij.python.sdk.backend.evolution.DiscoveredVenv
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
 import com.intellij.python.sdk.backend.evolution.EvoToolContext
@@ -18,7 +20,10 @@ import com.intellij.python.sdk.common.evolution.EvoAddNewOptionDto
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
 import com.intellij.python.sdk.common.evolution.EvoSectionDto
 import com.intellij.python.sdk.common.evolution.PyInterpreterRef
+import com.intellij.python.uv.backend.PyUvBundle
 import com.intellij.python.uv.backend.UvPyTool
+import com.intellij.python.uv.backend.cli.uv.UvPythonEntry
+import com.intellij.python.uv.backend.runtime.uvCli
 import com.intellij.python.uv.common.UV_TOOL_ID
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
@@ -26,8 +31,6 @@ import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.evolution.requiresPython
 import com.jetbrains.python.sdk.impl.PySdkBundle
-import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
-import com.jetbrains.python.sdk.uv.impl.validateAndCreateUvCli
 import com.jetbrains.python.sdk.uv.setupExistingEnvAndSdk
 import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnv
 import io.github.z4kn4fein.semver.Version
@@ -61,7 +64,10 @@ internal class UvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
     )
   }
 
-  /** Creates a new uv env in the folder the add-new row named; `token` is the chosen Python version ("" = uv's default). */
+  /**
+   * Creates a new uv env in the folder the add-new row named; `token` is the chosen Python version as `major.minor`
+   * ("" = uv's default), which is all `uv venv --python` is given — see [supportedPythonVersions].
+   */
   override suspend fun createSdkForNewEnv(context: EvoToolContext, ref: PyInterpreterRef.CreateEnv): PyResult<Sdk> {
     val uvExecutable = executableOrNull(context.fileSystem) ?: return toolMissing()
     val venvDir = context.resolveNewVenvDir(ref)
@@ -108,15 +114,66 @@ internal class UvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
   }
 
   /**
-   * The Python versions uv itself offers, filtered by the project's `requires-python` — the same list the v2 dialog
-   * shows, newest first. The token is the full version so the create step can pin it.
+   * The Python versions uv itself offers, filtered by the project's `requires-python`, newest first.
+   *
+   * Read from `uv python list --output-format json` (see [UvPythonEntry]) rather than from uv's table, so a version the
+   * machine does not have is recognizable as one uv would fetch instead of looking like one already here.
+   *
+   * Entries are grouped down to `major.minor` because that is the granularity uv is actually asked for:
+   * `UvLowLevel.initializeEnvironment` passes `--python <major>.<minor>`, so within one such group the choice of build is
+   * uv's to make, not the user's.
    */
   private suspend fun supportedPythonVersions(context: EvoToolContext): List<EvoAddNewOptionDto> {
     val uvExecutable = executableOrNull(context.fileSystem) ?: return emptyList()
-    val cli = validateAndCreateUvCli(uvExecutable, context.fileSystem).getOrNull() ?: return emptyList()
     val baseDir = context.pyProject.baseDir
-    val versions = createUvLowLevel(baseDir, cli, context.fileSystem, null)
-      .listSupportedPythonVersions(requiresPython(baseDir)).getOrNull().orEmpty()
-    return versions.map { EvoAddNewOptionDto(title = "${it.major}.${it.minor}", token = it.toString()) }
+    // Run in the project dir, as the rest of this provider's uv calls do: uv reads `.python-version` and the project's
+    // own `pyproject.toml` from its working directory, so listing from anywhere else can name a different set.
+    val runtime = PyToolRuntime(
+      binary = context.fileSystem.getBinaryToExec(uvExecutable, baseDir),
+      execOptions = ExecOptions(),
+    )
+    // Handed over exactly as `pyproject.toml` wrote it: uv parses the constraint itself, so what it makes of one is its
+    // answer to give. An empty answer is what [decorate] turns into the node's warning.
+    val entries = runtime.uvCli().python().list(requiresPython(baseDir)).getOrNull().orEmpty()
+    return entries
+      .groupBy { it.versionParts.major to it.versionParts.minor }
+      .entries
+      .sortedWith(compareByDescending<Map.Entry<Pair<Int, Int>, List<UvPythonEntry>>> { it.key.first }
+                    .thenByDescending { it.key.second })
+      .map { (_, group) -> group.toOption() }
   }
+
+  /**
+   * Turns "uv named no interpreter" into the node's warning, since nothing can be created from an empty list — saying so
+   * up front beats an "add new environment" row that would only fail once clicked.
+   *
+   * The warning deliberately does not claim a cause. uv answers an empty list both for a constraint nothing satisfies
+   * (`3.16`, which does not exist yet) and for one it cannot parse (a Poetry-style `^3.13`, which also fails `uv sync`),
+   * and the two are indistinguishable from here: uv reports both as success with no rows.
+   *
+   * Runs off the same per-request cache [addNewEnvSpec] fills, so this costs no extra uv call.
+   */
+  override suspend fun decorate(context: EvoToolContext, result: EvoLoadResultDto): EvoLoadResultDto {
+    if (result !is EvoLoadResultDto.Ok) return result
+    if (context.cached(VERSIONS_KEY) { supportedPythonVersions(context) }.isNotEmpty()) return result
+    val requiresPython = requiresPython(context.pyProject.baseDir)
+    return EvoLoadResultDto.Warning(
+      if (requiresPython == null) PyUvBundle.message("evolution.uv.no.pythons")
+      else PyUvBundle.message("evolution.uv.no.pythons.for.requires", requiresPython)
+    )
+  }
+}
+
+/** All the interpreters uv listed for one `major.minor`, as the single option that version amounts to. */
+private fun List<UvPythonEntry>.toOption(): EvoAddNewOptionDto {
+  val level = first().versionParts.languageLevel
+  return EvoAddNewOptionDto(
+    title = level,
+    // Not the full `3.14.5`: only major.minor survives into `uv venv --python`, so pinning a patch here would promise
+    // a precision the create step drops. See `UvLowLevel.initializeEnvironment`.
+    token = level,
+    // uv fetches what it cannot find, so a version with nothing installed at all is a download — but one uv performs
+    // itself, which is why this is not `installable` (that would run the IDE's own Python installer first, to no purpose).
+    downloadedByTool = none { it.path != null },
+  )
 }

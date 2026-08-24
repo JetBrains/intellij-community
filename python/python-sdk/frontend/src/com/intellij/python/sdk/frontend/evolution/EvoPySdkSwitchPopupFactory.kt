@@ -342,7 +342,7 @@ internal class EvoPySdkSwitchPopupFactory(
     object : AnAction({ addVersionText(option) }, { "" }, versionIcon(option)), DumbAware, EvoAlternatives {
       init {
         // Says what picking this row will do before it does it, the way the v2 dialog labels its download entries.
-        if (option.installable) {
+        if (option.needsDownload()) {
           templatePresentation.putClientProperty(
             ActionUtil.SECONDARY_TEXT, PySdkFrontendBundle.message("evo.sdk.status.bar.popup.add.new.installable"))
         }
@@ -377,9 +377,15 @@ internal class EvoPySdkSwitchPopupFactory(
     createEvoEnv(project, pyProjectKey, nodeId, token, path, editableName?.value ?: defaultName, installVersion, scope)
   }
 
-  /** A version the machine has gets the Python logo; one it would have to fetch gets the download icon. */
+  /**
+   * A version the machine has gets the Python logo; one that would have to be fetched gets the download icon —
+   * regardless of who does the fetching, since what the row is telling the user is the same either way.
+   */
   private fun versionIcon(option: EvoAddNewOptionDto): Icon =
-    if (option.installable) AllIcons.Actions.Download else AllIcons.Language.Python
+    if (option.needsDownload()) AllIcons.Actions.Download else AllIcons.Language.Python
+
+  /** True when picking this row means fetching the interpreter first, whether the IDE or the tool itself does it. */
+  private fun EvoAddNewOptionDto.needsDownload(): Boolean = installable || downloadedByTool
 
   /** The version to install before creating, or null when the interpreter is already here. */
   private fun EvoAddNewOptionDto.installVersion(): String? = token.takeIf { installable }
