@@ -48,6 +48,8 @@ jvm_library(
         "//platform/execution",
         "//platform/execution-impl",
         "//libraries/pty4j",
+        "//platform/ide-core-impl",
+        "//platform/core-impl",
     ],
 )
 
@@ -92,6 +94,8 @@ jvm_library(
         "//platform/execution:execution_test_lib",
         "//platform/execution-impl:execution-impl_test_lib",
         "//libraries/pty4j:pty4j_test_lib",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ijent.community.ui` end

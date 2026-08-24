@@ -2,6 +2,7 @@
 
 package com.intellij.platform.ijent.community.ui.actions.unavailable
 
+import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.icons.AllIcons
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationManager
@@ -58,7 +59,7 @@ import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 private class EdtOnceTask : OnceTask<ProjectCloseDecision>() {
   override suspend fun <R> executeUnderLockIfNotAlreadyAcquired(f: suspend () -> R): R {
@@ -119,10 +120,11 @@ internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
         val logJob = launch {
           val ijentSession = eelDescriptor.getResolvedEelMachine().asSafely<IjentMachine>()?.getCachedIjentSession()
           if (ijentSession != null) {
-            var backOff = 500.milliseconds
+            var backOff = 2.seconds
             while (true) {
               val statTable = ijentSession.eventBus.counter.snapshot().printTable()
-              LOG.warn("Ijent is unavailable. Calls statistics:\n\n$statTable")
+              val path = PerformanceWatcher.getInstance().dumpThreads("ijent", true, true)
+              LOG.warn("Ijent is unavailable. Thread dump saved to $path. Calls statistics:\n\n$statTable")
               delay(backOff)
               backOff *= 2
             }
