@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
+import com.intellij.diagnostic.VMOptions;
 import com.intellij.ide.AboutPopupDescriptionProvider;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
@@ -352,6 +353,20 @@ public final class AboutDialog extends DialogWrapper {
         text.append("  ").append(device.getName()).append(" (").append(device.getTypeString()).append("), caps=0x")
           .append(Integer.toHexString(device.getCapabilities())).append("\n");
       }
+    }
+
+    var userOptionsFile = VMOptions.getUserOptionsFile();
+    if (userOptionsFile != null) {
+      try (var lines = Files.lines(userOptionsFile)) {
+        var userOptions = lines
+          .map(String::trim)
+          .filter(line -> !(line.isEmpty() || line.startsWith("#")))
+          .collect(Collectors.joining("\n  "));
+        if (!userOptions.isEmpty()) {
+          text.append("User VM options:\n  ").append(userOptions).append('\n');
+        }
+      }
+      catch (IOException _) { }
     }
 
     var changedValues = Registry.getAll().stream().filter(RegistryValue::isChangedFromDefault).toList();
