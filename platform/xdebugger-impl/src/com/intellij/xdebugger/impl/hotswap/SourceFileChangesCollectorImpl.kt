@@ -428,8 +428,13 @@ private fun getChangeStateSinceLastReset(
 }
 
 private fun getContentBeforeLastReset(file: VirtualFile, lastTimestamp: Long): FileContent? {
-  val localHistory = SourceFileChangesCollectorImpl.customLocalHistory ?: LocalHistory.getInstance()
-  val bytes = localHistory.getByteContent(file) { timestamp -> timestamp < lastTimestamp } ?: return null
-  val content = LoadTextUtil.getTextByBinaryPresentation(bytes, file, false, false)
+  val content = getSourceFileContentBefore(file, lastTimestamp) ?: return null
   return FileContent(content, Strings.stringHashCode(content))
+}
+
+@ApiStatus.Internal
+fun getSourceFileContentBefore(file: VirtualFile, timestamp: Long): CharSequence? {
+  val localHistory = SourceFileChangesCollectorImpl.customLocalHistory ?: LocalHistory.getInstance()
+  val bytes = localHistory.getByteContent(file) { revisionTimestamp -> revisionTimestamp < timestamp } ?: return null
+  return LoadTextUtil.getTextByBinaryPresentation(bytes, file, false, false)
 }
