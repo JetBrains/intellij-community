@@ -439,7 +439,8 @@ open class ExternalResourceManagerExBase(coroutineScope: CoroutineScope) : Exter
     incModificationCount()
   }
 
-  internal fun getStandardResources(): Collection<MutableMap<String, ExternalResource>> = standardResources.value.values
+  @ApiStatus.Internal
+  fun getStandardResources(): Collection<MutableMap<String, ExternalResource>> = standardResources.value.values
 
   override fun getDefaultHtmlDoctype(project: Project): String {
     val doctype = getProjectResources(project).defaultHtmlDoctype

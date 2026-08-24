@@ -56,7 +56,7 @@ public abstract class IndexableSetContributor {
    * @return an additional project-independent set of {@link VirtualFile} instances to index,
    *         the returned set should not contain {@code null} files or invalid files.
    */
-  public abstract @NotNull @Unmodifiable Set<VirtualFile> getAdditionalRootsToIndex();
+  public abstract @NotNull @Unmodifiable Set<@NotNull VirtualFile> getAdditionalRootsToIndex();
 
   /**
    * @return contributor's debug name for indexing diagnostic report.
