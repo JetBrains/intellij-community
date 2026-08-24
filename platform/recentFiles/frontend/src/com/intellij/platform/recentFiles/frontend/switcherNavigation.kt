@@ -8,7 +8,6 @@ import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.project.Project
@@ -48,16 +47,19 @@ internal fun openEditorForFile(
   IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(
     {
       val manager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
-      var splitWindow: EditorWindow? = null
-      for (value in values) {
-        val file = value.virtualFile?.takeIf { it.isValid } ?: continue
+      val plan = values.mapNotNull { value ->
+        val file = value.virtualFile?.takeIf { it.isValid } ?: return@mapNotNull null
         val mode = RecentFilesNavigator.EP_NAME.computeSafeIfAny { it.getEditorOpenOptions(project, file) } ?: defaultMode
+        Triple(value, file, mode)
+      }
+      val rightSplitFiles = plan.filter { it.third === FileEditorManagerImpl.OpenMode.RIGHT_SPLIT }.map { it.second }
+      var splitSubmitted = false
+      for ((value, file, mode) in plan) {
         if (mode === FileEditorManagerImpl.OpenMode.RIGHT_SPLIT) {
-          if (splitWindow == null) {
-            splitWindow = openInRightSplit(project = project, file = file, element = null, requestFocus = true)
-          }
-          else {
-            manager.openFile(file, splitWindow, FileEditorOpenOptions(waitForCompositeOpen = false).withRequestFocus())
+          if (!splitSubmitted) {
+            splitSubmitted = true
+            // all of them go into one new split
+            openInRightSplit(project = project, files = rightSplitFiles)
           }
         }
         else if (mode == FileEditorManagerImpl.OpenMode.NEW_WINDOW) {

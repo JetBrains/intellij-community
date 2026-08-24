@@ -692,19 +692,16 @@ object Switcher : BaseSwitcherAction(null) {
         IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(
           {
             val manager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
-            var splitWindow: EditorWindow? = null
-            for (value in values) {
-              if (value is SwitcherVirtualFile) {
-                val file = value.file
-                if (mode === FileEditorManagerImpl.OpenMode.RIGHT_SPLIT) {
-                  if (splitWindow == null) {
-                    splitWindow = openInRightSplit(project = project, file = file, element = null, requestFocus = true)
-                  }
-                  else {
-                    manager.openFile(file, splitWindow, FileEditorOpenOptions().withRequestFocus())
-                  }
+            if (mode === FileEditorManagerImpl.OpenMode.RIGHT_SPLIT) {
+              openInRightSplit(project = project, files = values.filterIsInstance<SwitcherVirtualFile>().map { it.file })
+            }
+            else {
+              for (value in values) {
+                if (value !is SwitcherVirtualFile) {
+                  continue
                 }
-                else if (mode == FileEditorManagerImpl.OpenMode.NEW_WINDOW) {
+                val file = value.file
+                if (mode == FileEditorManagerImpl.OpenMode.NEW_WINDOW) {
                   manager.openFileInNewWindow(file)
                 }
                 else if (value.window != null) {

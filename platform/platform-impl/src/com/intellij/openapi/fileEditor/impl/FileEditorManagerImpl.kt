@@ -1137,6 +1137,10 @@ open class FileEditorManagerImpl(
       }
     }
     else if (mode == OpenMode.RIGHT_SPLIT) {
+      // the split is created before the composite is opened (see EditorWindow.split)
+      if (!canOpenFileAsync(file)) {
+        return FileEditorComposite.EMPTY
+      }
       withContext(Dispatchers.EDT) {
         openInRightSplit(file,
                          options.requestFocus,

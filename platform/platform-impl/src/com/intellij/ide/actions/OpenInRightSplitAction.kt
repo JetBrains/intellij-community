@@ -43,23 +43,18 @@ class OpenInRightSplitAction : AnAction(), DumbAware, ActionRemoteBehaviorSpecif
     val file = getVirtualFile(e) ?: return
 
     val element = e.getData(CommonDataKeys.PSI_ELEMENT) as? Navigatable
-    val editorWindow = openInRightSplit(project, file, element) ?: return
-    if (element != null) {
+    if (element != null && element !is PsiFile) {
+      requestNavigate(project,element, rightSplitOptions(), e.dataContext,
+                      coroutineScope = e.coroutineScope)
       return
     }
 
-    val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return
-    if (files.size > 1) {
-      for (it in files) {
-        if (file == it) {
-          continue
-        }
-
-        FileEditorManagerEx.getInstanceEx(project).openFile(
-          file = it,
-          window = editorWindow,
-          options = FileEditorOpenOptions(requestFocus = true),
-        )
+    val selection = if (element == null) e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY).orEmpty() else VirtualFile.EMPTY_ARRAY
+    // the context file comes first, because that is the one the new split is created for
+    val files = setOfNotNull(file, *selection)
+    requestNavigate(project, rightSplitOptions(true), e.dataContext, coroutineScope = e.coroutineScope) {
+      readAction {
+        files.mapNotNull { NavigationRequest.sourceNavigationRequest(project, file = it, offset = -1) }
       }
     }
   }

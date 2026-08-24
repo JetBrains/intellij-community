@@ -759,6 +759,24 @@ class FileEditorManagerTest {
     }
   }
 
+  @Test
+  fun testOpenInRightSplitLeavesNoEmptySplitForFileWithoutProviders(): Unit = timeoutRunBlocking {
+    val fileWithoutProviders = withContext(Dispatchers.UiWithModelAccess) {
+      // a window to split has to exist, and its editor has to be loaded before the test ends, or it outlives the closed composite
+      openSingleTextEditor(getSourceFile("1.txt"))
+      createTempFooBar()
+    }
+    assertThat(manager.canOpenFile(fileWithoutProviders)).isFalse()
+
+    val composite = manager.openFile(
+      file = fileWithoutProviders,
+      options = FileEditorOpenOptions(openMode = FileEditorManagerImpl.OpenMode.RIGHT_SPLIT, requestFocus = true),
+    )
+
+    assertThat(composite.allEditors).isEmpty()
+    assertThat(manager.windows).hasSize(1)
+  }
+
   /**
    * An editor a deferred selection notification can still reference after the file has been closed:
    * unlike a real text editor, [Mock.MyFileEditor] never becomes invalid.

@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;
+import java.util.List;
 
 import static com.intellij.ide.browsers.OpenInBrowserRequestKt.createOpenInBrowserRequest;
 
@@ -59,12 +60,7 @@ public final class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
         BaseOpenInBrowserActionKt.chooseUrl(urls).onSuccess((url) -> {
           WebPreviewVirtualFile file = new WebPreviewVirtualFile(virtualFile, url);
           if (!FileEditorManager.getInstance(project).isFileOpen(file)) {
-            OpenInRightSplitAction.Companion.openInRightSplit(
-              project,
-              file,
-              null,
-              false
-            );
+            OpenInRightSplitAction.openInRightSplit(project, List.of(file), false);
           }
           else {
             FileEditorManagerEx.getInstanceEx(project).openFile(file, null, new FileEditorOpenOptions().withReuseOpen());
