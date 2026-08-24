@@ -28,6 +28,11 @@ public class FirLiteralKotlinToKotlinCopyPasteTestGenerated extends AbstractFirL
         runTest("../../idea/tests/testData/copyPaste/literal/CollectionLiteralReference.kt");
     }
 
+    @TestMetadata("DollarsFromRawToSingleQuoted.kt")
+    public void testDollarsFromRawToSingleQuoted() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/literal/DollarsFromRawToSingleQuoted.kt");
+    }
+
     @TestMetadata("DontEscapeEntries.kt")
     public void testDontEscapeEntries() throws Exception {
         runTest("../../idea/tests/testData/copyPaste/literal/DontEscapeEntries.kt");

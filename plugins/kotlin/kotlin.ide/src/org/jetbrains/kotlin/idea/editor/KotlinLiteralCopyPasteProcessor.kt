@@ -137,27 +137,50 @@ internal class KotlinLiteralCopyPasteProcessor : CopyPastePreProcessor {
         val prefixLength = interpolationPrefix?.textLength ?: 0
 
         return if (beginTp.isSingleQuoted()) {
-            singleQuotedPaste(text, prefixLength)
+            singleQuotedPaste(text, prefixLength, editor, selectionModel)
         } else {
             tripleQuotedPaste(text, prefixLength, selectionStartElement, beginTp, selectionModel, editor)
         }
     }
 
-    private fun singleQuotedPaste(text: String, interpolationPrefixLength: Int): String {
+    /**
+     * Escape the pasted [text] inserted into a single-quoted string with [interpolationPrefixLength].
+     *
+     * Special characters, quotes, and interpolation entries are escaped unconditionally.
+     * Dollars of literal chunks are only escaped when they would otherwise start an interpolation entry,
+     * see [findDollarsToEscapeOnPaste].
+     */
+    private fun singleQuotedPaste(
+        text: String,
+        interpolationPrefixLength: Int,
+        editor: Editor,
+        selectionModel: SelectionModel,
+    ): String {
         val res = StringBuilder()
         val interpolationPrefix = "$".repeat(interpolationPrefixLength)
         val lineBreak = "\\n\"+\n $interpolationPrefix\""
-        val additionalEscapedChars = if (interpolationPrefixLength > 1) "\"" else "$\""
+        val chunks = TemplateTokenSequence(text, interpolationPrefixLength).toList()
+        val dollarContext = createPasteDollarContext(editor, selectionModel, interpolationPrefixLength)
         var endsInLineBreak = false
-        TemplateTokenSequence(text, interpolationPrefixLength).forEach {
-            when (it) {
-                is LiteralChunk -> StringUtil.escapeStringCharacters(it.text.length, it.text, additionalEscapedChars, res)
-                is EntryChunk -> {
-                    StringUtil.escapeStringCharacters(it.text.length, it.text, additionalEscapedChars, res)
+
+        for ((index, chunk) in chunks.withIndex()) {
+            when (chunk) {
+                is LiteralChunk -> {
+                    val chunkText = chunk.text
+                    val indicesOfDollarsToEscape =
+                        findDollarsToEscape(chunks, index, chunkText, dollarContext, interpolationPrefixLength, isSingleQuoted = true)
+                    res.appendEscapedLiteralChunk(chunkText, indicesOfDollarsToEscape)
                 }
-                is NewLineChunk -> res.append(lineBreak)
+                is EntryChunk -> {
+                    val additionalEscapedChars = if (interpolationPrefixLength > 1) "\"" else "$\""
+                    val chunkText = chunk.text
+                    StringUtil.escapeStringCharacters(chunkText.length, chunkText, additionalEscapedChars, res)
+                }
+                is NewLineChunk -> {
+                    res.append(lineBreak)
+                }
             }
-            endsInLineBreak = it is NewLineChunk
+            endsInLineBreak = chunk is NewLineChunk
         }
         return if (endsInLineBreak) {
             res.removeSuffix(lineBreak).toString() + "\\n"
@@ -172,8 +195,8 @@ internal class KotlinLiteralCopyPasteProcessor : CopyPastePreProcessor {
      * [text] is parsed as if it was inside a string with the passed [interpolationPrefixLength]
      * The parser output is then sanitized:
      * — the last dollar in prefix is escaped in interpolation entries;
-     * — dollar characters parsed as literal entries are only escaped in the beginning and the end
-     *   if they form a new interpolation entry inside the host string.
+     * — dollar characters parsed as literal entries are only escaped if they start
+     *   a new interpolation entry inside the host string, see [findDollarsToEscapeOnPaste].
      */
     private fun tripleQuotedPaste(
         text: String,
@@ -183,55 +206,122 @@ internal class KotlinLiteralCopyPasteProcessor : CopyPastePreProcessor {
         selectionModel: SelectionModel,
         editor: Editor,
     ): String {
-        val templateTokenSequence = TemplateTokenSequence(text, interpolationPrefixLength)
-        val indent = createIndent(beginTp, templateTokenSequence, selectionStartElement)
-        val docCharSequence = editor.document.charsSequence
+        val chunks = TemplateTokenSequence(text, interpolationPrefixLength).toList()
+        val indent = createIndent(beginTp, chunks, selectionStartElement)
+        val dollarContext = createPasteDollarContext(editor, selectionModel, interpolationPrefixLength)
 
         return buildString {
             var indentToAdd = ""
 
-            fun handleChunk(chunk: TemplateChunk, shouldEscapeDollars: Boolean) = when (chunk) {
-                is LiteralChunk -> {
-                    val noQuotes = escapeTripleQuotes(chunk)
-                    val escapedLiteralChunk = if (shouldEscapeDollars) {
-                        escapeDangerousDollars(noQuotes, docCharSequence, selectionModel, interpolationPrefixLength)
-                    } else noQuotes
-                    append(indentToAdd)
-                    append(escapedLiteralChunk)
-                    indentToAdd = ""
-                }
-                is EntryChunk -> {
-                    append(indentToAdd)
-                    append(chunk.toEscapedText(interpolationPrefixLength))
-                    indentToAdd = ""
-                }
-                is NewLineChunk -> {
-                    appendLine()
-                    indentToAdd = indent
+            for ((index, chunk) in chunks.withIndex()) {
+                when (chunk) {
+                    is LiteralChunk -> {
+                        val chunkText = chunk.text
+                        val dollarIndicesToEscape =
+                            findDollarsToEscape(chunks, index, chunkText, dollarContext, interpolationPrefixLength, isSingleQuoted = false)
+                        // dollars are escaped first: `escapeTripleQuotes` introduces `${'"'}` entries that shouldn't be touched
+                        val escapedDollar = createEscapedDollarEntryText(interpolationPrefixLength)
+                        val chunkWithEscapedDollars = replaceDollarsWithEscapedText(chunkText, dollarIndicesToEscape, escapedDollar)
+                        val chunkWithFullEscaping = escapeTripleQuotes(chunkWithEscapedDollars)
+                        append(indentToAdd)
+                        append(chunkWithFullEscaping)
+                        indentToAdd = ""
+                    }
+                    is EntryChunk -> {
+                        append(indentToAdd)
+                        append(chunk.toEscapedText(interpolationPrefixLength))
+                        indentToAdd = ""
+                    }
+                    is NewLineChunk -> {
+                        appendLine()
+                        indentToAdd = indent
+                    }
                 }
             }
+        }
+    }
 
-            val sequenceIterator = templateTokenSequence.iterator()
-            if (!sequenceIterator.hasNext()) { return@buildString }
+    private class PasteDollarContext(
+        val dollarsBefore: Int,
+        val dollarsAfter: Int,
+        val charAfterDollars: Char?,
+    )
 
-            val firstChunk = sequenceIterator.next()
-            handleChunk(firstChunk, shouldEscapeDollars = true)
+    private fun createPasteDollarContext(
+        editor: Editor,
+        selectionModel: SelectionModel,
+        interpolationPrefixLength: Int,
+    ): PasteDollarContext {
+        // Fallback for multiple carets — assume unsafe surroundings
+        if (editor.caretModel.caretCount > 1) {
+            return PasteDollarContext(
+                dollarsBefore = maxOf(interpolationPrefixLength, 1),
+                dollarsAfter = 0,
+                charAfterDollars = UNKNOWN_IDENTIFIER_START_CHAR,
+            )
+        }
+        val docCharSequence = editor.document.charsSequence
+        val dollarsAfter = countFollowingDollars(docCharSequence, selectionModel)
+        return PasteDollarContext(
+            dollarsBefore = countPrecedingDollars(docCharSequence, selectionModel),
+            dollarsAfter = dollarsAfter,
+            charAfterDollars = docCharSequence.getOrNull(selectionModel.selectionEnd + dollarsAfter),
+        )
+    }
 
-            while (sequenceIterator.hasNext()) {
-                val nextChunk = sequenceIterator.next()
-                handleChunk(nextChunk, shouldEscapeDollars = !sequenceIterator.hasNext())
+    private fun findDollarsToEscape(
+        chunks: List<TemplateChunk>,
+        chunkIndex: Int,
+        chunkText: String,
+        dollarContext: PasteDollarContext,
+        interpolationPrefixLength: Int,
+        isSingleQuoted: Boolean,
+    ): List<Int> {
+        val isLastChunk = chunkIndex == chunks.lastIndex
+        val dollarsBefore = if (chunkIndex == 0) dollarContext.dollarsBefore else 0
+        val dollarsAfter = if (isLastChunk) dollarContext.dollarsAfter else 0
+        val charAfter = if (isLastChunk) dollarContext.charAfterDollars else chunks[chunkIndex + 1].firstChar(isSingleQuoted)
+
+        return findDollarsToEscapeOnPaste(chunkText, dollarsBefore, dollarsAfter, charAfter, interpolationPrefixLength)
+    }
+
+    private fun TemplateChunk.firstChar(isSingleQuoted: Boolean): Char? = when (this) {
+        is LiteralChunk -> text.firstOrNull()
+        is EntryChunk -> '$'
+        is NewLineChunk -> if (isSingleQuoted) '\\' else '\n'
+    }
+
+    private fun StringBuilder.appendEscapedLiteralChunk(chunkText: String, dollarsToEscape: List<Int>) {
+        var from = 0
+        for (dollarIndex in dollarsToEscape) {
+            StringUtil.escapeStringCharacters(dollarIndex - from, chunkText.substring(from), LITERAL_CHUNK_ESCAPED_CHARS, this)
+            append(SINGLE_QUOTED_ESCAPED_DOLLAR)
+            from = dollarIndex + 1
+        }
+        StringUtil.escapeStringCharacters(chunkText.length - from, chunkText.substring(from), LITERAL_CHUNK_ESCAPED_CHARS, this)
+    }
+
+    private fun replaceDollarsWithEscapedText(chunkText: String, dollarIndicesToEscape: List<Int>, escapedDollar: String): String {
+        if (dollarIndicesToEscape.isEmpty()) return chunkText
+        return buildString {
+            var from = 0
+            for (dollarIndex in dollarIndicesToEscape) {
+                append(chunkText, from, dollarIndex)
+                append(escapedDollar)
+                from = dollarIndex + 1
             }
+            append(chunkText, from, chunkText.length)
         }
     }
 
     private fun createIndent(
         beginTp: KtStringTemplateExpression,
-        templateTokenSequence: TemplateTokenSequence,
+        chunks: List<TemplateChunk>,
         selectionStartElement: PsiElement,
     ): String {
         return if (!beginTp.isSingleQuoted() &&
             (beginTp.getQualifiedExpressionForReceiver()?.selectorExpression as? KtCallExpression)?.calleeExpression?.text == "trimIndent" &&
-            templateTokenSequence.firstOrNull()?.indent() == templateTokenSequence.lastOrNull()?.indent()
+            chunks.firstOrNull()?.indent() == chunks.lastOrNull()?.indent()
         ) {
             selectionStartElement.parent?.prevSibling?.text?.takeIf { it.all { c -> c == ' ' || c == '\t' } }
         } else {
@@ -247,87 +337,8 @@ internal class KotlinLiteralCopyPasteProcessor : CopyPastePreProcessor {
 
     private val tripleQuoteRe: Regex = Regex("\"{3,}")
 
-    private fun escapeTripleQuotes(chunk: LiteralChunk): String =
-        tripleQuoteRe.replace(chunk.text) { "\"\"" + "\${'\"'}".repeat(it.value.count() - 2) }
-
-    private fun escapeDangerousDollars(
-        unescapedInput: String,
-        documentCharSequence: CharSequence,
-        selectionModel: SelectionModel,
-        interpolationPrefixLength: Int,
-    ): String {
-        if (!unescapedInput.endsWith("$") && !unescapedInput.startsWith("$")) return unescapedInput
-
-        val firstPastedDollarsCount = unescapedInput.takeWhile { c -> c == '$' }.count()
-        val lastPastedDollarsCount = unescapedInput.takeLastWhile { c -> c == '$' }.count()
-        val previousTrailingDollarsCount = countPrecedingDollars(documentCharSequence, selectionModel)
-        val dollarsAfterPastedTextCount = countFollowingDollars(documentCharSequence, selectionModel)
-
-        val isOnlyDollarsPasted = unescapedInput.all { it == '$' }
-        val charAfterFirstPastedDollars = unescapedInput.getOrNull(firstPastedDollarsCount)
-        val charAfterTrailingDollars = documentCharSequence.getOrNull(selectionModel.selectionEnd + dollarsAfterPastedTextCount)
-
-        return if (isOnlyDollarsPasted) {
-            adjustPastedTextAllDollars(
-                unescapedInput,
-                charAfterTrailingDollars,
-                previousTrailingDollarsCount,
-                dollarsAfterPastedTextCount,
-                interpolationPrefixLength
-            )
-        } else {
-            adjustPastedText(
-                unescapedInput, charAfterFirstPastedDollars, charAfterTrailingDollars,
-                previousTrailingDollarsCount, firstPastedDollarsCount, lastPastedDollarsCount,
-                dollarsAfterPastedTextCount, interpolationPrefixLength,
-            )
-        }
-    }
-
-    private fun adjustPastedTextAllDollars(
-        unescapedInput: String,
-        charAfterTrailingDollars: Char?,
-        dollarCountBefore: Int,
-        dollarCountAfter: Int,
-        interpolationPrefixLength: Int,
-    ): String {
-        if (charAfterTrailingDollars?.canBeStartOfIdentifierOrBlock() != true) return unescapedInput
-        if (dollarCountBefore + dollarCountAfter + unescapedInput.length < interpolationPrefixLength) return unescapedInput
-        return unescapedInput.dropLast(1) + createEscapedDollarEntryText(interpolationPrefixLength)
-    }
-
-    private fun adjustPastedText(
-        unescapedInput: String,
-        charAfterFirstPastedDollars: Char?,
-        charAfterTrailingDollars: Char?,
-        previousTrailingDollarsCount: Int,
-        firstPastedDollarsCount: Int,
-        lastPastedDollarsCount: Int,
-        dollarsAfterPastedTextCount: Int,
-        interpolationPrefixLength: Int,
-    ): String = buildString {
-        if (firstPastedDollarsCount > 0
-            && charAfterFirstPastedDollars?.canBeStartOfIdentifierOrBlock() == true
-            && previousTrailingDollarsCount + firstPastedDollarsCount >= interpolationPrefixLength
-        ) {
-            this.append(unescapedInput.take(firstPastedDollarsCount - 1))
-            this.append(createEscapedDollarEntryText(interpolationPrefixLength))
-        } else {
-            this.append(unescapedInput.take(firstPastedDollarsCount))
-        }
-
-        val pastedTextWithoutLeadingDollars = unescapedInput.drop(firstPastedDollarsCount)
-
-        if (lastPastedDollarsCount > 0
-            && charAfterTrailingDollars?.canBeStartOfIdentifierOrBlock() == true
-            && lastPastedDollarsCount + dollarsAfterPastedTextCount >= interpolationPrefixLength
-        ) {
-            this.append(pastedTextWithoutLeadingDollars.dropLast(1))
-            this.append(createEscapedDollarEntryText(interpolationPrefixLength))
-        } else {
-            this.append(pastedTextWithoutLeadingDollars)
-        }
-    }
+    private fun escapeTripleQuotes(chunkText: String): String =
+        tripleQuoteRe.replace(chunkText) { "\"\"" + "\${'\"'}".repeat(it.value.count() - 2) }
 
     private fun countPrecedingDollars(docCharSequence: CharSequence, selectionModel: SelectionModel): Int {
         var previousTrailingDollarsCount = 0
@@ -354,4 +365,52 @@ internal class KotlinLiteralCopyPasteProcessor : CopyPastePreProcessor {
     }
 
     private fun createEscapedDollarEntryText(prefixLength: Int): String = "${"$".repeat(maxOf(prefixLength, 1))}{'$'}"
+}
+
+private const val LITERAL_CHUNK_ESCAPED_CHARS: String = "\""
+private const val SINGLE_QUOTED_ESCAPED_DOLLAR: String = """\$"""
+private const val UNKNOWN_IDENTIFIER_START_CHAR: Char = '_'
+
+/**
+ * Find indices of the dollars inside [chunkText] that have to be escaped to keep it plain text for a given [interpolationPrefixLength].
+ * [dollarsBefore], [dollarsAfter] and [charAfter] describe the surroundings at the insertion point.
+ */
+@ApiStatus.Internal
+fun findDollarsToEscapeOnPaste(
+    chunkText: String,
+    dollarsBefore: Int,
+    dollarsAfter: Int,
+    charAfter: Char?,
+    interpolationPrefixLength: Int,
+): List<Int> {
+    val entryPrefixLength = maxOf(interpolationPrefixLength, 1)
+    val dollarsToEscape = mutableListOf<Int>()
+    var index = 0
+    while (index < chunkText.length) {
+        if (chunkText[index] != '$') {
+            index++
+            continue
+        }
+        // index pointing directly after the current dollar sequence
+        var afterDollarSequenceIndex = index
+        while (afterDollarSequenceIndex < chunkText.length && chunkText[afterDollarSequenceIndex] == '$') {
+            afterDollarSequenceIndex++
+        }
+
+        val isTrailing = afterDollarSequenceIndex == chunkText.length
+        val dollarsCountBefore = if (index == 0) dollarsBefore else 0
+        val dollarsCountAfter = if (isTrailing) dollarsAfter else 0
+        val charAfterDollars = if (isTrailing) charAfter else chunkText[afterDollarSequenceIndex]
+        val totalSequentialDollarsCount = dollarsCountBefore + (afterDollarSequenceIndex - index) + dollarsCountAfter
+
+        if (charAfterDollars?.canBeStartOfIdentifierOrBlock() == true
+            && totalSequentialDollarsCount >= entryPrefixLength
+            && dollarsCountAfter < entryPrefixLength // don't escape if there were enough dollars for prefix even before pasting
+        ) {
+            val lastDollarIndex = afterDollarSequenceIndex - 1
+            dollarsToEscape += lastDollarIndex
+        }
+        index = afterDollarSequenceIndex
+    }
+    return dollarsToEscape
 }

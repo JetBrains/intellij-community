@@ -63,6 +63,11 @@ public class FirLiteralTextToKotlinCopyPasteTestGenerated extends AbstractFirLit
         runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/NoSpecialCharsToSingleQuote.txt");
     }
 
+    @TestMetadata("RawDollarBeforeKeywordInTheMiddle.txt")
+    public void testRawDollarBeforeKeywordInTheMiddle() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawDollarBeforeKeywordInTheMiddle.txt");
+    }
+
     @TestMetadata("RawNoPrefixTwoDollars1.txt")
     public void testRawNoPrefixTwoDollars1() throws Exception {
         runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawNoPrefixTwoDollars1.txt");
@@ -211,6 +216,51 @@ public class FirLiteralTextToKotlinCopyPasteTestGenerated extends AbstractFirLit
     @TestMetadata("RawPrefix3TwoSeparatedDollars5.txt")
     public void testRawPrefix3TwoSeparatedDollars5() throws Exception {
         runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawPrefix3TwoSeparatedDollars5.txt");
+    }
+
+    @TestMetadata("RawTrailingDollarBeforeEntryInTarget.txt")
+    public void testRawTrailingDollarBeforeEntryInTarget() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/RawTrailingDollarBeforeEntryInTarget.txt");
+    }
+
+    @TestMetadata("SingleQuotedDollarBeforeIdentifierAndKeyword.txt")
+    public void testSingleQuotedDollarBeforeIdentifierAndKeyword() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/SingleQuotedDollarBeforeIdentifierAndKeyword.txt");
+    }
+
+    @TestMetadata("SingleQuotedDollarBeforeQuoteAndNewLine.txt")
+    public void testSingleQuotedDollarBeforeQuoteAndNewLine() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/SingleQuotedDollarBeforeQuoteAndNewLine.txt");
+    }
+
+    @TestMetadata("SingleQuotedDollarNotBeforeIdentifier.txt")
+    public void testSingleQuotedDollarNotBeforeIdentifier() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/SingleQuotedDollarNotBeforeIdentifier.txt");
+    }
+
+    @TestMetadata("SingleQuotedPrefix2OneTrailingDollarBeforeIdentifier.txt")
+    public void testSingleQuotedPrefix2OneTrailingDollarBeforeIdentifier() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/SingleQuotedPrefix2OneTrailingDollarBeforeIdentifier.txt");
+    }
+
+    @TestMetadata("SingleQuotedPrefix2TwoTrailingDollarsBeforeIdentifier.txt")
+    public void testSingleQuotedPrefix2TwoTrailingDollarsBeforeIdentifier() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/SingleQuotedPrefix2TwoTrailingDollarsBeforeIdentifier.txt");
+    }
+
+    @TestMetadata("SingleQuotedTrailingDollarBeforeDigitInTarget.txt")
+    public void testSingleQuotedTrailingDollarBeforeDigitInTarget() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/SingleQuotedTrailingDollarBeforeDigitInTarget.txt");
+    }
+
+    @TestMetadata("SingleQuotedTrailingDollarBeforeEntryInTarget.txt")
+    public void testSingleQuotedTrailingDollarBeforeEntryInTarget() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/SingleQuotedTrailingDollarBeforeEntryInTarget.txt");
+    }
+
+    @TestMetadata("SingleQuotedTrailingDollarBeforeIdentifierInTarget.txt")
+    public void testSingleQuotedTrailingDollarBeforeIdentifierInTarget() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/SingleQuotedTrailingDollarBeforeIdentifierInTarget.txt");
     }
 
     @TestMetadata("Stacktrace.txt")

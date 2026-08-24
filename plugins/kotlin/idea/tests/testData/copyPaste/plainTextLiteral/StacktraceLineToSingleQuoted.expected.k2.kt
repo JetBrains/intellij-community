@@ -1,1 +1,0 @@
-val a = "at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport.runReadAction\$lambda\$4(AnyThreadWriteThreadingSupport.kt:261)"
