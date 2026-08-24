@@ -2,7 +2,6 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -54,7 +53,7 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
 
   @Override
   public @Nullable PsiElement resolve() {
-    return ApplicationManager.getApplication().getService(XmlResolveReferenceSupport.class).resolveReference(this);
+    return XmlResolveReferenceSupport.getInstance().resolveReference(this);
   }
 
   @Override

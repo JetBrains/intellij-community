@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.impl.schema;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.FieldCache;
 import com.intellij.psi.PsiElement;
@@ -362,7 +361,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
         XmlAttributeValue element = ref.getValueElement();
         final PsiElement psiElement;
         if (element != null) {
-          psiElement = ApplicationManager.getApplication().getService(XmlResolveReferenceSupport.class).resolveSchemaTypeOrElementOrAttributeReference(element);
+          psiElement = XmlResolveReferenceSupport.getInstance().resolveSchemaTypeOrElementOrAttributeReference(element);
           if (psiElement instanceof XmlTag) descriptorTag = (XmlTag)psiElement;
         }
       }

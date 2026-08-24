@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
@@ -25,7 +24,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
 
   @Override
   public XmlEntityDecl resolve(PsiFile targetFile) {
-    return ApplicationManager.getApplication().getService(XmlResolveReferenceSupport.class).resolveReference(this, targetFile);
+    return XmlResolveReferenceSupport.getInstance().resolveReference(this, targetFile);
   }
 
   @Override
