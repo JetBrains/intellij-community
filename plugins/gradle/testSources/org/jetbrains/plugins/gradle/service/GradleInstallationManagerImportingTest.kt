@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service
 
 import kotlinx.coroutines.runBlocking
@@ -74,8 +74,7 @@ class GradleInstallationManagerImportingTest : GradleImportingTestCase() {
                   ?.map { it.fileName.toString() }
                   ?.toList() ?: throw IllegalStateException("Gradle class roots must not be null")
     val expected = getExpectedGradleClassRoots()
-    assertThat(actual).containsAll(expected)
-    assertEquals(actual.size, expected.size)
+    assertThat(actual).containsExactlyInAnyOrderElementsOf(expected)
   }
 
   private fun calculateGradleDistributionRoot(): List<Path> {
