@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -9,8 +9,6 @@ import org.jetbrains.annotations.ApiStatus
  *
  * This service doesn't affect core plugin management in [com.intellij.ide.plugins.PluginManagerCore], just the UI and update process.
  * For early plugin loading restrictions, see [com.intellij.ide.plugins.DisabledPluginsState]
- *
- * This service can be overridden from plugins using service overrides
  *
  * @see DefaultPluginManagementPolicy
  */
@@ -69,7 +67,10 @@ interface PluginManagementPolicy {
   fun isPluginAutoUpdateAllowed(): Boolean = DefaultPluginManagementPolicyImpl.isPluginAutoUpdateAllowed()
 
   companion object {
+    @JvmField
+    val EP: ExtensionPointName<PluginManagementPolicy> = ExtensionPointName("com.intellij.pluginManagementPolicy")
+
     @JvmStatic
-    fun getInstance(): PluginManagementPolicy = service()
+    fun getInstance(): PluginManagementPolicy = EP.extensionList.firstOrNull() ?: DefaultPluginManagementPolicyImpl
   }
 }

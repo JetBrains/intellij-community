@@ -99,6 +99,15 @@
   </dependencies>
   <!-- endregion -->
   <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.marketplaceCustomization"
+                    interface="com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.pluginManagementPolicy"
+                    interface="com.intellij.ide.plugins.PluginManagementPolicy"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.provisionedServiceRegistry"
+                    interface="com.intellij.platform.ide.provisioner.ProvisionedServiceRegistry"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.editor.interLineBreakpointConfigurationProvider"
                     interface="com.intellij.openapi.editor.impl.InterLineBreakpointConfigurationProvider"
                     dynamic="true"/>
@@ -591,8 +600,6 @@
                         serviceImplementation="com.intellij.ide.plugins.PluginManagerConfigurableServiceImpl"/>
     <applicationService serviceInterface="com.intellij.ide.plugins.UltimateDependencyChecker"
                         serviceImplementation="com.intellij.ide.plugins.UltimateDependencyCheckerImpl"/>
-    <applicationService serviceInterface="com.intellij.ide.plugins.PluginManagementPolicy"
-                        serviceImplementation="com.intellij.ide.plugins.DefaultPluginManagementPolicy"/>
     <applicationService serviceInterface="com.intellij.ui.dsl.listCellRenderer.UiDslRendererProvider" open="true"
                         serviceImplementation="com.intellij.ui.dsl.listCellRenderer.impl.DefaultUiDslRendererProvider"/>
     <applicationService serviceInterface="com.intellij.ui.dsl.builder.KotlinUiDslService"

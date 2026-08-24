@@ -77,7 +77,7 @@ class GrazieLoginManager(coroutineScope: CoroutineScope) {
   init {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
       coroutineScope.launch {
-        val aiService = service<ProvisionedServiceRegistry>().getServiceById("ai")
+        val aiService = ProvisionedServiceRegistry.getInstance().getServiceById("ai")
         if (aiService == null) {
           logger.trace("No AI service is provisioned")
           enterpriseState.value = noAIEnterprise
