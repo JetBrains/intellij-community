@@ -91,8 +91,6 @@ data class PluginValidationOptions(
    */
   val moduleLevelServicesToIgnore: Set<String> = emptySet(),
 
-  val filesNamedLikeContentModuleDescriptorsButIncludedViaXiInclude: Set<String> = emptySet(),
-
   /**
    * Names of service interfaces that are overridden by plugins which sources are located outside the current project, and therefore need
    * to be registered as `open`.
@@ -299,7 +297,7 @@ internal class PluginModelValidator(
           mapOf("descriptorFile" to moduleInfo.descriptorFile),
         )
       }
-      else if (contentModuleDescriptor.name !in validationOptions.filesNamedLikeContentModuleDescriptorsButIncludedViaXiInclude) {
+      else {
         reportError(
           message = """
                     |File '${contentModuleDescriptor.name}' is named as a content module descriptor, but actually it's included via xi:include tag.

@@ -35,9 +35,6 @@ val communityPluginValidationOptions: PluginValidationOptions = PluginValidation
   // only perform the check once in AllProductsPackagingTest.pluginModel.
   skipServicesOverridesCheck = true,
   pluginsToOptionalDepends = existingOptionalDependsTagInCommunityPlugins,
-  filesNamedLikeContentModuleDescriptorsButIncludedViaXiInclude = setOf(
-    "kotlin.plugin.k2.xml", // KTIJ-39613
-  ),
   referencedPluginIdsOfExternalPlugins = setOf(
     // These modules are defined in the Ultimate part.
     "com.intellij.marketplace",
