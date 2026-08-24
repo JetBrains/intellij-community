@@ -32,7 +32,7 @@ import java.util.function.Supplier;
 
 @Subsystems.CodeInsight
 @Layers.Functional
-public class PySyntheticCallHelperTest extends PyTestCase {
+public class PySyntheticCallTest extends PyTestCase {
   public static final String TEST_DIRECTORY = "/types/syntheticCallHelper/";
 
   public void testSimpleFunctionOnTopLevel() {
