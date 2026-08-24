@@ -1289,6 +1289,7 @@ intellij.platform.daemon.connection
 intellij.platform.daemon.connection.ssh.prompts
 intellij.platform.daemon.frontend.split
 intellij.platform.daemon.light
+intellij.platform.daemon.statistics
 intellij.platform.daemon.workspaces
 intellij.platform.execution.dashboard
 intellij.platform.execution.dashboard.backend
