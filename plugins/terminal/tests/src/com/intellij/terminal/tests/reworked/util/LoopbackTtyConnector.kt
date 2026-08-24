@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit
  * Text passed to [feed] is routed through [read] into the terminal emulator as
  * if a process produced it.
  */
-internal class LoopbackTtyConnector : TtyConnector {
+class LoopbackTtyConnector : TtyConnector {
   private val pipe: InMemoryPipe = InMemoryPipeImpl()
 
   private val closed = CountDownLatch(1)

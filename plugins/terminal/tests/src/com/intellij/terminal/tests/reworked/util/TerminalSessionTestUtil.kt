@@ -32,7 +32,6 @@ import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
-import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalCursorPositionChangedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalInitialStateEvent
@@ -40,6 +39,7 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.TerminalStateChangedEvent
 import org.jetbrains.plugins.terminal.session.impl.dto.toState
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.jetbrains.plugins.terminal.util.ShellEelProcess
 import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
 import org.jetbrains.plugins.terminal.view.impl.updateContent
@@ -51,7 +51,7 @@ import java.nio.file.Path
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
-internal object TerminalSessionTestUtil {
+object TerminalSessionTestUtil {
   /** Starts the same terminal session used in production */
   fun startTestTerminalSession(
     project: Project,
@@ -127,10 +127,11 @@ internal object TerminalSessionTestUtil {
     project: Project,
     coroutineScope: CoroutineScope,
     emulatorType: TerminalEmulatorType? = null,
+    initialSize: TermSize = TermSize(80, 24),
   ): Pair<TerminalSession, LoopbackTtyConnector> {
     val connector = LoopbackTtyConnector()
     val options = ShellStartupOptions.Builder()
-      .initialTermSize(TermSize(80, 24))
+      .initialTermSize(initialSize)
       .processType(TerminalProcessType.NON_SHELL)
       .workingDirectory(System.getProperty("user.home"))
       .emulatorType(emulatorType)
@@ -211,7 +212,7 @@ internal object TerminalSessionTestUtil {
   val ENTER_BYTES: ByteArray = byteArrayOf(Ascii.CR)
 }
 
-internal class TestTerminalSessionResult(
+class TestTerminalSessionResult(
   val session: TerminalSession,
   val ttyConnector: TtyConnector,
 )
