@@ -3,7 +3,7 @@ package com.intellij.lambda.testFramework.junit
 import com.intellij.ide.plugins.PluginModuleDescriptor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.remoteDev.tests.LambdaFrontendContext
-import com.intellij.remoteDev.tests.impl.LambdaTestHost
+import com.intellij.performanceTesting.rdct.LambdaTestHost
 import com.intellij.remoteDev.tests.impl.utils.SerializedLambdaHelper
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestActionParameters
 import java.lang.invoke.MethodHandles

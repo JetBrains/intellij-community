@@ -46,6 +46,9 @@
 - name: lib/modules/intellij.performanceTesting.problemsView.jar
   contentModules:
   - name: intellij.performanceTesting.problemsView
+- name: lib/modules/intellij.performanceTesting.rdct.jar
+  contentModules:
+  - name: intellij.performanceTesting.rdct
 - name: lib/modules/intellij.performanceTesting.remoteDriver.compose.jar
   contentModules:
   - name: intellij.performanceTesting.remoteDriver.compose

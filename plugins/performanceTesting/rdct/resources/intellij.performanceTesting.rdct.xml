@@ -1,0 +1,23 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <module name="intellij.libraries.kotlin.reflect"/>
+    <module name="intellij.libraries.rd.core"/>
+    <module name="intellij.libraries.rd.framework"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.rd.community"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.remoteDev.util"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationInitializedListener implementation="com.intellij.performanceTesting.rdct.LambdaTestHost"/>
+    <applicationService serviceImplementation="com.intellij.performanceTesting.rdct.DistributedTestHost" preload="true"/>
+    <applicationService serviceInterface="com.intellij.remoteDev.tests.RemoteDevTestModeService"
+                        serviceImplementation="com.intellij.performanceTesting.rdct.RemoteDevTestModeServiceImpl"/>
+  </extensions>
+</idea-plugin>

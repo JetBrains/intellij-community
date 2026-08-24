@@ -1,0 +1,79 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.performanceTesting.rdct` start
+jvm_library(
+    name = "rdct",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.performanceTesting.rdct",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/remoteDev-util",
+        "//libraries/kotlin/reflect",
+        "//libraries/rd/core",
+        "//libraries/rd/framework",
+        "//platform/rd-platform-community:rd-community",
+        "//platform/core-api:core",
+        "//platform/platform-impl:ide-impl",
+        "//platform/platform-impl/ui",
+        "//platform/core-impl",
+        "//platform/ide-core-impl",
+        "//platform/ide-core",
+        "//platform/util:util-ui",
+        "//platform/projectModel-api:projectModel",
+    ],
+)
+
+content_module_jar(module = ":rdct")
+
+jvm_library(
+    name = "rdct_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.performanceTesting.rdct",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":rdct",
+        "//platform/remoteDev-util:remoteDev-util_test_lib",
+        "//libraries/kotlin/reflect:reflect_test_lib",
+        "//libraries/rd/core:core_test_lib",
+        "//libraries/rd/framework:framework_test_lib",
+        "//platform/rd-platform-community:rd-community_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/platform-impl/ui:ui_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+    ],
+)
+### auto-generated section `build intellij.performanceTesting.rdct` end
+
+### auto-generated section `iml intellij.performanceTesting.rdct` start
+exports_files(
+    [
+        "intellij.performanceTesting.rdct.iml",
+        "resources/intellij.performanceTesting.rdct.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.performanceTesting.rdct` end

@@ -199,6 +199,7 @@ dev_dist_plugin_content(
         "//plugins/performanceTesting/frontend-base:frontend-base_content_module_jar",
         "//plugins/performanceTesting/frontend:frontend_content_module_jar",
         "//plugins/performanceTesting/problemsView:problemsView_content_module_jar",
+        "//plugins/performanceTesting/rdct:rdct_content_module_jar",
         "//plugins/performanceTesting/remote-driver.compose:remote-driver.compose_content_module_jar",
         "//plugins/performanceTesting/remote-driver.jcef:remote-driver.jcef_content_module_jar",
         "//plugins/performanceTesting/structureView:structureView_content_module_jar",

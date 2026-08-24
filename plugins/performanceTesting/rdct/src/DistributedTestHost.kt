@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.remoteDev.tests.impl
+package com.intellij.performanceTesting.rdct
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
@@ -41,6 +41,10 @@ import com.intellij.remoteDev.tests.DistributedTestPlayer
 import com.intellij.remoteDev.tests.DistributedTestsAgentConstants
 import com.intellij.remoteDev.tests.GatewayAgentContextImpl
 import com.intellij.remoteDev.tests.HostAgentContextImpl
+import com.intellij.remoteDev.tests.impl.AgentTestLoggerFactory
+import com.intellij.remoteDev.tests.impl.DistributedTestIdeScheduler
+import com.intellij.remoteDev.tests.impl.LogFactoryHandler
+import com.intellij.remoteDev.tests.impl.RdctTestFrameworkLoggerCategory
 import com.intellij.remoteDev.tests.impl.utils.getArtifactsFileName
 import com.intellij.remoteDev.tests.impl.utils.runLogged
 import com.intellij.remoteDev.tests.impl.utils.waitSuspending

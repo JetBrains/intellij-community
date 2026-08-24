@@ -15,7 +15,7 @@ import com.intellij.lambda.testFramework.utils.LambdaTestPluginHolder.LoadingInS
 import com.intellij.lambda.testFramework.utils.LambdaTestPluginHolder.LoadingInSplitMode.OnlyFrontend
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.remoteDev.tests.LambdaTestsConstants
-import com.intellij.remoteDev.tests.impl.LambdaTestHost.Companion.TEST_MODULE_ID_PROPERTY_NAME
+import com.intellij.performanceTesting.rdct.LambdaTestHost.Companion.TEST_MODULE_ID_PROPERTY_NAME
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeType
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeType.BACKEND
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeType.FRONTEND

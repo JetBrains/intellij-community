@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.remoteDev.tests.impl
+package com.intellij.performanceTesting.rdct
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
@@ -8,6 +8,7 @@ import com.intellij.codeWithMe.clientId
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
+import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginModuleDescriptor
@@ -31,6 +32,8 @@ import com.intellij.remoteDev.tests.LambdaIdeContextClass
 import com.intellij.remoteDev.tests.LambdaMonolithContextClass
 import com.intellij.remoteDev.tests.LambdaTestBridge
 import com.intellij.remoteDev.tests.LambdaTestsConstants
+import com.intellij.remoteDev.tests.impl.LambdaTestIdeScheduler
+import com.intellij.remoteDev.tests.impl.RdctTestFrameworkLoggerCategory
 import com.intellij.remoteDev.tests.impl.utils.SerializedLambdaWithIdeContextHelper
 import com.intellij.remoteDev.tests.impl.utils.runLogged
 import com.intellij.remoteDev.tests.impl.utils.waitSuspendingNotNull
@@ -73,7 +76,7 @@ import kotlin.time.Duration.Companion.seconds
 @TestOnly
 @ApiStatus.Internal
 @InternalIgnoreDependencyViolation
-open class LambdaTestHost(coroutineScope: CoroutineScope) {
+open class LambdaTestHost(private val coroutineScope: CoroutineScope) : ApplicationInitializedListener {
   companion object {
     // it is easier to sort out logs from just testFramework
     private val LOG
@@ -104,7 +107,7 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
     }
   }
 
-  init {
+  override suspend fun execute() {
     val hostAddress =
       System.getProperty(LambdaTestsConstants.protocolHostPropertyName)?.let {
         LOG.info("${LambdaTestsConstants.protocolHostPropertyName} system property is set=$it, will try to get address from it.")

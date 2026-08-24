@@ -44,7 +44,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.remoteDev.util" />
-    <orderEntry type="module" module-name="intellij.remoteDev.testFramework" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.performanceTesting" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
@@ -68,5 +67,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="module" module-name="intellij.driver.client" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.teamCity" />
+    <orderEntry type="module" module-name="intellij.performanceTesting.rdct" />
   </component>
 </module>

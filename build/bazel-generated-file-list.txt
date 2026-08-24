@@ -937,7 +937,6 @@ platform/remote-topics/backend
 platform/remote-topics/frontend
 platform/remote-topics/shared
 platform/remoteDev-util
-platform/remoteDev-util/testFramework
 platform/runtime/loader
 platform/runtime/product
 platform/runtime/product/tests
@@ -1602,6 +1601,7 @@ plugins/performanceTesting/freezes
 plugins/performanceTesting/frontend
 plugins/performanceTesting/frontend-base
 plugins/performanceTesting/problemsView
+plugins/performanceTesting/rdct
 plugins/performanceTesting/remote-driver
 plugins/performanceTesting/remote-driver.compose
 plugins/performanceTesting/remote-driver.jcef
