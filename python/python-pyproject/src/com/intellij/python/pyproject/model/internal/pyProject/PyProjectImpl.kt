@@ -1,6 +1,5 @@
 package com.intellij.python.pyproject.model.internal.pyProject
 
-import com.intellij.openapi.diagnostic.errorWithWarnDetails
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
@@ -25,12 +24,11 @@ internal data class PyProjectImpl private constructor(override val baseDir: Path
         0 -> return null
         1 -> roots.first()
         else -> {
-          // There shouldn't be python modules with more than 1 roots
-          // We still support them, but log it to Diogen to handle it somehow
-          log.errorWithWarnDetails(
-            "Python module has more than one content root, falling back to the first one",
-            "module=${module.name}, roots=$n",
-          )
+          // Several content roots are legitimate: a build system may root a module per source file rather than per
+          // directory, which is what Bazel does for a target declaring no `imports` (see BazelPythonWorkspaceImporter).
+          // Hence a warning and not an error report -- every root belongs to the same module, so the deterministic
+          // first one is a safe base dir, and reporting an error here would fail the sync of any such project.
+          log.warn("Python module has more than one content root, falling back to the first one: module=${module.name}, roots=$n")
           roots.minBy { it.url.fileName } // We sort it to make it predictable between runs
         }
       }
