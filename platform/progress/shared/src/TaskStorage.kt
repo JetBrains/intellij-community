@@ -11,7 +11,6 @@ import com.intellij.platform.project.projectId
 import com.jetbrains.rhizomedb.ChangeScope
 import com.jetbrains.rhizomedb.exists
 import fleet.kernel.change
-import fleet.kernel.delete
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -78,7 +77,7 @@ class TaskStorage {
    */
   suspend fun removeTask(taskInfoEntity: TaskInfoEntity): Unit = withKernel {
     change {
-      delete(taskInfoEntity)
+      taskInfoEntity.delete()
     }
   }
 

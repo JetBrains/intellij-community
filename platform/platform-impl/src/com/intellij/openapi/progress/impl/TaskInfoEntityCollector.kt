@@ -26,7 +26,6 @@ import com.jetbrains.rhizomedb.EID
 import com.jetbrains.rhizomedb.entities
 import com.jetbrains.rhizomedb.exists
 import fleet.kernel.change
-import fleet.kernel.delete
 import fleet.kernel.rete.asValuesFlow
 import fleet.kernel.rete.collect
 import fleet.kernel.rete.collectLatest
@@ -106,7 +105,7 @@ internal suspend fun removeTasksForUnregisteredProjects(projectIds: Set<ProjectI
     .filter { projectId -> entities(ProjectEntity.ProjectIdValue, projectId).isEmpty() }
     .forEach { projectId ->
       change {
-        entities(TaskInfoEntity.ProjectIdType, projectId).forEach { delete(it) }
+        entities(TaskInfoEntity.ProjectIdType, projectId).forEach { it.delete() }
       }
     }
 }
