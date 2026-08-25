@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.inspections.tests
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.intellij.openapi.project.modules
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.IdeaTestUtil
 import org.jetbrains.kotlin.idea.base.util.getString
@@ -29,6 +30,8 @@ abstract class AbstractK2MultiFileInspectionTest : KotlinMultiFileTestCase() {
         val withRuntime = config["withRuntime"]?.asBoolean ?: false
         val withFullJdk = config["withFullJdk"]?.asBoolean ?: false
         isMultiModule = config["isMultiModule"]?.asBoolean ?: false
+        val settings = configFile.resolveSibling("settings.xml").takeIf { it.exists() }?.let(JDOMUtil::load)
+        val expectedFixes = config["expectedFixes"]?.asJsonArray?.map { it.asString }
 
         doTest(
             { _, _ ->
@@ -42,10 +45,16 @@ abstract class AbstractK2MultiFileInspectionTest : KotlinMultiFileTestCase() {
                         }
                     }
 
-                    runInspection(
+                    val presentation = runInspection(
                         Class.forName(config.getString("k2InspectionClass")), project,
+                        settings = settings,
                         withTestDir = configFile.parent
                     )
+                    if (expectedFixes != null) {
+                        val actualFixes = presentation.problemDescriptors
+                            .flatMap { descriptor -> descriptor.fixes?.map { it.name } ?: emptyList() }
+                        assertEquals(expectedFixes.sorted(), actualFixes.sorted())
+                    }
                 } finally {
                     if (withRuntime) {
                         project.modules.forEach { module ->

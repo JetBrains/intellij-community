@@ -1,0 +1,4 @@
+{
+    "k2InspectionClass": "org.jetbrains.kotlin.idea.codeInsight.inspections.PackageDirectoryMismatchInspection",
+    "expectedFixes": ["Move file to 'foo/bar'", "Change file's package to source root"]
+}

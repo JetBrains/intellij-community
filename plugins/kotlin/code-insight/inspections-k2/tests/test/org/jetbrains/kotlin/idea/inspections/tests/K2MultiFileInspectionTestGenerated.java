@@ -174,4 +174,30 @@ public abstract class K2MultiFileInspectionTestGenerated extends AbstractK2Multi
             runTest("../../../idea/tests/testData/multiFileInspections/mismatchedProjectAndDirectoryRoot/mismatchedProjectAndDirectoryRoot.test");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/multiFileInspections/packageDirectoryMismatchWithImplicitPrefix")
+    public static class PackageDirectoryMismatchWithImplicitPrefix extends AbstractK2MultiFileInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("packageDirectoryMismatchWithImplicitPrefix.test")
+        public void testPackageDirectoryMismatchWithImplicitPrefix() throws Exception {
+            runTest("../../../idea/tests/testData/multiFileInspections/packageDirectoryMismatchWithImplicitPrefix/packageDirectoryMismatchWithImplicitPrefix.test");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/multiFileInspections/packageMatchesImplicitPrefix")
+    public static class PackageMatchesImplicitPrefix extends AbstractK2MultiFileInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("packageMatchesImplicitPrefix.test")
+        public void testPackageMatchesImplicitPrefix() throws Exception {
+            runTest("../../../idea/tests/testData/multiFileInspections/packageMatchesImplicitPrefix/packageMatchesImplicitPrefix.test");
+        }
+    }
 }
