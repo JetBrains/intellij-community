@@ -12,25 +12,32 @@ import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiDeclarationStatement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
@@ -40,7 +47,9 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -86,10 +95,9 @@ public final class MoveIntoIfBranchesAction implements ModCommandAction {
         !ControlFlowUtils.statementMayCompleteNormally(elseBranch)) {
       return true;
     }
-    List<String> declaredInIf = StreamEx.of(thenBranch, elseBranch).flatArray(ControlFlowUtils::unwrapBlock)
-      .select(PsiDeclarationStatement.class).flatArray(PsiDeclarationStatement::getDeclaredElements)
-      .select(PsiNamedElement.class).map(PsiNamedElement::getName).nonNull().toList();
+    Set<String> declaredInIf = getDeclaredInStatement(thenBranch, elseBranch);
     if (afterLast.isEmpty() && declaredInIf.isEmpty()) return false;
+    if (collectEffectiveQualifiers(statements, declaredInIf).containsValue(null)) return true;
     Set<PsiVariable> declared = StreamEx.of(statements).flatCollection(VariableAccessUtils::findDeclaredVariables).toSet();
     if (declared.isEmpty()) return false;
     if (SyntaxTraverser.psiTraverser().withRoots(afterLast).filter(PsiJavaCodeReferenceElement.class)
@@ -141,8 +149,92 @@ public final class MoveIntoIfBranchesAction implements ModCommandAction {
     PsiJavaToken thenBrace = thenBlock.getRBrace();
     PsiJavaToken elseBrace = elseBlock.getRBrace();
     if (thenBrace == null || elseBrace == null) return;
-    thenBlock.addRangeBefore(statements.getFirst(), statements.getLast(), thenBrace);
-    elseBlock.addRangeBefore(statements.getFirst(), statements.getLast(), elseBrace);
+
+    Set<String> declaredIfStatements = getDeclaredInStatement(thenBranch);
+    Set<String> declaredElseStatements = getDeclaredInStatement(elseBranch);
+
+    Map<String, PsiExpression> qualifiers =
+      collectEffectiveQualifiers(statements, ContainerUtil.union(declaredIfStatements, declaredElseStatements));
+    PsiElement thenNewStatement = thenBlock.addRangeBefore(statements.getFirst(), statements.getLast(), thenBrace);
+    PsiElement elseNewStatement = elseBlock.addRangeBefore(statements.getFirst(), statements.getLast(), elseBrace);
+    qualifyIfNeeded(qualifiers, declaredIfStatements, thenNewStatement, thenBrace, factory);
+    qualifyIfNeeded(qualifiers, declaredElseStatements, elseNewStatement, elseBrace, factory);
     ifStatement.getParent().deleteChildRange(statements.getFirst(), statements.getLast());
+  }
+
+  /// Qualifies references in the newly created statements if there is shadowing to a locally declared variable
+  ///
+  /// @param qualifiers           map of variables and their effective qualifiers 
+  /// @param declaredInStatements names of variables created inside an if/else block 
+  /// @param newElementStart      first newly inserted statement
+  /// @param newElementEnd        end of if/else block, expected to be a right brace
+  private static void qualifyIfNeeded(@NotNull Map<String, PsiExpression> qualifiers,
+                                      @NotNull Set<String> declaredInStatements,
+                                      @NotNull PsiElement newElementStart,
+                                      @NotNull PsiElement newElementEnd,
+                                      @NotNull PsiElementFactory factory) {
+    if (declaredInStatements.isEmpty()) return;
+
+    PsiClass containingClass = PsiUtil.getContainingClass(newElementStart);
+    if (containingClass == null) return;
+    List<PsiElement> newRange = PsiTreeUtil.getElementsOfRange(newElementStart, newElementEnd);
+
+    SyntaxTraverser.psiTraverser()
+      .withRoots(newRange)
+      .filter(PsiReferenceExpression.class)
+      .forEach(ref -> {
+        PsiLocalVariable var = shouldBeRequalified(ref, PsiLocalVariable.class, declaredInStatements, containingClass);
+        if (var != null) {
+          ref.replace(factory.createExpressionFromText(qualifiers.get(var.getName()).getText() + "." + var.getName(), var));
+        }
+      });
+  }
+
+  /// {@return a map of variable names associated with their effective qualifiers}
+  ///
+  /// @param declaredInStatements names of the variables we are interested in, meaning we collect effective qualifiers only for [PsiField]s
+  ///                             sharing the same names.
+  /// @param statements           statements to visit
+  private static Map<String, PsiExpression> collectEffectiveQualifiers(List<PsiStatement> statements, Set<String> declaredInStatements) {
+    PsiClass containingClass = PsiUtil.getContainingClass(statements.getFirst());
+    if (containingClass == null) {
+      return Collections.EMPTY_MAP;
+    }
+    Map<String, PsiExpression> results = HashMap.newHashMap(2);
+
+    SyntaxTraverser.psiTraverser()
+      .withRoots(statements)
+      .filter(PsiReferenceExpression.class)
+      .forEach(ref -> {
+        PsiField field = shouldBeRequalified(ref, PsiField.class, declaredInStatements, containingClass);
+        if (field != null) {
+          results.put(field.getName(), ExpressionUtils.getEffectiveQualifier(ref));
+        }
+      });
+    return results;
+  }
+
+  /// {@return the resolved `ref` if it should be requalified, `null` otherwise}
+  private static <T extends PsiVariable> @Nullable T shouldBeRequalified(@NotNull PsiReferenceExpression ref,
+                                                                         @NotNull Class<T> targetClass,
+                                                                         @NotNull Set<String> declaredInStatements,
+                                                                         @NotNull PsiClass containingClass) {
+    if (ref.getQualifierExpression() != null) return null;
+    T resolved = tryCast(ref.resolve(), targetClass);
+
+    if (resolved == null ||
+        resolved.isUnnamed() ||
+        !declaredInStatements.contains(resolved.getName()) ||
+        PsiUtil.isVariableNameUnique(Objects.requireNonNull(resolved.getName()), containingClass)) {
+      return null;
+    }
+    return resolved;
+  }
+
+  /// @return The names of declared variables inside the `branchStatements` inputs
+  private static Set<String> getDeclaredInStatement(PsiStatement... branchStatements) {
+    return StreamEx.of(branchStatements).flatArray(ControlFlowUtils::unwrapBlock)
+      .select(PsiDeclarationStatement.class).flatArray(PsiDeclarationStatement::getDeclaredElements)
+      .select(PsiNamedElement.class).map(PsiNamedElement::getName).nonNull().toSet();
   }
 }
