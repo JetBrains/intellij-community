@@ -3,31 +3,14 @@ project
 
 project.androidApp
 
-project.androidApp.androidHostTest
-    org.jetbrains.kotlin.mpp.tests:kmmLib-android:1.0 (TEST)
+project.androidApp.androidTest
+    org.jetbrains.kotlin.mpp.tests:kmmLib-android:1.0@aar (TEST)
 
-project.androidApp.androidMain
-    org.jetbrains.kotlin.mpp.tests:kmmLib-android:1.0 (COMPILE)
+project.androidApp.main
+    org.jetbrains.kotlin.mpp.tests:kmmLib-android:1.0@aar (COMPILE)
 
-project.androidApp.commonMain
-    org.jetbrains.kotlin.mpp.tests:kmmLib-android:1.0 (COMPILE)
-
-project.androidApp.commonTest
-    org.jetbrains.kotlin.mpp.tests:kmmLib-android:1.0 (TEST)
-
-project.androidHostTest
-    androidMain (friend, TEST)
-    commonMain (friend, TEST)
-    commonTest (refines, TEST)
-
-project.androidMain
-    commonMain (refines, COMPILE)
-
-project.commonMain
-
-project.commonTest
-    androidMain (friend, TEST)
-    commonMain (friend, TEST)
+project.androidApp.unitTest
+    org.jetbrains.kotlin.mpp.tests:kmmLib-android:1.0@aar (TEST)
 
 
 Test configuration:

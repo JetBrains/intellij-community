@@ -118,8 +118,20 @@ internal fun SimpleProperties(
         else "id(\"com.android.library\")"
     )
 
-    val android_application_compatible_plugin_id by simplePropertyWithValue(
+    val android_application_plugin_id by simplePropertyWithValue(
         "id(\"com.android.application\")"
+    )
+
+    val android_application_block by simplePropertyWithValue(
+        """
+        android {
+            $defaultAndroidBlockBody
+        }
+        """.trimIndent()
+    )
+
+    val android_application_compatible_plugin_id by simplePropertyWithValue(
+        if (isAgp9OrHigher) "id(\"com.android.kotlin.multiplatform.library\")" else "id(\"com.android.application\")"
     )
 
     val android_root_plugins_apply_false by simplePropertyWithValue(

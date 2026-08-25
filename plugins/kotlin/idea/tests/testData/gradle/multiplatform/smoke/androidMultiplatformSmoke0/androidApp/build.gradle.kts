@@ -1,5 +1,5 @@
 plugins {
-    {{android_application_compatible_plugin_id}}
+    {{android_application_plugin_id}}
     kotlin("android")
 }
 

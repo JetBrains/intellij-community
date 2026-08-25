@@ -3,35 +3,17 @@ project
 
 project.androidApp
 
-project.androidApp.androidHostTest
+project.androidApp.androidTest
     kmmLib.androidMain (TEST)
     kmmLib.commonMain (TEST)
 
-project.androidApp.androidMain
+project.androidApp.main
     kmmLib.androidMain (COMPILE)
     kmmLib.commonMain (COMPILE)
 
-project.androidApp.commonMain
-    kmmLib.androidMain (COMPILE)
-    kmmLib.commonMain (COMPILE)
-
-project.androidApp.commonTest
+project.androidApp.unitTest
     kmmLib.androidMain (TEST)
     kmmLib.commonMain (TEST)
-
-project.androidHostTest
-    androidMain (friend, TEST)
-    commonMain (friend, TEST)
-    commonTest (refines, TEST)
-
-project.androidMain
-    commonMain (refines, COMPILE)
-
-project.commonMain
-
-project.commonTest
-    androidMain (friend, TEST)
-    commonMain (friend, TEST)
 
 
 Test configuration:
