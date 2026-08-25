@@ -82,7 +82,7 @@ class RegionSettingsService(coroutineScope: CoroutineScope) {
    * This is the preferred way to get the region: it never blocks the calling thread and always returns a value,
    * so the caller does not need a fallback for the not-yet-initialized state.
    */
-  suspend fun getCurrenRegion(): Region {
+  suspend fun getCurrentRegion(): Region {
     cachedRegion.value?.let { return it }
 
     return computeRegion()

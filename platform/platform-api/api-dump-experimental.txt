@@ -21,7 +21,7 @@ f:com.intellij.execution.filters.HyperlinkInfoBaseKt
 *f:com.intellij.ide.RegionSettingsService
 - *sf:Companion:com.intellij.ide.RegionSettingsService$Companion
 - <init>(kotlinx.coroutines.CoroutineScope):V
-- f:getCurrenRegion(kotlin.coroutines.Continuation):java.lang.Object
+- f:getCurrentRegion(kotlin.coroutines.Continuation):java.lang.Object
 - f:getCurrentRegionBlocking():com.intellij.ide.Region
 - f:getCurrentRegionIfKnown():com.intellij.ide.Region
 *f:com.intellij.ide.RegionSettingsService$Companion
