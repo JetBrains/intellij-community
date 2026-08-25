@@ -2,6 +2,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui
 
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
@@ -40,6 +43,7 @@ internal fun prepareForMenuDragSession(menu: JBPopupMenu, invoker: Component?, x
 private fun startDragSession(menu: JBPopupMenu, invoker: Component, x: Int, y: Int) {
   val screenPoint = Point(x, y)
   SwingUtilities.convertPointToScreen(screenPoint, invoker)
+  LOG.debug { "Starting a context menu drag session from $screenPoint" }
   ClientProperty.put(menu, SESSION_KEY, MenuDragSession(screenPoint.x, screenPoint.y))
 }
 
@@ -60,13 +64,18 @@ class MenuDragSession internal constructor(
     val location = e.locationOnScreen
     val distance = max(abs(location.x - initialX), abs(location.y - initialY))
     maximumDragDistance = maximumDragDistance?.let { max(it, distance) } ?: distance
+    LOG.trace { "The drag distance is updated: new location = $location, distance = $distance, max distance = $maximumDragDistance" }
   }
 
-  @Suppress("RedundantIf")
   fun isClickOrNoticeableDrag(): Boolean {
     val distance = maximumDragDistance
     if (distance == null) return true // click
-    return distance >= threshold()
+    val threshold = threshold()
+    val isNoticeable = distance >= threshold
+    if (isNoticeable) {
+      LOG.debug { "A noticeable drag is detected, the menu item will be clicked: threshold = $threshold, distance = $distance" }
+    }
+    return isNoticeable
   }
 
 }
@@ -80,3 +89,5 @@ private fun threshold(): Int {
   }
   return JBUI.scale(unscaled)
 }
+
+private val LOG = fileLogger()
