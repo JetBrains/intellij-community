@@ -41,6 +41,8 @@
         implementation="com.intellij.markdown.backend.providers.MarkdownLinkOpenerApiProvider"/>
       <platform.rpc.backend.remoteApiProvider
         implementation="com.intellij.markdown.backend.providers.VirtualFileAccessorProvider"/>
+      <platform.rpc.backend.remoteApiProvider
+        implementation="com.intellij.markdown.backend.providers.MarkdownCommandRunnerApiProvider"/>
       <stubElementRegistryExtension implementation="com.intellij.markdown.backend.index.MarkdownStubRegistryExtension"/>
 
       <longLineInspectionPolicy implementation="org.intellij.plugins.markdown.editor.MarkdownLongLineInspectionPolicy"/>

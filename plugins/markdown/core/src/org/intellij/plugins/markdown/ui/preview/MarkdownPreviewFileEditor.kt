@@ -41,6 +41,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.PreviewCommandRunnability
 import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.util.MarkdownPluginScope
@@ -242,16 +243,10 @@ class MarkdownPreviewFileEditor(
       return
     }
 
-    lastRenderedContent = readAction {
-      val text = if (panel is MarkdownContentPanel) {
-        document.text
-      }
-      else {
-        val textPreprocessor = retrievePanelProvider(MarkdownSettings.getInstance(project)).sourceTextPreprocessor
-        textPreprocessor.preprocessText(project, document, file)
-      }
-      logger.debug("MarkdownPreviewFileEditor: readAction finished")
-      text
+    lastRenderedContent = generateContent(panel)
+    if (PreviewCommandRunnability.getInstance().resolvePending()) {
+      logger.debug("MarkdownPreviewFileEditor: regenerating after resolving preview run commands")
+      lastRenderedContent = generateContent(panel)
     }
 
     val editor = mainEditor.firstOrNull() ?: run {
@@ -270,6 +265,20 @@ class MarkdownPreviewFileEditor(
         panel.setHtml(lastRenderedContent, offset, line, file)
       }
       logger.debug("MarkdownPreviewFileEditor: setContent finished")
+    }
+  }
+
+  private suspend fun generateContent(panel: MarkdownHtmlPanel): String {
+    return readAction {
+      val text = if (panel is MarkdownContentPanel) {
+        document.text
+      }
+      else {
+        val textPreprocessor = retrievePanelProvider(MarkdownSettings.getInstance(project)).sourceTextPreprocessor
+        textPreprocessor.preprocessText(project, document, file)
+      }
+      logger.debug("MarkdownPreviewFileEditor: readAction finished")
+      text
     }
   }
 

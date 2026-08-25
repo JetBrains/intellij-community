@@ -34,9 +34,10 @@ final class ShMarkdownRunner implements MarkdownRunner {
                      @NotNull Project project,
                      @Nullable String workingDirectory, @NotNull Executor executor) {
     ShRunner shRunner = ApplicationManager.getApplication().getService(ShRunner.class);
-    if (shRunner != null && shRunner.isAvailable(project)) {
-      shRunner.run(project, command, workingDirectory, "RunMarkdown", true);
+    if (shRunner == null || !shRunner.isAvailable(project)) {
+      return false;
     }
+    shRunner.run(project, command, workingDirectory, "RunMarkdown", true);
     /*try {
       runInTerminal(command, workingDirectory, project);
     }

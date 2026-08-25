@@ -10,6 +10,9 @@
 - name: lib/modules/intellij.sh.frontend.split.jar
   contentModules:
   - name: intellij.sh.frontend.split
+- name: lib/modules/intellij.sh.markdown.frontend.split.jar
+  contentModules:
+  - name: intellij.sh.markdown.frontend.split
 - name: lib/modules/intellij.sh.markdown.jar
   contentModules:
   - name: intellij.sh.markdown

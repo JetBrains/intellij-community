@@ -56,7 +56,11 @@ class CommandRunnerExtension(
   private val sessionKey = UUID.randomUUID().toString()
   override val scripts: List<String> = listOf("commandRunner/commandRunner.js")
   override val styles: List<String> = listOf("commandRunner/commandRunner.css")
-  private val hash2Cmd = mutableMapOf<String, String>()
+  private val hash2Cmd = ConcurrentHashMap<String, String>()
+
+  fun resetCommands() {
+    hash2Cmd.clear()
+  }
 
   init {
     val runLineHandler = createRunLineHandler()
@@ -116,7 +120,7 @@ class CommandRunnerExtension(
       val project = panel.project
       val file = panel.virtualFile
       if (project != null && file != null
-          && matches(project, getMarkdownCommandWorkingDirectories(project, file), true, rawCodeLine.trim(), allowRunConfigurations)
+          && PreviewCommandRunnability.getInstance().isRunnable(project, file, rawCodeLine.trim(), allowRunConfigurations)
       ) {
         val hash = MarkdownUtil.md5(rawCodeLine, sessionKey)
         hash2Cmd[hash] = rawCodeLine
@@ -142,9 +146,7 @@ class CommandRunnerExtension(
   fun processCodeBlock(codeFenceRawContent: String, language: String): String {
     try {
       val lang = CodeFenceLanguageGuesser.guessLanguageForInjection(language)
-      val runner = MarkdownRunner.EP_NAME.extensionList.firstOrNull {
-        it.isApplicable(lang)
-      }
+      val runner = MarkdownRunner.EP_NAME.extensionList.firstOrNull { it.isApplicable(lang) }
       if (runner == null) return ""
 
       val hash = MarkdownUtil.md5(codeFenceRawContent, sessionKey)
@@ -190,30 +192,18 @@ class CommandRunnerExtension(
   }
 
   private fun executeLineCommand(command: String, executorId: String, x: Int, y: Int) {
-    val executor = ExecutorRegistry.getInstance().getExecutorById(executorId) ?: DefaultRunExecutor.getRunExecutorInstance()
-    val project = panel.project
-    val virtualFile = panel.virtualFile
-    if (project != null && virtualFile != null) {
-      withMarkdownCommandWorkingDirectory(project, virtualFile, panel.component, x, y) { workingDirectory ->
-        execute(project, workingDirectory, true, command, executor, RunnerPlace.PREVIEW)
-      }
+    val project = panel.project ?: return
+    val virtualFile = panel.virtualFile ?: return
+    withMarkdownCommandWorkingDirectory(project, virtualFile, panel.component, x, y) { workingDirectory ->
+      PreviewCommandRunnability.getInstance().execute(project, virtualFile, command, executorId, workingDirectory)
     }
   }
 
   private fun executeBlock(command: String, executorId: String, x: Int, y: Int) {
-    val runner = MarkdownRunner.EP_NAME.extensionList.first()
-    val executor = ExecutorRegistry.getInstance().getExecutorById(executorId) ?: DefaultRunExecutor.getRunExecutorInstance()
-    val project = panel.project
-    val virtualFile = panel.virtualFile
-    if (project != null && virtualFile != null) {
-      withMarkdownCommandWorkingDirectory(project, virtualFile, panel.component, x, y) { workingDirectory ->
-        TrustedProjectUtil.executeIfTrusted(project) {
-          RUNNER_EXECUTED.log(project, RunnerPlace.PREVIEW, RunnerType.BLOCK, runner.javaClass)
-          invokeLater {
-            runner.run(command, project, workingDirectory, executor)
-          }
-        }
-      }
+    val project = panel.project ?: return
+    val virtualFile = panel.virtualFile ?: return
+    withMarkdownCommandWorkingDirectory(project, virtualFile, panel.component, x, y) { workingDirectory ->
+      launchBlockRunner(project, command, executorId, workingDirectory)
     }
   }
 
@@ -334,13 +324,43 @@ class CommandRunnerExtension(
     }
 
     @ApiStatus.Internal
+    fun launchBlockRunner(project: Project, command: String, executorId: String, workingDirectory: String): Boolean {
+      val runner = MarkdownRunner.EP_NAME.extensionList.firstOrNull()
+      if (runner == null) {
+        LOG.warn("No Markdown runner is registered, the block is not executed.")
+        return false
+      }
+      val trusted = TrustedProjectUtil.executeIfTrusted(project) {
+        startRunner(project, command, executorId, runner, workingDirectory)
+      }
+      if (!trusted) {
+        LOG.info("Markdown block is not executed: the project is not trusted.")
+      }
+      return trusted
+    }
+
+    private fun startRunner(project: Project, command: String, executorId: String, runner: MarkdownRunner, workingDirectory: String) {
+      val executor = ExecutorRegistry.getInstance().getExecutorById(executorId) ?: DefaultRunExecutor.getRunExecutorInstance()
+      LOG.info("Markdown block run: ${runner.javaClass.name} in '$workingDirectory'.")
+      invokeLater {
+        if (runner.run(command, project, workingDirectory, executor)) {
+          RUNNER_EXECUTED.log(project, RunnerPlace.PREVIEW, RunnerType.BLOCK, runner.javaClass)
+        }
+        else {
+          LOG.warn("Markdown block run: ${runner.javaClass.name} declined to run the command.")
+        }
+      }
+    }
+
+    @ApiStatus.Internal
     fun matches(project: Project, workingDirectories: List<String>, localSession: Boolean,
                 command: String,
                 allowRunConfigurations: Boolean = false): Boolean {
       val trimmedCmd = trimPrompt(command).trim()
       if (trimmedCmd.isEmpty()) return false
 
-      return workingDirectories.any { workingDirectory ->
+      val candidateDirectories: List<String?> = workingDirectories.ifEmpty { listOf(null) }
+      return candidateDirectories.any { workingDirectory ->
         val dataContext = createDataContext(project, localSession, workingDirectory)
         ReadAction.nonBlocking<Boolean> {
           RunAnythingProvider.EP_NAME.extensionList.asSequence()
@@ -348,6 +368,19 @@ class CommandRunnerExtension(
             .any { provider -> provider.findMatchingValue(dataContext, trimmedCmd) != null }
         }.executeSynchronously()
       }
+    }
+
+    @ApiStatus.Internal
+    fun executeByExecutorId(
+      project: Project,
+      workingDirectory: String?,
+      localSession: Boolean,
+      command: String,
+      executorId: String,
+      place: RunnerPlace
+    ): Boolean {
+      val executor = ExecutorRegistry.getInstance().getExecutorById(executorId) ?: DefaultRunExecutor.getRunExecutorInstance()
+      return execute(project, workingDirectory, localSession, command, executor, place)
     }
 
     @ApiStatus.Internal
@@ -448,7 +481,10 @@ fun getMarkdownCommandWorkingDirectory(project: Project, virtualFile: VirtualFil
 
 @ApiStatus.Internal
 fun getMarkdownCommandWorkingDirectories(project: Project, virtualFile: VirtualFile?): List<String> {
-  val fileDirectory = virtualFile?.parent?.canonicalPath ?: return emptyList()
+  // Not `virtualFile.parent`: it is null for the previewed file on the JetBrains Client, and an empty list here means
+  // no line or span is ever offered a run icon (IJPL-250078).
+  if (virtualFile == null) return emptyList()
+  val fileDirectory = markdownCommandFileDirectory(virtualFile) ?: return emptyList()
   val projectDirectory = BaseProjectDirectories.getInstance(project).getBaseDirectoryFor(virtualFile)?.canonicalPath ?: fileDirectory
   return when (MarkdownSettings.getInstance(project).useFileDirectoryForCommands) {
     true -> listOf(fileDirectory)

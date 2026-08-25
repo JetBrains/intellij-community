@@ -51,6 +51,12 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.intellij.markdown.markdownRunner"
+                    interface="org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunner"
+                    dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="markdown.live.preview.image.max.bytes"
                  defaultValue="4194304"
@@ -59,7 +65,15 @@
                  defaultValue="2100000"
                  description="Maximum image pixel count for Markdown live preview."/>
   </extensions>
+
   <extensions defaultExtensionNs="org.intellij.markdown">
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.ProcessImagesExtension$Provider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService
+      serviceInterface="org.intellij.plugins.markdown.extensions.jcef.commandRunner.PreviewCommandRunnability"
+      serviceImplementation="org.intellij.plugins.markdown.extensions.jcef.commandRunner.LocalPreviewCommandRunnability"
+      open="true"/>
   </extensions>
 </idea-plugin>

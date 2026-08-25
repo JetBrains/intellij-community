@@ -113,9 +113,6 @@
     <extensionPoint qualifiedName="org.intellij.markdown.markdownExportProvider"
                     interface="org.intellij.plugins.markdown.fileActions.export.MarkdownExportProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="org.intellij.markdown.markdownRunner"
-                    interface="org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunner"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="org.intellij.markdown.codeSpanRunnableSearcher"
                     interface="org.intellij.plugins.markdown.extensions.MarkdownCodeSpanConfigurationContextSearcher"
                     dynamic="true"/>
