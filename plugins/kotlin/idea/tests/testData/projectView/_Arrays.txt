@@ -1,10 +1,10 @@
 Node: ArraysKt___ArraysKt
 User object class: KtInternalFileTreeNode
 
-Value: KtLightClassForDecompiledDeclaration of PsiFile:ArraysKt___ArraysKt.class
+Value: KtLightClassForDecompiledFacade of PsiFile:ArraysKt___ArraysKt.class
 Value file: kotlin-stdlib.jar!/kotlin/collections/ArraysKt___ArraysKt.class
 
-Navigation item #0: KtLightClassForDecompiledDeclaration of PsiFile:ArraysKt___ArraysKt.class
+Navigation item #0: KtLightClassForDecompiledFacade of PsiFile:ArraysKt___ArraysKt.class
 Navigation item file #0: kotlin-stdlib.jar!/kotlin/collections/ArraysKt___ArraysKt.class
 Navigation item #1: KtFile: ArraysKt___ArraysKt.class
 Navigation item file #1: kotlin-stdlib.jar!/kotlin/collections/ArraysKt___ArraysKt.class

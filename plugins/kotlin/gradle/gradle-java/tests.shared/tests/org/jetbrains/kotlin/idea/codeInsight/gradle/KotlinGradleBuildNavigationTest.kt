@@ -51,7 +51,7 @@ class KotlinGradleBuildNavigationTest : KotlinGradleCodeInsightTestCase() {
                 if (isGradleOlderThan(gradleVersion, "9.0")) {
                     withPlugin("org.jetbrains.kotlin.multiplatform", "1.7.0")
                 } else {
-                    withPlugin("org.jetbrains.kotlin.multiplatform", "1.9.25")
+                    withPlugin("org.jetbrains.kotlin.multiplatform", "2.4.20")
                 }
                 withMavenCentral()
                 withPostfix {

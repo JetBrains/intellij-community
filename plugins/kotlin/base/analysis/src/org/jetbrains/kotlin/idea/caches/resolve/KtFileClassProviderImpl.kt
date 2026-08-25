@@ -5,9 +5,8 @@ package org.jetbrains.kotlin.idea.caches.resolve
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiClass
-import org.jetbrains.kotlin.analysis.decompiled.light.classes.DecompiledLightClassesFactory
-import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
+import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.fileClasses.isJvmMultifileClassFile
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
@@ -27,14 +26,7 @@ class KtFileClassProviderImpl(val project: Project) : KtFileClassProvider {
         if (!Registry.`is`("kotlin.analysis.allowRestrictedAnalysis", true) && file.project.isInDumbMode) return emptyArray()
 
         if (file.isCompiled) {
-            val lightClass = if (file is KtClsFile) {
-                DecompiledLightClassesFactory.createLightClassForDecompiledKotlinFile(file, project)
-            } else {
-                null
-            }
-            // TODO(KTIJ-39997): BUG! `createLightClassForDecompiledKotlinFile` must not be called directly. It currently forces creation of an incorrect light class
-            // in the case of a file facade
-//            val lightClass = file.findFacadeClass() ?: (file.declarations.singleOrNull() as? KtClassOrObject)?.toLightClass()
+            val lightClass = file.findFacadeClass() ?: (file.declarations.singleOrNull() as? KtClassOrObject)?.toLightClass()
             return lightClass?.let { arrayOf(it) } ?: PsiClass.EMPTY_ARRAY
         }
 
