@@ -424,7 +424,7 @@ public class GeneratedParserUtilBase {
   }
 
   public static boolean isWhitespaceOrComment(@NotNull PsiBuilder builder, @Nullable IElementType type) {
-    return builder.isWhitespaceOrComment(type);
+    return type != null && builder.isWhitespaceOrComment(type);
   }
 
   private static boolean wasAutoSkipped(@NotNull PsiBuilder builder, int steps) {
