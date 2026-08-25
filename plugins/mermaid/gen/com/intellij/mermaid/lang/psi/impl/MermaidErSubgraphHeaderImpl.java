@@ -11,14 +11,14 @@ import static com.intellij.mermaid.lang.parser.MermaidElements.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.mermaid.lang.psi.*;
 
-public class MermaidErIdentifierAliasImpl extends ASTWrapperPsiElement implements MermaidErIdentifierAlias {
+public class MermaidErSubgraphHeaderImpl extends ASTWrapperPsiElement implements MermaidErSubgraphHeader {
 
-  public MermaidErIdentifierAliasImpl(@NotNull ASTNode node) {
+  public MermaidErSubgraphHeaderImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull MermaidVisitor visitor) {
-    visitor.visitErIdentifierAlias(this);
+    visitor.visitErSubgraphHeader(this);
   }
 
   @Override
@@ -28,15 +28,15 @@ public class MermaidErIdentifierAliasImpl extends ASTWrapperPsiElement implement
   }
 
   @Override
-  @Nullable
-  public MermaidComplexLabel getComplexLabel() {
-    return findChildByClass(MermaidComplexLabel.class);
+  @NotNull
+  public MermaidErIdentifier getErIdentifier() {
+    return findNotNullChildByClass(MermaidErIdentifier.class);
   }
 
   @Override
   @Nullable
-  public MermaidString getString() {
-    return findChildByClass(MermaidString.class);
+  public MermaidErIdentifierAlias getErIdentifierAlias() {
+    return findChildByClass(MermaidErIdentifierAlias.class);
   }
 
 }

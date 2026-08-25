@@ -446,6 +446,18 @@ public class MermaidVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitErSubgraphBlock(@NotNull MermaidErSubgraphBlock o) {
+    visitDiagramBlock(o);
+  }
+
+  public void visitErSubgraphHeader(@NotNull MermaidErSubgraphHeader o) {
+    visitPsiElement(o);
+  }
+
+  public void visitErSubgraphStatement(@NotNull MermaidErSubgraphStatement o) {
+    visitFoldableElement(o);
+  }
+
   public void visitFlowchartBody(@NotNull MermaidFlowchartBody o) {
     visitDiagramBlock(o);
   }

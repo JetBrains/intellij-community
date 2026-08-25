@@ -5,7 +5,7 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface MermaidErBody extends MermaidDiagramBlock {
+public interface MermaidErSubgraphBlock extends MermaidDiagramBlock {
 
   @NotNull
   List<MermaidAccStatement> getAccStatementList();

@@ -120,6 +120,9 @@ public interface MermaidElements {
   IElementType ER_IDENTIFIER_ALIAS = new MermaidElementType("ER_IDENTIFIER_ALIAS");
   IElementType ER_RELATION_STATEMENT = new MermaidElementType("ER_RELATION_STATEMENT");
   IElementType ER_STYLE_CLASS = new MermaidElementType("ER_STYLE_CLASS");
+  IElementType ER_SUBGRAPH_BLOCK = new MermaidElementType("ER_SUBGRAPH_BLOCK");
+  IElementType ER_SUBGRAPH_HEADER = new MermaidElementType("ER_SUBGRAPH_HEADER");
+  IElementType ER_SUBGRAPH_STATEMENT = new MermaidElementType("ER_SUBGRAPH_STATEMENT");
   IElementType FLOWCHART_BODY = new MermaidElementType("FLOWCHART_BODY");
   IElementType FLOWCHART_CLASS_STATEMENT = new MermaidElementType("FLOWCHART_CLASS_STATEMENT");
   IElementType FLOWCHART_CLICK_STATEMENT = new MermaidElementType("FLOWCHART_CLICK_STATEMENT");
@@ -622,6 +625,15 @@ public interface MermaidElements {
       }
       else if (type == ER_STYLE_CLASS) {
         return new MermaidErStyleClassImpl(node);
+      }
+      else if (type == ER_SUBGRAPH_BLOCK) {
+        return new MermaidErSubgraphBlockImpl(node);
+      }
+      else if (type == ER_SUBGRAPH_HEADER) {
+        return new MermaidErSubgraphHeaderImpl(node);
+      }
+      else if (type == ER_SUBGRAPH_STATEMENT) {
+        return new MermaidErSubgraphStatementImpl(node);
       }
       else if (type == FLOWCHART_BODY) {
         return new MermaidFlowchartBodyImpl(node);

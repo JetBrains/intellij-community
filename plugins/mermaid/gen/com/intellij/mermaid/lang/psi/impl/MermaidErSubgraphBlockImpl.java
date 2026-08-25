@@ -11,14 +11,14 @@ import static com.intellij.mermaid.lang.parser.MermaidElements.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.mermaid.lang.psi.*;
 
-public class MermaidErBodyImpl extends ASTWrapperPsiElement implements MermaidErBody {
+public class MermaidErSubgraphBlockImpl extends ASTWrapperPsiElement implements MermaidErSubgraphBlock {
 
-  public MermaidErBodyImpl(@NotNull ASTNode node) {
+  public MermaidErSubgraphBlockImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull MermaidVisitor visitor) {
-    visitor.visitErBody(this);
+    visitor.visitErSubgraphBlock(this);
   }
 
   @Override

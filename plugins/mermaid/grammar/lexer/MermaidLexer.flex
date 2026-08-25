@@ -62,7 +62,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 %states state_diagram, state_statement, note_statement, note_content, simple_note_content, state_class_def, state_style_opt, state_style_value, state_class, state_class_style, state_scale
 
-%states entity_relationship, entity_attributes, relationship_description
+%states entity_relationship, entity_attributes, relationship_description, er_subgraph_title
 
 %states gantt, gantt_task_data, gantt_value, gantt_today_marker_value, gantt_title, gantt_title_value, gantt_section, gantt_section_title, gantt_title, gantt_title_value
 
@@ -838,13 +838,22 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "-." |
   "optionally to" { return EntityRelationship.NON_IDENTIFYING; }
 
+  // Subgraphs, added to erDiagram in mermaid 11.17. Declared ahead of the identifier rule, which matches
+  // these words at the same length: among equal-length matches JFlex prefers the rule declared first. As in
+  // flowcharts, that costs entities literally named `subgraph` or `end`, which upstream cannot name either.
+  "subgraph" { return Flowchart.SUBGRAPH; }
+  "end" { return END; }
+
   [a-zA-Z_][\w\-\.]* { return ID; }
   [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
 
   ":" { yypushstate(relationship_description); return COLON; }
   "{" { yybegin(entity_attributes); return OPEN_CURLY; }
 
-  "[" { return OPEN_SQUARE; }
+  // Bracketed text is an entity alias (`PERSON["Person Entity"]`) or a subgraph title (`subgraph id [A title]`).
+  // Both are free text, and the cardinality keywords this state is otherwise full of -- `1`, `one`, `many`,
+  // `to` -- are ordinary words inside them, so the content gets its own state rather than being lexed here.
+  "[" { yypushstate(er_subgraph_title); return OPEN_SQUARE; }
   "]" { return CLOSE_SQUARE; }
 }
 <entity_attributes> {
@@ -863,6 +872,14 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [^\s\"]+ { return LABEL; }
   [^\S\r\n]+ { return WHITE_SPACE; }
   [\n\r] { yybegin(entity_relationship); return EOL; }
+}
+<er_subgraph_title> {
+  [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
+  "]" { yypopstate(); return CLOSE_SQUARE; }
+  [^\s\"\]]+ { return LABEL; }
+  [^\S\r\n]+ { return WHITE_SPACE; }
+  // An unclosed bracket ends with the line rather than swallowing the rest of the diagram.
+  [\n\r] { yypopstate(); return EOL; }
 }
 
 //---gantt------------------------------------------------------------------------

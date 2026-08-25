@@ -5,12 +5,12 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface MermaidErIdentifierAlias extends MermaidPsiElement {
+public interface MermaidErSubgraphHeader extends MermaidPsiElement {
+
+  @NotNull
+  MermaidErIdentifier getErIdentifier();
 
   @Nullable
-  MermaidComplexLabel getComplexLabel();
-
-  @Nullable
-  MermaidString getString();
+  MermaidErIdentifierAlias getErIdentifierAlias();
 
 }

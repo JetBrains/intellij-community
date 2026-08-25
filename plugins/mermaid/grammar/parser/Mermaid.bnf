@@ -489,7 +489,8 @@ erHeader ::= ENTITY_RELATIONSHIP
 erBody ::= erLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 private erLines ::= erLine [erLines]
 private erLine ::= erStatement [EOL] | EOL
-private erStatement ::= erRelationStatement
+private erStatement ::= erSubgraphStatement
+  | erRelationStatement
   | entityDeclaration
   | erIdentifier [erStyleClass] [erIdentifierAlias]
   | directive
@@ -505,7 +506,16 @@ erIdentifier ::= ID | string {
   mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
 }
 
-erIdentifierAlias ::= OPEN_SQUARE (ID | string) CLOSE_SQUARE
+// Free text rather than a single token: entity aliases are quoted (`PERSON["Person Entity"]`), but the
+// subgraph titles added in mermaid 11.17 are not (`subgraph id1 [title 1]`).
+erIdentifierAlias ::= OPEN_SQUARE (complexLabel | maybeEmptyString) CLOSE_SQUARE
+
+// erDiagram subgraphs, mermaid 11.17. Modelled on the flowchart ones, and nesting the same way: the block
+// is the ordinary line list, which already includes this rule and `direction`, and stops at END because no
+// statement starts with it.
+erSubgraphStatement ::= erSubgraphHeader erSubgraphBlock? END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+erSubgraphHeader ::= SUBGRAPH erIdentifier [erIdentifierAlias]
+erSubgraphBlock ::= erLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 // `PERSON:::someclass` attaches a classDef class. Kept out of erIdentifier so the identifier's own text
 // stays just the name, which is what the named-element mixin exposes to rename and find-usages.
 erStyleClass ::= STYLE_SEPARATOR ID
