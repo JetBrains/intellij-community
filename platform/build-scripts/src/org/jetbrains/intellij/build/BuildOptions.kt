@@ -607,6 +607,7 @@ private fun computeInitialBuiltStepsToSkip(isInDevelopmentMode: Boolean): Set<St
   if (isInDevelopmentMode) {
     result.add(BuildOptions.MAC_SIGN_STEP)
     result.add(BuildOptions.MAC_NOTARIZE_STEP)
+    result.add(BuildOptions.WIN_SIGN_STEP)
   }
   // repair utility is unbundled for all IDEs
   result.add(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)
