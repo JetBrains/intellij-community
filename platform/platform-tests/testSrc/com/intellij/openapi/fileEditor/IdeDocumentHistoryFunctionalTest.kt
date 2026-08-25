@@ -24,9 +24,12 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.awaitPendingNavigation
 import com.intellij.testFramework.executeSomeCoroutineTasksAndDispatchAllInvocationEvents
+import io.ktor.server.routing.CompositeRouteSelector
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicReference
 
 internal class IdeDocumentHistoryFunctionalTest : HeavyFileEditorManagerTestCase() {
@@ -261,9 +264,7 @@ internal class IdeDocumentHistoryFunctionalTest : HeavyFileEditorManagerTestCase
       clearDocumentHistory()
 
       val entered = CompletableDeferred<Unit>()
-      @Suppress("UsagesOfObsoleteApi")
-      val scope = (project as ComponentManagerEx).getCoroutineScope()
-      val job = scope.launch {
+      val job = coroutineScope.launch {
         performNavigationHistoryAware(project) {
           entered.complete(Unit)
           awaitCancellation()
@@ -295,9 +296,7 @@ internal class IdeDocumentHistoryFunctionalTest : HeavyFileEditorManagerTestCase
 
     val entered = CompletableDeferred<Unit>()
     val release = CompletableDeferred<Unit>()
-    @Suppress("UsagesOfObsoleteApi")
-    val scope = (project as ComponentManagerEx).getCoroutineScope()
-    val job = scope.launch {
+    val job = coroutineScope.launch {
       performNavigationHistoryAware(project) {
         entered.complete(Unit)
         release.await()
@@ -326,11 +325,9 @@ internal class IdeDocumentHistoryFunctionalTest : HeavyFileEditorManagerTestCase
       val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
       clearDocumentHistory()
 
-      @Suppress("UsagesOfObsoleteApi")
-      val scope = (project as ComponentManagerEx).getCoroutineScope()
       val result = AtomicReference<Boolean>()
       val requests = listOf(createNavigationRequest(target1, 0), createNavigationRequest(target2, 0))
-      scope.launch {
+      coroutineScope.launch {
         result.set(project.serviceAsync<NavigationService>().navigate(requests, NavigationOptions.defaultOptions()))
       }
 
@@ -348,9 +345,7 @@ internal class IdeDocumentHistoryFunctionalTest : HeavyFileEditorManagerTestCase
 
   fun testEmptyRequestBatchReturnsFalse() {
     val result = AtomicReference<Boolean>()
-    @Suppress("UsagesOfObsoleteApi")
-    val scope = (project as ComponentManagerEx).getCoroutineScope()
-    scope.launch {
+    coroutineScope.launch {
       result.set(
         project.serviceAsync<NavigationService>().navigate(
           emptyList<NavigationRequest>(),
@@ -361,6 +356,51 @@ internal class IdeDocumentHistoryFunctionalTest : HeavyFileEditorManagerTestCase
 
     waitUntil("Navigation result was not produced") { result.get() != null }
     assertThat(result.get()).isFalse()
+  }
+
+  fun testNavigationWhichOpenedNothingLetsAnOlderPreparationToApply() {
+    withNavigationRequests(isAsync = true) {
+      val directory = myFixture.tempDirFixture.findOrCreateDir("directory")
+      val target = myFixture.addFileToProject("target.txt", "target").virtualFile
+      myFixture.configureByText("source.txt", "source<caret>")
+      val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
+      clearDocumentHistory()
+
+      val preparing = CompletableDeferred<Unit>()
+      val releasePreparation = CompletableDeferred<Unit>()
+      val targetRequest = createNavigationRequest(target, 0)
+      val scope = coroutineScope
+      val olderResult = AtomicReference<Boolean>()
+      scope.launch {
+        olderResult.set(
+          project.serviceAsync<NavigationService>().navigateRequests(NavigationOptions.defaultOptions()) {
+            preparing.complete(Unit)
+            releasePreparation.await()
+            listOf(targetRequest)
+          }
+        )
+      }
+      waitUntil("Older navigation did not start resolving its targets") { preparing.isCompleted }
+
+      // a directory request under `sourceNavigationOnly` takes the turn and then opens nothing
+      val sourceOnlyResult = AtomicReference<Boolean>()
+      scope.launch {
+        sourceOnlyResult.set(
+          project.serviceAsync<NavigationService>().navigate(
+            listOf(createDirectoryNavigationRequest(directory)),
+            NavigationOptions.defaultOptions().sourceNavigationOnly(true),
+          )
+        )
+      }
+      waitUntil("Source-only navigation result was not produced") { sourceOnlyResult.get() != null }
+      assertThat(sourceOnlyResult.get()).isFalse()
+
+      releasePreparation.complete(Unit)
+      waitUntil("Older navigation did not open its target") { fileEditorManager.isFileOpen(target) }
+      waitUntil("Older navigation result was not produced") { olderResult.get() != null }
+      assertThat(olderResult.get()).isTrue()
+      assertThat(IdeDocumentHistory.getInstance(project).getBackPlaces()).hasSize(1)
+    }
   }
 
   fun testBatchOpensFirstHandledSourceInRightSplit() {
@@ -376,10 +416,8 @@ internal class IdeDocumentHistoryFunctionalTest : HeavyFileEditorManagerTestCase
         createNavigationRequest(target1, 0),
         createNavigationRequest(target2, 0),
       )
-      @Suppress("UsagesOfObsoleteApi")
-      val scope = (project as ComponentManagerEx).getCoroutineScope()
 
-      scope.launch {
+      coroutineScope.launch {
         result.set(
           project.serviceAsync<NavigationService>().navigate(
             requests,
@@ -405,8 +443,7 @@ internal class IdeDocumentHistoryFunctionalTest : HeavyFileEditorManagerTestCase
   fun testRequestedEditorNoneReachesANavigatableWhichNavigatesByItself() {
     withNavigationRequests(isAsync = true) {
       myFixture.configureByText("${getTestName(false)}.txt", "source<caret>")
-      @Suppress("UsagesOfObsoleteApi")
-      val scope = (project as ComponentManagerEx).getCoroutineScope()
+      val scope = coroutineScope
       val suppressed = AtomicReference<Boolean>()
       val navigatable = object : Navigatable {
         override fun navigate(requestFocus: Boolean) {
@@ -456,6 +493,10 @@ internal class IdeDocumentHistoryFunctionalTest : HeavyFileEditorManagerTestCase
       }
     }
   }
+
+  @Suppress("UsagesOfObsoleteApi")
+  private val coroutineScope: CoroutineScope
+    get() = (project as ComponentManagerEx).getCoroutineScope()
 
   private fun moveCaret4LinesDown() {
     for (i in 0..3) {

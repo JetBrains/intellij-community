@@ -8,6 +8,7 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.job
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicInteger
@@ -23,7 +24,8 @@ import java.util.concurrent.atomic.AtomicInteger
  * NB: used as a temporary step before clean async editor open separation, so that there is only `one` critical section
  * on `EDT`.
  */
-internal class TwoPhaseOverflowExecutor {
+@ApiStatus.Internal
+class TwoPhaseOverflowExecutor {
   private val applyMutex: Mutex = Mutex()
 
   private val lastTaskId: AtomicInteger = AtomicInteger()
