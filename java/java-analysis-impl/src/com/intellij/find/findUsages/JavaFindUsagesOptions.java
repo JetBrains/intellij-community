@@ -1,17 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
-import com.ibm.icu.text.ListFormatter;
 import com.intellij.DynamicBundle;
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.text.ListFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public abstract class JavaFindUsagesOptions extends PersistentFindUsagesOptions {
@@ -84,7 +84,8 @@ public abstract class JavaFindUsagesOptions extends PersistentFindUsagesOptions 
     }
     return formatOrList(strings);
   }
-  private static @NotNull @Nls String formatOrList(Collection<?> list) {
-    return ListFormatter.getInstance(DynamicBundle.getLocale(), ListFormatter.Type.OR, ListFormatter.Width.WIDE).format(list);
+  private static @NotNull @Nls String formatOrList(List<String> list) {
+    @NlsSafe String formatted = ListFormat.getInstance(DynamicBundle.getLocale(), ListFormat.Type.OR, ListFormat.Style.FULL).format(list);
+    return formatted;
   }
 }

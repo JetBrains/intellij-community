@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
-import com.ibm.icu.text.ListFormatter;
 import com.intellij.DynamicBundle;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
@@ -116,6 +115,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.ListFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -1472,8 +1472,11 @@ public final class TrackingRunner extends StandardDataFlowRunner {
   private @NotNull CauseItem fromSingleContract(@NotNull MemoryStateChange history, @NotNull PsiCallExpression call,
                                                 @NotNull PsiMethod method, @NotNull MethodContract contract) {
     List<ContractValue> conditions = contract.getConditions();
-    Collector<String, ?, @Nls String> collector = Collectors.collectingAndThen(Collectors.toList(), list -> ListFormatter.getInstance(
-      DynamicBundle.getLocale(), ListFormatter.Type.AND, ListFormatter.Width.WIDE).format(list));
+    Collector<String, ?, @Nls String> collector = Collectors.collectingAndThen(Collectors.toList(), list -> {
+      @NlsSafe String formatted =
+        list.isEmpty() ? "" : ListFormat.getInstance(DynamicBundle.getLocale(), ListFormat.Type.STANDARD, ListFormat.Style.FULL).format(list);
+      return formatted;
+    });
     String conditionsText = conditions.stream().map(c -> c.getPresentationText(call)).collect(collector);
     String message;
     String objectType = JavaElementKind.fromElement(method).lessDescriptive().subject();
