@@ -68,9 +68,9 @@
       <with attribute="implementationClass" implements="com.intellij.debugger.engine.dfaassist.DfaAssistProvider"/>
     </extensionPoint>
 
-    <extensionPoint qualifiedName="com.intellij.debugger.trickyLineBreakpointLocationProvider" beanClass="com.intellij.lang.LanguageExtensionPoint"
+    <extensionPoint qualifiedName="com.intellij.debugger.specialLineBreakpointCaseProvider" beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.debugger.ui.breakpoints.JvmTrickyLineBreakpointLocationProvider"/>
+      <with attribute="implementationClass" implements="com.intellij.debugger.ui.breakpoints.JvmSpecialLineBreakpointCaseProvider"/>
     </extensionPoint>
 
     <extensionPoint qualifiedName="com.intellij.debugger.extraDebugNodesProvider"

@@ -5,7 +5,6 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfo
-import com.intellij.openapi.application.readAction
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointType
@@ -21,13 +20,13 @@ object JavaBreakpointsUsageCollector : CounterUsagesCollector() {
     RETURN,
   }
 
-  private val GROUP = EventLogGroup("debugger.breakpoints.usage.java", 2)
+  private val GROUP = EventLogGroup("debugger.breakpoints.usage.java", 3)
   private val LINE_BREAKPOINT_KIND_FIELD = EventFields.Enum<LineBreakpointKind>("kind")
-  private val LINE_BREAKPOINT_LOCATION_KIND_FIELD = EventFields.NullableEnum<TrickyLineBreakpointLocation>("location_kind")
+  private val LINE_BREAKPOINT_SPECIAL_CASE_FIELD = EventFields.NullableEnum<SpecialLineBreakpointCase>("special_case")
   private val LINE_BREAKPOINT_ADDED = GROUP.registerEvent("line.breakpoint.added",
                                                           EventFields.PluginInfo,
                                                           LINE_BREAKPOINT_KIND_FIELD,
-                                                          LINE_BREAKPOINT_LOCATION_KIND_FIELD)
+                                                          LINE_BREAKPOINT_SPECIAL_CASE_FIELD)
 
   @JvmStatic
   fun reportNewBreakpoint(breakpoint: Breakpoint<*>, type: XBreakpointType<*, *>) {
@@ -48,8 +47,13 @@ object JavaBreakpointsUsageCollector : CounterUsagesCollector() {
       val line = xBreakpoint.line
       val coroutineScope = (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).coroutineScope
       coroutineScope.launch {
-        val location = readAction { getLineBreakpointLocation(project, fileUrl, line) }
-        LINE_BREAKPOINT_ADDED.log(project, pluginInfo, kind, location)
+        val specialCase = if (kind == LineBreakpointKind.LINE || kind == LineBreakpointKind.LINE_AND_LAMBDAS) {
+          getSpecialLineBreakpointCase(project, fileUrl, line)
+        }
+        else {
+          null
+        }
+        LINE_BREAKPOINT_ADDED.log(project, pluginInfo, kind, specialCase)
       }
     }
   }
