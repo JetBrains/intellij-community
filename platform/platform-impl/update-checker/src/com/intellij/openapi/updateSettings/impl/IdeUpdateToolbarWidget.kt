@@ -38,8 +38,9 @@ import javax.swing.JPanel
  * Shown only for updates from the release channel and only while [IdeUpdateWidgetState.isWidgetShown] holds,
  * see [UpdateSettingsEntryPointActionProvider].
  */
-internal class IdeUpdateToolbarWidget : DumbAwareAction(), CustomComponentAction, RightAlignedToolbarAction, NonCustomizableAction,
-                                        ActionRemoteBehaviorSpecification.Frontend {
+internal class IdeUpdateToolbarWidget :
+  DumbAwareAction(IdeBundle.message("update.toolbar.widget.text", ApplicationNamesInfo.getInstance().fullProductName)),
+  CustomComponentAction, RightAlignedToolbarAction, NonCustomizableAction, ActionRemoteBehaviorSpecification.Frontend {
 
   private val status: IdeUpdateWidgetState.Status
     get() = IdeUpdateWidgetState.getInstance().status.value
