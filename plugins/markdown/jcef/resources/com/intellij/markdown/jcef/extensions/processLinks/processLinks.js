@@ -4,6 +4,8 @@ if (window.__IntelliJTools === undefined) {
 }
 
 (function() {
+  const guard = window.__IntelliJTools.clickGuard;
+
   const openInExternalBrowser = (href) => {
     try {
       window.__IntelliJTools.messagePipe.post("openLink", href);
@@ -11,7 +13,7 @@ if (window.__IntelliJTools === undefined) {
     finally {}
   };
 
-  window.__IntelliJTools.processClick = function(link) {
+  window.__IntelliJTools.processClick = function(link, event) {
     if (!hasHrefAttribute(link)) {
       return false;
     }
@@ -25,7 +27,8 @@ if (window.__IntelliJTools === undefined) {
       }
     }
     else {
-      openInExternalBrowser(href);
+      const needsConfirmation = event === undefined || !guard.isGenuineClickInside(event, link);
+      openInExternalBrowser(guard.confirmationFlag(needsConfirmation) + ":" + href);
     }
     return false;
   };
@@ -43,7 +46,7 @@ if (window.__IntelliJTools === undefined) {
         return false;
       }
       e.stopPropagation();
-      return window.__IntelliJTools.processClick(target);
+      return window.__IntelliJTools.processClick(target, e);
     }
   };
 

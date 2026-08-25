@@ -42,6 +42,7 @@ import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.ui.preview.BrowserPipe
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
+import org.intellij.plugins.markdown.ui.preview.PreviewClickConfirmation
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
 import org.jetbrains.annotations.ApiStatus
@@ -178,7 +179,7 @@ class CommandRunnerExtension(
       val cmdHash: String = parts.getOrElse(1) { "" }
       val x = parts.getOrNull(2)?.toIntOrNull() ?: 0
       val y = parts.getOrNull(3)?.toIntOrNull() ?: 0
-      val needsConfirmation = parts.getOrNull(4) == NEEDS_CONFIRMATION
+      val needsConfirmation = parts.getOrNull(4) == PreviewClickConfirmation.NEEDS_CONFIRMATION
       val command = hash2Cmd[cmdHash]
       if (command == null) {
         LOG.error("Command index not found. Please attach .md file to error report.")
@@ -245,7 +246,7 @@ class CommandRunnerExtension(
       val trimmedCmd = trimPrompt(command)
       val x = args[3].toDoubleOrNull()?.toInt() ?: 0
       val y = args[4].toDoubleOrNull()?.toInt() ?: 0
-      val needsConfirmation = args.getOrNull(5) == NEEDS_CONFIRMATION
+      val needsConfirmation = args.getOrNull(5) == PreviewClickConfirmation.NEEDS_CONFIRMATION
       if (needsConfirmation) {
         confirmThenRun(trimmedCmd) {
           executeBlock(trimmedCmd, executorId, x, y)
@@ -310,7 +311,6 @@ class CommandRunnerExtension(
     private const val RUN_BLOCK_EVENT = "runBlock"
     private const val RUN_LINE_ICON = "commandRunner/run.png"
     private const val RUN_BLOCK_ICON = "commandRunner/runrun.png"
-    private const val NEEDS_CONFIRMATION = "1"
 
     const val extensionId = "MarkdownCommandRunnerExtension"
 

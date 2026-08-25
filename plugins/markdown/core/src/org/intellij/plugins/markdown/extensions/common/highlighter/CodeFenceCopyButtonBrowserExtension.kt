@@ -5,12 +5,17 @@ import com.intellij.icons.AllIcons
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.WindowManager
+import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
 import org.intellij.plugins.markdown.ui.preview.BrowserPipe
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
+import org.intellij.plugins.markdown.ui.preview.PreviewClickConfirmation
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import org.intellij.plugins.markdown.ui.preview.html.PreviewEncodingUtil
 import java.awt.datatransfer.StringSelection
@@ -20,9 +25,13 @@ internal class CodeFenceCopyButtonBrowserExtension(panel: MarkdownHtmlPanel, bro
   init {
     browserPipe.subscribe("copy-button/copy", object : BrowserPipe.Handler {
       override fun processMessageReceived(data: String): Boolean {
-        val content = PreviewEncodingUtil.decodeContent(data)
+        val (needsConfirmation, encodedContent) = PreviewClickConfirmation.parseFlagPrefixed(data) ?: return true
+        val content = PreviewEncodingUtil.decodeContent(encodedContent)
         val project = panel.project
         invokeLater {
+          if (needsConfirmation && !confirmCopy(project, content)) {
+            return@invokeLater
+          }
           CopyPasteManager.getInstance().setContents(StringSelection(content))
           if (project != null) {
             val statusBar = WindowManager.getInstance().getStatusBar(project)
@@ -33,6 +42,18 @@ internal class CodeFenceCopyButtonBrowserExtension(panel: MarkdownHtmlPanel, bro
         return project == null
       }
     })
+  }
+
+  private fun confirmCopy(project: Project?, content: String): Boolean {
+    return MessageDialogBuilder
+      .yesNo(
+        MarkdownBundle.message("markdown.preview.copy.confirm.title"),
+        MarkdownBundle.message("markdown.preview.copy.confirm.message", StringUtil.shortenTextWithEllipsis(content.trim(), 200, 0))
+      )
+      .icon(Messages.getWarningIcon())
+      .yesText(MarkdownBundle.message("markdown.preview.copy.confirm.copy"))
+      .noText(Messages.getCancelButton())
+      .ask(project)
   }
 
   override val resourceProvider = this
