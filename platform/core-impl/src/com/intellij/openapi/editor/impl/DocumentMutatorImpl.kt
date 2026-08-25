@@ -308,6 +308,9 @@ internal abstract class DocumentMutatorImpl(
     changeEvent: DocumentEvent,
     patch: DocumentTextPatch,
   ): DocumentSnapshot {
+    if (changeEvent is DocumentEventImpl) {
+      patch.attachLineDiff(changeEvent.lineDiff)
+    }
     assertNotNestedModification()
     val snapshotAfterChange: DocumentSnapshot
     textChangeInProgress = true

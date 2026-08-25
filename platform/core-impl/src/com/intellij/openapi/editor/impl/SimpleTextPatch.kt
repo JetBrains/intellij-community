@@ -10,6 +10,8 @@ internal open class SimpleTextPatch(
   private val newModStamp: Long,
   private val clearLineFlags: Boolean,
 ) : DocumentTextPatch {
+  internal var lineDiff: DocumentLineDiff? = null
+
   final override fun startOffset(): Int = startOffset
   final override fun endOffset(): Int = endOffset
   final override fun newFragment(): CharSequence = newFragment

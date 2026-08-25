@@ -184,6 +184,9 @@ internal abstract class DocumentElfMutator(
     changeEvent: DocumentEvent,
     patch: DocumentTextPatch,
   ): DocumentSnapshot {
+    if (changeEvent is DocumentEventImpl) {
+      patch.attachLineDiff(changeEvent.lineDiff)
+    }
     assertNotNestedModification()
     val snapshotAfter: DocumentSnapshot
     textChangeInProgress = true

@@ -4,17 +4,11 @@ package com.intellij.openapi.editor.impl.event;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.ex.LineIterator;
+import com.intellij.openapi.editor.impl.DocumentLineDiff;
 import com.intellij.openapi.editor.impl.LineSet;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
-import com.intellij.util.text.MergingCharSequence;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class DocumentEventImpl extends DocumentEvent {
   private final int myOffset;
@@ -25,15 +19,11 @@ public class DocumentEventImpl extends DocumentEvent {
 
   private final long myOldTimeStamp;
   private final boolean myIsWholeDocReplaced;
-  private Diff.Change myChange;
-  private static final Diff.Change TOO_BIG_FILE = new Diff.Change(0, 0, 0, 0, null);
+  private final @NotNull DocumentLineDiff myLineDiff;
 
   private final int myInitialStartOffset;
   private final int myInitialOldLength;
   private final int myMoveOffset;
-
-  private LineSet myOldFragmentLineSet;
-  private int myOldFragmentLineSetStart;
 
   @ApiStatus.Internal
   public DocumentEventImpl(@NotNull Document document,
@@ -62,6 +52,7 @@ public class DocumentEventImpl extends DocumentEvent {
     myOldTimeStamp = oldTimeStamp;
 
     myIsWholeDocReplaced = textLength != 0 && wholeTextReplaced;
+    myLineDiff = new DocumentLineDiff(offset, oldString, newString);
     assert initialStartOffset >= 0 : initialStartOffset;
     assert initialOldLength >= 0 : initialOldLength;
     assert moveOffset == offset || myOldLength == 0 || myNewLength == 0 : this;
@@ -131,71 +122,21 @@ public class DocumentEventImpl extends DocumentEvent {
     return myIsWholeDocReplaced;
   }
 
+  @ApiStatus.Internal
+  public @NotNull DocumentLineDiff getLineDiff() {
+    return myLineDiff;
+  }
+
   public int translateLineViaDiff(int line) throws FilesTooBigForDiffException {
-    Diff.Change change = reBuildDiffIfNeeded();
-    if (change == null) return line;
-
-    int startLine = getDocument().getLineNumber(getOffset());
-    line -= startLine;
-    int newLine = line;
-
-    while (change != null) {
-      if (line < change.line0) break;
-      if (line >= change.line0 + change.deleted) {
-        newLine += change.inserted - change.deleted;
-      }
-      else {
-        int delta = Math.min(change.inserted, line - change.line0);
-        newLine = change.line1 + delta;
-        break;
-      }
-
-      change = change.link;
-    }
-
-    return newLine + startLine;
+    Document document = getDocument();
+    int startLine = document.getLineNumber(myLineDiff.getChangeStartOffset());
+    return myLineDiff.translateLine(line, startLine, document.getImmutableCharSequence());
   }
 
   public int translateLineViaDiffStrict(int line) throws FilesTooBigForDiffException {
-    Diff.Change change = reBuildDiffIfNeeded();
-    if (change == null) return line;
-    int startLine = getDocument().getLineNumber(getOffset());
-    if (line < startLine) return line;
-    int translatedRelative = Diff.translateLine(change, line - startLine);
-    return translatedRelative < 0 ? -1 : translatedRelative + startLine;
-  }
-
-  // line numbers in Diff.Change are relative to change start
-  private Diff.Change reBuildDiffIfNeeded() throws FilesTooBigForDiffException {
-    if (myChange == TOO_BIG_FILE) throw new FilesTooBigForDiffException();
-    if (myChange == null) {
-      String[] oldLines = getOldLines();
-      String[] newLines = Diff.splitLines(myNewString);
-      try {
-        myChange = Diff.buildChanges(oldLines, newLines);
-      }
-      catch (FilesTooBigForDiffException e) {
-        myChange = TOO_BIG_FILE;
-        throw e;
-      }
-    }
-    return myChange;
-  }
-
-  private String @NotNull [] getOldLines() {
-    createOldFragmentLineSetIfNeeded();
-    int offsetDiff = myOffset - myOldFragmentLineSetStart;
-    LineIterator lineIterator = myOldFragmentLineSet.createIterator();
-    List<String> lines = new ArrayList<>(myOldFragmentLineSet.getLineCount());
-    while (!lineIterator.atEnd()) {
-      int start = lineIterator.getStart() - offsetDiff;
-      int end = lineIterator.getEnd() - lineIterator.getSeparatorLength() - offsetDiff;
-      if (start >= 0 && end <= myOldString.length()) {
-        lines.add(myOldString.subSequence(start, end).toString());
-      }
-      lineIterator.advance();
-    }
-    return lines.isEmpty() ? new String[] {""} : ArrayUtil.toStringArray(lines);
+    Document document = getDocument();
+    int startLine = document.getLineNumber(myLineDiff.getChangeStartOffset());
+    return myLineDiff.translateLineStrict(line, startLine, document.getImmutableCharSequence());
   }
 
 
@@ -206,37 +147,21 @@ public class DocumentEventImpl extends DocumentEvent {
    * {@link Document#getLineNumber(int)}, if that call would be performed before the document change.
    */
   public int getLineNumberBeforeUpdate(int offsetBeforeUpdate) {
-    createOldFragmentLineSetIfNeeded();
     Document document = getDocument();
-    if (offsetBeforeUpdate <= myOldFragmentLineSetStart) {
+    CharSequence afterText = document.getImmutableCharSequence();
+    LineSet oldFragmentLineSet = myLineDiff.getOldFragmentLineSet(afterText);
+    int oldFragmentLineSetStart = myLineDiff.getOldFragmentLineSetStart(afterText);
+    if (offsetBeforeUpdate <= oldFragmentLineSetStart) {
       return document.getLineNumber(offsetBeforeUpdate);
     }
-    int oldFragmentLineSetEnd = myOldFragmentLineSetStart + myOldFragmentLineSet.getLength();
+    int oldFragmentLineSetEnd = oldFragmentLineSetStart + oldFragmentLineSet.getLength();
     if (offsetBeforeUpdate <= oldFragmentLineSetEnd) {
-      return document.getLineNumber(myOldFragmentLineSetStart) +
-             myOldFragmentLineSet.findLineIndex(offsetBeforeUpdate - myOldFragmentLineSetStart);
+      return document.getLineNumber(oldFragmentLineSetStart) +
+             oldFragmentLineSet.findLineIndex(offsetBeforeUpdate - oldFragmentLineSetStart);
     }
     int shift = getNewLength() - getOldLength();
-    return document.getLineNumber(myOldFragmentLineSetStart) +
-           (myOldFragmentLineSetStart == oldFragmentLineSetEnd ? 0 : myOldFragmentLineSet.getLineCount() - 1) +
+    return document.getLineNumber(oldFragmentLineSetStart) +
+           (oldFragmentLineSetStart == oldFragmentLineSetEnd ? 0 : oldFragmentLineSet.getLineCount() - 1) +
            document.getLineNumber(offsetBeforeUpdate + shift) - document.getLineNumber(oldFragmentLineSetEnd + shift);
-  }
-
-  private void createOldFragmentLineSetIfNeeded() {
-    if (myOldFragmentLineSet != null) {
-      return;
-    }
-    CharSequence newText = getDocument().getImmutableCharSequence();
-    CharSequence oldFragment = getOldFragment();
-    myOldFragmentLineSetStart = getOffset();
-    if (myOldFragmentLineSetStart > 0 && newText.charAt(myOldFragmentLineSetStart - 1) == '\r') {
-      myOldFragmentLineSetStart--;
-      oldFragment = new MergingCharSequence("\r", oldFragment);
-    }
-    int newChangeEnd = getOffset() + getNewLength();
-    if (newChangeEnd < newText.length() && newText.charAt(newChangeEnd) == '\n') {
-      oldFragment = new MergingCharSequence(oldFragment, "\n");
-    }
-    myOldFragmentLineSet = LineSet.createLineSet(oldFragment);
   }
 }

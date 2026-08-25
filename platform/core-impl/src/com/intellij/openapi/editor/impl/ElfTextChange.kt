@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentTextPatch
+import com.intellij.openapi.editor.impl.event.DocumentEventImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.Command
 
@@ -24,4 +25,10 @@ internal class ElfTextChange(
   val commandName: @Command String?,
   val commandGroupId: Any?,
   val isTransparent: Boolean,
-)
+) {
+  init {
+    if (changeEvent is DocumentEventImpl) {
+      patch.attachLineDiff(changeEvent.lineDiff)
+    }
+  }
+}
