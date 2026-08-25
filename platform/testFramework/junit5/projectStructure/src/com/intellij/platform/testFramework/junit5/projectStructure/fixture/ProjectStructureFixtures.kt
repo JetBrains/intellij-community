@@ -54,18 +54,26 @@ fun TestFixture<Project>.withSharedSourceEnabled(): TestFixture<Project> = testF
  */
 @TestOnly
 fun TestFixture<Project>.sdkFixture(sdkName: String, type: SdkTypeId, pathFixture: TestFixture<Path>): TestFixture<Sdk> =
-  sdkFixtureImpl { jdkTable ->
-    val homePath = pathFixture.init()
-    val sdk = jdkTable.createSdk(sdkName, type)
-    val root = withContext(Dispatchers.IO) { VfsUtil.findFile(homePath, true)!! }
-    edtWriteAction {
-      val sdkModificator = sdk.sdkModificator
-      sdkModificator.homePath = homePath.pathString
-      sdkModificator.addRoot(root, OrderRootType.CLASSES)
-      sdkModificator.commitChanges()
-    }
-    return@sdkFixtureImpl sdk
+  sdkFixtureImpl { jdkTable -> createSdk(jdkTable, sdkName, type, homePath = pathFixture.init()) }
+
+/**
+ * Create SDK [sdkName] of [type] with [homePath] [Sdk.getHomePath] and register it in [ProjectJdkTable]
+ */
+@TestOnly
+internal fun TestFixture<Project>.sdkFixture(sdkName: String, type: SdkTypeId, homePath: Path): TestFixture<Sdk> =
+  sdkFixtureImpl { jdkTable -> createSdk(jdkTable, sdkName, type, homePath) }
+
+private suspend fun createSdk(jdkTable: ProjectJdkTable, sdkName: String, type: SdkTypeId, homePath: Path): Sdk {
+  val sdk = jdkTable.createSdk(sdkName, type)
+  val root = withContext(Dispatchers.IO) { VfsUtil.findFile(homePath, true)!! }
+  edtWriteAction {
+    val sdkModificator = sdk.sdkModificator
+    sdkModificator.homePath = homePath.pathString
+    sdkModificator.addRoot(root, OrderRootType.CLASSES)
+    sdkModificator.commitChanges()
   }
+  return sdk
+}
 
 /**
  * Create SDK using [sdkProvider] and register it in [ProjectJdkTable].
