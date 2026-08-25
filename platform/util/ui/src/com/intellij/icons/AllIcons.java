@@ -1331,7 +1331,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Snowflake = load("providers/snowflake.svg", -900289909, 0);
     /** 16x16 */ public static final @NotNull Icon Spark = load("providers/spark.svg", 505740135, 0);
     /** 16x16 */ public static final @NotNull Icon Sqlite = load("providers/sqlite.svg", -469619323, 2);
-    /** 16x16 */ public static final @NotNull Icon SqlServer = load("providers/sqlServer.svg", 2084040364, 0);
+    /** 16x16 */ public static final @NotNull Icon SqlServer = load("providers/sqlServer.svg", 487839144, 2);
     /** 16x16 */ public static final @NotNull Icon Sun = load("providers/sun.svg", -210021560, 2);
     /** 16x16 */ public static final @NotNull Icon Sybase = load("providers/sybase.svg", 174932757, 0);
     /** 16x16 */ public static final @NotNull Icon Tair = load("providers/tair.svg", 1322700262, 2);
