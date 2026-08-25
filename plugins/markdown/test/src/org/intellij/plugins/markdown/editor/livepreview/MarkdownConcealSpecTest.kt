@@ -1,25 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.editor.livepreview
 
+import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 class MarkdownConcealSpecTest: BasePlatformTestCase() {
-
-  private fun elements(content: String): List<MarkdownConcealElement> {
-    myFixture.configureByText("test.md", content)
-    val elements = computeConcealElements(myFixture.file)
-    for (element in elements) {
-      assertFalse("An element with nothing to conceal must not be reported: $element", element.conceals.isEmpty())
-      assertTrue("An element must contain the markup it conceals: $element", element.conceals.all { element.range.contains(it) })
-    }
-    return elements
-  }
-
-  private fun concealed(content: String): List<String> =
-    elements(content).flatMap { it.conceals }.map { content.substring(it.startOffset, it.endOffset) }
-
-  private fun revealRanges(content: String): List<String> =
-    elements(content).map { content.substring(it.range.startOffset, it.range.endOffset) }
 
   fun testEmphasisMarkersAreConcealed() {
     val content = "Some **bold**, *italic* and ~~gone~~ text"
@@ -109,14 +94,14 @@ class MarkdownConcealSpecTest: BasePlatformTestCase() {
     val elements = elements(content)
     assertEquals(listOf("-", "*", "+", "-"), concealed(content))
     assertEquals(listOf("- ", "* ", "+ ", "- "), revealRanges(content))
-    assertEquals(listOf("•", "◦", "▪", "•"), elements.map { it.placeholderText })
+    assertEquals(listOf("•", "◦", "▪", "•"), elements.map { (it as MarkdownLivePreviewSpec.Bullet).placeholderText })
   }
 
   fun testOrderedListParentsCountTowardsBulletDepth() {
     val content = "1. one\n   - two"
     val elements = elements(content)
     assertEquals(listOf("-"), concealed(content))
-    assertEquals(listOf("◦"), elements.map { it.placeholderText })
+    assertEquals(listOf("◦"), elements.map { (it as MarkdownLivePreviewSpec.Bullet).placeholderText })
   }
 
   fun testOrderedAndTaskListMarkersAreNotConcealed() {
@@ -131,4 +116,36 @@ class MarkdownConcealSpecTest: BasePlatformTestCase() {
     """.trimMargin()
     assertEmpty(concealed(content))
   }
+
+  fun testThematicBreaksConcealTheirCompleteLines() {
+    val content = "---\n***\n___\n  *  *  *  \ntail"
+    val breaks = elements(content).filterIsInstance<MarkdownLivePreviewSpec.HorizontalRule>()
+
+    assertEquals(4, breaks.size)
+    assertEquals(listOf("---", "***", "___", "  *  *  *  "), breaks.map { content.substring(it.range.startOffset, it.range.endOffset) })
+    assertTrue(breaks.all { it.range.length > 0 })
+  }
+
+  private fun MarkdownLivePreviewSpec.concealedRanges(): List<TextRange> = when (this) {
+    is MarkdownLivePreviewSpec.Conceal -> conceals
+    is MarkdownLivePreviewSpec.HorizontalRule -> listOf(range)
+    is MarkdownLivePreviewSpec.Bullet -> listOf(concealRange)
+  }
+
+  private fun elements(content: String): List<MarkdownLivePreviewSpec> {
+    myFixture.configureByText("test.md", content)
+    val elements = computeLivePreviewSpecs(myFixture.file)
+    for (element in elements) {
+      val conceals = element.concealedRanges()
+      assertFalse("An element with nothing to conceal must not be reported: $element", conceals.isEmpty())
+      assertTrue("An element must contain the markup it conceals: $element", conceals.all { element.range.contains(it) })
+    }
+    return elements
+  }
+
+  private fun concealed(content: String): List<String> =
+    elements(content).flatMap { it.concealedRanges() }.map { content.substring(it.startOffset, it.endOffset) }
+
+  private fun revealRanges(content: String): List<String> =
+    elements(content).map { content.substring(it.range.startOffset, it.range.endOffset) }
 }

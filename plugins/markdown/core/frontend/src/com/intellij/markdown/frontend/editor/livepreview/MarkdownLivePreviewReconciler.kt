@@ -16,13 +16,23 @@ import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.FoldingKeys
+import com.intellij.openapi.editor.colors.CodeInsightColors
+import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
+import com.intellij.openapi.editor.markup.HighlighterLayer
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import com.intellij.ui.paint.LinePainter2D
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.intellij.plugins.markdown.editor.livepreview.MarkdownConcealSpecSet
+import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec
+import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecSet
+import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
 import org.intellij.plugins.markdown.settings.MarkdownSettings
+import java.awt.Graphics
+import java.awt.Graphics2D
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
@@ -32,6 +42,9 @@ import org.jetbrains.annotations.VisibleForTesting
  */
 @VisibleForTesting
 val MARKDOWN_LIVE_PREVIEW_REGION: Key<Boolean> = Key.create("markdown.live.preview.region")
+
+@VisibleForTesting
+val MARKDOWN_LIVE_PREVIEW_HORIZONTAL_RULE: Key<Boolean> = Key.create("markdown.live.preview.horizontal.rule")
 
 private val AllowedEditorKinds = setOf(EditorKind.MAIN_EDITOR, EditorKind.UNTYPED)
 
@@ -44,7 +57,7 @@ private val AllowedEditorKinds = setOf(EditorKind.MAIN_EDITOR, EditorKind.UNTYPE
 @ApiStatus.Internal
 class MarkdownLivePreviewReconciler private constructor(private val editor: EditorEx): Disposable {
 
-  private var specSet: MarkdownConcealSpecSet? = null
+  private var specSet: MarkdownLivePreviewSpecSet? = null
 
   /**
    * The regions we own, keyed by the concealed range each was created for. The keys go stale as soon as the
@@ -52,6 +65,7 @@ class MarkdownLivePreviewReconciler private constructor(private val editor: Edit
    * themselves, and every path that trusts the keys first checks the spec set against the document stamp.
    */
   private val ownedRegions = HashMap<TextRange, FoldRegion>()
+  private val ownedHorizontalRules = HashMap<TextRange, RangeHighlighter>()
 
   /** Indices of the elements we have already revealed, so [revealNow] can act on the difference alone. */
   private var revealedElements = emptySet<Int>()
@@ -85,7 +99,7 @@ class MarkdownLivePreviewReconciler private constructor(private val editor: Edit
    * Called on the EDT once the highlighting pass has finished computing.
    */
   @RequiresEdt
-  fun publishSpecs(specSet: MarkdownConcealSpecSet) {
+  fun publishSpecs(specSet: MarkdownLivePreviewSpecSet) {
     ThreadingAssertions.assertEventDispatchThread()
     this.specSet = specSet
     reconcileNow()
@@ -108,13 +122,30 @@ class MarkdownLivePreviewReconciler private constructor(private val editor: Edit
     if (specSet.documentStamp != editor.document.modificationStamp) return
 
     val revealed = revealedElementIndices(specSet)
-    val desired = HashMap<TextRange, String?>()
-    specSet.elements.forEachIndexed { index, element ->
-      if (index !in revealed) {
-        element.conceals.forEach { desired[it] = element.placeholderText }
+    val (regions, horizontalRules) = buildOwnedState(specSet, revealed)
+    reconcileOwnedRegions(regions)
+    reconcileOwnedHorizontalRules(horizontalRules)
+    revealedElements = revealed
+  }
+
+  private fun buildOwnedState(specSet: MarkdownLivePreviewSpecSet, revealed: Set<Int>): OwnedState {
+    val regions = HashMap<TextRange, String?>()
+    val horizontalRules = HashSet<TextRange>()
+    specSet.elements.forEachIndexed { index, spec ->
+      if (index in revealed) return@forEachIndexed
+      when (spec) {
+        is MarkdownLivePreviewSpec.Conceal -> spec.conceals.forEach { regions[it] = null }
+        is MarkdownLivePreviewSpec.HorizontalRule -> {
+          regions[spec.range] = null
+          horizontalRules.add(spec.range)
+        }
+        is MarkdownLivePreviewSpec.Bullet -> regions[spec.concealRange] = spec.placeholderText
       }
     }
+    return OwnedState(regions, horizontalRules)
+  }
 
+  private fun reconcileOwnedRegions(desired: Map<TextRange, String?>) {
     // Re-key by where the regions actually are now, which is how a region survives an edit that only
     // shifted it, and how a region the clipboard brought back gets picked up instead of duplicated.
     val existing = HashMap<TextRange, FoldRegion>()
@@ -138,13 +169,30 @@ class MarkdownLivePreviewReconciler private constructor(private val editor: Edit
     }
     ownedRegions.clear()
     ownedRegions.putAll(next)
-    revealedElements = revealed
+  }
+
+  private fun reconcileOwnedHorizontalRules(desired: Set<TextRange>) {
+    val paintableRules = desired.filterTo(HashSet()) { range ->
+      ownedRegions[range]?.let { it.isValid && it.placeholderText.isEmpty() } == true
+    }
+    val existingRules = HashMap<TextRange, RangeHighlighter>()
+    for (highlighter in ownedHorizontalRules.values) {
+      if (highlighter.isValid) existingRules[highlighter.textRange] = highlighter
+    }
+    existingRules.filterKeys { it !in paintableRules }.values.forEach { it.dispose() }
+    val nextRules = HashMap<TextRange, RangeHighlighter>()
+    for (range in paintableRules) {
+      existingRules[range]?.let { nextRules[range] = it } ?: createHorizontalRule(range)?.let { nextRules[range] = it }
+    }
+    ownedHorizontalRules.clear()
+    ownedHorizontalRules.putAll(nextRules)
   }
 
   // Deliberately not @RequiresEdt: Disposer may call this from any thread, and it only drops state.
   override fun dispose() {
     disposed = true
     ownedRegions.clear()
+    ownedHorizontalRules.clear()
     revealedElements = emptySet()
     specSet = null
   }
@@ -170,18 +218,34 @@ class MarkdownLivePreviewReconciler private constructor(private val editor: Edit
     val newlyRevealed = revealed - revealedElements
     if (newlyRevealed.isEmpty()) return
 
-    val toRemove = mutableListOf<Pair<TextRange, FoldRegion>>()
+    val rangesToRemove = HashSet<TextRange>()
     for (index in newlyRevealed) {
-      for (range in specSet.elements[index].conceals) {
-        val region = ownedRegions[range] ?: continue
-        if (region.isValid) toRemove.add(range to region)
+      when (val spec = specSet.elements[index]) {
+        is MarkdownLivePreviewSpec.Conceal -> rangesToRemove.addAll(spec.conceals)
+        is MarkdownLivePreviewSpec.HorizontalRule -> rangesToRemove.add(spec.range)
+        is MarkdownLivePreviewSpec.Bullet -> rangesToRemove.add(spec.concealRange)
       }
     }
-    if (toRemove.isNotEmpty()) {
-      runFoldBatch { toRemove.forEach { editor.foldingModel.removeFoldRegion(it.second) } }
-      toRemove.forEach { ownedRegions.remove(it.first) }
-    }
+    revealOwnedRegions(rangesToRemove)
+    revealOwnedHorizontalRules(rangesToRemove)
     revealedElements = revealedElements + newlyRevealed
+  }
+
+  private fun revealOwnedRegions(ranges: Set<TextRange>) {
+    val toRemove = ranges.mapNotNull { range ->
+      ownedRegions[range]?.takeIf { it.isValid }?.let { range to it }
+    }
+    if (toRemove.isEmpty()) return
+    runFoldBatch { toRemove.forEach { editor.foldingModel.removeFoldRegion(it.second) } }
+    toRemove.forEach { ownedRegions.remove(it.first) }
+  }
+
+  private fun revealOwnedHorizontalRules(ranges: Set<TextRange>) {
+    val toRemove = ownedHorizontalRules.filter { (range, highlighter) ->
+      range in ranges && highlighter.isValid
+    }
+    toRemove.values.forEach { it.dispose() }
+    toRemove.keys.forEach { ownedHorizontalRules.remove(it) }
   }
 
   private fun scheduleReconcile() {
@@ -206,7 +270,7 @@ class MarkdownLivePreviewReconciler private constructor(private val editor: Edit
    * Every caret is considered, which covers multiple carets and column selection alike: a column selection
    * is one caret per visual line, each with its own selection.
    */
-  private fun revealedElementIndices(specSet: MarkdownConcealSpecSet): Set<Int> {
+  private fun revealedElementIndices(specSet: MarkdownLivePreviewSpecSet): Set<Int> {
     val revealed = HashSet<Int>()
     for (caret in editor.caretModel.allCarets) {
       specSet.intersecting(caret.selectionStart, caret.selectionEnd, revealed)
@@ -239,10 +303,23 @@ class MarkdownLivePreviewReconciler private constructor(private val editor: Edit
 
   private fun removeAllOwned() {
     val regions = ownedRegions.values.filter { it.isValid }
+    ownedHorizontalRules.values.filter { it.isValid }.forEach { it.dispose() }
     ownedRegions.clear()
+    ownedHorizontalRules.clear()
     revealedElements = emptySet()
     if (regions.isEmpty()) return
     runFoldBatch { regions.forEach { editor.foldingModel.removeFoldRegion(it) } }
+  }
+
+  private fun createHorizontalRule(range: TextRange): RangeHighlighter? {
+    if (range.isEmpty) return null
+    return editor.markupModel.addRangeHighlighter(
+      MarkdownHighlighterColors.HRULE, range.startOffset, range.endOffset,
+      HighlighterLayer.ADDITIONAL_SYNTAX, HighlighterTargetArea.EXACT_RANGE,
+    ).also {
+      it.putUserData(MARKDOWN_LIVE_PREVIEW_HORIZONTAL_RULE, true)
+      it.customRenderer = MarkdownHorizontalRuleRenderer
+    }
   }
 
   /**
@@ -318,3 +395,47 @@ class MarkdownLivePreviewReconciler private constructor(private val editor: Edit
     fun getExisting(editor: Editor): MarkdownLivePreviewReconciler? = editor.getUserData(KEY)
   }
 }
+
+/**
+ * Paints a Markdown horizontal rule without participating in editor layout or input handling.
+ *
+ * The source line is concealed by a zero-width, never-expanding fold. A range highlighter is used only as
+ * a paint hook: unlike an inlay or a line marker, it does not reserve height, change hit testing, consume
+ * mouse events, or install an editor component. This keeps the normal caret and selection machinery in
+ * charge of revealing the source when the line is touched.
+ *
+ * The renderer cannot use the highlighter's logical range to determine the stripe width. The source may be
+ * longer than the viewport, may be soft-wrapped, and may be horizontally scrolled; the requested rule is
+ * always the width of the currently visible editor area. Likewise, geometry and color are read on every
+ * paint so ordinary editor repainting reflects scrolling, resizing, font changes, and color-scheme changes
+ * without dedicated listeners or cached state.
+ *
+ * The vertical position is the center of the existing visual line, so the stripe adds no line height. A
+ * child graphics context isolates the renderer's color and rendering state from other editor painters.
+ */
+private object MarkdownHorizontalRuleRenderer : CustomHighlighterRenderer {
+  override fun paint(editor: Editor, highlighter: RangeHighlighter, graphics: Graphics) {
+    if (editor.isDisposed || !highlighter.isValid) return
+    val visibleArea = editor.scrollingModel.visibleArea
+    if (visibleArea.width <= 0) return
+    val visualLine = editor.offsetToVisualPosition(highlighter.startOffset).line
+    val y = editor.visualLineToY(visualLine) + editor.lineHeight / 2
+    val scheme = editor.colorsScheme
+    val color = scheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR)
+      ?: highlighter.getTextAttributes(scheme)?.foregroundColor
+      ?: scheme.defaultForeground
+    val child = (graphics as? Graphics2D)?.create() as? Graphics2D ?: return
+    try {
+      child.color = color
+      LinePainter2D.paint(child, visibleArea.x.toDouble(), y.toDouble(),
+                          (visibleArea.x + visibleArea.width).toDouble(), y.toDouble())
+    } finally {
+      child.dispose()
+    }
+  }
+}
+
+private data class OwnedState(
+  val regions: Map<TextRange, String?>,
+  val horizontalRules: Set<TextRange>,
+)

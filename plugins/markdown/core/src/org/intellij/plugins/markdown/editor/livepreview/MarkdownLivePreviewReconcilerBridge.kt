@@ -2,7 +2,6 @@
 package org.intellij.plugins.markdown.editor.livepreview
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.annotations.ApiStatus
 
@@ -10,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface MarkdownLivePreviewReconcilerBridge {
   fun hasExistingReconciler(editor: Editor): Boolean
-  fun publish(editor: Editor, specSet: MarkdownConcealSpecSet): Boolean
+  fun publish(editor: Editor, specSet: MarkdownLivePreviewSpecSet): Boolean
 
   companion object {
     fun getInstance(): MarkdownLivePreviewReconcilerBridge? =

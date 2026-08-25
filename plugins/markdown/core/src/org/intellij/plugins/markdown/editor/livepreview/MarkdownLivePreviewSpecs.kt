@@ -36,7 +36,7 @@ private val NoDescendTypes: Set<IElementType> = setOf(
  * The leaf autolink tokens, which the parser does not wrap in an element of their own.
  *
  * `<name@example.org>` is parsed flat - the brackets are siblings of the address rather than a wrapper - and
- * a bare GFM autolink has no brackets at all, so [bracketedSiblingAutolinkConceals] tells them apart by
+ * a bare GFM autolink has no brackets at all, so [toAutolinkSpecs] tells them apart by
  * looking for the sibling brackets.
  */
 private val LeafAutolinkTypes: Set<IElementType> = setOf(
@@ -56,16 +56,16 @@ private const val BULLET_PLACEHOLDERS = "•◦▪"
  * Collects the markup to hide, skipping the subtrees named in [NoDescendTypes].
  */
 @ApiStatus.Internal
-fun computeConcealElements(file: PsiFile): List<MarkdownConcealElement> {
+fun computeLivePreviewSpecs(file: PsiFile): List<MarkdownLivePreviewSpec> {
   return SyntaxTraverser.psiTraverser(file)
     .expand { PsiUtilCore.getElementType(it) !in NoDescendTypes }
     .asSequence()
-    .mapNotNull { it.toConcealElement() }
+    .mapNotNull { it.toDecorationSpecs() }
     .sortedWith(compareBy({ it.range.startOffset }, { it.range.endOffset }))
     .toList()
 }
 
-private fun PsiElement.toConcealElement(): MarkdownConcealElement? {
+private fun PsiElement.toDecorationSpecs(): MarkdownLivePreviewSpec? {
   return when (PsiUtilCore.getElementType(this)) {
     // One `*` or `_` is one EMPH token, so `**bold**` has two of them on each side, and the token type is
     // shared by emphasis and strong. A nested emphasis element is a composite of a different type, so it
@@ -73,17 +73,36 @@ private fun PsiElement.toConcealElement(): MarkdownConcealElement? {
     MarkdownElementTypes.STRONG, MarkdownElementTypes.EMPH -> delimiterConceals(MarkdownTokenTypes.EMPH)
     MarkdownElementTypes.STRIKETHROUGH -> delimiterConceals(MarkdownTokenTypes.TILDE)
     MarkdownElementTypes.CODE_SPAN -> delimiterConceals(MarkdownTokenTypes.BACKTICK)
-    MarkdownElementTypes.INLINE_LINK -> inlineLinkConceals()
+    MarkdownElementTypes.INLINE_LINK -> toInlineLinkSpecs()
     // `<https://example.org>` becomes a composite holding the brackets, while `<name@example.org>` stays
     // flat and keeps them as siblings, so the two forms need different lookups.
-    MarkdownElementTypes.AUTOLINK -> wrappedAutolinkConceals()
-    in LeafAutolinkTypes -> bracketedSiblingAutolinkConceals()
-    MarkdownTokenTypes.LIST_BULLET -> unorderedListBulletConceal()
+    MarkdownElementTypes.AUTOLINK -> toAutolinkSpecs()
+    in LeafAutolinkTypes -> toAutolinkSpecs()
+    MarkdownTokenTypes.LIST_BULLET -> toBulletSpec()
+    MarkdownTokenTypes.HORIZONTAL_RULE -> toHorizontalRuleSpec()
+    MarkdownTokenTypes.SETEXT_2 -> toSetextCodeSpanUnderlineSpec()
     else -> null
   }
 }
 
-private fun PsiElement.unorderedListBulletConceal(): MarkdownConcealElement? {
+private fun PsiElement.toSetextCodeSpanUnderlineSpec(): MarkdownLivePreviewSpec? {
+  val header = parent?.takeIf { PsiUtilCore.getElementType(it) == MarkdownElementTypes.SETEXT_2 } ?: return null
+  val content = header.children.singleOrNull { PsiUtilCore.getElementType(it) == MarkdownTokenTypes.SETEXT_CONTENT } ?: return null
+  if (content.children.singleOrNull { PsiUtilCore.getElementType(it) == MarkdownElementTypes.CODE_SPAN } == null) return null
+  return toHorizontalRuleSpec()
+}
+
+private fun PsiElement.toHorizontalRuleSpec(): MarkdownLivePreviewSpec.HorizontalRule {
+  val contents = containingFile.viewProvider.contents
+  var start = (textRange.endOffset - 1).coerceAtLeast(textRange.startOffset)
+  while (start > 0 && contents[start - 1] != '\n') start--
+  var end = textRange.endOffset
+  while (end < contents.length && contents[end] != '\n') end++
+  val line = TextRange(start, end)
+  return MarkdownLivePreviewSpec.HorizontalRule(line)
+}
+
+private fun PsiElement.toBulletSpec(): MarkdownLivePreviewSpec.Bullet? {
   val listItem = parent?.takeIf { PsiUtilCore.getElementType(it) == MarkdownElementTypes.LIST_ITEM } ?: return null
   if (PsiUtilCore.getElementType(listItem.parent) != MarkdownElementTypes.UNORDERED_LIST ||
       PsiUtilCore.getElementType(nextSibling) == MarkdownTokenTypes.CHECK_BOX) {
@@ -94,29 +113,29 @@ private fun PsiElement.unorderedListBulletConceal(): MarkdownConcealElement? {
   val depth = generateSequence(listItem) { it.parent }
     .count { PsiUtilCore.getElementType(it) == MarkdownElementTypes.LIST_ITEM }
   val markerStart = textRange.startOffset + markerOffset
-  return MarkdownConcealElement(
+  return MarkdownLivePreviewSpec.Bullet(
     range = textRange,
-    conceals = listOf(TextRange(markerStart, markerStart + 1)),
+    concealRange = TextRange(markerStart, markerStart + 1),
     placeholderText = BULLET_PLACEHOLDERS[(depth - 1) % BULLET_PLACEHOLDERS.length].toString(),
   )
 }
 
 /** Hides the runs of [delimiter] that open and close this element, as in `**bold**` or `` `code` ``. */
-private fun PsiElement.delimiterConceals(delimiter: IElementType): MarkdownConcealElement? {
+private fun PsiElement.delimiterConceals(delimiter: IElementType): MarkdownLivePreviewSpec.Conceal? {
   val children = childList()
   val leading = children.takeWhile { PsiUtilCore.getElementType(it) == delimiter }
   val trailing = children.takeLastWhile { PsiUtilCore.getElementType(it) == delimiter }
   if (leading.isEmpty() || trailing.isEmpty()) return null
   // The element is malformed or empty, and the two runs are the same tokens.
   if (leading.last().textRange.endOffset > trailing.first().textRange.startOffset) return null
-  return concealElement(
+  return inlineConceal(
     TextRange(leading.first().textRange.startOffset, leading.last().textRange.endOffset),
     TextRange(trailing.first().textRange.startOffset, trailing.last().textRange.endOffset),
   )
 }
 
 /** Hides `[` and `](destination)` of `[title](destination)`, leaving the title as plain text. */
-private fun PsiElement.inlineLinkConceals(): MarkdownConcealElement? {
+private fun PsiElement.toInlineLinkSpecs(): MarkdownLivePreviewSpec.Conceal? {
   val linkText = childList().firstOrNull { PsiUtilCore.getElementType(it) == MarkdownElementTypes.LINK_TEXT } ?: return null
   val textChildren = linkText.childList()
   val openBracket = textChildren.firstOrNull()?.takeIf { PsiUtilCore.getElementType(it) == MarkdownTokenTypes.LBRACKET } ?: return null
@@ -126,40 +145,30 @@ private fun PsiElement.inlineLinkConceals(): MarkdownConcealElement? {
   if (closeBracket.textRange.startOffset <= openBracket.textRange.endOffset || end <= closeBracket.textRange.startOffset) {
     return null
   }
-  return concealElement(openBracket.textRange, TextRange(closeBracket.textRange.startOffset, end))
+  return inlineConceal(openBracket.textRange, TextRange(closeBracket.textRange.startOffset, end))
 }
 
-/** Hides the angle brackets of a wrapped autolink such as `<https://example.org>`. */
-private fun PsiElement.wrappedAutolinkConceals(): MarkdownConcealElement? {
+/** Hides the angle brackets of wrapped and flat autolinks. */
+private fun PsiElement.toAutolinkSpecs(): MarkdownLivePreviewSpec.Conceal? {
   val range = textRange
-  if (range.length < 2) return null
   val text = text
-  if (!text.startsWith('<') || !text.endsWith('>')) return null
-  return concealElement(
-    TextRange(range.startOffset, range.startOffset + 1),
-    TextRange(range.endOffset - 1, range.endOffset),
-  )
-}
-
-/**
- * Hides the angle brackets around an autolink that the parser left flat, as in `<name@example.org>`.
- *
- * The element covering the whole autolink is the bracket pair itself, so revealing works the same way as
- * for the wrapped form. A bare autolink has no brackets and is left alone.
- */
-private fun PsiElement.bracketedSiblingAutolinkConceals(): MarkdownConcealElement? {
+  if (range.length >= 2 && text.startsWith('<') && text.endsWith('>')) {
+    return inlineConceal(
+      TextRange(range.startOffset, range.startOffset + 1),
+      TextRange(range.endOffset - 1, range.endOffset),
+    )
+  }
   val openBracket = prevSibling?.takeIf { PsiUtilCore.getElementType(it) == MarkdownTokenTypes.LT } ?: return null
   val closeBracket = nextSibling?.takeIf { PsiUtilCore.getElementType(it) == MarkdownTokenTypes.GT } ?: return null
-  return MarkdownConcealElement(
+  return MarkdownLivePreviewSpec.Conceal(
     range = TextRange(openBracket.textRange.startOffset, closeBracket.textRange.endOffset),
     conceals = listOf(openBracket.textRange, closeBracket.textRange),
-    placeholderText = null
   )
 }
 
-private fun PsiElement.concealElement(vararg conceals: TextRange): MarkdownConcealElement? {
+private fun PsiElement.inlineConceal(vararg conceals: TextRange): MarkdownLivePreviewSpec.Conceal? {
   val ranges = conceals.filterNot { it.isEmpty }
-  return if (ranges.isEmpty()) null else MarkdownConcealElement(textRange, ranges, null)
+  return if (ranges.isEmpty()) null else MarkdownLivePreviewSpec.Conceal(textRange, ranges)
 }
 
 private fun PsiElement.childList(): List<PsiElement> = node.getChildren(null).map { it.psi }

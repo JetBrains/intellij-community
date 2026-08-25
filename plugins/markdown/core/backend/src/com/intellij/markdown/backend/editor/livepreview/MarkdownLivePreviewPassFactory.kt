@@ -13,9 +13,9 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
-import org.intellij.plugins.markdown.editor.livepreview.MarkdownConcealSpecSet
+import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecSet
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewReconcilerBridge
-import org.intellij.plugins.markdown.editor.livepreview.computeConcealElements
+import org.intellij.plugins.markdown.editor.livepreview.computeLivePreviewSpecs
 import org.intellij.plugins.markdown.lang.isMarkdownLanguage
 
 private val LIVE_PREVIEW_DOCUMENT_STAMP: Key<Long> = Key.create("markdown.live.preview.document.stamp")
@@ -52,10 +52,10 @@ internal class MarkdownLivePreviewPassFactory:
 private class MarkdownLivePreviewPass(editor: Editor, psiFile: PsiFile):
   EditorBoundHighlightingPass(editor, psiFile, false), DumbAware {
 
-  private var specSet: MarkdownConcealSpecSet? = null
+  private var specSet: MarkdownLivePreviewSpecSet? = null
 
   override fun doCollectInformation(progress: ProgressIndicator) {
-    specSet = MarkdownConcealSpecSet(myEditor.document.modificationStamp, computeConcealElements(myFile))
+    specSet = MarkdownLivePreviewSpecSet(myEditor.document.modificationStamp, computeLivePreviewSpecs(myFile))
   }
 
   override fun doApplyInformationToEditor() {

@@ -9,6 +9,8 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.impl.FoldingKeys
+import com.intellij.markdown.frontend.editor.livepreview.MARKDOWN_LIVE_PREVIEW_HORIZONTAL_RULE
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.PlatformTestUtil
@@ -174,6 +176,44 @@ class MarkdownLivePreviewFoldingTest: BasePlatformTestCase() {
     assertEquals("Folding must not touch the document", content.removeSuffix("<caret>"), myFixture.editor.document.text)
   }
 
+  fun testThematicBreaksUseEmptyFoldsAndOwnedRules() {
+    val content = "---\n***\n___\ntail"
+    configure("$content<caret>")
+
+    assertEquals(3, thematicBreakHighlighters().size)
+    assertEquals(listOf("---", "***", "___"), concealed())
+    assertEquals(content, myFixture.editor.document.text)
+  }
+
+  fun testThematicBreakRevealsAndRestores() {
+    val content = "---\ntail"
+    configure("$content<caret>")
+    val rule = thematicBreakHighlighters().single()
+
+    moveCaretTo(rule.startOffset)
+    assertEmpty(concealed())
+    assertEmpty(thematicBreakHighlighters())
+    assertEquals(content, myFixture.editor.document.text)
+
+    moveCaretTo(content.length)
+    assertEquals(listOf("---"), concealed())
+    assertEquals(1, thematicBreakHighlighters().size)
+  }
+
+  fun testThematicBreakDoesNotConcealInlineCodeOnThePreviousLine() {
+    val content = "`---`\n---\ntail"
+    configure("$content<caret>")
+
+    assertEquals(listOf("`---`", "---"), computeLivePreviewSpecs(myFixture.file).map {
+      content.substring(it.range.startOffset, it.range.endOffset)
+    })
+    assertEquals(1, thematicBreakHighlighters().size)
+    assertEquals(listOf("", "", ""), concealedLivePreviewRegions(myFixture.editor).map { it.placeholderText })
+    assertEquals("---\n\ntail", visibleText())
+    assertEquals(1, thematicBreakHighlighters().size)
+    assertEquals(listOf("`", "`", "---"), concealed())
+  }
+
   fun testSelectingEverythingRevealsEverything() {
     val content = "Some **bold** and `code`"
     configure(content)
@@ -182,14 +222,6 @@ class MarkdownLivePreviewFoldingTest: BasePlatformTestCase() {
     assertEquals(content, myFixture.editor.selectionModel.selectedText)
   }
 
-  /**
-   * `BackspaceAction` looks for a collapsed region one character behind the caret and deletes the whole of
-   * it, and that lookup counts a region ending exactly there as a hit - so a caret one character past
-   * `**bold**` would take both asterisks out in a single keystroke. It never gets the chance: the action
-   * first moves the caret one column left, onto the element's end offset, and the reveal that runs
-   * synchronously in the caret listener removes the region before the action goes looking for it. This is
-   * what makes a dedicated backspace handler unnecessary, so the test is here to keep it that way.
-   */
   fun testBackspacePastAnElementDeletesOneCharacter() {
     val content = "**bold** x"
     configure(content)
@@ -233,7 +265,7 @@ class MarkdownLivePreviewFoldingTest: BasePlatformTestCase() {
     val diffEditor = EditorFactory.getInstance().createEditor(document, project, myFixture.file.virtualFile, false, EditorKind.DIFF)
     try {
       val reconciler = MarkdownLivePreviewReconciler.getOrCreate(diffEditor)!!
-      reconciler.publishSpecs(MarkdownConcealSpecSet(document.modificationStamp, computeConcealElements(myFixture.file)))
+      reconciler.publishSpecs(MarkdownLivePreviewSpecSet(document.modificationStamp, computeLivePreviewSpecs(myFixture.file)))
       assertEmpty("A diff editor must show the raw source", concealed(diffEditor))
     }
     finally {
@@ -262,12 +294,12 @@ class MarkdownLivePreviewFoldingTest: BasePlatformTestCase() {
     val editor = myFixture.editor
     PsiDocumentManager.getInstance(project).commitAllDocuments()
     val reconciler = MarkdownLivePreviewReconciler.getOrCreate(editor)!!
-    val elements = computeConcealElements(myFixture.file)
+    val elements = computeLivePreviewSpecs(myFixture.file)
 
-    reconciler.publishSpecs(MarkdownConcealSpecSet(editor.document.modificationStamp - 1, elements))
+    reconciler.publishSpecs(MarkdownLivePreviewSpecSet(editor.document.modificationStamp - 1, elements))
     assertEmpty("Specs computed from an older document must be declined", concealed())
 
-    reconciler.publishSpecs(MarkdownConcealSpecSet(editor.document.modificationStamp, elements))
+    reconciler.publishSpecs(MarkdownLivePreviewSpecSet(editor.document.modificationStamp, elements))
     assertEquals(listOf("**", "**"), concealed())
   }
 
@@ -318,5 +350,10 @@ class MarkdownLivePreviewFoldingTest: BasePlatformTestCase() {
   private fun concealedLivePreviewRegions(editor: Editor): List<FoldRegion> =
     editor.foldingModel.allFoldRegions
       .filter { it.isValid && it.getUserData(MARKDOWN_LIVE_PREVIEW_REGION) == true }
+      .sortedWith(compareBy({ it.startOffset }, { it.endOffset }))
+
+  private fun thematicBreakHighlighters(): List<RangeHighlighter> =
+    myFixture.editor.markupModel.allHighlighters
+      .filter { it.isValid && it.getUserData(MARKDOWN_LIVE_PREVIEW_HORIZONTAL_RULE) == true }
       .sortedWith(compareBy({ it.startOffset }, { it.endOffset }))
 }
