@@ -321,10 +321,18 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
      */
     val bundlingRestrictions: PluginBundlingRestrictions.Builder = PluginBundlingRestrictions.Builder()
 
+    /**
+     * Excludes a module-level library from the plugin. This shouldn't be used in new code; mark the dependency as 'Provided' instead.
+     */
+    @Obsolete
     fun excludeModuleLibrary(libraryName: String, moduleName: String) {
       layout.excludedModuleLibraries.computeIfAbsent(moduleName) { ArrayList() }.add(libraryName)
     }
 
+    /**
+     * Excludes a module-level library from the plugin. This shouldn't be used in new code; mark the dependency as 'Provided' instead.
+     */
+    @Obsolete
     fun excludeProjectLibrary(libraryName: String) {
       layout.excludeProjectLibrary(libraryName)
     }
@@ -385,6 +393,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
      * Pattern is relative to plugin root directory.
      * Example: withExecutable("lib/native/fsnotifier")
      */
+    @Deprecated("Use per-platform [withPlatformExecutable] instead")
     fun withExecutable(pattern: String) {
       val allPlatforms = listOf(
         SupportedDistribution(OsFamily.LINUX, JvmArchitecture.x64, LinuxLibcImpl.GLIBC),
@@ -571,7 +580,11 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     /**
      * This plugin will be compatible with IDE versions with the same two digits of the build number.
      * See [org.jetbrains.intellij.build.CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE]
+     *
+     * It's better not to use this option: such a compatibility range is already used for EAP builds; for release builds it's better to keep the plugin compatible with newer IDE
+     * builds so users won't be forced to update it when installing a bug-fix update even if nothing is changed in the plugin.
      */
+    @Obsolete
     fun pluginCompatibilitySameRelease() {
       layout.pluginCompatibilitySameRelease = true
     }

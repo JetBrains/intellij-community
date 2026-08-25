@@ -18,5 +18,6 @@ enum class CompatibleBuildRange {
   /**
    * A plugin will be compatible with all IDE builds from the same baseline, i.e., with 163.* builds.
    */
+  @Deprecated("It's dangerous to make a plugin compatible with older IDE builds from the same baseline")
   ANY_WITH_SAME_BASELINE
 }
