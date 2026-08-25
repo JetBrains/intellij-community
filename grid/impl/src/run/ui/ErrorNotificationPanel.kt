@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.NlsActions
@@ -161,7 +162,8 @@ class ErrorNotificationPanel private constructor(
     private var type: MessageType = MessageType.ERROR
     private var hideErrorAction: Runnable? = null
 
-    private var isChoppedMessage = false
+    var isChoppedMessage: Boolean = false
+      private set
 
     init {
       errorMessage = when {
@@ -203,11 +205,16 @@ class ErrorNotificationPanel private constructor(
       }
     }
 
-    fun addFullMessageButtonIfNeeded(): Builder {
-      if (!isChoppedMessage) return this
-      return addLink(DataGridBundle.message("action.full.message.text"), KeyEvent.VK_F, Runnable {
+    fun addCopyButton(): Builder {
+      return addLink(DataGridBundle.message("action.copy.text"), KeyEvent.VK_Y) {
+        CopyPasteManager.copyTextToClipboard(message ?: errorMessage ?: "")
+      }
+    }
+
+    fun addFullMessageButton(): Builder {
+      return addLink(DataGridBundle.message("action.full.message.text"), KeyEvent.VK_F) {
         ErrorNotificationPopup(DataGridBundle.message("action.full.message.text"), error, message).show()
-      })
+      }
     }
 
     fun addCloseButton(action: Runnable?): Builder {
@@ -280,7 +287,7 @@ class ErrorNotificationPanel private constructor(
     }
   }
 
-  private class EmptySpace() : PanelItem {
+  private class EmptySpace : PanelItem {
     override fun buildComponent(): JComponent {
       return Box.createRigidArea(JBDimension(1, 20)) as JComponent
     }
