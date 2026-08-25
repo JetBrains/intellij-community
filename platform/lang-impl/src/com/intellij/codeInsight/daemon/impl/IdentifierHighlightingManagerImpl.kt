@@ -48,9 +48,9 @@ import org.jetbrains.annotations.ApiStatus
  * - the [com.intellij.codeInsight.highlighting.BackgroundHighlighter] starts the identifier highlighting activity in the background
  * - which calls [getMarkupData]
  * - which checks if the information for the current offset is already computed (i.e. exists [IdentifierHighlightingResult] where target range markers overlap with caret position)
- * - if not found, the call [IdentifierHighlightingAccessor.getMarkupData] which either
- * --- calls [IdentifierHighlightingComputer.computeRanges] directly in the local monolith case which computes all the necessary ranges by doing resolve/find usages etc., see [IdentifierHighlightingAccessorImpl]
- * --- or calls RPC to the server, see [com.intellij.platform.identifiers.highlighting.frontend.split.ThinIdentifierHighlightingAccessor]
+ * - if not found, the call [IdentifierHighlightingAccessor.getMarkupData] is made which either
+ *     - calls [IdentifierHighlightingComputer.computeRanges] directly in the local monolith case which computes all the necessary ranges by doing resolve/find usages etc., see [IdentifierHighlightingAccessorImpl]
+ *     - or calls RPC to the server, see [com.intellij.platform.identifiers.highlighting.frontend.split.ThinIdentifierHighlightingAccessor]
  */
 @ApiStatus.Internal
 class IdentifierHighlightingManagerImpl(private val myProject: Project) : IdentifierHighlightingManager, Disposable {
