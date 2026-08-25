@@ -37,6 +37,11 @@ fun TestFixture<SdkFixture<PyEnvironment>>.pyVenvFixture(
     val venvDir = workingDirectory.resolve(".venv")
     val venvPython = createVenv(env.pythonPath, venvDir).getOrThrow()
     val additionalData = createVenvAdditionalData(workingDirectory)
+    if (module == null) {
+      // With no module this fixture stands for a *shared* venv, so it must not keep the association a new SDK derives
+      // from its working directory: sortForExistingEnvironment only treats an unassociated SDK as SHARED_VENVS.
+      additionalData.associatedModulePath = null
+    }
     val venvSdk = createSdk(
       PathHolder.Eel(venvPython),
       additionalData,

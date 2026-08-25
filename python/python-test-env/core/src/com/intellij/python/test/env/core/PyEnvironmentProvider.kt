@@ -35,7 +35,9 @@ interface PyEnvironment : AutoCloseable {
 
   suspend fun prepareSdk(): Sdk = withContext(Dispatchers.IO) {
     val vfsFile = VfsUtil.findFile(pythonPath, true) ?: error("Cannot find Python executable: ${pythonPath}")
-    val data = PythonSdkAdditionalData(osSpecificSdkFlavorAndData, envPath)
+    // The environment belongs to no project, and its working directory is the env dir rather than a module base dir:
+    // drop the association the constructor derives from it. Fixtures that want one call setAssociationToModule.
+    val data = PythonSdkAdditionalData(osSpecificSdkFlavorAndData, envPath).apply { associatedModulePath = null }
     SdkConfigurationUtil.setupSdk(emptyArray(), vfsFile,
                                   SdkType.findByName(PyNames.PYTHON_SDK_ID_NAME)!!, data, null)
   }

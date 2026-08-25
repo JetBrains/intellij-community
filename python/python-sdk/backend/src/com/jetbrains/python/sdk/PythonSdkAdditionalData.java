@@ -98,6 +98,18 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   public PythonSdkAdditionalData(@Nullable PyFlavorAndData<?, ?> flavorAndData, @NotNull Path workingDirectory) {
     this(flavorAndData);
     setWorkingDirectory(workingDirectory);
+    // A freshly created SDK belongs to the project it was created for, so it is associated with it by default: the
+    // creation routes pass the module base dir (or the project base path when there is no module) as the working
+    // directory, which is exactly the path the association stores. Deserialization goes through the
+    // no-working-directory constructor and `load`, so a stored SDK keeps whatever association it was saved with,
+    // including none.
+    // Whoever builds an SDK that belongs to no project -- a mock, or a bare environment whose working directory is the
+    // interpreter's own directory rather than a project dir -- must clear this, otherwise the SDK's own subdirectories
+    // are classified as project-local (see findSdkOwnerModuleAndRoots). Use `setAssociationToPath(null)` after
+    // creation, or `setAssociatedModulePath(null)` before the data is committed.
+    if (hasValidWorkingDirectory()) {
+      setAssociatedModulePath(workingDirectory.toString());
+    }
   }
 
   /**
