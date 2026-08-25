@@ -16,6 +16,7 @@ import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
+import org.jetbrains.annotations.VisibleForTesting
 
 suspend fun Module.findPythonVirtualEnvironments(): List<PythonBinary> {
   val venvsInModule = this.baseDir?.let {
@@ -38,7 +39,8 @@ suspend fun Module.findPythonVirtualEnvironments(): List<PythonBinary> {
 @ApiStatus.Internal
 interface PyProjectSdkConfigurationExtension {
   companion object {
-    private val EP_NAME: ExtensionPointName<PyProjectSdkConfigurationExtension> =
+    @VisibleForTesting
+    val EP_NAME: ExtensionPointName<PyProjectSdkConfigurationExtension> =
       ExtensionPointName.create("Pythonid.projectSdkConfigurationExtension")
     private val CONCURRENCY_LIMIT = Semaphore(permits = 5)
 

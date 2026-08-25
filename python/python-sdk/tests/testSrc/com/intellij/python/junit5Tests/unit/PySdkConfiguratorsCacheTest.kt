@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.unit
 
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.junit5Tests.framework.pyModuleFixture
@@ -25,8 +24,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.concurrent.atomic.AtomicInteger
 
-private val EP_NAME: ExtensionPointName<PyProjectSdkConfigurationExtension> =
-  ExtensionPointName.create("Pythonid.projectSdkConfigurationExtension")
 
 /**
  * The shared cache over the SDK configurators.
@@ -45,7 +42,7 @@ internal class PySdkConfiguratorsCacheTest {
   /** When set, a probe blocks on it, so callers can be made to arrive while one is still running. */
   private var gate: CompletableDeferred<Unit>? = null
 
-  private val countingConfigurator by extensionPointFixture(EP_NAME) {
+  private val countingConfigurator by extensionPointFixture(PyProjectSdkConfigurationExtension.EP_NAME) {
     object : PyProjectSdkConfigurationExtension {
       override val toolId: ToolId = ToolId("counting-test-tool")
       override val potentialDependencyFiles: Set<String> = emptySet()

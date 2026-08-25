@@ -2,16 +2,15 @@
 package com.intellij.python.junit5Tests.unit
 
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.guessModuleDir
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntilAssertSucceeds
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.disposableFixture
-import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.testFramework.junit5.fixture.pathInProjectFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
@@ -43,8 +42,8 @@ class PyInterpreterInspectionTest {
   fun setUp() {
     sourceRootFixture.get()
     ExtensionTestUtil.maskExtensions(
-      ExtensionPointName.create("Pythonid.projectSdkConfigurationExtension"),
-      emptyList<PyProjectSdkConfigurationExtension>(),
+      PyProjectSdkConfigurationExtension.EP_NAME,
+      emptyList(),
       testDisposable,
     )
   }
