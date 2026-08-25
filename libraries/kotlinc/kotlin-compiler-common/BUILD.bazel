@@ -14,16 +14,16 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlinc-kotlin-compiler-common"],
+    exports = ["@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common"],
     runtime_deps = [
         # do not sort,
-        "@lib//:kotlinc-kotlin-compiler-common",
+        "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common",
         "//java/java-frontback-psi-api:frontback-psi",
     ],
 )
 
 content_module_jar(
-    libraries = ["@lib//:kotlinc-kotlin-compiler-common"],
+    libraries = ["@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common"],
     module = ":libraries-kotlinc-kotlin-compiler-common",
 )
 
@@ -37,7 +37,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.kotlinc.kotlin.compiler.common",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlinc-kotlin-compiler-common"],
+    exports = ["@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common"],
     runtime_deps = [
         # do not sort,
         ":libraries-kotlinc-kotlin-compiler-common",
