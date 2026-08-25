@@ -386,10 +386,11 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
 
         Pair<Set<String>, Set<TextWithImports>> usedVars = EMPTY_USED_VARS;
         if (sourcePosition != null) {
-          usedVars = ReadAction.compute(
+          usedVars = ReadAction.nonBlocking(
             () -> DumbService.isDumb(debugProcess.getProject())
                   ? EMPTY_USED_VARS
-                  : findReferencedVars(ContainerUtil.union(visibleVariables.keySet(), visibleLocals), sourcePosition));
+                  : findReferencedVars(ContainerUtil.union(visibleVariables.keySet(), visibleLocals), sourcePosition))
+            .executeSynchronously();
         }
         // add locals
         if (myAutoWatchMode) {
