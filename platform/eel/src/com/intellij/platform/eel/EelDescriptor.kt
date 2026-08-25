@@ -30,15 +30,35 @@ interface EelDescriptorWithoutNativeFileChooserSupport : EelDescriptor
 interface EelDescriptorWithIsolatedWorkspace : EelDescriptor
 
 /**
- * Marker interface that indicates ssh agent forwarding by default
+ * Whether the local ssh agent may answer a request from the environment without asking the user,
+ * see [EelDescriptorWithSshForwardingEnabled.sshForwardingConsent].
+ */
+@ApiStatus.Internal
+enum class SshForwardingConsentPolicy {
+  /** Forward silently. Fits a local and short-lived environment, a Docker container for instance. */
+  SILENT,
+
+  /** Ask the user before the local agent answers a request from the environment. */
+  ASK,
+}
+
+/**
+ * Marker interface that indicates ssh agent forwarding by default.
+ *
+ * The socket is always exported to the environment; [sshForwardingConsent] decides whether the local agent answers the
+ * requests coming from it silently or only after the user allows them.
  */
 @ApiStatus.OverrideOnly
 @ApiStatus.Internal
 @VisibleToClasses(
   "com.intellij.docker.ijent.DockerEelDescriptor",
+  "com.intellij.platform.ijent.ssh.SshEelDescriptor",
   "com.intellij.platform.ijent.ssh.impl.IjentSshAgentForwardingService",
 )
-interface EelDescriptorWithSshForwardingEnabled : EelDescriptor
+interface EelDescriptorWithSshForwardingEnabled : EelDescriptor {
+  /** Silent by default, so that an environment which does not override it keeps the behaviour it had before consent existed. */
+  val sshForwardingConsent: SshForwardingConsentPolicy get() = SshForwardingConsentPolicy.SILENT
+}
 
 /**
  * The deployment of this environment can ask for user interaction, for example an SSH authentication dialog.
