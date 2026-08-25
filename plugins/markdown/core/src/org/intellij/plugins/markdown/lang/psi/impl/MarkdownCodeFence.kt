@@ -75,11 +75,12 @@ class MarkdownCodeFence(elementType: IElementType): MarkdownCodeFenceImpl(elemen
 
     override fun decode(rangeInsideHost: TextRange, outChars: StringBuilder): Boolean {
       val contentMask = obtainFenceContentMask(myHost)
+      val hostText = myHost.text
       val sourceOffsets = IntArray(rangeInsideHost.length + 1)
       var decodedLength = 0
       for (hostOffset in rangeInsideHost.startOffset until rangeInsideHost.endOffset) {
         if (!contentMask[hostOffset]) continue
-        outChars.append(myHost.text[hostOffset])
+        outChars.append(hostText[hostOffset])
         if (decodedLength == 0) {
           sourceOffsets[0] = hostOffset - rangeInsideHost.startOffset
         }
