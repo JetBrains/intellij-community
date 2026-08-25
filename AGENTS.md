@@ -12,27 +12,36 @@ repository: monorepo
 
 ## Project Invariants
 
-- Module/plugin directories may contain their own AGENTS/CLAUDE instructions; follow them when present.
-- `*.iml` files are the source of truth and auto-generate `BUILD.bazel` files.
-- When adding or editing a JPS module `.iml`, run `bun build/jps-module.mjs register <path-to-iml> --fix-iml-eof` before `./build/jpsModelToBazel.cmd`. This keeps `.idea/modules.xml` and `community/.idea/modules.xml` in canonical order.
+- A module or plugin directory can hold its own AGENTS or CLAUDE instructions. Follow them when they are present.
+- `*.iml` files are the source of truth. They generate the `BUILD.bazel` files.
+- Register a new or edited JPS module `.iml` with `bun build/jps-module.mjs register <path-to-iml> --fix-iml-eof`, then run `./build/jpsModelToBazel.cmd`. Never edit `.idea/modules.xml` by hand. The command keeps both `modules.xml` files in canonical order: by `.iml` basename without the suffix, as `org.jetbrains.intellij.build.ModulesXml` does.
 - User-visible strings belong in `*.properties` for localization.
+
+## Writing
+
+Write every user-visible artifact in [ASD-STE100 Simplified Technical English](https://www.asd-ste100.org/), and keep it short. This covers comments, KDoc and doc strings, commit messages, documentation, specs, and the reports and summaries you write for the user. Use the active voice and a simple tense, state one topic per sentence, write positively, and use no noun cluster longer than three words. The five that catch most of the damage here:
+
+- Keep a sentence at or under 25 words. `AirSpecReferencesTest` enforces that number on a tagged spec.
+- Make an aside its own sentence. Do not put it between dashes.
+- Keep the articles. Write "the session", not "session".
+- One term per concept. Never introduce a synonym for a term the area already defines.
+- Say what you left out and why. Do not pad a report to look complete.
 
 ## Workspace Isolation
 
-Do not create ad hoc Git worktrees or clones, or install a workspace manager, on your own initiative. Before any workspace-isolation action, read and follow [Workspace Isolation](./.ai/workspace-isolation.md), which also covers the explicit-request exception.
+Do not create a Git worktree or a clone, and do not install a workspace manager, on your own initiative. Read [Workspace Isolation](./.ai/workspace-isolation.md) before any workspace-isolation action. It also covers the explicit-request exception.
 
 ## Module-specific rules
 
-For files under these roots, read the referenced rules before edits or reviews; they override conflicting general guidance.
+Read the referenced rules before you edit or review a file under these roots. They override the general guidance here.
 
 - **Product DSL** (`platform/build-scripts/product-dsl/`): follow its `AGENTS.md`.
 - **IJ Proxy MCP server** (`community/build/mcp-servers/ij-proxy/`):
   - Tests: run `bun run build` and `bun test`.
-  - Bazel: do not run Bazel build and tests here.
-- **AI Assistant activation** (`plugins/llm/activation/`):
-  - Activation: follow `plugins/llm/activation/.ai/guidelines.md` before edits or reviews.
+  - Bazel: do not run a Bazel build or test here.
+- **AI Assistant activation** (`plugins/llm/activation/`): follow `plugins/llm/activation/.ai/guidelines.md`.
 - **Toolbox** (`toolbox/`):
-  - Tests: never use `./tests.cmd`; see `toolbox/.ai/index.md` for Gradle/Bazel test commands.
+  - Tests: never use `./tests.cmd`. See `toolbox/.ai/index.md` for the Gradle and Bazel test commands.
   - Build: use `./bazel.cmd build //toolbox/...` instead of `./bazel-build-all.cmd`.
 - **PyCharm** (`./python`): use `./python/.ai/index.md`.
 
@@ -40,53 +49,39 @@ For files under these roots, read the referenced rules before edits or reviews; 
 
 ### After Code Changes
 
-- **Run affected tests:** `./tests.cmd --module <module> --test <FQN or wildcard>` (**FQN required; simple class names do not match; always specify the test module directly**), or `node --test <file>` for `*.test.mjs`.
-  `tests.cmd` performs Bazel compilation internally, so a separate `bazel build` step is not needed when tests will be run.
-  Module-specific rules may override the runner. Skip if plugin has no tests. See [TESTING](./.agents/skills/testing/SKILL.md).
-- **Bazel compilation without tests:** when only verifying compilation (no tests to run), use `bazel build <target>` for affected modules. Skip if only `.js`, `.mjs`, `.md`, `.txt`, or `.json` files are modified.
-- After modifying Bazel/Starlark sources (`BUILD`, `BUILD.bazel`, `MODULE.bazel`, `WORKSPACE`, `WORKSPACE.bazel`, or `*.bzl`), run `bazel run //:format.check`. If it reports diffs, run `bazel run //:format`, inspect the changes, and rerun the check.
-- After modifying `*.iml`, `BUILD.bazel`, or `.idea/` files: run `./build/jpsModelToBazel.cmd`.
+- **Run the affected tests:** `./tests.cmd --module <module> --test <FQN or wildcard>`, or `node --test <file>` for a `*.test.mjs` file. An FQN is required, and a simple class name matches nothing. Always name the test module. `tests.cmd` compiles with Bazel itself, so a separate `bazel build` step is not needed. A module rule can override the runner. Skip this when the plugin has no tests. See [TESTING](./.agents/skills/testing/SKILL.md).
+- **Bazel compilation without tests:** to verify compilation only, run `bazel build <target>` for the affected modules. Skip this when you changed only `.js`, `.mjs`, `.md`, `.txt`, or `.json` files.
+- After you change a Bazel or Starlark source (`BUILD`, `BUILD.bazel`, `MODULE.bazel`, `WORKSPACE`, `WORKSPACE.bazel`, or `*.bzl`), run `bazel run //:format.check`. If it reports a diff, run `bazel run //:format`, inspect the changes, and run the check again.
+- After you change an `*.iml`, a `BUILD.bazel`, or a `.idea/` file, run `./build/jpsModelToBazel.cmd`.
 
 ### After Writing Code
 
-- Use `lint_files` to check files for warnings when ijproxy or JetBrains MCP is available.
-  Fix any warnings related to the code changes made. You may ignore unrelated warnings.
+- Use `lint_files` to check the files for warnings when ijproxy or JetBrains MCP is available. Fix every warning that belongs to your changes. You can ignore an unrelated warning.
 
 ## Repository-wide rules
 
-Preserve IDE-serialized .iml files in canonical form. Do not:
+Keep IDE-serialized `.iml` files in canonical form. Do not:
 
-- add comments
+- add a comment
 - auto-format
-- normalize (structure or whitespace)
-- add a trailing newline at end of file
-- prune (remove) empty tags
-- reorder elements or attributes
-
-Use `bun build/jps-module.mjs register <path-to-iml> --fix-iml-eof` for module registration and `.iml` EOF cleanup instead of hand-editing `.idea/modules.xml`. The canonical `modules.xml` order is by `.iml` basename without the `.iml` suffix, matching `org.jetbrains.intellij.build.ModulesXml`.
+- normalize the structure or the whitespace
+- add a trailing newline at the end of the file
+- remove an empty tag
+- reorder an element or an attribute
 
 ## Tools
 
-Never use the `code-search` skill; the search tools below replace it.
+Never use the `code-search` skill. The search tools below replace it.
 
 ### Search & navigation (ijproxy preferred)
 
-Default to `search_symbol` for classes, methods, and fields; use `search_text` and `search_regex` mainly for strings, comments, and other non-symbol matches.
+Use `search_symbol` for a class, a method, or a field. Use `search_file` to find a file by glob. Use `search_text` and `search_regex` for a string, a comment, or another match that is not a symbol.
 
-Codex exposes these as `mcp__ijproxy__<name>`; inspect the deferred tool catalog (`ALL_TOOLS`) for them before using a shell or non-ijproxy fallback.
-
-- Search symbols: `search_symbol`
-- Find files (glob): `search_file`
-- Search text: `search_text`
-- Search regex: `search_regex`
-
-### Client fallback (no MCP)
-
-- **No MCP:** use `./tools/fd.cmd` (file search) and `./tools/rg.cmd` (text/regex search) as shell search fallbacks.
+Codex exposes these as `mcp__ijproxy__<name>`. Inspect the deferred tool catalog (`ALL_TOOLS`) for them before you use a shell or a non-ijproxy fallback.
 
 ### IDE-backed semantic tools
 
-Available via ijproxy or JetBrains MCP. Prefer a real refactoring over manual search/replace.
+Available through ijproxy or JetBrains MCP. Prefer a real refactoring over a manual search and replace.
 
 - Inspections & symbol info: `lint_files`, `get_symbol_info`
 - Refactors: `rename` (ijproxy) / `rename_refactoring` (JetBrains MCP)
@@ -97,18 +92,17 @@ Available via ijproxy or JetBrains MCP. Prefer a real refactoring over manual se
 
 ### Tooling rules
 
-- For content/symbol **search** and semantic operations, prefer ijproxy; fall back to JetBrains MCP, then to the client fallback, only when ijproxy is unavailable.
-- Don't shell for file **search** on repo paths, and expect this to be enforced: the `Glob` and `Grep` tools are denied outright, and so are the `grep` and `find` commands, in every pipeline position. Pipe into `./tools/rg.cmd` instead of `| grep` -- it reads stdin. Use ijproxy search, or `./tools/fd.cmd` and `./tools/rg.cmd` when no MCP is available.
-- The repo's documented wrapper commands are allowlisted, so prefer them over a hand-rolled equivalent: a spelling the list knows runs without a prompt, a novel one does not. The list is `community/.ai/tool-permissions.json`, rendered into each harness's own config; add an entry there and rerun `bazel run @community//.ai:render-guides` rather than editing a harness allowlist by hand.
-- Shell is allowed where explicitly documented above and for git (prefer `git_status` if the tool is available), build/test.
-- Outside the working copy, shell access is task-scoped, not general clearance. Read what this repo's tooling produced or what the user or a skill named: build output, an IDE sandbox (`system/`, `config/`, `idea.log`), a tool cache, a VM workspace a skill documents. Do not survey the machine — no listing or reading home, `~/Downloads`, other checkouts, mail, browser or messaging data — and when a step fails, report it rather than going to look for an artifact nobody named. If the task genuinely needs a path outside that set, ask first.
-- Search outside the repo still goes through `./tools/rg.cmd` and `./tools/fd.cmd` (absolute paths OK), never native `grep`/`find`.
-- Windows/PowerShell exception: do not pass literal shell metacharacters such as `<`, `>`, `|`, or `&` through `.cmd` search wrappers, even inside quotes. For `rg.cmd` alternation, use repeated `-e` patterns (`./tools/rg.cmd -n -e "foo" -e "bar" path/to/file.kt`) instead of `"foo|bar"`. For single-file conflict-marker checks, use `Select-String -SimpleMatch -Pattern '<<<<<<<','=======','>>>>>>>' -Path <file>` instead of retrying `rg.cmd` with different quoting.
-- `fd.cmd` and `rg.cmd` skip dot-directories by default. Agent assets live in `.agents/`, `.claude/`, `.junie/`, `.opencode/` — pass `-H` (`--hidden`) when looking for skills, guidelines, or hooks, or you will conclude they do not exist.
+- Prefer ijproxy for a content or symbol **search** and for a semantic operation. Fall back to JetBrains MCP, then to `./tools/fd.cmd` (files) and `./tools/rg.cmd` (text and regex), only when ijproxy is unavailable.
+- Do not shell out for a file **search**, inside the repo or outside it. This is enforced: the `Glob` and `Grep` tools are denied, and so are the `grep` and `find` commands in every pipeline position. An absolute path through the wrappers is fine. Pipe into `./tools/rg.cmd` instead of `| grep`, because it reads stdin.
+- `fd.cmd` and `rg.cmd` skip a dot-directory by default. Agent assets live in `.agents/`, `.claude/`, `.junie/`, and `.opencode/`. Pass `-H` (`--hidden`) to find a skill, a guideline, or a hook. Without it you will conclude they do not exist.
+- On Windows and PowerShell, do not pass a literal `<`, `>`, `|`, or `&` through a `.cmd` search wrapper, even inside quotes. For `rg.cmd` alternation, repeat `-e` (`./tools/rg.cmd -n -e "foo" -e "bar" path/to/file.kt`) instead of `"foo|bar"`. To check one file for conflict markers, use `Select-String -SimpleMatch -Pattern '<<<<<<<','=======','>>>>>>>' -Path <file>`.
+- Prefer a documented wrapper command over a hand-rolled equivalent. A spelling the allowlist knows runs without a prompt. A novel one does not. Add a new entry to `community/.ai/tool-permissions.json` and rerun `bazel run @community//.ai:render-guides`. Never edit a harness allowlist by hand.
+- Shell is allowed where this guide documents it, and for git, build, and test. Prefer `git_status` when that tool is available.
+- Outside the working copy, shell access is task-scoped. Read what this repo's tooling produced, or what the user or a skill named: build output, an IDE sandbox (`system/`, `config/`, `idea.log`), a tool cache, or a VM workspace a skill documents. Do not survey the machine. Do not list or read the home directory, `~/Downloads`, another checkout, mail, or browser and messaging data. Report a failed step instead of hunting for an artifact nobody named. If the task needs a path outside that set, ask first.
 
 ### Skills
 
-The harness may list skill *names* only, without descriptions. When a task looks like something a skill covers, read the index for what each name does before improvising:
+The harness can list skill *names* only, without a description. When a task looks like something a skill covers, read the index for what each name does before you improvise:
 
 - Skill index: [`.agents/skills/INDEX.md`](./.agents/skills/INDEX.md)
 

@@ -20,8 +20,9 @@ IDEA-12345 <subject>              # behavioral change — ticket, no subsystem p
 
 ## Body
 
-Write one for every change except the mechanical ones (typo, import, format) — including non-production ones.
-Say why the change was made and what was decided; the diff already shows what changed.
+Write a body for every change except a mechanical one (a typo, an import, a format pass). This includes a non-production change.
+Say why you made the change and what you decided. The diff already shows what changed.
+Write the body in ASD-STE100 Simplified Technical English, as the repository guide (`AGENTS.md`, section **Writing**) defines it.
 A requested suffix such as `IJ-MR-100` goes in its own trailing paragraph.
 
 ## Safe message input

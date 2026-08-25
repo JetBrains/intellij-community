@@ -77,19 +77,14 @@ Never delete a sentence without moving it. A spec that quietly loses a constrain
 
 ## Writing Style
 
-Write specs in [ASD-STE100 Simplified Technical English](https://www.asd-ste100.org/). The rules that matter here:
+The repository guide (`AGENTS.md`, section **Writing**) defines the ASD-STE100 rules for every artifact, and a spec follows them. These four rules are specific to a spec:
 
-- **One topic per sentence.** Requirement sentences stay at or under 20 words, other prose at or under 25.
-- **Active voice, simple tense.** "The picker hides unavailable agents", not "unavailable agents are hidden".
-- **Keep articles.** Write "the session", not "session". Telegraphic style is not shorter to read.
-- **No noun cluster longer than three words.** "Fixed text-size, replay-work, deletion-marker, or diff-trace budgets" forces the reader to expand four compounds before reaching the verb. Name the things in separate sentences, or in a list.
-- **No `-ing` clause as a modifier.** Split it into a second sentence.
-- **One term per concept, one concept per term.** Take the term from the plugin's concept glossary and never introduce a synonym for it. AIR's glossary is `plugins/air/docs/model/concepts.md`.
-- **Write positively.** State what happens. Add a `must not` only when the prohibition is the requirement, not as a way to imply the behavior.
+- **A requirement sentence stays at or under 20 words.** Other prose stays at or under 25. 25 is the number `AirSpecReferencesTest` enforces on a tagged spec.
+- **Take every term from the plugin's concept glossary.** AIR's glossary is `plugins/air/docs/model/concepts.md`.
 - **Name a class in prose only when the sentence is about that class.** Otherwise name the behavior.
 - **Open with context.** The `## Summary` first sentence says what the feature is, in words a reader who has never opened the code can follow.
 
-Prefer a table or a list over a sentence with three subordinate clauses. State one requirement per bullet; when a bullet needs four sentences to hold one requirement, it is usually two requirements.
+State one requirement per bullet. When a bullet needs four sentences to hold one requirement, it is usually two requirements.
 
 ## Guidance
 - Use must/should/may to say how strong a requirement is. Do not chain several of them into one sentence.
@@ -102,4 +97,4 @@ Prefer a table or a list over a sentence with three subordinate clauses. State o
 ## References
 - Adapted from the Tessl spec-driven development tile (see `LICENSE`).
 - Informed by Addy Osmani's "How to write a good spec for AI agents".
-- Writing style follows ASD-STE100 Simplified Technical English.
+- Writing style follows the repository guide's **Writing** section (ASD-STE100).
