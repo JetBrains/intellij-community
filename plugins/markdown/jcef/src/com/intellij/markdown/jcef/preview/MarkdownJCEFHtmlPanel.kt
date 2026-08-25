@@ -449,6 +449,7 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
       "incremental-dom.min.js",
       "incremental-dom-additions.js",
       "BrowserPipe.js",
+      "PreviewClickGuard.js",
       "ScrollSync.js"
     )
 

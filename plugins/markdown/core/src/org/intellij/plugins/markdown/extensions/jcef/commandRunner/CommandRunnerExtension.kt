@@ -42,6 +42,7 @@ import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
 import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings
 import org.intellij.plugins.markdown.ui.preview.BrowserPipe
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
+import org.intellij.plugins.markdown.ui.preview.PreviewClickConfirmation
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
 import java.util.UUID
@@ -176,7 +177,7 @@ internal class CommandRunnerExtension(
       val parts = data.split(":")
       val executorId = parts[0]
       val cmdHash: String = parts.getOrElse(1) { "" }
-      val needsConfirmation = parts.getOrNull(2) == NEEDS_CONFIRMATION
+      val needsConfirmation = parts.getOrNull(2) == PreviewClickConfirmation.NEEDS_CONFIRMATION
       val command = hash2Cmd[cmdHash]
       if (command == null) {
         LOG.error("Command index not found. Please attach .md file to error report.")
@@ -249,7 +250,7 @@ internal class CommandRunnerExtension(
         return true
       }
       val trimmedCmd = trimPrompt(command)
-      val needsConfirmation = args.getOrNull(5) == NEEDS_CONFIRMATION
+      val needsConfirmation = args.getOrNull(5) == PreviewClickConfirmation.NEEDS_CONFIRMATION
       if (needsConfirmation) {
         confirmThenRun(trimmedCmd) {
           executeBlock(trimmedCmd, executorId)
@@ -318,7 +319,6 @@ internal class CommandRunnerExtension(
     private const val RUN_BLOCK_EVENT = "runBlock"
     private const val RUN_LINE_ICON = "commandRunner/run.png"
     private const val RUN_BLOCK_ICON = "commandRunner/runrun.png"
-    private const val NEEDS_CONFIRMATION = "1"
 
     const val extensionId = "MarkdownCommandRunnerExtension"
 
