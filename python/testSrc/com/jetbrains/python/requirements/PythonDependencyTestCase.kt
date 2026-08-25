@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.requirements
 
 import com.intellij.openapi.application.ApplicationManager
@@ -71,8 +71,7 @@ abstract class PythonDependencyTestCase : BasePlatformTestCase() {
     return object : PyLightProjectDescriptor(languageLevel) {
       override fun getSdk(): Sdk {
         val sdk: Sdk = PythonMockSdk.create("Mock ${PyNames.PYTHON_SDK_ID_NAME} ${languageLevel.toPythonVersion()}",
-                                            "${PythonTestUtil.getTestDataPath()}/MockSdk", PythonSdkType.getInstance(), languageLevel,
-                                            *additionalRoots)
+                                            "${PythonTestUtil.getTestDataPath()}/MockSdk", PythonSdkType.getInstance(), languageLevel)
         sdk.sdkModificator.let {
           it.sdkAdditionalData = sdkAdditionalData ?: it.sdkAdditionalData
           ApplicationManager.getApplication().runWriteAction {
