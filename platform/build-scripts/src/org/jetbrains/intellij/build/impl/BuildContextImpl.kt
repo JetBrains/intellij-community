@@ -41,10 +41,12 @@ import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
+import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.computeAppInfoXml
 import org.jetbrains.intellij.build.findProductModulesFile
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
 import org.jetbrains.intellij.build.impl.moduleRepository.MODULE_DESCRIPTORS_COMPACT_PATH
+import org.jetbrains.intellij.build.impl.moduleRepository.computeDescriptorsForAdditionalFrontendPlugins
 import org.jetbrains.intellij.build.impl.plugins.PluginAutoPublishList
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.jarCache.JarCacheManager
@@ -364,6 +366,12 @@ class BuildContextImpl internal constructor(
   }
 
   override suspend fun getEmbeddedFrontendProductContext(): BuildContext? = embeddedFrontendProductContext.await()
+
+  private val layoutOfAdditionalFrontendOnlyPlugins = suspendingLazy("layout of additional frontend only plugins") {
+    computeDescriptorsForAdditionalFrontendPlugins(this@BuildContextImpl, distributionState().platformLayout)
+  }
+
+  override suspend fun getLayoutOfAdditionalFrontendOnlyPlugins(): List<PluginBuildResult> = layoutOfAdditionalFrontendOnlyPlugins.await()
 
   private val _contentModuleFilter by lazy { computeContentModuleFilter() }
 

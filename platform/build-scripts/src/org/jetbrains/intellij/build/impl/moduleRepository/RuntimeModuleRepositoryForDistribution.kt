@@ -5,14 +5,13 @@ package org.jetbrains.intellij.build.impl.moduleRepository
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimePluginHeader
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
-import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
 import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.classPath.getEmbeddedProductTempPluginDir
 import org.jetbrains.intellij.build.classPath.resolveAndCacheDescriptorForEmbeddedProduct
@@ -33,6 +32,7 @@ import org.jetbrains.jps.model.module.JpsModule
 import java.io.IOException
 import java.nio.file.Path
 import java.util.Properties
+import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.reader
@@ -47,7 +47,7 @@ internal suspend fun generateRuntimeModuleRepositoryForDistribution(
   context: BuildContext,
   platformLayout: PlatformLayout,
 ) {
-  val additionalFrontendOnlyPlugins = computeDescriptorsForAdditionalFrontendPlugins(context, platformLayout)
+  val additionalFrontendOnlyPlugins = context.getLayoutOfAdditionalFrontendOnlyPlugins()
 
   val osSpecificDistPaths = SUPPORTED_DISTRIBUTIONS.associateWith {
     getOsAndArchSpecificDistDirectory(osFamily = it.os, arch = it.arch, libc = it.libcImpl, context = context)
@@ -118,57 +118,42 @@ internal suspend fun generateRuntimeModuleRepositoryForDevBuild(
 }
 
 /**
- * Merges module repositories for different OS to a common one which can be used in the cross-platform distribution. 
- * @return path to the directory with the generated repository file or `null` if [distAllPath] already contains a common module repository file which is used for all OSes
+ * Generates a runtime module repository for modules and plugins included in the cross-platform distribution.
+ * @return path to the directory with the generated repository file or `null` if `distAllPath` already contains a common module repository file which is used for all OSes
  */
-internal fun generateCrossPlatformRepository(distAllPath: Path, osSpecificDistPaths: List<Path>, context: BuildContext): Path? {
-  val commonRepositoryFile = distAllPath.resolve(MODULE_DESCRIPTORS_COMPACT_PATH)
+internal suspend fun generateCrossPlatformRepository(
+  contentReport: ContentReport,
+  context: BuildContext,
+  platformLayout: PlatformLayout,
+  crossPlatformPluginsDir: Path?,
+  crossPlatformBuiltPlugins: List<PluginBuildDescriptor>,
+): Path? {
+  val commonTargetDirectory = context.paths.distAllDir
+  val commonRepositoryFile = commonTargetDirectory.resolve(MODULE_DESCRIPTORS_COMPACT_PATH)
   if (commonRepositoryFile.exists()) {
     return null
   }
-  
-  val repositories = osSpecificDistPaths.map { osSpecificDistPath ->
-    val repositoryFile = osSpecificDistPath.resolve(MODULE_DESCRIPTORS_COMPACT_PATH)
-    if (!repositoryFile.exists()) {
-      context.messages.logErrorAndThrow("Cannot generate runtime module repository for cross-platform distribution: $repositoryFile doesn't exist")
-    }
-    RuntimeModuleRepositorySerialization.loadFromCompactFile(repositoryFile)
-  }
-  val commonIds = repositories.map { it.allModuleIds }.reduce { a, b -> a.intersect(b) }
-  val commonPluginDescriptorModules = repositories
-    .map { repository -> repository.pluginHeaders.mapTo(HashSet()) { it.pluginDescriptorModuleId } }
-    .reduce<Set<RuntimeModuleId>, Set<RuntimeModuleId>> { a, b -> a.intersect(b) }
-  val commonDescriptors = ArrayList<RawRuntimeModuleDescriptor>()
-  for (moduleId in commonIds) {
-    val descriptors = repositories.map { it.findDescriptor(moduleId)!! }
-    val commonResourcePaths = descriptors.map { it.resourcePaths.toSet() }.reduce { a, b -> a.intersect(b) }
-    val commonDependencies = descriptors.first().dependencyIds
-    if (descriptors.all { it.dependencyIds == commonDependencies }) {
-      commonDescriptors.add(RawRuntimeModuleDescriptor.create(moduleId, commonResourcePaths.toList(), commonDependencies))
-    }
-    else {
-      Span.current().addEvent("${moduleId.displayName} isn't included in the runtime module repository because it has different dependencies for different platforms")
-    }
-  }
-  val commonIncludedModuleIds = commonDescriptors.mapTo(HashSet()) { it.moduleId }
-  val commonPluginHeaders = ArrayList<RuntimePluginHeader>()
-  for (pluginDescriptorModule in commonPluginDescriptorModules) {
-    val headers = repositories.map { repository -> repository.pluginHeaders.single { it.pluginDescriptorModuleId == pluginDescriptorModule } }
-    val header = headers.first()
-    if (headers.any { it.pluginId != header.pluginId || it.includedModules != header.includedModules }) {
-      Span.current().addEvent("${pluginDescriptorModule.displayName} plugin isn't included in the runtime module repository because it has different plugin headers for different platforms")
-      continue
-    }
-    val missingModule = header.includedModules.find { it.moduleId !in commonIncludedModuleIds}
-    if (missingModule != null) {
-      Span.current().addEvent("${pluginDescriptorModule.displayName} plugin isn't included in the runtime module repository because it's module ${missingModule.moduleId.displayName} isn't available for some platform")
-      continue
-    }
-    commonPluginHeaders.add(header)
-  }
+
   val targetDir = context.paths.tempDir.resolve("cross-platform-module-repository")
-  saveModuleRepository(commonDescriptors, commonPluginHeaders, targetDir)
-  return targetDir
+  val actualPlatformEntries = contentReport.platform.filter { it.path.startsWith(commonTargetDirectory) }
+  val actualPlugins = contentReport.bundledPlugins.filter { it.os == null && it.arch == null } + crossPlatformBuiltPlugins.map { it.buildResult }
+  val additionalFrontendOnlyPlugins = context.getLayoutOfAdditionalFrontendOnlyPlugins()
+  generateRepositoryForDistribution(
+    targetDirectory = targetDir,
+    platformEntries = actualPlatformEntries,
+    context = context,
+    bundledPlugins = actualPlugins,
+    additionalFrontendOnlyPlugins = additionalFrontendOnlyPlugins,
+    platformLayout = platformLayout,
+    entryPathRelativizer = {
+      when {
+        it.startsWith(commonTargetDirectory) -> commonTargetDirectory.relativize(it)
+        crossPlatformPluginsDir != null && it.startsWith(crossPlatformPluginsDir) -> Path("plugins").resolve(crossPlatformPluginsDir.relativize(it))
+        else -> null
+      }
+    },
+  )
+  return targetDir.resolve(RUNTIME_REPOSITORY_MODULES_DIR_NAME)
 }
 
 /**
@@ -251,8 +236,9 @@ private fun removeDataForSuppressedPlugins(originalPluginDescriptorsData: List<P
  * Returns the list of descriptors for additional plugins which should be added to the runtime module repository.
  * These plugins are not bundled with the IDE, but they are used from the frontend process started from the IDE.
  * To be able to run the frontend process from a regular IDE, we need to include information about its modules to the runtime module repository.
+ * Use [BuildContext.getLayoutOfAdditionalFrontendOnlyPlugins] to get the cached value instead of calling this method directly.
  */
-private suspend fun computeDescriptorsForAdditionalFrontendPlugins(
+internal suspend fun computeDescriptorsForAdditionalFrontendPlugins(
   context: BuildContext,
   platformLayout: PlatformLayout,
 ): List<PluginBuildResult> {
