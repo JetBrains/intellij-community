@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.speedSearch.SpeedSearchAction;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.UISettings;
@@ -595,6 +596,20 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
     if (mySearchPopup == null && e.getID() == InputMethodEvent.INPUT_METHOD_TEXT_CHANGED) {
       var text = e.getText();
+      // IJPL-158652: a space key is hijacked by an input method, but we need to treat it as a regular key press.
+      if (text != null && text.first() == ' ') {
+        // Note that the produced KeyEvent will commit the text, which will immediately cause another InputMethodEvent,
+        // so we check getCommittedCharacterCount to ignore the next event.
+        if (e.getCommittedCharacterCount() == 0) {
+          var window = ComponentUtil.getWindow(myComponent);
+          if (window != null) {
+            IdeEventQueue.getInstance().postEvent(
+              new KeyEvent(window, KeyEvent.KEY_PRESSED, e.getWhen(), 0, KeyEvent.VK_SPACE, ' ')
+            );
+          }
+        }
+        return; // we ignore both events here, as we don't want to start searching for a space either way
+      }
       if (text != null && text.first() != CharacterIterator.DONE) {
         showPopup();
       }
