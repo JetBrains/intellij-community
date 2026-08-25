@@ -36,11 +36,8 @@ abstract class XDebuggerActionBase protected constructor(private val myHideDisab
   }
 
   protected open fun isEnabled(e: AnActionEvent): Boolean {
-    val project: Project? = e.project
-    if (project != null && !project.isDisposed()) {
-      return isEnabled(project, e)
-    }
-    return false
+    val project: Project = e.project ?: return false
+    return !project.isDisposed() && isEnabled(project, e)
   }
 
   @Deprecated("Use XDebuggerActionBase#getHandler() instead.")
@@ -82,11 +79,8 @@ abstract class XDebuggerActionBase protected constructor(private val myHideDisab
   }
 
   protected open fun isHidden(event: AnActionEvent): Boolean {
-    val project: Project? = event.project
-    if (project != null && !project.isDisposed()) {
-      return getHandler().isHidden(project, event)
-    }
-    return true
+    val project: Project = event.project ?: return true
+    return project.isDisposed() || getHandler().isHidden(project, event)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
