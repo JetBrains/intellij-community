@@ -137,8 +137,13 @@ object EelPathUtils {
   @RequiresBackgroundThread(generateAssertion = false)
   fun getSystemFolder(eel: EelApi): Path {
     val selector = PathManager.getPathsSelector() ?: "IJ-Platform"
-    val userHomeFolder = eel.userInfo.home.asNioPath().toString()
-    return Path.of(PathManager.getDefaultSystemPathFor(eel.platform.toOs(), userHomeFolder, selector, eel.exec.fetchLoginShellEnvVariablesBlocking()))
+    val systemPath = PathManager.getDefaultSystemPathFor(
+      eel.platform.toOs(),
+      eel.userInfo.home.toString(),
+      selector,
+      eel.exec.fetchLoginShellEnvVariablesBlocking()
+    )
+    return EelPath.parse(systemPath, eel.descriptor).asNioPath()
   }
 
   @JvmStatic
