@@ -63,13 +63,26 @@ a non-empty set (throws otherwise) and add symbols via `add`/`addAll`/`+`/`addSy
 `contrib/Astro/src/org/jetbrains/astro/polySymbols/scope/AstroAvailableComponentsScope.kt` (Project,
 Unit key), `AstroNamespacedComponentsScope.kt` (PsiElement, Unit key, with `filterCodeCompletions`).
 
-**Caveat**: the DSL does not expose `PolySymbolScopeWithCache.partialMatchingSupport` — if a scope
-answers `getMatchingSymbols` via a direct name-indexed lookup instead of building the full symbol map
-first (e.g. GDScript's `GdPsiClassesPolySymbolScope`/`GdPsiResourceClassesPolySymbolScope`, see
-[case-studies.md](case-studies.md#gdscript)), keep it hand-written — converting would force every
-lookup through the full-cache path, a real perf regression for a project-wide index. Reach for
-hand-written `PolySymbolScopeWithCache` only for that case, or when you need custom `createPointer()`
-chaining through an owning symbol (rare).
+**Caveat**: the DSL does not expose `PolySymbolScopeWithCache.partialMatchingSupport` directly - but
+that's rarely a reason to hand-write a scope. A scope whose candidate set is bounded to one PSI
+element/file (the common case) should still default to `polySymbolScopeCached(...)`: a full
+PSI/stub walk over an already-open file is normally *cheaper* than a project-wide index lookup for
+the same answer, and the DSL's caching means repeat queries (including code completion) reuse the
+walk for free - see GDScript's `gdPsiInnerClassesPolySymbolScope`
+(`dotnet/Plugins/godot-support/gdscript/.../polySymbols/scope/GdPsiInnerClassesPolySymbolScope.kt`)
+for the idiomatic shape (an iterative, stub-only walk of one file, cached by the DSL). Reach into an
+index instead only when full enumeration is genuinely expensive - i.e. the scope's candidate set spans
+many files (GDScript's `GdPsiClassesPolySymbolScope`/`GdClassNamingIndex`, deliberately project-wide,
+see [case-studies.md](case-studies.md#gdscript)) or a single file is large enough that walking it every
+time is wasteful. For the latter, hand-write a `PolySymbolScopeWithCache` subclass and gate the
+index-backed path behind a real size check, the way `CssStylesheetClassesScope` does in
+`plugins/css/backend/src/com/intellij/polySymbols/css/classes/CssTagClassesScope.kt`: it walks the
+stylesheet's own stubs by default via `initialize`, and only turns on its index-backed
+`partialMatchingSupport` (`CssClassIndex`) when the containing file's stub tree exceeds 500 stubbed
+symbols - "using indexes on small files can cause performance issues," per its own comment. Treat
+that file as the canonical worked example of this trade-off; reach for a hand-written, always-index
+`PolySymbolScopeWithCache` (no cached PSI walk at all) only for genuinely project-wide scopes, or when
+you need custom `createPointer()` chaining through an owning symbol (rare).
 
 `isExclusiveFor(kind)`: when a scope is exclusive for a kind, pattern-matching stops walking further
 down the scope stack for that kind once this scope has been consulted — use it when a scope is
@@ -321,13 +334,18 @@ ways this can go wrong, and the one that actually works:
   `unwrapMatchedSymbols()` recurses *through* `PolySymbolMatch` wrapping down to the real, wrongly-named
   leaf symbol — the alias name never survives to the final filter.
 - **Right: a `PolySymbolDelegate<T>` that overrides `name`.** A delegate is not a `PolySymbolMatch`, so
-  `unwrapMatchedSymbols()` treats it as a leaf and its overridden name survives. GDScript's
-  `GdAliasedNameSymbol<T : PolySymbol>(delegate: T, name: String)` is a small, reusable
-  implementation of this (`dotnet/Plugins/godot-support/gdscript/.../polySymbols/psi/GdAliasedNameSymbol.kt`)
-  — apply the wrapping *in the query scope* that resolves the mismatched name (e.g.
-  `GdPsiResourceClassesPolySymbolScope.getMatchingSymbols`), not in the reference/own-reference call
-  site, so every consumer of that scope (own references, completion, etc.) sees a consistently-named
-  symbol. `PolySymbolDelegate.unwrapAllDelegates()` recovers the real symbol for production code that
+  `unwrapMatchedSymbols()` treats it as a leaf and its overridden name survives. The platform now has a
+  shared, reusable implementation of this: `PolySymbol.withName(name: String): PolySymbolDelegate<PolySymbol>`
+  (`community/platform/polySymbols/src/com/intellij/polySymbols/utils/PolySymbolUtils.kt`, backed by a
+  private `AliasedPolySymbol` delegate, `renameTarget = null`) — apply the wrapping *in the query scope*
+  that resolves the mismatched name (e.g. GDScript's `GdPsiResourceClassesPolySymbolScope.getMatchingSymbols`,
+  or Angular's `Angular2BlockReferenceProvider.getReferencedSymbol` aliasing a canonicalized, whitespace-
+  collapsed block name like `else if` back onto whatever spacing variant was actually typed), not in the
+  reference/own-reference call site, so every consumer of that scope (own references, completion, etc.)
+  sees a consistently-named symbol. (GDScript previously had its own bespoke `GdAliasedNameSymbol` for
+  this; it has been migrated onto the shared `withName`/`AliasedPolySymbol` utility, so if you see
+  `GdAliasedNameSymbol` referenced elsewhere, that's stale.) `PolySymbolDelegate.unwrapAllDelegates()`
+  recovers the real symbol for production code that
   needs it (`GdSymbolResolverUtil.resolveSymbolReferences()` calls this centrally); test helpers that
   call the platform's raw `resolveSymbolReference()`/`multiResolveSymbolReference()` do **not** unwrap
   delegates automatically, so an assertion like `assertInstanceOf(resolved, RealSymbolClass::class.java)`
