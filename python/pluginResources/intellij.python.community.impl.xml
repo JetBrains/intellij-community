@@ -326,6 +326,8 @@
     <stripTrailingSpacesFilterFactory implementation="com.jetbrains.python.editor.PyStripTrailingSpacesFilterFactory"/>
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.testing.PyTestParameterCompletionContributor"/>
+    <completion.contributor language="Python" id="pythonConsoleCompletionBlocking" order="first"
+                            implementationClass="com.jetbrains.python.console.completion.PythonConsoleCompletionBlockingContributor"/>
 
     <projectService serviceImplementation="com.jetbrains.python.inspections.PyCompatibilityInspectionAdvertiserSettings"/>
     <projectService serviceImplementation="com.jetbrains.python.packaging.PyPackagingSettings"/>

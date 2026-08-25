@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.console.PyConsoleUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -17,7 +18,7 @@ public final class PythonConsoleAutopopupBlockingHandler extends TypedHandlerDel
 
   @Override
   public @NotNull Result checkAutoPopup(final char charTyped, final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
-    if (editor.getUserData(REPL_KEY) != null){
+    if (PyConsoleUtil.isCodeCompletionSuppressed(file) || editor.getUserData(REPL_KEY) != null){
       return Result.DEFAULT;
     }
     return Result.CONTINUE;

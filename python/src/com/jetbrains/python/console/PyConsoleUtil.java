@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.IJSwingUtilities;
 import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
@@ -109,6 +110,19 @@ public final class PyConsoleUtil {
     consoleData.setIPythonAutomagic(detected);
   }
 
+  /**
+   * Returns {@code true} if code completion must not be offered in the console input editor backed by {@code consoleFile}.
+   * <p>
+   * That is the case while the console is waiting for the input of the running program (the {@link #INPUT_PROMPT} prompt):
+   * the typed text is passed to the stdin of the process as is, so it is not Python code and completing it would replace
+   * what the user has typed.
+   */
+  public static boolean isCodeCompletionSuppressed(@Nullable PsiFile consoleFile) {
+    if (consoleFile == null) return false;
+    ConsoleCommunication communication = consoleFile.getCopyableUserData(PydevConsoleRunner.CONSOLE_COMMUNICATION_KEY);
+    return communication != null && communication.isWaitingForInput();
+  }
+
   public static AnAction createTabCompletionAction(PythonConsoleView consoleView) {
     final AnAction runCompletions = new AnAction() {
       @Override
@@ -131,6 +145,11 @@ public final class PyConsoleUtil {
         Editor editor = consoleView.getConsoleEditor();
         if (LookupManager.getActiveLookup(editor) != null) {
           e.getPresentation().setEnabled(false);
+        }
+        if (isCodeCompletionSuppressed(consoleView.getFile())) {
+          // let the editor insert the tabulation character instead, the typed text goes to the stdin of the program
+          e.getPresentation().setEnabled(false);
+          return;
         }
         int offset = editor.getCaretModel().getOffset();
         Document document = editor.getDocument();
