@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.idea.customization.plugin` start
@@ -33,7 +34,15 @@ exports_files(
     [
         "intellij.idea.customization.plugin.iml",
         "resources/META-INF/plugin.xml",
+        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.idea.customization.plugin` end
+
+### auto-generated section `dev content intellij.idea.customization.plugin` start
+dev_dist_plugin_content(
+    descriptor_module = ":plugin",
+    prepacked_content_modules = ["//idea/customization/backend:backend_content_module_jar"],
+)
+### auto-generated section `dev content intellij.idea.customization.plugin` end

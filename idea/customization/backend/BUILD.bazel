@@ -41,7 +41,6 @@ exports_files(
     [
         "intellij.idea.customization.backend.iml",
         "resources/intellij.idea.customization.backend.xml",
-        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
