@@ -18,6 +18,7 @@ import com.intellij.psi.PsiBreakStatement;
 import com.intellij.psi.PsiCall;
 import com.intellij.psi.PsiCaseLabelElement;
 import com.intellij.psi.PsiCaseLabelElementList;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiContinueStatement;
@@ -30,6 +31,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionStatement;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiLabeledStatement;
+import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiPattern;
@@ -794,6 +796,11 @@ public final class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLoc
       result[i] = copy;
       Collection<PsiReturnStatement> returnStatements = PsiTreeUtil.findChildrenOfType(copy, PsiReturnStatement.class);
       for (PsiReturnStatement returnStatement : returnStatements) {
+        NestingKind nestingKind = getNestingKind(copy, returnStatement);
+        // a 'return' inside a lambda or a class body returns from that lambda/method, so it must be left as is
+        if (nestingKind == NestingKind.OTHER_SCOPE) continue;
+        // 'yield' would belong to the nested switch, and 'return' is not allowed inside a switch expression
+        if (nestingKind == NestingKind.NESTED_SWITCH) return null;
         PsiExpression returnValue = returnStatement.getReturnValue();
         if (returnValue == null || PsiTreeUtil.hasErrorElements(returnValue) || !returnValue.isValid() || returnValue.getType() == null) {
           return null;
@@ -802,6 +809,30 @@ public final class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLoc
       }
     }
     return result;
+  }
+
+  private enum NestingKind {
+    /**
+     * The statement belongs to the same method or lambda as the switch statement being converted
+     */
+    SAME_SCOPE,
+    /**
+     * The statement is located inside a nested lambda expression or class body
+     */
+    OTHER_SCOPE,
+    /**
+     * The statement is located inside a nested switch block
+     */
+    NESTED_SWITCH
+  }
+
+  private static @NotNull NestingKind getNestingKind(@NotNull PsiElement root, @NotNull PsiStatement statement) {
+    for (PsiElement parent = statement.getParent(); parent != null; parent = parent.getParent()) {
+      if (parent instanceof PsiLambdaExpression || parent instanceof PsiClass) return NestingKind.OTHER_SCOPE;
+      if (parent instanceof PsiSwitchBlock) return NestingKind.NESTED_SWITCH;
+      if (parent == root) break;
+    }
+    return NestingKind.SAME_SCOPE;
   }
 
   private static PsiStatement[] withLastStatementReplacedWithYield(PsiStatement[] statements, @NotNull PsiExpression expr) {
