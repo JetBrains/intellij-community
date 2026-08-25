@@ -27,6 +27,8 @@ class IntelliJResourceBundle internal constructor(reader: Reader) : ResourceBund
   val parent: ResourceBundle?
     get() = super.parent
 
+  internal fun containsKeyLocally(key: String): Boolean = lookup.containsKey(key)
+
   @NlsSafe
   fun getMessageOrNull(key: String): String? {
     val value = lookup.get(key) ?: return null

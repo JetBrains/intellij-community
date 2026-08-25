@@ -1,26 +1,21 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.nls;
 
-import com.ibm.icu.number.FormattedNumber;
-import com.ibm.icu.number.IntegerWidth;
-import com.ibm.icu.number.LocalizedNumberFormatter;
-import com.ibm.icu.number.NumberFormatter;
-import com.ibm.icu.text.ListFormatter;
-import com.ibm.icu.text.MeasureFormat;
-import com.ibm.icu.util.Measure;
-import com.ibm.icu.util.MeasureUnit;
 import com.intellij.DynamicBundle;
+import com.intellij.ide.IdeCoreBundle;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
-import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.DateFormat;
+import java.text.ListFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -34,9 +29,7 @@ import java.util.stream.Collectors;
  * Utility methods to produce localized messages
  */
 public final class NlsMessages {
-  private static final MeasureUnit[] TIME_UNITS =
-    {MeasureUnit.NANOSECOND, MeasureUnit.MICROSECOND, MeasureUnit.MILLISECOND, MeasureUnit.SECOND, MeasureUnit.MINUTE, MeasureUnit.HOUR,
-      MeasureUnit.DAY, MeasureUnit.WEEK};
+  private static final String[] UNIT_KEYS = {"ns", "mcs", "ms", "sec", "min", "hr", "day", "week"};
   private static final long[] TIME_MULTIPLIERS = {1, 1000, 1000, 1000, 60, 60, 24, 7};
   private static final int[] PADDED_FORMAT = {3, 3, 3, 2, 2, 2, 1, 1};
 
@@ -46,7 +39,7 @@ public final class NlsMessages {
    * E.g. formatAndList(List.of("X", "Y", "Z")) will produce "X, Y, and Z" in English locale.
    */
   public static @NotNull @Nls String formatAndList(Collection<?> list) {
-    return getFormats().andWideList.format(list);
+    return formatList(getFormats().andWideList, list);
   }
 
   /**
@@ -56,7 +49,7 @@ public final class NlsMessages {
    * E.g. formatAndList(List.of("X", "Y", "Z")) will produce "X, Y, Z" in English locale.
    */
   public static @NotNull @Nls String formatNarrowAndList(Collection<?> list) {
-    return getFormats().andNarrowList.format(list);
+    return formatList(getFormats().andNarrowList, list);
   }
 
   /**
@@ -65,7 +58,13 @@ public final class NlsMessages {
    * E.g. formatAndList(List.of("X", "Y", "Z")) will produce "X, Y, or Z" in English locale.
    */
   public static @NotNull @Nls String formatOrList(Collection<?> list) {
-    return getFormats().orWideList.format(list);
+    return formatList(getFormats().orWideList, list);
+  }
+
+  private static @NotNull @Nls String formatList(@NotNull ListFormat format, @NotNull Collection<?> list) {
+    if (list.isEmpty()) return ""; // ListFormat rejects empty input
+    @NlsSafe String result = format.format(ContainerUtil.map(list, String::valueOf));
+    return result;
   }
 
   /**
@@ -127,51 +126,41 @@ public final class NlsMessages {
   }
 
   /**
-   * Converts {@link TimeUnit} to {@link MeasureUnit}
+   * Converts {@link TimeUnit} to the corresponding index in {@link #UNIT_KEYS}/{@link #TIME_MULTIPLIERS}
    *
    * @param timeUnit input timeunit
-   * @return the corresponding unit of measurement
+   * @return the corresponding unit index
    */
-  private static @NotNull MeasureUnit convert(@NotNull TimeUnit timeUnit) {
+  private static int convert(@NotNull TimeUnit timeUnit) {
     return switch (timeUnit) {
-      case NANOSECONDS -> MeasureUnit.NANOSECOND;
-      case MICROSECONDS -> MeasureUnit.MICROSECOND;
-      case MILLISECONDS -> MeasureUnit.MILLISECOND;
-      case SECONDS -> MeasureUnit.SECOND;
-      case MINUTES -> MeasureUnit.MINUTE;
-      case HOURS -> MeasureUnit.HOUR;
-      case DAYS -> MeasureUnit.DAY;
+      case NANOSECONDS -> 0;
+      case MICROSECONDS -> 1;
+      case MILLISECONDS -> 2;
+      case SECONDS -> 3;
+      case MINUTES -> 4;
+      case HOURS -> 5;
+      case DAYS -> 6;
     };
   }
 
   /**
-   * Format duration given in durationTimeUnit as a sum of time units
+   * Format duration given in the unit denoted by unitIndex as a sum of time units
    *
-   * @param duration         duration
-   * @param durationTimeUnit measure unit for duration
-   * @param maxFragments     count of fragments (example: {@code for maxFragments = 1 formatDuration(61, 1, ....) = "1m"}
-   * @param narrow           is narrow on output
+   * @param duration     duration
+   * @param unitIndex    index of the duration unit in {@link #UNIT_KEYS}
+   * @param maxFragments count of fragments (example: {@code for maxFragments = 1 formatDuration(61, 1, ....) = "1m"}
+   * @param narrow       is narrow on output
    * @return formatted duration
    */
   private static @NotNull @Nls String formatDuration(long duration,
-                                                     MeasureUnit durationTimeUnit, int maxFragments,
+                                                     int unitIndex, int maxFragments,
                                                      boolean narrow) {
     LongArrayList unitValues = new LongArrayList();
     IntList unitIndices = new IntArrayList();
 
     long count = duration;
-    int i = 0;
-    while (TIME_UNITS[i] != durationTimeUnit) {
-      i++;
-      if (i == TIME_UNITS.length) {
-        // Will never be called in a practical case, since the converter produces only those time units that are already in the array
-        // However, it can be called theoretically, since the converter can be changed
-        throw new IllegalArgumentException("Duration time unit doesn't exists in all time units");
-      }
-    }
-    int startPosition = i;
-    i++;
-    for (; i < TIME_UNITS.length && count > 0; i++) {
+    int i = unitIndex + 1;
+    for (; i < UNIT_KEYS.length && count > 0; i++) {
       long multiplier = TIME_MULTIPLIERS[i];
       if (count < multiplier) break;
       long remainder = count % multiplier;
@@ -190,33 +179,20 @@ public final class NlsMessages {
       // Round up if needed
       if (unitValues.getLong(maxFragments) > lastMultiplier / 2) {
         long increment = lastMultiplier - unitValues.getLong(maxFragments);
-        for (int unit = lastUnitIndex - 1; unit > startPosition; unit--) {
+        for (int unit = lastUnitIndex - 1; unit > unitIndex; unit--) {
           increment *= TIME_MULTIPLIERS[unit];
         }
-        return new NlsDurationFormatter()
-          .setDurationMeasureTimeUnit(durationTimeUnit)
-          .setNarrow(narrow)
-          .setMaxFragments(maxFragments)
-          .formatDuration(duration + increment);
+        return formatDuration(duration + increment, unitIndex, maxFragments, narrow);
       }
     }
 
     int finalCount = Math.min(unitValues.size(), maxFragments);
-    CachedFormats formats = getFormats();
-    if (narrow) {
-      List<String> fragments = new ArrayList<>();
-      for (i = 0; i < finalCount; i++) {
-        fragments.add(formats.shortNumberUnitFormatters[unitIndices.getInt(i)]
-                        .format(unitValues.getLong(i)).toString().replace(' ', '\u2009'));
-      }
-      return StringUtil.join(fragments, " ");
-    }
-    MeasureFormat format = formats.shortFormat;
-    Measure[] measures = new Measure[finalCount];
+    List<String> fragments = new ArrayList<>(finalCount);
     for (i = 0; i < finalCount; i++) {
-      measures[i] = new Measure(unitValues.getLong(i), TIME_UNITS[unitIndices.getInt(i)]);
+      String fragment = IdeCoreBundle.message("nls.duration." + UNIT_KEYS[unitIndices.getInt(i)] + ".short", unitValues.getLong(i));
+      fragments.add(narrow ? fragment.replace(' ', '\u2009') : fragment);
     }
-    return format.formatMeasures(measures);
+    return narrow ? StringUtil.join(fragments, " ") : formatList(getFormats().unitShortList, fragments);
   }
 
   /**
@@ -236,37 +212,28 @@ public final class NlsMessages {
       .formatDuration(duration);
   }
 
-  private static @NotNull @Nls String formatDurationPaddedMeasure(long duration, @NotNull MeasureUnit durationTimeUnit) {
-    long millisIn = 1;
-    int i = 0;
-    while (TIME_UNITS[i] != durationTimeUnit) {
-      i++;
-      // Will never be called in a practical case, since the converter produces only those time units that are already in the array
-      // However, it can be called theoretically, since the converter can be changed
-      if (i == TIME_UNITS.length) throw new IllegalArgumentException("Duration time unit doesn't exists in all time units");
-    }
-    i++;
-    int startPosition = i;
+  private static @NotNull @Nls String formatDurationPadded(long duration, int unitIndex) {
+    long unitsIn = 1;
+    int i = unitIndex + 1;
     for (; i < TIME_MULTIPLIERS.length; i++) {
       long multiplier = TIME_MULTIPLIERS[i];
-      millisIn *= multiplier;
-      if (duration < millisIn) {
+      unitsIn *= multiplier;
+      if (duration < unitsIn) {
         break;
       }
     }
     long d = duration;
-    LocalizedNumberFormatter formatter = getFormats().narrowNumber;
-    List<FormattedNumber> result = new ArrayList<>();
-    for (i -= 1; i >= startPosition - 1; i--) {
+    NumberFormat numberFormat = NumberFormat.getIntegerInstance(DynamicBundle.getLocale()); // not thread-safe, so a per-call instance
+    List<String> result = new ArrayList<>();
+    for (i -= 1; i >= unitIndex; i--) {
       long multiplier = i == TIME_MULTIPLIERS.length - 1 ? 1 : TIME_MULTIPLIERS[i + 1];
-      millisIn /= multiplier;
-      long value = d / millisIn;
-      d = d % millisIn;
-      IntegerWidth style = IntegerWidth.zeroFillTo(result.isEmpty() ? 1 : PADDED_FORMAT[i]); // do not pad the most significant unit
-      LocalizedNumberFormatter unitFormatter = formatter.unit(TIME_UNITS[i]).integerWidth(style);
-      result.add(unitFormatter.format(value));
+      unitsIn /= multiplier;
+      long value = d / unitsIn;
+      d = d % unitsIn;
+      numberFormat.setMinimumIntegerDigits(result.isEmpty() ? 1 : PADDED_FORMAT[i]); // do not pad the most significant unit
+      result.add(IdeCoreBundle.message("nls.duration." + UNIT_KEYS[i] + ".narrow", numberFormat.format(value)));
     }
-    return ListFormatter.getInstance(Locale.getDefault(), ListFormatter.Type.UNITS, ListFormatter.Width.NARROW).format(result);
+    return formatList(getFormats().unitNarrowList, result);
   }
 
   /**
@@ -289,7 +256,7 @@ public final class NlsMessages {
     private boolean padded = false;
     private boolean narrow = true;
     private int maxFragments = Integer.MAX_VALUE;
-    private @NotNull MeasureUnit durationTimeUnit = MeasureUnit.MILLISECOND;
+    private int unitIndex = convert(TimeUnit.MILLISECONDS);
 
     /**
      * Padding each value with leading zeros to the maximum size. Example {@code padded 1s = 01s, padded 0ms = 000ms}
@@ -339,32 +306,7 @@ public final class NlsMessages {
      * @return formatter
      */
     public @NotNull NlsDurationFormatter setDurationTimeUnit(@NotNull TimeUnit durationTimeUnit) {
-      this.durationTimeUnit = convert(durationTimeUnit);
-      return this;
-    }
-
-    /**
-     * Sets the unit of measurement in which the conversion will be performed. If give it seconds, then the next conversion will convert seconds to string
-     *
-     * <p>Default value: {@code MeasureUnit.MILLISECOND}, which means that all formatting will be in milliseconds
-     *
-     * @param durationTimeUnit unit of measurement
-     * @return formatter
-     */
-    @Internal
-    public @NotNull NlsDurationFormatter setDurationMeasureTimeUnit(@NotNull MeasureUnit durationTimeUnit) {
-      if (
-        durationTimeUnit != MeasureUnit.NANOSECOND &&
-        durationTimeUnit != MeasureUnit.MICROSECOND &&
-        durationTimeUnit != MeasureUnit.MILLISECOND &&
-        durationTimeUnit != MeasureUnit.SECOND &&
-        durationTimeUnit != MeasureUnit.MINUTE &&
-        durationTimeUnit != MeasureUnit.HOUR &&
-        durationTimeUnit != MeasureUnit.DAY
-      ) {
-        throw new IllegalArgumentException("The measurement must be a measurement of time");
-      }
-      this.durationTimeUnit = durationTimeUnit;
+      this.unitIndex = convert(durationTimeUnit);
       return this;
     }
 
@@ -376,10 +318,10 @@ public final class NlsMessages {
      */
     public @NotNull @Nls String formatDuration(long duration) {
       if (padded) {
-        return formatDurationPaddedMeasure(duration, durationTimeUnit);
+        return formatDurationPadded(duration, unitIndex);
       }
       else {
-        return NlsMessages.formatDuration(duration, durationTimeUnit, maxFragments, narrow);
+        return NlsMessages.formatDuration(duration, unitIndex, maxFragments, narrow);
       }
     }
   }
@@ -411,23 +353,19 @@ public final class NlsMessages {
    */
   private static final class CachedFormats {
     final Locale locale;
-    final MeasureFormat shortFormat;
-    final LocalizedNumberFormatter narrowNumber;
-    final LocalizedNumberFormatter[] shortNumberUnitFormatters;
-    final ListFormatter andWideList;
-    final ListFormatter andNarrowList;
-    final ListFormatter orWideList;
+    final ListFormat andWideList;
+    final ListFormat andNarrowList;
+    final ListFormat orWideList;
+    final ListFormat unitShortList;
+    final ListFormat unitNarrowList;
 
     CachedFormats(Locale locale) {
       this.locale = locale;
-      this.shortFormat = MeasureFormat.getInstance(locale, MeasureFormat.FormatWidth.SHORT);
-      LocalizedNumberFormatter numberFormatter = NumberFormatter.withLocale(locale);
-      LocalizedNumberFormatter shortNumber = numberFormatter.unitWidth(NumberFormatter.UnitWidth.SHORT);
-      this.shortNumberUnitFormatters = ContainerUtil.map2Array(TIME_UNITS, LocalizedNumberFormatter.class, shortNumber::unit);
-      this.narrowNumber = numberFormatter.unitWidth(NumberFormatter.UnitWidth.NARROW);
-      this.andWideList = ListFormatter.getInstance(DynamicBundle.getLocale(), ListFormatter.Type.AND, ListFormatter.Width.WIDE);
-      this.orWideList = ListFormatter.getInstance(DynamicBundle.getLocale(), ListFormatter.Type.OR, ListFormatter.Width.WIDE);
-      this.andNarrowList = ListFormatter.getInstance(DynamicBundle.getLocale(), ListFormatter.Type.AND, ListFormatter.Width.NARROW);
+      this.andWideList = ListFormat.getInstance(locale, ListFormat.Type.STANDARD, ListFormat.Style.FULL);
+      this.andNarrowList = ListFormat.getInstance(locale, ListFormat.Type.STANDARD, ListFormat.Style.NARROW);
+      this.orWideList = ListFormat.getInstance(locale, ListFormat.Type.OR, ListFormat.Style.FULL);
+      this.unitShortList = ListFormat.getInstance(locale, ListFormat.Type.UNIT, ListFormat.Style.SHORT);
+      this.unitNarrowList = ListFormat.getInstance(locale, ListFormat.Type.UNIT, ListFormat.Style.NARROW);
     }
   }
 }

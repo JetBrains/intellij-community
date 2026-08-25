@@ -14,11 +14,13 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.text.OrdinalFormat
+import com.intellij.util.text.PluralForms
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import java.text.MessageFormat
+import java.util.Locale
 import java.util.MissingResourceException
 import java.util.ResourceBundle
 import java.util.function.BiConsumer
@@ -220,7 +222,7 @@ private fun quotePattern(message: String): @NlsSafe String {
 }
 
 @Suppress("HardCodedStringLiteral")
-internal fun postprocessValue(bundle: ResourceBundle, value: @Nls String, params: Array<out Any?>?): @Nls String {
+internal fun postprocessValue(bundle: ResourceBundle, value: @Nls String, params: Array<out Any?>?, sourceLocale: Locale? = null): @Nls String {
   @Suppress("NAME_SHADOWING") val value = replaceMnemonicAmpersand(value)!!
   if (params.isNullOrEmpty() || !value.contains('{')) {
     return value
@@ -228,7 +230,16 @@ internal fun postprocessValue(bundle: ResourceBundle, value: @Nls String, params
 
   val locale = bundle.locale
   try {
-    val format = if (locale == null) MessageFormat(value) else MessageFormat(value, locale)
+    val pattern = if (value.contains(PluralForms.FORMAT_TYPE)) {
+      // a ROOT bundle serves base *.properties content, which is English; l10n packs may serve translated files
+      // under ROOT too - acceptable while their languages (ja/zh/ko) select the mandatory `other` branch anyway
+      val pluralLocale = (sourceLocale ?: locale)?.takeIf { it != Locale.ROOT } ?: Locale.ENGLISH
+      PluralForms.replaceArguments(value, pluralLocale, params)
+    }
+    else {
+      value
+    }
+    val format = if (locale == null) MessageFormat(pattern) else MessageFormat(pattern, locale)
     OrdinalFormat.apply(format)
     return format.format(params)
   }
@@ -263,7 +274,13 @@ private fun messageOrDefaultForJdkBundle(
     defaultValue ?: useDefaultValue(bundle = bundle, key = key)
   }
 
-  val result = postprocessValue(bundle = bundle, value = value, params = params)
+  val sourceLocale = if (resourceFound && !params.isNullOrEmpty() && value.contains(PluralForms.FORMAT_TYPE)) {
+    sourceBundleLocale(bundle = bundle, key = key)
+  }
+  else {
+    null
+  }
+  val result = postprocessValue(bundle = bundle, value = value, params = params, sourceLocale = sourceLocale)
   translationConsumer?.accept(key, result)
   return when {
     !resourceFound -> result
@@ -277,6 +294,20 @@ private fun messageOrDefaultForJdkBundle(
     SHOW_LOCALIZED_MESSAGES -> appendLocalizationSuffix(result = result, suffixToAppend = L10N_MARKER)
     else -> result
   }
+}
+
+/**
+ * Returns the locale of the bundle file that defines [key] in the parent chain of [bundle].
+ * A child bundle can inherit a message from a base file in another language,
+ * and plural selection must follow the language of that file.
+ */
+private fun sourceBundleLocale(bundle: ResourceBundle, key: String): Locale? {
+  var b: ResourceBundle? = bundle
+  while (b is IntelliJResourceBundle) {
+    if (b.containsKeyLocally(key)) return b.locale
+    b = b.parent
+  }
+  return null
 }
 
 internal fun useDefaultValue(bundle: ResourceBundle, @NlsSafe key: String): @Nls String {
