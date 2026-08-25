@@ -4483,6 +4483,9 @@ public final class AllIconsKeys {
     public static final class Browsers {
       /** 16x16 */
       @GeneratedFromIntelliJSources
+      public static final @NotNull IntelliJIconKey Brave = new IntelliJIconKey("xml/browsers/brave.svg", "xml/browsers/brave.svg", AllIconsKeys.class);
+      /** 16x16 */
+      @GeneratedFromIntelliJSources
       public static final @NotNull IntelliJIconKey Canary = new IntelliJIconKey("xml/browsers/canary.svg", "xml/browsers/canary.svg", AllIconsKeys.class);
       /** 16x16 */
       @GeneratedFromIntelliJSources

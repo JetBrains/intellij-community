@@ -4069,6 +4069,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Xml
 - sf:Html_id:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - <init>():V
 f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Xml$Browsers
+- sf:Brave:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Canary:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Chrome:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Chromium:org.jetbrains.jewel.ui.icon.IntelliJIconKey

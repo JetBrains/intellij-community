@@ -1526,6 +1526,7 @@ f:com.intellij.icons.AllIcons$Xml
 - sf:Html_id:javax.swing.Icon
 - <init>():V
 f:com.intellij.icons.AllIcons$Xml$Browsers
+- sf:Brave:javax.swing.Icon
 - sf:Canary:javax.swing.Icon
 - sf:Chrome:javax.swing.Icon
 - sf:Chromium:javax.swing.Icon

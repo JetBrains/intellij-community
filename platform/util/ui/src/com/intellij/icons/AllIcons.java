@@ -1640,6 +1640,7 @@ public class AllIcons {
 
   public static final class Xml {
     public static final class Browsers {
+      /** 16x16 */ public static final @NotNull Icon Brave = load("xml/browsers/brave.svg", -2140257375, 0);
       /** 16x16 */ public static final @NotNull Icon Canary = load("xml/browsers/canary.svg", 1155643146, 0);
       /** 16x16 */ public static final @NotNull Icon Chrome = load("xml/browsers/chrome.svg", -1254806517, 0);
       /** 16x16 */ public static final @NotNull Icon Chromium = load("xml/browsers/chromium.svg", -1696650918, 0);
