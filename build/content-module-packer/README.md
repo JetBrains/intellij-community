@@ -111,3 +111,30 @@ Four things about this that are easy to get wrong, and cost an afternoon each:
   gives every recipe as its expanded command line; concatenate them into one flag file, rewrite the `output=` paths so
   a run does not overwrite `bazel-out`, drop the groups whose sources are unmaterialised `http_file` repos, then run it
   from the exec root with `--cpuprofile=`. That flag exists for this and is refused in worker mode.
+
+### Spans
+
+A `trace-file=` line in the flag file, or `--trace-file=<path>` on the command line, writes what this run spent its time
+on as Jaeger JSON - the format
+[`JaegerJsonSpanExporter`](../../platform/diagnostic/telemetry.exporters/src/JaegerJsonSpanExporter.kt) writes on the JVM
+side, so a packing action's spans land in the same trace as the rest of the build's. A run writes a `pack content
+modules` root span and one `pack jar` child per output, tagged with the jar's name, how many sources it merged, how many
+bytes it wrote and how many duplicate entries it reported.
+
+Four things about it that are not obvious:
+
+- **One file per request, not per worker**, and the destination arrives *inside the flag file* as a `trace-file=` line,
+  not as a `--trace-file=` argument. Bazel splits a worker spawn's arguments at the param file: everything before it
+  belongs to the worker *process* and to its `WorkerKey`, so a per-action path there would start a fresh worker for each
+  of the ~2 500 actions - measured, eight actions with eight different destinations share one worker pool
+  (`key hash 855446300` for all of them under `--worker_verbose`). `--trace-file=` stays for one-shot and whole-tranche
+  runs, which are command lines rather than requests, and it wins where both are present. Either way the path is
+  resolved against the working directory, which for a worker is the exec root for the life of the process.
+- **The recipe is parsed before the tracer starts**, since in a build the destination is in the recipe. So the parse sits
+  outside the root span, and a recipe that does not parse writes no span file at all.
+- **The ids are random, and deliberately so.** Every span file in a build is written by a different process, and the
+  merge that puts them in one trace has nothing but the ids to tell two actions' spans apart. Each file therefore also
+  carries its *own* trace id, and a merge across producers has to rewrite them onto one trace.
+- **It is a pure side output.** Nothing reads it during the build, the packing action is `+no-cache`, and a run without
+  a destination behaves byte for byte as it did before - which is what `internal/jarpack`'s digests and
+  `./build/dev-dist.cmd jars` check.

@@ -1,21 +1,31 @@
-"""Analysis tests for the prepacked plugin-content provider boundary."""
+"""Analysis tests for the dev-distribution content rules: the prepacked plugin-content provider boundary, and what a
+packing action declares."""
 
 load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts")
 load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
-load(":content_module_jar.bzl", "ContentModuleJarInfo")
+load(":content_module_jar.bzl", "ContentModuleJarInfo", "content_module_jar", "content_module_jar_target_name")
 load(":dev_dist_content.bzl", "DevDistContentInfo", "dev_dist_content_set", "dev_dist_plugin_content")
 load(":intellij_dev_dist.bzl", "intellij_dev_build_inputs")
+
+# An empty zip: the 22-byte end-of-central-directory record and nothing else. Octal escapes, because Bazel's Starlark
+# rejects `\x`; every byte is below 0x80, so `ctx.actions.write` - which encodes as UTF-8 - reproduces it exactly.
+#
+# A fake module's jar has to be a *real* jar, because one of these fakes is the owner of a real `content_module_jar`
+# target and `./build/dev-dist.cmd jars` builds every one of those in the repository. A few bytes of text there failed
+# that gate with `11 bytes is too small to be a zip`, and the alternative - teaching the gate to skip this target -
+# would have put an opt-out into the only check that holds the two producers of these bytes to each other.
+_EMPTY_JAR = "PK\005\006" + ("\000" * 18)
 
 def _fake_module_impl(ctx):
     """A module: one own output jar, and the `KtJvmInfo.module_name` that tells a module from a library container.
 
     Nothing about packing lives here. A module's `lib/` jar is a `content_module_jar` target of its own now - see
     `_fake_packed` - so a module fake is only what the `modules`/`content_modules`/`descriptor_module` attributes ask
-    for.
+    for. The jar's *content* is the one exception: see [_EMPTY_JAR].
     """
     module_jar = ctx.actions.declare_file(ctx.label.name + ".jar")
-    ctx.actions.write(module_jar, ctx.attr.module_name)
+    ctx.actions.write(module_jar, _EMPTY_JAR)
     return [
         DefaultInfo(files = depset([module_jar])),
         _KtJvmInfo(
@@ -165,6 +175,52 @@ def _completion_provider_test_impl(ctx):
 
 _completion_provider_test = analysistest.make(_completion_provider_test_impl)
 
+# The setting the two packing-output tests differ by, in the canonical form a transition needs. Written once: the same
+# label is the rule's own `_trace_spans` default, and a test that named a different one would pass while asserting
+# nothing.
+_TRACE_SPANS = str(Label("//platform/build-scripts/bazel-rules:trace_spans"))
+
+_PACKING_OUTPUTS_ATTRS = {
+    "expected_outputs": attr.string_list(mandatory = True),
+    "expected_span_files": attr.string_list(mandatory = True),
+}
+
+def _packing_outputs_test_impl(ctx):
+    """What a packing action declares: the jar alone, or the jar and the span file beside it.
+
+    This is the invariant the whole `trace_spans` gating rests on. Off has to mean *absent* - not an empty file, not an
+    output nobody asks for - because these actions are the dev build itself, and a second declared output re-keys every
+    one of the ~2 500 of them, so a measuring build would be measuring a different build. That was proved once by hand,
+    with an `aquery` diff over 1 512 actions; this is what holds it.
+    """
+    env = analysistest.begin(ctx)
+    actions = analysistest.target_actions(env)
+    packing = [action for action in actions if action.mnemonic == "PackContentModuleJar"]
+    asserts.equals(env, 1, len(packing), "mnemonics: %s" % [action.mnemonic for action in actions])
+    asserts.equals(
+        env,
+        ctx.attr.expected_outputs,
+        sorted([file.basename for file in packing[0].outputs.to_list()]),
+    )
+
+    # The output group is how a single jar's spans are asked for explicitly, and it has to exist in both states:
+    # `--output_groups=+trace_spans` is part of the documented measuring command line, and requesting a group that a
+    # target does not have is an error rather than an empty set.
+    group = analysistest.target_under_test(env)[OutputGroupInfo].trace_spans.to_list()
+    asserts.equals(env, ctx.attr.expected_span_files, [file.basename for file in group])
+    return analysistest.end(env)
+
+_packing_outputs_test = analysistest.make(
+    _packing_outputs_test_impl,
+    attrs = _PACKING_OUTPUTS_ATTRS,
+)
+
+_measuring_packing_outputs_test = analysistest.make(
+    _packing_outputs_test_impl,
+    attrs = _PACKING_OUTPUTS_ATTRS,
+    config_settings = {_TRACE_SPANS: True},
+)
+
 def dev_dist_content_test_suite(name):
     _fake_module(
         name = name + "_descriptor",
@@ -293,9 +349,40 @@ def dev_dist_content_test_suite(name):
         target_under_test = name + "_unnamed_completion_content",
     )
 
+    # A packing target of its own, so the action under test is the real one rather than a fake of it. It needs nothing
+    # but an owner module: a jar with no library and no other member is still a `PackContentModuleJar` action, and what
+    # is asserted is the shape of its output set, not its recipe. Both tests run against this one target - the only
+    # difference between them is the value of `trace_spans` their transition sets.
+    _fake_module(
+        name = name + "_packed_owner",
+        module_name = "test.packed",
+    )
+
+    # A real packing target, and `./build/dev-dist.cmd jars` builds it along with the other ~2 500. It packs, because
+    # `_fake_module`'s jar is a real (empty) jar - see [_EMPTY_JAR] - and lands in that gate's "packed, not in this
+    # distribution" bucket, where a target no distribution composes belongs.
+    content_module_jar(module = ":" + name + "_packed_owner")
+    _packing_outputs_test(
+        name = name + "_packing_outputs_test",
+        expected_outputs = ["test.packed.jar"],
+        expected_span_files = [],
+        target_under_test = content_module_jar_target_name(name + "_packed_owner"),
+    )
+    _measuring_packing_outputs_test(
+        name = name + "_measuring_packing_outputs_test",
+        expected_outputs = [
+            "test.packed.jar",
+            "test.packed.spans.json",
+        ],
+        expected_span_files = ["test.packed.spans.json"],
+        target_under_test = content_module_jar_target_name(name + "_packed_owner"),
+    )
+
     native.test_suite(
         name = name,
         tests = [
+            name + "_packing_outputs_test",
+            name + "_measuring_packing_outputs_test",
             name + "_multi_jar_library_test",
             name + "_provided_library_test",
             name + "_composed_provider_test",

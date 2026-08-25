@@ -5,6 +5,7 @@
 package org.jetbrains.intellij.build.devServer
 
 import com.intellij.platform.devIdeConfig.DevIdeConfig
+import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.dev.DevBuildComponent
 import org.jetbrains.intellij.build.dev.composeDevBuildComponents
 import org.jetbrains.intellij.build.dev.readDevBuildComponentManifest
@@ -14,15 +15,22 @@ import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
 
-@OptIn(ExperimentalPathApi::class)
 fun main(args: Array<String>) {
   val options = parseCommandLineOptions(args)
+  runDevDistJob(traceFile = options.optionalPath(TRACE_FILE_OPTION), jobName = "compose dev distribution") {
+    composeDevDistribution(options)
+  }
+}
+
+@OptIn(ExperimentalPathApi::class)
+private fun composeDevDistribution(options: CommandLineOptions) {
   val specFile = options.requiredPath("--composition-spec")
   val spec = readDevBuildCompositionSpec(specFile)
   val outputDir = options.requiredPath("--output-dir")
   val ideConfig = options.requiredPath("--ide-config")
   val fingerprintFile = options.requiredPath("--fingerprint")
   options.checkNoUnknownOptions()
+  Span.current().setAttribute("componentCount", spec.components.size.toLong())
 
   val components = spec.components.map { component ->
     val manifest = readDevBuildComponentManifest(Path.of(component.manifest).toAbsolutePath().normalize())

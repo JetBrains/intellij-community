@@ -1,7 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dev
 
+import io.opentelemetry.api.trace.Span
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.blockingUse
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -17,6 +20,22 @@ private data class PackedPluginJar(
 /** Joins Bazel-built plugin jars to the destinations a fragment validated through `JarPackager`, then copies them. */
 @ApiStatus.Internal
 fun collectPrepackedPluginContentJars(pluginJarsFile: Path, placementFiles: List<Path>, outputDir: Path): Int {
+  return spanBuilder("collect prepacked plugin content jars").blockingUse { span ->
+    collectPrepackedPluginContentJars(
+      pluginJarsFile = pluginJarsFile,
+      placementFiles = placementFiles,
+      outputDir = outputDir,
+      span = span,
+    )
+  }
+}
+
+private fun collectPrepackedPluginContentJars(
+  pluginJarsFile: Path,
+  placementFiles: List<Path>,
+  outputDir: Path,
+  span: Span,
+): Int {
   val jars = LinkedHashMap<PrepackedPluginContentKey, PackedPluginJar>()
   readTabSeparated(pluginJarsFile, fieldCount = 4) { fields, lineNumber ->
     val key = PrepackedPluginContentKey(pluginMainModule = fields[0], contentModule = fields[1])
@@ -48,6 +67,7 @@ fun collectPrepackedPluginContentJars(pluginJarsFile: Path, placementFiles: List
 
   val normalizedOutputDir = outputDir.toAbsolutePath().normalize()
   val destinations = HashMap<Path, PrepackedPluginContentKey>()
+  var byteCount = 0L
   for (key in placements.keys.sortedWith(compareBy(PrepackedPluginContentKey::pluginMainModule, PrepackedPluginContentKey::contentModule))) {
     val jar = jars.getValue(key)
     val distributionPathString = placements.getValue(key)
@@ -64,8 +84,11 @@ fun collectPrepackedPluginContentJars(pluginJarsFile: Path, placementFiles: List
     val previous = destinations.put(target, key)
     require(previous == null) { "Plugin jars $previous and $key both claim $distributionPathString" }
     Files.createDirectories(target.parent)
+    byteCount += Files.size(jar.source)
     copyAsDistributionFile(source = jar.source, target = target)
   }
+  span.setAttribute("jarCount", placements.size.toLong())
+  span.setAttribute("byteCount", byteCount)
   return placements.size
 }
 

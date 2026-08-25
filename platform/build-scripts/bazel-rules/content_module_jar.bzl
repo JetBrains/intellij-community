@@ -33,6 +33,7 @@ The libraries arrive as the targets that group their jars, not as jar files, so 
 rule expands each to its jars, in the order the library declares them, and drops a jar it has already seen.
 """
 
+load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@rules_java//java:defs.bzl", "JavaInfo")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 
@@ -159,6 +160,20 @@ def _content_module_jar_impl(ctx):
     # `--flagfile=` is the only argument it accepts.
     args.use_param_file("--flagfile=%s", use_always = True)
     args.add(output, format = "output=%s")
+
+    outputs = [output]
+
+    # Inside the flag file, as a `trace-file=` line, rather than as a `--trace-file=` argument - which is what every
+    # other producer of these span files takes. A worker has no other per-action channel: Bazel splits a worker spawn's
+    # arguments at the param file, everything before it becomes the worker *process*'s command line and part of its
+    # `WorkerKey`, and a per-action path there would start a fresh worker for each of the ~2 500 actions. Everything
+    # added to this `Args` lands in the file instead. It follows `output=`, because the grammar starts a group there.
+    spans = None
+    if ctx.attr._trace_spans[BuildSettingInfo].value:
+        spans = ctx.actions.declare_file(module_name + ".spans.json")
+        args.add(spans, format = "trace-file=%s")
+        outputs.append(spans)
+
     if _keep_manifest(library_jars, merged_module_names):
         args.add("keep-manifest=true")
     if ctx.attr.rewrite_boot_class_path:
@@ -172,7 +187,7 @@ def _content_module_jar_impl(ctx):
         # One mnemonic for every content-module jar, so a strategy or an execution-info override reaches all of them.
         mnemonic = "PackContentModuleJar",
         inputs = depset(library_jars + module_jars),
-        outputs = [output],
+        outputs = outputs,
         executable = ctx.executable._packer,
         # A worker, even though the binary starts in about two milliseconds. What a worker amortises here is not this
         # process's startup but Bazel's per-spawn cost, and the per-jar work is ~1 ms against a spawn-and-teardown
@@ -206,6 +221,10 @@ def _content_module_jar_impl(ctx):
     )
     return [
         DefaultInfo(files = depset([output])),
+        # Deliberately not a field of `ContentModuleJarInfo`: everything in that provider is read to *declare* something,
+        # and a span file must never be declared. The group is here for symmetry and for an explicit request; a dist
+        # build needs neither, because the jar and its spans are outputs of the same action and Bazel writes both.
+        OutputGroupInfo(trace_spans = depset([spans] if spans else [])),
         ContentModuleJarInfo(
             jar = output,
             module_name = module_name,
@@ -259,6 +278,12 @@ in - and merging it into `lib/<module>.jar` renames it. `mergeJars.kt` does the 
             default = "//build/content-module-packer",
             executable = True,
             cfg = "exec",
+        ),
+        # Whether to declare a span output per packed jar. Off by default and off means absent - see the flag's own
+        # comment in this package's `BUILD.bazel`.
+        "_trace_spans": attr.label(
+            default = "//platform/build-scripts/bazel-rules:trace_spans",
+            providers = [BuildSettingInfo],
         ),
     },
 )

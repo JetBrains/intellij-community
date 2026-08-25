@@ -131,6 +131,9 @@ type MergeSpec struct {
 	Sources              []Source
 	KeepManifest         bool
 	RewriteBootClassPath bool
+	// TraceFile is where the *run* writes its spans, and nothing about packing reads it. It arrives in the flag file
+	// because that is a worker's only per-request channel; see ParseFlagFile.
+	TraceFile string
 	// VerifyCRC recomputes every entry's CRC rather than carrying the source's, and fails on a mismatch. Off in a
 	// build, on in a parity run.
 	VerifyCRC bool

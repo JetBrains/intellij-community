@@ -5,6 +5,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.classPath.orderCoreClasspathEntries
 import org.jetbrains.intellij.build.classPath.writePluginClassPathCount
 import org.jetbrains.intellij.build.impl.PLUGIN_CLASSPATH
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.blockingUse
 import java.io.BufferedOutputStream
 import java.io.DataOutputStream
 import java.nio.file.FileVisitResult
@@ -124,7 +126,12 @@ fun composeDevBuildComponents(
         "Dev-build component '${manifest.kind}' declares symbolic link '${entry.relativePath}' more than once"
       }
     }
-    mergeDevBuildComponent(source = root, target = target, genuineSymlinks = genuineSymlinks)
+    // one span per component, so that a composition that is slow because of one fragment says which one
+    spanBuilder("merge dev build component").setAttribute("kind", manifest.kind).blockingUse { span ->
+      val merged = mergeDevBuildComponent(source = root, target = target, genuineSymlinks = genuineSymlinks)
+      span.setAttribute("fileCount", merged.fileCount.toLong())
+      span.setAttribute("byteCount", merged.byteCount)
+    }
   }
 
   val pluginClasspathFile = composePluginClassPath(components = components, target = target, prefix = pluginClasspathPrefix)
@@ -196,11 +203,16 @@ fun mergeDevBuildComponent(source: Path, target: Path) {
   mergeDevBuildComponent(source = source, target = target, genuineSymlinks = emptyMap())
 }
 
+/** What one merged component turned out to be, for the span that measured it. */
+internal class MergedDevBuildComponent(@JvmField val fileCount: Int, @JvmField val byteCount: Long)
+
 internal fun mergeDevBuildComponent(
   source: Path,
   target: Path,
   genuineSymlinks: Map<String, String>,
-) {
+): MergedDevBuildComponent {
+  var fileCount = 0
+  var byteCount = 0L
   val linksNotSeen = HashSet(genuineSymlinks.keys)
   fun recreateGenuineSymlink(relativePath: String, destination: Path, symlinkTarget: String) {
     check(!Files.exists(destination, LinkOption.NOFOLLOW_LINKS)) {
@@ -239,7 +251,10 @@ internal fun mergeDevBuildComponent(
       val genuineSymlinkTarget = genuineSymlinks.get(relativePath)
       if (genuineSymlinkTarget == null) {
         // Follow Bazel's staging link. Reproducing it would leak the execution root into the composed distribution.
-        Files.copy(file.toRealPath(), destination, StandardCopyOption.COPY_ATTRIBUTES)
+        val realFile = file.toRealPath()
+        fileCount++
+        byteCount += if (attrs.isSymbolicLink) Files.size(realFile) else attrs.size()
+        Files.copy(realFile, destination, StandardCopyOption.COPY_ATTRIBUTES)
       }
       else {
         recreateGenuineSymlink(relativePath, destination, genuineSymlinkTarget)
@@ -250,4 +265,5 @@ internal fun mergeDevBuildComponent(
   check(linksNotSeen.isEmpty()) {
     "Dev-build component manifest declares symbolic links absent from $source: ${linksNotSeen.sorted().joinToString()}"
   }
+  return MergedDevBuildComponent(fileCount = fileCount, byteCount = byteCount)
 }

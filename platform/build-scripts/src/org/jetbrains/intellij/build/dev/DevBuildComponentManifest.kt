@@ -9,6 +9,8 @@ import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.classPath.orderCoreClasspathEntries
 import org.jetbrains.intellij.build.impl.PLUGIN_CLASSPATH
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.blockingUse
 import java.nio.charset.StandardCharsets
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
@@ -166,67 +168,91 @@ fun computeIdeFingerprintFromComponents(
   return computeIdeFingerprint(entries)
 }
 
+/**
+ * Hashes every file a producer wrote and records what it found.
+ *
+ * Spanned because it is the one part of a producing action whose cost is a property of the action's output rather than
+ * of its work: it reads back, single-threaded, the full content of everything just written, in all ten producing
+ * actions. `fileCount` and `byteCount` are what the duration has to be read against.
+ */
 private fun inventoryDevBuildComponent(componentRoot: Path): List<DevBuildComponentEntry> {
-  val normalizedComponentRoot = componentRoot.toAbsolutePath().normalize()
-  val contentHashes = HashMap<Path, Long>()
-  val result = ArrayList<DevBuildComponentEntry>()
-  Files.walkFileTree(normalizedComponentRoot, object : SimpleFileVisitor<Path>() {
-    override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-      val relativePath = normalizedComponentRoot.relativize(file.toAbsolutePath().normalize()).invariantSeparatorsPathString
-      if (Files.isSymbolicLink(file)) {
-        val target = Files.readSymbolicLink(file)
-        if (!target.isAbsolute && file.parent.resolve(target).normalize().startsWith(normalizedComponentRoot)) {
-          val normalizedTarget = target.invariantSeparatorsPathString
-          result.add(
-            DevBuildComponentEntry(
-              relativePath = relativePath,
-              type = COMPONENT_SYMLINK_ENTRY_TYPE,
-              hash = computeDevBuildSymlinkHash(normalizedTarget),
-              symlinkTarget = normalizedTarget,
+  return spanBuilder("inventory dev build component").blockingUse { span ->
+    val normalizedComponentRoot = componentRoot.toAbsolutePath().normalize()
+    val contentHashes = HashMap<Path, Long>()
+    var hashedFileCount = 0L
+    var hashedByteCount = 0L
+    // not `computeIfAbsent`: only a file whose content was actually read counts towards what the hashing cost
+    fun contentHash(file: Path, size: Long): Long {
+      contentHashes.get(file)?.let { return it }
+      val hash = computeDevBuildContentHash(file)
+      contentHashes.put(file, hash)
+      hashedFileCount++
+      hashedByteCount += size
+      return hash
+    }
+
+    val result = ArrayList<DevBuildComponentEntry>()
+    Files.walkFileTree(normalizedComponentRoot, object : SimpleFileVisitor<Path>() {
+      override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+        val relativePath = normalizedComponentRoot.relativize(file.toAbsolutePath().normalize()).invariantSeparatorsPathString
+        if (Files.isSymbolicLink(file)) {
+          val target = Files.readSymbolicLink(file)
+          if (!target.isAbsolute && file.parent.resolve(target).normalize().startsWith(normalizedComponentRoot)) {
+            val normalizedTarget = target.invariantSeparatorsPathString
+            result.add(
+              DevBuildComponentEntry(
+                relativePath = relativePath,
+                type = COMPONENT_SYMLINK_ENTRY_TYPE,
+                hash = computeDevBuildSymlinkHash(normalizedTarget),
+                symlinkTarget = normalizedTarget,
+              )
             )
-          )
-        }
-        else {
-          // Bazel inputs and cache-backed assets may be linked into the fragment with an absolute or escaping target.
-          // Such a link is transport, not distribution semantics: inventory its bytes and let the composer copy them.
-          val realFile = file.toRealPath()
-          check(Files.isRegularFile(realFile, LinkOption.NOFOLLOW_LINKS)) {
-            "Dev-build component external symbolic link '$relativePath' must resolve to a regular file: $target"
           }
+          else {
+            // Bazel inputs and cache-backed assets may be linked into the fragment with an absolute or escaping target.
+            // Such a link is transport, not distribution semantics: inventory its bytes and let the composer copy them.
+            val realFile = file.toRealPath()
+            check(Files.isRegularFile(realFile, LinkOption.NOFOLLOW_LINKS)) {
+              "Dev-build component external symbolic link '$relativePath' must resolve to a regular file: $target"
+            }
+            result.add(
+              DevBuildComponentEntry(
+                relativePath = relativePath,
+                type = COMPONENT_FILE_ENTRY_TYPE,
+                hash = contentHash(realFile, Files.size(realFile)),
+                executable = computeDevBuildExecutableBit(realFile),
+              )
+            )
+          }
+        }
+        else if (attrs.isRegularFile) {
           result.add(
             DevBuildComponentEntry(
               relativePath = relativePath,
               type = COMPONENT_FILE_ENTRY_TYPE,
-              hash = contentHashes.computeIfAbsent(realFile, ::computeDevBuildContentHash),
-              executable = computeDevBuildExecutableBit(realFile),
+              hash = contentHash(file.toAbsolutePath().normalize(), attrs.size()),
+              executable = computeDevBuildExecutableBit(file),
             )
           )
         }
+        return FileVisitResult.CONTINUE
       }
-      else if (attrs.isRegularFile) {
-        result.add(
-          DevBuildComponentEntry(
-            relativePath = relativePath,
-            type = COMPONENT_FILE_ENTRY_TYPE,
-            hash = contentHashes.computeIfAbsent(file.toAbsolutePath().normalize(), ::computeDevBuildContentHash),
-            executable = computeDevBuildExecutableBit(file),
-          )
-        )
-      }
-      return FileVisitResult.CONTINUE
-    }
-  })
+    })
 
-  result.sortWith(
-    compareBy(
-      DevBuildComponentEntry::relativePath,
-      DevBuildComponentEntry::type,
-      DevBuildComponentEntry::hash,
-      DevBuildComponentEntry::executable,
-      { it.symlinkTarget ?: "" },
+    result.sortWith(
+      compareBy(
+        DevBuildComponentEntry::relativePath,
+        DevBuildComponentEntry::type,
+        DevBuildComponentEntry::hash,
+        DevBuildComponentEntry::executable,
+        { it.symlinkTarget ?: "" },
+      )
     )
-  )
-  return result
+    span.setAttribute("fileCount", result.size.toLong())
+    span.setAttribute("hashedFileCount", hashedFileCount)
+    span.setAttribute("byteCount", hashedByteCount)
+    result
+  }
 }
 
 private fun computeDevBuildSymlinkHash(target: String): Long {

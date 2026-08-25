@@ -20,6 +20,7 @@ import java.nio.file.Path
 fun main(args: Array<String>) {
   var manifest: Path? = null
   var outputDir: Path? = null
+  var traceFile: Path? = null
   for (arg in args) {
     val separator = arg.indexOf('=')
     require(arg.startsWith("--") && separator > 2) { "Expected an option in the '--key=value' form, but got '$arg'" }
@@ -27,13 +28,16 @@ fun main(args: Array<String>) {
     when (val name = arg.substring(0, separator)) {
       "--project-manifest" -> manifest = value
       "--output-dir" -> outputDir = value
+      TRACE_FILE_OPTION -> traceFile = value
       else -> error("Unknown option '$name'")
     }
   }
 
-  val tree = materializeProjectModelTree(
-    manifest = requireNotNull(manifest) { "--project-manifest is required" },
-    target = requireNotNull(outputDir) { "--output-dir is required" },
-  )
-  println("Project model tree materialized into $tree")
+  runDevDistJob(traceFile = traceFile, jobName = "materialize project model tree") {
+    val tree = materializeProjectModelTree(
+      manifest = requireNotNull(manifest) { "--project-manifest is required" },
+      target = requireNotNull(outputDir) { "--output-dir is required" },
+    )
+    println("Project model tree materialized into $tree")
+  }
 }

@@ -1,4 +1,22 @@
+load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
 load(":dev_dist_content_test.bzl", "dev_dist_content_test_suite")
+
+# Whether the packaging actions of a dev distribution write a Jaeger-JSON span file beside each of their outputs.
+#
+# Off by default, and off means *absent*: no rule declares a span output and no argument mentions one, so every action
+# key, argument list and declared output set is exactly what it was before this flag existed. That is the point - these
+# actions are the dev build, and a measurement that re-keys them measures a different build.
+#
+# It lives in this package because the rules that read it are here (`intellij_dev_dist.bzl`, `content_module_jar.bzl`),
+# and it is public rather than package-private because it is set from the command line of the repository that wraps this
+# one:
+#
+#     bazel build //build:idea_air_dist --@community//platform/build-scripts/bazel-rules:trace_spans
+bool_flag(
+    name = "trace_spans",
+    build_setting_default = False,
+    visibility = ["//visibility:public"],
+)
 
 dev_dist_content_test_suite(name = "dev_dist_content_tests")
 

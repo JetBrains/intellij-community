@@ -16,6 +16,11 @@ import (
 // does not fit a command line. `output=` starts a group, so the file is ordered and that order is the precedence Merge
 // uses for duplicates - every `library=` of a group comes before its `module=` lines, which is the order JarPackager
 // writes. Paths are resolved against baseDir.
+//
+// `trace-file=` is here rather than on the command line for a reason that is Bazel's, not this grammar's: Bazel splits a
+// worker spawn's arguments at the param file, so anything before it belongs to the worker *process* and to its
+// `WorkerKey`. A per-action path there would start a fresh worker for each of the ~2 500 packing actions. Inside the
+// file it is per *request*, which is what an action is.
 func ParseFlagFile(path string, baseDir string) ([]MergeSpec, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
@@ -60,6 +65,8 @@ func ParseFlagFile(path string, baseDir string) ([]MergeSpec, error) {
 			if current.RewriteBootClassPath, err = parseStrictBool(value); err != nil {
 				return nil, err
 			}
+		case "trace-file":
+			current.TraceFile = resolve(value)
 		case "module":
 			current.Sources = append(current.Sources, Source{Path: resolve(value), Filter: ModuleOutputNameFilter})
 		case "library":
@@ -71,6 +78,7 @@ func ParseFlagFile(path string, baseDir string) ([]MergeSpec, error) {
 	flush()
 
 	seen := make(map[string]int, len(specs))
+	trace := ""
 	for i, spec := range specs {
 		if len(spec.Sources) == 0 {
 			return nil, fmt.Errorf("no inputs for %q", spec.Output)
@@ -79,6 +87,18 @@ func ParseFlagFile(path string, baseDir string) ([]MergeSpec, error) {
 			return nil, fmt.Errorf("%q is declared twice, at group %d and %d", spec.Output, prev, i)
 		}
 		seen[spec.Output] = i
+		// A run writes one trace, so two groups naming different destinations have no answer. An action's flag file
+		// holds exactly one group and cannot reach this; a flag file assembled by hand from many actions' command lines
+		// - the whole-tranche profiling run in README.md - can, and silently writing every group's spans into the first
+		// one's declared output would be a file inside bazel-out that no action produced.
+		if spec.TraceFile == "" {
+			continue
+		}
+		if trace != "" && trace != spec.TraceFile {
+			return nil, fmt.Errorf("two `trace-file=` destinations, %q and %q: a run writes one trace, so pass "+
+				"`--trace-file=` for the whole run or drop the lines", trace, spec.TraceFile)
+		}
+		trace = spec.TraceFile
 	}
 	return specs, nil
 }

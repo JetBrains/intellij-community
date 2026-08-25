@@ -1,4 +1,4 @@
-load("@rules_go//go:def.bzl", "go_binary")
+load("@rules_go//go:def.bzl", "go_binary", "go_test")
 
 # Hand-maintained: no gazelle target is wired up in this repository, so adding a `.go` file means editing `srcs` here.
 
@@ -19,6 +19,26 @@ go_binary(
     visibility = ["//visibility:public"],
     deps = [
         "//build/content-module-packer/internal/jarpack",
+        "//build/content-module-packer/internal/span",
+        "//build/content-module-packer/internal/worker",
+    ],
+)
+
+# main.go is listed twice on purpose. The canonical rules_go shape would be a go_library that the binary and the test
+# both embed, but every packing action in the repository declares the binary above as an input and its output bytes are
+# what internal/jarpack's digests are frozen against: recompiling it under a different rule to gain a test is not a
+# trade worth making. What this covers is the argument surface and the span file - the jars themselves are gated in
+# internal/jarpack.
+go_test(
+    name = "content-module-packer_test",
+    srcs = [
+        "main.go",
+        "main_test.go",
+    ],
+    pure = "on",
+    deps = [
+        "//build/content-module-packer/internal/jarpack",
+        "//build/content-module-packer/internal/span",
         "//build/content-module-packer/internal/worker",
     ],
 )

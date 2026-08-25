@@ -1,12 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("RAW_RUN_BLOCKING")
 @file:JvmName("DevDistMain")
 
 package org.jetbrains.intellij.build.devServer
 
 import com.intellij.platform.devIdeConfig.DevIdeConfig
+import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
@@ -21,6 +20,8 @@ import org.jetbrains.intellij.build.dev.PrepackedPluginContentKey
 import org.jetbrains.intellij.build.dev.buildProductInProcess
 import org.jetbrains.intellij.build.dev.materializeProjectModelTree
 import org.jetbrains.intellij.build.impl.BazelBuildInputs
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.blockingUse
 import java.nio.file.DirectoryNotEmptyException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -44,11 +45,25 @@ import kotlin.system.exitProcess
  * files, `--preloaded-manifest` supplies the archives a build would otherwise download, and the jar cache is off unless
  * `--jar-cache-dir` names one. `--os` and `--arch` select the complete target platform. That is what an
  * dev-distribution fragment Bazel action passes.
+ *
+ * [TRACE_FILE_OPTION] writes this process's spans out as a side output; without it nothing is written.
  */
-@OptIn(ExperimentalPathApi::class)
 fun main(args: Array<String>) {
   val options = parseCommandLineOptions(args)
+  runDevDistJob(
+    traceFile = options.optionalPath(TRACE_FILE_OPTION),
+    jobName = "assemble dev distribution",
+    // this entry point printed a console span dump before it could write a trace file; not measuring must leave that as it was
+    consoleSpansWhenNotMeasuring = true,
+  ) {
+    assembleDevDistribution(options)
+  }
+  // the build uses thread pools and Netty/Ktor selectors that may outlive the last coroutine
+  exitProcess(0)
+}
 
+@OptIn(ExperimentalPathApi::class)
+private suspend fun assembleDevDistribution(options: CommandLineOptions) {
   val outputDir = options.requiredPath("--output-dir")
   val scratchDir = options.optionalPath("--scratch-dir") ?: Path.of("${outputDir.invariantSeparatorsPathString}.scratch")
   // Either the caller points at a checkout, or it hands over a manifest of the project-model files it declares and gets a
@@ -60,7 +75,9 @@ fun main(args: Array<String>) {
   }
   else {
     require(options.optional("--project-dir") == null) { "--project-dir and --project-manifest are mutually exclusive" }
-    materializeProjectModelTree(manifest = projectManifest, target = scratchDir.resolve("project"))
+    spanBuilder("materialize project model tree (inline)").blockingUse {
+      materializeProjectModelTree(manifest = projectManifest, target = scratchDir.resolve("project"))
+    }
   }
   // `BuildPaths.COMMUNITY_ROOT` and `ULTIMATE_HOME` are lazily initialized singletons that guess the repository root by walking up from
   // a set of candidate locations (see `IdeaProjectLoaderUtil.collectHomeSources`). Inside a Bazel action none of those candidates work:
@@ -91,6 +108,9 @@ fun main(args: Array<String>) {
   val cleanOutput = options.optionalBoolean("--clean-output") ?: false
   val cleanScratchOnSuccess = options.optionalBoolean("--clean-scratch-on-success") ?: false
   val fragment = parseFragment(options)
+  // the root span is what a merged timeline groups an action's spans under, and every fragment action opens the same
+  // one, so it has to say which fragment it was
+  Span.current().setAttribute("fragment", fragment.name)
   val componentManifest = options.optionalPath("--component-manifest")
   val pluginClasspathPart = options.optionalPath("--plugin-classpath-part")
   val pluginClasspathPrefix = options.optionalPath("--plugin-classpath-prefix")
@@ -137,40 +157,37 @@ fun main(args: Array<String>) {
 
   lateinit var mainClassName: String
 
-  val runDir = runBlocking(Dispatchers.Default) {
-    val runDir = buildProductInProcess(
-      BuildRequest(
-        platformPrefix = platformPrefix,
-        additionalModules = additionalModules,
-        projectDir = projectDir,
-        keepHttpClient = false,
-        platformClassPathConsumer = { actualMainClassName, _, _ ->
-          mainClassName = actualMainClassName
-        },
-        os = os,
-        arch = arch,
-        // the IDE is started by `PreBuiltDevMain`, which resets the classloader itself, so the boot classpath is not the final one
-        isBootClassPathCorrect = false,
-        generateRuntimeModuleRepository = generateRuntimeModuleRepository,
-        runDirOverride = outputDir,
-        scratchDir = scratchDir,
-        buildDateInSeconds = buildDateInSeconds,
-        jarCacheDir = jarCacheDir,
-        output = output,
-        prepackedPluginContent = prepackedPluginContent,
-      )
+  val runDir = buildProductInProcess(
+    BuildRequest(
+      platformPrefix = platformPrefix,
+      additionalModules = additionalModules,
+      projectDir = projectDir,
+      keepHttpClient = false,
+      platformClassPathConsumer = { actualMainClassName, _, _ ->
+        mainClassName = actualMainClassName
+      },
+      os = os,
+      arch = arch,
+      // the IDE is started by `PreBuiltDevMain`, which resets the classloader itself, so the boot classpath is not the final one
+      isBootClassPathCorrect = false,
+      generateRuntimeModuleRepository = generateRuntimeModuleRepository,
+      runDirOverride = outputDir,
+      scratchDir = scratchDir,
+      buildDateInSeconds = buildDateInSeconds,
+      jarCacheDir = jarCacheDir,
+      output = output,
+      prepackedPluginContent = prepackedPluginContent,
     )
+  )
 
-    withContext(Dispatchers.IO) {
-      dropEmptyTempDir(runDir)
-      // What the distribution is, not just where it is: a consumer that needs a different product or a plugin module
-      // this assembly did not build in is looking at the wrong distribution, and `DevIdeConfig` is where it can find
-      // that out. The relative-home rule and the file format live there too, with the readers.
-      if (fragment.isComplete) {
-        DevIdeConfig.write(checkNotNull(ideConfigFile) { "--ide-config is required for a complete distribution" }, runDir, mainClassName, platformPrefix, additionalModules)
-      }
+  withContext(Dispatchers.IO) {
+    dropEmptyTempDir(runDir)
+    // What the distribution is, not just where it is: a consumer that needs a different product or a plugin module
+    // this assembly did not build in is looking at the wrong distribution, and `DevIdeConfig` is where it can find
+    // that out. The relative-home rule and the file format live there too, with the readers.
+    if (fragment.isComplete) {
+      DevIdeConfig.write(checkNotNull(ideConfigFile) { "--ide-config is required for a complete distribution" }, runDir, mainClassName, platformPrefix, additionalModules)
     }
-    runDir
   }
 
   println("Dev distribution fragment '$fragment' assembled into $runDir (main class: $mainClassName${ideConfigFile?.let { ", config: $it" }.orEmpty()})")
@@ -179,8 +196,6 @@ fun main(args: Array<String>) {
     Files.createDirectories(scratchDir)
   }
   unusedInputs?.let(BazelBuildInputs::writeUnusedInputs)
-  // the build uses thread pools and Netty/Ktor selectors that may outlive the last coroutine
-  exitProcess(0)
 }
 
 private fun readPrepackedPluginContentPlan(file: Path): Map<PrepackedPluginContentKey, PrepackedPluginContentJar> {

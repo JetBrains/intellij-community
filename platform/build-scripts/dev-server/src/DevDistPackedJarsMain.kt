@@ -3,11 +3,14 @@
 
 package org.jetbrains.intellij.build.devServer
 
+import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.dev.collectPrepackedPluginContentJars
 import org.jetbrains.intellij.build.dev.copyAsDistributionFile
 import org.jetbrains.intellij.build.dev.writeDevBuildComponentManifest
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.blockingUse
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -28,6 +31,12 @@ import java.nio.file.Path
  */
 fun main(args: Array<String>) {
   val options = parseCommandLineOptions(args)
+  runDevDistJob(traceFile = options.optionalPath(TRACE_FILE_OPTION), jobName = "collect packed jars") {
+    collectPackedJars(options)
+  }
+}
+
+private fun collectPackedJars(options: CommandLineOptions) {
   val outputDir = options.requiredPath("--output-dir")
   val componentManifest = options.requiredPath("--component-manifest")
   val kind = requireNotNull(options.optional("--kind")) { "--kind is required: it names this component in the composition" }
@@ -41,6 +50,9 @@ fun main(args: Array<String>) {
   require((jarListFile == null) != (pluginJarsFile == null)) { "Exactly one of --jars-file and --plugin-jars-file is required" }
   val pluginPlacements = options.pathList("--plugin-placement")
   options.checkNoUnknownOptions()
+  // the root span is what a merged timeline groups an action's spans under, and every packed-jars action opens the
+  // same one, so it has to say which component it collected
+  Span.current().setAttribute("kind", kind)
 
   val count = if (jarListFile != null) {
     require(pluginPlacements.isEmpty()) { "--plugin-placement is only valid with --plugin-jars-file" }
@@ -70,17 +82,23 @@ fun main(args: Array<String>) {
 }
 
 private fun collectPlatformJars(jarListFile: Path, outputDir: Path): Int {
-  val libDir = outputDir.resolve("lib")
-  Files.createDirectories(libDir)
-  val jars = Files.readAllLines(jarListFile).filter { it.isNotBlank() }.map { Path.of(it).toAbsolutePath().normalize() }
-  require(jars.isNotEmpty()) { "$jarListFile names no jar, so this component would contribute nothing" }
+  return spanBuilder("collect platform jars").blockingUse { span ->
+    val libDir = outputDir.resolve("lib")
+    Files.createDirectories(libDir)
+    val jars = Files.readAllLines(jarListFile).filter { it.isNotBlank() }.map { Path.of(it).toAbsolutePath().normalize() }
+    require(jars.isNotEmpty()) { "$jarListFile names no jar, so this component would contribute nothing" }
 
-  val byName = HashMap<String, Path>(jars.size)
-  for (jar in jars) {
-    val name = jar.fileName.toString()
-    val previous = byName.put(name, jar)
-    require(previous == null) { "Two packed jars are named '$name': $previous and $jar" }
-    copyAsDistributionFile(source = jar, target = libDir.resolve(name))
+    var byteCount = 0L
+    val byName = HashMap<String, Path>(jars.size)
+    for (jar in jars) {
+      val name = jar.fileName.toString()
+      val previous = byName.put(name, jar)
+      require(previous == null) { "Two packed jars are named '$name': $previous and $jar" }
+      byteCount += Files.size(jar)
+      copyAsDistributionFile(source = jar, target = libDir.resolve(name))
+    }
+    span.setAttribute("jarCount", jars.size.toLong())
+    span.setAttribute("byteCount", byteCount)
+    jars.size
   }
-  return jars.size
 }

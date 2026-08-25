@@ -1,0 +1,20 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+# Hand-maintained: no gazelle target is wired up in this repository, so adding a `.go` file means editing `srcs` here.
+
+go_library(
+    name = "span",
+    srcs = ["span.go"],
+    importpath = "jetbrains.com/content-module-packer/internal/span",
+    visibility = ["//visibility:public"],
+)
+
+# The schema gate. The expectations in span_test.go are the bytes a merged build trace is read from, so a field renamed,
+# reordered or given a different JSON type fails here rather than in a Jaeger UI that silently drops what it cannot
+# parse.
+go_test(
+    name = "span_test",
+    srcs = ["span_test.go"],
+    embed = [":span"],
+    pure = "on",
+)
