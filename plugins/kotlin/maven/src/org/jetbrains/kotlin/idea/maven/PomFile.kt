@@ -165,7 +165,8 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
         ensureBuild()
 
         val groupArtifact = artifact.withNoVersion()
-        val plugin = findPlugin(groupArtifact) ?: domModel.build.plugins.addPlugin()
+        val plugin = domModel.build.plugins.plugins.firstOrNull { it.matches(groupArtifact) }
+            ?: domModel.build.plugins.addPlugin()
         plugin.groupId.stringValue = artifact.groupId
         plugin.artifactId.stringValue = artifact.artifactId
         if (artifact.version != null) {

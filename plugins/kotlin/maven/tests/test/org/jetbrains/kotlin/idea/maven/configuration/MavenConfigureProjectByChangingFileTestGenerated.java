@@ -58,6 +58,11 @@ public class MavenConfigureProjectByChangingFileTestGenerated extends AbstractMa
         runTest("testData/configurator/jvm/pluginMissing/");
     }
 
+    @TestMetadata("reuseActiveKotlinPlugin")
+    public void testReuseActiveKotlinPlugin() throws Exception {
+        runTest("testData/configurator/jvm/reuseActiveKotlinPlugin/");
+    }
+
     @TestMetadata("simpleProject")
     public void testSimpleProject() throws Exception {
         runTest("testData/configurator/jvm/simpleProject/");
