@@ -749,6 +749,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
    */
   @Deprecated
   public final @Nullable StubTree getGreenStubTree() {
+    if (InternalPsiVersioning.isInsideVersioningButNotLocks()) {
+      // as of now, we do not allow working with stubs inside versioned environment, as stubs are not represented as a versioned structure
+      // so the green stub functionality is disabled.
+      return null;
+    }
     assertReadAccessAllowed();
 
     StubTree deref = derefStub();
@@ -778,7 +783,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     Function<FileElement, T> astProcessor
   ) {
     Pair<@Nullable StubTree, @Nullable FileElement> result = getStubTreeOrFileElement();
-    StubElement<?> stubElement = result.first != null ? result.first.getRoot() : null;
+    StubElement<?> stubElement = result.first != null && !InternalPsiVersioning.isInsideVersioningButNotLocks() ? result.first.getRoot() : null;
     if (stubElement != null && !stubClass.isAssignableFrom(stubElement.getClass())) {
       LanguageStubDescriptor descriptor = getStubDescriptor();
       String elementTypeName = descriptor != null ? descriptor.getFileElementSerializer().getExternalId() : null;
@@ -801,7 +806,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     Function<FileElement, T> astProcessor
   ) {
     Pair<@Nullable StubTree, @Nullable FileElement> result = getStubTreeOrFileElement();
-    if (result.first != null) {
+    if (result.first != null && !InternalPsiVersioning.isInsideVersioningButNotLocks()) {
       return stubProcessor.apply(result.first);
     }
     FileElement fileElement = result.second;
