@@ -572,7 +572,9 @@ class JavaToJKTreeBuilder internal constructor(
 
         private fun PsiMethodCallExpression.getExplicitTypeArguments(): JKTypeArgumentList {
             val sourceCall = semanticResolver.originalElementOrSelf(this)
-            val typeArgumentList = (if (sourceCall.typeArguments.isNotEmpty()) {
+            val typeArgumentList = (if (typeArguments.isNotEmpty()) {
+                typeArgumentList
+            } else if (sourceCall.typeArguments.isNotEmpty()) {
                 sourceCall.typeArgumentList
             } else {
                 AddTypeArgumentsFix.addTypeArguments(sourceCall, null, false)
@@ -585,9 +587,13 @@ class JavaToJKTreeBuilder internal constructor(
             val typeParameters = sourceCall.resolveMethod()?.typeParameters ?: return typeArgumentList
             if (typeParameters.size != typeArgumentList.typeArguments.size) return typeArgumentList
 
+            val passesNull = sourceCall.argumentList.expressions.any {
+                getExpressionDfaNullability(it) in NULLABLE_DFA_NULLABILITIES
+            }
+
             typeArgumentList.typeArguments.forEachIndexed { index, typeArgument ->
                 typeArgument.type = when (getTypeParameterNullability(typeParameters[index])) {
-                    PsiNullability.NOT_NULL -> typeArgument.type.updateNullability(NotNull)
+                    PsiNullability.NOT_NULL -> if (passesNull) typeArgument.type else typeArgument.type.updateNullability(NotNull)
                     PsiNullability.NULLABLE -> typeArgument.type.updateNullability(Nullable)
                     else -> typeArgument.type
                 }

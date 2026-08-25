@@ -5326,6 +5326,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/simple.java");
         }
 
+        @TestMetadata("typeArgumentFromJavaTypeParameter.java")
+        public void testTypeArgumentFromJavaTypeParameter() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/typeArgumentFromJavaTypeParameter.java");
+        }
+
         @TestMetadata("typeArgumentInAbstractMethod.java")
         public void testTypeArgumentInAbstractMethod() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/typeArgumentInAbstractMethod.java");

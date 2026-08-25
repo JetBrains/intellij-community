@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.codeInsight.Nullability
+import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInspection.dataFlow.CommonDataflow
 import com.intellij.codeInspection.dataFlow.DfaNullability
 import com.intellij.codeInspection.dataFlow.DfaUtil
@@ -37,10 +38,18 @@ internal data class NullabilityInfo(
     val notNullElements: Set<PsiJavaCodeReferenceElement>,
 )
 
-// Only Kotlin type parameters are supported
+internal val NULLABLE_DFA_NULLABILITIES = setOf(DfaNullability.NULL, DfaNullability.NULLABLE)
+
+private fun getJavaTypeParameterNullability(psiTypeParameter: PsiTypeParameter): Nullability {
+    val manager = NullableNotNullManager.getInstance(psiTypeParameter.project) ?: return Nullability.UNKNOWN
+    manager.findOwnNullabilityInfo(psiTypeParameter)?.let { return it.nullability }
+    manager.findDefaultTypeUseNullability(psiTypeParameter)?.let { return it.nullability }
+    return Nullability.UNKNOWN
+}
+
 internal fun getTypeParameterNullability(psiTypeParameter: PsiTypeParameter): Nullability {
     val ktTypeParameter = (psiTypeParameter as? KtLightDeclaration<*, *>)?.kotlinOrigin as? KtTypeParameter
-        ?: return Nullability.UNKNOWN
+        ?: return getJavaTypeParameterNullability(psiTypeParameter)
 
     analyze(ktTypeParameter) {
         for (upperBound in ktTypeParameter.symbol.upperBounds) {

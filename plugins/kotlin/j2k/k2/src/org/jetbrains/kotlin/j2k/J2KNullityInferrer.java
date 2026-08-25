@@ -65,6 +65,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
@@ -90,7 +91,7 @@ import static org.jetbrains.kotlin.j2k.NullabilityUtilsKt.isUsedInAutoUnboxingCo
  * This class is based on com.intellij.codeInspection.inferNullity.NullityInferrer
  * and extended for better J2K support.
  * TODO:
- *  support inference for type arguments in case the type parameter is used as both an input and an output type (Collections.emptyList())
+ *  infer a type argument from the argument type when the callee declares no nullability at all
  *  support method calls of external methods (especially Kotlin interop)
  *  improve support for array types and initializers
  *  support propagation of generic nullability from lambda parameters
@@ -1043,7 +1044,12 @@ public class J2KNullityInferrer {
         // If type parameters come from Kotlin, we propagate their nullability to the type arguments
         // TODO support not only raw but generic propagation
         private void updateNullabilityOfTypeArguments(PsiTypeParameter[] typeParameters, PsiType[] typeArguments) {
-            
+            updateNullabilityOfTypeArguments(typeParameters, typeArguments, null);
+        }
+
+        private void updateNullabilityOfTypeArguments(PsiTypeParameter[] typeParameters,
+                                                      PsiType[] typeArguments,
+                                                      boolean @Nullable [] receivesNull) {
             if (typeParameters.length != typeArguments.length) return;
 
             for (int i = 0; i < typeParameters.length; i++) {
@@ -1053,8 +1059,74 @@ public class J2KNullityInferrer {
 
                 switch (nullability) {
                     case NULLABLE -> registerNullableType(typeArgument);
-                    case NOT_NULL -> registerNotNullType(typeArgument);
+                    case NOT_NULL -> {
+                        if (receivesNull == null || !receivesNull[i]) registerNotNullType(typeArgument);
+                    }
                 }
+            }
+        }
+
+        private void inferTypeArgumentsFromExpectedType(PsiMethodCallExpression call, PsiMethod method, boolean[] receivesNull) {
+            PsiType[] typeArguments = call.getTypeArguments();
+            PsiTypeParameter[] typeParameters = method.getTypeParameters();
+            if (typeArguments.length == 0 || typeArguments.length != typeParameters.length) return;
+
+            PsiType declaredReturnType = method.getReturnType();
+            if (declaredReturnType == null) return;
+
+            PsiType expectedType = ExpectedTypeUtils.findExpectedType(call, false);
+            if (expectedType == null) return;
+
+            projectOntoTypeArguments(declaredReturnType, expectedType, typeParameters, typeArguments, receivesNull);
+        }
+
+        private boolean receivesNullArgument(PsiMethodCallExpression call, PsiTypeParameter typeParameter) {
+            for (PsiExpression argument : call.getArgumentList().getExpressions()) {
+                PsiParameter parameter = MethodCallUtils.getParameterForArgument(argument);
+                if (parameter == null || !mentionsTypeParameter(parameter.getType(), typeParameter)) continue;
+                DfaNullability nullability = getExpressionDfaNullability(argument);
+                if (nullability == DfaNullability.NULL || nullability == DfaNullability.NULLABLE) return true;
+            }
+            return false;
+        }
+
+        private boolean mentionsTypeParameter(PsiType type, PsiTypeParameter typeParameter) {
+            if (type instanceof PsiArrayType arrayType) {
+                return mentionsTypeParameter(arrayType.getComponentType(), typeParameter);
+            }
+            if (!(type instanceof PsiClassType classType)) return false;
+            if (classType.resolve() == typeParameter) return true;
+            for (PsiType typeArgument : classType.getParameters()) {
+                if (mentionsTypeParameter(typeArgument, typeParameter)) return true;
+            }
+            return false;
+        }
+
+        private void projectOntoTypeArguments(PsiType declaredType,
+                                              PsiType expectedType,
+                                              PsiTypeParameter[] typeParameters,
+                                              PsiType[] typeArguments,
+                                              boolean[] receivesNull) {
+            if (!(declaredType instanceof PsiClassType declaredClassType)) return;
+
+            if (declaredClassType.resolve() instanceof PsiTypeParameter typeParameter) {
+                int index = ArrayUtil.indexOf(typeParameters, typeParameter);
+                if (index < 0) return;
+                if (isNotNull(expectedType)) {
+                    if (!receivesNull[index]) registerNotNullType(typeArguments[index]);
+                } else if (isNullable(expectedType)) {
+                    registerNullableType(typeArguments[index]);
+                }
+                return;
+            }
+
+            if (!(expectedType instanceof PsiClassType expectedClassType)) return;
+            PsiType[] declaredArguments = declaredClassType.getParameters();
+            PsiType[] expectedArguments = expectedClassType.getParameters();
+            if (declaredArguments.length != expectedArguments.length) return;
+
+            for (int i = 0; i < declaredArguments.length; i++) {
+                projectOntoTypeArguments(declaredArguments[i], expectedArguments[i], typeParameters, typeArguments, receivesNull);
             }
         }
 
@@ -1079,7 +1151,12 @@ public class J2KNullityInferrer {
             // Update nullability of type arguments
             PsiTypeParameter[] typeParameters = method.getTypeParameters();
             PsiType[] typeArguments = expression.getTypeArguments();
-            updateNullabilityOfTypeArguments(typeParameters, typeArguments);
+            boolean[] receivesNull = new boolean[typeParameters.length];
+            for (int i = 0; i < typeParameters.length; i++) {
+                receivesNull[i] = receivesNullArgument(expression, typeParameters[i]);
+            }
+            updateNullabilityOfTypeArguments(typeParameters, typeArguments, receivesNull);
+            inferTypeArgumentsFromExpectedType(expression, method, receivesNull);
         }
 
         @Override

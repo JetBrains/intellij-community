@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-// TODO handle the case when type argument is used in the method return type (make it not-null)
 public class J {
     Set<String> notNullSet = Collections.emptySet();
 

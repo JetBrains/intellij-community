@@ -93,6 +93,11 @@ public class K2JavaToKotlinConverterMultiFileTestGenerated extends AbstractK2Jav
         runTest("../../shared/tests/testData/multiFile/OverridePropertyAndUseAnotherPropertyOfSupertypeCompanion/");
     }
 
+    @TestMetadata("PackageNullMarked")
+    public void testPackageNullMarked() throws Exception {
+        runTest("../../shared/tests/testData/multiFile/PackageNullMarked/");
+    }
+
     @TestMetadata("ProtectedVisibility")
     public void testProtectedVisibility() throws Exception {
         runTest("../../shared/tests/testData/multiFile/ProtectedVisibility/");
