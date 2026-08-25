@@ -5,6 +5,7 @@ package com.intellij.util.ui
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.ScalableIcon
+import com.intellij.openapi.util.UtilThreadingAssertions
 import com.intellij.openapi.util.findIconUsingNewImplementation
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.IconManager
@@ -80,6 +81,8 @@ class ExtendableHTMLViewFactory internal constructor(
   internal constructor(vararg extensions: (Element, View) -> View?) : this(extensions.asList())
 
   override fun create(element: Element): View {
+    UtilThreadingAssertions.softAssertAwtOperationsThread()
+
     val defaultView = base.create(element)
     for (extension in extensions) {
       val view = extension(element, defaultView)
