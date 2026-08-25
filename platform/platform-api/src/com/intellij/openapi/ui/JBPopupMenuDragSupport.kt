@@ -27,9 +27,9 @@ private val SESSION_KEY = Key.create<MenuDragSession>("MenuDragSession")
 
 internal fun prepareForMenuDragSession(menu: JBPopupMenu, invoker: Component?, x: Int, y: Int) {
   if (
-    SystemInfoRt.isWindows || // On Windows click-by-drag is neither supported nor desired.
+    SystemInfoRt.isWindows || // On Windows click-by-drag is neither supported nor desired (except LMB drag for the main menu, but it needs no tracking).
     GraphicsEnvironment.isHeadless() || // Obviously...
-    threshold() == 0 || // The feature is disabled.
+    distanceThreshold() == 0 || // The feature is disabled.
     MenuSelectionManager.defaultManager().selectedPath.isNotEmpty() || // This is a nested menu, not invoked by right click.
     invoker == null || // Some weird exotic invocation, skip it.
     !invoker.isShowing // Ditto, some out-of-sync invocation or something.
@@ -70,17 +70,21 @@ class MenuDragSession internal constructor(
   fun isClickOrNoticeableDrag(): Boolean {
     val distance = maximumDragDistance
     if (distance == null) return true // click
-    val threshold = threshold()
-    val isNoticeable = distance >= threshold
+    val distanceThreshold = distanceThreshold()
+    val isNoticeable = distance >= distanceThreshold
     if (isNoticeable) {
-      LOG.debug { "A noticeable drag is detected, the menu item will be clicked: threshold = $threshold, distance = $distance" }
+      LOG.debug {
+        "A noticeable drag is detected, the menu item will be clicked: " +
+        "distance threshold = $distanceThreshold, " +
+        "distance = $distance"
+      }
     }
     return isNoticeable
   }
 
 }
 
-private fun threshold(): Int {
+private fun distanceThreshold(): Int {
   val unscaled = if (SystemInfoRt.isMac) {
     Registry.intValue(key = "popup.menu.drag.distance.threshold.mac", defaultValue = 0, minValue = 0, maxValue = 100)
   }
