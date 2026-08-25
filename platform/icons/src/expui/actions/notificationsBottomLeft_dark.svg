@@ -1,6 +1,5 @@
 <!-- Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path fill-rule="evenodd" clip-rule="evenodd" d="M1 4C1 2.89543 1.89543 2 3 2H13C14.1046 2 15 2.89543 15 4V12C15 13.1046 14.1046 14 13 14H3C1.89543 14 1 13.1046 1 12V4ZM3 3C2.44772 3 2 3.44772 2 4V12C2 12.5523 2.44772 13 3 13H13C13.5523 13 14 12.5523 14 12V4C14 3.44772 13.5523 3 13 3H3Z" fill="#CED0D6"/>
-<rect x="3" y="9" width="5" height="1" rx="0.5" fill="#CED0D6"/>
-<rect x="3" y="11" width="5" height="1" rx="0.5" fill="#CED0D6"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C13.105 2 14 2.895 14 4V12C14 13.105 13.105 14 12 14H4C2.895 14 2 13.105 2 12V4C2 2.895 2.895 2 4 2H12ZM6 13V10H3V12C3 12.552 3.448 13 4 13H6ZM12 13C12.552 13 13 12.552 13 12V4C13 3.448 12.552 3 12 3H4C3.448 3 3 3.448 3 4V9H6C6.552 9 7 9.448 7 10V13H12Z" fill="#CED0D6" color-fill-key="icon-default-stroke"/>
+<path d="M6 10V13H4C3.448 13 3 12.552 3 12V10H6Z" fill="#43454A" color-fill-key="icon-default-fill"/>
 </svg>
