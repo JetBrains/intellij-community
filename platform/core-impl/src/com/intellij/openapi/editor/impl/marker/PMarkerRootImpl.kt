@@ -205,6 +205,42 @@ open class PMarkerRootImpl private constructor(
   }
 
   /**
+   * Keeps this branch's marker states and adds valid markers that exist only in [other].
+   *
+   * Invalid or removed markers that exist only in [other] remain absent, which preserves their invalidity while this
+   * branch stays authoritative for every marker ID it has already observed.
+   */
+  internal fun mergeValidMarkersFrom(other: PMarkerRootImpl): PMarkerRootImpl {
+    if (other.rootId == NULL_NODE) return this
+
+    val otherEntries = ArrayList<MarkerEntry>()
+    collectEntries(MapBatchEditor(other.states), other.rootId, 0, otherEntries)
+    val missingEntries = otherEntries.filter { states.getUnchecked(it.markerId) == null }
+    if (missingEntries.isEmpty()) return this
+
+    val editor = MapBatchEditor(states)
+    var mergedRootId = rootId
+    for (entry in missingEntries) {
+      editor.putValid(
+        entry.markerId,
+        ValidNode(
+          entry = entry,
+          parentId = NULL_NODE,
+          leftId = NULL_NODE,
+          rightId = NULL_NODE,
+          height = 1,
+          maximumEndOffset = entry.endOffset,
+          lazyOffsetDelta = 0,
+          subtreeFlavorFlags = entry.flavorFlags,
+        )
+      )
+      mergedRootId = insertAvl(editor, mergedRootId, entry.markerId)
+    }
+    editor.setParent(mergedRootId, NULL_NODE)
+    return PMarkerRootImpl(mergedRootId, editor.build())
+  }
+
+  /**
    * Reports IDs of valid markers intersecting the half-open range `[startOffset, endOffset)`.
    *
    * This implementation uses a start-ordered tree augmented with subtree maximum ends. It is output-sensitive in

@@ -47,6 +47,12 @@ internal class DocumentSnapshotImpl private constructor(
     return this
   }
 
+  internal fun copyWithMarkerRoot(root: PMarkerRoot): DocumentSnapshotImpl {
+    return DocumentSnapshotImpl(text, modState, sputniks).also {
+      it.markerRoot.set(root)
+    }
+  }
+
   override fun applyOp(op: DocumentOp): DocumentSnapshot {
     val newText = text.applyOp(op)
     val newModState = modState.applyOp(text, newText, op)

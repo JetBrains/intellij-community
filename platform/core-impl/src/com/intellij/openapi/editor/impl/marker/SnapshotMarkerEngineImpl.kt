@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.impl.StripedIDGenerator
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.Processor
 import com.intellij.util.containers.ReferenceQueueable
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.lang.ref.ReferenceQueue
 import java.lang.ref.WeakReference
@@ -69,6 +70,28 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine, ReferenceQueueable {
       }
     }
     publishRoot(beforeSnapshot, afterSnapshot) { it.applyOp(op) }
+  }
+
+  /**
+   * Returns [metadataSnapshot] with the marker state of [markerSnapshot]. Markers created only in
+   * [metadataSnapshot] are retained as well.
+   *
+   * The caller must ensure that both snapshots represent the same text. The returned snapshot is not visible until
+   * its merged root has been installed.
+   */
+  @ApiStatus.Internal
+  fun mergeMarkerRoots(
+    markerSnapshot: DocumentSnapshot,
+    metadataSnapshot: DocumentSnapshot,
+  ): DocumentSnapshot {
+    processQueue()
+    if (markerSnapshot === metadataSnapshot) return metadataSnapshot
+
+    val primaryRoot = markerRoot(markerSnapshot).get() as PMarkerRootImpl
+    if (primaryRoot === PMarkerRootImpl.empty()) return metadataSnapshot
+    val metadataRoot = markerRoot(metadataSnapshot).get() as PMarkerRootImpl
+    val mergedRoot = primaryRoot.mergeValidMarkersFrom(metadataRoot)
+    return (metadataSnapshot as DocumentSnapshotImpl).copyWithMarkerRoot(mergedRoot)
   }
 
   private inline fun publishRoot(

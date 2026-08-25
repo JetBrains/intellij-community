@@ -22,6 +22,35 @@ import kotlin.concurrent.thread
 
 class SnapshotMarkerEngineImplTest {
   @Test
+  fun `clean snapshot merge keeps markers created in both branches`() {
+    val fixture = Fixture("abcdef")
+    val initialSnapshot = fixture.initialSnapshot
+    val primary = initialSnapshot.applyOp(DocumentNewOps.getInstance().createModStampOp(1, true))
+    val metadata = initialSnapshot.applyOp(DocumentNewOps.getInstance().createModStampOp(2, true))
+    val primaryMarker = SnapshotMarkerEngineImpl.createRangeMarker(
+      document = fixture.document,
+      snapshot = primary,
+      startOffset = 1,
+      endOffset = 4,
+      spec = nonGreedySpec(),
+    )
+    val metadataMarker = SnapshotMarkerEngineImpl.createRangeMarker(
+      document = fixture.document,
+      snapshot = metadata,
+      startOffset = 5,
+      endOffset = 5,
+      spec = nonGreedySpec(),
+    )
+
+    val merged = SnapshotMarkerEngineImpl.mergeMarkerRoots(primary, metadata)
+
+    assertSame(metadata.text(), merged.text())
+    assertEquals(metadata.modState().stamp(), merged.modState().stamp())
+    assertRange(primaryMarker, merged, startOffset = 1, endOffset = 4)
+    assertRange(metadataMarker, merged, startOffset = 5, endOffset = 5)
+  }
+
+  @Test
   fun `marker has different offsets in two child snapshots`() {
     val fixture = Fixture("abcdef")
     val initialSnapshot = fixture.initialSnapshot

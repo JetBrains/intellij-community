@@ -120,9 +120,15 @@ internal abstract class DocumentRealMutator(
   }
 
   private fun applyElfTextChange(elfChange: ElfTextChange) {
+    val applyChange = {
+      // Rebased changes carry independently computed snapshots. Apply each patch to the published result of the
+      // preceding replay so its marker root and any listener-time metadata are inherited by the whole batch.
+      val snapshotBefore = getSnapshotSnapshot().real
+      changeText(snapshotBefore, elfChange.changeEvent, elfChange.patch)
+    }
     if (elfChange.isTransparent) {
       CommandProcessor.getInstance().runUndoTransparentAction {
-        changeText(elfChange.snapshotBefore, elfChange.changeEvent, elfChange.patch)
+        applyChange()
       }
       return
     }
@@ -131,7 +137,7 @@ internal abstract class DocumentRealMutator(
       elfChange.commandName,
       elfChange.commandGroupId,
     ) {
-      changeText(elfChange.snapshotBefore, elfChange.changeEvent, elfChange.patch)
+      applyChange()
     }
   }
 

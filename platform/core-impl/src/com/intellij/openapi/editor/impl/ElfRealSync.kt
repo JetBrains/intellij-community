@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.util.DocumentEventUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import java.util.concurrent.LinkedBlockingQueue
@@ -261,9 +262,10 @@ internal abstract class ElfRealSync(
     }
     while (true) {
       val expect = getSnapshotSnapshot()
-      val update = SnapshotSnapshot.newClean(expect.real)
+      checkTextConsistency(expect)
+      val cleanSnapshot = SnapshotMarkerEngineImpl.mergeMarkerRoots(expect.elf, expect.real)
+      val update = SnapshotSnapshot.newClean(cleanSnapshot)
       if (compareAndSet(expect, update)) {
-        checkTextConsistency(expect)
         return
       }
     }
