@@ -240,6 +240,8 @@ public class UsageViewImpl implements UsageViewEx {
   // ========== non-static stuff ============
   
   // This is a legacy complicated class. Please keep all the fields here to make it easier to reason about the constructor's correctness.
+  // No Swing UI init is allowed here, the constructor can be invoked on a BGT (IJPL-205703).
+  // Swing init goes to initInEDT.
   
   private final int myUniqueIdentifier;
 
@@ -264,9 +266,9 @@ public class UsageViewImpl implements UsageViewEx {
 
   private final ExclusionHandlerEx<DefaultMutableTreeNode> myExclusionHandler;
   private final Map<Usage, UsageNode> myUsageNodes = new ConcurrentHashMap<>();
-  private final ButtonPanel myButtonPanel;
+  private ButtonPanel myButtonPanel;
   private boolean myNeedUpdateButtons;
-  private final JComponent myAdditionalComponent = new JPanel(new BorderLayout());
+  private JComponent myAdditionalComponent;
   private volatile boolean isDisposed;
   private volatile boolean myChangesDetected;
   private @Nullable GroupNode myAutoSelectedGroupNode;
@@ -283,7 +285,7 @@ public class UsageViewImpl implements UsageViewEx {
   private Splitter myPreviewSplitter; // accessed in EDT only
   private volatile ProgressIndicator associatedProgress; // the progress that current find usages is running under
 
-  private final UsageViewTreeCellRenderer myUsageViewTreeCellRenderer;
+  private UsageViewTreeCellRenderer myUsageViewTreeCellRenderer;
   private @Nullable Action myRerunAction;
   private final CoroutineDispatcherBackedExecutor updateRequests;
   private final List<ExcludeListener> myExcludeListeners = ContainerUtil.createConcurrentList();
@@ -381,8 +383,6 @@ public class UsageViewImpl implements UsageViewEx {
     myUsageSearcherFactory = usageSearcherFactory;
     myProject = project;
 
-    myButtonPanel = new ButtonPanel();
-
     myModel = new UsageViewTreeModelBuilder(myPresentation, targets);
     myRoot = (GroupNode)myModel.getRoot();
 
@@ -390,7 +390,6 @@ public class UsageViewImpl implements UsageViewEx {
     myBuilder = new UsageNodeTreeBuilder(myTargets, myGroupingRules, getActiveFilteringRules(myProject), myRoot, myProject);
     myProject.getMessageBus().connect(this).subscribe(UsageFilteringRuleProvider.RULES_CHANGED, () -> rulesChanged());
 
-    myUsageViewTreeCellRenderer = new UsageViewTreeCellRenderer(this);
     if (!myPresentation.isDetachedMode()) {
       UIUtil.invokeLaterIfNeeded(() -> WriteIntentReadAction.run(() -> initInEDT()));
     }
@@ -540,6 +539,11 @@ public class UsageViewImpl implements UsageViewEx {
     if (isDisposed()) {
       return;
     }
+
+    myButtonPanel = new ButtonPanel();
+    myAdditionalComponent = new JPanel(new BorderLayout());
+    myUsageViewTreeCellRenderer = new UsageViewTreeCellRenderer(this);
+
     myTree = new MyTree(myModel);
     myTree.setName("UsageViewTree");
     myTree.getAccessibleContext().setAccessibleName(UsageViewBundle.message("usages.tree.accessible.name"));
