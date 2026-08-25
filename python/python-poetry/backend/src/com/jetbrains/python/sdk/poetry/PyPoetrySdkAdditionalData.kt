@@ -16,12 +16,11 @@ import java.nio.file.Path
 @ApiStatus.Internal
 @PyInternalExecApi
 class PyPoetrySdkAdditionalData : PythonSdkAdditionalData {
+  // The association with the working directory is set by the base class for every tool, not just poetry.
   constructor(workingDirectory: Path) : super(
     PyFlavorAndData(PyFlavorData.Empty, PyPoetrySdkFlavor),
     workingDirectory,
-  ) {
-    associatedModulePath = workingDirectory.toString()
-  }
+  )
 
   override fun save(element: Element) {
     super.save(element)
