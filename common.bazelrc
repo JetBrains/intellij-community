@@ -203,6 +203,10 @@ test --cache_test_results=auto
 # Limit concurrent local test actions on CI to avoid OOM from multiple heavy test JVMs.
 test:ci --local_test_jobs=1
 
+# Build only the test targets to skip compiling what no test needs on CI
+# Bazel ignores other targets specified on the command line, and builds only what is necessary to run the *_test and test_suite rules not filtered by their tags, timeout etc.
+test:ci --build_tests_only
+
 # Aliases for flags used by ij_plugin rule
 build --flag_alias=ide_build_number=@community//platform/build-scripts/bazel-rules/ij-ide-build-settings:ide_build_number
 build --flag_alias=ide_stability_level=@community//platform/build-scripts/bazel-rules/ij-ide-build-settings:ide_stability_level
