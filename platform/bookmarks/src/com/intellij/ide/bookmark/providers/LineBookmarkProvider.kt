@@ -20,8 +20,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.event.BulkAwareDocumentListener
 import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
@@ -187,12 +187,29 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
   private val TreePath.asVirtualFile
     get() = TreeUtil.getLastUserObject(ProjectViewNode::class.java, this)?.virtualFile
 
-  private fun afterDocumentChange(document: Document, event: DocumentEvent? = null) {
+  private inner class BookmarkDocumentListener : BulkAwareDocumentListener {
+    override fun beforeDocumentChangeNonBulk(event: DocumentEvent): Unit = captureExpectedText(event.document)
+    override fun bulkUpdateStarting(document: Document): Unit = captureExpectedText(document)
+
+    override fun documentChangedNonBulk(event: DocumentEvent): Unit = afterDocumentChange(event.document, event)
+    override fun bulkUpdateFinished(document: Document): Unit = afterDocumentChange(document, null)
+
+    override fun documentChanged(event: DocumentEvent) {
+      if (event.isWholeTextReplaced && event.document.isInBulkUpdate) {
+        afterDocumentChange(event.document, event)
+      }
+      else {
+        super.documentChanged(event)
+      }
+    }
+  }
+
+  private fun afterDocumentChange(document: Document, event: DocumentEvent?) {
     val file = FileDocumentManager.getInstance().getFile(document) ?: return
     if (file is LightVirtualFile) return
     val manager = BookmarksManager.getInstance(project) ?: return
 
-    if (event != null && (event.isWholeTextReplaced || document.isInBulkUpdate)) {
+    if (event != null && event.isWholeTextReplaced) {
       if (updateBookmarksUsingDiffMapping(file, document, event, manager)) {
         return
       }
@@ -200,10 +217,14 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
 
     validateBookmarksUsingRangeMarker(file, manager)
 
-    if (event != null && !event.isWholeTextReplaced && !document.isInBulkUpdate) {
+    if (event == null || !event.isWholeTextReplaced) {
       bookmarkEditQueue.queue(file)
+      if (hasInvalidBookmarks(file, manager)) requestValidation()
     }
   }
+
+  private fun hasInvalidBookmarks(file: VirtualFile, manager: BookmarksManager): Boolean =
+    manager.bookmarks.any { it is InvalidBookmark && it.url == file.url }
 
   private fun validateBookmarksUsingRangeMarker(file: VirtualFile, manager: BookmarksManager) {
     val map = sortedMapOf<LineBookmarkImpl, Int>(compareBy { it.line })
@@ -468,7 +489,8 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
     }
   }
 
-  private fun captureExpectedTextBeforeReload(file: VirtualFile, document: Document) {
+  private fun captureExpectedText(document: Document) {
+    val file = FileDocumentManager.getInstance().getFile(document) ?: return
     val manager = BookmarksManager.getInstance(project) ?: return
     for (bookmark in manager.bookmarks) {
       if (bookmark is LineBookmarkImpl && bookmark.file == file) {
@@ -514,16 +536,7 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
   init {
     if (!project.isDefault) {
       val multicaster = EditorFactory.getInstance().eventMulticaster
-      multicaster.addDocumentListener(object : DocumentListener {
-        override fun beforeDocumentChange(event: DocumentEvent) {
-          val file = FileDocumentManager.getInstance().getFile(event.document) ?: return
-          captureExpectedTextBeforeReload(file, event.document)
-        }
-
-        override fun documentChanged(event: DocumentEvent) {
-          this@LineBookmarkProvider.afterDocumentChange(event.document, event)
-        }
-      }, project)
+      multicaster.addDocumentListener(BookmarkDocumentListener(), project)
       VirtualFileManager.getInstance().addAsyncFileListenerBackgroundable({ events -> this@LineBookmarkProvider.prepareChange(events) }, project)
       project.messageBus.connect().subscribe(FileDocumentManagerListener.TOPIC, object : FileDocumentManagerListener {
         override fun beforeDocumentSaving(document: Document) {

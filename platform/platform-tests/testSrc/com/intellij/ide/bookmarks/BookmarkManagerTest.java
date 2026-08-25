@@ -29,6 +29,7 @@ import com.intellij.psi.PsiDocumentListener;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.DocumentUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -166,6 +167,98 @@ public class BookmarkManagerTest extends AbstractEditorTest {
     assertInstanceOf(afterRestore.getFirst(), LineBookmark.class);
     assertEquals("original line 2", afterRestore.getFirst().getAttributes().get("lineText"));
     assertEquals(2, ((LineBookmark)afterRestore.getFirst()).getLine());
+  }
+
+  public void testWholeTextReplaceInsideBulkUpdateStillReanchorsByLineText() {
+    @NonNls String before = "line 0\nline 1\nbookmarked\nline 3\n";
+    @NonNls String after = "inserted\nline 0\nline 1\nbookmarked\nline 3\n";
+    init(before, PlainTextFileType.INSTANCE);
+    Document document = getEditor().getDocument();
+
+    addBookmark(2);
+
+    WriteCommandAction.writeCommandAction(getProject()).run(
+      () -> DocumentUtil.executeInBulk(document, () -> document.setText(after)));
+
+    List<Bookmark> result = getManager().getBookmarks();
+    assertEquals("the bookmark must survive the replacement, got: " + result, 1, result.size());
+    assertInstanceOf(result.getFirst(), LineBookmark.class);
+    assertEquals(3, ((LineBookmark)result.getFirst()).getLine());
+    assertEquals("bookmarked", result.getFirst().getAttributes().get("lineText"));
+  }
+
+  public void testBookmarkSurvivesBulkEditOnItsLine() {
+    @NonNls String text = "line 0\nline 1\noriginal\nline 3\n";
+    init(text, PlainTextFileType.INSTANCE);
+    Document document = getEditor().getDocument();
+
+    addBookmark(2);
+    Bookmark bookmark = getManager().getBookmarks().getFirst();
+    getManager().setType(bookmark, BookmarkType.DIGIT_4);
+
+    int start = document.getLineStartOffset(2);
+    int end = document.getLineEndOffset(2);
+    WriteCommandAction.writeCommandAction(getProject()).run(
+      () -> DocumentUtil.executeInBulk(document, () -> document.replaceString(start, end, "renamed")));
+
+    List<Bookmark> after = getManager().getBookmarks();
+    assertEquals("bulk edit must not drop the bookmark, got: " + after, 1, after.size());
+    assertInstanceOf(after.getFirst(), LineBookmark.class);
+    assertEquals(2, ((LineBookmark)after.getFirst()).getLine());
+    assertEquals(BookmarkType.DIGIT_4, getManager().getType(after.getFirst()));
+  }
+
+  public void testBookmarkFollowsLineShiftDoneInsideBulkUpdate() {
+    @NonNls String text = "line 0\nline 1\nline 2\noriginal\nline 4\n";
+    init(text, PlainTextFileType.INSTANCE);
+    Document document = getEditor().getDocument();
+
+    addBookmark(3);
+
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> DocumentUtil.executeInBulk(document, () -> {
+      document.replaceString(document.getLineStartOffset(3), document.getLineEndOffset(3), "renamed");
+      document.deleteString(document.getLineStartOffset(1), document.getLineStartOffset(2));
+    }));
+
+    List<Bookmark> after = getManager().getBookmarks();
+    assertEquals("bulk edit must not drop the bookmark, got: " + after, 1, after.size());
+    assertInstanceOf(after.getFirst(), LineBookmark.class);
+    assertEquals(2, ((LineBookmark)after.getFirst()).getLine());
+  }
+
+  public void testRestoredLineTextMergesTheMemorialBackIntoTheBookmark() {
+    @NonNls String text = "line 0\nline 1\noriginal\nline 3\n";
+    init(text, PlainTextFileType.INSTANCE);
+    Document document = getEditor().getDocument();
+
+    addBookmark(2);
+
+    bulkEditLineTo(document, 2, "renamed");
+    PlatformTestUtil.waitWithEventsDispatching(
+      "the memorial did not appear after the first refactoring",
+      () -> getManager().getBookmarks().stream().anyMatch(InvalidBookmark.class::isInstance),
+      15);
+    assertEquals("expected the live bookmark and its memorial, got: " + getManager().getBookmarks(),
+                 2, getManager().getBookmarks().size());
+
+    bulkEditLineTo(document, 2, "original");
+    PlatformTestUtil.waitWithEventsDispatching(
+      "the memorial was not merged back into the live bookmark",
+      () -> {
+        List<Bookmark> bookmarks = getManager().getBookmarks();
+        return bookmarks.size() == 1 && "original".equals(bookmarks.getFirst().getAttributes().get("lineText"));
+      },
+      15);
+
+    List<Bookmark> after = getManager().getBookmarks();
+    assertInstanceOf(after.getFirst(), LineBookmark.class);
+    assertEquals(2, ((LineBookmark)after.getFirst()).getLine());
+    assertEquals("original", after.getFirst().getAttributes().get("lineText"));
+  }
+
+  private void bulkEditLineTo(Document document, int line, @NonNls String newText) {
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> DocumentUtil.executeInBulk(
+      document, () -> document.replaceString(document.getLineStartOffset(line), document.getLineEndOffset(line), newText)));
   }
 
   public void testFirstEditLeavesOneMemorialFurtherEditsAreSilent() {
