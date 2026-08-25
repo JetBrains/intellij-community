@@ -21,6 +21,7 @@ import com.intellij.python.sdk.common.evolution.EvoLeafDto
 import com.intellij.python.sdk.common.evolution.EvoNodeDto
 import com.intellij.python.sdk.common.evolution.EvoPyProjectDto
 import com.intellij.python.sdk.common.evolution.PyEvoRegistry
+import com.intellij.python.sdk.common.evolution.PyEvoWidgetCollector
 import com.intellij.python.sdk.common.evolution.PyInterpreterDto
 import com.intellij.python.sdk.common.evolution.evoRpcOrNull
 import com.intellij.python.sdk.common.evolution.requestEvoAssociatedInterpreters
@@ -347,6 +348,7 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
     // The re-probe is async (takes effect from the next open) and availability is backed by PyExecutableCache, so a
     // warm cache makes it near-instant; it only does real work after an install invalidated that cache.
     if (reusable == null) refreshNodes(target.key)
+    PyEvoWidgetCollector.popupOpened(project, hasInterpreter = cached.current != null, toolCount = cached.nodes.size)
     val factory = EvoPySdkSwitchPopupFactory(project, target.key, target.name, structure.workspaceRootName(target),
                                              cached.current, cached.nodes, cached.associated, cached.shortcuts, scope)
     val tree = reusable ?: factory.buildTree(context).also { popupTree = it; popupTreeKey = target.key }

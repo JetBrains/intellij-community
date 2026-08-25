@@ -24,6 +24,7 @@ import com.intellij.python.sdk.common.evolution.EvoLeafDto
 import com.intellij.python.sdk.common.evolution.EvoLeafKind
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
 import com.intellij.python.sdk.common.evolution.EvoNodeDto
+import com.intellij.python.sdk.common.evolution.EvoNodeKind
 import com.intellij.python.sdk.common.evolution.EvoSectionDto
 import com.intellij.python.sdk.common.evolution.PyEvoRegistry
 import com.intellij.python.sdk.common.evolution.PyInterpreterRef
@@ -177,7 +178,24 @@ interface PyEvoEnvironmentProvider {
   /** Collapsed node icon (this provider's own tool icon). */
   val icon: Icon
 
-  fun getNode(): EvoNodeDto = EvoNodeDto(id = toolId.id, label = label, icon = icon.rpcId())
+  /**
+   * How this node is reported in usage statistics.
+   *
+   * Defaults to [EvoNodeKind.OTHER] so a provider that says nothing is reported as unknown rather than being
+   * silently counted as something it is not. Tool-backed providers get [EvoNodeKind.TOOL] from
+   * [PyToolEvoEnvironmentProvider]; the two nodes with no tool behind them declare their own.
+   */
+  val nodeKind: EvoNodeKind get() = EvoNodeKind.OTHER
+
+  /**
+   * The backing tool's `PyExecutable.fusId`, for a node that has one — reported alongside [nodeKind].
+   *
+   * Null for every node that is not [EvoNodeKind.TOOL], which is what makes "no tool behind this node" and "a tool we
+   * failed to name" impossible to confuse.
+   */
+  val fusId: String? get() = null
+
+  fun getNode(): EvoNodeDto = EvoNodeDto(id = toolId.id, label = label, icon = icon.rpcId(), kind = nodeKind, fusId = fusId)
 
   /**
    * Whether this provider's tool is available on the project's Eel machine. Unavailable providers are dropped

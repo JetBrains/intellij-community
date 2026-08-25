@@ -2,6 +2,7 @@
 
 package com.intellij.python.sdk.frontend.evolution.components
 
+import com.intellij.python.sdk.common.evolution.EvoNodeStats
 import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.Utils
@@ -62,3 +63,12 @@ class EvoTreeItem(
   val alternatives: EvoAlternatives?
     get() = ((element as? EvoTreeLeafElement)?.action as? EvoAlternatives)?.takeIf { it.alternatives.size > 1 }
 }
+
+/**
+ * The statistics identity of the node this row stands for, or null when the row is not a lazily-loaded node.
+ *
+ * Only the tool nodes carry one — a leaf belongs to whichever node listed it, which the row itself does not know — so
+ * a control reported against a non-node row is reported without a node rather than against a guessed one.
+ */
+internal fun EvoTreeItem.evoNodeStats(): EvoNodeStats? = (element as? EvoTreeLazyNodeElement)?.nodeStats
+

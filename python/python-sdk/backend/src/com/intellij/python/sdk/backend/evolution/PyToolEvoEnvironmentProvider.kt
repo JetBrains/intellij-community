@@ -2,6 +2,7 @@
 package com.intellij.python.sdk.backend.evolution
 
 import com.intellij.python.pytools.PyTool
+import com.intellij.python.sdk.common.evolution.EvoNodeKind
 import com.intellij.python.pytools.resolveExecutable
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
@@ -35,6 +36,11 @@ abstract class PyToolEvoEnvironmentProvider : PyEvoEnvironmentProvider {
   override val label: @Nls String get() = tool.presentableName
 
   override val icon: Icon get() = tool.icon
+
+  override val nodeKind: EvoNodeKind get() = EvoNodeKind.TOOL
+
+  /** The tool's own FUS identity — a well-known Python package name, so statistics need no vocabulary of their own. */
+  override val fusId: String get() = tool.fusId
 
   override suspend fun isAvailable(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>): Boolean =
     executableOrNull(fileSystem) != null

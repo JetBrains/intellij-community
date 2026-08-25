@@ -19,6 +19,10 @@ import com.intellij.python.sdk.common.evolution.EvoLeafDto
 import com.intellij.python.sdk.common.evolution.EvoSelectResultDto
 import com.intellij.python.sdk.common.evolution.PyInterpreterDto
 import com.intellij.python.sdk.common.evolution.PyInterpreterRef
+import com.intellij.python.sdk.common.evolution.EvoNodeIds
+import com.intellij.python.sdk.common.evolution.EvoNodeStats
+import com.intellij.python.sdk.common.evolution.PyEvoWidgetCollector
+import com.intellij.python.sdk.common.evolution.evoRefKind
 import com.intellij.python.sdk.common.evolution.evoRpcOrNull
 import com.intellij.python.sdk.common.evolution.requestEvoPerformNodeAction
 import com.intellij.python.sdk.common.evolution.requestEvoResolveVersion
@@ -53,16 +57,21 @@ internal fun createEvoEnv(
   project: Project,
   pyProjectKey: String,
   nodeId: String,
+  /** What statistics report this node as — resolved by the caller, which holds the node list. */
+  nodeStats: EvoNodeStats,
   token: String,
   folder: String,
   name: String?,
   /** Set for a row that offered an interpreter the machine lacks: the version to install before creating anything. */
   installPythonVersion: String?,
+  /** Which popup section the row that triggered this belongs to — reported, never acted on. */
+  source: PyEvoWidgetCollector.Source,
   scope: CoroutineScope,
 ) {
   project.service<EvoConfiguringTracker>().nodeId = nodeId   // so the widget fades this tool's logo while configuring
   scope.launch {
     val ref = PyInterpreterRef.CreateEnv(token, folder, name, installPythonVersion)
+    PyEvoWidgetCollector.interpreterSelected(project, nodeStats, ref.evoRefKind(), source)
     when (val result = requestEvoSelectInterpreter(project.projectId(), pyProjectKey, ref, nodeId)) {
       is EvoSelectResultDto.Ok -> Unit
       is EvoSelectResultDto.Error -> LOG.warn("Evo: failed to create '$nodeId' environment for '$pyProjectKey': ${result.message}")
@@ -106,6 +115,8 @@ internal class SelectEnvAction(
   private val ref: PyInterpreterRef,
   /** Tool node this row came from; nests its version probe under that tool's trace context (e.g. conda). */
   private val nodeId: String,
+  /** What statistics report this node as — see [EvoNodeStats]. */
+  private val nodeStats: EvoNodeStats,
   /** Trace root of the popup tree this row belongs to; groups its version probe under that tree's root. */
   private val traceId: String,
   /**
@@ -127,7 +138,7 @@ internal class SelectEnvAction(
     secondaryText?.let { templatePresentation.putClientProperty(ActionUtil.SECONDARY_TEXT, it) }
   }
 
-  override fun actionPerformed(e: AnActionEvent) = select(ref)
+  override fun actionPerformed(e: AnActionEvent) = select(ref, evoSourceForNode(nodeId))
 
   override val alternativesTitle: String
     get() = PySdkFrontendBundle.message("evo.sdk.status.bar.popup.add.new.base.title")
@@ -137,15 +148,15 @@ internal class SelectEnvAction(
     // Only a not-yet-created environment has a base interpreter left to choose; an existing one already has its own.
     when (val create = ref) {
       is PyInterpreterRef.CreateEnv -> bases.map { base ->
-        baseInterpreterRow(base) { select(create.copy(token = base.token)) }
+        baseInterpreterRow(base) { select(create.copy(token = base.token), PyEvoWidgetCollector.Source.ALTERNATIVES) }
       }
       else -> emptyList()
     }
   }
 
   /** Applies [ref], which for an alternative is this row's own ref with the chosen interpreter substituted in. */
-  private fun select(ref: PyInterpreterRef) =
-    selectInterpreter(project, pyProjectKey, ref, nodeId, scope)
+  private fun select(ref: PyInterpreterRef, source: PyEvoWidgetCollector.Source) =
+    selectInterpreter(project, pyProjectKey, ref, nodeId, nodeStats, source, scope)
 
   /** Resolves the interpreter version once, on first focus, for a detected env that has no version yet. */
   override fun resolveOnFocus(onResolved: () -> Unit) {
@@ -170,9 +181,20 @@ private val LOG = logger<SelectEnvAction>()
  * Top-level so a base-interpreter row can reuse it without being a [SelectEnvAction] itself: such a row applies the ref
  * of the row it came from with its own interpreter substituted in, and nothing else about it is a select-env row.
  */
-internal fun selectInterpreter(project: Project, pyProjectKey: String, ref: PyInterpreterRef, nodeId: String, scope: CoroutineScope) {
+internal fun selectInterpreter(
+  project: Project,
+  pyProjectKey: String,
+  ref: PyInterpreterRef,
+  nodeId: String,
+  /** What statistics report this node as — resolved by the caller, which holds the node list. */
+  nodeStats: EvoNodeStats,
+  /** Which popup section the row that triggered this belongs to — reported, never acted on. */
+  source: PyEvoWidgetCollector.Source,
+  scope: CoroutineScope,
+) {
   project.service<EvoConfiguringTracker>().nodeId = nodeId   // so the widget fades this tool's logo while configuring
   scope.launch {
+    PyEvoWidgetCollector.interpreterSelected(project, nodeStats, ref.evoRefKind(), source)
     when (val result = requestEvoSelectInterpreter(project.projectId(), pyProjectKey, ref, nodeId)) {
       is EvoSelectResultDto.Ok -> Unit
       is EvoSelectResultDto.Error -> LOG.warn("Evo: failed to select interpreter for '$pyProjectKey': ${result.message}")
@@ -190,11 +212,15 @@ internal fun baseInterpreterRows(
   pyProjectKey: String,
   leaf: EvoLeafDto,
   nodeId: String,
+  nodeStats: EvoNodeStats,
   scope: CoroutineScope,
 ): List<EvoTreeLeafElement> {
   val create = leaf.ref as? PyInterpreterRef.CreateEnv ?: return emptyList()
   return leaf.bases.map { base ->
-    baseInterpreterRow(base) { selectInterpreter(project, pyProjectKey, create.copy(token = base.token), nodeId, scope) }
+    baseInterpreterRow(base) {
+      selectInterpreter(project, pyProjectKey, create.copy(token = base.token), nodeId, nodeStats,
+                        PyEvoWidgetCollector.Source.EXPANDED_VERSION, scope)
+    }
   }
 }
 
@@ -209,11 +235,14 @@ internal fun installInterpreterRow(
   pyProjectKey: String,
   leaf: EvoLeafDto,
   nodeId: String,
+  nodeStats: EvoNodeStats,
   scope: CoroutineScope,
 ): EvoTreeLeafElement? {
   val create = leaf.ref as? PyInterpreterRef.CreateEnv ?: return null
   if (create.installPythonVersion == null) return null
-  return installActionRow { selectInterpreter(project, pyProjectKey, create, nodeId, scope) }
+  return installActionRow {
+    selectInterpreter(project, pyProjectKey, create, nodeId, nodeStats, PyEvoWidgetCollector.Source.INSTALL_ROW, scope)
+  }
 }
 
 /** The "download and install" row itself: the download icon and the action, with [onChosen] run when picked. */
@@ -248,12 +277,13 @@ internal fun baseInterpreterRow(base: EvoBasePythonDto, onChosen: () -> Unit): E
 /** The row's right-hand column: the interpreter's version, then whatever qualifies it beyond the version. */
 private fun EvoBasePythonDto.detail(): @NlsSafe String = listOfNotNull(version, qualifier).joinToString(", ")
 
-internal fun selectEnvAction(project: Project, pyProjectKey: String, leaf: EvoLeafDto, nodeId: String, traceId: String, scope: CoroutineScope): SelectEnvAction =
+internal fun selectEnvAction(project: Project, pyProjectKey: String, leaf: EvoLeafDto, nodeId: String, nodeStats: EvoNodeStats, traceId: String, scope: CoroutineScope): SelectEnvAction =
   SelectEnvAction(
     project = project,
     pyProjectKey = pyProjectKey,
     ref = requireNotNull(leaf.ref) { "SELECT_ENV leaf without a ref" },
     nodeId = nodeId,
+    nodeStats = nodeStats,
     traceId = traceId,
     bases = leaf.bases,
     title = leaf.title,
@@ -263,12 +293,13 @@ internal fun selectEnvAction(project: Project, pyProjectKey: String, leaf: EvoLe
     scope = scope,
   )
 
-internal fun selectEnvAction(project: Project, pyProjectKey: String, interpreter: PyInterpreterDto, nodeId: String, traceId: String, scope: CoroutineScope): SelectEnvAction =
+internal fun selectEnvAction(project: Project, pyProjectKey: String, interpreter: PyInterpreterDto, nodeId: String, nodeStats: EvoNodeStats, traceId: String, scope: CoroutineScope): SelectEnvAction =
   SelectEnvAction(
     project = project,
     pyProjectKey = pyProjectKey,
     ref = interpreter.ref,
     nodeId = nodeId,
+    nodeStats = nodeStats,
     traceId = traceId,
     // An interpreter that already exists was built from whatever it was built from; there is nothing left to choose.
     bases = emptyList(),
@@ -278,3 +309,17 @@ internal fun selectEnvAction(project: Project, pyProjectKey: String, interpreter
     icon = interpreter.icon,
     scope = scope,
   )
+
+/**
+ * The popup section a plain environment row belongs to, read off the node it was listed under.
+ *
+ * Derived rather than passed in because the three plain-select call sites already differ only by that node id, and the
+ * two synthetic ids are exactly the two non-tool sections. Rows that are *not* a plain select — a base interpreter
+ * behind the "…", an expanded per-version pick, an add-new version, an install row — name their section explicitly,
+ * since the node id cannot tell them apart.
+ */
+internal fun evoSourceForNode(nodeId: String): PyEvoWidgetCollector.Source = when (nodeId) {
+  EvoNodeIds.ASSOCIATED -> PyEvoWidgetCollector.Source.ASSOCIATED
+  EvoNodeIds.SHORTCUTS -> PyEvoWidgetCollector.Source.SHORTCUTS
+  else -> PyEvoWidgetCollector.Source.TOOL_NODE
+}
