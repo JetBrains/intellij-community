@@ -20,6 +20,9 @@ import javax.swing.SwingUtilities
 import javax.swing.event.MenuDragMouseEvent
 import kotlin.math.abs
 import kotlin.math.max
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeSource
 
 private var currentMenu: WeakReference<JBPopupMenu?> = WeakReference(null)
 
@@ -44,7 +47,7 @@ private fun startDragSession(menu: JBPopupMenu, invoker: Component, x: Int, y: I
   val screenPoint = Point(x, y)
   SwingUtilities.convertPointToScreen(screenPoint, invoker)
   LOG.debug { "Starting a context menu drag session from $screenPoint" }
-  ClientProperty.put(menu, SESSION_KEY, MenuDragSession(screenPoint.x, screenPoint.y))
+  ClientProperty.put(menu, SESSION_KEY, MenuDragSession(screenPoint.x, screenPoint.y, TimeSource.Monotonic.markNow()))
 }
 
 fun getCurrentMenuDragSession(): MenuDragSession? {
@@ -57,6 +60,7 @@ fun getCurrentMenuDragSession(): MenuDragSession? {
 class MenuDragSession internal constructor(
   val initialX: Int,
   val initialY: Int,
+  val initialTime: TimeSource.Monotonic.ValueTimeMark,
 ) {
   private var maximumDragDistance: Int? = null
 
@@ -70,13 +74,24 @@ class MenuDragSession internal constructor(
   fun isClickOrNoticeableDrag(): Boolean {
     val distance = maximumDragDistance
     if (distance == null) return true // click
+    val time = initialTime.elapsedNow()
     val distanceThreshold = distanceThreshold()
-    val isNoticeable = distance >= distanceThreshold
+    val timeThreshold = timeThreshold()
+    LOG.trace {
+      "Checking if noticeable: " +
+      "distance threshold = $distanceThreshold, " +
+      "distance = $distance, " +
+      "time threshold = $timeThreshold, " +
+      "time = $time"
+    }
+    val isNoticeable = distance >= distanceThreshold && time >= timeThreshold
     if (isNoticeable) {
       LOG.debug {
         "A noticeable drag is detected, the menu item will be clicked: " +
         "distance threshold = $distanceThreshold, " +
-        "distance = $distance"
+        "distance = $distance, " +
+        "time threshold = $timeThreshold, " +
+        "time = $time"
       }
     }
     return isNoticeable
@@ -92,6 +107,11 @@ private fun distanceThreshold(): Int {
     Registry.intValue(key = "popup.menu.drag.distance.threshold.linux", defaultValue = 0, minValue = 0, maxValue = 100)
   }
   return JBUI.scale(unscaled)
+}
+
+private fun timeThreshold(): Duration {
+  val ms = Registry.intValue(key = "popup.menu.drag.time.threshold", defaultValue = 0, minValue = 0, maxValue = 10000)
+  return ms.milliseconds
 }
 
 private val LOG = fileLogger()
