@@ -62,6 +62,8 @@ import com.intellij.util.SlowOperations
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.MultiMap
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
@@ -492,10 +494,11 @@ class XLineBreakpointManager(
       myDragDetected = false
     }
 
+    @OptIn(LowLevelLocalMachineAccess::class)
     override fun mouseClicked(e: EditorMouseEvent) {
       val editor = e.editor
       val mouseEvent = e.mouseEvent
-      if ((mouseEvent.isPopupTrigger || mouseEvent.isControlDown)
+      if ((mouseEvent.isPopupTrigger || OS.CURRENT == OS.macOS && mouseEvent.isControlDown)
           || mouseEvent.button != MouseEvent.BUTTON1
           || DiffUtil.isDiffEditor(editor)
           || !isInsideClickableGutterArea(e)
