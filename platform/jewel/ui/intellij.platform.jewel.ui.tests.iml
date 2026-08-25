@@ -40,37 +40,37 @@
     <orderEntry type="module" module-name="intellij.platform.jewel.foundation" exported="" scope="TEST" />
     <orderEntry type="module-library" exported="" scope="TEST">
       <library name="org.jetbrains.compose.components.components.resources" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.compose.components:components-resources:1.12.0-rc01">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.compose.components:components-resources:1.12.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.12.0-rc01/components-resources-1.12.0-rc01.jar">
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.12.0/components-resources-1.12.0.jar">
               <sha256sum>fa8ea0bf4dc142596c3a65875d610b12fed6f8996d3f1863cdf39d3fbbd0cb08</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.12.0-rc01/components-resources-1.12.0-rc01.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.12.0/components-resources-1.12.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.12.0-rc01/components-resources-1.12.0-rc01-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.12.0/components-resources-1.12.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" exported="" scope="TEST">
       <library name="org.jetbrains.compose.components.components.resources.desktop" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.compose.components:components-resources-desktop:1.12.0-rc01">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.compose.components:components-resources-desktop:1.12.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.12.0-rc01/components-resources-desktop-1.12.0-rc01.jar">
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.12.0/components-resources-desktop-1.12.0.jar">
               <sha256sum>9d5ad07d082fffc19c728516e87d51d3e439c00087cc067f821a116f27e8b29e</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.12.0-rc01/components-resources-desktop-1.12.0-rc01.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.12.0/components-resources-desktop-1.12.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.12.0-rc01/components-resources-desktop-1.12.0-rc01-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.12.0/components-resources-desktop-1.12.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
