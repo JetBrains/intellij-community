@@ -179,7 +179,7 @@ class CommandRunnerExtension(
       val cmdHash: String = parts.getOrElse(1) { "" }
       val x = parts.getOrNull(2)?.toIntOrNull() ?: 0
       val y = parts.getOrNull(3)?.toIntOrNull() ?: 0
-      val needsConfirmation = parts.getOrNull(4) == PreviewClickConfirmation.NEEDS_CONFIRMATION
+      val needsConfirmation = PreviewClickConfirmation.needsConfirmation(parts.getOrNull(4))
       val command = hash2Cmd[cmdHash]
       if (command == null) {
         LOG.error("Command index not found. Please attach .md file to error report.")
@@ -246,7 +246,7 @@ class CommandRunnerExtension(
       val trimmedCmd = trimPrompt(command)
       val x = args[3].toDoubleOrNull()?.toInt() ?: 0
       val y = args[4].toDoubleOrNull()?.toInt() ?: 0
-      val needsConfirmation = args.getOrNull(5) == PreviewClickConfirmation.NEEDS_CONFIRMATION
+      val needsConfirmation = PreviewClickConfirmation.needsConfirmation(args.getOrNull(5))
       if (needsConfirmation) {
         confirmThenRun(trimmedCmd) {
           executeBlock(trimmedCmd, executorId, x, y)
