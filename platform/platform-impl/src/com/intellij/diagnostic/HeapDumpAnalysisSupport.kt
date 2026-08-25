@@ -18,6 +18,8 @@ import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.awt.Component
 import java.nio.file.Path
 import kotlin.io.path.bufferedReader
@@ -34,11 +36,20 @@ internal class HeapDumpAnalysisSupport {
 
   fun getPrivacyPolicyUrl(): String = "https://www.jetbrains.com/company/privacy.html"
 
-  fun uploadReport(reportText: String, heapReportProperties: HeapReportProperties, parentComponent: Component) {
+  @RequiresEdt(generateAssertion = false)
+  fun uploadReport(
+    reportText: String,
+    heapReportProperties: HeapReportProperties,
+    parentComponent: Component,
+    automaticReport: Boolean = false,
+  ) {
+    ThreadingAssertions.assertEventDispatchThread()
+
+    val messageText = if (automaticReport) "Heap analysis results (auto)" else "Heap analysis results"
     val text = getHeapDumpReportText(reportText, heapReportProperties)
     val attachment = Attachment("report.txt", text).apply { isIncluded = true }
     attachment.isIncluded = true
-    val event = IdeaLoggingEvent("Heap analysis results", OutOfMemoryError(), listOf(attachment), null as IdeaPluginDescriptor?, null)
+    val event = IdeaLoggingEvent(messageText, OutOfMemoryError(), listOf(attachment), null as IdeaPluginDescriptor?, null)
     ErrorReportSubmitter.EP_NAME.findExtension(ITNReporter::class.java)?.submit(arrayOf(event), null, parentComponent) { }
   }
 
