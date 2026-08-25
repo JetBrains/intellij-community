@@ -1365,6 +1365,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/intentions/destructuringVariables/mapEntry.kt");
         }
 
+        @TestMetadata("nameBasedSkippedComponents.kt")
+        public void testNameBasedSkippedComponents() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringVariables/nameBasedSkippedComponents.kt");
+        }
+
         @TestMetadata("noInitializer.kt")
         public void testNoInitializer() throws Exception {
             runTest("../../../idea/tests/testData/intentions/destructuringVariables/noInitializer.kt");
@@ -1436,6 +1441,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("DataClassLast.kt")
         public void testDataClassLast() throws Exception {
             runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassLast.kt");
+        }
+
+        @TestMetadata("DataClassManySkippedComponents.kt")
+        public void testDataClassManySkippedComponents() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassManySkippedComponents.kt");
+        }
+
+        @TestMetadata("DataClassManySkippedComponentsNameBased.kt")
+        public void testDataClassManySkippedComponentsNameBased() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterationOverMap/DataClassManySkippedComponentsNameBased.kt");
         }
 
         @TestMetadata("DataClassMethodCall.kt")
