@@ -107,7 +107,11 @@ def _modules_to_reimport(old_modules, step_files):
         if name in old_modules or module is None:
             continue
         path = getattr(module, '__file__', None)
-        if not path or os.path.normcase(os.path.abspath(path)) not in step_files:
+        if not path:
+            continue
+        if path.endswith('.pyc'):  # Python 2
+            path = path[:-1]
+        if os.path.normcase(os.path.abspath(path)) not in step_files:
             continue
         subtree = [name]
         prefix = name + '.'
