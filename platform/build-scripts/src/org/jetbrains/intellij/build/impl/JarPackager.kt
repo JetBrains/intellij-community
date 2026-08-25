@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build.impl
@@ -806,10 +806,22 @@ private val agentLibrariesNotForcedInSeparateJars = listOf(
   "code-prompt-agents"
 )
 
+// IJPL-253818
+private val mavenLibrariesNotForcedInSeparateJars = listOf(
+  "maven-artifact",
+  "maven-central-configuration",
+  "maven-plugin-xml-parser",
+)
+
+/**
+ * Libraries that have to stay standalone jar files: agents are attached by path at runtime, and `-rt` / `maven-` jars are loaded by
+ * external processes. Objenesis is deliberately absent - it is an ordinary library, and hoisting it out of the content module that wraps it
+ * left that module's jar empty, so every module depending on the wrapper failed to resolve the classes (IJPL-252372).
+ */
 private fun isSeparateJar(fileName: String): Boolean {
   return fileName.endsWith("-rt.jar") ||
          (fileName.contains("-agent") && agentLibrariesNotForcedInSeparateJars.none { fileName.contains(it) }) ||
-         fileName.startsWith("maven-")
+         (fileName.startsWith("maven-") && mavenLibrariesNotForcedInSeparateJars.none { fileName.contains(it) })
 }
 
 private data class AssetDescriptor(
