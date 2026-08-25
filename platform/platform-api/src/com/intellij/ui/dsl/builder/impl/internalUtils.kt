@@ -48,13 +48,11 @@ enum class DslComponentPropertyInternal {
   CREATION_STACKTRACE,
 
   /**
-   * Preferred columns width for DslLabel when [MAX_LINE_LENGTH_WORD_WRAP] mode is used.
-   * A temporary workaround of IJPL-62164 will be removed later.
+   * Preferred DslLabel (comment or text) width measured in columns when [MAX_LINE_LENGTH_WORD_WRAP] mode is used.
+   * Useful when the panel is displayed in a [javax.swing.JScrollPane]: the label can shrink down to columns before a horizontal scrollbar appears.
    *
    * Value: Int
    */
-  @Deprecated("Not needed anymore, because IJPL-62164 has been implemented")
-  @ApiStatus.ScheduledForRemoval
   PREFERRED_COLUMNS_LABEL_WORD_WRAP
 }
 
