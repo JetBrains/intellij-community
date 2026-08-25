@@ -111,7 +111,9 @@ open class IdeaFrameUI(data: ComponentData) : WindowUiComponent(data) {
   }
 
   fun openSettingsDialog() {
-    driver.invokeAction("ShowSettings", now = false)
+    step("Open settings dialog via IDE action") {
+      driver.invokeAction("ShowSettings", now = false)
+    }
   }
 
   override fun toFront() {

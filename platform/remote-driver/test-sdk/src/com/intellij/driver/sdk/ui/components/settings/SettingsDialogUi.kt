@@ -7,9 +7,8 @@ import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 import com.intellij.driver.sdk.ui.components.common.WelcomeScreenUI
+import com.intellij.driver.sdk.ui.components.elements.BreadcrumbsUiComponent
 import com.intellij.driver.sdk.ui.components.elements.DialogUiComponent
-import com.intellij.driver.sdk.ui.components.elements.JButtonUiComponent
-import com.intellij.driver.sdk.ui.components.elements.JTextFieldUI
 import com.intellij.driver.sdk.ui.components.elements.JTreeUiComponent
 import com.intellij.driver.sdk.ui.components.elements.accessibleTree
 import com.intellij.driver.sdk.ui.components.elements.button
@@ -36,6 +35,8 @@ open class SettingsDialogUiComponent(data: ComponentData) : DialogUiComponent(da
   val searchTextField = textField { and(byType(JTextField::class.java), byAccessibleName("Search")) }
   val applyButton = button("Apply")
   val revertChangesLink: UiComponent = x { byClass("ActionLink") and byText("Revert changes") }
+  val breadcrumbs: BreadcrumbsUiComponent =
+    x(BreadcrumbsUiComponent::class.java, "Settings breadcrumbs") { byClass("Breadcrumbs") }
 
   fun openTreeSettingsSection(vararg path: String, fullMatch: Boolean = true) {
     settingsTree.should(message = "Settings tree is empty", timeout = 5.seconds) { collectExpandedPaths().isNotEmpty() }
@@ -45,7 +46,7 @@ open class SettingsDialogUiComponent(data: ComponentData) : DialogUiComponent(da
   fun content(action: UiComponent.() -> Unit = {}): UiComponent =
     x { byType("com.intellij.openapi.options.ex.ConfigurableCardPanel") }.apply(action)
 
-  protected class SettingsTreeUiComponent(data: ComponentData): JTreeUiComponent(data) {
+  protected class SettingsTreeUiComponent(data: ComponentData) : JTreeUiComponent(data) {
     override fun collectExpandedPaths(): List<TreePathToRow> {
       return super.collectExpandedPaths().map {
         it.apply {
