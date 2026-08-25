@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.eel.nioFs.impl.MultiRoutingFileSystemBackend
+import com.intellij.platform.eel.provider.getResolvedEelMachine
 import com.intellij.platform.eel.provider.utils.WindowsPathUtils
 import com.intellij.platform.ijent.community.impl.ijentFailSafeFileSystemApi
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
@@ -51,7 +52,20 @@ class TcpEelMrfsBackend(private val scope: CoroutineScope) : MultiRoutingFileSys
     val ijentDefaultProvider = IjentNioFileSystemProvider.getInstance()
 
     try {
-      val ijentFs = ijentFailSafeFileSystemApi(scope, descriptor, checkIsIjentInitialized = null)
+      // Deployment of most TCP machines needs no user interaction, and the tunnel works with this
+      // process's EDT blocked since IJPL-247956, so awaiting it from inside fsBlocking is slow but safe
+      // (IJPL-245001). The exception is [SshEelDescriptor]: its machine deploys over the SSH stack,
+      // which may prompt for authentication. Drop the special case together with that descriptor.
+      val sshDeployment = descriptor is SshEelDescriptor
+      val ijentFs = ijentFailSafeFileSystemApi(
+        scope,
+        descriptor,
+        checkIsIjentInitialized = if (sshDeployment) {
+          { (descriptor.getResolvedEelMachine() as? TcpEelMachine)?.isSessionRunning == true }
+        }
+        else null,
+        deploymentMayRequireUserInteraction = sshDeployment,
+      )
       ijentDefaultProvider.newFileSystem(ijentUri, IjentNioFileSystemProvider.newFileSystemMap(ijentFs))
     }
     catch (_: FileSystemAlreadyExistsException) {

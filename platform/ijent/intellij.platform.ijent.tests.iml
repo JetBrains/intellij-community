@@ -16,6 +16,8 @@
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.eel" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ijent" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ijent.community.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.ijent" />
 </module>
