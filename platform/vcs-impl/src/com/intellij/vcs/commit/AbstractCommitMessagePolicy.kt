@@ -22,15 +22,9 @@ abstract class AbstractCommitMessagePolicy(
 
   private var lastSetMessage: CommitMessage? = null // last message that was not a user input
 
-  fun init() {
+  open fun init() {
     listenForDelayedProviders(commitMessageUi, this)
     setCommitMessage(getNewCommitMessage() ?: CommitMessage.EMPTY)
-  }
-
-  fun saveCommitMessageOnTypingStrategy() {
-    commitMessageUi.addCommitMessageListener(
-      CommitMessageOnTypingStrategy(project)
-    )
   }
 
   /**
@@ -154,6 +148,14 @@ internal abstract class ChangeListCommitMessagePolicy(
 
   protected var currentChangeList: LocalChangeList = initialChangeList
 
+  override fun init() {
+    super.init()
+
+    commitMessageUi.addCommitMessageListener { text ->
+      editChangeListComment(text)
+    }
+  }
+
   override fun onBeforeCommit() {
     super.onBeforeCommit()
     saveMessageToChangeListDescription()
@@ -174,7 +176,7 @@ internal abstract class ChangeListCommitMessagePolicy(
   }
 
   override fun cleanupStoredMessage() {
-    editChangeLitComment("")
+    editChangeListComment("")
   }
 
   /**
@@ -191,18 +193,17 @@ internal abstract class ChangeListCommitMessagePolicy(
     }
   }
 
-
   protected fun saveMessageToChangeListDescription() {
     if (!currentMessageIsDisposable) {
-      editChangeLitComment(commitMessageUi.text)
+      editChangeListComment(commitMessageUi.text)
     }
   }
 
-  private fun editChangeLitComment(newText: String) {
+  private fun editChangeListComment(newText: String) {
     // After updating the comment, value in currentChangeList is not updated automatically
-    changeListManager.editComment(currentChangeList.name, commitMessageUi.text)
-    val updatedCurrentChangeLit = changeListManager.getChangeList(currentChangeList.id) ?: return
-    onChangelistChanged(updatedCurrentChangeLit)
+    changeListManager.editComment(currentChangeList.name, newText)
+    val updatedCurrentChangeList = changeListManager.getChangeList(currentChangeList.id) ?: return
+    onChangelistChanged(updatedCurrentChangeList)
   }
 
   protected fun getCommitMessageForCurrentList(): CommitMessage? {
@@ -224,17 +225,5 @@ internal abstract class ChangeListCommitMessagePolicy(
 open class CommitMessage(val text: String, val disposable: Boolean = false) {
   companion object {
     val EMPTY: CommitMessage = CommitMessage("")
-  }
-}
-
-private class CommitMessageOnTypingStrategy(
-  project: Project,
-) : CommitMessageListener {
-
-  private val manager = ChangeListManager.getInstance(project)
-
-  override fun onTextChanged(text: String) {
-    val changeListName = manager.defaultChangeList.name
-    manager.editComment(changeListName, text)
   }
 }

@@ -50,7 +50,7 @@ interface CommitMessageUi : TextAccessor {
   fun addCommitMessageListener(listener: CommitMessageListener) { }
 }
 
-interface CommitMessageListener : EventListener {
+fun interface CommitMessageListener : EventListener {
   @RequiresEdt
   fun onTextChanged(text: String)
 }
