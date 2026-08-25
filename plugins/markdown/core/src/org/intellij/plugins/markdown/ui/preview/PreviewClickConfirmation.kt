@@ -4,28 +4,31 @@ package org.intellij.plugins.markdown.ui.preview
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * The IDE side of the contract with `PreviewClickGuard.js`.
- *
- * A preview script reports whether a click looked genuine; it cannot refuse the action itself, because
- * only the IDE can ask the user. Every privileged control in the preview - running a command, copying to
- * the clipboard, opening a browser - carries this flag so that one policy covers all of them instead of
- * each control inventing its own checks.
+ * IDE side of the contract with `PreviewClickGuard.js`: the page reports whether a click looked genuine,
+ * and only the IDE can act on it by asking the user. One policy for every privileged preview control.
  */
 @ApiStatus.Internal
 object PreviewClickConfirmation {
-  /** The value `clickGuard.confirmationFlag` produces when a click did not look genuine. */
-  const val NEEDS_CONFIRMATION: String = "1"
+  const val GENUINE_CLICK: String = "0"
+
+  const val HIJACKED_CLICK: String = "1"
+
+  /** Fails closed: only an explicit [GENUINE_CLICK] suppresses the question. */
+  fun needsConfirmation(flag: String?): Boolean = flag != GENUINE_CLICK
 
   /**
-   * Splits `"<flag>:<payload>"`, the layout used by messages whose payload is a single value, and returns
-   * null when [data] does not have that shape. The command runner predates this helper and puts its flag
-   * last, among several colon-separated fields, so it parses its own messages.
+   * Splits `"<flag>:<payload>"`, or null if the prefix is not a known flag - a payload has colons of its
+   * own, so accepting an unknown prefix would yield a truncated payload instead of failing.
    */
   fun parseFlagPrefixed(data: String): Pair<Boolean, String>? {
     val separator = data.indexOf(':')
     if (separator < 0) {
       return null
     }
-    return (data.substring(0, separator) == NEEDS_CONFIRMATION) to data.substring(separator + 1)
+    val flag = data.substring(0, separator)
+    if (flag != GENUINE_CLICK && flag != HIJACKED_CLICK) {
+      return null
+    }
+    return needsConfirmation(flag) to data.substring(separator + 1)
   }
 }
