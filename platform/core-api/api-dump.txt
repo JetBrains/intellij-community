@@ -3424,6 +3424,7 @@ f:com.intellij.psi.util.PsiTreeUtilKt
 - sf:getStartOffset(com.intellij.psi.PsiElement):I
 - sf:lastLeaf(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - sf:parents(com.intellij.psi.PsiElement):kotlin.sequences.Sequence
+- sf:stubChildrenOfType(com.intellij.psi.PsiElement,java.lang.Class):kotlin.sequences.Sequence
 - sf:validOrNull(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 c:com.intellij.psi.util.PsiUtilCore
 - s:ensureValid(com.intellij.psi.PsiElement):V

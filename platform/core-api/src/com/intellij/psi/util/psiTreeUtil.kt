@@ -6,6 +6,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.StubBasedPsiElement
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
@@ -190,6 +191,20 @@ fun PsiElement.nextLeaf(filter: (PsiElement) -> Boolean): PsiElement? {
   return leaf
 }
 
+// -------------------- Walking stub children ----------------------------------------------------------------------------------------------
+fun <T : PsiElement> PsiElement.stubChildrenOfType(clazz: Class<T>): Sequence<T> =
+  (this as? StubBasedPsiElement<*>)?.getStub()?.childrenStubs
+    ?.asSequence()
+    ?.map { it.psi }
+    ?.filterIsInstance(clazz)
+  ?: childrenSequence.filterIsInstance(clazz)
+
+inline fun <reified T: PsiElement> PsiElement.stubChildrenOfType(): Sequence<T> =
+  stubChildrenOfType(T::class.java)
+
+inline fun <reified T : PsiElement> PsiElement.stubChildOfType(): T? =
+  PsiTreeUtil.getStubChildOfType(this, T::class.java)
+
 // -------------------- Recursive tree visiting --------------------------------------------------------------------------------------------
 
 private val alwaysTrue: (Any?) -> Boolean = { true }
@@ -202,7 +217,7 @@ private val alwaysTrue: (Any?) -> Boolean = { true }
  */
 fun PsiElement.descendants(
   childrenFirst: Boolean = false,
-  canGoInside: (PsiElement) -> Boolean = alwaysTrue
+  canGoInside: (PsiElement) -> Boolean = alwaysTrue,
 ): Sequence<PsiElement> = sequence {
   val root = this@descendants
   if (childrenFirst) {
