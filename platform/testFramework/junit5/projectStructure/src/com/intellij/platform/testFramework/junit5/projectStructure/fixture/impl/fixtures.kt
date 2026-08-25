@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import com.intellij.util.io.createDirectories
@@ -67,9 +68,19 @@ private suspend fun createDirectory(dir: Path) {
   }
 }
 
+/**
+ * If files were loaded into VFS, there could be pending writes for them (see [ManagingFS.flushPendingUpdates]):
+ * apply them before deleting the files, otherwise the pending writing races the deletion and fails with
+ * `NoSuchFileException` on a background thread, which is reported as an uncaught exception by the test framework.
+ */
+private fun flushPendingVfsUpdates() {
+  ManagingFS.getInstanceOrNull()?.flushPendingUpdates()
+}
+
 private suspend fun deleteDirectory(dir: Path) {
   withContext(Dispatchers.IO) {
     if (dir.exists()) {
+      flushPendingVfsUpdates()
       dir.delete(recursively = true)
     }
   }
@@ -122,6 +133,7 @@ private fun TestFixture<Path>.fileFixture(fileName: String, content: (file: Path
   initialized(file) {
     withContext(Dispatchers.IO) {
       if (file.exists()) {
+        flushPendingVfsUpdates()
         file.delete()
       }
     }
