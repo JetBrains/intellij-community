@@ -22,6 +22,11 @@ import org.jetbrains.annotations.Nullable;
  * {@link #createEditor(Project, VirtualFile)} must remain lightweight. If editor creation needs indexing, PSI, or other
  * expensive work, implement {@link AsyncFileEditorProvider} to offload preparation to a background thread and only build
  * the UI on the EDT.
+ * <p>
+ * For a file opened in the safe mode (a local file outside the project's trusted roots, see
+ * {@code com.intellij.ide.trustedProjects.TrustedFiles}), only providers registered with the
+ * {@code allowedInUntrustedFiles="true"} attribute are considered. Opt in only when the editor cannot execute code
+ * from the file or pass its content to external tools (e.g., a plain text viewer).
  *
  * @see DumbAware
  */

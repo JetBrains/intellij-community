@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
+import com.intellij.ide.trustedProjects.TrustedFiles
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.project.DumbAware
@@ -25,6 +26,12 @@ internal class CodeVisionPassFactory : TextEditorHighlightingPassFactory, TextEd
 
   override fun createHighlightingPass(psiFile: PsiFile, editor: Editor): TextEditorHighlightingPass? {
     if (!isCodeVisionEnabled) {
+      return null
+    }
+
+    // code vision ignores the highlighting level, so files opened in the safe mode need an explicit gate
+    val virtualFile = psiFile.virtualFile
+    if (virtualFile != null && !TrustedFiles.isTrusted(virtualFile, psiFile.project)) {
       return null
     }
 

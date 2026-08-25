@@ -1,5 +1,6 @@
 package com.intellij.platform.lsp.impl.documentSync
 
+import com.intellij.ide.trustedProjects.TrustedFiles
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
@@ -44,7 +45,8 @@ internal class LspOpenedFilesService(private val project: Project) {
     if (!TrustedProjects.isProjectTrusted(project)) return
     if (!LspIntegrationProvider.hasAnyExtensions()) return
 
-    val added = files.filter { it.isInLocalFileSystem }.let { openedFilesToHandle.addAll(it) }
+    // LSP servers are external processes: never send the content of files opened in the safe mode to them
+    val added = files.filter { it.isInLocalFileSystem && TrustedFiles.isTrusted(it, project) }.let { openedFilesToHandle.addAll(it) }
     if (added) scheduleOpenedFilesProcessing()
   }
 

@@ -5,6 +5,7 @@ import com.intellij.ide.impl.TrustedPaths
 import com.intellij.ide.impl.TrustedPathsSettings
 import com.intellij.ide.impl.TrustedProjectsStatistics
 import com.intellij.ide.lightEdit.LightEdit
+import com.intellij.ide.lightEdit.LightEditUtil
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator.LocatedProject
 import com.intellij.openapi.project.Project
 import com.intellij.util.ThreeState
@@ -55,7 +56,7 @@ object TrustedProjects {
     return when {
       explicitTrustedState != ThreeState.UNSURE -> explicitTrustedState
       isTrustedCheckDisabledForProduct() -> ThreeState.YES
-      LightEdit.owns(locatedProject.project) -> ThreeState.YES
+      LightEdit.owns(locatedProject.project) && locatedProject.project === LightEditUtil.getProjectIfCreated() -> ThreeState.YES
       TrustedPathsSettings.getInstance().isProjectTrusted(locatedProject) -> {
         TrustedProjectsStatistics.PROJECT_IMPLICITLY_TRUSTED_BY_PATH.log(locatedProject.project)
         ThreeState.YES

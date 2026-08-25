@@ -4,6 +4,7 @@
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.diagnostic.PluginException
+import com.intellij.ide.trustedProjects.TrustedFiles
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.RoamingType
@@ -69,8 +70,15 @@ class FileEditorProviderManagerImpl
       }
     }
 
+    val untrustedFile = !TrustedFiles.isTrusted(file, project)
+
     val fileType = file.fileType
     for (item in FileEditorProvider.EP_FILE_EDITOR_PROVIDER.filterableLazySequence()) {
+      // untrusted files are restricted to explicitly opted-in providers (plain text and large-file editors);
+      // checked before instantiation, so suppressed provider classes are never loaded
+      if (untrustedFile && !item.isAllowedInUntrustedFiles) {
+        continue
+      }
       if (!isAcceptedByFileType(item = item, fileType = fileType, file = file) || (item.isDocumentRequired && !hasDocument)) {
         continue
       }
@@ -111,6 +119,8 @@ class FileEditorProviderManagerImpl
     // collect all possible editors
     val suppressors = FileEditorProviderSuppressor.EP_NAME.extensionList
 
+    val untrustedFile = !TrustedFiles.isTrusted(file, project)
+
     // Not lazy - avoid thread starvation.
     // We run in parallel, and each provider can get blocked while getting the file type (e.g., during TextMate bundle initialization).
 
@@ -123,6 +133,11 @@ class FileEditorProviderManagerImpl
 
       FileEditorProvider.EP_FILE_EDITOR_PROVIDER.filterableLazySequence().mapNotNull { item ->
         if (excludeIds.contains(item.id)) {
+          return@mapNotNull null
+        }
+        // untrusted files are restricted to explicitly opted-in providers (plain text and large-file editors);
+        // checked before instantiation, so suppressed provider classes are never loaded
+        if (untrustedFile && !item.isAllowedInUntrustedFiles) {
           return@mapNotNull null
         }
 
@@ -313,6 +328,9 @@ private object MyComparator : Comparator<FileEditorProvider> {
 
 private val LazyExtension<FileEditorProvider>.isDocumentRequired
   get() = getCustomAttribute("isDocumentRequired").toBoolean()
+
+private val LazyExtension<FileEditorProvider>.isAllowedInUntrustedFiles
+  get() = getCustomAttribute("allowedInUntrustedFiles").toBoolean()
 
 private val LazyExtension<FileEditorProvider>.fileType
   get() = getCustomAttribute("fileType")

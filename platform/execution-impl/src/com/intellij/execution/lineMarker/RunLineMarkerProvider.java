@@ -10,6 +10,7 @@ import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor.Info;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.trustedProjects.TrustedFiles;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -26,6 +27,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.ui.ColorUtil;
@@ -65,6 +67,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implemen
   public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(element.getProject());
     if (injectedLanguageManager.isInjectedFragment(element.getContainingFile())) return null;
+    if (isUntrustedFile(element)) return null;
 
     List<RunLineMarkerContributor> contributors =
       DumbService.getInstance(element.getProject()).filterByDumbAwareness(RunLineMarkerContributor.EXTENSION.allForLanguageOrAny(element.getLanguage()));
@@ -93,6 +96,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implemen
   @Override
   public void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements,
                                      @NotNull Collection<? super LineMarkerInfo<?>> result) {
+    if (!elements.isEmpty() && isUntrustedFile(elements.getFirst())) return;
     for (PsiElement element : elements) {
       List<RunLineMarkerContributor> contributors = DumbService.getInstance(element.getProject())
         .filterByDumbAwareness(RunLineMarkerContributor.EXTENSION.allForLanguageOrAny(element.getLanguage()));
@@ -117,6 +121,13 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implemen
       }
     }
 
+  }
+
+  /** Run actions execute code from the file, so their gutter markers must not appear in the safe mode. */
+  private static boolean isUntrustedFile(@NotNull PsiElement element) {
+    PsiFile file = element.getContainingFile();
+    VirtualFile virtualFile = file == null ? null : file.getVirtualFile();
+    return virtualFile != null && !TrustedFiles.isTrusted(virtualFile, element.getProject());
   }
 
   public static @NotNull LineMarkerInfo<PsiElement> createLineMarker(@NotNull PsiElement element,

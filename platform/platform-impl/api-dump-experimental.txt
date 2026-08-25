@@ -116,6 +116,9 @@ f:com.intellij.ide.plugins.PluginNode
 - f:getPROJECT_EP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 f:com.intellij.ide.startup.StartupActionScriptManager
 - *s:addActionCommandsToBeginning(java.util.List):V
+*f:com.intellij.ide.trustedProjects.TrustedFiles
+- sf:INSTANCE:com.intellij.ide.trustedProjects.TrustedFiles
+- sf:isTrusted(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
 *f:com.intellij.ide.ui.PopupLocationTracker
 - <init>():V
 - s:canRectangleBeUsed(java.awt.Component,java.awt.Rectangle,com.intellij.ide.ui.ScreenAreaConsumer):Z

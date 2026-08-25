@@ -64,4 +64,23 @@ class TrustedPaths : TrustedProjectsStateStorage<TrustedPaths.State>(State()) {
       State(it.trustedPaths + additionalTrustedState)
     }
   }
+
+  /**
+   * The project and file paths the user has explicitly trusted (via the trust confirmation dialogs),
+   * as shown in Settings | Trusted Locations.
+   */
+  fun getExplicitlyTrustedPaths(): List<String> {
+    return state.trustedPaths.filterValues { it }.keys.sorted()
+  }
+
+  /**
+   * Replaces the set of [explicitly trusted paths][getExplicitlyTrustedPaths].
+   * A path removed from the set is forgotten rather than marked untrusted: the next open asks for trust again.
+   * Explicitly untrusted entries are preserved.
+   */
+  fun setExplicitlyTrustedPaths(paths: Collection<String>) {
+    updateState {
+      State(it.trustedPaths.filterValues { trusted -> !trusted } + paths.associateWith { true })
+    }
+  }
 }

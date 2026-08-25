@@ -153,4 +153,38 @@ object TrustedProjectsDialog {
 
     return answer
   }
+
+  /**
+   * Shows a warning confirmation for trusting the location of a single file opened in the safe mode
+   * inside [hostProject]'s frame (see [TrustedFiles]) and marks [filePath] trusted if the user confirms.
+   *
+   * @return `true` if the file became trusted
+   */
+  @JvmStatic
+  fun confirmTrustingUntrustedFile(hostProject: Project, filePath: Path): Boolean {
+    val locatedFile = TrustedProjectsLocator.locateProject(filePath, project = null)
+    if (TrustedProjects.isProjectTrusted(locatedFile)) {
+      TrustedProjects.setProjectTrusted(locatedFile, true)
+      return true
+    }
+
+    val answer = invokeAndWaitIfNeeded {
+      MessageDialogBuilder.yesNo(
+        IdeBundle.message("untrusted.file.dialog.title"),
+        IdeBundle.message("untrusted.file.dialog.text", ApplicationInfoEx.getInstanceEx().fullApplicationName, filePath.toString()))
+        .yesText(IdeBundle.message("untrusted.file.dialog.trust.button"))
+        .noText(IdeBundle.message("untrusted.project.dialog.distrust.button"))
+        .asWarning()
+        .help(TRUSTED_PROJECTS_HELP_TOPIC)
+        .ask(hostProject)
+    }
+
+    if (answer) {
+      TrustedProjects.setProjectTrusted(locatedFile, true)
+    }
+
+    TrustedProjectsStatistics.LOAD_UNTRUSTED_PROJECT_CONFIRMATION_CHOICE.log(hostProject, answer)
+
+    return answer
+  }
 }

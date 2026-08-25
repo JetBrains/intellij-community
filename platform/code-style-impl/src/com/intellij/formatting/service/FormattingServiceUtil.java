@@ -32,6 +32,7 @@ public final class FormattingServiceUtil {
       FormattingService.EP_NAME.getExtensionList(),
       s -> (isExplicit || s.getFeatures().contains(Feature.AD_HOC_FORMATTING)) &&
            (isCompleteFile || s.getFeatures().contains(Feature.FORMAT_FRAGMENTS)) &&
+           !isSuppressed(file, s) &&
            s.canFormat(file, features.toArray(new Feature[0]))
     );
     LOG.assertTrue(formattingService != null,
@@ -43,10 +44,20 @@ public final class FormattingServiceUtil {
     return ContainerUtil.find(FormattingService.EP_NAME.getExtensionList(), s -> s.getClass().equals(serviceClass));
   }
 
+  private static boolean isSuppressed(@NotNull PsiFile file, @NotNull FormattingService service) {
+    // the point is absent in minimal containers (e.g., the standalone language server)
+    for (FormattingServiceSuppressor suppressor : FormattingServiceSuppressor.EP_NAME.getExtensionsIfPointIsRegistered()) {
+      if (suppressor.isSuppressed(file, service)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public static @NotNull FormattingService findImportsOptimizingService(@NotNull PsiFile file) {
     FormattingService importsOptimizer = ContainerUtil.find(
       FormattingService.EP_NAME.getExtensionList(),
-      s -> s.getFeatures().contains(Feature.OPTIMIZE_IMPORTS) && s.canFormat(file, Feature.OPTIMIZE_IMPORTS)
+      s -> s.getFeatures().contains(Feature.OPTIMIZE_IMPORTS) && !isSuppressed(file, s) && s.canFormat(file, Feature.OPTIMIZE_IMPORTS)
     );
     LOG.assertTrue(importsOptimizer != null,
                    "At least 1 formatting service which can optimize imports in PsiFile " + file.getName() + " should be registered.");

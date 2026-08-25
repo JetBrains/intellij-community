@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.actions
 
+import com.intellij.CommonBundle
 import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.navigation.CtrlMouseData
@@ -11,6 +12,8 @@ import com.intellij.codeInsight.navigation.impl.fromGTDProviders
 import com.intellij.codeInsight.navigation.impl.gotoDeclarationOrUsages
 import com.intellij.codeInsight.navigation.impl.toGTDUActionData
 import com.intellij.find.FindUsagesSettings
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.trustedProjects.TrustedFiles
 import com.intellij.find.actions.ShowUsagesAction.showUsages
 import com.intellij.find.actions.TargetVariant
 import com.intellij.find.findUsages.FindUsagesOptions
@@ -25,14 +28,43 @@ import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.platform.ide.navigation.NavigationOptions
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
+
+private val NAVIGATION_CONFIRMED_IN_UNTRUSTED_FILE = Key.create<Boolean>("navigation.confirmed.in.untrusted.file")
+
+/**
+ * Navigation from a file opened in the safe mode (see [TrustedFiles]) resolves references and can open other files,
+ * so it requires an explicit one-time (per file, per session) confirmation.
+ */
+private fun confirmNavigationFromUntrustedFile(project: Project, psiFile: PsiFile): Boolean {
+  val virtualFile = psiFile.virtualFile ?: return true
+  if (TrustedFiles.isTrusted(virtualFile, project)) {
+    return true
+  }
+  if (virtualFile.getUserData(NAVIGATION_CONFIRMED_IN_UNTRUSTED_FILE) == true) {
+    return true
+  }
+  val answer = MessageDialogBuilder.yesNo(
+    IdeBundle.message("untrusted.file.navigation.dialog.title"),
+    IdeBundle.message("untrusted.file.navigation.dialog.text", virtualFile.name))
+    .yesText(IdeBundle.message("untrusted.file.navigation.dialog.navigate.button"))
+    .noText(CommonBundle.getCancelButtonText())
+    .asWarning()
+    .ask(project)
+  if (answer) {
+    virtualFile.putUserData(NAVIGATION_CONFIRMED_IN_UNTRUSTED_FILE, true)
+  }
+  return answer
+}
 
 @ApiStatus.Internal
 class GotoDeclarationOrUsageHandler2 internal constructor(
@@ -80,6 +112,9 @@ class GotoDeclarationOrUsageHandler2 internal constructor(
       return
     }
     if (EditorUtil.isCaretInVirtualSpace(editor)) {
+      return
+    }
+    if (!confirmNavigationFromUntrustedFile(project, psiFile)) {
       return
     }
 

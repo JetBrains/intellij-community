@@ -5,6 +5,7 @@ package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.trustedProjects.TrustedFiles
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -91,7 +92,9 @@ private fun CoroutineScope.computeFileEditorProviders(
   project: Project,
   file: VirtualFile,
 ): Deferred<List<FileEditorProvider>> {
-  if (fileEntry == null || fileEntry.ideFingerprint != ideFingerprint()) {
+  // never resolve persisted provider ids for an untrusted file: a provider persisted while the file
+  // (or the whole session) was trusted would bypass the untrusted-file filtering in FileEditorProviderManagerImpl
+  if (fileEntry == null || fileEntry.ideFingerprint != ideFingerprint() || !TrustedFiles.isTrusted(file, project)) {
     return async {
       span("editor provider computing") {
         serviceAsync<FileEditorProviderManager>().getProvidersAsync(project, file)

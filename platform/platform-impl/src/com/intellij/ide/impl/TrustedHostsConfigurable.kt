@@ -2,7 +2,11 @@
 package com.intellij.ide.impl
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.trustedProjects.TrustedProjectsListener
+import com.intellij.ide.trustedProjects.TrustedProjectsLocator
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
@@ -20,6 +24,8 @@ import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
+import java.nio.file.InvalidPathException
+import java.nio.file.Path
 import kotlin.math.max
 
 @ApiStatus.Internal
@@ -34,10 +40,12 @@ class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurab
         label(IdeBundle.message("trusted.folders.settings.label"))
       }
       row {
-        val trustedPathsSettings = TrustedPathsSettings.getInstance()
-        trustedLocationConfigurable(getValuesFromSettings = { trustedPathsSettings.getTrustedPaths() },
-                                    setValuesToSettings = { trustedPathsSettings.setTrustedPaths(it) },
-                                    getNewValueFromUser = { getPathFromUser(it) })
+        trustedLocationConfigurable(getValuesFromSettings = { getMergedTrustedPaths() },
+                                    setValuesToSettings = { applyMergedTrustedPaths(it) },
+                                    getNewValueFromUser = {
+                                      getPathFromUser(it, FileChooserDescriptorFactory.singleFileOrDir()
+                                        .withTitle(IdeBundle.message("trusted.hosts.settings.new.trusted.folder.file.chooser.title")))
+                                    })
       }.resizableRow()
 
       for (additionalPanel in EP_NAME.extensionList) {
@@ -45,6 +53,55 @@ class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurab
       }
     }
     return result
+  }
+
+  /**
+   * One list over both trust stores: the user-managed trusted locations ([TrustedPathsSettings])
+   * followed by the projects and files explicitly trusted from the confirmation dialogs ([TrustedPaths]).
+   */
+  private fun getMergedTrustedPaths(): List<String> {
+    val settingsPaths = TrustedPathsSettings.getInstance().getTrustedPaths()
+    val settingsPathSet = settingsPaths.toSet()
+    return settingsPaths + TrustedPaths.getInstance().getExplicitlyTrustedPaths().filter { it !in settingsPathSet }
+  }
+
+  /**
+   * Entries stay in the store they came from; new entries go to the user-managed trusted locations.
+   * The trust events are fired for the difference, so trust caches, editor banners, and open editors refresh
+   * the same way as when trust is granted from the confirmation dialogs.
+   */
+  private fun applyMergedTrustedPaths(paths: List<String>) {
+    val trustedPathsSettings = TrustedPathsSettings.getInstance()
+    val trustedPaths = TrustedPaths.getInstance()
+    val settingsBefore = trustedPathsSettings.getTrustedPaths().toSet()
+    val explicitBefore = trustedPaths.getExplicitlyTrustedPaths()
+    val explicitBeforeSet = explicitBefore.toSet()
+    val afterSet = paths.toSet()
+
+    trustedPathsSettings.setTrustedPaths(paths.filter { it in settingsBefore || it !in explicitBeforeSet })
+    trustedPaths.setExplicitlyTrustedPaths(explicitBefore.filter { it in afterSet })
+
+    val beforeSet = buildSet {
+      addAll(settingsBefore)
+      addAll(explicitBeforeSet)
+    }
+    val publisher = ApplicationManager.getApplication().messageBus.syncPublisher(TrustedProjectsListener.TOPIC)
+    for (path in afterSet.filter { it !in beforeSet }) {
+      locate(path)?.let { publisher.onProjectTrusted(it) }
+    }
+    for (path in beforeSet.filter { it !in afterSet }) {
+      locate(path)?.let { publisher.onProjectUntrusted(it) }
+    }
+  }
+
+  private fun locate(path: String): TrustedProjectsLocator.LocatedProject? {
+    val nioPath = try {
+      Path.of(path)
+    }
+    catch (_: InvalidPathException) {
+      return null
+    }
+    return TrustedProjectsLocator.locateProject(nioPath, project = null)
   }
 
   private fun Row.trustedLocationConfigurable(
@@ -71,6 +128,8 @@ class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurab
       .align(Align.FILL)
       .onApply {
         setValuesToSettings(model.items)
+        // the settings may normalize the values (e.g., keep them sorted)
+        model.replaceAll(getValuesFromSettings())
       }.onIsModified {
         getValuesFromSettings() != model.items
       }.onReset {
@@ -78,10 +137,10 @@ class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurab
       }
   }
 
-  private fun getPathFromUser(parent: Component): String? {
+  private fun getPathFromUser(parent: Component, chooserDescriptor: FileChooserDescriptor): String? {
     val pathField = TextFieldWithBrowseButton(null, disposable)
     pathField.textField.columns = Messages.InputDialog.INPUT_DIALOG_COLUMNS
-    pathField.addBrowseFolderListener(null, FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(IdeBundle.message("trusted.hosts.settings.new.trusted.folder.file.chooser.title")))
+    pathField.addBrowseFolderListener(null, chooserDescriptor)
     val ok = DialogBuilder(parent)
       .title(IdeBundle.message("trusted.hosts.settings.new.trusted.folder.dialog.title"))
       .setNorthPanel(pathField)
