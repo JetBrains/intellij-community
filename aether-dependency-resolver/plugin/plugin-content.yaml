@@ -4,6 +4,7 @@
   library: maven-resolver-provider
   files:
   - name: $MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-interpolation/1/plexus-interpolation-1.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3/maven-artifact-3.jar
   - name: $MAVEN_REPOSITORY$/org/eclipse/sisu/org.eclipse.sisu.inject/0/org.eclipse.sisu.inject-0.jar
   reason: <- intellij.libraries.maven.resolver.provider
 - name: lib/intellij.libraries.plexus.utils.jar
@@ -15,11 +16,6 @@
 - name: lib/java-aetherDependencyResolver-plugin.jar
   modules:
   - name: intellij.java.aetherDependencyResolver.plugin
-- name: lib/maven-artifact.jar
-  library: maven-resolver-provider
-  files:
-  - name: $MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3/maven-artifact-3.jar
-  reason: <- intellij.libraries.maven.resolver.provider
 - name: lib/maven-builder-support.jar
   library: maven-resolver-provider
   files:
