@@ -601,7 +601,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
 
     @Override
     public void menuDragMouseReleased(MenuDragMouseEvent e) {
-      if (e.getButton() == MouseEvent.BUTTON2 && !triggerMenuActionsOnRmbRelease()) return;
+      if (e.getButton() != MouseEvent.BUTTON1 && !triggerMenuActionsOnRmbRelease()) return;
       MenuSelectionManager manager=e.getMenuSelectionManager();
       if (handleReleaseOnMenuItem(e, manager)) return;
       manager.clearSelectedPath();
