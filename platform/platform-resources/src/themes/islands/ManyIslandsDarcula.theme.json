@@ -883,6 +883,10 @@
       "progressCounterForeground": "#000000"
     },
 
+    "ToggleButton": {
+      "focusBorderColor": "ComponentBorderFocus"
+    },
+
     "SearchFieldWithExtension": {
       "background": "#45494A",
       "border": "com.intellij.ui.components.DarculaSearchBorder",
@@ -935,7 +939,20 @@
       "Checkbox.Background.Disabled": "#43494A",
       "Checkbox.Background.Selected": "#363738",
       "Checkbox.Border.Disabled": "#545556",
-      "Checkbox.Foreground.Disabled": "#606060"
+      "Checkbox.Foreground.Disabled": "#606060",
+
+      "Toggle.Background.Default": "#FFFFFF29",
+      "Toggle.Border.Default": "#FFFFFF29",
+      "Toggle.Foreground.Default": "#CED0D6",
+      "Toggle.Background.Selected": "SelectionActive",
+      "Toggle.Border.Selected": "ComponentBorderFocus",
+      "Toggle.Foreground.Selected": "#DFE1E5",
+      "Toggle.Background.Disabled": "#43494A",
+      "Toggle.Border.Disabled": "#545556",
+      "Toggle.Foreground.Disabled": "#606060",
+      "Toggle.Background.SelectedDisabled": "#43494A",
+      "Toggle.Border.SelectedDisabled": "#545556",
+      "Toggle.Foreground.SelectedDisabled": "#606060"
     }
   }
 }

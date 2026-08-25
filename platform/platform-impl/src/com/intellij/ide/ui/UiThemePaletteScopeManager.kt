@@ -101,7 +101,7 @@ internal class UiThemePaletteScopeManager(themeId: @NonNls String, theme: UIThem
 
   fun computeDigest(builder: InsecureHashBuilder): InsecureHashBuilder {
     // id and version of this class implementation, see ColorPatcherIdGenerator
-    builder.putLong(453973057740471735)
+    builder.putLong(804496732575600524)
       .putBoolean(isBasedOnExperimentalTheme)
     ui.updateHash(builder)
     checkBoxes.updateHash(builder)
@@ -113,6 +113,8 @@ internal class UiThemePaletteScopeManager(themeId: @NonNls String, theme: UIThem
   private fun getScope(colorKey: String): UiThemePaletteScope? {
     return when {
       colorKey.startsWith("Checkbox.") -> if (isBasedOnExperimentalTheme) checkBoxesExperimentalThemes else checkBoxes
+      // toggle icons are patched by element id, which is supported only for new themes
+      colorKey.startsWith("Toggle.") -> if (isBasedOnExperimentalTheme) checkBoxesExperimentalThemes else null
       colorKey.startsWith("Tree.iconColor") -> trees
       colorKey.startsWith("Objects.") -> ui
       colorKey.startsWith("Actions.") -> ui
@@ -134,6 +136,8 @@ internal class UiThemePaletteScopeManager(themeId: @NonNls String, theme: UIThem
           file.startsWith("check") -> checkBoxes
           // same set of colors as for checkboxes
           file.startsWith("radio") -> checkBoxes
+          // Islands toggles have no per-theme copies — a single asset recolored via `Toggle.*` palette keys
+          file.startsWith("toggle") -> if (isBasedOnExperimentalTheme) checkBoxesExperimentalThemes else null
           else -> null
         }
       }

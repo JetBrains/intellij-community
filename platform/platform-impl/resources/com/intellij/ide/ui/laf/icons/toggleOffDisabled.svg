@@ -1,0 +1,5 @@
+<svg width="26" height="16" viewBox="0 0 26 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path id="Toggle.Border.Disabled" d="M8 0.5H18C22.1421 0.5 25.5 3.85786 25.5 8C25.5 12.1421 22.1421 15.5 18 15.5H8C3.85786 15.5 0.5 12.1421 0.5 8C0.5 3.85786 3.85786 0.5 8 0.5Z" stroke="#DDDFE4"/>
+<path id="Toggle.Background.Disabled" d="M1 8C1 4.13401 4.13401 1 8 1H18C21.866 1 25 4.13401 25 8V8C25 11.866 21.866 15 18 15H8C4.13401 15 1 11.866 1 8V8Z" fill="none"/>
+<path id="Toggle.Foreground.Disabled" d="M8 5C9.65685 5 11 6.34315 11 8C11 9.65685 9.65685 11 8 11C6.34315 11 5 9.65685 5 8C5 6.34315 6.34315 5 8 5Z" stroke="#C3C5CB" stroke-width="2"/>
+</svg>

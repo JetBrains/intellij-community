@@ -16,6 +16,22 @@ class UINewThemeIconsTest {
 
   private val iconsPath = "/themes/expUI/icons/dark/"
 
+  private val lafIconsPath = "/com/intellij/ide/ui/laf/icons/"
+
+  /**
+   * Islands toggles have no per-theme copies — a single asset per state, recolored via `Toggle.*` palette keys
+   */
+  private val toggleAvailableKeys: Map<Set<String>, Set<String>> = mapOf(
+    setOf("toggleOff.svg") to
+      setOf("Toggle.Background.Default", "Toggle.Border.Default", "Toggle.Foreground.Default"),
+    setOf("toggleOn.svg") to
+      setOf("Toggle.Background.Selected", "Toggle.Border.Selected", "Toggle.Foreground.Selected"),
+    setOf("toggleOffDisabled.svg") to
+      setOf("Toggle.Background.Disabled", "Toggle.Border.Disabled", "Toggle.Foreground.Disabled"),
+    setOf("toggleOnDisabled.svg") to
+      setOf("Toggle.Background.SelectedDisabled", "Toggle.Border.SelectedDisabled", "Toggle.Foreground.SelectedDisabled")
+  )
+
   private val allAvailableKeys: Map<Set<String>, Set<String>> = mapOf(
     setOf("checkBox.svg", "radio.svg") to
       setOf("Checkbox.Background.Default", "Checkbox.Border.Default"),
@@ -35,19 +51,46 @@ class UINewThemeIconsTest {
   fun testIcons() {
     for ((names, availableKeys) in allAvailableKeys.entries) {
       for (name in names) {
-        checkIcon(name, availableKeys)
+        checkIcon(name, availableKeys, iconsPath)
       }
     }
   }
 
-  private fun checkIcon(name: String, availableKeys: Set<String>) {
+  @Test
+  fun testToggleIcons() {
+    for ((names, availableKeys) in toggleAvailableKeys.entries) {
+      for (name in names) {
+        checkIcon(name, availableKeys, lafIconsPath)
+      }
+    }
+  }
+
+  /**
+   * The toggle assets are shared by all themes, so an Islands theme that misses a key renders that
+   * element with the color baked into the asset instead of its own.
+   */
+  @Test
+  fun testToggleKeysDeclaredByIslandsThemes() {
+    val themes = listOf("ManyIslandsDark", "ManyIslandsLight", "ManyIslandsDarcula", "HighContrast")
+    for (theme in themes) {
+      val path = "/themes/islands/$theme.theme.json"
+      val text = javaClass.getResourceAsStream(path)?.reader()?.readText() ?: fail("Theme not found: $path")
+      for (key in toggleAvailableKeys.values.flatten()) {
+        if (!text.contains("\"$key\"")) {
+          fail("Theme: $theme, palette key $key is not declared, see IslandsOnOffButtonUI-spec.md")
+        }
+      }
+    }
+  }
+
+  private fun checkIcon(name: String, availableKeys: Set<String>, path: String) {
     fun assertTrue(actual: Boolean, id: String, message: String) {
       if (!actual) {
         fail("Icon: $name, id: $id, $message")
       }
     }
 
-    createJSvgDocument(createXmlStreamReader(javaClass.getResourceAsStream(iconsPath + name)!!), object : AttributeMutator {
+    createJSvgDocument(createXmlStreamReader(javaClass.getResourceAsStream(path + name)!!), object : AttributeMutator {
       override fun invoke(attributes: MutableMap<String, String>) {
         val id = attributes[ATTR_ID] ?: fail("Icon: $name, $ATTR_ID not found")
         val separatorCount = id.count { it == FILL_STROKE_SEPARATOR }

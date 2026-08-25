@@ -1,0 +1,5 @@
+<svg width="26" height="16" viewBox="0 0 26 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect id="Toggle.Border.Selected" x="0.5" y="0.5" width="25" height="15" rx="7.5" stroke="#3871E1"/>
+<rect id="Toggle.Background.Selected" x="1" y="1" width="24" height="14" rx="7" fill="#3871E1"/>
+<path id="Toggle.Foreground.Selected" d="M18 13C20.7614 13 23 10.7614 23 8C23 5.23858 20.7614 3 18 3C15.2386 3 13 5.23858 13 8C13 10.7614 15.2386 13 18 13Z" fill="white"/>
+</svg>

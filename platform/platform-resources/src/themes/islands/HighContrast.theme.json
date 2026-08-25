@@ -487,7 +487,8 @@
       "offForeground": "#FFFFFF",
       "offBackground": "#000000",
       "buttonColor":  "#FFFFFF",
-      "borderColor": "#FFFFFF"
+      "borderColor": "#FFFFFF",
+      "focusBorderColor": "#1AEBFF"
     },
 
     "ToolTip": {
@@ -787,6 +788,19 @@
       "Checkbox.Background.Disabled": "#000000",
       "Checkbox.Border.Disabled": "#AA6E28",
       "Checkbox.Foreground.Disabled": "#AA6E28",
+
+      "Toggle.Background.Default": "#000000",
+      "Toggle.Border.Default": "#1AEBFF",
+      "Toggle.Foreground.Default": "#1AEBFF",
+      "Toggle.Background.Selected": "#1AEBFF",
+      "Toggle.Border.Selected": "#1AEBFF",
+      "Toggle.Foreground.Selected": "#000000",
+      "Toggle.Background.Disabled": "#000000",
+      "Toggle.Border.Disabled": "#AA6E28",
+      "Toggle.Foreground.Disabled": "#AA6E28",
+      "Toggle.Background.SelectedDisabled": "#AA6E28",
+      "Toggle.Border.SelectedDisabled": "#AA6E28",
+      "Toggle.Foreground.SelectedDisabled": "#000000",
 
       "#CED0D6": "#FFFFFF"
 
