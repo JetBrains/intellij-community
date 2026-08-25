@@ -131,6 +131,10 @@ jvm_library(
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/eel",
         "//platform/eel:eel_test_lib",
+        "//platform/ijent/impl",
+        "//platform/ijent/impl:impl_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ijent.tests` end

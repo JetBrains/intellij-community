@@ -86,6 +86,8 @@ fun <T> EelDescriptor.fsBlocking(body: suspend () -> T): T {
   //
   // Trade-off: while a remote FS is slow or wants to show UI the EDT stays blocked (the original IJPL-245001 problem).
   // That is preferable to the hard freeze and is tracked in IJPL-245001.
+  // Deployers that may need user interaction (SSH) fail fast when triggered from inside this call
+  // instead of deadlocking: see com.intellij.platform.ijent.throwIfInsideIjentFsBlocking.
   return IntelliJCoroutinesFacade.runAndCompensateParallelism(500.milliseconds) {
     fsBlockingWithoutParallelismCompensation {
       showModalDialogOnTimeout(this, IjentCallerContext.computeCallerContext().unavailableDialogTimeout()) {
