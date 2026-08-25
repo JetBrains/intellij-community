@@ -12,7 +12,12 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.childrenOfType
 import com.intellij.psi.util.siblings
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationTarget
+import org.jetbrains.kotlin.analysis.api.symbols.applicableAnnotationTargets
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
@@ -88,6 +93,17 @@ class MergePropertyWithConstructorParameterProcessing : ElementsBasedPostProcess
         return context
     }
 
+    /**
+     * On a constructor `val`/`var` an annotation without a use-site target goes to the first applicable of
+     * parameter, property, field — so `@field:` only changes anything when the annotation could land elsewhere.
+     */
+    @OptIn(KaExperimentalApi::class)
+    context(_: KaSession)
+    private fun KtAnnotationEntry.needsFieldUseSiteTarget(): Boolean {
+        val targets = typeReference?.type?.expandedSymbol?.applicableAnnotationTargets ?: return true
+        return KaAnnotationTarget.VALUE_PARAMETER in targets || KaAnnotationTarget.PROPERTY in targets
+    }
+
     context(_: KaSession)
     private fun collectPropertyInitializations(klass: KtClass): List<Initialization<*>> {
         val usedParameters = mutableSetOf<KtParameter>()
@@ -118,7 +134,10 @@ class MergePropertyWithConstructorParameterProcessing : ElementsBasedPostProcess
                     if (!property.isSameTypeAs(parameter)) return false
                     usedParameters += parameter
                     val references = ReferencesSearch.search(parameter, LocalSearchScope(parameter.containingKtFile)).asIterable().toList()
-                    initializations += ConstructorParameterInitialization(property, parameter, assignment, references)
+                    val needFieldTarget = property.annotationEntries.filterTo(mutableSetOf()) { it.needsFieldUseSiteTarget() }
+                    initializations += ConstructorParameterInitialization(
+                        property, parameter, assignment, references, needFieldTarget
+                    )
                 }
 
                 is KtConstantExpression, is KtStringTemplateExpression -> {
@@ -199,9 +218,10 @@ private class Applier(private val context: Map<KtClass, List<Initialization<*>>>
         parameter.annotationEntries.forEach {
             if (it.useSiteTarget == null) it.addUseSiteTarget(CONSTRUCTOR_PARAMETER)
         }
-        property.annotationEntries.forEach {
-            parameter.addAnnotationEntry(it).also { entry ->
-                if (entry.useSiteTarget == null) entry.addUseSiteTarget(FIELD)
+        property.annotationEntries.forEach { propertyAnnotation ->
+            val entry = parameter.addAnnotationEntry(propertyAnnotation)
+            if (entry.useSiteTarget == null && propertyAnnotation in annotationsNeedingFieldTarget) {
+                entry.addUseSiteTarget(FIELD)
             }
         }
         property.typeReference?.annotationEntries?.forEach { entry ->
@@ -295,7 +315,8 @@ private data class ConstructorParameterInitialization(
     override val property: KtProperty,
     override val initializer: KtParameter,
     override val assignment: KtBinaryExpression,
-    val parameterReferences: List<PsiReference>
+    val parameterReferences: List<PsiReference>,
+    val annotationsNeedingFieldTarget: Set<KtAnnotationEntry>,
 ) : Initialization<KtParameter>()
 
 private data class LiteralInitialization(
