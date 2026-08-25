@@ -77,23 +77,25 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
       options.add("UTF-8");
       List<File> platformClasspath = new ArrayList<>();
       List<File> classpath = new ArrayList<>();
-      AnnotationProcessingConfiguration profile = null;
-      if (myModule != null) {
-        assert myProject.equals(myModule.getProject()) : myModule + " is from another project";
-        profile = CompilerConfiguration.getInstance(myProject).getAnnotationProcessingConfiguration(myModule);
-        ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
-        for (String s : rootManager.orderEntries().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().getPathList()) {
-          classpath.add(new File(s));
-        }
-        for (String s : rootManager.orderEntries().compileOnly().sdkOnly().getPathsList().getPathList()) {
-          platformClasspath.add(new File(s));
-        }
+      ReadAction.runBlocking(() -> {
+        AnnotationProcessingConfiguration profile = null;
+        if (myModule != null) {
+          assert myProject.equals(myModule.getProject()) : myModule + " is from another project";
+          profile = CompilerConfiguration.getInstance(myProject).getAnnotationProcessingConfiguration(myModule);
+          ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
+          for (String s : rootManager.orderEntries().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().getPathList()) {
+            classpath.add(new File(s));
+          }
+          for (String s : rootManager.orderEntries().compileOnly().sdkOnly().getPathsList().getPathList()) {
+            platformClasspath.add(new File(s));
+          }
 
-        if (myLanguageLevel != null && myLanguageLevel.isPreview()) {
-          options.add(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY);
+          if (myLanguageLevel != null && myLanguageLevel.isPreview()) {
+            options.add(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY);
+          }
         }
-      }
-      JavaBuilder.addAnnotationProcessingOptions(options, profile);
+        JavaBuilder.addAnnotationProcessingOptions(options, profile);
+      });
 
       Pair<Sdk, JavaSdkVersion> runtime = BuildManager.getJavacRuntimeSdk(myProject);
       JavaSdkVersion buildRuntimeVersion = runtime.getSecond();
