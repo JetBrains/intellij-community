@@ -92,7 +92,7 @@ internal data object PluralsType : TemplateType() {
     val pluralName =
       if (TemplateKeyNormalizationContext.PLURALS.blankAliases.contains(nameCandidate)) "" else nameCandidate.asNameAttributeValue()
     val quantity = normalizedKey.substringAfter(':', "c").ifBlank { "c" }
-    val qualifier = callback.file.parent?.name?.substringAfterLast('-', "") ?: ""
+    val qualifier = callback.file.parent?.name?.let(::extractLanguageQualifier) ?: ""
     return context.makePluralsTemplate(pluralName, quantity, parsed.text, parsed.repetitions, qualifier)
   }
 }

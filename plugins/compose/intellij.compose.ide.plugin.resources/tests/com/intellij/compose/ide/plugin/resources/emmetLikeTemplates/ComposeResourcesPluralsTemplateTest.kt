@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.resources.emmetLikeTemplates
 
+import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class ComposeResourcesPluralsTemplateTest {
@@ -114,8 +115,84 @@ class ComposeResourcesPluralsTemplateTest {
   }
 
   @Test
+  fun `test legacy language codes use the modern rules`() {
+    assertPluralsTemplate(
+      expectedTemplate = """
+        <plurals name="test">
+        <item quantity="one">${variable(0)}</item>
+        <item quantity="two">${variable(1)}</item>
+        <item quantity="other">${variable(2)}</item>
+        </plurals>
+        $TEMPLATE_END""",
+      expectedVariableCounter = 3,
+      name = "test",
+      text = "",
+      repetitions = 1,
+      categoryMode = "c",
+      qualifier = "iw" // Hebrew
+    )
+
+    assertPluralsTemplate(
+      expectedTemplate = """
+        <plurals name="test">
+        <item quantity="other">${variable(0)}</item>
+        </plurals>
+        $TEMPLATE_END""",
+      expectedVariableCounter = 1,
+      name = "test",
+      text = "",
+      repetitions = 1,
+      categoryMode = "c",
+      qualifier = "in" // Indonesian
+    )
+
+    assertPluralsTemplate(
+      expectedTemplate = """
+        <plurals name="test">
+        <item quantity="one">${variable(0)}</item>
+        <item quantity="other">${variable(1)}</item>
+        </plurals>
+        $TEMPLATE_END""",
+      expectedVariableCounter = 2,
+      name = "test",
+      text = "",
+      repetitions = 1,
+      categoryMode = "c",
+      qualifier = "tl" // Filipino
+    )
+  }
+
+  @Test
   fun `test TemplateType matches plurals triggers`() {
     PluralsType.assertMatchesKeys("p", "plurals", ":", "p.test", "plurals.test", "test:a")
   }
 
+  @Test
+  fun `test language qualifier extraction from a directory name`() {
+    assertEquals("", extractLanguageQualifier("values"))
+    assertEquals("en", extractLanguageQualifier("values-en"))
+    assertEquals("en", extractLanguageQualifier("values-en-rUS"))
+    assertEquals("fil", extractLanguageQualifier("values-fil"))
+    assertEquals("de", extractLanguageQualifier("values-dark-de"))
+    assertEquals("", extractLanguageQualifier("values-dark"))
+  }
+
+  @Test
+  fun `test languages beyond the ICU available locales use their CLDR rules`() {
+    assertPluralsTemplate(
+      expectedTemplate = """
+        <plurals name="test">
+        <item quantity="one">${variable(0)}</item>
+        <item quantity="two">${variable(1)}</item>
+        <item quantity="other">${variable(2)}</item>
+        </plurals>
+        $TEMPLATE_END""",
+      expectedVariableCounter = 3,
+      name = "test",
+      text = "",
+      repetitions = 1,
+      categoryMode = "c",
+      qualifier = "iu" // Inuktitut
+    )
+  }
 }
