@@ -26,31 +26,26 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-class InternalUserInvokedFullAnalysisAction : AnAction(), DumbAware {
+internal class InternalUserInvokedFullAnalysisAction : AnAction(), DumbAware {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
   override fun actionPerformed(e: AnActionEvent) {
     HeapDumpSnapshotRunnable(MemoryReportReason.InternalUserInvoked, IMMEDIATE).run()
   }
-
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
 }
 
-class InternalNonuserInvokedHeapDumpSnapshotAction : AnAction(), DumbAware {
+internal class InternalNonuserInvokedHeapDumpSnapshotAction : AnAction(), DumbAware {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
   override fun actionPerformed(e: AnActionEvent) {
     HeapDumpSnapshotRunnable(MemoryReportReason.InternalUserInvoked, SCHEDULE_ON_NEXT_START).run()
   }
-
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
 }
 
-@ApiStatus.Internal
-class AnalyzeReportAction : DumbAwareAction() {
+internal class AnalyzeReportAction : DumbAwareAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
   override fun actionPerformed(e: AnActionEvent) {
     val fileChooser = FileChooserFactory.getInstance().createFileChooser(
       FileChooserDescriptorFactory.createSingleFileDescriptor(),
@@ -58,9 +53,5 @@ class AnalyzeReportAction : DumbAwareAction() {
     val files = fileChooser.choose(e.project, null)
     if (files.isEmpty()) return
     AnalysisRunnable(files[0].toNioPath(), HeapReportProperties(MemoryReportReason.InternalUserInvoked, "", ""), false).run()
-  }
-
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
   }
 }
