@@ -18,7 +18,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.customization.LspGoToDefinitionSupport
 import com.intellij.platform.lsp.api.customization.LspGoToTypeDefinitionDisabled
 import com.intellij.platform.lsp.impl.LspClientImpl
@@ -72,7 +71,7 @@ internal class LspImplicitReferenceProvider : ImplicitReferenceProvider {
 
     if (definitions.size == 1
         && definitions[0].targetSelectionRange == definitions[0].originSelectionRange
-        && definitions[0].targetUri == lspClient.descriptor.getFileUri(file))
+        && definitions[0].targetUri == lspClient.getFileUriForRequests(file))
       return emptyList()
 
     return definitions
@@ -95,7 +94,7 @@ internal class LspImplicitReferenceProvider : ImplicitReferenceProvider {
     val file = psiFile.virtualFile ?: return null
     val document = FileDocumentManager.getInstance().getCachedDocument(file) ?: return null
 
-    val clientsAndLocationLinks = LspClientManagerImpl.getInstanceImpl(psiFile.project).getClientsWithThisFileOpen(file)
+    val clientsAndLocationLinks = LspClientManagerImpl.getInstanceImpl(psiFile.project).getClientsForFileRequests(file)
       .mapNotNull {
         val locationLinks = sendRequest(it, file, offset)
         if (locationLinks.isNotEmpty()) LspClientAndLocationLinks(it, locationLinks) else null
@@ -126,7 +125,7 @@ internal class LspImplicitReferenceProvider : ImplicitReferenceProvider {
           return@mapNotNull null
         }
         rangeInFile = rangeInFile?.union(textRange) ?: textRange
-        val targetFile = clientAndLocationLinks.lspClient.descriptor.findFileByUri(locationLink.targetUri)
+        val targetFile = clientAndLocationLinks.lspClient.libraryFiles.findTargetFile(locationLink.targetUri)
                          ?: return@mapNotNull null
         LspNavigatableSymbol(targetFile, locationLink.targetSelectionRange)
       }
@@ -139,7 +138,7 @@ internal class LspImplicitReferenceProvider : ImplicitReferenceProvider {
 }
 
 
-private data class LspClientAndLocationLinks(val lspClient: LspClient, val locationLinks: List<LocationLink>)
+private data class LspClientAndLocationLinks(val lspClient: LspClientImpl, val locationLinks: List<LocationLink>)
 
 
 private class LspResolvedSymbolReference(

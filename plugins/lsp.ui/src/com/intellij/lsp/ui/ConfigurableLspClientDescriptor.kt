@@ -10,6 +10,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspCommunicationChannel
 import com.intellij.platform.lsp.api.ProjectWideLspClientDescriptor
+import com.intellij.platform.lsp.api.customization.LspCustomization
+import com.intellij.platform.lsp.api.customization.LspSemanticTokensCustomizer
+import com.intellij.platform.lsp.api.customization.LspSemanticTokensSupport
+import com.intellij.psi.PsiFile
 
 internal class ConfigurableLspClientDescriptor(
   project: Project,
@@ -59,6 +63,14 @@ internal class ConfigurableLspClientDescriptor(
         startProcess = configuration.executablePath.isNotBlank()
       )
     }
+
+  override val lspCustomization: LspCustomization = object : LspCustomization() {
+    // user-configured file patterns already gate this server's files,
+    // so don't suppress the request for files with a real PSI language (the default TEXT/textmate-only heuristic)
+    override val semanticTokensCustomizer: LspSemanticTokensCustomizer = object : LspSemanticTokensSupport() {
+      override fun shouldAskServerForSemanticTokens(psiFile: PsiFile): Boolean = true
+    }
+  }
 
   override fun createInitializationOptions(): Any? {
     if (configuration.initializationOptions.isBlank()) {

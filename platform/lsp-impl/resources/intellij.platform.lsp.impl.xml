@@ -55,6 +55,7 @@
 
     <serviceViewContributor implementation="com.intellij.platform.lsp.impl.serviceView.LspServiceViewContributor"/>
 
+    <postStartupActivity implementation="com.intellij.platform.lsp.impl.platformListeners.LspStartupActivity"/>
     <editorFactoryDocumentListener id="LspDocumentListener"
                                    implementation="com.intellij.platform.lsp.impl.platformListeners.LspDocumentListener"/>
     <vfs.asyncListener id="LspFileListener"

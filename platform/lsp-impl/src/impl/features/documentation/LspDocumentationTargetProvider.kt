@@ -26,7 +26,7 @@ internal class LspDocumentationTargetProvider : DocumentationTargetProvider {
     val offsetInHost = injectedLanguageManager.injectedToHost(psiFile, offset)
     val file = hostPsiFile.virtualFile ?: return emptyList()
 
-    return LspClientManagerImpl.getInstanceImpl(project).getClientsWithThisFileOpen(file).mapNotNull { lspClient ->
+    return LspClientManagerImpl.getInstanceImpl(project).getClientsForFileRequests(file).mapNotNull { lspClient ->
       if (lspClient.descriptor.lspCustomization.hoverCustomizer !is LspHoverSupport) return@mapNotNull null
       if (!lspClient.supportsHover()) return@mapNotNull null
 
