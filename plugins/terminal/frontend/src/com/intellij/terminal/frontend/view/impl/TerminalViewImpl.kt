@@ -440,7 +440,7 @@ class TerminalViewImpl(
         coroutineScope = coroutineScope.childScope("TerminalTypingTracker")
       )
       if (TerminalAiInlineCompletion.isEnabled()) {
-        configureInlineCompletion(outputModel, typingTracker)
+        configureInlineCompletion(outputModel, shellIntegration, typingTracker)
       }
 
       val startupOptions = startupOptionsDeferred.await()
@@ -693,12 +693,14 @@ class TerminalViewImpl(
 
   private fun configureInlineCompletion(
     outputModel: MutableTerminalOutputModel,
+    shellIntegration: TerminalShellIntegration,
     typingTracker: TerminalTypingTracker,
   ) {
     val inlineCompletionScope = coroutineScope.childScope("TerminalInlineCompletion")
     val inlineCompletionController = TerminalInlineCompletionController(
       editor = outputEditor,
       model = outputModel,
+      shellIntegration = shellIntegration,
       typingTracker = typingTracker,
       coroutineScope = inlineCompletionScope
     )

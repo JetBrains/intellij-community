@@ -3,6 +3,7 @@ package com.intellij.terminal.frontend.view.inlineCompletion
 import com.intellij.codeInsight.inline.completion.InlineCompletion
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent.Backspace
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent.DocumentChange
+import com.intellij.codeInsight.inline.completion.TypingEvent.NewLine
 import com.intellij.codeInsight.inline.completion.TypingEvent.OneSymbol
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
@@ -11,6 +12,7 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.util.TextRange
 import com.intellij.terminal.frontend.view.TerminalKeyEvent
 import com.intellij.terminal.frontend.view.impl.TerminalTypingEvent
 import com.intellij.terminal.frontend.view.impl.TerminalTypingListener
@@ -21,9 +23,15 @@ import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
+import org.jetbrains.plugins.terminal.view.shellIntegration.getTypedCommandText
 import java.awt.event.KeyEvent
 
 /**
@@ -36,6 +44,7 @@ import java.awt.event.KeyEvent
 class TerminalInlineCompletionController(
   private val editor: EditorEx,
   private val model: TerminalOutputModel,
+  private val shellIntegration: TerminalShellIntegration,
   private val typingTracker: TerminalTypingTracker,
   private val coroutineScope: CoroutineScope,
 ) {
@@ -51,6 +60,14 @@ class TerminalInlineCompletionController(
         }
       }
     })
+    coroutineScope.launch {
+      shellIntegration.outputStatus
+        .filter { it == TerminalOutputStatus.TypingCommand }
+        .drop(1)// Do not suggest immediately for the very first command
+        .collect {
+          invokeNewCommandCompletion()
+        }
+    }
     coroutineScope.awaitCancellationAndInvoke(Dispatchers.UI) {
       InlineCompletion.remove(editor)
     }
@@ -94,6 +111,25 @@ class TerminalInlineCompletionController(
     launchInlineCompletionAction {
       syncEditorCaretWithModel(editor, model)
       InlineCompletion.getHandlerOrNull(editor)?.invokeEvent(Backspace(editor))
+    }
+  }
+
+  private fun getCurrentTypedCommandText(): String? {
+    val activeBlock = shellIntegration.blocksModel.activeBlock as? TerminalCommandBlock ?: return null
+    return activeBlock.getTypedCommandText(model)
+  }
+
+  private fun invokeNewCommandCompletion() {
+    launchInlineCompletionAction {
+      if (shellIntegration.outputStatus.value != TerminalOutputStatus.TypingCommand) return@launchInlineCompletionAction
+      if (getCurrentTypedCommandText() != "") return@launchInlineCompletionAction
+
+      val offset = (model.cursorOffset - model.startOffset).toInt()
+      syncEditorCaretWithModel(editor, model)
+      // This synthetic event represents the new terminal command input; no editor document change occurred.
+      InlineCompletion.getHandlerOrNull(editor)?.invokeEvent(
+        DocumentChange(NewLine("", TextRange(offset, offset)), editor)
+      )
     }
   }
 
