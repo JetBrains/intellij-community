@@ -21,6 +21,6 @@ class VersionCatalogsLocator(val myProject: Project) {
       ExternalSystemApiUtil.find(it, BuildScriptClasspathData.VERSION_CATALOGS)?.data
     }
                                ?: return emptyMap()
-    return versionCatalogsModel.catalogsLocations.mapValues { entry -> Path.of(entry.value) }
+    return versionCatalogsModel.catalogsLocations.mapValues { entry -> entry.value.toPath() }
   }
 }

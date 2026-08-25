@@ -163,7 +163,7 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
         return Collections.emptyList();
       }
       var versionCatalogPaths = versionCatalogNode.getData().getCatalogsLocations();
-      return ContainerUtil.map(versionCatalogPaths.values(), it -> Path.of(it));
+      return ContainerUtil.map(versionCatalogPaths.values(), it -> it.toPath());
     }
   }
 

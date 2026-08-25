@@ -47,7 +47,7 @@ internal class GradleVersionCatalogSyncContributor : GradleSyncContributor {
     val versionCatalogModel = context.getBuildModel(buildModel, VersionCatalogsModel::class.java) ?: return emptyList()
 
     return versionCatalogModel.catalogsLocations.map { (catalogName, catalogPath) ->
-      val catalogUrl = context.virtualFileUrl(Path.of(catalogPath))
+      val catalogUrl = context.virtualFileUrl(catalogPath)
       GradleVersionCatalogEntity(catalogName, catalogUrl, entitySource)
     }
   }

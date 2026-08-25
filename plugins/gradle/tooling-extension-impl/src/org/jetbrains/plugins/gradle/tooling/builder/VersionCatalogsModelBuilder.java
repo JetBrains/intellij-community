@@ -20,6 +20,7 @@ import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.internal.VersionCatalogsModelImpl;
 
+import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -31,7 +32,7 @@ import static org.codehaus.groovy.runtime.StringGroovyMethods.capitalize;
 public class VersionCatalogsModelBuilder extends AbstractModelBuilderService {
   @Override
   public Object buildAll(@NotNull String modelName, @NotNull Project project, @NotNull ModelBuilderContext context) {
-    Map<String, String> result = new HashMap<>();
+    Map<String, File> result = new HashMap<>();
     SettingsInternal settings = ((GradleInternal)project.getGradle()).getSettings();
     MutableVersionCatalogContainer catalogs = settings.getDependencyResolutionManagement().getVersionCatalogs();
     for (VersionCatalogBuilder builder : catalogs) {
@@ -50,7 +51,7 @@ public class VersionCatalogsModelBuilder extends AbstractModelBuilderService {
         Configuration catalogImportConf = service.getConfigurationContainer()
           .getByName("incomingCatalogFor" + capitalize(name) + "0");
         for (ResolvedArtifactResult artifact : catalogImportConf.getIncoming().getArtifacts().getArtifacts()) {
-          result.put(name, artifact.getFile().getAbsolutePath().replace('\\', '/'));
+          result.put(name, artifact.getFile());
         }
       } catch (UnknownConfigurationException ignore) {
       }

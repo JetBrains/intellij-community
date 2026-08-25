@@ -4,17 +4,19 @@ package org.jetbrains.plugins.gradle.tooling.internal;
 import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.plugins.gradle.model.VersionCatalogsModel;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.Map;
 
+@SuppressWarnings("IO_FILE_USAGE")
 public class VersionCatalogsModelImpl implements VersionCatalogsModel, Serializable {
-  private final Map<String, String> catalogsLocations;
+  private final Map<String, File> catalogsLocations;
 
   @PropertyMapping({"catalogsLocations"})
-  public VersionCatalogsModelImpl(Map<String, String> catalogsLocations) { this.catalogsLocations = catalogsLocations; }
+  public VersionCatalogsModelImpl(Map<String, File> catalogsLocations) { this.catalogsLocations = catalogsLocations; }
 
   @Override
-  public Map<String, String> getCatalogsLocations() {
+  public Map<String, File> getCatalogsLocations() {
     return catalogsLocations;
   }
 }
