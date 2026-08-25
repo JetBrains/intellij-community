@@ -143,7 +143,7 @@ private class LocalTwoSideDiffViewer(
 
   override fun transferLine(side: Side, line: Int): Int? {
     if (!actualState.isActual || line !in 0 until viewer.getEditor(side).document.lineCount) return null
-    return viewer.transferPosition(side, LineCol(line, 0)).line.takeIf { it >= 0 }
+    return viewer.transferPosition(side, LineCol(line, 0)).line
   }
 }
 

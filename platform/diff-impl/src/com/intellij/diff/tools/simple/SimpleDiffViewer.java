@@ -443,6 +443,20 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     return myModel.getChanges();
   }
 
+  /**
+   * The changed blocks of the computed diff, as the line ranges that {@link #transferPosition} transfers lines through:
+   * {@code start1}/{@code end1} are the LEFT lines of a block and {@code start2}/{@code end2} the RIGHT ones.
+   * <p>
+   * Read from the changes rather than from their fragments, so that the shifts they collected from document changes since the
+   * rediff are included. Together with {@link DiffUtil#getLineCount} of both documents this is the whole input of the transfer,
+   * so a caller that has it can transfer a line without the viewer.
+   */
+  @ApiStatus.Internal
+  public @NotNull @Unmodifiable List<Range> getLineMappingRanges() {
+    return ContainerUtil.map(getDiffChanges(), change -> new Range(change.getStartLine(Side.LEFT), change.getEndLine(Side.LEFT),
+                                                                  change.getStartLine(Side.RIGHT), change.getEndLine(Side.RIGHT)));
+  }
+
   private @NotNull @Unmodifiable List<SimpleDiffChange> getNonSkippedDiffChanges(Side side) {
     return ContainerUtil.filter(myModel.getChanges(side), it -> !it.isSkipped());
   }

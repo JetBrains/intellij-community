@@ -1,50 +1,50 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.frontend.impl
 
+import com.intellij.diff.util.Range
 import org.jetbrains.annotations.ApiStatus
 import kotlin.math.min
 
+/**
+ * Converts lines between the unified document of a unified diff and one of its sides, the way
+ * `com.intellij.diff.tools.fragmented.LineNumberConvertor` does.
+ *
+ * The conversion is fully determined by the segments the convertor was built from, so it can be replayed away from the viewer
+ * that computed the diff - which is what the split-mode frontend does with the segments the backend sends it.
+ *
+ * @param segments the segments of one side, as `com.intellij.diff.tools.fragmented.UnifiedDiffViewer.getLineNumberMapping`
+ *                 returns them: [Range.start1]/[Range.end1] in the unified document and [Range.start2]/[Range.end2] in the side
+ */
 @ApiStatus.Internal
-data class FrontendUnifiedDiffMappingSegment(
-  val unifiedStart: Int,
-  val sideStart: Int,
-  val unifiedLength: Int,
-  val sideLength: Int,
-)
+class FrontendUnifiedDiffSegmentMapping(segments: List<Range>) {
+  private val fromUnified = segments.sortedBy { it.start1 }
 
-@ApiStatus.Internal
-class FrontendUnifiedDiffSegmentMapping(segments: List<FrontendUnifiedDiffMappingSegment>) {
-  private val unifiedSegments = segments.sortedBy { it.unifiedStart }
-  // Match LineNumberConvertor's inverted TreeMap: for equal side starts, the last segment wins.
-  private val sideSegments = segments.associateBy { it.sideStart }.values.sortedBy { it.sideStart }
+  /**
+   * The same segments flipped, so that [convert] only ever has to run from side 1 to side 2. Segments starting on the same
+   * line of the side collapse to the last of them, matching the inverted `TreeMap` of `LineNumberConvertor`.
+   */
+  private val fromSide = segments.associateBy { it.start2 }.values.map { it.flip() }.sortedBy { it.start1 }
 
-  fun unifiedToSide(line: Int, strict: Boolean): Int = convert(unifiedSegments, line, strict, fromUnified = true)
+  fun unifiedToSide(line: Int, strict: Boolean): Int = convert(fromUnified, line, strict)
 
-  fun sideToUnified(line: Int, strict: Boolean): Int = convert(sideSegments, line, strict, fromUnified = false)
+  fun sideToUnified(line: Int, strict: Boolean): Int = convert(fromSide, line, strict)
 
-  private fun convert(
-    segments: List<FrontendUnifiedDiffMappingSegment>,
-    line: Int,
-    strict: Boolean,
-    fromUnified: Boolean,
-  ): Int {
+  private fun convert(segments: List<Range>, line: Int, strict: Boolean): Int {
     val index = segments.binarySearch { segment ->
-      val start = if (fromUnified) segment.unifiedStart else segment.sideStart
-      if (start <= line) -1 else 1
+      if (segment.start1 <= line) -1 else 1
     }.let { insertionPoint ->
       if (insertionPoint >= 0) insertionPoint else -insertionPoint - 2
     }
     if (index < 0) return if (strict) -1 else 0
 
     val segment = segments[index]
-    val start = if (fromUnified) segment.unifiedStart else segment.sideStart
-    val length = if (fromUnified) segment.unifiedLength else segment.sideLength
-    val otherStart = if (fromUnified) segment.sideStart else segment.unifiedStart
-    val otherLength = if (fromUnified) segment.sideLength else segment.unifiedLength
+    val shift = segment.start2 - segment.start1
     if (strict) {
-      if (line >= start + length || length != otherLength) return -1
-      return otherStart - start + line
+      if (line >= segment.end1 || segment.end1 - segment.start1 != segment.end2 - segment.start2) return -1
+      return shift + line
     }
-    return min(otherStart - start + line, otherStart + otherLength)
+    return min(shift + line, segment.end2)
   }
 }
+
+private fun Range.flip(): Range = Range(start2, end2, start1, end1)

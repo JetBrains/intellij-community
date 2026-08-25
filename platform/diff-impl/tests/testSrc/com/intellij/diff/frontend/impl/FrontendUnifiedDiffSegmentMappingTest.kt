@@ -43,14 +43,7 @@ internal class FrontendUnifiedDiffSegmentMappingTest : TestCase() {
       builder.put(unifiedStart, sideStart, unifiedLength, sideLength)
     }
     val convertor = builder.build()
-    val mapping = FrontendUnifiedDiffSegmentMapping(convertor.ranges.map { range ->
-      FrontendUnifiedDiffMappingSegment(
-        unifiedStart = range.start1,
-        sideStart = range.start2,
-        unifiedLength = range.end1 - range.start1,
-        sideLength = range.end2 - range.start2,
-      )
-    })
+    val mapping = FrontendUnifiedDiffSegmentMapping(convertor.ranges)
 
     for (line in -2..20) {
       assertEquals("strict unified line $line", convertor.convert(line), mapping.unifiedToSide(line, strict = true))
