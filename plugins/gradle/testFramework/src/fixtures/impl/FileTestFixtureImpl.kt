@@ -5,16 +5,12 @@ import com.intellij.gradle.testFramework.configuration.TestFilesConfigurationImp
 import com.intellij.gradle.testFramework.fixtures.FileTestFixture
 import com.intellij.gradle.testFramework.util.refreshAndAwait
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installBulkVirtualFileListener
 import com.intellij.openapi.observable.operation.core.onFailureCatching
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.io.findOrCreateDirectory
 import com.intellij.openapi.util.io.findOrCreateFile
 import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.util.io.toCanonicalPath
@@ -24,7 +20,6 @@ import com.intellij.openapi.vfs.findDocument
 import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.openapi.vfs.findOrCreateFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.openapi.vfs.readText
 import com.intellij.openapi.vfs.refreshAndFindVirtualFile
 import com.intellij.openapi.vfs.writeText
@@ -32,10 +27,8 @@ import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.utils.editor.reloadFromDisk
 import com.intellij.testFramework.utils.vfs.deleteChildrenRecursively
 import com.intellij.testFramework.utils.vfs.deleteRecursively
-import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
 import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualFile
 import com.intellij.util.throwIfNotEmpty
-import com.intellij.util.xmlb.XmlSerializer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import java.nio.file.FileSystems
@@ -70,7 +63,7 @@ internal class FileTestFixtureImpl(
 
     testRootDisposable = Disposer.newDisposable()
 
-    fixtureRoot = createFixtureRoot(relativePath)
+    fixtureRoot = createFixtureRoot(relativePath, testRootDisposable)
     fixtureStateFile = createFixtureStateFile()
     fixtureProjectRoot = createProjectRoot()
 
@@ -81,7 +74,7 @@ internal class FileTestFixtureImpl(
       .toSet()
     excludedFilePatterns = configuration.excludedFilePatterns
 
-    val oldState = readFixtureState()
+    val oldState = readFixtureState(fixtureStateFile.toNioPath())
     dumpFixtureState()
 
     runBlocking(Dispatchers.Default) {
@@ -104,20 +97,9 @@ internal class FileTestFixtureImpl(
     )
   }
 
-  private fun createFixtureRoot(relativePath: String): VirtualFile {
-    val systemPath = Path.of(PathManager.getSystemPath())
-    // The Gradle sync stores canonical paths, so the fixture root must not contain a symbolic link.
-    val systemDirectory = systemPath.findOrCreateDirectory().toRealPath().refreshAndGetVirtualDirectory()
-    val fixtureRoot = "FileTestFixture/$relativePath"
-    VfsRootAccess.allowRootAccess(testRootDisposable, systemDirectory.path + "/$fixtureRoot")
-    return runWriteActionAndWait {
-      systemDirectory.findOrCreateDirectory(fixtureRoot)
-    }
-  }
-
   private fun createFixtureStateFile(): VirtualFile {
     return runWriteActionAndWait {
-      root.findOrCreateFile("_FileTestFixture.xml")
+      root.findOrCreateFile(STATE_FILE_NAME)
     }
   }
 
@@ -135,7 +117,7 @@ internal class FileTestFixtureImpl(
       invalidateFixtureCaches()
       return
     }
-    for ((path, text) in snapshots) {
+    for ([path, text] in snapshots) {
       revertFile(Path.of(path), text)
     }
   }
@@ -148,22 +130,8 @@ internal class FileTestFixtureImpl(
 
   private fun dumpFixtureState() {
     val errors = errors.map { it.message ?: it.toString() }
-    val snapshots = snapshots.entries.associate { (k, v) -> k.toCanonicalPath() to v.orElse(null) }
-    writeFixtureState(State(isInitialized, errors, snapshots))
-  }
-
-  private fun readFixtureState(): State {
-    return runCatching {
-      runReadActionBlocking {
-        val element = JDOMUtil.load(fixtureStateFile.toNioPath())
-        XmlSerializer.deserialize(element, State::class.java)
-      }
-    }.getOrElse { State() }
-  }
-
-  private fun writeFixtureState(state: State) {
-    val element = XmlSerializer.serialize(state)
-    JDOMUtil.write(element, fixtureStateFile.toNioPath())
+    val snapshots = snapshots.entries.associate { [k, v] -> k.toCanonicalPath() to v.orElse(null) }
+    writeFixtureState(fixtureStateFile.toNioPath(), State(isInitialized, errors, snapshots))
   }
 
   private fun createFixtureConfiguration(): Configuration {
@@ -294,10 +262,4 @@ internal class FileTestFixtureImpl(
       excludedFilePatterns.addAll(syntaxAndPatterns.map(fileSystem::getPathMatcher))
     }
   }
-
-  private data class State(
-    var isInitialized: Boolean? = null,
-    var errors: List<String>? = null,
-    var snapshots: Map<String, String?>? = null
-  )
 }

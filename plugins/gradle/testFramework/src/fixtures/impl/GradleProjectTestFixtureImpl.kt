@@ -10,33 +10,25 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.observable.operation.OperationExecutionStatus
 import com.intellij.openapi.observable.operation.core.whenOperationStarted
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.findOrCreateDirectory
-import com.intellij.openapi.util.use
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
-import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestObservation.awaitOpenProjectActivity
-import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.closeProjectAsync
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.openProjectAsync
-import com.intellij.testFramework.useProjectAsync
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexEx
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.execution.gradleUserHomeDir
-import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.getGradleProjectReloadOperation
-import org.jetbrains.plugins.gradle.util.whenExternalSystemTaskFinished
 
 internal class GradleProjectTestFixtureImpl(
   private val fixtureName: String,
@@ -92,7 +84,7 @@ internal class GradleProjectTestFixtureImpl(
         configureProject()
         excludeFilePatterns("glob:**/.gradle{,/**}", "glob:**/build{,/**}")
         withGradleWrapper(gradleVersion)
-        withFiles { createProjectCaches(it) }
+        withFiles { createGradleProjectCaches(it) }
       }
       fileFixture.setUp()
     }
@@ -129,35 +121,4 @@ internal class GradleProjectTestFixtureImpl(
     }
   }
 
-  companion object {
-
-    private suspend fun createProjectCaches(projectRoot: VirtualFile) {
-      closeOpenedProjectsIfFailAsync {
-        assertExecutionStatusIsSuccess {
-          awaitOpenProjectActivity {
-            openProjectAsync(projectRoot)
-          }
-        }
-      }.useProjectAsync(save = true) {
-        projectRoot.refreshAndAwait()
-      }
-    }
-
-    private suspend fun <R> assertExecutionStatusIsSuccess(action: suspend () -> R): R {
-      Disposer.newDisposable().use { disposable ->
-        var status: OperationExecutionStatus? = null
-        whenExternalSystemTaskFinished(disposable) { _, newStatus ->
-          status = newStatus
-        }
-        val result = action()
-        when (val status = status) {
-          null -> throw AssertionError("Execution isn't completed")
-          is OperationExecutionStatus.Failure -> throw AssertionError("Execution is failed", status.cause)
-          is OperationExecutionStatus.Cancel -> throw AssertionError("Execution is cancelled")
-          is OperationExecutionStatus.Success -> {}
-        }
-        return result
-      }
-    }
-  }
 }

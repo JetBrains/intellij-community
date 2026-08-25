@@ -81,6 +81,7 @@ jvm_library(
         "//tools/intellij.tools.ide.starter:ide-starter",
         "//platform/buildView",
         "//platform/consoleView",
+        "//platform/eel-nioFs",
     ],
 )
 ### auto-generated section `build intellij.gradle.testFramework` end

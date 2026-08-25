@@ -31,7 +31,7 @@ open class TestFilesConfigurationImpl : TestFilesConfiguration {
   }
 
   override fun areContentsEqual(root: VirtualFile): Boolean {
-    for ((relativePath, expectedContent) in files) {
+    for ([relativePath, expectedContent] in files) {
       val file = root.findFile(relativePath) ?: return false
       val content = file.readText()
       if (expectedContent != content) {
@@ -47,7 +47,7 @@ open class TestFilesConfigurationImpl : TestFilesConfiguration {
   }
 
   override fun assertContentsAreEqual(root: VirtualFile) {
-    for ((relativePath, expectedContent) in files) {
+    for ([relativePath, expectedContent] in files) {
       val file = root.findFile(relativePath)
       Assertions.assertNotNull(file) {
         "File doesn't exist: ${root.path}/$relativePath"
@@ -68,7 +68,7 @@ open class TestFilesConfigurationImpl : TestFilesConfiguration {
 
   override suspend fun createFiles(root: VirtualFile) {
     edtWriteAction {
-      for ((path, content) in files) {
+      for ([path, content] in files) {
         val file = root.createFile(path)
         file.writeText(content)
       }

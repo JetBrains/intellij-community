@@ -33,7 +33,7 @@ annotation class GradleProjectTestApplication
 /**
  * @see com.intellij.testFramework.junit5.impl.TestApplicationLeakTrackerExtension
  */
-private class GradleProjectTestApplicationLeakTracker : BeforeAllCallback, AfterAllCallback {
+internal class GradleProjectTestApplicationLeakTracker : BeforeAllCallback, AfterAllCallback {
 
   companion object {
     private val LEAK_TRACKERS_KEY = TypedStoreKey.createKey<GradleLeakTrackers>()
