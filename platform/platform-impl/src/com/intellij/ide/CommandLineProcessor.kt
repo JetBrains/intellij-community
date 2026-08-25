@@ -11,6 +11,7 @@ import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil
 import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.LightEditUtil
+import com.intellij.ide.lightEdit.isClaimedByWelcomeScreenProject
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.idea.ApplicationStartArguments
 import com.intellij.notification.Notification
@@ -142,7 +143,8 @@ object CommandLineProcessor {
     }
 
     NonProjectFileWritingAccessProvider.allowWriting(listOf(file))
-    val project = if (LightEditUtil.isForceOpenInLightEditMode()) {
+    val claimedByWelcomeScreenProject = !tempProject && isClaimedByWelcomeScreenProject(ioFile)
+    val project = if (LightEditUtil.isForceOpenInLightEditMode() && !claimedByWelcomeScreenProject) {
       val project = LightEditService.getInstance().openFile(file)
       LightEditFeatureUsagesUtil.logFileOpen(project, file, OpenPlace.CommandLine)
       project

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.menuBar;
 
 import com.intellij.ide.RecentProjectListActionProvider;
@@ -102,8 +102,8 @@ final class LightEditRecentFileActionGroup extends ActionGroup implements DumbAw
       Project project = e.getProject();
       if (project != null) {
         LightEditUtil.markUnknownFileTypeAsPlainTextIfNeeded(project, myFile);
-        LightEditFeatureUsagesUtil.logFileOpen(project, myFile, RecentFiles);
         LightEditService.getInstance().openFile(myFile);
+        LightEditFeatureUsagesUtil.logFileOpen(project, myFile, RecentFiles);
       }
     }
   }
