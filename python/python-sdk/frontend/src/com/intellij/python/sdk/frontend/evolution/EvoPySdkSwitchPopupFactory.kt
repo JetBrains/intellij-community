@@ -521,7 +521,10 @@ internal class EvoPySdkSwitchPopupFactory(
     }
 
     val externalToolsSection = EvoTreeSection(
-      label = ListSeparator(PySdkFrontendBundle.message("evo.sdk.status.bar.popup.select.environment")),
+      // "Change" once there is something to change: the section switches the interpreter rather than setting a first one.
+      label = ListSeparator(PySdkFrontendBundle.message(
+        if (currentInterpreter == null) "evo.sdk.status.bar.popup.select.environment"
+        else "evo.sdk.status.bar.popup.change.environment")),
       elements = toolNodeElements,
     )
 
@@ -534,11 +537,13 @@ internal class EvoPySdkSwitchPopupFactory(
           elements = leaves.map { EvoTreeLeafElement(selectEnvAction(project, pyProjectKey, it, SHORTCUTS_NODE_ID, EvoNodeStats(EvoNodeKind.SHORTCUTS), traceId, scope)) },
         )
       }
+      // Titled generically rather than by the interpreter: the rows below act on whatever is current, and the widget
+      // itself already names it. No icon either, so this header renders as an ordinary separator (see
+      // `GearGroupHeaderSeparator`), unlike the tool sections above it.
       else -> EvoTreeSection(
-        label = ListSeparator(currentInterpreter.title, currentInterpreter.icon.icon()),
+        label = ListSeparator(PySdkFrontendBundle.message("evo.sdk.status.bar.popup.current.environment")),
         elements = packageManagerActions(context) + EvoTreeLeafElement(managePackagesAction),
-        // The header names the interpreter by its short name, which does not say where it is. Its full path on hover,
-        // the same thing the widget itself shows in the status bar.
+        // Which environment, on hover — the identity the caption no longer spells out.
         labelTooltip = currentInterpreter.description,
       )
     }
