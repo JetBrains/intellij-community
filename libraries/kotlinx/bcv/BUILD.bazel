@@ -42,6 +42,7 @@ exports_files(
     [
         "intellij.libraries.kotlinx.bcv.iml",
         "resources/intellij.libraries.kotlinx.bcv.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

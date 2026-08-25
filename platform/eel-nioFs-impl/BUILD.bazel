@@ -67,6 +67,7 @@ exports_files(
     [
         "intellij.platform.eel.nioFs.impl.iml",
         "resources/intellij.platform.eel.nioFs.impl.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

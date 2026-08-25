@@ -58,6 +58,7 @@ exports_files(
     [
         "intellij.libraries.jgit.ssh.iml",
         "resources/intellij.libraries.jgit.ssh.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

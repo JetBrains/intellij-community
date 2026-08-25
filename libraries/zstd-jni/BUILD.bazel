@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.zstd.jni.iml",
         "resources/intellij.libraries.zstd.jni.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

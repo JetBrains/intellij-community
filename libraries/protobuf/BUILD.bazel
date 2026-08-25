@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.protobuf.iml",
         "resources/intellij.libraries.protobuf.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

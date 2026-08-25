@@ -58,6 +58,7 @@ exports_files(
     [
         "intellij.libraries.lucene.common.iml",
         "resources/intellij.libraries.lucene.common.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

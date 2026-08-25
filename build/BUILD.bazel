@@ -1,4 +1,4 @@
-load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_IML_TARGETS", "ALL_COMMUNITY_MODULE_DESCRIPTOR_TARGETS", "ALL_COMMUNITY_PLUGIN_CONTENT_REPORT_FILES", "ALL_COMMUNITY_PLUGIN_DISTRIBUTION_TARGETS", "ALL_COMMUNITY_TARGETS", "ALL_LIBRARY_COMMUNITY_TARGETS", "ALL_PRODUCTION_COMMUNITY_TARGETS", "ALL_TEST_COMMUNITY_TARGETS", "BAZEL_TARGETS_JSON_COMMUNITY", "JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT")
+load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_CONTENT_MODULE_RECIPE_FILES", "ALL_COMMUNITY_IML_TARGETS", "ALL_COMMUNITY_MODULE_DESCRIPTOR_TARGETS", "ALL_COMMUNITY_PLUGIN_CONTENT_REPORT_FILES", "ALL_COMMUNITY_PLUGIN_DISTRIBUTION_TARGETS", "ALL_COMMUNITY_TARGETS", "ALL_LIBRARY_COMMUNITY_TARGETS", "ALL_PRODUCTION_COMMUNITY_TARGETS", "ALL_TEST_COMMUNITY_TARGETS", "BAZEL_TARGETS_JSON_COMMUNITY", "JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT")
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:intellij_dev.bzl", "INTELLIJ_ADD_OPENS")
@@ -43,11 +43,13 @@ filegroup(
 jps_to_bazel_targets_json(
     name = "community_bazel_targets_json",
     srcs = [
-        ":dev_dist_plugin_content_tables",
-        "//:jps_to_bazel_community_model_root_files",
-    ] + ALL_COMMUNITY_IML_TARGETS + ALL_COMMUNITY_MODULE_DESCRIPTOR_TARGETS + ALL_COMMUNITY_PLUGIN_CONTENT_REPORT_FILES,
+               ":dev_dist_plugin_content_tables",
+               "//:jps_to_bazel_community_model_root_files",
+           ] + ALL_COMMUNITY_IML_TARGETS + ALL_COMMUNITY_MODULE_DESCRIPTOR_TARGETS + ALL_COMMUNITY_PLUGIN_CONTENT_REPORT_FILES +
+           ALL_COMMUNITY_CONTENT_MODULE_RECIPE_FILES,
     jps_to_bazel_treat_kotlin_dev_version_as_snapshot = JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT,
     mode = "community",
+    starlark_content_module_recipe_files = ALL_COMMUNITY_CONTENT_MODULE_RECIPE_FILES,
     starlark_iml_targets = ALL_COMMUNITY_IML_TARGETS,
     starlark_library_targets = ALL_LIBRARY_COMMUNITY_TARGETS,
     starlark_plugin_content_report_files = ALL_COMMUNITY_PLUGIN_CONTENT_REPORT_FILES,
@@ -358,6 +360,7 @@ exports_files(
     [
         "jvm-rules/dependency-graph/intellij.platform.jps.build.dependencyGraph.iml",
         "jvm-rules/dependency-graph/resources/intellij.platform.jps.build.dependencyGraph.xml",
+        "jvm-rules/dependency-graph/module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -416,6 +419,7 @@ exports_files(
     [
         "jvm-rules/jps-builders-6/intellij.platform.jps.build.javac.rt.iml",
         "jvm-rules/jps-builders-6/resources/intellij.platform.jps.build.javac.rt.xml",
+        "jvm-rules/jps-builders-6/module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

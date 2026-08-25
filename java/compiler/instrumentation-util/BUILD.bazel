@@ -47,6 +47,7 @@ exports_files(
     [
         "intellij.java.compiler.instrumentationUtil.iml",
         "resources/intellij.java.compiler.instrumentationUtil.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

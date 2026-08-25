@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.jsoup.iml",
         "resources/intellij.libraries.jsoup.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

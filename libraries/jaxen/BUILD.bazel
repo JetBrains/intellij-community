@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.jaxen.iml",
         "resources/intellij.libraries.jaxen.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

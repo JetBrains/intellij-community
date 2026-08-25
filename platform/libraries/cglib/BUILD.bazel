@@ -66,6 +66,7 @@ exports_files(
     [
         "intellij.libraries.cglib.iml",
         "resources/intellij.libraries.cglib.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

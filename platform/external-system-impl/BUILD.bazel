@@ -164,6 +164,7 @@ exports_files(
         "resources/META-INF/ExternalSystemExtensionPoints.xml",
         "resources/META-INF/ExternalSystemExtensions.xml",
         "resources/intellij.platform.externalSystem.impl.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

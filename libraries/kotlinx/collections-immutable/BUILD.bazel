@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.kotlinx.collections.immutable.iml",
         "resources/intellij.libraries.kotlinx.collections.immutable.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

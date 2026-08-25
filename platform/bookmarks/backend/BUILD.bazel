@@ -75,6 +75,7 @@ exports_files(
     [
         "intellij.platform.bookmarks.backend.iml",
         "resources/intellij.platform.bookmarks.backend.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

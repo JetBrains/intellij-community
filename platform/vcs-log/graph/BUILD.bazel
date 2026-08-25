@@ -80,6 +80,7 @@ exports_files(
     [
         "intellij.platform.vcs.log.graph.impl.iml",
         "resources/intellij.platform.vcs.log.graph.impl.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

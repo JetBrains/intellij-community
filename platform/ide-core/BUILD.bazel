@@ -104,6 +104,7 @@ exports_files(
         "resources/META-INF/intellij.moduleSets.core.platform.xml",
         "resources/META-INF/intellij.moduleSets.rpc.minimal.xml",
         "resources/intellij.platform.ide.core.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

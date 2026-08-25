@@ -130,10 +130,12 @@ exports_files(
 
 ### auto-generated section `dev content intellij.vcs.svn` start
 dev_dist_plugin_content(
+    content_modules = ["//libraries/sqlite"],
     descriptor_module = ":vcs-svn",
     libraries = [
         "@lib//:jaxb-api",
         "@lib//:jaxb-runtime",
+        "@lib//:libraries-sqlite-sqlite",
     ],
 )
 ### auto-generated section `dev content intellij.vcs.svn` end

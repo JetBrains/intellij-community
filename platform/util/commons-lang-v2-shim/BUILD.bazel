@@ -52,6 +52,7 @@ exports_files(
     [
         "intellij.platform.util.commonsLangV2Shim.iml",
         "resources/intellij.platform.util.commonsLangV2Shim.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

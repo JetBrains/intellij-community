@@ -161,6 +161,7 @@ exports_files(
     [
         "intellij.settingsSync.core.iml",
         "resources/intellij.settingsSync.core.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

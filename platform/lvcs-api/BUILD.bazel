@@ -55,6 +55,7 @@ exports_files(
     [
         "intellij.platform.lvcs.iml",
         "resources/intellij.platform.lvcs.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

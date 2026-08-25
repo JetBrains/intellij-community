@@ -71,6 +71,7 @@ exports_files(
     [
         "intellij.platform.experiment.iml",
         "resources/intellij.platform.experiment.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

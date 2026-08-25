@@ -57,6 +57,7 @@ exports_files(
     [
         "intellij.libraries.kotlinc.low.level.api.fir.iml",
         "resources/intellij.libraries.kotlinc.low.level.api.fir.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

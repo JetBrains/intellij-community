@@ -42,6 +42,7 @@ exports_files(
     [
         "intellij.libraries.isorelax.iml",
         "resources/intellij.libraries.isorelax.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

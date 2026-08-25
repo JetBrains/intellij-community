@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.jettison.iml",
         "resources/intellij.libraries.jettison.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -42,6 +42,7 @@ exports_files(
     [
         "intellij.libraries.zxing.core.iml",
         "resources/intellij.libraries.zxing.core.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

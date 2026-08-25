@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.asm.iml",
         "resources/intellij.libraries.asm.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

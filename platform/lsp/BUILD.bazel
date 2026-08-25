@@ -82,6 +82,7 @@ exports_files(
         "intellij.platform.lsp.iml",
         "resources/META-INF/intellij.moduleSets.libraries.lsp4j.xml",
         "resources/intellij.platform.lsp.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

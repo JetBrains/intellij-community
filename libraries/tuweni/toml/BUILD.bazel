@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.tuweni.toml.iml",
         "resources/intellij.libraries.tuweni.toml.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

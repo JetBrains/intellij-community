@@ -187,6 +187,7 @@ exports_files(
         "intellij.platform.execution.impl.iml",
         "resources/intellij.platform.execution.impl.actions.xml",
         "resources/intellij.platform.execution.impl.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

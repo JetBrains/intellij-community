@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.zip.signer.iml",
         "resources/intellij.libraries.zip.signer.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

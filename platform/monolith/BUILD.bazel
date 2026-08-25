@@ -46,6 +46,7 @@ exports_files(
     [
         "intellij.platform.monolith.iml",
         "resources/intellij.platform.monolith.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

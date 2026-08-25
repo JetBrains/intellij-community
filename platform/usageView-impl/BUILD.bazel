@@ -99,6 +99,7 @@ exports_files(
         "intellij.platform.usageView.impl.iml",
         "resources/intellij.platform.usageView.impl.actions.xml",
         "resources/intellij.platform.usageView.impl.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

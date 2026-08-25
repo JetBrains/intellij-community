@@ -73,6 +73,7 @@ exports_files(
     [
         "intellij.execution.process.elevation.iml",
         "resources/intellij.execution.process.elevation.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

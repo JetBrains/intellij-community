@@ -121,6 +121,7 @@ exports_files(
     [
         "intellij.platform.lvcs.impl.iml",
         "resources/intellij.platform.lvcs.impl.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

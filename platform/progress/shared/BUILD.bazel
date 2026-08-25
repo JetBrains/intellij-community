@@ -73,6 +73,7 @@ exports_files(
     [
         "intellij.platform.ide.progress.iml",
         "resources/intellij.platform.ide.progress.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

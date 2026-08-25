@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.cli.parser.iml",
         "resources/intellij.libraries.cli.parser.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

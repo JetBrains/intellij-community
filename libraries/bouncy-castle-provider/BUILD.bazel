@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.bouncy.castle.provider.iml",
         "resources/intellij.libraries.bouncy.castle.provider.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

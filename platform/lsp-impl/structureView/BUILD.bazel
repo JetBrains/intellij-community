@@ -73,6 +73,7 @@ exports_files(
     [
         "intellij.platform.lsp.impl.structureView.iml",
         "resources/intellij.platform.lsp.impl.structureView.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

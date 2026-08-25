@@ -42,6 +42,7 @@ exports_files(
     [
         "intellij.libraries.search.everywhere.find.ec.model.iml",
         "resources/intellij.libraries.search.everywhere.find.ec.model.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

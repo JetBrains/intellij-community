@@ -93,6 +93,7 @@ exports_files(
         "intellij.platform.langInjection.iml",
         "resources/LanguageInjectionConfiguration.xml",
         "resources/intellij.platform.langInjection.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

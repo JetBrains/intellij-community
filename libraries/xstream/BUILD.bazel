@@ -51,6 +51,7 @@ exports_files(
     [
         "intellij.libraries.xstream.iml",
         "resources/intellij.libraries.xstream.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

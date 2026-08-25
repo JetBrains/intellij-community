@@ -13,6 +13,7 @@ def _jps_to_bazel_targets_json_impl(ctx):
     args.add_all(ctx.attr.starlark_iml_targets, format_each = "--starlark-iml=%s")
     args.add_all(ctx.attr.starlark_plugin_distribution_targets, format_each = "--starlark-plugin-distribution=%s")
     args.add_all(ctx.attr.starlark_plugin_content_report_files, format_each = "--starlark-plugin-content=%s")
+    args.add_all(ctx.attr.starlark_content_module_recipe_files, format_each = "--starlark-content-module-recipe=%s")
     args.use_param_file("@%s", use_always = True)
 
     env = {}
@@ -77,6 +78,18 @@ jps_to_bazel_targets_json = rule(
 The inputs of the `contentTarget` half of `pluginDistributionTargets`, not the targets: whether a report yields a
 content target depends on what the report says, which only the converter reads. Asserting the file set is what proves
 the converter saw every report the checkout has, which is the property a missing manifest entry would break.""",
+        ),
+        "starlark_content_module_recipe_files": attr.string_list(
+            default = [],
+            doc = """Starlark-derived `module-content.yaml` file labels for parity assertion.
+
+The input of `contentModuleJarTarget`, on the same terms as `starlark_plugin_content_report_files`: whether a recipe
+yields a packing target depends on what the recipe says, which only the converter reads, so this asserts the file set.
+
+It is the property that broke. The recipe was not named here, so the hermetic run could not see any of them: 651
+modules lost the label and a dev-distribution fragment repacked their jars while the packing targets went unbuilt, and
+6 more gained a label for a target that is not in the tree, because the recipe's absence also stops the veto in
+`isPrepackedPluginContentModule` from firing.""",
         ),
         "jps_to_bazel_treat_kotlin_dev_version_as_snapshot": attr.string(
             default = "",

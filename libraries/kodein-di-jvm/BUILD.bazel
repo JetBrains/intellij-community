@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.kodein.di.jvm.iml",
         "resources/intellij.libraries.kodein.di.jvm.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

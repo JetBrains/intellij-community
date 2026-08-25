@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.xerial.snappy.java.iml",
         "resources/intellij.libraries.xerial.snappy.java.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

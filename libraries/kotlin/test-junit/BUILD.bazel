@@ -50,6 +50,7 @@ exports_files(
     [
         "intellij.libraries.kotlin.test.junit.iml",
         "resources/intellij.libraries.kotlin.test.junit.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

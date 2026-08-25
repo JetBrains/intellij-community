@@ -253,6 +253,7 @@ exports_files(
         "resources/liveTemplates/html_xml.xml",
         "resources/liveTemplates/zen_html.xml",
         "resources/liveTemplates/zen_xsl.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

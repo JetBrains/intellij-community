@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.sqlite.iml",
         "resources/intellij.libraries.sqlite.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

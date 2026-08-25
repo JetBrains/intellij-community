@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.clikt.iml",
         "resources/intellij.libraries.clikt.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

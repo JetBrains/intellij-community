@@ -79,6 +79,7 @@ exports_files(
     [
         "intellij.platform.threadDumpParser.iml",
         "resources/intellij.platform.threadDumpParser.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

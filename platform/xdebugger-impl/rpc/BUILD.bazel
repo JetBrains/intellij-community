@@ -78,6 +78,7 @@ exports_files(
         "intellij.platform.debugger.impl.rpc.iml",
         "resources/intellij.platform.debugger.impl.rpc.content.xml",
         "resources/intellij.platform.debugger.impl.rpc.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

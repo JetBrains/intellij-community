@@ -97,6 +97,7 @@ exports_files(
     [
         "intellij.platform.tasks.impl.iml",
         "resources/intellij.platform.tasks.impl.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.commons.text.iml",
         "resources/intellij.libraries.commons.text.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

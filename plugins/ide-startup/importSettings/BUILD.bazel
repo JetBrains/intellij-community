@@ -134,6 +134,7 @@ exports_files(
     [
         "intellij.ide.startup.importSettings.iml",
         "resources/intellij.ide.startup.importSettings.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.opentelemetry.exporter.sender.jdk.iml",
         "resources/intellij.libraries.opentelemetry.exporter.sender.jdk.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

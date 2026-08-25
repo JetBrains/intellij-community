@@ -82,6 +82,7 @@ exports_files(
     [
         "fleet.openmap.iml",
         "resources/fleet.openmap.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -129,6 +129,7 @@ exports_files(
     [
         "fleet.util.core.iml",
         "resources/fleet.util.core.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

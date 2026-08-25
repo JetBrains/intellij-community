@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.guava.iml",
         "resources/intellij.libraries.guava.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -80,6 +80,7 @@ exports_files(
     [
         "fleet.bifurcan.iml",
         "resources/fleet.bifurcan.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

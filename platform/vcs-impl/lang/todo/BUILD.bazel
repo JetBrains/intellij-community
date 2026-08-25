@@ -108,6 +108,7 @@ exports_files(
     [
         "intellij.platform.vcs.impl.lang.todo.iml",
         "resources/intellij.platform.vcs.impl.lang.todo.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

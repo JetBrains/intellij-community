@@ -81,6 +81,7 @@ exports_files(
     [
         "intellij.platform.discoverability.iml",
         "resources/intellij.platform.discoverability.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

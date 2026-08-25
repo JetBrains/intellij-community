@@ -75,6 +75,7 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.jewel.markdown.testing.iml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

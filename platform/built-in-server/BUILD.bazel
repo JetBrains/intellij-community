@@ -130,6 +130,7 @@ exports_files(
     [
         "intellij.platform.builtInServer.impl.iml",
         "resources/intellij.platform.builtInServer.impl.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

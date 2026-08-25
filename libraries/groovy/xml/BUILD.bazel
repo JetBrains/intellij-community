@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.groovy.xml.iml",
         "resources/intellij.libraries.groovy.xml.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

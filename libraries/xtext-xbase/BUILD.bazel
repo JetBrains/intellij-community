@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.xtext.xbase.iml",
         "resources/intellij.libraries.xtext.xbase.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

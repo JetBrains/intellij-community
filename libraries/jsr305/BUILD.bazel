@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.jsr305.iml",
         "resources/intellij.libraries.jsr305.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

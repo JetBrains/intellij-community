@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.netty.buffer.iml",
         "resources/intellij.libraries.netty.buffer.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

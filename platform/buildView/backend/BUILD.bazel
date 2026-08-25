@@ -65,6 +65,7 @@ exports_files(
     [
         "intellij.platform.buildView.backend.iml",
         "resources/intellij.platform.buildView.backend.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

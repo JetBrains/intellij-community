@@ -148,6 +148,7 @@ exports_files(
     [
         "intellij.platform.icons.impl.intellij.iml",
         "resources/intellij.platform.icons.impl.intellij.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

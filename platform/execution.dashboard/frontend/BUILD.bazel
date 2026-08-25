@@ -93,6 +93,7 @@ exports_files(
     [
         "intellij.platform.execution.dashboard.frontend.iml",
         "resources/intellij.platform.execution.dashboard.frontend.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

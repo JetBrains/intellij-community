@@ -139,6 +139,7 @@ exports_files(
         "intellij.platform.configurationStore.impl.iml",
         "resources/intellij.platform.configurationStore.impl.actions.xml",
         "resources/intellij.platform.configurationStore.impl.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

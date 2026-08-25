@@ -42,6 +42,7 @@ exports_files(
     [
         "intellij.libraries.kxml2.iml",
         "resources/intellij.libraries.kxml2.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

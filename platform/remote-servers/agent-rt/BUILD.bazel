@@ -42,6 +42,7 @@ exports_files(
     [
         "intellij.platform.remoteServers.agent.rt.iml",
         "resources/intellij.platform.remoteServers.agent.rt.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

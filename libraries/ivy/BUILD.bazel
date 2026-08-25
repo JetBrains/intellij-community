@@ -51,6 +51,7 @@ exports_files(
     [
         "intellij.libraries.ivy.iml",
         "resources/intellij.libraries.ivy.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

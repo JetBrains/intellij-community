@@ -141,6 +141,7 @@ exports_files(
     [
         "intellij.platform.jps.build.iml",
         "resources/intellij.platform.jps.build.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -42,6 +42,7 @@ exports_files(
     [
         "intellij.libraries.commons.pool2.iml",
         "resources/intellij.libraries.commons.pool2.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

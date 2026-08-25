@@ -94,6 +94,7 @@ exports_files(
     [
         "intellij.xml.analysis.impl.iml",
         "resources/intellij.xml.analysis.impl.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -36,6 +36,7 @@ exports_files(
     [
         "intellij.platform.customization.min.iml",
         "resources/intellij.platform.customization.min.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

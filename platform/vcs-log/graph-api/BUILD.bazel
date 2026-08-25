@@ -51,6 +51,7 @@ exports_files(
     [
         "intellij.platform.vcs.log.graph.iml",
         "resources/intellij.platform.vcs.log.graph.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

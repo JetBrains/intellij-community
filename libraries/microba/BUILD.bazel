@@ -40,6 +40,7 @@ exports_files(
     [
         "intellij.libraries.microba.iml",
         "resources/intellij.libraries.microba.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

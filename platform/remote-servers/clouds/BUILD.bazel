@@ -66,6 +66,7 @@ exports_files(
     [
         "intellij.platform.clouds.iml",
         "resources/intellij.platform.clouds.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

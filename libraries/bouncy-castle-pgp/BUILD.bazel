@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.bouncy.castle.pgp.iml",
         "resources/intellij.libraries.bouncy.castle.pgp.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

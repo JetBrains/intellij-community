@@ -131,6 +131,7 @@ exports_files(
     [
         "intellij.platform.jewel.markdown.ideLafBridgeStyling.iml",
         "src/main/resources/intellij.platform.jewel.markdown.ideLafBridgeStyling.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

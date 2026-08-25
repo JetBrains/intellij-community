@@ -87,6 +87,7 @@ exports_files(
     [
         "intellij.platform.eel.tcp.iml",
         "resources/intellij.platform.eel.tcp.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

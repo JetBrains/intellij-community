@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.jediterm.core.iml",
         "resources/intellij.libraries.jediterm.core.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

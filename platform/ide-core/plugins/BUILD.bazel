@@ -57,6 +57,7 @@ exports_files(
     [
         "intellij.platform.ide.core.plugins.iml",
         "resources/intellij.platform.ide.core.plugins.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

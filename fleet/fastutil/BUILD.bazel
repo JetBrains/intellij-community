@@ -65,6 +65,7 @@ exports_files(
     [
         "fleet.fastutil.iml",
         "resources/fleet.fastutil.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

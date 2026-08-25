@@ -152,6 +152,7 @@ exports_files(
     [
         "intellij.platform.vcs.log.impl.iml",
         "resources/intellij.platform.vcs.log.impl.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

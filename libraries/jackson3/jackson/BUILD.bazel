@@ -60,6 +60,7 @@ exports_files(
     [
         "intellij.libraries.jackson3.iml",
         "resources/intellij.libraries.jackson3.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

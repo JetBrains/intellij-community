@@ -65,6 +65,7 @@ exports_files(
     [
         "intellij.libraries.ktor.client.cio.iml",
         "resources/intellij.libraries.ktor.client.cio.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

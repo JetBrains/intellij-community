@@ -40,6 +40,7 @@ exports_files(
     [
         "intellij.libraries.swingx.iml",
         "resources/intellij.libraries.swingx.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

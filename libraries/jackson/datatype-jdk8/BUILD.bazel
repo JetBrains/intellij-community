@@ -51,6 +51,7 @@ exports_files(
     [
         "intellij.libraries.jackson.datatype.jdk8.iml",
         "resources/intellij.libraries.jackson.datatype.jdk8.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

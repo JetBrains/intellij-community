@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.rhino.iml",
         "resources/intellij.libraries.rhino.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

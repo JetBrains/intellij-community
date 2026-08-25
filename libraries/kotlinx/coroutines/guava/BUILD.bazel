@@ -53,6 +53,7 @@ exports_files(
     [
         "intellij.libraries.kotlinx.coroutines.guava.iml",
         "resources/intellij.libraries.kotlinx.coroutines.guava.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

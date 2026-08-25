@@ -97,6 +97,7 @@ exports_files(
     [
         "intellij.regexp.iml",
         "resources/intellij.regexp.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

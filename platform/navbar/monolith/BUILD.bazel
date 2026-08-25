@@ -59,6 +59,7 @@ exports_files(
     [
         "intellij.platform.navbar.monolith.iml",
         "resources/intellij.platform.navbar.monolith.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

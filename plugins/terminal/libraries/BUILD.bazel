@@ -42,6 +42,7 @@ exports_files(
     [
         "intellij.terminal.libraries.completionDbWithExtensions.iml",
         "resources/intellij.terminal.libraries.completionDbWithExtensions.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

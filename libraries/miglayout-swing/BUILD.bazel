@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.miglayout.swing.iml",
         "resources/intellij.libraries.miglayout.swing.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

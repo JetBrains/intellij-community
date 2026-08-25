@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.jgoodies.common.iml",
         "resources/intellij.libraries.jgoodies.common.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

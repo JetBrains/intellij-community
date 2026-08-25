@@ -68,6 +68,7 @@ exports_files(
     [
         "intellij.libraries.compose.runtime.desktop.iml",
         "resources/intellij.libraries.compose.runtime.desktop.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

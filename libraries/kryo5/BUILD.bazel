@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.kryo5.iml",
         "resources/intellij.libraries.kryo5.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

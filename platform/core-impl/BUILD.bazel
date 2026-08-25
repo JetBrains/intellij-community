@@ -105,6 +105,7 @@ exports_files(
         "intellij.platform.core.impl.iml",
         "resources/META-INF/CoreImpl.analyzer.xml",
         "resources/intellij.platform.core.impl.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

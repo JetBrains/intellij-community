@@ -122,6 +122,7 @@ exports_files(
     [
         "intellij.platform.coverage.iml",
         "resources/intellij.platform.coverage.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

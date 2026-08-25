@@ -42,6 +42,7 @@ exports_files(
     [
         "intellij.java.debugger.libraries.jb.jdi.iml",
         "resources/intellij.java.debugger.libraries.jb.jdi.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

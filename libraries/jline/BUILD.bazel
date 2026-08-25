@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.jline.iml",
         "resources/intellij.libraries.jline.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

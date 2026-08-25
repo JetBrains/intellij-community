@@ -93,6 +93,7 @@ exports_files(
     [
         "intellij.platform.refactoring.iml",
         "resources/intellij.platform.refactoring.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

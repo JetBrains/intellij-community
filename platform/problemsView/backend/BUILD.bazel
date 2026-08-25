@@ -117,6 +117,7 @@ exports_files(
     [
         "intellij.platform.problemView.backend.iml",
         "resources/intellij.platform.problemView.backend.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

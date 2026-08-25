@@ -344,6 +344,7 @@ exports_files(
         "resources/idea/PriorityEditorLangActions.xml",
         "resources/intellij.platform.lang.impl.actions.xml",
         "resources/intellij.platform.lang.impl.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

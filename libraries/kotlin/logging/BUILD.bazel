@@ -42,6 +42,7 @@ exports_files(
     [
         "intellij.libraries.kotlin.logging.iml",
         "resources/intellij.libraries.kotlin.logging.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

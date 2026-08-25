@@ -90,6 +90,7 @@ exports_files(
     [
         "intellij.platform.jewel.markdown.extensions.gfmAlerts.iml",
         "src/main/resources/intellij.platform.jewel.markdown.extensions.gfmAlerts.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

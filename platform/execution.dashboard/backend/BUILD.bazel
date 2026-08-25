@@ -95,6 +95,7 @@ exports_files(
     [
         "intellij.platform.execution.dashboard.backend.iml",
         "resources/intellij.platform.execution.dashboard.backend.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

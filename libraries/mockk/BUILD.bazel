@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.mockk.iml",
         "resources/intellij.libraries.mockk.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

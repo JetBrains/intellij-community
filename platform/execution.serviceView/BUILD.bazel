@@ -106,6 +106,7 @@ exports_files(
     [
         "intellij.platform.execution.serviceView.iml",
         "resources/intellij.platform.execution.serviceView.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

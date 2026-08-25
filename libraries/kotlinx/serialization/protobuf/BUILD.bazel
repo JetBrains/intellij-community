@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.kotlinx.serialization.protobuf.iml",
         "resources/intellij.libraries.kotlinx.serialization.protobuf.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

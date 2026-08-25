@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.eclipse.lsp4j.jsonrpc.iml",
         "resources/intellij.libraries.eclipse.lsp4j.jsonrpc.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

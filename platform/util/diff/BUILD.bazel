@@ -55,6 +55,7 @@ exports_files(
     [
         "intellij.platform.util.diff.iml",
         "resources/intellij.platform.util.diff.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

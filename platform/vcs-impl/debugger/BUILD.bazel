@@ -53,6 +53,7 @@ exports_files(
     [
         "intellij.platform.vcs.impl.debugger.iml",
         "resources/intellij.platform.vcs.impl.debugger.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

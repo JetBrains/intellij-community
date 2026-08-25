@@ -42,6 +42,7 @@ exports_files(
     [
         "intellij.libraries.completion.ranking.ruby.iml",
         "resources/intellij.libraries.completion.ranking.ruby.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

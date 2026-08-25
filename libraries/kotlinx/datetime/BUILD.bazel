@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.kotlinx.datetime.iml",
         "resources/intellij.libraries.kotlinx.datetime.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

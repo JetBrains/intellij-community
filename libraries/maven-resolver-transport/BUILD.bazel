@@ -63,6 +63,7 @@ exports_files(
     [
         "intellij.libraries.maven.resolver.transport.iml",
         "resources/intellij.libraries.maven.resolver.transport.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

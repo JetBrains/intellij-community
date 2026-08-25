@@ -67,6 +67,7 @@ exports_files(
     [
         "intellij.platform.ide.pluginSignatureVerifier.iml",
         "resources/intellij.platform.ide.pluginSignatureVerifier.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

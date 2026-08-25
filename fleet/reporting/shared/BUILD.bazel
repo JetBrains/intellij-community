@@ -83,6 +83,7 @@ exports_files(
     [
         "fleet.reporting.shared.iml",
         "resources/fleet.reporting.shared.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

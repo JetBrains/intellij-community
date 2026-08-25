@@ -85,6 +85,7 @@ exports_files(
     [
         "intellij.platform.todo.backend.iml",
         "resources/intellij.platform.todo.backend.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

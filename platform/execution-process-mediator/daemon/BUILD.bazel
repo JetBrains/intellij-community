@@ -63,6 +63,7 @@ exports_files(
     [
         "intellij.execution.process.mediator.daemon.iml",
         "resources/intellij.execution.process.mediator.daemon.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

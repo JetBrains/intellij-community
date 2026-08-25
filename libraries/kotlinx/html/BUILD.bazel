@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.kotlinx.html.iml",
         "resources/intellij.libraries.kotlinx.html.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -73,6 +73,7 @@ exports_files(
     [
         "intellij.java.aetherDependencyResolver.iml",
         "resources/intellij.java.aetherDependencyResolver.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

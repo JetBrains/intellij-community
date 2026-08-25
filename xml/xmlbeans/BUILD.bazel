@@ -99,6 +99,7 @@ exports_files(
     [
         "intellij.xml.xmlbeans.iml",
         "resources/intellij.xml.xmlbeans.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

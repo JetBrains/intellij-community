@@ -62,6 +62,7 @@ exports_files(
     [
         "intellij.platform.ide.newUiOnboarding.jcef.iml",
         "resources/intellij.platform.ide.newUiOnboarding.jcef.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

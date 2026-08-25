@@ -42,6 +42,7 @@ exports_files(
     [
         "intellij.libraries.protobuf.kotlin.iml",
         "resources/intellij.libraries.protobuf.kotlin.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

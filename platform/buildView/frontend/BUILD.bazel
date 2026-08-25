@@ -87,6 +87,7 @@ exports_files(
     [
         "intellij.platform.buildView.frontend.iml",
         "resources/intellij.platform.buildView.frontend.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

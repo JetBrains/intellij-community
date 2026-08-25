@@ -63,6 +63,7 @@ exports_files(
     [
         "intellij.platform.statistics.config.iml",
         "resources/intellij.platform.statistics.config.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

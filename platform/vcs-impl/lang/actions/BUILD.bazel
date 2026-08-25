@@ -45,6 +45,7 @@ exports_files(
     [
         "intellij.platform.vcs.impl.lang.actions.iml",
         "resources/intellij.platform.vcs.impl.lang.actions.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

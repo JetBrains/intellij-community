@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.oshi.core.iml",
         "resources/intellij.libraries.oshi.core.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

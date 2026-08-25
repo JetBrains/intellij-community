@@ -89,6 +89,7 @@ exports_files(
         "resources/colorSchemes/XmlHighContrast.xml",
         "resources/colorSchemes/XmlIntelliJLight.xml",
         "resources/intellij.xml.ui.common.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

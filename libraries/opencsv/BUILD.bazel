@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.opencsv.iml",
         "resources/intellij.libraries.opencsv.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

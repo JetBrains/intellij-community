@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.jcef.iml",
         "resources/intellij.libraries.jcef.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

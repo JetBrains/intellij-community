@@ -70,6 +70,7 @@ exports_files(
     [
         "intellij.platform.externalSystem.dependencyUpdater.iml",
         "resources/intellij.platform.externalSystem.dependencyUpdater.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

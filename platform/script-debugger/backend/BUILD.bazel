@@ -73,6 +73,7 @@ exports_files(
     [
         "intellij.platform.scriptDebugger.backend.iml",
         "resources/intellij.platform.scriptDebugger.backend.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

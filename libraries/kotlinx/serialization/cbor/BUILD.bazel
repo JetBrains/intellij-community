@@ -51,6 +51,7 @@ exports_files(
     [
         "intellij.libraries.kotlinx.serialization.cbor.iml",
         "resources/intellij.libraries.kotlinx.serialization.cbor.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

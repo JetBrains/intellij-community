@@ -63,6 +63,7 @@ exports_files(
     [
         "intellij.platform.managed.cache.iml",
         "resources/intellij.platform.managed.cache.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

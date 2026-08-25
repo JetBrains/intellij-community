@@ -77,6 +77,7 @@ exports_files(
     [
         "intellij.platform.find.backend.iml",
         "resources/intellij.platform.find.backend.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

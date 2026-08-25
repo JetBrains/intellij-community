@@ -234,6 +234,30 @@ def _find_plugin_content_report_rel_path(project_root, first_content_root):
     rel_path = _join_project_relative_path(first_content_root, _PLUGIN_CONTENT_REPORT_FILE_NAME)
     return rel_path if project_root.get_child(rel_path).exists else None
 
+_CONTENT_MODULE_RECIPE_FILE_NAME = "module-content.yaml"
+
+def _find_content_module_recipe_rel_path(project_root, first_content_root):
+    """The `module-content.yaml` of the `lib/` jar this module owns, or `None`.
+
+    The recipe is what says whether a platform content module owns a jar of its own, and only the converter reads it -
+    but for the same reason [_find_plugin_content_report_rel_path] gives, a recipe nobody names is a recipe the hermetic
+    `bazel-targets.json` run cannot see, and its `contentModuleJarTarget` then silently differs from the full-checkout
+    run's. That is not a symmetric loss: a missing label makes a dev-distribution fragment repack a jar whose packing
+    target goes unbuilt, and the recipe's absence also stops the veto in `isPrepackedPluginContentModule` from firing,
+    so the fallback claims jars for modules that own none and the plan hands a jar to a target that is not in the tree.
+
+    Beside the module's *first content root*, which is where the content-report writer puts it and is not always the
+    directory holding the `.iml` - the same rule `ModuleDescriptor.contentModuleRecipeFile` follows.
+
+    Existence only, deliberately, exactly as for the plugin report: this side cannot parse YAML and does not have to -
+    `JpsModuleToBazelTargetsOnly` asserts that the two sides pick out the same set of files, and the one converter then
+    decides the rest.
+    """
+    if first_content_root == None:
+        return None
+    rel_path = _join_project_relative_path(first_content_root, _CONTENT_MODULE_RECIPE_FILE_NAME)
+    return rel_path if project_root.get_child(rel_path).exists else None
+
 def watch_project_model_files(ctx, project_root):
     idea_dir = project_root.get_child(".idea")
     modules_xml = idea_dir.get_child("modules.xml")
@@ -267,7 +291,8 @@ def read_project_model(ctx, project_root, extra_descriptor_rel_paths_by_module =
 
     Returns struct with:
       - modules: list of structs (module_name, iml_dir_rel, iml_content, iml_rel_path, plugin_xml_rel_path,
-        descriptor_rel_paths, plugin_content_report_rel_path, test_plugin_modules)
+        descriptor_rel_paths, plugin_content_report_rel_path, content_module_recipe_rel_path,
+        test_plugin_modules)
       - library_xmls: list of structs (xml_content, xml_rel_path) from .idea/libraries/
     """
     idea_dir = project_root.get_child(".idea")
@@ -321,6 +346,10 @@ def read_project_model(ctx, project_root, extra_descriptor_rel_paths_by_module =
                 extra_rel_paths = extra_descriptor_rel_paths_by_module.get(module_name, []),
             ),
             plugin_content_report_rel_path = _find_plugin_content_report_rel_path(
+                project_root = project_root,
+                first_content_root = iml_roots.first_content_root,
+            ),
+            content_module_recipe_rel_path = _find_content_module_recipe_rel_path(
                 project_root = project_root,
                 first_content_root = iml_roots.first_content_root,
             ),

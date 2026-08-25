@@ -51,6 +51,7 @@ exports_files(
     [
         "intellij.platform.klogger.iml",
         "resources/intellij.platform.klogger.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

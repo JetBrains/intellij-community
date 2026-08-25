@@ -217,6 +217,7 @@ exports_files(
         "resources/META-INF/VcsExtensionPoints.xml",
         "resources/META-INF/VcsExtensions.xml",
         "resources/intellij.platform.vcs.impl.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

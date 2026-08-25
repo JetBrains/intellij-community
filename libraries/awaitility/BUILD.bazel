@@ -42,6 +42,7 @@ exports_files(
     [
         "intellij.libraries.awaitility.iml",
         "resources/intellij.libraries.awaitility.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

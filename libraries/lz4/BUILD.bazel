@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.lz4.iml",
         "resources/intellij.libraries.lz4.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

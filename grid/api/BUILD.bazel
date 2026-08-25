@@ -52,6 +52,7 @@ exports_files(
     [
         "intellij.grid.iml",
         "resources/intellij.grid.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

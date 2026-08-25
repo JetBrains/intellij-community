@@ -86,6 +86,7 @@ exports_files(
     [
         "intellij.platform.feedback.iml",
         "resources/intellij.platform.feedback.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

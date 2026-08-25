@@ -94,6 +94,7 @@ exports_files(
     [
         "fleet.rpc.server.iml",
         "resources/fleet.rpc.server.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

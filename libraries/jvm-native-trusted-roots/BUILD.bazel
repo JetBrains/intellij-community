@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.jvm.native.trusted.roots.iml",
         "resources/intellij.libraries.jvm.native.trusted.roots.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

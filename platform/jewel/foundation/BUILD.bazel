@@ -97,6 +97,7 @@ exports_files(
     [
         "intellij.platform.jewel.foundation.iml",
         "src/main/resources/intellij.platform.jewel.foundation.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

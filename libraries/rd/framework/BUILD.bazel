@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.rd.framework.iml",
         "resources/intellij.libraries.rd.framework.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

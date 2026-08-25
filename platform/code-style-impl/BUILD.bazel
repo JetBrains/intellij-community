@@ -75,6 +75,7 @@ exports_files(
     [
         "intellij.platform.codeStyle.impl.iml",
         "resources/intellij.platform.codeStyle.impl.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

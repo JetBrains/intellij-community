@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.plexus.utils.iml",
         "resources/intellij.libraries.plexus.utils.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

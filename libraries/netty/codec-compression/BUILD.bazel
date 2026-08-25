@@ -51,6 +51,7 @@ exports_files(
     [
         "intellij.libraries.netty.codec.compression.iml",
         "resources/intellij.libraries.netty.codec.compression.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

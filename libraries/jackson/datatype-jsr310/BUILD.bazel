@@ -51,6 +51,7 @@ exports_files(
     [
         "intellij.libraries.jackson.datatype.jsr310.iml",
         "resources/intellij.libraries.jackson.datatype.jsr310.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -55,6 +55,7 @@ exports_files(
     [
         "intellij.libraries.netty.codec.protobuf.iml",
         "resources/intellij.libraries.netty.codec.protobuf.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

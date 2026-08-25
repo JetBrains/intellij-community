@@ -72,6 +72,7 @@ exports_files(
     [
         "intellij.libraries.coil.iml",
         "resources/intellij.libraries.coil.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

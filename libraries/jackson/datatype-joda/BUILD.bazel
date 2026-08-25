@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.jackson.datatype.joda.iml",
         "resources/intellij.libraries.jackson.datatype.joda.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

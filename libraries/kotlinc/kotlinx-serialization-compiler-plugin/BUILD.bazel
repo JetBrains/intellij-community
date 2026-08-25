@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin.iml",
         "resources/intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

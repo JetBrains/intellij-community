@@ -42,6 +42,7 @@ exports_files(
     [
         "intellij.libraries.completion.ranking.kotlin.iml",
         "resources/intellij.libraries.completion.ranking.kotlin.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

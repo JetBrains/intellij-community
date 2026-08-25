@@ -42,6 +42,7 @@ exports_files(
     [
         "intellij.libraries.log4j.to.slf4j.iml",
         "resources/intellij.libraries.log4j.to.slf4j.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

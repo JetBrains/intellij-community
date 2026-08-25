@@ -87,6 +87,7 @@ exports_files(
     [
         "intellij.platform.scopes.iml",
         "resources/intellij.platform.scopes.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

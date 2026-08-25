@@ -158,6 +158,7 @@ exports_files(
         "intellij.xml.impl.iml",
         "resources/com/intellij/xml/util/htmlreferencetable.xml",
         "resources/intellij.xml.impl.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

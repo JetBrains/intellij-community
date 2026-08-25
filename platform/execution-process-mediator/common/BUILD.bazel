@@ -74,6 +74,7 @@ exports_files(
     [
         "intellij.execution.process.mediator.common.iml",
         "resources/intellij.execution.process.mediator.common.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

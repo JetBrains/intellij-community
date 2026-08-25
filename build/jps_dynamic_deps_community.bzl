@@ -21,7 +21,7 @@ def _format_target_list(name, targets):
     lines.append("]\n")
     return "\n".join(lines)
 
-def _generate_targets_bzl(production_targets, test_targets, library_targets, iml_targets, plugin_distribution_targets, descriptor_targets, plugin_content_report_targets):
+def _generate_targets_bzl(production_targets, test_targets, library_targets, iml_targets, plugin_distribution_targets, descriptor_targets, plugin_content_report_targets, content_module_recipe_targets):
     """Generate the content for targets.bzl file."""
     content = []
     content.append(_format_target_list("ALL_PRODUCTION_COMMUNITY_TARGETS", production_targets))
@@ -31,6 +31,7 @@ def _generate_targets_bzl(production_targets, test_targets, library_targets, iml
     content.append(_format_target_list("ALL_COMMUNITY_PLUGIN_DISTRIBUTION_TARGETS", plugin_distribution_targets))
     content.append(_format_target_list("ALL_COMMUNITY_MODULE_DESCRIPTOR_TARGETS", descriptor_targets))
     content.append(_format_target_list("ALL_COMMUNITY_PLUGIN_CONTENT_REPORT_FILES", plugin_content_report_targets))
+    content.append(_format_target_list("ALL_COMMUNITY_CONTENT_MODULE_RECIPE_FILES", content_module_recipe_targets))
     content.append("BAZEL_TARGETS_JSON_COMMUNITY = \"@community//build:community_bazel_targets_json\"")
     content.append("ALL_COMMUNITY_TARGETS = ALL_PRODUCTION_COMMUNITY_TARGETS + ALL_TEST_COMMUNITY_TARGETS + ALL_LIBRARY_COMMUNITY_TARGETS")
     return "\n".join(content)
@@ -52,6 +53,7 @@ def _derive_targets_from_model(ctx, model):
     all_descriptors = []
     all_plugin_distribution = []
     all_plugin_content_reports = []
+    all_content_module_recipes = []
 
     # community-only: community_root_parts is [] (project root IS community root)
     community_root_parts = []
@@ -93,6 +95,17 @@ def _derive_targets_from_model(ctx, model):
             )
             if report_target not in all_plugin_content_reports:
                 all_plugin_content_reports.append(report_target)
+
+        if mod.content_module_recipe_rel_path != None:
+            recipe_target = compute_project_file_target(
+                module_name = mod.module_name,
+                build_dir_parts = build_dir_parts,
+                file_rel_path = mod.content_module_recipe_rel_path,
+                is_community = True,
+                community_root_parts = community_root_parts,
+            )
+            if recipe_target not in all_content_module_recipes:
+                all_content_module_recipes.append(recipe_target)
 
         # Skip modules that the converter also skips (standalone Bazel projects)
         if mod.module_name in SKIPPED_MODULES:
@@ -154,6 +167,7 @@ def _derive_targets_from_model(ctx, model):
         plugin_distribution = all_plugin_distribution,
         descriptors = all_descriptors,
         plugin_content_reports = all_plugin_content_reports,
+        content_module_recipes = all_content_module_recipes,
     )
 
 def _targets_repo_impl(ctx):
@@ -169,6 +183,7 @@ def _targets_repo_impl(ctx):
         sorted(starlark.plugin_distribution),
         sorted(starlark.descriptors),
         sorted(starlark.plugin_content_reports),
+        sorted(starlark.content_module_recipes),
     )
 
     # jps_to_bazel_targets_json rule has no way to get JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT environment variable, forward it via targets.bzl

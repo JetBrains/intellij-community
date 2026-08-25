@@ -93,6 +93,7 @@ exports_files(
     [
         "intellij.platform.compose.markdown.iml",
         "resources/intellij.platform.compose.markdown.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -73,6 +73,7 @@ exports_files(
     [
         "intellij.platform.ide.newUsersOnboarding.iml",
         "resources/intellij.platform.ide.newUsersOnboarding.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

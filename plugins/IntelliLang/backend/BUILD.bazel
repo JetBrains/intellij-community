@@ -149,6 +149,7 @@ exports_files(
     [
         "intellij.platform.langInjection.backend.iml",
         "resources/intellij.platform.langInjection.backend.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

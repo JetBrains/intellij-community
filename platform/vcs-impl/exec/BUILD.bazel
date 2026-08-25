@@ -55,6 +55,7 @@ exports_files(
     [
         "intellij.platform.vcs.impl.exec.iml",
         "resources/intellij.platform.vcs.impl.exec.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.winp.iml",
         "resources/intellij.libraries.winp.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

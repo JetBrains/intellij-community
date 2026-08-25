@@ -128,6 +128,7 @@ exports_files(
     [
         "intellij.relaxng.iml",
         "resources/intellij.relaxng.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

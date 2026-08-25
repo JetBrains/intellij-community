@@ -95,6 +95,7 @@ exports_files(
     [
         "fleet.util.logging.api.iml",
         "resources/fleet.util.logging.api.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

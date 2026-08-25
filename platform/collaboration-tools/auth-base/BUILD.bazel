@@ -61,6 +61,7 @@ exports_files(
     [
         "intellij.platform.collaborationTools.auth.base.iml",
         "resources/intellij.platform.collaborationTools.auth.base.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

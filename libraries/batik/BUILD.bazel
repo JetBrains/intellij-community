@@ -63,6 +63,7 @@ exports_files(
     [
         "intellij.libraries.batik.iml",
         "resources/intellij.libraries.batik.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

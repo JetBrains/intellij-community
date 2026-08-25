@@ -60,6 +60,7 @@ exports_files(
     [
         "intellij.spellchecker.vcs.iml",
         "resources/intellij.spellchecker.vcs.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

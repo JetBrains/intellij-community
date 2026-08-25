@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.aalto.xml.iml",
         "resources/intellij.libraries.aalto.xml.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

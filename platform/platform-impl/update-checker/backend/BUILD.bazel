@@ -61,6 +61,7 @@ exports_files(
     [
         "intellij.platform.ide.updateChecker.backend.iml",
         "resources/intellij.platform.ide.updateChecker.backend.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

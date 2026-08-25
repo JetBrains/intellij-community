@@ -42,6 +42,7 @@ exports_files(
     [
         "intellij.libraries.completion.ranking.rust.iml",
         "resources/intellij.libraries.completion.ranking.rust.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

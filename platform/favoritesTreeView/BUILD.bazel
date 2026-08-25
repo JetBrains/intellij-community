@@ -69,6 +69,7 @@ exports_files(
     [
         "intellij.platform.ide.favoritesTreeView.iml",
         "resources/intellij.platform.ide.favoritesTreeView.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

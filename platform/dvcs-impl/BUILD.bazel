@@ -139,6 +139,7 @@ exports_files(
         "intellij.platform.vcs.dvcs.impl.iml",
         "resources/VcsProductivityFeatures.xml",
         "resources/intellij.platform.vcs.dvcs.impl.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

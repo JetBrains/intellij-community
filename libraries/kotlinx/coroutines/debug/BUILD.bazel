@@ -51,6 +51,7 @@ exports_files(
     [
         "intellij.libraries.kotlinx.coroutines.debug.iml",
         "resources/intellij.libraries.kotlinx.coroutines.debug.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.jsp.iml",
         "resources/intellij.libraries.jsp.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

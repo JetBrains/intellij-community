@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.mlapi.core.iml",
         "resources/intellij.libraries.mlapi.core.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

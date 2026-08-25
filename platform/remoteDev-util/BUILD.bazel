@@ -156,6 +156,7 @@ exports_files(
     [
         "intellij.remoteDev.util.iml",
         "resources/intellij.remoteDev.util.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

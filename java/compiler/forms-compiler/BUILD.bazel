@@ -79,6 +79,7 @@ exports_files(
     [
         "intellij.java.guiForms.compiler.iml",
         "resources/intellij.java.guiForms.compiler.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

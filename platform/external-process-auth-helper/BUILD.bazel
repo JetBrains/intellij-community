@@ -95,6 +95,7 @@ exports_files(
     [
         "intellij.platform.externalProcessAuthHelper.iml",
         "resources/intellij.platform.externalProcessAuthHelper.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

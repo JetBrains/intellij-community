@@ -61,6 +61,7 @@ exports_files(
     [
         "intellij.platform.scriptDebugger.protocolReaderRuntime.iml",
         "resources/intellij.platform.scriptDebugger.protocolReaderRuntime.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

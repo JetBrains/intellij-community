@@ -59,6 +59,7 @@ exports_files(
     [
         "intellij.libraries.mlapi.catboost.iml",
         "resources/intellij.libraries.mlapi.catboost.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -57,6 +57,7 @@ exports_files(
     [
         "intellij.libraries.grpc.netty.shaded.iml",
         "resources/intellij.libraries.grpc.netty.shaded.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

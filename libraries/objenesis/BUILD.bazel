@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.objenesis.iml",
         "resources/intellij.libraries.objenesis.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

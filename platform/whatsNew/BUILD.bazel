@@ -112,6 +112,7 @@ exports_files(
     [
         "intellij.platform.whatsNew.iml",
         "resources/intellij.platform.whatsNew.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -69,6 +69,7 @@ exports_files(
     [
         "intellij.platform.ide.nonModalWelcomeScreen.frontend.iml",
         "resources/intellij.platform.ide.nonModalWelcomeScreen.frontend.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

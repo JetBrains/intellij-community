@@ -154,6 +154,7 @@ exports_files(
     [
         "fleet.rhizomedb.transactor.iml",
         "resources/fleet.rhizomedb.transactor.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

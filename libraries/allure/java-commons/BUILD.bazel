@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.allure.java.commons.iml",
         "resources/intellij.libraries.allure.java.commons.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

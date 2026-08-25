@@ -91,6 +91,7 @@ exports_files(
     [
         "intellij.platform.syntax.psi.iml",
         "resources/intellij.platform.syntax.psi.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

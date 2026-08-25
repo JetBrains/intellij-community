@@ -51,6 +51,7 @@ exports_files(
     [
         "intellij.libraries.kotlinx.serialization.json.iml",
         "resources/intellij.libraries.kotlinx.serialization.json.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

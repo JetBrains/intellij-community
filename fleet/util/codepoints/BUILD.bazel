@@ -81,6 +81,7 @@ exports_files(
     [
         "fleet.util.codepoints.iml",
         "resources/fleet.util.codepoints.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

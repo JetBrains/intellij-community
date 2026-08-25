@@ -109,6 +109,7 @@ exports_files(
     [
         "fleet.andel.iml",
         "resources/fleet.andel.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

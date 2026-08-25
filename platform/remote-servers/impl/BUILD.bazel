@@ -94,6 +94,7 @@ exports_files(
     [
         "intellij.platform.remoteServers.impl.iml",
         "resources/intellij.platform.remoteServers.impl.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -75,6 +75,7 @@ exports_files(
     [
         "intellij.platform.ide.newUiOnboarding.iml",
         "resources/intellij.platform.ide.newUiOnboarding.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

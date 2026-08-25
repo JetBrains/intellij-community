@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.teamcity.service.messages.iml",
         "resources/intellij.libraries.teamcity.service.messages.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

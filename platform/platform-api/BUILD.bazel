@@ -138,6 +138,7 @@ exports_files(
         "resources/PlatformProductivityFeatures.xml",
         "resources/intellij.platform.ide.actions.xml",
         "resources/intellij.platform.ide.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

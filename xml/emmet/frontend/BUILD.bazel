@@ -130,6 +130,7 @@ exports_files(
     [
         "intellij.xml.emmet.frontend.iml",
         "resources/intellij.xml.emmet.frontend.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

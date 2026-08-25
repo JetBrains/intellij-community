@@ -79,6 +79,7 @@ exports_files(
     [
         "intellij.mcpserver.stdio.iml",
         "resources/intellij.mcpserver.stdio.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

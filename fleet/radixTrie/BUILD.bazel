@@ -79,6 +79,7 @@ exports_files(
     [
         "fleet.radixTrie.iml",
         "resources/fleet.radixTrie.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

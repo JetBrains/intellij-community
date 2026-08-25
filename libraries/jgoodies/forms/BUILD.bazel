@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.jgoodies.forms.iml",
         "resources/intellij.libraries.jgoodies.forms.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

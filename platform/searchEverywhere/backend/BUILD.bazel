@@ -109,6 +109,7 @@ exports_files(
     [
         "intellij.platform.searchEverywhere.backend.iml",
         "resources/intellij.platform.searchEverywhere.backend.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

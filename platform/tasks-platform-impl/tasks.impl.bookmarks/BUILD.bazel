@@ -64,6 +64,7 @@ exports_files(
     [
         "intellij.platform.tasks.impl.bookmarks.iml",
         "resources/intellij.platform.tasks.impl.bookmarks.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

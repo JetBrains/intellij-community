@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.icu4j.iml",
         "resources/intellij.libraries.icu4j.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.jetcheck.iml",
         "resources/intellij.libraries.jetcheck.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

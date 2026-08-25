@@ -149,6 +149,7 @@ exports_files(
     [
         "intellij.platform.ide.bootstrap.iml",
         "resources/intellij.platform.ide.bootstrap.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

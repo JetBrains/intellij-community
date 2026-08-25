@@ -79,6 +79,7 @@ exports_files(
     [
         "intellij.platform.diagnostic.telemetry.agent.extension.iml",
         "resources/intellij.platform.diagnostic.telemetry.agent.extension.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.jetbrains.annotations.iml",
         "resources/intellij.libraries.jetbrains.annotations.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

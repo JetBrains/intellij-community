@@ -51,6 +51,7 @@ exports_files(
     [
         "intellij.libraries.jackson3.module.kotlin.iml",
         "resources/intellij.libraries.jackson3.module.kotlin.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

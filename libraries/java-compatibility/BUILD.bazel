@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.java.compatibility.iml",
         "resources/intellij.libraries.java.compatibility.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

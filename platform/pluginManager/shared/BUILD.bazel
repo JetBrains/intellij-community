@@ -73,6 +73,7 @@ exports_files(
     [
         "intellij.platform.pluginManager.shared.iml",
         "resources/intellij.platform.pluginManager.shared.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

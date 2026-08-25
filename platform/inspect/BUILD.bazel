@@ -134,6 +134,7 @@ exports_files(
     [
         "intellij.platform.inspect.iml",
         "resources/intellij.platform.inspect.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

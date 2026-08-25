@@ -104,6 +104,7 @@ exports_files(
         "resources/data/cldr/annotationsDerived/ko.xml",
         "resources/data/cldr/annotationsDerived/zh.xml",
         "resources/intellij.emojipicker.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

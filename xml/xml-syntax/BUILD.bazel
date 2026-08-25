@@ -59,6 +59,7 @@ exports_files(
     [
         "intellij.xml.syntax.iml",
         "resources/intellij.xml.syntax.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

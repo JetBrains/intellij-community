@@ -60,6 +60,7 @@ exports_files(
     [
         "intellij.libraries.junit4.iml",
         "resources/intellij.libraries.junit4.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

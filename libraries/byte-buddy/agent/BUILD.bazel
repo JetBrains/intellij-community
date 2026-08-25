@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.byte.buddy.agent.iml",
         "resources/intellij.libraries.byte.buddy.agent.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -67,6 +67,7 @@ exports_files(
     [
         "intellij.platform.credentialStore.ui.iml",
         "resources/intellij.platform.credentialStore.ui.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

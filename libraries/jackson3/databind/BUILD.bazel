@@ -62,6 +62,7 @@ exports_files(
     [
         "intellij.libraries.jackson3.databind.iml",
         "resources/intellij.libraries.jackson3.databind.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

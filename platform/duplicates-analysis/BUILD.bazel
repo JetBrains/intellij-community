@@ -68,6 +68,7 @@ exports_files(
     [
         "intellij.platform.duplicates.analysis.iml",
         "resources/intellij.platform.duplicates.analysis.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

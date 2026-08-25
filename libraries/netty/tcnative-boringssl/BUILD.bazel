@@ -38,6 +38,7 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.netty.tcnative.boringssl.iml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

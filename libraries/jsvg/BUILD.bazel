@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.jsvg.iml",
         "resources/intellij.libraries.jsvg.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

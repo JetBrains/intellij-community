@@ -110,6 +110,7 @@ exports_files(
     [
         "intellij.platform.structuralSearch.iml",
         "resources/intellij.platform.structuralSearch.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

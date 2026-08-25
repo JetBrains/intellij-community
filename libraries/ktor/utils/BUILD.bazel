@@ -62,6 +62,7 @@ exports_files(
     [
         "intellij.libraries.ktor.utils.iml",
         "resources/intellij.libraries.ktor.utils.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -50,6 +50,7 @@ exports_files(
     [
         "intellij.libraries.mockito.kotlin.iml",
         "resources/intellij.libraries.mockito.kotlin.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

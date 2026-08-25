@@ -154,6 +154,7 @@ exports_files(
     [
         "intellij.xml.emmet.backend.iml",
         "resources/intellij.xml.emmet.backend.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

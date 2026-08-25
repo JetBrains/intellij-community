@@ -114,6 +114,7 @@ exports_files(
         "intellij.platform.debugger.impl.backend.iml",
         "resources/intellij.platform.debugger.impl.backend.content.xml",
         "resources/intellij.platform.debugger.impl.backend.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -57,6 +57,7 @@ exports_files(
     [
         "intellij.libraries.kotlinc.analysis.api.impl.base.iml",
         "resources/intellij.libraries.kotlinc.analysis.api.impl.base.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

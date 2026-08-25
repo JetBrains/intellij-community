@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.ini4j.iml",
         "resources/intellij.libraries.ini4j.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

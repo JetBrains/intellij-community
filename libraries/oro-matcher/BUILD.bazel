@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.oro.matcher.iml",
         "resources/intellij.libraries.oro.matcher.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

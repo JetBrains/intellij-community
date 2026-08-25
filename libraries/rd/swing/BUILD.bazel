@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.rd.swing.iml",
         "resources/intellij.libraries.rd.swing.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

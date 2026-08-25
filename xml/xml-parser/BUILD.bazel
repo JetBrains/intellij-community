@@ -71,6 +71,7 @@ exports_files(
     [
         "intellij.xml.parser.iml",
         "resources/intellij.xml.parser.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

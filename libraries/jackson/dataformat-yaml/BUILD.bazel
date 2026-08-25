@@ -51,6 +51,7 @@ exports_files(
     [
         "intellij.libraries.jackson.dataformat.yaml.iml",
         "resources/intellij.libraries.jackson.dataformat.yaml.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

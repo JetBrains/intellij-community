@@ -57,6 +57,7 @@ exports_files(
     [
         "intellij.libraries.kotlinc.symbol.light.classes.iml",
         "resources/intellij.libraries.kotlinc.symbol.light.classes.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

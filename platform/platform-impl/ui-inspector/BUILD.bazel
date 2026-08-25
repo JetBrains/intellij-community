@@ -90,6 +90,7 @@ exports_files(
     [
         "intellij.platform.ide.ui.inspector.iml",
         "resources/intellij.platform.ide.ui.inspector.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.kotlin.reflect.iml",
         "resources/intellij.libraries.kotlin.reflect.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

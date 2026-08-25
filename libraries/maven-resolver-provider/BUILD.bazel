@@ -51,6 +51,7 @@ exports_files(
     [
         "intellij.libraries.maven.resolver.provider.iml",
         "resources/intellij.libraries.maven.resolver.provider.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

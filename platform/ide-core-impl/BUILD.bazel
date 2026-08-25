@@ -103,6 +103,7 @@ exports_files(
     [
         "intellij.platform.ide.core.impl.iml",
         "resources/intellij.platform.ide.core.impl.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

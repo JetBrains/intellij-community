@@ -90,6 +90,7 @@ exports_files(
     [
         "intellij.execution.process.mediator.client.iml",
         "resources/intellij.execution.process.mediator.client.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

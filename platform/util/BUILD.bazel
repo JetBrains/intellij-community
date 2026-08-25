@@ -416,6 +416,7 @@ exports_files(
     [
         "intellij.platform.util.ui.iml",
         "ui/resources/intellij.platform.util.ui.xml",
+        "ui/module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

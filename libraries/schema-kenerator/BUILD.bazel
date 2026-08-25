@@ -62,6 +62,7 @@ exports_files(
     [
         "intellij.libraries.schema.kenerator.iml",
         "resources/intellij.libraries.schema.kenerator.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -42,6 +42,7 @@ exports_files(
     [
         "intellij.tasks.core.libraries.commonsDiscovery.iml",
         "resources/intellij.tasks.core.libraries.commonsDiscovery.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

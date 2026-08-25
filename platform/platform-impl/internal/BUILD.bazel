@@ -150,6 +150,7 @@ exports_files(
     [
         "intellij.platform.ide.internal.iml",
         "resources/intellij.platform.ide.internal.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

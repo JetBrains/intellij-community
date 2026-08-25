@@ -129,6 +129,7 @@ exports_files(
     [
         "intellij.platform.jewel.ui.iml",
         "src/main/resources/intellij.platform.jewel.ui.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.snakeyaml.engine.iml",
         "resources/intellij.libraries.snakeyaml.engine.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

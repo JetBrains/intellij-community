@@ -54,6 +54,7 @@ exports_files(
     [
         "intellij.platform.testIntegration.iml",
         "resources/intellij.platform.testIntegration.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

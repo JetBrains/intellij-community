@@ -87,6 +87,7 @@ exports_files(
     [
         "intellij.platform.warmup.iml",
         "resources/intellij.platform.warmup.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

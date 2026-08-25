@@ -15,7 +15,9 @@ import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.readText
+import kotlin.io.path.relativeTo
 
 /**
  * The jar a platform content module contributes to a distribution, described well enough to pack it from Bazel labels.
@@ -154,6 +156,19 @@ private val EXCLUDED_CONTENT_MODULES = setOf(
 )
 
 internal const val CONTENT_MODULE_RECIPE_FILE_NAME: String = "module-content.yaml"
+
+/**
+ * [ModuleDescriptor.contentModuleRecipeFile] as a label path in the module's own package, or `null` when it has none.
+ *
+ * The twin of [pluginContentReportPackagePath], and the converter half of `_find_content_module_recipe_rel_path` in
+ * `community/build/jps_model.bzl`: `JpsModuleToBazelTargetsOnly` asserts that the two sides pick out the same recipes,
+ * so both have to drop a recipe outside the package the same way - the recipe sits beside the module's first content
+ * root, which is not always inside it, and a file outside a package has no label.
+ */
+internal fun contentModuleRecipePackagePath(module: ModuleDescriptor): String? {
+  val file = module.contentModuleRecipeFile ?: return null
+  return file.relativeTo(module.bazelBuildFileDir).invariantSeparatorsPathString.takeIf { !it.startsWith("../") }
+}
 private const val PLATFORM_LIB_DIST_PREFIX = "dist.all/lib/"
 
 /**

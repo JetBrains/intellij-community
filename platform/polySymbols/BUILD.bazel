@@ -109,6 +109,7 @@ exports_files(
     [
         "intellij.platform.polySymbols.iml",
         "resources/intellij.platform.polySymbols.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

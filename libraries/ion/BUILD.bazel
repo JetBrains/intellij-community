@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.ion.iml",
         "resources/intellij.libraries.ion.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

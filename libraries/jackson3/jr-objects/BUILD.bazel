@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.jackson3.jr.objects.iml",
         "resources/intellij.libraries.jackson3.jr.objects.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

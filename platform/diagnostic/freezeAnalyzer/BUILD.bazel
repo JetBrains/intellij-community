@@ -55,6 +55,7 @@ exports_files(
     [
         "intellij.platform.diagnostic.freezeAnalyzer.iml",
         "resources/intellij.platform.diagnostic.freezeAnalyzer.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

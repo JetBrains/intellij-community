@@ -105,6 +105,7 @@ exports_files(
     [
         "intellij.platform.externalSystem.iml",
         "resources/intellij.platform.externalSystem.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

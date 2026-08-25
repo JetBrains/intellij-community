@@ -180,6 +180,7 @@ exports_files(
         "resources/intellij.platform.debugger.impl.actions.xml",
         "resources/intellij.platform.debugger.impl.content.xml",
         "resources/intellij.platform.debugger.impl.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

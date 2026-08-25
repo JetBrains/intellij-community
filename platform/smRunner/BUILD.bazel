@@ -120,6 +120,7 @@ exports_files(
     [
         "intellij.platform.smRunner.iml",
         "resources/intellij.platform.smRunner.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

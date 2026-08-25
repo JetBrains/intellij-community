@@ -619,6 +619,14 @@ internal class BazelBuildFileGenerator(
             imlTargetsBazel.exportFile(reportPath)
           }
         }
+        // The recipe the module's `content_module_jar` is generated from, exported for the same reason and with the same
+        // consequence if it is not: a recipe the hermetic run cannot see is a `contentModuleJarTarget` the two producers
+        // silently disagree on, in both directions.
+        contentModuleRecipePackagePath(module)?.let { recipePath ->
+          if (!fileUpdater.handWrittenExportedFiles().contains(recipePath)) {
+            imlTargetsBazel.exportFile(recipePath)
+          }
+        }
 
         val devContentBazel = BuildFile()
         moduleBuildTargets.pluginContent?.let { devContentBazel.emitPluginContent(module = module, content = it) }

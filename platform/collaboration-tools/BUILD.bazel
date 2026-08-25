@@ -158,6 +158,7 @@ exports_files(
         "resources/colorSchemes/CollaborationToolsDark.xml",
         "resources/colorSchemes/CollaborationToolsDefault.xml",
         "resources/intellij.platform.collaborationTools.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.joni.iml",
         "resources/intellij.libraries.joni.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

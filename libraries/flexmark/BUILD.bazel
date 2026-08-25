@@ -42,6 +42,7 @@ exports_files(
     [
         "intellij.libraries.flexmark.iml",
         "resources/intellij.libraries.flexmark.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

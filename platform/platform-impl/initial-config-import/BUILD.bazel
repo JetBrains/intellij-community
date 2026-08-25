@@ -81,6 +81,7 @@ exports_files(
         "intellij.platform.ide.initialConfigImport.iml",
         "resources/intellij.platform.ide.initialConfigImport.actions.xml",
         "resources/intellij.platform.ide.initialConfigImport.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

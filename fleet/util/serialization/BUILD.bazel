@@ -80,6 +80,7 @@ exports_files(
     [
         "fleet.util.serialization.iml",
         "resources/fleet.util.serialization.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

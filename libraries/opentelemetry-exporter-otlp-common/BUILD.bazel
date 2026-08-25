@@ -67,6 +67,7 @@ exports_files(
     [
         "intellij.libraries.opentelemetry.exporter.otlp.common.iml",
         "resources/intellij.libraries.opentelemetry.exporter.otlp.common.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

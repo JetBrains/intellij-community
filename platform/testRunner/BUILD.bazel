@@ -110,6 +110,7 @@ exports_files(
     [
         "intellij.platform.testRunner.iml",
         "resources/intellij.platform.testRunner.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

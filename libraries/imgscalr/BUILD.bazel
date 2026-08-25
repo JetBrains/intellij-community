@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.imgscalr.iml",
         "resources/intellij.libraries.imgscalr.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

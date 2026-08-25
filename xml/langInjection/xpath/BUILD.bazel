@@ -66,6 +66,7 @@ exports_files(
     [
         "intellij.xml.langInjection.xpath.iml",
         "resources/intellij.xml.langInjection.xpath.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

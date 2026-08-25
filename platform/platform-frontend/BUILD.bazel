@@ -51,6 +51,7 @@ exports_files(
     [
         "intellij.platform.frontend.iml",
         "resources/intellij.platform.frontend.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

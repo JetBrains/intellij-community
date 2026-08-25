@@ -67,6 +67,7 @@ exports_files(
     [
         "intellij.platform.welcomeScreen.impl.iml",
         "resources/intellij.platform.welcomeScreen.impl.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

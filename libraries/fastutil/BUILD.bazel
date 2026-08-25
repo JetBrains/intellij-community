@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.fastutil.iml",
         "resources/intellij.libraries.fastutil.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

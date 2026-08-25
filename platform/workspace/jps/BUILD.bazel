@@ -93,6 +93,7 @@ exports_files(
     [
         "intellij.platform.workspace.jps.iml",
         "resources/intellij.platform.workspace.jps.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

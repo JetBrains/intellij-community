@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.hdr.histogram.iml",
         "resources/intellij.libraries.hdr.histogram.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

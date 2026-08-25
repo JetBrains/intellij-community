@@ -66,6 +66,7 @@ exports_files(
     [
         "intellij.libraries.grpc.iml",
         "resources/intellij.libraries.grpc.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

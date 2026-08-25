@@ -91,6 +91,7 @@ exports_files(
     [
         "intellij.platform.scriptDebugger.ui.iml",
         "resources/intellij.platform.scriptDebugger.ui.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

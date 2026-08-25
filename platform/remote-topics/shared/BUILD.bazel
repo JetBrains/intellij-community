@@ -71,6 +71,7 @@ exports_files(
     [
         "intellij.platform.rpc.topics.iml",
         "resources/intellij.platform.rpc.topics.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

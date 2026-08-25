@@ -105,6 +105,7 @@ exports_files(
     [
         "intellij.platform.ml.impl.iml",
         "resources/intellij.platform.ml.impl.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

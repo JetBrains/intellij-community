@@ -70,6 +70,7 @@ exports_files(
     [
         "intellij.platform.tasks.impl.debugger.iml",
         "resources/intellij.platform.tasks.impl.debugger.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

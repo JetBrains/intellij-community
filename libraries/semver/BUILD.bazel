@@ -42,6 +42,7 @@ exports_files(
     [
         "intellij.libraries.semver.iml",
         "resources/intellij.libraries.semver.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

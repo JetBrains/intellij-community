@@ -65,6 +65,7 @@ exports_files(
     [
         "intellij.platform.util.coroutines.iml",
         "resources/intellij.platform.util.coroutines.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

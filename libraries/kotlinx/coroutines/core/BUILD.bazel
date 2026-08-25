@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.kotlinx.coroutines.core.iml",
         "resources/intellij.libraries.kotlinx.coroutines.core.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

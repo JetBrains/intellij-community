@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.caffeine.iml",
         "resources/intellij.libraries.caffeine.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

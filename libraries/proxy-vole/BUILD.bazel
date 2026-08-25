@@ -43,6 +43,7 @@ exports_files(
     [
         "intellij.libraries.proxy.vole.iml",
         "resources/intellij.libraries.proxy.vole.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
