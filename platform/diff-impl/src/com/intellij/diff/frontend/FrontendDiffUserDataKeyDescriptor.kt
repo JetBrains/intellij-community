@@ -12,9 +12,12 @@ import org.jetbrains.annotations.ApiStatus
  * Describes a piece of diff user data that [FrontendDiffExtension] may read on the frontend, and how to transfer it there.
  *
  * The data is put under [key] into `DiffContext` or `DiffRequest` by whoever shows the diff, and is read back via
- * [FrontendDiffExtensionData]. In split mode it travels between the backend and the frontend as [write]/[read] bytes,
- * where it is identified by the name of [key]. The byte format is up to the descriptor. For the common case see
- * [JsonFrontendDiffUserDataKeyDescriptor].
+ * [FrontendDiffContext.getUserData] or [FrontendDiffRequest.getUserData]. In split mode it travels between the backend and
+ * the frontend as [write]/[read] bytes, where it is identified by the name of [key]. The byte format is up to the
+ * descriptor. For the common case see [JsonFrontendDiffUserDataKeyDescriptor].
+ *
+ * A key without a descriptor reads as absent on both sides, so that an extension cannot come to depend on data that only a
+ * local diff can hand it.
  */
 @ApiStatus.Internal
 interface FrontendDiffUserDataKeyDescriptor<T : Any> {
