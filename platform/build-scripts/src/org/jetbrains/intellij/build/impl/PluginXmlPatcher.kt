@@ -57,9 +57,8 @@ internal suspend fun patchPluginXml(
   val pluginModule = context.outputProvider.findRequiredModule(pluginLayout.mainModule)
   val descriptorContent = pluginLayout.rawPluginXmlPatcher(getUnprocessedPluginXmlContent(pluginModule, context.outputProvider).decodeToString(), context)
 
-  val isBundled = !pluginsToPublish.contains(pluginLayout)
   val compatibleBuildRange = context.productProperties.customCompatibleBuildRange ?: when {
-    isBundled || pluginLayout.pluginCompatibilityExactVersion || isIncludePluginsInBuiltinCustomRepository(context) -> CompatibleBuildRange.EXACT
+    pluginLayout.pluginCompatibilityExactVersion || isIncludePluginsInBuiltinCustomRepository(context) -> CompatibleBuildRange.EXACT
     context.applicationInfo.isEAP || pluginLayout.pluginCompatibilitySameRelease -> CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE
     else -> CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
   }
