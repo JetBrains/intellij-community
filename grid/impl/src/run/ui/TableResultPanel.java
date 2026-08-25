@@ -24,19 +24,17 @@ import com.intellij.database.datagrid.GridSelection;
 import com.intellij.database.datagrid.GridSortingModel;
 import com.intellij.database.datagrid.GridUtilCore;
 import com.intellij.database.datagrid.ModelIndex;
-import com.intellij.database.datagrid.ResultViewColumn;
-import com.intellij.database.run.ui.table.GridColumnPinModel;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.database.datagrid.ModelIndexSet;
 import com.intellij.database.datagrid.RawIndexConverter;
 import com.intellij.database.datagrid.ResultView;
+import com.intellij.database.datagrid.ResultViewColumn;
 import com.intellij.database.datagrid.RowSortOrder;
 import com.intellij.database.datagrid.SelectionModel;
 import com.intellij.database.datagrid.SelectionModelUtil;
 import com.intellij.database.datagrid.ViewIndex;
-import com.intellij.database.datagrid.mutating.CellMutation;
 import com.intellij.database.datagrid.color.GridColorModel;
 import com.intellij.database.datagrid.color.GridColorModelImpl;
+import com.intellij.database.datagrid.mutating.CellMutation;
 import com.intellij.database.editor.DataGridColors;
 import com.intellij.database.extractors.BinaryDisplayType;
 import com.intellij.database.extractors.DatabaseObjectFormatterConfig.DatabaseDisplayObjectFormatterConfig;
@@ -56,6 +54,7 @@ import com.intellij.database.run.ui.grid.GridMarkupModelImpl;
 import com.intellij.database.run.ui.grid.GridRowComparator;
 import com.intellij.database.run.ui.grid.GridRowHeader;
 import com.intellij.database.run.ui.table.FormatterConfigCache;
+import com.intellij.database.run.ui.table.GridColumnPinModel;
 import com.intellij.database.run.ui.table.LocalFilterState;
 import com.intellij.database.run.ui.table.TableResultRowHeader;
 import com.intellij.database.run.ui.table.TableResultView;
@@ -94,6 +93,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -135,7 +135,6 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -1162,11 +1161,11 @@ public class TableResultPanel extends UserDataHolderBase
       int c = viewColumnIdx.asInteger() + 1;
       //noinspection DialogTitleCapitalization
       String title = DataGridBundle.message("action.row.choice.col.text", r, c, c < 1 ? 0 : 1);
-      builder.addLink(title, KeyEvent.VK_N, () -> {
-        if (viewRowIdx.isValid(this) && viewColumnIdx.isValid(this)) {
+      if (viewRowIdx.isValid(this) || viewColumnIdx.isValid(this)) {
+        builder.addLink(title, null, () -> {
           scrollToLocally(this, viewRowIdx, viewColumnIdx);
-        }
-      });
+        });
+      }
     }
     myErrorNotificationPanel = builder
       .addCloseButton(this::hideErrorPanel).build();
