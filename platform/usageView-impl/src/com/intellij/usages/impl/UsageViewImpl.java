@@ -266,9 +266,9 @@ public class UsageViewImpl implements UsageViewEx {
 
   private final ExclusionHandlerEx<DefaultMutableTreeNode> myExclusionHandler;
   private final Map<Usage, UsageNode> myUsageNodes = new ConcurrentHashMap<>();
-  private ButtonPanel myButtonPanel;
+  private ButtonPanel myButtonPanel; // accessed in EDT only, created in initInEDT
   private boolean myNeedUpdateButtons;
-  private JComponent myAdditionalComponent;
+  private JComponent myAdditionalComponent; // accessed in EDT only, created in initInEDT
   private volatile boolean isDisposed;
   private volatile boolean myChangesDetected;
   private @Nullable GroupNode myAutoSelectedGroupNode;
@@ -285,7 +285,7 @@ public class UsageViewImpl implements UsageViewEx {
   private Splitter myPreviewSplitter; // accessed in EDT only
   private volatile ProgressIndicator associatedProgress; // the progress that current find usages is running under
 
-  private UsageViewTreeCellRenderer myUsageViewTreeCellRenderer;
+  private UsageViewTreeCellRenderer myUsageViewTreeCellRenderer; // accessed in EDT only, created in initInEDT
   private @Nullable Action myRerunAction;
   private final CoroutineDispatcherBackedExecutor updateRequests;
   private final List<ExcludeListener> myExcludeListeners = ContainerUtil.createConcurrentList();
@@ -365,6 +365,10 @@ public class UsageViewImpl implements UsageViewEx {
 
   private boolean rulesChanged; // accessed in EDT only
 
+  /**
+   * Must not create any Swing components: this constructor can be invoked on a background thread (IJPL-205703).
+   * Swing initialization goes to {@link #initInEDT()}.
+   */
   @ApiStatus.Internal
   public UsageViewImpl(@NotNull Project project,
                        @NotNull CoroutineScope coroutineScope,
@@ -390,9 +394,6 @@ public class UsageViewImpl implements UsageViewEx {
     myBuilder = new UsageNodeTreeBuilder(myTargets, myGroupingRules, getActiveFilteringRules(myProject), myRoot, myProject);
     myProject.getMessageBus().connect(this).subscribe(UsageFilteringRuleProvider.RULES_CHANGED, () -> rulesChanged());
 
-    if (!myPresentation.isDetachedMode()) {
-      UIUtil.invokeLaterIfNeeded(() -> WriteIntentReadAction.run(() -> initInEDT()));
-    }
     myExclusionHandler = new ExclusionHandlerEx<>() {
       @Override
       @RequiresEdt
@@ -498,6 +499,12 @@ public class UsageViewImpl implements UsageViewEx {
         }
       });
     scheduleUpdateTargetNodes();
+
+    // Must stay last: when this constructor is invoked on EDT, invokeLaterIfNeeded() runs initInEDT()
+    // synchronously, so everything it may touch has to be assigned by now.
+    if (!myPresentation.isDetachedMode()) {
+      UIUtil.invokeLaterIfNeeded(() -> WriteIntentReadAction.run(() -> initInEDT()));
+    }
   }
 
   @ApiStatus.Internal
@@ -540,6 +547,8 @@ public class UsageViewImpl implements UsageViewEx {
       return;
     }
 
+    // These three must be created before myTree is assigned below: callers that only check
+    // "myTree != null" go on to dereference them (see checkNodeValidity, addButtonToLowerPane).
     myButtonPanel = new ButtonPanel();
     myAdditionalComponent = new JPanel(new BorderLayout());
     myUsageViewTreeCellRenderer = new UsageViewTreeCellRenderer(this);
@@ -1908,6 +1917,13 @@ public class UsageViewImpl implements UsageViewEx {
   @RequiresEdt
   public void addButtonToLowerPane(@NotNull Action action) {
     ThreadingAssertions.assertEventDispatchThread();
+    if (myButtonPanel == null) {
+      // Either detached mode, which has no Swing UI at all, or disposed before initInEDT() had a chance to run.
+      if (!isDisposed()) {
+        LOG.error("addButtonToLowerPane() needs a UI, but the presentation is in detached mode");
+      }
+      return;
+    }
     int index = myButtonPanel.getComponentCount();
     if (!SystemInfo.isMac && index > 0 && myPresentation.isShowCancelButton()) index--;
     myButtonPanel.addButtonAction(index, action);
@@ -1938,6 +1954,13 @@ public class UsageViewImpl implements UsageViewEx {
   @Override
   @RequiresEdt
   public void setAdditionalComponent(@Nullable JComponent comp) {
+    if (myAdditionalComponent == null) {
+      // Either detached mode, which has no Swing UI at all, or disposed before initInEDT() had a chance to run.
+      if (!isDisposed()) {
+        LOG.error("setAdditionalComponent() needs a UI, but the presentation is in detached mode");
+      }
+      return;
+    }
     BorderLayout layout = (BorderLayout)myAdditionalComponent.getLayout();
     Component prev = layout.getLayoutComponent(myAdditionalComponent, BorderLayout.CENTER);
     if (prev == comp) {
