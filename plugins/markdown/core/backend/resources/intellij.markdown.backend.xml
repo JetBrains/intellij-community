@@ -135,6 +135,7 @@
 
       <pathReferenceProvider implementation="com.intellij.markdown.backend.reference.paths.RelativeFileWithoutExtensionReferenceProvider"/>
       <anchorReferenceProvider implementation="com.intellij.markdown.backend.reference.paths.LineNumberPathReferenceProvider"/>
+      <anchorReferenceProvider implementation="com.intellij.markdown.backend.reference.headers.HeaderAnchorPathReferenceProvider"/>
 
       <renameHandler implementation="com.intellij.markdown.backend.rename.MarkdownFileRenameHandler"/>
       <automaticRenamerFactory implementation="com.intellij.markdown.backend.rename.MarkdownRenamerFactory"/>

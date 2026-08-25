@@ -26,6 +26,13 @@ class UnresolvedLinkLabelInspectionTest: BasePlatformTestCase() {
   }
 
   @Test
+  fun `inline link label is not reported`() {
+    doTest("""
+      [Google](https://google.com)
+    """)
+  }
+
+  @Test
   fun `test resolved label of shortcut reference link is not reported`() {
     doTest("""
       Here is a link to [Google].
