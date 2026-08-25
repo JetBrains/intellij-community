@@ -1375,6 +1375,7 @@
 - sf:unwrapMatchedSymbols(com.intellij.polySymbols.PolySymbol):kotlin.sequences.Sequence
 - sf:withMatchedKind(com.intellij.polySymbols.PolySymbol,com.intellij.polySymbols.PolySymbolKind):com.intellij.polySymbols.PolySymbol
 - sf:withMatchedName(com.intellij.polySymbols.PolySymbol,java.lang.String):com.intellij.polySymbols.PolySymbol
+- sf:withName(com.intellij.polySymbols.PolySymbol,java.lang.String):com.intellij.polySymbols.utils.PolySymbolDelegate
 - sf:withNavigationTarget(com.intellij.polySymbols.PolySymbol,com.intellij.psi.PsiElement):com.intellij.polySymbols.utils.PolySymbolDelegate
 - sf:withOffset(java.util.List,I):java.util.List
 - sf:withSegments(com.intellij.polySymbols.query.PolySymbolMatch,java.util.List):com.intellij.polySymbols.query.PolySymbolMatch

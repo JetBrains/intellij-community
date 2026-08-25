@@ -39,6 +39,7 @@ import com.intellij.polySymbols.query.PolySymbolQueryStack
 import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.polySymbols.query.PolySymbolWithPattern
 import com.intellij.polySymbols.query.impl.PolySymbolMatchBase
+import com.intellij.polySymbols.refactoring.PolySymbolRenameTarget
 import com.intellij.polySymbols.search.PsiLinkedPolySymbol
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
@@ -122,6 +123,41 @@ private data class PolySymbolWithNavigationTarget(
     val targetPtr = target.createSmartPointer()
     return Pointer {
       targetPtr.dereference()?.let { symbolPtr.dereference()?.withNavigationTarget(it) }
+    }
+  }
+}
+
+/**
+ * Reports [name] as this symbol's own name while delegating everything else (declaration,
+ * search targets, resolution equivalence, query scope) to the real symbol.
+ *
+ * Needed wherever a query is resolved by one piece of literal text to a symbol whose own declared
+ * name is different - e.g. a symbol shared across several differently-spelled reference sites, or
+ * a name normalized to a canonical form (case, whitespace, ...) that doesn't spell out the literal
+ * text at any particular occurrence.
+ */
+fun PolySymbol.withName(name: String): PolySymbolDelegate<PolySymbol> =
+  AliasedPolySymbol(this, name)
+
+private data class AliasedPolySymbol(
+  override val delegate: PolySymbol,
+  override val name: String,
+) : PolySymbolDelegate<PolySymbol> {
+
+  override val renameTarget: PolySymbolRenameTarget?
+    get() = null
+
+  override fun isEquivalentTo(symbol: Symbol): Boolean =
+    symbol === this
+    || delegate.isEquivalentTo(symbol)
+    || (symbol is AliasedPolySymbol
+        && delegate.isEquivalentTo(symbol.delegate))
+
+  override fun createPointer(): Pointer<out PolySymbolDelegate<PolySymbol>> {
+    val symbolPtr = delegate.createPointer()
+    val aliasName = name
+    return Pointer {
+      symbolPtr.dereference()?.withName(aliasName)
     }
   }
 }
