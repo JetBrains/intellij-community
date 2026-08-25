@@ -1066,7 +1066,7 @@ class JavaToJKTreeBuilder internal constructor(
                 else -> MUTABLE
             }
             return JKField(
-                JKTypeElement(type.toJK(), typeElement.annotationList()).withFormattingFrom(typeElement),
+                JKTypeElement(type.toJK(), typeElement.annotationList(this)).withFormattingFrom(typeElement),
                 nameIdentifier.toJK(),
                 with(expressionTreeMapper) { initializer.toJK() },
                 annotationList(this),
@@ -1118,8 +1118,24 @@ class JavaToJKTreeBuilder internal constructor(
             return JKAnnotationList(plainAnnotations + listOfNotNull(deprecatedAnnotation))
         }
 
-        fun PsiTypeElement?.annotationList(): JKAnnotationList {
-            return JKAnnotationList(this?.applicableAnnotations?.map { it.toJK() }.orEmpty())
+        /**
+         * A `TYPE_USE` annotation that also targets the declaration is reported by PSI both here and on the
+         * modifier list. Emitting both duplicates it, so keep only the declaration-site copy (KTIJ-39453).
+         */
+        fun PsiTypeElement?.annotationList(declaration: PsiModifierListOwner? = null): JKAnnotationList {
+            val annotations = this?.applicableAnnotations.orEmpty()
+                .filterNot { declaration != null && it.targetsDeclarationOf(declaration) }
+            return JKAnnotationList(annotations.map { it.toJK() })
+        }
+
+        private fun PsiAnnotation.targetsDeclarationOf(declaration: PsiModifierListOwner): Boolean {
+            val target = when (declaration) {
+                is PsiParameter -> PsiAnnotation.TargetType.PARAMETER
+                is PsiField -> PsiAnnotation.TargetType.FIELD
+                is PsiLocalVariable -> PsiAnnotation.TargetType.LOCAL_VARIABLE
+                else -> return false
+            }
+            return AnnotationTargetUtil.findAnnotationTarget(this, target) != null
         }
 
         fun PsiAnnotation.toJK(): JKAnnotation {
@@ -1233,8 +1249,8 @@ class JavaToJKTreeBuilder internal constructor(
         fun PsiParameter.toJK(): JKParameter {
             val rawType = type.toJK()
             val type =
-                if (isVarArgs && rawType is JKJavaArrayType) JKTypeElement(rawType.type, typeElement.annotationList())
-                else rawType.asTypeElement(typeElement.annotationList())
+                if (isVarArgs && rawType is JKJavaArrayType) JKTypeElement(rawType.type, typeElement.annotationList(this))
+                else rawType.asTypeElement(typeElement.annotationList(this))
             val name = if (nameIdentifier != null) nameIdentifier.toJK() else JKNameIdentifier(name)
 
             val parameter = if (declarationScope is PsiForeachStatement) {
@@ -1271,7 +1287,7 @@ class JavaToJKTreeBuilder internal constructor(
             }
 
             return JKLocalVariable(
-                JKTypeElement(type.toJK(), typeElement.annotationList()).withFormattingFrom(typeElement),
+                JKTypeElement(type.toJK(), typeElement.annotationList(this)).withFormattingFrom(typeElement),
                 nameIdentifier.toJK(),
                 with(expressionTreeMapper) { initializer.toJK().withLineBreaksFrom(initializer, copyLineBreaksBefore = true) },
                 JKMutabilityModifierElement(mutability),

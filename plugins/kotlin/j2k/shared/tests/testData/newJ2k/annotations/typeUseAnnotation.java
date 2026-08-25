@@ -3,6 +3,7 @@ import javaApi.Anon5;
 import javaApi.TypeUseAnon1;
 import javaApi.TypeUseAnon2;
 import javaApi.TypeUseAnon3;
+import javaApi.TypeUseAnon4;
 import java.io.File;
 import java.util.*;
 
@@ -107,6 +108,20 @@ public @interface TestAnnotationMethod {
  */
 public interface TestTypeParameter<@TypeUseAnon1 F extends @TypeUseAnon1 File> {
     <@TypeUseAnon1 T extends @TypeUseAnon1 File> void foo();
+}
+
+public class TestNestedTypeArgument {
+    List<@TypeUseAnon3 String> field;
+
+    void foo(List<@TypeUseAnon3 String> param) {
+        List<@TypeUseAnon3 String> local = null;
+    }
+}
+
+public class TestLocalVariableTarget {
+    void foo() {
+        @TypeUseAnon4 String local = "";
+    }
 }
 
 public class TestTypeArgument {

@@ -149,3 +149,7 @@ public @interface TypeUseAnon2 {
 @Target({ElementType.TYPE_USE, ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER})
 public @interface TypeUseAnon3 {
 }
+
+@Target({ElementType.TYPE_USE, ElementType.LOCAL_VARIABLE})
+public @interface TypeUseAnon4 {
+}
