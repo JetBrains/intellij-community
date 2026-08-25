@@ -73,6 +73,11 @@ public class K2JavaToKotlinConverterMultiFileTestGenerated extends AbstractK2Jav
         runTest("../../shared/tests/testData/multiFile/JavaUsageOfBothFieldAndAccessor/");
     }
 
+    @TestMetadata("Jsr305PackageDefault")
+    public void testJsr305PackageDefault() throws Exception {
+        runTest("../../shared/tests/testData/multiFile/Jsr305PackageDefault/");
+    }
+
     @TestMetadata("KT11952")
     public void testKT11952() throws Exception {
         runTest("../../shared/tests/testData/multiFile/KT11952/");
