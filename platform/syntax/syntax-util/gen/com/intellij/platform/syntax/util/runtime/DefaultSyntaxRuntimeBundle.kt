@@ -14,7 +14,7 @@ internal object DefaultSyntaxRuntimeBundle {
     "parsing.error.no.expected.done.marker.at.offset" to "No expected done marker at offset {0}",
     "parsing.error.or" to "or",
     "parsing.error.unexpected" to "''{0}'' unexpected",
-    "parsing.error.unmatched.input" to "unmatched input",
+    "parsing.error.unmatched.input" to "Unmatched input",
     "parsing.error.leftover.in.object" to "<property> or ''}'' expected, got ''{0}''",
     "parsing.error.leftover.in.array" to "<value> or '']'' expected, got ''{0}''",
   )

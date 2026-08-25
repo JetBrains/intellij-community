@@ -36,7 +36,7 @@ Groovy script
           PsiElement(identifier)('id1')
         Arguments
           PsiElement(()('(')
-          PsiErrorElement:unmatched input
+          PsiErrorElement:Unmatched input
             <empty list>
       PsiElement(new line)('\n')
       PsiElement(})('}')
@@ -125,7 +125,7 @@ Groovy script
           Literal
             PsiElement(Integer)('42')
           PsiElement(,)(',')
-          PsiErrorElement:unmatched input
+          PsiErrorElement:Unmatched input
             <empty list>
       PsiElement(new line)('\n')
       PsiElement(})('}')
