@@ -44,26 +44,13 @@ interface DocumentSnapshot {
   fun <S : DocumentSputnik> sputnik(key: Key<S>): S?
 
   /**
-   * Returns this snapshot with [op] applied: text and mod state reflect [op], and sputniks are rebuilt to
-   * stay consistent with it.
+   * Returns this snapshot with [op] applied: text and mod state reflect the operation, and sputniks are rebuilt
+   * once against the final snapshot for a text-changing [DocumentTextPatch].
    *
    * @see DocumentSputnik.applyOp
    */
   @Contract(pure = true)
   fun applyOp(op: DocumentOp): DocumentSnapshot
-
-  /**
-   * Returns this snapshot with [ops] applied in order via repeated [applyOp] calls. One logical change can
-   * lower to several ops, so sputniks may be rebuilt more than once; see [DocumentSputnik.applyOp].
-   */
-  @Contract(pure = true)
-  fun applyOps(ops: List<DocumentOp>): DocumentSnapshot {
-    var newSnapshot = this
-    for (op in ops) {
-      newSnapshot = newSnapshot.applyOp(op)
-    }
-    return newSnapshot
-  }
 
   /**
    * Returns [metadata] if it still has this snapshot's text, otherwise returns this snapshot unchanged

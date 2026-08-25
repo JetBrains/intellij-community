@@ -28,7 +28,7 @@ interface SnapshotMarkerEngine {
    * Derives and stores the marker root for [afterSnapshot].
    *
    * The implementation obtains the current root associated with
-   * [beforeSnapshot], calls [PMarkerRoot.applyEdit], and stores the returned
+   * [beforeSnapshot], calls [PMarkerRoot.applyOp], and stores the returned
    * root in [afterSnapshot].
    *
    * The root associated with [beforeSnapshot] is not changed.
@@ -43,7 +43,7 @@ interface SnapshotMarkerEngine {
    * @param afterSnapshot child text snapshot created by the edit
    * @param op snapshot operation describing the change
    */
-  fun applyEdit(beforeSnapshot: DocumentSnapshot, afterSnapshot: DocumentSnapshot, op: DocumentOp)
+  fun applyOp(beforeSnapshot: DocumentSnapshot, afterSnapshot: DocumentSnapshot, op: DocumentOp)
 
   /**
    * Creates an engine-global marker ID and inserts the marker into the

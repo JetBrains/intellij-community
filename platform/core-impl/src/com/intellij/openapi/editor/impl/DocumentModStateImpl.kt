@@ -2,8 +2,9 @@
 package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.ex.DocumentModState
-import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.DocumentOp
+import com.intellij.openapi.editor.ex.DocumentText
+import com.intellij.openapi.editor.ex.DocumentTextPatch
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntList
 
@@ -34,50 +35,38 @@ internal class DocumentModStateImpl private constructor(
 
   override fun applyOp(before: DocumentText, after: DocumentText, op: DocumentOp): DocumentModState {
     return when (op) {
-      is DocumentOp.Insert -> applyInsert(before, after, op)
-      is DocumentOp.Delete -> applyDelete(before, after, op)
+      is DocumentTextPatch -> applyTextPatch(before, after, op)
       is DocumentOp.ModStamp -> applyModStamp(op)
       is DocumentOp.UnmodifiedLines -> applyUnmodifiedLines(before, op)
       is DocumentOp.SetSputnik -> this
     }
   }
 
-  private fun applyInsert(before: DocumentText, after: DocumentText, op: DocumentOp.Insert): DocumentModState {
-    val offset = op.offset()
-    val fragment = op.fragment()
-    if (fragment.isEmpty()) {
+  private fun applyTextPatch(before: DocumentText, after: DocumentText, patch: DocumentTextPatch): DocumentModState {
+    val textChanged = before !== after
+    var newModifiedLines = modifiedLines
+    if (textChanged) {
+      newModifiedLines = getModifiedLines(before).update(
+        before,
+        patch.startOffset(),
+        patch.endOffset(),
+        patch.newFragment(),
+      )
+    }
+    if (patch.clearLineFlags() && newModifiedLines != null) {
+      newModifiedLines = newModifiedLines.clearModificationFlags(0, Int.MAX_VALUE)
+    }
+    if (newModifiedLines != null) {
+      assert(newModifiedLines.lineCount == after.lineCount()) {
+        "after.lineCount() = " + after.lineCount() + "; modState.lineCount() = " + newModifiedLines.lineCount
+      }
+    }
+    val newModSequence = if (textChanged) modSequence + 1 else modSequence
+    val newModStamp = patch.newModStamp()
+    if (newModStamp == modStamp && newModSequence == modSequence && newModifiedLines === modifiedLines) {
       return this
     }
-    val oldModifiedLines = getModifiedLines(before)
-    val newModifiedLines = oldModifiedLines.update(
-      before,
-      offset,
-      offset,
-      fragment,
-    )
-    assert(newModifiedLines.lineCount == after.lineCount()) {
-      "after.lineCount() = " + after.lineCount() + "; modState.lineCount() = " + newModifiedLines.lineCount
-    }
-    return DocumentModStateImpl(modStamp, modSequence + 1, newModifiedLines)
-  }
-
-  private fun applyDelete(before: DocumentText, after: DocumentText, op: DocumentOp.Delete): DocumentModState {
-    val offset = op.offset()
-    val length = op.length()
-    if (length == 0) {
-      return this
-    }
-    val oldModifiedLines = getModifiedLines(before)
-    val newModifiedLines = oldModifiedLines.update(
-      before,
-      offset,
-      offset + length,
-      "",
-    )
-    assert(newModifiedLines.lineCount == after.lineCount()) {
-      "after.lineCount() = " + after.lineCount() + "; modState.lineCount() = " + newModifiedLines.lineCount
-    }
-    return DocumentModStateImpl(modStamp, modSequence + 1, newModifiedLines)
+    return DocumentModStateImpl(newModStamp, newModSequence, newModifiedLines)
   }
 
   private fun applyModStamp(op: DocumentOp.ModStamp): DocumentModState {

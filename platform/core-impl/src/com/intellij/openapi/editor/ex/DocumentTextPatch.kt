@@ -6,8 +6,7 @@ import com.intellij.openapi.editor.impl.SimpleTextPatch
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Snapshot-update instruction of a text change, converted to [DocumentOp]s via [toOps] and applied
- * through [DocumentText.applyOp].
+ * Snapshot-update operation of a text change, applied atomically through [DocumentSnapshot.applyOp].
  *
  * [startOffset], [endOffset] and [newFragment] describe the applied replacement.
  * For a whole-text replacement the patch keeps the full range and the caller's untrimmed sequence
@@ -22,7 +21,7 @@ import org.jetbrains.annotations.ApiStatus
  * ordinary changes.
  */
 @ApiStatus.Internal
-interface DocumentTextPatch { // TODO: implement DocumentEventImpl via DocumentTextPatch
+interface DocumentTextPatch : DocumentOp { // TODO: implement DocumentEventImpl via DocumentTextPatch
   fun startOffset(): Int
   fun endOffset(): Int
   fun newFragment(): CharSequence
@@ -31,7 +30,6 @@ interface DocumentTextPatch { // TODO: implement DocumentEventImpl via DocumentT
   fun originStartOffset(): Int
   fun originEndOffset(): Int
   fun moveOffset(): Int
-  fun toOps(): List<DocumentOp>
 
   companion object {
 

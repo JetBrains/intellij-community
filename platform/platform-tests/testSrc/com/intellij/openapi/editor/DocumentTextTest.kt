@@ -33,14 +33,14 @@ internal class DocumentTextTest {
   @Test
   fun `withMetadata with a different text drops the other snapshot entirely`() {
     val base = snapshot("a\nb")
-    val changed = base.applyOps(
+    val changed = base.applyOp(
       DocumentTextPatch.simple(
         startOffset = 3,
         endOffset = 3,
         newFragment = "\nc",
         newModStamp = base.modState().stamp() + 1,
         clearLineFlags = false,
-      ).toOps()
+      )
     )
     val op = DocumentNewOps.getInstance().createModStampOp(42L, true)
     val metadata = base.applyOp(op)

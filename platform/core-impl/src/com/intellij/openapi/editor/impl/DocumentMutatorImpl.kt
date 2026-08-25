@@ -334,7 +334,7 @@ internal abstract class DocumentMutatorImpl(
     patch: DocumentTextPatch,
   ): DocumentSnapshot {
     val merged = snapshotBefore.withMetadata(latest)
-    return merged.applyOps(patch.toOps())
+    return merged.applyOp(patch)
   }
 
   private fun trimToSize(hostDocument: Document, snapshot: DocumentSnapshot): DocumentSnapshot {

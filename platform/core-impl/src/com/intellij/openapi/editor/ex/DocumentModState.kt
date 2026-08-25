@@ -37,15 +37,9 @@ interface DocumentModState {
   fun isLineModified(line: Int): Boolean
 
   /**
-   * Returns state with [op] applied. What [before]/[after] must be depends on [op]:
-   * - [DocumentOp.Insert]/[DocumentOp.Delete]: [before] must be the same [DocumentText] this
-   *   instance's line-modification tracking was built against, and [after] must be [before] with [op]
-   *   applied. Passing any other text silently mispairs this instance's tracked line structure with the
-   *   wrong offsets.
-   * - [DocumentOp.ModStamp]: neither [before] nor [after] is read.
-   * - [DocumentOp.UnmodifiedLines]: only [before] is read, and it must be the current [DocumentText]
-   *   this instance's line-modification tracking is paired with. Passing any other text silently mispairs
-   *   this instance's tracked line structure with the wrong line count/offsets.
+   * Returns state with [op] applied. For a [DocumentTextPatch], [before] must be the text this instance's
+   * line-modification tracking was built against, and [after] must be [before] with the patch applied.
+   * For [DocumentOp.UnmodifiedLines], [before] must be the current text paired with this instance.
    */
   @Contract(pure = true)
   fun applyOp(before: DocumentText, after: DocumentText, op: DocumentOp): DocumentModState

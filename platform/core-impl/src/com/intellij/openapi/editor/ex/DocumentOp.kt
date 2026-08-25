@@ -6,16 +6,6 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 sealed interface DocumentOp {
-  interface Insert : DocumentOp {
-    fun offset(): Int
-    fun fragment(): CharSequence
-  }
-
-  interface Delete : DocumentOp {
-    fun offset(): Int
-    fun length(): Int
-  }
-
   interface ModStamp : DocumentOp {
     fun modStamp(): Long
     fun incSequence(): Boolean

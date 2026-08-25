@@ -18,9 +18,7 @@ interface DocumentSputnik {
 
   /**
    * Returns the state of this sputnik consistent with [after], the snapshot produced by applying [op] to [before].
-   *
-   * Only called for a text-changing [op] ([DocumentOp.Insert]/[DocumentOp.Delete]) -- [op] carries just the raw
-   * edit, none of a patch's origin range, move offset, or mod stamp.
+   * This method is called only for a text-changing [DocumentTextPatch].
    *
    * Runs on the writer thread, on the critical path of every document change: must be fast, must not throw (an
    * exception aborts the change), must return a sputnik of the same type as `this`, and must tolerate being

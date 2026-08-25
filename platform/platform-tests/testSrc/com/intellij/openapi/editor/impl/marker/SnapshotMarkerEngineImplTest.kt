@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl.marker
 
 import com.intellij.openapi.editor.ex.DocumentNewOps
 import com.intellij.openapi.editor.ex.DocumentSnapshot
+import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Key
@@ -520,11 +521,22 @@ class SnapshotMarkerEngineImplTest {
       spec = nonGreedySpec().copy(policy = policy),
     )
 
-    val edited = root.applyEdit(DocumentNewOps.getInstance().createInsertOp(2, "x"))
+    val edited = root.applyOp(
+      DocumentTextPatch.complex(
+        startOffset = 2,
+        endOffset = 2,
+        newFragment = "x",
+        newModStamp = 1,
+        clearLineFlags = false,
+        originStartOffset = 1,
+        originEndOffset = 2,
+        moveOffset = 3,
+      )
+    )
 
     val invalid = edited.resolve(1, TextRange(0, 0)) as PMarkerResolution.Invalid
     assertEquals("Invalidated by test marker policy", invalid.reason)
-    assertEquals(MarkerEdit(2, 2, 1, 2, 2, 2), receivedEdit)
+    assertEquals(MarkerEdit(2, 2, 1, 1, 2, 3), receivedEdit)
   }
 
   @Test
@@ -551,7 +563,7 @@ class SnapshotMarkerEngineImplTest {
     assertEquals(listOf(4L), markerIds(root, tastePreference = 0x80))
     assertEquals(listOf(4L), markerIds(root, tastePreference = highFlavor.toInt()))
 
-    val edited = root.applyEdit(DocumentNewOps.getInstance().createInsertOp(0, "x"))
+    val edited = root.applyOp(textPatch(startOffset = 0, endOffset = 0, newFragment = "x"))
     assertEquals(listOf(3L), markerIds(edited, tastePreference = combinedFlavor.toInt()))
 
     val removed = edited.remove(3)
@@ -650,7 +662,7 @@ class SnapshotMarkerEngineImplTest {
       spec = nonGreedySpec()
     )
     fixture.document.insertString(0, "XX")
-    val child = fixture.initialSnapshot.applyOp(DocumentNewOps.getInstance().createInsertOp(0, "XX"))
+    val child = fixture.editWithNaturalModSequence(fixture.initialSnapshot, startOffset = 0, endOffset = 0, newFragment = "XX")
 
     assertSame(fixture.document, marker.document)
     assertEquals(2, marker.getStartOffset(fixture.initialSnapshot))
@@ -747,6 +759,16 @@ class SnapshotMarkerEngineImplTest {
 
   private fun nonGreedySpec(): MarkerSpec = MarkerSpec(isGreedyToLeft = false, isGreedyToRight = false)
 
+  private fun textPatch(startOffset: Int, endOffset: Int, newFragment: String): DocumentTextPatch {
+    return DocumentTextPatch.simple(
+      startOffset = startOffset,
+      endOffset = endOffset,
+      newFragment = newFragment,
+      newModStamp = 1,
+      clearLineFlags = false,
+    )
+  }
+
   private class Fixture(initialText: String) {
     val document = DocumentImpl(initialText, true)
     val initialSnapshot: DocumentSnapshot = document.core.snapshot()
@@ -764,21 +786,17 @@ class SnapshotMarkerEngineImplTest {
       require(startOffset in 0..endOffset)
       require(endOffset <= parent.text().length())
 
-      var child = applyTextEdit(parent, startOffset, endOffset, newFragment)
-      child = child.applyOp(newOps.createModStampOp(nextModStamp++, false))
-      return child
+      return applyTextEdit(parent, startOffset, endOffset, newFragment, nextModStamp++)
     }
 
     fun edit(parent: DocumentSnapshot, startOffset: Int, endOffset: Int, newFragment: String): DocumentSnapshot {
       require(startOffset in 0..endOffset)
       require(endOffset <= parent.text().length())
 
-      val textOpCount = (if (startOffset < endOffset) 1 else 0) + (if (newFragment.isNotEmpty()) 1 else 0)
-      val targetModSequence = maxOf(nextModSequence, parent.modState().sequence() + textOpCount)
+      val targetModSequence = maxOf(nextModSequence, parent.modState().sequence() + 1)
       var newModStamp = nextModStamp++
 
-      var child = applyTextEdit(parent, startOffset, endOffset, newFragment)
-      child = child.applyOp(newOps.createModStampOp(newModStamp, false))
+      var child = applyTextEdit(parent, startOffset, endOffset, newFragment, newModStamp)
 
       while (child.modState().sequence() < targetModSequence) {
         newModStamp = nextModStamp++
@@ -798,15 +816,17 @@ class SnapshotMarkerEngineImplTest {
       startOffset: Int,
       endOffset: Int,
       newFragment: String,
+      newModStamp: Long,
     ): DocumentSnapshot {
-      var child = parent
-      if (startOffset < endOffset) {
-        child = child.applyOp(newOps.createDeleteOp(startOffset, endOffset - startOffset))
-      }
-      if (newFragment.isNotEmpty()) {
-        child = child.applyOp(newOps.createInsertOp(startOffset, newFragment))
-      }
-      return child
+      return parent.applyOp(
+        DocumentTextPatch.simple(
+          startOffset = startOffset,
+          endOffset = endOffset,
+          newFragment = newFragment,
+          newModStamp = newModStamp,
+          clearLineFlags = false,
+        )
+      )
     }
   }
 }

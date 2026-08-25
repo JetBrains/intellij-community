@@ -50,26 +50,26 @@ internal class DocumentSnapshotImpl private constructor(
   override fun applyOp(op: DocumentOp): DocumentSnapshot {
     val newText = text.applyOp(op)
     val newModState = modState.applyOp(text, newText, op)
-    val canAffectSputniks = op is DocumentOp.SetSputnik
+    val canAffectSputniks = op is DocumentOp.SetSputnik || newText !== text
     if (newText === text && newModState === modState && !canAffectSputniks) {
       return this
     }
-    val oldSnapshot = this
     val newSnapshot = if (newText === text && newModState === modState) {
       this
-    } else {
-      DocumentSnapshotImpl(newText, newModState, sputniks)
-    }
-    val after = if (sputniks === DocumentSputniksImpl.EMPTY && !canAffectSputniks) {
-      newSnapshot
     }
     else {
-      sputniks.applyOp(oldSnapshot, newSnapshot, op) { newSputniks ->
+      DocumentSnapshotImpl(newText, newModState, sputniks)
+    }
+    val after = if (canAffectSputniks && (sputniks !== DocumentSputniksImpl.EMPTY || op is DocumentOp.SetSputnik)) {
+      sputniks.applyOp(this, newSnapshot, op) { newSputniks ->
         DocumentSnapshotImpl(newText, newModState, newSputniks)
       }
     }
+    else {
+      newSnapshot
+    }
     if (after !== this) {
-      SnapshotMarkerEngineImpl.applyEdit(this, after, op)
+      SnapshotMarkerEngineImpl.applyOp(this, after, op)
     }
     return after
   }

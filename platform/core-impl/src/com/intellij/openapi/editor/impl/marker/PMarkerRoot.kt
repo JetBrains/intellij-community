@@ -29,7 +29,7 @@ interface PMarkerRoot {
   fun resolve(markerId: Long, absentRange: TextRange): PMarkerResolution
 
   /**
-   * Derives the marker root for the document state after [op].
+   * Derives the marker root for the document state after [op]. Non-text operations return this root unchanged.
    *
    * A typical implementation:
    *
@@ -42,7 +42,7 @@ interface PMarkerRoot {
    *
    * Already-invalid markers normally remain invalid.
    */
-  fun applyEdit(op: DocumentOp): PMarkerRoot
+  fun applyOp(op: DocumentOp): PMarkerRoot
 
   /**
    * Inserts a marker whose ID is absent from this root.

@@ -83,9 +83,9 @@ interface DocumentText {
   fun lineIterator(): LineIterator
 
   /**
-   * Returns text with [op] applied.
+   * Returns text with [op] applied. Only [DocumentTextPatch] changes the text.
    *
-   * @see DocumentTextPatch.toOps
+   * @see DocumentSnapshot.applyOp
    */
   @Contract(pure = true)
   fun applyOp(op: DocumentOp): DocumentText

@@ -1,8 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
-import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.DocumentOp
+import com.intellij.openapi.editor.ex.DocumentText
+import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.ex.LineIterator
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.text.CharArrayUtil
@@ -97,11 +98,30 @@ internal class DocumentTextImpl private constructor(
   }
 
   override fun applyOp(op: DocumentOp): DocumentText {
-    return when(op) {
-      is DocumentOp.Insert -> applyInsert(op)
-      is DocumentOp.Delete -> applyDelete(op)
-      else -> this
+    val patch = op as? DocumentTextPatch ?: return this
+    val startOffset = patch.startOffset()
+    val endOffset = patch.endOffset()
+    val newFragment = patch.newFragment()
+    if (startOffset == endOffset && newFragment.isEmpty()) {
+      return this
     }
+    val oldText = chars
+    val canReuseFragment = startOffset == 0 && endOffset == oldText.length && newFragment is ImmutableCharSequence
+    val newText = if (canReuseFragment) {
+      newFragment
+    }
+    else {
+      oldText.replace(startOffset, endOffset, newFragment)
+    }
+    val oldLineSet = lineSet
+    if (oldLineSet == null) {
+      return DocumentTextImpl(newText, null, null)
+    }
+    val newLineSet = oldLineSet.update(oldText, startOffset, endOffset, newFragment)
+    assert(newLineSet.length == newText.length) {
+      "LineSet length mismatch: $newLineSet != $newText"
+    }
+    return DocumentTextImpl(newText, newLineSet, null)
   }
 
   /**
@@ -119,59 +139,6 @@ internal class DocumentTextImpl private constructor(
     lineSet = LineSet.createLineSet(chars)
     this.lineSet = lineSet
     return lineSet
-  }
-
-  private fun applyInsert(op: DocumentOp.Insert): DocumentText {
-    val offset = op.offset()
-    val newFragment = op.fragment()
-    if (newFragment.isEmpty()) {
-      return this
-    }
-    val oldText = chars
-    val canReuseFragment = (offset == 0 && oldText.isEmpty() && newFragment is ImmutableCharSequence)
-    val newText = if (canReuseFragment) {
-      newFragment
-    } else {
-      oldText.insert(offset, newFragment)
-    }
-    val oldLineSet = this.lineSet
-    if (oldLineSet == null) {
-      return DocumentTextImpl(newText, null, null)
-    }
-    val newLineSet = oldLineSet.update(
-      oldText,
-      offset,
-      offset,
-      newFragment,
-    )
-    assert(newLineSet.length == newText.length) {
-      "LineSet length mismatch: $newLineSet != $newText"
-    }
-    return DocumentTextImpl(newText, newLineSet, null)
-  }
-
-  private fun applyDelete(op: DocumentOp.Delete): DocumentText {
-    val offset = op.offset()
-    val length = op.length()
-    if (length == 0) {
-      return this
-    }
-    val oldText = chars
-    val newText = oldText.delete(offset, offset + length)
-    val oldLineSet = this.lineSet
-    if (oldLineSet == null) {
-      return DocumentTextImpl(newText, null, null)
-    }
-    val newLineSet = oldLineSet.update(
-      oldText,
-      offset,
-      offset + length,
-      "",
-    )
-    assert(newLineSet.length == newText.length) {
-      "LineSet length mismatch: $newLineSet != $newText"
-    }
-    return DocumentTextImpl(newText, newLineSet, null)
   }
 
   private fun presentation(obj: Any?): String {

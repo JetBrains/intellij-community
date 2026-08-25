@@ -13,7 +13,8 @@ internal interface DocumentSputniks {
   fun get(key: Key<out DocumentSputnik>): DocumentSputnik?
 
   /**
-   * Returns the snapshot obtained by rebuilding every sputnik against [before]/[op]. [nextSnapshot] is invoked
+   * Returns the snapshot obtained by applying [op] to the sputnik collection. For a text-changing
+   * [DocumentTextPatch], [nextSnapshot] is invoked
    * after each sputnik that actually changes, so later sputniks in the same call can observe earlier ones'
    * rebuilt state via `after` in [DocumentSputnik.applyOp].
    *

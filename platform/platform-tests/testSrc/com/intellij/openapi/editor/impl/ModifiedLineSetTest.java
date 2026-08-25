@@ -3,7 +3,6 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.mock.MockDocument;
 import com.intellij.openapi.editor.ex.DocumentText;
-import com.intellij.openapi.editor.ex.DocumentOp;
 import com.intellij.openapi.editor.ex.DocumentTextPatch;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PerformanceUnitTest;
@@ -348,7 +347,7 @@ public class ModifiedLineSetTest {
 
           lineSet = lineSet.update(text.chars(), start, end, replacement);
           modifiedLineSet = modifiedLineSet.update(text, start, end, replacement);
-          text = applyPatch(text, DocumentTextPatch.simple(start, end, replacement, ++modStamp, false));
+          text = text.applyOp(DocumentTextPatch.simple(start, end, replacement, ++modStamp, false));
 
           assertLinesAgree(lineSet, modifiedLineSet, trace.toString());
         }
@@ -382,7 +381,7 @@ public class ModifiedLineSetTest {
 
           lineSet = lineSet.update(text.chars(), start, end, replacement);
           modifiedLineSet = modifiedLineSet.update(text, start, end, replacement);
-          text = applyPatch(text, DocumentTextPatch.simple(start, end, replacement, ++modStamp, false));
+          text = text.applyOp(DocumentTextPatch.simple(start, end, replacement, ++modStamp, false));
           env.logMessage(trace.toString());
           assertLinesAgree(lineSet, modifiedLineSet, trace.toString());
 
@@ -485,7 +484,7 @@ public class ModifiedLineSetTest {
       for (int i = 0; i < edits; i++) {
         // simulates the pre-split DocumentTextImpl: its own LineSet served offset mapping AND modification
         // tracking, so this one call is the entire per-edit cost.
-        text = applyPatch(text, DocumentTextPatch.simple(offset, offset, "x", i, false));
+        text = text.applyOp(DocumentTextPatch.simple(offset, offset, "x", i, false));
         offset += 1;
       }
     }).runAsStressTest().start();
@@ -496,7 +495,7 @@ public class ModifiedLineSetTest {
       int offset = text.lineStartOffset(midLine);
       for (int i = 0; i < edits; i++) {
         modStateLineSet = modStateLineSet.update(text.chars(), offset, offset, "x"); // the wasted call, using the OLD text
-        text = applyPatch(text, DocumentTextPatch.simple(offset, offset, "x", i, false));
+        text = text.applyOp(DocumentTextPatch.simple(offset, offset, "x", i, false));
         offset += 1;
       }
     }).runAsStressTest().start();
@@ -507,7 +506,7 @@ public class ModifiedLineSetTest {
       int offset = text.lineStartOffset(midLine);
       for (int i = 0; i < edits; i++) {
         modifiedLineSet = modifiedLineSet.update(text, offset, offset, "x"); // using the OLD text, per the real contract
-        text = applyPatch(text, DocumentTextPatch.simple(offset, offset, "x", i, false));
+        text = text.applyOp(DocumentTextPatch.simple(offset, offset, "x", i, false));
         offset += 1;
       }
     }).runAsStressTest().start();
@@ -598,14 +597,14 @@ public class ModifiedLineSetTest {
       int offset = text.length();
       lineSet = lineSet.update(text.chars(), offset, offset, insertion);
       modifiedLineSet = modifiedLineSet.update(text, offset, offset, insertion);
-      text = applyPatch(text, DocumentTextPatch.simple(offset, offset, insertion, ++modStamp, false));
+      text = text.applyOp(DocumentTextPatch.simple(offset, offset, insertion, ++modStamp, false));
       assertLinesAgree(lineSet, modifiedLineSet, "after inserting \"" + StringUtil.escapeStringCharacters(insertion) + "\"");
     }
 
     int fullLength = text.length();
     lineSet = lineSet.update(text.chars(), 0, fullLength, "");
     modifiedLineSet = modifiedLineSet.update(text, 0, fullLength, "");
-    text = applyPatch(text, DocumentTextPatch.simple(0, fullLength, "", ++modStamp, false));
+    text = text.applyOp(DocumentTextPatch.simple(0, fullLength, "", ++modStamp, false));
     assertLinesAgree(lineSet, modifiedLineSet, "delete back to empty");
     assertEquals(0, lineSet.getLineCount());
 
@@ -637,7 +636,7 @@ public class ModifiedLineSetTest {
 
     lineSet = lineSet.update(text.chars(), 0, 0, "x");
     modifiedLineSet = modifiedLineSet.update(text, 0, 0, "x");
-    text = applyPatch(text, DocumentTextPatch.simple(0, 0, "x", ++modStamp, false));
+    text = text.applyOp(DocumentTextPatch.simple(0, 0, "x", ++modStamp, false));
     assertLinesAgree(lineSet, modifiedLineSet, "after inserting x");
     assertTrue(lineSet.isModified(0));
     assertFalse(lineSet.isModified(1));
@@ -684,10 +683,4 @@ public class ModifiedLineSetTest {
     return DocumentInternalUtil.getDocumentText(document);
   }
 
-  private static DocumentText applyPatch(DocumentText text, DocumentTextPatch patch) {
-    for (DocumentOp op : patch.toOps()) {
-      text = text.applyOp(op);
-    }
-    return text;
-  }
 }

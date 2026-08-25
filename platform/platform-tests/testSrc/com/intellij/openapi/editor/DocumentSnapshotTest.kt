@@ -79,6 +79,21 @@ internal class DocumentSnapshotTest {
   }
 
   @Test
+  fun `replacement increments modification sequence once`() {
+    val snapshot = snapshot("abc")
+    val patched = snapshot.applyOp(
+      DocumentTextPatch.simple(
+        startOffset = 1,
+        endOffset = 2,
+        newFragment = "xy",
+        newModStamp = snapshot.modState().stamp() + 1,
+        clearLineFlags = false,
+      )
+    )
+    assertEquals(snapshot.modState().sequence() + 1, patched.modState().sequence())
+  }
+
+  @Test
   fun `withMetadata with a different, longer text keeps line-modification tracking consistent`() {
     val patched = insertString(snapshot("a"), fragment = "z") // builds modState().lineSet for a 1-line text
     val longText = snapshot("a\nb\nc\nd\ne") // unrelated, never patched, 5 real lines
@@ -95,14 +110,14 @@ internal class DocumentSnapshotTest {
   }
 
   private fun insertString(snapshot: DocumentSnapshot, fragment: String): DocumentSnapshot {
-    return snapshot.applyOps(
+    return snapshot.applyOp(
       DocumentTextPatch.simple(
         startOffset = 0,
         endOffset = 0,
         newFragment = fragment,
         newModStamp = snapshot.modState().stamp() + 1,
         clearLineFlags = false,
-      ).toOps()
+      )
     )
   }
 

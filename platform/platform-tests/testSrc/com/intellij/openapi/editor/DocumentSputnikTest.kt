@@ -130,12 +130,11 @@ internal class DocumentSputnikTest {
     val before = snapshot("abcdef").applyOp(sputnikOp(KEY_1, TestSputnik()))
     val after = replaceString(before, startOffset = 1, endOffset = 3, fragment = "ZZZ")
     val rebuilt = after.sputnik(KEY_1)!!
-    // a range replacement lowers to Delete then Insert, so the sputnik is rebuilt twice: once per op
-    assertEquals(2, rebuilt.rebuildCount)
+    assertEquals(1, rebuilt.rebuildCount)
     assertEquals("aZZZdef", rebuilt.newWholeText.toString())
     assertEquals("aZZZdef", rebuilt.newText!!.string())
     assertEquals(1, rebuilt.startOffset)
-    assertEquals(1, rebuilt.endOffset)
+    assertEquals(3, rebuilt.endOffset)
     assertEquals("ZZZ", rebuilt.newFragment.toString())
   }
 
@@ -271,7 +270,7 @@ internal class DocumentSputnikTest {
   }
 
   private fun replaceString(snapshot: DocumentSnapshot, startOffset: Int, endOffset: Int, fragment: String): DocumentSnapshot {
-    return snapshot.applyOps(
+    return snapshot.applyOp(
       DocumentTextPatch.complex(
         startOffset = startOffset,
         endOffset = endOffset,
@@ -280,7 +279,7 @@ internal class DocumentSputnikTest {
         clearLineFlags = false,
         originStartOffset = startOffset,
         originEndOffset = endOffset,
-      ).toOps()
+      )
     )
   }
 
@@ -302,22 +301,11 @@ internal class DocumentSputnikTest {
       after: DocumentSnapshot,
       op: DocumentOp,
     ): DocumentSputnik {
-      val startOffset: Int
-      val endOffset: Int
-      val fragment: CharSequence
-      when (op) {
-        is DocumentOp.Insert -> {
-          startOffset = op.offset()
-          endOffset = op.offset()
-          fragment = op.fragment()
-        }
-        is DocumentOp.Delete -> {
-          startOffset = op.offset()
-          endOffset = op.offset() + op.length()
-          fragment = ""
-        }
-        else -> return this
-      }
+      check(op is DocumentTextPatch)
+      val patch = op
+      val startOffset = patch.startOffset()
+      val endOffset = patch.endOffset()
+      val fragment = patch.newFragment()
       val beforeText = before.text()
       val newWholeText = beforeText.chars().replace(startOffset, endOffset, fragment)
       return TestSputnik(

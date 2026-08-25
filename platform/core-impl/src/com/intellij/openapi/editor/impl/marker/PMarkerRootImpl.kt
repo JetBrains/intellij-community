@@ -2,7 +2,7 @@
 package com.intellij.openapi.editor.impl.marker
 
 import com.intellij.openapi.editor.ex.DocumentOp
-import com.intellij.openapi.editor.impl.DocumentOpMarkerEdit
+import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.Processor
@@ -151,8 +151,16 @@ open class PMarkerRootImpl private constructor(
   @TestOnly
   fun containsMarkerId(markerId: Long): Boolean = states.getUnchecked(markerId) != null
 
-  override fun applyEdit(op: DocumentOp): PMarkerRoot {
-    val edit = textEdit(op) ?: return this
+  override fun applyOp(op: DocumentOp): PMarkerRoot {
+    val patch = op as? DocumentTextPatch ?: return this
+    val edit = MarkerEdit(
+      startOffset = patch.startOffset(),
+      endOffset = patch.endOffset(),
+      newLength = patch.newFragment().length,
+      originStartOffset = patch.originStartOffset(),
+      originEndOffset = patch.originEndOffset(),
+      moveOffset = patch.moveOffset(),
+    )
     validateEdit(edit)
     val editStart = edit.startOffset
     val editEnd = edit.endOffset
@@ -374,50 +382,6 @@ open class PMarkerRootImpl private constructor(
     }
 
     fun empty(): PMarkerRootImpl = EMPTY
-
-    private fun textEdit(op: DocumentOp): MarkerEdit? {
-      if (op is DocumentOpMarkerEdit) {
-        return op.markerEdit?.let {
-          MarkerEdit(
-            startOffset = it.startOffset,
-            endOffset = it.endOffset,
-            newLength = it.newLength,
-            originStartOffset = it.originStartOffset,
-            originEndOffset = it.originEndOffset,
-            moveOffset = it.moveOffset,
-          )
-        }
-      }
-      return when (op) {
-        is DocumentOp.Insert -> {
-          val offset = op.offset()
-          MarkerEdit(
-            startOffset = offset,
-            endOffset = offset,
-            newLength = op.fragment().length,
-            originStartOffset = offset,
-            originEndOffset = offset,
-            moveOffset = offset,
-          )
-        }
-        is DocumentOp.Delete -> {
-          val offset = op.offset()
-          val length = op.length()
-          require(offset >= 0) { "DocumentOp.Delete offset must be non-negative" }
-          require(length >= 0) { "DocumentOp.Delete length must be non-negative" }
-          require(offset <= Int.MAX_VALUE - length) { "DocumentOp.Delete range overflows Int" }
-          MarkerEdit(
-            startOffset = offset,
-            endOffset = offset + length,
-            newLength = 0,
-            originStartOffset = offset,
-            originEndOffset = offset + length,
-            moveOffset = offset,
-          )
-        }
-        else -> null
-      }
-    }
 
     private fun validateEdit(edit: MarkerEdit) {
       require(edit.startOffset >= 0) { "Document edit startOffset must be non-negative" }

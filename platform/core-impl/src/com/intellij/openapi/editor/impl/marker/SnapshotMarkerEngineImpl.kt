@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl.marker
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentSnapshot
+import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.DocumentSnapshotImpl
@@ -58,15 +59,29 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine, ReferenceQueueable {
    * [afterSnapshot] must not become visible before this method completes. Otherwise marker creation may race with
    * publishing the derived root.
    */
-  override fun applyEdit(beforeSnapshot: DocumentSnapshot, afterSnapshot: DocumentSnapshot, op: DocumentOp) {
+  override fun applyOp(beforeSnapshot: DocumentSnapshot, afterSnapshot: DocumentSnapshot, op: DocumentOp) {
+    if (op is DocumentTextPatch) {
+      validatePatch(beforeSnapshot, afterSnapshot, op)
+    }
+    else {
+      require(beforeSnapshot.text() === afterSnapshot.text()) {
+        "A non-text DocumentOp must preserve the text instance"
+      }
+    }
+    publishRoot(beforeSnapshot, afterSnapshot) { it.applyOp(op) }
+  }
+
+  private inline fun publishRoot(
+    beforeSnapshot: DocumentSnapshot,
+    afterSnapshot: DocumentSnapshot,
+    transform: (PMarkerRoot) -> PMarkerRoot,
+  ) {
     processQueue()
     require(afterSnapshot !== beforeSnapshot) {
       "Before and after snapshots must be different instances"
     }
-    validateOp(beforeSnapshot, afterSnapshot, op)
-
     val beforeRoot = markerRoot(beforeSnapshot).get()
-    val afterRoot = beforeRoot.applyEdit(op)
+    val afterRoot = transform(beforeRoot)
     val updated = markerRoot(afterSnapshot).compareAndSet(PMarkerRootImpl.empty(), afterRoot)
     require(updated) {
       "After snapshot marker root is already initialized"
@@ -214,37 +229,17 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine, ReferenceQueueable {
   fun containsMarkerId(snapshot: DocumentSnapshot, markerId: Long): Boolean =
     (markerRoot(snapshot).get() as PMarkerRootImpl).containsMarkerId(markerId)
 
-  private fun validateOp(beforeSnapshot: DocumentSnapshot, afterSnapshot: DocumentSnapshot, op: DocumentOp) {
+  private fun validatePatch(beforeSnapshot: DocumentSnapshot, afterSnapshot: DocumentSnapshot, patch: DocumentTextPatch) {
     val beforeLength = beforeSnapshot.text().length()
     val afterLength = afterSnapshot.text().length()
-    when (op) {
-      is DocumentOp.Insert -> {
-        val offset = op.offset()
-        val insertedLength = op.fragment().length
-        require(offset >= 0) { "DocumentOp.Insert offset must be non-negative" }
-        require(offset <= beforeLength) { "Insert offset exceeds before snapshot length" }
-        require(insertedLength <= afterLength && offset <= afterLength - insertedLength) {
-          "Inserted range exceeds after snapshot length"
-        }
-        require(beforeLength == afterLength - insertedLength) {
-          "After snapshot length is inconsistent with DocumentOp.Insert"
-        }
-      }
-      is DocumentOp.Delete -> {
-        val offset = op.offset()
-        val deletedLength = op.length()
-        require(offset >= 0) { "DocumentOp.Delete offset must be non-negative" }
-        require(deletedLength >= 0) { "DocumentOp.Delete length must be non-negative" }
-        require(deletedLength <= beforeLength && offset <= beforeLength - deletedLength) {
-          "Deleted range exceeds before snapshot length"
-        }
-        require(afterLength == beforeLength - deletedLength) {
-          "After snapshot length is inconsistent with DocumentOp.Delete"
-        }
-      }
-      else -> require(beforeLength == afterLength) {
-        "Non-text DocumentOp changed snapshot text length"
-      }
+    val startOffset = patch.startOffset()
+    val endOffset = patch.endOffset()
+    require(startOffset >= 0) { "DocumentTextPatch startOffset must be non-negative" }
+    require(endOffset >= startOffset) { "DocumentTextPatch endOffset must not precede startOffset" }
+    require(endOffset <= beforeLength) { "DocumentTextPatch range exceeds before snapshot length" }
+    val expectedLength = beforeLength.toLong() - (endOffset - startOffset) + patch.newFragment().length
+    require(expectedLength == afterLength.toLong()) {
+      "After snapshot length is inconsistent with DocumentTextPatch"
     }
   }
 
