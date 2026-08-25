@@ -19,6 +19,7 @@ import com.intellij.psi.stubs.StubBuildCachedValuesManager.StubBuildCachedValueP
 import com.intellij.psi.stubs.StubBuildCachedValuesManager.getCachedValueStubBuildOptimized
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import org.intellij.markdown.html.entities.Entities
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
@@ -78,7 +79,7 @@ class MarkdownHeader: MarkdownHeaderImpl {
   }
 
   override fun getPresentation(): ItemPresentation {
-    val headerText = getHeaderText()
+    val headerText = if (isValid) getPresentationText() else null
     val text = headerText ?: "Invalid header: $text"
     return object: ColoredItemPresentation {
       override fun getPresentableText(): String {
@@ -128,24 +129,32 @@ class MarkdownHeader: MarkdownHeaderImpl {
    */
   @ApiStatus.Experimental
   fun buildVisibleText(hideImages: Boolean = true): String? {
+    return buildText { image -> if (hideImages) "" else image.text }
+  }
+
+  private fun getPresentationText(): String? {
+    return buildText { image ->
+      val linkText = PsiTreeUtil.findChildOfType(image, MarkdownLinkText::class.java)
+      linkText?.contentElements?.joinToString(separator = "") { it.text }
+        ?: PsiTreeUtil.findChildOfType(image, MarkdownLinkLabel::class.java)?.labelText.orEmpty()
+    }
+  }
+
+  private fun buildText(imageText: (MarkdownImage) -> String): String? {
     val contentHolder = findContentHolder() ?: return null
     val builder = StringBuilder()
     val children = contentHolder.children().dropWhile { it.hasType(MarkdownTokenTypeSets.WHITE_SPACES) }
-    traverseNameText(builder, children, hideImages)
+    traverseNameText(builder, children, imageText)
     return builder.toString().trim(' ')
   }
 
-  private fun traverseNameText(builder: StringBuilder, elements: Sequence<PsiElement>, hideImages: Boolean) {
+  private fun traverseNameText(builder: StringBuilder, elements: Sequence<PsiElement>, imageText: (MarkdownImage) -> String) {
     for (child in elements) {
       when (child) {
         is LeafPsiElement -> builder.append(child.text)
-        is MarkdownInlineLink -> traverseNameText(builder, child.linkText?.contentElements.orEmpty(), hideImages)
-        is MarkdownImage -> {
-          if (!hideImages) {
-            builder.append(child.text)
-          }
-        }
-        else -> traverseNameText(builder, child.children(), hideImages)
+        is MarkdownInlineLink -> traverseNameText(builder, child.linkText?.contentElements.orEmpty(), imageText)
+        is MarkdownImage -> builder.append(imageText(child))
+        else -> traverseNameText(builder, child.children(), imageText)
       }
     }
   }
