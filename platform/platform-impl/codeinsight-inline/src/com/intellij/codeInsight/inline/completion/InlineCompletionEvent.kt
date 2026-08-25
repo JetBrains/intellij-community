@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.psi.util.PsiUtilCore
+import com.intellij.psi.util.PsiVersioningService
 import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.ApiStatus
 import kotlin.random.Random
@@ -360,14 +361,15 @@ private inline fun getRequest(
   specificEndOffset: Int? = null,
   crossinline getLookupElement: () -> LookupElement? = { null },
 ): InlineCompletionRequest? {
-  return Elf.getElf().runReadAction {
+  return PsiVersioningService.freezePsiVersion {
     if (editor.caretModel.caretCount != 1 ||
         editor.document.isInBulkUpdate /* caret position is not valid */ ) {
-      return@runReadAction null
+      return@freezePsiVersion null
     }
+
     val caret = specificCaret ?: editor.caretModel.currentCaret
-    val project = editor.project ?: return@runReadAction null
-    val file = specificFile ?: getPsiFile(caret, project) ?: return@runReadAction null
+    val project = editor.project ?: return@freezePsiVersion null
+    val file = specificFile ?: getPsiFile(caret, project) ?: return@freezePsiVersion null
     val offset = caret.offset
     InlineCompletionRequest(
       event = event,

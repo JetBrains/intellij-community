@@ -3,6 +3,7 @@ package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.multiverse.EditorContextManager.Companion.getEditorContext
+import com.intellij.codeInsight.multiverse.anyContext
 import com.intellij.codeInsight.navigation.activateFileWithPsiElement
 import com.intellij.ide.IdeView
 import com.intellij.injected.editor.EditorWindow
@@ -36,6 +37,8 @@ import com.intellij.psi.impl.source.tree.injected.InjectedCaret
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.util.PsiUtilCore
+import com.intellij.psi.util.PsiVersioningService
+import com.intellij.util.application
 import com.intellij.util.containers.ContainerUtil
 
 internal class TextEditorPsiDataRule : UiDataRule {
@@ -58,7 +61,9 @@ internal class TextEditorPsiDataRule : UiDataRule {
     val project = editor.project ?: return
     // regular lazy keys
     sink.lazy(CommonDataKeys.PSI_FILE) {
-      getPsiFile(editor, file)
+      PsiVersioningService.freezePsiVersion {
+        getPsiFile(editor, file)
+      }
     }
     sink.lazy(CommonDataKeys.PSI_ELEMENT) {
       getPsiElementIn(editor, caret, file)
@@ -194,7 +199,11 @@ private fun getPsiElementIn(editor: Editor, caret: Caret, file: VirtualFile): Ps
 private fun getPsiFile(editor: Editor, file: VirtualFile): PsiFile? {
   if (editor.isDisposed || !file.isValid) return null
   val project = editor.project ?: return null
-  val context = getEditorContext(editor, project)
+  val context = if (application.isReadAccessAllowed) {
+    getEditorContext(editor, project)
+  } else {
+    anyContext()
+  }
   val psiFile = PsiManager.getInstance(project).findFile(file, context)
   return if (psiFile != null && psiFile.isValid()) psiFile else null
 }

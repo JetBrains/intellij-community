@@ -94,6 +94,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiVersioningService;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ComponentUtil;
@@ -1139,7 +1140,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       public void valueChanged(@NotNull ListSelectionEvent e) {
         if (!myUpdating) {
           LookupElement item = getCurrentItem();
-          fireCurrentItemChanged(oldItem, item);
+          PsiVersioningService.freezePsiVersion(() -> {
+            fireCurrentItemChanged(oldItem, item);
+            return null;
+          });
           oldItem = item;
         }
       }
@@ -1514,21 +1518,24 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     assert !myUpdating;
     LookupElement prevItem = getCurrentItem();
     myUpdating = true;
-    try {
-      boolean reused = mayCheckReused && checkReused();
-      boolean selectionVisible = isSelectionVisible();
-      boolean itemsChanged = updateList(onExplicitAction, reused);
-      if (isVisible()) {
-        LOG.assertTrue(!ApplicationManager.getApplication().isUnitTestMode());
-        cellRenderer.refreshUi();
-        myUi.refreshUi(selectionVisible, itemsChanged, reused, onExplicitAction);
+    PsiVersioningService.freezePsiVersion(() -> {
+      try {
+        boolean reused = mayCheckReused && checkReused();
+        boolean selectionVisible = isSelectionVisible();
+        boolean itemsChanged = updateList(onExplicitAction, reused);
+        if (isVisible()) {
+          LOG.assertTrue(!ApplicationManager.getApplication().isUnitTestMode());
+          cellRenderer.refreshUi();
+          myUi.refreshUi(selectionVisible, itemsChanged, reused, onExplicitAction);
+        }
       }
-    }
-    finally {
-      myUpdating = false;
-      fireCurrentItemChanged(prevItem, getCurrentItem());
-      fireUiRefreshed();
-    }
+      finally {
+        myUpdating = false;
+        fireCurrentItemChanged(prevItem, getCurrentItem());
+        fireUiRefreshed();
+      }
+      return null;
+    });
   }
 
   public void markReused() {

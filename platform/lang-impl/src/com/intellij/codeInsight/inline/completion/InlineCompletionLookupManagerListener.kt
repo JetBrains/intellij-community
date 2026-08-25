@@ -8,7 +8,6 @@ import com.intellij.codeInsight.lookup.LookupManagerListener
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
-import com.intellij.openapi.editor.elf.Elf
 import com.intellij.psi.util.PsiVersioningService
 
 private class InlineCompletionLookupManagerListener : LookupManagerListener {
@@ -24,7 +23,7 @@ private class InlineCompletionLookupManagerListener : LookupManagerListener {
           LOG.trace { "[Inline Completion] currentItemChanged ignored: item is null (clientId=${ClientId.currentOrNull})" }
           return
         }
-        val editor = Elf.getElf().runReadAction { event.lookup.editor }
+        val editor = event.lookup.editor
         val lookupChanged = InlineCompletionEvent.LookupChange(editor, event)
         val handler = InlineCompletion.getHandlerOrNull(lookupChanged.topLevelEditor)
         LOG.trace {
