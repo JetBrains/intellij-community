@@ -98,7 +98,6 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.hash4j")
     embeddedModule("intellij.libraries.hdr.histogram")
     embeddedModule("intellij.libraries.http.client")
-    embeddedModule("intellij.libraries.icu4j")
     embeddedModule("intellij.libraries.imgscalr")
     embeddedModule("intellij.libraries.ini4j")
     embeddedModule("intellij.libraries.ion")

@@ -1061,7 +1061,6 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/hash4j/intellij.libraries.hash4j.iml" filepath="$PROJECT_DIR$/libraries/hash4j/intellij.libraries.hash4j.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/hdr-histogram/intellij.libraries.hdr.histogram.iml" filepath="$PROJECT_DIR$/libraries/hdr-histogram/intellij.libraries.hdr.histogram.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/http-client/intellij.libraries.http.client.iml" filepath="$PROJECT_DIR$/libraries/http-client/intellij.libraries.http.client.iml" />
-      <module fileurl="file://$PROJECT_DIR$/libraries/icu4j/intellij.libraries.icu4j.iml" filepath="$PROJECT_DIR$/libraries/icu4j/intellij.libraries.icu4j.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/imgscalr/intellij.libraries.imgscalr.iml" filepath="$PROJECT_DIR$/libraries/imgscalr/intellij.libraries.imgscalr.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/ini4j/intellij.libraries.ini4j.iml" filepath="$PROJECT_DIR$/libraries/ini4j/intellij.libraries.ini4j.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/ion/intellij.libraries.ion.iml" filepath="$PROJECT_DIR$/libraries/ion/intellij.libraries.ion.iml" />

@@ -102,7 +102,6 @@
     <orderEntry type="module" module-name="intellij.libraries.classgraph" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.protobuf" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.icu4j" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.plugins" scope="TEST" />

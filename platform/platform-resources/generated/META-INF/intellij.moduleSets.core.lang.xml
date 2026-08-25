@@ -76,7 +76,6 @@
     <module name="intellij.libraries.hash4j" loading="embedded"/>
     <module name="intellij.libraries.hdr.histogram" loading="embedded"/>
     <module name="intellij.libraries.http.client" loading="embedded"/>
-    <module name="intellij.libraries.icu4j" loading="embedded"/>
     <module name="intellij.libraries.imgscalr" loading="embedded"/>
     <module name="intellij.libraries.ini4j" loading="embedded"/>
     <module name="intellij.libraries.ion" loading="embedded"/>

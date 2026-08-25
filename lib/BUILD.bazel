@@ -11625,21 +11625,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "com.ibm.icu/icu4j-78.3.jar_copy",
-    src = "@com_ibm_icu-icu4j-78_3_http//file",
-    out = "com.ibm.icu/icu4j-78.3.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "libraries-icu4j-icu4j",
-    jar = "@com_ibm_icu-icu4j-78_3_http//file",
-    source_jar = "@com_ibm_icu-icu4j-78_3-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "org.imgscalr/imgscalr-lib-4.2.jar_copy",
     src = "@org_imgscalr-imgscalr-lib-4_2_http//file",
     out = "org.imgscalr/imgscalr-lib-4.2.jar",

@@ -248,6 +248,12 @@ object CommunityLibraryLicenses {
     LibraryLicense("classgraph", libraryName = "classgraph", url = "https://github.com/classgraph/classgraph")
       .license("codehaus", "https://github.com/codehaus/classworlds/blob/master/classworlds/LICENSE.txt"),
 
+    LibraryLicense("CLDR plural categories (derived data)", version = "48", attachedTo = "intellij.compose.ide.plugin.resources", url = "https://cldr.unicode.org/")
+      .license("Unicode", "https://www.unicode.org/license.txt"),
+
+    LibraryLicense("CLDR plural rules (derived data)", version = "48", attachedTo = "intellij.platform.util", url = "https://cldr.unicode.org/")
+      .license("Unicode", "https://www.unicode.org/license.txt"),
+
     LibraryLicense("Clikt", libraryName = "clikt", url = "https://github.com/ajalt/clikt")
       .apache("https://github.com/ajalt/clikt/blob/master/LICENSE.txt")
       .copyrightText("Copyright 2018 AJ Alt")
@@ -487,8 +493,8 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/apache/httpcomponents-client/blob/master/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.APACHE),
 
-    LibraryLicense("ICU4J", libraryName = "icu4j", url = "https://icu.unicode.org/")
-      .license("Unicode", "https://www.unicode.org/copyright.html"),
+    LibraryLicense("ICU4J MessagePattern (derived code)", version = "78.3", attachedTo = "intellij.java.i18n", url = "https://icu.unicode.org/")
+      .license("Unicode", "https://www.unicode.org/license.txt"),
 
     LibraryLicense("imgscalr", libraryName = "imgscalr", url = "https://github.com/thebuzzmedia/imgscalr")
       .apache("https://github.com/rkalla/imgscalr/blob/master/LICENSE"),

@@ -451,7 +451,6 @@ libraries/hamcrest-more-matchers
 libraries/hash4j
 libraries/hdr-histogram
 libraries/http-client
-libraries/icu4j
 libraries/imgscalr
 libraries/ini4j
 libraries/io

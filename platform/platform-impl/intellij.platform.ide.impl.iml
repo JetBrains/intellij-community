@@ -100,7 +100,6 @@
     <orderEntry type="module" module-name="intellij.libraries.classgraph" />
     <orderEntry type="module" module-name="intellij.libraries.protobuf" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
-    <orderEntry type="module" module-name="intellij.libraries.icu4j" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.plugins" />

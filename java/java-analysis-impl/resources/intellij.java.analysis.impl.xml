@@ -19,7 +19,6 @@
     <module name="intellij.java.syntax"/>
     <module name="intellij.libraries.asm"/>
     <module name="intellij.libraries.fastutil"/>
-    <module name="intellij.libraries.icu4j"/>
     <module name="intellij.libraries.jsoup"/>
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.libraries.stream"/>
