@@ -24,6 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.yield
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModelImpl
@@ -36,6 +37,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.awt.Canvas
+import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 
 /**
@@ -123,7 +125,55 @@ internal class TerminalInlineCompletionControllerTest : BasePlatformTestCase() {
     }
   }
 
-  private fun createFixture(): Fixture = Fixture(project)
+  @Test
+  fun `control typed keys and modified backspace are ignored`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    createFixture().use { fixture ->
+      fixture.type('\n', TerminalOffset.ZERO)
+      for (modifiersEx in listOf(
+        InputEvent.ALT_DOWN_MASK,
+        InputEvent.ALT_GRAPH_DOWN_MASK,
+        InputEvent.CTRL_DOWN_MASK,
+        InputEvent.META_DOWN_MASK,
+        InputEvent.SHIFT_DOWN_MASK,
+      )) {
+        fixture.press(KeyEvent.VK_BACK_SPACE, TerminalOffset.ZERO, modifiersEx)
+      }
+
+      assertThat(fixture.provider.events.tryReceive().getOrNull()).isNull()
+    }
+  }
+
+  @Test
+  fun `completion is triggered for a new empty command`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    createFixture().use { fixture ->
+      fixture.startNewCommand()
+
+      assertThat(fixture.provider.events.receive()).isEqualTo(RecordedNewPrompt(0))
+    }
+  }
+
+  @Test
+  fun `completion is not triggered for the initial empty command`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    createFixture().use { fixture ->
+      yield()
+
+      assertThat(fixture.provider.events.tryReceive().getOrNull()).isNull()
+    }
+  }
+
+  @Test
+  fun `unrelated key events are ignored`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    createFixture().use { fixture ->
+      fixture.keyEvent(KeyEvent.KEY_PRESSED, KeyEvent.VK_A, 'a', TerminalOffset.ZERO)
+      fixture.keyEvent(KeyEvent.KEY_RELEASED, KeyEvent.VK_A, 'a', TerminalOffset.ZERO)
+
+      assertThat(fixture.provider.events.tryReceive().getOrNull()).isNull()
+    }
+  }
+
+  private suspend fun createFixture(): Fixture = Fixture(project).also {
+    yield()  // Let the status collector consume the initial TypingCommand.
+  }
 
   private class Fixture(project: Project) : AutoCloseable {
     private val scope = terminalProjectScope(project).childScope("TerminalInlineCompletionControllerTest")
@@ -140,7 +190,7 @@ internal class TerminalInlineCompletionControllerTest : BasePlatformTestCase() {
     }
 
     private val typingTracker = TerminalTypingTrackerImpl(project, model, shellIntegration, scope)
-    val controller = TerminalInlineCompletionController(editor, model, typingTracker, scope)
+    val controller = TerminalInlineCompletionController(editor, model, shellIntegration, typingTracker, scope)
 
     init {
       InlineCompletionHandler.registerTestHandler(provider, scope.asDisposable())
@@ -160,6 +210,20 @@ internal class TerminalInlineCompletionControllerTest : BasePlatformTestCase() {
 
     fun press(keyCode: Int, cursorOffset: TerminalOffset, modifiersEx: Int = 0) {
       typingTracker.handleKeyEvent(TerminalKeyEventImpl(KeyEvent(Canvas(), KeyEvent.KEY_PRESSED, 0, modifiersEx, keyCode, KeyEvent.CHAR_UNDEFINED), cursorOffset))
+    }
+
+    suspend fun startNewCommand() {
+      shellIntegration.onCommandStarted(TerminalOffset.ZERO, "")
+      yield()
+      shellIntegration.onCommandFinished(exitCode = 0)
+      yield()
+      shellIntegration.onPromptStarted(TerminalOffset.ZERO)
+      yield()
+      shellIntegration.onPromptFinished(TerminalOffset.ZERO)
+    }
+
+    fun keyEvent(id: Int, keyCode: Int, keyChar: Char, cursorOffset: TerminalOffset, modifiersEx: Int = 0) {
+      typingTracker.handleKeyEvent(TerminalKeyEventImpl(KeyEvent(Canvas(), id, 0, modifiersEx, keyCode, keyChar), cursorOffset))
     }
 
     override fun close() {
@@ -182,8 +246,11 @@ internal class TerminalInlineCompletionControllerTest : BasePlatformTestCase() {
     override suspend fun getSuggestion(request: com.intellij.codeInsight.inline.completion.InlineCompletionRequest): InlineCompletionSuggestion {
       val recordedEvent = when (val event = request.event) {
         is InlineCompletionEvent.DocumentChange -> {
-          val typing = event.typing as TypingEvent.OneSymbol
-          RecordedTyping(typing.typed.single(), typing.range.startOffset)
+          when (val typing = event.typing) {
+            is TypingEvent.OneSymbol -> RecordedTyping(typing.typed.single(), typing.range.startOffset)
+            is TypingEvent.NewLine -> RecordedNewPrompt(typing.range.startOffset)
+            else -> error("Unexpected typing event: $typing")
+          }
         }
         is InlineCompletionEvent.Backspace -> RecordedBackspace
         else -> error("Unexpected event: $event")
@@ -201,6 +268,8 @@ internal class TerminalInlineCompletionControllerTest : BasePlatformTestCase() {
   private sealed interface RecordedEvent
 
   private data class RecordedTyping(val char: Char, val offset: Int) : RecordedEvent
+
+  private data class RecordedNewPrompt(val offset: Int) : RecordedEvent
 
   private data object RecordedBackspace : RecordedEvent
 }
