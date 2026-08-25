@@ -359,7 +359,9 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     // suggestion (e.g. uv's "uv" and "uvBase" both offer "Set up uv environment"), so collapse by the visible label and
     // keep the first (best-sorted) — its tool id drives selection. Each row runs that option
     // (PyInterpreterRef.Autoconfigure(toolId) → autoconfigureInterpreter).
-    return PyProjectSdkConfigurationExtension.findAllSortedForModule(module)
+    // The cached probe: the widget re-reads this whenever the project model ticks, and each configurator answers by
+    // running its tool — one project open used to mean several `poetry check --lock` runs.
+    return PyProjectSdkConfigurationExtension.findAllSortedForModuleCached(module).options
       .distinctBy { it.createSdkInfo.intentionName }
       .mapIndexed { index, option ->
         EvoLeafDto(
@@ -559,6 +561,9 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
           val installed = tool.performToolInstallation(fileSystem.eelDescriptor.toEelApi()).getOrNull()
                           ?: return@withSdkConfigurationLock EvoSelectResultDto.Error(PySdkBundle.message("evolution.error.select.failed"))
           info.pathPersister(installed)
+          // The tool exists now, so every cached answer that was computed without it is wrong — drop this module's,
+          // the way `pathPersister` just dropped the executable-detection one.
+          PyProjectSdkConfigurationExtension.invalidateCachedForModule(module)
           PyProjectSdkConfigurationExtension.findAllSortedForModule(module).firstOrNull { it.toolId.id == toolId }
             ?.let { pyProject.applyAutoconfigOption(it) }
           EvoSelectResultDto.Ok
