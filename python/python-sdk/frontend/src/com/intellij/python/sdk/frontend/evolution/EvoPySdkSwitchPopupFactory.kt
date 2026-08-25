@@ -37,6 +37,9 @@ import com.intellij.python.sdk.common.evolution.EvoPyProjectDto
 import com.intellij.python.sdk.common.evolution.EvoSectionDto
 import com.intellij.python.sdk.common.evolution.PyInterpreterDto
 import com.intellij.python.sdk.common.evolution.PyInterpreterRef
+import com.intellij.python.sdk.common.evolution.EvoNodeKind
+import com.intellij.python.sdk.common.evolution.EvoNodeStats
+import com.intellij.python.sdk.common.evolution.PyEvoWidgetCollector
 import com.intellij.python.sdk.common.evolution.evoRpc
 import com.intellij.python.sdk.common.evolution.evoRpcOrNull
 import com.intellij.python.sdk.common.evolution.requestEvoNode
@@ -76,6 +79,7 @@ private val managePackagesAction = object : AnAction(
 ), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     e.project?.let {
+      PyEvoWidgetCollector.controlUsed(it, PyEvoWidgetCollector.Control.MANAGE_PACKAGES)
       ToolWindowManager.getInstance(it).getToolWindow("Python Packages")?.show()
     }
   }
@@ -132,10 +136,22 @@ internal class EvoPySdkSwitchPopupFactory(
   val shortcuts: List<EvoLeafDto>,
   val scope: CoroutineScope,
 ) {
+  /**
+   * The statistics identity of [nodeId] among the nodes this popup was built from.
+   *
+   * The two frontend-synthetic sections have no DTO to read it off, so they name themselves; anything else the backend
+   * did not send is reported as unknown rather than guessed at.
+   */
+  private fun nodeStats(nodeId: String): EvoNodeStats = when (nodeId) {
+    ASSOCIATED_NODE_ID -> EvoNodeStats(EvoNodeKind.ASSOCIATED)
+    SHORTCUTS_NODE_ID -> EvoNodeStats(EvoNodeKind.SHORTCUTS)
+    else -> nodes.firstOrNull { it.id == nodeId }?.let { EvoNodeStats.of(it) } ?: EvoNodeStats(EvoNodeKind.OTHER)
+  }
+
   private fun EvoLeafDto.toElement(nodeId: String, traceId: String): EvoTreeElement {
     // Checked first: a row that cannot be acted on has no version picker to offer either.
     unavailable?.let { reason ->
-      return EvoTreeUnavailableLeafElement(selectEnvAction(project, pyProjectKey, this, nodeId, traceId, scope), reason)
+      return EvoTreeUnavailableLeafElement(selectEnvAction(project, pyProjectKey, this, nodeId, nodeStats(nodeId), traceId, scope), reason)
     }
     // A version-picker row (hatch not-yet-created env): a node whose submenu is the versions; choosing one creates the
     // env with that Python. The row's ref (CreateEnv) carries the per-row create token (hatch: the env name) → folder.
@@ -148,8 +164,17 @@ internal class EvoPySdkSwitchPopupFactory(
         versionRows = versionRows(
           versions,
           { addVersionAction(nodeId, it, createToken) },
-          { base -> baseInterpreterRow(base) { createEnv(nodeId, base.token, createToken, null, null) } },
-          { option -> installActionRow { createEnv(nodeId, option.token, createToken, null, null, option.installVersion()) } },
+          { base ->
+            baseInterpreterRow(base) {
+              createEnv(nodeId, base.token, createToken, null, null, source = PyEvoWidgetCollector.Source.EXPANDED_VERSION)
+            }
+          },
+          { option ->
+            installActionRow {
+              createEnv(nodeId, option.token, createToken, null, null,
+                        source = PyEvoWidgetCollector.Source.INSTALL_ROW, installVersion = option.installVersion())
+            }
+          },
         ),
         // The env this is picking a base for, for the submenu's header. Declared in pyproject.toml, so it is shown
         // rather than offered for editing — unlike the name uv and pip make up for a folder they are about to create.
@@ -160,7 +185,7 @@ internal class EvoPySdkSwitchPopupFactory(
       )
     }
     return when (kind) {
-      EvoLeafKind.SELECT_ENV -> EvoTreeLeafElement(selectEnvAction(project, pyProjectKey, this, nodeId, traceId, scope))
+      EvoLeafKind.SELECT_ENV -> EvoTreeLeafElement(selectEnvAction(project, pyProjectKey, this, nodeId, nodeStats(nodeId), traceId, scope))
       // A runnable backend action (advanced add-interpreter) carries an actionId; a display-only row stays a no-op stub.
       EvoLeafKind.ACTION -> EvoTreeLeafElement(
         if (actionId != null) evoBackendActionLeaf(project, pyProjectKey, nodeId, this, scope) else toStubAction()
@@ -236,8 +261,8 @@ internal class EvoPySdkSwitchPopupFactory(
         plain += leaf.toElement(nodeId, traceId)
         continue
       }
-      val rows = installInterpreterRow(project, pyProjectKey, leaf, nodeId, scope)?.let { listOf(it) }
-                 ?: baseInterpreterRows(project, pyProjectKey, leaf, nodeId, scope).takeIf { it.isNotEmpty() }
+      val rows = installInterpreterRow(project, pyProjectKey, leaf, nodeId, nodeStats(nodeId), scope)?.let { listOf(it) }
+                 ?: baseInterpreterRows(project, pyProjectKey, leaf, nodeId, nodeStats(nodeId), scope).takeIf { it.isNotEmpty() }
                  // Nothing to choose between: the version already has its environment, so the row is that environment.
                  ?: listOf(leaf.asPathTitledRow(nodeId, traceId))
       flushPlain()
@@ -285,10 +310,15 @@ internal class EvoPySdkSwitchPopupFactory(
           versionRows = versionRows(
             addNewEnv.options,
             { addVersionAction(nodeId, it, addNewEnv.path, editable, addNewEnv.name) },
-            { base -> baseInterpreterRow(base) { createEnv(nodeId, base.token, addNewEnv.path, editable, addNewEnv.name) } },
+            { base ->
+              baseInterpreterRow(base) {
+                createEnv(nodeId, base.token, addNewEnv.path, editable, addNewEnv.name, source = PyEvoWidgetCollector.Source.EXPANDED_VERSION)
+              }
+            },
             { option ->
               installActionRow {
-                createEnv(nodeId, option.token, addNewEnv.path, editable, addNewEnv.name, option.installVersion())
+                createEnv(nodeId, option.token, addNewEnv.path, editable, addNewEnv.name,
+                          source = PyEvoWidgetCollector.Source.INSTALL_ROW, installVersion = option.installVersion())
               }
             },
           ),
@@ -352,7 +382,8 @@ internal class EvoPySdkSwitchPopupFactory(
       }
 
       override fun actionPerformed(e: AnActionEvent) =
-        createEnv(nodeId, option.token, path, editableName, defaultName, installVersion = option.installVersion())
+        createEnv(nodeId, option.token, path, editableName, defaultName,
+                  source = PyEvoWidgetCollector.Source.ADD_NEW_VERSION, installVersion = option.installVersion())
 
       override val alternativesTitle: String
         get() = PySdkFrontendBundle.message("evo.sdk.status.bar.popup.add.new.base.title")
@@ -361,7 +392,9 @@ internal class EvoPySdkSwitchPopupFactory(
       // mouse move. Each lambda still reads the edited name when it runs, not now.
       override val alternatives: List<EvoTreeLeafElement> by lazy {
         option.bases.map { base ->
-          baseInterpreterRow(base) { createEnv(nodeId, base.token, path, editableName, defaultName) }
+          baseInterpreterRow(base) {
+            createEnv(nodeId, base.token, path, editableName, defaultName, source = PyEvoWidgetCollector.Source.ALTERNATIVES)
+          }
         }
       }
     }
@@ -373,11 +406,18 @@ internal class EvoPySdkSwitchPopupFactory(
     path: String,
     editableName: EvoEditableName?,
     defaultName: String?,
+    source: PyEvoWidgetCollector.Source,
     installVersion: String? = null,
   ) {
     // A taken/blank name can't back a new env (the field shows it in red) — don't create.
-    if (editableName != null && !editableName.isValid) return
-    createEvoEnv(project, pyProjectKey, nodeId, token, path, editableName?.value ?: defaultName, installVersion, scope)
+    if (editableName != null && !editableName.isValid) {
+      // A discrete user action that produced nothing: worth reporting once here, where the click is refused, rather
+      // than per keystroke from the name field's validator.
+      editableName.problem?.let { PyEvoWidgetCollector.controlUsed(project, PyEvoWidgetCollector.Control.NAME_REJECTED, nodeStats(nodeId), it.toEvoNameProblem()) }
+      return
+    }
+    createEvoEnv(project, pyProjectKey, nodeId, nodeStats(nodeId), token, path, editableName?.value ?: defaultName,
+                 installVersion, source, scope)
   }
 
   /**
@@ -436,9 +476,11 @@ internal class EvoPySdkSwitchPopupFactory(
       sections = listOf(
         EvoTreeSection(
           label = null,
-          elements = associated.map { EvoTreeLeafElement(selectEnvAction(project, pyProjectKey, it, ASSOCIATED_NODE_ID, traceId, scope)) },
+          elements = associated.map { EvoTreeLeafElement(selectEnvAction(project, pyProjectKey, it, ASSOCIATED_NODE_ID, EvoNodeStats(EvoNodeKind.ASSOCIATED), traceId, scope)) },
         ),
       ),
+      // A static node, so it never runs the lazy loader that reports every other node's opening.
+      onOpened = { PyEvoWidgetCollector.staticNodeOpened(project, EvoNodeStats(EvoNodeKind.ASSOCIATED)) },
     )
 
   /**
@@ -457,7 +499,7 @@ internal class EvoPySdkSwitchPopupFactory(
     val toolNodeElements = buildList<EvoTreeElement> {
       for (node in nodes) {
         if (node.id == ADVANCED_NODE_ID && associated.isNotEmpty()) add(associatedInterpretersNode(traceId))
-        add(EvoTreeLazyNodeElement(node.label, node.icon.icon(), showOutput = { showToolOutput(node.id, traceId) }) { force ->
+        add(EvoTreeLazyNodeElement(node.label, node.icon.icon(), EvoNodeStats.of(node), showOutput = { showToolOutput(node.id, traceId) }) { force ->
           val result = evoRpc { requestEvoNode(projectId, pyProjectKey, node.id, traceId, force) }
           val refreshable = (result as? EvoLoadResultDto.Ok)?.refreshable == true
           val collapsed = result.toSections(node.id, traceId)
@@ -489,7 +531,7 @@ internal class EvoPySdkSwitchPopupFactory(
       null -> shortcuts.takeIf { it.isNotEmpty() }?.let { leaves ->
         EvoTreeSection(
           label = ListSeparator(PySdkFrontendBundle.message("evo.sdk.status.bar.popup.shortcuts")),
-          elements = leaves.map { EvoTreeLeafElement(selectEnvAction(project, pyProjectKey, it, SHORTCUTS_NODE_ID, traceId, scope)) },
+          elements = leaves.map { EvoTreeLeafElement(selectEnvAction(project, pyProjectKey, it, SHORTCUTS_NODE_ID, EvoNodeStats(EvoNodeKind.SHORTCUTS), traceId, scope)) },
         )
       }
       else -> EvoTreeSection(
@@ -518,6 +560,7 @@ internal class EvoPySdkSwitchPopupFactory(
    * does nothing when clicked.
    */
   private fun showToolOutput(nodeId: String, traceId: String) {
+    PyEvoWidgetCollector.controlUsed(project, PyEvoWidgetCollector.Control.PROCESS_OUTPUT, nodeStats(nodeId))
     scope.launch {
       val opened = evoRpcOrNull { requestEvoShowToolProcessOutput(project.projectId(), nodeId, traceId) } == true
       if (opened) return@launch
@@ -574,6 +617,18 @@ internal class EvoPySdkSwitchPopupFactory(
     ).apply {
       setExecuteExpandedItemOnClick(true)
     }
+}
+
+/**
+ * Maps the name field's own reason onto the reported one.
+ *
+ * Mapped here rather than sharing one enum: `EvoEditableName.Problem` is a frontend UI concern, and a metric's value
+ * space should not become something a UI refactor can change by accident.
+ */
+private fun EvoEditableName.Problem.toEvoNameProblem(): PyEvoWidgetCollector.NameProblem = when (this) {
+  EvoEditableName.Problem.BLANK -> PyEvoWidgetCollector.NameProblem.BLANK
+  EvoEditableName.Problem.ILLEGAL -> PyEvoWidgetCollector.NameProblem.ILLEGAL
+  EvoEditableName.Problem.TAKEN -> PyEvoWidgetCollector.NameProblem.TAKEN
 }
 
 internal class EvoSdkManagerTreePopup(

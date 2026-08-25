@@ -40,6 +40,7 @@ jvm_library(
         "//platform/platform-frontend:frontend",
         "//platform/platform-impl/rpc",
         "//python/python-sdk/common",
+        "//platform/statistics",
     ],
 )
 
@@ -74,6 +75,7 @@ jvm_library(
         "//platform/platform-frontend:frontend_test_lib",
         "//platform/platform-impl/rpc:rpc_test_lib",
         "//python/python-sdk/common:common_test_lib",
+        "//platform/statistics:statistics_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.sdk.frontend` end

@@ -123,7 +123,12 @@ open class EvoActionPopupStep(
       // Only open a submenu for a loaded, non-empty node — an empty popup crashes Swing layout (AIOOBE 0). The
       // "add new environment" node is handled here too; EvoTreePopup repositions its submenu to the left.
       is EvoTreeNodeElement ->
-        if (element.isEnabled && element.hasContent()) EvoActionPopupStep(null, element, dataContext, scope) else null
+        if (element.isEnabled && element.hasContent()) {
+          // Only a static node opts in; a lazy one reports itself from its loader instead, so this cannot double-count.
+          (element as? EvoTreeStaticNodeElement)?.onOpened?.invoke()
+          EvoActionPopupStep(null, element, dataContext, scope)
+        }
+        else null
       is EvoTreeLeafElement -> {
         // In an add-new submenu with an invalid name (blank/taken) the version rows are inert: don't select or close —
         // keep the popup open so the user can fix the name (the field is red with an explaining tooltip).

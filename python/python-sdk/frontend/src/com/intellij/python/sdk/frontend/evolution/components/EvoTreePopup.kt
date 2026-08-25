@@ -8,6 +8,9 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.ide.actions.ShowSettingsUtilImpl
+import com.intellij.python.sdk.common.evolution.EvoNodeKind
+import com.intellij.python.sdk.common.evolution.EvoNodeStats
+import com.intellij.python.sdk.common.evolution.PyEvoWidgetCollector
 import com.intellij.ide.setToolTipText
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.util.NlsContexts
@@ -427,6 +430,14 @@ open class EvoTreePopup private constructor(
    * the size and the position all end up agreeing.
    */
   private fun toggleExpandedAndReopen() {
+    // Read before the toggle: this reports what the user asked for, not the state left behind.
+    CommonDataKeys.PROJECT.getData(dataContext)?.let { project ->
+      val expanding = evoStep?.versionRows?.isExpanded == false
+      PyEvoWidgetCollector.controlUsed(
+        project,
+        if (expanding) PyEvoWidgetCollector.Control.EXPAND else PyEvoWidgetCollector.Control.COLLAPSE,
+      )
+    }
     val step = evoStep ?: return
     val parentPopup = parent as? EvoTreePopup ?: return
     step.toggleExpanded()
@@ -665,7 +676,12 @@ open class EvoTreePopup private constructor(
           showAlternatives(more)
           return
         }
-        reloadIconItemAt(e.point)?.let { item -> evoStep?.reloadItem(item) }
+        reloadIconItemAt(e.point)?.let { item ->
+          CommonDataKeys.PROJECT.getData(dataContext)?.let { project ->
+            PyEvoWidgetCollector.controlUsed(project, PyEvoWidgetCollector.Control.RELOAD, item.evoNodeStats() ?: EvoNodeStats(EvoNodeKind.OTHER))
+          }
+          evoStep?.reloadItem(item)
+        }
         if (settingsGearAt(e.point)) openPackageManagersSettings()
       }
     })
@@ -730,6 +746,9 @@ open class EvoTreePopup private constructor(
   private fun showAlternatives(item: EvoTreeItem) {
     val step = evoStep ?: return
     val alternatives = item.alternatives ?: return
+    CommonDataKeys.PROJECT.getData(dataContext)?.let { project ->
+      PyEvoWidgetCollector.controlUsed(project, PyEvoWidgetCollector.Control.ALTERNATIVES, item.evoNodeStats() ?: EvoNodeStats(EvoNodeKind.OTHER))
+    }
     if (myChild != null) return   // already open for this row
     handleNextStep(step.alternativesStep(alternatives), item, null)
   }
@@ -847,6 +866,7 @@ open class EvoTreePopup private constructor(
 
   private fun openPackageManagersSettings() {
     val project = CommonDataKeys.PROJECT.getData(dataContext) ?: return
+    PyEvoWidgetCollector.controlUsed(project, PyEvoWidgetCollector.Control.GEAR_SETTINGS)
     cancel() // close the popup before showing the (modal) settings dialog
     // Select the Package Managers page by its configurable id (findById), not by display name.
     ShowSettingsUtilImpl.showSettingsDialog(project, "python.package.managers.group.settings", null)

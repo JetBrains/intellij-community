@@ -11,6 +11,7 @@
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.rpc"/>
     <module name="intellij.platform.rpc.topics"/>
+    <module name="intellij.platform.statistics"/>
   </dependencies>
   <!-- endregion -->
 
@@ -29,5 +30,10 @@
                  description="Evo interpreter widget: how many directory levels below a base dir env discovery descends to find nested virtualenvs (a direct child is level 1)"/>
     <registryKey key="python.evolution.widget.scan.max.dirs" defaultValue="2000"
                  description="Evo interpreter widget: upper bound on directories examined per env discovery, so a huge project tree can't turn a node expansion into a long walk"/>
+
+    <!-- Evo interpreter widget usage statistics. Declared here (common) for the same reason as the keys above: the
+         group is logged from both the frontend process (popup interactions) and the backend one (apply outcomes),
+         and an EventLogGroup registers per-process. -->
+    <statistics.counterUsagesCollector implementationClass="com.intellij.python.sdk.common.evolution.PyEvoWidgetCollector"/>
   </extensions>
 </idea-plugin>

@@ -5,6 +5,9 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.NonNls
+import com.intellij.python.sdk.common.evolution.EvoNodeStats
+import com.intellij.python.sdk.common.evolution.PyEvoWidgetCollector
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.NlsActions.ActionDescription
@@ -245,6 +248,13 @@ class EvoTreeStaticNodeElement(
   text: String,
   icon: Icon,
   sections: List<EvoTreeSection>,
+  /**
+   * Run when this node's submenu is opened, for a node that wants to know.
+   *
+   * A static node is built from data already in hand, so it has no [EvoTreeLazyNodeElement.loader] to hang a
+   * "was opened" signal off — and without this it is indistinguishable from never having been touched.
+   */
+  val onOpened: (() -> Unit)? = null,
 ) : EvoTreeNodeElement(text, icon) {
   init {
     this.sections.addAll(sections)
@@ -268,6 +278,11 @@ class EvoLoadedNode(
 class EvoTreeLazyNodeElement(
   text: String,
   icon: Icon,
+  /**
+   * What usage statistics report this node as: its kind, plus the backing tool's `fusId` when it has one. Taken from
+   * the node's DTO rather than derived from [text], which is a translated label and must never reach a metric.
+   */
+  val nodeStats: EvoNodeStats,
   /**
    * Opens the process output for this node's last run, for when the row reports a failure. Null when the node has no
    * process behind it at all.
@@ -304,9 +319,28 @@ class EvoTreeLazyNodeElement(
   fun reload(project: Project, scope: CoroutineScope, listeners: List<ListPopupStep.ListPopupModelListener>): Unit =
     load(project, scope, listeners, forceRefresh = true)
 
+  /**
+   * Reports how this node's load ended, whatever the ending. Every branch below routes through here, so a tool that
+   * fails or answers with nothing is as visible in the data as one that works — the whole point of the metric.
+   */
+  private fun reportLoad(
+    project: Project,
+    outcome: PyEvoWidgetCollector.NodeOutcome,
+    forceRefresh: Boolean,
+    startedAt: Long,
+  ) = PyEvoWidgetCollector.nodeExpanded(
+    project = project,
+    node = nodeStats,
+    outcome = outcome,
+    isReload = forceRefresh,
+    wasSlow = refreshable,
+    durationMs = (System.nanoTime() - startedAt) / 1_000_000,
+  )
+
   private fun load(project: Project, scope: CoroutineScope, listeners: List<ListPopupStep.ListPopupModelListener>, forceRefresh: Boolean) {
     scope.launch(Dispatchers.IO) {
       loadMutex.withLock {
+        val startedAt = System.nanoTime()
         // The [sections] list backs the popup's Swing model (via EvoActionPopupStep.getValues) and updateState fires
         // ListPopupModelListener.onModelChanged. Both must run on the EDT — mutating the model off-EDT corrupts the
         // list UI (transient duplicated rows, wrong size, AIOOBE in WideSelectionListUI). Only the loader runs on IO.
@@ -326,6 +360,7 @@ class EvoTreeLazyNodeElement(
             presentation.isEnabled = true
             updateState(State.DONE, listeners)
           }
+          reportLoad(project, PyEvoWidgetCollector.NodeOutcome.OK, forceRefresh, startedAt)
         }
         catch (warning: EvoWarningException) {
           withContext(Dispatchers.EDT) {
@@ -333,14 +368,18 @@ class EvoTreeLazyNodeElement(
             presentation.putClientProperty(ActionUtil.TOOLTIP_TEXT, warning.message)
             updateState(State.NOT_AVAILABLE, listeners)
           }
+          // The tool answered, it just had nothing to offer — not a failure, and counted separately from one.
+          reportLoad(project, PyEvoWidgetCollector.NodeOutcome.EMPTY, forceRefresh, startedAt)
         }
         // Two ways loading a node can fail: the backend reported it ([EvoErrorException]), or the backend could not be
         // asked at all. Anything else is a bug here and propagates instead of becoming a tooltip.
         catch (error: EvoLoadException) {
           showLoadError(error, listeners)
+          reportLoad(project, PyEvoWidgetCollector.NodeOutcome.ERROR, forceRefresh, startedAt)
         }
         catch (error: EvoRpcFailedException) {
           showLoadError(error, listeners)
+          reportLoad(project, PyEvoWidgetCollector.NodeOutcome.ERROR, forceRefresh, startedAt)
         }
       }
     }

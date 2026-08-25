@@ -10,6 +10,7 @@
     <module name="intellij.python.community.common"/>
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.community.execService.python"/>
+    <module name="intellij.python.pytools"/>
     <module name="intellij.python.sdk.backend"/>
     <module name="intellij.python.sdk.common"/>
   </dependencies>
@@ -17,6 +18,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <python.community.common.toolToIconMapper implementation="com.intellij.python.venv.PyReqToolIdToIconMapper"/>
+    <!-- Deliberately not an ExternalPyTool or PackageManagerPyTool, so pip stays off both settings pages. -->
+    <python.pytools.pyTool implementation="com.intellij.python.venv.PipPyTool"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">

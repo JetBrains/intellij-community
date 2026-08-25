@@ -387,7 +387,48 @@ data class EvoNodeDto(
   val id: @NonNls String,
   val label: @Nls String,
   val icon: IconId,
+  /** What kind of node this is, for usage statistics — see [EvoNodeKind]. */
+  val kind: EvoNodeKind = EvoNodeKind.OTHER,
+  /**
+   * The backing tool's `PyExecutable.fusId` when [kind] is [EvoNodeKind.TOOL], else null.
+   *
+   * A well-known Python package name (`uv`, `poetry`, `hatch`, `conda`), which is what makes it reportable: it is
+   * validated against the same dictionary of package names the rest of the Python tooling reports through.
+   */
+  val fusId: @NonNls String? = null,
 )
+
+/**
+ * What a widget node *is*, as opposed to which tool sits behind it.
+ *
+ * Split from the tool identity because most nodes have no tool: only [TOOL] carries an [EvoNodeDto.fusId], and the
+ * others are structural sections whose identity is exhausted by this enum. Reported as-is in usage statistics, so a
+ * new constant is a deliberate change to what the metric can say.
+ */
+@ApiStatus.Internal
+@Serializable
+enum class EvoNodeKind {
+  /**
+   * A node that stands for a Python tool, and so reports one in [EvoNodeDto.fusId] — uv, Poetry, Conda, Hatch, and
+   * the plain-virtualenv node, which reports itself as `pip` (the name it already carries in the popup).
+   *
+   * The only kind with a tool name, which is what lets "which tools do people use" be one query over one field
+   * rather than a union over several kinds.
+   */
+  TOOL,
+
+  /** The "Advanced" add-interpreter actions node. */
+  ADVANCED,
+
+  /** Frontend-synthetic: the "Associated environments" node, whose rows are existing SDKs. */
+  ASSOCIATED,
+
+  /** Frontend-synthetic: the "Shortcuts" autoconfigure suggestions shown when no interpreter is set. */
+  SHORTCUTS,
+
+  /** A node this build has no constant for — a provider added since, or a third-party one. */
+  OTHER,
+}
 
 /** One leaf row inside a loaded node. */
 @ApiStatus.Internal

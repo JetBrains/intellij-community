@@ -52,8 +52,13 @@ import com.intellij.python.sdk.common.evolution.EvoPyProjectDto
 import com.intellij.python.sdk.common.evolution.EvoSelectResultDto
 import com.intellij.python.sdk.common.evolution.PyEvoRegistry
 import com.intellij.python.sdk.common.evolution.PyEvoSdkApi
+import com.intellij.python.sdk.common.evolution.EvoNodeKind
+import com.intellij.python.sdk.common.evolution.EvoNodeStats
+import com.intellij.python.sdk.common.evolution.PyEvoWidgetCollector
 import com.intellij.python.sdk.common.evolution.PyInterpreterDto
 import com.intellij.python.sdk.common.evolution.PyInterpreterRef
+import com.intellij.python.sdk.common.evolution.evoRefKind
+import com.intellij.python.sdk.common.evolution.evoReusesExistingEnv
 import com.intellij.python.uv.common.UV_TOOL_ID
 import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.ErrorSink
@@ -70,6 +75,7 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector
 import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
@@ -115,6 +121,23 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 
 private val LOG = logger<PyEvoSdkApiProvider>()
+
+/**
+ * The statistics identity of [nodeId], taken from the provider that owns it.
+ *
+ * Asking the provider rather than mapping the id here means a tool never has to be named twice: the node's kind and
+ * its `fusId` are declared once, on the provider, and adding a tool changes nothing in the statistics code.
+ *
+ * An [PyInterpreterRef.Autoconfigure] row is addressed by the synthetic `shortcuts` node rather than by a provider, so
+ * it is reported as [EvoNodeKind.SHORTCUTS]. Its `PyProjectSdkConfigurationExtension` tool id is a different
+ * vocabulary from `PyExecutable.fusId` and is deliberately not reported as one.
+ */
+private fun evoNodeStats(nodeId: String, ref: PyInterpreterRef? = null): EvoNodeStats {
+  if (ref is PyInterpreterRef.Autoconfigure) return EvoNodeStats(EvoNodeKind.SHORTCUTS)
+  val provider = PyEvoEnvironmentProvider.EP_NAME.extensionList.firstOrNull { it.toolId == ToolId(nodeId) }
+                 ?: return EvoNodeStats(EvoNodeKind.OTHER)
+  return EvoNodeStats(provider.nodeKind, provider.fusId)
+}
 
 /** Descending star ratings for the "Shortcuts" autoconfigure rows: the best (first) option gets a full star, then 4→1. */
 private val AUTOCONFIG_RATING_ICONS = listOf(
@@ -429,7 +452,41 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
       }
   }
 
+  /**
+   * Times [doSelectInterpreter] and reports its outcome.
+   *
+   * A wrapper rather than log calls inside, because that function returns from a dozen places (every provider failure
+   * is its own early return) and an `interpreter.applied` that only fired on some of them would silently under-report
+   * exactly the failures we want to see. Whether a base Python had to be downloaded is read off the incoming ref
+   * rather than plumbed out of the install step: [installBaseIfRequested] installs precisely when
+   * `CreateEnv.installPythonVersion` is set.
+   */
   override suspend fun selectInterpreter(
+    projectId: ProjectId,
+    pyProjectKey: String,
+    ref: PyInterpreterRef,
+    nodeId: String,
+  ): EvoSelectResultDto {
+    val startedAt = System.nanoTime()
+    val result = doSelectInterpreter(projectId, pyProjectKey, ref, nodeId)
+    // No project means resolvePyProject already failed; there is nothing to attribute the event to.
+    projectId.findProjectOrNull()?.let { project ->
+      PyEvoWidgetCollector.interpreterApplied(
+        project = project,
+        node = evoNodeStats(nodeId, ref),
+        refKind = ref.evoRefKind(),
+        outcome = when (result) {
+          is EvoSelectResultDto.Ok -> PyEvoWidgetCollector.Outcome.OK
+          is EvoSelectResultDto.Error -> PyEvoWidgetCollector.Outcome.ERROR
+        },
+        downloadedBase = (ref as? PyInterpreterRef.CreateEnv)?.installPythonVersion != null,
+        durationMs = (System.nanoTime() - startedAt) / 1_000_000,
+      )
+    }
+    return result
+  }
+
+  private suspend fun doSelectInterpreter(
     projectId: ProjectId,
     pyProjectKey: String,
     ref: PyInterpreterRef,
@@ -472,6 +529,10 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
         is PyInterpreterRef.Autoconfigure -> error("handled above")
       }
       pyProject.applySdk(sdk)
+      // Keeps `python.new.interpreter.added` continuous across the classic→evo widget migration: without this, every
+      // interpreter configured through the widget — now the default in both PyCharm and IDEA — is missing from that
+      // group, and the series reads as a decline in interpreter creation rather than a change of entry point.
+      PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(sdk, ref.evoReusesExistingEnv())
       EvoSelectResultDto.Ok
     }
   }
@@ -586,6 +647,9 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     // A tool root outside this module's own workspace (a differently-scoped tool) still gets the SDK, as before.
     module.getRootModuleOrNull(option.toolId)?.also { configurePythonSdk(it.project, it, sdk) }
     applySdk(sdk)
+    // Same continuity argument as in doSelectInterpreter: a "Shortcuts" row configures an interpreter too, and the
+    // `python.sdk.configuration` events these options already emit describe the env creation, not the SDK that landed.
+    PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(sdk, isPreviouslyConfigured = false)
     return true
   }
 
@@ -649,11 +713,15 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
   override suspend fun performNodeAction(projectId: ProjectId, pyProjectKey: String, nodeId: String, actionId: String): EvoSelectResultDto {
     val pyProject = resolvePyProject(projectId, pyProjectKey)
                     ?: return EvoSelectResultDto.Error(PySdkBundle.message("evolution.error.pyproject.not.found", pyProjectKey))
-    // Only the "advanced" node (AdvancedEvoEnvironmentProvider) exposes backend actions today; its actionId is the
-    // index into collectAddInterpreterActions.
-    val index = actionId.toIntOrNull()?.takeIf { nodeId == EvoNodeIds.ADVANCED }
-                ?: return EvoSelectResultDto.Error(PySdkBundle.message("evolution.error.select.failed"))
     val project = pyProject.project
+    // Only the "advanced" node (AdvancedEvoEnvironmentProvider) exposes backend actions today; its actionId is the
+    // index into collectAddInterpreterActions. Resolved after `project` so a malformed id is reported rather than
+    // dropped — an unreported failure here would read as the action never having been clicked.
+    val index = actionId.toIntOrNull()?.takeIf { nodeId == EvoNodeIds.ADVANCED }
+                ?: run {
+                  PyEvoWidgetCollector.backendActionPerformed(project, evoNodeStats(nodeId), PyEvoWidgetCollector.Outcome.ERROR)
+                  return EvoSelectResultDto.Error(PySdkBundle.message("evolution.error.select.failed"))
+                }
     val module = pyProject.module
     val widgetScope = project.service<EvoWidgetTraceScope>().scope
     // Re-collect the same actions the node was built from and run the index-th one. Associate any SDK the action
@@ -667,8 +735,12 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
       }
     }
     val action = actions.getOrNull(index)
-                 ?: return EvoSelectResultDto.Error(PySdkBundle.message("evolution.error.select.failed"))
+                 ?: run {
+                   PyEvoWidgetCollector.backendActionPerformed(project, evoNodeStats(nodeId), PyEvoWidgetCollector.Outcome.ERROR)
+                   return EvoSelectResultDto.Error(PySdkBundle.message("evolution.error.select.failed"))
+                 }
     withContext(Dispatchers.EDT) { action.createDialog()?.show() }
+    PyEvoWidgetCollector.backendActionPerformed(project, evoNodeStats(nodeId), PyEvoWidgetCollector.Outcome.OK)
     return EvoSelectResultDto.Ok
   }
 
