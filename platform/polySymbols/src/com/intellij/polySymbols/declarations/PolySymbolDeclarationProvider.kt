@@ -3,6 +3,7 @@ package com.intellij.polySymbols.declarations
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.impl.checkDeclarationSymbolNameMatchesText
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.TestOnly
 
@@ -27,12 +28,18 @@ interface PolySymbolDeclarationProvider {
 
     @JvmStatic
     fun getAllEquivalentDeclarations(element: PsiElement, offsetInElement: Int, target: PolySymbol): Collection<PolySymbolDeclaration> {
-      return EP_NAME.extensionList.flatMap { it.getEquivalentDeclarations(element, offsetInElement, target) }
+      return EP_NAME.extensionList.flatMap { provider ->
+        provider.getEquivalentDeclarations(element, offsetInElement, target)
+          .onEach { checkDeclarationSymbolNameMatchesText(provider, it) }
+      }
     }
 
     @JvmStatic
     fun getAllDeclarations(element: PsiElement, offsetInElement: Int): Collection<PolySymbolDeclaration> {
-      return EP_NAME.extensionList.flatMap { it.getDeclarations(element, offsetInElement) }
+      return EP_NAME.extensionList.flatMap { provider ->
+        provider.getDeclarations(element, offsetInElement)
+          .onEach { checkDeclarationSymbolNameMatchesText(provider, it) }
+      }
     }
   }
 }

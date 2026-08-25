@@ -80,6 +80,12 @@ class PsiPolySymbolReferenceProviderImpl : PsiSymbolReferenceProvider {
       for (provider in getProviders(element)) {
         val showProblems = provider.shouldShowProblems(element)
         val offsetsFromProvider = provider.getOffsetsToReferencedSymbols(element)
+        offsetsFromProvider.forEach { (offset, symbol) ->
+          val expectedName = (symbol as? PolySymbolMatch)?.matchedName ?: symbol.name
+          checkReferenceSymbolNameMatchesText(
+            provider.javaClass.name, element, TextRange(offset, offset + expectedName.length), expectedName,
+          )
+        }
         result.addAll(createPolySymbolReferences(element, offsetsFromProvider, showProblems))
         offsets.putAllValues(offsetsFromProvider)
       }

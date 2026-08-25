@@ -74,9 +74,9 @@ internal class PolySymbolOwnReferencesBuilderImpl(private val element: PolySymbo
     private val resolvedSymbols by lazy {
       val text = textRangeInElement.substring(psiElement.text)
       resolver().flatMap { symbol ->
-        assert(symbol.name == text) {
-          "Symbol name ${symbol.name} does not match text range contents $text: $symbol"
-        }
+        checkReferenceSymbolNameMatchesText(
+          "own reference resolver for ${psiElement.javaClass.name}", psiElement, textRangeInElement, symbol.name,
+        )
         // Filter out complex symbols in own references.
         // Overall, only simple symbol kind references are allowed on own references.
         symbol.unwrapMatchedSymbols()
