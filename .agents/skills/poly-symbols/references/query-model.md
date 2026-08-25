@@ -88,6 +88,50 @@ you need custom `createPointer()` chaining through an owning symbol (rare).
 down the scope stack for that kind once this scope has been consulted — use it when a scope is
 known to be a complete, self-contained answer (no outer scope could contribute more).
 
+**A symbol's own `kind` must always agree with the query kind that found it - never return a symbol
+whose `.kind` disagrees with the kind a scope is answering for.** `PolySymbolScopeWithCache` enforces
+this literally: both `initialize`'s `consumer` and `PartialMatchingSupport.getMatchingSymbols` throw
+`IllegalArgumentException` when a produced symbol's `.kind` isn't among what `provides(kind)` accepts.
+A hand-written raw `PolySymbolScope` has no such check, but the rule is still correct there too - skip
+it and any consumer reading `.kind` off the raw (non-unwrapped) resolved symbol silently sees the wrong
+kind. This bites whenever a scope's *query-routing* kind is answered by a real symbol whose *own* kind
+is genuinely different - e.g. GDScript's `GdPsiResourceClassesPolySymbolScope` answers
+`GdPolySymbolKind.RESOURCE_CLASS` queries (`extends "res://base.gd"`) with whatever the resource file
+actually declares, which always reports kind `CLASS` (`GdPsiClassSymbol` for a named file,
+`GdPsiResourceClassSymbol` for an anonymous one) - `RESOURCE_CLASS` is a routing-only kind that no
+symbol class ever reports as its own.
+
+Do **not** reach for a kind-overriding `PolySymbolDelegate` to fix this (there is no platform utility
+for that, and inventing a bespoke one is the wrong tool) - wrap the real symbol in a one-segment
+`PolySymbolMatch` reporting the routing kind instead:
+```kotlin
+PolySymbolMatch.create(
+  matchedName, routingKind,
+  PolySymbolNameSegment.create(0, matchedName.length, realSymbol.withName(matchedName)),
+)
+```
+`PolySymbolMatch` is already the platform's supported "reports kind X, composed of a real symbol
+underneath" mechanism, and - unlike a hypothetical kind-overriding delegate - it's exactly what
+`unwrapMatchedSymbols()` (used pervasively, including by own references' final name check - see the
+Hard Constraint note in [References — own references](#references--own-references-polysymbolownreferences))
+already knows how to peel back to the real symbol. The platform's own
+`ReferencingPolySymbol.create(kind, name, vararg kinds)`
+(`community/platform/polySymbols/src/com/intellij/polySymbols/utils/ReferencingPolySymbol.kt`) builds
+exactly this shape declaratively, but only for the case where the referencing and the real target
+share the *same name*: it works by *re-querying* other scopes for `kinds` via a `symbolReference(name)`
+pattern, using that one shared name (its own worked example: Angular Forms' `formControlName="x"`
+resolving as a `FormGroup`'s `"x"` key - see [case-studies.md](case-studies.md#angular)). When the
+queried name and the real target's own name differ too (GDScript's case: `"res://base.gd"` vs. the
+real class's `"Base"`) and the target is already known - found by a direct lookup, not a fresh
+by-name search - `ReferencingPolySymbol.create` doesn't apply; build the `PolySymbolMatch` by hand as
+above instead, `withName`-aliasing the real symbol *inside* the one nameSegment (not just on the outer
+match) so `unwrapMatchedSymbols()`'s eventual leaf still reports the queried name - the outer
+`PolySymbolMatch`'s own name is computed from the segment's range regardless, but the *leaf* the own-
+reference check inspects after unwrapping is the aliased real symbol, and that leaf's name is what
+must match. GDScript's `referencingResourceClassSymbol`
+(`dotnet/Plugins/godot-support/gdscript/.../polySymbols/scope/GdPsiResourceClassesPolySymbolScope.kt`)
+is the worked example of this hand-built variant.
+
 ## PolySymbolQueryScopeContributor — the registrar DSL
 
 ```kotlin
@@ -338,13 +382,16 @@ ways this can go wrong, and the one that actually works:
   shared, reusable implementation of this: `PolySymbol.withName(name: String): PolySymbolDelegate<PolySymbol>`
   (`community/platform/polySymbols/src/com/intellij/polySymbols/utils/PolySymbolUtils.kt`, backed by a
   private `AliasedPolySymbol` delegate, `renameTarget = null`) — apply the wrapping *in the query scope*
-  that resolves the mismatched name (e.g. GDScript's `GdPsiResourceClassesPolySymbolScope.getMatchingSymbols`,
-  or Angular's `Angular2BlockReferenceProvider.getReferencedSymbol` aliasing a canonicalized, whitespace-
-  collapsed block name like `else if` back onto whatever spacing variant was actually typed), not in the
-  reference/own-reference call site, so every consumer of that scope (own references, completion, etc.)
-  sees a consistently-named symbol. (GDScript previously had its own bespoke `GdAliasedNameSymbol` for
-  this; it has been migrated onto the shared `withName`/`AliasedPolySymbol` utility, so if you see
-  `GdAliasedNameSymbol` referenced elsewhere, that's stale.) `PolySymbolDelegate.unwrapAllDelegates()`
+  that resolves the mismatched name (e.g. Angular's `Angular2BlockReferenceProvider.getReferencedSymbol`
+  aliasing a canonicalized, whitespace-collapsed block name like `else if` back onto whatever spacing
+  variant was actually typed; GDScript's `GdPsiResourceClassesPolySymbolScope.referencingResourceClassSymbol`
+  does the same aliasing one layer deeper, *inside* a `PolySymbolMatch` nameSegment, because that scope
+  also has a **kind** mismatch to fix at the same time - see the `PolySymbolScope` section's note on
+  kind-consistency above), not in the reference/own-reference call site, so every consumer of that
+  scope (own references, completion, etc.) sees a consistently-named symbol. (GDScript previously had
+  its own bespoke `GdAliasedNameSymbol` for this; it has been migrated onto the shared
+  `withName`/`AliasedPolySymbol` utility, so if you see `GdAliasedNameSymbol` referenced elsewhere,
+  that's stale.) `PolySymbolDelegate.unwrapAllDelegates()`
   recovers the real symbol for production code that
   needs it (`GdSymbolResolverUtil.resolveSymbolReferences()` calls this centrally); test helpers that
   call the platform's raw `resolveSymbolReference()`/`multiResolveSymbolReference()` do **not** unwrap
