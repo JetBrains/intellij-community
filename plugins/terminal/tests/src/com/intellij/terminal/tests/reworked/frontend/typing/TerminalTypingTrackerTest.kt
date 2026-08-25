@@ -159,6 +159,71 @@ internal class TerminalTypingTrackerTest : BasePlatformTestCase() {
   }
 
   @Test
+  fun `a newline while a session is pending keeps later predictions anchored to the next line`(): Unit = doTest { fixture ->
+    // All three keys are typed/pressed before any output confirms them, so their predicted positions
+    // depend entirely on the session correctly tracking the line break introduced by Enter.
+    fixture.type('a', TerminalOffset.ZERO)
+    fixture.press(KeyEvent.VK_ENTER, TerminalOffset.ZERO)
+    fixture.type('b', TerminalOffset.ZERO)
+    fixture.assertTrackerState(hasInputSession = true, pendingEventsCount = 3, predictionsCount = 3)
+
+    fixture.updateOutput("a<cursor>")
+
+    assertThat(fixture.events.receive()).isEqualTo(RecordedConfirmedTyping('a', 0))
+    fixture.assertTrackerState(hasInputSession = true, pendingEventsCount = 2, predictionsCount = 2)
+
+    fixture.updateOutput("a\nb<cursor>")
+
+    assertThat(fixture.events.receive()).isEqualTo(RecordedConfirmedNewLine)
+    // 'b' lands at offset 2 (the start of the second line), not offset 1 (right after 'a' on the first line) —
+    // proving the pending session advanced past the newline instead of staying anchored to the first line.
+    assertThat(fixture.events.receive()).isEqualTo(RecordedConfirmedTyping('b', 2))
+    assertThat(fixture.events.tryReceive().getOrNull()).isNull()
+    fixture.assertTrackerState(hasInputSession = false, pendingEventsCount = 0, predictionsCount = 0)
+  }
+
+  @Test
+  fun `enter with nothing else pending starts a session and is confirmed once the cursor reaches the next line`(): Unit =
+    doTest { fixture ->
+      fixture.press(KeyEvent.VK_ENTER, TerminalOffset.ZERO)
+      fixture.assertTrackerState(hasInputSession = true, pendingEventsCount = 1, predictionsCount = 1)
+
+      fixture.updateOutput("\n<cursor>")
+
+      assertThat(fixture.events.receive()).isEqualTo(RecordedConfirmedNewLine)
+      fixture.assertTrackerState(hasInputSession = false, pendingEventsCount = 0, predictionsCount = 0)
+    }
+
+  @Test
+  fun `typing right after enter, before the newline is confirmed, is anchored to the new line`(): Unit = doTest { fixture ->
+    // Nothing was pending before Enter, so without a session started for it, 'b' would fall back to the raw
+    // cursor offset from its own key event — which still points at the old line, since the newline hasn't been
+    // confirmed by any output yet.
+    fixture.press(KeyEvent.VK_ENTER, TerminalOffset.ZERO)
+    fixture.type('b', TerminalOffset.ZERO)
+    fixture.assertTrackerState(hasInputSession = true, pendingEventsCount = 2, predictionsCount = 2)
+
+    fixture.updateOutput("\nb<cursor>")
+
+    assertThat(fixture.events.receive()).isEqualTo(RecordedConfirmedNewLine)
+    // offset 1 is the start of the second line; offset 0 would mean 'b' was wrongly left on the first line.
+    assertThat(fixture.events.receive()).isEqualTo(RecordedConfirmedTyping('b', 1))
+    assertThat(fixture.events.tryReceive().getOrNull()).isNull()
+    fixture.assertTrackerState(hasInputSession = false, pendingEventsCount = 0, predictionsCount = 0)
+  }
+
+  @Test
+  fun `modified enter is ignored even with a session pending`(): Unit = doTest { fixture ->
+    fixture.type('a', TerminalOffset.ZERO)
+    fixture.assertTrackerState(hasInputSession = true, pendingEventsCount = 1, predictionsCount = 1)
+
+    fixture.press(KeyEvent.VK_ENTER, TerminalOffset.ZERO, InputEvent.SHIFT_DOWN_MASK)
+
+    assertThat(fixture.events.tryReceive().getOrNull()).isNull()
+    fixture.assertTrackerState(hasInputSession = true, pendingEventsCount = 1, predictionsCount = 1)
+  }
+
+  @Test
   fun `navigation keys invalidate pending input with a mismatch`(): Unit = doTest { fixture ->
     for (keyCode in listOf(
       KeyEvent.VK_TAB,
@@ -351,8 +416,9 @@ internal class TerminalTypingTrackerTest : BasePlatformTestCase() {
     private fun toRecordedEvent(event: TerminalTypingEvent): RecordedEvent = when (event) {
       is TerminalTypingEvent.Confirmed -> {
         val relativeOffset = (event.keyEvent.cursorOffset - model.startOffset).toInt()
-        when (event.keyEvent.awtEvent.id) {
-          KeyEvent.KEY_TYPED -> RecordedConfirmedTyping(event.keyEvent.awtEvent.keyChar, relativeOffset)
+        when {
+          event.keyEvent.awtEvent.id == KeyEvent.KEY_TYPED -> RecordedConfirmedTyping(event.keyEvent.awtEvent.keyChar, relativeOffset)
+          event.keyEvent.awtEvent.keyCode == KeyEvent.VK_ENTER -> RecordedConfirmedNewLine
           else -> RecordedConfirmedBackspace
         }
       }
@@ -407,6 +473,8 @@ internal class TerminalTypingTrackerTest : BasePlatformTestCase() {
   private data class RecordedConfirmedTyping(val char: Char, val offset: Int) : RecordedEvent
 
   private data object RecordedConfirmedBackspace : RecordedEvent
+
+  private data object RecordedConfirmedNewLine : RecordedEvent
 
   private data object RecordedMismatch : RecordedEvent
 }

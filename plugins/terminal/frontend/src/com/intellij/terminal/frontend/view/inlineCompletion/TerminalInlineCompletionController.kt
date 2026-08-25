@@ -59,8 +59,14 @@ class TerminalInlineCompletionController(
   private fun handleConfirmed(keyEvent: TerminalKeyEvent) {
     val documentOffset = (keyEvent.cursorOffset - model.startOffset).toInt()
     when (keyEvent.awtEvent.id) {
-      KeyEvent.KEY_TYPED -> invokeTyping(keyEvent.awtEvent.keyChar, documentOffset)
-      KeyEvent.KEY_PRESSED -> invokeBackspace()
+      KeyEvent.KEY_TYPED -> {
+        invokeTyping(keyEvent.awtEvent.keyChar, documentOffset)
+      }
+      KeyEvent.KEY_PRESSED -> {
+        if (keyEvent.awtEvent.keyCode == KeyEvent.VK_BACK_SPACE) {
+          invokeBackspace()
+        }
+      }
     }
   }
 

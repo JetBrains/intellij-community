@@ -11,6 +11,7 @@ import com.intellij.terminal.frontend.view.TerminalKeyEvent
 import com.intellij.terminal.frontend.view.TerminalKeyEventImpl
 import com.intellij.terminal.frontend.view.typeahead.TerminalBackspacePrediction
 import com.intellij.terminal.frontend.view.typeahead.TerminalLogicalPosition
+import com.intellij.terminal.frontend.view.typeahead.TerminalNewLinePrediction
 import com.intellij.terminal.frontend.view.typeahead.TerminalTypeAheadSession
 import com.intellij.terminal.frontend.view.typeahead.TerminalTypingPrediction
 import com.intellij.terminal.frontend.view.typeahead.TypeAheadConfirmationResult
@@ -81,6 +82,9 @@ class TerminalTypingTrackerImpl(
         KeyEvent.VK_BACK_SPACE -> if (event.awtEvent.hasNoModifiers()) {
           handleBackspace(event, event.cursorOffset)
         }
+        KeyEvent.VK_ENTER -> if (event.awtEvent.hasNoModifiers()) {
+          handleNewLine(event)
+        }
         KeyEvent.VK_TAB,
         KeyEvent.VK_LEFT,
         KeyEvent.VK_RIGHT,
@@ -123,6 +127,14 @@ class TerminalTypingTrackerImpl(
     addPendingEvent(PendingInputEvent(keyEvent, prediction.position))
     session.applyPrediction(prediction)
     LOG.trace("Typing input deferred: backspace")
+  }
+
+  private fun handleNewLine(keyEvent: TerminalKeyEvent) {
+    val session = getOrCreateInputSession(keyEvent.cursorOffset)
+    val prediction = TerminalNewLinePrediction(session.cursorPosition, isTentative = true)
+    addPendingEvent(PendingInputEvent(keyEvent, prediction.position))
+    session.applyPrediction(prediction)
+    LOG.trace("Typing input deferred: newline")
   }
 
   private fun getOrCreateInputSession(cursorOffset: TerminalOffset): TerminalTypeAheadSession {
@@ -239,8 +251,11 @@ class TerminalTypingTrackerImpl(
     }
   }
 
-  private fun PendingInputEvent.describeForLog(): String =
-    if (keyEvent.awtEvent.id == KeyEvent.KEY_TYPED) "typing '${keyEvent.awtEvent.keyChar}'" else "backspace"
+  private fun PendingInputEvent.describeForLog(): String = when {
+    keyEvent.awtEvent.id == KeyEvent.KEY_TYPED -> "typing '${keyEvent.awtEvent.keyChar}'"
+    keyEvent.awtEvent.keyCode == KeyEvent.VK_ENTER -> "newline"
+    else -> "backspace"
+  }
 
   private data class PendingInputEvent(
     val keyEvent: TerminalKeyEvent,
