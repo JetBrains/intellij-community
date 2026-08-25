@@ -7,8 +7,10 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.RangeMarkerStorage;
+import com.intellij.openapi.editor.impl.marker.DefaultMarkerPolicy;
 import com.intellij.openapi.editor.impl.marker.MarkerSpec;
 import com.intellij.openapi.editor.impl.marker.PMarker;
+import com.intellij.openapi.editor.impl.marker.PersistentMarkerPolicy;
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
@@ -40,11 +42,19 @@ public final class RangeMarkerStorageImpl implements RangeMarkerStorage {
                                                   int startOffset,
                                                   int endOffset,
                                                   boolean surviveOnExternalChange) {
+    if (Holder.USE_PMARKER_IMPLEMENTATION) {
+      MarkerSpec spec = new MarkerSpec(false, false, false,
+                                       surviveOnExternalChange ? PersistentMarkerPolicy.INSTANCE : DefaultMarkerPolicy.INSTANCE);
+      return SnapshotMarkerEngineImpl.INSTANCE.createRangeMarker(
+        hostDocument,
+        ((DocumentImpl)hostDocument).getCore().snapshot(),
+        startOffset,
+        endOffset,
+        spec
+      );
+    }
     if (surviveOnExternalChange) {
       return new PersistentRangeMarker(hostDocument, startOffset, endOffset, true);
-    }
-    if (Holder.USE_PMARKER_IMPLEMENTATION) {
-      return SnapshotMarkerEngineImpl.INSTANCE.createRangeMarker(hostDocument, ((DocumentImpl)hostDocument).getCore().snapshot(), startOffset, endOffset, new MarkerSpec(false, false, false));
     }
     return new RangeMarkerImpl(hostDocument, startOffset, endOffset, true, false);
   }
@@ -86,7 +96,9 @@ public final class RangeMarkerStorageImpl implements RangeMarkerStorage {
         return false;
       }
     }
-    return SnapshotMarkerEngineImpl.INSTANCE.processRangeMarkersOverlappingWith(myDocument.getCore().snapshot(), start, end, tastePreference, processor);
+    return SnapshotMarkerEngineImpl.INSTANCE.processRangeMarkersOverlappingWith(
+      myDocument.getCore().snapshot(), start, end, tastePreference, processor
+    );
   }
 
   @Override

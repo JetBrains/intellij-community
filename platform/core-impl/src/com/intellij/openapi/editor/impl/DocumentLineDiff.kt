@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.util.diff.Diff
 import com.intellij.util.diff.FilesTooBigForDiffException
 import com.intellij.util.text.MergingCharSequence
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 /**
@@ -25,6 +24,9 @@ internal class DocumentLineDiff(
   private var changesInitialized: Boolean = false
   private var changesUnavailable: Boolean = false
   private var changes: Diff.Change? = null
+
+  @TestOnly
+  fun isComputed(): Boolean = changesInitialized
 
   @Throws(FilesTooBigForDiffException::class)
   fun translateLine(line: Int, changeStartLine: Int, afterText: CharSequence): Int {

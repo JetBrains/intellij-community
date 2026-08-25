@@ -1279,6 +1279,27 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     assertFalse(normal.isValid());
   }
 
+  public void testPersistentMarkerDoesUseSharedDiff() {
+    String oldText = "alpha\ntarget\nomega";
+    String newText = "prefix\nalpha\ntarget\nomega\nsuffix";
+    Document document = new DocumentImpl(oldText, true);
+    int markerStart = oldText.indexOf("target") + 1;
+    RangeMarker marker = document.createRangeMarker(markerStart, markerStart + 3, true);
+    AtomicReference<DocumentEventImpl> changeEvent = new AtomicReference<>();
+    document.addDocumentListener(new DocumentListener() {
+      @Override
+      public void documentChanged(@NotNull DocumentEvent event) {
+        changeEvent.set((DocumentEventImpl)event);
+      }
+    }, getTestRootDisposable());
+
+    replaceString(document, 0, oldText.length(), newText);
+
+    int expectedStart = newText.indexOf("target") + 1;
+    assertTrue(changeEvent.get().getLineDiff().isComputed());
+    assertValidMarker(marker, expectedStart, expectedStart + 3);
+  }
+
   public void testMoveTextRetargetsMarkers() {
     RangeMarkerEx marker1 = createMarker("01234567890", 1, 3);
     DocumentEx document = (DocumentEx)marker1.getDocument();

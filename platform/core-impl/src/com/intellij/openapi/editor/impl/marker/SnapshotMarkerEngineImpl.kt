@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.impl.marker
 
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.ex.RangeMarkerEx
@@ -60,16 +59,18 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine, ReferenceQueueable {
    * [afterSnapshot] must not become visible before this method completes. Otherwise marker creation may race with
    * publishing the derived root.
    */
-  override fun applyOp(beforeSnapshot: DocumentSnapshot, afterSnapshot: DocumentSnapshot, op: DocumentOp) {
-    if (op is DocumentTextPatch) {
-      validatePatch(beforeSnapshot, afterSnapshot, op)
+  override fun applyPatch(beforeSnapshot: DocumentSnapshot, afterSnapshot: DocumentSnapshot, patch: DocumentTextPatch) {
+    validatePatch(beforeSnapshot, afterSnapshot, patch)
+    publishRoot(beforeSnapshot, afterSnapshot) {
+      it.applyPatch(patch, beforeSnapshot.text(), afterSnapshot.text())
     }
-    else {
-      require(beforeSnapshot.text() === afterSnapshot.text()) {
-        "A non-text DocumentOp must preserve the text instance"
-      }
+  }
+
+  override fun inherit(beforeSnapshot: DocumentSnapshot, afterSnapshot: DocumentSnapshot) {
+    require(beforeSnapshot.text() === afterSnapshot.text()) {
+      "Snapshots must share the same text instance"
     }
-    publishRoot(beforeSnapshot, afterSnapshot) { it.applyOp(op) }
+    publishRoot(beforeSnapshot, afterSnapshot) { it }
   }
 
   /**

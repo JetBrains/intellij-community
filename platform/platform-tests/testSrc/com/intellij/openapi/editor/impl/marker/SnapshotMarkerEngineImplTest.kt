@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.editor.impl.RangeMarkerStorageImpl
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.ref.GCUtil
@@ -21,6 +22,17 @@ import java.util.concurrent.CountDownLatch
 import kotlin.concurrent.thread
 
 class SnapshotMarkerEngineImplTest {
+  @Test
+  fun `persistent marker uses snapshot engine`() {
+    RangeMarkerStorageImpl.usePMarkerImplementationIn<RuntimeException> {
+      val document = DocumentImpl("text")
+
+      val marker = document.createRangeMarker(1, 3, true)
+
+      assertTrue(marker is PMarker)
+    }
+  }
+
   @Test
   fun `clean snapshot merge keeps markers created in both branches`() {
     val fixture = Fixture("abcdef")
@@ -265,6 +277,90 @@ class SnapshotMarkerEngineImplTest {
 
     assertRange(marker, initialSnapshot, startOffset = 2, endOffset = 6)
     assertRange(marker, child, startOffset = 2, endOffset = 7)
+  }
+
+  @Test
+  fun `whole replacement translates persistent marker through line diff`() {
+    val oldText = "alpha\ntarget\nomega"
+    val newText = "prefix\nalpha\ntarget\nomega\nsuffix"
+    val document = DocumentImpl(oldText, true)
+    val initialSnapshot = document.core.snapshot()
+    val markerStart = oldText.indexOf("target") + 1
+    val persistentMarker = SnapshotMarkerEngineImpl.createRangeMarker(
+      document,
+      initialSnapshot,
+      markerStart,
+      markerStart + 3,
+      persistentSpec(),
+    )
+    val ordinaryMarker = SnapshotMarkerEngineImpl.createRangeMarker(
+      document,
+      initialSnapshot,
+      markerStart,
+      markerStart + 3,
+      nonGreedySpec(),
+    )
+
+    document.replaceString(0, oldText.length, newText)
+    val replacedSnapshot = document.core.snapshot()
+    val expectedStart = newText.indexOf("target") + 1
+
+    assertRange(persistentMarker, replacedSnapshot, expectedStart, expectedStart + 3)
+    assertTrue(ordinaryMarker.resolve(replacedSnapshot) is PMarkerResolution.Invalid)
+  }
+
+  @Test
+  fun `large partial replacement translates persistent marker through line diff`() {
+    val oldText = "x\nold-a\ntarget\nold-b\ny"
+    val replacement = "new-a\nextra\npadding\ntarget\nnew-b\n"
+    val document = DocumentImpl(oldText, true)
+    val initialSnapshot = document.core.snapshot()
+    val markerStart = oldText.indexOf("target") + 1
+    val persistentMarker = SnapshotMarkerEngineImpl.createRangeMarker(
+      document,
+      initialSnapshot,
+      markerStart,
+      markerStart + 3,
+      persistentSpec(),
+    )
+    val ordinaryMarker = SnapshotMarkerEngineImpl.createRangeMarker(
+      document,
+      initialSnapshot,
+      markerStart,
+      markerStart + 3,
+      nonGreedySpec(),
+    )
+    val replacementStart = oldText.indexOf("old-a")
+    val replacementEnd = oldText.indexOf('y')
+
+    document.replaceString(replacementStart, replacementEnd, replacement)
+    val replacedSnapshot = document.core.snapshot()
+    val expectedStart = document.text.indexOf("target") + 1
+
+    assertRange(persistentMarker, replacedSnapshot, expectedStart, expectedStart + 3)
+    assertTrue(ordinaryMarker.resolve(replacedSnapshot) is PMarkerResolution.Invalid)
+  }
+
+  @Test
+  fun `small partial replacement uses ordinary marker transformation`() {
+    val oldText = "stable0\nstable1\nold-a\ntarget\nold-b\nstable2\nstable3\nstable4"
+    val replacement = "new-a\ntarget\nnew-b\n"
+    val document = DocumentImpl(oldText, true)
+    val initialSnapshot = document.core.snapshot()
+    val markerStart = oldText.indexOf("target") + 1
+    val persistentMarker = SnapshotMarkerEngineImpl.createRangeMarker(
+      document,
+      initialSnapshot,
+      markerStart,
+      markerStart + 3,
+      persistentSpec(),
+    )
+    val replacementStart = oldText.indexOf("old-a")
+    val replacementEnd = oldText.indexOf("stable2")
+
+    document.replaceString(replacementStart, replacementEnd, replacement)
+
+    assertTrue(persistentMarker.resolve(document.core.snapshot()) is PMarkerResolution.Invalid)
   }
 
   @Test
@@ -538,9 +634,9 @@ class SnapshotMarkerEngineImplTest {
 
   @Test
   fun `marker spec delegates transformation to its policy`() {
-    var receivedEdit: MarkerEdit? = null
-    val policy = MarkerPolicy { _, edit ->
-      receivedEdit = edit
+    var receivedPatch: DocumentTextPatch? = null
+    val policy = MarkerPolicy { _, patch, _, _ ->
+      receivedPatch = patch
       MarkerTransformResult.Invalid("Invalidated by test marker policy")
     }
     val root = PMarkerRootImpl.empty().insert(
@@ -550,22 +646,21 @@ class SnapshotMarkerEngineImplTest {
       spec = nonGreedySpec().copy(policy = policy),
     )
 
-    val edited = root.applyOp(
-      DocumentTextPatch.complex(
-        startOffset = 2,
-        endOffset = 2,
-        newFragment = "x",
-        newModStamp = 1,
-        clearLineFlags = false,
-        originStartOffset = 1,
-        originEndOffset = 2,
-        moveOffset = 3,
-      )
+    val patch = DocumentTextPatch.complex(
+      startOffset = 2,
+      endOffset = 2,
+      newFragment = "x",
+      newModStamp = 1,
+      clearLineFlags = false,
+      originStartOffset = 1,
+      originEndOffset = 2,
+      moveOffset = 3,
     )
+    val edited = applyPatch(root, "abcd", patch)
 
     val invalid = edited.resolve(1, TextRange(0, 0)) as PMarkerResolution.Invalid
     assertEquals("Invalidated by test marker policy", invalid.reason)
-    assertEquals(MarkerEdit(2, 2, 1, 1, 2, 3), receivedEdit)
+    assertSame(patch, receivedPatch)
   }
 
   @Test
@@ -592,7 +687,7 @@ class SnapshotMarkerEngineImplTest {
     assertEquals(listOf(4L), markerIds(root, tastePreference = 0x80))
     assertEquals(listOf(4L), markerIds(root, tastePreference = highFlavor.toInt()))
 
-    val edited = root.applyOp(textPatch(startOffset = 0, endOffset = 0, newFragment = "x"))
+    val edited = applyPatch(root, "abcd", textPatch(startOffset = 0, endOffset = 0, newFragment = "x"))
     assertEquals(listOf(3L), markerIds(edited, tastePreference = combinedFlavor.toInt()))
 
     val removed = edited.remove(3)
@@ -788,6 +883,8 @@ class SnapshotMarkerEngineImplTest {
 
   private fun nonGreedySpec(): MarkerSpec = MarkerSpec(isGreedyToLeft = false, isGreedyToRight = false)
 
+  private fun persistentSpec(): MarkerSpec = nonGreedySpec().copy(policy = PersistentMarkerPolicy)
+
   private fun textPatch(startOffset: Int, endOffset: Int, newFragment: String): DocumentTextPatch {
     return DocumentTextPatch.simple(
       startOffset = startOffset,
@@ -796,6 +893,12 @@ class SnapshotMarkerEngineImplTest {
       newModStamp = 1,
       clearLineFlags = false,
     )
+  }
+
+  private fun applyPatch(root: PMarkerRoot, before: String, patch: DocumentTextPatch): PMarkerRoot {
+    val beforeText = DocumentImpl(before, true).core.snapshot().text()
+    val afterText = beforeText.applyOp(patch)
+    return root.applyPatch(patch, beforeText, afterText)
   }
 
   private class Fixture(initialText: String) {

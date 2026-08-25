@@ -1,7 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.marker
 
-import com.intellij.openapi.editor.ex.DocumentOp
+import com.intellij.openapi.editor.ex.DocumentText
+import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.Processor
 import java.lang.ref.WeakReference
@@ -29,7 +30,7 @@ interface PMarkerRoot {
   fun resolve(markerId: Long, absentRange: TextRange): PMarkerResolution
 
   /**
-   * Derives the marker root for the document state after [op]. Non-text operations return this root unchanged.
+   * Derives the marker root for the document state after [patch].
    *
    * A typical implementation:
    *
@@ -42,7 +43,7 @@ interface PMarkerRoot {
    *
    * Already-invalid markers normally remain invalid.
    */
-  fun applyOp(op: DocumentOp): PMarkerRoot
+  fun applyPatch(patch: DocumentTextPatch, beforeText: DocumentText, afterText: DocumentText): PMarkerRoot
 
   /**
    * Inserts a marker whose ID is absent from this root.

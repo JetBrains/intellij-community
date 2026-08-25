@@ -2,8 +2,8 @@
 package com.intellij.openapi.editor.impl.marker
 
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentSnapshot
+import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.util.Processor
 
@@ -28,12 +28,12 @@ interface SnapshotMarkerEngine {
    * Derives and stores the marker root for [afterSnapshot].
    *
    * The implementation obtains the current root associated with
-   * [beforeSnapshot], calls [PMarkerRoot.applyOp], and stores the returned
+   * [beforeSnapshot], calls [PMarkerRoot.applyPatch], and stores the returned
    * root in [afterSnapshot].
    *
    * The root associated with [beforeSnapshot] is not changed.
    *
-   * [op] must describe exactly the transformation from [beforeSnapshot]
+   * [patch] must describe exactly the transformation from [beforeSnapshot]
    * to [afterSnapshot]. Its offsets use coordinates from [beforeSnapshot].
    *
    * Marker creation, marker removal, and child-snapshot creation from the
@@ -41,9 +41,15 @@ interface SnapshotMarkerEngine {
    *
    * @param beforeSnapshot parent text snapshot
    * @param afterSnapshot child text snapshot created by the edit
-   * @param op snapshot operation describing the change
+   * @param patch text patch describing the change
    */
-  fun applyOp(beforeSnapshot: DocumentSnapshot, afterSnapshot: DocumentSnapshot, op: DocumentOp)
+  fun applyPatch(beforeSnapshot: DocumentSnapshot, afterSnapshot: DocumentSnapshot, patch: DocumentTextPatch)
+
+  /**
+   * Stores an independent marker root for [afterSnapshot] by capturing the current root of [beforeSnapshot].
+   * Both snapshots must share the same text instance.
+   */
+  fun inherit(beforeSnapshot: DocumentSnapshot, afterSnapshot: DocumentSnapshot)
 
   /**
    * Creates an engine-global marker ID and inserts the marker into the

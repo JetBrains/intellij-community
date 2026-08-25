@@ -1,32 +1,25 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.marker
 
+import com.intellij.openapi.editor.ex.DocumentText
+import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
 import org.jetbrains.annotations.ApiStatus
 
 /**
  * Transforms one marker in response to a logical document edit.
  *
- * Implementations must preserve the marker ID. Expensive data shared by several markers should be prepared by the
- * marker root and supplied through a future edit context rather than recomputed for every marker.
+ * Implementations must preserve the marker ID.
  */
 @ApiStatus.Internal
 fun interface MarkerPolicy {
-  fun transform(entry: MarkerEntry, edit: MarkerEdit): MarkerTransformResult
+  fun transform(
+    entry: MarkerEntry,
+    patch: DocumentTextPatch,
+    beforeText: DocumentText,
+    afterText: DocumentText,
+  ): MarkerTransformResult
 }
-
-/**
- * Logical edit coordinates used by marker transformation policies.
- */
-@ApiStatus.Internal
-data class MarkerEdit(
-  val startOffset: Int,
-  val endOffset: Int,
-  val newLength: Int,
-  val originStartOffset: Int,
-  val originEndOffset: Int,
-  val moveOffset: Int,
-)
 
 /**
  * Final state of one marker after an edit.
@@ -42,21 +35,26 @@ sealed interface MarkerTransformResult {
  */
 @ApiStatus.Internal
 object DefaultMarkerPolicy : MarkerPolicy {
-  override fun transform(entry: MarkerEntry, edit: MarkerEdit): MarkerTransformResult {
+  override fun transform(
+    entry: MarkerEntry,
+    patch: DocumentTextPatch,
+    beforeText: DocumentText,
+    afterText: DocumentText,
+  ): MarkerTransformResult {
     return if (entry.startOffset == entry.endOffset) {
-      transformPoint(entry, edit)
+      transformPoint(entry, patch)
     }
     else {
-      transformRange(entry, edit)
+      transformRange(entry, patch)
     }
   }
 
-  private fun transformPoint(entry: MarkerEntry, edit: MarkerEdit): MarkerTransformResult {
+  private fun transformPoint(entry: MarkerEntry, patch: DocumentTextPatch): MarkerTransformResult {
     val point = entry.startOffset
-    val editStart = edit.startOffset
-    val editEnd = edit.endOffset
+    val editStart = patch.startOffset()
+    val editEnd = patch.endOffset()
     val oldLength = editEnd - editStart
-    val newLength = edit.newLength
+    val newLength = patch.newFragment().length
 
     if (editStart < point && point < editEnd) return MarkerTransformResult.Invalid(INVALIDATED_BY_EDIT)
 
@@ -77,17 +75,17 @@ object DefaultMarkerPolicy : MarkerPolicy {
     return MarkerTransformResult.Valid(entry)
   }
 
-  private fun transformRange(entry: MarkerEntry, edit: MarkerEdit): MarkerTransformResult {
+  private fun transformRange(entry: MarkerEntry, patch: DocumentTextPatch): MarkerTransformResult {
     val startOffset = entry.startOffset
     val endOffset = entry.endOffset
-    val editStart = edit.startOffset
-    val editEnd = edit.endOffset
-    val newLength = edit.newLength
+    val editStart = patch.startOffset()
+    val editEnd = patch.endOffset()
+    val newLength = patch.newFragment().length
     val delta = newLength - (editEnd - editStart)
 
     if (editStart > endOffset) return MarkerTransformResult.Valid(entry)
     if (!entry.spec.isGreedyToRight && endOffset == editStart) {
-      if (editStart == editEnd && edit.originStartOffset < editStart) {
+      if (editStart == editEnd && patch.originStartOffset() < editStart) {
         return MarkerTransformResult.Valid(entry.copy(endOffset = endOffset + newLength))
       }
       return MarkerTransformResult.Valid(entry)
@@ -98,7 +96,7 @@ object DefaultMarkerPolicy : MarkerPolicy {
       )
     }
     if (!entry.spec.isGreedyToLeft && startOffset == editEnd) {
-      if (editStart == editEnd && edit.originEndOffset > editStart) {
+      if (editStart == editEnd && patch.originEndOffset() > editStart) {
         return MarkerTransformResult.Valid(entry.copy(endOffset = endOffset + newLength))
       }
       return MarkerTransformResult.Valid(
