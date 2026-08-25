@@ -61,7 +61,7 @@ class PyExternalSystemProjectAware private constructor(
     get() =
       runBlockingMaybeCancellable {
         // We do not need file content: only names here.
-        val fsInfo = walkFileSystemNoTomlContent(getRootPaths()).getOr {
+        val fsInfo = walkFileSystemNoTomlContent(getRootPaths(), collectExcludedPaths(project)).getOr {
           // Dir can't be accessed
           log.trace(it.error)
           return@runBlockingMaybeCancellable emptySet()

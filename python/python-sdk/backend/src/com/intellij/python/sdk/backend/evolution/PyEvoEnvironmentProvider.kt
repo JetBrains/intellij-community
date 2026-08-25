@@ -40,6 +40,7 @@ import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.impl.shortenPath
 import com.jetbrains.python.venvReader.Directory
+import com.jetbrains.python.venvReader.PRUNED_SCAN_DIRS
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import java.io.IOException
 import java.nio.file.Files
@@ -269,13 +270,6 @@ data class DiscoveredVenv(
   val createdByUv: Boolean get() = "uv" in config
 }
 
-/** Well-known heavy/irrelevant directories that never hold a user-selectable venv; never descended into. */
-private val PRUNED_SCAN_DIRS = setOf(
-  ".git", ".hg", ".svn", ".idea",
-  "node_modules", "__pycache__",
-  ".mypy_cache", ".pytest_cache", ".ruff_cache",
-)
-
 /**
  * Discovers virtualenvs under [baseDirs], descending into nested subfolders (up to [maxDepth] levels) so envs kept in
  * a project subdirectory are found too — not just those directly under a base dir. Directories in [excludedRoots]
@@ -304,7 +298,7 @@ suspend fun discoverVenvs(
     catch (_: IOException) {
       return emptyList()
     }
-    return entries.filter { it.isDirectory() && it.fileName?.toString() !in PRUNED_SCAN_DIRS }
+    return entries.filter { it.fileName?.toString() !in PRUNED_SCAN_DIRS && it.isDirectory() }
   }
 
   // The base dir itself is never treated as a venv (matching the previous behavior); scanning starts at its children.

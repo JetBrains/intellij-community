@@ -12,8 +12,12 @@ import com.intellij.python.pyproject.safeGetArr
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.Result
 import com.jetbrains.python.venvReader.Directory
+import com.jetbrains.python.venvReader.PRUNED_SCAN_DIRS_NO_DOT
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.apache.tuweni.toml.TomlTable
 import java.io.IOException
@@ -36,11 +40,14 @@ internal suspend fun walkFileSystemWithTomlContent(
 ): Result<FSWalkInfoWithToml, IOException> {
   val rawTomlFiles = walkFileSystemNoTomlContent(roots, excludedPaths).getOr { return it }.rawTomlFiles
 
-  // TODO: with a big number of files, use `chunk` to parse them concurrently
-  val tomlFiles = rawTomlFiles.map { file ->
-    val toml = readFile(file) ?: return@map null
-    file to toml
-  }.filterNotNull().toMap()
+  // `awaitAll` keeps the order of `rawTomlFiles`, so the resulting map stays deterministic.
+  val tomlFiles = coroutineScope {
+    rawTomlFiles
+      .map { file -> async(Dispatchers.Default) { readFile(file)?.let { toml -> file to toml } } }
+      .awaitAll()
+      .filterNotNull()
+      .toMap()
+  }
   return Result.success(FSWalkInfoWithToml(tomlFiles = tomlFiles))
 }
 
@@ -54,15 +61,15 @@ suspend fun walkFileSystemNoTomlContent(
 ): Result<FsWalkInfoNoToml, IOException> {
   val rawTomlFiles = ArrayList<Path>(10)
   // TODO: Measure performance, parallelize if needed
-  for (root in roots) {
-    try {
-      withContext(Dispatchers.IO) {
+  try {
+    withContext(Dispatchers.IO) {
+      for (root in roots) {
         walkFileSystemNoTomlContent(root, rawTomlFiles, excludedPaths)
       }
     }
-    catch (e: IOException) {
-      return Result.failure(e)
-    }
+  }
+  catch (e: IOException) {
+    return Result.failure(e)
   }
   return Result.success(FsWalkInfoNoToml(rawTomlFiles = rawTomlFiles))
 }
@@ -74,6 +81,7 @@ private fun walkFileSystemNoTomlContent(
   rawTomlFiles: MutableList<Path>,
   excludedPaths: Set<Path>,
 ) {
+  val virtualEnvReader = VirtualEnvReader()
   root.visitFileTree {
     onVisitFile { file, _ ->
       if (file.name == PY_PROJECT_TOML) {
@@ -81,20 +89,19 @@ private fun walkFileSystemNoTomlContent(
       }
       return@onVisitFile FileVisitResult.CONTINUE
     }
+    // The order of the checks follows their cost. A check of the name needs no syscall.
+    // Only a directory that passes the name checks pays for the `stat` of the venv marker.
+    // This walk visits every directory of the project, so the order is important (PY-91826).
     onPreVisitDirectory { directory, _ ->
       val dirName = directory.name
 
-      // default name is popular enough to make a shortcut
-      if (dirName == VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME || VirtualEnvReader().findPythonInPythonRoot(directory) != null) {
-        // Venv: exclude and skip
+      // A dot directory, a well-known heavy directory, or an excluded directory.
+      // A `pyproject.toml` in an excluded folder must not become a module.
+      if (dirName.startsWith(".") || dirName in PRUNED_SCAN_DIRS_NO_DOT || directory in excludedPaths) {
         FileVisitResult.SKIP_SUBTREE
       }
-      else if (dirName.startsWith(".")) {
-        // Dot: just skip
-        FileVisitResult.SKIP_SUBTREE
-      }
-      else if (directory in excludedPaths) {
-        // Excluded folder: skip (pyproject.toml inside excluded folders should not become modules)
+      // A venv. The walk never descends into an environment.
+      else if (virtualEnvReader.findPythonInPythonRoot(directory) != null) {
         FileVisitResult.SKIP_SUBTREE
       }
       else {
@@ -106,15 +113,16 @@ private fun walkFileSystemNoTomlContent(
 
 private val logger = fileLogger()
 
+/**
+ * The caller selects the dispatcher for the parse, because [PyProjectToml.parse] runs on it.
+ * [PyProjectToml.parseOrNull] reads the file on [Dispatchers.IO] itself.
+ */
 private suspend fun readFile(file: Path): PyProjectToml? {
-  return withContext(Dispatchers.Default) {
-    val toml = PyProjectToml.parseOrNull(file) ?: return@withContext null
-    val errors = toml.issues.joinToString(", ")
-    if (errors.isNotBlank()) {
-      logger.warn("Errors on $file: $errors")
-    }
-    toml
+  val toml = PyProjectToml.parseOrNull(file) ?: return null
+  if (toml.issues.isNotEmpty()) {
+    logger.warn("Errors on $file: ${toml.issues.joinToString(", ")}")
   }
+  return toml
 }
 
 internal suspend fun getDependenciesFromToml(

@@ -85,10 +85,8 @@ class VirtualEnvReader private constructor(
    */
   @RequiresBackgroundThread
   fun findVenvsInDir(root: Directory): List<PythonBinary> {
-
-    val candidates: ArrayList<Path> = arrayListOf()
     val children = try {
-      root.listDirectoryEntries().sortedBy { it.fileName.toString() }
+      root.listDirectoryEntries()
     }
     catch (_: NoSuchFileException) {
       return emptyList()
@@ -97,11 +95,13 @@ class VirtualEnvReader private constructor(
       return emptyList()
     }
 
-    for (dir in children) {
-      findPythonInPythonRoot(dir)?.let { candidates.add(it) }
-    }
-
-    return candidates
+    // This code sorts only the directories that hold a Python. The order is the same as a sort of all the children.
+    // The list is much smaller, and a child without a Python needs no string.
+    val pythonPattern = getLayout(forcedOs ?: root.osFamily)
+    return children
+      .mapNotNull { dir -> findPythonInPythonRoot(dir, pythonPattern)?.let { python -> dir.name to python } }
+      .sortedBy { it.first }
+      .map { it.second }
   }
 
   @RequiresBackgroundThread
@@ -142,8 +142,13 @@ class VirtualEnvReader private constructor(
    */
   @RequiresBackgroundThread
   fun findPythonInPythonRoot(pathOrDir: PythonHomePath): PythonBinary? {
-    val pythonPattern = getLayout(forcedOs ?: pathOrDir.osFamily)
-    if (pathOrDir.isRegularFile() && pythonPattern.pyBinaryPattern.matches(pathOrDir.name)) {
+    val layout = getLayout(forcedOs ?: pathOrDir.osFamily)
+    return findPythonInPythonRoot(pathOrDir, layout)
+  }
+
+  @RequiresBackgroundThread
+  private fun findPythonInPythonRoot(pathOrDir: PythonHomePath, layout: PythonOsLayout): PythonBinary? {
+    if (layout.pyBinaryPattern.matches(pathOrDir.name) && pathOrDir.isRegularFile()) {
       return pathOrDir
     }
 
@@ -151,12 +156,12 @@ class VirtualEnvReader private constructor(
       return null
     }
 
-    val bin = pathOrDir.resolve(pythonPattern.dirWithPython)
+    val bin = pathOrDir.resolve(layout.dirWithPython)
     if (bin.isDirectory()) {
-      findInterpreter(bin)?.let { return it }
+      findInterpreter(bin, layout.pyBinaryPattern)?.let { return it }
     }
 
-    return findInterpreter(pathOrDir)
+    return findInterpreter(pathOrDir, layout.pyBinaryPattern)
   }
 
   /**
@@ -210,18 +215,16 @@ class VirtualEnvReader private constructor(
    * and Files.newDirectoryStream() order is undefined.
    */
   @RequiresBackgroundThread
-  private fun findInterpreter(dir: Path): PythonBinary? =
+  private fun findInterpreter(dir: Path, pythonPattern: Regex): PythonBinary? =
     try {
       Files.newDirectoryStream(dir).use { stream ->
-        val pythonPattern = getLayout(forcedOs ?: dir.osFamily)
 
         val candidates = stream.filter {
-          it.isRegularFile() && pythonPattern.pyBinaryPattern.matches(it.name)
+          pythonPattern.matches(it.name) && it.isRegularFile()
         }.toList()
 
         candidates.minByOrNull { it.name.length }
       }
-
     }
     catch (_: NotDirectoryException) {
       return null
