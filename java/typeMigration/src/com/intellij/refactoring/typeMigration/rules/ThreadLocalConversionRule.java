@@ -94,7 +94,9 @@ public final class ThreadLocalConversionRule extends TypeConversionRule {
     LOG.assertTrue(toTypeClass != null);
 
     final PsiElement parent = context.getParent();
-    if (parent.equals(labeler.getCurrentRoot().getElement()) && ((PsiVariable)parent).getInitializer() == context) {
+    if (labeler.getCurrentRoot() != null &&
+        parent.equals(labeler.getCurrentRoot().getElement()) &&
+        ((PsiVariable)parent).getInitializer() == context) {
 
       return wrapWithNewExpression(from, to, (PsiExpression)context);
     }
