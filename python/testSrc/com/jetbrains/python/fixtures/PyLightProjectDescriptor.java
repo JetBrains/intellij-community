@@ -15,10 +15,14 @@ import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /**
  * Project descriptor (extracted from {@link com.jetbrains.python.fixtures.PyTestCase}) and should be used with it.
+ * The project is usually cached and reused, unless {@link #myName} or {@link #myLevel} differ, see parent contract.
+ *
  * @author Ilya.Kazakevich
-*/
+ */
 public class PyLightProjectDescriptor extends LightProjectDescriptor {
 
   @Nullable
@@ -35,9 +39,22 @@ public class PyLightProjectDescriptor extends LightProjectDescriptor {
     this(name, LanguageLevel.getLatest());
   }
 
-  private PyLightProjectDescriptor(@Nullable String name, @NotNull LanguageLevel level) {
+  protected PyLightProjectDescriptor(@Nullable String name, @NotNull LanguageLevel level) {
     myName = name;
     myLevel = level;
+  }
+
+  @Override
+  public final boolean equals(Object o) {
+    // Inheritors should never be considered equal because they might override module configuration functions
+    if (o == null || getClass() != o.getClass()) return false;
+    PyLightProjectDescriptor that = (PyLightProjectDescriptor)o;
+    return Objects.equals(myName, that.myName) && myLevel == that.myLevel;
+  }
+
+  @Override
+  public final int hashCode() {
+    return Objects.hash(myName, myLevel, getClass());
   }
 
   @Override

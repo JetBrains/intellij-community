@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.requirements
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
@@ -11,17 +10,12 @@ import com.jetbrains.python.PythonMockSdk
 import com.jetbrains.python.PythonTestUtil
 import com.jetbrains.python.fixtures.PyLightProjectDescriptor
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
-import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
-import com.jetbrains.python.packaging.management.RequirementsProviderType
 import com.jetbrains.python.packaging.management.TestPackageManagerProvider
 import com.jetbrains.python.packaging.management.TestPackageRepository
-import com.jetbrains.python.packaging.management.TestPythonPackageManager
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.pythonSdk
-import kotlinx.coroutines.runBlocking
 
 abstract class PythonDependencyTestCase : BasePlatformTestCase() {
 
@@ -66,38 +60,16 @@ abstract class PythonDependencyTestCase : BasePlatformTestCase() {
     myFixture.project.pythonSdk = projectDescriptor.sdk
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor {
+  final override fun getProjectDescriptor(): LightProjectDescriptor {
     val languageLevel = LanguageLevel.getLatest()
-    return object : PyLightProjectDescriptor(languageLevel) {
-      override fun getSdk(): Sdk {
-        val sdk: Sdk = PythonMockSdk.create("Mock ${PyNames.PYTHON_SDK_ID_NAME} ${languageLevel.toPythonVersion()}",
-                                            "${PythonTestUtil.getTestDataPath()}/MockSdk", PythonSdkType.getInstance(), languageLevel)
-        sdk.sdkModificator.let {
-          it.sdkAdditionalData = sdkAdditionalData ?: it.sdkAdditionalData
-          ApplicationManager.getApplication().runWriteAction {
-            it.commitChanges()
-          }
-        }
-        return sdk
-      }
+    return object : PyLightProjectDescriptor(this@PythonDependencyTestCase.name, languageLevel) {
+      override fun getSdk(): Sdk =
+        PythonMockSdk.create("Mock ${PyNames.PYTHON_SDK_ID_NAME} ${languageLevel.toPythonVersion()}",
+                             "${PythonTestUtil.getTestDataPath()}/MockSdk", PythonSdkType.getInstance(), languageLevel)
     }
   }
 
-  open val sdkAdditionalData: PythonSdkAdditionalData? = null
 
-  override fun getBasePath(): String {
-    return "/community/python/testData/requirements/"
-  }
+  override fun getBasePath(): String = "/community/python/testData/requirements/"
 
-  fun setDependencyRoot(providerType: RequirementsProviderType) {
-    val sdk = myFixture.project.pythonSdk!!
-    sdk.putUserData(TestPythonPackageManager.REQUIREMENTS_PROVIDER_KEY, providerType)
-    val moduleDir = myFixture.findFileInTempDir(providerType.filename).parent
-    ApplicationManager.getApplication().runWriteAction {
-      val modificator = sdk.sdkModificator
-      (modificator.sdkAdditionalData as PythonSdkAdditionalData).associatedModulePath = moduleDir.path
-      modificator.commitChanges()
-    }
-    runBlocking { PythonPackageManager.forSdk(myFixture.project, sdk).waitForInit() }
-  }
 }
