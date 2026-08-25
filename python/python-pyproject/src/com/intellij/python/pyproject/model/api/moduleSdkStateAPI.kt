@@ -52,7 +52,13 @@ suspend fun <T : Any> Module.configureSdkIfNeeded(onNoSdk: suspend SdkForModuleC
  */
 suspend fun Module.getModuleSdkState(
   configuratorsByTool: Map<ToolId, PyProjectSdkConfigurationExtension> = PyProjectSdkConfigurationExtension.createMap(),
-): ModuleSdkState = getModuleSdkStateImpl(configuratorsByTool)
+  /**
+   * Re-probe the configurators instead of reusing the shared cache. Only for a caller whose answer must be true at this
+   * instant — one running under the SDK-configuration lock, where a sibling module may have been configured a moment
+   * ago. Everything else wants the default: the probe runs the project's tools.
+   */
+  fresh: Boolean = false,
+): ModuleSdkState = getModuleSdkStateImpl(configuratorsByTool, fresh)
 
 /**
  * Result for [getModuleSdkState]: either SDK or suggestion on SDK creation

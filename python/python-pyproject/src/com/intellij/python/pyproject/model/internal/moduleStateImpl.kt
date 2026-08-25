@@ -6,6 +6,7 @@ import com.intellij.python.pyproject.model.api.ModuleSdkState
 import com.intellij.python.pyproject.model.api.SdkForModuleConfigInstruction
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
+import com.jetbrains.python.sdk.configuration.ModuleConfigurators
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.configuration.findPythonVirtualEnvironments
 import com.jetbrains.python.sdk.findPythonSdk
@@ -15,7 +16,8 @@ import com.jetbrains.python.sdk.findPythonSdk
  */
 internal suspend fun Module.getModuleSdkStateImpl(
   configuratorsByTool: Map<ToolId, PyProjectSdkConfigurationExtension> = PyProjectSdkConfigurationExtension.createMap(),
-): ModuleSdkState { // Save on module level
+  fresh: Boolean = false,
+): ModuleSdkState {
   val currentSdk = findPythonSdk()
   return if (currentSdk != null) {
     ModuleSdkState.HasSdk(currentSdk)
@@ -23,8 +25,15 @@ internal suspend fun Module.getModuleSdkStateImpl(
   else {
     val suggestedByPyProjectToml = when (val suggestedSdk = suggestSdk()) {
       is SuggestedSdk.PyProjectIndependent, null -> {
-        val venvsInModule = findPythonVirtualEnvironments()
-        val bestProposalFromTools = PyProjectSdkConfigurationExtension.findAllSortedForModule(this, venvsInModule).firstOrNull()
+        // Both halves come from one probe, cached unless the caller asked for a live answer: asking the configurators
+        // runs their tools, and this is the busiest way into them.
+        val configurators = if (fresh) {
+          val venvs = findPythonVirtualEnvironments()
+          ModuleConfigurators(venvs, PyProjectSdkConfigurationExtension.findAllSortedForModule(this, venvs))
+        }
+        else PyProjectSdkConfigurationExtension.findAllSortedForModuleCached(this)
+        val venvsInModule = configurators.venvsInModule
+        val bestProposalFromTools = configurators.options.firstOrNull()
         when (bestProposalFromTools?.createSdkInfo) {
           is CreateSdkInfo.ExistingEnv -> bestProposalFromTools
           is CreateSdkInfo.WillCreateEnv, is CreateSdkInfo.WillInstallTool, null -> {

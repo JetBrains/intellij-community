@@ -112,7 +112,10 @@ private suspend fun <T : Any> SdkForModuleConfigInstruction.autoConfigureSdkImpl
       }
 
       check(parentModule != module) { "$parentModule can't be parent of the same module $module" }
-      when (val parentSdkResult = parentModule.getModuleSdkState()) {
+      // Deliberately not the shared cache: this runs under the SDK-configuration lock, inside a loop that configures the
+      // project's modules one by one, so the parent's SDK may have been created moments ago by an earlier iteration —
+      // the same TOCTOU the check in `autoConfigureSdk` above guards against.
+      when (val parentSdkResult = parentModule.getModuleSdkState(fresh = true)) {
         is ModuleSdkState.HasSdk -> {
           // Parent already has SDK
           parentSdkResult.sdk.asSdkResult()
