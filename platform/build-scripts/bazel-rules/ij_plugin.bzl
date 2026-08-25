@@ -8,9 +8,10 @@ load(
 load("@rules_java//java/common:java_common.bzl", "java_common")
 load("@rules_jvm//:jvm.bzl", _jvm_platform_transition = "jvm_platform_transition", _scrubbed_host_platform_transition = "scrubbed_host_platform_transition")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
+load("//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", _PluginModuleInfo = "PluginModuleInfo")
 
 def _ij_plugin_impl(ctx):
-    plugin_descriptor_module_info = ctx.attr.descriptor_module[_KtJvmInfo]
+    plugin_descriptor_module_info = _plugin_module_info(ctx.attr.descriptor_module)
     dir_name = _module_name_to_directory_name(plugin_descriptor_module_info.module_name)
     output_dir = ctx.actions.declare_directory(dir_name)
     packed_modules_file = ctx.actions.declare_file("packed-modules.yaml")
@@ -54,14 +55,15 @@ def _ij_plugin_impl(ctx):
         format_each = plugin_descriptor_module_info.module_name + ":%s",
     )
     for content_module in ctx.attr.content_modules:
-        content_module_info = content_module[_KtJvmInfo]
-        content_module_jar = content_module_info.all_output_jars[0]
-        args.add_all(
+        content_module_info = _plugin_module_info(content_module)
+        content_module_jars = content_module_info.all_output_jars
+        args.add_joined(
             "--content_module",
-            [content_module_jar],
-            format_each = content_module_info.module_name + ":%s",
+            content_module_jars,
+            format_joined = content_module_info.module_name + ":%s",
+            join_with = ",",
         )
-        inputs.append(content_module_jar)
+        inputs.extend(content_module_jars)
 
     java_runtime = ctx.attr._tool_java_runtime[java_common.JavaRuntimeInfo]
     ctx.actions.run(
@@ -90,6 +92,15 @@ def _ij_plugin_impl(ctx):
     return [
         DefaultInfo(files = depset([output_dir, packed_modules_file])),
     ]
+
+def _plugin_module_info(target):
+    if _PluginModuleInfo in target:
+        return target[_PluginModuleInfo]
+    kt_jvm_info = target[_KtJvmInfo]
+    return _PluginModuleInfo(
+        module_name = kt_jvm_info.module_name,
+        all_output_jars = kt_jvm_info.all_output_jars,
+    )
 
 _build_number_from_file = "$build_number_from_file"
 
@@ -173,12 +184,12 @@ This rule is experimental, and its API may change. Do not migrate plugins to it 
         ),
         "descriptor_module": attr.label(
             doc = "A target containing the plugin descriptor (`META-INF/plugin.xml`).",
-            providers = [_KtJvmInfo],
+            providers = [[_PluginModuleInfo], [_KtJvmInfo]],
             mandatory = True,
         ),
         "content_modules": attr.label_list(
             doc = "A list of targets that produce the plugin content modules registered in the plugin.",
-            providers = [_KtJvmInfo],
+            providers = [[_PluginModuleInfo], [_KtJvmInfo]],
         ),
         "since_build": attr.string(
             doc = """\

@@ -119,6 +119,52 @@ internal class IjPluginPackagerTest {
   }
 
   @Test
+  fun packagesAllJarsOfContentModule(@TempDir tempDirectory: Path) {
+    val inputDirectory = tempDirectory.resolve("input")
+    directoryContent {
+      zip("descriptor.jar") {
+        dir("META-INF") {
+          file("plugin.xml", "<idea-plugin><content><module name=\"content.module\"/></content></idea-plugin>")
+        }
+      }
+      zip("content-module.jar") {
+        file("content.module.xml", "<idea-plugin></idea-plugin>")
+        file("ContentModule.class", "content module")
+      }
+      zip("content-module-dependency.jar") {
+        dir("META-INF") {
+          file("MANIFEST.MF", "dependency manifest")
+        }
+        file("ContentModuleDependency.class", "content module dependency")
+      }
+    }.generate(inputDirectory)
+
+    val outputDirectory = tempDirectory.resolve("output")
+    IjPluginPackager.packPlugin(
+      args = listOf(
+        "output",
+        "--descriptor_module",
+        "descriptor:input/descriptor.jar",
+        "--content_module",
+        "content.module:input/content-module.jar,input/content-module-dependency.jar",
+      ),
+      baseDir = tempDirectory,
+    )
+
+    outputDirectory.resolve("lib/modules").assertMatches(directoryContent {
+      zip("content.module.jar") {
+        file("__index__")
+        dir("META-INF") {
+          file("MANIFEST.MF", "dependency manifest")
+        }
+        file("content.module.xml", "<idea-plugin></idea-plugin>")
+        file("ContentModule.class", "content module")
+        file("ContentModuleDependency.class", "content module dependency")
+      }
+    })
+  }
+
+  @Test
   fun doesNotGeneratePackedModulesIfOptionIsNotSpecified(@TempDir tempDirectory: Path) {
     val inputDirectory = tempDirectory.resolve("input")
     directoryContent {

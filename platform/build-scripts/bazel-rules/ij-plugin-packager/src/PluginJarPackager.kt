@@ -12,9 +12,10 @@ import java.nio.file.Path
 /**
  * Provides a way to create a plugin jar by including entries from different sources.
  */
-internal class PluginJarPackager(outputJarPath: Path) : AutoCloseable {
+internal class PluginJarPackager(private val outputJarPath: Path) : AutoCloseable {
   private val packageIndexBuilder = PackageIndexBuilder(AddDirEntriesMode.NONE)
   private val zipWriter = ZipFileWriter(zipWriter(outputJarPath, packageIndexBuilder))
+  private val addedFilePaths = HashSet<String>()
 
   internal fun interface ZipEntryPatcher {
     /**
@@ -24,6 +25,7 @@ internal class PluginJarPackager(outputJarPath: Path) : AutoCloseable {
   }
 
   fun addFile(relativePath: String, content: ByteArray) {
+    checkAddedFile(relativePath)
     packageIndexBuilder.addFile(relativePath)
     zipWriter.uncompressedData(relativePath, content)
   }
@@ -32,10 +34,17 @@ internal class PluginJarPackager(outputJarPath: Path) : AutoCloseable {
     readZipFile(inputJar) { filePath, dataFetcher ->
       val patchedData = entryPatcher.patchEntry(filePath, dataFetcher)
       if (patchedData != null) {
+        checkAddedFile(filePath)
         packageIndexBuilder.addFile(filePath)
         zipWriter.uncompressedData(filePath, patchedData)
       }
       ZipEntryProcessorResult.CONTINUE
+    }
+  }
+
+  private fun checkAddedFile(relativePath: String) {
+    if (!addedFilePaths.add(relativePath)) {
+      throw IllegalStateException("File $relativePath was added twice to $outputJarPath")
     }
   }
 

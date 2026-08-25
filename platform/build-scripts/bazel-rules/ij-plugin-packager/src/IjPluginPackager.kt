@@ -28,7 +28,9 @@ import kotlin.io.path.readText
  * The first argument is the path to the output directory where the distribution should be generated.
  * Other arguments are:
  * * `--descriptor_module module_name:path_to_jar` (mandatory): specifies the name of a JPS module containing the plugin descriptor and path to its JAR file;
- * * `--content_module module_name:path_to_jar` (multiple entries are allowed): includes a plugin content module to the plugin distribution;
+ * * `--content_module module_name:path_to_jar[,path_to_jar...]`: includes a plugin content module in the distribution; the first path contains the module XML descriptor, if
+ *   additional paths are specified, they are packed together with the content module;
+ *   Specify each module only once.
  * * `--packed_modules path`: enables generation of the `packed-modules.yaml` file, which names each jar in the distribution and the modules packed into it;
  * * `--plugin_version version`: updates `<version>` tag in `plugin.xml` with the provided version;
  * * `--since_build build`: updates `since-build` attribute in `<idea-version>` tag in `plugin.xml` with the provided value;
@@ -102,7 +104,7 @@ object IjPluginPackager {
     val libDirectory = outputDirectory.resolve("lib")
     Files.createDirectories(libDirectory)
     val descriptorModuleArgument = requireNotNull(descriptorModule) { "--descriptor_module must be specified" }
-    val descriptorJar = descriptorModuleArgument.jar
+    val descriptorJar = descriptorModuleArgument.jars.first()
     val originalPluginXmlContent = readEntryFromZip(descriptorJar, PLUGIN_DESCRIPTOR_ENTRY_NAME)
     requireNotNull(originalPluginXmlContent) { "$PLUGIN_DESCRIPTOR_ENTRY_NAME is not found in $descriptorJar" }
     val contentModules = parseContentAndXIncludes(originalPluginXmlContent, descriptorJar.toString()).contentModules
@@ -160,18 +162,25 @@ object IjPluginPackager {
       val contentDescriptorName = "${contentModule.name}.xml"
       val outputJar = destinationDirectory.resolve("${contentModule.name}.jar")
       PluginJarPackager(outputJar).use {
-        it.addEntriesFromJar(contentModuleArgument.jar) { filePath, dataFetcher ->
-          if (!isIncludedFromModuleOutput(filePath)) {
-            return@addEntriesFromJar null
-          }
-          val data = dataFetcher()
-          if (filePath == contentDescriptorName) {
-            val dataBytes = data.toByteArray()
-            contentModuleDescriptors[contentModule.name] = dataBytes
-            ByteBuffer.wrap(dataBytes)
-          }
-          else {
-            data
+        val containMultipleLibraries = contentModuleArgument.jars.size > 2
+        for ((index, jar) in contentModuleArgument.jars.withIndex()) {
+          val first = index == 0
+          it.addEntriesFromJar(jar) { filePath, dataFetcher ->
+            if (!isIncludedFromModuleOutput(filePath)) {
+              return@addEntriesFromJar null
+            }
+            if (!first && containMultipleLibraries && isSkippedWhileMergingLibraries(filePath)) {
+              return@addEntriesFromJar null
+            }
+            val data = dataFetcher()
+            if (first && filePath == contentDescriptorName) {
+              val dataBytes = data.toByteArray()
+              contentModuleDescriptors[contentModule.name] = dataBytes
+              ByteBuffer.wrap(dataBytes)
+            }
+            else {
+              data
+            }
           }
         }
       }
@@ -184,20 +193,33 @@ object IjPluginPackager {
     return filePath != "icon-robots.txt" && !filePath.endsWith("/icon-robots.txt")
   }
 
+  /**
+   * Returns `true` if the given file path should be skipped while merging multiple libraries in a single JAR.
+   */
+  private fun isSkippedWhileMergingLibraries(filePath: String): Boolean {
+    // this function intentionally doesn't include all patterns from librarySourcesFilter.kt because exclusion of files may break library's logic
+    return filePath == "META-INF/MANIFEST.MF"
+           || filePath == "module-info.class" // IJ platform doesn't use JPMS, so it's ok to skip these entries
+  }
+
   private fun parseModuleArgument(argument: String, baseDir: Path): ModuleArgument {
     val separatorIndex = argument.indexOf(':')
     require(separatorIndex > 0 && separatorIndex < argument.lastIndex) {
-      "Expected module argument in the form module_name:path_to_jar, got: $argument"
+      "Expected a module argument in the form module_name:path_to_jar[,path_to_jar...]. Got: $argument"
+    }
+    val paths = argument.substring(separatorIndex + 1).split(',')
+    require(paths.all { it.isNotEmpty() }) {
+      "Expected a module argument in the form module_name:path_to_jar[,path_to_jar...]. Got: $argument"
     }
     return ModuleArgument(
       name = argument.substring(0, separatorIndex),
-      jar = baseDir.resolve(argument.substring(separatorIndex + 1)),
+      jars = paths.map { baseDir.resolve(it) },
     )
   }
 
   private data class ModuleArgument(
     @JvmField val name: String,
-    @JvmField val jar: Path,
+    @JvmField val jars: List<Path>,
   )
 }
 

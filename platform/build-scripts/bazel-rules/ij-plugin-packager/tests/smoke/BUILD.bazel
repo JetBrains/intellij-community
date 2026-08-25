@@ -1,6 +1,7 @@
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 load(":build_settings_test.bzl", "ij_plugin_settings_test_target")
 
 # A minimal plugin used to check that `ij_plugin` rule and the packager worker actually work.
@@ -26,12 +27,24 @@ jvm_library(
     resources = glob(["optional/**/*"]),
 )
 
+ij_plugin_module(
+    name = "library-content-module",
+    module_name = "intellij.ijPluginPackagerSmoke.library",
+    packed_deps = [
+        "@lib//:libraries-asm-tools-asm-tools",  # java_library
+        "@lib//:libraries-assertj-core-assert_j",  # jvm_import
+    ],
+    resource_strip_prefix = "library",
+    resources = glob(["library/**/*"]),
+)
+
 ij_plugin(
     name = "smoke-plugin",
     descriptor_module = ":descriptor-module",
     content_modules = [
         ":embedded-content-module",
         ":optional-content-module",
+        ":library-content-module_plugin_module",
     ],
 )
 
@@ -41,6 +54,7 @@ ij_plugin(
     content_modules = [
         ":embedded-content-module",
         ":optional-content-module",
+        ":library-content-module_plugin_module",
     ],
     until_build = "$since_build",
 )
