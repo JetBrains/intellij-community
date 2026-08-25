@@ -1270,7 +1270,8 @@ open class FileEditorManagerImpl(
         return composite
       }
     }
-    return window.owner.openInRightSplit(file, forceFocus = forceFocus, internalHint = internalHint)
+    // propagate the requestFocus for a split view as well
+    return window.owner.openInRightSplit(file, requestFocus = requestFocus, forceFocus = forceFocus, internalHint = internalHint)
       ?.composites()?.firstOrNull { it.file == file }
   }
 
