@@ -161,7 +161,7 @@ object CoreModuleSets {
    *
    * @see telemetryImpl for the OTLP exporters and `TelemetryManager` implementation
    */
-  fun telemetry(): ModuleSet = moduleSet("telemetry", includeDependencies = true) {
+  fun telemetry(): ModuleSet = moduleSet("telemetry") {
     moduleSet(librariesOpenTelemetry())
 
     embeddedModule("intellij.platform.diagnostic.telemetry")
@@ -170,11 +170,10 @@ object CoreModuleSets {
   /**
    * OpenTelemetry API and SDK library wrappers.
    *
-   * A nested set rather than plain members of `telemetry()`, because `includeDependencies` is a per-set default:
-   * the telemetry modules need it (packaging packs their JPS runtime deps into their own jars, e.g.
-   * `intellij.platform.diagnostic.telemetry.exporters` into the telemetry.impl jar), library wrappers must not
-   * have it - their JPS deps are other wrappers, and packing those would bundle them twice. Same reason
-   * `corePlatform()` nests `librariesDap()` instead of listing it inline.
+   * A nested set rather than plain members of `telemetry()`, matching how `telemetryImpl()` nests
+   * `librariesOpenTelemetryExporter()`: library wrappers must never pick up a set's `includeDependencies`
+   * default, since their own JPS deps are other wrappers and packing those would bundle them twice.
+   * `telemetry()` doesn't set the flag; `telemetryImpl()` still does.
    */
   fun librariesOpenTelemetry(): ModuleSet = moduleSet("libraries.opentelemetry") {
     embeddedModule("intellij.libraries.opentelemetry")
