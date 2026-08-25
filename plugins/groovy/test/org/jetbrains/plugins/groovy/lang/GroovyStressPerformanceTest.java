@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.openapi.command.WriteCommandAction;
@@ -279,6 +279,38 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
                       }
                     """;
     Benchmark.newBenchmark(getTestName(false), configureAndHighlight(text)).attempts(20).start();
+  }
+
+  public void testSlowNewExpression() {
+    String text = """
+        class DosMap {
+            static Map<String, DosObject> getStandardMembers() {
+                return [
+                        "dos object 1": new DosObject(name: "dos object 1",
+                        "dos object 2": new DosObject(name: "dos object 2",
+                        "dos object 3": new DosObject(name: "dos object 3",
+                        "dos object 4": new DosObject(name: "dos object 4",
+                        "dos object 5": new DosObject(name: "dos object 5",
+                        "dos object 6": new DosObject(name: "dos object 6",
+                        "dos object 7": new DosObject(name: "dos object 7",
+                        "dos object 8": new DosObject(name: "dos object 8",
+                        "dos object 9": new DosObject(name: "dos object 9",
+                        "dos object 10": new DosObject(name: "dos object 10",
+                        "dos object 11": new DosObject(name: "dos object 11",
+                        "dos object 12": new DosObject(name: "dos object 12",
+                        "dos object 13": new DosObject(name: "dos object 13",
+                        "dos object 14": new DosObject(name: "dos object 14",
+                        "dos object 15": new DosObject(name: "dos object 15",
+                        "dos object 16": new DosObject(name: "dos object 16",
+                        "dos object 17": new DosObject(name: "dos object 17",
+                        "dos object 18": new DosObject(name: "dos object 18",
+                        "dos object 19": new DosObject(name: "dos object 19",
+                        "dos object 20": new DosObject(name: "dos object 20") {})))))))))))))))))))))))))))))
+                ]
+            }
+        }
+        """;
+    Benchmark.newBenchmark(getTestName(false), configureAndHighlight(text)).start();
   }
 
   public void test_infer_only_the_variable_types_that_are_needed() {
