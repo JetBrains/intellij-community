@@ -269,10 +269,29 @@ def _declare_spans(ctx, args, base):
 
     A cached action replays the span file its execution wrote, so a hit reports the timings of the build that produced
     it rather than of the build that asked. That is what makes these figures readable only from a cold run.
+
+    **Append the returned file to `outputs`; never prepend it.** `dev-dist trace` joins a span file to its action by the
+    action's *primary* output, which is the first entry of the list handed to `ctx.actions.run`. Putting the span file
+    first would re-point the profile's `out` at the span file itself, and then no output in the build matches any span
+    file: every one comes back as "no action in this profile produced that output" with no other symptom - a report of
+    nothing, from a build that measured everything. Every caller here appends, which is also what keeps the primary
+    output, the action's identity in the profile and this file's own stem unchanged when the flag flips.
+
+    Args:
+        ctx: the rule context, for the flag and the declaration.
+        args: the tool's `Args`, which learns `--trace-file=` only when the flag is on.
+        base: the declared file's name without the `.spans.json` suffix - normally the primary output's stem, which is
+          what makes `<output stem>.spans.json` the name the join looks for.
     """
     if not ctx.attr._trace_spans[BuildSettingInfo].value:
         return None
     spans = ctx.actions.declare_file(base + ".spans.json")
+
+    # A string, matching every neighbouring `args.add("--option=" + file.path)` in this file, where the same choice was
+    # made for the tools' other path arguments. `content_module_jar.bzl` passes the `File` instead, because only that
+    # form is rewritten by output path mapping - and it is a worker whose whole argument list is a param file, where
+    # path mapping is the point. These actions are local-exec and not path-mapped, so the two forms are equivalent
+    # here; the rule is "the `File` where path mapping can apply, the string where the file's neighbours use strings".
     args.add("--trace-file=" + spans.path)
     return spans
 

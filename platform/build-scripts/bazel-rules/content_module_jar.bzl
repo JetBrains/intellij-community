@@ -171,7 +171,14 @@ def _content_module_jar_impl(ctx):
     spans = None
     if ctx.attr._trace_spans[BuildSettingInfo].value:
         spans = ctx.actions.declare_file(module_name + ".spans.json")
+
+        # The `File`, not `spans.path`: this argument travels in a param file that output path mapping may rewrite, and
+        # only the `File` form is rewritten with it. `intellij_dev_dist.bzl`'s `_declare_spans` passes the string,
+        # because there the argument sits on a local-exec command line among neighbours that all pass strings.
         args.add(spans, format = "trace-file=%s")
+
+        # Appended, never prepended: the jar stays this action's primary output, which is both its identity in a Bazel
+        # profile and the key `dev-dist trace` joins this file by.
         outputs.append(spans)
 
     if _keep_manifest(library_jars, merged_module_names):

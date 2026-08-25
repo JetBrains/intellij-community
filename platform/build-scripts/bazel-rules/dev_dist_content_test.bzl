@@ -210,9 +210,13 @@ def _packing_outputs_test_impl(ctx):
     asserts.equals(env, ctx.attr.expected_span_files, [file.basename for file in group])
     return analysistest.end(env)
 
+# Both tests pin the flag, neither reads it. Without `config_settings` this one would assert whatever `trace_spans`
+# happened to be on the command line, so `bazel test ... --@community//platform/build-scripts/bazel-rules:trace_spans`
+# would fail it - a test of the ambient configuration rather than of the rule.
 _packing_outputs_test = analysistest.make(
     _packing_outputs_test_impl,
     attrs = _PACKING_OUTPUTS_ATTRS,
+    config_settings = {_TRACE_SPANS: False},
 )
 
 _measuring_packing_outputs_test = analysistest.make(
