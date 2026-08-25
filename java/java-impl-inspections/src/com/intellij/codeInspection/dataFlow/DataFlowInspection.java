@@ -97,12 +97,10 @@ public final class DataFlowInspection extends DataFlowInspectionBase {
   }
 
   @Override
-  protected @NotNull List<@NotNull LocalQuickFix> createMethodReferenceNPEFixes(PsiMethodReferenceExpression methodRef, boolean onTheFly) {
+  protected @NotNull List<@NotNull LocalQuickFix> createMethodReferenceNPEFixes(PsiMethodReferenceExpression methodRef) {
     List<LocalQuickFix> fixes = new ArrayList<>();
     ContainerUtil.addIfNotNull(fixes, StreamFilterNotNullFix.makeFix(methodRef));
-    if (onTheFly) {
-      fixes.add(new ReplaceWithTernaryOperatorFix.ReplaceMethodRefWithTernaryOperatorFix());
-    }
+    fixes.add(new ReplaceWithTernaryOperatorFix.ReplaceMethodRefWithTernaryOperatorFix());
     return fixes;
   }
 
@@ -117,7 +115,6 @@ public final class DataFlowInspection extends DataFlowInspectionBase {
   @Override
   protected @NotNull List<@NotNull LocalQuickFix> createCastFixes(PsiTypeCastExpression castExpression,
                                                                   PsiType realType,
-                                                                  boolean onTheFly,
                                                                   boolean alwaysFails) {
     List<LocalQuickFix> fixes = new ArrayList<>();
     PsiExpression operand = castExpression.getOperand();
@@ -153,7 +150,6 @@ public final class DataFlowInspection extends DataFlowInspectionBase {
   @Override
   protected @NotNull List<@NotNull LocalQuickFix> createNPEFixes(@Nullable PsiExpression qualifier,
                                                                  PsiExpression expression,
-                                                                 boolean onTheFly,
                                                                  boolean alwaysNull) {
     qualifier = PsiUtil.deparenthesizeExpression(qualifier);
 
@@ -182,7 +178,7 @@ public final class DataFlowInspection extends DataFlowInspectionBase {
           fixes.add(new SurroundWithIfFix(qualifier, suffix));
         }
 
-        if (onTheFly && ReplaceWithTernaryOperatorFix.isAvailable(qualifier, expression)) {
+        if (ReplaceWithTernaryOperatorFix.isAvailable(qualifier, expression)) {
           fixes.add(new ReplaceWithTernaryOperatorFix(qualifier));
         }
       }
@@ -207,9 +203,7 @@ public final class DataFlowInspection extends DataFlowInspectionBase {
   }
 
   @Override
-  protected @NotNull List<@NotNull LocalQuickFix> createUnboxingNullableFixes(@NotNull PsiExpression qualifier,
-                                                                              PsiElement anchor,
-                                                                              boolean onTheFly) {
+  protected @NotNull List<@NotNull LocalQuickFix> createUnboxingNullableFixes(@NotNull PsiExpression qualifier, PsiElement anchor) {
     List<LocalQuickFix> result = new SmartList<>();
     if (TypeConversionUtil.isBooleanType(qualifier.getType())) {
       result.add(new ReplaceWithBooleanEqualsFix(qualifier));
