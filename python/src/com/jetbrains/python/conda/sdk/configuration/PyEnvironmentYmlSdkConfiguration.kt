@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.conda.sdk.configuration
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
@@ -29,7 +28,6 @@ import com.jetbrains.python.project.project
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.add.v2.PathHolder
-import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnvironment
 import com.jetbrains.python.sdk.conda.execution.CondaExecutor
@@ -51,9 +49,6 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.jetbrains.python.sdk.setAssociationToModule
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.SystemDependent
 import java.nio.file.Path
@@ -133,17 +128,8 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
       }
     }.getOr { return it }
 
-    val shared = PyCondaSdkCustomizer.instance.sharedEnvironmentsByDefault
-    val basePath = pyProject.baseDir
-
-    withContext(Dispatchers.EDT) {
-      this@PyEnvironmentYmlSdkConfiguration.thisLogger()
-        .debug("Adding conda environment: ${sdk.homePath}, associated ${shared}}, module path ${basePath})")
-      if (!shared) {
-        sdk.setAssociationToModule(pyProject.residesOnModule)
-      }
-    }
-
+    // No association step: both branches build the SDK with the pyproject base dir as the working directory, which is
+    // what a newly created PythonSdkAdditionalData associates itself with.
     return PyResult.success(sdk)
   }
 
