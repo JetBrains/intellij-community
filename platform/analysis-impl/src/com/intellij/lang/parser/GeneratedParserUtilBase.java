@@ -554,6 +554,7 @@ public class GeneratedParserUtilBase {
     }
     while (state.hooks != null && state.hooks.level >= state.level) {
       if (state.hooks.level == state.level) {
+        //noinspection unchecked
         marker = ((Hook<Object>)state.hooks.hook).run(builder, marker, state.hooks.param);
       }
       state.hooks = state.hooks.next;
@@ -1107,7 +1108,7 @@ public class GeneratedParserUtilBase {
     }
   }
 
-  private record Hooks<T>(Hook<T> hook, T param, int level, Hooks next) {
+  private record Hooks<T>(Hook<T> hook, T param, int level, Hooks<?> next) {
     static <E> Hooks<E> concat(Hook<E> hook, E param, int level, Hooks<?> hooks) {
       return new Hooks<>(hook, param, level, hooks);
     }
