@@ -41,7 +41,7 @@ import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlug
 public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(LifecycleUsageTriggerCollector.class);
 
-  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 79);
+  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 80);
 
   private static final AtomicInteger MAX_SIMULTANEOUS_PROJECTS = new AtomicInteger(0);
 
@@ -132,6 +132,17 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
 
   private static final EventsRateThrottle ourErrorRateThrottle = new EventsRateThrottle(100, 5L * 60 * 1000); // 100 errors per 5 minutes
   private static final EventsIdentityThrottle ourErrorIdentityThrottle = new EventsIdentityThrottle(50, 60L * 60 * 1000); // 1 unique error per 1 hour
+
+  private static final EventId1<Boolean> IDE_MEMORY_REPORT_SENT =
+    LIFECYCLE.registerEvent("ide.memory.report.send", EventFields.Boolean("automatic"));
+
+  private static final EventId IDE_MEMORY_REPORT_VIEW = LIFECYCLE.registerEvent("ide.memory.report.view");
+  private static final EventId IDE_MEMORY_REPORT_PREPARE = LIFECYCLE.registerEvent("ide.memory.report.prepare");
+  private static final EventId IDE_MEMORY_REPORT_FAIL = LIFECYCLE.registerEvent("ide.memory.report.failed");
+
+  private static final EventField<Boolean> IS_OOM_ERROR = EventFields.Boolean("oomError");
+  private static final EventId1<Boolean> IDE_MEMORY_ADJUST = LIFECYCLE.registerEvent("ide.memory.adjust", IS_OOM_ERROR);
+  private static final EventId1<Boolean> IDE_MEMORY_REPORT_PROBLEM = LIFECYCLE.registerEvent("ide.memory.report.problem", IS_OOM_ERROR);
 
   @Override
   public EventLogGroup getGroup() {
@@ -298,5 +309,29 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
       PluginInfo pluginInfo = (pluginId != null) ? getPluginInfoById(pluginId) : getPlatformPlugin();
       IDE_HUNDRED_EXCEPTIONS_HAPPENED_IN_PLUGIN.log(numberOfExceptions, pluginInfo);
     }
+  }
+
+  public static void onMemoryReportPrepared() {
+    IDE_MEMORY_REPORT_PREPARE.log();
+  }
+
+  public static void onMemoryReportFailed() {
+    IDE_MEMORY_REPORT_FAIL.log();
+  }
+
+  public static void onMemoryReportReview() {
+    IDE_MEMORY_REPORT_VIEW.log();
+  }
+
+  public static void onReportProblemClicked(boolean oomError) {
+    IDE_MEMORY_REPORT_PROBLEM.log(oomError);
+  }
+
+  public static void onMemoryAdjust(boolean oomError) {
+    IDE_MEMORY_ADJUST.log(oomError);
+  }
+
+  public static void onMemoryReportSubmitted(boolean automatic) {
+    IDE_MEMORY_REPORT_SENT.log(automatic);
   }
 }

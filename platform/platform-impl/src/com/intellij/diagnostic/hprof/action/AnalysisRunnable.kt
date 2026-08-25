@@ -25,6 +25,7 @@ import com.intellij.diagnostic.hprof.util.HeapDumpAnalysisNotificationGroup
 import com.intellij.diagnostic.hprof.util.HeapReportUtils.sectionHeader
 import com.intellij.diagnostic.hprof.util.HeapReportUtils.toShortStringAsSize
 import com.intellij.diagnostic.report.HeapReportProperties
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.actions.ShowLogAction
 import com.intellij.notification.Notification
@@ -117,10 +118,13 @@ internal class AnalysisRunnable(
         deleteHprofFileAsync()
       }
 
+      HeapDumpAnalysisSupport.getInstance().analysisComplete(heapProperties)
+
       val notification = HeapDumpAnalysisNotificationGroup.GROUP.createNotification(
         title = DiagnosticBundle.message("heap.dump.analysis.notification.title"),
         content = DiagnosticBundle.message("heap.dump.analysis.notification.ready.content"),
         type = NotificationType.INFORMATION)
+      notification.setDisplayId("memory.analysis.complete")
       notification.isImportant = true
       notification.setSuggestionType(true)
       notification.addAction(ReviewReportAction(reportText, heapProperties))
@@ -147,14 +151,14 @@ internal class AnalysisRunnable(
         return
       }
 
+      LifecycleUsageTriggerCollector.onMemoryReportReview()
+
       reportShown = true
       UIUtil.invokeLaterIfNeeded {
         notification.expire()
 
         val reportDialog = ShowReportDialog(reportText, heapProperties)
         val userAgreedToSendReport = reportDialog.showAndGet()
-
-        HeapDumpAnalysisSupport.getInstance().analysisComplete(heapProperties)
 
         if (userAgreedToSendReport) {
           HeapDumpAnalysisSupport.getInstance().uploadReport(reportText, heapProperties, parentComponent)

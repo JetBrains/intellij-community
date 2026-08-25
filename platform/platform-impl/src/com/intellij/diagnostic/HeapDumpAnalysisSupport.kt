@@ -1,12 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
+import com.google.common.hash.Hashing
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
 import com.intellij.diagnostic.hprof.action.AnalysisRunnable
 import com.intellij.diagnostic.hprof.action.getHeapDumpReportText
 import com.intellij.diagnostic.report.HeapReportProperties
 import com.intellij.diagnostic.report.MemoryReportReason
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
@@ -21,7 +23,9 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.awt.Component
+import java.nio.charset.StandardCharsets
 import java.nio.file.Path
+import java.util.Collections
 import kotlin.io.path.bufferedReader
 import kotlin.io.path.bufferedWriter
 import kotlin.io.path.deleteIfExists
@@ -36,6 +40,8 @@ internal class HeapDumpAnalysisSupport {
 
   fun getPrivacyPolicyUrl(): String = "https://www.jetbrains.com/company/privacy.html"
 
+  private val reportedHashes = Collections.synchronizedSet(mutableSetOf<String>())
+
   @RequiresEdt(generateAssertion = false)
   fun uploadReport(
     reportText: String,
@@ -45,12 +51,18 @@ internal class HeapDumpAnalysisSupport {
   ) {
     ThreadingAssertions.assertEventDispatchThread()
 
+    val fastReportHash = Hashing.murmur3_128().hashString(reportText, StandardCharsets.UTF_8).toString()
+    if (!reportedHashes.add(fastReportHash)) {
+      return // already reported this exact report (e.g. auto-submitted, then manually sent)
+    }
+
     val messageText = if (automaticReport) "Heap analysis results (auto)" else "Heap analysis results"
     val text = getHeapDumpReportText(reportText, heapReportProperties)
     val attachment = Attachment("report.txt", text).apply { isIncluded = true }
-    attachment.isIncluded = true
     val event = IdeaLoggingEvent(messageText, OutOfMemoryError(), listOf(attachment), null as ProblematicPluginInfo?, null)
     ErrorReportSubmitter.EP_NAME.findExtension(ITNReporter::class.java)?.submit(arrayOf(event), null, parentComponent) { }
+
+    LifecycleUsageTriggerCollector.onMemoryReportSubmitted(automaticReport)
   }
 
   /**
@@ -74,9 +86,13 @@ internal class HeapDumpAnalysisSupport {
     }
   }
 
-  fun analysisFailed(heapProperties: HeapReportProperties) { }
+  fun analysisFailed(heapProperties: HeapReportProperties) {
+    LifecycleUsageTriggerCollector.onMemoryReportFailed()
+  }
 
-  fun analysisComplete(heapProperties: HeapReportProperties) { }
+  fun analysisComplete(heapProperties: HeapReportProperties) {
+    LifecycleUsageTriggerCollector.onMemoryReportPrepared()
+  }
 }
 
 internal class AnalyzePendingSnapshotActivity: ProjectActivity {

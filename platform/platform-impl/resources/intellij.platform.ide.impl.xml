@@ -1345,7 +1345,7 @@
     <notificationGroup id="Settings Error" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.settings.error"/>
     <notificationGroup id="Load Error" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.load.error"/>
     <notificationGroup id="Heap Dump Analysis" displayType="STICKY_BALLOON" bundle="messages.DiagnosticBundle"
-                       key="notification.group.heap.dump.analysis"/>
+                       key="notification.group.heap.dump.analysis" notificationIds="memory.analysis.complete"/>
     <notificationGroup id="KeymapMissing" displayType="STICKY_BALLOON" bundle="messages.KeyMapBundle"
                        key="notification.group.keymap.missing"/>
     <notificationGroup id="ColorSchemeDeprecation" displayType="STICKY_BALLOON" bundle="messages.IdeBundle"

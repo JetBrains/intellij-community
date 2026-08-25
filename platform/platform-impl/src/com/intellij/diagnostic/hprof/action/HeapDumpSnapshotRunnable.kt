@@ -63,6 +63,7 @@ internal class HeapDumpSnapshotRunnable(
   enum class AnalysisOption {
     NO_ANALYSIS,
     SCHEDULE_ON_NEXT_START,
+    SCHEDULE_ON_NEXT_START_SILENT,
     IMMEDIATE
   }
 
@@ -167,6 +168,10 @@ internal class HeapDumpSnapshotRunnable(
       LOG.info("Memory snapshot saved for analysis: '$hprofPath'")
 
       when (analysisOption) {
+        AnalysisOption.SCHEDULE_ON_NEXT_START_SILENT -> {
+          HeapDumpAnalysisSupport.getInstance().saveSnapshotForAnalysis(hprofPath, reportProperties)
+        }
+
         AnalysisOption.SCHEDULE_ON_NEXT_START -> {
           HeapDumpAnalysisSupport.getInstance().saveSnapshotForAnalysis(hprofPath, reportProperties)
 
