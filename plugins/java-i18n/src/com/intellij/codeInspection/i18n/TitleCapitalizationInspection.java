@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n;
 
-import com.ibm.icu.text.MessagePattern;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.NlsCapitalizationUtil;
@@ -287,7 +286,7 @@ public final class TitleCapitalizationInspection extends AbstractBaseJavaLocalIn
       if (value == null) return null;
       if (useFormat) {
         try {
-          MessagePattern pattern = new MessagePattern(MessagePattern.ApostropheMode.DOUBLE_REQUIRED);
+          MessagePatternLite pattern = new MessagePatternLite();
           pattern.parse(value);
           return new PropertyValue(value, pattern);
         }
@@ -355,9 +354,9 @@ public final class TitleCapitalizationInspection extends AbstractBaseJavaLocalIn
 
   static class PropertyValue implements Value {
     private final String myPresentation;
-    private final MessagePattern myPattern;
+    private final MessagePatternLite myPattern;
 
-    PropertyValue(String presentation, MessagePattern pattern) {
+    PropertyValue(String presentation, MessagePatternLite pattern) {
       myPresentation = presentation;
       myPattern = pattern;
     }
@@ -368,14 +367,14 @@ public final class TitleCapitalizationInspection extends AbstractBaseJavaLocalIn
     }
     
     private int getMessagesForPart(int index) {
-      MessagePattern.Part part = myPattern.getPart(index);
-      if (part.getType() != MessagePattern.Part.Type.ARG_START) return 0;
+      MessagePatternLite.Part part = myPattern.getPart(index);
+      if (part.getType() != MessagePatternLite.Part.Type.ARG_START) return 0;
       int limitPart = myPattern.getLimitPartIndex(index);
       int msgCount = 0;
       int nesting = -1;
       for (int i = index + 1; i < limitPart; i++) {
         part = myPattern.getPart(i);
-        if (part.getType() == MessagePattern.Part.Type.MSG_START) {
+        if (part.getType() == MessagePatternLite.Part.Type.MSG_START) {
           if (nesting == -1) {
             nesting = part.getValue();
           }
@@ -404,28 +403,28 @@ public final class TitleCapitalizationInspection extends AbstractBaseJavaLocalIn
         int curMsgCount = 0;
         boolean inMsg = false;
         for (int i = 1; i < parts; i++) {
-          MessagePattern.Part part = myPattern.getPart(i);
+          MessagePatternLite.Part part = myPattern.getPart(i);
           boolean shouldCopyPart = nestingLevel == 0 || inMsg && msgIndex == curIndex % curMsgCount + 1;
           if (shouldCopyPart) {
             sample.append(string, myPattern.getPart(i - 1).getLimit(), myPattern.getPatternIndex(i));
           }
-          if (part.getType() == MessagePattern.Part.Type.ARG_START) {
+          if (part.getType() == MessagePatternLite.Part.Type.ARG_START) {
             nestingLevel++;
-            MessagePattern.ArgType argType = part.getArgType();
-            if ((argType == MessagePattern.ArgType.SIMPLE || argType == MessagePattern.ArgType.NONE) && shouldCopyPart) {
+            MessagePatternLite.ArgType argType = part.getArgType();
+            if ((argType == MessagePatternLite.ArgType.SIMPLE || argType == MessagePatternLite.ArgType.NONE) && shouldCopyPart) {
               sample.append("_");
             }
             msgIndex = 0;
             curMsgCount = Math.max(1, getMessagesForPart(i));
           }
-          else if (part.getType() == MessagePattern.Part.Type.MSG_START) {
+          else if (part.getType() == MessagePatternLite.Part.Type.MSG_START) {
             msgIndex++;
             inMsg = true;
           }
-          else if (part.getType() == MessagePattern.Part.Type.MSG_LIMIT) {
+          else if (part.getType() == MessagePatternLite.Part.Type.MSG_LIMIT) {
             inMsg = false;
           }
-          else if (part.getType() == MessagePattern.Part.Type.ARG_LIMIT) {
+          else if (part.getType() == MessagePatternLite.Part.Type.ARG_LIMIT) {
             nestingLevel--;
           }
         }
@@ -437,8 +436,8 @@ public final class TitleCapitalizationInspection extends AbstractBaseJavaLocalIn
     @Override
     public boolean canFix() {
       return IntStream.range(0, myPattern.countParts()).anyMatch(idx -> {
-        MessagePattern.ArgType type = myPattern.getPart(idx).getArgType();
-        return type == MessagePattern.ArgType.NONE || type == MessagePattern.ArgType.SIMPLE;
+        MessagePatternLite.ArgType type = myPattern.getPart(idx).getArgType();
+        return type == MessagePatternLite.ArgType.NONE || type == MessagePatternLite.ArgType.SIMPLE;
       });
     }
   }
