@@ -89,7 +89,7 @@ internal class DevBuildComponentComposerTest {
     )
 
     val manifest = readDevBuildComponentManifest(manifestFile)
-    assertThat(manifest.version).isEqualTo(8)
+    assertThat(manifest.version).isEqualTo(9)
     assertThat(manifest.entries).anySatisfy { entry ->
       assertThat(entry.relativePath).isEqualTo("lib/ijent/ijent-x86_64-unknown-linux-musl-release")
       assertThat(entry.type).isEqualTo("component-file")
@@ -615,6 +615,185 @@ internal class DevBuildComponentComposerTest {
     }
       .isInstanceOf(IllegalStateException::class.java)
       .hasMessageContaining("does not declare: [intellij.devkit]")
+  }
+
+  @Test
+  fun `sourced component manifest names where each file's bytes are and hashes a shared source once`(@TempDir tempDir: Path) {
+    val shared = tempDir.resolve("shared.jar")
+    Files.writeString(shared, "packed bytes")
+    val manifestFile = tempDir.resolve("component.json")
+
+    writeSourcedDevBuildComponentManifest(
+      file = manifestFile,
+      kind = "plugins_packed_content_modules",
+      platformPrefix = "idea",
+      os = OsFamily.LINUX,
+      arch = JvmArchitecture.x64,
+      files = listOf(
+        DevBuildComponentSourcedFile("plugins/two/lib/modules/shared.jar", shared.toString()),
+        DevBuildComponentSourcedFile("plugins/one/lib/modules/shared.jar", shared.toString()),
+      ),
+    )
+
+    val manifest = readDevBuildComponentManifest(manifestFile)
+    // Such a component knows its product and target platform and nothing that needs a product layout.
+    assertThat(manifest.mainClass).isNull()
+    assertThat(manifest.coreClassPath).isEmpty()
+    assertThat(manifest.entries.map { it.relativePath }).containsExactly(
+      "plugins/one/lib/modules/shared.jar",
+      "plugins/two/lib/modules/shared.jar",
+    )
+    assertThat(manifest.entries).allSatisfy { entry ->
+      assertThat(entry.type).isEqualTo("component-file")
+      assertThat(entry.source).isEqualTo(shared.toString())
+      assertThat(entry.symlinkTarget).isNull()
+      // Not read off the source: the composer chmods what it writes, so this is false by construction.
+      assertThat(entry.executable).isFalse()
+    }
+    // One jar under two destinations is one set of bytes, so both entries carry the same hash.
+    assertThat(manifest.entries.map { it.hash }.distinct()).hasSize(1)
+  }
+
+  /**
+   * The mode assertion the collector used to own. It was true there because the collector chmodded its own copy of the
+   * jar before inventorying it; the copy is gone, so the composer normalizes instead and the manifest's
+   * `executable = false` has to keep meaning the same thing.
+   */
+  @Test
+  fun `composer copies a tree-less component's sourced files as non-executable distribution files`(@TempDir tempDir: Path) {
+    val source = tempDir.resolve("staged/shared.jar")
+    Files.createDirectories(source.parent)
+    Files.writeString(source, "packed bytes")
+    val supportsPosix = Files.getFileStore(source).supportsFileAttributeView(PosixFileAttributeView::class.java)
+    if (supportsPosix) {
+      Files.setPosixFilePermissions(
+        source,
+        setOf(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE),
+      )
+    }
+    val component = DevBuildComponent(
+      root = null,
+      manifest = manifest(
+        kind = "plugins_packed_content_modules",
+        entries = listOf(
+          sourcedEntry("plugins/one/lib/modules/shared.jar", source),
+          sourcedEntry("plugins/two/lib/modules/shared.jar", source),
+        ),
+      ),
+    )
+    val target = tempDir.resolve("target")
+
+    composeDevBuildComponents(listOf(component), target)
+
+    for (relativePath in listOf("plugins/one/lib/modules/shared.jar", "plugins/two/lib/modules/shared.jar")) {
+      val copied = target.resolve(relativePath)
+      assertThat(Files.readString(copied)).isEqualTo("packed bytes")
+      assertThat(Files.isSymbolicLink(copied)).isFalse()
+      if (supportsPosix) {
+        assertThat(Files.getPosixFilePermissions(copied)).isEqualTo(setOf(
+          PosixFilePermission.OWNER_READ,
+          PosixFilePermission.OWNER_WRITE,
+          PosixFilePermission.GROUP_READ,
+          PosixFilePermission.OTHERS_READ,
+        ))
+      }
+    }
+  }
+
+  @Test
+  fun `composer follows a staging symlink of a tree-less component`(@TempDir tempDir: Path) {
+    if (!supportsSymbolicLinks(tempDir)) return
+    val bytes = tempDir.resolve("bazel-out/packed.jar")
+    Files.createDirectories(bytes.parent)
+    Files.writeString(bytes, "jar bytes")
+    val staged = tempDir.resolve("sandbox/packed.jar")
+    Files.createDirectories(staged.parent)
+    Files.createSymbolicLink(staged, bytes)
+    val component = DevBuildComponent(
+      root = null,
+      manifest = manifest(kind = "platform_packed_content_modules", entries = listOf(sourcedEntry("lib/packed.jar", staged))),
+    )
+    val target = tempDir.resolve("target")
+
+    composeDevBuildComponents(listOf(component), target)
+    Files.delete(bytes)
+
+    assertThat(Files.isSymbolicLink(target.resolve("lib/packed.jar"))).isFalse()
+    assertThat(Files.readString(target.resolve("lib/packed.jar"))).isEqualTo("jar bytes")
+  }
+
+  @Test
+  fun `composer rejects a tree-less component entry that names no source`(@TempDir tempDir: Path) {
+    val component = DevBuildComponent(
+      root = null,
+      manifest = manifest(
+        kind = "platform_packed_content_modules",
+        entries = listOf(DevBuildComponentEntry(relativePath = "lib/packed.jar", type = "component-file", hash = 1)),
+      ),
+    )
+
+    assertThatThrownBy { composeDevBuildComponents(listOf(component), tempDir.resolve("target")) }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining("must name where its bytes are")
+  }
+
+  /** What replaces `linksNotSeen`: with no tree to check a declared link against, a link may not be declared at all. */
+  @Test
+  fun `composer rejects a symbolic link declared by a tree-less component`(@TempDir tempDir: Path) {
+    val source = tempDir.resolve("packed.jar")
+    Files.writeString(source, "packed bytes")
+    val component = DevBuildComponent(
+      root = null,
+      manifest = manifest(
+        kind = "platform_packed_content_modules",
+        entries = listOf(sourcedEntry("lib/packed.jar", source).copy(symlinkTarget = "other.jar")),
+      ),
+    )
+
+    assertThatThrownBy { composeDevBuildComponents(listOf(component), tempDir.resolve("target")) }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining("cannot declare the symbolic link 'lib/packed.jar'")
+  }
+
+  /** What replaces relativizing a walked path: a manifest path is a string, so the escape is checked explicitly. */
+  @Test
+  fun `composer rejects a tree-less component entry that escapes the distribution`(@TempDir tempDir: Path) {
+    val source = tempDir.resolve("packed.jar")
+    Files.writeString(source, "packed bytes")
+    val component = DevBuildComponent(
+      root = null,
+      manifest = manifest(kind = "platform_packed_content_modules", entries = listOf(sourcedEntry("../outside.jar", source))),
+    )
+
+    assertThatThrownBy { composeDevBuildComponents(listOf(component), tempDir.resolve("target")) }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining("escapes the distribution: ../outside.jar")
+  }
+
+  @Test
+  fun `composer rejects a path a tree-less and a tree component both provide`(@TempDir tempDir: Path) {
+    val source = tempDir.resolve("packed.jar")
+    Files.writeString(source, "packed bytes")
+    val components = listOf(
+      DevBuildComponent(root = component(tempDir, "platform", "lib/packed.jar"), manifest = manifest(kind = "platform_lib")),
+      DevBuildComponent(
+        root = null,
+        manifest = manifest(kind = "platform_packed_content_modules", entries = listOf(sourcedEntry("lib/packed.jar", source))),
+      ),
+    )
+
+    assertThatThrownBy { composeDevBuildComponents(components, tempDir.resolve("target")) }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining("both provide 'lib/packed.jar'")
+  }
+
+  private fun sourcedEntry(relativePath: String, source: Path): DevBuildComponentEntry {
+    return DevBuildComponentEntry(
+      relativePath = relativePath,
+      type = "component-file",
+      hash = 1,
+      source = source.toString(),
+    )
   }
 
   private fun component(tempDir: Path, name: String, relativeFile: String): Path {

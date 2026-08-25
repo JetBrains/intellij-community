@@ -16,12 +16,22 @@ import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.attribute.PosixFilePermission
+import java.util.EnumSet
 import java.util.LinkedHashSet
 import kotlin.io.path.invariantSeparatorsPathString
 
 @ApiStatus.Internal
 data class DevBuildComponent(
-  @JvmField val root: Path,
+  /**
+   * The tree this component's files sit in, or `null` for a component that owns no tree.
+   *
+   * A component with no tree names each file's bytes where they already are, in
+   * [DevBuildComponentEntry.source] - see [writeSourcedDevBuildComponentManifest]. Its manifest is then the only
+   * statement of what the component contains, which is why the composer holds it to a stricter contract: every entry
+   * must name a source and none may be a symbolic link.
+   */
+  @JvmField val root: Path?,
   @JvmField val manifest: DevBuildComponentManifest,
   /** This component's share of the `plugin-classpath.txt` records, if it built any plugin. */
   @JvmField val pluginClasspathPart: Path? = null,
@@ -128,7 +138,13 @@ fun composeDevBuildComponents(
     }
     // one span per component, so that a composition that is slow because of one fragment says which one
     spanBuilder("merge dev build component").setAttribute("kind", manifest.kind).blockingUse { span ->
-      val merged = mergeDevBuildComponent(source = root, target = target, genuineSymlinks = genuineSymlinks)
+      span.setAttribute("manifestOnly", root == null)
+      val merged = if (root == null) {
+        copyManifestOnlyComponent(manifest = manifest, target = target)
+      }
+      else {
+        mergeDevBuildComponent(source = root, target = target, genuineSymlinks = genuineSymlinks)
+      }
       span.setAttribute("fileCount", merged.fileCount.toLong())
       span.setAttribute("byteCount", merged.byteCount)
     }
@@ -206,6 +222,61 @@ fun mergeDevBuildComponent(source: Path, target: Path) {
 /** What one merged component turned out to be, for the span that measured it. */
 internal class MergedDevBuildComponent(@JvmField val fileCount: Int, @JvmField val byteCount: Long)
 
+/**
+ * Copies a component that owns no tree straight into [target], from where its manifest says each file's bytes are.
+ *
+ * Nothing here walks anything: the manifest is the component. That removes the tree the producer would otherwise have
+ * written for this function to read - the distribution's first write - and with it the two cross-checks the walk gave
+ * for free, so they are replaced by what a manifest can be held to instead:
+ *
+ * - the walk's `linksNotSeen` proved every symbolic link the manifest declared was really in the tree. There is no
+ *   tree to disagree with, so the manifest is not allowed to declare one at all: these components are packed jars and
+ *   nothing else, and a symlink entry in one of them is a producer defect, rejected here rather than recreated.
+ * - the walk relativized real paths, so a path could not escape the component. A manifest path is a string, so the
+ *   escape is checked explicitly.
+ *
+ * The collision check is unchanged - the same `Files.exists` on the destination as the tree walk does, in the same
+ * target tree, so two components providing one path still fail here and the analysis-time check in `dev_dist_content`
+ * stays the backup it was.
+ *
+ * The mode is this function's, not the producer's: the bytes are read out of Bazel's output tree, where a jar's mode is
+ * whatever the packing action left, and the distribution wants an ordinary non-executable file. Normalizing on this
+ * side is what lets the manifest state `executable = false` by construction and keeps the fingerprint where it was
+ * when the producer chmodded its own copy.
+ */
+private fun copyManifestOnlyComponent(manifest: DevBuildComponentManifest, target: Path): MergedDevBuildComponent {
+  val normalizedTarget = target.normalize()
+  var byteCount = 0L
+  for (entry in manifest.entries) {
+    val source = checkNotNull(entry.source) {
+      "Dev-build component '${manifest.kind}' declares no tree, so '${entry.relativePath}' must name where its bytes are"
+    }
+    check(entry.symlinkTarget == null) {
+      "Dev-build component '${manifest.kind}' declares no tree, so it cannot declare the symbolic link '${entry.relativePath}'"
+    }
+    val destination = normalizedTarget.resolve(entry.relativePath).normalize()
+    check(destination.startsWith(normalizedTarget) && destination != normalizedTarget) {
+      "Dev-build component '${manifest.kind}' entry escapes the distribution: ${entry.relativePath}"
+    }
+    check(!Files.exists(destination, LinkOption.NOFOLLOW_LINKS)) {
+      "Dev-build components both provide '${entry.relativePath}'"
+    }
+    val staged = Path.of(source)
+    // The one failure this shape has that a tree does not: a manifest may name a file the composing action never
+    // declared, and then the file is simply not in the sandbox. Said plainly here rather than as a NoSuchFileException.
+    check(Files.exists(staged)) {
+      "Dev-build component '${manifest.kind}' names '$source' for '${entry.relativePath}', but nothing is staged there" +
+      " - the composing action has to declare that file as an input"
+    }
+    // Follow Bazel's staging link, as the tree walk does: reproducing it would leak the execution root into the result.
+    val sourceFile = staged.toRealPath()
+    Files.createDirectories(destination.parent)
+    byteCount += Files.size(sourceFile)
+    copyAsDistributionFile(source = sourceFile, target = destination)
+  }
+  return MergedDevBuildComponent(fileCount = manifest.entries.size, byteCount = byteCount)
+}
+
 internal fun mergeDevBuildComponent(
   source: Path,
   target: Path,
@@ -267,3 +338,21 @@ internal fun mergeDevBuildComponent(
   }
   return MergedDevBuildComponent(fileCount = fileCount, byteCount = byteCount)
 }
+
+/** Copies [source] as an ordinary non-executable distribution file without hard-linking back into Bazel outputs. */
+private fun copyAsDistributionFile(source: Path, target: Path) {
+  // COPY_ATTRIBUTES selects the host's optimized copy path, copy-on-write included, so it is never omitted here.
+  Files.copy(source, target, StandardCopyOption.COPY_ATTRIBUTES)
+  try {
+    Files.setPosixFilePermissions(target, DISTRIBUTION_FILE_PERMISSIONS)
+  }
+  catch (_: UnsupportedOperationException) {
+  }
+}
+
+private val DISTRIBUTION_FILE_PERMISSIONS: Set<PosixFilePermission> = EnumSet.of(
+  PosixFilePermission.OWNER_READ,
+  PosixFilePermission.OWNER_WRITE,
+  PosixFilePermission.GROUP_READ,
+  PosixFilePermission.OTHERS_READ,
+)

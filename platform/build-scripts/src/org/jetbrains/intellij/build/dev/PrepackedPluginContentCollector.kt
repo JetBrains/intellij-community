@@ -7,24 +7,28 @@ import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.blockingUse
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
-import java.nio.file.attribute.PosixFilePermission
-import java.util.EnumSet
+import kotlin.io.path.invariantSeparatorsPathString
 
 private data class PackedPluginJar(
   @JvmField val key: PrepackedPluginContentKey,
   @JvmField val relativeOutputFile: String,
-  @JvmField val source: Path,
+  /** The jar's path as the record gave it - execution-root-relative, and the composer resolves it the same way. */
+  @JvmField val source: String,
 )
 
-/** Joins Bazel-built plugin jars to the destinations a fragment validated through `JarPackager`, then copies them. */
+/**
+ * Joins Bazel-built plugin jars to the destinations a fragment validated through `JarPackager`.
+ *
+ * Copies nothing: the result is the component's content stated as pairs of destination and existing bytes, which
+ * `writeSourcedDevBuildComponentManifest` turns into the manifest the composer copies from. One jar may be named by
+ * several plugins, so the same source appears under more than one destination.
+ */
 @ApiStatus.Internal
-fun collectPrepackedPluginContentJars(pluginJarsFile: Path, placementFiles: List<Path>, outputDir: Path): Int {
+fun collectPrepackedPluginContentJars(pluginJarsFile: Path, placementFiles: List<Path>): List<DevBuildComponentSourcedFile> {
   return spanBuilder("collect prepacked plugin content jars").blockingUse { span ->
     collectPrepackedPluginContentJars(
       pluginJarsFile = pluginJarsFile,
       placementFiles = placementFiles,
-      outputDir = outputDir,
       span = span,
     )
   }
@@ -33,18 +37,13 @@ fun collectPrepackedPluginContentJars(pluginJarsFile: Path, placementFiles: List
 private fun collectPrepackedPluginContentJars(
   pluginJarsFile: Path,
   placementFiles: List<Path>,
-  outputDir: Path,
   span: Span,
-): Int {
+): List<DevBuildComponentSourcedFile> {
   val jars = LinkedHashMap<PrepackedPluginContentKey, PackedPluginJar>()
   readTabSeparated(pluginJarsFile, fieldCount = 4) { fields, lineNumber ->
     val key = PrepackedPluginContentKey(pluginMainModule = fields[0], contentModule = fields[1])
     val relativeOutputFile = validateRelativeOutputFile(key = key, value = fields[2], source = "$pluginJarsFile:$lineNumber")
-    val jar = PackedPluginJar(
-      key = key,
-      relativeOutputFile = relativeOutputFile,
-      source = Path.of(fields[3]).toAbsolutePath().normalize(),
-    )
+    val jar = PackedPluginJar(key = key, relativeOutputFile = relativeOutputFile, source = fields[3])
     val previous = jars.put(key, jar)
     require(previous == null) { "$pluginJarsFile:$lineNumber: duplicate plugin jar relation $key" }
   }
@@ -65,13 +64,16 @@ private fun collectPrepackedPluginContentJars(
     " unknown placements ${formatKeys(unknown)}"
   }
 
-  val normalizedOutputDir = outputDir.toAbsolutePath().normalize()
-  val destinations = HashMap<Path, PrepackedPluginContentKey>()
+  val destinations = HashMap<String, PrepackedPluginContentKey>()
   var byteCount = 0L
+  val result = ArrayList<DevBuildComponentSourcedFile>(placements.size)
   for (key in placements.keys.sortedWith(compareBy(PrepackedPluginContentKey::pluginMainModule, PrepackedPluginContentKey::contentModule))) {
     val jar = jars.getValue(key)
     val distributionPathString = placements.getValue(key)
     val distributionPath = Path.of(distributionPathString)
+    // The only escape check there is now: with no output directory to resolve against, a placement is accepted or
+    // rejected on its own text. A normalized relative path that does not start with `..` cannot leave the distribution,
+    // which is what the resolved-and-compared check used to restate.
     require(!distributionPath.isAbsolute && distributionPath.normalize() == distributionPath && !distributionPath.startsWith("..")) {
       "Placement for $key escapes the distribution: $distributionPathString"
     }
@@ -79,17 +81,15 @@ private fun collectPrepackedPluginContentJars(
     require(distributionPath.startsWith("plugins") && distributionPath.endsWith(expectedSuffix)) {
       "Placement for $key is '$distributionPathString', expected plugins/<directory>/$expectedSuffix"
     }
-    val target = normalizedOutputDir.resolve(distributionPath).normalize()
-    require(target.startsWith(normalizedOutputDir)) { "Placement for $key escapes $outputDir: $distributionPathString" }
-    val previous = destinations.put(target, key)
+    val relativePath = distributionPath.invariantSeparatorsPathString
+    val previous = destinations.put(relativePath, key)
     require(previous == null) { "Plugin jars $previous and $key both claim $distributionPathString" }
-    Files.createDirectories(target.parent)
-    byteCount += Files.size(jar.source)
-    copyAsDistributionFile(source = jar.source, target = target)
+    byteCount += Files.size(Path.of(jar.source))
+    result.add(DevBuildComponentSourcedFile(relativePath = relativePath, source = jar.source))
   }
   span.setAttribute("jarCount", placements.size.toLong())
   span.setAttribute("byteCount", byteCount)
-  return placements.size
+  return result
 }
 
 private fun validateRelativeOutputFile(key: PrepackedPluginContentKey, value: String, source: String): String {
@@ -118,21 +118,3 @@ private inline fun readTabSeparated(file: Path, fieldCount: Int, consumer: (List
     consumer(fields, index + 1)
   }
 }
-
-/** Copies [source] as an ordinary non-executable distribution file without hard-linking back into Bazel outputs. */
-@ApiStatus.Internal
-fun copyAsDistributionFile(source: Path, target: Path) {
-  Files.copy(source.toRealPath(), target, StandardCopyOption.COPY_ATTRIBUTES)
-  try {
-    Files.setPosixFilePermissions(target, DISTRIBUTION_FILE_PERMISSIONS)
-  }
-  catch (_: UnsupportedOperationException) {
-  }
-}
-
-private val DISTRIBUTION_FILE_PERMISSIONS: Set<PosixFilePermission> = EnumSet.of(
-  PosixFilePermission.OWNER_READ,
-  PosixFilePermission.OWNER_WRITE,
-  PosixFilePermission.GROUP_READ,
-  PosixFilePermission.OTHERS_READ,
-)

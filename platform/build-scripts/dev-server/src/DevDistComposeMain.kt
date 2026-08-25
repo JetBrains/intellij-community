@@ -35,7 +35,9 @@ private fun composeDevDistribution(options: CommandLineOptions) {
   val components = spec.components.map { component ->
     val manifest = readDevBuildComponentManifest(Path.of(component.manifest).toAbsolutePath().normalize())
     DevBuildComponent(
-      root = Path.of(component.root).toAbsolutePath().normalize(),
+      // A component with no tree resolves its entries' own paths against this process's working directory instead - the
+      // execution root its action staged them into - so nothing is made absolute here on its behalf.
+      root = component.root?.let { Path.of(it).toAbsolutePath().normalize() },
       manifest = manifest,
       pluginClasspathPart = component.pluginClasspathPart?.let { Path.of(it).toAbsolutePath().normalize() },
     )

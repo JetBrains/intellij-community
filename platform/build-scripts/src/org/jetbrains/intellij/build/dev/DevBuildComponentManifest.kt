@@ -22,7 +22,7 @@ import java.nio.file.attribute.PosixFilePermission
 import java.util.LinkedHashSet
 import kotlin.io.path.invariantSeparatorsPathString
 
-private const val DEV_BUILD_COMPONENT_MANIFEST_VERSION = 8
+private const val DEV_BUILD_COMPONENT_MANIFEST_VERSION = 9
 private const val COMPONENT_FILE_ENTRY_TYPE = "component-file"
 private const val COMPONENT_SYMLINK_ENTRY_TYPE = "symlink"
 private const val GENERATED_CORE_CLASSPATH_ENTRY_TYPE = "generated-core-classpath"
@@ -39,6 +39,16 @@ data class DevBuildComponentEntry(
   @JvmField val executable: Boolean = false,
   /** Relative target of a genuine distribution symlink; `null` for an ordinary owned file. */
   @JvmField val symlinkTarget: String? = null,
+  /**
+   * Where this file's bytes are, for a component that owns no tree - see [writeSourcedDevBuildComponentManifest].
+   *
+   * A path as the producer received it, which is a Bazel execution-root-relative one, so the composer resolves it
+   * against its own working directory and finds the file its action staged at the same path. `null` for an entry of a
+   * component that has a tree, whose bytes are at [relativePath] under that tree.
+   *
+   * Deliberately outside the fingerprint: it names where bytes came from, and [hash] already says what they are.
+   */
+  @JvmField val source: String? = null,
 )
 
 @Serializable
@@ -100,6 +110,57 @@ fun writeDevBuildComponentManifest(
     },
     pluginCount = pluginCount,
     entries = inventoryDevBuildComponent(componentRoot),
+  )
+  file.parent?.let { Files.createDirectories(it) }
+  Files.writeString(file, componentManifestJson.encodeToString(DevBuildComponentManifest.serializer(), manifest))
+}
+
+/**
+ * One file of a component that owns no tree: bytes that already exist, and the distribution path they belong at.
+ *
+ * @param relativePath the file's path in the distribution, `/`-separated.
+ * @param source the path the producer was given for the bytes - see [DevBuildComponentEntry.source].
+ */
+@ApiStatus.Internal
+data class DevBuildComponentSourcedFile(
+  @JvmField val relativePath: String,
+  @JvmField val source: String,
+)
+
+/**
+ * Writes the manifest of a component that owns no tree, naming where each of its files' bytes already are.
+ *
+ * The counterpart of [writeDevBuildComponentManifest] for a producer whose whole job is to say where already-packed
+ * jars belong: copying them into a tree only for the composer to copy them again writes the distribution twice, so it
+ * declares no tree at all and the composer copies each jar straight into the distribution.
+ *
+ * The mode is recorded by construction rather than measured. Such a file lands in the distribution as an ordinary
+ * non-executable file - the composer chmods it, exactly as the collector used to before writing this manifest - so
+ * `executable` is false here for the same reason it was false then, and not because of whatever mode Bazel left on the
+ * packed jar in its output tree. Reading the mode off the source would make the fingerprint depend on that instead.
+ *
+ * Such a component declares no main class, no core classpath, no additional modules and no plugins, because deciding
+ * any of those needs a product layout - see [DevBuildComponentManifest.mainClass].
+ */
+@ApiStatus.Internal
+fun writeSourcedDevBuildComponentManifest(
+  file: Path,
+  kind: String,
+  platformPrefix: String,
+  os: OsFamily,
+  arch: JvmArchitecture,
+  files: Collection<DevBuildComponentSourcedFile>,
+) {
+  val manifest = DevBuildComponentManifest(
+    kind = kind,
+    platformPrefix = platformPrefix,
+    os = os.osId,
+    arch = arch.name,
+    additionalModules = emptyList(),
+    mainClass = null,
+    coreClassPath = emptyList(),
+    pluginCount = 0,
+    entries = inventorySourcedDevBuildComponent(files),
   )
   file.parent?.let { Files.createDirectories(it) }
   Files.writeString(file, componentManifestJson.encodeToString(DevBuildComponentManifest.serializer(), manifest))
@@ -178,19 +239,7 @@ fun computeIdeFingerprintFromComponents(
 private fun inventoryDevBuildComponent(componentRoot: Path): List<DevBuildComponentEntry> {
   return spanBuilder("inventory dev build component").blockingUse { span ->
     val normalizedComponentRoot = componentRoot.toAbsolutePath().normalize()
-    val contentHashes = HashMap<Path, Long>()
-    var hashedFileCount = 0L
-    var hashedByteCount = 0L
-    // not `computeIfAbsent`: only a file whose content was actually read counts towards what the hashing cost
-    fun contentHash(file: Path, size: Long): Long {
-      contentHashes.get(file)?.let { return it }
-      val hash = computeDevBuildContentHash(file)
-      contentHashes.put(file, hash)
-      hashedFileCount++
-      hashedByteCount += size
-      return hash
-    }
-
+    val hasher = DevBuildContentHasher()
     val result = ArrayList<DevBuildComponentEntry>()
     Files.walkFileTree(normalizedComponentRoot, object : SimpleFileVisitor<Path>() {
       override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
@@ -219,7 +268,7 @@ private fun inventoryDevBuildComponent(componentRoot: Path): List<DevBuildCompon
               DevBuildComponentEntry(
                 relativePath = relativePath,
                 type = COMPONENT_FILE_ENTRY_TYPE,
-                hash = contentHash(realFile, Files.size(realFile)),
+                hash = hasher.hash(realFile, Files.size(realFile)),
                 executable = computeDevBuildExecutableBit(realFile),
               )
             )
@@ -230,7 +279,7 @@ private fun inventoryDevBuildComponent(componentRoot: Path): List<DevBuildCompon
             DevBuildComponentEntry(
               relativePath = relativePath,
               type = COMPONENT_FILE_ENTRY_TYPE,
-              hash = contentHash(file.toAbsolutePath().normalize(), attrs.size()),
+              hash = hasher.hash(file.toAbsolutePath().normalize(), attrs.size()),
               executable = computeDevBuildExecutableBit(file),
             )
           )
@@ -239,19 +288,72 @@ private fun inventoryDevBuildComponent(componentRoot: Path): List<DevBuildCompon
       }
     })
 
-    result.sortWith(
-      compareBy(
-        DevBuildComponentEntry::relativePath,
-        DevBuildComponentEntry::type,
-        DevBuildComponentEntry::hash,
-        DevBuildComponentEntry::executable,
-        { it.symlinkTarget ?: "" },
-      )
-    )
+    result.sortWith(DEV_BUILD_COMPONENT_ENTRY_ORDER)
     span.setAttribute("fileCount", result.size.toLong())
-    span.setAttribute("hashedFileCount", hashedFileCount)
-    span.setAttribute("byteCount", hashedByteCount)
+    span.setAttribute("hashedFileCount", hasher.fileCount)
+    span.setAttribute("byteCount", hasher.byteCount)
     result
+  }
+}
+
+/**
+ * Hashes the bytes of a component that owns no tree, at the paths its producer was given.
+ *
+ * Under the same span name as [inventoryDevBuildComponent], because it is the same cost on the same bytes - reading
+ * back the component's whole content, single-threaded - and the two are only readable against each other under one
+ * name. `hashedFileCount` below `fileCount` is what this shape adds: one jar placed in several plugins is hashed once,
+ * where inventorying a tree hashed each copy of it.
+ */
+private fun inventorySourcedDevBuildComponent(files: Collection<DevBuildComponentSourcedFile>): List<DevBuildComponentEntry> {
+  return spanBuilder("inventory dev build component").blockingUse { span ->
+    val hasher = DevBuildContentHasher()
+    val result = files.mapTo(ArrayList(files.size)) { file ->
+      val source = Path.of(file.source)
+      require(Files.isRegularFile(source)) { "Source of '${file.relativePath}' is not a regular file: ${file.source}" }
+      DevBuildComponentEntry(
+        relativePath = file.relativePath,
+        type = COMPONENT_FILE_ENTRY_TYPE,
+        hash = hasher.hash(source.toAbsolutePath().normalize(), Files.size(source)),
+        // by construction, not measured - see `writeSourcedDevBuildComponentManifest`
+        executable = false,
+        source = file.source,
+      )
+    }
+    result.sortWith(DEV_BUILD_COMPONENT_ENTRY_ORDER)
+    span.setAttribute("fileCount", result.size.toLong())
+    span.setAttribute("hashedFileCount", hasher.fileCount)
+    span.setAttribute("byteCount", hasher.byteCount)
+    result
+  }
+}
+
+private val DEV_BUILD_COMPONENT_ENTRY_ORDER: Comparator<DevBuildComponentEntry> = compareBy(
+  DevBuildComponentEntry::relativePath,
+  DevBuildComponentEntry::type,
+  DevBuildComponentEntry::hash,
+  DevBuildComponentEntry::executable,
+  { it.symlinkTarget ?: "" },
+  { it.source ?: "" },
+)
+
+/** Content hashes by absolute path, and what reading them cost, for the inventory span. */
+private class DevBuildContentHasher {
+  private val hashes = HashMap<Path, Long>()
+
+  /** How many files were actually read - a path asked for twice is hashed once and counted once. */
+  var fileCount: Long = 0
+    private set
+  var byteCount: Long = 0
+    private set
+
+  // not `computeIfAbsent`: only a file whose content was actually read counts towards what the hashing cost
+  fun hash(file: Path, size: Long): Long {
+    hashes.get(file)?.let { return it }
+    val hash = computeDevBuildContentHash(file)
+    hashes.put(file, hash)
+    fileCount++
+    byteCount += size
+    return hash
   }
 }
 

@@ -7,12 +7,15 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.attribute.PosixFileAttributeView
-import java.nio.file.attribute.PosixFilePermission
 
 internal class PrepackedPluginContentCollectorTest {
+  /**
+   * Copies nothing and keeps the source path it was given: one jar under two plugin destinations is two entries with
+   * one source, and the composer is what turns those into files - see `DevBuildComponentComposerTest`, which is also
+   * where the mode those files land with is asserted.
+   */
   @Test
-  fun `copies one packed jar into each validated plugin destination`(@TempDir tempDir: Path) {
+  fun `names one packed jar at each validated plugin destination`(@TempDir tempDir: Path) {
     val jar = tempDir.resolve("shared.jar")
     Files.writeString(jar, "packed bytes")
     val metadata = writeLines(
@@ -25,19 +28,11 @@ internal class PrepackedPluginContentCollectorTest {
       "plugin.two\tcontent.shared\tplugins/two/lib/modules/content.shared.jar",
       "plugin.one\tcontent.shared\tplugins/one/lib/modules/content.shared.jar",
     )
-    val output = tempDir.resolve("output")
 
-    assertThat(collectPrepackedPluginContentJars(metadata, listOf(placements), output)).isEqualTo(2)
-    assertThat(Files.readString(output.resolve("plugins/one/lib/modules/content.shared.jar"))).isEqualTo("packed bytes")
-    assertThat(Files.readString(output.resolve("plugins/two/lib/modules/content.shared.jar"))).isEqualTo("packed bytes")
-    if (Files.getFileStore(output).supportsFileAttributeView(PosixFileAttributeView::class.java)) {
-      assertThat(Files.getPosixFilePermissions(output.resolve("plugins/one/lib/modules/content.shared.jar"))).isEqualTo(setOf(
-        PosixFilePermission.OWNER_READ,
-        PosixFilePermission.OWNER_WRITE,
-        PosixFilePermission.GROUP_READ,
-        PosixFilePermission.OTHERS_READ,
-      ))
-    }
+    assertThat(collectPrepackedPluginContentJars(metadata, listOf(placements))).containsExactly(
+      DevBuildComponentSourcedFile(relativePath = "plugins/one/lib/modules/content.shared.jar", source = jar.toString()),
+      DevBuildComponentSourcedFile(relativePath = "plugins/two/lib/modules/content.shared.jar", source = jar.toString()),
+    )
   }
 
   @Test
@@ -47,7 +42,7 @@ internal class PrepackedPluginContentCollectorTest {
     val metadata = writeLines(tempDir.resolve("jars.tsv"), "plugin.one\tcontent.one\tmodules/content.one.jar\t$jar")
 
     assertThatThrownBy {
-      collectPrepackedPluginContentJars(metadata, emptyList(), tempDir.resolve("missing"))
+      collectPrepackedPluginContentJars(metadata, emptyList())
     }.isInstanceOf(IllegalArgumentException::class.java)
       .hasMessageContaining("missing placements [plugin.one/content.one]")
 
@@ -57,7 +52,7 @@ internal class PrepackedPluginContentCollectorTest {
       "plugin.two\tcontent.two\tplugins/two/lib/modules/content.two.jar",
     )
     assertThatThrownBy {
-      collectPrepackedPluginContentJars(metadata, listOf(unknown), tempDir.resolve("unknown"))
+      collectPrepackedPluginContentJars(metadata, listOf(unknown))
     }.isInstanceOf(IllegalArgumentException::class.java)
       .hasMessageContaining("unknown placements [plugin.two/content.two]")
   }
@@ -72,7 +67,7 @@ internal class PrepackedPluginContentCollectorTest {
       "plugin.one\tcontent.one\tmodules/content.one.jar\t$jar",
     )
     assertThatThrownBy {
-      collectPrepackedPluginContentJars(duplicateJars, emptyList(), tempDir.resolve("duplicate-jars"))
+      collectPrepackedPluginContentJars(duplicateJars, emptyList())
     }.isInstanceOf(IllegalArgumentException::class.java)
       .hasMessageContaining("duplicate plugin jar relation")
 
@@ -80,7 +75,7 @@ internal class PrepackedPluginContentCollectorTest {
     val first = writeLines(tempDir.resolve("first.tsv"), "plugin.one\tcontent.one\tplugins/one/lib/modules/content.one.jar")
     val second = writeLines(tempDir.resolve("second.tsv"), "plugin.one\tcontent.one\tplugins/one/lib/modules/content.one.jar")
     assertThatThrownBy {
-      collectPrepackedPluginContentJars(metadata, listOf(first, second), tempDir.resolve("duplicate-placement"))
+      collectPrepackedPluginContentJars(metadata, listOf(first, second))
     }.isInstanceOf(IllegalArgumentException::class.java)
       .hasMessageContaining("duplicate placement")
   }
@@ -91,20 +86,20 @@ internal class PrepackedPluginContentCollectorTest {
     Files.writeString(jar, "content")
     val escapingMetadata = writeLines(tempDir.resolve("escaping-jars.tsv"), "plugin.one\tcontent.one\t../content.jar\t$jar")
     assertThatThrownBy {
-      collectPrepackedPluginContentJars(escapingMetadata, emptyList(), tempDir.resolve("escaping-metadata"))
+      collectPrepackedPluginContentJars(escapingMetadata, emptyList())
     }.isInstanceOf(IllegalArgumentException::class.java)
       .hasMessageContaining("escapes plugin lib")
 
     val metadata = writeLines(tempDir.resolve("jars.tsv"), "plugin.one\tcontent.one\tmodules/content.one.jar\t$jar")
     val escapingPlacement = writeLines(tempDir.resolve("escaping-placement.tsv"), "plugin.one\tcontent.one\t../outside.jar")
     assertThatThrownBy {
-      collectPrepackedPluginContentJars(metadata, listOf(escapingPlacement), tempDir.resolve("escaping-placement"))
+      collectPrepackedPluginContentJars(metadata, listOf(escapingPlacement))
     }.isInstanceOf(IllegalArgumentException::class.java)
       .hasMessageContaining("escapes the distribution")
 
     val mismatched = writeLines(tempDir.resolve("mismatched.tsv"), "plugin.one\tcontent.one\tplugins/one/lib/modules/other.jar")
     assertThatThrownBy {
-      collectPrepackedPluginContentJars(metadata, listOf(mismatched), tempDir.resolve("mismatched"))
+      collectPrepackedPluginContentJars(metadata, listOf(mismatched))
     }.isInstanceOf(IllegalArgumentException::class.java)
       .hasMessageContaining("expected plugins/<directory>/lib/modules/content.one.jar")
   }
@@ -127,7 +122,7 @@ internal class PrepackedPluginContentCollectorTest {
     )
 
     assertThatThrownBy {
-      collectPrepackedPluginContentJars(metadata, listOf(placements), tempDir.resolve("output"))
+      collectPrepackedPluginContentJars(metadata, listOf(placements))
     }.isInstanceOf(IllegalArgumentException::class.java)
       .hasMessageContaining("both claim plugins/shared/lib/modules/content.jar")
   }

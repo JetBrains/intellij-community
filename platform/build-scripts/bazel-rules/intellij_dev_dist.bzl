@@ -207,8 +207,9 @@ intellij_dev_build_inputs = rule(
 IntellijDevFragmentInfo = provider(
     fields = {
         "name": "The fragment name, which is also the `kind` of its manifest.",
-        "home": "The fragment tree.",
+        "home": "The fragment tree, or None for a component whose manifest names files that already exist.",
         "manifest": "The fragment manifest.",
+        "payload": "The already-existing files a `home`-less component's manifest names, or None; the composer stages them.",
         "plugin_classpath_part": "This fragment's plugin-classpath records, or None if it built no plugin.",
         "plugin_classpath_prefix": "The plugin-classpath prefix, or None if another fragment produces it.",
         "inputs_manifest": "The label-to-path manifest of the fragment's declared Bazel inputs.",
@@ -497,6 +498,7 @@ def _fragment_impl(ctx):
         IntellijDevFragmentInfo(
             name = ctx.attr.fragment_name,
             home = home,
+            payload = None,
             manifest = component_manifest,
             plugin_classpath_part = plugin_classpath_part,
             plugin_classpath_prefix = plugin_classpath_prefix,
@@ -556,7 +558,6 @@ intellij_dev_fragment = rule(
 )
 
 def _packed_jars_component_impl(ctx):
-    home = ctx.actions.declare_directory(ctx.label.name + ".home")
     component_manifest = ctx.actions.declare_file(ctx.label.name + ".component.json")
 
     # Which jars these are is read off the graph by `dev_dist_platform_payload`, not from a list something had to
@@ -570,28 +571,32 @@ def _packed_jars_component_impl(ctx):
     jar_list.add_all(jars)
 
     args = ctx.actions.args()
-    args.add("--output-dir=" + home.path)
     args.add("--component-manifest=" + component_manifest.path)
     args.add("--kind=" + ctx.attr.component_name)
     args.add("--platform-prefix=" + ctx.attr.platform_prefix)
     _add_target_platform_args(args, ctx.attr.target_platform)
-    spans = _declare_spans(ctx, args, ctx.label.name)
+
+    # The manifest is the primary output, so it is also what names the span file: `dev-dist trace` joins a span file to
+    # its action by the primary output's stem, and `X.component.json`'s stem is `X.component`.
+    spans = _declare_spans(ctx, args, ctx.label.name + ".component")
 
     ctx.actions.run(
         inputs = depset(jars),
-        outputs = [home, component_manifest] + ([spans] if spans else []),
+        outputs = [component_manifest] + ([spans] if spans else []),
         executable = ctx.executable.collector,
         arguments = [args, jar_list],
         execution_requirements = _LOCAL_DISK_CACHE_ONLY,
         mnemonic = "IntellijDevPackedJars",
-        progress_message = "Collecting %d packed %s jars for %%{label}" % (len(jars), ctx.attr.platform_prefix),
+        progress_message = "Naming %d packed %s jars for %%{label}" % (len(jars), ctx.attr.platform_prefix),
     )
     return [
-        DefaultInfo(files = depset([home, component_manifest])),
+        # The jars come along with the manifest, so that building this component alone produces everything it names.
+        DefaultInfo(files = depset([component_manifest] + jars)),
         OutputGroupInfo(trace_spans = _spans_output_group([spans], [])),
         IntellijDevFragmentInfo(
             name = ctx.attr.component_name,
-            home = home,
+            home = None,
+            payload = depset(jars),
             manifest = component_manifest,
             plugin_classpath_part = None,
             plugin_classpath_prefix = None,
@@ -612,6 +617,10 @@ intellij_dev_packed_jars_component = rule(
     merge, and this rule does no more than name them `lib/<module>.jar` and inventory them - so an unrelated model edit
     leaves both the packing and this collection untouched.
 
+    It declares no tree: its one output is the manifest, which names each jar where its packer left it, and the
+    composer copies from there. A tree here would hold a second copy of every jar for no purpose other than being
+    copied out of again.
+
     Which jars those are comes from `dev_dist_platform_payload`, which asks the payload's targets; the sibling
     fragment is handed the same provider and stops packing exactly these jars, so ownership cannot overlap.
     """,
@@ -630,7 +639,6 @@ intellij_dev_packed_jars_component = rule(
 )
 
 def _packed_plugin_jars_component_impl(ctx):
-    home = ctx.actions.declare_directory(ctx.label.name + ".home")
     component_manifest = ctx.actions.declare_file(ctx.label.name + ".component.json")
 
     placement_manifests = []
@@ -657,32 +665,34 @@ def _packed_plugin_jars_component_impl(ctx):
     ctx.actions.write(metadata, ("\n".join(metadata_lines) + "\n") if metadata_lines else "")
 
     args = ctx.actions.args()
-    args.add("--output-dir=" + home.path)
     args.add("--component-manifest=" + component_manifest.path)
     args.add("--kind=" + ctx.attr.component_name)
     args.add("--platform-prefix=" + ctx.attr.platform_prefix)
     args.add("--plugin-jars-file=" + metadata.path)
     args.add_all(placement_manifests, format_each = "--plugin-placement=%s")
     _add_target_platform_args(args, ctx.attr.target_platform)
-    spans = _declare_spans(ctx, args, ctx.label.name)
+
+    # See the sibling rule: the span file's name follows the primary output, which is now the manifest.
+    spans = _declare_spans(ctx, args, ctx.label.name + ".component")
 
     ctx.actions.run(
         inputs = depset(direct = [metadata] + jars + placement_manifests),
-        outputs = [home, component_manifest] + ([spans] if spans else []),
+        outputs = [component_manifest] + ([spans] if spans else []),
         executable = ctx.executable.collector,
         arguments = [args],
         execution_requirements = _LOCAL_DISK_CACHE_ONLY,
         mnemonic = "IntellijDevPackedPluginJars",
-        progress_message = "Collecting packed plugin content jars for %{label}",
+        progress_message = "Naming packed plugin content jars for %{label}",
     )
     return [
-        DefaultInfo(files = depset([home, component_manifest])),
+        DefaultInfo(files = depset([component_manifest] + jars)),
         # Only this action's own spans: the fragments it reads placement manifests from are composed by the same
         # distribution, which carries them already.
         OutputGroupInfo(trace_spans = _spans_output_group([spans], [])),
         IntellijDevFragmentInfo(
             name = ctx.attr.component_name,
-            home = home,
+            home = None,
+            payload = depset(jars),
             manifest = component_manifest,
             plugin_classpath_part = None,
             plugin_classpath_prefix = None,
@@ -694,7 +704,8 @@ def _packed_plugin_jars_component_impl(ctx):
     ]
 
 intellij_dev_packed_plugin_jars_component = rule(
-    doc = "Collects plugin content-module jars packed by `jvm_library` into their JarPackager-validated destinations.",
+    doc = "Names plugin content-module jars packed by `jvm_library` at their JarPackager-validated destinations, in " +
+          "a manifest the composer copies from - this rule declares no tree of its own.",
     implementation = _packed_plugin_jars_component_impl,
     attrs = {
         "collector": attr.label(executable = True, cfg = "exec", mandatory = True),
@@ -726,7 +737,9 @@ def _compose(ctx, fragment_targets):
             "additionalModules": ctx.attr.additional_modules,
             "components": [
                 {
-                    "root": fragment.home.path,
+                    # None for a component that declares no tree: its manifest names each file where it already is, and
+                    # the composer copies from there - see `writeSourcedDevBuildComponentManifest`.
+                    "root": fragment.home.path if fragment.home else None,
                     "manifest": fragment.manifest.path,
                     "pluginClasspathPart": fragment.plugin_classpath_part.path if fragment.plugin_classpath_part else None,
                 }
@@ -743,7 +756,17 @@ def _compose(ctx, fragment_targets):
     args.add("--fingerprint=" + fingerprint.path)
     spans = _declare_spans(ctx, args, ctx.label.name)
     ctx.actions.run(
-        inputs = [composition_spec] + [file for fragment in fragments for file in [fragment.home, fragment.manifest]] + parts + prefixes,
+        # A tree-less component's files are staged individually instead of as its tree: they are the very files its
+        # manifest names, at the execution-root paths the manifest recorded, which is what makes them findable from
+        # inside this action. The count staged is the same either way - a TreeArtifact input is staged file by file too -
+        # but this action's key now lists them one by one where it listed one tree digest.
+        inputs = depset(
+            direct = [composition_spec] +
+                     [fragment.manifest for fragment in fragments] +
+                     [fragment.home for fragment in fragments if fragment.home] +
+                     parts + prefixes,
+            transitive = [fragment.payload for fragment in fragments if fragment.payload],
+        ),
         outputs = [home, ide_config, fingerprint] + ([spans] if spans else []),
         executable = ctx.executable.composer,
         arguments = [args],

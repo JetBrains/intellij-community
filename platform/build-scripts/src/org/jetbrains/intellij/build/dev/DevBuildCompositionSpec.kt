@@ -12,7 +12,13 @@ private const val DEV_BUILD_COMPOSITION_SPEC_VERSION = 1
 @Serializable
 @ApiStatus.Internal
 data class DevBuildCompositionComponent(
-  @JvmField val root: String,
+  /**
+   * The component's tree, or `null` for a component whose manifest names where each of its files' bytes already are.
+   *
+   * See `DevBuildComponentEntry.source`: a producer of nothing but placements for already-packed jars declares no tree,
+   * so there is none to name here.
+   */
+  @JvmField val root: String? = null,
   @JvmField val manifest: String,
   @JvmField val pluginClasspathPart: String? = null,
 )
