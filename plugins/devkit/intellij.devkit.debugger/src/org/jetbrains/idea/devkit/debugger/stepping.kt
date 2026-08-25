@@ -17,6 +17,7 @@ import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.debugger.impl.wrapIncompatibleThreadStateException
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.sun.jdi.BooleanValue
 import com.sun.jdi.ClassType
@@ -24,17 +25,17 @@ import com.sun.jdi.ObjectCollectedException
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.ReferenceType
 import com.sun.jdi.VMDisconnectedException
-import java.util.WeakHashMap
 
 private const val CANCELLATION_FQN = "com.intellij.openapi.progress.Cancellation"
 
 private object PauseListener : DebuggerManagerListener {
-  private val sessions = WeakHashMap<DebuggerSession, SessionThreadsData>()
+  private val sessionThreadsDataKey = Key.create<SessionThreadsData>("devkit.debugger.session.threads.data")
 
   override fun sessionAttached(session: DebuggerSession?) {
     if (session == null) return
-    sessions[session] = SessionThreadsData()
-    session.process.addDebugProcessListener(object : DebugProcessListener {
+    val debugProcess = session.process
+    debugProcess.putUserData(sessionThreadsDataKey, SessionThreadsData())
+    debugProcess.addDebugProcessListener(object : DebugProcessListener {
       override fun paused(suspendContext: SuspendContext) {
         val context = suspendContext as? SuspendContextImpl ?: return
         val sessionData = getSessionData(context.debugProcess.session) ?: return
@@ -49,10 +50,10 @@ private object PauseListener : DebuggerManagerListener {
 
   override fun sessionDetached(session: DebuggerSession?) {
     if (session == null) return
-    sessions.remove(session)
+    session.process.putUserData(sessionThreadsDataKey, null)
   }
 
-  fun getSessionData(session: DebuggerSession): SessionThreadsData? = sessions[session]
+  fun getSessionData(session: DebuggerSession): SessionThreadsData? = session.process.getUserData(sessionThreadsDataKey)
 }
 
 internal class ResumeListener : SteppingListener {
