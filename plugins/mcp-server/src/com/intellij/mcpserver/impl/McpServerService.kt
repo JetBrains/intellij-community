@@ -31,6 +31,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileDocumentManager.ConflictResolution
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.util.asDisposable
@@ -505,7 +506,10 @@ open class McpServerService(val cs: CoroutineScope) {
         )
         // Process initial tools immediately to fix race condition
         sessionToolsManager.updateTools()
-        FileDocumentManager.getInstance().overrideConflictsSolverEnabled(false, sessionToolsManager.sessionScope.asDisposable())
+        FileDocumentManager.getInstance().overrideConflictResolution(
+          ConflictResolution.MERGE,
+          sessionToolsManager.sessionScope.asDisposable(),
+        )
 
         val session = sessionToolsManager.createAndInitializeSession(transport)
 

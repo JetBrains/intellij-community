@@ -130,7 +130,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   private static final Key<String> LINE_SEPARATOR_KEY = Key.create("LINE_SEPARATOR_KEY");
   private static final Key<Boolean> MUST_RECOMPUTE_FILE_TYPE = Key.create("Must recompute file type");
 
-  private final List<ConflictsSolverOverride> myConflictsSolverOverrides = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<ConflictResolutionOverride> myConflictResolutionOverrides = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Set<Document> myUnsavedDocuments = ConcurrentCollectionFactory.createConcurrentSet();
 
   private final FileDocumentManagerListenerBackgroundableBridge bridge = new FileDocumentManagerListenerBackgroundableBridge();
@@ -717,7 +717,9 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
           for (VFileContentChangeEvent event : contentChanges) {
             // new range markers could've appeared after "prepareChange" in some read action
             prepareForRangeMarkerUpdate(strongRefsToDocuments, event.getFile());
-            if (myFileDocumentManager.isConflictsSolverEnabled()) {
+            // only ASK is acted on so far; MERGE is not implemented yet and so behaves like KEEP_MEMORY_CHANGES, which is
+            // what the clients asking for it got before
+            if (myFileDocumentManager.getConflictResolution() == ConflictResolution.ASK) {
               myFileDocumentManager.myConflictResolver.beforeContentChange(event);
             }
           }
@@ -913,14 +915,27 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   @Override
-  public void overrideConflictsSolverEnabled(boolean enabled, @NotNull Disposable parentDisposable) {
-    ContainerUtil.add(new ConflictsSolverOverride(enabled), myConflictsSolverOverrides, parentDisposable);
+  public void overrideConflictResolution(@NotNull ConflictResolution resolution, @NotNull Disposable parentDisposable) {
+    ContainerUtil.add(new ConflictResolutionOverride(resolution), myConflictResolutionOverrides, parentDisposable);
   }
 
+  /**
+   * How a conflict has to be resolved right now, honouring the precedence documented on {@link #overrideConflictResolution}.
+   */
   @ApiStatus.Internal
-  public boolean isConflictsSolverEnabled() {
-    ConflictsSolverOverride override = ContainerUtil.getLastItem(myConflictsSolverOverrides);
-    return override == null || override.enabled;
+  public @NotNull ConflictResolution getConflictResolution() {
+    ConflictResolutionOverride override = ContainerUtil.getLastItem(myConflictResolutionOverrides);
+    ConflictResolution resolution = override == null ? ConflictResolution.ASK : override.resolution;
+    if (resolution != ConflictResolution.MERGE) {
+      return resolution;
+    }
+    // MERGE is the only resolution that changes a document without asking, so anyone who opted out of that wins over it
+    for (ConflictResolutionOverride other : myConflictResolutionOverrides) {
+      if (other.resolution == ConflictResolution.KEEP_MEMORY_CHANGES) {
+        return ConflictResolution.KEEP_MEMORY_CHANGES;
+      }
+    }
+    return ConflictResolution.MERGE;
   }
 
   // NB: virtualFile might be invalid by now
@@ -1039,7 +1054,16 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     });
   }
 
-  private record ConflictsSolverOverride(boolean enabled) {
+  /**
+   * Deliberately a class and not a record: {@link ContainerUtil#add} unregisters by {@code equals}, so value equality would
+   * let one client's disposal drop another client's entry whenever the two asked for the same resolution.
+   */
+  private static final class ConflictResolutionOverride {
+    private final ConflictResolution resolution;
+
+    private ConflictResolutionOverride(@NotNull ConflictResolution resolution) {
+      this.resolution = resolution;
+    }
   }
 
   @Override

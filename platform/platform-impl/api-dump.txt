@@ -3272,7 +3272,7 @@ c:com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 - com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
 - com.intellij.openapi.vfs.SafeWriteRequestor
 - <init>():V
-- overrideConflictsSolverEnabled(Z,com.intellij.openapi.Disposable):V
+- overrideConflictResolution(com.intellij.openapi.fileEditor.FileDocumentManager$ConflictResolution,com.intellij.openapi.Disposable):V
 - s:updateModifiedProperty(com.intellij.openapi.vfs.VirtualFile):V
 f:com.intellij.openapi.fileEditor.impl.FocusBasedCurrentEditorProvider
 - com.intellij.openapi.fileEditor.impl.CurrentEditorProvider

@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileDocumentManager.ConflictResolution;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -447,47 +448,146 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     assertEquals(oldDocumentStamp, document.getModificationStamp());
   }
 
-  public void testConflictsSolverOverrideIsBoundToDisposable() {
-    assertTrue(myDocumentManager.isConflictsSolverEnabled());
 
-    Disposable firstOverride = Disposer.newDisposable();
-    Disposable secondOverride = Disposer.newDisposable();
-    try {
-      myDocumentManager.overrideConflictsSolverEnabled(false, firstOverride);
-      assertFalse(myDocumentManager.isConflictsSolverEnabled());
 
-      myDocumentManager.overrideConflictsSolverEnabled(true, secondOverride);
-      assertTrue(myDocumentManager.isConflictsSolverEnabled());
+  /** The Rider shape: a client owning its documents is never asked and never merged into. */
+  public void testContentChanged_keepMemoryChangesIgnoresExternalChange() throws Exception {
+    overrideConflictResolution(ConflictResolution.KEEP_MEMORY_CHANGES);
 
-      Disposer.dispose(secondOverride);
-      assertFalse(myDocumentManager.isConflictsSolverEnabled());
-    }
-    finally {
-      Disposer.dispose(firstOverride);
-      Disposer.dispose(secondOverride);
-    }
+    Document document = editInMemoryThenOnDisk("rider.txt");
 
-    assertTrue(myDocumentManager.isConflictsSolverEnabled());
+    assertEquals("first\nSECOND\nthird\n", document.getText());
   }
 
-  public void testDisposingOlderConflictsSolverOverrideDoesNotAffectNewerOverride() {
-    assertTrue(myDocumentManager.isConflictsSolverEnabled());
+
+  /**
+   * MERGE is declared but not implemented yet, so asking for it has to keep behaving like KEEP_MEMORY_CHANGES -- which is
+   * what the clients migrating to it got from the boolean API before.
+   */
+  public void testContentChanged_mergeNotImplementedYetKeepsMemoryChanges() throws Exception {
+    overrideConflictResolution(ConflictResolution.MERGE);
+
+    Document document = editInMemoryThenOnDisk("merge-not-implemented.txt");
+
+    assertEquals("first\nSECOND\nthird\n", document.getText());
+  }
+
+  /** Without an override the dialog is still the answer: merging only happens for a client that asked for it. */
+  public void testContentChanged_defaultAsksWithoutAnyOverride() throws Exception {
+    assertEquals("the premise of this test", ConflictResolution.ASK, myDocumentManager.getConflictResolution());
+    myAskReloadFromDiskResult = Boolean.TRUE;
+
+    Document document = editInMemoryThenOnDisk("default.txt");
+
+    // the user was asked and picked the disk version, so the mergeable in-memory edit is dropped rather than combined
+    assertEquals("first\nsecond\nTHIRD\n", document.getText());
+  }
+
+
+
+
+
+
+  private void overrideConflictResolution(@NotNull ConflictResolution resolution) {
+    myDocumentManager.overrideConflictResolution(resolution, getTestRootDisposable());
+  }
+
+  /**
+   * Edits the second line of a fresh file in memory and its third line on disk, so that the two sides are mergeable
+   * and the merge result is distinguishable from either of them.
+   */
+  private @NotNull Document editInMemoryThenOnDisk(@NotNull String fileName) throws Exception {
+    VirtualFile file = createFile(fileName, "first\nsecond\nthird\n");
+    Document document = myDocumentManager.getDocument(file);
+    assertNotNull(file.toString(), document);
+
+    WriteCommandAction.runWriteCommandAction(myProject, () -> document.setText("first\nSECOND\nthird\n"));
+    setFileText(file, "first\nsecond\nTHIRD\n");
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    return document;
+  }
+
+
+
+  public void testConflictResolutionOverrideIsBoundToDisposable() {
+    assertEquals(ConflictResolution.ASK, myDocumentManager.getConflictResolution());
 
     Disposable firstOverride = Disposer.newDisposable();
     Disposable secondOverride = Disposer.newDisposable();
     try {
-      myDocumentManager.overrideConflictsSolverEnabled(false, firstOverride);
-      myDocumentManager.overrideConflictsSolverEnabled(true, secondOverride);
+      myDocumentManager.overrideConflictResolution(ConflictResolution.KEEP_MEMORY_CHANGES, firstOverride);
+      assertEquals(ConflictResolution.KEEP_MEMORY_CHANGES, myDocumentManager.getConflictResolution());
 
-      Disposer.dispose(firstOverride);
-      assertTrue(myDocumentManager.isConflictsSolverEnabled());
+      myDocumentManager.overrideConflictResolution(ConflictResolution.ASK, secondOverride);
+      assertEquals(ConflictResolution.ASK, myDocumentManager.getConflictResolution());
+
+      Disposer.dispose(secondOverride);
+      assertEquals(ConflictResolution.KEEP_MEMORY_CHANGES, myDocumentManager.getConflictResolution());
     }
     finally {
       Disposer.dispose(firstOverride);
       Disposer.dispose(secondOverride);
     }
 
-    assertTrue(myDocumentManager.isConflictsSolverEnabled());
+    assertEquals(ConflictResolution.ASK, myDocumentManager.getConflictResolution());
+  }
+
+  /** Two clients asking for the same resolution must stay distinguishable, or one disposal drops the other's entry. */
+  public void testDisposingOneOfTwoEqualConflictResolutionOverridesKeepsTheOther() {
+    Disposable firstOverride = Disposer.newDisposable();
+    Disposable secondOverride = Disposer.newDisposable();
+    try {
+      myDocumentManager.overrideConflictResolution(ConflictResolution.KEEP_MEMORY_CHANGES, firstOverride);
+      myDocumentManager.overrideConflictResolution(ConflictResolution.KEEP_MEMORY_CHANGES, secondOverride);
+
+      Disposer.dispose(firstOverride);
+      assertEquals(ConflictResolution.KEEP_MEMORY_CHANGES, myDocumentManager.getConflictResolution());
+
+      Disposer.dispose(secondOverride);
+      assertEquals(ConflictResolution.ASK, myDocumentManager.getConflictResolution());
+    }
+    finally {
+      Disposer.dispose(firstOverride);
+      Disposer.dispose(secondOverride);
+    }
+  }
+
+  /** MERGE yields to KEEP_MEMORY_CHANGES, but only while that override is actually alive. */
+  public void testMergeOverrideAppliesOnceKeepMemoryChangesOverrideIsDisposed() {
+    Disposable keepMemory = Disposer.newDisposable();
+    Disposable merge = Disposer.newDisposable();
+    try {
+      myDocumentManager.overrideConflictResolution(ConflictResolution.KEEP_MEMORY_CHANGES, keepMemory);
+      myDocumentManager.overrideConflictResolution(ConflictResolution.MERGE, merge);
+      assertEquals(ConflictResolution.KEEP_MEMORY_CHANGES, myDocumentManager.getConflictResolution());
+
+      Disposer.dispose(keepMemory);
+      assertEquals(ConflictResolution.MERGE, myDocumentManager.getConflictResolution());
+    }
+    finally {
+      Disposer.dispose(keepMemory);
+      Disposer.dispose(merge);
+    }
+  }
+
+  public void testDisposingOlderConflictResolutionOverrideDoesNotAffectNewerOverride() {
+    assertEquals(ConflictResolution.ASK, myDocumentManager.getConflictResolution());
+
+    Disposable firstOverride = Disposer.newDisposable();
+    Disposable secondOverride = Disposer.newDisposable();
+    try {
+      myDocumentManager.overrideConflictResolution(ConflictResolution.KEEP_MEMORY_CHANGES, firstOverride);
+      myDocumentManager.overrideConflictResolution(ConflictResolution.ASK, secondOverride);
+
+      Disposer.dispose(firstOverride);
+      assertEquals(ConflictResolution.ASK, myDocumentManager.getConflictResolution());
+    }
+    finally {
+      Disposer.dispose(firstOverride);
+      Disposer.dispose(secondOverride);
+    }
+
+    assertEquals(ConflictResolution.ASK, myDocumentManager.getConflictResolution());
   }
 
   public void testSaveDocument_DoNotSaveIfModStampEqualsToFile() throws Exception {

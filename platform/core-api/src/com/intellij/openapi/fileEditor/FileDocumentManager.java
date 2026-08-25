@@ -208,10 +208,36 @@ public abstract class FileDocumentManager implements SavingRequestor {
   public abstract void reloadFiles(VirtualFile @NotNull ... files);
 
   /**
-   * Overrides whether file content conflicts should be handled until {@code parentDisposable} is disposed.
+   * What to do when a file is changed on disk while the document for it has unsaved changes.
    */
   @ApiStatus.Experimental
-  public void overrideConflictsSolverEnabled(boolean enabled, @NotNull Disposable parentDisposable) { }
+  public enum ConflictResolution {
+    /**
+     * Let the user choose, through the "File Cache Conflict" dialog. The default.
+     */
+    ASK,
+    /**
+     * Merge the external change into the unsaved changes, keeping both. The user is never asked, not even when the two turn
+     * out to be unmergeable; the external change wins in that case.
+     */
+    MERGE,
+    /**
+     * Keep the unsaved changes and act as if the file had not changed, which is what the "Keep memory changes" button of the
+     * dialog does. The external change is then lost as soon as the document is saved over it.
+     */
+    KEEP_MEMORY_CHANGES
+  }
+
+  /**
+   * Overrides how file content conflicts are resolved until {@code parentDisposable} is disposed. Intended for clients that
+   * write files behind the user's back, such as an AI agent, or that own document contents themselves.
+   * <p>
+   * The most recent override wins, with one exception: {@link ConflictResolution#MERGE} is the only resolution that changes a
+   * document without asking, so it never overrides an active {@link ConflictResolution#KEEP_MEMORY_CHANGES}. In other words,
+   * opting out of having documents changed is sticky, while opting in is not.
+   */
+  @ApiStatus.Experimental
+  public void overrideConflictResolution(@NotNull ConflictResolution resolution, @NotNull Disposable parentDisposable) { }
 
   @Internal
   public void reloadBinaryFiles() { }

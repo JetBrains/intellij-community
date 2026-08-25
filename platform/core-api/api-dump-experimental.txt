@@ -241,7 +241,14 @@ c:com.intellij.openapi.editor.markup.TextAttributes
 - *:withAdditionalEffect(com.intellij.openapi.editor.markup.EffectType,java.awt.Color):V
 a:com.intellij.openapi.fileEditor.FileDocumentManager
 - com.intellij.openapi.vfs.SavingRequestor
-- *:overrideConflictsSolverEnabled(Z,com.intellij.openapi.Disposable):V
+- *:overrideConflictResolution(com.intellij.openapi.fileEditor.FileDocumentManager$ConflictResolution,com.intellij.openapi.Disposable):V
+*e:com.intellij.openapi.fileEditor.FileDocumentManager$ConflictResolution
+- java.lang.Enum
+- sf:ASK:com.intellij.openapi.fileEditor.FileDocumentManager$ConflictResolution
+- sf:KEEP_MEMORY_CHANGES:com.intellij.openapi.fileEditor.FileDocumentManager$ConflictResolution
+- sf:MERGE:com.intellij.openapi.fileEditor.FileDocumentManager$ConflictResolution
+- s:valueOf(java.lang.String):com.intellij.openapi.fileEditor.FileDocumentManager$ConflictResolution
+- s:values():com.intellij.openapi.fileEditor.FileDocumentManager$ConflictResolution[]
 *:com.intellij.openapi.fileEditor.FileDocumentManagerListenerBackgroundable
 - com.intellij.openapi.fileEditor.FileDocumentManagerListener
 - *sf:Companion:com.intellij.openapi.fileEditor.FileDocumentManagerListenerBackgroundable$Companion
