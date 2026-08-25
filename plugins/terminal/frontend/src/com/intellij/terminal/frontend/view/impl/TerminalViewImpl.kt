@@ -434,8 +434,15 @@ class TerminalViewImpl(
         coroutineScope.childScope("TerminalBlocksDecorator")
       )
 
+      val typingTracker = createTypingTracker(
+        project = project,
+        terminalView = this@TerminalViewImpl,
+        model = outputModel,
+        shellIntegration = shellIntegration,
+        coroutineScope = coroutineScope.childScope("TerminalTypingTracker")
+      )
       if (TerminalAiInlineCompletion.isEnabled()) {
-        configureInlineCompletion(outputModel, shellIntegration)
+        configureInlineCompletion(outputModel, typingTracker)
       }
 
       val startupOptions = startupOptionsDeferred.await()
@@ -688,27 +695,16 @@ class TerminalViewImpl(
 
   private fun configureInlineCompletion(
     outputModel: MutableTerminalOutputModel,
-    shellIntegration: TerminalShellIntegration,
+    typingTracker: TerminalTypingTracker,
   ) {
     val inlineCompletionScope = coroutineScope.childScope("TerminalInlineCompletion")
-    val inlineCompletionController =
-      TerminalInlineCompletionController(project, outputEditor, outputModel, shellIntegration, inlineCompletionScope)
+    val inlineCompletionController = TerminalInlineCompletionController(
+      editor = outputEditor,
+      model = outputModel,
+      typingTracker = typingTracker,
+      coroutineScope = inlineCompletionScope
+    )
     inlineCompletionController.install()
-    addKeyEventsListener(inlineCompletionScope.asDisposable(), object : TerminalKeyEventsListener {
-      override fun beforeKeyEvent(event: TerminalKeyEvent): Boolean {
-        inlineCompletionController.handleKeyEvent(event)
-        return false
-      }
-    })
-    outputModel.addListener(inlineCompletionScope.asDisposable(), object : TerminalOutputModelListener {
-      override fun afterContentChanged(event: TerminalContentChangeEvent) {
-        inlineCompletionController.handleContentChanged()
-      }
-
-      override fun cursorOffsetChanged(event: TerminalCursorOffsetChangeEvent) {
-        inlineCompletionController.handleCursorOffsetChanged()
-      }
-    })
   }
 
   override fun toString(): String {
