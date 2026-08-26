@@ -53,6 +53,20 @@ content of its owning plugin. Read it through
 - Choosing between shared content and private plugin content; consumers are reported so the owner can apply
   that policy.
 
+## Limitations
+
+The rule builds its candidate set from module-set membership only. `analyzeUnusedSharedLibraryModules`
+(`src/traversal/UnusedSharedLibraryAnalysis.kt`) collects the candidates in the `moduleSets { }` walk. It then
+reads the consumers from content-module and plugin dependency edges only.
+
+Therefore two kinds of consumers stay invisible. The first is a plain JPS `orderEntry` from a module outside the
+graph. For example, `intellij.platform.buildScripts` uses `intellij.libraries.netty.tcnative.boringssl` this way.
+The second is the legacy `PluginLayout.withModule(...)` path. For example, the Gradle plugin ships
+`intellij.libraries.groovy.ant` through `CommunityRepositoryModules.kt`.
+
+A wrapper that no module set lists is a blind spot. The rule does not validate it as used, and it does not report
+it as unused.
+
 ## Related
 
 - [validation-rules.md](../validation-rules.md)
