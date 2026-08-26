@@ -46,11 +46,4 @@ public interface LazyQuickFixUpdater {
   @RequiresBackgroundThread
   @RequiresReadLock
   void startComputingNextQuickFixes(@NotNull PsiFile psiFile, @NotNull Editor editor, @NotNull ProperTextRange visibleRange);
-
-  Topic<QuickFixesAvailableListener> TOPIC =
-    new Topic<>(QuickFixesAvailableListener.class, Topic.BroadcastDirection.NONE);
-
-  interface QuickFixesAvailableListener extends EventListener {
-    void quickFixesAvailable(@NotNull HighlightInfo info, @NotNull Document document);
-  }
 }

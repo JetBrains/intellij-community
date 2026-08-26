@@ -16,8 +16,6 @@ import org.jetbrains.annotations.ApiStatus
 @Rpc
 interface ProblemsViewApi : RemoteApi<Unit> {
 
-  suspend fun getFileProblemsFlow(projectId: ProjectId, fileId: VirtualFileId) : Flow<List<ProblemEventDto>>
-
   suspend fun loadQuickFixes(
     projectId: ProjectId,
     fileId: VirtualFileId,

@@ -18,11 +18,6 @@ import kotlinx.coroutines.flow.map
 
 internal class BackendProblemsViewApi : ProblemsViewApi {
 
-  override suspend fun getFileProblemsFlow(projectId: ProjectId, fileId: VirtualFileId): Flow<List<ProblemEventDto>> {
-    val project = projectId.findProjectOrNull() ?: return emptyFlow()
-    return HighlightingProblemsBackendService.getInstance(project).getOrCreateEventFlowForFile(fileId)
-  }
-
   override suspend fun loadQuickFixes(
     projectId: ProjectId,
     fileId: VirtualFileId,
