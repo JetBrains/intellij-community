@@ -11,6 +11,10 @@ fun Driver.getPlugin(id: String): PluginDescriptor? {
   return utility<PluginManagerCore>().getPlugin(utility(PluginId::class).getId(id))
 }
 
+fun Driver.getInstalledPlugins(): Array<PluginDescriptor> {
+  return utility<PluginManagerCore>().getPlugins()
+}
+
 fun Driver.getEnabledPlugins(): Array<PluginDescriptor> {
   return utility<PluginManagerCore>().getLoadedPlugins()
 }
@@ -43,6 +47,7 @@ interface PluginId {
 @Remote("com.intellij.ide.plugins.PluginManagerCore")
 interface PluginManagerCore {
   fun getPlugin(pluginId: PluginId): PluginDescriptor?
+  fun getPlugins(): Array<PluginDescriptor>
   fun getLoadedPlugins(): Array<PluginDescriptor>
   fun arePluginsInitialized(): Boolean
   fun isLoaded(pluginId: PluginId): Boolean
