@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.converters
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiFile
 import com.intellij.psi.xml.XmlFile
 import com.intellij.util.xml.ConvertContext
 import com.intellij.util.xml.GenericDomValue
@@ -54,13 +55,29 @@ object MavenConsumerPomUtil {
     return null
   }
 
+  /**
+   * Maven 4 takes an absent parent property from the POM at the relative path.
+   * The default relative path is `../pom.xml`.
+   * A POM can also inherit the property. Then the search continues up the parent chain.
+   *
+   * @param inheritedFromParent set it to true for a property that Maven inherits, such as the `groupId`.
+   */
   @JvmStatic
-  fun getParentPomPropertyUsingRelativePath(context: ConvertContext,
-                                            extractor: (MavenDomProjectModel) -> GenericDomValue<String>): String? {
+  fun getParentPomPropertyUsingRelativePath(
+    context: ConvertContext,
+    inheritedFromParent: Boolean = false,
+    extractor: (MavenDomProjectModel) -> GenericDomValue<String>,
+  ): String? {
     val parent = getMavenParentElementFromContext(context) ?: return null
-    val parentPom = parent.relativePath.value ?: return null
-    val parentPomDomModel = MavenDomUtil.getMavenDomModel(parentPom, MavenDomProjectModel::class.java) ?: return null
-    return extractor(parentPomDomModel).value
+    var parentPom = parent.relativePath.value ?: return null
+    val visitedPoms = mutableSetOf<PsiFile>(context.file)
+    while (visitedPoms.add(parentPom)) {
+      val parentPomDomModel = MavenDomUtil.getMavenDomModel(parentPom, MavenDomProjectModel::class.java) ?: return null
+      extractor(parentPomDomModel).value?.let { return it }
+      if (!inheritedFromParent) return null
+      parentPom = parentPomDomModel.mavenParent.relativePath.value ?: return null
+    }
+    return null
   }
 
   private fun getMavenParentElementFromContext(context: ConvertContext): MavenDomParent? {

@@ -613,6 +613,50 @@ class MavenParentCompletionAndResolutionTest(mavenVersion: String, modelVersion:
   }
 
   @Test
+  fun testHighlightingMaven4AbsentGroupIdIfParentPomInheritsGroupId() = runBlocking {
+    maven.assumeMaven4()
+    maven.createProjectPom("""
+                      <groupId>test</groupId>
+                      <artifactId>project</artifactId>
+                      <version>1</version>
+                      """.trimIndent())
+    // The intermediate parent POM inherits its own groupId, therefore the search continues up the parent chain.
+    maven.createModulePom("integrations-parent", """
+                      <artifactId>integrations-parent</artifactId>
+                      <packaging>pom</packaging>
+                      """.trimIndent())
+    val subprojectPom = maven.createModulePom("integration-a", """
+                      <parent>
+                          <relativePath>../integrations-parent</relativePath>
+                      </parent>
+                      <artifactId>integration-a</artifactId>
+                      """.trimIndent())
+    maven.fixture.enableInspections(MavenParentMissedGroupIdArtifactIdInspection::class.java)
+    maven.checkHighlighting(subprojectPom)
+  }
+
+  @Test
+  fun testHighlightingMaven4AbsentGroupIdIfParentPomInheritsGroupId_2() = runBlocking {
+    maven.assumeMaven4()
+    maven.createProjectPom("""
+                      <groupId>test</groupId>
+                      <artifactId>project</artifactId>
+                      <version>1</version>
+                      """.trimIndent())
+    // The same case with the default relative path (../pom.xml).
+    maven.createModulePom("lib", """
+                      <artifactId>lib</artifactId>
+                      <packaging>pom</packaging>
+                      """.trimIndent())
+    val subprojectPom = maven.createModulePom("lib/lib-1", """
+                      <parent/>
+                      <artifactId>lib-1</artifactId>
+                      """.trimIndent())
+    maven.fixture.enableInspections(MavenParentMissedGroupIdArtifactIdInspection::class.java)
+    maven.checkHighlighting(subprojectPom)
+  }
+
+  @Test
   fun testHighlightingAbsentVersion() = runBlocking {
     maven.assumeMaven3()
     maven.createProjectPom("""
