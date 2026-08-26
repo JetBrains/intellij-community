@@ -24,20 +24,13 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
-      <library name="kotlinc.analysis-api-k2" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-api-k2-for-ide:2.5.0-dev-5674">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-k2-for-ide/2.5.0-dev-5674/analysis-api-k2-for-ide-2.5.0-dev-5674.jar">
-              <sha256sum>32e25b16bb9b5063494425a0567b20d2bcc2741a3c29b962a5e5f084a5a7ba66</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
+      <library name="kotlinc.analysis-api-k2">
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-k2-for-ide/2.5.0-dev-5674/analysis-api-k2-for-ide-2.5.0-dev-5674.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../lib/kotlin-snapshot/org/jetbrains/kotlin/analysis-api-k2-for-ide/2.5.255-dev-255/analysis-api-k2-for-ide-2.5.255-dev-255.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-k2-for-ide/2.5.0-dev-5674/analysis-api-k2-for-ide-2.5.0-dev-5674-sources.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../lib/kotlin-snapshot/org/jetbrains/kotlin/analysis-api-k2-for-ide/2.5.255-dev-255/analysis-api-k2-for-ide-2.5.255-dev-255-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

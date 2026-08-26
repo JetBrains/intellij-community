@@ -14,10 +14,10 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-kotlinc-analysis-api-impl-base-kotlinc-analysis-api-impl-base"],
+    exports = ["@lib//:kotlinc-analysis-api-impl-base"],
     runtime_deps = [
         # do not sort,
-        "@lib//:libraries-kotlinc-analysis-api-impl-base-kotlinc-analysis-api-impl-base",
+        "@lib//:kotlinc-analysis-api-impl-base",
         "//platform/backend",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
@@ -26,7 +26,7 @@ jvm_library(
 )
 
 content_module_jar(
-    libraries = ["@lib//:libraries-kotlinc-analysis-api-impl-base-kotlinc-analysis-api-impl-base"],
+    libraries = ["@lib//:kotlinc-analysis-api-impl-base"],
     module = ":libraries-kotlinc-analysis-api-impl-base",
 )
 
@@ -40,7 +40,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.kotlinc.analysis.api.impl.base",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-kotlinc-analysis-api-impl-base-kotlinc-analysis-api-impl-base"],
+    exports = ["@lib//:kotlinc-analysis-api-impl-base"],
     runtime_deps = [
         # do not sort,
         ":libraries-kotlinc-analysis-api-impl-base",

@@ -71,10 +71,10 @@ dev_dist_plugin_content(
     ],
     descriptor_module = ":jsr223-plugin",
     libraries = [
+        "@lib//:kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-compiler-fe10",
         "@lib//:kotlinc-kotlin-script-runtime",
         "@lib//:kotlinc-kotlin-scripting-jvm",
-        "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common",
     ],
 )
 ### auto-generated section `dev content intellij.kotlin.jsr223.plugin` end
