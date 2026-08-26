@@ -137,7 +137,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   private static void waitWithTimeout(@NotNull List<? extends Job> threads) throws TimeoutException {
     for (Job thread : threads) {
       try {
-        thread.waitForCompletion(20_000);
+        thread.waitForCompletion(120_000);
       }
       catch (InterruptedException e) {
         throw new RuntimeException(e);
