@@ -1229,11 +1229,19 @@ as an example
           if (!line.startsWith('#') && line.trim().length > 0) {
             const parts = line.split(',')
             if (parts.length === 4) {//name, startEpochNs, endEpochNs, value:
-              data.push({
-                name: parts[0].trim(),
-                startedAt: new Date(parseInt(parts[1].trim()) / 1_000_000 /* ns -> ms */),
-                value: parseFloat(parts[3].trim())
-              })
+              const startedAtNanos = Number(parts[1].trim())
+              const value = Number(parts[3].trim())
+              if (Number.isFinite(startedAtNanos) && startedAtNanos >= 0
+                  && Number.isFinite(value)) {
+                data.push({
+                  name: parts[0].trim(),
+                  startedAt: new Date(startedAtNanos / 1_000_000 /* ns -> ms */),
+                  value: value
+                })
+              }
+              else {
+                console.log("Skipping malformed CSV row: [" + line + "]")
+              }
             }
             else {
               console.log("Error parsing line: [" + line + "]")
