@@ -1,9 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase.log.squash
 
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.test.refresh
 import com.intellij.vcs.test.updateChangeListManager
+import git4idea.GitDisposable
+import git4idea.inMemory.rebase.log.InMemoryRebaseOperations
+import git4idea.inMemory.rebase.log.RebaseEntriesSource
+import git4idea.log.createLogDataIn
+import git4idea.log.refreshAndWait
 import git4idea.rebase.log.GitCommitEditingOperationResult
 import git4idea.rebase.log.GitCommitEditingOperationResult.Complete
 import git4idea.rebase.log.GitCommitEditingOperationResult.Complete.UndoPossibility
@@ -16,22 +22,52 @@ import git4idea.test.file
 import git4idea.test.git
 import git4idea.test.gitSingleRepoContextFixture
 import git4idea.test.message
+import git4idea.test.runUnderProgress
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
+import java.util.stream.Stream
 
-/**
- * The shared squash test suite. Subclasses provide the way the squash is actually performed
- * (a native rebase or an in-memory one) by implementing [execute].
- */
-internal abstract class GitSquashOperationTestBase {
+@TestApplication
+@ParameterizedClass(name = "{0}")
+@MethodSource("squashOperations")
+@Suppress("unused")
+internal class GitSquashOperationTestBase private constructor(private val testType: String, private val operation: SquashTestOperation) {
+  companion object {
+    @JvmStatic
+    fun squashOperations(): Stream<Arguments> =
+      Stream.of(
+        Arguments.of("Git Squash", GitSquashTestOperation()),
+        Arguments.of("In-Memory Squash", InMemorySquashTestOperation())
+      )
+  }
+
+  private abstract class SquashTestOperation {
+    abstract fun execute(context: GitSingleRepoContext, commitsToSquash: List<VcsCommitMetadata>, newMessage: String): GitCommitEditingOperationResult
+  }
+
+  private class GitSquashTestOperation : SquashTestOperation() {
+    override fun execute(context: GitSingleRepoContext, commitsToSquash: List<VcsCommitMetadata>, newMessage: String): GitCommitEditingOperationResult {
+      return runUnderProgress { GitSquashOperation(context.repo).execute(commitsToSquash, newMessage) }
+    }
+  }
+
+  private class InMemorySquashTestOperation : SquashTestOperation() {
+    override fun execute(context: GitSingleRepoContext, commitsToSquash: List<VcsCommitMetadata>, newMessage: String): GitCommitEditingOperationResult {
+      return runBlocking {
+        val testCs = GitDisposable.getInstance(context.project).coroutineScope
+        val logData = createLogDataIn(testCs, context.repo, context.logProvider)
+        logData.refreshAndWait(context.repo, true)
+        InMemoryRebaseOperations.squash(context.repo, commitsToSquash, newMessage, RebaseEntriesSource.LogData(logData))
+      }
+    }
+  }
+
   private val contextFixture = gitSingleRepoContextFixture()
-  protected val context: GitSingleRepoContext get() = contextFixture.get()
-
-  protected abstract fun GitSingleRepoContext.execute(
-    commitsToSquash: List<VcsCommitMetadata>,
-    newMessage: String,
-  ): GitCommitEditingOperationResult
+  private val context: GitSingleRepoContext get() = contextFixture.get()
 
   @Test
   fun `test squash last few commits`(): Unit = with(context) {
@@ -45,7 +81,7 @@ internal abstract class GitSquashOperationTestBase {
 
     val newMessage = "Squashed commit message"
 
-    execute(commitsToSquash, newMessage)
+    operation.execute(context, commitsToSquash, newMessage)
 
     assertLastMessage(newMessage)
     repo.assertCommitted {
@@ -68,7 +104,7 @@ internal abstract class GitSquashOperationTestBase {
     updateChangeListManager()
 
     val newMessage = "Squashed commit message"
-    execute(commitsToSquash, newMessage)
+    operation.execute(context, commitsToSquash, newMessage)
 
     assertMessage(newMessage, repo.message("HEAD^"))
     repo.assertCommitted(1) {
@@ -97,7 +133,7 @@ internal abstract class GitSquashOperationTestBase {
     updateChangeListManager()
 
     val newMessage = "Squashed commit message"
-    execute(commitsToSquash, newMessage)
+    operation.execute(context, commitsToSquash, newMessage)
 
     assertMessage(newMessage, repo.message("HEAD~2"))
     repo.assertCommitted(1) {
@@ -126,7 +162,7 @@ internal abstract class GitSquashOperationTestBase {
     updateChangeListManager()
 
     val newMessage = "Squashed commit message"
-    val operationResult = execute(commitsToSquash, newMessage) as Complete
+    val operationResult = operation.execute(context, commitsToSquash, newMessage) as Complete
 
     assertThat(runBlocking { operationResult.checkUndoPossibility() }).isInstanceOf(UndoPossibility.Possible::class.java)
     assertThat(operationResult.undo()).isInstanceOf(UndoResult.Success::class.java)
@@ -158,7 +194,7 @@ internal abstract class GitSquashOperationTestBase {
     updateChangeListManager()
 
     val newMessage = "Squashed commit message"
-    val operationResult = execute(commitsToSquash, newMessage) as Complete
+    val operationResult = operation.execute(context, commitsToSquash, newMessage) as Complete
 
     file("new").create().addCommit("new")
 
@@ -179,7 +215,7 @@ internal abstract class GitSquashOperationTestBase {
     updateChangeListManager()
 
     val newMessage = "Squashed commit message"
-    val operationResult = execute(commitsToSquash, newMessage) as Complete
+    val operationResult = operation.execute(context, commitsToSquash, newMessage) as Complete
 
     git("update-ref refs/remotes/origin/master HEAD~2")
 
