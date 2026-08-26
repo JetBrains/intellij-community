@@ -41,3 +41,13 @@ fun Disposable.whenDisposed(
     }
   })
 }
+
+@ApiStatus.Internal
+@ApiStatus.Experimental
+fun Disposable.whenDisposedOrNow(listener: () -> Unit): Boolean {
+  val registered = Disposer.tryRegister(this, Disposable { listener() })
+  if (!registered) {
+    listener()
+  }
+  return registered
+}

@@ -4,8 +4,8 @@
 package com.intellij.openapi.project.impl
 
 import com.intellij.conversion.CannotConvertException
+import com.intellij.openapi.observable.util.whenDisposedOrNow
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.wm.IdeFrame
@@ -81,7 +81,7 @@ internal fun Project.getOrCreateIdeFrameDeferred(): CompletableDeferred<IdeFrame
   val newDeferred = CompletableDeferred<IdeFrame?>()
   val actualDeferred = (this as UserDataHolderEx).putUserDataIfAbsent(IDE_FRAME_DEFERRED_KEY, newDeferred)
   if (newDeferred === actualDeferred) {
-    Disposer.register(this) {
+    this.whenDisposedOrNow {
       if (!newDeferred.isCompleted) {
         newDeferred.cancel(CancellationException("Project is disposed"))
       }
