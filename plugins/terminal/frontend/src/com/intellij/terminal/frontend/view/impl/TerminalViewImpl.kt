@@ -140,9 +140,7 @@ class TerminalViewImpl(
 
   @VisibleForTesting
   val outputEditor: EditorImpl
-
-  @VisibleForTesting
-  val alternateBufferEditor: EditorImpl
+  private val alternateBufferEditor: EditorEx
 
   @VisibleForTesting
   val outputEditorDecorationApplier: EditorTextDecorationApplier
