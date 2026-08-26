@@ -40,8 +40,8 @@ internal object SpecificationUtils {
     if (PropertiesComponent.getInstance().getBoolean(SPECIFICATION_ANALYSIS_PROMOTION_DISMISSED)) return
 
     val lock = (file as UserDataHolderEx).putUserDataIfAbsent(SPECIFICATION_ANALYSIS_PROMOTION_LOCK, Semaphore(1))
+    if (!lock.tryAcquire()) return
     try {
-      if (!lock.tryAcquire()) return
       if (PropertiesComponent.getInstance().getBoolean(SPECIFICATION_ANALYSIS_PROMOTION_DISMISSED)) return
 
       val actions = arrayOf(
