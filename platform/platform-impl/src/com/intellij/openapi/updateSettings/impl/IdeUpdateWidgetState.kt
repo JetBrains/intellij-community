@@ -2,6 +2,7 @@
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.ActivityTracker
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
@@ -9,6 +10,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.TimeUnit
+
+private const val REMIND_LATER_TIME = "IdeUpdateWidget.RemindLaterTime"
+private val REMIND_LATER_TIMEOUT_MS = TimeUnit.DAYS.toMillis(3)
 
 @ApiStatus.Internal
 @Service(Service.Level.APP)
@@ -48,6 +53,19 @@ class IdeUpdateWidgetState {
      */
     @JvmStatic
     fun isWidgetShown(): Boolean = isEnabled() && getInstance().status.value != Status.NONE
+
+    /**
+     * Whether an update must not be announced, because the user has asked to be reminded later.
+     */
+    @JvmStatic
+    fun isRemindLaterActive(): Boolean {
+      if (!isEnabled()) {
+        return false
+      }
+
+      val elapsed = System.currentTimeMillis() - PropertiesComponent.getInstance().getLong(REMIND_LATER_TIME, 0)
+      return elapsed < REMIND_LATER_TIMEOUT_MS
+    }
   }
 
   private val mutableStatus = MutableStateFlow(Status.NONE)
@@ -75,6 +93,10 @@ class IdeUpdateWidgetState {
     if (mutableStatus.compareAndSet(current, value)) {
       updateWidget()
     }
+  }
+
+  fun remindMeLater() {
+    PropertiesComponent.getInstance().setValue(REMIND_LATER_TIME, System.currentTimeMillis().toString())
   }
 
   fun onDownloadFinished() {
