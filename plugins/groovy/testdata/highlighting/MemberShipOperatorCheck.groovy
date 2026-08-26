@@ -28,3 +28,8 @@ print (<warning descr="'ArrayList<Integer>' cannot contain 'ArrayList<Integer>'"
 print (1 in new ArrayList())
 print (<warning descr="'Integer' cannot contain 'Date'">new Date() in 2</warning>)
 print (<warning descr="'ArrayList<Integer>' cannot contain 'String'">'a' in [1]</warning>)
+
+final IntRange r = (0..100)
+final Long i = 1
+assert i in r
+print (<warning descr="'ArrayList<Integer>' cannot contain 'Long'">i in [1]</warning>)

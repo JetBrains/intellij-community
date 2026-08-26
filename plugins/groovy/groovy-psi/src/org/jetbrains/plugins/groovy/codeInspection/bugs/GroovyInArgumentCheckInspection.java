@@ -16,6 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GrInExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 /**
  * @author Max Medvedev
@@ -61,6 +62,11 @@ public final class GroovyInArgumentCheckInspection extends BaseInspection {
       if (component == null) return;
 
       if (TypesUtil.isAssignableWithoutConversions(component, ltype)) return;
+
+      if (InheritanceUtil.isInheritor(rtype, GroovyCommonClassNames.GROOVY_LANG_RANGE) &&
+          TypesUtil.isNumericType(component) && TypesUtil.isNumericType(ltype)) {
+        return;
+      }
 
       registerError(expression, ltype, rtype);
     }
