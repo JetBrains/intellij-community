@@ -37,7 +37,7 @@ internal class GitLabLoginErrorStatusPresenter(
     if (!canLogInWithGit) return null
     if (error !is LoginException.UnsupportedServerVersion &&
         error !is LoginException.InvalidTokenOrUnsupportedServerVersion) return null
-    return swingAction(CollaborationToolsBundle.message("login.via.git")) {
+    return swingAction(CollaborationToolsBundle.message("login.using.git.action")) {
       model.tryGitAuthorization()
     }
   }
@@ -48,8 +48,8 @@ internal class GitLabLoginErrorStatusPresenter(
     val builder = this
     val text = GitLabBundle.message("server.version.unsupported", error.earliestSupportedVersion)
     if (!canLogInWithGit) return builder.append(text)
-    val link = HtmlChunk.link(ErrorStatusPresenter.ERROR_ACTION_HREF, CollaborationToolsBundle.message("login.via.git"))
-
+    val link = HtmlChunk.link(ErrorStatusPresenter.ERROR_ACTION_HREF,
+                              CollaborationToolsBundle.message("login.using.git.action"))
     return builder
       .append(text).nbsp()
       .append(link)
@@ -59,14 +59,14 @@ internal class GitLabLoginErrorStatusPresenter(
     error: LoginException.InvalidTokenOrUnsupportedServerVersion
   ): HtmlBuilder {
     val builder = this
-    val text = GitLabBundle.message("invalid.token.or.server.version.unsupported", error.earliestSupportedVersion)
+    val text = GitLabBundle.message("invalid.token.or.server.version.unsupported")
     if (!canLogInWithGit) return builder.append(text)
-    val linkAction = HtmlChunk.link(ErrorStatusPresenter.ERROR_ACTION_HREF, CollaborationToolsBundle.message("login.via.git"))
-    val linkAdditionalText = GitLabBundle.message("invalid.token.or.server.version.unsupported.additional.text", error.earliestSupportedVersion)
-
+    val linkAdditionalText =
+      GitLabBundle.message("invalid.token.or.server.version.unsupported.additional.text", error.earliestSupportedVersion)
+    val linkAction = HtmlChunk.link(ErrorStatusPresenter.ERROR_ACTION_HREF, CollaborationToolsBundle.message("login.using.git"))
     val linkBuilder = HtmlBuilder()
-      .append(linkAction).nbsp()
-      .append(linkAdditionalText)
+      .append(linkAdditionalText).nbsp()
+      .append(linkAction)
 
     return builder
       .append(text)
