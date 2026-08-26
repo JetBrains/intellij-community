@@ -142,7 +142,7 @@ public final class PluginHeaderPanel {
                        ? IdeBundle.message("label.category.unknown")
                        : StringUtil.toUpperCase(plugin.getDisplayCategory()));
     String versionText;
-    boolean showVersion = !plugin.isBundled() || plugin.allowBundledUpdate();
+    boolean showVersion = PluginUtils.isUpdateable(plugin);
     if (plugin instanceof PluginNode node) {
       myRating.setRate(node.getRating());
       myDownloads.setText(IdeBundle.message("label.plugin.0.downloads", node.getPresentableDownloads()));

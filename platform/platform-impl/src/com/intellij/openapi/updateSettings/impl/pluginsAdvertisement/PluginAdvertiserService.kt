@@ -11,6 +11,7 @@ import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNode
+import com.intellij.ide.plugins.PluginUtils
 import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
@@ -392,7 +393,7 @@ open class PluginAdvertiserServiceImpl(
       .filter { loadedPlugin ->
         when (val installedPlugin = PluginManagerCore.getPluginSet().findInstalledPlugin(loadedPlugin.pluginId)) {
           null -> true
-          else -> (!installedPlugin.isBundled || installedPlugin.allowBundledUpdate())
+          else -> PluginUtils.isUpdateable(installedPlugin)
                   && PluginDownloader.compareVersionsSkipBrokenAndIncompatible(loadedPlugin.version, installedPlugin) > 0
         }
       }.filter { PluginManagementPolicy.getInstance().canInstallPlugin(it) }

@@ -222,4 +222,9 @@ object PluginUtils {
       }
     })
   }
+
+  @JvmStatic
+  fun isUpdateable(plugin: PluginDescriptor): Boolean {
+    return !plugin.isBundled || plugin.allowBundledUpdate()
+  }
 }

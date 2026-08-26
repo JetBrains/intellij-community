@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.PluginEnabler
 import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginStringSetFile
+import com.intellij.ide.plugins.PluginUtils
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService
 import com.intellij.ide.plugins.newui.PluginUiModel
@@ -428,7 +429,7 @@ object UpdateChecker {
 
     // installed plugins that could be updated (either downloaded or updateable bundled)
     UpdateCheckerPluginsFacade.getInstance().getInstalledPlugins()
-      .filter { !it.isBundled || it.allowBundledUpdate() }
+      .filter { PluginUtils.isUpdateable(it) }
       .associateByTo(updateable) { it.pluginId }
 
     // plugins installed in an instance from which the settings were imported

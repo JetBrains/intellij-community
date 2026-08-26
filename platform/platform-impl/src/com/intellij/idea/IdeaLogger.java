@@ -235,7 +235,7 @@ public final class IdeaLogger extends JulLogger {
       var idAndPlugin = pluginSet == null ? null : PluginUtils.findPlugin(t, pluginSet);
       var id = idAndPlugin == null ? null : idAndPlugin.getFirst();
       var plugin = idAndPlugin == null ? null : idAndPlugin.getSecond();
-      if (id != null && (plugin == null || !plugin.isBundled() || plugin.allowBundledUpdate())) {
+      if (id != null && (plugin == null || PluginUtils.isUpdateable(plugin))) {
         logSevere(plugin == null
                   ? "Plugin to blame: " + id.getIdString()
                   : "Plugin to blame: " + plugin.getName() + " version: " + plugin.getVersion());

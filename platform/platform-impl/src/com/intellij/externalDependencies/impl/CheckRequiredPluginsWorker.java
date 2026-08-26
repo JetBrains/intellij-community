@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.PluginEnabler;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.ide.plugins.PluginModuleDescriptor;
+import com.intellij.ide.plugins.PluginUtils;
 import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationGroupManager;
@@ -107,8 +108,7 @@ final class CheckRequiredPluginsWorker {
       var pluginVersion = descriptor.getVersion();
 
       var currentIdeVersion = applicationInfo.getBuild();
-      if (descriptor.isBundled() &&
-          !descriptor.allowBundledUpdate() &&
+      if (!PluginUtils.isUpdateable(descriptor) &&
           currentIdeVersion.asStringWithoutProductCode().equals(pluginVersion)) {
         var pluginFromString = PluginManagerCore.CORE_ID.equals(descriptor.getPluginId()) ? "" : "plugin '" + pluginName + "' from ";
         if (
