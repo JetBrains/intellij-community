@@ -3,6 +3,7 @@ package git4idea.ui;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.CoroutinesKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListAdapter;
@@ -16,8 +17,10 @@ import com.intellij.openapi.vcs.changes.ui.RemoteStatusChangeNodeDecorator;
 import com.intellij.openapi.vcs.changes.ui.SimpleAsyncChangesTreeModel;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.update.DisposableUpdate;
-import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.DebouncedUpdates;
+import com.intellij.util.ui.update.UpdateQueue;
+import kotlin.Unit;
+import kotlinx.coroutines.Dispatchers;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -79,14 +82,13 @@ public class ChangesBrowserWithRollback extends AsyncChangesBrowserBase implemen
 
 
   private class MyChangeListListener extends ChangeListAdapter {
-    private final @NotNull MergingUpdateQueue myUpdateQueue =
-      new MergingUpdateQueue("ChangesBrowserWithRollback", 300, true,
-                             ChangesBrowserWithRollback.this, ChangesBrowserWithRollback.this);
+    private final @NotNull UpdateQueue<Unit> myUpdateQueue =
+      DebouncedUpdates.<Unit>forComponent(ChangesBrowserWithRollback.this, "ChangesBrowserWithRollback", 300)
+        .withContext(CoroutinesKt.getEDT(Dispatchers.INSTANCE))
+        .runLatest(ignored -> myViewer.rebuildTree());
 
     private void doUpdate() {
-      myUpdateQueue.queue(DisposableUpdate.createDisposable(myUpdateQueue, "update", () -> {
-        myViewer.rebuildTree();
-      }));
+      myUpdateQueue.queue(Unit.INSTANCE);
     }
 
     @Override
