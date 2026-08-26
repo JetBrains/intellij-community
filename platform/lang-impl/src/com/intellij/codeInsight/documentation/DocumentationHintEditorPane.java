@@ -80,7 +80,7 @@ public final class DocumentationHintEditorPane extends DocumentationEditorPane {
 
   @Override
   protected void processMouseMotionEvent(MouseEvent e) {
-    processWindowMoveListenerMouseMotionEvent(e);
+    processWindowMoveListenerMouseEvent(e);
     if (!e.isConsumed()) {
       super.processMouseMotionEvent(e);
     }
@@ -97,12 +97,6 @@ public final class DocumentationHintEditorPane extends DocumentationEditorPane {
       case MouseEvent.MOUSE_CLICKED -> moveListener.mouseClicked(e);
       case MouseEvent.MOUSE_EXITED -> moveListener.mouseExited(e);
       case MouseEvent.MOUSE_ENTERED -> moveListener.mouseEntered(e);
-    }
-  }
-
-  private void processWindowMoveListenerMouseMotionEvent(MouseEvent e) {
-    if (PopupUtil.getPopupContainerFor(this) == null) return;
-    switch (e.getID()) {
       case MouseEvent.MOUSE_MOVED -> moveListener.mouseMoved(e);
       case MouseEvent.MOUSE_DRAGGED -> moveListener.mouseDragged(e);
     }
