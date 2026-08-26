@@ -14,6 +14,9 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 object TrustedProjects {
+  @ApiStatus.Internal
+  const val TRUST_HEADLESS_DISABLED_PROPERTY: String = "idea.trust.headless.disabled"
+
   @JvmStatic
   fun isProjectTrusted(project: Project): Boolean = isProjectTrusted(TrustedProjectsLocator.locateProject(project))
 
@@ -105,7 +108,7 @@ object TrustedProjects {
       return true
     }
     val isHeadlessMode = application.isUnitTestMode || application.isHeadlessEnvironment
-    return isHeadlessMode && System.getProperty("idea.trust.headless.disabled", "true").toBoolean()
+    return isHeadlessMode && System.getProperty(TRUST_HEADLESS_DISABLED_PROPERTY, "true").toBoolean()
   }
 
   private fun isTrustedCheckDisabledForProduct(): Boolean = System.getProperty("idea.trust.disabled").toBoolean() || isTrustedCheckDisabled()

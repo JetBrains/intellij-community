@@ -19,6 +19,7 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.project.stateStore
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.TrustedProjectsTestUtil
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.createOrLoadProject
 import com.intellij.testFramework.loadProjectAndCheckResults
@@ -157,8 +158,10 @@ class LoadInvalidProjectTest {
       TrustedProjects.setProjectTrusted(projectDirPath, false)
       return projectDirPath
     }
-    runBlocking {
-      createOrLoadProject(tempDirectory, ::createUntrustedProject, loadComponentState = true, useDefaultProjectSettings = false, task = task)
+    TrustedProjectsTestUtil.withTrustedProjectsCheckEnabled {
+      runBlocking {
+        createOrLoadProject(tempDirectory, ::createUntrustedProject, loadComponentState = true, useDefaultProjectSettings = false, task = task)
+      }
     }
   }
 
