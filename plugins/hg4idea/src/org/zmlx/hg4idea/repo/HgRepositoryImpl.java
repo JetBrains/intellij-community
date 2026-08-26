@@ -96,7 +96,7 @@ public final class HgRepositoryImpl extends RepositoryImpl implements HgReposito
   }
 
   private void setupUpdater() {
-    HgRepositoryUpdater updater = new HgRepositoryUpdater(this);
+    HgRepositoryUpdater updater = new HgRepositoryUpdater(this, coroutineScope);
     Disposer.register(this, updater);
     myLocalIgnoredHolder.startRescan();
   }

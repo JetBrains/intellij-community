@@ -11,10 +11,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
+import com.intellij.util.ui.update.DebouncedUpdates;
+import com.intellij.util.ui.update.UpdateQueue;
+import kotlin.Unit;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.Dispatchers;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,17 +31,17 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
   private final Project myProject;
   private final @NotNull HgRepositoryFiles myRepositoryFiles;
   private final @Nullable MessageBusConnection myMessageBusConnection;
-  private final @NotNull MergingUpdateQueue myUpdateQueue;
+  private final @NotNull UpdateQueue<Unit> myUpdateQueue;
   private final @Nullable VirtualFile myBranchHeadsDir;
   private static final int TIME_SPAN = 300;
   private @Nullable VirtualFile myMqDir;
   private final @Nullable LocalFileSystem.WatchRequest myWatchRequest;
-  private final @NotNull MergingUpdateQueue myUpdateConfigQueue;
+  private final @NotNull UpdateQueue<Unit> myUpdateConfigQueue;
   private final HgRepository myRepository;
   private final VcsDirtyScopeManager myDirtyScopeManager;
 
 
-  HgRepositoryUpdater(final @NotNull HgRepository repository) {
+  HgRepositoryUpdater(final @NotNull HgRepository repository, final CoroutineScope coroutineScope) {
     myRepository = repository;
     VirtualFile hgDir = myRepository.getHgDir();
     myWatchRequest = LocalFileSystem.getInstance().addRootToWatch(hgDir.getPath(), true);
@@ -51,8 +53,16 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
 
     myProject = repository.getProject();
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
-    myUpdateQueue = new MergingUpdateQueue("HgRepositoryUpdate", TIME_SPAN, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD);
-    myUpdateConfigQueue = new MergingUpdateQueue("HgConfigUpdate", TIME_SPAN, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD);
+
+    myUpdateQueue = DebouncedUpdates.<Unit>forScope(coroutineScope, "HgRepositoryUpdate", TIME_SPAN)
+      .withContext(Dispatchers.getDefault())
+      .runLatest(ignored -> myRepository.update())
+      .cancelOnDispose(this);
+    myUpdateConfigQueue = DebouncedUpdates.<Unit>forScope(coroutineScope, "HgConfigUpdate", TIME_SPAN)
+      .withContext(Dispatchers.getDefault())
+      .runLatest(ignored -> myRepository.updateConfig())
+      .cancelOnDispose(this);
+
     if (!myProject.isDisposed()) {
       myMessageBusConnection = myProject.getMessageBus().connect(this);
       myMessageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, this);
@@ -67,8 +77,6 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     if (myWatchRequest != null) {
       LocalFileSystem.getInstance().removeWatchedRoot(myWatchRequest);
     }
-    myUpdateQueue.cancelAllUpdates();
-    myUpdateConfigQueue.cancelAllUpdates();
     if (myMessageBusConnection != null) {
       myMessageBusConnection.disconnect();
     }
@@ -138,15 +146,10 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     if (branchHeadsChanged || branchFileChanged || dirstateFileChanged || mergeFileChanged || rebaseFileChanged ||
         bookmarksFileChanged || currentBookmarkFileChanged || tagsFileChanged || localTagsFileChanged ||
         mqChanged) {
-      myUpdateQueue.queue(new MyUpdater("hgrepositoryUpdate"));
+      myUpdateQueue.queue(Unit.INSTANCE);
     }
     if (configHgrcChanged) {
-      myUpdateConfigQueue.queue(new MyUpdater("hgconfigUpdate"){
-        @Override
-        public void run() {
-          myRepository.updateConfig();
-        }
-      });
+      myUpdateConfigQueue.queue(Unit.INSTANCE);
     }
     if (dirstateFileChanged || hgIgnoreChanged) {
       myRepository.getIgnoredFilesHolder().startRescan();
@@ -159,19 +162,4 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     }
   }
 
-  private class MyUpdater extends Update {
-    MyUpdater(String name) {
-      super(name);
-    }
-
-    @Override
-    public boolean canEat(@NotNull Update update) {
-      return true;
-    }
-
-    @Override
-    public void run() {
-      myRepository.update();
-    }
-  }
 }
