@@ -2,9 +2,9 @@
 package org.jetbrains.idea.maven.dom.converters
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
-import com.intellij.psi.xml.XmlFile
 import com.intellij.util.xml.ConvertContext
 import com.intellij.util.xml.GenericDomValue
 import org.jetbrains.idea.maven.dom.MavenDomUtil
@@ -38,21 +38,28 @@ object MavenConsumerPomUtil {
     val groupId = parentElement.groupId.value
     if (artifactId == null || groupId == null) return null
 
-    return getDerivedParentPropertyForConsumerPom(context.file, artifactId, groupId, extractor)
+    val parentPom = parentElement.relativePath.value ?: return null
+    return getDerivedParentPropertyForConsumerPom(parentPom, artifactId, groupId, extractor)
   }
 
+  /**
+   * Reads a property of the parent POM at [parentPomFile], if that POM has the declared parent coordinates.
+   *
+   * The parent POM can inherit the property. Then the value comes from the parent chain, through the converter
+   * of the property. [RecursionManager] stops a cycle in that chain.
+   */
   @JvmStatic
-  fun getDerivedParentPropertyForConsumerPom(currentPomFile: XmlFile,
-                                             parentElementArtifactId: String,
-                                             parentElementGroupId: String,
-                                             extractor: (MavenDomProjectModel) -> GenericDomValue<String>): String? {
-    val parentPsi = currentPomFile.parent?.parent?.findFile("pom.xml") as? XmlFile ?: return null
-    val mavenParentDomPsiModel = MavenDomUtil.getMavenDomModel(parentPsi, MavenDomProjectModel::class.java) ?: return null
+  fun getDerivedParentPropertyForConsumerPom(
+    parentPomFile: PsiFile,
+    parentElementArtifactId: String,
+    parentElementGroupId: String,
+    extractor: (MavenDomProjectModel) -> GenericDomValue<String>,
+  ): String? {
+    val mavenParentDomPsiModel = MavenDomUtil.getMavenDomModel(parentPomFile, MavenDomProjectModel::class.java) ?: return null
+    if (mavenParentDomPsiModel.artifactId.value != parentElementArtifactId) return null
     val parentRealGroupId = mavenParentDomPsiModel.groupId.value ?: mavenParentDomPsiModel.mavenParent.groupId.value
-    if (mavenParentDomPsiModel.artifactId.value == parentElementArtifactId && parentRealGroupId == parentElementGroupId) {
-      return extractor(mavenParentDomPsiModel).value
-    }
-    return null
+    if (parentRealGroupId != parentElementGroupId) return null
+    return RecursionManager.doPreventingRecursion(parentPomFile, false) { extractor(mavenParentDomPsiModel).value }
   }
 
   /**

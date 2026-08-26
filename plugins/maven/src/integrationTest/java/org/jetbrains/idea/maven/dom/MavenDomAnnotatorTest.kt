@@ -1,7 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom
 
+import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder
+import com.intellij.codeInsight.navigation.NavigationGutterIconRenderer
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assumeMaven4
 import com.intellij.maven.testFramework.fixtures.createModulePom
 import com.intellij.maven.testFramework.fixtures.createProjectPom
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
@@ -19,6 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.dom.annotator.MavenDomGutterAnnotatorLogger
+import org.jetbrains.idea.maven.fixtures.doHighlighting
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.junit.jupiter.api.AfterEach
@@ -218,6 +222,60 @@ class MavenDomAnnotatorTest(mavenVersion: String, modelVersion: String) {
   }
 
   @Test
+  fun testAnnotateParentIfParentPomUsesSiblingRelativePath() = runBlocking {
+    maven.assumeMaven4()
+    maven.createProjectPom("""
+<groupId>test</groupId>
+<artifactId>project</artifactId>
+<version>1.1</version>
+<packaging>pom</packaging>
+
+<modules>
+  <module>integrations-parent</module>
+  <module>integrations</module>
+</modules>
+""")
+
+    maven.createModulePom("integrations-parent", """
+<groupId>test</groupId>
+<artifactId>integrations-parent</artifactId>
+<version>1.1</version>
+<packaging>pom</packaging>
+""")
+
+    // The intermediate POM reaches its own parent through a sibling directory, and it inherits its own version.
+    val integrationsPom = maven.createModulePom("integrations", """
+<parent>
+  <groupId>test</groupId>
+  <artifactId>integrations-parent</artifactId>
+  <version>1.1</version>
+  <relativePath>../integrations-parent</relativePath>
+</parent>
+
+<artifactId>integrations</artifactId>
+<packaging>pom</packaging>
+
+<modules>
+  <module>integrations-helper</module>
+</modules>
+""")
+
+    val helperPom = maven.createModulePom("integrations/integrations-helper", """
+<parent>
+  <groupId>test</groupId>
+  <artifactId>integrations</artifactId>
+</parent>
+
+<artifactId>integrations-helper</artifactId>
+""")
+
+    maven.importProjectAsync()
+
+    // The parent gutter icon is the only icon in the child POM, and it must navigate to the intermediate POM.
+    assertEquals(listOf(integrationsPom), gutterTargetFiles(helperPom))
+  }
+
+  @Test
   fun testChildrenProjectsOrder() = runBlocking {
     maven.createModulePom("module-c", """
 <parent>
@@ -273,6 +331,21 @@ class MavenDomAnnotatorTest(mavenVersion: String, modelVersion: String) {
     }
 
     assertEquals(listOf("module-a", "module-b", "module-c", "module-d"), artifactIds)
+  }
+
+  /**
+   * Returns the file of every navigation target of every gutter icon in [pom].
+   *
+   * The Maven annotator builds each icon with [NavigationGutterIconBuilder], which produces a
+   * [NavigationGutterIconRenderer]. The target of the parent icon is the `project` tag of the parent POM.
+   */
+  private suspend fun gutterTargetFiles(pom: VirtualFile): List<VirtualFile> {
+    val renderers = maven.doHighlighting(pom)
+      .mapNotNull { it.gutterIconRenderer }
+      .filterIsInstance<NavigationGutterIconRenderer>()
+    return readAction {
+      renderers.flatMap { it.targetElements }.map { it.containingFile.virtualFile }
+    }
   }
 
   private suspend fun checkGutters(virtualFile: VirtualFile, expectedFileContent: String, expectedProperties: Collection<String>) {
