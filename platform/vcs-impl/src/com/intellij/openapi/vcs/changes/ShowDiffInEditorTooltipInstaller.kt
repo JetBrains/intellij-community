@@ -11,14 +11,15 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.impl.ActionButtonUtil
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.ActionToolbarGotItTooltip
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.ui.update.DisposableUpdate
-import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.DebouncedUpdates
+import kotlinx.coroutines.Dispatchers
 import javax.swing.JComponent
 
 internal class ShowDiffInEditorTooltipInstaller : DiffRequestProcessorEditorCustomizer {
@@ -38,9 +39,12 @@ private class ShowDiffInEditorTabTooltipHolder(
   }
 
   /**
-   * In case of multiple show tooltip request coming from different listeners, [MergingUpdateQueue] will help here to ensure that only one tooltip will be shown
+   * In case of multiple show tooltip request coming from different listeners, [DebouncedUpdates] will help here to ensure that only one tooltip will be shown
    */
-  private val notificationQueue = MergingUpdateQueue("DiffRequestNotificationQueue", 500, true, null, this)
+  private val notificationQueue = DebouncedUpdates.forComponent<Unit>(toolbarToShowTooltip.component, "DiffRequestNotificationQueue", 500)
+    .withContext(Dispatchers.EDT)
+    .runLatest { performShowGotItTooltip() }
+    .cancelOnDispose(this)
 
   init {
     Disposer.register(disposable, this)
@@ -54,13 +58,15 @@ private class ShowDiffInEditorTabTooltipHolder(
   }
 
   private fun showGotItTooltip() {
+    notificationQueue.queue(Unit)
+  }
+
+  private fun performShowGotItTooltip() {
     val diffSettingsButton: (ActionToolbar) -> JComponent? = { toolbar ->
       ActionButtonUtil.findToolbarActionButton(toolbar) { b -> b.action is SetEditorSettingsActionGroup || b.action is SetEditorSettingsAction }
     }
-    notificationQueue.queue(DisposableUpdate.createDisposable(this, TOOLTIP_ID) {
-      ActionToolbarGotItTooltip(TOOLTIP_ID, VcsBundle.message("show.diff.in.editor.tab.got.it.tooltip"),
-                                this, toolbarToShowTooltip, diffSettingsButton)
-    })
+    ActionToolbarGotItTooltip(TOOLTIP_ID, VcsBundle.message("show.diff.in.editor.tab.got.it.tooltip"),
+                              this, toolbarToShowTooltip, diffSettingsButton)
   }
 
   override fun dispose() {}
