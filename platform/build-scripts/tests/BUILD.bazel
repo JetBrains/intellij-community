@@ -35,6 +35,8 @@ jvm_library(
     runtime_deps = [":tests"],
     deps = [
         # do not sort,
+        "//platform/build-scripts/bazel-rules/searchable-options-injector",
+        "//platform/build-scripts/bazel-rules/searchable-options-injector:searchable-options-injector_test_lib",
         "//platform/devIdeConfig",
         "//platform/devIdeConfig:devIdeConfig_test_lib",
         "//platform/runtime/product",

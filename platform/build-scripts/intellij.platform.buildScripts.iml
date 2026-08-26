@@ -217,6 +217,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.base.multiplatform" />
     <orderEntry type="module" module-name="intellij.platform.util.base" />
     <orderEntry type="module" module-name="intellij.idea.community.build.zip" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.searchableOptionsInjector" />
     <orderEntry type="library" name="com.jetbrains.fus.reporting.fus-api" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.fus.ap.validation" />
     <orderEntry type="library" name="jetbrains.fus.reporting.api.jvm" level="project" />

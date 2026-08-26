@@ -694,6 +694,7 @@ platform/bootstrap/coroutine
 platform/bootstrap/dev
 platform/build-scripts
 platform/build-scripts/api
+platform/build-scripts/bazel-rules/searchable-options-injector
 platform/build-scripts/codeOptimizer
 platform/build-scripts/dev-server
 platform/build-scripts/downloader

@@ -1,16 +1,22 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.plugins
 
+import com.intellij.platform.buildScripts.searchableOptionsInjector.SearchableOptionsEntry
+import com.intellij.platform.buildScripts.searchableOptionsInjector.SearchableOptionsInjection
+import com.intellij.platform.buildScripts.searchableOptionsInjector.injectSearchableOptions
 import com.intellij.platform.distributionContent.FileEntry
 import com.intellij.platform.distributionContent.ModuleEntry
 import com.intellij.platform.distributionContent.deserializeContentData
 import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.FileSource
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
+import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.generateInclusionReasonForContentModule
 import org.jetbrains.intellij.build.impl.BazelModuleOutputProvider
+import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.DescriptorCacheContainer
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.PluginLayout
@@ -66,6 +72,7 @@ internal suspend fun buildPluginsByBazel(
   plugins: List<PluginBuiltByBazelDescriptor>,
   targetDir: Path,
   descriptorCacheContainer: DescriptorCacheContainer,
+  searchableOptionSet: SearchableOptionSetDescriptor?,
   buildContext: BuildContext
 ): List<PluginBuildResult> {
   if (plugins.isEmpty()) return emptyList()
@@ -98,6 +105,22 @@ internal suspend fun buildPluginsByBazel(
         buildContext.messages.logErrorAndThrow("Cannot build '${plugin.mainModule}' because '${packedModulesPath}' does not exist")
       }
       val distributionFileEntries = readPackedModules(packedModulesPath, plugin.mainModule, pluginTargetDir)
+      if (searchableOptionSet != null) {
+        // `ij_plugin` never packs searchable options: the index is produced by running the IDE assembled from
+        // index-free plugin distributions, so it can only be added to the distribution afterwards
+        spanBuilder("inject searchable options")
+          .setAttribute("plugin", plugin.mainModule)
+          .use {
+            val pluginId = getPluginId(plugin.mainModule, buildContext)
+            val injections = computeSearchableOptionsInjections(
+              distributionFileEntries = distributionFileEntries,
+              mainModule = plugin.mainModule,
+              pluginId = pluginId,
+              searchableOptionSet = searchableOptionSet,
+            )
+            injectSearchableOptions(injections)
+          }
+      }
       val pluginBuildResult = PluginBuildResult(plugin.mainModule, pluginTargetDir, os = null, arch = null, distributionFileEntries)
       storeXmlDescriptorsInCache(descriptorCacheContainer.forPlugin(pluginTargetDir), pluginBuildResult)
       pluginBuildResult
@@ -171,6 +194,43 @@ private fun convertModuleEntry(
     relativeOutputFile = moduleItem.relativeOutputFile,
     reason = moduleItem.reason,
   )
+}
+
+/**
+ * Maps the searchable options index to the JARs of a plugin distribution built by the `ij_plugin` rule, following the same
+ * rules as [org.jetbrains.intellij.build.impl.JarPackager.addSearchableOptionSources] does for plugins built in-process:
+ * options of the main module are stored under the plugin ID, options of a content module under the module name.
+ *
+ * Modules without searchable options are the common case, so a missing key is not an error.
+ */
+internal fun computeSearchableOptionsInjections(
+  distributionFileEntries: List<DistributionFileEntry>,
+  mainModule: String,
+  pluginId: String,
+  searchableOptionSet: SearchableOptionSetDescriptor,
+): List<SearchableOptionsInjection> {
+  val entriesByJar = LinkedHashMap<Path, MutableList<SearchableOptionsEntry>>()
+  for (entry in distributionFileEntries) {
+    if (entry !is ModuleOutputEntry) {
+      continue
+    }
+    val sources = if (entry.reason == null && entry.owner.moduleName == mainModule) {
+      searchableOptionSet.createSourceByPlugin(pluginId)
+    }
+    else {
+      searchableOptionSet.createSourceByModule(entry.owner.moduleName)
+    }
+    for (source in sources) {
+      source as? FileSource ?: error("$source is not FileSource")
+      entriesByJar.computeIfAbsent(entry.path) { ArrayList() }.add(SearchableOptionsEntry(source.relativePath, source.file))
+    }
+  }
+  return entriesByJar.map { SearchableOptionsInjection(it.key, it.value) }
+}
+
+private suspend fun getPluginId(mainModule: String, buildContext: BuildContext): String {
+  val module = buildContext.outputProvider.findRequiredModule(mainModule)
+  return (buildContext as BuildContextImpl).jarPackagerDependencyHelper.getPluginIdByModule(module)
 }
 
 private fun computeIdeStabilityLevel(buildContext: BuildContext): String {

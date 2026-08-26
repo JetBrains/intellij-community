@@ -1,0 +1,47 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.platform.buildScripts.searchableOptionsInjector` start
+jvm_library(
+    name = "searchable-options-injector",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.buildScripts.searchableOptionsInjector",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@community//build:zip",
+    ],
+)
+
+jvm_library(
+    name = "searchable-options-injector_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.buildScripts.searchableOptionsInjector",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":searchable-options-injector",
+        "@community//build:zip_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.buildScripts.searchableOptionsInjector` end
+
+### auto-generated section `iml intellij.platform.buildScripts.searchableOptionsInjector` start
+exports_files(
+    [
+        "intellij.platform.buildScripts.searchableOptionsInjector.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.buildScripts.searchableOptionsInjector` end
