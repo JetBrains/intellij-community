@@ -2,6 +2,11 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ex.ExclusionState
 import com.intellij.openapi.vcs.ex.LineStatusTracker
@@ -10,13 +15,17 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.HashingStrategy
-import com.intellij.util.ui.update.DisposableUpdate
-import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.DebouncedUpdates
+import com.intellij.util.ui.update.UpdateQueue
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.Collections
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
 abstract class PartiallyExcludedFilesStateHolder<T>(
@@ -31,8 +40,18 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
     return getChangeListId(element)?.let { getExcludedFromCommitState(it) } ?: ExclusionState.NO_CHANGES
   }
 
-  protected val updateQueue =
-    MergingUpdateQueue(PartiallyExcludedFilesStateHolder::class.java.name, 300, true, MergingUpdateQueue.ANY_COMPONENT, this)
+  protected val updateQueue: UpdateQueue<Unit> =
+    DebouncedUpdates.forScope<Unit>(
+      project.service<PartiallyExcludedFilesStateHolderScopeService>().coroutineScope,
+      "PartiallyExcludedFilesStateHolder",
+      300.milliseconds
+    )
+    .runLatest {
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        updateExclusionStates()
+      }
+    }
+    .cancelOnDispose(this)
 
   private val lock = ReentrantReadWriteLock()
   private val includedElements = createElementsSet()
@@ -67,7 +86,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
     get() = trackableElements.mapNotNull { element -> findTrackerFor(element)?.let { tracker -> element to tracker } }
 
   private fun scheduleExclusionStatesUpdate() {
-    updateQueue.queue(DisposableUpdate.createDisposable(updateQueue, "updateExcludedFromCommit") { updateExclusionStates() })
+    updateQueue.queue(Unit)
   }
 
   private inner class MyTrackerListener : PartialLocalLineStatusTracker.ListenerAdapter() {
@@ -252,3 +271,8 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
     fireInclusionChanged()
   }
 }
+
+@Service(Service.Level.PROJECT)
+private class PartiallyExcludedFilesStateHolderScopeService(
+  val coroutineScope: CoroutineScope
+)
