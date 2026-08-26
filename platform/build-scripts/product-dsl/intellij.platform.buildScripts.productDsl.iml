@@ -48,5 +48,6 @@
     <orderEntry type="module" module-name="intellij.libraries.aalto.xml" />
     <orderEntry type="module" module-name="intellij.libraries.androidx.collections" />
     <orderEntry type="module" module-name="intellij.platform.pluginGraph" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.licenses" />
   </component>
 </module>

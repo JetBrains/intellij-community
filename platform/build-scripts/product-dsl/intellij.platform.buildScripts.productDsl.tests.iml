@@ -49,6 +49,7 @@
     <orderEntry type="module" module-name="intellij.libraries.androidx.collections" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.pluginGraph" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.productDsl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.licenses" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.buildScripts.productDsl" />
 </module>

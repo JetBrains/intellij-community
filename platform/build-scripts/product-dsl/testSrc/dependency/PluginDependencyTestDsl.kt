@@ -4,6 +4,7 @@
 
 package org.jetbrains.intellij.build.productLayout.dependency
 
+import com.intellij.platform.buildScripts.licenses.LibraryLicense
 import com.intellij.platform.pluginGraph.ContentModuleName
 import com.intellij.platform.pluginGraph.PluginGraph
 import com.intellij.platform.pluginGraph.PluginId
@@ -48,6 +49,8 @@ import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.JpsJavaLibraryType
 import org.jetbrains.jps.model.java.JpsJavaModuleType
+import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
+import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
@@ -85,11 +88,20 @@ internal fun jpsProject(baseDir: Path, block: JpsProjectBuilder.() -> Unit): Jps
 
 @JpsTestDsl
 class JpsProjectBuilder(private val baseDir: Path) {
-  private val libraries = mutableListOf<String>()
+  private val libraries = mutableListOf<JpsLibrarySpec>()
   private val modules = mutableListOf<JpsModuleSpec>()
 
   fun library(name: String) {
-    libraries.add(name)
+    libraries.add(JpsLibrarySpec(name = name, mavenDescriptor = null))
+  }
+
+  /**
+   * Adds a project library that carries a Maven descriptor.
+   *
+   * Use it when a rule reads the coordinates of a library. The plain [library] has no descriptor.
+   */
+  fun mavenLibrary(name: String, groupId: String, artifactId: String, version: String) {
+    libraries.add(JpsLibrarySpec(name = name, mavenDescriptor = JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version)))
   }
 
   fun module(name: String, block: JpsModuleBuilder.() -> Unit = {}) {
@@ -103,8 +115,19 @@ class JpsProjectBuilder(private val baseDir: Path) {
     val project = model.project
 
     // Create libraries
-    val libraryMap = libraries.associateWith { name ->
-      project.libraryCollection.addLibrary(name, JpsJavaLibraryType.INSTANCE)
+    val libraryMap = libraries.associate { spec ->
+      val descriptor = spec.mavenDescriptor
+      val library = if (descriptor == null) {
+        project.libraryCollection.addLibrary(spec.name, JpsJavaLibraryType.INSTANCE)
+      }
+      else {
+        project.libraryCollection.addLibrary(
+          spec.name,
+          JpsRepositoryLibraryType.INSTANCE,
+          JpsElementFactory.getInstance().createSimpleElement(descriptor),
+        )
+      }
+      spec.name to library
     }
 
     // Create modules
@@ -205,6 +228,11 @@ internal data class JpsModuleSpec(
   @JvmField val resourceRoot: String?,
   @JvmField val libraryDeps: List<LibraryDep>,
   @JvmField val moduleDeps: List<ModuleDep>,
+)
+
+internal data class JpsLibrarySpec(
+  @JvmField val name: String,
+  @JvmField val mavenDescriptor: JpsMavenRepositoryLibraryDescriptor?,
 )
 
 internal data class LibraryDep(
@@ -807,6 +835,7 @@ internal fun testGenerationModel(
   testLibraryAllowedInModule: Map<ContentModuleName, Set<String>> = emptyMap(),
   productAllowedMissing: Map<String, Set<ContentModuleName>> = emptyMap(),
   dslTestPluginsByProduct: Map<String, List<org.jetbrains.intellij.build.productLayout.TestPluginSpec>> = emptyMap(),
+  libraryLicenses: List<LibraryLicense> = emptyList(),
 ): GenerationModel {
   val effectiveOutputProvider = outputProvider ?: stubModuleOutputProvider()
   val effectiveFileUpdater = fileUpdater ?: DeferredFileUpdater(Path.of("."))
@@ -825,6 +854,7 @@ internal fun testGenerationModel(
       projectRoot = Path.of("."),
       outputProvider = effectiveOutputProvider,
       projectLibraryToModuleMap = effectiveOutputProvider.getProjectLibraryToModuleMap(),
+      libraryLicenses = libraryLicenses,
       pluginAllowedMissingDependencies = pluginAllowedMissingDependencies,
       testLibraryAllowedInModule = testLibraryAllowedInModule,
       suppressionConfigPath = suppressionConfigPath,

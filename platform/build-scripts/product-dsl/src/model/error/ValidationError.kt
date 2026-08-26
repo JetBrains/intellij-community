@@ -72,6 +72,8 @@ enum class ErrorCategory {
 
   /** [PluginVariantOverlapError] - hard failure, not suppressible */
   PLUGIN_VARIANT_OVERLAP,
+  /** [MissingLibraryLicenseError] - hard failure, not suppressible */
+  MISSING_LIBRARY_LICENSE,
 }
 
 /**
@@ -134,5 +136,6 @@ fun ValidationError.errorId(): String {
     is UnusedEmbeddedLibraryModuleError -> "unused-embedded-library:$context"
     is UnusedSharedLibraryModuleError -> "unused-shared-library:$context"
     is PluginVariantOverlapError -> "plugin-variant-overlap:$context"
+    is MissingLibraryLicenseError -> "missing-library-license:$context"
   }
 }

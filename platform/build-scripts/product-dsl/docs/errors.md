@@ -17,6 +17,7 @@ Complete reference of validation errors, their causes, and fixes.
 | [Structural Violations](#structural-loading-violations) | Error | Yes* | Loading mode constraint violations |
 | [MissingContentModulePluginDep](#missing-content-module-plugin-dependency) | Error | No | Content module missing plugin dep |
 | [MissingTestPluginPluginDep](#missing-test-plugin-plugin-dependency) | Error | No | Test plugin missing plugin dep |
+| [MissingLibraryLicenseError](#missing-library-license) | Error | No | Library in a distribution has no license entry |
 | [DSL Constraint Errors](#dsl-constraint-errors) | Error | No | Invalid DSL usage |
 | [Suppressible Errors](#suppressible-errors) | Warning | Yes | Errors detected during generation |
 
@@ -344,6 +345,41 @@ Run 'Generate Product Layouts' to fix automatically.
 ```
 
 **Auto-Fix**: Run "Generate Product Layouts" to move test libraries to TEST scope.
+
+---
+
+## Missing Library License
+
+Emitted by `LibraryLicenseValidator` (ruleName `LibraryLicenseValidation`, category `MISSING_LIBRARY_LICENSE`).
+
+```
+Libraries without a license entry
+
+Every library that an installation packages needs a license entry.
+The entry gives the license name and the library origin for the legal report.
+
+  * some-library-1.2.3
+    Coordinates: com.example:some-library:1.2.3
+    Module: intellij.platform.ide.impl
+
+Fix:
+1. Add the license entry to CommunityLibraryLicenses.kt or UltimateLibraryLicenses.kt.
+2. Change the dependency scope to TEST if only tests use the library.
+3. Change the dependency scope to PROVIDED if only compilation uses the library.
+
+[Rule: LibraryLicenseValidation]
+```
+
+**Cause**: A third-party library reaches a distribution, and no `*LibraryLicenses.kt` file holds an entry for it.
+
+**Fixes**:
+1. **Add the license entry** to `CommunityLibraryLicenses.kt` or `UltimateLibraryLicenses.kt`
+2. **Change the dependency scope to TEST** when only tests use the library
+3. **Change the dependency scope to PROVIDED** when only compilation uses the library
+
+**Auto-Fix**: No. The error is a hard failure. No suppression and no allowlist exist.
+
+**Spec**: [validators/library-license.md](validators/library-license.md)
 
 ---
 

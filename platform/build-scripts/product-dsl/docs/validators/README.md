@@ -15,7 +15,7 @@ This directory is the normative spec for product-dsl validation behavior. Each f
 
 - Validation uses the plugin graph after generation, filtering, and suppression. If a dependency is not represented as a graph edge, it is not validated.
 - Suppressions are explicit contracts: suppressed JPS-derived deps must not produce validation errors.
-- Only `LibraryModuleValidator` and `TestLibraryScopeValidator` read `.iml` dependencies directly; their scope is still anchored to graph content modules.
+- `LibraryModuleValidator`, `TestLibraryScopeValidator` and `LibraryLicenseValidator` read `.iml` dependencies directly. The graph still gives the scope.
 
 ## Index
 
@@ -36,6 +36,7 @@ This directory is the normative spec for product-dsl validation behavior. Each f
 | Self-contained module set validation | `SelfContainedModuleSetValidator` | `selfContainedValidation` | [self-contained-module-set.md](self-contained-module-set.md) |
 | Library module replacement | `LibraryModuleValidator` | `libraryModuleValidation` | [library-module.md](library-module.md) |
 | Test library scope | `TestLibraryScopeValidator` | `testLibraryScopeValidation` | [test-library-scope.md](test-library-scope.md) |
+| Library license coverage | `LibraryLicenseValidator` | `libraryLicenseValidation` | [library-license.md](library-license.md) |
 | Suppression config keys | `SuppressionConfigValidator` | `suppressionConfigValidation` | [suppression-config.md](suppression-config.md) |
 
 ## Related docs

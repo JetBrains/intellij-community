@@ -412,3 +412,49 @@ internal data class UnusedSharedLibraryModuleError(
     appendLine()
   }
 }
+
+/**
+ * A library that an installation packages, but that has no license entry.
+ */
+internal data class MissingLibraryLicenseViolation(
+  @JvmField val libraryName: String,
+  @JvmField val coordinates: String?,
+  @JvmField val moduleName: String,
+)
+
+/**
+ * Reported when a library goes into an installation without a license entry.
+ */
+internal data class MissingLibraryLicenseError(
+  override val context: String,
+  @JvmField val violations: List<MissingLibraryLicenseViolation>,
+  override val ruleName: String = "LibraryLicenseValidation",
+) : ValidationError {
+  override val category: ErrorCategory get() = ErrorCategory.MISSING_LIBRARY_LICENSE
+
+  @Suppress("DestructuringDeclaration")
+  override fun format(s: AnsiStyle): String = buildString {
+    appendLine("${s.red}${s.bold}Libraries without a license entry${s.reset}")
+    appendLine()
+    appendLine("${s.yellow}Every library that an installation packages needs a license entry.${s.reset}")
+    appendLine("${s.yellow}The entry gives the license name and the library origin for the legal report.${s.reset}")
+    appendLine()
+
+    for (violation in violations.sortedBy { it.libraryName }) {
+      appendLine("  ${s.red}*${s.reset} ${s.bold}${violation.libraryName}${s.reset}")
+      if (violation.coordinates != null) {
+        appendLine("    Coordinates: ${violation.coordinates}")
+      }
+      appendLine("    Module: ${violation.moduleName}")
+    }
+
+    appendLine()
+    appendLine("${s.yellow}Fix:${s.reset}")
+    appendLine("1. Add the license entry to CommunityLibraryLicenses.kt or UltimateLibraryLicenses.kt.")
+    appendLine("2. Change the dependency scope to TEST if only tests use the library.")
+    appendLine("3. Change the dependency scope to PROVIDED if only compilation uses the library.")
+    appendLine()
+    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+    appendLine()
+  }
+}

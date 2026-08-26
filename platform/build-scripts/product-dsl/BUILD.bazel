@@ -52,6 +52,7 @@ jvm_library(
         "//libraries/aalto-xml",
         "//libraries/androidx-collections",
         "//platform/build-scripts/product-dsl/plugin-graph",
+        "//platform/build-scripts/licenses",
     ],
 )
 
@@ -89,6 +90,7 @@ jvm_library(
         "//libraries/aalto-xml:aalto-xml_test_lib",
         "//libraries/androidx-collections:androidx-collections_test_lib",
         "//platform/build-scripts/product-dsl/plugin-graph:plugin-graph_test_lib",
+        "//platform/build-scripts/licenses:licenses_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.buildScripts.productDsl` end
@@ -179,6 +181,8 @@ jvm_library(
         "//libraries/androidx-collections:androidx-collections_test_lib",
         "//platform/build-scripts/product-dsl/plugin-graph",
         "//platform/build-scripts/product-dsl/plugin-graph:plugin-graph_test_lib",
+        "//platform/build-scripts/licenses",
+        "//platform/build-scripts/licenses:licenses_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.buildScripts.productDsl.tests` end

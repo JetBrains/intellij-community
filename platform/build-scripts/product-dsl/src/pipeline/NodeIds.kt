@@ -123,4 +123,7 @@ internal object NodeIds {
 
   /** Shared (non-embedded) library modules must have at least one consumer */
   @JvmField val UNUSED_SHARED_LIBRARY_MODULE_VALIDATION = NodeId("unusedSharedLibraryModuleValidation", NodeCategory.VALIDATION)
+
+  /** Library license coverage validation */
+  @JvmField val LIBRARY_LICENSE_VALIDATION = NodeId("libraryLicenseValidation", NodeCategory.VALIDATION)
 }
