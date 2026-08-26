@@ -165,7 +165,7 @@ final class InternalJcefTest {
           LOG.error(e);
         }
 
-        String errDesc = "";
+        String errDesc;
         if (isInitialized) {
           CefClient client = cefApp.createClient();
           final CountDownLatch latchCreated = new CountDownLatch(1);
@@ -226,25 +226,31 @@ final class InternalJcefTest {
             client.dispose();
           }
 
-          if (latchCreated.getCount() > 0 && !FAIL_BROWSER_CREATED) {
+          if (FAIL_BROWSER_CREATED) {
+            result.complete("Browser creation is failed by QA request.");
+            return;
+          }
+          if (FAIL_BROWSER_LOAD) {
+            result.complete("Browser loading is failed by QA request.");
+            return;
+          }
+
+          if (latchCreated.getCount() > 0) {
             errDesc = "Native CefBrowser wasn't created (onAfterCreated wasn't called).";
           } else {
             // Native CefBrowser was created. Check latchLoad.
             final int lc = (int)latchLoad.getCount();
-            if (lc == 0 && !FAIL_BROWSER_LOAD) {
+            if (lc == 0) {
               result.complete(null);
               return;
             }
 
             if (lc == 2) errDesc = "Native CefBrowser was successfully created but onLoadStart wasn't called.";
-            else if (lc == 1) errDesc = "Native CefBrowser was successfully created but onLoadEnd wasn't called.";
-            else if (FAIL_BROWSER_LOAD) errDesc = "Failed by QA request.";
+            else errDesc = "Native CefBrowser was successfully created but onLoadEnd wasn't called.";
 
             if (errCode != CefLoadHandler.ErrorCode.ERR_NONE) {
               final String errLoad = String.format("Native CefBrowser was successfully created but onLoadError occurred, errCode=%s, errText=%s.", errCode, errText);
-              if (!errDesc.isEmpty())
-                errDesc += " ";
-              errDesc += errLoad;
+              errDesc += " " + errLoad;
             }
           }
         } else
