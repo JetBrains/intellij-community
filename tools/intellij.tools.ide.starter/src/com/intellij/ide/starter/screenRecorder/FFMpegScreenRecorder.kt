@@ -23,6 +23,41 @@ class FFMpegScreenRecorder(recordingPath: Path, recordingFilePrefix: String, pri
   IDEScreenRecorder(recordingPath, recordingFilePrefix) {
   private var ffmpegProcessJob: Job? = null
 
+  companion object {
+    /** Where `ffmpeg` is on a machine that runs the tests; a container image has it on the `PATH` instead. */
+    const val DEFAULT_EXECUTABLE: String = "/usr/bin/ffmpeg"
+
+    private const val FRAMERATE: String = "24"
+
+    /**
+     * The command this class runs, for whoever has to run it somewhere this process cannot reach.
+     *
+     * A run whose IDE draws on a display of its own - inside a container, on another host - deserves the same recording as
+     * any other: same input, same timestamp overlay, same codec, same file format. Only the starting of it differs, so
+     * that is all a caller has to bring. [fontFile] is for images too slim for fontconfig to answer, since `drawtext`
+     * fails the whole recording when it resolves no font; a machine with fonts installed needs nothing here.
+     */
+    fun recordingArgs(
+      display: String,
+      videoSize: String,
+      outputFile: String,
+      executable: String = DEFAULT_EXECUTABLE,
+      fontFile: String? = null,
+    ): List<String> = listOf(executable, "-f", "x11grab", "-video_size", videoSize, "-framerate", FRAMERATE, "-i", display) +
+                      listOf("-vf", timestampFilter(fontFile)) +
+                      listOf("-codec:v", "libx264", "-preset", "superfast", outputFile)
+
+    private fun timestampFilter(fontFile: String?): String = buildString {
+      append("drawtext=")
+      if (fontFile != null) append("fontfile=$fontFile:")
+      append("text='%{localtime\\:%F %T}':")
+      append("fontcolor=white:")
+      append("fontsize=20:")
+      append("box=1:boxcolor=black@0.6:boxborderw=6:")
+      append("x=10:y=10")
+    }
+  }
+
   override fun start() {
     check(!isStarted()) { "FFMpeg screen recorder is already started" }
 
@@ -71,39 +106,15 @@ class FFMpegScreenRecorder(recordingPath: Path, recordingFilePrefix: String, pri
     }
   }
 
-  private fun buildDrawTimeFilterArgs(): List<String> {
-    val filter = buildString {
-      append("drawtext=")
-      append("text='%{localtime\\:%F %T}':")
-      append("fontcolor=white:")
-      append("fontsize=20:")
-      append("box=1:boxcolor=black@0.6:boxborderw=6:")
-      append("x=10:y=10")
-    }
-    return listOf("-vf", filter)
-  }
-
   private suspend fun startFFMpegRecording() {
     ensureRecordingDirExists()
 
     val recordingFile = recordingDir / "$recordingFilePrefix.mkv"
     val ffmpegLogFile =
       (recordingDir / "ffmpeg-${LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH_mm_ss_SSS"))}.log").createFile()
-    val args = listOf("/usr/bin/ffmpeg",
-                      "-f",
-                      "x11grab",
-                      "-video_size",
-                      getDisplaySize(display).let { "${it.first}x${it.second}" },
-                      "-framerate",
-                      "24",
-                      "-i",
-                      display) +
-               buildDrawTimeFilterArgs() +
-               listOf("-codec:v",
-                      "libx264",
-                      "-preset",
-                      "superfast",
-                      recordingFile.pathString)
+    val args = recordingArgs(display = display,
+                             videoSize = getDisplaySize(display).let { "${it.first}x${it.second}" },
+                             outputFile = recordingFile.pathString)
     logOutput("Start screen recording to $recordingFile\nArgs: ${args.joinToString(" ")}")
     try {
       ProcessExecutor(
