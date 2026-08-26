@@ -7,6 +7,7 @@ import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -224,6 +225,7 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
       #└ TYPE int
       """.trimIndent())
 
+    @Disabled //see: PY-91856
     @Test
     @TestFor(issues = ["PY-25346"])
     fun `typing NamedTuple functional target field`() = test("""
@@ -289,6 +291,7 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
       #└ TYPE Cat
       """.trimIndent())
 
+    @Disabled //see: PY-91856
     @Test
     @TestFor(issues = ["PY-27148"])
     fun `typing NamedTuple functional _make on instance`() = test("""
@@ -298,6 +301,7 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
       #└ TYPE Cat
       """.trimIndent())
 
+    @Disabled //see: PY-91856
     @Test
     @TestFor(issues = ["PY-27148"])
     fun `typing NamedTuple functional _make on class`() = test("""
@@ -318,6 +322,7 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
       #└ TYPE Cat
       """.trimIndent())
 
+    @Disabled //see: PY-91856
     @Test
     @TestFor(issues = ["PY-27148"])
     fun `typing NamedTuple functional _replace on instance`() = test("""
@@ -327,6 +332,7 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
       #└ TYPE Cat
       """.trimIndent())
 
+    @Disabled //see: PY-91856
     @Test
     @TestFor(issues = ["PY-27148"])
     fun `typing NamedTuple functional _replace result field`() = test("""
@@ -381,6 +387,7 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
       foo(nt(field = "f"))
       """.trimIndent())
 
+    @Disabled //see: PY-91856
     @Test
     @TestFor(issues = ["PY-23239", "PY-23253"])
     fun `initializing typing NamedTuple`() = test("""
