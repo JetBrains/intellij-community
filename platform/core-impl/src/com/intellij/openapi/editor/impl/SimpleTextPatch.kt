@@ -1,16 +1,41 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
+import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.DocumentTextPatch
+import com.intellij.util.text.ImmutableCharSequence
 
 internal open class SimpleTextPatch(
   private val startOffset: Int,
   private val endOffset: Int,
-  private val newFragment: CharSequence,
+  newFragment: CharSequence,
   private val newModStamp: Long,
   private val clearLineFlags: Boolean,
 ) : DocumentTextPatch {
-  internal var lineDiff: DocumentLineDiff? = null
+  private val newFragment: CharSequence = ImmutableCharSequence.asImmutable(newFragment)
+
+  @Volatile
+  private var cachedLineDiff: DocumentLineDiff? = null
+
+  internal fun attachLineDiffCache(lineDiff: DocumentLineDiff) {
+    synchronized(this) {
+      check(cachedLineDiff == null || cachedLineDiff === lineDiff) {
+        "DocumentTextPatch is already associated with another line diff"
+      }
+      cachedLineDiff = lineDiff
+    }
+  }
+
+  internal fun getOrCreateLineDiff(beforeText: DocumentText): DocumentLineDiff {
+    cachedLineDiff?.let { return it }
+    return synchronized(this) {
+      cachedLineDiff ?: DocumentLineDiff(
+        changeStartOffset = startOffset,
+        oldFragment = beforeText.chars().subSequence(startOffset, endOffset),
+        newFragment = newFragment,
+      ).also { cachedLineDiff = it }
+    }
+  }
 
   final override fun startOffset(): Int = startOffset
   final override fun endOffset(): Int = endOffset

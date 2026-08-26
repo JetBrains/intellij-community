@@ -40,4 +40,20 @@ internal class DocumentTextPatchTest {
       patch.toString(),
     )
   }
+
+  @Test
+  fun `patch freezes a mutable new fragment`() {
+    val fragment = StringBuilder("new")
+    val patch = DocumentTextPatch.simple(
+      startOffset = 1,
+      endOffset = 2,
+      newFragment = fragment,
+      newModStamp = 9L,
+      clearLineFlags = false,
+    )
+
+    fragment.replace(0, fragment.length, "changed")
+
+    assertEquals("new", patch.newFragment().toString())
+  }
 }
