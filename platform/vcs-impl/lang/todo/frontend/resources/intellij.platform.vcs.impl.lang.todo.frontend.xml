@@ -7,10 +7,13 @@
     <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.rpc"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.rpc"/>
+    <module name="intellij.platform.rpc.topics"/>
     <module name="intellij.platform.todo"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ui"/>
@@ -21,5 +24,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <todoViewChangesSupportFactory implementation="com.intellij.ide.todo.FrontendTodoViewChangesSupportFactory"/>
+    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.ide.todo.CommitCheckTodosRemoteTopicListener"
+                                             topicId="todo.commitCheck.show"/>
   </extensions>
 </idea-plugin>

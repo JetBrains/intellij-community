@@ -8,9 +8,12 @@ import com.intellij.ide.todo.SetTodoFilterAction
 import com.intellij.ide.todo.TodoConfiguration
 import com.intellij.ide.todo.TodoPanelSettings
 import com.intellij.ide.todo.TodoView
+import com.intellij.ide.todo.shouldUseSplitTodo
+import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.DumbAware
@@ -22,6 +25,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Messages.YesNoCancelResult
 import com.intellij.openapi.util.NlsContexts.Button
 import com.intellij.openapi.util.NlsContexts.DialogMessage
+import com.intellij.openapi.util.NlsContexts.TabTitle
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsConfiguration
@@ -32,6 +36,9 @@ import com.intellij.openapi.vcs.checkin.TodoCheckinHandler.Companion.showDialog
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.wm.ToolWindowId.TODO_VIEW
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.platform.rpc.topics.sendToClient
+import com.intellij.platform.vcs.impl.shared.SHOW_COMMIT_CHECK_TODOS_REMOTE_TOPIC
+import com.intellij.platform.vcs.impl.shared.ShowCommitCheckTodosRequest
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.psi.search.TodoItem
 import com.intellij.util.text.DateFormatUtil.formatDateTime
@@ -142,6 +149,19 @@ internal class TodoCheckinHandler(private val project: Project) : CheckinHandler
     }
 
     internal fun showTodoItems(project: Project, changes: Collection<Change>, todoItems: Collection<TodoItem>, isPostCommit: Boolean) {
+      val title = message("checkin.title.for.commit.0", formatDateTime(System.currentTimeMillis()))
+
+      if (shouldUseSplitTodo()) {
+        // this check runs on the backend, the TODO tool window is on the frontend, so what was found is sent over there
+        val fileIds = runReadActionBlocking {
+          todoItems.mapNotNull { it.file.virtualFile?.rpcId() }.distinct()
+        }
+        if (fileIds.isEmpty()) return
+
+        SHOW_COMMIT_CHECK_TODOS_REMOTE_TOPIC.sendToClient(project, ShowCommitCheckTodosRequest(title, fileIds))
+        return
+      }
+
       val todoView = project.service<TodoView>()
       val content = todoView.addCustomTodoView(
         { tree, _ ->
@@ -152,7 +172,7 @@ internal class TodoCheckinHandler(private val project: Project) : CheckinHandler
             CommitChecksTodosTreeBuilder(tree, project, changes, todoItems)
           }
         },
-        message("checkin.title.for.commit.0", formatDateTime(System.currentTimeMillis())),
+        title,
         TodoPanelSettings(VcsConfiguration.getInstance(project).myTodoPanelSettings)
       )
       if (content == null) return
