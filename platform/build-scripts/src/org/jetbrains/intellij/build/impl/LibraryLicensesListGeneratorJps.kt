@@ -8,6 +8,7 @@ import com.intellij.platform.buildScripts.licenses.LibraryLicensesListGenerator
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.getLibraryFileName
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService

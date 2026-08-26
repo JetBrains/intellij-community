@@ -3,7 +3,7 @@ package com.intellij.platform.buildScripts.testFramework
 
 import com.intellij.platform.buildScripts.licenses.LibraryLicense
 import org.assertj.core.api.SoftAssertions
-import org.jetbrains.intellij.build.impl.getLibraryFileName
+import org.jetbrains.intellij.build.getLibraryFileName
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService

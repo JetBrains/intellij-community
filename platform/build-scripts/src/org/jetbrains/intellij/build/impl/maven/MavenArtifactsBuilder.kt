@@ -22,9 +22,9 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.DirSource
 import org.jetbrains.intellij.build.ZipSource
 import org.jetbrains.intellij.build.buildJar
+import org.jetbrains.intellij.build.getLibraryFileName
 import org.jetbrains.intellij.build.impl.commonModuleExcludes
 import org.jetbrains.intellij.build.impl.createModuleSourcesNamesFilter
-import org.jetbrains.intellij.build.impl.getLibraryFileName
 import org.jetbrains.intellij.build.impl.libraries.isLibraryModule
 import org.jetbrains.intellij.build.isCommunityModule
 import org.jetbrains.intellij.build.mapConcurrent
