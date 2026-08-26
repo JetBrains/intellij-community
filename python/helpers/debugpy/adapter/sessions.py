@@ -271,6 +271,19 @@ def get(pid):
         return next((session for session in _sessions if session.pid == pid), None)
 
 
+def get_primary():
+    """
+    The session that started this debug run, or None if no session has a client.
+    """
+    with _lock:
+        live = [
+            session
+            for session in _sessions
+            if session.client and session.client.is_connected
+        ]
+        return min(live, key=lambda session: session.id, default=None)
+
+
 def wait_until_ended():
     """Blocks until all sessions have ended.
 

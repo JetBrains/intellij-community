@@ -123,6 +123,14 @@ class Connection(object):
         if parent_session is None:
             parent_session = sessions.get(self.pid)
         if parent_session is None:
+            parent_session = sessions.get_primary()
+            if parent_session is not None:
+                log.info(
+                    "No session for the parent process of {0}; reporting it to {1}.",
+                    self,
+                    parent_session,
+                )
+        if parent_session is None:
             log.info("No active debug session for parent process of {0}.", self)
         else:
             if self.pid == parent_session.pid:
