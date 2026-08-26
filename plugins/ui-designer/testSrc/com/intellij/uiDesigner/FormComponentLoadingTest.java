@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.TrustedProjectsTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
@@ -147,21 +148,23 @@ public class FormComponentLoadingTest extends JavaCodeInsightFixtureTestCase {
    * initializers and constructors and has the {@code Introspector} instantiate their {@code BeanInfo}. In a project
    * the user has not trusted, none of that may happen - the components become placeholders instead.
    */
-  public void testUntrustedProjectDoesNotCreateProjectComponents() throws Exception {
-    TrustedProjects.setProjectTrusted(getProject(), false);
-    VirtualFile formFile = copyForm("beanInfoSafety/TestHostileComponent.form");
+  public void testUntrustedProjectDoesNotCreateProjectComponents() {
+    TrustedProjectsTestUtil.withTrustedProjectsCheckEnabled(() -> {
+      TrustedProjects.setProjectTrusted(getProject(), false);
+      VirtualFile formFile = copyForm("beanInfoSafety/TestHostileComponent.form");
 
-    LoaderFactory loaderFactory = LoaderFactory.getInstance(getProject());
-    LwRootContainer lwRootContainer = loaderFactory.readRootContainer(formFile, VfsUtilCore.loadText(formFile));
-    RadRootContainer rootContainer =
-      XmlReader.createRoot(new MyModuleProvider(getModule()), lwRootContainer, loaderFactory.getLoader(formFile), null);
+      LoaderFactory loaderFactory = LoaderFactory.getInstance(getProject());
+      LwRootContainer lwRootContainer = loaderFactory.readRootContainer(formFile, VfsUtilCore.loadText(formFile));
+      RadRootContainer rootContainer =
+        XmlReader.createRoot(new MyModuleProvider(getModule()), lwRootContainer, loaderFactory.getLoader(formFile), null);
 
-    if (Files.exists(myMarkerFile)) {
-      fail("Component code was executed for an untrusted project: " + Files.readString(myMarkerFile).trim());
-    }
+      if (Files.exists(myMarkerFile)) {
+        fail("Component code was executed for an untrusted project: " + Files.readString(myMarkerFile).trim());
+      }
 
-    RadComponent component = ((RadContainer)rootContainer.getComponent(0)).getComponent(0);
-    assertInstanceOf(component, RadErrorComponent.class);
+      RadComponent component = ((RadContainer)rootContainer.getComponent(0)).getComponent(0);
+      assertInstanceOf(component, RadErrorComponent.class);
+    });
   }
 
   /**
@@ -169,21 +172,23 @@ public class FormComponentLoadingTest extends JavaCodeInsightFixtureTestCase {
    * to take the place of that container the same way it does for an atomic component - the whole form failing to
    * read would leave the user with nothing to edit.
    */
-  public void testUntrustedProjectDoesNotCreateProjectContainers() throws Exception {
-    TrustedProjects.setProjectTrusted(getProject(), false);
-    VirtualFile formFile = copyForm("beanInfoSafety/TestHostileScrollPane.form");
+  public void testUntrustedProjectDoesNotCreateProjectContainers() {
+    TrustedProjectsTestUtil.withTrustedProjectsCheckEnabled(() -> {
+      TrustedProjects.setProjectTrusted(getProject(), false);
+      VirtualFile formFile = copyForm("beanInfoSafety/TestHostileScrollPane.form");
 
-    LoaderFactory loaderFactory = LoaderFactory.getInstance(getProject());
-    LwRootContainer lwRootContainer = loaderFactory.readRootContainer(formFile, VfsUtilCore.loadText(formFile));
-    RadRootContainer rootContainer =
-      XmlReader.createRoot(new MyModuleProvider(getModule()), lwRootContainer, loaderFactory.getLoader(formFile), null);
+      LoaderFactory loaderFactory = LoaderFactory.getInstance(getProject());
+      LwRootContainer lwRootContainer = loaderFactory.readRootContainer(formFile, VfsUtilCore.loadText(formFile));
+      RadRootContainer rootContainer =
+        XmlReader.createRoot(new MyModuleProvider(getModule()), lwRootContainer, loaderFactory.getLoader(formFile), null);
 
-    if (Files.exists(myMarkerFile)) {
-      fail("Component code was executed for an untrusted project: " + Files.readString(myMarkerFile).trim());
-    }
+      if (Files.exists(myMarkerFile)) {
+        fail("Component code was executed for an untrusted project: " + Files.readString(myMarkerFile).trim());
+      }
 
-    RadComponent component = ((RadContainer)rootContainer.getComponent(0)).getComponent(0);
-    assertInstanceOf(component, RadErrorComponent.class);
+      RadComponent component = ((RadContainer)rootContainer.getComponent(0)).getComponent(0);
+      assertInstanceOf(component, RadErrorComponent.class);
+    });
   }
 
   /**
