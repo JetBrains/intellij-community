@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.debugger.streams.java.rt` start
 jvm_library(
@@ -19,6 +20,8 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
 )
+
+content_module_jar(module = ":rt")
 
 jvm_library(
     name = "rt_test_lib",

@@ -594,9 +594,18 @@ private fun mergedLibraryTargetLabels(
 }
 
 /**
- * The repo-global candidate set: every module whose every `contentModules:` occurrence agrees on a plain,
- * product-independent `lib/modules/<module>.jar` **and on the libraries merged into it**, with [overrides] applied last.
- * The value is that agreed library set.
+ * The repo-global candidate set: every module whose every `contentModules:` occurrence agrees that the jar is a plain,
+ * product-independent, self-named jar **and on the libraries merged into it**, with [overrides] applied last. The value
+ * is that agreed library set.
+ *
+ * Not on the destination. [simplePluginContentEntryPath] accepts two of them. Which one a plugin uses is that plugin's
+ * layout decision rather than a fact about the jar, so the fold agrees on the bytes and the relation carries the
+ * destination.
+ *
+ * One exception, and it costs this lift 24 modules. An occurrence at `lib/<module>.jar` that merges a module library is
+ * not simple at all, so it vetoes the module for every plugin. 24 of the 114 modules with such an occurrence gain
+ * nothing here, although another plugin places them conventionally. Making that refusal per occurrence is a slice of its
+ * own, because the fold is what keeps one packing target serving every plugin.
  *
  * Folded over the reports this run can see, which is every report the JPS model reaches - `pluginContentReport` is
  * parsed at most once per module and generation parses all of them anyway, so the fold is free. An occurrence in a
@@ -742,7 +751,8 @@ internal fun readPluginContentCandidateOverrides(file: Path): Map<String, Set<St
 }
 
 /**
- * What a first-tranche plugin entry hands over: the content module, and the module libraries merged into its jar.
+ * What a first-tranche plugin entry hands over: the content module, where the plugin puts its jar, and the module
+ * libraries merged into it.
  *
  * [libraries] is the entry's *record*, not a packing instruction. [computeContentModuleJar] derives the merge from the
  * JPS model and compares the result against this set, for the reason [ContentModuleJar] states: the record loses a
@@ -754,15 +764,55 @@ internal fun readPluginContentCandidateOverrides(file: Path): Map<String, Set<St
  */
 internal class SimplePluginContentEntry(
   @JvmField val moduleName: String,
+  /**
+   * Where this plugin puts the jar, relative to the plugin's `lib/`.
+   *
+   * A property of the *(plugin, module)* relation and not of the module: 14 candidate modules are placed under
+   * `lib/modules/` by one plugin and directly in `lib/` by another, which is one packed jar and two destinations. So
+   * [foldPluginContentCandidacy] agrees on [libraries] and never on this, and the relation carries it - see
+   * `prepacked_jars` in `dev_dist_content.bzl`.
+   */
+  @JvmField val relativeOutputFile: String,
   @JvmField val libraries: Set<String>,
 )
+
+/**
+ * The two shapes a plugin entry may have for its jar to be packable, by the path the entry records.
+ *
+ * `lib/modules/<module>.jar` is what `computeOutputJarPath` returns for a content module that needs a jar of its own,
+ * and `lib/<module>.jar` is what `computeEmbeddedOutputJarPath` returns for an `embedded` one the layout does not pack
+ * into the plugin jar. Both are self-named, which is what makes them a jar this generator can reproduce: any other name
+ * is a jar whose contents the path does not describe.
+ *
+ * The second shape is accepted only for a jar that merges no module library. That restriction is a measurement rather
+ * than a symmetry. A dev fragment patches the plugin descriptor. `embedContentModule` embeds an embedded module's own
+ * descriptor into it. `resolveIncludes` then resolves every `xi:include` that descriptor holds against the fragment's
+ * declared inputs. A handed-off jar is not one of those inputs. The project model tree carries a module's own
+ * descriptors and nothing from its libraries, so an include whose target sits inside a merged library jar cannot be
+ * resolved.
+ *
+ * The Kotlin plugin proved it. `intellij.libraries.kotlinc.analysis.api.k2` includes
+ * `/META-INF/analysis-api/analysis-api-fir.xml`, which the Kotlin compiler FIR library jar holds. Handing off
+ * `intellij.libraries.kotlinc.kotlin.compiler.fir` failed the assembly with "Cannot resolve".
+ */
+private fun simplePluginContentEntryPath(entryName: String, moduleName: String, mergesLibraries: Boolean): String? {
+  return when (entryName) {
+    "lib/modules/$moduleName.jar" -> "modules/$moduleName.jar"
+    "lib/$moduleName.jar" -> if (mergesLibraries) null else "$moduleName.jar"
+    else -> null
+  }
+}
 
 /** The hand-over of a first-tranche plugin entry, or `null` when the entry needs JarPackager. */
 internal fun simplePluginContentEntry(entry: RecipeEntry): SimplePluginContentEntry? {
   val contentModule = entry.contentModules.singleOrNull() ?: return null
   val moduleName = contentModule.moduleName
-  if (entry.name != "lib/modules/$moduleName.jar" ||
-      entry.modules.isNotEmpty() ||
+  val relativeOutputFile = simplePluginContentEntryPath(
+    entryName = entry.name,
+    moduleName = moduleName,
+    mergesLibraries = contentModule.libraries.isNotEmpty(),
+  ) ?: return null
+  if (entry.modules.isNotEmpty() ||
       entry.projectLibraries.isNotEmpty() ||
       entry.library != null ||
       entry.module != null ||
@@ -772,7 +822,16 @@ internal fun simplePluginContentEntry(entry: RecipeEntry): SimplePluginContentEn
       entry.libc != null) {
     return null
   }
-  return SimplePluginContentEntry(moduleName = moduleName, libraries = contentModule.libraries.keys)
+  return SimplePluginContentEntry(
+    moduleName = moduleName,
+    relativeOutputFile = relativeOutputFile,
+    libraries = contentModule.libraries.keys,
+  )
+}
+
+/** Whether [relativeOutputFile] is the path `dev_dist_content.bzl` derives, so a relation must not restate it. */
+internal fun isConventionalPrepackedPath(moduleName: String, relativeOutputFile: String): Boolean {
+  return relativeOutputFile == "modules/$moduleName.jar"
 }
 
 /**

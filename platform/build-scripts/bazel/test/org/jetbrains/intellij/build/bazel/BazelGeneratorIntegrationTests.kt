@@ -71,6 +71,22 @@ class BazelGeneratorIntegrationTests {
    */
   @Test fun prepackedContentModuleLibraries() = doTest("prepacked-content-module-libraries")
 
+  /**
+   * The three destinations a plugin can give one content module's jar, and what each one generates.
+   *
+   * `intellij.libraries.conventional` sits at `lib/modules/<module>.jar`, so the relation is a plain
+   * `prepacked_content_modules` label and the rule derives the destination from the module name.
+   * `intellij.libraries.embedded` sits at `lib/<module>.jar`, which the rule cannot derive, so the relation carries it
+   * in `prepacked_jars`.
+   *
+   * `intellij.libraries.conflicting` is the veto: this one report puts its jar at *both* destinations. One packed jar
+   * cannot satisfy both, and a relation is keyed by *(plugin, module)*, so there is no second relation to carry the
+   * second path. It stays a raw `content_modules` member and `JarPackager` keeps packing both jars. It keeps a
+   * `content_module_jar` target that nobody names, which is correct: the repo-global fold still agrees on the jar, and
+   * only this plugin's relation is impossible.
+   */
+  @Test fun prepackedContentModulePlacement() = doTest("prepacked-content-module-placement")
+
   private fun doTest(
     testName: String,
     runWithoutUltimateRoot: Boolean = true,

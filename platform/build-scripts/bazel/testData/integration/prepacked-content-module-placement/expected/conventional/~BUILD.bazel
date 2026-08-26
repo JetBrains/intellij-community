@@ -1,0 +1,43 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.libraries.conventional` start
+jvm_library(
+    name = "conventional",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.conventional",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+content_module_jar(module = ":conventional")
+
+jvm_library(
+    name = "conventional_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k21",
+    module_name = "intellij.libraries.conventional",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":conventional"],
+)
+### auto-generated section `build intellij.libraries.conventional` end
+
+### auto-generated section `iml intellij.libraries.conventional` start
+exports_files(
+    [
+        "intellij.libraries.conventional.iml",
+        "resources/intellij.libraries.conventional.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.conventional` end

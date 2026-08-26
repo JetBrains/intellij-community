@@ -16,7 +16,7 @@ import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.UTIL_8_JAR
 import org.jetbrains.intellij.build.UTIL_JAR
-import org.jetbrains.intellij.build.dev.PrepackedPluginContentJar
+import org.jetbrains.intellij.build.dev.AssembledPrepackedPluginContentJar
 import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
 import org.jetbrains.intellij.build.impl.DescriptorCacheContainer
 import org.jetbrains.intellij.build.impl.LIB_DIRECTORY
@@ -191,7 +191,8 @@ internal suspend fun generateCoreClasspathFromPlugins(
         classPathResult.add(distributionEntry.path)
       }
     }
-    for (jar in buildResult.prepackedContentJars) {
+    for (assembled in buildResult.prepackedContentJars) {
+      val jar = assembled.jar
       if (jar.contentModule in classPathModules) {
         classPathResult.add(buildResult.dir.resolve("lib").resolve(jar.relativeOutputFile))
       }
@@ -237,7 +238,7 @@ data class PluginBuildResult(
   @JvmField val os: OsFamily?,
   @JvmField val arch: JvmArchitecture?,
   @JvmField val distribution: Collection<DistributionFileEntry>,
-  @JvmField val prepackedContentJars: List<PrepackedPluginContentJar> = emptyList(),
+  @JvmField val prepackedContentJars: List<AssembledPrepackedPluginContentJar> = emptyList(),
 )
 
 /**
@@ -316,6 +317,70 @@ suspend fun createCachedProductDescriptor(
   return mainPluginDescriptor
 }
 
+/**
+ * One plugin's classpath jars, with each handed-off jar back at the position the assembly would have given it.
+ *
+ * The position is the whole point, and [AssembledPrepackedPluginContentJar.assetOrdinal] states why: the sort that
+ * follows is stable and its last tiebreak is the file-name length, so appending the handed-off jars would let a jar's
+ * *producer* decide the classpath order.
+ *
+ * [distribution] enumerates the assembly's assets in creation order. It holds one or more entries per asset, so the
+ * count of distinct target files seen so far is the index of the next asset, and a jar recorded at ordinal `n` belongs
+ * immediately before the asset at index `n`. Two jars recorded at one ordinal keep the order the assembly recorded them
+ * in.
+ *
+ * Two shapes would make the count lag: an asset that produces no entry at all, and two assets whose `effectiveFile`
+ * is one file. No flag rules either out - a dev distribution is the unpacked one, so `buildJars` may point an asset at
+ * its cache entry - and nothing here detects them. Both would move a handed-off jar later and never earlier, and the
+ * whole-distribution comparison in `dev-dist.cmd snapshot diff` is what says neither happens.
+ *
+ * A jar in a subdirectory of `lib/` is never on the classpath. That is the same rule the `relativeOutputFile` test below
+ * applies to an assembled entry.
+ */
+@VisibleForTesting
+internal fun mergePrepackedIntoAssetOrder(
+  distribution: Collection<DistributionFileEntry>,
+  prepacked: List<AssembledPrepackedPluginContentJar>,
+  libDir: Path,
+): MutableList<Path> {
+  val files = ArrayList<Path>(distribution.size)
+  val uniqueGuard = HashSet<Path>()
+  val seenAssets = HashSet<Path>()
+
+  val ordered = prepacked.filter { !it.jar.relativeOutputFile.contains('/') }
+    .sortedBy(AssembledPrepackedPluginContentJar::assetOrdinal)
+  var next = 0
+  fun drainUpTo(assetIndex: Int) {
+    while (next < ordered.size && ordered[next].assetOrdinal <= assetIndex) {
+      val file = libDir.resolve(ordered[next].jar.relativeOutputFile)
+      if (uniqueGuard.add(file)) {
+        files.add(file)
+      }
+      next++
+    }
+  }
+
+  var assetIndex = 0
+  for (entry in distribution) {
+    val file = entry.path
+    if (seenAssets.add(file)) {
+      drainUpTo(assetIndex)
+      assetIndex++
+    }
+
+    val relativeOutputFile = entry.relativeOutputFile
+    if (relativeOutputFile != null && relativeOutputFile.contains('/')) {
+      continue
+    }
+    if (!uniqueGuard.add(file) || (entry is CustomAssetEntry && !file.toString().endsWith(".jar"))) {
+      continue
+    }
+    files.add(file)
+  }
+  drainUpTo(Int.MAX_VALUE)
+  return files
+}
+
 @Suppress("BlockingMethodInNonBlockingContext")
 internal suspend fun generatePluginClassPath(
   pluginEntries: List<PluginBuildResult>,
@@ -327,36 +392,17 @@ internal suspend fun generatePluginClassPath(
   val byteOut = ByteArrayOutputStream()
   val out = DataOutputStream(byteOut)
 
-  val uniqueGuard = HashSet<Path>()
   for (plugin in pluginEntries) {
     val pluginDir = plugin.dir
 
-    val files = ArrayList<Path>(plugin.distribution.size)
-    uniqueGuard.clear()
-    for (entry in plugin.distribution) {
-      val relativeOutputFile = entry.relativeOutputFile
-      if (relativeOutputFile != null && relativeOutputFile.contains('/')) {
-        continue
-      }
-
-      val file = entry.path
-      if (!uniqueGuard.add(file) || (entry is CustomAssetEntry && !file.toString().endsWith(".jar"))) {
-        continue
-      }
-
-      files.add(file)
-
+    val files = mergePrepackedIntoAssetOrder(
+      distribution = plugin.distribution,
+      prepacked = plugin.prepackedContentJars,
+      libDir = pluginDir.resolve(LIB_DIRECTORY),
+    )
+    for (file in files) {
       check(!file.startsWith(pluginDir) || pluginDir.relativize(file).nameCount == 2) {
         "plugin entry is not specified correctly: $file"
-      }
-    }
-    for (jar in plugin.prepackedContentJars) {
-      if (jar.relativeOutputFile.contains('/')) {
-        continue
-      }
-      val file = pluginDir.resolve("lib").resolve(jar.relativeOutputFile)
-      if (uniqueGuard.add(file)) {
-        files.add(file)
       }
     }
 

@@ -159,6 +159,39 @@ def _composed_provider_test_impl(ctx):
 
 _composed_provider_test = analysistest.make(_composed_provider_test_impl)
 
+def _placed_provider_test_impl(ctx):
+    """A relation that declares its own destination produces it verbatim, beside a conventional one.
+
+    Both attributes at once, because that is the shape the generator writes for a plugin whose members are placed
+    differently, and because it is what proves the two are one mechanism: the records are indistinguishable apart from
+    `relative_output_file`.
+    """
+    env = analysistest.begin(ctx)
+    records = analysistest.target_under_test(env)[DevDistContentInfo].prepacked_plugin_jars.to_list()
+
+    # The module beside its destination, not the destinations alone: a record that carried the wrong `content_module`
+    # would pass a test that compares only paths, and the key of the whole relation is that pair.
+    asserts.equals(
+        env,
+        [("test.content", "modules/test.content.jar"), ("test.other", "test.other.jar")],
+        sorted([(record.content_module, record.relative_output_file) for record in records]),
+    )
+    for record in records:
+        asserts.equals(env, "test.plugin", record.plugin_main_module)
+
+    # The jar as well, because the dict branch reads the destination from the attribute and the jar from the provider.
+    asserts.equals(
+        env,
+        [
+            ("test.content", "dev_dist_content_tests_content.jar"),
+            ("test.other", "dev_dist_content_tests_other_content.jar"),
+        ],
+        sorted([(record.content_module, record.jar.basename) for record in records]),
+    )
+    return analysistest.end(env)
+
+_placed_provider_test = analysistest.make(_placed_provider_test_impl)
+
 def _completion_provider_test_impl(ctx):
     """A set that completes a cross-repository plugin produces the same record a plugin-content target would.
 
@@ -331,6 +364,64 @@ def dev_dist_content_test_suite(name):
         target_under_test = name + "_conflicting_inputs",
     )
 
+    _fake_packed(
+        name = name + "_other_content",
+        module_name = "test.other",
+    )
+
+    # The conventional relation and a declared one side by side, which is what a plugin placing its members differently
+    # generates.
+    dev_dist_plugin_content(
+        name = name + "_placed_plugin_content",
+        descriptor_module = name + "_descriptor",
+        prepacked_content_modules = [name + "_content"],
+        prepacked_jars = {name + "_other_content": "test.other.jar"},
+    )
+    _placed_provider_test(
+        name = name + "_placed_provider_test",
+        target_under_test = name + "_placed_plugin_content",
+    )
+
+    # The convention has one spelling. A relation that restates it would be a checked-in copy of a derived rule.
+    dev_dist_plugin_content(
+        name = name + "_restated_plugin_content",
+        descriptor_module = name + "_descriptor",
+        prepacked_jars = {name + "_content": "modules/test.content.jar"},
+        tags = ["manual"],
+    )
+    _expected_failure_test(
+        name = name + "_restated_path_test",
+        expected_message = "name the target in `prepacked_content_modules` instead",
+        target_under_test = name + "_restated_plugin_content",
+    )
+
+    # `<module>.jar` is the only destination the report shape accepts besides the derived one, so it is the only one a
+    # relation may declare. Both a foreign module's name and a path that leaves the plugin are refused where the relation
+    # is written, rather than where the bytes are copied: the composer's own check has no target to name.
+    dev_dist_plugin_content(
+        name = name + "_foreign_name_plugin_content",
+        descriptor_module = name + "_descriptor",
+        prepacked_jars = {name + "_content": "test.other.jar"},
+        tags = ["manual"],
+    )
+    _expected_failure_test(
+        name = name + "_foreign_name_test",
+        expected_message = "'test.other.jar' is not the own jar name of test.content",
+        target_under_test = name + "_foreign_name_plugin_content",
+    )
+
+    dev_dist_plugin_content(
+        name = name + "_escaping_plugin_content",
+        descriptor_module = name + "_descriptor",
+        prepacked_jars = {name + "_content": "../elsewhere/test.content.jar"},
+        tags = ["manual"],
+    )
+    _expected_failure_test(
+        name = name + "_escaping_path_test",
+        expected_message = "is not the own jar name of test.content",
+        target_under_test = name + "_escaping_plugin_content",
+    )
+
     dev_dist_content_set(
         name = name + "_completion_content",
         prepacked_content_modules = [name + "_content"],
@@ -390,6 +481,10 @@ def dev_dist_content_test_suite(name):
             name + "_multi_jar_library_test",
             name + "_provided_library_test",
             name + "_composed_provider_test",
+            name + "_placed_provider_test",
+            name + "_restated_path_test",
+            name + "_foreign_name_test",
+            name + "_escaping_path_test",
             name + "_conflicting_relation_test",
             name + "_completion_provider_test",
             name + "_unnamed_completion_test",

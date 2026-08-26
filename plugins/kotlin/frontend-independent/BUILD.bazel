@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build kotlin.fir.frontend-independent` start
 jvm_library(
@@ -71,6 +72,8 @@ jvm_library(
         "//plugins/kotlin/base/compiler-configuration",
     ],
 )
+
+content_module_jar(module = ":frontend-independent")
 
 jvm_library(
     name = "frontend-independent_test_lib",

@@ -46,8 +46,6 @@ dev_dist_plugin_content(
         "//libraries/gradle",
         "//libraries/groovy",
         "//libraries/groovy/ant",
-        "//plugins/gradle",
-        "//plugins/gradle/settings",
         "//plugins/gradle/tooling-extension-api:toolingExtension",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
         "//plugins/gradle/tooling-proxy",
@@ -69,5 +67,9 @@ dev_dist_plugin_content(
         "//plugins/gradle/completion:completion_content_module_jar",
         "//plugins/gradle/properties:properties_content_module_jar",
     ],
+    prepacked_jars = {
+        "//plugins/gradle/settings:settings_content_module_jar": "intellij.gradle.settings.jar",
+        "//plugins/gradle:gradle_content_module_jar": "intellij.gradle.jar",
+    },
 )
 ### auto-generated section `dev content intellij.gradle.plugin` end

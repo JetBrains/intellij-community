@@ -42,12 +42,14 @@ exports_files(
 
 ### auto-generated section `dev content intellij.searchEverywhereLucene.plugin` start
 dev_dist_plugin_content(
-    content_modules = ["//plugins/search-everywhere-lucene/common"],
     descriptor_module = ":searchEverywhereLucene-plugin",
     prepacked_content_modules = [
         "//plugins/search-everywhere-lucene/backend:backend_content_module_jar",
         "//plugins/search-everywhere-lucene/frontend:frontend_content_module_jar",
         "//plugins/search-everywhere-lucene/test-commands:searchEverywhereLucene-performanceTesting_content_module_jar",
     ],
+    prepacked_jars = {
+        "//plugins/search-everywhere-lucene/common:common_content_module_jar": "intellij.searchEverywhereLucene.common.jar",
+    },
 )
 ### auto-generated section `dev content intellij.searchEverywhereLucene.plugin` end

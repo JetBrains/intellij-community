@@ -1,5 +1,6 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.markdown` start
 jvm_library(
@@ -82,6 +83,8 @@ jvm_library(
         "//platform/usageView",
     ],
 )
+
+content_module_jar(module = ":markdown")
 
 jvm_library(
     name = "markdown_test_lib",

@@ -1,5 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.json.syntax` start
 create_kotlinc_options(
@@ -42,6 +43,8 @@ jvm_library(
         ":platform_multiplatformSupport_provided",
     ],
 )
+
+content_module_jar(module = ":syntax")
 
 jvm_library(
     name = "syntax_test_lib",

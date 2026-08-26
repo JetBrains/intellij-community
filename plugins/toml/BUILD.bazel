@@ -42,15 +42,15 @@ exports_files(
 
 ### auto-generated section `dev content intellij.toml` start
 dev_dist_plugin_content(
-    content_modules = [
-        "//plugins/toml/core",
-        "//plugins/toml/grazie",
-    ],
+    content_modules = ["//plugins/toml/grazie"],
     descriptor_module = ":toml",
     prepacked_content_modules = [
         "//plugins/toml/backend:backend_content_module_jar",
         "//plugins/toml/frontend:frontend_content_module_jar",
         "//plugins/toml/json:json_content_module_jar",
     ],
+    prepacked_jars = {
+        "//plugins/toml/core:core_content_module_jar": "intellij.toml.core.jar",
+    },
 )
 ### auto-generated section `dev content intellij.toml` end

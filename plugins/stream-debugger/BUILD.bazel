@@ -62,10 +62,6 @@ exports_files(
 
 ### auto-generated section `dev content intellij.debugger.streams.plugin` start
 dev_dist_plugin_content(
-    content_modules = [
-        "//plugins/stream-debugger/rt",
-        "//plugins/stream-debugger/rt/gatherers",
-    ],
     descriptor_module = ":debugger-streams-plugin",
     prepacked_content_modules = [
         "//plugins/stream-debugger/backend:backend_content_module_jar",
@@ -74,6 +70,10 @@ dev_dist_plugin_content(
         "//plugins/stream-debugger/java:java_content_module_jar",
         "//plugins/stream-debugger/shared:shared_content_module_jar",
     ],
+    prepacked_jars = {
+        "//plugins/stream-debugger/rt/gatherers:gatherers_content_module_jar": "intellij.debugger.streams.java.rt.gatherers.jar",
+        "//plugins/stream-debugger/rt:rt_content_module_jar": "intellij.debugger.streams.java.rt.jar",
+    },
 )
 ### auto-generated section `dev content intellij.debugger.streams.plugin` end
 

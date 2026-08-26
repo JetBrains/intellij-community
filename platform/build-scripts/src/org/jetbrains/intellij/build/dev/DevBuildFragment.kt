@@ -24,6 +24,29 @@ data class PrepackedPluginContentJar(
 }
 
 /**
+ * One handed-off jar as a single assembly saw it: the relation, and where in that assembly the jar belongs.
+ *
+ * A type of its own, because [assetOrdinal] is not part of the relation. The relation is product-independent and comes
+ * from Bazel; the ordinal is a fact about one `JarPackager` run and cannot be read from a checked-in file.
+ */
+@ApiStatus.Internal
+data class AssembledPrepackedPluginContentJar(
+  @JvmField val jar: PrepackedPluginContentJar,
+  /**
+   * How many assets the assembly had created when it handed this jar over, which is the index the jar's own asset
+   * would have had.
+   *
+   * The plugin classpath needs it. `generatePluginClassPath` orders a plugin's jars with
+   * `putMoreLikelyPluginJarsFirst`, a stable sort whose last tiebreak is the file name *length* - so two jars with
+   * equally long names keep the order they were added in. Appending the handed-off jars after the assembled ones would
+   * therefore let the *producer* of a jar decide the classpath order, and handing a jar over would reorder
+   * `plugin-classpath.txt` without changing a byte of any jar. With the ordinal the merge puts each handed-off jar back
+   * where `computeSourcesForModule` would have put its asset, so the sort sees the same input either way.
+   */
+  @JvmField val assetOrdinal: Int,
+)
+
+/**
  * Which independently cacheable slice of a dev distribution one assembly produces.
  *
  * A complete distribution is [COMPLETE] - one assembly, everything in it. Anything else is a fragment: a caller

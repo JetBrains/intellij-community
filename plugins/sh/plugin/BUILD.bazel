@@ -42,7 +42,6 @@ exports_files(
 
 ### auto-generated section `dev content intellij.sh.plugin` start
 dev_dist_plugin_content(
-    content_modules = ["//plugins/sh/core"],
     descriptor_module = ":plugin",
     prepacked_content_modules = [
         "//plugins/sh/backend:backend_content_module_jar",
@@ -51,6 +50,9 @@ dev_dist_plugin_content(
         "//plugins/sh/python:python_content_module_jar",
         "//plugins/sh/terminal:terminal_content_module_jar",
     ],
+    prepacked_jars = {
+        "//plugins/sh/core:core_content_module_jar": "intellij.sh.core.jar",
+    },
 )
 ### auto-generated section `dev content intellij.sh.plugin` end
 

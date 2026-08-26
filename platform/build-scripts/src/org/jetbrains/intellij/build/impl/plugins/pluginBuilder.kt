@@ -24,6 +24,7 @@ import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.antToRegex
 import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
 import org.jetbrains.intellij.build.classPath.PluginBuildResult
+import org.jetbrains.intellij.build.dev.AssembledPrepackedPluginContentJar
 import org.jetbrains.intellij.build.dev.PrepackedPluginContentJar
 import org.jetbrains.intellij.build.dev.PrepackedPluginContentKey
 import org.jetbrains.intellij.build.hasModuleOutputPath
@@ -200,7 +201,7 @@ private suspend fun CoroutineScope.buildPlugin(
     )
   }
 
-  val prepackedContentJars = ArrayList<PrepackedPluginContentJar>()
+  val prepackedContentJars = ArrayList<AssembledPrepackedPluginContentJar>()
   val task = spanBuilder("plugin").setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString()).use {
     val (entries, file) = layoutDistribution(
       layout = pluginLayout,

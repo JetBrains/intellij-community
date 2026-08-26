@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.kotlin.compilerPlugins.support` start
 jvm_library(
@@ -33,6 +34,8 @@ jvm_library(
         "//plugins/kotlin/base/compiler-configuration",
     ],
 )
+
+content_module_jar(module = ":kotlin-compilerPlugins-support")
 
 jvm_library(
     name = "kotlin-compilerPlugins-support_test_lib",

@@ -37,6 +37,7 @@ import org.jetbrains.intellij.build.buildJar
 import org.jetbrains.intellij.build.checkForNoDiskSpace
 import org.jetbrains.intellij.build.computeHashForModuleOutput
 import org.jetbrains.intellij.build.computeModuleSourcesByContent
+import org.jetbrains.intellij.build.dev.AssembledPrepackedPluginContentJar
 import org.jetbrains.intellij.build.dev.DevDistRecipe
 import org.jetbrains.intellij.build.dev.PrepackedPluginContentJar
 import org.jetbrains.intellij.build.dev.PrepackedPluginContentKey
@@ -172,7 +173,7 @@ class JarPackager private constructor(
 
   private val helper = (context as BuildContextImpl).jarPackagerDependencyHelper
 
-  private val prepackedContentJars = ArrayList<PrepackedPluginContentJar>()
+  private val prepackedContentJars = ArrayList<AssembledPrepackedPluginContentJar>()
 
   companion object {
     suspend fun pack(includedModules: Collection<ModuleItem>, outputDir: Path, context: BuildContext) {
@@ -203,7 +204,7 @@ class JarPackager private constructor(
       descriptorCache: ScopedCachedDescriptorContainer? = null,
       assetFilter: DistributionAssetFilter? = null,
       prepackedPluginContent: Map<PrepackedPluginContentKey, PrepackedPluginContentJar> = emptyMap(),
-      prepackedPluginContentJars: MutableCollection<PrepackedPluginContentJar>? = null,
+      prepackedPluginContentJars: MutableCollection<AssembledPrepackedPluginContentJar>? = null,
       context: BuildContext,
     ): Collection<DistributionFileEntry> {
       val packager = JarPackager(
@@ -228,6 +229,14 @@ class JarPackager private constructor(
         copiedFiles = packager.copiedFiles,
         assetFilter = assetFilter,
       )
+      // An asset filter drops assets after the ordinals were counted against all of them, so every recorded position
+      // would drift. Only a platform payload passes a filter and only a `PluginLayout` hands a jar over, so the two
+      // never meet - and this is what keeps that true rather than leaving it to be rediscovered from a reordered
+      // `plugin-classpath.txt`. See [AssembledPrepackedPluginContentJar.assetOrdinal].
+      check(assetFilter == null || packager.prepackedContentJars.isEmpty()) {
+        "$layout hands ${packager.prepackedContentJars.size} jar(s) over under an asset filter, which drops assets the" +
+        " recorded ordinals were counted against"
+      }
       prepackedPluginContentJars?.addAll(packager.prepackedContentJars)
 
       // The whole layout is computed above, but only the owned jars are packed and reported: everything downstream -
@@ -362,13 +371,17 @@ class JarPackager private constructor(
       hasLayoutPlacedModuleLibrary = pluginLayout.includedModuleLibraries.any { it.moduleName == moduleName },
       isTestPluginModule = helper.isTestPluginModule(moduleName, module),
     )
-    prepackedContentJars.add(expected)
+    // `assets.size` is the index `getJarAsset` would have given this jar. `computeSourcesForModule` never runs for a
+    // handed-off module, and that function creates this jar's asset first. The passes that would create a *second* asset
+    // are all refused above, `hasSeparateLibraryJar` among them, so no later hand-off's ordinal shifts. See
+    // [AssembledPrepackedPluginContentJar].
+    prepackedContentJars.add(AssembledPrepackedPluginContentJar(jar = expected, assetOrdinal = assets.size))
     return true
   }
 
   private fun validatePrepackedPluginContent(layout: PluginLayout) {
     val expected = prepackedPluginContent.keys.filterTo(HashSet()) { it.pluginMainModule == layout.mainModule }
-    val actual = prepackedContentJars.mapTo(HashSet(), PrepackedPluginContentJar::key)
+    val actual = prepackedContentJars.mapTo(HashSet()) { it.jar.key }
     check(actual == expected) {
       "Prepacked plugin content of ${layout.mainModule} does not match its descriptor/layout:" +
       " missing ${(expected - actual).sortedBy(PrepackedPluginContentKey::contentModule)}," +

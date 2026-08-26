@@ -6,6 +6,7 @@ import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.nio.file.Path
+import java.util.TreeMap
 import java.util.TreeSet
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.readText
@@ -26,16 +27,26 @@ internal class PluginContent(
   /** Raw member modules except the main module, which `dev_dist_plugin_content` takes as `descriptor_module`. */
   @JvmField val contentModuleLabels: List<String>,
   /**
-   * Eligible content-module target labels.
+   * Eligible content-module target labels whose jar this plugin puts at the conventional path.
    *
    * These modules are still members of the plugin, but their jar bytes bypass the fragment and reach the composed
    * distribution through the packed-plugin-jars component.
    *
-   * No path: eligibility *is* the report entry being exactly `lib/modules/<module>.jar`, so the rule derives
-   * `modules/<module>.jar` from the module name it already reads off the target. Writing it here put one copy of that
-   * rule into each of 2030 relations in checked-in build files, and a Maven-style renaming of a module rewrote both.
+   * No path: the rule derives `modules/<module>.jar` from the module name it already reads off the target. Writing it
+   * here put one copy of that rule into each of the 2 030 relations checked in when the derivation replaced it, and a
+   * Maven-style renaming of a module rewrote both. The set is larger now; `dev_dist_content.bzl` states the current
+   * figure. [prepackedJarDestinations] is the other shape.
    */
   @JvmField val prepackedContentModuleLabels: List<String>,
+  /**
+   * The same hand-off where this plugin puts the jar somewhere else: the packing target's label to the `lib/`-relative
+   * path.
+   *
+   * An `embedded` content module the layout does not pack into the plugin jar gets `lib/<module>.jar`, which is a jar
+   * this generator reproduces as faithfully as the conventional one - the destination is the only difference, and it is
+   * the relation's rather than the module's. Only the deviation is written; see `_collect_prepacked`.
+   */
+  @JvmField val prepackedJarDestinations: Map<String, String>,
   /**
    * One label per library - the `jvm_import`, `java_library` or `java_import` target that *groups* its jars, and not the
    * per-jar `copy_file`/`exports_files` labels those jars have.
@@ -123,6 +134,9 @@ internal fun BuildFile.emitPluginContent(module: ModuleDescriptor, content: Plug
     if (content.prepackedContentModuleLabels.isNotEmpty()) {
       option("prepacked_content_modules", content.prepackedContentModuleLabels)
     }
+    if (content.prepackedJarDestinations.isNotEmpty()) {
+      option("prepacked_jars", LinkedHashMap(content.prepackedJarDestinations))
+    }
   }
 }
 
@@ -168,11 +182,11 @@ internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleLi
 
   val contentModuleLabels = ArrayList<String>()
   val prepackedContentModuleLabels = ArrayList<String>()
+  val prepackedJarDestinations = TreeMap<String, String>()
   val crossRepositoryPrepackedModules = ArrayList<String>()
   val members = ArrayList<ModuleDescriptor>()
   members.add(module)
-  val prepackedMemberNames = entries.mapNotNull(::simplePluginContentEntry).mapTo(HashSet()) { it.moduleName } -
-                             coPackedElsewhere(entries)
+  val prepackedMemberPaths = prepackedMemberPaths(moduleName = moduleName, entries = entries)
   // The members this plugin really handed over, whichever repository packs them. What is inside their jars is what this
   // target must stop declaring; see [recordedLibraries].
   val handedOver = HashSet<String>()
@@ -183,16 +197,24 @@ internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleLi
       println("WARN: $moduleName content target: no Bazel target for member module $memberName")
       continue
     }
-    val isPrepacked = memberName in prepackedMemberNames &&
-                      isPrepackedPluginContentModule(module = member, moduleList = moduleList, context = context)
+    val relativeOutputFile = prepackedMemberPaths.get(memberName)
+      ?.takeIf { isPrepackedPluginContentModule(module = member, moduleList = moduleList, context = context) }
     if (module.isCommunity && !member.isCommunity) {
       // `getBazelDependencyLabel` fails outright on this edge, and a main-repository label is unreachable from the
       // community repository anyway. The member is still packed - the completion set in `//build/dev-dist-content` sees
       // both repositories and names it there - so what this target records is which half completes it: a prepack-eligible
       // member keeps its packed jar, and anything else stays a raw input the completion declares.
-      if (isPrepacked) {
+      //
+      // Only at the conventional path. A completion carries a name, and `dev_dist_content_set` derives the destination
+      // from it, so a plugin that puts the jar elsewhere has nowhere to say so. No report needs that today, which is
+      // why this is a veto rather than a second attribute on the set.
+      if (relativeOutputFile != null && isConventionalPrepackedPath(moduleName = memberName, relativeOutputFile = relativeOutputFile)) {
         crossRepositoryPrepackedModules.add(memberName)
         handedOver.add(memberName)
+      }
+      else if (relativeOutputFile != null) {
+        println("WARN: $moduleName content target: ultimate module $memberName keeps being packed by JarPackager," +
+                " because a cross-repository hand-off cannot state its `lib/$relativeOutputFile` destination")
       }
       else {
         println("WARN: $moduleName content target: community plugin packs ultimate module $memberName")
@@ -200,10 +222,16 @@ internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleLi
       continue
     }
 
-    if (isPrepacked) {
-      // The member's packing target, not its `jvm_library`: the jar is that target's own output, and
-      // `prepacked_content_modules` gates on `ContentModuleJarInfo`, which only it provides.
-      prepackedContentModuleLabels.add(contentModuleJarLabel(module = member, dependent = module, context = context))
+    if (relativeOutputFile != null) {
+      // The member's packing target, not its `jvm_library`: the jar is that target's own output, and both prepacked
+      // attributes gate on `ContentModuleJarInfo`, which only it provides.
+      val label = contentModuleJarLabel(module = member, dependent = module, context = context)
+      if (isConventionalPrepackedPath(moduleName = memberName, relativeOutputFile = relativeOutputFile)) {
+        prepackedContentModuleLabels.add(label)
+      }
+      else {
+        prepackedJarDestinations.put(label, relativeOutputFile)
+      }
       handedOver.add(memberName)
     }
     else {
@@ -220,7 +248,10 @@ internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleLi
   )
   // Sorted: these are sets of inputs, not merge orders, so a stable order keeps a regeneration free of diff noise.
   val crossRepository = crossRepositoryPrepackedModules.distinct().sorted()
-  if (contentModuleLabels.isEmpty() && prepackedContentModuleLabels.isEmpty() && libraryContainerLabels.isEmpty()) {
+  if (contentModuleLabels.isEmpty() &&
+      prepackedContentModuleLabels.isEmpty() &&
+      prepackedJarDestinations.isEmpty() &&
+      libraryContainerLabels.isEmpty()) {
     return PluginContentResult(content = null, crossRepositoryPrepackedModules = crossRepository)
   }
 
@@ -228,10 +259,39 @@ internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleLi
     content = PluginContent(
       contentModuleLabels = contentModuleLabels.distinct().sorted(),
       prepackedContentModuleLabels = prepackedContentModuleLabels.distinct().sorted(),
+      prepackedJarDestinations = prepackedJarDestinations,
       libraryContainerLabels = libraryContainerLabels,
     ),
     crossRepositoryPrepackedModules = crossRepository,
   )
+}
+
+/**
+ * Where this report puts the jar of each member it hands over, by module name, relative to the plugin's `lib/`.
+ *
+ * The two vetoes of a hand-off that one entry cannot see are applied here. [coPackedElsewhere] is the first. The second
+ * is this report naming one module at two destinations: one packed jar cannot satisfy both, and a relation is keyed by
+ * *(plugin, module)*, so there is no second relation to carry the second path. Both are fail-open - the module stays a
+ * raw member and `JarPackager` keeps packing every jar it is in.
+ */
+private fun prepackedMemberPaths(moduleName: String, entries: List<RecipeEntry>): Map<String, String> {
+  val coPacked = coPackedElsewhere(entries)
+  val paths = HashMap<String, String>()
+  val conflicting = HashSet<String>()
+  for (entry in entries) {
+    val simple = simplePluginContentEntry(entry) ?: continue
+    if (simple.moduleName in coPacked) {
+      continue
+    }
+    val previous = paths.put(simple.moduleName, simple.relativeOutputFile)
+    if (previous != null && previous != simple.relativeOutputFile) {
+      println("WARN: $moduleName content target: ${simple.moduleName} keeps being packed by JarPackager, because this" +
+              " report puts its jar at both `lib/$previous` and `lib/${simple.relativeOutputFile}`")
+      conflicting.add(simple.moduleName)
+    }
+  }
+  paths.keys.removeAll(conflicting)
+  return paths
 }
 
 /**
@@ -337,7 +397,7 @@ private fun computeLibraryContainerLabels(
 }
 
 /**
- * The modules this report packs somewhere *besides* their own `lib/modules/<module>.jar` entry.
+ * The modules this report packs somewhere *besides* the self-named entry that would hand them over.
  *
  * [simplePluginContentEntry] judges one entry in isolation, which is not enough to decide a hand-off: a module
  * whose own entry is simple can still be a `modules:` member of another jar in the same plugin, and `JarPackager` packs

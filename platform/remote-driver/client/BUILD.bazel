@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.driver.client` start
 jvm_library(
@@ -25,6 +26,8 @@ jvm_library(
         "//libraries/jetbrains/annotations",
     ],
 )
+
+content_module_jar(module = ":client")
 
 jvm_library(
     name = "client_test_lib",

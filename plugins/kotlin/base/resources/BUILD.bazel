@@ -1,5 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.kotlin.base.resources` start
 create_kotlinc_options(
@@ -46,6 +47,8 @@ jvm_library(
         "//java/java-frontback-psi-api:frontback-psi",
     ],
 )
+
+content_module_jar(module = ":kotlin-base-resources")
 
 jvm_library(
     name = "kotlin-base-resources_test_lib",

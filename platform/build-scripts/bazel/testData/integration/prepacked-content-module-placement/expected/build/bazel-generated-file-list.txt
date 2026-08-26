@@ -1,0 +1,4 @@
+conflicting
+conventional
+embedded
+plugin

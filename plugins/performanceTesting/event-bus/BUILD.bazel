@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "tools-ide-starter-bus-tests_test",
@@ -40,6 +41,8 @@ jvm_library(
         "//libraries/netty/codec-compression:libraries-netty-codec-compression",
     ],
 )
+
+content_module_jar(module = ":tools-ide-starter-bus")
 
 jvm_library(
     name = "tools-ide-starter-bus_test_lib",

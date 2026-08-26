@@ -169,10 +169,7 @@ exports_files(
 
 ### auto-generated section `dev content intellij.java.coverage` start
 dev_dist_plugin_content(
-    content_modules = [
-        "//libraries/test-discovery",
-        "//plugins/coverage/coverage_rt:java-coverage-rt",
-    ],
+    content_modules = ["//libraries/test-discovery"],
     descriptor_module = ":coverage",
     libraries = [
         "@lib//:java-coverage-_ja_co_co",
@@ -183,6 +180,9 @@ dev_dist_plugin_content(
         "//plugins/coverage/junit:junit_content_module_jar",
         "//plugins/coverage/testng:testng_content_module_jar",
     ],
+    prepacked_jars = {
+        "//plugins/coverage/coverage_rt:java-coverage-rt_content_module_jar": "intellij.java.coverage.rt.jar",
+    },
 )
 ### auto-generated section `dev content intellij.java.coverage` end
 

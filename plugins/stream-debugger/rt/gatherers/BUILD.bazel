@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.debugger.streams.java.rt.gatherers` start
 jvm_library(
@@ -18,6 +19,8 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
 )
+
+content_module_jar(module = ":gatherers")
 
 jvm_library(
     name = "gatherers_test_lib",

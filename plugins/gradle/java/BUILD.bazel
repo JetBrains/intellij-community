@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.gradle.java` start
 jvm_library(
@@ -88,6 +89,8 @@ jvm_library(
         "//plugins/gradle/properties",
     ],
 )
+
+content_module_jar(module = ":java")
 
 jvm_library(
     name = "java_test_lib",

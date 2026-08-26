@@ -1,6 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "yaml-tests_test",
@@ -62,6 +63,8 @@ jvm_library(
         "//plugins/yaml/syntax",
     ],
 )
+
+content_module_jar(module = ":yaml")
 
 jvm_library(
     name = "yaml_test_lib",
@@ -125,9 +128,11 @@ exports_files(
 
 ### auto-generated section `dev content intellij.yaml` start
 dev_dist_plugin_content(
-    content_modules = ["//plugins/yaml/syntax"],
     descriptor_module = ":yaml",
     prepacked_content_modules = ["//plugins/yaml/backend:backend_content_module_jar"],
+    prepacked_jars = {
+        "//plugins/yaml/syntax:syntax_content_module_jar": "intellij.yaml.syntax.jar",
+    },
 )
 ### auto-generated section `dev content intellij.yaml` end
 

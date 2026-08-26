@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.bazel
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -20,7 +21,40 @@ internal class PluginContentModuleJarTest {
 
     val simple = simplePluginContentEntry(entry)
     assertEquals("intellij.example", simple?.moduleName)
+    assertEquals("modules/intellij.example.jar", simple?.relativeOutputFile)
     assertEquals(emptySet<String>(), simple?.libraries)
+  }
+
+  @Test
+  fun `an embedded content module jar is eligible at its own destination`() {
+    // `computeEmbeddedOutputJarPath` gives an `embedded` module that the layout does not pack into the plugin jar its
+    // own `lib/<module>.jar`. Same jar, other place.
+    val simple = simplePluginContentEntry(RecipeEntry(
+      name = "lib/intellij.example.jar",
+      contentModules = listOf(RecipeModule(name = "intellij.example")),
+    ))
+
+    assertEquals("intellij.example", simple?.moduleName)
+    assertEquals("intellij.example.jar", simple?.relativeOutputFile)
+    assertEquals(emptySet<String>(), simple?.libraries)
+    assertFalse(isConventionalPrepackedPath(moduleName = "intellij.example", relativeOutputFile = "intellij.example.jar"))
+    assertTrue(isConventionalPrepackedPath(moduleName = "intellij.example", relativeOutputFile = "modules/intellij.example.jar"))
+  }
+
+  @Test
+  fun `an embedded content module jar that merges a library is ineligible`() {
+    // The fragment embeds this module's own descriptor and resolves its includes against its declared inputs, and a
+    // handed-off jar is not one of those. The same library under `lib/modules/` is still fine.
+    val contentModule = RecipeModule(name = "intellij.example", libraries = mapOf("first" to emptyList()))
+
+    assertNull(simplePluginContentEntry(RecipeEntry(name = "lib/intellij.example.jar", contentModules = listOf(contentModule))))
+    assertEquals(
+      "modules/intellij.example.jar",
+      simplePluginContentEntry(RecipeEntry(
+        name = "lib/modules/intellij.example.jar",
+        contentModules = listOf(contentModule),
+      ))?.relativeOutputFile,
+    )
   }
 
   @Test
@@ -79,11 +113,15 @@ internal class PluginContentModuleJarTest {
   }
 
   @Test
-  fun `noncanonical destination is ineligible`() {
-    assertNull(simplePluginContentEntry(RecipeEntry(
-      name = "lib/other.jar",
-      contentModules = listOf(RecipeModule(name = "intellij.example")),
-    )))
+  fun `a destination that does not name the module is ineligible`() {
+    // Each of these names a jar whose content the path does not describe, so one target per module would produce one
+    // incomplete jar per module.
+    for (name in listOf("lib/other.jar", "lib/modules/other.jar", "lib/standalone/intellij.example.jar")) {
+      assertNull(name, simplePluginContentEntry(RecipeEntry(
+        name = name,
+        contentModules = listOf(RecipeModule(name = "intellij.example")),
+      )))
+    }
   }
 
   @Test
@@ -130,6 +168,29 @@ internal class PluginContentModuleJarTest {
     // Both orders, because the fold reads the reports in whatever order the model hands them over.
     assertEquals(emptyMap<String, Set<String>>(), foldPluginContentCandidacy(listOf(listOf(one), listOf(other)), emptyMap()))
     assertEquals(emptyMap<String, Set<String>>(), foldPluginContentCandidacy(listOf(listOf(other), listOf(one)), emptyMap()))
+  }
+
+  @Test
+  fun `occurrences that differ only on the destination stay eligible`() {
+    // 14 candidate modules are placed under `lib/modules/` by one plugin and directly in `lib/` by another. One packed
+    // jar, two destinations. The destination travels on the relation, so this is not a disagreement about the jar.
+    val underModules = RecipeEntry(
+      name = "lib/modules/intellij.example.jar",
+      contentModules = listOf(RecipeModule(name = "intellij.example")),
+    )
+    val embedded = RecipeEntry(
+      name = "lib/intellij.example.jar",
+      contentModules = listOf(RecipeModule(name = "intellij.example")),
+    )
+
+    assertEquals(
+      mapOf("intellij.example" to emptySet<String>()),
+      foldPluginContentCandidacy(listOf(listOf(underModules), listOf(embedded)), emptyMap()),
+    )
+    assertEquals(
+      mapOf("intellij.example" to emptySet<String>()),
+      foldPluginContentCandidacy(listOf(listOf(embedded), listOf(underModules)), emptyMap()),
+    )
   }
 
   @Test

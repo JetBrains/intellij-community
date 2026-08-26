@@ -1,0 +1,85 @@
+{
+  "modules": {
+    "intellij.example.plugin": {
+      "productionTargets": [
+        "@community//plugin:plugin.jar"
+      ],
+      "productionJars": [
+        "out/bazel-out/jvm-fastbuild/bin/plugin/plugin.jar"
+      ],
+      "testTargets": [
+        "@community//plugin:plugin_test_lib.jar"
+      ],
+      "testJars": [
+        "out/bazel-out/jvm-fastbuild/bin/plugin/plugin_test_lib.jar"
+      ],
+      "exports": [],
+      "moduleLibraries": {}
+    },
+    "intellij.libraries.conflicting": {
+      "productionTargets": [
+        "@community//conflicting:conflicting.jar"
+      ],
+      "productionJars": [
+        "out/bazel-out/jvm-fastbuild/bin/conflicting/conflicting.jar"
+      ],
+      "testTargets": [
+        "@community//conflicting:conflicting_test_lib.jar"
+      ],
+      "testJars": [
+        "out/bazel-out/jvm-fastbuild/bin/conflicting/conflicting_test_lib.jar"
+      ],
+      "exports": [],
+      "moduleLibraries": {},
+      "contentModuleJarTarget": "@community//conflicting:conflicting_content_module_jar"
+    },
+    "intellij.libraries.conventional": {
+      "productionTargets": [
+        "@community//conventional:conventional.jar"
+      ],
+      "productionJars": [
+        "out/bazel-out/jvm-fastbuild/bin/conventional/conventional.jar"
+      ],
+      "testTargets": [
+        "@community//conventional:conventional_test_lib.jar"
+      ],
+      "testJars": [
+        "out/bazel-out/jvm-fastbuild/bin/conventional/conventional_test_lib.jar"
+      ],
+      "exports": [],
+      "moduleLibraries": {},
+      "contentModuleJarTarget": "@community//conventional:conventional_content_module_jar"
+    },
+    "intellij.libraries.embedded": {
+      "productionTargets": [
+        "@community//embedded:embedded.jar"
+      ],
+      "productionJars": [
+        "out/bazel-out/jvm-fastbuild/bin/embedded/embedded.jar"
+      ],
+      "testTargets": [
+        "@community//embedded:embedded_test_lib.jar"
+      ],
+      "testJars": [
+        "out/bazel-out/jvm-fastbuild/bin/embedded/embedded_test_lib.jar"
+      ],
+      "exports": [],
+      "moduleLibraries": {},
+      "contentModuleJarTarget": "@community//embedded:embedded_content_module_jar"
+    }
+  },
+  "imlTargets": [
+    "@community//conflicting:intellij.libraries.conflicting.iml",
+    "@community//conventional:intellij.libraries.conventional.iml",
+    "@community//embedded:intellij.libraries.embedded.iml",
+    "@community//plugin:intellij.example.plugin.iml"
+  ],
+  "projectLibraries": {},
+  "pluginDistributionTargets": {
+    "intellij.example.plugin": {
+      "target": "@community//plugin:plugin_plugin",
+      "distributionDirectory": "out/bazel-out/jvm-fastbuild/bin/plugin/example-plugin",
+      "contentTarget": "@community//plugin:plugin_dev_content"
+    }
+  }
+}

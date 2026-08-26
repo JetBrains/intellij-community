@@ -1,5 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.kotlin.codeInsight.overrideImplement` start
 create_kotlinc_options(
@@ -57,6 +58,8 @@ jvm_library(
         "//plugins/kotlin/base/code-insight",
     ],
 )
+
+content_module_jar(module = ":kotlin-codeInsight-overrideImplement")
 
 jvm_library(
     name = "kotlin-codeInsight-overrideImplement_test_lib",

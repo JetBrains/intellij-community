@@ -40,6 +40,7 @@ import org.jetbrains.intellij.build.buildSearchableOptions
 import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.classPath.generateClassPathByLayoutReport
 import org.jetbrains.intellij.build.classPath.generateCoreClasspathFromPlugins
+import org.jetbrains.intellij.build.dev.AssembledPrepackedPluginContentJar
 import org.jetbrains.intellij.build.dev.PrepackedPluginContentJar
 import org.jetbrains.intellij.build.dev.PrepackedPluginContentKey
 import org.jetbrains.intellij.build.dev.collectLayoutsOfPluginsToScramble
@@ -811,7 +812,7 @@ internal suspend fun layoutDistribution(
   cachedDescriptorWriterProvider: ScopedCachedDescriptorContainer?,
   assetFilter: DistributionAssetFilter? = null,
   prepackedPluginContent: Map<PrepackedPluginContentKey, PrepackedPluginContentJar> = emptyMap(),
-  prepackedPluginContentJars: MutableCollection<PrepackedPluginContentJar>? = null,
+  prepackedPluginContentJars: MutableCollection<AssembledPrepackedPluginContentJar>? = null,
   context: BuildContext,
 ): Pair<List<DistributionFileEntry>, Path> {
   if (copyFiles) {

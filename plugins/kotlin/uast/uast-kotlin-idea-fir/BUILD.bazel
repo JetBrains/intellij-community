@@ -1,5 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.kotlin.uast.idea` start
 create_kotlinc_options(
@@ -53,6 +54,8 @@ jvm_library(
         "//plugins/kotlin/references",
     ],
 )
+
+content_module_jar(module = ":kotlin-uast-idea")
 
 jvm_library(
     name = "kotlin-uast-idea_test_lib",

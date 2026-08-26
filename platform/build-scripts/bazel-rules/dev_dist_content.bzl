@@ -366,29 +366,67 @@ def _collect_library_jars(ctx, library_jars):
             fail("%s: library jar %s must provide exactly one file, got %s" % (ctx.label, target.label, files))
         library_jars.append(depset([struct(label = str(target.label), jars = (files[0],))]))
 
-def _collect_prepacked(ctx, plugin_main_module, prepacked_plugin_jars):
-    """Turn `prepacked_content_modules` into typed *(plugin, module, path, jar)* records.
+def _conventional_prepacked_path(content_module):
+    """Where a plugin puts a handed-off content module's jar unless its report says otherwise.
+
+    `simplePluginContentEntry` in `contentModuleJar.kt` accepts a plugin entry at `lib/modules/<module>.jar` or at
+    `lib/<module>.jar`. The second destination belongs to an `embedded` content module that gets a jar of its own. The
+    first is 2 262 of the 2 463 accepted entries, so it stays derived and the other is declared per relation. See
+    `prepacked_jars`.
+    """
+    return "modules/" + content_module + ".jar"
+
+def _collect_prepacked(label, plugin_main_module, prepacked_content_modules, prepacked_jars, prepacked_plugin_jars):
+    """Turn the two prepacked attributes into typed *(plugin, module, path, jar)* records.
 
     Shared by `dev_dist_plugin_content` and `dev_dist_content_set` because a plugin split across the repository boundary
     is declared in two places: the community half names what a community package can name, and the completion set in
     `//build/dev-dist-content` - the one package that sees both repositories - names the ultimate members. Both halves
     hand the collector the same kind of record, so nothing downstream can tell which side a jar came from.
 
-    The path is derived, not declared. A relation is eligible for prepacking only when its content-report entry is
-    exactly `lib/modules/<module>.jar` - `simplePluginContentEntry` in `contentModuleJar.kt` returns nothing for
-    any other shape - so `modules/<module>.jar` is the only path a prepacked relation can have, and the module name it
-    is built from is read off the target one line above. Declaring it as well put 2 030 copies of that one rule into
-    checked-in `BUILD.bazel` files, and made a *generated* path the thing that
-    `JarPackager.validatePrepackedPluginContentHandoff` compared the layout against. That check keeps its value here:
-    it now asserts that the layout put the jar where the eligibility rule says it must be.
+    The destination travels on the *relation* and not on the packed jar, because one packed jar reaches two of them. 14
+    candidate modules are placed under `lib/modules/` by one plugin and directly in `lib/` by another. Both destinations
+    copy the same bytes.
+
+    The conventional destination stays derived for the same reason it always was. Declaring it as well would put one
+    copy of one rule into each of the 2 132 conventional relations that are checked in. It would also make a *generated*
+    path the thing `JarPackager.validatePrepackedPluginContentHandoff` compares the layout against. That check keeps its
+    value either way, because it asserts that the layout put the jar where the relation says it goes.
+
+    Args:
+        label: the target being analyzed, for a failure message.
+        plugin_main_module: the plugin these relations belong to.
+        prepacked_content_modules: targets whose jar goes to the conventional path.
+        prepacked_jars: target to `lib/`-relative path, for a plugin that places the jar somewhere else.
+        prepacked_plugin_jars: the list of depsets to append the records to.
     """
-    for target in ctx.attr.prepacked_content_modules:
+    for target in prepacked_content_modules:
         info = target[ContentModuleJarInfo]
-        content_module = info.module_name
         prepacked_plugin_jars.append(depset([struct(
             plugin_main_module = plugin_main_module,
-            content_module = content_module,
-            relative_output_file = "modules/" + content_module + ".jar",
+            content_module = info.module_name,
+            relative_output_file = _conventional_prepacked_path(info.module_name),
+            jar = info.jar,
+        )]))
+
+    for target, relative_output_file in prepacked_jars.items():
+        info = target[ContentModuleJarInfo]
+        if relative_output_file == _conventional_prepacked_path(info.module_name):
+            # One way to say one thing. A relation that restates the convention would be a checked-in copy of a derived
+            # rule, and a later change to the rule would then reach some relations and not others.
+            fail("%s: %s is the conventional path of %s, so name the target in `prepacked_content_modules` instead" %
+                 (label, relative_output_file, info.module_name))
+
+        # The only destination the report shape accepts besides the derived one, so it is the only one worth declaring.
+        # A path naming another module would place a jar the layout does not want there, and
+        # `JarPackager.validatePrepackedPluginContentHandoff` would find it a whole distribution build later. This also
+        # refuses a path that leaves the plugin, which `PrepackedPluginContentCollector` can only report by module name.
+        if relative_output_file != info.module_name + ".jar":
+            fail("%s: '%s' is not the own jar name of %s" % (label, relative_output_file, info.module_name))
+        prepacked_plugin_jars.append(depset([struct(
+            plugin_main_module = plugin_main_module,
+            content_module = info.module_name,
+            relative_output_file = relative_output_file,
             jar = info.jar,
         )]))
 
@@ -398,6 +436,16 @@ def _collect_prepacked(ctx, plugin_main_module, prepacked_plugin_jars):
 # packs no jar has no label to name here and Bazel refuses the attribute before any of those could fire.
 _PREPACKED_CONTENT_MODULES_ATTR = attr.label_list(
     doc = "Content modules handed to their own `content_module_jar` target instead of being packed by the fragment.",
+    providers = [ContentModuleJarInfo],
+)
+
+_PREPACKED_JARS_ATTR = attr.label_keyed_string_dict(
+    doc = """The same hand-off, for a content module this plugin does not place at the conventional path.
+
+The key is the module's `content_module_jar` target and the value is where this plugin puts the jar, relative to the
+plugin's `lib/`. Declared rather than derived because the path belongs to the *relation*: one packed jar is placed under
+`lib/modules/` by one plugin and directly in `lib/` by another. Naming the conventional path here is refused - see
+`_collect_prepacked`.""",
     providers = [ContentModuleJarInfo],
 )
 
@@ -411,8 +459,10 @@ def _dev_dist_plugin_content_impl(ctx):
     _collect_libraries(ctx, library_jars)
 
     _collect_prepacked(
-        ctx,
+        label = ctx.label,
         plugin_main_module = ctx.attr.descriptor_module[_KtJvmInfo].module_name,
+        prepacked_content_modules = ctx.attr.prepacked_content_modules,
+        prepacked_jars = ctx.attr.prepacked_jars,
         prepacked_plugin_jars = prepacked_plugin_jars,
     )
 
@@ -452,6 +502,7 @@ _dev_dist_plugin_content = rule(
             providers = [[JavaInfo]],
         ),
         "prepacked_content_modules": _PREPACKED_CONTENT_MODULES_ATTR,
+        "prepacked_jars": _PREPACKED_JARS_ATTR,
         "_kotlin_stdlib": _KOTLIN_STDLIB_ATTR,
     },
 )
@@ -491,9 +542,15 @@ def _dev_dist_content_set_impl(ctx):
     if bool(ctx.attr.prepacked_plugin_main_module) != bool(ctx.attr.prepacked_content_modules):
         fail("%s: `prepacked_plugin_main_module` and `prepacked_content_modules` must be set together" % ctx.label)
     if ctx.attr.prepacked_content_modules:
+        # No `prepacked_jars` here. A completion carries a member of the *other* repository, and the converter records
+        # such a member only when its plugin places the jar at the conventional path - `computePluginContent` in
+        # `pluginContent.kt` keeps the rest raw, with a warning. No report in this repository needs the other case
+        # today, so the attribute would be one nothing writes.
         _collect_prepacked(
-            ctx,
+            label = ctx.label,
             plugin_main_module = ctx.attr.prepacked_plugin_main_module,
+            prepacked_content_modules = ctx.attr.prepacked_content_modules,
+            prepacked_jars = {},
             prepacked_plugin_jars = prepacked_plugin_jars,
         )
 

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/conflicting/intellij.libraries.conflicting.iml" filepath="$PROJECT_DIR$/conflicting/intellij.libraries.conflicting.iml" />
+      <module fileurl="file://$PROJECT_DIR$/conventional/intellij.libraries.conventional.iml" filepath="$PROJECT_DIR$/conventional/intellij.libraries.conventional.iml" />
+      <module fileurl="file://$PROJECT_DIR$/embedded/intellij.libraries.embedded.iml" filepath="$PROJECT_DIR$/embedded/intellij.libraries.embedded.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugin/intellij.example.plugin.iml" filepath="$PROJECT_DIR$/plugin/intellij.example.plugin.iml" />
+    </modules>
+  </component>
+</project>

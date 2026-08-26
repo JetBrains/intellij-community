@@ -55,7 +55,6 @@ dev_dist_plugin_content(
         "//plugins/maven/maven3-server-impl:server-m3-impl",
         "//plugins/maven/maven36-server-impl:server-m36-impl",
         "//plugins/maven/maven40-server-impl:server-m40",
-        "//plugins/maven/model",
     ],
     descriptor_module = ":plugin",
     libraries = [
@@ -107,5 +106,8 @@ dev_dist_plugin_content(
         "//plugins/maven/performanceTesting:performanceTesting_content_module_jar",
         "//plugins/maven/proofreading:proofreading_content_module_jar",
     ],
+    prepacked_jars = {
+        "//plugins/maven/model:model_content_module_jar": "intellij.maven.model.jar",
+    },
 )
 ### auto-generated section `dev content intellij.maven.plugin` end

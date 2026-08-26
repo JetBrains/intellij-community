@@ -1,5 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.kotlin.completion.api` start
 create_kotlinc_options(
@@ -44,6 +45,8 @@ jvm_library(
         "//plugins/kotlin/base/kotlin.base.serialization",
     ],
 )
+
+content_module_jar(module = ":api")
 
 jvm_library(
     name = "api_test_lib",

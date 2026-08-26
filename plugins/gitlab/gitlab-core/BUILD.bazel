@@ -2,6 +2,7 @@ load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 BAZEL_TARGETS_JSON = current_bazel_targets_json()
 
@@ -109,6 +110,8 @@ jvm_library(
         ":libraries_kotlinc_libraries-kotlinc-kotlinx-serialization-compiler-plugin_provided",
     ],
 )
+
+content_module_jar(module = ":vcs-gitlab")
 
 jvm_library(
     name = "vcs-gitlab_test_lib",

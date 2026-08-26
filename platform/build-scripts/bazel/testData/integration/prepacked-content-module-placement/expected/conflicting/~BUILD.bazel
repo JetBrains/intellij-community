@@ -1,0 +1,43 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.libraries.conflicting` start
+jvm_library(
+    name = "conflicting",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.conflicting",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+content_module_jar(module = ":conflicting")
+
+jvm_library(
+    name = "conflicting_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k21",
+    module_name = "intellij.libraries.conflicting",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":conflicting"],
+)
+### auto-generated section `build intellij.libraries.conflicting` end
+
+### auto-generated section `iml intellij.libraries.conflicting` start
+exports_files(
+    [
+        "intellij.libraries.conflicting.iml",
+        "resources/intellij.libraries.conflicting.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.conflicting` end

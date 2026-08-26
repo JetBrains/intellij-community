@@ -595,7 +595,7 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
 private fun writePrepackedPluginContentPlacement(file: Path, plugins: List<PluginBuildResult>, runDir: Path) {
   val placements = LinkedHashMap<PrepackedPluginContentKey, String>()
   for (plugin in plugins.sortedBy(PluginBuildResult::mainModule)) {
-    for (jar in plugin.prepackedContentJars.sortedBy(PrepackedPluginContentJar::contentModule)) {
+    for (jar in plugin.prepackedContentJars.map { it.jar }.sortedBy(PrepackedPluginContentJar::contentModule)) {
       val finalPath = runDir.relativize(plugin.dir.resolve("lib").resolve(jar.relativeOutputFile)).invariantSeparatorsPathString
       val previous = placements.put(jar.key, finalPath)
       check(previous == null) {

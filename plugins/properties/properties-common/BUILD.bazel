@@ -1,5 +1,6 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.properties` start
 jvm_library(
@@ -43,6 +44,8 @@ jvm_library(
         "//jps/model-api:model",
     ],
 )
+
+content_module_jar(module = ":properties")
 
 jvm_library(
     name = "properties_test_lib",
@@ -92,12 +95,14 @@ exports_files(
 
 ### auto-generated section `dev content intellij.properties` start
 dev_dist_plugin_content(
-    content_modules = ["//plugins/properties/properties-psi-api:psi"],
     descriptor_module = ":properties",
     prepacked_content_modules = [
         "//plugins/properties/copyright:copyright_content_module_jar",
         "//plugins/properties/properties-psi-impl:backend-psi_content_module_jar",
         "//plugins/properties:properties-backend_content_module_jar",
     ],
+    prepacked_jars = {
+        "//plugins/properties/properties-psi-api:psi_content_module_jar": "intellij.properties.psi.jar",
+    },
 )
 ### auto-generated section `dev content intellij.properties` end

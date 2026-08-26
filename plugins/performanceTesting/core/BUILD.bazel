@@ -186,10 +186,6 @@ exports_files(
 dev_dist_plugin_content(
     content_modules = [
         "//libraries/assertj-core",
-        "//platform/remote-driver/client",
-        "//platform/remote-driver/core:driver-impl",
-        "//platform/remote-driver/model",
-        "//plugins/performanceTesting/event-bus:tools-ide-starter-bus",
         "//plugins/performanceTesting/remote-driver",
     ],
     descriptor_module = ":performanceTesting",
@@ -207,6 +203,12 @@ dev_dist_plugin_content(
         "//plugins/performanceTesting/structureView:structureView_content_module_jar",
         "//plugins/performanceTesting/vcs:vcs_content_module_jar",
     ],
+    prepacked_jars = {
+        "//platform/remote-driver/client:client_content_module_jar": "intellij.driver.client.jar",
+        "//platform/remote-driver/core:driver-impl_content_module_jar": "intellij.driver.impl.jar",
+        "//platform/remote-driver/model:model_content_module_jar": "intellij.driver.model.jar",
+        "//plugins/performanceTesting/event-bus:tools-ide-starter-bus_content_module_jar": "intellij.tools.ide.starter.bus.jar",
+    },
 )
 ### auto-generated section `dev content intellij.performanceTesting` end
 
