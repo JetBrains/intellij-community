@@ -3135,13 +3135,21 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
 
     // Try forwarding the input method event to various possible speed search handlers
 
-    JComponent comp = myPreferredFocusedComponent == null ? myComponent : myPreferredFocusedComponent;
-    SpeedSearchSupply supply = comp == null ? null : SpeedSearchSupply.getSupply(comp, true);
+    SpeedSearchSupply supply = null;
+    if (myPreferredFocusedComponent != null) {
+      supply = SpeedSearchSupply.getSupply(myPreferredFocusedComponent, true);
+    }
+    // If the preferred component doesn't have a speed search, there might be a speed search on the whole popup.
+    // It's the case, for example, for the Switcher, where a single speed search is shared between the two lists.
+    if (supply == null && myComponent != null) {
+      supply = SpeedSearchSupply.getSupply(myComponent, true);
+    }
 
     if (!event.isConsumed() && supply instanceof SpeedSearchBase<?>) {
       ((SpeedSearchBase<?>)supply).processInputMethodEvent(event);
     }
 
+    JComponent comp = myPreferredFocusedComponent == null ? myComponent : myPreferredFocusedComponent;
     if (!event.isConsumed() && comp instanceof ListWithFilter<?>) {
       ((ListWithFilter<?>)comp).processInputMethodEvent(event);
     }
