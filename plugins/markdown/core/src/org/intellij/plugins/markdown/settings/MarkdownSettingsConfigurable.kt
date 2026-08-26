@@ -202,14 +202,15 @@ internal class MarkdownSettingsConfigurable(private val project: Project) : Boun
     publisher.extensionsSettingsChanged(fromSettingsDialog = true)
   }
 
-  private fun Panel.htmlPanelProvidersRow(availableProviders: List<MarkdownHtmlPanelProvider>): Row {
+  private fun Panel.htmlPanelProvidersRow(availableProviders: List<MarkdownHtmlPanelProvider>) {
     // guaranteed by MarkdownSettingsConfigurable.previewDependentOptionsBlock
     require(availableProviders.isNotEmpty())
-    return row(MarkdownBundle.message("markdown.settings.preview.providers.label")) {
+    if (availableProviders.size == 1) {
+      return
+    }
+    row(MarkdownBundle.message("markdown.settings.preview.providers.label")) {
       val providerInfos = availableProviders.map { it.providerInfo }
       comboBox(model = DefaultComboBoxModel(providerInfos.toTypedArray()))
-        .enabled(availableProviders.size > 1)
-        .applyIfEnabled()
         .bindItem(settings::previewPanelProviderInfo.toNullableProperty())
         .widthGroup(comboBoxWidthGroup)
     }
