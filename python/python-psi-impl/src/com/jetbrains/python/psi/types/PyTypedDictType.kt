@@ -27,8 +27,7 @@ class PyTypedDictType private constructor(
   isDefinition: Boolean,
   private val declaration: PyQualifiedNameOwner,
   val isClosed: Boolean,
-  private val lazyExtraItemsType: Lazy<PyType?>,
-  val extraItemsQualifiers: TypedDictFieldQualifiers,
+  private val lazyExtraItems: Lazy<FieldTypeAndTotality>,
   /**
    * Read from the declaration rather than from the item types, which a recursive TypedDict cannot evaluate. An empty list means
    * "not generic"; `null` means unstated, which only a TypedDict synthesized from something else is.
@@ -42,10 +41,14 @@ class PyTypedDictType private constructor(
 ) : PyClassTypeImpl(dictClass, isDefinition) {
 
   val fields: Map<String, FieldTypeAndTotality> get() = lazyFields.value
-  val extraItemsType: PyType? get() = lazyExtraItemsType.value.also { PyAnyType.validate(it) }
+
+  /** An item without a value expression, `extra_items` being a keyword argument rather than an assignment. */
+  val extraItems: FieldTypeAndTotality get() = lazyExtraItems.value
+  val extraItemsType: PyType? get() = extraItems.type
+  val extraItemsQualifiers: TypedDictFieldQualifiers get() = extraItems.qualifiers
 
   /**
-   * The items and the extra items type are evaluated on first access, not on creation: both can refer back to the TypedDict
+   * The items and the extra items are evaluated on first access, not on creation: both can refer back to the TypedDict
    * being created, as `parent: "Node"` and `extra_items="Node"` do. Both providers have to use the [TypeEvalContext] the type
    * is created for, since what they produce becomes part of this instance.
    */
@@ -56,15 +59,13 @@ class PyTypedDictType private constructor(
     isDefinition: Boolean,
     declaration: PyQualifiedNameOwner,
     isClosed: Boolean = false,
-    extraItemsTypeEvaluator: () -> PyType? = { PyAnyType.unknown },
-    extraItemsQualifiers: TypedDictFieldQualifiers = TypedDictFieldQualifiers(),
+    extraItemsProvider: () -> FieldTypeAndTotality = { FieldTypeAndTotality(null, PyAnyType.unknown) },
     declaredTypeParameters: List<PyType?>? = null,
     substitutedTypeArguments: List<PyType?> = emptyList(),
   ) : this(name,
            lazy(LazyThreadSafetyMode.PUBLICATION, fieldsProvider),
            dictClass, isDefinition, declaration, isClosed,
-           lazy(LazyThreadSafetyMode.PUBLICATION, extraItemsTypeEvaluator),
-           extraItemsQualifiers,
+           lazy(LazyThreadSafetyMode.PUBLICATION, extraItemsProvider),
            declaredTypeParameters,
            substitutedTypeArguments)
 
@@ -83,7 +84,7 @@ class PyTypedDictType private constructor(
 
   override fun toInstance(): PyTypedDictType {
     return if (isDefinition)
-      PyTypedDictType(name, lazyFields, dictClass, false, declaration, isClosed, lazyExtraItemsType, extraItemsQualifiers,
+      PyTypedDictType(name, lazyFields, dictClass, false, declaration, isClosed, lazyExtraItems,
                       declaredTypeParameters, substitutedTypeArguments)
     else
       this
@@ -93,7 +94,7 @@ class PyTypedDictType private constructor(
     return if (isDefinition)
       this
     else
-      PyTypedDictType(name, lazyFields, dictClass, true, declaration, isClosed, lazyExtraItemsType, extraItemsQualifiers,
+      PyTypedDictType(name, lazyFields, dictClass, true, declaration, isClosed, lazyExtraItems,
                       declaredTypeParameters, substitutedTypeArguments)
   }
 

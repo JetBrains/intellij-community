@@ -298,13 +298,11 @@ private fun createTypedDictTypeForClass(cls: PyClass, context: TypeEvalContext):
   val extraItemsText = getSuperClassKeywordArgumentText(cls, TYPED_DICT_EXTRA_ITEMS_PARAMETER)
   val closedText = getSuperClassKeywordArgumentText(cls, TYPED_DICT_CLOSED_PARAMETER)
 
-  val extraItemsQualifiers = extraItemsText
-    ?.let { getStringBasedTypedDictQualifiers(it, cls, context) }
-    ?: PyTypedDictType.TypedDictFieldQualifiers()
-
-  val extraItemsTypeProvider = {
-    if (extraItemsText != null) PyTypingTypeProvider.getStringBasedType(extraItemsText, cls, context).derefOrUnknown()
-    else typedDictAncestors.firstNotNullOfOrNull { it.extraItemsType } ?: PyAnyType.unknown
+  val extraItemsProvider = {
+    val type =
+      if (extraItemsText != null) PyTypingTypeProvider.getStringBasedType(extraItemsText, cls, context).derefOrUnknown()
+      else typedDictAncestors.firstNotNullOfOrNull { it.extraItemsType } ?: PyAnyType.unknown
+    extraItems(type, extraItemsText, cls, context)
   }
 
   val closed = when (closedText) {
@@ -320,8 +318,7 @@ private fun createTypedDictTypeForClass(cls: PyClass, context: TypeEvalContext):
     true,
     cls,
     closed,
-    extraItemsTypeProvider,
-    extraItemsQualifiers,
+    extraItemsProvider,
     ownTypeParameters(cls, context),
   )
 }
@@ -376,6 +373,19 @@ private fun PyClassLikeType.declaringClass(): PyClass? = when (this) {
 /** Read from the declaration, not from the items, which a recursive TypedDict cannot evaluate while it is being built. */
 private fun ownTypeParameters(cls: PyClass, context: TypeEvalContext): List<PyType?> =
   PyTypeChecker.findGenericDefinitionType(cls, context)?.typeArguments.orEmpty()
+
+/** `extra_items` is a keyword argument rather than an assignment, so the item it stands for has no value expression. */
+private fun extraItems(
+  type: PyType?,
+  extraItemsText: String?,
+  anchor: PsiElement,
+  context: TypeEvalContext,
+): PyTypedDictType.FieldTypeAndTotality {
+  val qualifiers = extraItemsText
+    ?.let { getStringBasedTypedDictQualifiers(it, anchor, context) }
+    ?: PyTypedDictType.TypedDictFieldQualifiers()
+  return PyTypedDictType.FieldTypeAndTotality(null, type, qualifiers)
+}
 
 private fun getSuperClassKeywordArgumentText(cls: PyClass, name: String): String? {
   // This method is stub-friendly
@@ -519,9 +529,10 @@ private fun getTypedDictTypeFromStub(
   val dictClass = PyBuiltinCache.getInstance(target).dictType?.pyClass ?: return null
 
   val extraItemsText = stub.extraItemsType
-  val extraItemsQualifiers = extraItemsText
-    ?.let { getStringBasedTypedDictQualifiers(it, target, context) }
-    ?: PyTypedDictType.TypedDictFieldQualifiers()
+  val extraItemsProvider = {
+    val type = extraItemsText?.let { PyTypingTypeProvider.getStringBasedType(it, target, context) }.derefOrUnknown()
+    extraItems(type, extraItemsText, target, context)
+  }
 
   return PyTypedDictType(
     stub.name,
@@ -530,8 +541,7 @@ private fun getTypedDictTypeFromStub(
     true,
     target,
     stub.isClosed,
-    { extraItemsText?.let { PyTypingTypeProvider.getStringBasedType(it, target, context) }.derefOrUnknown() },
-    extraItemsQualifiers,
+    extraItemsProvider,
     declaredTypeParameters = emptyList(),
   )
 }

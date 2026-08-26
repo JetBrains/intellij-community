@@ -147,8 +147,7 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
       typedDictType.isDefinition(),
       typedDictType.getDeclarationElement(),
       typedDictType.isClosed(),
-      () -> cloneDeferred(() -> clone(typedDictType.getExtraItemsType())),
-      typedDictType.getExtraItemsQualifiers(),
+      () -> cloneExtraItems(typedDictType),
       typedDictType.getDeclaredTypeParameters(),
       cloneTypedDictTypeArguments(typedDictType));
   }
@@ -156,6 +155,13 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
   /** Clones the arguments a TypedDict already has. Substitution overrides this to parameterize a generic one. */
   protected @NotNull List<PyType> cloneTypedDictTypeArguments(@NotNull PyTypedDictType typedDictType) {
     return cloneTypeArguments(typedDictType.getSubstitutedTypeArguments());
+  }
+
+  private @NotNull PyTypedDictType.FieldTypeAndTotality cloneExtraItems(@NotNull PyTypedDictType typedDictType) {
+    return cloneDeferred(() -> {
+      PyTypedDictType.FieldTypeAndTotality extraItems = typedDictType.getExtraItems();
+      return new PyTypedDictType.FieldTypeAndTotality(extraItems.getValue(), clone(extraItems.getType()), extraItems.getQualifiers());
+    });
   }
 
   private @NotNull Map<String, PyTypedDictType.FieldTypeAndTotality> cloneFields(@NotNull PyTypedDictType typedDictType) {
