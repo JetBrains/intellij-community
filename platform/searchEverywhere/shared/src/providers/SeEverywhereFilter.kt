@@ -6,7 +6,7 @@ import com.intellij.platform.searchEverywhere.SeFilterState
 import com.intellij.platform.searchEverywhere.SeProviderId
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 sealed interface SeEverywhereFilter : SeFilter {
   val isAllTab: Boolean
   val isEverywhere: Boolean

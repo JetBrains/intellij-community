@@ -251,7 +251,3 @@
 - f:withShouldKeepLocationVisible(Z):com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
 - f:withTargetPresentation(com.intellij.platform.backend.presentation.TargetPresentation,com.intellij.ide.util.PsiElementListCellRenderer$ItemMatchers,com.intellij.platform.searchEverywhere.SeExtendedInfo,Z):com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
 *f:com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder$Companion
-*:com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter
-- a:getDisabledProviderIds():java.util.List
-- a:isAllTab():Z
-- a:isEverywhere():Z
