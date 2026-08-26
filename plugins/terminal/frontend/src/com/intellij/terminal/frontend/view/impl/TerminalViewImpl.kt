@@ -434,7 +434,7 @@ class TerminalViewImpl(
         coroutineScope.childScope("TerminalBlocksDecorator")
       )
 
-      val typingTracker = createTypingTracker(
+      val typingTracker = installTypingTracker(
         project = project,
         terminalView = this@TerminalViewImpl,
         model = outputModel,

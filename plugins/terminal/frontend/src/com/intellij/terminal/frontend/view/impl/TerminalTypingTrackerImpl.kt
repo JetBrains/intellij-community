@@ -37,7 +37,7 @@ import java.awt.event.KeyEvent
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Implementation of [TerminalTypingTracker]. Create instances via [createTypingTracker].
+ * Implementation of [TerminalTypingTracker]. Create instances via [installTypingTracker].
  *
  * Uses [TerminalTypeAheadSession] to confirm the order of input events.
  * Only reacts to key events and output updates while [TerminalShellIntegration.outputStatus] is

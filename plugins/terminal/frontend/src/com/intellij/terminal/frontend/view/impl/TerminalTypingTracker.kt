@@ -59,7 +59,7 @@ sealed interface TerminalTypingEvent {
 }
 
 
-internal fun createTypingTracker(
+internal fun installTypingTracker(
   project: Project,
   terminalView: TerminalView,
   model: MutableTerminalOutputModel,
