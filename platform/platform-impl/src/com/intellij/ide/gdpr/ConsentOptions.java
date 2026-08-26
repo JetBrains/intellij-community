@@ -374,6 +374,8 @@ public final class ConsentOptions implements ModificationTracker {
   @RequiresReadLockAbsence(generateAssertion = false)
   @RequiresBackgroundThread(generateAssertion = false)
   public @NotNull Pair<List<Consent>, Boolean> getConsents(@NotNull Predicate<? super Consent> filter) {
+    SlowOperations.assertNonCancelableSlowOperationsAreAllowed();
+
     var allDefaults = loadDefaultConsents();
     if (isEAP()) {
       // for EA builds there is a different option for statistics sending management
