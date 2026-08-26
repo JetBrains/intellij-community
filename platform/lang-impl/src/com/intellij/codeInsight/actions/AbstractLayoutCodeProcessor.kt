@@ -470,9 +470,10 @@ abstract class AbstractLayoutCodeProcessor private constructor(
 
         ProgressIndicatorProvider.checkCanceled()
 
+        val stageCommandName = processor.commandName
         withStructuredAsyncDocumentFormattingIfNotEdt {
-          processor.runTask(file, commandName, groupId, processAllFilesAsSingleUndoStep) {
-            AbstractLayoutCodeProcessorWriteInterceptor.getInstance().runFileWrite(writeTask, myProject, commandName);
+          processor.runTask(file, stageCommandName, groupId, processAllFilesAsSingleUndoStep) {
+            AbstractLayoutCodeProcessorWriteInterceptor.getInstance().runFileWrite(writeTask, myProject, stageCommandName)
           }
         }
 
