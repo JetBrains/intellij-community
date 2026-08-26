@@ -64,16 +64,23 @@ public class FindUsagesHandlerBase {
     return options;
   }
 
-  public boolean processElementUsages(@NotNull PsiElement element,
-                                      @NotNull Processor<? super UsageInfo> processor,
-                                      @NotNull FindUsagesOptions options) {
-    ReadActionProcessor<PsiReference> refProcessor = new ReadActionProcessor<>() {
+  @ApiStatus.Internal
+  protected ReadActionProcessor<PsiReference> createReferenceProcessor(
+    @NotNull Processor<? super UsageInfo> processor,
+    @NotNull PsiElement targetElement
+  ) {
+    return new ReadActionProcessor<>() {
       @Override
       public boolean processInReadAction(PsiReference ref) {
         return processor.process(new UsageInfo(ref));
       }
     };
+  }
 
+  public boolean processElementUsages(@NotNull PsiElement element,
+                                      @NotNull Processor<? super UsageInfo> processor,
+                                      @NotNull FindUsagesOptions options) {
+    ReadActionProcessor<PsiReference> refProcessor = createReferenceProcessor(processor, element);
     SearchScope scope = options.searchScope;
 
     if (options.isUsages) {
