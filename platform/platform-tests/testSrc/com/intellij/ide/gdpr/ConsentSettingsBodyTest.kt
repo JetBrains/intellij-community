@@ -17,9 +17,9 @@ class ConsentSettingsBodyTest {
 
   @Test
   fun `panel for JetBrains vendor contains comment with company name and group name`() {
-    val consents = listOf(createTestConsent("test.consent.1", "Test Consent"))
+    val consentsState = ConsentsState(listOf(createTestConsent("test.consent.1", "Test Consent")))
     val ui = ConsentSettingsUi(true, true)
-    ui.reset(consents)
+    ui.reset(consentsState)
 
     val texts = findAllTextContent(ui)
     val hasJetBrainsComment = texts.any { text ->
@@ -34,9 +34,9 @@ class ConsentSettingsBodyTest {
 
   @Test
   fun `panel for non-JetBrains vendor does not contain JetBrains-specific comment and group name`() {
-    val consents = listOf(createTestConsent("test.consent.1", "Test Consent"))
+    val consentsState = ConsentsState(listOf(createTestConsent("test.consent.1", "Test Consent")))
     val ui = ConsentSettingsUi(true, false)
-    ui.reset(consents)
+    ui.reset(consentsState)
 
     val texts = findAllTextContent(ui)
     val hasJetBrainsComment = texts.any { text ->
@@ -51,12 +51,12 @@ class ConsentSettingsBodyTest {
 
   @Test
   fun `panel creates checkboxes for multiple consents`() {
-    val consents = listOf(
+    val consentsState = ConsentsState(listOf(
       createTestConsent("test.consent.1", "Test Consent 1"),
       createTestConsent("test.consent.2", "Test Consent 2")
-    )
+    ))
     val ui = ConsentSettingsUi(true, true)
-    ui.reset(consents)
+    ui.reset(consentsState)
 
     val checkboxes = UIUtil.findComponentsOfType(ui, JCheckBox::class.java)
     assertTrue(checkboxes.isNotEmpty(), "Panel should contain checkboxes for consents")
@@ -64,9 +64,9 @@ class ConsentSettingsBodyTest {
 
   @Test
   fun `panel in preferences mode adds checkboxes for single consent`() {
-    val consents = listOf(createTestConsent("test.consent.1", "Test Consent"))
+    val consentsState = ConsentsState(listOf(createTestConsent("test.consent.1", "Test Consent")))
     val ui = ConsentSettingsUi(true, true)
-    ui.reset(consents)
+    ui.reset(consentsState)
 
     val checkboxes = UIUtil.findComponentsOfType(ui, JCheckBox::class.java)
     assertTrue(checkboxes.isNotEmpty(), "Preferences mode should add checkbox even for single consent")
@@ -75,7 +75,7 @@ class ConsentSettingsBodyTest {
   @Test
   fun `panel shows empty message when no consents`() {
     val ui = ConsentSettingsUi(true, true)
-    ui.reset(emptyList())
+    ui.reset(ConsentsState(emptyList()))
 
     val hasEmptyMessage = findAllTextContent(ui).any { text ->
       text.contains("no data-sharing options") || text.contains("no data sharing options")
@@ -85,9 +85,9 @@ class ConsentSettingsBodyTest {
 
   @Test
   fun `panel checkbox selection reflects consent accepted state`() {
-    val consents = listOf(createTestConsent("test.consent.1", "Test Consent", isAccepted = true))
+    val consentsState = ConsentsState(listOf(createTestConsent("test.consent.1", "Test Consent", isAccepted = true)))
     val ui = ConsentSettingsUi(true, true)
-    ui.reset(consents)
+    ui.reset(consentsState)
 
     val checkboxes = UIUtil.findComponentsOfType(ui, JCheckBox::class.java)
     assertEquals(1, checkboxes.size)
@@ -96,9 +96,9 @@ class ConsentSettingsBodyTest {
 
   @Test
   fun `panel checkbox not selected for non-accepted consent`() {
-    val consents = listOf(createTestConsent("test.consent.1", "Test Consent", isAccepted = false))
+    val consentsState = ConsentsState(listOf(createTestConsent("test.consent.1", "Test Consent", isAccepted = false)))
     val ui = ConsentSettingsUi(true, true)
-    ui.reset(consents)
+    ui.reset(consentsState)
 
     val checkboxes = UIUtil.findComponentsOfType(ui, JCheckBox::class.java)
     assertEquals(1, checkboxes.size)
@@ -107,38 +107,55 @@ class ConsentSettingsBodyTest {
 
   @Test
   fun `isModified returns false when consents unchanged`() {
-    val consents = listOf(createTestConsent("test.consent.1", "Test Consent", isAccepted = false))
+    val consentsState = ConsentsState(listOf(createTestConsent("test.consent.1", "Test Consent", isAccepted = false)))
     val ui = ConsentSettingsUi(true, true)
-    ui.reset(consents)
+    ui.reset(consentsState)
 
-    assertFalse(ui.isModified(consents), "isModified should return false when consents unchanged")
+    assertFalse(ui.isModified(consentsState), "isModified should return false when consents unchanged")
   }
 
   @Test
   fun `isModified returns true when checkbox toggled`() {
-    val consents = listOf(createTestConsent("test.consent.1", "Test Consent", isAccepted = false))
+    val consentsState = ConsentsState(listOf(createTestConsent("test.consent.1", "Test Consent", isAccepted = false)))
     val ui = ConsentSettingsUi(true, true)
-    ui.reset(consents)
+    ui.reset(consentsState)
 
     val checkboxes = UIUtil.findComponentsOfType(ui, JCheckBox::class.java)
     checkboxes.first().isSelected = true
 
-    assertTrue(ui.isModified(consents), "isModified should return true when checkbox toggled")
+    assertTrue(ui.isModified(consentsState), "isModified should return true when checkbox toggled")
   }
 
   @Test
   fun `apply updates consent state`() {
-    val consents = mutableListOf(createTestConsent("test.consent.1", "Test Consent", isAccepted = false))
+    val consentsState = ConsentsState(listOf(createTestConsent("test.consent.1", "Test Consent", isAccepted = false)))
     val ui = ConsentSettingsUi(true, true)
-    ui.reset(consents)
+    ui.reset(consentsState)
 
     val checkboxes = UIUtil.findComponentsOfType(ui, JCheckBox::class.java)
     checkboxes.first().isSelected = true
 
-    ui.apply(consents)
+    ui.apply(consentsState)
 
-    assertEquals(1, consents.size)
-    assertTrue(consents.first().isAccepted, "Consent should be accepted after apply")
+    assertEquals(1, consentsState.allConsents.size)
+    assertTrue(consentsState.allConsents.first().isAccepted, "Consent should be accepted after apply")
+  }
+
+  @Test
+  fun `state keeps the split of the consents after apply`() {
+    val actualConsent = createTestConsent("test.consent.actual", "Actual Consent", isAccepted = false)
+    val localConsent = createTestConsent("test.consent.local", "Local Consent", isAccepted = false)
+    val consentsState = ConsentsState(mutableListOf(actualConsent, localConsent), setOf(localConsent.id))
+    val ui = ConsentSettingsUi(true, true)
+    ui.reset(consentsState)
+
+    UIUtil.findComponentsOfType(ui, JCheckBox::class.java).forEach { it.isSelected = true }
+    ui.apply(consentsState)
+
+    assertEquals(listOf(actualConsent.id), consentsState.actualConsents.map { it.id })
+    assertEquals(listOf(localConsent.id), consentsState.localConsents.map { it.id })
+    assertTrue(consentsState.actualConsents.all { it.isAccepted }, "Every actual consent should be accepted after apply")
+    assertTrue(consentsState.localConsents.all { it.isAccepted }, "Every local consent should be accepted after apply")
   }
 
   private fun createTestConsent(id: String, name: String, isAccepted: Boolean = false): Consent {

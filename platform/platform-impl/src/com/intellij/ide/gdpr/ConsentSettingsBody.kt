@@ -4,7 +4,6 @@ package com.intellij.ide.gdpr
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.gdpr.ConsentSettingsUi.ConsentStateSupplier
-import com.intellij.ide.gdpr.localConsents.LocalConsentOptions
 import com.intellij.ide.gdpr.ui.consents.ConsentForcedState
 import com.intellij.ide.gdpr.ui.consents.ConsentForcedState.ExternallyDisabled
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
@@ -22,7 +21,6 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.ApiStatus
 
 private const val JETBRAINS_VENDOR_NAME = "JetBrains"
 
@@ -40,8 +38,8 @@ internal fun createNoOptionsConsentSettings(preferencesMode: Boolean): DialogPan
 internal fun createConsentSettings(consentMapping: MutableCollection<ConsentStateSupplier>,
                                    preferencesMode: Boolean,
                                    isJetBrainsVendor: Boolean,
-                                   consents: List<Consent>): DialogPanel {
-  val addCheckBox = preferencesMode || consents.size > 1
+                                   consentsState: ConsentsState): DialogPanel {
+  val addCheckBox = preferencesMode || consentsState.allConsents.size > 1
   val shortCompanyName = if (isJetBrainsVendor) JETBRAINS_VENDOR_NAME else ApplicationInfoImpl.getShadowInstance().shortCompanyName
   return panel {
     if (isJetBrainsVendor) {
@@ -49,7 +47,9 @@ internal fun createConsentSettings(consentMapping: MutableCollection<ConsentStat
         comment(IdeBundle.message("gdpr.data.sharing.title.comment.text", shortCompanyName))
       }
     }
-    val (actualConsents, localConsentsAsConsents) = partitionConsentsAndLocalConsents(consents)
+    val actualConsents = consentsState.actualConsents
+    val localConsentsAsConsents = consentsState.localConsents
+
     if (!actualConsents.isEmpty()) {
       if (isJetBrainsVendor) {
         group(IdeBundle.message("gdpr.data.sharing.consents.title", shortCompanyName)) {
@@ -85,11 +85,6 @@ private fun Panel.createConsentElements(
     val supplier = createConsentElement(consent, addCheckBox)
     consentMapping.add(supplier)
   }
-}
-
-internal fun partitionConsentsAndLocalConsents(consents: List<Consent>): Pair<List<Consent>, List<Consent>> {
-  val localConsentIds = LocalConsentOptions.getLocalConsents().first.map(Consent::getId)
-  return consents.partition { consent -> consent.id !in localConsentIds }
 }
 
 private fun DialogPanel.addBorder(preferencesMode: Boolean) {

@@ -4,6 +4,7 @@ package com.intellij.performanceTesting.freezes.promo
 import com.intellij.diagnostic.ExceptionAutoReportUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdleTracker
+import com.intellij.ide.gdpr.showDataSharingOptionsDialog
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
@@ -17,7 +18,6 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.RegistryManager
-import com.intellij.ui.AppUIUtil
 import com.intellij.util.Time
 import com.intellij.util.application
 import com.jetbrains.performancePlugin.PerformanceTestingBundle
@@ -94,7 +94,7 @@ private class ErrorReportPromoterService(private val coroutineScope: CoroutineSc
                          PerformanceTestingBundle.message("auto.report.enabled.text"),
                          NotificationType.INFORMATION)
               .addAction(NotificationAction.createSimple(PerformanceTestingBundle.message("auto.report.enabled.settings.action")) {
-                AppUIUtil.confirmConsentOptions(AppUIUtil.loadConsentsForEditing())
+                showDataSharingOptionsDialog()
               })
               .notify(project)
           }

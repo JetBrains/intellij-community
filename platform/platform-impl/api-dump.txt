@@ -4556,7 +4556,6 @@ a:com.intellij.ui.AppIcon
 - requestFocus(com.intellij.openapi.wm.IdeFrame):V
 f:com.intellij.ui.AppUIUtil
 - sf:INSTANCE:com.intellij.ui.AppUIUtil
-- f:confirmConsentOptions(java.util.List):Z
 - f:createHorizontalGradientTexture(java.awt.Graphics,java.awt.Color,java.awt.Color,I,I,I):java.awt.TexturePaint
 - bs:createHorizontalGradientTexture$default(com.intellij.ui.AppUIUtil,java.awt.Graphics,java.awt.Color,java.awt.Color,I,I,I,I,java.lang.Object):java.awt.TexturePaint
 - f:createVerticalGradientTexture(java.awt.Graphics,java.awt.Color,java.awt.Color,I,I,I):java.awt.TexturePaint
@@ -4572,7 +4571,6 @@ f:com.intellij.ui.AppUIUtil
 - sf:loadConsentsForEditing():java.util.List
 - sf:loadSmallApplicationIcon(com.intellij.ui.scale.ScaleContext,I):javax.swing.Icon
 - sf:saveConsents(java.util.List):V
-- f:showConsentsAgreementIfNeeded(com.intellij.openapi.diagnostic.Logger,java.util.function.Predicate):Z
 - sf:targetToDevice(java.awt.Component,java.awt.Component):V
 - sf:updateAppWindowIcon(java.awt.Window):V
 - sf:updateForDarcula(Z):V

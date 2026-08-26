@@ -11,6 +11,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.gdpr.Consent
 import com.intellij.ide.gdpr.ConsentOptions
 import com.intellij.ide.gdpr.ConsentSettingsUi
+import com.intellij.ide.gdpr.ConsentsState
 import com.intellij.ide.gdpr.localConsents.LocalConsentOptions
 import com.intellij.ide.gdpr.trace.TraceConsentManager
 import com.intellij.ide.plugins.PluginManagerCore
@@ -44,6 +45,8 @@ import com.intellij.ui.scale.ScaleType
 import com.intellij.ui.svg.loadWithSizes
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.ResourceUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.io.URLUtil
 import com.intellij.util.system.LowLevelLocalMachineAccess
@@ -55,7 +58,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import sun.awt.AWTAccessor
 import java.awt.Color
 import java.awt.Component
-import java.awt.EventQueue
 import java.awt.Graphics
 import java.awt.GraphicsEnvironment
 import java.awt.Image
@@ -65,11 +67,9 @@ import java.awt.TexturePaint
 import java.awt.Window
 import java.awt.event.ActionEvent
 import java.awt.image.BufferedImage
-import java.lang.reflect.InvocationTargetException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.function.Predicate
 import javax.swing.Action
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -230,38 +230,25 @@ object AppUIUtil {
     return wmClass
   }
 
-  fun showConsentsAgreementIfNeeded(log: Logger, filter: Predicate<in Consent?>): Boolean {
-    val (first, second) = ConsentOptions.getInstance().getConsents(filter)
-    if (!second) {
-      return false
-    }
-    else if (@Suppress("SwingIsEventDispatchThread") EventQueue.isDispatchThread()) {
-      return confirmConsentOptions(first)
-    }
-    else {
-      var result = false
-      try {
-        EventQueue.invokeAndWait { result = confirmConsentOptions(first) }
-      }
-      catch (e: InterruptedException) {
-        log.warn(e)
-      }
-      catch (e: InvocationTargetException) {
-        log.warn(e)
-      }
-      return result
-    }
-  }
-
   @JvmStatic
   fun updateForDarcula(isDarcula: Boolean) {
     JBColor.setDark(isDarcula)
     setUseDarkIcons(isDarcula)
   }
 
-  fun confirmConsentOptions(consents: List<Consent>): Boolean {
-    if (consents.isEmpty()) {
-      return false
+  /**
+   * Shows the data sharing dialog and returns the choice of the user.
+   * It returns `null` if the user closed the dialog without a choice.
+   *
+   * This method only shows the UI. The caller reads [consents] and writes the result on a background thread.
+   * Use [com.intellij.ide.gdpr.showDataSharingOptionsDialog] or
+   * [com.intellij.ide.gdpr.showConsentsAgreementIfNeeded] instead of a direct call.
+   */
+  @Internal
+  @RequiresEdt
+  fun showConsentsDialog(consents: ConsentsState): List<Consent>? {
+    if (consents.allConsents.isEmpty()) {
+      return null
     }
 
     val ui = ConsentSettingsUi(false)
@@ -279,13 +266,13 @@ object AppUIUtil {
       override fun createCenterPanel() = ui.component
 
       override fun createActions(): Array<Action> {
-        if (consents.size > 1) {
+        if (consents.allConsents.size > 1) {
           val actions = super.createActions()
           setOKButtonText(IdeBundle.message("button.save"))
           setCancelButtonText(IdeBundle.message("button.skip"))
           return actions
         }
-        setOKButtonText(consents.iterator().next().name)
+        setOKButtonText(consents.allConsents.iterator().next().name)
         return arrayOf(okAction, object : DialogWrapperAction(IdeBundle.message("button.do.not.send")) {
           override fun doAction(e: ActionEvent) {
             close(NEXT_USER_EXIT_CODE)
@@ -303,27 +290,27 @@ object AppUIUtil {
     dialog.isModal = true
     dialog.title = IdeBundle.message("dialog.title.data.sharing")
     dialog.pack()
-    if (consents.size < 2) {
+    if (consents.allConsents.size < 2) {
       dialog.setSize(dialog.window.width, dialog.window.height + scale(75))
     }
     dialog.show()
     val exitCode = dialog.exitCode
     if (exitCode == DialogWrapper.CANCEL_EXIT_CODE) {
-      return false // don't save any changes in this case: a user hasn't made a choice
+      return null // don't save any changes in this case: a user hasn't made a choice
     }
-    val result: List<Consent>
-    if (consents.size == 1) {
-      result = listOf(consents.iterator().next().derive(exitCode == DialogWrapper.OK_EXIT_CODE))
+    if (consents.allConsents.size == 1) {
+      return listOf(consents.allConsents.iterator().next().derive(exitCode == DialogWrapper.OK_EXIT_CODE))
     }
-    else {
-      result = ArrayList()
-      ui.apply(result)
-    }
-    saveConsents(result)
-    return true
+    return ui.getState()
   }
 
+  /**
+   * Reads the consents from the disk.
+   *
+   * A read of the consents is an IO operation, so a background thread is required.
+   */
   @JvmStatic
+  @RequiresBackgroundThread
   fun loadConsentsForEditing(): List<Consent> {
     val options = ConsentOptions.getInstance()
     var result = options.consents.first
@@ -359,8 +346,14 @@ object AppUIUtil {
     }
   }
 
+  /**
+   * Reads the local consents from the disk.
+   *
+   * A read of the local consents is an IO operation, so a background thread is required.
+   */
   @JvmStatic
   @Internal
+  @RequiresBackgroundThread
   fun loadLocalConsentsAsConsentsForEditing(): List<Consent> {
     val localConsents = LocalConsentOptions.getLocalConsents().first.toMutableList()
     if (TraceConsentManager.getInstance()?.canDisplayTraceConsent() != true) {
@@ -384,7 +377,13 @@ object AppUIUtil {
     }
   }
 
+  /**
+   * Writes the consents to the disk.
+   *
+   * A write of the consents is an IO operation, so a background thread is required.
+   */
   @JvmStatic
+  @RequiresBackgroundThread
   fun saveConsents(consents: List<Consent>) {
     if (consents.isEmpty()) {
       return
@@ -416,7 +415,13 @@ object AppUIUtil {
     }
   }
 
+  /**
+   * Writes the local consents to the disk.
+   *
+   * A write of the local consents is an IO operation, so a background thread is required.
+   */
   @Internal
+  @RequiresBackgroundThread
   fun saveConsentsAsLocalConsents(consents: List<Consent>) {
     LocalConsentOptions.setLocalConsents(consents)
   }

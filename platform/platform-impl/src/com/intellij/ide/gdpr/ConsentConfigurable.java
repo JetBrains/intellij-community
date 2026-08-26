@@ -2,31 +2,33 @@
 package com.intellij.ide.gdpr;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.gdpr.localConsents.LocalConsentOptions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurableBase;
-import com.intellij.ui.AppUIUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import static com.intellij.ide.gdpr.ConsentsUiLoadingKt.applyConsentsFromConfigurable;
+import static com.intellij.ide.gdpr.ConsentsUiLoadingKt.loadConsentsForConfigurable;
 
 @ApiStatus.Internal
-public final class ConsentConfigurable extends ConfigurableBase<ConsentSettingsUi, List<Consent>> {
-  private final List<Consent> myConsents;
+public final class ConsentConfigurable extends ConfigurableBase<ConsentSettingsUi, ConsentsState> {
+  private ConsentsState myConsents = null;
 
   public ConsentConfigurable() {
     super("consents", IdeBundle.message("consent.configurable"), "preferences.usage.statistics");
-    myConsents = new ArrayList<>(AppUIUtil.loadConsentsForEditing());
-    myConsents.addAll(AppUIUtil.loadLocalConsentsAsConsentsForEditing());
-    myConsents.sort(Comparator.comparing(ConsentBase::getId));
   }
 
   @Override
-  protected @NotNull List<Consent> getSettings() {
+  public void reset() {
+    if (myConsents == null) {
+      myConsents = loadConsentsForConfigurable();
+    }
+
+    super.reset();
+  }
+
+  @Override
+  protected @NotNull ConsentsState getSettings() {
     return myConsents;
   }
 
@@ -34,16 +36,16 @@ public final class ConsentConfigurable extends ConfigurableBase<ConsentSettingsU
   protected ConsentSettingsUi createUi() {
     ConsentSettingsUi ui = new ConsentSettingsUi(true) {
       @Override
-      public void apply(@NotNull List<Consent> consents) {
+      public void apply(@NotNull ConsentsState consents) {
         super.apply(consents);
-        List<String> localSettingIds = ContainerUtil.map(LocalConsentOptions.INSTANCE.getLocalConsents().getFirst(), Consent::getId);
-        AppUIUtil.saveConsents(ContainerUtil.filter(consents, consent -> !localSettingIds.contains(consent.getId())));
-        AppUIUtil.INSTANCE.saveConsentsAsLocalConsents(ContainerUtil.filter(consents, consent -> localSettingIds.contains(consent.getId())));
+
+        applyConsentsFromConfigurable(consents);
       }
     };
 
     // When building searchable options, ensure we return a non-empty UI
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      myConsents = loadConsentsForConfigurable();
       ui.reset(myConsents);
     }
     return ui;

@@ -4,12 +4,14 @@ package com.intellij.ide.gdpr
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Data structure describing all possible Consent JSON attributes
  */
 @Serializable
-internal class ConsentAttributes {
+@ApiStatus.Internal
+class ConsentAttributes {
   companion object {
     @OptIn(ExperimentalSerializationApi::class)
     internal val jsonConfig by lazy {
