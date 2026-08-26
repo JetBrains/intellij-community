@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Component
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
@@ -35,11 +36,11 @@ fun IjentCallerContext.allowCancellableNio(): Boolean {
 
 fun IjentCallerContext.unavailableDialogTimeout(): Duration {
   return if (IjentRegistry.getInstance().isEnabled("ijent.unavailable.dialog.enabled", true)) {
-    if (isDispatchThread) {
+    if (isDispatchThread || isWrite) {
       500.milliseconds
     }
     else {
-      1000.milliseconds
+      5000.milliseconds
     }
   }
   else Duration.INFINITE
@@ -90,7 +91,10 @@ fun CoroutineContext.coroutineNameAppended(name: String, separator: String = " >
 }
 
 interface ReconnectUiHandle {
-  fun requestDialogImmediately(): ReconnectUiDialog
+  suspend fun requestDialogImmediately(): ReconnectUiDialog?
 }
 
-interface ReconnectUiDialog
+interface ReconnectUiDialog {
+  val edtAndModality: CoroutineContext
+  val component: Component
+}

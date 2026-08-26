@@ -30,6 +30,7 @@ import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandlerRes
 import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandlerResult.ProjectCloseDecision
 import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandlerResult.UnrelatedIjent
 import com.intellij.platform.ijent.community.impl.nio.ReconnectUiDialogImpl
+import com.intellij.platform.ijent.community.impl.nio.ReconnectUiHandleImpl
 import com.intellij.platform.ijent.community.ui.actions.IjentImplBundle
 import com.intellij.platform.ijent.community.ui.actions.dashboard.IjentStatDashboard
 import com.intellij.platform.ijent.community.ui.actions.dashboard.printTable
@@ -37,11 +38,14 @@ import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.util.application
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.computeDetached
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.launchOnShow
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainCoroutineDispatcher
@@ -61,7 +65,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.time.Duration.Companion.seconds
 
-private class EdtOnceTask : OnceTask<ProjectCloseDecision>() {
+private class EdtOnceTask : OnceTask<ProjectCloseDecision, ReconnectUiDialogImpl>() {
   override suspend fun <R> executeUnderLockIfNotAlreadyAcquired(f: suspend () -> R): R {
     return if (checkNotNull(IjentCallerContext.getSaved()).isDispatchThread) {
       check(ApplicationManager.getApplication().isDispatchThread)
@@ -80,10 +84,14 @@ private class EdtOnceTask : OnceTask<ProjectCloseDecision>() {
   }
 }
 
+/**
+ * Reuses the same [EdtOnceTask] mutex for a generation of projects, replacing it only after
+ * that generation is closed and new projects are opened on the same IJent.
+ */
 @Service
-internal class NotRespondingFilesystemDialogService {
-  private val pendingRequests = ConcurrentHashMap<EelDescriptor, Pair<List<Project>, OnceTask<ProjectCloseDecision>>>()
-  suspend fun doOnceOrWait(ijentId: EelDescriptor, projects: List<Project>, f: suspend () -> ProjectCloseDecision): ProjectCloseDecision {
+private class NotRespondingFilesystemDialogService {
+  private val pendingRequests = ConcurrentHashMap<EelDescriptor, Pair<List<Project>, EdtOnceTask>>()
+  suspend fun doOnceOrWait(ijentId: EelDescriptor, projects: List<Project>, onComputing: (Deferred<ReconnectUiDialogImpl>) -> Unit, f: suspend (CompletableDeferred<ReconnectUiDialogImpl>) -> ProjectCloseDecision): ProjectCloseDecision {
     val onceTask = pendingRequests.compute(ijentId) { _, v ->
       when {
         v == null -> projects to EdtOnceTask()
@@ -92,9 +100,7 @@ internal class NotRespondingFilesystemDialogService {
         else -> (v.first + projects).distinct() to v.second
       }
     }!!.second
-    return onceTask.getOrCompute {
-      f()
-    }
+    return onceTask.getOrCompute(onComputing, f)
   }
 
   companion object {
@@ -103,7 +109,7 @@ internal class NotRespondingFilesystemDialogService {
 }
 
 internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
-  override suspend fun showModalDialog(eelDescriptor: EelDescriptor, uiHandle: ReconnectUiDialogImpl): IjentUnavailableHandlerResult {
+  override suspend fun showModalDialog(eelDescriptor: EelDescriptor, uiHandle: ReconnectUiHandleImpl): IjentUnavailableHandlerResult {
     val activeProject = ProjectUtil.getActiveProject()
     val projectsToClose = ProjectManager.getInstance().openProjects.filter {
       it.getEelDescriptor() == eelDescriptor
@@ -115,7 +121,7 @@ internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
       return UnrelatedIjent(eelDescriptor)
     }
     LOG.warn("Ijent is unavailable. Modal dialog will be shown.")
-    return NotRespondingFilesystemDialogService.getInstance().doOnceOrWait(eelDescriptor, projectsToClose) {
+    return NotRespondingFilesystemDialogService.getInstance().doOnceOrWait(eelDescriptor, projectsToClose, uiHandle::setDialogSession) { dialogSession ->
       coroutineScope {
         val logJob = launch(Dispatchers.IO) {
           val ijentSession = eelDescriptor.getResolvedEelMachine().asSafely<IjentMachine>()?.getCachedIjentSession()
@@ -131,7 +137,7 @@ internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
           }
         }
         try {
-          showCloseProjectDialog(eelDescriptor, projectsToClose).also {
+          showCloseProjectDialog(eelDescriptor, dialogSession, projectsToClose).also {
             eelDescriptor.getResolvedEelMachine().asSafely<IjentMachine>()?.getCachedIjentSession()?.close()
           }
         }
@@ -142,7 +148,7 @@ internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
     }
   }
 
-  private suspend fun showCloseProjectDialog(eelDescriptor: EelDescriptor, projects: List<Project>): ProjectCloseDecision {
+  private suspend fun showCloseProjectDialog(eelDescriptor: EelDescriptor, dialogSession: CompletableDeferred<ReconnectUiDialogImpl>, projects: List<Project>): ProjectCloseDecision {
     val coroutineContext = currentCoroutineContext()
     val closeDecision = suspendCancellableCoroutine { cont ->
       val builder = DialogBuilder(projects.first()).apply {
@@ -163,6 +169,7 @@ internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
       // It's crucial here to pump coroutine event loop while the dialog is shown
       // because otherwise canceling the dialog would not even be dispatched,
       // and the dialog (created to visualize the freeze) becomes a cause of the freeze to continue.
+      builder.dialogWrapper.registerWhenShowing(dialogSession)
       val exitCode = builder.showWithPump(coroutineContext)
 
       if (exitCode == DialogWrapper.OK_EXIT_CODE) {
@@ -235,6 +242,20 @@ internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
   }
 }
 
+private fun DialogWrapper.registerWhenShowing(dialogSession: CompletableDeferred<ReconnectUiDialogImpl>) {
+  application.invokeLater(
+    {
+      if (contentPane.isShowing) {
+        dialogSession.complete(ReconnectUiDialogImpl(ModalityState.stateForComponent(contentPane), contentPane))
+      }
+      else if (dialogSession.isActive && !isDisposed) {
+        registerWhenShowing(dialogSession)
+      }
+    },
+    ModalityState.any(),
+  )
+}
+
 private fun DialogBuilder.showWithPump(coroutineContext: CoroutineContext): Int {
   @Suppress("INVISIBLE_REFERENCE")
   return when (val loop = coroutineContext[ContinuationInterceptor]) {
@@ -243,7 +264,7 @@ private fun DialogBuilder.showWithPump(coroutineContext: CoroutineContext): Int 
       // Use active waiting since it's the simplest way. Listening for dispatched events is more complex.
       val future = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(
         {
-          ApplicationManager.getApplication().invokeLater(
+          application.invokeLater(
             {
               @Suppress("RAW_RUN_BLOCKING")
               runBlocking(loop) { }
