@@ -2,7 +2,10 @@
   <dependencies>
     <module name="intellij.xml.emmet"/>
     <module name="intellij.platform.backend"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.xml.emmet.shared"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

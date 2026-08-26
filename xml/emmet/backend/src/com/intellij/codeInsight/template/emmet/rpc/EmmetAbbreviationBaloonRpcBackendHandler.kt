@@ -7,6 +7,7 @@ import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.platform.rpc.backend.RemoteApiProvider
+import com.intellij.xml.emmet.shared.EmmetAbbreviationBaloonRpc
 import fleet.rpc.remoteApiDescriptor
 
 private val log = logger<EmmetAbbreviationBaloonRpcBackendHandler>()

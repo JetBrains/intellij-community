@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.LightColors
 import com.intellij.ui.TextFieldWithHistory
+import com.intellij.xml.emmet.shared.EmmetAbbreviationBaloonRpc
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelChildren

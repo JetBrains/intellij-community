@@ -14,6 +14,7 @@
     <module name="intellij.xml.psi.impl"/>
     <module name="intellij.xml.analysis"/>
     <module name="intellij.xml.emmet"/>
+    <module name="intellij.xml.emmet.shared"/>
     <module name="intellij.xml.emmet.backend"/>
     <module name="intellij.xml.emmet.frontend"/>
     <module name="intellij.xml.ui.common"/>

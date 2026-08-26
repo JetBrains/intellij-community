@@ -85,6 +85,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
+        "//xml/emmet/shared",
         "@lib//:kotlin-stdlib-provided",
         "//platform/kernel/rpc.backend",
         ":xml_emmet_provided",
@@ -117,6 +118,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":backend",
+        "//xml/emmet/shared:shared_test_lib",
         "@lib//:kotlin-stdlib-provided",
         "//xml/emmet",
         "//xml/emmet:emmet_test_lib",

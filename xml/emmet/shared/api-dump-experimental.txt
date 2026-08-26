@@ -1,0 +1,6 @@
+f:com.intellij.xml.emmet.shared.EmmetAbbreviationBaloonRpc$_generated_RemoteApiDescriptor
+- fleet.rpc.RemoteApiDescriptor
+- *bf:call(com.intellij.xml.emmet.shared.EmmetAbbreviationBaloonRpc,java.lang.String,java.lang.Object[],kotlin.coroutines.Continuation):java.lang.Object
+- *bf:clientStub(kotlin.jvm.functions.Function3):com.intellij.xml.emmet.shared.EmmetAbbreviationBaloonRpc
+- *bf:getApiFqn():java.lang.String
+- *bf:getSignature(java.lang.String):fleet.rpc.RpcSignature
