@@ -24,3 +24,11 @@ data class QuickFixDto(
   val isSelectable: Boolean = false,
   val priority: PriorityDto? = null
 )
+
+@ApiStatus.Internal
+@Serializable
+data class QuickFixModelDto(
+  val quickFixModelId: String,
+  val quickFixes: List<QuickFixDto>,
+  val offset: Int,
+)

@@ -1,0 +1,200 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.problemsView.backend
+
+import com.intellij.analysis.problemsView.toolWindow.splitApi.actions.ProblemsViewEditorUtils
+import com.intellij.analysis.problemsView.toolWindow.splitApi.actions.QuickFixModelDto
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.IntentionSource
+import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
+import com.intellij.codeInsight.quickfix.LazyQuickFixUpdater
+import com.intellij.ide.vfs.VirtualFileId
+import com.intellij.ide.vfs.virtualFile
+import com.intellij.openapi.application.ApplicationManager.getApplication
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.ex.MarkupModelEx
+import com.intellij.openapi.editor.ex.RangeHighlighterEx
+import com.intellij.openapi.editor.impl.DocumentMarkupModel
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.platform.problemsView.backend.actions.BackendQuickFixModel
+import com.intellij.platform.problemsView.backend.actions.IntentionActionWithIds
+import com.intellij.platform.problemsView.backend.actions.IntentionOptionWithId
+import com.intellij.psi.PsiManager
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import org.jetbrains.annotations.TestOnly
+import java.util.UUID
+import java.util.concurrent.atomic.AtomicReference
+
+
+@Service(Service.Level.PROJECT)
+internal class BackendProblemsViewQuickFixService(private val project: Project) {
+  private val currentQuickFixModel = AtomicReference<BackendQuickFixModel?>()
+
+  suspend fun loadQuickFixes(fileId: VirtualFileId, highlighterId: Long): QuickFixModelDto? {
+    val pendingQuickFixModel = BackendQuickFixModel(quickFixModelId = UUID.randomUUID().toString())
+    currentQuickFixModel.set(pendingQuickFixModel)
+
+    try {
+      val loadedQuickFixModel = loadQuickFixModel(pendingQuickFixModel, fileId, highlighterId) ?: return null
+      if (!currentQuickFixModel.compareAndSet(pendingQuickFixModel, loadedQuickFixModel)) return null
+
+      return loadedQuickFixModel.toDto()
+    }
+    finally {
+      currentQuickFixModel.compareAndSet(pendingQuickFixModel, null)
+    }
+  }
+
+  private suspend fun loadQuickFixModel(
+    pendingQuickFixModel: BackendQuickFixModel,
+    fileId: VirtualFileId,
+    highlighterId: Long,
+  ): BackendQuickFixModel? {
+    val file = fileId.virtualFile() ?: return null
+    val (highlighter, info) = findHighlightInfo(file, highlighterId) ?: return null
+
+    LazyQuickFixUpdater.getInstance(project).waitQuickFixesSynchronously(info, project, highlighter.document)
+
+    val quickFixes = readAction {
+      if (!highlighter.isValid || findHighlighter(file, highlighterId) !== highlighter) return@readAction null
+      collectAvailableQuickFixes(info, file, project).takeIf { it.isNotEmpty() }
+    } ?: return null
+
+    return pendingQuickFixModel.copy(
+      file = file,
+      offset = info.actualStartOffset,
+      quickFixes = quickFixes,
+    )
+  }
+
+  fun discardQuickFixes() {
+    currentQuickFixModel.set(null)
+  }
+
+  @RequiresReadLock
+  internal fun collectAvailableQuickFixes(info: HighlightInfo, file: VirtualFile, project: Project): List<IntentionActionWithIds> {
+    if (!file.isValid) return emptyList()
+
+    val psiFile = PsiManager.getInstance(project).findFile(file)
+    if (psiFile == null) return emptyList()
+
+    val editor = ProblemsViewEditorUtils.getEditor(psiFile, showEditor = false)
+    if (editor == null) return emptyList()
+
+    val quickFixes = mutableListOf<IntentionActionWithIds>()
+
+    info.findRegisteredQuickFix { intentionAction, _ ->
+      val action = intentionAction.action
+      val isActionAvailable = runCatching {
+        action.isAvailable(psiFile.project, editor, psiFile)
+      }.getOrDefault(false)
+
+      if (isActionAvailable) {
+        val options = intentionAction.getOptions(psiFile, editor).map { option ->
+          IntentionOptionWithId(
+            action = option,
+            intentionId = UUID.randomUUID().toString(),
+            text = option.text,
+            familyName = option.familyName
+          )
+        }
+
+        quickFixes.add(
+          IntentionActionWithIds(
+            descriptor = intentionAction,
+            intentionId = UUID.randomUUID().toString(),
+            options = options,
+            text = action.text,
+            familyName = action.familyName
+          )
+        )
+      }
+      null
+    }
+
+    return quickFixes
+  }
+
+  suspend fun executeQuickFix(quickFixModelId: String, intentionId: String) {
+    val quickFixModel = currentQuickFixModel.get()?.takeIf { it.quickFixModelId == quickFixModelId } ?: return
+    val file = quickFixModel.file ?: return
+    val action = quickFixModel.findQuickFixById(intentionId) ?: return
+
+    if (!currentQuickFixModel.compareAndSet(quickFixModel, null)) return
+    if (!file.isValid) return
+
+    executeQuickFix(file, quickFixModel.offset, action)
+  }
+
+  private suspend fun executeQuickFix(file: VirtualFile, offset: Int, action: IntentionAction) {
+    val (psiFile, editor) = readAction {
+      val psiFile = PsiManager.getInstance(project).findFile(file)
+      val editor = psiFile?.let { ProblemsViewEditorUtils.getEditor(it, showEditor = true) }
+      psiFile to editor
+    }
+    if (psiFile == null || editor == null) return
+
+    editor.contentComponent.requestFocus()
+    val modality = ModalityState.stateForComponent(editor.contentComponent)
+    getApplication().invokeLater(
+      {
+        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(
+          {
+            ShowIntentionActionsHandler.chooseActionAndInvoke(
+              psiFile,
+              editor,
+              action,
+              action.text,
+              offset,
+              IntentionSource.PROBLEMS_VIEW,
+            )
+          },
+          modality,
+        )
+      },
+      modality,
+      project.disposed,
+    )
+  }
+
+  private fun BackendQuickFixModel.toDto(): QuickFixModelDto? {
+    val currentQuickFixModel = currentQuickFixModel.get() ?: return null
+    if (this !== currentQuickFixModel || file == null) return null
+
+    return QuickFixModelDto(
+      quickFixModelId,
+      quickFixes.map(::convertIntentionActionToDto),
+      offset
+    )
+  }
+
+  private fun findHighlighter(file: VirtualFile, highlighterId: Long): RangeHighlighterEx? {
+    val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
+    val markupModel = DocumentMarkupModel.forDocument(document, project, false) as? MarkupModelEx ?: return null
+    return markupModel.allHighlighters.filterIsInstance<RangeHighlighterEx>().firstOrNull { it.id == highlighterId }
+  }
+
+  private suspend fun findHighlightInfo(file: VirtualFile, highlighterId: Long): Pair<RangeHighlighterEx, HighlightInfo>? {
+    return readAction {
+      val highlighter = findHighlighter(file, highlighterId) ?: return@readAction null
+      val info = HighlightInfo.fromRangeHighlighter(highlighter) ?: return@readAction null
+      highlighter to info
+    }
+  }
+
+  @TestOnly
+  fun hasLoadedQuickFixes(): Boolean {
+    val quickFixModel = currentQuickFixModel.get() ?: return false
+    return quickFixModel.file != null
+  }
+
+  companion object {
+    fun getInstance(project: Project): BackendProblemsViewQuickFixService = project.service()
+  }
+}

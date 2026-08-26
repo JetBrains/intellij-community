@@ -9,48 +9,33 @@ import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.ide.ui.icons.icon
-import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.problemsView.frontend.FrontendHighlightingProblem
-import com.intellij.platform.problemsView.shared.ProblemsViewApi
-import com.intellij.platform.problemsView.shared.ProblemsViewCoroutineScopeHolder
+import com.intellij.platform.problemsView.frontend.FrontendProblemsViewQuickFixService
 import com.intellij.psi.PsiFile
-import com.intellij.platform.project.projectId
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 @ApiStatus.Internal
-class FrontendIntentionAction : CustomizableIntentionAction, PriorityAction {
-  constructor(quickFixDto: QuickFixDto, file: VirtualFile, problemId: String) {
-    this.text = quickFixDto.text
-    this.familyName = quickFixDto.familyName
-    this.isSelectable = quickFixDto.isSelectable
-    this.hasOptions = quickFixDto.hasOptions
-    this.priority = when (quickFixDto.priority) {
-      PriorityDto.TOP -> PriorityAction.Priority.TOP
-      PriorityDto.HIGH -> PriorityAction.Priority.HIGH
-      PriorityDto.NORMAL -> PriorityAction.Priority.NORMAL
-      PriorityDto.LOW -> PriorityAction.Priority.LOW
-      PriorityDto.BOTTOM -> PriorityAction.Priority.BOTTOM
-      null -> PriorityAction.Priority.NORMAL
-    }
-    this.intentionId = quickFixDto.intentionId
-    this.file = file
-    this.problemId = problemId
-    this.icon = quickFixDto.iconId?.icon()
-  }
+class FrontendIntentionAction internal constructor(
+  quickFixDto: QuickFixDto,
+  private val quickFixModelId: String,
+) : CustomizableIntentionAction, PriorityAction {
 
-  val icon: Icon?
-  private val text: String
-  private val familyName: String
-  private val isSelectable: Boolean
-  private val hasOptions: Boolean
-  private val priority: PriorityAction.Priority
-  private val intentionId: String
-  private val file: VirtualFile
-  private val problemId: String
+  val icon: Icon? = quickFixDto.iconId?.icon()
+  private val text: String = quickFixDto.text
+  private val familyName: String = quickFixDto.familyName
+  private val isSelectable: Boolean = quickFixDto.isSelectable
+  private val hasOptions: Boolean = quickFixDto.hasOptions
+  private val intentionId: String = quickFixDto.intentionId
+  private val priority: PriorityAction.Priority = when (quickFixDto.priority) {
+    PriorityDto.TOP -> PriorityAction.Priority.TOP
+    PriorityDto.HIGH -> PriorityAction.Priority.HIGH
+    PriorityDto.NORMAL -> PriorityAction.Priority.NORMAL
+    PriorityDto.LOW -> PriorityAction.Priority.LOW
+    PriorityDto.BOTTOM -> PriorityAction.Priority.BOTTOM
+    null -> PriorityAction.Priority.NORMAL
+  }
 
   override fun getText(): @IntentionName String = text
 
@@ -66,28 +51,26 @@ class FrontendIntentionAction : CustomizableIntentionAction, PriorityAction {
 
   override fun getPriority(): PriorityAction.Priority = priority
 
-  override fun invoke(project: Project, editor: Editor?, psiFile: PsiFile?, ) {
-    val virtualFile = psiFile?.virtualFile ?: file
-
-    ProblemsViewCoroutineScopeHolder.getInstance().launch {
-      ProblemsViewApi.getInstance().executeQuickFix(
-        project.projectId(),
-        virtualFile.rpcId(),
-        problemId,
-        intentionId
-      )
-    }
+  override fun invoke(project: Project, editor: Editor?, psiFile: PsiFile?) {
+    FrontendProblemsViewQuickFixService.getInstance(project).executeQuickFix(quickFixModelId, intentionId)
   }
 }
 
-@ApiStatus.Internal
-fun dtoToIntentionActionDescriptor(quickFixDto: QuickFixDto, problem: FrontendHighlightingProblem): HighlightInfo.IntentionActionDescriptor{
-  val intentionAction = FrontendIntentionAction(quickFixDto, problem.file, problem.id)
-
+internal fun dtoToIntentionActionDescriptor(
+  quickFixDto: QuickFixDto,
+  quickFixModelId: String,
+): HighlightInfo.IntentionActionDescriptor {
+  val intentionAction = FrontendIntentionAction(quickFixDto, quickFixModelId)
   val intentionOptions = quickFixDto.options.map { optionDto ->
-    FrontendIntentionAction(optionDto, problem.file, problem.id)
+    FrontendIntentionAction(optionDto, quickFixModelId)
   }
+  return createDescriptor(intentionAction, intentionOptions)
+}
 
+private fun createDescriptor(
+  intentionAction: FrontendIntentionAction,
+  intentionOptions: List<FrontendIntentionAction>,
+): HighlightInfo.IntentionActionDescriptor {
   return HighlightInfo.IntentionActionDescriptor(
     intentionAction,
     intentionOptions,
@@ -96,6 +79,6 @@ fun dtoToIntentionActionDescriptor(quickFixDto: QuickFixDto, problem: FrontendHi
     null,
     null,
     null,
-    null
+    null,
   )
 }
