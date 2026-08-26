@@ -35,7 +35,7 @@ import java.util.stream.Stream
 @ParameterizedClass(name = "{0}")
 @MethodSource("squashOperations")
 @Suppress("unused")
-internal class GitSquashOperationTestBase private constructor(private val testType: String, private val operation: SquashTestOperation) {
+internal class GitSquashOperationTest private constructor(private val testType: String, private val operation: SquashTestOperation) {
   companion object {
     @JvmStatic
     fun squashOperations(): Stream<Arguments> =
