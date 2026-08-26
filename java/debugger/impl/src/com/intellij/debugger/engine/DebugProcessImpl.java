@@ -234,7 +234,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final Map<Type, Object> myNodeRenderersMap = Collections.synchronizedMap(new HashMap<>());
 
   private final SuspendManagerImpl mySuspendManager = new SuspendManagerImpl(this);
-  protected CompoundPositionManager myPositionManager = CompoundPositionManager.DISABLED;
+  protected volatile CompoundPositionManager myPositionManager = CompoundPositionManager.DISABLED;
   private volatile @NotNull DebuggerManagerThreadImpl myDebuggerManagerThread;
 
   private final Semaphore myWaitFor = new Semaphore();
@@ -1144,7 +1144,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
             forEachSafe(myDebugProcessListeners, it -> it.processDetached(this, closedByUser));
           }
           finally {
-            callback.accept(vmData);
+            try {
+              callback.accept(vmData);
+            }
+            finally {
+              myPositionManager = CompoundPositionManager.DISABLED;
+            }
           }
         }
       }
@@ -1181,7 +1186,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     if (myRootProcessClosed.compareAndSet(false, true)) {
       myDebuggerManagerThread.closeAndCancel();
       myWaitFor.up();
-      myPositionManager = CompoundPositionManager.DISABLED;
     }
   }
 
