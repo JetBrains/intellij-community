@@ -1,7 +1,6 @@
 package com.intellij.python.pyproject.model.internal
 
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
@@ -9,7 +8,6 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.model.internal.workspaceBridge.pyProjectTomlEntity
 import com.intellij.workspaceModel.ide.legacyBridge.findModule
-import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntityIfNotDisposed
 import com.intellij.workspaceModel.ide.toPath
 import kotlinx.coroutines.Dispatchers
@@ -24,14 +22,13 @@ internal suspend fun Module.getPyProjectTomlFileImpl(): VirtualFile? = readActio
 }
 
 internal suspend fun suggestSdkImpl(module: Module): SuggestedSdk? = withContext(Dispatchers.Default) {
-  val entity = module.findModuleEntityIfNotDisposed().pyProjectTomlEntity ?: return@withContext null
+  val moduleEntity = module.findModuleEntityIfNotDisposed()
+  val pyProjectEntity = moduleEntity.pyProjectTomlEntity ?: return@withContext null
+
+  val moduleId = moduleEntity.symbolicId
+
   val storage = module.project.workspaceModel.currentSnapshot
-  val moduleId = module.findModuleEntity(storage)?.symbolicId
-  if (moduleId == null) {
-    logger.warn("Module $module doesn't exist in a storage, no SDK could be suggested")
-    return@withContext null
-  }
-  val toolWithWorkspace = entity.participatedTools.firstNotNullOfOrNull { (tool, workspaceRootModuleId) ->
+  val toolWithWorkspace = pyProjectEntity.participatedTools.firstNotNullOfOrNull { (tool, workspaceRootModuleId) ->
     if (workspaceRootModuleId == moduleId) {
       null // This module is a workspace root and can't be `SameAs()` itself
     }
@@ -51,10 +48,9 @@ internal suspend fun suggestSdkImpl(module: Module): SuggestedSdk? = withContext
     SuggestedSdk.SameAs(workspaceRootModule, tool)
   }
   else {
-    val tools = entity.participatedTools.keys
-    val dirWithToml = entity.dirWithToml.toPath()
+    val tools = pyProjectEntity.participatedTools.keys
+    val dirWithToml = pyProjectEntity.dirWithToml.toPath()
     SuggestedSdk.PyProjectIndependent(preferTools = tools, moduleDir = dirWithToml)
   }
 }
 
-private val logger = fileLogger()

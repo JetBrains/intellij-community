@@ -14,6 +14,8 @@ import com.intellij.python.pyproject.model.api.configureSdkIfNeeded
 import com.jetbrains.python.module.PyModuleService
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
@@ -35,12 +37,17 @@ suspend fun configureSdkAutomatically(project: Project): Unit = withContext(Disp
       }
     }
     else -> {
-      for (module in pythonModules) {
-        module.configureSdkIfNeeded { autoConfigureSdkExistingOnly() }?.run {
-          log(module) { error ->
-            when (val r = error.createSdkInfo) {
-              is CreateSdkInfo.ExistingEnv -> "Files exist on disk, but no SDK configured"
-              is CreateSdkInfo.WillCreateEnv -> "Files must be created with ${r.intentionName}"
+      supervisorScope {
+        for (module in pythonModules) {
+          // If module is disposed, the coroutine gets cancelled, but we still need to configure other modules
+          launch {
+            module.configureSdkIfNeeded { autoConfigureSdkExistingOnly() }?.run {
+              log(module) { error ->
+                when (val r = error.createSdkInfo) {
+                  is CreateSdkInfo.ExistingEnv -> "Files exist on disk, but no SDK configured"
+                  is CreateSdkInfo.WillCreateEnv -> "Files must be created with ${r.intentionName}"
+                }
+              }
             }
           }
         }

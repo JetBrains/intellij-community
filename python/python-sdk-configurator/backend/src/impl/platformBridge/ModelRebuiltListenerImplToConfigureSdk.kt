@@ -12,19 +12,22 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-private val configureMutex = Mutex()
 
 internal class ModelRebuiltListenerImplToConfigureSdk : ModelRebuiltListener {
 
   override fun modelRebuilt(project: Project) {
-    project.service<MyService>().scope.launch(Dispatchers.Default) {
-      configureMutex.withLock {
-        configureSdkAutomatically(project)
+    project.service<MyService>().run {
+      scope.launch(Dispatchers.Default) {
+        configureMutex.withLock {
+          configureSdkAutomatically(project)
+        }
       }
     }
   }
 }
 
 @Service(Level.PROJECT)
-private class MyService(val scope: CoroutineScope)
+private class MyService(val scope: CoroutineScope) {
+  val configureMutex = Mutex()
+}
 
