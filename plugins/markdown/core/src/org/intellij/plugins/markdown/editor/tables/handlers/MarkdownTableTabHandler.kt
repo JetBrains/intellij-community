@@ -9,10 +9,12 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.siblings
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.firstNonWhitespaceOffset
 import org.intellij.plugins.markdown.editor.tables.TableUtils.lastNonWhitespaceOffset
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
@@ -42,6 +44,9 @@ internal abstract class MarkdownTableTabHandler(private val baseHandler: EditorA
     val file = documentManager.getPsiFile(document) ?: return false
     PsiDocumentManager.getInstance(project).commitDocument(document)
     val cell = TableUtils.findCell(file, caretOffset) ?: return false
+    if (cell.parentOfType<MarkdownListItem>() != null) {
+      return false
+    }
     val nextCell = findNextCell(cell, forward)
     if (nextCell != null) {
       val offset = when {
