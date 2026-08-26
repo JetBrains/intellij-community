@@ -710,37 +710,39 @@ class JavaDocParser(
 
   /** Attempt to parse a class with a potential generic type attached to it (e.g. `List<String>`, `Map<String, String>`) */
   private fun parseMaybeGenericType(isReferenceHolder: Boolean) {
-    var continueParsing = true
     val refStart = builder.mark()
     val newElement = if (isReferenceHolder) JavaDocSyntaxElementType.DOC_REFERENCE_HOLDER else JavaDocSyntaxElementType.DOC_TYPE_HOLDER
-    while (continueParsing) {
-      val type = builder.tokenType
 
-      if (type !== JavaDocSyntaxTokenType.DOC_TAG_VALUE_TOKEN && type !== JavaDocSyntaxTokenType.DOC_COMMENT_DATA) {
-        refStart.rollbackTo()
-        return
-      }
-
-      builder.remapCurrentToken(newElement)
-      builder.advanceLexer()
-
-      continueParsing = false
-      if (builder.tokenType === JavaDocSyntaxTokenType.DOC_TAG_VALUE_LT || builder.tokenType === JavaDocSyntaxTokenType.DOC_LT) {
-        builder.advanceLexer()
-        if (builder.tokenType !== JavaDocSyntaxTokenType.DOC_TAG_VALUE_GT && builder.tokenType !== JavaDocSyntaxTokenType.DOC_GT)
-          parseMaybeGenericType(false)
-
-        if (builder.tokenType === JavaDocSyntaxTokenType.DOC_COMMA || builder.tokenType === JavaDocSyntaxTokenType.DOC_TAG_VALUE_COMMA) {
-          continueParsing = true
-          builder.advanceLexer()
-          if (isWhiteSpace(builder.tokenType))
-            builder.advanceLexer()
-        }
-      }
+    if (getTokenType() !== JavaDocSyntaxTokenType.DOC_TAG_VALUE_TOKEN && getTokenType() !== JavaDocSyntaxTokenType.DOC_COMMENT_DATA) {
+      refStart.rollbackTo()
+      return
     }
 
-    if (builder.tokenType === JavaDocSyntaxTokenType.DOC_TAG_VALUE_GT || builder.tokenType === JavaDocSyntaxTokenType.DOC_GT) {
-      builder.advanceLexer()
+    builder.remapCurrentToken(newElement)
+    builder.advanceLexer()
+
+    if (LT_TOKENS.contains(getTokenType())) {
+      var nesting = 1
+      while (!isEolToken(builder.tokenType, builder.tokenText)) {
+        builder.advanceLexer()
+        if (DATA_IN_GENERICS_TOKENS.contains(builder.tokenType))
+          continue
+        if (LT_TOKENS.contains(builder.tokenType)) {
+          nesting++
+          continue
+        }
+        if (GT_TOKENS.contains(builder.tokenType)) {
+          nesting--
+          if (nesting == 0) {
+            builder.advanceLexer()
+            break
+          }
+          continue
+        }
+
+        // Disallowed token, break regardless of the nesting
+        break
+      }
     }
 
     refStart.collapse(newElement)
@@ -944,6 +946,15 @@ private val REFERENCE_LINK_EOC_EXPECTED_TOKENS: SyntaxElementTypeSet = syntaxEle
   JavaDocSyntaxTokenType.DOC_RBRACKET, JavaDocSyntaxTokenType.DOC_LT,
   JavaDocSyntaxTokenType.DOC_SHARP, JavaDocSyntaxTokenType.DOC_DOUBLE_SHARP,
 )
+
+/** Represent the allowed base tokens when parsing generics */
+private val DATA_IN_GENERICS_TOKENS: SyntaxElementTypeSet = syntaxElementTypeSetOf(
+  JavaDocSyntaxTokenType.DOC_TAG_VALUE_TOKEN, JavaDocSyntaxTokenType.DOC_COMMENT_DATA,
+  JavaDocSyntaxTokenType.DOC_TAG_VALUE_COMMA, JavaDocSyntaxTokenType.DOC_COMMA,
+  JavaDocSyntaxTokenType.DOC_SPACE, SyntaxTokenTypes.WHITE_SPACE
+)
+private val LT_TOKENS: SyntaxElementTypeSet = syntaxElementTypeSetOf(JavaDocSyntaxTokenType.DOC_LT, JavaDocSyntaxTokenType.DOC_TAG_VALUE_LT)
+private val GT_TOKENS: SyntaxElementTypeSet = syntaxElementTypeSetOf(JavaDocSyntaxTokenType.DOC_GT, JavaDocSyntaxTokenType.DOC_TAG_VALUE_GT)
 
 private const val SEE_TAG = "@see"
 private const val LINK_TAG = "@link"

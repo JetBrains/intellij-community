@@ -145,7 +145,7 @@ LEADING_TOKEN_MARKDOWN="///"
         genericNestingLevel += 1
         return JavaDocSyntaxTokenType.DOC_TAG_VALUE_LT
       }
-<DOC_TAG_VALUE_IN_LTGT> {IDENTIFIER} { return JavaDocSyntaxTokenType.DOC_TAG_VALUE_TOKEN }
+<DOC_TAG_VALUE_IN_LTGT> ({IDENTIFIER}|\?) { return JavaDocSyntaxTokenType.DOC_TAG_VALUE_TOKEN }
 <DOC_TAG_VALUE_IN_LTGT> [\>] {
         genericNestingLevel -= 1
         if (genericNestingLevel <= 0) {

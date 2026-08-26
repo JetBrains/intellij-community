@@ -76,16 +76,38 @@ java.FILE
           JAVA_CODE_REFERENCE
             IDENTIFIER
             REFERENCE_PARAMETER_LIST
-              <empty list>
-        DOC_LT
-        DOC_TYPE_HOLDER
-          TYPE
-            JAVA_CODE_REFERENCE
-              IDENTIFIER
-              REFERENCE_PARAMETER_LIST
+              LT
+              TYPE
+                JAVA_CODE_REFERENCE
+                  IDENTIFIER
+                  REFERENCE_PARAMETER_LIST
+                    <empty list>
+              COMMA
+              ERROR_ELEMENT
                 <empty list>
-        DOC_COMMA
-        DOC_GT
+              GT
+        DOC_RBRACKET
+      WHITE_SPACE
+      DOC_COMMENT_LEADING_ASTERISKS
+      DOC_COMMENT_DATA
+      DOC_REFERENCE_LINK
+        DOC_LBRACKET
+        DOC_REFERENCE_HOLDER
+          JAVA_CODE_REFERENCE
+            IDENTIFIER
+            REFERENCE_PARAMETER_LIST
+              LT
+              TYPE
+                QUEST
+                WHITE_SPACE
+                EXTENDS_KEYWORD
+                WHITE_SPACE
+                TYPE
+                  JAVA_CODE_REFERENCE
+                    IDENTIFIER
+                    REFERENCE_PARAMETER_LIST
+                      <empty list>
+              GT
         DOC_RBRACKET
       WHITE_SPACE
       DOC_COMMENT_LEADING_ASTERISKS
@@ -171,19 +193,40 @@ java.FILE
           JAVA_CODE_REFERENCE
             IDENTIFIER
             REFERENCE_PARAMETER_LIST
-              <empty list>
-        DOC_TAG_VALUE_ELEMENT
-          DOC_TAG_VALUE_LT
-        DOC_TYPE_HOLDER
-          TYPE
-            JAVA_CODE_REFERENCE
-              IDENTIFIER
-              REFERENCE_PARAMETER_LIST
+              LT
+              TYPE
+                JAVA_CODE_REFERENCE
+                  IDENTIFIER
+                  REFERENCE_PARAMETER_LIST
+                    <empty list>
+              COMMA
+              ERROR_ELEMENT
                 <empty list>
-        DOC_TAG_VALUE_ELEMENT
-          DOC_TAG_VALUE_COMMA
-        DOC_TAG_VALUE_ELEMENT
-          DOC_TAG_VALUE_GT
+              GT
+        DOC_INLINE_TAG_END
+      WHITE_SPACE
+      DOC_COMMENT_LEADING_ASTERISKS
+      DOC_COMMENT_DATA
+      DOC_INLINE_TAG
+        DOC_INLINE_TAG_START
+        DOC_TAG_NAME
+        WHITE_SPACE
+        DOC_REFERENCE_HOLDER
+          JAVA_CODE_REFERENCE
+            IDENTIFIER
+            REFERENCE_PARAMETER_LIST
+              LT
+              TYPE
+                QUEST
+                WHITE_SPACE
+                EXTENDS_KEYWORD
+                WHITE_SPACE
+                TYPE
+                  JAVA_CODE_REFERENCE
+                    IDENTIFIER
+                    REFERENCE_PARAMETER_LIST
+                      <empty list>
+              GT
         DOC_INLINE_TAG_END
     WHITE_SPACE
     MODIFIER_LIST
