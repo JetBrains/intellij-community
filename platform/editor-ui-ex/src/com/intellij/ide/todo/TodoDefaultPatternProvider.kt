@@ -16,7 +16,6 @@ interface TodoDefaultPatternProvider {
   }
 
   fun getDefaultPatterns(): Array<TodoPattern>
-  fun tryGetExternalTodoPatterns(project: Project): Array<out TodoPattern>?
 }
 
 internal class DefaultTodoDefaultPatternProvider : TodoDefaultPatternProvider {
@@ -25,9 +24,5 @@ internal class DefaultTodoDefaultPatternProvider : TodoDefaultPatternProvider {
       TodoPattern("\\btodo\\b.*", TodoAttributesUtil.createDefault(), false),
       TodoPattern("\\bfixme\\b.*", TodoAttributesUtil.createDefault(), false),
     )
-  }
-
-  override fun tryGetExternalTodoPatterns(project: Project): Array<out TodoPattern>? {
-    return null
   }
 }

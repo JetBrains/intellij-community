@@ -61,7 +61,7 @@ public class TodoConfigurable implements SearchableConfigurable, Configurable.No
 
   protected boolean arePatternsModified() {
     var todoConfiguration = TodoConfiguration.getInstance();
-    var initialPatterns = getTodoPatternsToDisplay(todoConfiguration);
+    var initialPatterns = todoConfiguration.getTodoPatterns();
     if (initialPatterns.length != myPatterns.size()) {
       return true;
     }
@@ -343,7 +343,7 @@ public class TodoConfigurable implements SearchableConfigurable, Configurable.No
 
     myPatterns.clear();
     var todoConfiguration = TodoConfiguration.getInstance();
-    for (var pattern : getTodoPatternsToDisplay(todoConfiguration)) {
+    for (var pattern : todoConfiguration.getTodoPatterns()) {
       myPatterns.add(pattern.clone());
     }
     myPatternsModel.fireTableDataChanged();
@@ -353,11 +353,6 @@ public class TodoConfigurable implements SearchableConfigurable, Configurable.No
       myFilters.add(filter.clone());
     }
     myFiltersModel.fireTableDataChanged();
-  }
-
-  protected TodoPattern @NotNull [] getTodoPatternsToDisplay(TodoConfiguration todoConfiguration) {
-    final var todoPatterns = TodoDefaultPatternProvider.getInstance().tryGetExternalTodoPatterns(myProject);
-    return todoPatterns == null ? todoConfiguration.getTodoPatterns() : todoPatterns;
   }
 
   private final class MyFilterNameTableCellRenderer extends DefaultTableCellRenderer {
