@@ -33,8 +33,10 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastCoerceAtLeast
 import org.jetbrains.annotations.Nls
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
@@ -620,7 +622,7 @@ private fun InlineBannerImpl(
         SubcomposeLayout { constraints ->
             val spacingPx = BANNER_CONTENT_SPACING.dp.roundToPx()
 
-            val unconstrained = constraints.copy(minWidth = 0)
+            val unconstrained = constraints.copy(minWidth = 0, minHeight = 0)
             val actionIconsPlaceables =
                 subcompose("actionIcons") {
                         if (actionIcons != null) {
@@ -643,11 +645,26 @@ private fun InlineBannerImpl(
             // Calculate width available for the main content column
             // Total - Icon - Spacing
             val startOffset = if (iconWidth > 0) iconWidth + spacingPx else 0
-            val contentAvailableWidth = (constraints.maxWidth - startOffset).coerceAtLeast(0)
+
+            // When the incoming width is unbounded there is no space to distribute, so children are measured at
+            // their natural width and the banner reports the width it wants to occupy via naturalWidth below.
+            val hasBoundedWidth = constraints.hasBoundedWidth
+            val contentAvailableWidth =
+                if (hasBoundedWidth) (constraints.maxWidth - startOffset).fastCoerceAtLeast(0) else Constraints.Infinity
+
+            val halfPaddingEnd = (originalPadding.calculateEndPadding(layoutDirection).toPx() / 2).toInt()
+            // width of all icons + the background padding when hovering the icons + an extra of 8.dp
+            val actionIconsReservedWidth =
+                if (actionIconsWidth > 0) actionIconsWidth + halfPaddingEnd + spacingPx else 0
 
             // Text MUST respect Action Icons (i.e, subtract their width)
-            val textConstraints =
-                constraints.copy(minWidth = 0, maxWidth = (contentAvailableWidth - actionIconsWidth).coerceAtLeast(0))
+            val textMaxWidth =
+                if (hasBoundedWidth) {
+                    (contentAvailableWidth - actionIconsReservedWidth).fastCoerceAtLeast(0)
+                } else {
+                    Constraints.Infinity
+                }
+            val textConstraints = constraints.copy(minWidth = 0, minHeight = 0, maxWidth = textMaxWidth)
             val textPlaceables =
                 subcompose("text") {
                         Column {
@@ -664,7 +681,7 @@ private fun InlineBannerImpl(
 
             // Link Actions must IGNORE Action Icons (use full available width)
             // This allows buttons to render underneath the top-right icons
-            val linkConstraints = constraints.copy(minWidth = 0, maxWidth = contentAvailableWidth)
+            val linkConstraints = constraints.copy(minWidth = 0, minHeight = 0, maxWidth = contentAvailableWidth)
             val linkPlaceables =
                 subcompose("links") {
                         if (actions != null) {
@@ -681,7 +698,7 @@ private fun InlineBannerImpl(
             // calculating the width the banner actually wants to occupy, coerced to
             // fit within the incoming minWidth/maxWidth constraints
             val naturalWidth =
-                (startOffset + maxOf(textWidth + actionIconsWidth, linksWidth)).coerceIn(
+                (startOffset + maxOf(textWidth + actionIconsReservedWidth, linksWidth)).coerceIn(
                     constraints.minWidth,
                     constraints.maxWidth,
                 )
@@ -700,7 +717,6 @@ private fun InlineBannerImpl(
                     // We always offset the action icon to half the padding
                     val topPaddingPx = adjustedPadding.calculateTopPadding().roundToPx()
                     val halfPaddingTop = (originalPadding.calculateTopPadding().toPx() / 2).toInt()
-                    val halfPaddingEnd = (originalPadding.calculateEndPadding(layoutDirection).toPx() / 2).toInt()
 
                     // Offset Logic:
                     val yPos = halfPaddingTop - topPaddingPx

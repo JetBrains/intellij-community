@@ -187,7 +187,6 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
       compose {
         Box {
           InlineInformationBanner(
-            modifier = Modifier.width(300.dp), // TODO: this is a hack. A proper fix will come in JEWEL-1415
             text = DevkitComposeBundle.message("jewel.compose.inline.banners"),
             iconActions = {
               iconAction(
