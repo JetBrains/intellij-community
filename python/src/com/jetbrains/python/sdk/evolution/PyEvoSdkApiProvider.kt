@@ -158,22 +158,27 @@ internal suspend fun requiresPython(baseDir: Path): String? = withContext(Dispat
  * base-interpreter choice pip, poetry and hatch all offer, since each creates its environment *from* an existing Python
  * rather than providing one (conda does, so it does not use this).
  *
- * Filtered to what can actually work: at least 3.8, the bundled virtualenv's minimum, and within the project's
- * `requires-python`. Each option's token is the interpreter's own path, which is what the create step consumes.
+ * Filtered to what can actually work — see [versionFilter], which either keeps the general rules (at least 3.8, the
+ * bundled virtualenv's minimum, and within the project's `requires-python`) or obeys [envSpecifiers] instead. Each
+ * option's token is the interpreter's own path, which is what the create step consumes.
  *
  * A version the machine has several installs of stays *one* option — the version is what the user picks first — but the
  * installs travel with it in [EvoAddNewOptionDto.bases], so the widget can offer the finer choice. The option's own
  * token is the first of them, keeping the plain "pick a version" click exactly as it was.
  */
-internal suspend fun systemPythonOptions(baseDir: Path, fileSystem: FileSystem<PathHolder.Eel>): List<EvoAddNewOptionDto> {
+internal suspend fun systemPythonOptions(
+  baseDir: Path,
+  fileSystem: FileSystem<PathHolder.Eel>,
+  envSpecifiers: String? = null,
+): List<EvoAddNewOptionDto> {
   // A machine-less (legacy Target) filesystem has no descriptor; fall back to the local machine, as the poetry node did.
   val eelApi = fileSystem.eelDescriptor?.toEelApi() ?: localEel
-  val spec = PyVersionSpecifiers(requiresPython(baseDir) ?: "")
+  val accepts = versionFilter(baseDir, envSpecifiers)
   val installed = SystemPythonService().findSystemPythons(eelApi)
-    .filter { it.pythonInfo.languageLevel.isAtLeast(LanguageLevel.PYTHON38) && spec.isValid(it.pythonInfo.languageLevel) }
+    .filter { accepts(it.pythonInfo.languageLevel) }
     // groupBy keeps the order within each group, so the option's token names the interpreter the service listed first.
     .groupBy { it.pythonInfo.languageLevel }
-  return (installed.keys + installableLevels(fileSystem, spec, installed.keys))
+  return (installed.keys + installableLevels(fileSystem, accepts, installed.keys))
     .sortedDescending()
     .map { level ->
       val pythons = installed[level]
@@ -188,6 +193,25 @@ internal suspend fun systemPythonOptions(baseDir: Path, fileSystem: FileSystem<P
 }
 
 /**
+ * Which Python versions an option list may hold.
+ *
+ * [envSpecifiers] is a version specifier the *environment* declares, such as `==3.11` or `>=3.8` from the `python`
+ * option of a hatch environment. It replaces the two general filters rather than joining them: the environment accepts
+ * nothing outside it, so the project's `requires-python` and the 3.8 floor of the bundled virtualenv have nothing left
+ * to decide. An environment that asks for 2.7 therefore shows 2.7.
+ *
+ * Without it the list keeps the general rules: at least 3.8, and within the project's `requires-python`.
+ */
+private suspend fun versionFilter(baseDir: Path, envSpecifiers: String?): (LanguageLevel) -> Boolean {
+  if (envSpecifiers != null) {
+    val declared = PyVersionSpecifiers(envSpecifiers)
+    return { level -> declared.isValid(level) }
+  }
+  val spec = PyVersionSpecifiers(requiresPython(baseDir) ?: "")
+  return { level -> level.isAtLeast(LanguageLevel.PYTHON38) && spec.isValid(level) }
+}
+
+/**
  * Versions the IDE could install and that are not in [installedLevels] — what turns "you do not have 3.12" from a gap
  * in the list into a row offering to get it.
  *
@@ -196,15 +220,13 @@ internal suspend fun systemPythonOptions(baseDir: Path, fileSystem: FileSystem<P
  */
 private suspend fun installableLevels(
   fileSystem: FileSystem<PathHolder.Eel>,
-  spec: PyVersionSpecifiers,
+  accepts: (LanguageLevel) -> Boolean,
   installedLevels: Set<LanguageLevel>,
 ): Set<LanguageLevel> {
   val eelApi = fileSystem.eelDescriptor?.toEelApi() ?: localEel
   if (SystemPythonService().getInstaller(eelApi) == null) return emptySet()
   val available = withContext(Dispatchers.IO) { PySdkToInstallManager.getAvailableVersionsToInstall().keys }
-  return available.filterTo(mutableSetOf()) {
-    it !in installedLevels && it.isAtLeast(LanguageLevel.PYTHON38) && spec.isValid(it)
-  }
+  return available.filterTo(mutableSetOf()) { it !in installedLevels && accepts(it) }
 }
 
 /** One install as an [EvoBasePythonDto]: the path identifies it, its tool's icon and free-threadedness qualify it. */
@@ -418,7 +440,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
       toolScope(pyProject.project, traceId, provider.toolId.id, provider.label)
         .async {
           val fs = eelFileSystem(pyProject)
-          val context = EvoToolContext(pyProject, fs, ErrorSink()) { systemPythonOptions(pyProject.baseDir, fs) }
+          val context = EvoToolContext(pyProject, fs, ErrorSink()) { envSpecifiers -> systemPythonOptions(pyProject.baseDir, fs, envSpecifiers) }
           val loaded = provider.loadSections(pyProject, fs, discovered)
           // The node's own decorations: its add-new flow, then whatever else the tool adds (hatch's version pickers).
           provider.decorate(context, withProviderAddNewEnv(loaded, provider, context))
@@ -778,7 +800,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
    */
   private fun toolContextFor(toolId: ToolId, pyProject: EvoPyProject, fileSystem: EelFileSystem): Pair<PyEvoEnvironmentProvider, EvoToolContext>? {
     val provider = providers.firstOrNull { it.toolId == toolId } ?: return null
-    return provider to EvoToolContext(pyProject, fileSystem, ErrorSink()) { systemPythonOptions(pyProject.baseDir, fileSystem) }
+    return provider to EvoToolContext(pyProject, fileSystem, ErrorSink()) { envSpecifiers -> systemPythonOptions(pyProject.baseDir, fileSystem, envSpecifiers) }
   }
 
   /**

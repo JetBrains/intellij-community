@@ -115,7 +115,7 @@ class EvoToolContext(
   val pyProject: EvoPyProject,
   val fileSystem: FileSystem<PathHolder.Eel>,
   val errorSink: ErrorSink,
-  private val systemPythons: suspend () -> List<EvoAddNewOptionDto>,
+  private val systemPythons: suspend (String?) -> List<EvoAddNewOptionDto>,
 ) {
   /**
    * The system Pythons that can back a new environment here, newest first, one per minor version — filtered to what the
@@ -126,9 +126,17 @@ class EvoToolContext(
    * which Pythons a machine has is not a fact about any one tool — which is why pip, poetry and hatch can all build
    * their version pickers from the same list instead of each deciding what counts.
    *
-   * Memoized per context via [cached], since enumerating interpreters can spawn processes.
+   * Pass [envSpecifiers] when the *environment* constrains the Python it needs, such as a hatch environment with a
+   * `python` option. It is a version specifier — `==3.11`, `>=3.8`, `>=3.9,<3.13` — and the list then holds the
+   * versions it admits. It also replaces the two general filters rather than joining them, because the environment
+   * accepts nothing outside it and they have nothing left to decide: an environment that asks for 2.7 shows 2.7,
+   * whatever the project's `requires-python` says.
+   *
+   * Memoized per context via [cached], since enumerating interpreters can spawn processes. Each specifier gets its own
+   * entry, so a node with several constrained environments still probes once per distinct specifier.
    */
-  suspend fun systemPythonOptions(): List<EvoAddNewOptionDto> = cached(SYSTEM_PYTHONS_KEY) { systemPythons() }
+  suspend fun systemPythonOptions(envSpecifiers: String? = null): List<EvoAddNewOptionDto> =
+    cached("$SYSTEM_PYTHONS_KEY:${envSpecifiers.orEmpty()}") { systemPythons(envSpecifiers) }
 
   private val memo = mutableMapOf<String, Any?>()
   private val memoLock = Mutex()
@@ -264,9 +272,6 @@ data class DiscoveredVenv(
 ) {
   /** The environment root directory (`…/<venv>/bin/python` → `<venv>`). */
   val venvRoot: Path? get() = pythonBinary.parent?.parent
-
-  /** True when `pyvenv.cfg` carries a `uv` marker (the env was created by uv). */
-  val createdByUv: Boolean get() = "uv" in config
 }
 
 /** Well-known heavy/irrelevant directories that never hold a user-selectable venv; never descended into. */
@@ -516,8 +521,19 @@ fun evoInstallPythonLeaf(title: @Nls String, version: @NlsSafe String): EvoLeafD
  * [com.intellij.python.sdk.common.evolution.PyInterpreterRef.CreateEnv].
  */
 @ApiStatus.Internal
-fun evoCreateEnvLeaf(title: @Nls String, token: String, icon: Icon, bases: List<EvoBasePythonDto> = emptyList()): EvoLeafDto =
-  EvoLeafDto(title = title, icon = icon.rpcId(), kind = EvoLeafKind.SELECT_ENV, ref = PyInterpreterRef.CreateEnv(token), bases = bases)
+fun evoCreateEnvLeaf(
+  title: @Nls String,
+  token: String,
+  icon: Icon,
+  bases: List<EvoBasePythonDto> = emptyList(),
+  /**
+   * A second provider-owned token, carried as [PyInterpreterRef.CreateEnv.name]. It means whatever the provider that
+   * built this leaf reads back from it, exactly like [token]. Hatch puts the environment's declared version specifier
+   * here, so [PyEvoEnvironmentProvider.decorate] can offer the interpreters it admits and no other.
+   */
+  name: String? = null,
+): EvoLeafDto =
+  EvoLeafDto(title = title, icon = icon.rpcId(), kind = EvoLeafKind.SELECT_ENV, ref = PyInterpreterRef.CreateEnv(token, name = name), bases = bases)
 
 /**
  * Builds a leaf for a *tool-enumerated* environment (conda/hatch/poetry-per-version) identified by [pythonBinary].

@@ -22,6 +22,7 @@ import com.intellij.python.sdk.backend.evolution.evoCreateEnvLeaf
 import com.intellij.python.sdk.backend.evolution.evoEnvLeaf
 import com.intellij.python.sdk.backend.evolution.evoWarning
 import com.intellij.python.sdk.backend.evolution.resolvePythonExecutable
+import com.intellij.python.sdk.common.evolution.EvoLeafDto
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
 import com.intellij.python.sdk.common.evolution.EvoSectionDto
 import com.intellij.python.sdk.common.evolution.PyInterpreterRef
@@ -44,8 +45,10 @@ internal class HatchEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
     val leaves = environments.map { env ->
       val binary = env.pythonVirtualEnvironment?.pythonHomePath?.path?.resolvePythonExecutable()
       // Materialized env → select it; a declared-but-not-created env → create it on click (token = env name).
+      // A not-created env carries its declared `python` option, which [decorate] turns into the version picker.
       if (binary != null) evoEnvLeaf(title = env.hatchEnvironment.name, pythonBinary = binary, icon = icon)
-      else evoCreateEnvLeaf(title = env.hatchEnvironment.name, token = env.hatchEnvironment.name, icon = icon)
+      else evoCreateEnvLeaf(title = env.hatchEnvironment.name, token = env.hatchEnvironment.name, icon = icon,
+                            name = env.hatchEnvironment.pythonSpec?.versionSpecifiers)
     }
     return EvoLoadResultDto.Ok(listOf(EvoSectionDto(label = null, leaves = leaves)))
   }
@@ -98,20 +101,33 @@ internal class HatchEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
    */
   override suspend fun decorate(context: EvoToolContext, result: EvoLoadResultDto): EvoLoadResultDto {
     if (result !is EvoLoadResultDto.Ok) return result
-    val options = context.systemPythonOptions()
     return result.copy(sections = result.sections.map { section ->
-      section.copy(leaves = section.leaves.map { leaf ->
-        when {
-          leaf.ref !is PyInterpreterRef.CreateEnv -> leaf
-          // Declared in pyproject.toml but nothing on the machine to build it from: creating it would fail, so the row
-          // says so up front instead of looking creatable.
-          options.isEmpty() -> leaf.copy(
-            unavailable = PySdkBundle.message("evolution.error.no.base.python"),
-            secondaryText = leaf.secondaryText ?: NO_VERSION,
-          )
-          else -> leaf.copy(createVersions = options, secondaryText = leaf.secondaryText ?: NO_VERSION)
-        }
-      })
+      section.copy(leaves = section.leaves.map { leaf -> leaf.withBasePythonPicker(context) })
     })
+  }
+
+  /**
+   * This row with its base-Python picker attached, or unchanged when it creates no environment.
+   *
+   * An env's `python` option says which interpreters can build it, so the picker offers those alone. A matrix env is the
+   * common case: `test.py3.11` declares `3.11`, and every other version on the machine would be the wrong answer. A
+   * range such as `>=3.8` keeps every version it admits.
+   *
+   * The constraint is the env's own, so it replaces the project's `requires-python` and the 3.8 floor of the general
+   * list rather than joining them — an env that asks for 2.7 offers 2.7.
+   *
+   * An env that declares no version keeps the full list, as before. See
+   * [com.intellij.python.hatch.cli.HatchPythonSpec.versionSpecifiers] for the options that constrain no version.
+   */
+  private suspend fun EvoLeafDto.withBasePythonPicker(context: EvoToolContext): EvoLeafDto {
+    val create = ref as? PyInterpreterRef.CreateEnv ?: return this
+    // `name` holds the env's declared version specifier — this provider put it there in loadSections.
+    val options = context.systemPythonOptions(create.name)
+    // Declared in pyproject.toml but nothing on the machine to build it from: creating it would fail, so the row says
+    // so up front instead of looking creatable.
+    if (options.isEmpty()) {
+      return copy(unavailable = PySdkBundle.message("evolution.error.no.base.python"), secondaryText = secondaryText ?: NO_VERSION)
+    }
+    return copy(createVersions = options, secondaryText = secondaryText ?: NO_VERSION)
   }
 }

@@ -35,7 +35,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.pathString
 
 /**
- * Contributes the generic "pip" (virtualenv) node — plain venvs without a `uv` marker. Always available, since a
+ * Contributes the generic "pip" (virtualenv) node — every virtualenv the discovery found. Always available, since a
  * virtualenv needs no tool beyond a Python, which is why this implements [PyEvoEnvironmentProvider] directly rather than
  * extending the `PyTool`-backed base class: there is no pip *tool* to detect.
  *
@@ -57,8 +57,15 @@ internal class VenvEvoEnvironmentProvider : PyEvoEnvironmentProvider {
   override val fusId: String get() = tool.fusId
   override val icon: Icon get() = tool.icon
 
+  /**
+   * Every discovered virtualenv, a uv-created one included.
+   *
+   * A `uv` marker in `pyvenv.cfg` records which tool made the environment. It does not make the environment a uv-only
+   * one: it is an ordinary virtualenv, pip can work in it, and the user can select it here. This node used to hide such
+   * an environment, so a project whose only environment came from uv showed an empty pip node.
+   */
   override suspend fun loadSections(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto =
-    EvoLoadResultDto.Ok(discovered.filterNot { it.createdByUv }.toSectionsGroupedByParent(icon, addNew = true, baseDir = pyProject.baseDir))
+    EvoLoadResultDto.Ok(discovered.toSectionsGroupedByParent(icon, addNew = true, baseDir = pyProject.baseDir))
 
   /**
    * A plain virtualenv has no tool-specific SDK, so its type is guessed from the path — the generic route the core used
