@@ -202,12 +202,14 @@ private fun detectLocalProjectStructure(workingDirectoryPath: Path): ProjectStru
  * a name as `integration-testing-environme…` and a type as `virtu…`. Both forms then fail: the type no longer equals
  * [ENV_TYPE_VIRTUAL], and Hatch does not know the shortened name.
  *
- * Only the name and the type of an environment reach the caller. The other [HatchEnvironment] fields describe the
- * table columns, and no caller reads them, so this leaves them at their defaults.
+ * Only the name, the type and the declared [HatchEnvironment.python] reach the caller. The other [HatchEnvironment]
+ * fields describe the table columns, and no caller reads them, so this leaves them at their defaults.
  */
 private fun HatchDetailedEnvironments.toVirtualHatchEnvironments(): List<HatchEnvironment> =
   filterValues { it.type == ENV_TYPE_VIRTUAL }
-    .map { (name, details) -> HatchEnvironment(name = name, type = details.type, description = details.description ?: "") }
+    .map { (name, details) ->
+      HatchEnvironment(name = name, type = details.type, python = details.python, description = details.description ?: "")
+    }
 
 private suspend fun <P : PathHolder> resolvePythonVirtualEnvironment(
   fileSystem: FileSystem<P>,

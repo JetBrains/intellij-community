@@ -264,6 +264,14 @@ data class HatchEnvironments(
 data class HatchEnvironment(
   val name: @NlsSafe String,
   val type: @NlsSafe String,
+  /**
+   * The `python` option of the environment, which names the interpreter it must be built from.
+   *
+   * Hatch writes a version such as `3.11`, a compact version such as `312`, or an absolute interpreter path. It is null
+   * when the environment names no interpreter, and it is always null for an environment read from the table response,
+   * which has no column for it.
+   */
+  val python: @NlsSafe String? = null,
   val features: String = "",
   val dependencies: String = "",
   val environmentVariables: String = "",
@@ -282,6 +290,15 @@ data class HatchEnvironment(
    * on the packages installed in system python
    */
   fun isDefault(): Boolean = name == DEFAULT.name && type == DEFAULT.type
+
+  /**
+   * The [python] option parsed, or null when the environment names no interpreter.
+   *
+   * See [HatchPythonSpec] for the forms Hatch accepts, and [HatchPythonSpec.versionSpecifiers] for the version
+   * constraint a caller that offers base interpreters should filter by.
+   */
+  val pythonSpec: HatchPythonSpec?
+    get() = python?.trim()?.takeIf { it.isNotEmpty() }?.let { HatchPythonSpec.parse(it) }
 }
 
 data class HatchMatrixEnvironment(
