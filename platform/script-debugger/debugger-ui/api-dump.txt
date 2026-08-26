@@ -47,7 +47,8 @@ f:org.jetbrains.debugger.SourceInfo
 - <init>(com.intellij.openapi.vfs.VirtualFile,I,I,I):V
 - <init>(com.intellij.openapi.vfs.VirtualFile,I,I,I,java.lang.String):V
 - <init>(com.intellij.openapi.vfs.VirtualFile,I,I,I,java.lang.String,com.intellij.util.Url):V
-- b:<init>(com.intellij.openapi.vfs.VirtualFile,I,I,I,java.lang.String,com.intellij.util.Url,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(com.intellij.openapi.vfs.VirtualFile,I,I,I,java.lang.String,com.intellij.util.Url,Z):V
+- b:<init>(com.intellij.openapi.vfs.VirtualFile,I,I,I,java.lang.String,com.intellij.util.Url,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - createNavigatable(com.intellij.openapi.project.Project):com.intellij.openapi.fileEditor.OpenFileDescriptor
 - f:getColumn():I
 - getFile():com.intellij.openapi.vfs.VirtualFile
@@ -55,6 +56,7 @@ f:org.jetbrains.debugger.SourceInfo
 - getLine():I
 - getOffset():I
 - f:getUrl():com.intellij.util.Url
+- f:isInIgnoreList():Z
 a:org.jetbrains.debugger.connection.RemoteVmConnection
 - org.jetbrains.debugger.connection.VmConnection
 - <init>():V

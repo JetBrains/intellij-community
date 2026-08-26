@@ -69,6 +69,9 @@ interface SourceMap {
 
   @ApiStatus.Internal
   fun getSourceContent(sourceIndex: Int): String?
+
+  @ApiStatus.Internal
+  fun isInIgnoreList(sourceIndex: Int): Boolean
 }
 
 internal abstract class SourceMapBase(
@@ -86,6 +89,10 @@ internal abstract class SourceMapBase(
 
   override val sources: Array<Url>
     get() = sourceResolver.canonicalizedUrls
+
+  private val ignoreListIndices: Set<Int> = sourceMapData.ignoreList.toHashSet()
+
+  override fun isInIgnoreList(sourceIndex: Int): Boolean = ignoreListIndices.contains(sourceIndex)
 
   override fun findSourceIndex(sourceUrl: Url, sourceFile: VirtualFile?, resolver: Lazy<SourceFileResolver?>?, localFileUrlOnly: Boolean): Int {
     val index = sourceResolver.findSourceIndex(sourceUrl, sourceFile, localFileUrlOnly)

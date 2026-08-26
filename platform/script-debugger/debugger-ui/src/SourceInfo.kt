@@ -31,6 +31,7 @@ class SourceInfo @JvmOverloads constructor(
   private var offset: Int = -1,
   val functionName: String? = null,
   val url: Url? = null,
+  val isInIgnoreList: Boolean = false,
 ) : XSourcePosition {
   override fun getFile(): VirtualFile = file
 

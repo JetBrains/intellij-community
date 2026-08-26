@@ -37,6 +37,8 @@ class NestedSourceMap(private val childMap: SourceMap, private val parentMap: So
     return result
   }
 
+  override fun isInIgnoreList(sourceIndex: Int): Boolean = parentMap.isInIgnoreList(sourceIndex)
+
   override fun findSourceIndex(sourceFile: VirtualFile, localFileUrlOnly: Boolean): Int = parentMap.findSourceIndex(sourceFile, localFileUrlOnly)
 
   override fun findSourceIndex(sourceUrl: Url,
