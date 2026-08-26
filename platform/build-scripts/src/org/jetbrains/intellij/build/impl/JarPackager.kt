@@ -130,7 +130,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "jooq.joox",
   "jps-javac-extension",
   "jruby-parser-0.5.4",
-  "json-schema-validator",
   "kaml",
   "kmp-wizard-shared",
   "kotlin-metadata",

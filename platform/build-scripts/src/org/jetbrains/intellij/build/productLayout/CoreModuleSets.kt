@@ -276,6 +276,7 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.jackson3.jr.objects")
     embeddedModule("intellij.libraries.jackson3.databind")
     module("intellij.libraries.jackson3.dataformat.yaml")
+    module("intellij.libraries.jackson3.dataformat.toml")
     embeddedModule("intellij.libraries.jackson3.module.kotlin")
   }
 

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="jackson3-dataformat-toml" type="repository">
+        <properties include-transitive-deps="false" maven-id="tools.jackson.dataformat:jackson-dataformat-toml:3.2.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/tools/jackson/dataformat/jackson-dataformat-toml/3.2.1/jackson-dataformat-toml-3.2.1.jar">
+              <sha256sum>18829c4cac6e9aae8ebff68f3f483508f72cf666fd6928aa10253bae59ba8215</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/dataformat/jackson-dataformat-toml/3.2.1/jackson-dataformat-toml-3.2.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/dataformat/jackson-dataformat-toml/3.2.1/jackson-dataformat-toml-3.2.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.jackson3" scope="RUNTIME" />
+  </component>
+</module>

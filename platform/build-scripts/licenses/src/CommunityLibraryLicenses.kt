@@ -10,8 +10,7 @@ import com.intellij.platform.buildScripts.licenses.SoftwareBillOfMaterials.Compa
 object CommunityLibraryLicenses {
   @Suppress("SpellCheckingInspection", "NonAsciiCharacters")
   val LICENSES_LIST: List<LibraryLicense> = listOf(
-    LibraryLicense("A fast Java JSON schema validator", libraryName = "json-schema-validator", url = "https://github.com/networknt/json-schema-validator")
-      .additionalLibraryNames("json-schema-validator-jetbrains")
+    LibraryLicense("A fast Java JSON schema validator", libraryName = "json-schema-validator-jetbrains", url = "https://github.com/networknt/json-schema-validator")
       .apache("https://github.com/networknt/json-schema-validator/blob/master/LICENSE"),
 
     LibraryLicense("aalto-xml", libraryName = "aalto-xml", url = "https://github.com/FasterXML/aalto-xml/")
@@ -570,6 +569,7 @@ object CommunityLibraryLicenses {
       .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
 
     LibraryLicense("Jackson Dataformat TOML", libraryName = "jackson-dataformat-toml", url = "https://github.com/FasterXML/jackson-dataformats-text")
+      .additionalLibraryNames("jackson3-dataformat-toml")
       .apache("https://github.com/FasterXML/jackson-dataformats-text/blob/2.16/pom.xml")
       .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
 

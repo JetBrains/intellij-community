@@ -4,8 +4,9 @@ package org.jetbrains.intellij.build.impl.productInfo
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.platform.buildData.productInfo.ProductInfoData
 import com.networknt.schema.InputFormat
-import com.networknt.schema.JsonSchemaFactory
-import com.networknt.schema.SpecVersion
+import com.networknt.schema.Schema
+import com.networknt.schema.SchemaRegistry
+import com.networknt.schema.SpecificationVersion
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
@@ -17,6 +18,7 @@ import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Checks that 'product-info.json' file located in [archiveFile] archive in [pathInArchive] subdirectory is correct.
@@ -53,8 +55,13 @@ internal fun validateProductJson(jsonText: String, installationDirectories: List
   }
 }
 
+private val jsonSchemaRegistry = SchemaRegistry.withDefaultDialect(SpecificationVersion.DRAFT_7)
+
+/** Compiled once per schema file. `SchemaRegistry.validate` would parse the schema again on every call. */
+private val jsonSchemas = ConcurrentHashMap<Path, Schema>()
+
 private fun verifyJsonBySchema(jsonData: String, jsonSchemaFile: Path, messages: BuildMessages) {
-  val schema = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7).getSchema(Files.readString(jsonSchemaFile))
+  val schema = jsonSchemas.computeIfAbsent(jsonSchemaFile) { jsonSchemaRegistry.getSchema(Files.readString(it)) }
   val errors = schema.validate(jsonData, InputFormat.JSON)
   if (!errors.isEmpty()) {
     messages.logErrorAndThrow("Unable to validate JSON against ${jsonSchemaFile}:\n${errors.joinToString("\n")}\nfile content:\n${jsonData}")

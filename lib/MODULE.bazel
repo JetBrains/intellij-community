@@ -5475,20 +5475,6 @@ http_file(
 )
 
 http_file(
-    name = "com_networknt-json-schema-validator-1_3_1_http",
-    downloaded_file_path = "json-schema-validator-1.3.1.jar",
-    sha256 = "81ad7bfe7e59de4cd047eacf24f979ec47db40eac6afc76e6f10288b456b14b1",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/networknt/json-schema-validator/1.3.1/json-schema-validator-1.3.1.jar",
-)
-
-http_file(
-    name = "com_networknt-json-schema-validator-1_3_1-sources_http",
-    downloaded_file_path = "json-schema-validator-1.3.1-sources.jar",
-    sha256 = "ef9dd0dafdba630e1eb3b41013cb1bd66fec9ff5a208358f68d7ef8f011a4d99",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/networknt/json-schema-validator/1.3.1/json-schema-validator-1.3.1-sources.jar",
-)
-
-http_file(
     name = "org_jetbrains_nativecerts-jvm-native-trusted-roots-1_1_7_http",
     downloaded_file_path = "jvm-native-trusted-roots-1.1.7.jar",
     sha256 = "8d715c487c8908a8b3b1d982f013f5ec39fb9033eb4272fdb251d648b5ede48c",
@@ -9434,6 +9420,20 @@ http_file(
     downloaded_file_path = "jackson-databind-3.2.1-sources.jar",
     sha256 = "e6455e24b0621c5f9def55101fdb1e0599fbadce11389f9b51e478d5a664d4e5",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/core/jackson-databind/3.2.1/jackson-databind-3.2.1-sources.jar",
+)
+
+http_file(
+    name = "tools_jackson_dataformat-jackson-dataformat-toml-3_2_1_http",
+    downloaded_file_path = "jackson-dataformat-toml-3.2.1.jar",
+    sha256 = "18829c4cac6e9aae8ebff68f3f483508f72cf666fd6928aa10253bae59ba8215",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/dataformat/jackson-dataformat-toml/3.2.1/jackson-dataformat-toml-3.2.1.jar",
+)
+
+http_file(
+    name = "tools_jackson_dataformat-jackson-dataformat-toml-3_2_1-sources_http",
+    downloaded_file_path = "jackson-dataformat-toml-3.2.1-sources.jar",
+    sha256 = "a7a6c34093053090a0a5cbebdb38e1cd9623821a9e91aa466b97b07df5a6288d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/tools/jackson/dataformat/jackson-dataformat-toml/3.2.1/jackson-dataformat-toml-3.2.1-sources.jar",
 )
 
 http_file(
