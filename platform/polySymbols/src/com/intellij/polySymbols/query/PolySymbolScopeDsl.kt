@@ -172,6 +172,60 @@ interface PolySymbolScopeCachedBuilderBase<K>: PolySymbolScopeBuilderBase {
 
 }
 
+/**
+ * Receiver of a `partialMatchingSupport { }` block - see e.g.
+ * [PsiPolySymbolScopeCachedBuilder.partialMatchingSupport] for when to reach for one of the two
+ * `partialMatchingSupport` shapes, and this interface's own [provideMatchingSymbols] for the fast
+ * lookup path itself.
+ */
+@PolySymbolScopeDsl
+@ApiStatus.NonExtendable
+interface PolySymbolScopePartialMatchingSupportBuilderBase<K> {
+
+  val project: Project
+
+  val key: K
+
+  /**
+   * Declare the fast, index/direct-lookup-backed path for single name-match queries, and its own
+   * result-cache dependencies (which must be non-empty) - independent of whichever
+   * `partialMatchingSupport(...)` overload's own cache dependencies (if any) govern only the
+   * *decision* to offer this path at all. Called once per distinct name variant needed to resolve a
+   * query. Not calling this at all (the block exits without calling it) means partial matching isn't
+   * available for this decision - the scope falls back to full-cache-backed matching until the
+   * decision is next (re)computed. At most one call.
+   */
+  fun provideMatchingSymbols(
+    cacheDependencies: Collection<Any>,
+    lookup: (kind: PolySymbolKind, nameVariant: String) -> List<PolySymbol>,
+  )
+
+  /** Vararg-form overload of [provideMatchingSymbols]. */
+  fun provideMatchingSymbols(
+    vararg cacheDependencies: Any,
+    lookup: (kind: PolySymbolKind, nameVariant: String) -> List<PolySymbol>,
+  )
+
+}
+
+@PolySymbolScopeDsl
+@ApiStatus.NonExtendable
+interface PsiPolySymbolScopePartialMatchingSupportBuilder<T : PsiElement, K> : PolySymbolScopePartialMatchingSupportBuilderBase<K> {
+
+  val element: T
+}
+
+@PolySymbolScopeDsl
+@ApiStatus.NonExtendable
+interface ProjectPolySymbolScopePartialMatchingSupportBuilder<K> : PolySymbolScopePartialMatchingSupportBuilderBase<K>
+
+@PolySymbolScopeDsl
+@ApiStatus.NonExtendable
+interface PolySymbolScopePartialMatchingSupportBuilder<T : UserDataHolder, K> : PolySymbolScopePartialMatchingSupportBuilderBase<K> {
+
+  val dataHolder: T
+}
+
 @PolySymbolScopeDsl
 @ApiStatus.NonExtendable
 interface PsiPolySymbolScopeCachedBuilder<T : PsiElement, K> : PolySymbolScopeCachedBuilderBase<K> {
@@ -179,6 +233,51 @@ interface PsiPolySymbolScopeCachedBuilder<T : PsiElement, K> : PolySymbolScopeCa
   val element: T
 
   fun initialize(body: PsiPolySymbolScopeCachedInitializer<T, K>.() -> Unit)
+
+  /**
+   * Opt into a fast, index/direct-lookup-backed path for single name-match queries — the common
+   * case, resolving one reference — so it doesn't have to force building (or wait on) the scope's
+   * full symbol cache first.
+   *
+   * The decision (whether to offer the fast path, and with what lookup) is
+   * computed once, lazily, for this scope instance's lifetime.
+   *
+   * Use `partialMatchingSupport` only when the candidate set is genuinely expensive to enumerate
+   * fully (e.g. a project-wide index) and a targeted point lookup is cheaper.
+   */
+  fun partialMatchingSupport(configure: PsiPolySymbolScopePartialMatchingSupportBuilder<T, K>.() -> Unit)
+
+  /**
+   * Opt into a fast, index/direct-lookup-backed path for single name-match queries — the common
+   * case, resolving one reference — so it doesn't have to force building (or wait on) the scope's
+   * full symbol cache first.
+   *
+   * The decision (whether to offer the fast path, and with what lookup) is
+   * cached using provided [cacheDependencies].
+   *
+   * Use `partialMatchingSupport` only when the candidate set is genuinely expensive to enumerate
+   * fully (e.g. a project-wide index) and a targeted point lookup is cheaper.
+   */
+  fun partialMatchingSupport(
+    cacheDependencies: Collection<Any>,
+    configure: PsiPolySymbolScopePartialMatchingSupportBuilder<T, K>.() -> Unit,
+  )
+
+  /**
+   * Opt into a fast, index/direct-lookup-backed path for single name-match queries — the common
+   * case, resolving one reference — so it doesn't have to force building (or wait on) the scope's
+   * full symbol cache first.
+   *
+   * The decision (whether to offer the fast path, and with what lookup) is
+   * cached using provided [cacheDependencies].
+   *
+   * Use `partialMatchingSupport` only when the candidate set is genuinely expensive to enumerate
+   * fully (e.g. a project-wide index) and a targeted point lookup is cheaper.
+   */
+  fun partialMatchingSupport(
+    vararg cacheDependencies: Any,
+    configure: PsiPolySymbolScopePartialMatchingSupportBuilder<T, K>.() -> Unit,
+  )
 }
 
 @PolySymbolScopeDsl
@@ -186,6 +285,51 @@ interface PsiPolySymbolScopeCachedBuilder<T : PsiElement, K> : PolySymbolScopeCa
 interface ProjectPolySymbolScopeCachedBuilder<K> : PolySymbolScopeCachedBuilderBase<K> {
 
   fun initialize(body: ProjectPolySymbolScopeCachedInitializer<K>.() -> Unit)
+
+  /**
+   * Opt into a fast, index/direct-lookup-backed path for single name-match queries — the common
+   * case, resolving one reference — so it doesn't have to force building (or wait on) the scope's
+   * full symbol cache first.
+   *
+   * The decision (whether to offer the fast path, and with what lookup) is
+   * computed once, lazily, for this scope instance's lifetime.
+   *
+   * Use `partialMatchingSupport` only when the candidate set is genuinely expensive to enumerate
+   * fully (e.g. a project-wide index) and a targeted point lookup is cheaper.
+   */
+  fun partialMatchingSupport(configure: ProjectPolySymbolScopePartialMatchingSupportBuilder<K>.() -> Unit)
+
+  /**
+   * Opt into a fast, index/direct-lookup-backed path for single name-match queries — the common
+   * case, resolving one reference — so it doesn't have to force building (or wait on) the scope's
+   * full symbol cache first.
+   *
+   * The decision (whether to offer the fast path, and with what lookup) is
+   * cached using provided [cacheDependencies].
+   *
+   * Use `partialMatchingSupport` only when the candidate set is genuinely expensive to enumerate
+   * fully (e.g. a project-wide index) and a targeted point lookup is cheaper.
+   */
+  fun partialMatchingSupport(
+    cacheDependencies: Collection<Any>,
+    configure: ProjectPolySymbolScopePartialMatchingSupportBuilder<K>.() -> Unit,
+  )
+
+  /**
+   * Opt into a fast, index/direct-lookup-backed path for single name-match queries — the common
+   * case, resolving one reference — so it doesn't have to force building (or wait on) the scope's
+   * full symbol cache first.
+   *
+   * The decision (whether to offer the fast path, and with what lookup) is
+   * cached using provided [cacheDependencies].
+   *
+   * Use `partialMatchingSupport` only when the candidate set is genuinely expensive to enumerate
+   * fully (e.g. a project-wide index) and a targeted point lookup is cheaper.
+   */
+  fun partialMatchingSupport(
+    vararg cacheDependencies: Any,
+    configure: ProjectPolySymbolScopePartialMatchingSupportBuilder<K>.() -> Unit,
+  )
 }
 
 @PolySymbolScopeDsl
@@ -201,6 +345,51 @@ interface PolySymbolScopeCachedBuilder<T : UserDataHolder, K> : PolySymbolScopeC
   fun pointer(provider: (T) -> Pointer<out T>)
 
   fun initialize(body: PolySymbolScopeCachedInitializer<T, K>.() -> Unit)
+
+  /**
+   * Opt into a fast, index/direct-lookup-backed path for single name-match queries — the common
+   * case, resolving one reference — so it doesn't have to force building (or wait on) the scope's
+   * full symbol cache first.
+   *
+   * The decision (whether to offer the fast path, and with what lookup) is
+   * computed once, lazily, for this scope instance's lifetime.
+   *
+   * Use `partialMatchingSupport` only when the candidate set is genuinely expensive to enumerate
+   * fully (e.g. a project-wide index) and a targeted point lookup is cheaper.
+   */
+  fun partialMatchingSupport(configure: PolySymbolScopePartialMatchingSupportBuilder<T, K>.() -> Unit)
+
+  /**
+   * Opt into a fast, index/direct-lookup-backed path for single name-match queries — the common
+   * case, resolving one reference — so it doesn't have to force building (or wait on) the scope's
+   * full symbol cache first.
+   *
+   * The decision (whether to offer the fast path, and with what lookup) is
+   * cached using provided [cacheDependencies].
+   *
+   * Use `partialMatchingSupport` only when the candidate set is genuinely expensive to enumerate
+   * fully (e.g. a project-wide index) and a targeted point lookup is cheaper.
+   */
+  fun partialMatchingSupport(
+    cacheDependencies: Collection<Any>,
+    configure: PolySymbolScopePartialMatchingSupportBuilder<T, K>.() -> Unit,
+  )
+
+  /**
+   * Opt into a fast, index/direct-lookup-backed path for single name-match queries — the common
+   * case, resolving one reference — so it doesn't have to force building (or wait on) the scope's
+   * full symbol cache first.
+   *
+   * The decision (whether to offer the fast path, and with what lookup) is
+   * cached using provided [cacheDependencies].
+   *
+   * Use `partialMatchingSupport` only when the candidate set is genuinely expensive to enumerate
+   * fully (e.g. a project-wide index) and a targeted point lookup is cheaper.
+   */
+  fun partialMatchingSupport(
+    vararg cacheDependencies: Any,
+    configure: PolySymbolScopePartialMatchingSupportBuilder<T, K>.() -> Unit,
+  )
 }
 
 /**

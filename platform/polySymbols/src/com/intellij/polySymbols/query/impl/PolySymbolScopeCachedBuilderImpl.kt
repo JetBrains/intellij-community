@@ -3,6 +3,7 @@ package com.intellij.polySymbols.query.impl
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolBuilder
@@ -18,14 +19,22 @@ import com.intellij.polySymbols.query.PolySymbolScopeCachedBuilder
 import com.intellij.polySymbols.query.PolySymbolScopeCachedBuilderBase
 import com.intellij.polySymbols.query.PolySymbolScopeCachedInitializer
 import com.intellij.polySymbols.query.PolySymbolScopeCachedInitializerBase
+import com.intellij.polySymbols.query.PolySymbolScopePartialMatchingSupportBuilder
+import com.intellij.polySymbols.query.PolySymbolScopePartialMatchingSupportBuilderBase
 import com.intellij.polySymbols.utils.PolySymbolScopeWithCache
 import com.intellij.polySymbols.utils.ReferencingPolySymbol
 import com.intellij.polySymbols.query.ProjectPolySymbolScopeCachedBuilder
 import com.intellij.polySymbols.query.ProjectPolySymbolScopeCachedInitializer
+import com.intellij.polySymbols.query.ProjectPolySymbolScopePartialMatchingSupportBuilder
 import com.intellij.polySymbols.query.PsiPolySymbolScopeCachedBuilder
 import com.intellij.polySymbols.query.PsiPolySymbolScopeCachedInitializer
+import com.intellij.polySymbols.query.PsiPolySymbolScopePartialMatchingSupportBuilder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
+import com.intellij.psi.util.CachedValue
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import java.util.concurrent.ConcurrentHashMap
 
 internal abstract class AbstractBuilder<K>(
   override val project: Project,
@@ -88,6 +97,64 @@ internal abstract class AbstractBuilder<K>(
   }
 }
 
+// ─── partialMatchingSupport collectors ─────────────────────────────────────────
+
+/**
+ * Collected result of one `partialMatchingSupport { }` block evaluation - a plain data holder, not
+ * part of the public DSL surface (callers only ever interact via `provideMatchingSymbols(...)`).
+ * `internal`, not `private`, only because it - and [PartialMatchingSupportCollectorBase] below - are
+ * referenced from [BuiltPolySymbolScopeWithCache]'s constructor parameter types, and Kotlin requires
+ * a declaration's exposed parameter types to be at least as visible as the declaration itself.
+ */
+internal class FixedPolySymbolScopePartialMatchingSupport(
+  val cacheDependencies: Collection<Any>,
+  val lookup: (kind: PolySymbolKind, nameVariant: String) -> List<PolySymbol>,
+)
+
+internal abstract class PartialMatchingSupportCollectorBase<K>(
+  override val project: Project,
+  override val key: K,
+) : PolySymbolScopePartialMatchingSupportBuilderBase<K> {
+
+  var support: FixedPolySymbolScopePartialMatchingSupport? = null
+    private set
+
+  final override fun provideMatchingSymbols(
+    cacheDependencies: Collection<Any>,
+    lookup: (kind: PolySymbolKind, nameVariant: String) -> List<PolySymbol>,
+  ) {
+    check(support == null) { "polySymbolScopeCached: partialMatchingSupport { provideMatchingSymbols(...) } must be called at most once." }
+    check(cacheDependencies.isNotEmpty()) { "polySymbolScopeCached: provideMatchingSymbols cacheDependencies must not be empty." }
+    support = FixedPolySymbolScopePartialMatchingSupport(cacheDependencies, lookup)
+  }
+
+  final override fun provideMatchingSymbols(
+    vararg cacheDependencies: Any,
+    lookup: (kind: PolySymbolKind, nameVariant: String) -> List<PolySymbol>,
+  ) {
+    provideMatchingSymbols(cacheDependencies.toList(), lookup)
+  }
+}
+
+private class ProjectPartialMatchingSupportCollector<K>(
+  project: Project,
+  key: K,
+) : PartialMatchingSupportCollectorBase<K>(project, key), ProjectPolySymbolScopePartialMatchingSupportBuilder<K>
+
+private class PsiPartialMatchingSupportCollector<T : PsiElement, K>(
+  project: Project,
+  override val element: T,
+  key: K,
+) : PartialMatchingSupportCollectorBase<K>(project, key), PsiPolySymbolScopePartialMatchingSupportBuilder<T, K>
+
+private class UserDataHolderPartialMatchingSupportCollector<T : UserDataHolder, K>(
+  project: Project,
+  override val dataHolder: T,
+  key: K,
+) : PartialMatchingSupportCollectorBase<K>(project, key), PolySymbolScopePartialMatchingSupportBuilder<T, K>
+
+// ─── Builders ───────────────────────────────────────────────────────────────────
+
 internal class ProjectPolySymbolScopeCachedBuilderImpl<K>(
   project: Project,
   key: K,
@@ -99,11 +166,37 @@ internal class ProjectPolySymbolScopeCachedBuilderImpl<K>(
   }
 
   private var initBody: (ProjectPolySymbolScopeCachedInitializer<K>.() -> Unit)? = null
+  private var partialMatchingSupportConfigure: (ProjectPolySymbolScopePartialMatchingSupportBuilder<K>.() -> Unit)? = null
+  private var partialMatchingSupportDecisionCacheDependencies: Collection<Any>? = null
 
   override fun initialize(body: ProjectPolySymbolScopeCachedInitializer<K>.() -> Unit) {
     check(initBody == null) { "polySymbolScopeCached: initialize { } must be called exactly once." }
     checkNoPsiCapture(body, "polySymbolScopeCached.initialize")
     initBody = body
+  }
+
+  override fun partialMatchingSupport(configure: ProjectPolySymbolScopePartialMatchingSupportBuilder<K>.() -> Unit) {
+    check(partialMatchingSupportConfigure == null) { "polySymbolScopeCached: partialMatchingSupport { } must be called at most once." }
+    checkNoPsiCapture(configure, "polySymbolScopeCached.partialMatchingSupport")
+    partialMatchingSupportConfigure = configure
+  }
+
+  override fun partialMatchingSupport(
+    cacheDependencies: Collection<Any>,
+    configure: ProjectPolySymbolScopePartialMatchingSupportBuilder<K>.() -> Unit,
+  ) {
+    check(partialMatchingSupportConfigure == null) { "polySymbolScopeCached: partialMatchingSupport { } must be called at most once." }
+    check(cacheDependencies.isNotEmpty()) { "polySymbolScopeCached: partialMatchingSupport cacheDependencies must not be empty." }
+    checkNoPsiCapture(configure, "polySymbolScopeCached.partialMatchingSupport")
+    partialMatchingSupportDecisionCacheDependencies = cacheDependencies
+    partialMatchingSupportConfigure = configure
+  }
+
+  override fun partialMatchingSupport(
+    vararg cacheDependencies: Any,
+    configure: ProjectPolySymbolScopePartialMatchingSupportBuilder<K>.() -> Unit,
+  ) {
+    partialMatchingSupport(cacheDependencies.toList(), configure)
   }
 
   fun build(): BuiltPolySymbolScopeWithCache<Project, K> {
@@ -113,6 +206,7 @@ internal class ProjectPolySymbolScopeCachedBuilderImpl<K>(
     val projectRef = project
     val keyRef = key
     val configureRef = configure
+    val partialConfigure = partialMatchingSupportConfigure
     return BuiltPolySymbolScopeWithCache(
       project = projectRef,
       dataHolder = projectRef,
@@ -124,6 +218,16 @@ internal class ProjectPolySymbolScopeCachedBuilderImpl<K>(
       requiresResolveValue = requiresResolveValue,
       codeCompletionFilter = codeCompletionFilter,
       nameMatchFilter = nameMatchFilter,
+      partialMatchingSupportDecisionCacheDependencies = partialMatchingSupportDecisionCacheDependencies,
+      partialMatchingSupportBody = partialConfigure?.let { partialBody ->
+        {
+          @Suppress("UNCHECKED_CAST")
+          partialBody.invoke(this as ProjectPolySymbolScopePartialMatchingSupportBuilder<K>)
+        }
+      },
+      partialMatchingSupportCollectorFactory = { snapshotProject, _, snapshotKey ->
+        ProjectPartialMatchingSupportCollector(snapshotProject, snapshotKey)
+      },
       pointerProvider = { Pointer.hardPointer(projectRef) },
       initializerFactory = { snapshotProject, _, snapshotKey, consumer, deps ->
         ProjectCachedInitializerImpl(snapshotProject, snapshotKey, consumer, deps)
@@ -150,11 +254,37 @@ internal class PsiPolySymbolScopeCachedBuilderImpl<T : PsiElement, K>(
   }
 
   private var initBody: (PsiPolySymbolScopeCachedInitializer<T, K>.() -> Unit)? = null
+  private var partialMatchingSupportConfigure: (PsiPolySymbolScopePartialMatchingSupportBuilder<T, K>.() -> Unit)? = null
+  private var partialMatchingSupportDecisionCacheDependencies: Collection<Any>? = null
 
   override fun initialize(body: PsiPolySymbolScopeCachedInitializer<T, K>.() -> Unit) {
     check(initBody == null) { "polySymbolScopeCached: initialize { } must be called exactly once." }
     checkNoPsiCapture(body, "polySymbolScopeCached.initialize")
     initBody = body
+  }
+
+  override fun partialMatchingSupport(configure: PsiPolySymbolScopePartialMatchingSupportBuilder<T, K>.() -> Unit) {
+    check(partialMatchingSupportConfigure == null) { "polySymbolScopeCached: partialMatchingSupport { } must be called at most once." }
+    checkNoPsiCapture(configure, "polySymbolScopeCached.partialMatchingSupport")
+    partialMatchingSupportConfigure = configure
+  }
+
+  override fun partialMatchingSupport(
+    cacheDependencies: Collection<Any>,
+    configure: PsiPolySymbolScopePartialMatchingSupportBuilder<T, K>.() -> Unit,
+  ) {
+    check(partialMatchingSupportConfigure == null) { "polySymbolScopeCached: partialMatchingSupport { } must be called at most once." }
+    check(cacheDependencies.isNotEmpty()) { "polySymbolScopeCached: partialMatchingSupport cacheDependencies must not be empty." }
+    checkNoPsiCapture(configure, "polySymbolScopeCached.partialMatchingSupport")
+    partialMatchingSupportDecisionCacheDependencies = cacheDependencies
+    partialMatchingSupportConfigure = configure
+  }
+
+  override fun partialMatchingSupport(
+    vararg cacheDependencies: Any,
+    configure: PsiPolySymbolScopePartialMatchingSupportBuilder<T, K>.() -> Unit,
+  ) {
+    partialMatchingSupport(cacheDependencies.toList(), configure)
   }
 
   fun build(): BuiltPolySymbolScopeWithCache<T, K> {
@@ -163,6 +293,7 @@ internal class PsiPolySymbolScopeCachedBuilderImpl<T : PsiElement, K>(
     check(providesKinds.isNotEmpty()) { "polySymbolScopeCached: provides() must be called with at least one kind." }
     val keyRef = key
     val configureRef = configure
+    val partialConfigure = partialMatchingSupportConfigure
     return BuiltPolySymbolScopeWithCache(
       project = project,
       dataHolder = element,
@@ -174,6 +305,16 @@ internal class PsiPolySymbolScopeCachedBuilderImpl<T : PsiElement, K>(
       requiresResolveValue = requiresResolveValue,
       codeCompletionFilter = codeCompletionFilter,
       nameMatchFilter = nameMatchFilter,
+      partialMatchingSupportDecisionCacheDependencies = partialMatchingSupportDecisionCacheDependencies,
+      partialMatchingSupportBody = partialConfigure?.let { partialBody ->
+        {
+          @Suppress("UNCHECKED_CAST")
+          partialBody.invoke(this as PsiPolySymbolScopePartialMatchingSupportBuilder<T, K>)
+        }
+      },
+      partialMatchingSupportCollectorFactory = { snapshotProject, snapshotHolder, snapshotKey ->
+        PsiPartialMatchingSupportCollector(snapshotProject, snapshotHolder, snapshotKey)
+      },
       pointerProvider = { it.createSmartPointer() },
       initializerFactory = { snapshotProject, snapshotHolder, snapshotKey, consumer, deps ->
         PsiCachedInitializerImpl(snapshotProject, snapshotHolder, snapshotKey, consumer, deps)
@@ -202,6 +343,8 @@ internal class UserDataHolderPolySymbolScopeCachedBuilderImpl<T : UserDataHolder
 
   private var initBody: (PolySymbolScopeCachedInitializer<T, K>.() -> Unit)? = null
   private var pointerProvider: ((T) -> Pointer<out T>)? = null
+  private var partialMatchingSupportConfigure: (PolySymbolScopePartialMatchingSupportBuilder<T, K>.() -> Unit)? = null
+  private var partialMatchingSupportDecisionCacheDependencies: Collection<Any>? = null
 
   override fun pointer(provider: (T) -> Pointer<out T>) {
     check(pointerProvider == null) { "polySymbolScopeCached: pointer { } must be called exactly once." }
@@ -215,6 +358,30 @@ internal class UserDataHolderPolySymbolScopeCachedBuilderImpl<T : UserDataHolder
     initBody = body
   }
 
+  override fun partialMatchingSupport(configure: PolySymbolScopePartialMatchingSupportBuilder<T, K>.() -> Unit) {
+    check(partialMatchingSupportConfigure == null) { "polySymbolScopeCached: partialMatchingSupport { } must be called at most once." }
+    checkNoPsiCapture(configure, "polySymbolScopeCached.partialMatchingSupport")
+    partialMatchingSupportConfigure = configure
+  }
+
+  override fun partialMatchingSupport(
+    cacheDependencies: Collection<Any>,
+    configure: PolySymbolScopePartialMatchingSupportBuilder<T, K>.() -> Unit,
+  ) {
+    check(partialMatchingSupportConfigure == null) { "polySymbolScopeCached: partialMatchingSupport { } must be called at most once." }
+    check(cacheDependencies.isNotEmpty()) { "polySymbolScopeCached: partialMatchingSupport cacheDependencies must not be empty." }
+    checkNoPsiCapture(configure, "polySymbolScopeCached.partialMatchingSupport")
+    partialMatchingSupportDecisionCacheDependencies = cacheDependencies
+    partialMatchingSupportConfigure = configure
+  }
+
+  override fun partialMatchingSupport(
+    vararg cacheDependencies: Any,
+    configure: PolySymbolScopePartialMatchingSupportBuilder<T, K>.() -> Unit,
+  ) {
+    partialMatchingSupport(cacheDependencies.toList(), configure)
+  }
+
   fun build(): BuiltPolySymbolScopeWithCache<T, K> {
     configure(this)
     val body = initBody ?: error("polySymbolScopeCached: initialize { } was not called.")
@@ -224,6 +391,7 @@ internal class UserDataHolderPolySymbolScopeCachedBuilderImpl<T : UserDataHolder
     val projectRef = project
     val keyRef = key
     val configureRef = configure
+    val partialConfigure = partialMatchingSupportConfigure
     return BuiltPolySymbolScopeWithCache(
       project = projectRef,
       dataHolder = dataHolder,
@@ -235,6 +403,16 @@ internal class UserDataHolderPolySymbolScopeCachedBuilderImpl<T : UserDataHolder
       requiresResolveValue = requiresResolveValue,
       codeCompletionFilter = codeCompletionFilter,
       nameMatchFilter = nameMatchFilter,
+      partialMatchingSupportDecisionCacheDependencies = partialMatchingSupportDecisionCacheDependencies,
+      partialMatchingSupportBody = partialConfigure?.let { partialBody ->
+        {
+          @Suppress("UNCHECKED_CAST")
+          partialBody.invoke(this as PolySymbolScopePartialMatchingSupportBuilder<T, K>)
+        }
+      },
+      partialMatchingSupportCollectorFactory = { snapshotProject, snapshotHolder, snapshotKey ->
+        UserDataHolderPartialMatchingSupportCollector(snapshotProject, snapshotHolder, snapshotKey)
+      },
       pointerProvider = pointer,
       initializerFactory = { snapshotProject, snapshotHolder, snapshotKey, consumer, deps ->
         UserDataHolderCachedInitializerImpl(snapshotProject, snapshotHolder, snapshotKey, consumer, deps)
@@ -325,6 +503,11 @@ private class UserDataHolderCachedInitializerImpl<T : UserDataHolder, K>(
 
 // ─── Built scope ──────────────────────────────────────────────────────────────
 
+/** Dedicated userData-map marker for the partial-matching-support decision cache - kept distinct
+ *  from [PolySymbolScopeWithCache]'s own internal search-map cache key so the two never collide on
+ *  the same `dataHolder`. */
+private object PartialMatchingSupportDecisionMapMarker
+
 internal class BuiltPolySymbolScopeWithCache<T : UserDataHolder, K>(
   project: Project,
   dataHolder: T,
@@ -336,6 +519,9 @@ internal class BuiltPolySymbolScopeWithCache<T : UserDataHolder, K>(
   private val requiresResolveValue: Boolean,
   private val codeCompletionFilter: ((PolySymbolKind, List<PolySymbolCodeCompletionItem>) -> List<PolySymbolCodeCompletionItem>)?,
   private val nameMatchFilter: ((PolySymbolQualifiedName, List<PolySymbol>) -> List<PolySymbol>)?,
+  private val partialMatchingSupportDecisionCacheDependencies: Collection<Any>?,
+  private val partialMatchingSupportBody: (PolySymbolScopePartialMatchingSupportBuilderBase<K>.() -> Unit)?,
+  private val partialMatchingSupportCollectorFactory: (Project, T, K) -> PartialMatchingSupportCollectorBase<K>,
   private val pointerProvider: (T) -> Pointer<out T>,
   private val initializerFactory: (
     Project,
@@ -355,6 +541,50 @@ internal class BuiltPolySymbolScopeWithCache<T : UserDataHolder, K>(
 
   override val requiresResolve: Boolean
     get() = requiresResolveValue
+
+  private fun runPartialMatchingSupportCollector(): FixedPolySymbolScopePartialMatchingSupport? {
+    val body = partialMatchingSupportBody ?: return null
+    val collector = partialMatchingSupportCollectorFactory(project, dataHolder, userKey)
+    body.invoke(collector)
+    return collector.support
+  }
+
+  // Only ever read from the no-argument-`partialMatchingSupport { }`-configured branch below - the
+  // initializer therefore only ever runs (at most once, for this scope instance's lifetime) when
+  // that branch is actually taken; no CachedValuesManager involved on this path at all.
+  private val partialMatchingSupportLazyValue: FixedPolySymbolScopePartialMatchingSupport? by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    runPartialMatchingSupportCollector()
+  }
+
+  private fun getCachedPartialMatchingSupportDecision(decisionCacheDependencies: Collection<Any>): FixedPolySymbolScopePartialMatchingSupport? {
+    val manager = CachedValuesManager.getManager(project)
+    val perScopeMap: ConcurrentHashMap<Pair<Class<*>, K>, CachedValue<FixedPolySymbolScopePartialMatchingSupport?>> =
+      manager.getCachedValue(dataHolder, manager.getKeyForClass(PartialMatchingSupportDecisionMapMarker::class.java), {
+        CachedValueProvider.Result(ConcurrentHashMap(), ModificationTracker.NEVER_CHANGED)
+      }, false)
+    val cachedValue = perScopeMap.getOrPut(key) {
+      manager.createCachedValue {
+        CachedValueProvider.Result.create(runPartialMatchingSupportCollector(), decisionCacheDependencies.toList())
+      }
+    }
+    return cachedValue.value
+  }
+
+  override val partialMatchingSupport: PartialMatchingSupport?
+    get() {
+      val decisionDeps = partialMatchingSupportDecisionCacheDependencies
+      val fixedSupport =
+        if (partialMatchingSupportBody == null) null
+        else if (decisionDeps == null) partialMatchingSupportLazyValue
+        else getCachedPartialMatchingSupportDecision(decisionDeps)
+      return fixedSupport?.let { fixed ->
+        object : PartialMatchingSupport {
+          override val cacheDependencies: Collection<Any> = fixed.cacheDependencies
+          override fun getMatchingSymbols(kind: PolySymbolKind, nameVariant: String): List<PolySymbol> =
+            fixed.lookup(kind, nameVariant)
+        }
+      }
+    }
 
   override fun initialize(consumer: (PolySymbol) -> Unit, cacheDependencies: MutableSet<Any>) {
     val initializer = initializerFactory(project, dataHolder, userKey, consumer, cacheDependencies)

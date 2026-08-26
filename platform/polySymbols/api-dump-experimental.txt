@@ -1083,6 +1083,9 @@
 - com.intellij.polySymbols.query.PolySymbolScopeCachedBuilderBase
 - a:getDataHolder():com.intellij.openapi.util.UserDataHolder
 - a:initialize(kotlin.jvm.functions.Function1):V
+- a:partialMatchingSupport(java.util.Collection,kotlin.jvm.functions.Function1):V
+- a:partialMatchingSupport(kotlin.jvm.functions.Function1):V
+- a:partialMatchingSupport(java.lang.Object[],kotlin.jvm.functions.Function1):V
 - a:pointer(kotlin.jvm.functions.Function1):V
 *:com.intellij.polySymbols.query.PolySymbolScopeCachedBuilderBase
 - com.intellij.polySymbols.query.PolySymbolScopeBuilderBase
@@ -1115,6 +1118,14 @@
 - bs:referenceSymbols$default(com.intellij.polySymbols.query.PolySymbolScopeInitializer,com.intellij.polySymbols.PolySymbolKind,java.lang.String,com.intellij.polySymbols.PolySymbolKind[],com.intellij.polySymbols.PolySymbol$Priority,I,java.lang.Object):V
 - a:unaryPlus(com.intellij.polySymbols.PolySymbol):V
 - a:unaryPlus(java.lang.Iterable):V
+*:com.intellij.polySymbols.query.PolySymbolScopePartialMatchingSupportBuilder
+- com.intellij.polySymbols.query.PolySymbolScopePartialMatchingSupportBuilderBase
+- a:getDataHolder():com.intellij.openapi.util.UserDataHolder
+*:com.intellij.polySymbols.query.PolySymbolScopePartialMatchingSupportBuilderBase
+- a:getKey():java.lang.Object
+- a:getProject():com.intellij.openapi.project.Project
+- a:provideMatchingSymbols(java.util.Collection,kotlin.jvm.functions.Function2):V
+- a:provideMatchingSymbols(java.lang.Object[],kotlin.jvm.functions.Function2):V
 *:com.intellij.polySymbols.query.PolySymbolThreadLocalCacheKeyProvider
 - *sf:Companion:com.intellij.polySymbols.query.PolySymbolThreadLocalCacheKeyProvider$Companion
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
@@ -1126,14 +1137,25 @@
 *:com.intellij.polySymbols.query.ProjectPolySymbolScopeCachedBuilder
 - com.intellij.polySymbols.query.PolySymbolScopeCachedBuilderBase
 - a:initialize(kotlin.jvm.functions.Function1):V
+- a:partialMatchingSupport(java.util.Collection,kotlin.jvm.functions.Function1):V
+- a:partialMatchingSupport(kotlin.jvm.functions.Function1):V
+- a:partialMatchingSupport(java.lang.Object[],kotlin.jvm.functions.Function1):V
 *:com.intellij.polySymbols.query.ProjectPolySymbolScopeCachedInitializer
 - com.intellij.polySymbols.query.PolySymbolScopeCachedInitializerBase
+*:com.intellij.polySymbols.query.ProjectPolySymbolScopePartialMatchingSupportBuilder
+- com.intellij.polySymbols.query.PolySymbolScopePartialMatchingSupportBuilderBase
 *:com.intellij.polySymbols.query.PsiPolySymbolScopeCachedBuilder
 - com.intellij.polySymbols.query.PolySymbolScopeCachedBuilderBase
 - a:getElement():com.intellij.psi.PsiElement
 - a:initialize(kotlin.jvm.functions.Function1):V
+- a:partialMatchingSupport(java.util.Collection,kotlin.jvm.functions.Function1):V
+- a:partialMatchingSupport(kotlin.jvm.functions.Function1):V
+- a:partialMatchingSupport(java.lang.Object[],kotlin.jvm.functions.Function1):V
 *:com.intellij.polySymbols.query.PsiPolySymbolScopeCachedInitializer
 - com.intellij.polySymbols.query.PolySymbolScopeCachedInitializerBase
+- a:getElement():com.intellij.psi.PsiElement
+*:com.intellij.polySymbols.query.PsiPolySymbolScopePartialMatchingSupportBuilder
+- com.intellij.polySymbols.query.PolySymbolScopePartialMatchingSupportBuilderBase
 - a:getElement():com.intellij.psi.PsiElement
 *:com.intellij.polySymbols.refactoring.PolySymbolRenameTarget
 - com.intellij.refactoring.rename.api.RenameTarget

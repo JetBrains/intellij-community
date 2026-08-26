@@ -63,26 +63,53 @@ a non-empty set (throws otherwise) and add symbols via `add`/`addAll`/`+`/`addSy
 `contrib/Astro/src/org/jetbrains/astro/polySymbols/scope/AstroAvailableComponentsScope.kt` (Project,
 Unit key), `AstroNamespacedComponentsScope.kt` (PsiElement, Unit key, with `filterCodeCompletions`).
 
-**Caveat**: the DSL does not expose `PolySymbolScopeWithCache.partialMatchingSupport` directly - but
-that's rarely a reason to hand-write a scope. A scope whose candidate set is bounded to one PSI
-element/file (the common case) should still default to `polySymbolScopeCached(...)`: a full
+**The DSL exposes `PolySymbolScopeWithCache.partialMatchingSupport` too**, via two builder overloads:
+```kotlin
+fun partialMatchingSupport(cacheDependencies: Collection<Any>, getMatchingSymbols: (kind: PolySymbolKind, nameVariant: String) -> List<PolySymbol>)
+fun partialMatchingSupport(provider: () -> PolySymbolScopePartialMatchingSupport?)
+```
+The first is the common case: a fixed, *unconditionally* active fast path - a single name-match query
+goes straight to `getMatchingSymbols` (typically a direct index/point lookup) instead of forcing (or
+waiting on) the full symbol-set build first. GDScript's `gdPsiClassesPolySymbolScope`/
+`gdPsiResourceClassesPolySymbolScope`
+(`dotnet/Plugins/godot-support/gdscript/.../polySymbols/scope/GdPsiClassesPolySymbolScope.kt`/
+`GdPsiResourceClassesPolySymbolScope.kt`) both use this form - each backed by a project-wide
+index/lookup where a full walk is proportional to everything in the project, but a single point
+lookup is always cheap regardless of project size, so the fast path is worth providing
+unconditionally. The second is the general form, for a *conditional* activation strategy: `provider`
+is invoked fresh on every `getMatchingSymbols` call (matching the underlying property's own contract)
+and may return `null` to skip the partial path for that call and fall through to the DSL's normal,
+full-cache-backed matching. If the *decision itself* is non-trivial to compute (e.g. checking a stub
+count), cache that decision inside `provider` the same way a hand-written scope would (e.g. via
+`CachedValuesManager.getCachedValue(dataHolder) { ... }`) - the DSL does not do this for you, it just
+forwards the call through.
+
+A scope whose candidate set is bounded to one PSI element/file (the common case) should still default
+to the plain form of `polySymbolScopeCached(...)`, with **no** `partialMatchingSupport` at all: a full
 PSI/stub walk over an already-open file is normally *cheaper* than a project-wide index lookup for
 the same answer, and the DSL's caching means repeat queries (including code completion) reuse the
 walk for free - see GDScript's `gdPsiInnerClassesPolySymbolScope`
 (`dotnet/Plugins/godot-support/gdscript/.../polySymbols/scope/GdPsiInnerClassesPolySymbolScope.kt`)
-for the idiomatic shape (an iterative, stub-only walk of one file, cached by the DSL). Reach into an
-index instead only when full enumeration is genuinely expensive - i.e. the scope's candidate set spans
-many files (GDScript's `GdPsiClassesPolySymbolScope`/`GdClassNamingIndex`, deliberately project-wide,
-see [case-studies.md](case-studies.md#gdscript)) or a single file is large enough that walking it every
-time is wasteful. For the latter, hand-write a `PolySymbolScopeWithCache` subclass and gate the
-index-backed path behind a real size check, the way `CssStylesheetClassesScope` does in
-`plugins/css/backend/src/com/intellij/polySymbols/css/classes/CssTagClassesScope.kt`: it walks the
-stylesheet's own stubs by default via `initialize`, and only turns on its index-backed
-`partialMatchingSupport` (`CssClassIndex`) when the containing file's stub tree exceeds 500 stubbed
-symbols - "using indexes on small files can cause performance issues," per its own comment. Treat
-that file as the canonical worked example of this trade-off; reach for a hand-written, always-index
-`PolySymbolScopeWithCache` (no cached PSI walk at all) only for genuinely project-wide scopes, or when
-you need custom `createPointer()` chaining through an owning symbol (rare).
+for the idiomatic shape (an iterative, stub-only walk of one file, cached by the DSL). Reach for
+`partialMatchingSupport` only when full enumeration is genuinely expensive - i.e. the scope's
+candidate set spans many files/the whole project (GDScript's `gdPsiClassesPolySymbolScope`/
+`GdClassNamingIndex`, deliberately project-wide, see [case-studies.md](case-studies.md#gdscript)) or a
+single file is large enough that walking it every time is wasteful, gated behind a real size check -
+the way CSS's `CssStylesheetClassesScope` does in
+`plugins/css/backend/src/com/intellij/polySymbols/css/classes/CssTagClassesScope.kt` (only turns on
+its index-backed partial matching, over `CssClassIndex`, when the containing file's stub tree exceeds
+500 stubbed symbols - "using indexes on small files can cause performance issues," per its own
+comment) and `CssCustomPropertiesScope`
+(`plugins/css/backend/src/com/intellij/polySymbols/css/CssSymbolQueryScopeContributor.kt`, gated on
+whether the file is indexed at all, no size threshold) do. Both predate this DSL addition and haven't
+been migrated onto it - the size/indexed-file gate maps onto the general `provider` overload above,
+but migrating a different plugin's hand-written scope onto a platform DSL feature is a separate,
+deliberate follow-up, not something to do silently as part of adding the feature.
+
+Reach for a hand-written `PolySymbolScopeWithCache` subclass (bypassing the DSL entirely) only when
+you need custom `createPointer()` chaining through an owning symbol (rare) - not for
+`partialMatchingSupport` itself anymore, now that the DSL covers both the unconditional and the
+conditional/gated case.
 
 `isExclusiveFor(kind)`: when a scope is exclusive for a kind, pattern-matching stops walking further
 down the scope stack for that kind once this scope has been consulted — use it when a scope is
@@ -95,7 +122,7 @@ this literally: both `initialize`'s `consumer` and `PartialMatchingSupport.getMa
 A hand-written raw `PolySymbolScope` has no such check, but the rule is still correct there too - skip
 it and any consumer reading `.kind` off the raw (non-unwrapped) resolved symbol silently sees the wrong
 kind. This bites whenever a scope's *query-routing* kind is answered by a real symbol whose *own* kind
-is genuinely different - e.g. GDScript's `GdPsiResourceClassesPolySymbolScope` answers
+is genuinely different - e.g. GDScript's `gdPsiResourceClassesPolySymbolScope` answers
 `GdPolySymbolKind.RESOURCE_CLASS` queries (`extends "res://base.gd"`) with whatever the resource file
 actually declares, which always reports kind `CLASS` (`GdPsiClassSymbol` for a named file,
 `GdPsiResourceClassSymbol` for an anonymous one) - `RESOURCE_CLASS` is a routing-only kind that no
@@ -384,10 +411,11 @@ ways this can go wrong, and the one that actually works:
   private `AliasedPolySymbol` delegate, `renameTarget = null`) — apply the wrapping *in the query scope*
   that resolves the mismatched name (e.g. Angular's `Angular2BlockReferenceProvider.getReferencedSymbol`
   aliasing a canonicalized, whitespace-collapsed block name like `else if` back onto whatever spacing
-  variant was actually typed; GDScript's `GdPsiResourceClassesPolySymbolScope.referencingResourceClassSymbol`
-  does the same aliasing one layer deeper, *inside* a `PolySymbolMatch` nameSegment, because that scope
-  also has a **kind** mismatch to fix at the same time - see the `PolySymbolScope` section's note on
-  kind-consistency above), not in the reference/own-reference call site, so every consumer of that
+  variant was actually typed; GDScript's `gdPsiResourceClassesPolySymbolScope`'s
+  `referencingResourceClassSymbol` helper does the same aliasing one layer deeper, *inside* a
+  `PolySymbolMatch` nameSegment, because that scope also has a **kind** mismatch to fix at the same
+  time - see the `PolySymbolScope` section's note on kind-consistency above), not in the
+  reference/own-reference call site, so every consumer of that
   scope (own references, completion, etc.) sees a consistently-named symbol. (GDScript previously had
   its own bespoke `GdAliasedNameSymbol` for this; it has been migrated onto the shared
   `withName`/`AliasedPolySymbol` utility, so if you see `GdAliasedNameSymbol` referenced elsewhere,
