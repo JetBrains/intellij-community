@@ -71,6 +71,21 @@ public final class DocumentationHintEditorPane extends DocumentationEditorPane {
 
   @Override
   protected void processMouseEvent(MouseEvent e) {
+    processWindowMoveListenerMouseEvent(e);
+    if (!e.isConsumed()) {
+      super.processMouseEvent(e);
+    }
+  }
+
+  @Override
+  protected void processMouseMotionEvent(MouseEvent e) {
+    processWindowMoveListenerMouseMotionEvent(e);
+    if (!e.isConsumed()) {
+      super.processMouseMotionEvent(e);
+    }
+  }
+
+  private void processWindowMoveListenerMouseEvent(MouseEvent e) {
     // We can't use moveListener.installTo() because there are other listeners, and we can't depend on their order.
     // The move listener must be invoked first, and if it consumes the event, then we must stop.
     // Otherwise, it'll lead to weird effects like the text selection changing while the popup is being moved.
@@ -81,19 +96,12 @@ public final class DocumentationHintEditorPane extends DocumentationEditorPane {
       case MouseEvent.MOUSE_EXITED -> moveListener.mouseExited(e);
       case MouseEvent.MOUSE_ENTERED -> moveListener.mouseEntered(e);
     }
-    if (!e.isConsumed()) {
-      super.processMouseEvent(e);
-    }
   }
 
-  @Override
-  protected void processMouseMotionEvent(MouseEvent e) {
+  private void processWindowMoveListenerMouseMotionEvent(MouseEvent e) {
     switch (e.getID()) {
       case MouseEvent.MOUSE_MOVED -> moveListener.mouseMoved(e);
       case MouseEvent.MOUSE_DRAGGED -> moveListener.mouseDragged(e);
-    }
-    if (!e.isConsumed()) {
-      super.processMouseMotionEvent(e);
     }
   }
 
