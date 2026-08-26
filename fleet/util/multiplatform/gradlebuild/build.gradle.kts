@@ -1,15 +1,12 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 // IMPORT__MARKER_START
 import fleet.buildtool.conventions.configureAtMostOneJvmTargetOrThrow
 import fleet.buildtool.conventions.withJavaSourceSet
 // IMPORT__MARKER_END
+
 plugins {
   alias(libs.plugins.kotlin.multiplatform)
   id("fleet.project-module-conventions")
   id("fleet.toolchain-conventions")
-  id("fleet.module-publishing-conventions")
-  id("fleet.open-source-module-conventions")
-  alias(libs.plugins.dokka)
   // GRADLE_PLUGINS__MARKER_START
   id("fleet-module")
   // GRADLE_PLUGINS__MARKER_END

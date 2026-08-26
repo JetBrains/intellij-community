@@ -1,5 +1,3 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 // IMPORT__MARKER_START
 import fleet.buildtool.conventions.configureAtMostOneJvmTargetOrThrow
 import fleet.buildtool.conventions.withJavaSourceSet
@@ -9,8 +7,6 @@ plugins {
   alias(libs.plugins.kotlin.multiplatform)
   id("fleet.project-module-conventions")
   id("fleet.toolchain-conventions")
-  alias(libs.plugins.dokka)
-  id("fleet.module-publishing-conventions")
   // GRADLE_PLUGINS__MARKER_START
   id("fleet-module")
   // GRADLE_PLUGINS__MARKER_END
@@ -18,20 +14,8 @@ plugins {
 
 fleetModule {
   module {
-    name = "fleet.build.buildtool.cli"
+    name = "fleet.build.cli"
     importedFromJps {}
-  }
-}
-
-kotlin {
-  jvm {
-    @OptIn(ExperimentalKotlinGradlePluginApi::class)
-    binaries {
-      // Configures a JavaExec task named "runJvm" and a Gradle distribution for the "main" compilation in this target
-      executable {
-        mainClass.set("fleet.buildtool.cli.commands.GenerateInitModuleDescriptorCommandKt")
-      }
-    }
   }
 }
 

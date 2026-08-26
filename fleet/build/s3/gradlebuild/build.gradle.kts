@@ -7,8 +7,6 @@ plugins {
   alias(libs.plugins.kotlin.multiplatform)
   id("fleet.project-module-conventions")
   id("fleet.toolchain-conventions")
-  alias(libs.plugins.dokka)
-  id("fleet.module-publishing-conventions")
   // GRADLE_PLUGINS__MARKER_START
   id("fleet-module")
   // GRADLE_PLUGINS__MARKER_END
@@ -18,7 +16,6 @@ fleetModule {
   module {
     name = "fleet.build.s3"
     importedFromJps {}
-    test {}
   }
 }
 

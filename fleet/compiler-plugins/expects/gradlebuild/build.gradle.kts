@@ -7,7 +7,6 @@ plugins {
   alias(libs.plugins.kotlin.multiplatform)
   id("fleet.project-module-conventions")
   id("fleet.toolchain-conventions")
-  alias(libs.plugins.dokka)
   // GRADLE_PLUGINS__MARKER_START
   id("fleet-module")
   // GRADLE_PLUGINS__MARKER_END
