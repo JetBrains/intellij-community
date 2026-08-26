@@ -13,6 +13,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.actions.OpenFileAction
 import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.ide.trustedProjects.TrustedFiles
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
@@ -619,6 +620,7 @@ object ProjectUtil {
       else {
         val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtilRt.toSystemIndependentName(file.toString()))
         if (virtualFile != null && virtualFile.isValid) {
+          TrustedFiles.markExternallyOpened(virtualFile)
           OpenFileAction.openFileAsync(virtualFile, projectToClose)
         }
         result = projectToClose

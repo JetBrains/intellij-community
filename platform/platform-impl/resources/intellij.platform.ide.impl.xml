@@ -1540,6 +1540,7 @@
     <applicationService serviceImplementation="com.intellij.ide.browsers.WebBrowserManager" />
     <applicationService serviceImplementation="com.intellij.ide.impl.TrustedPaths" />
     <applicationService serviceImplementation="com.intellij.ide.impl.TrustedPathsSettings" />
+    <applicationService serviceImplementation="com.intellij.ide.trustedProjects.ExternallyOpenedFiles" />
     <applicationService serviceImplementation="com.intellij.openapi.keymap.impl.KeymapFlagsStorage" />
     <applicationService serviceImplementation="com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetSettings" />
     <statusBarWidgetFactory id="VfsRefresh" implementation="com.intellij.openapi.wm.impl.status.VfsRefreshIndicatorWidgetFactory"
@@ -1643,6 +1644,7 @@
     <projectSettings service="com.intellij.configurationStore.ProjectIdManagerImpl"/>
     <applicationSettings service="com.intellij.ide.impl.TrustedPaths"/>
     <applicationSettings service="com.intellij.ide.impl.TrustedPathsSettings"/>
+    <applicationSettings service="com.intellij.ide.trustedProjects.ExternallyOpenedFiles"/>
     <applicationSettings service="com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings"/>
     <applicationSettings service="com.intellij.ide.ui.experimental.toolbar.ExperimentalToolbarSettings"/>
     <projectSettings service="com.intellij.ide.util.ProjectPropertyService"/>

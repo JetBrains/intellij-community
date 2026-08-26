@@ -2,21 +2,26 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen
 
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.trustedProjects.TrustedFiles
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.util.asDisposable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -91,6 +96,26 @@ internal class WelcomeScreenCommandLineProjectOpenProcessorTest {
       val position = FileEditorManager.getInstance(project).selectedTextEditor?.caretModel?.logicalPosition
       assertEquals(1, position?.line)
       assertEquals(3, position?.column)
+    }
+  }
+
+  @Test
+  @Timeout(30)
+  @SystemProperty("idea.trust.headless.disabled", "false")
+  fun `an opened file is in the safe mode before the editor opens`(@TempDir tempDir: Path): Unit = timeoutRunBlocking {
+    Registry.get(TrustedFiles.SAFE_MODE_REGISTRY_KEY).setValue(true, asDisposable())
+    val file = createFile(tempDir, "external.txt", "text")
+    val processor = createProcessor {
+      provider.welcomeProject = project
+      project
+    }
+
+    assertSame(project, processor.openProjectAndFile(file, tempProject = false, OpenProjectTask {}))
+
+    val virtualFile = findVirtualFile(file)
+    assertFalse(TrustedFiles.isTrusted(virtualFile, project))
+    withContext(Dispatchers.EDT) {
+      assertTrue(FileEditorManager.getInstance(project).isFileOpen(virtualFile))
     }
   }
 

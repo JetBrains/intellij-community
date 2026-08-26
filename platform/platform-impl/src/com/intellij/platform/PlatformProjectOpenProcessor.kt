@@ -11,6 +11,7 @@ import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.impl.toOpenProjectTask
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.isClaimedByWelcomeScreenProject
+import com.intellij.ide.trustedProjects.TrustedFiles
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -26,6 +27,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.checkTrustedState
@@ -45,6 +47,7 @@ import com.intellij.projectImport.ProjectOpenedCallback
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Files
@@ -457,6 +460,7 @@ private fun openFileFromCommandLine(project: Project, file: Path, line: Int, col
         }
 
         val virtualFile = ProjectUtilCore.getFileAndRefresh(file) ?: return@Runnable
+        TrustedFiles.markExternallyOpened(virtualFile)
         val navigatable = if (line > 0) {
           OpenFileDescriptor(project, virtualFile, line - 1, column.coerceAtLeast(0))
         }

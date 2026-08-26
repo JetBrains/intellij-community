@@ -5,6 +5,7 @@ import com.intellij.configurationStore.ProjectStorePathManager
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.projectView.ProjectView
+import com.intellij.ide.trustedProjects.TrustedFiles
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -114,8 +115,10 @@ internal class WelcomeScreenCommandLineProjectOpenProcessor(
   ): Project {
     val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file) ?: return project
 
-    focusOnFile(project, virtualFile, options.line, options.column, selectInProjectView)
+    // before focusOnFile: editor provider selection reads both the write access and the trust state
     NonProjectFileWritingAccessProvider.allowWriting(listOf(virtualFile))
+    TrustedFiles.markExternallyOpened(virtualFile)
+    focusOnFile(project, virtualFile, options.line, options.column, selectInProjectView)
     return project
   }
 
