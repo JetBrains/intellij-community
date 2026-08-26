@@ -204,6 +204,10 @@ object CommunityLibraryLicenses {
       .simplifiedBsd("https://github.com/cs-au-dk/dk.brics.automaton/blob/master/COPYING")
       .copyrightText("Copyright (c) 2001-2022 Anders Moeller"),
 
+    LibraryLicense("Awaitility", libraryName = "awaitility", url = "https://github.com/awaitility/awaitility")
+      .apache("https://github.com/awaitility/awaitility/blob/master/LICENSE")
+      .suppliedByPersons("Johan Haleby"),
+
     LibraryLicense("Bash-Preexec", version = "0.5.0", attachedTo = "intellij.terminal", url = "https://github.com/rcaloras/bash-preexec")
       .mit("https://github.com/rcaloras/bash-preexec/blob/master/LICENSE.md"),
 
@@ -1054,6 +1058,10 @@ object CommunityLibraryLicenses {
       .newBsd("https://github.com/mikaelgrev/miglayout/blob/master/src/site/resources/docs/license.txt")
       .suppliedByOrganizations("MiG InfoCom AB"),
 
+    LibraryLicense("Mockito Kotlin", libraryName = "mockito-kotlin", url = "https://github.com/mockito/mockito-kotlin")
+      .mit("https://github.com/mockito/mockito-kotlin/blob/main/LICENSE")
+      .suppliedByPersons("Niek Haarman"),
+
     LibraryLicense("MockK", libraryName = "io.mockk", url = "https://mockk.io")
       .apache("https://github.com/mockk/mockk/blob/master/LICENSE"),
 
@@ -1469,9 +1477,13 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("ai.grazie.emb"),
     jetbrainsLibrary("ai.grazie.nlp.detect"),
     jetbrainsLibrary("ai.grazie.nlp.encoder.bert.uncased"),
+    jetbrainsLibrary("ai.grazie.nlp.phonetics.jvm"),
+    jetbrainsLibrary("ai.grazie.nlp.similarity.jvm"),
     jetbrainsLibrary("ai.grazie.semantic.engine"),
     jetbrainsLibrary("ai.grazie.spell.gec.engine.local"),
     jetbrainsLibrary("ai.grazie.spell.hunspell.en"),
+    jetbrainsLibrary("ai.grazie.utils.common.jvm"),
+    jetbrainsLibrary("ai.grazie.utils.multiplatform.jvm"),
     jetbrainsLibrary("cloud-config-client"),
     jetbrainsLibrary("cloud.jetbrains.sdk.ml.jbai.ner.api"),
     jetbrainsLibrary("cloud.jetbrains.sdk.ml.jbai.tree.api"),
