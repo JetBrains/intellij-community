@@ -315,6 +315,11 @@ COMMUNITY_DEV_LAUNCH_REPOS = merge_repo_sets(
     _per_platform_repos("jcef"),
 )
 
+# Just the bundled Maven distribution and its libraries: what a test that opens a Maven project needs,
+# because `MavenDistributionsCache` resolves the bundled Maven through `BundledMavenDownloader` and would
+# otherwise download it. Deliberately not the whole dev-launch set - a test has no use for JCEF.
+MAVEN_DEV_LAUNCH_REPOS = _shared_repos(["maven"])
+
 # What IDE Starter downloads to launch an IDE under test. Deliberately apart from the dev-launch set: a
 # `bazel run` dev launch runs on the JVM Bazel gave it and never touches these 400 MB.
 COMMUNITY_IDE_STARTER_REPOS = _per_platform_repos("jbr")
