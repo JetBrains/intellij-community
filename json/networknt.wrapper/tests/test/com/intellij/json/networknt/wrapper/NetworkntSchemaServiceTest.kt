@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
+import com.intellij.testFramework.TrustedProjectsTestUtil
 import com.intellij.testFramework.common.waitUntilAssertSucceedsBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
@@ -42,6 +43,8 @@ class NetworkntSchemaServiceTest : BasePlatformTestCase() {
 
   override fun setUp() {
     super.setUp()
+    TrustedProjectsTestUtil.enableTrustedProjectsCheck(testRootDisposable)
+    TrustedProjects.setProjectTrusted(project, true)
     service().invalidateAllCaches("test setUp")
   }
 
