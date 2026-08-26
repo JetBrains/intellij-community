@@ -535,7 +535,7 @@ public abstract class DiffRequestProcessor
   }
 
   protected @Nullable Runnable createAfterNavigateCallback() {
-    return null;
+    return () -> DiffUtil.minimizeDiffIfOpenedInWindow(myMainPanel);
   }
 
   protected @NotNull List<AnAction> getNavigationActions() {
