@@ -76,6 +76,7 @@ class PyreflyLspClientDescriptor(module: Module) : PyLspToolDescriptor(module, P
     return buildMap {
       put("pythonPath", homePath)
       put("pyrefly", buildPyreflyClientSettings())
+      put("analysis", buildPyreflyAnalysisSettings())
     }
   }
 
@@ -110,8 +111,13 @@ class PyreflyLspClientDescriptor(module: Module) : PyLspToolDescriptor(module, P
     put("disableBundledThirdPartyStubs", true)
   }
 
+  private fun buildPyreflyAnalysisSettings(): Map<String, Any> = mapOf("completeFunctionParens" to true)
+
   override fun getWorkspaceConfiguration(item: ConfigurationItem): Map<String, Map<String, Any>> =
-    mapOf("pyrefly" to buildPyreflyClientSettings())
+    mapOf(
+      "pyrefly" to buildPyreflyClientSettings(),
+      "analysis" to buildPyreflyAnalysisSettings(),
+    )
 
   override fun startServerProcess(): BaseProcessHandler<*> {
     // Pyrefly always runs against the module interpreter (discovery mode is no longer selectable).
