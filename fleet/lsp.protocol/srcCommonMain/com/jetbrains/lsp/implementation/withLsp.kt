@@ -2,6 +2,7 @@ package com.jetbrains.lsp.implementation
 
 import com.jetbrains.lsp.protocol.CancelParams
 import com.jetbrains.lsp.protocol.ErrorCodes
+import com.jetbrains.lsp.protocol.ExitNotificationType
 import com.jetbrains.lsp.protocol.LSP
 import com.jetbrains.lsp.protocol.NotificationMessage
 import com.jetbrains.lsp.protocol.NotificationType
@@ -79,10 +80,7 @@ internal suspend fun withLspImpl(
             outgoing.send(LSP.json.encodeToJsonElement(RequestMessage.serializer(), request))
             @Suppress("UNCHECKED_CAST")
             return try {
-                when (requestType) {
-                    Shutdown -> null
-                    else -> deferred.await()
-                } as Result
+                deferred.await() as Result
             } catch (c: CancellationException) {
                 runCatching {
                     notifyAsync(LSP.CancelNotificationType, CancelParams(id))
@@ -223,10 +221,6 @@ internal suspend fun withLspImpl(
                                         currentCoroutineContext().job.ensureActive()
                                         LOG.info("Response for ${request.method} is not delivered ($it)")
                                     }
-                                    if (request.method == Shutdown.method) {
-                                        incoming.cancel()
-                                        outgoing.close()
-                                    }
                                 }
                             }.also { requestJob ->
                                 incomingRequestsJobs[request.id] = requestJob
@@ -307,6 +301,11 @@ internal suspend fun withLspImpl(
                                             else -> {
                                                 val deserializedParams = notification.params?.let { params ->
                                                     LSP.json.decodeFromJsonElement(handler.notificationType.paramsSerializer, params)
+                                                }
+                                                // After receiving the exit notification, no further communication may happen.
+                                                if (notification.method == ExitNotificationType.method) {
+                                                    incoming.cancel()
+                                                    outgoing.close()
                                                 }
                                                 @Suppress("UNCHECKED_CAST")
                                                 (handler as LspNotificationHandler<Any?>).handler(
