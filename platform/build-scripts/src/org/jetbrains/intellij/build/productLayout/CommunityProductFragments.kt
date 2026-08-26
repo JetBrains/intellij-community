@@ -46,7 +46,7 @@ object CommunityProductFragments {
     moduleSet(CommunityModuleSets.jspBase())
 
     // Optional plugin support
-    embeddedModule("intellij.platform.remoteServers.impl")
+    module("intellij.platform.remoteServers.impl")
     deprecatedInclude("intellij.uiDesigner", "META-INF/DesignerCorePlugin.xml", optional = true)
 
     // Extensions block (UTM tracking, new UI onboarding)
@@ -73,7 +73,7 @@ object CommunityProductFragments {
     alias("com.intellij.modules.pycharm")
 
     // Optional remote servers support
-    embeddedModule("intellij.platform.remoteServers.impl")
+    module("intellij.platform.remoteServers.impl")
 
     // Extensions and actions block (PyCharm-specific customization)
     deprecatedInclude("intellij.pycharm.community", "META-INF/pycharm-core.xml")

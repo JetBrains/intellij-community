@@ -25,7 +25,7 @@
   <xi:include href="/META-INF/intellij.moduleSets.rd.common.xml"/>
   <!-- region additional -->
   <content namespace="jetbrains">
-    <module name="intellij.platform.remoteServers.impl" loading="embedded"/>
+    <module name="intellij.platform.remoteServers.impl"/>
     <module name="intellij.platform.coverage"/>
     <module name="intellij.platform.coverage.agent"/>
     <module name="intellij.xml.xmlbeans"/>
