@@ -20,6 +20,7 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -30,16 +31,24 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtAnnotatedExpression
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtContainerNodeForControlStructureBody
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtEscapeStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.kotlin.psi.KtIsExpression
 import org.jetbrains.kotlin.psi.KtLabeledExpression
+import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.kotlin.psi.KtPrefixExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.psi.KtReturnExpression
+import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.ifExpressionVisitor
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
@@ -193,8 +202,17 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
         if (thenType != elseType) return null
 
         val returnAfterIf = if (`else` == null) elseOrReturnAfterIf else null
+        val condition = condition ?: return null
+        val hasSimpleCondition = condition.isSimpleBooleanExpression()
+        val hasSimpleLiteralBranches = thenReturn.isSimpleBranchLiteral() && elseReturn.isSimpleBranchLiteral()
+        val hasCommentedBranch = then.hasComments() || elseOrReturnAfterIf.hasComments(then)
+        val canReuseCondition = condition.canReuseBooleanExpression()
+        val canReplaceWithCondition = hasSimpleCondition ||
+                hasSimpleLiteralBranches && canReuseCondition ||
+                hasConditionWithFloatingPointType()
+        val canReplaceWithBranchExpression = hasSimpleCondition || hasCommentedBranch && canReuseCondition
         return when {
-            KtPsiUtil.isTrueConstant(thenReturn) && KtPsiUtil.isFalseConstant(elseReturn) ->
+            canReplaceWithCondition && KtPsiUtil.isTrueConstant(thenReturn) && KtPsiUtil.isFalseConstant(elseReturn) ->
                 IfExpressionRedundancyInfo(
                     ReplacementStrategy.CONDITION,
                     thenType,
@@ -202,7 +220,7 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
                     returnAfterIf,
                 )
 
-            KtPsiUtil.isFalseConstant(thenReturn) && KtPsiUtil.isTrueConstant(elseReturn) ->
+            canReplaceWithCondition && KtPsiUtil.isFalseConstant(thenReturn) && KtPsiUtil.isTrueConstant(elseReturn) ->
                 IfExpressionRedundancyInfo(
                     ReplacementStrategy.NEGATED_CONDITION,
                     thenType,
@@ -210,7 +228,9 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
                     returnAfterIf,
                 )
 
-            KtPsiUtil.isTrueConstant(thenReturn) && elseReturn.isNonConstantBooleanExpression() ->
+            canReplaceWithBranchExpression &&
+                    KtPsiUtil.isTrueConstant(thenReturn) &&
+                    elseReturn.canReuseAsBooleanBranch(hasCommentedBranch) ->
                 IfExpressionRedundancyInfo(
                     ReplacementStrategy.CONDITION_OR_BRANCH,
                     thenType,
@@ -218,7 +238,9 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
                     returnAfterIf,
                 )
 
-            KtPsiUtil.isFalseConstant(thenReturn) && elseReturn.isNonConstantBooleanExpression() ->
+            canReplaceWithBranchExpression &&
+                    KtPsiUtil.isFalseConstant(thenReturn) &&
+                    elseReturn.canReuseAsBooleanBranch(hasCommentedBranch) ->
                 IfExpressionRedundancyInfo(
                     ReplacementStrategy.NEGATED_CONDITION_AND_BRANCH,
                     thenType,
@@ -226,7 +248,9 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
                     returnAfterIf,
                 )
 
-            thenReturn.isNonConstantBooleanExpression() && KtPsiUtil.isTrueConstant(elseReturn) ->
+            canReplaceWithBranchExpression &&
+                    thenReturn.canReuseAsBooleanBranch(hasCommentedBranch) &&
+                    KtPsiUtil.isTrueConstant(elseReturn) ->
                 IfExpressionRedundancyInfo(
                     ReplacementStrategy.NEGATED_CONDITION_OR_BRANCH,
                     thenType,
@@ -234,7 +258,9 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
                     returnAfterIf,
                 )
 
-            thenReturn.isNonConstantBooleanExpression() && KtPsiUtil.isFalseConstant(elseReturn) ->
+            canReplaceWithBranchExpression &&
+                    thenReturn.canReuseAsBooleanBranch(hasCommentedBranch) &&
+                    KtPsiUtil.isFalseConstant(elseReturn) ->
                 IfExpressionRedundancyInfo(
                     ReplacementStrategy.CONDITION_AND_BRANCH,
                     thenType,
@@ -273,21 +299,35 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
         }
     }
 
+    private fun KtExpression.isSimpleNonConstantBooleanExpression(): Boolean {
+        return !KtPsiUtil.isTrueConstant(this) &&
+                !KtPsiUtil.isFalseConstant(this) &&
+                isSimpleBooleanExpression()
+    }
+
+    private fun KtExpression.canReuseAsBooleanBranch(hasCommentedBranch: Boolean): Boolean {
+        return isSimpleNonConstantBooleanExpression() ||
+                hasCommentedBranch && isNonConstantBooleanExpression() && canReuseBooleanExpression()
+    }
+
     private fun KtExpression.isNonConstantBooleanExpression(): Boolean {
         return !KtPsiUtil.isTrueConstant(this) &&
                 !KtPsiUtil.isFalseConstant(this) &&
-                (isObviouslyBooleanExpression() || isNotNullableBooleanExpression(this))
+                isNotNullableBooleanExpression(this)
     }
 
-    private fun KtExpression.isObviouslyBooleanExpression(): Boolean = when (this) {
-        is KtAnnotatedExpression -> baseExpression?.isObviouslyBooleanExpression() == true
-        is KtLabeledExpression -> baseExpression?.isObviouslyBooleanExpression() == true
-        is KtParenthesizedExpression -> expression?.isObviouslyBooleanExpression() == true
-        is KtPrefixExpression -> operationToken == KtTokens.EXCL
-        is KtIsExpression -> true
+    private fun KtExpression.isSimpleBooleanExpression(): Boolean = when (this) {
+        is KtAnnotatedExpression -> baseExpression?.isSimpleBooleanExpression() == true
+        is KtLabeledExpression -> baseExpression?.isSimpleBooleanExpression() == true
+        is KtParenthesizedExpression -> expression?.isSimpleBooleanExpression() == true
+        is KtPrefixExpression ->
+            operationToken == KtTokens.EXCL && baseExpression?.isSimpleBooleanExpression() == true
+        is KtIsExpression -> leftHandSide.isSimpleOperand()
         is KtBinaryExpression -> when (operationToken) {
             KtTokens.ANDAND,
             KtTokens.OROR,
+            -> left?.isSimpleBooleanExpression() == true && right?.isSimpleBooleanExpression() == true
+
             KtTokens.EQEQ,
             KtTokens.EXCLEQ,
             KtTokens.EQEQEQ,
@@ -298,12 +338,165 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
             KtTokens.GTEQ,
             KtTokens.IN_KEYWORD,
             KtTokens.NOT_IN,
-            -> true
+            -> hasSimpleOperandsWithConstant()
+
+            else -> false
+        }
+
+        else -> isSimpleOperand() && isNotNullableBooleanExpression(this)
+    }
+
+    private fun KtExpression.hasNonConstantComparison(): Boolean = when (this) {
+        is KtAnnotatedExpression -> baseExpression?.hasNonConstantComparison() == true
+        is KtLabeledExpression -> baseExpression?.hasNonConstantComparison() == true
+        is KtParenthesizedExpression -> expression?.hasNonConstantComparison() == true
+        is KtPrefixExpression ->
+            operationToken == KtTokens.EXCL && baseExpression?.hasNonConstantComparison() == true
+        is KtBinaryExpression -> when (operationToken) {
+            KtTokens.ANDAND,
+            KtTokens.OROR,
+            -> left?.hasNonConstantComparison() == true || right?.hasNonConstantComparison() == true
+
+            KtTokens.EQEQ,
+            KtTokens.EXCLEQ,
+            KtTokens.EQEQEQ,
+            KtTokens.EXCLEQEQEQ,
+            KtTokens.LT,
+            KtTokens.LTEQ,
+            KtTokens.GT,
+            KtTokens.GTEQ,
+            KtTokens.IN_KEYWORD,
+            KtTokens.NOT_IN,
+            -> {
+                val leftExpression = left
+                val rightExpression = right
+                leftExpression != null &&
+                        rightExpression != null &&
+                        leftExpression.isSimpleOperand() &&
+                        rightExpression.isSimpleOperand() &&
+                        !leftExpression.isSimpleConstantOperand() &&
+                        !rightExpression.isSimpleConstantOperand()
+            }
 
             else -> false
         }
 
         else -> false
+    }
+
+    private fun KtExpression.canReuseBooleanExpression(): Boolean =
+        !hasNonConstantComparison() && !hasNonSimpleNegation()
+
+    private fun KtExpression.hasNonSimpleNegation(): Boolean = when (this) {
+        is KtAnnotatedExpression -> baseExpression?.hasNonSimpleNegation() == true
+        is KtLabeledExpression -> baseExpression?.hasNonSimpleNegation() == true
+        is KtParenthesizedExpression -> expression?.hasNonSimpleNegation() == true
+        is KtPrefixExpression -> operationToken == KtTokens.EXCL &&
+                baseExpression?.isSimpleBooleanExpression() != true
+        is KtBinaryExpression -> when (operationToken) {
+            KtTokens.ANDAND,
+            KtTokens.OROR,
+            -> left?.hasNonSimpleNegation() == true || right?.hasNonSimpleNegation() == true
+
+            else -> false
+        }
+
+        else -> false
+    }
+
+    private fun KtExpression.isSimpleOperand(): Boolean = when (this) {
+        is KtAnnotatedExpression -> baseExpression?.isSimpleOperand() == true
+        is KtLabeledExpression -> baseExpression?.isSimpleOperand() == true
+        is KtParenthesizedExpression -> expression?.isSimpleOperand() == true
+        is KtConstantExpression -> true
+        is KtStringTemplateExpression -> entries.all { it is KtLiteralStringTemplateEntry || it is KtEscapeStringTemplateEntry }
+        is KtNameReferenceExpression -> true
+        is KtThisExpression -> true
+        is KtDotQualifiedExpression -> receiverExpression.isSimpleOperand() && selectorExpression?.isSimpleOperand() == true
+        is KtSafeQualifiedExpression -> receiverExpression.isSimpleOperand() && selectorExpression?.isSimpleOperand() == true
+        is KtPrefixExpression -> when (operationToken) {
+            KtTokens.PLUS,
+            KtTokens.MINUS,
+            -> baseExpression?.isSimpleOperand() == true
+
+            else -> false
+        }
+
+        is KtBinaryExpression -> when (operationToken) {
+            KtTokens.PLUS,
+            KtTokens.MINUS,
+            KtTokens.MUL,
+            KtTokens.DIV,
+            KtTokens.PERC,
+            KtTokens.RANGE,
+            KtTokens.RANGE_UNTIL,
+            -> left?.isSimpleOperand() == true && right?.isSimpleOperand() == true
+
+            else -> false
+        }
+
+        else -> false
+    }
+
+    private fun KtBinaryExpression.hasSimpleOperandsWithConstant(): Boolean {
+        val left = left ?: return false
+        val right = right ?: return false
+        return left.isSimpleOperand() &&
+                right.isSimpleOperand() &&
+                (left.isSimpleConstantOperand() || right.isSimpleConstantOperand())
+    }
+
+    private fun KtExpression.isSimpleBranchLiteral(): Boolean = when (this) {
+        is KtAnnotatedExpression -> baseExpression?.isSimpleBranchLiteral() == true
+        is KtLabeledExpression -> baseExpression?.isSimpleBranchLiteral() == true
+        is KtParenthesizedExpression -> expression?.isSimpleBranchLiteral() == true
+        is KtConstantExpression -> iElementType == KtNodeTypes.INTEGER_CONSTANT ||
+                iElementType == KtNodeTypes.BOOLEAN_CONSTANT ||
+                iElementType == KtNodeTypes.NULL
+        is KtPrefixExpression -> when (operationToken) {
+            KtTokens.PLUS,
+            KtTokens.MINUS,
+            -> baseExpression?.isSimpleBranchLiteral() == true
+
+            else -> false
+        }
+
+        else -> false
+    }
+
+    private fun KtExpression.isSimpleConstantOperand(): Boolean = when (this) {
+        is KtAnnotatedExpression -> baseExpression?.isSimpleConstantOperand() == true
+        is KtLabeledExpression -> baseExpression?.isSimpleConstantOperand() == true
+        is KtParenthesizedExpression -> expression?.isSimpleConstantOperand() == true
+        is KtConstantExpression -> iElementType == KtNodeTypes.INTEGER_CONSTANT ||
+                iElementType == KtNodeTypes.BOOLEAN_CONSTANT ||
+                iElementType == KtNodeTypes.NULL
+        is KtStringTemplateExpression -> entries.all { it is KtLiteralStringTemplateEntry || it is KtEscapeStringTemplateEntry }
+        is KtDotQualifiedExpression -> isNamedFloatingPointConstant()
+        is KtPrefixExpression -> when (operationToken) {
+            KtTokens.PLUS,
+            KtTokens.MINUS,
+            -> baseExpression?.isSimpleConstantOperand() == true
+
+            else -> false
+        }
+
+        is KtBinaryExpression -> when (operationToken) {
+            KtTokens.RANGE,
+            KtTokens.RANGE_UNTIL,
+            -> left?.isSimpleConstantOperand() == true && right?.isSimpleConstantOperand() == true
+
+            else -> false
+        }
+
+        else -> false
+    }
+
+    private fun KtDotQualifiedExpression.isNamedFloatingPointConstant(): Boolean {
+        val receiver = receiverExpression as? KtNameReferenceExpression ?: return false
+        val selector = selectorExpression as? KtNameReferenceExpression ?: return false
+        return receiver.getReferencedName() in setOf("Double", "Float") &&
+                selector.getReferencedName() in setOf("NaN", "POSITIVE_INFINITY", "NEGATIVE_INFINITY")
     }
 
     private inner class RemoveRedundantIf(

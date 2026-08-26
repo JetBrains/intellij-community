@@ -1,4 +1,4 @@
-// "Remove redundant 'if' statement" "true"
+// "Remove redundant 'if' statement" "false"
 operator fun String.not(): Boolean = false
 
 fun bar(value: Int): Boolean {
