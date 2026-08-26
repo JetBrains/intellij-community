@@ -363,6 +363,21 @@ class IdeBuilderTest {
     assertThat(options.buildDateInSeconds).isEqualTo(requestedBuildDateInSeconds)
   }
 
+  // IJAI-955: a dev distribution is launched, never shipped, and the build number it inherits from `build.txt` says
+  // nothing about that. `263.3889.SNAPSHOT` on an EAP branch made `isNightlyBuild` false and dropped every
+  // NOT_FOR_PUBLIC_BUILDS plugin the caller had asked for by name, while the same assembly on master kept them.
+  @Test
+  fun copyWithDevBuildOverridesTurnsOffTheReleaseCycleBundlingRestrictions() {
+    val options = BuildOptions().copyWithDevBuildOverrides(
+      request = createBuildRequest(),
+      buildDir = tempDir.resolve("dev-build"),
+      defaultBuildDateInSeconds = 1_600_000_000L,
+    )
+
+    assertThat(options.useReleaseCycleRelatedBundlingRestrictions).isFalse()
+    assertThat(BuildOptions().useReleaseCycleRelatedBundlingRestrictions).isTrue()
+  }
+
   @Test
   fun buildProductClearsThrowawayScratchDataButKeepsTheLog() {
     val scratchDir = tempDir.resolve("scratch")

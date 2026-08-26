@@ -130,6 +130,16 @@ data class BuildOptions(
   @JvmField internal val isDevDistribution: Boolean = false,
 
   /**
+   * If `false`, [org.jetbrains.intellij.build.impl.satisfiesBundlingRequirements] ignores [PluginBundlingRestrictions.includeInDistribution].
+   *
+   * Two owners turn it off. A packaging-content test needs a report that the release cycle cannot move. A dev assembly has no audience to
+   * protect, so [org.jetbrains.intellij.build.dev.copyWithDevBuildOverrides] turns it off for every one.
+   */
+  @set:TestOnly
+  @Internal
+  var useReleaseCycleRelatedBundlingRestrictions: Boolean = true,
+
+  /**
    * If `true`, the project modules will be compiled incrementally.
    */
   var incrementalCompilation: Boolean = getBooleanProperty(INTELLIJ_BUILD_INCREMENTAL_COMPILATION),
@@ -559,14 +569,6 @@ data class BuildOptions(
    * Specifies an additional list of compatible plugin names which should not be built, see [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.compatiblePluginsToIgnore]
    */
   var compatiblePluginsToIgnore: Set<String> = getSetProperty("intellij.build.compatible.plugins.to.ignore")
-
-  /**
-   * If `false`, [org.jetbrains.intellij.build.impl.projectStructureMapping.buildJarContentReport]
-   * won't be affected by [PluginBundlingRestrictions.includeInDistribution]
-   */
-  @set:TestOnly
-  @Internal
-  var useReleaseCycleRelatedBundlingRestrictionsForContentReport: Boolean = true
 
   @set:TestOnly
   @Internal

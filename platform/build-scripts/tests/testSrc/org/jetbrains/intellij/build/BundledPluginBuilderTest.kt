@@ -144,6 +144,41 @@ class BundledPluginBuilderTest {
     ).isFalse()
   }
 
+  @Test
+  fun `a plugin that is not for public builds survives without release-cycle restrictions`() {
+    val internalPlugin = PluginLayout.pluginAuto(listOf("internal.plugin")) {
+      it.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_PUBLIC_BUILDS
+    }
+    val applicationInfo = mock(ApplicationInfoProperties::class.java)
+    val context = mock(BuildContext::class.java)
+    `when`(applicationInfo.isEAP).thenReturn(true)
+    `when`(context.applicationInfo).thenReturn(applicationInfo)
+    `when`(context.isNightlyBuild).thenReturn(false)
+
+    `when`(context.options).thenReturn(BuildOptions(useReleaseCycleRelatedBundlingRestrictions = false))
+    assertThat(
+      isDevModePluginApplicable(
+        bundledMainModuleNames = setOf(internalPlugin.mainModule),
+        plugin = internalPlugin,
+        os = OsFamily.MACOS,
+        arch = JvmArchitecture.x64,
+        context = context,
+      )
+    ).isTrue()
+
+    // what a shipped build does is unchanged
+    `when`(context.options).thenReturn(BuildOptions())
+    assertThat(
+      isDevModePluginApplicable(
+        bundledMainModuleNames = setOf(internalPlugin.mainModule),
+        plugin = internalPlugin,
+        os = OsFamily.MACOS,
+        arch = JvmArchitecture.x64,
+        context = context,
+      )
+    ).isFalse()
+  }
+
   private fun createMinimalBundledPluginBuildState(): Pair<BuildContext, DistributionBuilderState> {
     val applicationInfo = mock(ApplicationInfoProperties::class.java)
     val context = mock(BuildContext::class.java)

@@ -131,7 +131,7 @@ fun customizeBuildOptionsForPackagingContentTest(
   options.targetOs = targetOs
   options.targetArch = null
   options.buildStepsToSkip += buildStepsToSkip
-  options.useReleaseCycleRelatedBundlingRestrictionsForContentReport = false
+  options.useReleaseCycleRelatedBundlingRestrictions = false
 }
 
 suspend inline fun createBuildContext(

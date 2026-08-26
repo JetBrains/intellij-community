@@ -777,7 +777,7 @@ internal fun satisfiesBundlingRequirements(plugin: PluginLayout, osFamily: OsFam
     return false
   }
 
-  if (context.options.useReleaseCycleRelatedBundlingRestrictionsForContentReport) {
+  if (context.options.useReleaseCycleRelatedBundlingRestrictions) {
     val isNightly = context.isNightlyBuild
     val isEap = context.applicationInfo.isEAP
 

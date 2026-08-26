@@ -850,6 +850,12 @@ internal fun BuildOptions.copyWithDevBuildOverrides(
     jarCacheDir = request.jarCacheDir,
     buildDateInSeconds = request.buildDateInSeconds ?: defaultBuildDateInSeconds,
     isDevDistribution = true,
+    // A dev distribution is launched, never shipped, so a release-cycle restriction has no audience to protect. The
+    // build number a dev assembly inherits from `build.txt` also cannot answer the question the restriction asks. On
+    // the EAP branch 263.3889 the number `263.3889.SNAPSHOT` made `isNightlyBuild` false. The layout then dropped
+    // every NOT_FOR_PUBLIC_BUILDS plugin, `intellij.air.plugin` and `intellij.devkit` among them, which the caller
+    // had asked for by name. The same assembly on master kept them, because `263.SNAPSHOT` has one dot fewer.
+    useReleaseCycleRelatedBundlingRestrictions = false,
     printFreeSpace = false,
     validateImplicitPlatformModule = false,
     skipDependencySetup = true,
