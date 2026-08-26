@@ -591,3 +591,55 @@ data class DuplicatePluginDependencyDeclarationError(
     appendLine()
   }
 }
+
+/**
+ * Error when two variants of one plugin are both candidates for one target platform.
+ *
+ * A plugin is declared once for each supported `(os, arch)`, and a distribution holds one of those variants. Every
+ * variant carries the same plugin directory, so a second candidate for one target has nothing of its own to write to.
+ * `org.jetbrains.intellij.build.dev.devModePluginCandidates` selects the variant of the target, and it fails on a pair.
+ *
+ * The producer of this error lives above this module, because a plugin variant and its bundling restrictions are
+ * build-script types. So the error carries the text of a restriction rather than the restriction itself.
+ */
+data class PluginVariantOverlapError(
+  override val context: String,
+  @JvmField val overlaps: List<PluginVariantOverlap>,
+  override val ruleName: String = "PluginVariantOverlapValidation",
+) : ValidationError {
+  override val category: ErrorCategory get() = ErrorCategory.PLUGIN_VARIANT_OVERLAP
+
+  /**
+   * @param mainModule the main module every variant of the pair declares
+   * @param targetPlatform the target both variants are candidates for, as `os arch`
+   * @param restrictions the bundling restrictions of each variant, in declaration order
+   */
+  data class PluginVariantOverlap(
+    @JvmField val mainModule: String,
+    @JvmField val targetPlatform: String,
+    @JvmField val restrictions: List<String>,
+  )
+
+  override fun format(s: AnsiStyle): String = buildString {
+    appendLine("${s.red}${s.bold}Product '$context' declares two variants of one plugin for one target platform${s.reset}")
+    appendLine()
+    appendLine("${s.yellow}A distribution holds one variant of a plugin, and every variant carries the same plugin")
+    appendLine("directory. So the second variant has no destination, and one overwrites the other.${s.reset}")
+    appendLine()
+
+    for ((mainModule, targetPlatform, restrictions) in overlaps.sortedWith(compareBy({ it.mainModule }, { it.targetPlatform }))) {
+      appendLine("  ${s.red}*${s.reset} ${s.bold}$mainModule${s.reset} on $targetPlatform")
+      for (restriction in restrictions) {
+        appendLine("      - [$restriction]")
+      }
+    }
+
+    appendLine()
+    appendLine("${s.yellow}Fix:${s.reset}")
+    appendLine("1. Narrow the restrictions of one variant, so that one candidate remains for each target platform.")
+    appendLine("2. Or delete the variant the product does not need.")
+    appendLine()
+    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+    appendLine()
+  }
+}

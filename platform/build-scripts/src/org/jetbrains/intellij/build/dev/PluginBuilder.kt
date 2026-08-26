@@ -193,12 +193,20 @@ internal fun devModePluginCandidates(request: BuildRequest, context: BuildContex
   val selector = checkNotNull(request.fragment.plugins)
   val bundledMainModuleNames = getBundledMainModuleNames(context, request.additionalModules)
   selector.checkNamesAreKnown(bundledMainModuleNames, request.fragment.name)
-  return getPluginLayoutsByJpsModuleNames(bundledMainModuleNames, context.productProperties.productLayout)
-    .filter {
-      // The candidate set is the product's, and the fragment takes its share of it. Computing the whole set in every
-      // fragment is what makes `Remaining` exact: it is the complement of what the named fragments claimed, not a
-      // second list that could drift from them.
-      selector.accepts(it.mainModule) &&
+  // The candidate set is the product's, and the fragment takes its share of it. Computing the whole set in every
+  // fragment is what makes `Remaining` exact: it is the complement of what the named fragments claimed, not a
+  // second list that could drift from them.
+  val owned = getPluginLayoutsByJpsModuleNames(bundledMainModuleNames, context.productProperties.productLayout)
+    .filter { selector.accepts(it.mainModule) }
+
+  // One plugin reaches this point as one variant for each supported (os, arch): see `NATIVE_DEBUG_ALL_LAYOUTS` and
+  // `rustPluginOsSpecificLayouts`. A distribution holds one of them, so the target platform selects a variant rather
+  // than filtering a flat list. Grouping asks the question the caller asks, which is about a plugin and not about a
+  // variant. `groupBy` keeps the encounter order, so the result follows the order of `owned`.
+  val demanded = demandedMainModules(request)
+  val result = ArrayList<PluginLayout>(owned.size)
+  for ((mainModule, variants) in owned.groupBy(PluginLayout::mainModule)) {
+    val applicable = variants.filter {
       isPluginApplicable(
         bundledMainModuleNames = bundledMainModuleNames,
         plugin = it,
@@ -207,6 +215,84 @@ internal fun devModePluginCandidates(request: BuildRequest, context: BuildContex
         context = context,
       )
     }
+    when (applicable.size) {
+      1 -> result.add(applicable.single())
+      0 -> checkTheAbsenceIsIntended(mainModule = mainModule, variants = variants, demanded = demanded, request = request, context = context)
+      else -> error(
+        "Plugin '$mainModule' has ${applicable.size} variants for ${request.os} ${request.arch}. A distribution holds" +
+        " one variant of a plugin, so these would overwrite each other: " +
+        applicable.joinToString { "[${it.bundlingRestrictions}] -> plugins/${it.directoryName}" } +
+        ". Restrict the variants so that one of them remains."
+      )
+    }
+  }
+  return result
+}
+
+/** The plugins this fragment was told to assemble, which is not the same set as the plugins it may assemble. */
+private fun demandedMainModules(request: BuildRequest): Set<String> {
+  // A plugin reaches a fragment either way, so both sources count as a demand.
+  val result = HashSet(request.additionalModules)
+  (request.fragment.plugins as? PluginFragmentSelector.Named)?.let { result.addAll(it.mainModules) }
+  return result
+}
+
+/**
+ * Fails when a plugin this fragment was told to assemble is absent, and the target platform does not explain it.
+ *
+ * The sibling of the `checkNamesAreKnown` call in [devModePluginCandidates], and for the same reason: a plugin that
+ * quietly does not appear is invisible here and surfaces far away. It cost an EAP branch a day of red builds. The
+ * layout dropped `intellij.air.plugin` and `intellij.devkit` over a release-cycle bundling restriction a dev
+ * distribution should never have applied. The only symptom was `collectPrepackedPluginContentJars` reporting 149
+ * Bazel-built jars with no destination.
+ *
+ * The target platform is the normal reason for an absence, so it is never a failure here. `intellij.laf.macos` has a
+ * MACOS variant alone, and a LINUX distribution is right to hold none of it. What this checks is the rest:
+ * [org.jetbrains.intellij.build.BuildOptions.bundledPluginDirectoriesToSkip] and the release cycle.
+ *
+ * What is *not* checked is a bundled plugin nobody named. Its own restrictions are the normal reason for it to be
+ * absent. A [PluginFragmentSelector.Remaining] fragment's complement is not checked either, because it describes what
+ * is left rather than demanding a list.
+ */
+private fun checkTheAbsenceIsIntended(
+  mainModule: String,
+  variants: List<PluginLayout>,
+  demanded: Set<String>,
+  request: BuildRequest,
+  context: BuildContext,
+) {
+  if (!demanded.contains(mainModule) || variants.all { isAbsentBecauseOfTheTargetPlatform(plugin = it, context = context) }) {
+    return
+  }
+
+  error(
+    "Fragment '${request.fragment.name}' of ${request.platformPrefix} was asked for the plugin '$mainModule', and then" +
+    " left it out of the distribution, so nothing would assemble it. Its variants are " +
+    variants.joinToString { "[${it.bundlingRestrictions}]" } +
+    ", and the target platform is ${request.os} ${request.arch}." +
+    " isDevDistribution=${context.options.isDevDistribution}, isNightlyBuild=${context.isNightlyBuild}." +
+    " Either stop requesting it here, or let the restriction admit it."
+  )
+}
+
+/**
+ * Whether the target platform alone keeps [plugin] out of the distribution.
+ *
+ * Asks [satisfiesBundlingRequirements] again with the platform the variant itself names, so neither the os clause nor
+ * the arch clause can say no a second time. What can still say no is what a target platform does not explain.
+ */
+private fun isAbsentBecauseOfTheTargetPlatform(plugin: PluginLayout, context: BuildContext): Boolean {
+  val restrictions = plugin.bundlingRestrictions
+  if (restrictions === PluginBundlingRestrictions.MARKETPLACE) {
+    // A marketplace variant is uploaded, never bundled. `PluginBundlingRestrictions.MARKETPLACE` requires a bundled
+    // sibling of its own, and `validatePluginModel` owns that rule.
+    return true
+  }
+
+  // `satisfiesBundlingRequirements` wants a null os for an os-independent variant, so ask it both ways.
+  val arch = restrictions.supportedArch.firstOrNull()
+  return satisfiesBundlingRequirements(plugin = plugin, osFamily = restrictions.supportedOs.firstOrNull(), arch = arch, context = context) ||
+         satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = arch, context = context)
 }
 
 internal fun collectLayoutsOfPluginsToScramble(pluginLayouts: Collection<PluginLayout>): Map<String, PluginLayout> {
