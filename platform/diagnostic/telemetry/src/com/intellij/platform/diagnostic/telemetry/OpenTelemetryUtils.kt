@@ -33,7 +33,7 @@ object OpenTelemetryUtils {
       MetricDataType.DOUBLE_GAUGE -> metricData.doubleGaugeData.points.asSequence().map { p: DoublePointData ->
         concatToCsvLine(metricData.name, p.startEpochNanos.toString(), p.epochNanos.toString(), p.value.toString())
       }
-      else -> sequenceOf(concatToCsvLine(metricData.name, "-1", "-1", "<metrics type " + metricData.type + " is not supported yet>"))
+      else -> sequenceOf("# ${metricData.name}: metrics type '${metricData.type}' is not supported yet")
     }
   }
 
