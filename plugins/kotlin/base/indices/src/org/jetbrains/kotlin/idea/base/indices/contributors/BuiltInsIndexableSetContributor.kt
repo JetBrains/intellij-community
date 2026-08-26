@@ -1,11 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.indices.contributors
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.IndexableSetContributor
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
+import org.jetbrains.kotlin.psi.KtPlatformInterface
 
 internal class BuiltInsIndexableSetContributor: IndexableSetContributor() {
+    @OptIn(KtPlatformInterface::class)
     override fun getAdditionalRootsToIndex(): Set<VirtualFile> {
         return BuiltinsVirtualFileProvider.getInstance().getBuiltinVirtualFiles()
     }
