@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,12 +31,17 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.jetbrains.python.sdk.PythonSdkType.MOCK_PY_MARKER_KEY;
 
 
 public final class PythonMockSdk {
+
+  private static final AtomicBoolean ourTypeshedRefreshed = new AtomicBoolean();
 
   private PythonMockSdk() {
   }
@@ -103,9 +109,25 @@ public final class PythonMockSdk {
     ContainerUtil.addIfNotNull(result, localFS.refreshAndFindFileByPath(new File(mockSdkPath, "Lib").getAbsolutePath()));
     ContainerUtil.addIfNotNull(result, localFS.refreshAndFindFileByPath(new File(mockSdkPath, PythonSdkUtil.SKELETON_DIR_NAME).getAbsolutePath()));
 
+    refreshTypeshedRootsOnce();
     result.addAll(PyTypeShed.INSTANCE.findStdlibRootsForLanguageLevel(level));
-
     return result;
+  }
+
+  /**
+   * Refreshes all Typeshed stdlib roots once per test run (per JVM).
+   * <p>
+   * When the Typeshed content changes in the monorepo, e.g. on a git branch checkout, the test application VFS doesn't catch these
+   * updates automatically and therefore doesn't trigger index updates, which might cause outdated PSI stub index errors during test runs.
+   * Hence, we need to forcefully refresh Typeshed roots once before any test SDK is created (assuming they don't change afterward).
+   */
+  private static void refreshTypeshedRootsOnce() {
+    if (!ourTypeshedRefreshed.compareAndSet(false, true)) return;
+    Set<VirtualFile> roots = new LinkedHashSet<>();
+    for (LanguageLevel level : LanguageLevel.values()) {
+      roots.addAll(PyTypeShed.INSTANCE.findStdlibRootsForLanguageLevel(level));
+    }
+    VfsUtil.markDirtyAndRefresh(false, true, true, roots.toArray(VirtualFile.EMPTY_ARRAY));
   }
 
   private static @NotNull String toVersionString(@NotNull LanguageLevel level) {
