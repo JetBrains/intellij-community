@@ -384,8 +384,9 @@ object UpdateChecker {
 
         val relevantUpdates = if (PluginUpdateSourceService.isPluginUpdateFilteredAgainstPluginUpdateSource()) {
           val backendUpdateSource = getMatchingPluginUpdateSource(backend)
-          val relevantPluginIds =
-            updates.getAllPluginIds().filter { pluginId -> hasMatchingPluginUpdateSource(pluginId, backendUpdateSource) }
+          val relevantPluginIds = updates.getAllPluginIds().filter { pluginId ->
+            hasMatchingPluginUpdateSource(pluginId, backendUpdateSource)
+          }
           updates.filterByPluginIds(relevantPluginIds)
         }
         else {
@@ -415,7 +416,10 @@ object UpdateChecker {
     return InternalPluginResults(updates, pluginModels.values, errors)
   }
 
-  private fun hasMatchingPluginUpdateSource(pluginId: PluginId, candidatePluginUpdateSource: PluginUpdateSourceId): Boolean {
+  private fun hasMatchingPluginUpdateSource(
+    pluginId: PluginId,
+    candidatePluginUpdateSource: PluginUpdateSourceId,
+  ): Boolean {
     val updateSourceFromSettings = PluginUpdateSourceService.getInstance().getPluginUpdateSourceId(pluginId)
     return when {
       updateSourceFromSettings == null -> false

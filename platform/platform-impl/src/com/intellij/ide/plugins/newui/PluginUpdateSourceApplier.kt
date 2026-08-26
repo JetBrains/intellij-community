@@ -3,6 +3,8 @@ package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.plugins.marketplace.InstallPluginResult
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceServiceImpl
 import com.intellij.openapi.updateSettings.impl.createRepository
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
@@ -11,6 +13,7 @@ internal class PluginUpdateSourceApplier private constructor(
   private val pluginModel: PluginUiModel,
   private val modelFacade: PluginModelFacade,
   private val initialUpdateSource: PluginUpdateSourceId?,
+  private val wasInitialUpdateSourceExplicit: Boolean,
 ) {
 
   companion object {
@@ -18,7 +21,9 @@ internal class PluginUpdateSourceApplier private constructor(
       // Case when pluginUpdateSource was edited in settings, then plugin was updated but failed is ignored for now,
       // because in future pluginUpdateSource won't be updated on update. For uninstalled plugin one can't edit pluginUpdateSource
       val initialUpdateSource = modelFacade.getPluginUpdateSource(pluginModel.pluginId)
-      return PluginUpdateSourceApplier(pluginModel, modelFacade, initialUpdateSource)
+      val wasInitialUpdateSourceExplicit =
+        (PluginUpdateSourceService.getInstance() as PluginUpdateSourceServiceImpl).hasExplicitlySetPluginUpdateSource(pluginModel.pluginId)
+      return PluginUpdateSourceApplier(pluginModel, modelFacade, initialUpdateSource, wasInitialUpdateSourceExplicit)
     }
   }
 
@@ -36,7 +41,12 @@ internal class PluginUpdateSourceApplier private constructor(
   }
 
   private suspend fun revertApplyingPluginUpdateSourceId() {
-    modelFacade.persistPluginUpdateSource(pluginModel.pluginId, initialUpdateSource)
+    if (wasInitialUpdateSourceExplicit) {
+      modelFacade.persistPluginUpdateSource(pluginModel.pluginId, initialUpdateSource)
+    }
+    else {
+      modelFacade.persistPluginUpdateSource(pluginModel.pluginId, null)
+    }
   }
 
   suspend fun applyPluginUpdateSourcesBasedOnResult(result: InstallPluginResult?) {

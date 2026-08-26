@@ -11,5 +11,5 @@ interface PluginUpdateSourceId {
 
 @Remote("com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService")
 interface PluginUpdateSourceService {
-  fun getPluginUpdateSourceId(pluginId: PluginId): PluginUpdateSourceId?
+  fun getPersistedPluginUpdateSourceId(pluginId: PluginId): PluginUpdateSourceId?
 }

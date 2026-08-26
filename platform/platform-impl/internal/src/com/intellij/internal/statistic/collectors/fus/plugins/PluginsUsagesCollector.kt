@@ -86,9 +86,7 @@ internal class PluginsUsagesCollector : ApplicationUsagesCollector() {
   private fun getPluginUpdateSourcesMetric(): MetricEvent {
     val service = PluginUpdateSourceService.getInstance()
     val pluginNumber = PluginManagerCore.plugins.asSequence().count {
-      !it.isBundled &&
-      PluginManagerCore.isDevelopedByJetBrains(it) &&
-      service.getPluginUpdateSourceId(it.pluginId) == null
+      service.isMissingPluginUpdateSource(it)
     }
     val initializationHappened = PluginUpdateSourceInitializer.hasInitializationHappened()
     return PLUGINS_WITHOUT_PLUGIN_UPDATE_SOURCE.metric(pluginNumber, initializationHappened)

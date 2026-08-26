@@ -43,7 +43,7 @@ internal class PluginUpdateFilteringBasedOnPluginUpdateSourceTest : UpdateChecke
       CUSTOM_SOURCE_CUSTOM_ONLY,
       WITHOUT_SOURCE_BOTH,
     )
-    installedPluginsFacade.setPlugins(installedPluginIds.map { InstalledPluginMock(it, it, "JetBrains", "1.0", "1.0", "999.99999", true) })
+    setInstalledPluginMocks(*installedPluginIds.map { installedPlugin(it) }.toTypedArray())
     installedPluginsFacade.setHosts(listOf(customRepositoryUrl))
 
     val marketplaceUpdates = listOf(
@@ -98,6 +98,52 @@ internal class PluginUpdateFilteringBasedOnPluginUpdateSourceTest : UpdateChecke
                  marketplaceRequestedIds)
   }
 
+  @Test
+  fun `updateable JetBrains bundled plugins are updated from Marketplace only`() {
+    val customServer = createTestServer(testDisposable.get())
+    val customRepositoryUrl = customServer.url + "/custom-repository"
+
+    val installedPluginIds = listOf(
+      UPDATEABLE_BUNDLED_JETBRAINS,
+      UPDATEABLE_BUNDLED_NOT_JETBRAINS,
+      NON_UPDATEABLE_BUNDLED_JETBRAINS,
+      NON_UPDATEABLE_BUNDLED_NOT_JETBRAINS,
+    )
+    setInstalledPluginMocks(
+      installedPlugin(UPDATEABLE_BUNDLED_JETBRAINS, isBundled = true, allowBundledUpdate = true, isJetBrainsPlugin = true),
+      installedPlugin(UPDATEABLE_BUNDLED_NOT_JETBRAINS, isBundled = true, allowBundledUpdate = true),
+      installedPlugin(NON_UPDATEABLE_BUNDLED_JETBRAINS, isBundled = true, isJetBrainsPlugin = true),
+      installedPlugin(NON_UPDATEABLE_BUNDLED_NOT_JETBRAINS, isBundled = true),
+    )
+    installedPluginsFacade.setHosts(listOf(customRepositoryUrl))
+
+    setMarketplacePlugins(listOf(
+      RepositoryPluginMock(UPDATEABLE_BUNDLED_JETBRAINS, "601", "201", "2.0"),
+      RepositoryPluginMock(UPDATEABLE_BUNDLED_NOT_JETBRAINS, "602", "202", "3.0"),
+      RepositoryPluginMock(NON_UPDATEABLE_BUNDLED_JETBRAINS, "603", "203", "4.0"),
+      RepositoryPluginMock(NON_UPDATEABLE_BUNDLED_NOT_JETBRAINS, "604", "204", "5.0"),
+    ), installedPluginIds)
+
+    setCustomRepositoryPlugins(customServer, listOf(
+      CustomRepositoryPlugin(UPDATEABLE_BUNDLED_JETBRAINS, "9.0"),
+      CustomRepositoryPlugin(UPDATEABLE_BUNDLED_NOT_JETBRAINS, "9.0"),
+      CustomRepositoryPlugin(NON_UPDATEABLE_BUNDLED_JETBRAINS, "9.0"),
+      CustomRepositoryPlugin(NON_UPDATEABLE_BUNDLED_NOT_JETBRAINS, "9.0"),
+    ))
+
+    val internalResult = UpdateCheckerFacade.getInstance().checkInstalledPluginUpdates()
+    assertEquals(emptyMap<String?, Exception>(), internalResult.errors)
+    val result = internalResult.pluginUpdates
+
+    val updatesById = result.allEnabled.associateBy { it.id.idString }
+    assertEquals(setOf(UPDATEABLE_BUNDLED_JETBRAINS), updatesById.keys)
+    assertEquals("2.0", updatesById.getValue(UPDATEABLE_BUNDLED_JETBRAINS).pluginVersion)
+    assertTrue(result.allDisabled.isEmpty())
+
+    val marketplaceRequestedIds = getPluginIdsFromQuery(receivedUpdatesRequestUri).toSet()
+    assertEquals(setOf(UPDATEABLE_BUNDLED_JETBRAINS, UPDATEABLE_BUNDLED_NOT_JETBRAINS), marketplaceRequestedIds)
+  }
+
   private fun setMarketplacePlugins(plugins: List<RepositoryPluginMock>, knownPluginIds: Collection<String>) {
     server.createContext("/plugins/files/pluginsXMLIds.json") { handler ->
       handler.sendResponseHeaders(200, 0)
@@ -126,6 +172,18 @@ internal class PluginUpdateFilteringBasedOnPluginUpdateSourceTest : UpdateChecke
     }
   }
 
+  private fun installedPlugin(
+    pluginId: String,
+    isBundled: Boolean = false,
+    allowBundledUpdate: Boolean = false,
+    isJetBrainsPlugin: Boolean = false,
+  ): InstalledPluginMock {
+    val company = if (isJetBrainsPlugin) "JetBrains" else "Acme"
+    val vendor =  if (isJetBrainsPlugin) "JetBrains" else "Some Company"
+    return InstalledPluginMock(pluginId, pluginId, company, "1.0", "1.0", "999.99999", true, vendor, isBundled,
+                               allowBundledUpdate)
+  }
+
   private fun setPluginUpdateSources(pluginUpdateSourceId: PluginUpdateSourceId, vararg pluginIds: String) {
     pluginIds.forEach { pluginId ->
       val id = PluginId.getId(pluginId)
@@ -142,5 +200,10 @@ internal class PluginUpdateFilteringBasedOnPluginUpdateSourceTest : UpdateChecke
     const val CUSTOM_SOURCE_MARKETPLACE_ONLY = "test.custom.source.marketplace.only"
     const val CUSTOM_SOURCE_CUSTOM_ONLY = "test.custom.source.custom.only"
     const val WITHOUT_SOURCE_BOTH = "test.without.source.both"
+
+    const val UPDATEABLE_BUNDLED_JETBRAINS = "test.updateable.bundled.jetbrains"
+    const val UPDATEABLE_BUNDLED_NOT_JETBRAINS = "test.updateable.bundled.not.jetbrains"
+    const val NON_UPDATEABLE_BUNDLED_JETBRAINS = "test.non.updateable.bundled.jetbrains"
+    const val NON_UPDATEABLE_BUNDLED_NOT_JETBRAINS = "test.non.updateable.bundled.not.jetbrains"
   }
 }

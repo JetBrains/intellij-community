@@ -29,9 +29,14 @@ internal class PluginUpdateSourceServiceImpl : PluginUpdateSourceService,
     if (!isFunctionalitySupported()) {
       return null
     }
-    val source = state.sources[pluginId.idString]
+    val source = getPersistedPluginUpdateSourceId(pluginId)
     thisLogger().debug { "Requested pluginSourceId for $pluginId: $source" }
-    return source?.toPluginSourceId()
+    if (source != null) return source
+    val plugin = PluginUpdateSourcePluginsProvider.getInstance().getAllPlugins().firstOrNull { it.pluginId == pluginId }
+    if (plugin != null && plugin.isBundled && plugin.allowBundledUpdate() && PluginManagerCore.isDevelopedByJetBrains(plugin)) {
+      return createMarketplacePluginUpdateSourceId()
+    }
+    return null
   }
 
   override fun setPluginUpdateSourceId(pluginId: PluginId, updateSourceId: PluginUpdateSourceId) {
@@ -61,6 +66,16 @@ internal class PluginUpdateSourceServiceImpl : PluginUpdateSourceService,
 
   override fun createCustomRepositoryPluginUpdateSourceId(host: String): PluginUpdateSourceId {
     return createRepository(host)
+  }
+
+  override fun getPersistedPluginUpdateSourceId(pluginId: PluginId): PluginUpdateSourceId? {
+    val updateSourceId = state.sources[pluginId.idString]?.toPluginSourceId()
+    thisLogger().debug { "Requested persisted pluginSourceId for $pluginId: $updateSourceId" }
+    return updateSourceId
+  }
+
+  fun hasExplicitlySetPluginUpdateSource(pluginId: PluginId): Boolean {
+    return getPersistedPluginUpdateSourceId(pluginId) != null
   }
 
   private fun updateState(

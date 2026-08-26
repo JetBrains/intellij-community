@@ -3,6 +3,7 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginUtils
 import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.diagnostic.getOrHandleException
@@ -110,9 +111,18 @@ object PluginUpdateSourceInitializer {
     marketplaceUpdateSourceId: PluginUpdateSourceId,
   ) {
     val pluginId = plugin.pluginId
-    val pluginUpdateSourceId = PluginUpdateSourceService.getInstance().getPluginUpdateSourceId(pluginId)
-    thisLogger().info("Plugin $pluginId already has update source")
-    if (pluginUpdateSourceId != null) return
+    val service = PluginUpdateSourceService.getInstance()
+    // Plugins with predefined Marketplace update source may still be overwritten in custom repositories and
+    // should go through initialization
+    if (!PluginUtils.isUpdateable(plugin)) {
+      thisLogger().info("Plugin $pluginId doesn't need update source")
+      return
+    }
+    val pluginUpdateSourceId = service.getPluginUpdateSourceId(pluginId)
+    if (pluginUpdateSourceId != null && (service as PluginUpdateSourceServiceImpl).hasExplicitlySetPluginUpdateSource(pluginId)) {
+      thisLogger().info("Plugin $pluginId already has update source")
+      return
+    }
 
     val singleCustomRepoUpdateSource = customPluginUpdateSources.singleOrNull()
     val newUpdateSourceId = when {
@@ -133,7 +143,7 @@ object PluginUpdateSourceInitializer {
     }
     if (newUpdateSourceId != null) {
       thisLogger().info("Set ${newUpdateSourceId.getPresentableName()} update source to $pluginId")
-      PluginUpdateSourceService.getInstance().setPluginUpdateSourceId(pluginId, newUpdateSourceId)
+      service.setPluginUpdateSourceId(pluginId, newUpdateSourceId)
     }
   }
 }

@@ -10,8 +10,10 @@ import com.intellij.ide.plugins.TestIdeaPluginDescriptor
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService
 import com.intellij.ide.plugins.updateBrokenPlugins
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.observable.util.whenDisposed
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourcePluginsProvider
 import com.intellij.openapi.updateSettings.impl.UpdateCheckerPluginsFacade
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsSafe
@@ -46,6 +48,8 @@ internal abstract class UpdateCheckerTestBase {
 
     application.replaceService(InstalledPluginsState::class.java, InstalledPluginsState(), testDisposable.get())
     application.replaceService(UpdateCheckerPluginsFacade::class.java, TestUpdateCheckerPluginsFacade(), testDisposable.get())
+    application.replaceService(PluginUpdateSourcePluginsProvider::class.java, TestPluginUpdateSourcePluginsProvider(),
+                               testDisposable.get())
     application.replaceService(MarketplaceCustomizationService::class.java, TestMarketplaceCustomizationService(server.url),
                                testDisposable.get())
 
@@ -179,6 +183,15 @@ internal abstract class UpdateCheckerTestBase {
 
   protected val installedPluginsFacade: TestUpdateCheckerPluginsFacade
     get() = application.getService(UpdateCheckerPluginsFacade::class.java) as TestUpdateCheckerPluginsFacade
+
+  protected fun setInstalledPluginMocks(vararg plugins: InstalledPluginMock) {
+    val installedPlugins = plugins.asList()
+    installedPluginsFacade.setPlugins(installedPlugins)
+    pluginUpdateSourcePluginsProvider.setPlugins(installedPlugins.map { it.createTestPluginDescriptor() })
+  }
+
+  private val pluginUpdateSourcePluginsProvider: TestPluginUpdateSourcePluginsProvider
+    get() = application.getService(PluginUpdateSourcePluginsProvider::class.java) as TestPluginUpdateSourcePluginsProvider
 }
 
 internal class TestMarketplaceCustomizationService(private val mockHost: String, private val byJetBrains: Boolean = true) :
@@ -206,7 +219,27 @@ internal data class InstalledPluginMock(
   val sinceBuild: String?,
   val untilBuild: String?,
   val enabled: Boolean,
-)
+  val vendor: String? = null,
+  val isBundled: Boolean = false,
+  val allowBundledUpdate: Boolean = false,
+) {
+  fun createTestPluginDescriptor(): TestIdeaPluginDescriptor {
+    return object : TestIdeaPluginDescriptor() {
+      override fun getPluginId(): PluginId = PluginId.getId(id)
+      override fun getName(): @NlsSafe String = pluginId.idString
+      override fun getSinceBuild(): @NlsSafe String? = this@InstalledPluginMock.sinceBuild
+      override fun getUntilBuild(): @NlsSafe String? = this@InstalledPluginMock.untilBuild
+      override fun getVersion(): @NlsSafe String? = this@InstalledPluginMock.version
+      override fun getVendor(): @NlsSafe String? = this@InstalledPluginMock.vendor
+      override fun getDependencies(): List<IdeaPluginDependency> = listOf()
+
+      @Suppress("OVERRIDE_DEPRECATION")
+      override fun isEnabled(): Boolean = enabled
+      override fun isBundled(): Boolean = this@InstalledPluginMock.isBundled
+      override fun allowBundledUpdate(): Boolean = this@InstalledPluginMock.allowBundledUpdate
+    }
+  }
+}
 
 internal data class CustomRepositoryPlugin(val pluginId: String, val version: String) {
   val downloadPath: String = "/downloads/$pluginId-$version.jar"
@@ -251,22 +284,7 @@ internal class TestUpdateCheckerPluginsFacade : UpdateCheckerPluginsFacade {
 
     this.descriptors.clear()
     this.descriptors.putAll(
-      plugins.map { mock ->
-        object : TestIdeaPluginDescriptor() {
-          override fun getPluginId(): PluginId = PluginId.getId(mock.id)
-          override fun getName(): @NlsSafe String = pluginId.idString
-          override fun getSinceBuild(): @NlsSafe String? = mock.sinceBuild
-          override fun getUntilBuild(): @NlsSafe String? = mock.untilBuild
-          override fun getVersion(): @NlsSafe String? = mock.version
-          override fun getDependencies(): List<IdeaPluginDependency> = listOf()
-
-          @Suppress("OVERRIDE_DEPRECATION")
-          override fun isEnabled(): Boolean = mock.enabled
-          override fun isBundled(): Boolean = false
-          override fun allowBundledUpdate(): Boolean = false
-        }
-      }
-        .associateBy { it.pluginId }
+      plugins.map { it.createTestPluginDescriptor() }.associateBy { it.pluginId }
     )
   }
 
@@ -302,5 +320,18 @@ internal class TestUpdateCheckerPluginsFacade : UpdateCheckerPluginsFacade {
     data.addAll(hosts)
     data.add(null)
     return data
+  }
+}
+
+internal class TestPluginUpdateSourcePluginsProvider : PluginUpdateSourcePluginsProvider {
+  private val plugins = mutableListOf<PluginDescriptor>()
+
+  fun setPlugins(plugins: Collection<PluginDescriptor>) {
+    this.plugins.clear()
+    this.plugins.addAll(plugins)
+  }
+
+  override fun getAllPlugins(): Collection<PluginDescriptor> {
+    return plugins
   }
 }

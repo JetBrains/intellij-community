@@ -3,14 +3,17 @@ package com.intellij.openapi.application
 
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginSet
+import com.intellij.ide.plugins.loadDescriptorFromFileOrDirInTests
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceInitializationActivity
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceInitializer
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
-import com.intellij.platform.pluginSystem.testFramework.PluginSetSpecBuilder
-import com.intellij.platform.pluginSystem.testFramework.buildPluginSet
+import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
+import com.intellij.platform.testFramework.plugins.PluginSpecBuilder
+import com.intellij.platform.testFramework.plugins.installAt
+import com.intellij.platform.testFramework.plugins.plugin as pluginSpec
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
@@ -55,7 +58,7 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
     val anotherCustomRepositoryUrl = anotherCustomServer.url + "/custom-repository"
 
     setCustomRepositoryHosts(listOf(customRepositoryUrl, anotherCustomRepositoryUrl))
-    setInstalledPlugins(INSTALLED_PLUGIN_IDS)
+    setInstalledPlugins(INSTALLED_PLUGINS)
 
     setServerPlugins(
       plugins = listOf(
@@ -66,14 +69,11 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
       ),
       updates = emptyList(),
     )
-    setCustomRepositoryPlugins(customServer,
-                               listOf(
-                                 CustomRepositoryPlugin(ALREADY_INITIALIZED_PLUGIN, "9.0"),
-                                 CustomRepositoryPlugin(UNKNOWN_PLUGIN, "9.0"),
-                                 CustomRepositoryPlugin(MULTIPLE_CUSTOM_REPOSITORIES_PLUGIN, "9.0"),
-                                 CustomRepositoryPlugin(FROM_LIST_SINGLE_CUSTOM_REPOSITORY_PLUGIN, "9.0"),
-                                 CustomRepositoryPlugin(NOT_FROM_LIST_SINGLE_CUSTOM_REPOSITORY_PLUGIN, "9.0"),
-                               ))
+
+    val customRepoPlugins = INSTALLED_PLUGINS.map { it.pluginId }
+      .filter { it != FROM_LIST_NO_CUSTOM_REPOSITORY_PLUGIN }
+      .map { CustomRepositoryPlugin(it, "9.0") }
+    setCustomRepositoryPlugins(customServer, customRepoPlugins)
     setCustomRepositoryPlugins(anotherCustomServer,
                                listOf(
                                  CustomRepositoryPlugin(MULTIPLE_CUSTOM_REPOSITORIES_PLUGIN, "10.0"),
@@ -93,6 +93,11 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
     assertPluginUpdateSource(NOT_FROM_LIST_SINGLE_CUSTOM_REPOSITORY_PLUGIN, customRepositoryUpdateSourceId)
     assertPluginUpdateSource(FROM_LIST_NO_CUSTOM_REPOSITORY_PLUGIN, marketplaceUpdateSourceId)
 
+    assertPluginUpdateSource(BUNDLED_UPDATEABLE_JET_BRAINS_PLUGIN_CUSTOM_REPOSITORY_PLUGIN, customRepositoryUpdateSourceId)
+    assertNoPluginUpdateSource(BUNDLED_NON_UPDATEABLE_JET_BRAINS_PLUGIN_CUSTOM_REPOSITORY_PLUGIN)
+    assertPluginUpdateSource(BUNDLED_UPDATEABLE_PLUGIN_CUSTOM_REPOSITORY_PLUGIN, customRepositoryUpdateSourceId)
+    assertNoPluginUpdateSource(BUNDLED_NON_UPDATEABLE_PLUGIN_CUSTOM_REPOSITORY_PLUGIN)
+
     val sourcesAfterFirstInitialization = pluginUpdateSourcesByPluginId()
     executeInitializationActivity()
     assertEquals(sourcesAfterFirstInitialization, pluginUpdateSourcesByPluginId())
@@ -104,22 +109,28 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
     }
   }
 
-  private fun setInstalledPlugins(pluginIds: List<String>) {
+  private fun setInstalledPlugins(plugins: List<InstalledPlugin>) {
     originalPluginSet = originalPluginSet ?: PluginManagerCore.getPluginSetOrNull()
 
     val pluginsDirPath = inMemoryFs.fs.getPath("/").resolve("plugins")
-    val pluginSet = buildPluginSet(pluginsDirPath) {
-      for (pluginId in pluginIds) {
-        testPlugin(pluginId)
-      }
+    val installedPluginPaths = plugins.map { plugin ->
+      plugin to pluginSpec(plugin.pluginId) {
+        testPlugin(plugin)
+      }.installAt(pluginsDirPath)
     }
+    val pluginSet = PluginSetTestBuilder.fromDescriptors { loadingContext ->
+      installedPluginPaths.mapNotNull { (plugin, path) ->
+        loadDescriptorFromFileOrDirInTests(path, loadingContext, plugin.isBundled)
+      }
+    }.build()
     PluginManagerCore.setPluginSet(pluginSet)
   }
 
-  private fun PluginSetSpecBuilder.testPlugin(pluginId: String) {
-    plugin(pluginId) {
-      version = "1.0"
-      vendor = "JetBrains"
+  private fun PluginSpecBuilder.testPlugin(plugin: InstalledPlugin) {
+    version = "1.0"
+    vendor = plugin.vendor
+    if (plugin.allowBundledUpdate) {
+      rootTagAttributes = """allow-bundled-update="true""""
     }
   }
 
@@ -137,16 +148,16 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
 
   private fun pluginUpdateSourcesByPluginId(): Map<String, PluginUpdateSourceId?> {
     return TESTED_PLUGIN_IDS.associateWith { pluginId ->
-      PluginUpdateSourceService.getInstance().getPluginUpdateSourceId(pluginId(pluginId))
+      PluginUpdateSourceService.getInstance().getPersistedPluginUpdateSourceId(pluginId(pluginId))
     }
   }
 
   private fun assertPluginUpdateSource(pluginId: String, expectedUpdateSourceId: PluginUpdateSourceId) {
-    assertEquals(expectedUpdateSourceId, PluginUpdateSourceService.getInstance().getPluginUpdateSourceId(pluginId(pluginId)))
+    assertEquals(expectedUpdateSourceId, PluginUpdateSourceService.getInstance().getPersistedPluginUpdateSourceId(pluginId(pluginId)))
   }
 
   private fun assertNoPluginUpdateSource(pluginId: String) {
-    assertNull(PluginUpdateSourceService.getInstance().getPluginUpdateSourceId(pluginId(pluginId)))
+    assertNull(PluginUpdateSourceService.getInstance().getPersistedPluginUpdateSourceId(pluginId(pluginId)))
   }
 
   private fun eraseAllPluginUpdateSources(pluginIds: Collection<String>) {
@@ -171,16 +182,50 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
     const val NOT_FROM_LIST_SINGLE_CUSTOM_REPOSITORY_PLUGIN = "test.single.custom.repository.update.source"
     const val FROM_LIST_NO_CUSTOM_REPOSITORY_PLUGIN = "org.jetbrains.plugins.github"
 
-    val INSTALLED_PLUGIN_IDS = listOf(ALREADY_INITIALIZED_PLUGIN,
-                                      MULTIPLE_CUSTOM_REPOSITORIES_PLUGIN,
-                                      FROM_LIST_SINGLE_CUSTOM_REPOSITORY_PLUGIN,
-                                      NOT_FROM_LIST_SINGLE_CUSTOM_REPOSITORY_PLUGIN,
-                                      FROM_LIST_NO_CUSTOM_REPOSITORY_PLUGIN)
+    const val BUNDLED_UPDATEABLE_JET_BRAINS_PLUGIN_CUSTOM_REPOSITORY_PLUGIN = "test.bundled.updateable.jet.brains.in.custom.repository"
+    const val BUNDLED_NON_UPDATEABLE_JET_BRAINS_PLUGIN_CUSTOM_REPOSITORY_PLUGIN =
+      "test.bundled.non.updateable.jet.brains.in.custom.repository"
+    const val BUNDLED_UPDATEABLE_PLUGIN_CUSTOM_REPOSITORY_PLUGIN = "test.bundled.updateable.in.custom.repository"
+    const val BUNDLED_NON_UPDATEABLE_PLUGIN_CUSTOM_REPOSITORY_PLUGIN = "test.bundled.non.updateable.in.custom.repository"
+
+
+    val INSTALLED_PLUGINS = listOf(
+      installedPlugin(ALREADY_INITIALIZED_PLUGIN),
+      installedPlugin(MULTIPLE_CUSTOM_REPOSITORIES_PLUGIN),
+      installedPlugin(FROM_LIST_SINGLE_CUSTOM_REPOSITORY_PLUGIN),
+      installedPlugin(NOT_FROM_LIST_SINGLE_CUSTOM_REPOSITORY_PLUGIN),
+      installedPlugin(FROM_LIST_NO_CUSTOM_REPOSITORY_PLUGIN),
+
+      installedPlugin(BUNDLED_UPDATEABLE_JET_BRAINS_PLUGIN_CUSTOM_REPOSITORY_PLUGIN,
+                      isBundled = true,
+                      allowBundledUpdate = true,
+                      isJetBrainsPlugin = true),
+      installedPlugin(BUNDLED_NON_UPDATEABLE_JET_BRAINS_PLUGIN_CUSTOM_REPOSITORY_PLUGIN, isBundled = true, isJetBrainsPlugin = true),
+      installedPlugin(BUNDLED_UPDATEABLE_PLUGIN_CUSTOM_REPOSITORY_PLUGIN, isBundled = true, allowBundledUpdate = true),
+      installedPlugin(BUNDLED_NON_UPDATEABLE_PLUGIN_CUSTOM_REPOSITORY_PLUGIN, isBundled = true),
+    )
 
 
     val TESTED_PLUGIN_IDS = buildList {
-      addAll(INSTALLED_PLUGIN_IDS)
+      addAll(INSTALLED_PLUGINS.map { it.pluginId })
       add(UNKNOWN_PLUGIN)
+    }
+
+    private fun installedPlugin(
+      pluginId: String,
+      isBundled: Boolean = false,
+      allowBundledUpdate: Boolean = false,
+      isJetBrainsPlugin: Boolean = false,
+    ): InstalledPlugin {
+      val vendor = if (isJetBrainsPlugin) "JetBrains" else "Some Company"
+      return InstalledPlugin(pluginId, isBundled, allowBundledUpdate, vendor)
     }
   }
 }
+
+private data class InstalledPlugin(
+  val pluginId: String,
+  val isBundled: Boolean = false,
+  val allowBundledUpdate: Boolean = false,
+  val vendor: String?,
+)

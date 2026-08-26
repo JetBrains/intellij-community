@@ -38,7 +38,7 @@ internal class UpdateCheckerFacadeTest : UpdateCheckerTestBase() {
 
   @Test
   fun `no plugins have no updates`() {
-    installedPluginsFacade.setPlugins(emptyList())
+    setInstalledPluginMocks()
 
     val result = UpdateCheckerFacade.getInstance().checkInstalledPluginUpdates()
     assertEquals(0, result.pluginUpdates.all.size, "There must be no updates found for no plugins")
@@ -46,10 +46,10 @@ internal class UpdateCheckerFacadeTest : UpdateCheckerTestBase() {
 
   @Test
   fun `downgrade for broken plugin`() {
-    installedPluginsFacade.setPlugins(listOf(
+    setInstalledPluginMocks(
       InstalledPluginMock("ColourChooser", "Colour Chooser", "JetBrains", "0.2", "0", "999.99999", true),
       InstalledPluginMock("ImageView", "Image View", "JetBrains", "0.1", "1.0", "999.99999", true),
-    ))
+    )
 
     val serverPlugins = listOf(
       RepositoryPluginMock("ColourChooser", "501", "101", "0.1"),
@@ -79,10 +79,10 @@ internal class UpdateCheckerFacadeTest : UpdateCheckerTestBase() {
 
   @Test
   fun `update check sends all query parameters`() {
-    installedPluginsFacade.setPlugins(listOf(
+    setInstalledPluginMocks(
       InstalledPluginMock("ColourChooser", "Colour Chooser", "JetBrains", "0.1", "0", "999.99999", true),
       InstalledPluginMock("ImageView", "Image View", "JetBrains", "0.1", "1.0", "999.99999", true),
-    ))
+    )
 
     val serverPlugins = listOf(
       RepositoryPluginMock("ColourChooser", "501", "101", "0.1"),
@@ -122,10 +122,10 @@ internal class UpdateCheckerFacadeTest : UpdateCheckerTestBase() {
     application.replaceService(MarketplaceCustomizationService::class.java, TestMarketplaceCustomizationService(server.url, false),
                                testDisposable.get())
 
-    installedPluginsFacade.setPlugins(listOf(
+    setInstalledPluginMocks(
       InstalledPluginMock("ColourChooser", "Colour Chooser", "JetBrains", "0.1", "0", "999.99999", true),
       InstalledPluginMock("ImageView", "Image View", "JetBrains", "0.1", "1.0", "999.99999", true),
-    ))
+    )
 
     val serverPlugins = listOf(
       RepositoryPluginMock("ColourChooser", "501", "101", "0.1"),
@@ -148,10 +148,10 @@ internal class UpdateCheckerFacadeTest : UpdateCheckerTestBase() {
 
   @Test
   fun `not installed yet plugin`() {
-    installedPluginsFacade.setPlugins(listOf(
+    setInstalledPluginMocks(
       InstalledPluginMock("ColourChooser", "Colour Chooser", "JetBrains", "1.0", "0", "999.99999", true),
       // no ImageView installed, but we ask for its versions
-    ))
+    )
 
     val serverPlugins = listOf(
       RepositoryPluginMock("ColourChooser", "501", "101", "2.0"),
@@ -171,10 +171,10 @@ internal class UpdateCheckerFacadeTest : UpdateCheckerTestBase() {
 
   @Test
   fun `compatible with new build number`() {
-    installedPluginsFacade.setPlugins(listOf(
+    setInstalledPluginMocks(
       InstalledPluginMock("ColourChooser", "Colour Chooser", "JetBrains", "1.0", "0", "999.99999", true),
       InstalledPluginMock("ImageView", "Image View", "JetBrains", "0.1", "1.0", "999.99999", true),
-    ))
+    )
 
     val serverPlugins = listOf(
       // incompatible with build number > 251.250
@@ -200,10 +200,10 @@ internal class UpdateCheckerFacadeTest : UpdateCheckerTestBase() {
 
   @Test
   fun `plugins become incompatible with new build number`() {
-    installedPluginsFacade.setPlugins(listOf(
+    setInstalledPluginMocks(
       InstalledPluginMock("ColourChooser", "Colour Chooser", "JetBrains", "1.0", "251.200", "251.250", true),
       InstalledPluginMock("ImageView", "Image View", "JetBrains", "0.1", "1.0", "999.99999", true),
-    ))
+    )
 
     val colourChooserPlugin = RepositoryPluginMock(
       "ColourChooser", "501", "101", "1.0",
@@ -234,10 +234,10 @@ internal class UpdateCheckerFacadeTest : UpdateCheckerTestBase() {
 
   @Test
   fun `custom repository`() {
-    installedPluginsFacade.setPlugins(listOf(
+    setInstalledPluginMocks(
       InstalledPluginMock("ColourChooser", "Colour Chooser", "JetBrains", "1.0", "0", "999.99999", true),
       InstalledPluginMock("ImageView", "Image View", "JetBrains", "0.1", "1.0", "999.99999", true),
-    ))
+    )
 
     val serverPlugins = listOf(
       RepositoryPluginMock("ColourChooser", "501", "101", "2.0"),
@@ -312,9 +312,9 @@ internal class UpdateCheckerFacadeTest : UpdateCheckerTestBase() {
 
   @Test
   fun `custom repository receives os and arch in query`() {
-    installedPluginsFacade.setPlugins(listOf(
+    setInstalledPluginMocks(
       InstalledPluginMock("ImageView", "Image View", "JetBrains", "0.1", "1.0", "999.99999", true),
-    ))
+    )
 
     setServerPlugins(emptyList(), emptyList())
 
@@ -347,10 +347,10 @@ internal class UpdateCheckerFacadeTest : UpdateCheckerTestBase() {
 
   @Test
   fun `disabled plugin`() {
-    installedPluginsFacade.setPlugins(listOf(
+    setInstalledPluginMocks(
       InstalledPluginMock("ColourChooser", "Colour Chooser", "JetBrains", "1.0", "0", "999.99999", true),
       InstalledPluginMock("ImageView", "Image View", "JetBrains", "0.1", "1.0", "999.99999", false),
-    ))
+    )
 
     val serverPlugins = listOf(
       RepositoryPluginMock("ColourChooser", "501", "101", "2.0"),
@@ -370,9 +370,9 @@ internal class UpdateCheckerFacadeTest : UpdateCheckerTestBase() {
 
   @Test
   fun `server errors`() {
-    installedPluginsFacade.setPlugins(listOf(
+    setInstalledPluginMocks(
       InstalledPluginMock("ColourChooser", "Colour Chooser", "JetBrains", "1.0", "0", "999.99999", true)
-    ))
+    )
 
     val serverPlugins = listOf(RepositoryPluginMock("ColourChooser", "501", "101", "1.0"))
     setServerPlugins(serverPlugins, emptyList())
@@ -395,10 +395,10 @@ internal class UpdateCheckerFacadeTest : UpdateCheckerTestBase() {
 
   @Test
   fun `alien plugin IDs are not send to Marketplace`() {
-    installedPluginsFacade.setPlugins(listOf(
+    setInstalledPluginMocks(
       InstalledPluginMock("ColourChooser", "Colour Chooser", "JetBrains", "1.0", "0", "999.99999", true),
       InstalledPluginMock("ImageView", "Image View", "JetBrains", "0.1", "1.0", "999.99999", true),
-    ))
+    )
 
     val serverPlugins = listOf(
       RepositoryPluginMock("ColourChooser", "501", "101", "2.0"),
@@ -427,10 +427,10 @@ internal class UpdateCheckerFacadeTest : UpdateCheckerTestBase() {
 
   @Test
   fun `single plugin update`() {
-    installedPluginsFacade.setPlugins(listOf(
+    setInstalledPluginMocks(
       InstalledPluginMock("ColourChooser", "Colour Chooser", "JetBrains", "1.0", "0", "999.99999", true),
       InstalledPluginMock("ImageView", "Image View", "JetBrains", "0.1", "1.0", "999.99999", true),
-    ))
+    )
 
     val colourChooserPlugin = RepositoryPluginMock("ColourChooser", "501", "101", "2.0")
     val imageViewPlugin = RepositoryPluginMock("ImageView", "502", "102", "2.1")
@@ -454,7 +454,7 @@ internal class UpdateCheckerFacadeTest : UpdateCheckerTestBase() {
     val customServer = createTestServer(testDisposable.get())
     val customRepositoryUrl = customServer.url + "/custom-repository"
 
-    installedPluginsFacade.setPlugins(listOf(
+    setInstalledPluginMocks(
       InstalledPluginMock(id = pluginId,
                           name = pluginId,
                           company = "JetBrains",
@@ -462,7 +462,7 @@ internal class UpdateCheckerFacadeTest : UpdateCheckerTestBase() {
                           sinceBuild = "1.0",
                           untilBuild = "999.99999",
                           enabled = true),
-    ))
+    )
     installedPluginsFacade.setHosts(listOf(customRepositoryUrl))
     updateBrokenPlugins(mapOf(Pair(PluginId(pluginId), setOf("2.0"))))
 
@@ -487,7 +487,7 @@ internal class UpdateCheckerFacadeTest : UpdateCheckerTestBase() {
   fun `don't suggest downgrade for non-broken plugins from Marketplace even when downgrade is allowed (IJPL-251144)`() {
     val pluginId = "test.custom.source.downgrade"
 
-    installedPluginsFacade.setPlugins(listOf(
+    setInstalledPluginMocks(
       InstalledPluginMock(id = pluginId,
                           name = pluginId,
                           company = "JetBrains",
@@ -495,7 +495,7 @@ internal class UpdateCheckerFacadeTest : UpdateCheckerTestBase() {
                           sinceBuild = "1.0",
                           untilBuild = "999.99999",
                           enabled = true),
-    ))
+    )
 
     val marketplaceUpdate = RepositoryPluginMock(pluginId = pluginId, externalPluginId = "501", externalUpdateId = "101", version = "0.5")
     setServerPlugins(listOf(marketplaceUpdate), listOf(marketplaceUpdate))
@@ -519,7 +519,7 @@ internal class UpdateCheckerFacadeTest : UpdateCheckerTestBase() {
     val customServer = createTestServer(testDisposable.get())
     val customRepositoryUrl = customServer.url + "/custom-repository"
 
-    installedPluginsFacade.setPlugins(listOf(
+    setInstalledPluginMocks(
       InstalledPluginMock(id = pluginId,
                           name = pluginId,
                           company = "JetBrains",
@@ -527,7 +527,7 @@ internal class UpdateCheckerFacadeTest : UpdateCheckerTestBase() {
                           sinceBuild = "1.0",
                           untilBuild = "999.99999",
                           enabled = true),
-    ))
+    )
     installedPluginsFacade.setHosts(listOf(customRepositoryUrl))
 
     setCustomRepositoryPlugins(customServer, listOf(
