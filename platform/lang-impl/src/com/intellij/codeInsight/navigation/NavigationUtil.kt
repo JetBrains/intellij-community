@@ -55,7 +55,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.PsiElementProcessor
@@ -208,6 +207,9 @@ fun openFileWithPsiElement(element: PsiElement, searchForOpen: Boolean, requestF
 
 internal suspend fun openFileWithPsiElementAsync(element: PsiElement, searchForOpen: Boolean, requestFocus: Boolean): Boolean {
   val openAsNative = shouldOpenAsNative(element)
+  val hasDecompiler = readAction { hasBinaryDecompiler(element) }
+  val commandProcessor = (serviceAsync<CommandProcessor>() as CommandProcessorEx)
+
   if (searchForOpen) {
     element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null)
   }
@@ -215,44 +217,14 @@ internal suspend fun openFileWithPsiElementAsync(element: PsiElement, searchForO
     element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, true)
   }
 
-  // Decompiler-backed files (e.g. .class) load their content via a long read action.
-  // The blocking openFile(file, window, options) overload waits for the composite to become available
-  // via blockingWaitForCompositeFileOpen on the EDT, which keeps the document-load coroutine
-  // bound to the EDT pump and prevents the read action from being cancelled. For such files we
-  // route through the suspend openFile(file, options) overload, which releases the EDT while
-  // composite.waitForAvailable() suspends — so the decompile is genuinely cancellable.
-  val hasDecompiler = readAction { hasBinaryDecompiler(element) }
-
-  val commandProcessor = (serviceAsync<CommandProcessor>() as CommandProcessorEx)
-  val hasCachedDocument = readAction {
-    element.containingFile?.let {
-      PsiDocumentManager.getInstance(element.project)
-        .getCachedDocument(it) != null
-    }
-  }
-  return if (hasDecompiler && hasCachedDocument != true) {
-    navigateWithoutOuterWriteIntent(element, openAsNative, searchForOpen, requestFocus, commandProcessor)
-  }
-  else {
-    withContext(Dispatchers.EDT) {
-        // all navigations inside should be treated as a single operation, so that 'Back' action undoes it in one go
-        val commandHandle = commandProcessor.startCommand(element.project, "", null, UndoConfirmationPolicy.DEFAULT) ?: return@withContext false
-        try {
-          if (openAsNative || !activatePsiElementIfOpen(element, searchForOpen, requestFocus)) {
-            val navigationItem = element as NavigationItem
-            if (navigationItem.canNavigate()) {
-              navigationItem.navigate(requestFocus)
-              return@withContext true
-            }
-          }
-        }
-        finally {
-          commandProcessor.finishCommand(commandHandle, null)
-          element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null)
-        }
-        false
-    }
-  }
+  // Content loading may take an indefinite time, there is no way to tell in advance whether a given open
+  // will need it. The blocking openFile(file, window, options) overload waits for the composite to become
+  // available via blockingWaitForCompositeFileOpen on the EDT, which keeps the document-load coroutine bound to
+  // the EDT pump and prevents the read action from being cancelled. Every open is routed through the suspend
+  // openFile(file, options) overload, which releases the EDT while composite.waitForAvailable() suspends —
+  // the load stays cancellable
+  return navigateWithoutCommand(element, openAsNative, searchForOpen, requestFocus, commandProcessor,
+                                registerUndo = hasDecompiler)
 }
 
 /**
@@ -266,16 +238,21 @@ private fun hasBinaryDecompiler(element: PsiElement): Boolean {
   return BinaryFileTypeDecompilers.getInstance().hasDecompiler(vFile)
 }
 
-private suspend fun navigateWithoutOuterWriteIntent(
+/**
+ * @param registerUndo is required only the decompiler-backed path IDEA-387866;
+ * a plain file open used to run inside an empty command and contributed nothing to the undo stack.
+ */
+private suspend fun navigateWithoutCommand(
   element: PsiElement,
   openAsNative: Boolean,
   searchForOpen: Boolean,
   requestFocus: Boolean,
   commandProcessor: CommandProcessorEx,
+  registerUndo: Boolean,
 ): Boolean {
   val project = element.project
 
-  val before = withContext(Dispatchers.EDT) { NavigationSnapshot.capture(project) }
+  val before = if (registerUndo) withContext(Dispatchers.EDT) { NavigationSnapshot.capture(project) } else null
   val navigated = try {
     doNavigateAsync(element, openAsNative, searchForOpen, requestFocus)
   }
@@ -283,6 +260,7 @@ private suspend fun navigateWithoutOuterWriteIntent(
     element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null)
   }
   if (!navigated) return false
+  if (before == null) return true
   val after = withContext(Dispatchers.EDT) { NavigationSnapshot.capture(project) }
   if (before != after) {
     // short command only to register UndoableAction
