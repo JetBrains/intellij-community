@@ -120,8 +120,9 @@ public class MenuItemColors(
     public val keybindingTintHovered: Color,
     public val separator: Color,
 ) {
+    @Deprecated("This is being made private")
     @Composable
-    internal fun backgroundFor(state: MenuItemState): State<Color> =
+    public fun backgroundFor(state: MenuItemState): State<Color> =
         rememberUpdatedState(
             state.chooseValue(
                 normal = background,
@@ -133,8 +134,9 @@ public class MenuItemColors(
             )
         )
 
+    @Deprecated("This is being made private")
     @Composable
-    internal fun contentFor(state: MenuItemState): State<Color> =
+    public fun contentFor(state: MenuItemState): State<Color> =
         rememberUpdatedState(
             state.chooseValue(
                 normal = content,
@@ -146,8 +148,9 @@ public class MenuItemColors(
             )
         )
 
+    @Deprecated("This is being made private")
     @Composable
-    internal fun iconTintFor(state: MenuItemState): State<Color> =
+    public fun iconTintFor(state: MenuItemState): State<Color> =
         rememberUpdatedState(
             state.chooseValue(
                 normal = iconTint,
@@ -159,8 +162,9 @@ public class MenuItemColors(
             )
         )
 
+    @Deprecated("This is being made private")
     @Composable
-    internal fun keybindingTintFor(state: MenuItemState): State<Color> =
+    public fun keybindingTintFor(state: MenuItemState): State<Color> =
         rememberUpdatedState(
             state.chooseValue(
                 normal = keybindingTint,

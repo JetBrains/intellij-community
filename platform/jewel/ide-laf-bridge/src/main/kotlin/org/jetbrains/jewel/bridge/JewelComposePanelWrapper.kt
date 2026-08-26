@@ -2,6 +2,7 @@ package org.jetbrains.jewel.bridge
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.ui.awt.ComposePanel
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.plugins.PluginUtil
@@ -47,6 +48,18 @@ public fun compose(
  *
  * The [content] is wrapped in a [SwingBridgeTheme], which will be derived from the current Swing LaF.
  *
+ * @param config A lambda to configure the underlying [ComposePanel].
+ * @param content The Composable content to display.
+ */
+@Deprecated("Use the version with 'focusOnClickInside' parameter", level = DeprecationLevel.HIDDEN)
+public fun compose(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
+    JewelComposePanel(focusOnClickInside = false, config, content)
+
+/**
+ * Creates a Swing component that can host Compose content.
+ *
+ * The [content] is wrapped in a [SwingBridgeTheme], which will be derived from the current Swing LaF.
+ *
  * This is the same as [compose].
  *
  * @param focusOnClickInside If `true`, the underlying [ComposePanel] will request focus when a mouse click occurs
@@ -77,6 +90,21 @@ public fun JewelComposePanel(
 /**
  * Creates a Swing component that can host Compose content.
  *
+ * The [content] is wrapped in a [SwingBridgeTheme], which will be derived from the current Swing LaF.
+ *
+ * This is the same as [compose].
+ *
+ * @param config A lambda to configure the underlying [ComposePanel].
+ * @param content The Composable content to display.
+ */
+@Suppress("ktlint:standard:function-naming", "FunctionName") // Swing to Compose bridge API
+@Deprecated("Use the version with 'focusOnClickInside' parameter", level = DeprecationLevel.HIDDEN)
+public fun JewelComposePanel(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
+    JewelComposePanel(focusOnClickInside = false, config, content)
+
+/**
+ * Creates a Swing component that can host Compose content.
+ *
  * The [content] is **not** wrapped in a theme, meaning that you **MUST** wrap the content in a theme by yourself.
  *
  * This is not normally what you want; use this only if you want to provide a completely custom theme.
@@ -93,6 +121,23 @@ public fun composeWithoutTheme(
     config: ComposePanel.() -> Unit = {},
     content: @Composable () -> Unit,
 ): JComponent = JewelComposeNoThemePanel(focusOnClickInside, config, content)
+
+/**
+ * Creates a Swing component that can host Compose content.
+ *
+ * The [content] is **not** wrapped in a theme, meaning that you **MUST** wrap the content in a theme by yourself.
+ *
+ * This is not normally what you want; use this only if you want to provide a completely custom theme.
+ *
+ * @param config A lambda to configure the underlying [ComposePanel].
+ * @param content The Composable content to display.
+ */
+@ApiStatus.Experimental
+@ExperimentalJewelApi
+@Suppress("ktlint:standard:function-naming") // Swing to Compose bridge API
+@Deprecated("Use the version with 'focusOnClickInside' parameter", level = DeprecationLevel.HIDDEN)
+public fun composeWithoutTheme(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
+    JewelComposeNoThemePanel(focusOnClickInside = false, config, content)
 
 /**
  * Creates a Swing component that can host Compose content.
@@ -128,6 +173,25 @@ public fun JewelComposeNoThemePanel(
             }
         }
     }
+
+/**
+ * Creates a Swing component that can host Compose content.
+ *
+ * The [content] is **not** wrapped in a theme, meaning that you **MUST** wrap the content in a theme by yourself.
+ *
+ * This is not normally what you want; use this only if you want to provide a completely custom theme.
+ *
+ * This is the same as [composeWithoutTheme].
+ *
+ * @param config A lambda to configure the underlying [ComposePanel].
+ * @param content The Composable content to display.
+ */
+@ApiStatus.Experimental
+@ExperimentalJewelApi
+@Suppress("ktlint:standard:function-naming", "FunctionName") // Swing to Compose bridge API
+@Deprecated("Use the version with 'focusOnClickInside' parameter", level = DeprecationLevel.HIDDEN)
+public fun JewelComposeNoThemePanel(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
+    JewelComposeNoThemePanel(focusOnClickInside = false, config, content)
 
 private fun createJewelComposePanel(
     focusOnClickInside: Boolean,
@@ -197,3 +261,13 @@ public class JewelComposePanelWrapper(private val focusOnClickInside: Boolean) :
         targetProvider?.uiDataSnapshot(sink)
     }
 }
+
+/** Provides the root component used to host the current Compose hierarchy. */
+@Suppress("CompositionLocalAllowlist")
+@ApiStatus.Experimental
+@ExperimentalJewelApi
+@Deprecated(
+    "Use the LocalComponent from the foundation API",
+    replaceWith = ReplaceWith("LocalComponent", "org.jetbrains.jewel.foundation.LocalComponent"),
+)
+public val LocalComponent: ProvidableCompositionLocal<JComponent> = LocalComponentFoundation

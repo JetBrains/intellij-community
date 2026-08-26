@@ -27,7 +27,7 @@ public class OrderedListRenderingTest {
             setContent {
                 MarkdownTestTheme {
                     val renderer = DefaultMarkdownBlockRenderer(createMarkdownTestStyling(), emptyList())
-                    renderer.RenderBlocks(blocks = blocks, enabled = true, onUrlClick = {}, modifier = Modifier)
+                    renderer.render(blocks, enabled = true, onUrlClick = {}, onTextClick = {}, modifier = Modifier)
                 }
             }
 
@@ -50,7 +50,7 @@ public class OrderedListRenderingTest {
             setContent {
                 MarkdownTestTheme {
                     val renderer = DefaultMarkdownBlockRenderer(createMarkdownTestStyling(), emptyList())
-                    renderer.RenderBlocks(blocks = blocks, enabled = true, onUrlClick = {}, modifier = Modifier)
+                    renderer.render(blocks, enabled = true, onUrlClick = {}, onTextClick = {}, modifier = Modifier)
                 }
             }
 
@@ -75,7 +75,7 @@ public class OrderedListRenderingTest {
             setContent {
                 MarkdownTestTheme {
                     val renderer = DefaultMarkdownBlockRenderer(createMarkdownTestStyling(), emptyList())
-                    renderer.RenderBlocks(blocks = blocks, enabled = true, onUrlClick = {}, modifier = Modifier)
+                    renderer.render(blocks, enabled = true, onUrlClick = {}, onTextClick = {}, modifier = Modifier)
                 }
             }
 
@@ -99,7 +99,7 @@ public class OrderedListRenderingTest {
             setContent {
                 MarkdownTestTheme {
                     val renderer = DefaultMarkdownBlockRenderer(createMarkdownTestStyling(), emptyList())
-                    renderer.RenderBlocks(blocks = blocks, enabled = true, onUrlClick = {}, modifier = Modifier)
+                    renderer.render(blocks, enabled = true, onUrlClick = {}, onTextClick = {}, modifier = Modifier)
                 }
             }
 
