@@ -45,9 +45,15 @@ internal class UvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
   override val tool: PyTool get() = UvPyTool.getInstance()
   override val toolId: ToolId get() = UV_TOOL_ID
 
+  /**
+   * `uv venv` writes its own version into the environment's `pyvenv.cfg`, which is what lets every node say that uv made
+   * it. uv is the only one of the tools here that leaves such a mark.
+   */
+  override val pyvenvMarker: String get() = "uv"
+
   // uv works with any virtualenv, so it shows all discovered environments.
   override suspend fun loadSections(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto =
-    EvoLoadResultDto.Ok(discovered.toSectionsGroupedByParent(icon, addNew = true, baseDir = pyProject.baseDir))
+    EvoLoadResultDto.Ok(discovered.toSectionsGroupedByParent(this, addNew = true, baseDir = pyProject.baseDir))
 
   /**
    * Adopts an existing virtualenv as a uv env — `usePip = false`, so the SDK is wired to uv rather than to pip even

@@ -41,6 +41,7 @@ import com.intellij.python.sdk.backend.evolution.discoverVenvs
 import com.intellij.python.sdk.backend.evolution.getPythonVersion
 import com.intellij.python.sdk.backend.evolution.toDisplayPath
 import com.intellij.python.sdk.backend.evolution.toSectionLabel
+import com.intellij.python.sdk.backend.evolution.withCreators
 import com.intellij.python.sdk.common.evolution.EvoAddNewOptionDto
 import com.intellij.python.sdk.common.evolution.EvoBasePythonDto
 import com.intellij.python.sdk.common.evolution.EvoLeafDto
@@ -434,7 +435,8 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     if (cacheKey in slowTools && !forceRefresh) {
       envListCache.getIfPresent(cacheKey)?.let { return it }
     }
-    val discovered = discoverVenvs(baseDirs(pyProject), excludedRoots(pyProject))
+    // Named here, from every provider at once, so each node reads one environment's maker the same way.
+    val discovered = discoverVenvs(baseDirs(pyProject), excludedRoots(pyProject)).withCreators(providers)
     // Run (and time) the tool's env listing in the tool's own coroutine.
     val timed = measureTimedValue {
       toolScope(pyProject.project, traceId, provider.toolId.id, provider.label)

@@ -464,8 +464,8 @@ data class EvoLeafDto(
    * Why this row cannot be acted on, when it cannot — a hatch environment declared in `pyproject.toml` with no
    * interpreter on the machine to build it from, say.
    *
-   * The row is then shown disabled with a warning sign carrying this text, rather than looking selectable and failing
-   * only once the user clicks it.
+   * The row is then shown disabled, with this text as its tooltip, rather than looking selectable and failing only once
+   * the user clicks it.
    */
   val unavailable: @Nls String? = null,
   /**

@@ -33,7 +33,6 @@ import com.intellij.python.sdk.common.evolution.requestEvoShortcuts
 import com.intellij.python.sdk.frontend.PySdkFrontendBundle
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeStaticNodeElement
 import com.intellij.ui.AnimatedIcon
-import com.intellij.util.IconUtil
 import com.intellij.util.messages.MessageBusConnection
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
@@ -44,6 +43,16 @@ private const val ID: String = "EvoPySdkStatusBarWidget"
 
 /** How long (ms) after the popup is closed a re-open still reuses the built tree instead of rebuilding (rescanning). */
 private fun popupTreeTtlMs(): Long = PyEvoRegistry.popupTreeCacheSeconds.toLong() * 1000
+
+/**
+ * How long (ms) the widget keeps a fetched "Shortcuts" list before it asks the backend again.
+ *
+ * The suggestions change with the project on disk — a dependency file written, a tool installed — and nothing tells the
+ * frontend about it. So they are re-read on a timer instead, as the "no interpreter configured" inspection re-reads them
+ * on each of its own runs. Matches the backend cache behind the answer (`PySdkConfiguratorsCache`), which makes a
+ * re-read that finds no change cost one RPC call and no probe.
+ */
+private const val SHORTCUTS_TTL_MS: Long = 20_000
 
 /** Fading Python logo for the neutral "loading" state (no specific tool yet); configuring uses the tool's own logo. */
 private val PYTHON_FADING_ICON: Icon = AnimatedIcon.Fading(AllIcons.Language.Python)
@@ -109,6 +118,8 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
     val associated: List<PyInterpreterDto>,
     /** "Shortcuts" rows (autoconfigure suggestions), fetched only when there is no current interpreter. */
     val shortcuts: List<EvoLeafDto>,
+    /** When [shortcuts] was last read (epoch ms); the [SHORTCUTS_TTL_MS] window is measured from this moment. */
+    val shortcutsAt: Long,
   )
 
   /**
@@ -220,6 +231,11 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
     // widget never blinks out. Unlike before, there is no "is this Python at all" question to wait on: the target came
     // out of the structure, so it *is* a PyProject and the widget can show its loading state right away.
     if (cached == null || cached.stamp != modelStamp()) refresh(target.key)
+    // The suggestions the popup would show go stale on their own, without anything the checks above can see. Re-read
+    // them here, where the widget is told about the edits that change them, so the next open is built from a fresh list.
+    else if (cached.current == null && System.currentTimeMillis() - cached.shortcutsAt > SHORTCUTS_TTL_MS) {
+      refreshShortcuts(target.key)
+    }
 
     if (configuring) {
       // Keep the widget enabled so its dynamic (self-animating) icon is painted directly — a disabled widget would
@@ -248,9 +264,9 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
         true,
       ).apply { icon = AllIcons.General.BalloonWarning }
     }
-    // Match the classic interpreter widget: desaturated tool icon + the interpreter's short name as text.
+    // The tool's own icon, as the tool draws it, plus the interpreter's short name as text.
     return WidgetState(interpreter.description, interpreter.title, true).apply {
-      icon = IconUtil.desaturate(interpreter.icon.icon())
+      icon = interpreter.icon.icon()
     }
   }
 
@@ -274,13 +290,14 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
       }
       try {
         val interpreter = evoRpcOrNull { requestEvoCurrentInterpreter(projectId, key) }
-        publish(Cached(stamp, interpreter, prev?.nodes.orEmpty(), prev?.associated.orEmpty(), prev?.shortcuts.orEmpty()))
+        publish(Cached(stamp, interpreter, prev?.nodes.orEmpty(), prev?.associated.orEmpty(),
+                       prev?.shortcuts.orEmpty(), prev?.shortcutsAt ?: 0))
 
         val nodes = evoRpcOrNull { requestEvoNodes(projectId, key) }.orEmpty()
         val associated = evoRpcOrNull { requestEvoAssociatedInterpreters(projectId, key) }.orEmpty()
         // The "Shortcuts" autoconfigure suggestions are only shown (and only worth computing) when there is no interpreter.
         val shortcuts = if (interpreter == null) evoRpcOrNull { requestEvoShortcuts(projectId, key) }.orEmpty() else emptyList()
-        publish(Cached(stamp, interpreter, nodes, associated, shortcuts))
+        publish(Cached(stamp, interpreter, nodes, associated, shortcuts, System.currentTimeMillis()))
       }
       finally {
         loading.remove(key)
@@ -315,6 +332,37 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
       }
       finally {
         refreshingNodes = false
+      }
+    }
+  }
+
+  /** Guards against stacking concurrent shortcut re-reads (see [refreshShortcuts]). */
+  @Volatile
+  private var refreshingShortcuts: Boolean = false
+
+  /**
+   * Re-reads the "Shortcuts" suggestions for [key] once their [SHORTCUTS_TTL_MS] window has run out, keeping everything
+   * else the entry holds. The read stamps the entry whatever it finds, so an unchanged list costs one call per window;
+   * only a changed list drops the built tree and repaints, so the popup opens on what the IDE would suggest now.
+   *
+   * Skipped while a full [refresh] or another re-read is in flight.
+   */
+  private fun refreshShortcuts(key: String) {
+    if (key in loading || refreshingShortcuts) return
+    refreshingShortcuts = true
+    scope.launch {
+      try {
+        val shortcuts = evoRpcOrNull { requestEvoShortcuts(project.projectId(), key) }.orEmpty()
+        val base = cache[key] ?: return@launch
+        cache[key] = base.copy(shortcuts = shortcuts, shortcutsAt = System.currentTimeMillis())
+        // Compare by what a row says and what it does: an IconId is not guaranteed to be equal across fetches, so the
+        // DTOs themselves cannot answer this.
+        if (base.shortcuts.map { it.title to it.ref } == shortcuts.map { it.title to it.ref }) return@launch
+        if (popupTreeKey == key) dropPopupTree()
+        update()
+      }
+      finally {
+        refreshingShortcuts = false
       }
     }
   }

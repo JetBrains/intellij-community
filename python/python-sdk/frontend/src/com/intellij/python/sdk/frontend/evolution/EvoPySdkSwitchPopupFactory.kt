@@ -472,7 +472,7 @@ internal class EvoPySdkSwitchPopupFactory(
   private fun associatedInterpretersNode(traceId: String): EvoTreeStaticNodeElement =
     EvoTreeStaticNodeElement(
       text = PySdkFrontendBundle.message("evo.sdk.status.bar.popup.associated.interpreters"),
-      icon = AllIcons.Language.Python,
+      icon = PythonSdkFrontendIcons.Associated,
       sections = listOf(
         EvoTreeSection(
           label = null,

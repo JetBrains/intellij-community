@@ -203,6 +203,17 @@ interface PyEvoEnvironmentProvider {
    */
   val fusId: String? get() = null
 
+  /**
+   * The `pyvenv.cfg` key this tool writes into every environment it creates, or null when it leaves no mark there.
+   *
+   * It is what lets a row say which tool an environment came from, whichever node the row is shown on — see
+   * [withCreators]. Declare one only for a key that *this* tool alone writes. A key several tools share names none of
+   * them: `virtualenv`, which poetry, hatch and the `virtualenv` package all write, would attribute one tool's
+   * environment to another, and a wrong attribution is worse than none because it disables the row on the real owner's
+   * node.
+   */
+  val pyvenvMarker: String? get() = null
+
   fun getNode(): EvoNodeDto = EvoNodeDto(id = toolId.id, label = label, icon = icon.rpcId(), kind = nodeKind, fusId = fusId)
 
   /**
@@ -261,6 +272,13 @@ interface PyEvoEnvironmentProvider {
 }
 
 /**
+ * The tool that made an environment: enough to name it in a message, draw its row, and tell it from the node the row is
+ * shown on. Taken from a provider, so a tool is drawn and named the same way wherever it appears.
+ */
+@ApiStatus.Internal
+data class EvoVenvCreator(val toolId: ToolId, val label: @Nls String, val icon: Icon)
+
+/**
  * A virtualenv found by the central discovery, together with its parsed `pyvenv.cfg` [config] (tool markers +
  * version). No python is executed during discovery; the display [version] comes from `pyvenv.cfg`.
  */
@@ -269,6 +287,8 @@ data class DiscoveredVenv(
   val pythonBinary: Path,
   val config: Map<String, String>,
   val version: @NlsSafe String?,
+  /** The tool [config] names as this environment's maker, or null when nothing there names one — see [withCreators]. */
+  val creator: EvoVenvCreator? = null,
 ) {
   /** The environment root directory (`…/<venv>/bin/python` → `<venv>`). */
   val venvRoot: Path? get() = pythonBinary.parent?.parent
@@ -280,6 +300,23 @@ private val PRUNED_SCAN_DIRS = setOf(
   "node_modules", "__pycache__",
   ".mypy_cache", ".pytest_cache", ".ruff_cache",
 )
+
+/**
+ * Names the tool behind each environment, by reading its `pyvenv.cfg` against what every provider says it writes
+ * ([PyEvoEnvironmentProvider.pyvenvMarker]).
+ *
+ * Done once for the whole list, by the core, rather than per node: which tool made an environment is a fact about the
+ * environment, and every node showing it must read it the same way. An environment naming no known tool keeps a null
+ * creator and is shown as the node's own, which is what an ordinary `python -m venv` environment is on any of them.
+ */
+@ApiStatus.Internal
+fun List<DiscoveredVenv>.withCreators(providers: List<PyEvoEnvironmentProvider>): List<DiscoveredVenv> {
+  val byMarker = providers.mapNotNull { provider ->
+    provider.pyvenvMarker?.let { it to EvoVenvCreator(provider.toolId, provider.label, provider.icon) }
+  }
+  if (byMarker.isEmpty()) return this
+  return map { venv -> venv.copy(creator = byMarker.firstOrNull { (marker, _) -> marker in venv.config }?.second) }
+}
 
 /**
  * Discovers virtualenvs under [baseDirs], descending into nested subfolders (up to [maxDepth] levels) so envs kept in
@@ -454,17 +491,29 @@ fun Path.toSectionLabel(): @NlsSafe String = shortenPath(toDisplayPath(), SECTIO
 @ApiStatus.Internal
 const val NO_VERSION: @NlsSafe String = "n/a"
 
-/** Builds a SELECT_ENV leaf for a discovered venv; the version comes from `pyvenv.cfg` (or "n/a"). */
+/**
+ * Builds a SELECT_ENV leaf for a discovered venv on [owner]'s node; the version comes from `pyvenv.cfg` (or "n/a").
+ *
+ * A row this node can offer keeps [owner]'s icon, whoever made the environment. Only a row the node cannot offer — one
+ * `pyvenv.cfg` names another tool as the maker of — swaps in that tool's icon and is shown disabled, with the tool named
+ * in the tooltip. The icon and the disabled look then say the same thing: this environment belongs to another node.
+ *
+ * So the icon changes exactly where the row stops being selectable, and nowhere else. An environment naming no tool
+ * stays the node's own to offer, which is the usual case: only uv writes a key of its own, so an environment created by
+ * `python -m venv`, by the `virtualenv` package, or by hatch through either of them, names nobody.
+ */
 @ApiStatus.Internal
-fun DiscoveredVenv.toLeaf(icon: Icon): EvoLeafDto {
+fun DiscoveredVenv.toLeaf(owner: PyEvoEnvironmentProvider): EvoLeafDto {
   val name: @NlsSafe String = venvRoot?.fileName?.toString() ?: pythonBinary.fileName.toString()
+  val otherTool = creator?.takeIf { it.toolId != owner.toolId }
   return EvoLeafDto(
     title = name,
     description = pythonBinary.toDisplayPath(),
     secondaryText = version ?: NO_VERSION,
-    icon = icon.rpcId(),
+    icon = (otherTool?.icon ?: owner.icon).rpcId(),
     kind = EvoLeafKind.SELECT_ENV,
     ref = PyInterpreterRef.DetectedPath(pythonBinary.pathString),
+    unavailable = otherTool?.let { PySdkBundle.message("evolution.env.owned.by.other.tool", it.label) },
   )
 }
 
@@ -474,7 +523,7 @@ fun DiscoveredVenv.toLeaf(icon: Icon): EvoLeafDto {
  * its containing folder ([EvoSectionDto.addNewFolderPath]) so "add new" targets that folder, not always the base dir.
  */
 @ApiStatus.Internal
-fun List<DiscoveredVenv>.toSectionsGroupedByParent(icon: Icon, addNew: Boolean, baseDir: Path): List<EvoSectionDto> {
+fun List<DiscoveredVenv>.toSectionsGroupedByParent(owner: PyEvoEnvironmentProvider, addNew: Boolean, baseDir: Path): List<EvoSectionDto> {
   if (isEmpty()) {
     return if (addNew) listOf(EvoSectionDto(label = null, leaves = emptyList(), addNew = true, addNewFolderPath = baseDir.pathString)) else emptyList()
   }
@@ -482,7 +531,7 @@ fun List<DiscoveredVenv>.toSectionsGroupedByParent(icon: Icon, addNew: Boolean, 
     EvoSectionDto(
       label = containingFolder?.toSectionLabel(),
       labelTooltip = containingFolder?.toDisplayPath(),
-      leaves = venvs.map { it.toLeaf(icon) },
+      leaves = venvs.map { it.toLeaf(owner) },
       addNew = addNew,
       addNewFolderPath = (containingFolder ?: baseDir).pathString,
     )
