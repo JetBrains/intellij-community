@@ -1804,7 +1804,6 @@ f:com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
 - updateDate():V
 - s:writeExternal(com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList,org.jdom.Element,com.intellij.openapi.components.PathMacroSubstitutor):V
 c:com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager
-- com.intellij.openapi.Disposable
 - sf:HELP_ID:java.lang.String
 - sf:SHELVED_BINARY_FILE_KEY:com.intellij.openapi.actionSystem.DataKey
 - sf:SHELVED_CHANGELIST_KEY:com.intellij.openapi.actionSystem.DataKey
@@ -1815,7 +1814,6 @@ c:com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager
 - p:activateContent():V
 - activateView(com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList):V
 - s:deleteShelves(com.intellij.openapi.project.Project,java.util.List):V
-- dispose():V
 - s:getBinaryShelveChanges(com.intellij.openapi.actionSystem.DataContext):java.util.List
 - s:getExactlySelectedLists(com.intellij.openapi.actionSystem.DataContext):java.util.List
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager

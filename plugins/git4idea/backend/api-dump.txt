@@ -294,6 +294,7 @@ e:git4idea.reset.GitResetOperation$SmartResetPolicy
 - sf:PROPOSE:git4idea.reset.GitResetOperation$SmartResetPolicy
 - s:valueOf(java.lang.String):git4idea.reset.GitResetOperation$SmartResetPolicy
 - s:values():git4idea.reset.GitResetOperation$SmartResetPolicy[]
+f:git4idea.stash.GitStashTracker
 f:git4idea.stash.GitStashUtils
 - sf:createStashHandler(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,Z,Z,java.lang.String):git4idea.commands.GitLineHandler
 - bs:createStashHandler$default(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,Z,Z,java.lang.String,I,java.lang.Object):git4idea.commands.GitLineHandler

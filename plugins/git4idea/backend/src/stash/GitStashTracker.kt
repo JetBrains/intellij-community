@@ -14,22 +14,24 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.util.Alarm
 import com.intellij.util.EventDispatcher
-import com.intellij.util.ui.update.DisposableUpdate
-import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.DebouncedUpdates
 import com.intellij.vcs.log.runInEdt
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
 import git4idea.stash.ui.GitStashUIHandler
 import git4idea.ui.StashInfo
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import java.util.EventListener
 
-class GitStashTracker(private val project: Project) : Disposable {
+class GitStashTracker internal constructor(private val project: Project, cs: CoroutineScope) : Disposable {
   private val disposableFlag = Disposer.newCheckedDisposable()
   private val eventDispatcher = EventDispatcher.create(GitStashTrackerListener::class.java)
-  private val updateQueue = MergingUpdateQueue("GitStashTracker", 300, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD)
+  private val updateQueue = DebouncedUpdates.forScope<Unit>(cs, "GitStashTracker", 300)
+    .withContext(Dispatchers.Default)
+    .runLatest { performUpdate() }
 
   var stashes = emptyMap<VirtualFile, Stashes>()
     private set
@@ -62,25 +64,26 @@ class GitStashTracker(private val project: Project) : Disposable {
 
   fun scheduleRefresh() {
     if (!project.service<GitStashUIHandler>().isStashTabAvailable()) return
+    updateQueue.queue(Unit)
+  }
 
-    updateQueue.queue(DisposableUpdate.createDisposable(this, "update", Runnable {
-      val newStashes = mutableMapOf<VirtualFile, Stashes>()
-      for (repo in GitRepositoryManager.getInstance(project).repositories) {
-        try {
-          newStashes[repo.root] = Stashes.Loaded(loadStashStack(project, repo.root))
-        }
-        catch (e: VcsException) {
-          newStashes[repo.root] = Stashes.Error(e)
-          logger<GitStashTracker>().warn(e)
-        }
+  private fun performUpdate() {
+    val newStashes = mutableMapOf<VirtualFile, Stashes>()
+    for (repo in GitRepositoryManager.getInstance(project).repositories) {
+      try {
+        newStashes[repo.root] = Stashes.Loaded(loadStashStack(project, repo.root))
       }
-
-      runInEdt(disposableFlag) {
-        stashes = newStashes
-
-        eventDispatcher.multicaster.stashesUpdated()
+      catch (e: VcsException) {
+        newStashes[repo.root] = Stashes.Error(e)
+        logger<GitStashTracker>().warn(e)
       }
-    }))
+    }
+
+    runInEdt(disposableFlag) {
+      stashes = newStashes
+
+      eventDispatcher.multicaster.stashesUpdated()
+    }
   }
 
   fun addListener(listener: GitStashTrackerListener, disposable: Disposable) {

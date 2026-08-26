@@ -4560,7 +4560,6 @@ f:git4idea.stash.GitStashOperations
 - sf:viewStash(com.intellij.openapi.project.Project,git4idea.ui.StashInfo,Z):V
 f:git4idea.stash.GitStashTracker
 - com.intellij.openapi.Disposable
-- <init>(com.intellij.openapi.project.Project):V
 - f:addListener(git4idea.stash.GitStashTrackerListener,com.intellij.openapi.Disposable):V
 - dispose():V
 - f:getRoots():java.util.Set
