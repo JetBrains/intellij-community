@@ -20,7 +20,8 @@ import java.io.PrintWriter
 import java.io.Writer
 
 
-val BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/psi/formatter/commandLine"
+val BASE_PATH: String
+  get() = JavaTestUtil.getJavaTestDataPath() + "/psi/formatter/commandLine"
 
 abstract class FileSetCodeStyleProcessorTestBase : LightPlatformTestCase() {
 
