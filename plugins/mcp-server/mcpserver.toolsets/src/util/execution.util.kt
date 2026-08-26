@@ -91,18 +91,18 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private val logger = fileLogger()
 
+@ApiStatus.Internal
+class CommandExecutionRejectedException : McpExpectedError("User rejected command execution")
+
 suspend fun checkUserConfirmationIfNeeded(@NlsContexts.Label notificationText: String, command: String?, project: Project) {
-
-  fun rejected(): McpExpectedError = McpExpectedError("User rejected command execution")
-
   val commandExecutionMode = currentCoroutineContext().mcpCallInfo.mcpSessionOptions.commandExecutionMode
   when (commandExecutionMode) {
     McpServerService.AskCommandExecutionMode.ASK -> {
-      if (!askConfirmation(project, notificationText, command)) throw rejected()
+      if (!askConfirmation(project, notificationText, command)) throw CommandExecutionRejectedException()
     }
     McpServerService.AskCommandExecutionMode.RESPECT_GLOBAL_SETTINGS -> {
       if (!McpServerSettings.getInstance().enableBraveMode && !askConfirmation(project, notificationText, command)) {
-        throw rejected()
+        throw CommandExecutionRejectedException()
       }
     }
     else -> {
@@ -223,6 +223,13 @@ data class RunConfigurationExecutionOutput(
   val output: String,
   val outputPath: Path?,
 )
+
+@ApiStatus.Internal
+class RunConfigurationExecutionException(message: String, cause: Throwable) : McpExpectedError(message) {
+  init {
+    initCause(cause)
+  }
+}
 
 private data class StartedRunConfigurationExecution(
   val descriptor: RunContentDescriptor,
@@ -393,34 +400,45 @@ private suspend fun prepareAndExecuteRunConfiguration(
   configurationCustomizer: ((RunConfiguration) -> Unit)? = null,
   execute: suspend (Project, ResolvedRunConfiguration) -> RunConfigurationExecutionOutput,
 ): RunConfigurationExecutionOutput {
-  val executionTarget = resolveRunConfigurationExecutionTarget(configurationName = configurationName, filePath = filePath, line = line)
-  currentCoroutineContext().reportToolActivity(McpServerBundle.message(activityMessageKey, executionTarget.presentableName))
-  val project = currentCoroutineContext().project
-  var resolvedConfiguration = resolveRunConfigurationForExecution(
-    project = project,
-    executionTarget = executionTarget,
-    programArguments = programArguments,
-    workingDirectory = workingDirectory,
-    envs = envs,
-  )
-  if (configurationCustomizer != null) {
-    val effectiveConfiguration = resolvedConfiguration.runConfiguration.clone()
-    configurationCustomizer(effectiveConfiguration)
-    resolvedConfiguration = resolvedConfiguration.copy(
-      runConfiguration = effectiveConfiguration,
-      useOriginalSettings = false,
+  try {
+    val executionTarget = resolveRunConfigurationExecutionTarget(configurationName = configurationName, filePath = filePath, line = line)
+    currentCoroutineContext().reportToolActivity(McpServerBundle.message(activityMessageKey, executionTarget.presentableName))
+    val project = currentCoroutineContext().project
+    var resolvedConfiguration = resolveRunConfigurationForExecution(
+      project = project,
+      executionTarget = executionTarget,
+      programArguments = programArguments,
+      workingDirectory = workingDirectory,
+      envs = envs,
     )
+    if (configurationCustomizer != null) {
+      val effectiveConfiguration = resolvedConfiguration.runConfiguration.clone()
+      configurationCustomizer(effectiveConfiguration)
+      resolvedConfiguration = resolvedConfiguration.copy(
+        runConfiguration = effectiveConfiguration,
+        useOriginalSettings = false,
+      )
+    }
+    val effectiveName = resolvedConfiguration.settings.name
+    val runConfigurationParameters = (resolvedConfiguration.runConfiguration as? CommonProgramRunConfigurationParameters)?.programParameters
+    val notificationText = if (runConfigurationParameters != null) {
+      McpServerBundle.message("label.do.you.want.to.execute.run.configuration.with.command", effectiveName)
+    }
+    else {
+      McpServerBundle.message("label.do.you.want.to.execute.run.configuration", effectiveName)
+    }
+    checkUserConfirmationIfNeeded(notificationText, command = runConfigurationParameters, project)
+    return execute(project, resolvedConfiguration)
   }
-  val effectiveName = resolvedConfiguration.settings.name
-  val runConfigurationParameters = (resolvedConfiguration.runConfiguration as? CommonProgramRunConfigurationParameters)?.programParameters
-  val notificationText = if (runConfigurationParameters != null) {
-    McpServerBundle.message("label.do.you.want.to.execute.run.configuration.with.command", effectiveName)
+  catch (e: RunConfigurationExecutionException) {
+    throw e
   }
-  else {
-    McpServerBundle.message("label.do.you.want.to.execute.run.configuration", effectiveName)
+  catch (e: CommandExecutionRejectedException) {
+    throw e
   }
-  checkUserConfirmationIfNeeded(notificationText, command = runConfigurationParameters, project)
-  return execute(project, resolvedConfiguration)
+  catch (e: McpExpectedError) {
+    throw RunConfigurationExecutionException(e.mcpErrorText, e)
+  }
 }
 
 internal suspend fun executeResolvedRunConfiguration(
@@ -455,12 +473,17 @@ private suspend fun executeResolvedRunConfiguration(
   executor: Executor,
   processCallbackDelegate: ProgramRunner.Callback? = null,
 ): RunConfigurationExecutionOutput {
-  val startedExecution = startResolvedRunConfiguration(
-    project = project,
-    resolvedConfiguration = resolvedConfiguration,
-    executor = executor,
-    processCallbackDelegate = processCallbackDelegate,
-  )
+  val startedExecution = try {
+    startResolvedRunConfiguration(
+      project = project,
+      resolvedConfiguration = resolvedConfiguration,
+      executor = executor,
+      processCallbackDelegate = processCallbackDelegate,
+    )
+  }
+  catch (e: McpExpectedError) {
+    throw RunConfigurationExecutionException(e.mcpErrorText, e)
+  }
   val exitCode = if (waitForExit) awaitExitCode(startedExecution.exitCodeDeferred, timeout) else null
   if (exitCode != null) {
     logger.trace { "Execution finished with exit code $exitCode. Closing collector..." }
