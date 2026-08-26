@@ -8,8 +8,8 @@ import com.intellij.codeInsight.hints.VcsCodeVisionProvider
 import com.intellij.codeInsight.hints.codeVision.CodeVisionFusCollector
 import com.intellij.ide.PowerSaveMode
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
@@ -30,20 +30,30 @@ import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
-import com.intellij.util.ui.update.DisposableUpdate
-import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.DebouncedUpdates
 import com.intellij.vcs.CacheableAnnotationProvider
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlin.system.measureTimeMillis
+import kotlin.time.Duration.Companion.milliseconds
 
 @Service(Level.PROJECT)
-internal class AnnotationsPreloader(private val project: Project, private val coroutineScope: CoroutineScope) {
-  private val updateQueue = MergingUpdateQueue.mergingUpdateQueue(
-    name = "Annotations preloader queue",
-    mergingTimeSpan = 1000,
-    coroutineScope = coroutineScope,
-  )
+internal class AnnotationsPreloader(private val project: Project, coroutineScope: CoroutineScope) {
+  private val updateQueue = DebouncedUpdates.forScope<VirtualFile>(
+    coroutineScope,
+    "Annotations preloader queue",
+    1000.milliseconds
+  ).withContext(Dispatchers.Default)
+    .runBatchedDistinct { files: Set<VirtualFile> ->
+      var hasPreloadedAnnotations = false
+      for (file in files) {
+        hasPreloadedAnnotations = preloadAnnotations(file) || hasPreloadedAnnotations
+      }
+      if (hasPreloadedAnnotations) {
+        invalidateProvider()
+      }
+    }
 
   init {
     project.messageBus.connect().subscribe(VCS_CONFIGURATION_CHANGED, VcsListener { refreshSelectedFiles() })
@@ -51,39 +61,40 @@ internal class AnnotationsPreloader(private val project: Project, private val co
 
   fun schedulePreloading(file: VirtualFile) {
     if (project.isDisposed) return
+    updateQueue.queue(file)
+  }
 
-    updateQueue.queue(object : DisposableUpdate(project, file) {
-      override fun doRun() {
-        try {
-          val durationMs = measureTimeMillis {
-            if (!FileEditorManager.getInstance(project).isFileOpen(file)) return
-            if (file.fileType.isBinary) return
-            val annotationProvider = getAnnotationProvider(project, file) ?: return
-            annotationProvider.populateCache(file)
-          }
+  private suspend fun preloadAnnotations(file: VirtualFile): Boolean {
+    try {
+      val durationMs = measureTimeMillis {
+        if (!FileEditorManager.getInstance(project).isFileOpenWithRemotes(file)) return false
+        if (file.fileType.isBinary) return false
+        val annotationProvider = getAnnotationProvider(project, file) ?: return false
+        annotationProvider.populateCache(file)
+      }
 
-          coroutineScope.launch {
-            readAction {
-              val psiFile = if (file.isValid) PsiManager.getInstance(project).findFile(file) else null
-              if (psiFile != null) {
-                CodeVisionFusCollector.reportVcsAnnotationDuration(psiFile, durationMs)
-              }
-            }
-          }
-
-          LOG.debug { "Preloaded VCS annotations for ${file.name} in $durationMs ms" }
-
-          runInEdt {
-            if (project.isDisposed) return@runInEdt
-            CodeVisionInitializer.getInstance(project).getCodeVisionHost().invalidateProvider(
-              CodeVisionHost.LensInvalidateSignal(null, listOf(VcsCodeVisionProvider.id)))
-          }
-        }
-        catch (e: VcsException) {
-          LOG.info(e)
+      readAction {
+        val psiFile = if (file.isValid) PsiManager.getInstance(project).findFile(file) else null
+        if (psiFile != null) {
+          CodeVisionFusCollector.reportVcsAnnotationDuration(psiFile, durationMs)
         }
       }
-    })
+
+      LOG.debug { "Preloaded VCS annotations for ${file.name} in $durationMs ms" }
+      return true
+    }
+    catch (e: VcsException) {
+      LOG.info(e)
+      return false
+    }
+  }
+
+  private suspend fun invalidateProvider() {
+    withContext(Dispatchers.EDT) {
+      if (project.isDisposed) return@withContext
+      CodeVisionInitializer.getInstance(project).getCodeVisionHost().invalidateProvider(
+        CodeVisionHost.LensInvalidateSignal(null, listOf(VcsCodeVisionProvider.id)))
+    }
   }
 
   private fun refreshSelectedFiles() {
