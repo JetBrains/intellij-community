@@ -13,8 +13,8 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.view.TerminalKeyEventImpl
 import com.intellij.terminal.frontend.view.impl.TerminalEditorFactory
-import com.intellij.terminal.frontend.view.inlineCompletion.TerminalInlineCompletionController
 import com.intellij.terminal.frontend.view.impl.TerminalTypingTrackerImpl
+import com.intellij.terminal.frontend.view.inlineCompletion.TerminalInlineCompletionController
 import com.intellij.terminal.tests.reworked.util.outputPattern
 import com.intellij.terminal.tests.reworked.util.updateContent
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -43,7 +43,7 @@ import java.awt.event.KeyEvent
  * events into actual
  * [com.intellij.codeInsight.inline.completion.InlineCompletion] actions on the editor.
  * The typing/output matching logic itself is covered by
- * `com.intellij.terminal.tests.reworked.frontend.typing.TerminalTypingTrackerTest`.
+ * [com.intellij.terminal.tests.reworked.frontend.typing.TerminalTypingTrackerTest].
  */
 @RunWith(JUnit4::class)
 internal class TerminalInlineCompletionControllerTest : BasePlatformTestCase() {

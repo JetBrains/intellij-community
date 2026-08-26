@@ -58,8 +58,12 @@ sealed interface TerminalTypingEvent {
   data object Mismatch : TerminalTypingEvent
 }
 
-
-internal fun installTypingTracker(
+/**
+ * Creates a [TerminalTypingTracker] and installs the listeners it needs on [terminalView] and [model] to observe
+ * key events and output model updates. Both listeners are removed when [coroutineScope] is cancelled.
+ */
+@ApiStatus.Internal
+fun installTypingTracker(
   project: Project,
   terminalView: TerminalView,
   model: MutableTerminalOutputModel,

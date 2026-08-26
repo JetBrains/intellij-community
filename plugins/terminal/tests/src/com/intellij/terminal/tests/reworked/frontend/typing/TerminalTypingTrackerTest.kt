@@ -1,14 +1,22 @@
 package com.intellij.terminal.tests.reworked.frontend.typing
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.terminal.TerminalTitle
+import com.intellij.terminal.frontend.view.TerminalKeyEvent
 import com.intellij.terminal.frontend.view.TerminalKeyEventImpl
+import com.intellij.terminal.frontend.view.TerminalKeyEventsListener
+import com.intellij.terminal.frontend.view.TerminalTextSelectionModel
+import com.intellij.terminal.frontend.view.TerminalView
+import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import com.intellij.terminal.frontend.view.impl.TerminalTypingEvent
 import com.intellij.terminal.frontend.view.impl.TerminalTypingListener
 import com.intellij.terminal.frontend.view.impl.TerminalTypingTrackerImpl
 import com.intellij.terminal.frontend.view.impl.TerminalTypingTrackerImpl.StateForTest
+import com.intellij.terminal.frontend.view.impl.installTypingTracker
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil
 import com.intellij.terminal.tests.reworked.util.outputPattern
 import com.intellij.terminal.tests.reworked.util.updateContent
@@ -16,15 +24,28 @@ import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.asDisposable
+import com.intellij.util.containers.DisposableWrapperList
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.job
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModelImpl
 import org.jetbrains.plugins.terminal.session.ShellName
+import org.jetbrains.plugins.terminal.session.TerminalGridSize
+import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
+import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import org.jetbrains.plugins.terminal.view.TerminalOffset
+import org.jetbrains.plugins.terminal.view.TerminalOutputModelsSet
+import org.jetbrains.plugins.terminal.view.TerminalSendTextBuilder
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
 import org.jetbrains.plugins.terminal.view.shellIntegration.impl.TerminalShellIntegrationImpl
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -32,6 +53,8 @@ import org.junit.runners.JUnit4
 import java.awt.Canvas
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import java.nio.file.Path
+import javax.swing.JComponent
 import kotlin.time.Duration.Companion.milliseconds
 
 @RunWith(JUnit4::class)
@@ -386,8 +409,96 @@ internal class TerminalTypingTrackerTest : BasePlatformTestCase() {
     assertThat(laterEvents.receive()).isEqualTo(TerminalTypingEvent.Mismatch)
   }
 
+  @Test
+  fun `installTypingTracker wires key events and output model changes into the tracker, and tears down with its scope`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.EDT) {
+      val scope = terminalProjectScope(project).childScope("InstallTypingTrackerTest")
+      try {
+        val model = TerminalTestUtil.createOutputModel()
+        val shellIntegration = TerminalShellIntegrationImpl(
+          model, TerminalSessionModelImpl(), scope, LocalEelDescriptor, ShellName.of("unknown")
+        )
+        shellIntegration.onPromptStarted(TerminalOffset.ZERO)
+        shellIntegration.onPromptFinished(TerminalOffset.ZERO)
+
+        val terminalView = FakeTerminalView()
+        val tracker = installTypingTracker(project, terminalView, model, shellIntegration, scope)
+
+        val events = Channel<TerminalTypingEvent>(Channel.UNLIMITED)
+        tracker.addTypingListener(scope.asDisposable(), object : TerminalTypingListener {
+          override fun onTypingEvent(event: TerminalTypingEvent) {
+            events.trySend(event)
+          }
+        })
+
+        // The TerminalKeyEventsListener that installTypingTracker registers on the view forwards into the tracker.
+        terminalView.fireKeyEvent(
+          TerminalKeyEventImpl(KeyEvent(Canvas(), KeyEvent.KEY_TYPED, 0, 0, KeyEvent.VK_UNDEFINED, 'a'), TerminalOffset.ZERO)
+        )
+        // The TerminalOutputModelListener that installTypingTracker registers on the model forwards into the tracker.
+        model.updateContent(0, outputPattern("a<cursor>"))
+
+        val confirmed = events.receive()
+        assertThat(confirmed).isInstanceOf(TerminalTypingEvent.Confirmed::class.java)
+        assertThat((confirmed as TerminalTypingEvent.Confirmed).keyEvent.awtEvent.keyChar).isEqualTo('a')
+        assertThat(events.tryReceive().getOrNull()).isNull()
+
+        // Cancelling the scope passed to installTypingTracker disposes both subscriptions; cancelAndJoin (rather
+        // than plain cancel) waits for that disposal to actually complete before we check it took effect.
+        scope.coroutineContext.job.cancelAndJoin()
+
+        terminalView.fireKeyEvent(
+          TerminalKeyEventImpl(KeyEvent(Canvas(), KeyEvent.KEY_TYPED, 0, 0, KeyEvent.VK_UNDEFINED, 'b'), TerminalOffset.ZERO)
+        )
+        model.updateContent(0, outputPattern("ab<cursor>"))
+        assertThat(events.tryReceive().getOrNull()).isNull()
+      }
+      finally {
+        scope.cancel()
+      }
+    }
+
   private fun doTest(test: suspend (Fixture) -> Unit): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     Fixture(project).use { fixture -> test(fixture) }
+  }
+
+  /**
+   * A minimal [TerminalView] stub exposing only [addKeyEventsListener], the single member [installTypingTracker] uses.
+   */
+  @Suppress("OVERRIDE_DEPRECATION")
+  private class FakeTerminalView : TerminalView {
+    private val keyEventsListeners = DisposableWrapperList<TerminalKeyEventsListener>()
+
+    fun fireKeyEvent(event: TerminalKeyEvent) {
+      for (listener in keyEventsListeners) {
+        listener.beforeKeyEvent(event)
+      }
+    }
+
+    override fun addKeyEventsListener(parentDisposable: Disposable, listener: TerminalKeyEventsListener) {
+      keyEventsListeners.add(listener, parentDisposable)
+    }
+
+    override val coroutineScope: CoroutineScope get() = notUsedInTest()
+    override val component: JComponent get() = notUsedInTest()
+    override val preferredFocusableComponent: JComponent get() = notUsedInTest()
+    override val gridSize: TerminalGridSize get() = notUsedInTest()
+    override val title: TerminalTitle get() = notUsedInTest()
+    override val outputModels: TerminalOutputModelsSet get() = notUsedInTest()
+    override val textSelectionModel: TerminalTextSelectionModel get() = notUsedInTest()
+    override val sessionState: StateFlow<TerminalViewSessionState> get() = notUsedInTest()
+    override val keyEventsFlow: Flow<TerminalKeyEvent> get() = notUsedInTest()
+    override val workingDirectoryFlow: StateFlow<Path?> get() = notUsedInTest()
+    override val shellIntegrationDeferred: Deferred<TerminalShellIntegration> get() = notUsedInTest()
+    override val startupOptionsDeferred: Deferred<TerminalStartupOptions> get() = notUsedInTest()
+    override val sessionDeferred: Deferred<TerminalSession> get() = notUsedInTest()
+    override suspend fun hasChildProcesses(): Boolean = notUsedInTest()
+    override fun getCurrentDirectory(): String = notUsedInTest()
+    override fun sendText(text: String) = notUsedInTest()
+    override fun createSendTextBuilder(): TerminalSendTextBuilder = notUsedInTest()
+    override fun setTopComponent(component: JComponent, disposable: Disposable) = notUsedInTest()
+
+    private fun notUsedInTest(): Nothing = error("Not used by installTypingTracker")
   }
 
   private class Fixture(project: Project) : AutoCloseable {
