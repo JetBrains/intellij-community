@@ -273,104 +273,112 @@ _DEV_DIST_PLANS_ATTR = {
     ),
 }
 
-def _declare_spans(ctx, args, base):
-    """Declare this action's span output and tell its tool where to write it - or do neither.
+# The third flag of this shape, for the plugin descriptors a fragment patched. See the flag's own comment in this
+# package's `BUILD.bazel` for why it is not the recipe's flag, and why "patched" is in the name.
+_DEV_DIST_PATCHED_DESCRIPTORS_ATTR = {
+    "_dev_dist_patched_descriptors": attr.label(
+        default = "//platform/build-scripts/bazel-rules:dev_dist_patched_descriptors",
+        providers = [BuildSettingInfo],
+    ),
+}
 
-    Returns the `File`, or None when the flag is off. A span file is a pure side output: nothing declares it as an
-    input, and no provider another rule reads carries it, so the only trace of tracing in an action is the extra
-    declared output and the extra argument - and with the flag off there is neither.
+def _declare_side_output(flag, ctx, args, base, suffix, option):
+    """Declare one side output of an action and tell its tool where to write it - or do neither.
 
-    A cached action replays the span file its execution wrote, so a hit reports the timings of the build that produced
-    it rather than of the build that asked. That is what makes these figures readable only from a cold run.
+    Returns the `File`, or None when `flag` is off. A side output is pure: nothing declares it as an input and no
+    provider another rule reads carries it, so the only trace of it in an action is the extra declared output and the
+    extra argument - and with the flag off there is neither. That is what lets a request for one of these files leave
+    every action key, argument list and declared output set exactly as it was.
 
     **Append the returned file to `outputs`; never prepend it.** `dev-dist trace` joins a span file to its action by the
-    action's *primary* output, which is the first entry of the list handed to `ctx.actions.run`. Putting the span file
-    first would re-point the profile's `out` at the span file itself, and then no output in the build matches any span
-    file: every one comes back as "no action in this profile produced that output" with no other symptom - a report of
-    nothing, from a build that measured everything. Every caller here appends, which is also what keeps the primary
-    output, the action's identity in the profile and this file's own stem unchanged when the flag flips.
+    action's *primary* output, which is the first entry of the list handed to `ctx.actions.run`. A side output put first
+    re-points the profile's `out` at that file, and then no output in the build matches any span file: every one comes
+    back as "no action in this profile produced that output" with no other symptom - a report of nothing, from a build
+    that measured everything. This has already cost this work one whole measurement. Appending also keeps the primary
+    output, the action's identity in the profile and this file's own stem unchanged when a flag flips. Every caller in
+    this file appends.
 
     Args:
-        ctx: the rule context, for the flag and the declaration.
-        args: the tool's `Args`, which learns `--trace-file=` only when the flag is on.
-        base: the declared file's name without the `.spans.json` suffix - normally the primary output's stem, which is
-          what makes `<output stem>.spans.json` the name the join looks for.
+        flag: the rule's flag attribute, already selected by the caller.
+        ctx: the rule context, for the declaration.
+        args: the tool's `Args`, which learns the option only when the flag is on.
+        base: the declared file's name without `suffix` - normally the primary output's stem, which is what makes
+          `<output stem>.spans.json` the name the span join looks for.
+        suffix: what the declared file's name ends with, including the dot.
+        option: the tool's option name, written as `option=<path>`.
     """
-    if not ctx.attr._trace_spans[BuildSettingInfo].value:
+    if not flag[BuildSettingInfo].value:
         return None
-    spans = ctx.actions.declare_file(base + ".spans.json")
+    file = ctx.actions.declare_file(base + suffix)
 
     # A string, matching every neighbouring `args.add("--option=" + file.path)` in this file, where the same choice was
     # made for the tools' other path arguments. `content_module_jar.bzl` passes the `File` instead, because only that
     # form is rewritten by output path mapping - and it is a worker whose whole argument list is a param file, where
     # path mapping is the point. These actions are local-exec and not path-mapped, so the two forms are equivalent
     # here; the rule is "the `File` where path mapping can apply, the string where the file's neighbours use strings".
-    args.add("--trace-file=" + spans.path)
-    return spans
+    args.add(option + "=" + file.path)
+    return file
+
+def _declare_spans(ctx, args, base):
+    """This action's span file, or None when `trace_spans` is off.
+
+    A cached action replays the span file its execution wrote, so a hit reports the timings of the build that produced
+    it rather than of the build that asked. That is what makes these figures readable only from a cold run.
+    """
+    return _declare_side_output(ctx.attr._trace_spans, ctx, args, base, ".spans.json", "--trace-file")
 
 def _declare_plan(ctx, args, base):
-    """Declare this action's executed-recipe output and tell the assembler where to write it - or do neither.
+    """This fragment's executed packaging recipe, or None when `dev_dist_plans` is off."""
+    return _declare_side_output(ctx.attr._dev_dist_plans, ctx, args, base, ".plan.yaml", "--plan")
 
-    Returns the `File`, or None when the flag is off. Same contract as `_declare_spans`: a pure side output that
-    nothing declares as an input and no provider another rule reads carries, so with the flag off there is neither an
-    extra declared output nor an extra argument.
+def _declare_patched_descriptors(ctx, args, base):
+    """The plugin descriptors this fragment patched, or None when `dev_dist_patched_descriptors` is off."""
+    return _declare_side_output(
+        ctx.attr._dev_dist_patched_descriptors,
+        ctx,
+        args,
+        base,
+        ".patched-descriptors.json",
+        "--patched-descriptors",
+    )
 
-    **Append the returned file to `outputs`; never prepend it.** The reason is `_declare_spans`' reason, and it has
-    already cost this work one whole measurement: the first entry of the list handed to `ctx.actions.run` is the
-    action's primary output, which is what `dev-dist trace` joins a span file to its action by. A plan file put first
-    re-points the profile's `out` at the plan, and then every span file in the build reports "no action produced that
-    output" - a report of nothing, from a build that measured everything.
+def _side_output_group(own, dependencies, group_name):
+    """One side output group: this target's own files of that group, plus those of the targets it composes.
+
+    Always present and empty when the group's flag is off, so `--output_groups=+<group_name>` is a valid request either
+    way.
+
+    Propagation is only where the graph makes a file otherwise unreachable, and it is the caller that knows where that
+    is. A fragment carries its project model tree's spans, because no dist rule depends on that tree. A dist carries
+    every group of every fragment it composes. Nothing else propagates: a side output of an action whose output the
+    build already needs is written by that action anyway, since Bazel runs an action for any of its outputs and requires
+    all of them.
+
+    Call it through one of the three wrappers below, never directly. The group's name has to be the same on both sides,
+    and a mismatch analyses, passes, and produces a silently empty group.
 
     Args:
-        ctx: the rule context, for the flag and the declaration.
-        args: the assembler's `Args`, which learns `--plan=` only when the flag is on.
-        base: the declared file's name without the `.plan.yaml` suffix - normally the primary output's stem.
-    """
-    if not ctx.attr._dev_dist_plans[BuildSettingInfo].value:
-        return None
-    plan = ctx.actions.declare_file(base + ".plan.yaml")
-
-    # A string, like every neighbouring path argument in this file - these actions are local-exec and not path-mapped,
-    # so the `File` form buys nothing here. See `_declare_spans` for the full rule.
-    args.add("--plan=" + plan.path)
-    return plan
-
-def _plans_output_group(own, dependencies):
-    """The `dev_dist_plans` output group: this target's own recipe files, plus those of the targets it composes.
-
-    Always present and empty when the flag is off, so `--output_groups=+dev_dist_plans` is a valid request either way.
-
-    Only the fragment rule writes one, because only the fragment runs the assembler; a distribution propagates its
-    fragments' so that one request against a dist collects every recipe it is made of. The project model tree is not
-    carried here as it is for spans - it packs nothing, so it has no recipe to carry.
+        own: this target's own files, which may hold None for a flag that is off.
+        dependencies: the targets to propagate the same group from.
+        group_name: the group's name.
     """
     return depset(
         direct = [file for file in own if file != None],
         transitive = [
-            target[OutputGroupInfo].dev_dist_plans
+            getattr(target[OutputGroupInfo], group_name)
             for target in dependencies
-            if OutputGroupInfo in target and hasattr(target[OutputGroupInfo], "dev_dist_plans")
+            if OutputGroupInfo in target and hasattr(target[OutputGroupInfo], group_name)
         ],
     )
 
 def _spans_output_group(own, dependencies):
-    """The `trace_spans` output group: this target's own span files, plus those of the targets it composes.
+    return _side_output_group(own, dependencies, "trace_spans")
 
-    Always present and empty when the flag is off, so `--output_groups=+trace_spans` is a valid request either way.
+def _plans_output_group(own, dependencies):
+    return _side_output_group(own, dependencies, "dev_dist_plans")
 
-    Propagation is only where the graph makes a span file otherwise unreachable. A fragment carries its project model
-    tree's spans, because no dist rule depends on that tree; the dist carries its fragments'. Nothing else propagates -
-    a span file of an action whose output the build already needs is written by that action anyway, since Bazel runs an
-    action for any of its outputs and requires all of them.
-    """
-    return depset(
-        direct = [file for file in own if file != None],
-        transitive = [
-            target[OutputGroupInfo].trace_spans
-            for target in dependencies
-            if OutputGroupInfo in target and hasattr(target[OutputGroupInfo], "trace_spans")
-        ],
-    )
+def _patched_descriptors_output_group(own, dependencies):
+    return _side_output_group(own, dependencies, "dev_dist_patched_descriptors")
 
 def _project_model_tree_impl(ctx):
     tree = ctx.actions.declare_directory(ctx.label.name + ".tree")
@@ -527,6 +535,10 @@ def _fragment_impl(ctx):
     if plan:
         outputs.append(plan)
 
+    patched_descriptors = _declare_patched_descriptors(ctx, args, ctx.label.name)
+    if patched_descriptors:
+        outputs.append(patched_descriptors)
+
     ctx.actions.run(
         inputs = depset(
             direct = [
@@ -557,6 +569,8 @@ def _fragment_impl(ctx):
             trace_spans = _spans_output_group([spans], [ctx.attr.project_model_tree]),
             # This fragment's executed recipe. Nothing is propagated into it: the tree runs no assembler.
             dev_dist_plans = _plans_output_group([plan], []),
+            # The plugin descriptors this fragment patched, on the same terms as the recipe.
+            dev_dist_patched_descriptors = _patched_descriptors_output_group([patched_descriptors], []),
         ),
         IntellijDevFragmentInfo(
             name = ctx.attr.fragment_name,
@@ -617,7 +631,7 @@ intellij_dev_fragment = rule(
         "preloaded_downloads": attr.label_list(allow_files = True),
         "preloaded_manifests": attr.label_list(allow_files = True),
         "ijent_binaries": attr.label_list(allow_files = True, doc = "The unpacked IJent binaries the assembly bundles at `lib/ijent/`, so that it extracts nothing itself."),
-    } | _TRACE_SPANS_ATTR | _DEV_DIST_PLANS_ATTR,
+    } | _TRACE_SPANS_ATTR | _DEV_DIST_PLANS_ATTR | _DEV_DIST_PATCHED_DESCRIPTORS_ATTR,
 )
 
 def _packed_jars_component_impl(ctx):
@@ -858,6 +872,9 @@ def _compose(ctx, fragment_targets):
             # Every fragment's executed recipe in one request. The composition itself has none: it places files, it
             # does not pack them.
             dev_dist_plans = _plans_output_group([], fragment_targets),
+            # Every fragment's patched plugin descriptors in one request. The composition patches none, for the reason
+            # above.
+            dev_dist_patched_descriptors = _patched_descriptors_output_group([], fragment_targets),
         ),
     ]
 

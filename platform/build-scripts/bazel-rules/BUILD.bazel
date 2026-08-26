@@ -35,6 +35,23 @@ bool_flag(
     visibility = ["//visibility:public"],
 )
 
+# Whether a dev-distribution fragment writes out the plugin descriptors it patched, beside its own outputs.
+#
+# The third flag of this shape, with the same off-means-absent rule as `trace_spans` and `dev_dist_plans`. It is
+# separate from `dev_dist_plans` for a reason of its own. A recipe is wanted from an ordinary build, by the replay gate
+# among others. Every descriptor of every plugin is several megabytes that the gate has no use for.
+#
+# "Patched" is in the name because `build/dev_dist_descriptors.bzl` already names the descriptor *inputs* a fragment
+# declares. This flag is about the descriptors a fragment *wrote*.
+#
+#     bazel build //build:idea_air_dist --@community//platform/build-scripts/bazel-rules:dev_dist_patched_descriptors \
+#       --output_groups=+dev_dist_patched_descriptors
+bool_flag(
+    name = "dev_dist_patched_descriptors",
+    build_setting_default = False,
+    visibility = ["//visibility:public"],
+)
+
 dev_dist_content_test_suite(name = "dev_dist_content_tests")
 
 test_suite(
