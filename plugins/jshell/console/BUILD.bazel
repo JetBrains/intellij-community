@@ -1,3 +1,4 @@
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -42,6 +43,7 @@ jvm_library(
         "//jps/model-api:model",
         "//platform/lang-api:lang",
         "//platform/util:util-ui",
+        "@lib//:kotlin-stdlib",
     ],
 )
 
@@ -94,3 +96,60 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.jshell.console` end
+
+### auto-generated section `build intellij.java.jshell.console.tests` start
+jvm_library(
+    name = "java-jshell-console-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.jshell.console.tests",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "java-jshell-console-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//plugins/jshell/console",
+        "//plugins/jshell/console:console_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [":java-jshell-console-tests"],
+    deps = [
+        # do not sort,
+        "//plugins/jshell/execution",
+        "//plugins/jshell/execution:execution_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "@lib//:kotlin-stdlib",
+        "//libraries/assertj-core",
+        "//libraries/assertj-core:assertj-core_test_lib",
+    ],
+)
+### auto-generated section `build intellij.java.jshell.console.tests` end
+
+### auto-generated section `iml intellij.java.jshell.console.tests` start
+exports_files(
+    [
+        "intellij.java.jshell.console.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.java.jshell.console.tests` end
+
+### auto-generated section `test intellij.java.jshell.console.tests` start
+jps_test(
+    name = "java-jshell-console-tests_test",
+    runtime_deps = [":java-jshell-console-tests_test_lib"],
+)
+### auto-generated section `test intellij.java.jshell.console.tests` end

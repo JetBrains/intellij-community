@@ -899,6 +899,8 @@ jvm_library(
         "//plugins/ui-designer:java-guiForms-designer-tests_test_lib",
         "//plugins/java-i18n:java-i18n-tests",
         "//plugins/java-i18n:java-i18n-tests_test_lib",
+        "//plugins/jshell/console:java-jshell-console-tests",
+        "//plugins/jshell/console:java-jshell-console-tests_test_lib",
         "//plugins/jshell/protocol:java-jshell-protocol-tests",
         "//plugins/jshell/protocol:java-jshell-protocol-tests_test_lib",
         "//java/manifest:manifest-tests",

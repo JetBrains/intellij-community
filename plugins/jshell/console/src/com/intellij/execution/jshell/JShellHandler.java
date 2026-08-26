@@ -63,6 +63,7 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -82,7 +83,6 @@ public final class JShellHandler {
   private static final Charset ourCharset = StandardCharsets.UTF_8;
 
   private static final Executor EXECUTOR = DefaultRunExecutor.getRunExecutorInstance();
-  private static final String JSHELL_FRONTEND_JAR = "jshell-frontend.jar";
 
   private final @NotNull Project myProject;
   private final @NotNull RunContentDescriptor myRunContent;
@@ -240,9 +240,9 @@ public final class JShellHandler {
       throw new ExecException("Cannot determine path to VM executable for JDK " + sdk.getName() + ". Please re-configure the JDK.");
     }
     final File executableFile = new File(vmExePath);
-    final String frontEndPath = findFrontEndLibrary();
+    final String frontEndPath = JShellClasspath.findFrontendJar();
     if (frontEndPath == null) {
-      throw new ExecException("Library " + JSHELL_FRONTEND_JAR + " not found in IDE classpath");
+      throw new ExecException("The JShell frontend classes are not in the IDE classpath");
     }
     final GeneralCommandLine cmdLine = new GeneralCommandLine();
     cmdLine.setExePath(executableFile.getAbsolutePath());
@@ -253,7 +253,7 @@ public final class JShellHandler {
     }
 
     final StringBuilder launchCp = new StringBuilder().append(frontEndPath);
-    final String protocolJar = getLibPath(Endpoint.class);
+    final Path protocolJar = PathManager.getJarForClass(Endpoint.class);
     if (protocolJar != null) {
       launchCp.append(File.pathSeparator).append(protocolJar);
     }
@@ -261,7 +261,7 @@ public final class JShellHandler {
       cmdLine.addParameter("-classpath");
       cmdLine.addParameter(launchCp.toString());
     }
-    cmdLine.addParameter("com.intellij.execution.jshell.frontend.Main");
+    cmdLine.addParameter(JShellClasspath.FRONTEND_MAIN_CLASS);
 
     // init classpath for evaluation
     //final Set<String> cp = new LinkedHashSet<>();
@@ -297,15 +297,6 @@ public final class JShellHandler {
     //  });
     //}
     return processHandler;
-  }
-
-  private static String findFrontEndLibrary() {
-    final String path = PathManager.getResourceRoot(JShellHandler.class.getClassLoader(), "com/intellij/execution/jshell/frontend/Marker.class");
-    return path != null? path : JSHELL_FRONTEND_JAR;
-  }
-
-  private static String getLibPath(final Class<?> aClass) {
-    return PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
   }
 
   public void stop() {

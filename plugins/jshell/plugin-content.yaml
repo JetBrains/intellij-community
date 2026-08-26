@@ -1,11 +1,12 @@
+- name: lib/intellij.java.jshell.execution.jar
+  contentModules:
+  - name: intellij.java.jshell.execution
+    libraries:
+      jshell-frontend:
+      - name: $PROJECT_DIR$/community/plugins/jshell/execution/jshell-frontend.jar
 - name: lib/java-jshell.jar
   modules:
   - name: intellij.java.jshell
-- name: lib/jshell-frontend.jar
-  library: jshell-frontend
-  module: intellij.java.jshell.execution
-  files:
-  - name: $PROJECT_DIR$/community/plugins/jshell/execution/jshell-frontend.jar
 - name: lib/jshell-protocol.jar
   modules:
   - name: intellij.java.jshell.protocol

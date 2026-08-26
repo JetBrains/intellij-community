@@ -261,7 +261,6 @@ object CommunityRepositoryModules {
     },
     pluginAuto("intellij.java.jshell") { spec ->
       spec.withModule("intellij.java.jshell.protocol", "jshell-protocol.jar")
-      spec.withModuleLibrary("jshell-frontend", "intellij.java.jshell.execution", "jshell-frontend.jar")
     },
     pluginAuto(listOf("intellij.tipsOfTheDay.plugin")),
     *allJcefPlugins()

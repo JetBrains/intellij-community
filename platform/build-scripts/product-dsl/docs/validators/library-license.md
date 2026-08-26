@@ -43,7 +43,7 @@ Ensures every third-party library that reaches a distribution has a license entr
 
 - The Maven descriptor filter and the JetBrains group filter of the `third_party_libraries` build step. The rule applies neither filter, so it stays stricter than the build step.
 - Validation of the license text or the license identifier in an entry.
-- A module that a plugin layout adds through `withModule`, that the graph does not hold, and that no module in the graph depends on. `intellij.platform.eelHelper`, `intellij.java.debugger.agent.holder`, `intellij.java.jshell.execution` and `intellij.builtInHelp` are of this shape: a layout packs the module into its own jar, so nothing depends on it. The `third_party_libraries` build step covers such a library. Convert the module to a content module to bring it back into this rule. `IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST` in `JarPackager` tracks the same migration for a project library, see IJPL-252908.
+- A module that a plugin layout adds through `withModule`, that the graph does not hold, and that no module in the graph depends on. `intellij.platform.eelHelper`, `intellij.java.debugger.agent.holder` and `intellij.builtInHelp` are of this shape: a layout packs the module into its own jar, so nothing depends on it. The `third_party_libraries` build step covers such a library. Convert the module to a content module to bring it back into this rule. `IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST` in `JarPackager` tracks the same migration for a project library, see IJPL-252908.
 
 ## Related
 
