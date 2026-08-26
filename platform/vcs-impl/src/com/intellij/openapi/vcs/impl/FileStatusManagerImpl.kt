@@ -6,7 +6,9 @@ package com.intellij.openapi.vcs.impl
 import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.editor.Document
@@ -38,26 +40,27 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.update.DisposableUpdate
-import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.DebouncedUpdates
 import com.intellij.vcsUtil.VcsUtil
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.Collections
-import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.seconds
 
 @VisibleForTesting
 @Internal
 class FileStatusManagerImpl(private val project: Project, coroutineScope: CoroutineScope) : FileStatusManager(), Disposable {
-  private val queue = MergingUpdateQueue.mergingUpdateQueue(
-    name = "FileStatusManagerImpl",
-    mergingTimeSpan = 100,
-    coroutineScope = coroutineScope,
-  )
+
+  private val updateQueue =
+    DebouncedUpdates.forScope<UpdateType>(coroutineScope, "file status manager updates", 100)
+      .withContext(Dispatchers.Default)
+      .runBatched { runBatchUpdate(it) }
 
   private val dirtyLock = Any()
   private val dirtyStatuses = HashSet<VirtualFile>()
@@ -72,6 +75,11 @@ class FileStatusManagerImpl(private val project: Project, coroutineScope: Corout
     connection.subscribe(ChangeListListener.TOPIC, MyChangeListListener())
     FileStatusProvider.EP_NAME.addChangeListener(project, ::fileStatusesChanged, project)
     StartupManager.getInstance(project).runAfterOpened(::fileStatusesChanged)
+  }
+
+  private enum class UpdateType {
+    REFRESH_FROM_DOCUMENT,
+    FILE_STATUS_UPDATE
   }
 
   private inner class MyChangeListListener : ChangeListListener {
@@ -225,11 +233,20 @@ class FileStatusManagerImpl(private val project: Project, coroutineScope: Corout
     }
 
     synchronized(dirtyLock) { dirtyStatuses.add(file) }
-    queue.queue(DisposableUpdate.createDisposable(this, "file status update", ::updateCachedFileStatuses))
+    updateQueue.queue(UpdateType.FILE_STATUS_UPDATE)
+  }
+
+  private suspend fun runBatchUpdate(updates: List<UpdateType>) {
+    if (updates.any { it == UpdateType.REFRESH_FROM_DOCUMENT }) {
+      processModifiedDocuments()
+    }
+    if (updates.any { it == UpdateType.FILE_STATUS_UPDATE }) {
+      updateCachedFileStatuses()
+    }
   }
 
   @RequiresBackgroundThread
-  private fun updateCachedFileStatuses() {
+  private suspend fun updateCachedFileStatuses() {
     var toRefresh: List<VirtualFile>
     synchronized(dirtyLock) {
       toRefresh = dirtyStatuses.toList()
@@ -242,14 +259,12 @@ class FileStatusManagerImpl(private val project: Project, coroutineScope: Corout
         updatedFiles.add(file)
       }
     }
-    ApplicationManager.getApplication().invokeLater(
-      {
-        val publisher = project.messageBus.syncPublisher(FileStatusListener.TOPIC)
-        for (file in updatedFiles) {
-          publisher.fileStatusChanged(file)
-        }
-      }, ModalityState.any(), project.disposed
-    )
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      val publisher = project.messageBus.syncPublisher(FileStatusListener.TOPIC)
+      for (file in updatedFiles) {
+        publisher.fileStatusChanged(file)
+      }
+    }
   }
 
   private fun updateFileStatusFor(file: VirtualFile): Boolean {
@@ -303,7 +318,7 @@ class FileStatusManagerImpl(private val project: Project, coroutineScope: Corout
     }
     val isDocumentModified = isDocumentModified(file)
     synchronized(dirtyLock) { dirtyDocuments.put(file, isDocumentModified) }
-    queue.queue(DisposableUpdate.createDisposable(this, "refresh from document", ::processModifiedDocuments))
+    updateQueue.queue(UpdateType.REFRESH_FROM_DOCUMENT)
   }
 
   @RequiresBackgroundThread
@@ -357,13 +372,7 @@ class FileStatusManagerImpl(private val project: Project, coroutineScope: Corout
 
   @TestOnly
   fun waitFor() {
-    queue.waitForAllExecuted(10, TimeUnit.SECONDS)
-    if (queue.isFlushing) {
-      // MUQ.queue() inside Update.run cancels underlying future, and 'waitForAllExecuted' exits prematurely.
-      // Work around this issue by waiting twice
-      // This fixes 'processModifiedDocument -> fileStatusChanged' interaction.
-      queue.waitForAllExecuted(10, TimeUnit.SECONDS)
-    }
+    updateQueue.waitForAllExecuted(10.seconds)
   }
 }
 
