@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.ex.ThreeStateCheckboxAction;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.CoroutinesKt;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.project.DumbAware;
@@ -48,10 +49,12 @@ import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox.State;
-import com.intellij.util.ui.update.DisposableUpdate;
-import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.DebouncedUpdates;
+import com.intellij.util.ui.update.UpdateQueue;
 import com.intellij.vcs.commit.PartialCommitInclusionModel;
 import com.intellij.vcs.commit.SingleChangeListCommitWorkflowUi;
+import kotlin.Unit;
+import kotlinx.coroutines.Dispatchers;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,11 +76,12 @@ import java.util.function.Supplier;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY;
-import static com.intellij.util.ui.update.MergingUpdateQueue.ANY_COMPONENT;
 
 class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser implements Disposable {
-  private final @NotNull MergingUpdateQueue myUpdateQueue =
-    new MergingUpdateQueue("MultipleLocalChangeListsBrowser", 300, true, ANY_COMPONENT, this);
+  private final @NotNull UpdateQueue<Unit> myUpdateQueue =
+    DebouncedUpdates.<Unit>forComponent(this, "MultipleLocalChangeListsBrowser", 300)
+      .withContext(CoroutinesKt.getEDT(Dispatchers.INSTANCE))
+      .runLatest(ignored -> updateDisplayedChangeLists());
 
   private final Collection<AbstractVcs> myAffectedVcses;
   private final boolean myEnableUnversioned;
@@ -451,9 +455,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   private class MyChangeListListener extends ChangeListAdapter {
     @Override
     public void changeListsChanged() {
-      myUpdateQueue.queue(DisposableUpdate.createDisposable(myUpdateQueue, "updateChangeLists", () -> {
-        updateDisplayedChangeLists();
-      }));
+      myUpdateQueue.queue(Unit.INSTANCE);
     }
   }
 }
