@@ -4,6 +4,7 @@ package com.intellij.codeInsight.documentation;
 import com.intellij.lang.documentation.DocumentationImageResolver;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.WindowMoveListener;
@@ -86,6 +87,7 @@ public final class DocumentationHintEditorPane extends DocumentationEditorPane {
   }
 
   private void processWindowMoveListenerMouseEvent(MouseEvent e) {
+    if (PopupUtil.getPopupContainerFor(this) == null) return; // disable the move listener when this thing is in a tool window
     // We can't use moveListener.installTo() because there are other listeners, and we can't depend on their order.
     // The move listener must be invoked first, and if it consumes the event, then we must stop.
     // Otherwise, it'll lead to weird effects like the text selection changing while the popup is being moved.
@@ -99,6 +101,7 @@ public final class DocumentationHintEditorPane extends DocumentationEditorPane {
   }
 
   private void processWindowMoveListenerMouseMotionEvent(MouseEvent e) {
+    if (PopupUtil.getPopupContainerFor(this) == null) return;
     switch (e.getID()) {
       case MouseEvent.MOUSE_MOVED -> moveListener.mouseMoved(e);
       case MouseEvent.MOUSE_DRAGGED -> moveListener.mouseDragged(e);
