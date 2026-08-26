@@ -5,12 +5,14 @@ import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
+import com.intellij.python.hatch.PyHatchBundle
 import com.intellij.python.pytools.runtime.PyToolRuntime
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import kotlinx.serialization.SerialName
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromJsonElement
@@ -116,7 +118,13 @@ const val ENV_TYPE_VIRTUAL: String = "virtual"
  */
 class HatchEnv<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("env", runtime) {
   companion object {
-    private val SHOW_RESPONSE_REGEX = """^\s*Standalone\s*\n((?:[+|].*[+|]\n)+)(?:\s+Matrices\s*\n((?:[+|].*[+|]\n)+))?$""".toRegex()
+    /**
+     * The `env show --ascii` response: a `Standalone` table, then an optional `Matrices` table.
+     *
+     * The `Matrices` heading follows the first table with no blank line between them, so nothing after the table is
+     * mandatory here.
+     */
+    private val SHOW_RESPONSE_REGEX = """^\s*Standalone\s*\n((?:[+|].*[+|]\n)+)(?:\s*Matrices\s*\n((?:[+|].*[+|]\n)+))?$""".toRegex()
   }
 
   enum class CreateResult {
@@ -211,13 +219,15 @@ class HatchEnv<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("env", 
                    ?: return@executeAndHandleErrors Result.failure(null)
 
       val json = Json { ignoreUnknownKeys = true }
-      val jsonOutput = json.parseToJsonElement(output)
-
-      // JSON mode always shows internal environments, and there is no flag to distinguish them
-      val environments = jsonOutput.jsonObject.filterKeys { !it.startsWith("hatch-") }
-
-      val parsedEnvironments = environments.mapValues {
-        json.decodeFromJsonElement<HatchEnvironmentDetails>(it.value)
+      // A response Hatch itself calls JSON, but that the reader rejects, is a failure and not an exception: the caller
+      // reports it like any other bad response. Both calls below declare this exception, and nothing else here throws.
+      val parsedEnvironments = try {
+        // JSON mode always shows internal environments, and there is no flag to distinguish them
+        val environments = json.parseToJsonElement(output).jsonObject.filterKeys { !it.startsWith("hatch-") }
+        environments.mapValues { json.decodeFromJsonElement<HatchEnvironmentDetails>(it.value) }
+      }
+      catch (e: SerializationException) {
+        return@executeAndHandleErrors Result.failure(PyHatchBundle.message("python.hatch.cli.error.response.out.of.pattern", "JSON: ${e.localizedMessage}"))
       }
       Result.success(parsedEnvironments)
     }

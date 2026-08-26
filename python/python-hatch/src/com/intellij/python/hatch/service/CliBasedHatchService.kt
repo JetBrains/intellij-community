@@ -18,8 +18,8 @@ import com.intellij.python.hatch.ProjectStructure
 import com.intellij.python.hatch.PythonVirtualEnvironment
 import com.intellij.python.hatch.cli.ENV_TYPE_VIRTUAL
 import com.intellij.python.hatch.cli.HatchCli
+import com.intellij.python.hatch.cli.HatchDetailedEnvironments
 import com.intellij.python.hatch.cli.HatchEnvironment
-import com.intellij.python.hatch.cli.HatchEnvironments
 import com.intellij.python.hatch.cli.new
 import com.intellij.python.hatch.runtime.HatchConstants
 import com.intellij.python.hatch.runtime.createHatchRuntime
@@ -121,8 +121,8 @@ internal class CliBasedHatchService<P : PathHolder> private constructor(
 
   override suspend fun findVirtualEnvironments(): PyResult<List<HatchVirtualEnvironment<P>>> {
     val hatchEnv = hatchCli().env()
-    val environments: HatchEnvironments = hatchEnv.show().getOr { return it }
-    val virtualEnvironments = environments.getAvailableVirtualHatchEnvironments()
+    val environments: HatchDetailedEnvironments = hatchEnv.showWithDetails().getOr { return it }
+    val virtualEnvironments = environments.toVirtualHatchEnvironments()
 
     val available = virtualEnvironments.concurrentMap { env ->
       val pythonHomePathOnTarget = hatchEnv.find(env.name).getOr { return@concurrentMap null } ?: return@concurrentMap null
@@ -194,24 +194,20 @@ private fun detectLocalProjectStructure(workingDirectoryPath: Path): ProjectStru
   testRoot = workingDirectoryPath.resolve("tests").takeIf { it.isDirectory() },
 )
 
-private fun HatchEnvironments.getAvailableVirtualHatchEnvironments(): List<HatchEnvironment> {
-  val matricesFlatted = matrices.flatMap { matrixEnvironment ->
-    matrixEnvironment.envs.map { envName ->
-      with(matrixEnvironment.hatchEnvironment) {
-        HatchEnvironment(
-          name = envName,
-          type = type,
-          features = features,
-          dependencies = dependencies,
-          environmentVariables = environmentVariables,
-          scripts = scripts,
-          description = description,
-        )
-      }
-    }
-  }
-  return (standalone + matricesFlatted).filter { it.type == ENV_TYPE_VIRTUAL }
-}
+/**
+ * The virtual environments of a `hatch env show --json` response.
+ *
+ * The JSON response is the one this service can rely on. It names every matrix environment in full, such as
+ * `test.py3.11`, and it never shortens a value. The table response fits itself to the terminal width, so it can report
+ * a name as `integration-testing-environme…` and a type as `virtu…`. Both forms then fail: the type no longer equals
+ * [ENV_TYPE_VIRTUAL], and Hatch does not know the shortened name.
+ *
+ * Only the name and the type of an environment reach the caller. The other [HatchEnvironment] fields describe the
+ * table columns, and no caller reads them, so this leaves them at their defaults.
+ */
+private fun HatchDetailedEnvironments.toVirtualHatchEnvironments(): List<HatchEnvironment> =
+  filterValues { it.type == ENV_TYPE_VIRTUAL }
+    .map { (name, details) -> HatchEnvironment(name = name, type = details.type, description = details.description ?: "") }
 
 private suspend fun <P : PathHolder> resolvePythonVirtualEnvironment(
   fileSystem: FileSystem<P>,
