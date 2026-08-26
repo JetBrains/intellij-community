@@ -10,6 +10,8 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.maven" scope="TEST" />
     <orderEntry type="module" module-name="intellij.maven.delegation.junit" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.maven.delegation.testng" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.testng" scope="TEST" />
     <orderEntry type="module" module-name="intellij.junit" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testRunner" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.smRunner" scope="TEST" />

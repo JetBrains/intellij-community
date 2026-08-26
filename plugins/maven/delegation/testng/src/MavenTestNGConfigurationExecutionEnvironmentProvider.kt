@@ -11,7 +11,10 @@ import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.project.Project
 import com.intellij.task.ExecuteRunConfigurationTask
 import com.theoryinpractice.testng.configuration.TestNGConfiguration
+import com.theoryinpractice.testng.model.TestData
 import com.theoryinpractice.testng.model.TestType
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.execution.MavenSurefireConfigurationFactory
 import org.jetbrains.idea.maven.execution.MavenSurefireRunConfiguration
 import org.jetbrains.idea.maven.execution.build.MavenExecutionEnvironmentProvider
@@ -40,6 +43,7 @@ class MavenTestNGConfigurationExecutionEnvironmentProvider : MavenExecutionEnvir
     val mavenRunConfiguration = runnerAndConfigurationSettings.configuration as MavenSurefireRunConfiguration
     mavenRunConfiguration.beforeRunTasks = emptyList<BeforeRunTask<*>>()
     mavenRunConfiguration.testModuleDirectory = leafProject.directory
+    mavenRunConfiguration.runnerSettings = MavenRunner.getInstance(project).state.clone().apply { isSkipTests = false }
 
     val runnerParameters = mavenRunConfiguration.runnerParameters
     // Run from root reactor so upstream modules are built fresh.
@@ -66,29 +70,38 @@ class MavenTestNGConfigurationExecutionEnvironmentProvider : MavenExecutionEnvir
       .build()
   }
 
-  private fun buildTestParam(configuration: TestNGConfiguration): String? {
-    val data = configuration.persistantData
-    return when (data.TEST_OBJECT) {
-      TestType.CLASS.type -> data.mainClassName.ifEmpty { null }
+  private fun buildTestParam(configuration: TestNGConfiguration): String? =
+    buildTestNGTestParam(configuration.persistantData)
+}
 
-      TestType.METHOD.type -> {
-        val className = data.mainClassName.ifEmpty { return null }
-        val methodName = data.methodName.ifEmpty { return null }
-        "$className#$methodName"
-      }
+/**
+ * Converts [TestData] to a Surefire `-Dtest=` parameter string.
+ * Returns null for test types that cannot be expressed as a `-Dtest=` filter
+ */
+@ApiStatus.Internal
+fun buildTestNGTestParam(data: TestData): String? {
+  return when (data.TEST_OBJECT) {
+    TestType.CLASS.type -> data.mainClassName.ifEmpty { null }
 
-      TestType.PACKAGE.type -> {
-        val pkg = data.packageName
-        if (pkg.isEmpty()) "*" else "$pkg.*"
-      }
-
-      TestType.PATTERN.type -> {
-        val patterns = data.patterns
-        if (patterns.isEmpty()) return null
-        patterns.joinToString("+")
-      }
-
-      else -> null
+    TestType.METHOD.type -> {
+      val className = data.mainClassName.ifEmpty { return null }
+      val methodName = data.methodName.ifEmpty { return null }
+      "$className#$methodName"
     }
+
+    TestType.PACKAGE.type -> {
+      val pkg = data.packageName
+      if (pkg.isEmpty()) "*" else "$pkg.*"
+    }
+
+    TestType.PATTERN.type -> {
+      val patterns = data.patterns
+      if (patterns.isEmpty()) return null
+      patterns.joinToString("+")
+    }
+
+    // GROUP (-Dgroups=), SUITE (-DsuiteXmlFile=), and SOURCE (test-discovery-based) require different
+    // Surefire arguments or are not expressible as a static -Dtest= filter; fall back to the IDE runner.
+    else -> null
   }
 }

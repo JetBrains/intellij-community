@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ExecutionDataKeys
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.ComponentContainer
+import org.jetbrains.annotations.ApiStatus
 
 private val LOG = logger<SurefireRerunFailedTestsAction>()
 
@@ -31,7 +32,7 @@ internal class SurefireRerunFailedTestsAction(
 
   override fun actionPerformed(e: AnActionEvent) {
     val environment = e.getData(ExecutionDataKeys.EXECUTION_ENVIRONMENT) ?: return
-    val model = model ?: return
+    val model = model ?: run { LOG.debug("SurefireRerunFailedTestsAction: SM runner model not yet available"); return }
     val failedTestParam = buildFailedTestParam(model.root.allTests) ?: return
 
     val cloned = configuration.clone() as MavenSurefireRunConfiguration
@@ -52,12 +53,18 @@ internal class SurefireRerunFailedTestsAction(
   }
 
   private fun buildFailedTestParam(allTests: List<AbstractTestProxy>): String? {
-    val specs = allTests.filter { it.isLeaf && it.isDefect }.mapNotNull { proxy ->
-      // displayName is "ClassName.methodName" as written by SurefireReportParser
-      val name = proxy.name
-      val dot = name.lastIndexOf('.')
-      if (dot < 0) null else "${name.substring(0, dot)}#${name.substring(dot + 1)}"
-    }
+    val specs = allTests.filter { it.isLeaf && it.isDefect }.mapNotNull { surefireTestSpec(it.name) }
     return specs.ifEmpty { null }?.joinToString("+")
   }
+}
+
+/**
+ * Converts a SM runner display name (`ClassName.methodName` as written by [SurefireReportParser])
+ * to a Surefire test spec (`ClassName#methodName`). Returns null when the name contains no dot
+ * (e.g. a suite node rather than a leaf test).
+ */
+@ApiStatus.Internal
+fun surefireTestSpec(displayName: String): String? {
+  val dot = displayName.lastIndexOf('.')
+  return if (dot < 0) null else "${displayName.substring(0, dot)}#${displayName.substring(dot + 1)}"
 }

@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.execution
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.inputStream
@@ -18,7 +19,8 @@ private val LOG = logger<SurefireReportParser>()
  * clicking the root "Test Results" node in the SM runner tree.  Per-test output is emitted as
  * `testStdOut`/`testStdErr` events and is visible when clicking individual test nodes.
  */
-internal object SurefireReportParser {
+@ApiStatus.Internal
+object SurefireReportParser {
 
   const val SUREFIRE_REPORTS_PATH = "target/surefire-reports"
 
@@ -53,11 +55,11 @@ internal object SurefireReportParser {
 
     val suiteName = root.getAttributeValue("name") ?: return
 
-    // Suite-level output emitted before testSuiteStarted shows in the root node's Output tab.
+    messages += "##teamcity[testSuiteStarted name='${escape(suiteName)}' locationHint='java:suite://${escape(suiteName)}']"
+
+    // Suite-level output emitted inside the open suite block is attributed to the suite node in the SM runner.
     root.getChild("system-out")?.textTrim?.takeIf { it.isNotEmpty() }?.let { messages += it }
     root.getChild("system-err")?.textTrim?.takeIf { it.isNotEmpty() }?.let { messages += it }
-
-    messages += "##teamcity[testSuiteStarted name='${escape(suiteName)}' locationHint='java:suite://${escape(suiteName)}']"
 
     for (testcase in root.getChildren("testcase")) {
       val name = testcase.getAttributeValue("name") ?: continue

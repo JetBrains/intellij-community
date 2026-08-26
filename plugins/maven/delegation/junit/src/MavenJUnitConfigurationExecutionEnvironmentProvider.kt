@@ -11,6 +11,8 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.project.Project
 import com.intellij.task.ExecuteRunConfigurationTask
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.execution.MavenSurefireConfigurationFactory
 import org.jetbrains.idea.maven.execution.MavenSurefireRunConfiguration
 import org.jetbrains.idea.maven.execution.build.MavenExecutionEnvironmentProvider
@@ -47,6 +49,7 @@ class MavenJUnitConfigurationExecutionEnvironmentProvider : MavenExecutionEnviro
     val mavenRunConfiguration = runnerAndConfigurationSettings.configuration as MavenSurefireRunConfiguration
     mavenRunConfiguration.beforeRunTasks = emptyList<BeforeRunTask<*>>()
     mavenRunConfiguration.testModuleDirectory = leafProject.directory
+    mavenRunConfiguration.runnerSettings = MavenRunner.getInstance(project).state.clone().apply { isSkipTests = false }
 
     val runnerParameters = mavenRunConfiguration.runnerParameters
     // Run from root reactor so upstream modules are built fresh.
@@ -122,7 +125,8 @@ private fun buildTestParam(config: JUnitConfiguration, leafProject: MavenProject
  * Converts a JUnit pattern entry (e.g. "com.example.MyTest" or "com.example.MyTest,method")
  * to a Surefire test spec.
  */
-private fun patternToSurefireSpec(pattern: String): String {
+@ApiStatus.Internal
+fun patternToSurefireSpec(pattern: String): String {
   // JUnit patterns may contain "ClassName,methodName" with comma separator
   val commaIdx = pattern.indexOf(',')
   return if (commaIdx >= 0) {
