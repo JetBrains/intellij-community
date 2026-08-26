@@ -20,6 +20,7 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
+import kotlin.math.max
 
 private val TEXT_GAPS: UnscaledGaps = UnscaledGaps(top = 4, left = 16, bottom = 3, right = 16)
 private const val DEFAULT_FONT_SIZE: Int = 13
@@ -64,6 +65,18 @@ class PillButton(text: @NlsContexts.Button String? = null) : JComponent() {
   }
 
   var text: @NlsContexts.Button String? = null
+    set(value) {
+      if (field != value) {
+        field = value
+        revalidate()
+        repaint()
+      }
+    }
+
+  /**
+   * Texts the button reserves width for in addition to [text], so that switching between them doesn't change the width.
+   */
+  var prototypeTexts: List<@NlsContexts.Button String> = emptyList()
     set(value) {
       if (field != value) {
         field = value
@@ -142,7 +155,7 @@ class PillButton(text: @NlsContexts.Button String? = null) : JComponent() {
   }
 
   /**
-   * The listeners are notified on a left mouse click and on [doClick], the same way [javax.swing.AbstractButton] does it.
+   * The listeners are notified on a left mouse click, the same way [javax.swing.AbstractButton] does it.
    */
   fun addActionListener(l: ActionListener) {
     listenerList.add(ActionListener::class.java, l)
@@ -191,7 +204,8 @@ class PillButton(text: @NlsContexts.Button String? = null) : JComponent() {
 
       text?.let {
         val fontMetrics = getFontMetrics(font)
-        val offset = (rect.height - TEXT_GAPS.height - getFontMetrics(font).height) / 2
+        val offset = (rect.height - TEXT_GAPS.height - fontMetrics.height) / 2
+        val x = max(TEXT_GAPS.left, (rect.width - fontMetrics.stringWidth(it)) / 2)
 
         g2.color = when {
           !isEnabled -> DISABLED_FOREGROUND
@@ -199,7 +213,7 @@ class PillButton(text: @NlsContexts.Button String? = null) : JComponent() {
           else -> foreground
         }
         g2.font = font
-        g2.drawString(it, TEXT_GAPS.left, TEXT_GAPS.top + offset + fontMetrics.ascent)
+        g2.drawString(it, x, TEXT_GAPS.top + offset + fontMetrics.ascent)
       }
     }
     finally {
@@ -219,9 +233,8 @@ class PillButton(text: @NlsContexts.Button String? = null) : JComponent() {
   private fun getTextDimension(): Dimension {
     val font = font ?: return Dimension(0, JBUI.scale(DEFAULT_FONT_SIZE))
 
-    val text = text
     val fontMetrics = getFontMetrics(font)
-    val width = if (text == null) 0 else fontMetrics.stringWidth(text)
+    val width = (prototypeTexts + text).filterNotNull().maxOfOrNull(fontMetrics::stringWidth) ?: 0
 
     return Dimension(width, fontMetrics.height)
   }

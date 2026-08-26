@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public final class IdeUpdateUsageTriggerCollector extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("ide.self.update", 4);
+  private static final EventLogGroup GROUP = new EventLogGroup("ide.self.update", 5);
 
   private static final EventId1<String> DIALOG_SHOWN = GROUP.registerEvent(
     "dialog.shown", EventFields.String("patches", List.of("not.available", "manual", "auto")));
@@ -28,6 +28,11 @@ public final class IdeUpdateUsageTriggerCollector extends CounterUsagesCollector
   static final EventId UPDATE_STARTED = GROUP.registerEvent("dialog.update.started");
 
   static final EventId MANUAL_PATCH_PREPARED = GROUP.registerEvent("dialog.manual.patch.prepared");
+
+  static final EventId UPDATE_WIDGET_RESTART_CLICKED = GROUP.registerEvent("widget.restart.clicked");
+
+  static final EventId1<IdeUpdateWidgetState.Status> UPDATE_WIDGET_STATE_CHANGED = GROUP.registerEvent(
+    "widget.state.changed", EventFields.Enum("status", IdeUpdateWidgetState.Status.class));
 
   static void triggerUpdateDialog(@Nullable UpdateChain patches, boolean isRestartCapable) {
     var patchesValue = patches == null ? "not.available" : !isRestartCapable ? "manual" : "auto";

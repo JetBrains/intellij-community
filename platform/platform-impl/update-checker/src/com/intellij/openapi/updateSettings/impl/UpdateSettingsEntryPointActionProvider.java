@@ -128,8 +128,9 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
     }
   }
 
-  private static void clearUpdatesInfo() {
+  static void clearUpdatesInfo() {
     setPlatformUpdateInfo(null);
+    setWidgetStatus(false);
     newPlatformUpdate(null, null, (String)null, null);
     updateState();
   }
@@ -259,6 +260,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
   static void showPlatformUpdateDialog(@Nullable Project project, @NotNull PlatformUpdates.Loaded platformUpdateInfo) {
     PlatformUpdateDialog dialog = new PlatformUpdateDialog(project, platformUpdateInfo, true,
                                                           myLocalUpdatesForPlugins, myIncompatiblePluginNames);
+    // The toolbar button keeps announcing the update after it has been started, so the info has to be kept as well
     if (dialog.showAndGet() && !IdeUpdateWidgetState.isWidgetShown()) {
       clearUpdatesInfo();
     }
@@ -309,7 +311,6 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
                                IdeBundle.message("updates.no.updates.notification"),
                                IdeBundle.message("find.ide.update.title"));
       clearUpdatesInfo();
-      setWidgetStatus(false);
     }
     return null;
   }
