@@ -1,0 +1,62 @@
+load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.example.plugin` start
+jvm_library(
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.example.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k21",
+    module_name = "intellij.example.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":plugin"],
+)
+
+ij_plugin(
+    name = "plugin_plugin",
+    descriptor_module = ":plugin",
+    content_modules = [
+        # do not sort,
+        "//content:libraries-example",
+        "//refused",
+    ],
+)
+### auto-generated section `build intellij.example.plugin` end
+
+### auto-generated section `iml intellij.example.plugin` start
+exports_files(
+    [
+        "intellij.example.plugin.iml",
+        "resources/META-INF/plugin.xml",
+        "plugin-content.yaml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.example.plugin` end
+
+### auto-generated section `dev content intellij.example.plugin` start
+dev_dist_plugin_content(
+    content_modules = ["//refused"],
+    descriptor_module = ":plugin",
+    libraries = ["//libs:libraries-refused-testonly"],
+    prepacked_content_modules = ["//content:libraries-example_content_module_jar"],
+)
+### auto-generated section `dev content intellij.example.plugin` end

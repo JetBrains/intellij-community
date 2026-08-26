@@ -171,7 +171,11 @@ internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleLi
   val crossRepositoryPrepackedModules = ArrayList<String>()
   val members = ArrayList<ModuleDescriptor>()
   members.add(module)
-  val prepackedMemberNames = entries.mapNotNull(::simplePluginContentModuleName).toSet() - coPackedElsewhere(entries)
+  val prepackedMemberNames = entries.mapNotNull(::simplePluginContentEntry).mapTo(HashSet()) { it.moduleName } -
+                             coPackedElsewhere(entries)
+  // The members this plugin really handed over, whichever repository packs them. What is inside their jars is what this
+  // target must stop declaring; see [recordedLibraries].
+  val handedOver = HashSet<String>()
   for (memberName in memberNames) {
     val member = moduleList.getModuleDescriptorOrNull(memberName)
     if (member == null || moduleList.skippedModules.contains(memberName)) {
@@ -188,6 +192,7 @@ internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleLi
       // member keeps its packed jar, and anything else stays a raw input the completion declares.
       if (isPrepacked) {
         crossRepositoryPrepackedModules.add(memberName)
+        handedOver.add(memberName)
       }
       else {
         println("WARN: $moduleName content target: community plugin packs ultimate module $memberName")
@@ -199,6 +204,7 @@ internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleLi
       // The member's packing target, not its `jvm_library`: the jar is that target's own output, and
       // `prepacked_content_modules` gates on `ContentModuleJarInfo`, which only it provides.
       prepackedContentModuleLabels.add(contentModuleJarLabel(module = member, dependent = module, context = context))
+      handedOver.add(memberName)
     }
     else {
       members.add(member)
@@ -209,7 +215,7 @@ internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleLi
   val libraryContainerLabels = computeLibraryContainerLabels(
     module = module,
     members = members,
-    recordedLibraries = recordedLibraries(entries),
+    recordedLibraries = recordedLibraries(entries = entries, handedOver = handedOver),
     context = context,
   )
   // Sorted: these are sets of inputs, not merge orders, so a stable order keeps a regeneration free of diff noise.
@@ -247,10 +253,12 @@ internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleLi
  * 2. the libraries the report records, which is what the distribution really packs into the plugin's `lib/`. A member's
  *    dependency is not necessarily where a packed library is declared, so this is not implied by the first.
  *
- * **Scope-blind, TEST included.** A member's own TEST-scope library can still be packed -
- * `jmc-flightrecorder-writer` of `intellij.profiler.ultimate` is one - so a member declares every
- * `<orderEntry type="library">` and every `module-library` whatever its scope. There is no second scope rule to keep
- * this one in step with: the dependency frontier that had the other half is gone, so the walk is one level of one thing.
+ * **Scope-blind, TEST included.** A member declares every `<orderEntry type="library">` and every `module-library`,
+ * whatever its scope, because the report does not state which of them a fragment must resolve. A blanket
+ * `productionOnly()` once took `jmc-flightrecorder-writer` of `intellij.profiler.ultimate` out of the java fragment's
+ * manifest. That module became prepacked on 2026-08-26 and left this walk, so no current member is named for it.
+ * There is no second scope rule to keep this one in step with: the dependency frontier that had the other half is gone,
+ * so the walk is one level of one thing.
  * PROVIDED is declared for the same reason - it is compile-only rather than test-only, and the layout can still pack
  * such a library. Note that a PROVIDED dependency is written as the `-provided` variant
  * ([libraryDependencyLabel]) while this list names the plain container, which is what keeps the manifest key
@@ -331,7 +339,7 @@ private fun computeLibraryContainerLabels(
 /**
  * The modules this report packs somewhere *besides* their own `lib/modules/<module>.jar` entry.
  *
- * [simplePluginContentModuleName] judges one entry in isolation, which is not enough to decide a hand-off: a module
+ * [simplePluginContentEntry] judges one entry in isolation, which is not enough to decide a hand-off: a module
  * whose own entry is simple can still be a `modules:` member of another jar in the same plugin, and `JarPackager` packs
  * that jar from the module's raw output. Handing the module off takes its raw jar out of the fragment's declaration
  * while leaving that second jar to be packed, so the assembly resolves an input nobody declared.
@@ -346,7 +354,7 @@ private fun computeLibraryContainerLabels(
 private fun coPackedElsewhere(entries: List<RecipeEntry>): Set<String> {
   val result = HashSet<String>()
   for (entry in entries) {
-    if (simplePluginContentModuleName(entry) != null) {
+    if (simplePluginContentEntry(entry) != null) {
       continue
     }
     entry.modules.mapTo(result) { it.name }
@@ -378,11 +386,12 @@ private fun labelRepository(label: String): String = label.substringBefore("//")
 /**
  * Every library [module] declares itself, as the converted [Library] the jar labels are computed from.
  *
- * Every scope, TEST included: a member's own TEST-scope library can still be packed - `jmc-flightrecorder-writer` of
- * `intellij.profiler.ultimate` is one, and dropping it once took the jar out of the java fragment's manifest. Only
- * members are walked, so there is no second scope rule to separate this from; the walk over a member's *direct
- * dependencies* is gone, and with it the keys it cost - `jmock`, a TEST-scope project library of
- * `intellij.platform.lang`, reached 369 of the 475 content targets that way and was packed by none of them.
+ * Every scope, TEST included: dropping a member's TEST-scope library once took `jmc-flightrecorder-writer` of
+ * `intellij.profiler.ultimate` out of the java fragment's manifest. That module became prepacked on 2026-08-26 and left
+ * this walk, so the rule now rests on the argument rather than on a current case. Only members are walked, so there is
+ * no second scope rule to separate this from; the walk over a member's *direct dependencies* is gone, and with it the
+ * keys it cost - `jmock`, a TEST-scope project library of `intellij.platform.lang`, reached 369 of the 475 content
+ * targets that way and was packed by none of them.
  */
 private fun collectDeclaredLibraries(
   module: ModuleDescriptor,
@@ -416,15 +425,27 @@ private fun collectDeclaredLibraries(
 /**
  * One library a content report records, with the module it is recorded under.
  *
- * [ownerModule] is what makes the record resolvable, and it is *not* a claim that the library is a module library: a
- * report interleaves a module's project libraries with its module libraries exactly as the `.iml` declares them, so the
- * module is a hint to try first, not a key. It is `null` only where the report itself has no module to offer - a project
- * library hoisted to the jar level as `projectLibraries:`.
+ * [ownerModule] is what makes the record resolvable. A library recorded under a member **is** that member's module
+ * library. `writeModuleLibraries` in `ProjectStructureMapping.kt` writes only a `ModuleLibraryFileEntry` of that module
+ * there. A project library is hoisted to the jar level as `projectLibraries:` instead, and [ownerModule] is then `null`.
+ * The merge *order* interleaves the two kinds as the `.iml` declares them. The report does not.
+ *
+ * The lookup in [computeLibraryContainerLabels] still tries the project-library index when the module identity misses.
+ * That is defensive rather than a second shape: the converter keys an *unnamed* module library by declaration index and
+ * the report keys it by jar file name, so neither index holds it, and the warning below is the honest outcome.
  */
 private data class RecordedLibrary(@JvmField val name: String, @JvmField val ownerModule: String?)
 
-/** Every library the report records, however it records it: per member module, hoisted to the jar, or as a jar of its own. */
-private fun recordedLibraries(entries: List<RecipeEntry>): Set<RecordedLibrary> {
+/**
+ * Every library the report records, however it records it: per member module, hoisted to the jar, or as a jar of its own.
+ *
+ * Except a library merged into a jar this plugin no longer packs. [handedOver] names those members, and their libraries
+ * are inside the jar their own `content_module_jar` target produces - so declaring them here would leave the fragment
+ * with a declared input its assembly never reads, and a declared-but-unread input still re-keys the action. Only the
+ * record is dropped: a library another member declares is still reached by the member walk in
+ * [computeLibraryContainerLabels].
+ */
+private fun recordedLibraries(entries: List<RecipeEntry>, handedOver: Set<String>): Set<RecordedLibrary> {
   val result = LinkedHashSet<RecordedLibrary>()
   for (entry in entries) {
     for (reportModule in entry.modules) {
@@ -432,7 +453,11 @@ private fun recordedLibraries(entries: List<RecipeEntry>): Set<RecordedLibrary> 
     }
     for (reportModule in entry.contentModules) {
       // [RecipeModule.moduleName], not `name`: this is looked up as a module, and a `moduleName/descriptorName` key is not one.
-      reportModule.libraries.keys.mapTo(result) { RecordedLibrary(name = it, ownerModule = reportModule.moduleName) }
+      val reportModuleName = reportModule.moduleName
+      if (reportModuleName in handedOver) {
+        continue
+      }
+      reportModule.libraries.keys.mapTo(result) { RecordedLibrary(name = it, ownerModule = reportModuleName) }
     }
     entry.projectLibraries.mapTo(result) { RecordedLibrary(name = it.name, ownerModule = null) }
     // `module:` present means the jar is a library taken out of *that* module's jar, so the library is one of its own.

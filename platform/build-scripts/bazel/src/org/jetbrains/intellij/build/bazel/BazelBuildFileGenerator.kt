@@ -29,6 +29,7 @@ import java.nio.file.Path
 import java.util.IdentityHashMap
 import java.util.TreeMap
 import java.util.TreeSet
+import java.util.concurrent.ConcurrentHashMap
 import java.util.logging.Level
 import java.util.logging.Logger
 import kotlin.io.path.exists
@@ -47,7 +48,7 @@ internal class ModuleList(
   @JvmField val community: List<ModuleDescriptor>,
   @JvmField val ultimate: List<ModuleDescriptor>,
   @JvmField val skipped: List<ModuleDescriptor>,
-  private val pluginContentCandidateOverrides: Map<String, Boolean>,
+  private val pluginContentCandidateOverrides: Map<String, Set<String>?>,
 ) {
   @JvmField val allModules = community + ultimate + skipped
   val skippedModules = skipped.map { it.module.name }
@@ -74,19 +75,19 @@ internal class ModuleList(
   }
 
   /**
-   * Modules whose checked-in plugin content reports agree that they are a plain `lib/modules/<module>.jar` containing
-   * only that module's production output.
+   * Modules whose checked-in plugin content reports agree that they are a plain `lib/modules/<module>.jar` holding that
+   * module's production output and one agreed set of module libraries. The value is that library set.
    *
    * Folded once for the whole run over every report the model reaches, then corrected by what a community-only run
    * cannot see; see [foldPluginContentCandidacy]. The per-module recipe still gets the final veto in
-   * [isPrepackedPluginContentModule]: a conflicting platform recipe, an excluded module, or a descriptor that exists
-   * only in generated output keeps the module on the JarPackager path.
+   * [isPrepackedPluginContentModule]: a conflicting platform recipe, an excluded module, a descriptor that exists only
+   * in generated output, or a library set the JPS model does not derive keeps the module on the JarPackager path.
    *
    * [skipped] modules count like any other: a report is a report wherever its plugin's own target ends up, and leaving
    * them out would make the fold depend on which modules this generator converts.
    */
-  val pluginContentModuleJarCandidates: Set<String> by lazy {
-    foldPluginContentCandidacy(modules = allModules, overrides = pluginContentCandidateOverrides)
+  val pluginContentModuleJarCandidates: Map<String, Set<String>> by lazy {
+    foldPluginContentCandidacy(reports = allModules.mapNotNull { it.pluginContentReport }, overrides = pluginContentCandidateOverrides)
   }
 }
 
@@ -166,10 +167,26 @@ internal class BazelBuildFileGenerator(
    * ultimate. An ultimate run folds the same answer out of the reports it can see, so reading them unconditionally
    * changes nothing there and keeps the two runs on one code path.
    */
-  private val pluginContentCandidateOverrides: Map<String, Boolean> by lazy {
+  private val pluginContentCandidateOverrides: Map<String, Set<String>?> by lazy {
     readPluginContentCandidateOverrides(
       (ultimateRoot?.resolve("community") ?: communityRoot).resolve("build/$PLUGIN_CONTENT_CANDIDATE_OVERRIDES_FILE_NAME")
     )
+  }
+
+  /**
+   * Module names a `content_module_jar` refusal was already reported for.
+   *
+   * [isPrepackedPluginContentModule] asks the same question once per plugin that ships the module, and one module is
+   * content of up to 45 of them, so a refusal without this prints 45 identical lines. Concurrent, because the cost is
+   * nil and a set that assumes one thread is a claim about generation this class should not make.
+   */
+  private val reportedContentModuleJarRefusals = ConcurrentHashMap.newKeySet<String>()
+
+  /** Says once why [moduleName]'s `lib/` jar stays with `JarPackager`. */
+  fun reportContentModuleJarRefusal(moduleName: String, reason: String) {
+    if (reportedContentModuleJarRefusals.add(moduleName)) {
+      println("WARN: $moduleName keeps being packed by JarPackager: $reason")
+    }
   }
 
   /** Product/plugin layout transformations that make a raw module-output jar ineligible for direct handoff. */

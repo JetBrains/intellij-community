@@ -43,10 +43,9 @@ exports_files(
 
 ### auto-generated section `dev content intellij.jcef.plugin` start
 dev_dist_plugin_content(
-    content_modules = ["//libraries/jcef"],
     descriptor_module = ":plugin",
-    libraries = ["@lib//:libraries-jcef-jcef"],
     prepacked_content_modules = [
+        "//libraries/jcef:jcef_content_module_jar",
         "//platform/new-ui-onboarding/jcef:jcef_content_module_jar",
         "//platform/platform-impl/internal/jcef:jcef_content_module_jar",
         "//platform/platform-impl/jcef:jcef_content_module_jar",

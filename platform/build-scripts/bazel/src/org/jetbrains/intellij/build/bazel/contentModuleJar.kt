@@ -20,7 +20,7 @@ import kotlin.io.path.readText
 import kotlin.io.path.relativeTo
 
 /**
- * The jar a platform content module contributes to a distribution, described well enough to pack it from Bazel labels.
+ * The jar a content module contributes to a distribution, described well enough to pack it from Bazel labels.
  *
  * Order is load-bearing - the packer resolves a duplicate entry to the first source that offers it, so a reordered
  * source list is a different jar. Reproducing `JarPackager` means:
@@ -32,12 +32,13 @@ import kotlin.io.path.relativeTo
  * 3. module outputs in the recipe's `modules:` order, which is order-faithful - the content report writer does not sort
  *    that list.
  *
- * Which libraries those are is *derived* from the JPS model by [isMergedIntoContentModuleJar], not read from the recipe.
- * The recipe records the set but loses two things the merge needs: a project library's position among a module's
- * libraries, because `projectLibraries:` is sorted by name and hoisted to the jar level when the report is written, and
- * the identity of an unnamed `<orderEntry type="module-library">`, which it keys by jar file name. It is still what says
- * *whether* this module owns a jar and which modules share it - that is a product-layout decision, and evaluating a
- * product layout is the work this generator exists to keep out of a fragment action.
+ * Which libraries those are comes from the JPS model and the recipe together; [mergedLibraryTargetLabels] states which
+ * of the two decides, and it is not the same answer for a platform jar and a plugin jar. The recipe alone cannot order
+ * them: it loses a project library's position among a module's libraries, because `projectLibraries:` is sorted by name
+ * and hoisted to the jar level when the report is written, and it keys an unnamed `<orderEntry type="module-library">`
+ * by jar file name. The model alone cannot say *whether* this module owns a jar or which modules share it - that is a
+ * product-layout decision, and evaluating a product layout is the work this generator exists to keep out of a fragment
+ * action.
  */
 internal class ContentModuleJar(
   /**
@@ -247,7 +248,7 @@ internal data class RecipeEntry(
    * `collectPluginContentCategoryFailures` in `contentChecker.kt` unions a plugin's per-OS variants into the one file
    * that is checked in, precisely so a per-OS difference does not need a report per OS. Undeclared, `strictMode = false`
    * would read an OS-conditional entry as an unconditional one - and a handed-off jar is packed unconditionally, for
-   * every product and every OS. So any non-null value vetoes the entry in [simplePluginContentModuleName] instead of
+   * every product and every OS. So any non-null value vetoes the entry in [simplePluginContentEntry] instead of
    * being interpreted here: which files a target platform keeps is a product-layout decision, the same one
    * `EXCLUDED_CONTENT_MODULES` declines for `presignedNativeLibs`.
    */
@@ -302,8 +303,13 @@ internal val recipeYaml: Yaml = Yaml(
 )
 
 /**
- * Reads the recipe beside [module] and resolves it into merge-ordered Bazel labels, or returns `null` when this module
- * does not own a packable platform content-module jar.
+ * The `content_module_jar` [module] owns, resolved into merge-ordered Bazel labels, or `null` when it owns none.
+ *
+ * Two kinds of jar, one target. A platform content module has a `module-content.yaml` beside it, which names the
+ * modules its jar merges. A plugin content module has none, and its jar is the plain `lib/modules/<module>.jar` the
+ * plugin reports agree on - see [prepackedPluginContentModuleLibraries]. Both resolve their libraries with
+ * [mergedLibraryTargetLabels], under the [MergeRules] of the layout that owns them, and both end at the same
+ * comparison against the report.
  *
  * Returning `null` rather than failing is deliberate: a jar this generator cannot reproduce faithfully - one several
  * modules co-own, one whose merged module the converter does not know, one holding a library it cannot label - must keep
@@ -318,17 +324,22 @@ internal fun computeContentModuleJar(module: ModuleDescriptor, moduleList: Modul
 
   val entry = module.contentModuleRecipe
   if (entry == null) {
-    return if (isPrepackedPluginContentModule(module = module, moduleList = moduleList, context = context)) {
-      ContentModuleJar(
-        libraryTargetLabels = emptyList(),
-        modulesBefore = emptyList(),
-        modulesAfter = emptyList(),
-        rewriteBootClassPath = false,
-      )
-    }
-    else {
-      null
-    }
+    val recordedNames = prepackedPluginContentModuleLibraries(module = module, moduleList = moduleList, context = context)
+                        ?: return null
+    val libraryTargetLabels = mergedLibraryTargetLabels(
+      dependent = module,
+      packedModuleNames = listOf(moduleName),
+      rules = MergeRules.PLUGIN,
+      recordedNames = recordedNames,
+      moduleList = moduleList,
+      context = context,
+    ) ?: return null
+    return ContentModuleJar(
+      libraryTargetLabels = libraryTargetLabels,
+      modulesBefore = emptyList(),
+      modulesAfter = emptyList(),
+      rewriteBootClassPath = false,
+    )
   }
   // `contentModules:` means a plugin content-module jar under `lib/modules/`, which `ij_plugin` owns.
   if (entry.contentModules.isNotEmpty() || entry.modules.isEmpty()) {
@@ -352,13 +363,158 @@ internal fun computeContentModuleJar(module: ModuleDescriptor, moduleList: Modul
     return null
   }
 
+  // The recipe is not the source of the library set on this path, but it is still the only record of what the
+  // distribution ships, so it gets a veto - see [mergedLibraryTargetLabels].
+  val recordedNames = HashSet<String>()
+  entry.modules.flatMapTo(recordedNames) { it.libraries.keys }
+  entry.projectLibraries.mapTo(recordedNames) { it.name }
+  entry.library?.let { recordedNames.add(it) }
+
+  val libraryTargetLabels = mergedLibraryTargetLabels(
+    dependent = module,
+    packedModuleNames = moduleNames,
+    rules = MergeRules.PLATFORM,
+    recordedNames = recordedNames,
+    moduleList = moduleList,
+    context = context,
+  ) ?: return null
+
+  return ContentModuleJar(
+    libraryTargetLabels = libraryTargetLabels,
+    modulesBefore = moduleNames.subList(0, ownerIndex),
+    modulesAfter = moduleNames.subList(ownerIndex + 1, moduleNames.size),
+    rewriteBootClassPath = module.module.name == BOOT_CLASS_PATH_MODULE,
+  )
+}
+
+/**
+ * Whether [module] may use its `content_module_jar` output for a plugin-content relation.
+ *
+ * The second half is the whole point of asking [computeContentModuleJar] rather than repeating its checks: the emitter
+ * writes a packing target where that function returns one, and a `prepacked_content_modules` relation names that
+ * target. A relation naming a target nobody wrote does not build, so both answers come from one function.
+ *
+ * One case the pair does not cover, and it is older than this function. `generateModuleBuildFiles` drops the packing
+ * target of a module whose `build` section a person took over, while the `dev content` section is written whatever
+ * happens - so a hand-written module that is also a plugin candidate would leave a label with no target behind it.
+ * `intellij.php.dev` is the one module with a hand-written section, and it is not a candidate. A dangling label fails
+ * at analysis rather than silently, so the build says so at once. Closing this needs the skipped sections read before
+ * the decision runs.
+ */
+internal fun isPrepackedPluginContentModule(module: ModuleDescriptor, moduleList: ModuleList, context: BazelBuildFileGenerator): Boolean {
+  return prepackedPluginContentModuleLibraries(module = module, moduleList = moduleList, context = context) != null &&
+         computeContentModuleJar(module = module, moduleList = moduleList, context = context) != null
+}
+
+/**
+ * The libraries the plugin reports record for [module]'s jar, or `null` when [module] hands no jar to a plugin.
+ *
+ * [ModuleList.pluginContentModuleJarCandidates] proves the plugin jar is a single-module self-named jar and says which
+ * libraries it merges. The checks here cover facts local to the module target: a platform recipe must not ask the same
+ * output group to produce different bytes, and the descriptor used by `computeModuleSourcesByContent` must remain
+ * readable after the raw module jar stops being a fragment input.
+ *
+ * Report facts only. Whether the merge is *derivable* from the JPS model is [computeContentModuleJar]'s answer, and
+ * [isPrepackedPluginContentModule] is the two together.
+ */
+private fun prepackedPluginContentModuleLibraries(
+  module: ModuleDescriptor,
+  moduleList: ModuleList,
+  context: BazelBuildFileGenerator,
+): Set<String>? {
+  val moduleName = module.module.name
+  val recordedNames = moduleList.pluginContentModuleJarCandidates.get(moduleName) ?: return null
+  if (moduleName in context.pluginContentModuleJarVetoes ||
+      moduleName in EXCLUDED_CONTENT_MODULES ||
+      moduleName == BOOT_CLASS_PATH_MODULE) {
+    return null
+  }
+
+  module.contentModuleRecipe?.let { platformRecipe ->
+    if (!isCompatibleSingleModuleRecipe(entry = platformRecipe, moduleName = moduleName, recordedNames = recordedNames)) {
+      return null
+    }
+  }
+
+  // A resource root and nothing else: `_find_descriptor_rel_paths` in `@community//build:jps_model.bzl` derives a
+  // module's descriptors from its `java-resource` roots only, so a `<moduleName>.xml` that lives in a source root is
+  // absent from the project-model tree the assembly reads. Accepting it here takes the raw module jar out of the
+  // fragment while leaving `DescriptorSearchPass.MODULE_OUTPUT` as the only reader that could still find the
+  // descriptor, and that reads a label nobody declared - "Bazel input '<label>' is not declared in the explicit input
+  // manifest", which names the jar and not the descriptor that made it unreachable.
+  val hasReadableDescriptor = module.module.sourceRoots.any { root ->
+    root.rootType == JavaResourceRootType.RESOURCE && context.javaExtensionService.findSourceFile(root, "$moduleName.xml") != null
+  }
+  return if (hasReadableDescriptor) recordedNames else null
+}
+
+/**
+ * Whether a platform recipe describes the same jar the plugin reports describe, [recordedNames] included.
+ *
+ * One module, one jar, one target. When both a `module-content.yaml` and a plugin report cover this module, they have to
+ * ask for the same bytes, or the one target would satisfy one of them and break the other.
+ */
+private fun isCompatibleSingleModuleRecipe(entry: RecipeEntry, moduleName: String, recordedNames: Set<String>): Boolean {
+  val single = entry.modules.singleOrNull() ?: return false
+  return entry.contentModules.isEmpty() &&
+         single.name == moduleName &&
+         single.libraries.keys == recordedNames &&
+         entry.projectLibraries.isEmpty() &&
+         entry.library == null &&
+         entry.module == null &&
+         (entry.name == "<file>" || entry.name == "$PLATFORM_LIB_DIST_PREFIX$moduleName.jar")
+}
+
+/** Whose layout decides which of a walked module's libraries its content-module jar merges. */
+private enum class MergeRules {
+  /**
+   * The platform layout, which this generator mirrors.
+   *
+   * [isMergedIntoContentModuleJar] reproduces `JarPackager.computeSourcesForModuleLibs` for it, down to the two
+   * hand-kept lists `LAYOUT_PACKED_PROJECT_LIBRARIES` and `LAYOUT_PACKED_MODULE_LIBRARIES`. So the model decides and
+   * the report vetoes, and a veto in either direction is a rule the mirror is missing.
+   */
+  PLATFORM,
+
+  /**
+   * A plugin layout, which this generator does not evaluate - so here the report decides and the model orders.
+   *
+   * `excludedModuleLibraries`, `doNotCopyModuleLibrariesAutomatically` and `auto` are all `PluginLayout` state.
+   * Evaluating a product layout is the work this generator exists to keep out of a fragment action, and mirroring one
+   * of those fields would mean mirroring every plugin layout in the repository. The first attempt over-derived. The 13
+   * `doNotCopyModuleLibrariesAutomatically` modules of the database and Rider layouts each declare a module library
+   * their jar does not hold, so a model-decides rule refused all 13.
+   *
+   * The model is still needed for everything the report loses: the merge order, which is the module's `orderEntry`
+   * order, and the Bazel target of each library. The report is still checked. Every library it names must be one this
+   * module declares in production scope, and the comparison below is the same expression on both paths.
+   */
+  PLUGIN,
+}
+
+/**
+ * The target that groups the jars of each library [packedModuleNames] merges, in merge order, or `null` when this jar
+ * must stay with `JarPackager`.
+ *
+ * `null` for three reasons, and each is stated where it is decided: a merged module the converter does not know, a
+ * merged library with no target it can name, or a set that disagrees with [recordedNames]. A disagreement is warned
+ * about, because a jar that differs from the distribution's surfaces at class-load time and nowhere earlier.
+ */
+private fun mergedLibraryTargetLabels(
+  dependent: ModuleDescriptor,
+  packedModuleNames: List<String>,
+  rules: MergeRules,
+  recordedNames: Set<String>,
+  moduleList: ModuleList,
+  context: BazelBuildFileGenerator,
+): List<String>? {
   // A set, because two libraries of one module can intern to the same Bazel target, and Bazel rejects a repeated label
   // in an attribute outright. The first-wins jar order the packer needs is preserved by the rule, which expands these
   // targets in this order and drops a jar it has already seen.
-  val libraryTargetLabels = LinkedHashSet<String>()
+  val targetLabels = LinkedHashSet<String>()
   val claimed = HashSet<Pair<String, String?>>()
-  val derivedNames = HashSet<String>()
-  for (packedModuleName in moduleNames) {
+  val names = HashSet<String>()
+  for (packedModuleName in packedModuleNames) {
     val packedModule = moduleList.getModuleDescriptorOrNull(packedModuleName) ?: return null
     for (element in packedModule.module.dependenciesList.dependencies) {
       if (element !is JpsLibraryDependency) {
@@ -380,141 +536,137 @@ internal fun computeContentModuleJar(module: ModuleDescriptor, moduleList: Modul
 
       val jpsLibrary = element.library ?: continue
       val owner = (parentReference as? JpsModuleReference)?.moduleName
-      if (!isMergedIntoContentModuleJar(
+      // The plugin path has to ask this about every library the module declares, because the recorded set is what
+      // selects. An unnamed library this generator cannot name reads as not merged, which the comparison below then
+      // reports if the recipe names it.
+      val reportName = distributionLibraryName(jpsLibrary)
+      val isMerged = when (rules) {
+        MergeRules.PLATFORM -> isMergedIntoContentModuleJar(
           jpsLibraryName = jpsLibrary.name,
           ownerModuleName = owner,
           packedModuleName = packedModuleName,
           packedModule = packedModule,
           moduleList = moduleList,
           context = context,
-        )) {
+        )
+        // Two unnamed libraries of one module whose jars share a file name are one recorded name and two labels here,
+        // because the report has one key for both. Neither the report nor this walk can separate them.
+        MergeRules.PLUGIN -> reportName != null && reportName in recordedNames
+      }
+      if (!isMerged || !claimed.add(jpsLibrary.name to owner)) {
         continue
       }
-      if (!claimed.add(jpsLibrary.name to owner)) {
-        continue
+      if (reportName == null) {
+        // Reached on the platform path only: the merge rules said yes and the comparison below has nothing to compare.
+        context.reportContentModuleJarRefusal(dependent.module.name, "an unnamed merged library has no single jar to name it by")
+        return null
       }
-      derivedNames.add(distributionLibraryName(jpsLibrary))
+      names.add(reportName)
 
       // Collected while the module's dependencies were converted, so an unknown identity means a library this walk can
       // see but the converter did not - which would make the label unresolvable. Bail out rather than emit it.
       val library = context.getLibraryByJpsIdentity(jpsName = jpsLibrary.name, moduleLibraryModuleName = owner) ?: return null
-      libraryTargetLabels.add(
+      targetLabels.add(
         libraryTargetLabel(
           library = library,
           communityRoot = context.communityRoot,
           ultimateRoot = context.ultimateRoot,
-          isCommunityDependent = module.isCommunity,
+          isCommunityDependent = dependent.isCommunity,
         )
       )
     }
   }
 
-  // The recipe is not the source of the library set any more, but it is still the only record of what the distribution
-  // actually ships, so it gets a veto. A disagreement means the derivation is missing a rule this jar depends on, and a
-  // jar that differs from the distribution's surfaces at class-load time and nowhere earlier - so leave it to
-  // `JarPackager` and say so, loudly enough to be fixed.
-  val recordedNames = HashSet<String>()
-  entry.modules.flatMapTo(recordedNames) { it.libraries.keys }
-  entry.projectLibraries.mapTo(recordedNames) { it.name }
-  entry.library?.let { recordedNames.add(it) }
-  if (recordedNames != derivedNames) {
-    println(
-      "WARN: $moduleName keeps being packed by JarPackager: the derived library set does not match its recipe" +
-      " (only in the recipe: ${(recordedNames - derivedNames).sorted()}," +
-      " only derived: ${(derivedNames - recordedNames).sorted()})"
+  if (names != recordedNames) {
+    // Only the halves that have a name. On the plugin path the merged set is a subset of the recorded one by
+    // construction, so `only merged` is always empty there and printing it would be dead text.
+    val onlyRecorded = (recordedNames - names).sorted()
+    val onlyMerged = (names - recordedNames).sorted()
+    context.reportContentModuleJarRefusal(
+      dependent.module.name,
+      "the merged library set does not match its recipe" +
+      (if (onlyRecorded.isEmpty()) "" else " (only in the recipe: $onlyRecorded)") +
+      (if (onlyMerged.isEmpty()) "" else " (only merged: $onlyMerged)"),
     )
     return null
   }
-
-  return ContentModuleJar(
-    libraryTargetLabels = libraryTargetLabels.toList(),
-    modulesBefore = moduleNames.subList(0, ownerIndex),
-    modulesAfter = moduleNames.subList(ownerIndex + 1, moduleNames.size),
-    rewriteBootClassPath = module.module.name == BOOT_CLASS_PATH_MODULE,
-  )
-}
-
-/**
- * Whether [module] may use its `content_module_jar` output for a plugin-content relation.
- *
- * [ModuleList.pluginContentModuleJarCandidates] proves the plugin jar is a single-module self-named jar. The checks
- * here cover facts local to the module target: a platform recipe must not ask the same output group to produce
- * different bytes, and the descriptor used by `computeModuleSourcesByContent` must remain readable after the raw module
- * jar stops being a fragment input.
- */
-internal fun isPrepackedPluginContentModule(module: ModuleDescriptor, moduleList: ModuleList, context: BazelBuildFileGenerator): Boolean {
-  val moduleName = module.module.name
-  if (moduleName !in moduleList.pluginContentModuleJarCandidates ||
-      moduleName in context.pluginContentModuleJarVetoes ||
-      moduleName in EXCLUDED_CONTENT_MODULES ||
-      moduleName == BOOT_CLASS_PATH_MODULE) {
-    return false
-  }
-
-  module.contentModuleRecipe?.let { platformRecipe ->
-    if (!isCompatibleSingleModuleRecipe(entry = platformRecipe, moduleName = moduleName)) {
-      return false
-    }
-  }
-
-  // A resource root and nothing else: `_find_descriptor_rel_paths` in `@community//build:jps_model.bzl` derives a
-  // module's descriptors from its `java-resource` roots only, so a `<moduleName>.xml` that lives in a source root is
-  // absent from the project-model tree the assembly reads. Accepting it here takes the raw module jar out of the
-  // fragment while leaving `DescriptorSearchPass.MODULE_OUTPUT` as the only reader that could still find the
-  // descriptor, and that reads a label nobody declared - "Bazel input '<label>' is not declared in the explicit input
-  // manifest", which names the jar and not the descriptor that made it unreachable.
-  return module.module.sourceRoots.any { root ->
-    root.rootType == JavaResourceRootType.RESOURCE && context.javaExtensionService.findSourceFile(root, "$moduleName.xml") != null
-  }
-}
-
-private fun isCompatibleSingleModuleRecipe(entry: RecipeEntry, moduleName: String): Boolean {
-  return entry.contentModules.isEmpty() &&
-         entry.modules.size == 1 &&
-         entry.modules.single().name == moduleName &&
-         entry.modules.single().libraries.isEmpty() &&
-         entry.projectLibraries.isEmpty() &&
-         entry.library == null &&
-         entry.module == null &&
-         (entry.name == "<file>" || entry.name == "$PLATFORM_LIB_DIST_PREFIX$moduleName.jar")
+  return targetLabels.toList()
 }
 
 /**
  * The repo-global candidate set: every module whose every `contentModules:` occurrence agrees on a plain,
- * product-independent `lib/modules/<module>.jar`, with [overrides] applied last.
+ * product-independent `lib/modules/<module>.jar` **and on the libraries merged into it**, with [overrides] applied last.
+ * The value is that agreed library set.
  *
  * Folded over the reports this run can see, which is every report the JPS model reaches - `pluginContentReport` is
  * parsed at most once per module and generation parses all of them anyway, so the fold is free. An occurrence in a
  * main plugin jar (`modules:`) is irrelevant: `content_module_jar` is an extra output and does not change that jar.
  *
+ * The library set has to travel with the answer, because one target serves every plugin that ships the module. Two
+ * plugins recording different libraries for one module describe two different jars, and neither is the one a single
+ * target could pack - so a disagreement is a veto, and it says both sets.
+ *
  * An entry with no `contentModules:` but a `module:` is a bare library jar taken out of that module's own jar
  * (`lib/debugger-memory-agent.jar`); a prepacked module skips `computeSourcesForModule` and would silently never write
- * it, so the owner is vetoed on sight. The veto needs no cross-entry bookkeeping: this is an AND, so once a module is
- * recorded ineligible no later occurrence can bring it back, whatever order the reports are read in.
+ * it, so the owner is vetoed on sight.
+ *
+ * The fold is tri-state - unseen, agreed on a library set, or vetoed - which one map cannot hold, so `vetoed` is a
+ * collection of its own. A vetoed module is also removed from `agreed`, and every veto path does both. That is what
+ * keeps the fold an AND: once a module is vetoed no later occurrence brings it back, whatever order the reports are
+ * read in.
  *
  * [overrides] is what a community-only run cannot fold for itself; see [PLUGIN_CONTENT_CANDIDATE_OVERRIDES_FILE_NAME].
  * It is applied after the fold, so it decides both directions.
  *
- * `foldPrepackedCandidateEligibility` in `devDistPlanGenerator.kt` is the same fold over `FileEntry` instead of
- * [RecipeEntry] - it is the half that can see both repositories, and it is what records [overrides]. A rule changed
- * here belongs there too; until then the two runs disagree and the sync assertion says which files.
+ * `PrepackedCandidateFold` in `devDistPlanGenerator.kt` is the same fold over `FileEntry` instead of [RecipeEntry].
+ * It is the half that can see both repositories, and it is what records [overrides]. A rule changed here belongs there
+ * too; until then the two runs disagree and the sync assertion says which files.
  */
-internal fun foldPluginContentCandidacy(modules: List<ModuleDescriptor>, overrides: Map<String, Boolean>): Set<String> {
-  val eligibility = HashMap<String, Boolean>()
-  for (module in modules) {
-    for (entry in module.pluginContentReport ?: continue) {
+internal fun foldPluginContentCandidacy(reports: List<List<RecipeEntry>>, overrides: Map<String, Set<String>?>): Map<String, Set<String>> {
+  val agreed = HashMap<String, Set<String>>()
+  val vetoed = HashSet<String>()
+  for (report in reports) {
+    for (entry in report) {
       if (entry.contentModules.isEmpty()) {
-        entry.module?.let { eligibility.put(it, false) }
+        entry.module?.let {
+          agreed.remove(it)
+          vetoed.add(it)
+        }
         continue
       }
+      val simple = simplePluginContentEntry(entry)
       for (contentModule in entry.contentModules) {
         val name = contentModule.moduleName
-        eligibility.put(name, eligibility.getOrDefault(name, true) && simplePluginContentModuleName(entry) == name)
+        if (name in vetoed) {
+          continue
+        }
+        if (simple == null || simple.moduleName != name) {
+          agreed.remove(name)
+          vetoed.add(name)
+          continue
+        }
+        val recorded = agreed.putIfAbsent(name, simple.libraries)
+        if (recorded != null && recorded != simple.libraries) {
+          println(
+            "WARN: $name keeps being packed by JarPackager: its plugin content reports disagree about the libraries" +
+            " merged into its jar (${recorded.sorted()} against ${simple.libraries.sorted()})"
+          )
+          agreed.remove(name)
+          vetoed.add(name)
+        }
       }
     }
   }
-  eligibility.putAll(overrides)
-  return eligibility.asSequence().filter { it.value }.mapTo(HashSet()) { it.key }
+
+  for ((name, libraries) in overrides) {
+    if (libraries == null) {
+      agreed.remove(name)
+    }
+    else {
+      agreed.put(name, libraries)
+    }
+  }
+  return agreed
 }
 
 /**
@@ -532,6 +684,11 @@ internal fun foldPluginContentCandidacy(modules: List<ModuleDescriptor>, overrid
  * is that answer, so `+` and `-` both occur. An override always agrees with what an ultimate run folds for itself, by
  * construction, so no run needs to know which kind of checkout it is in.
  *
+ * That is why a `+` line also carries the merged library names, space separated after the module name. The fold agrees
+ * on a library *set* and not only on a boolean, and the set of a module whose only report is in ultimate is another
+ * thing a community-only run cannot see. Without it that run would emit a `libraries` attribute the ultimate run
+ * refuses, or refuse one the ultimate run emits. A `-` line records no library, because a vetoed module has no jar.
+ *
  * A plain text file for the same reason as the sibling `dev_dist_plugin_content_vetoes.txt`: it keeps this reader
  * independent of Starlark. Staleness is caught where the other plan files' is: the blocking `model-generation`
  * validation of `AllProductsPackagingTest` regenerates and diffs it.
@@ -539,7 +696,7 @@ internal fun foldPluginContentCandidacy(modules: List<ModuleDescriptor>, overrid
 internal const val PLUGIN_CONTENT_CANDIDATE_OVERRIDES_FILE_NAME: String = "dev_dist_plugin_content_candidate_overrides.txt"
 
 /**
- * Reads what `plugin-model-tool` recorded, or nothing when no run has recorded it.
+ * Reads what `plugin-model-tool` recorded, or nothing when no run has recorded it. A `null` value is "not a candidate".
  *
  * Nothing rather than a failure, because a project the tool has never run over is a real case and not a mistake: the
  * generator's own integration tests each build a throwaway community project. Those hold no `plugin-content.yaml` at
@@ -547,14 +704,15 @@ internal const val PLUGIN_CONTENT_CANDIDATE_OVERRIDES_FILE_NAME: String = "dev_d
  * modules it would have corrected, which the sync assertion then reports.
  *
  * A line without a sign is a hard error, unlike a missing file: it would silently change how a module is packed, and a
- * jar that differs from the distribution's is not noticed until class-load time.
+ * jar that differs from the distribution's is not noticed until class-load time. A `-` line with a library is the same
+ * class of mistake read from the other side.
  */
-internal fun readPluginContentCandidateOverrides(file: Path): Map<String, Boolean> {
+internal fun readPluginContentCandidateOverrides(file: Path): Map<String, Set<String>?> {
   if (!Files.exists(file)) {
     return emptyMap()
   }
 
-  val result = HashMap<String, Boolean>()
+  val result = HashMap<String, Set<String>?>()
   for (line in Files.readAllLines(file)) {
     val trimmed = line.trim()
     if (trimmed.isEmpty() || trimmed.startsWith('#')) {
@@ -566,17 +724,44 @@ internal fun readPluginContentCandidateOverrides(file: Path): Map<String, Boolea
       '-' -> false
       else -> error("$file: a line must start with `+` (a candidate) or `-` (not a candidate), got `$trimmed`")
     }
-    result.put(trimmed.substring(1), isCandidate)
+    val fields = trimmed.substring(1).split(' ').filter { it.isNotEmpty() }
+    val moduleName = fields.firstOrNull() ?: error("$file: a line must name a module, got `$trimmed`")
+    if (isCandidate) {
+      result.put(moduleName, fields.drop(1).toSet())
+    }
+    else {
+      // The same class of mistake as a line without a sign, and reported the same way: it would silently change how a
+      // module is packed.
+      if (fields.size != 1) {
+        error("$file: a `-` line records no library, got `$trimmed`")
+      }
+      result.put(moduleName, null)
+    }
   }
   return result
 }
 
-/** The module of a first-tranche plugin entry, or `null` when the entry needs JarPackager. */
-internal fun simplePluginContentModuleName(entry: RecipeEntry): String? {
+/**
+ * What a first-tranche plugin entry hands over: the content module, and the module libraries merged into its jar.
+ *
+ * [libraries] is the entry's *record*, not a packing instruction. [computeContentModuleJar] derives the merge from the
+ * JPS model and compares the result against this set, for the reason [ContentModuleJar] states: the record loses a
+ * library's position among the module's order entries, and the identity of an unnamed `module-library`.
+ *
+ * Module libraries only. `ModuleEntry.libraries` is the module libraries the layout merged, and a project library is
+ * recorded at the jar level as `projectLibraries:` - which still vetoes the entry here, because a plugin merges one
+ * only for an `auto` `PluginLayout`, and a `PluginLayout` is exactly what this generator does not evaluate.
+ */
+internal class SimplePluginContentEntry(
+  @JvmField val moduleName: String,
+  @JvmField val libraries: Set<String>,
+)
+
+/** The hand-over of a first-tranche plugin entry, or `null` when the entry needs JarPackager. */
+internal fun simplePluginContentEntry(entry: RecipeEntry): SimplePluginContentEntry? {
   val contentModule = entry.contentModules.singleOrNull() ?: return null
   val moduleName = contentModule.moduleName
   if (entry.name != "lib/modules/$moduleName.jar" ||
-      contentModule.libraries.isNotEmpty() ||
       entry.modules.isNotEmpty() ||
       entry.projectLibraries.isNotEmpty() ||
       entry.library != null ||
@@ -587,12 +772,12 @@ internal fun simplePluginContentModuleName(entry: RecipeEntry): String? {
       entry.libc != null) {
     return null
   }
-  return moduleName
+  return SimplePluginContentEntry(moduleName = moduleName, libraries = contentModule.libraries.keys)
 }
 
 /**
- * Whether `JarPackager` merges the library [jpsLibraryName] declares into the content-module jar owned by
- * [packedModuleName], reproducing `JarPackager.computeSourcesForModuleLibs`.
+ * Whether the **platform** layout merges the library [jpsLibraryName] declares into the content-module jar owned by
+ * [packedModuleName], reproducing `JarPackager.computeSourcesForModuleLibs` for it. See [MergeRules.PLATFORM].
  *
  * Everything the platform path of that function tests is here. What is *not* here is deliberate:
  * `IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST` and `LibraryPackMode` are reachable only for an auto `PluginLayout`, and
@@ -694,18 +879,22 @@ private fun declaresLibrary(module: ModuleDescriptor, jpsLibraryName: String, co
 
 /**
  * The name a content report records a library under: `getLibraryFileName` in the platform - the library's own name, or
- * the file name of its single jar for an unnamed module library.
+ * the file name of its single jar for an unnamed module library. `null` when an unnamed library has no single jar.
  *
  * `intellij.relaxng` is why the unnamed case matters: its two `<orderEntry type="module-library">` entries have no name,
  * so the recipe keys them by jar file name. Deriving the merge from the JPS model needs no name at all, and this is only
  * used to compare the result against the recipe.
+ *
+ * `null` rather than a failure, because the plugin path asks this about every production-scope library of a candidate
+ * module, merged or not, so an unnamed library with two jars anywhere in the project would stop the whole run. A jar
+ * this generator cannot name is a jar it refuses to pack, which is the file's policy everywhere else.
  */
-private fun distributionLibraryName(library: JpsLibrary): String {
+private fun distributionLibraryName(library: JpsLibrary): String? {
   val name = library.name
   if (name.isNotEmpty() && !name.startsWith('#')) {
     return name
   }
-  return library.getPaths(JpsOrderRootType.COMPILED).single().fileName.toString()
+  return library.getPaths(JpsOrderRootType.COMPILED).singleOrNull()?.fileName?.toString()
 }
 
 /** Parses [ModuleDescriptor.contentModuleRecipeFile]; reached only through [ModuleDescriptor.contentModuleRecipe]. */

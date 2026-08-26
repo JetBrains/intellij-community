@@ -135,7 +135,6 @@ exports_files(
 ### auto-generated section `dev content intellij.tasks.core` start
 dev_dist_plugin_content(
     content_modules = [
-        "//libraries/xml-rpc",
         "//plugins/tasks/tasks-api:tasks",
         "//plugins/tasks/tasks-compatibility:compatibility",
         "//plugins/tasks/tasks-core/libraries:tasks-core-libraries-commonsDiscovery",
@@ -143,11 +142,11 @@ dev_dist_plugin_content(
     descriptor_module = ":core",
     libraries = [
         "//plugins/tasks/tasks-core/lib:tasks-core-axis-1-4",
-        "@lib//:libraries-xml-rpc-xml-rpc",
         "@lib//:tasks-compatibility-http-client-3-1",
         "@lib//:tasks-core-libraries-commons_discovery-commons-discovery",
     ],
     prepacked_content_modules = [
+        "//libraries/xml-rpc:xml-rpc_content_module_jar",
         "//plugins/tasks/tasks-core/bugzilla:bugzilla_content_module_jar",
         "//plugins/tasks/tasks-core/jira:jira_content_module_jar",
         "//plugins/tasks/tasks-core/trac:trac_content_module_jar",

@@ -375,7 +375,7 @@ def _collect_prepacked(ctx, plugin_main_module, prepacked_plugin_jars):
     hand the collector the same kind of record, so nothing downstream can tell which side a jar came from.
 
     The path is derived, not declared. A relation is eligible for prepacking only when its content-report entry is
-    exactly `lib/modules/<module>.jar` - `simplePluginContentModuleName` in `contentModuleJar.kt` returns nothing for
+    exactly `lib/modules/<module>.jar` - `simplePluginContentEntry` in `contentModuleJar.kt` returns nothing for
     any other shape - so `modules/<module>.jar` is the only path a prepacked relation can have, and the module name it
     is built from is read off the target one line above. Declaring it as well put 2 030 copies of that one rule into
     checked-in `BUILD.bazel` files, and made a *generated* path the thing that

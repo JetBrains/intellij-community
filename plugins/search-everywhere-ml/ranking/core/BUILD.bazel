@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
     name = "searchEverywhereMl-ranking-core-tests_test",
@@ -67,6 +68,19 @@ jvm_library(
         "//platform/searchEverywhere/frontend",
         "//platform/util:util-ui",
     ],
+)
+
+content_module_jar(
+    libraries = [
+        # do not sort,
+        "@lib//:search_everywhere_ml-ranking-core-find-action-model",
+        "@lib//:search_everywhere_ml-ranking-core-find-action-model-experimental",
+        "@lib//:search_everywhere_ml-ranking-core-find-file-model",
+        "@lib//:search_everywhere_ml-ranking-core-find-file-model-experimental",
+        "@lib//:search_everywhere_ml-ranking-core-find-classes-model",
+        "@lib//:search_everywhere_ml-ranking-core-find-classes-model-experimental",
+    ],
+    module = ":core",
 )
 
 jvm_library(

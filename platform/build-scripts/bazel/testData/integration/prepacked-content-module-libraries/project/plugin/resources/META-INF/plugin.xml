@@ -1,0 +1,8 @@
+<!-- BUILD_USING_BAZEL_MARKER -->
+<idea-plugin>
+  <id>my.plugin</id>
+  <content>
+    <module name="intellij.libraries.example"/>
+    <module name="intellij.libraries.refused"/>
+  </content>
+</idea-plugin>

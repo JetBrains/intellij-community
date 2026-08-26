@@ -3,6 +3,8 @@
 # `plugin-content.yaml`, and the JPS-to-Bazel converter folds it over the reports it parses anyway. These are
 # the community modules a community-only checkout would fold differently, because the reports that decide them
 # are in the ultimate half: `+` is a candidate, `-` is not, and the sign is the whole-repo answer either way.
+# A `+` line names the module libraries merged into its jar after the module name, because the fold agrees on
+# that set as well and a community-only checkout cannot see it.
 +intellij.grid.images.impl
 +intellij.grid.json.impl
 -intellij.java.compiler.impl
@@ -16,6 +18,15 @@
 -intellij.kotlin.uast.base
 -intellij.kotlin.uast.idea
 -intellij.kotlin.uast.idea.base
+-intellij.libraries.jsr305
+-intellij.libraries.kotlin.gradle.plugin.idea
+-intellij.libraries.kotlin.gradle.plugin.idea.proto
+-intellij.libraries.kotlin.tooling.core
++intellij.libraries.kryo2 Kryo Objenesis
+-intellij.libraries.mlapi.catboost
+-intellij.libraries.mlapi.core
++intellij.libraries.opentelemetry.exporter.otlp opentelemetry-exporter-otlp-library
+-intellij.libraries.tuweni.toml
 +intellij.notebooks.jupyter.core
 +intellij.notebooks.ui
 +intellij.notebooks.visualization

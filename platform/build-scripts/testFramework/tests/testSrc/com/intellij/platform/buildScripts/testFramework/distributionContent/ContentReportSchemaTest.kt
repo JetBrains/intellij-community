@@ -95,7 +95,7 @@ private val FILE_ENTRY = NarrowSchema(
   narrowName = "RecipeEntry",
   // `os`/`arch`/`libc` are modeled rather than ignored although no checked-in plugin or module report carries one: a
   // report is an OS superset (`collectPluginContentCategoryFailures` unions the per-OS variants), so an entry that did
-  // carry one would be read as unconditional, and `simplePluginContentModuleName` hands only unconditional jars off to
+  // carry one would be read as unconditional, and `simplePluginContentEntry` hands only unconditional jars off to
   // a Bazel target. Declaring them turns that from a silent misread into a veto.
   modeled = setOf("name", "os", "arch", "libc", "modules", "contentModules", "projectLibraries", "library", "module"),
   ignored = mapOf(

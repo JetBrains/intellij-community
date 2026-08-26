@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/content/intellij.libraries.example.iml" filepath="$PROJECT_DIR$/content/intellij.libraries.example.iml" />
+      <module fileurl="file://$PROJECT_DIR$/refused/intellij.libraries.refused.iml" filepath="$PROJECT_DIR$/refused/intellij.libraries.refused.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugin/intellij.example.plugin.iml" filepath="$PROJECT_DIR$/plugin/intellij.example.plugin.iml" />
+    </modules>
+  </component>
+</project>

@@ -84,7 +84,6 @@ dev_dist_plugin_content(
         "//plugins/kotlin/base/compiler-configuration",
         "//plugins/kotlin/base/compiler-configuration-ui:kotlin-base-compilerConfiguration-ui",
         "//plugins/kotlin/base/facet",
-        "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform",
         "//plugins/kotlin/base/indices",
         "//plugins/kotlin/base/jps",
         "//plugins/kotlin/base/kdoc",
@@ -134,7 +133,6 @@ dev_dist_plugin_content(
     libraries = [
         "@lib//:javax-inject",
         "@lib//:jaxb-api",
-        "@lib//:kotlin-analysis-platform-ehcache-sizeof",
         "@lib//:kotlin-metadata",
         "@lib//:kotlinc-allopen-compiler-plugin",
         "@lib//:kotlinc-assignment-compiler-plugin",
@@ -178,6 +176,7 @@ dev_dist_plugin_content(
     prepacked_content_modules = [
         "//plugins/kotlin/base/analysis-api-platform:kotlin-base-analysis-platform_content_module_jar",
         "//plugins/kotlin/base/external-build-system:kotlin-base-externalSystem_content_module_jar",
+        "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform_content_module_jar",
         "//plugins/kotlin/base/fir/code-insight:kotlin-codeInsight-base_content_module_jar",
         "//plugins/kotlin/base/fir/project-structure:project-structure_content_module_jar",
         "//plugins/kotlin/base/fir/scripting:scripting_content_module_jar",

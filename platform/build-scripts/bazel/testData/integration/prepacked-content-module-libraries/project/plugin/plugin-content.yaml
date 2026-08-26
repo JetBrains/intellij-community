@@ -1,0 +1,19 @@
+- name: lib/intellij.example.plugin.jar
+  modules:
+  - name: intellij.example.plugin
+- name: lib/modules/intellij.libraries.example.jar
+  contentModules:
+  - name: intellij.libraries.example
+    libraries:
+      first:
+      - name: first.jar
+      second:
+      - name: second.jar
+      third:
+      - name: third.jar
+- name: lib/modules/intellij.libraries.refused.jar
+  contentModules:
+  - name: intellij.libraries.refused
+    libraries:
+      testonly:
+      - name: testonly.jar

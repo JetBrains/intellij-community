@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.tips` start
 jvm_library(
@@ -60,6 +61,26 @@ jvm_library(
         "//platform/util/concurrency",
         "//platform/project-frame",
     ],
+)
+
+content_module_jar(
+    libraries = [
+        # do not sort,
+        "@lib//:tips-tips-idea-ce",
+        "@lib//:tips-tips-idea",
+        "@lib//:tips-tips-goland",
+        "@lib//:tips-tips-clion",
+        "@lib//:tips-tips-appcode",
+        "@lib//:tips-tips-phpstorm",
+        "@lib//:tips-tips-webstorm",
+        "@lib//:tips-tips-datagrip",
+        "@lib//:tips-tips-database-plugin",
+        "@lib//:tips-tips-big-data-tools",
+        "@lib//:tips-tips-rubymine",
+        "@lib//:tips-tips-pycharm-community",
+        "@lib//:tips-tips-pycharm-pro",
+    ],
+    module = ":tips",
 )
 
 jvm_library(

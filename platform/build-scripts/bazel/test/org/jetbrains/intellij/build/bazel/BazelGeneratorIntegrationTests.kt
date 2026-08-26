@@ -56,6 +56,21 @@ class BazelGeneratorIntegrationTests {
 
   @Test fun ijPluginTarget() = doTest("ij-plugin-target")
 
+  /**
+   * A plugin content module whose jar merges its module libraries, and one whose recipe the model refuses.
+   *
+   * `intellij.libraries.example` declares four module libraries and its recipe records three, so
+   * `content_module_jar` names those three in `orderEntry` order and the plugin declares the module as prepacked
+   * instead of declaring its raw jar and its libraries. The fourth library is TEST-scope: this is the
+   * `intellij.libraries.coil` case in miniature.
+   *
+   * `intellij.libraries.refused` is the other side of the same comparison. Its recipe records the TEST-scope library,
+   * which the production-runtime walk cannot reach, so it keeps no packing target, stays a raw `content_modules`
+   * member, and the plugin keeps declaring its library. That is the scope filter shown as a refusal rather than as a
+   * silently smaller jar.
+   */
+  @Test fun prepackedContentModuleLibraries() = doTest("prepacked-content-module-libraries")
+
   private fun doTest(
     testName: String,
     runWithoutUltimateRoot: Boolean = true,

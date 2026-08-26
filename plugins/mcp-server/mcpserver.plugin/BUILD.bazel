@@ -66,7 +66,6 @@ dev_dist_plugin_content(
         "//libraries/kotlin/logging",
         "//libraries/ktor/server-content-negotiation:libraries-ktor-server-content-negotiation",
         "//libraries/ktor/server-sse:libraries-ktor-server-sse",
-        "//libraries/night-config-toml",
         "//libraries/schema-kenerator",
         "//plugins/mcp-server/mcpserver.stdio",
         "//plugins/mcp-server:mcpserver",
@@ -77,7 +76,6 @@ dev_dist_plugin_content(
         "@lib//:libraries-kotlin-logging-io-github-oshai-kotlin-logging-jvm",
         "@lib//:libraries-ktor-server-content-negotiation-ktor-server-content-negotiation",
         "@lib//:libraries-ktor-server-sse-ktor-server-sse-jvm",
-        "@lib//:libraries-night-config-toml-night-config-toml",
         "@lib//:libraries-schema-kenerator-io-github-smiley4-schema-kenerator-core",
         "@lib//:libraries-schema-kenerator-io-github-smiley4-schema-kenerator-jsonschema",
         "@lib//:libraries-schema-kenerator-io-github-smiley4-schema-kenerator-serialization",
@@ -85,6 +83,7 @@ dev_dist_plugin_content(
         "@lib//:slf4j-jdk14",
     ],
     prepacked_content_modules = [
+        "//libraries/night-config-toml:night-config-toml_content_module_jar",
         "//plugins/mcp-server/mcpserver.frontend:mcpserver.frontend_content_module_jar",
         "//plugins/mcp-server/mcpserver.terminal.frontend:mcpserver.terminal.frontend_content_module_jar",
         "//plugins/mcp-server/mcpserver.terminal:mcpserver.terminal_content_module_jar",

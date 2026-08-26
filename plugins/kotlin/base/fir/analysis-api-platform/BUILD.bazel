@@ -1,6 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.kotlin.analysis.platform` start
 create_kotlinc_options(
@@ -64,6 +65,11 @@ jvm_library(
         "//plugins/kotlin/kotlin.searching",
         "//java/java-psi-impl:psi-impl",
     ],
+)
+
+content_module_jar(
+    libraries = ["@lib//:kotlin-analysis-platform-ehcache-sizeof"],
+    module = ":kotlin-analysis-platform",
 )
 
 jvm_library(

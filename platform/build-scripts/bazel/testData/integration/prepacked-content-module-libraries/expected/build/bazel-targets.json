@@ -1,0 +1,118 @@
+{
+  "modules": {
+    "intellij.example.plugin": {
+      "productionTargets": [
+        "@community//plugin:plugin.jar"
+      ],
+      "productionJars": [
+        "out/bazel-out/jvm-fastbuild/bin/plugin/plugin.jar"
+      ],
+      "testTargets": [
+        "@community//plugin:plugin_test_lib.jar"
+      ],
+      "testJars": [
+        "out/bazel-out/jvm-fastbuild/bin/plugin/plugin_test_lib.jar"
+      ],
+      "exports": [],
+      "moduleLibraries": {}
+    },
+    "intellij.libraries.example": {
+      "productionTargets": [
+        "@community//content:libraries-example.jar"
+      ],
+      "productionJars": [
+        "out/bazel-out/jvm-fastbuild/bin/content/libraries-example.jar"
+      ],
+      "testTargets": [
+        "@community//content:libraries-example_test_lib.jar"
+      ],
+      "testJars": [
+        "out/bazel-out/jvm-fastbuild/bin/content/libraries-example_test_lib.jar"
+      ],
+      "exports": [],
+      "moduleLibraries": {
+        "first": {
+          "target": "//libs:libraries-example-first",
+          "jars": [
+            "execroot/_main/libs/first.jar"
+          ],
+          "jarTargets": [
+            "//libs:first.jar"
+          ],
+          "sourceJars": []
+        },
+        "second": {
+          "target": "//libs:libraries-example-second",
+          "jars": [
+            "execroot/_main/libs/second.jar"
+          ],
+          "jarTargets": [
+            "//libs:second.jar"
+          ],
+          "sourceJars": []
+        },
+        "testonly": {
+          "target": "//libs:libraries-example-testonly",
+          "jars": [
+            "execroot/_main/libs/testonly.jar"
+          ],
+          "jarTargets": [
+            "//libs:testonly.jar"
+          ],
+          "sourceJars": []
+        },
+        "third": {
+          "target": "//libs:libraries-example-third",
+          "jars": [
+            "execroot/_main/libs/third.jar"
+          ],
+          "jarTargets": [
+            "//libs:third.jar"
+          ],
+          "sourceJars": []
+        }
+      },
+      "contentModuleJarTarget": "@community//content:libraries-example_content_module_jar"
+    },
+    "intellij.libraries.refused": {
+      "productionTargets": [
+        "@community//refused:refused.jar"
+      ],
+      "productionJars": [
+        "out/bazel-out/jvm-fastbuild/bin/refused/refused.jar"
+      ],
+      "testTargets": [
+        "@community//refused:refused_test_lib.jar"
+      ],
+      "testJars": [
+        "out/bazel-out/jvm-fastbuild/bin/refused/refused_test_lib.jar"
+      ],
+      "exports": [],
+      "moduleLibraries": {
+        "testonly": {
+          "target": "//libs:libraries-refused-testonly",
+          "jars": [
+            "execroot/_main/libs/testonly.jar"
+          ],
+          "jarTargets": [
+            "//libs:testonly.jar"
+          ],
+          "sourceJars": []
+        }
+      }
+    }
+  },
+  "imlTargets": [
+    "@community//content:intellij.libraries.example.iml",
+    "@community//plugin:intellij.example.plugin.iml",
+    "@community//refused:intellij.libraries.refused.iml"
+  ],
+  "projectLibraries": {},
+  "pluginDistributionTargets": {
+    "intellij.example.plugin": {
+      "target": "@community//plugin:plugin_plugin",
+      "distributionDirectory": "out/bazel-out/jvm-fastbuild/bin/plugin/example-plugin",
+      "contentTarget": "@community//plugin:plugin_dev_content"
+    }
+  }
+}
