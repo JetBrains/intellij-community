@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager.getApplication
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.Change
@@ -33,8 +34,9 @@ import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.util.ui.update.Activatable
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
+import com.intellij.util.ui.update.DebouncedUpdates
+import com.intellij.vcs.VcsDisposable
+import kotlinx.coroutines.Dispatchers
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import java.awt.event.FocusAdapter
@@ -85,8 +87,37 @@ open class TreeHandlerChangesTreeTracker(
   private val isForceKeepCurrentFileWhileFocused = editorViewer is ChangeViewDiffRequestProcessor &&
                                                    editorViewer.forceKeepCurrentFileWhileFocused()
 
-  private val updatePreviewQueue = MergingUpdateQueue("TreeHandlerChangesTreeTracker", 100, true, editorViewer.component, editorViewer.disposable).apply {
-    setRestartTimerOnAdd(true)
+  private val queueScope = VcsDisposable.getInstance(tree.project)
+    .childScope("TreeHandlerChangesTreeTracker", editorViewer.disposable)
+  private val updatePreviewQueue =
+    DebouncedUpdates.forScope<UpdateType>(
+      queueScope,
+      "TreeHandlerChangesTreeTracker",
+      100
+    )
+    .withContext(Dispatchers.EDT)
+    .withComponentModality(editorViewer.component)
+    .restartTimerOnAdd(true)
+    .runBatched { batch -> processUpdateBatch(batch) }
+
+  private fun processUpdateBatch(batch: List<UpdateType>) {
+    if (batch.isEmpty()) return
+
+    val mergedUpdate = mergeUpdates(batch)
+    updatePreview(mergedUpdate)
+  }
+
+  private fun mergeUpdates(updateTypes: List<UpdateType>): UpdateType {
+    if (UpdateType.FULL in updateTypes) return UpdateType.FULL
+
+    if (isCombinedViewer) {
+      if (UpdateType.ON_MODEL_CHANGE in updateTypes) return UpdateType.ON_MODEL_CHANGE
+    }
+    else if (isForceKeepCurrentFileWhileFocused) {
+      if (UpdateType.ON_SELECTION_CHANGE in updateTypes) return UpdateType.ON_SELECTION_CHANGE
+    }
+
+    return updateTypes.last()
   }
 
   init {
@@ -126,11 +157,11 @@ open class TreeHandlerChangesTreeTracker(
       DiffUtil.installShowNotifyListener(editorViewer.component, object : Activatable {
         override fun showNotify() {
           updatePreview(UpdateType.FULL)
-          updatePreviewQueue.cancelAllUpdates()
+          updatePreviewQueue.cancelPending()
         }
 
         override fun hideNotify() {
-          updatePreviewQueue.cancelAllUpdates()
+          updatePreviewQueue.cancelPending()
         }
       })
     }
@@ -140,7 +171,7 @@ open class TreeHandlerChangesTreeTracker(
   }
 
   fun updatePreviewLater(updateType: UpdateType) {
-    updatePreviewQueue.queue(PreviewUpdate(updateType))
+    updatePreviewQueue.queue(updateType)
   }
 
   private fun updatePreview(updateType: UpdateType) {
@@ -178,29 +209,6 @@ open class TreeHandlerChangesTreeTracker(
         editorViewer.clear()
       }
       else -> fail(editorViewer)
-    }
-  }
-
-  private inner class PreviewUpdate(val updateType: UpdateType) : Update(updateType) {
-    override fun run() {
-      updatePreview(updateType)
-    }
-
-    override fun canEat(eatenUpdate: Update): Boolean {
-      if (eatenUpdate !is PreviewUpdate) return false
-      if (updateType == eatenUpdate.updateType) return true
-      if (updateType == UpdateType.FULL) return true
-      if (isCombinedViewer) {
-        return updateType == UpdateType.ON_MODEL_CHANGE &&
-               eatenUpdate.updateType == UpdateType.ON_SELECTION_CHANGE
-      }
-      else if (isForceKeepCurrentFileWhileFocused) {
-        return updateType == UpdateType.ON_SELECTION_CHANGE &&
-               eatenUpdate.updateType == UpdateType.ON_MODEL_CHANGE
-      }
-      else {
-        return true
-      }
     }
   }
 
