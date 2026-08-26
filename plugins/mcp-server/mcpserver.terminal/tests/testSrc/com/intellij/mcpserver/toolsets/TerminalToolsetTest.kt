@@ -4,6 +4,7 @@ package com.intellij.mcpserver.toolsets
 
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.mcpserver.GeneralMcpToolsetTestBase
 import com.intellij.mcpserver.toolsets.terminal.TerminalToolset
 import com.intellij.openapi.wm.ToolWindowManager
@@ -60,6 +61,7 @@ class TerminalToolsetTest : GeneralMcpToolsetTestBase() {
   }
 
   @Test
+  @SystemProperty(TrustedProjects.TRUST_HEADLESS_DISABLED_PROPERTY, "false")
   fun execute_terminal_command_ignores_configured_env_for_untrusted_project() = runBlocking(Dispatchers.Default) {
     TerminalProjectOptionsProvider.getInstance(project).setEnvData(
       EnvironmentVariablesData.create(mapOf("MCP_TEST_ENV_VAR" to "value"), true))
