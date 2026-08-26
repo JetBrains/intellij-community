@@ -13,7 +13,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.messages.Topic
 import java.util.function.BooleanSupplier
-import java.util.function.Consumer
 
 class DocRenderItemManagerImpl : DocRenderItemManager {
   override fun getItemAroundOffset(editor: Editor, offset: Int): DocRenderItem? {
@@ -99,9 +98,7 @@ class DocRenderItemManagerImpl : DocRenderItemManager {
           itemsToUpdateText.add(item.textToRender)
         }
       }
-      editor.foldingModel.runBatchFoldingOperation({
-                                                     foldingTasks.forEach(Consumer { obj: Runnable -> obj.run() })
-                                                   }, true, false)
+      editor.foldingModel.runBatchFoldingOperation({ foldingTasks.forEach(Runnable::run) }, true, false)
       for (i in itemsToUpdateRenderers.indices) {
         itemsToUpdateRenderers[i].textToRender = itemsToUpdateText[i]
       }
@@ -135,9 +132,7 @@ class DocRenderItemManagerImpl : DocRenderItemManager {
           updated = updated or item.toggle(foldingTasks)
         }
       }
-      editor.foldingModel.runBatchFoldingOperation({
-                                                     foldingTasks.forEach(Consumer { obj: Runnable -> obj.run() })
-                                                   }, true, false)
+      editor.foldingModel.runBatchFoldingOperation({ foldingTasks.forEach(Runnable::run) }, true, false)
       updated
     }
   }
