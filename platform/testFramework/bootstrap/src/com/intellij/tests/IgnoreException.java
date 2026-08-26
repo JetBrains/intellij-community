@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tests;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.junit.AssumptionViolatedException;
 import org.opentest4j.TestAbortedException;
 
@@ -21,9 +22,7 @@ public class IgnoreException extends Exception {
       try {
         Method getFailuresMethod = Class.forName(MULTIPLE_FAILURES_ERROR).getDeclaredMethod("getFailures");
         @SuppressWarnings("unchecked") List<Throwable> failures = (List<Throwable>)getFailuresMethod.invoke(throwable);
-        for (Throwable failure : failures) {
-          if (isIgnoringThrowable(failure)) return true;
-        }
+        return ContainerUtil.and(failures, IgnoreException::isIgnoringThrowable);
       }
       catch (Throwable e) {
         return false;
