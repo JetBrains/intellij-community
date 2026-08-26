@@ -227,6 +227,16 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
     }
 
   /**
+   * Stops [lspClient] and starts a new client with the same descriptor.
+   * The restart must not depend on the open-editors scan of [startIfNeeded]: the scan skips library files,
+   * so it revives no server when only a library editor tab remains open.
+   */
+  internal fun restartClient(lspClient: LspClientImpl) {
+    stopRunningServer(lspClient)
+    ensureStarted(lspClient.providerClass, lspClient.descriptor)
+  }
+
+  /**
    * Called when the IDE detects that the server stopped working, for example,
    * the server process has terminated or the socket connection has been lost.
    * 1. This might be expected because the server has recently been stopped by calling [stopRunningServer].

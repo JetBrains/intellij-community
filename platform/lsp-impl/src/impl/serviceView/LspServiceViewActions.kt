@@ -31,9 +31,7 @@ private class RestartLspClientServiceAction :
 
   override fun actionPerformed(e: AnActionEvent) {
     val lspClient = e.getData(LSP_CLIENT_DATA_KEY) as? LspClientImpl ?: return
-    val manager = LspClientManagerImpl.getInstanceImpl(lspClient.project)
-    manager.stopRunningServer(lspClient)
-    manager.startClientsIfNeeded(lspClient.providerClass)
+    LspClientManagerImpl.getInstanceImpl(lspClient.project).restartClient(lspClient)
   }
 }
 

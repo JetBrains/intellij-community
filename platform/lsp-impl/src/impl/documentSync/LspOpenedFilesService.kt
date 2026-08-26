@@ -31,7 +31,8 @@ internal class LspOpenedFilesService(private val project: Project) {
     fun getInstance(project: Project): LspOpenedFilesService = project.service()
   }
 
-  private val openedFilesToHandle: MutableSet<VirtualFile> = Collections.synchronizedSet(HashSet())
+  // linked sets keep the report order, so a batch processes the files in a predictable order
+  private val openedFilesToHandle: MutableSet<VirtualFile> = Collections.synchronizedSet(LinkedHashSet())
   private val openFilesCoalesceObject = Any()
   private val closeFilesCoalesceObject = Any()
 
@@ -52,7 +53,7 @@ internal class LspOpenedFilesService(private val project: Project) {
 
   private fun scheduleOpenedFilesProcessing() {
     class OpenedFilesData {
-      val handledFiles: MutableSet<VirtualFile> = HashSet()
+      val handledFiles: MutableSet<VirtualFile> = LinkedHashSet()
       val clientsToSendDidOpen: MultiMap<LspClientImpl, VirtualFile> = MultiMap()
       val newClientsToStart: MutableCollection<Pair<Class<out LspIntegrationProvider>, LspClientDescriptor>> = mutableListOf()
     }
@@ -68,9 +69,9 @@ internal class LspOpenedFilesService(private val project: Project) {
       for (provider in LspIntegrationProvider.getAllExtensions()) {
         val providerClass: Class<out LspIntegrationProvider> = provider.javaClass
         val clientsForProvider = manager.getClients(providerClass)
-        var fileWithinServerRootsAndSupported = false
 
         for (openedFile in data.handledFiles) {
+          var fileWithinServerRootsAndSupported = false
           for (lspClient in clientsForProvider) {
             ProgressManager.checkCanceled()
             if (lspClient.descriptor.roots.any { VfsUtilCore.isAncestor(it, openedFile, true) } && lspClient.isSupportedFile(openedFile)) {

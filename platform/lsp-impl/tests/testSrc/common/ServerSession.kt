@@ -16,6 +16,11 @@ internal suspend fun CoroutineScope.configureServerSession(
   file: VirtualFile,
 ): ServerSession {
   awaitFileOpenedByLspServer(project, file)
+  return currentServerSession(project)
+}
+
+/** The session of the already started fake server. Use when no local file open can settle the start. */
+internal fun CoroutineScope.currentServerSession(project: Project): ServerSession {
   val servers = LspServerManager.getInstance(project).getServersForProvider(FakeLspServerSupportProvider::class.java)
   val descriptor = servers.first().descriptor as FakeLspServerDescriptor
   return ServerSessionImpl(descriptor, this)

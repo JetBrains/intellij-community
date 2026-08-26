@@ -34,9 +34,7 @@ internal class LspWidgetInternalServiceImpl : LspWidgetInternalService() {
   override fun restartLspClient(lspClient: LspClient) {
     LanguageServiceWidgetUsagesCollector
       .actionInvoked(lspClient.project, LanguageServiceWidgetActionKind.RestartService, lspClient.descriptor.javaClass)
-    val manager = LspClientManagerImpl.getInstanceImpl(lspClient.project)
-    manager.stopRunningServer(lspClient as LspClientImpl)
-    manager.startClientsIfNeeded(lspClient.providerClass)
+    LspClientManagerImpl.getInstanceImpl(lspClient.project).restartClient(lspClient as LspClientImpl)
 
     val title = LangBundle.message("language.services.0.server.restarted.notification.title", lspClient.descriptor.presentableName)
     NotificationGroupManager.getInstance()
