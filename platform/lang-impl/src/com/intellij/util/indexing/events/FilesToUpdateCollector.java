@@ -127,6 +127,13 @@ public class FilesToUpdateCollector {
     return myDirtyFiles;
   }
 
+  /** Returns both request version boundaries from one collector state. */
+  public @NotNull CursorsRange rangeOfVersions() {
+    synchronized (requestsLock) {
+      return new CursorsRange(projectCursors.minimumCursor(), publishedVersion);
+    }
+  }
+
   public void removeScheduledFileFromUpdate(@NotNull VirtualFile file) {
     int fileId = FileBasedIndex.getFileId(file);
     VersionedRequest alreadyScheduledRequest = myFilesToUpdate.get(fileId);
@@ -354,6 +361,10 @@ public class FilesToUpdateCollector {
              "requestsCount=" + requests.size() + ", " +
              "droppedRequests(<=" + droppedRequestsBeforeVersion + ")=" + droppedRequestsCount + ']';
     }
+  }
+
+  /** Contains cursor values captured under one collector lock acquisition. */
+  public record CursorsRange(@NotNull OptionalLong minimumCursor, long publishedVersion) {
   }
 
   /** Preserves the collector's live read-only values view while keeping versions private. */

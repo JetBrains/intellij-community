@@ -122,6 +122,34 @@ internal class FilesToUpdateCollectorTest {
     }
   }
 
+  /** Ensures the range reports one consistent cursor and publication state. */
+  @Test
+  fun `cursor range reports current boundaries`() {
+    val collector = FilesToUpdateCollector()
+    val firstProject = mock<Project>()
+    val secondProject = mock<Project>()
+    collector.registerProject(firstProject)
+    collector.registerProject(secondProject)
+    val request = FileIndexingRequest.deleteRequest(TestVirtualFile("first.txt", 1))
+    collector.scheduleForUpdate(request, emptySet(), emptyList())
+
+    assertTrue(collector.rangeOfVersions().minimumCursor().isEmpty,
+               "An uninitialized project must prevent a minimum cursor")
+    assertEquals(1, collector.rangeOfVersions().publishedVersion(),
+                 "The first request must advance the publication version")
+
+    collector.advanceWithoutProcessing(firstProject, collector.requestsFor(firstProject, true))
+    collector.advanceWithoutProcessing(secondProject, collector.requestsFor(secondProject, true))
+    val initializedRange = collector.rangeOfVersions()
+    assertEquals(1, initializedRange.minimumCursor().asLong, "The range must report the slowest project cursor")
+    assertEquals(1, initializedRange.publishedVersion(), "Cursor advancement must preserve the publication version")
+
+    collector.scheduleForUpdate(FileIndexingRequest.deleteRequest(TestVirtualFile("second.txt", 2)), emptySet(), emptyList())
+    val advancedRange = collector.rangeOfVersions()
+    assertEquals(1, advancedRange.minimumCursor().asLong, "A new request must not advance a project cursor")
+    assertEquals(2, advancedRange.publishedVersion(), "A new request must advance the publication version")
+  }
+
   /** Ensures identity distinguishes equal request instances published for successive generations. */
   @Test
   fun `old request instance does not remove rescheduled request`() {
@@ -371,6 +399,52 @@ internal class FilesToUpdateCollectorTest {
       val snapshot = snapshotFuture.get(10, TimeUnit.SECONDS)
       assertEquals(1, snapshot.readUpToVersion(), "The completed snapshot must include the published boundary")
       assertEquals(listOf(request), snapshot.requests(), "The completed snapshot must include the request published at its boundary")
+    }
+    finally {
+      allowDirtyUpdate.countDown()
+      executor.shutdownNow()
+    }
+  }
+
+  /** Ensures cursor metrics cannot observe an incomplete request publication. */
+  @Test
+  fun `cursor range waits for request publication boundary`() {
+    val collector = FilesToUpdateCollector()
+    val project = mock<Project>()
+    collector.registerProject(project)
+    collector.advanceWithoutProcessing(project, collector.requestsFor(project, true))
+    val request = FileIndexingRequest.deleteRequest(TestVirtualFile("file.txt", 1))
+    val dirtyUpdateStarted = CountDownLatch(1)
+    val allowDirtyUpdate = CountDownLatch(1)
+    val blockingProjects = object : AbstractCollection<Project>() {
+      override val size: Int = 0
+
+      override fun iterator(): Iterator<Project> {
+        dirtyUpdateStarted.countDown()
+        assertTrue(allowDirtyUpdate.await(10, TimeUnit.SECONDS), "The test must release the blocked publication")
+        return emptyList<Project>().iterator()
+      }
+    }
+    val executor = Executors.newFixedThreadPool(2)
+
+    try {
+      val scheduleFuture = executor.submit {
+        collector.scheduleForUpdate(request, emptySet(), blockingProjects)
+      }
+      assertTrue(dirtyUpdateStarted.await(10, TimeUnit.SECONDS), "Scheduling must reach the dirty metadata update")
+
+      val rangeFuture = executor.submit<FilesToUpdateCollector.CursorsRange> {
+        collector.rangeOfVersions()
+      }
+      assertThrows<TimeoutException>("The cursor range must not expose an incomplete publication") {
+        rangeFuture.get(100, TimeUnit.MILLISECONDS)
+      }
+
+      allowDirtyUpdate.countDown()
+      scheduleFuture.get(10, TimeUnit.SECONDS)
+      val range = rangeFuture.get(10, TimeUnit.SECONDS)
+      assertEquals(0, range.minimumCursor().asLong, "The range must contain the cursor from the completed state")
+      assertEquals(1, range.publishedVersion(), "The range must contain the completed publication boundary")
     }
     finally {
       allowDirtyUpdate.countDown()

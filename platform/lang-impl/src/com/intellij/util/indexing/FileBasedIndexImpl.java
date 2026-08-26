@@ -55,6 +55,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.AsyncEventSupport;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -113,6 +114,9 @@ import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.SimpleMessageBusConnection;
+import io.opentelemetry.api.metrics.BatchCallback;
+import io.opentelemetry.api.metrics.Meter;
+import io.opentelemetry.api.metrics.ObservableLongMeasurement;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import kotlin.Unit;
@@ -153,6 +157,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.concurrency.ConcurrentCollectionFactory.createConcurrentSet;
+import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Indexes;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.containers.ContainerUtil.createLockFreeCopyOnWriteList;
 import static com.intellij.util.indexing.FileBasedIndexDataInitialization.readAllProjectDirtyFilesQueues;
@@ -214,6 +219,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private volatile SmartFMap<Document, PsiFile> myTransactionMap = SmartFMap.emptyMap();
 
   final boolean myIsUnitTestMode;
+  private final @Nullable IndexingRequestsToOTelMetricsReporter myIndexingRequestsToOTelMetricsReporter;
 
   private @Nullable Runnable myShutDownTask;
   private @Nullable AutoCloseable myFlushingTask;
@@ -268,6 +274,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     myFileDocumentManager = FileDocumentManager.getInstance();
     myIsUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+    myIndexingRequestsToOTelMetricsReporter = myIsUnitTestMode
+                                               ? null
+                                               : new IndexingRequestsToOTelMetricsReporter(myFilesToUpdateCollector);
 
     MessageBus messageBus = ApplicationManager.getApplication().getMessageBus();
     SimpleMessageBusConnection connection = messageBus.simpleConnect();
@@ -736,6 +745,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   void performShutdown(boolean keepConnection, @NotNull String reason) {
     myShutdownReason = keepConnection ? reason : null;
+    if (myIndexingRequestsToOTelMetricsReporter != null) {
+      myIndexingRequestsToOTelMetricsReporter.close();
+    }
     RegisteredIndexes registeredIndexes = myRegisteredIndexes;
     if (registeredIndexes == null || !registeredIndexes.performShutdown()) {
       return; // already shut down
@@ -2406,6 +2418,38 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   private static volatile ApplicationMode ourWritingIndexValuesSeparatedFromCounting;
+
+  /** Reports the current pending request boundaries for indexing diagnostics. */
+  private static final class IndexingRequestsToOTelMetricsReporter implements AutoCloseable {
+    private final FilesToUpdateCollector filesToUpdateCollector;
+    private final ObservableLongMeasurement minimumCursorGauge;
+    private final ObservableLongMeasurement publishedVersionGauge;
+    private final BatchCallback batchCallbackHandle;
+
+    private IndexingRequestsToOTelMetricsReporter(@NotNull FilesToUpdateCollector filesToUpdateCollector) {
+      this.filesToUpdateCollector = filesToUpdateCollector;
+
+      Meter meter = TelemetryManager.getInstance().getMeter(Indexes);
+      minimumCursorGauge = meter.gaugeBuilder("Indexing.pendingRequests.minimumVisitedVersion").ofLongs().buildObserver();
+      publishedVersionGauge = meter.gaugeBuilder("Indexing.pendingRequests.publishedVersion").ofLongs().buildObserver();
+      batchCallbackHandle = meter.batchCallback(
+        this::reportMetrics,
+        minimumCursorGauge,
+        publishedVersionGauge
+      );
+    }
+
+    private void reportMetrics() {
+      FilesToUpdateCollector.CursorsRange range = filesToUpdateCollector.rangeOfVersions();
+      range.minimumCursor().ifPresent(minimumCursorGauge::record);
+      publishedVersionGauge.record(range.publishedVersion());
+    }
+
+    @Override
+    public void close() {
+      batchCallbackHandle.close();
+    }
+  }
 
   // ==== Flushers implementations: =====
 
