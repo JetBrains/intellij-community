@@ -353,7 +353,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
 
   @Override
   public HtmlChunk visitPyTypedDictType(@NotNull PyTypedDictType typedDictType) {
-    List<PyType> typeArguments = typedDictType.getSubstitutedTypeArguments();
+    List<PyType> typeArguments = typedDictType.getTypeArguments();
     if (typeArguments.isEmpty()) {
       return visitPyClassLikeType(typedDictType);
     }

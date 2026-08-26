@@ -154,7 +154,7 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
 
   /** Clones the arguments a TypedDict already has. Substitution overrides this to parameterize a generic one. */
   protected @NotNull List<PyType> cloneTypedDictTypeArguments(@NotNull PyTypedDictType typedDictType) {
-    return cloneTypeArguments(typedDictType.getSubstitutedTypeArguments());
+    return cloneTypeArguments(typedDictType.getTypeArguments());
   }
 
   private @NotNull PyTypedDictType.FieldTypeAndTotality cloneExtraItems(@NotNull PyTypedDictType typedDictType) {

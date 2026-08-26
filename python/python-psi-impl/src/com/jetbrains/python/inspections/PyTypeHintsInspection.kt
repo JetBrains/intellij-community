@@ -1387,11 +1387,10 @@ class PyTypeHintsInspection : PyInspection() {
       }
     }
 
-    /** `Base[int]` as well as an alias standing for it. A TypedDict keeps its arguments apart from the inherited ones. */
+    /** `Base[int]` as well as an alias standing for it. */
     private fun isParameterizedBase(expression: PyExpression): Boolean {
       val type = Ref.deref(PyTypingTypeProvider.getType(expression, myTypeEvalContext))
-      return if (type is PyTypedDictType) type.substitutedTypeArguments.isNotEmpty()
-      else type is PyClassType && type.isParameterized
+      return type is PyClassType && type.isParameterized
     }
 
     private fun checkGenericClassParameterization(node: PySubscriptionExpression, declaration: PyClass) {

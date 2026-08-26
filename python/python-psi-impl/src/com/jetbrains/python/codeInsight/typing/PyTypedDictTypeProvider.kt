@@ -354,7 +354,7 @@ private fun specializeTypedDictAncestors(
   for (expression in PyTypingTypeProvider.getSuperClassExpressions(cls)) {
     if (expression !is PySubscriptionExpression) continue
     val baseType = Ref.deref(PyTypingTypeProvider.getType(expression, context)) as? PyTypedDictType ?: continue
-    if (baseType.substitutedTypeArguments.isEmpty()) continue
+    if (!baseType.isParameterized) continue
     val baseClass = baseType.declarationElement as? PyClass ?: continue
     specializedBases[baseClass] = baseType
   }

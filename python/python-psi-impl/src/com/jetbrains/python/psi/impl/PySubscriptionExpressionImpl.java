@@ -101,7 +101,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
   private @NotNull PyType parameterizeTypedDictDeclaration(@NotNull PyTypedDictType declarationType,
                                                            @NotNull TypeEvalContext context) {
     final PyType parameterizedType = Ref.deref(PyTypingTypeProvider.getType(this, context));
-    if (parameterizedType instanceof PyTypedDictType typedDictType && !typedDictType.getSubstitutedTypeArguments().isEmpty()) {
+    if (parameterizedType instanceof PyTypedDictType typedDictType && typedDictType.isParameterized()) {
       return typedDictType.toClass();
     }
     return declarationType;
