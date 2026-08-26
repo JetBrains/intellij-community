@@ -69,10 +69,25 @@ public abstract class JavaIntroduceVariableModCommandService {
    * @param familyName the {@link ModCommandAction#getFamilyName()} of the chooser entries, their own text if
    *                   {@code null}
    */
+  public final @NotNull ModCommand introduceVariableCommand(@NotNull ActionContext context,
+                                                            @NotNull IntroduceSite site,
+                                                            @NotNull ToVariableContext analysis,
+                                                            @Nls @Nullable String familyName) {
+    return introduceVariableCommand(context, site, analysis, familyName, null);
+  }
+
+  /**
+   * The same command as {@link #introduceVariableCommand(ActionContext, IntroduceSite, ToVariableContext, String)},
+   * but with an explicit type for the new variable.
+   *
+   * @param declaredTypeFqn the qualified name of the type to declare the variable with, {@code null} to keep the type
+   *                        of the expression
+   */
   public abstract @NotNull ModCommand introduceVariableCommand(@NotNull ActionContext context,
-                                                      @NotNull IntroduceSite site,
-                                                      @NotNull ToVariableContext analysis,
-                                                      @Nls @Nullable String familyName);
+                                                               @NotNull IntroduceSite site,
+                                                               @NotNull ToVariableContext analysis,
+                                                               @Nls @Nullable String familyName,
+                                                               @Nullable String declaredTypeFqn);
 
   /** What a command does when nothing can be extracted: tells the user why, or nothing at all if there is nothing to tell. */
   protected static @NotNull ModCommand errorCommand(@NotNull ToVariableContext analysis) {

@@ -1,8 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.codeInsight.completion.CompletionInitializationContext;
-import com.intellij.codeInsight.completion.JavaCompletionContributor;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateEditor;
@@ -11,24 +9,19 @@ import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixT
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateEditor;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateExpressionCondition;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.JavaCodeFragmentFactory;
 import com.intellij.psi.PsiCodeFragment;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiCodeFragmentImpl;
 import com.intellij.psi.impl.source.PsiExpressionCodeFragmentImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -43,7 +36,7 @@ import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplat
 import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils.readExternalTopmostAttribute;
 
 
-public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
+public class JavaPostfixTemplateProvider extends BaseJavaPostfixTemplateProvider {
   private static final @NonNls String LANGUAGE_LEVEL_ATTR = "language-level";
   
   private final Set<PostfixTemplate> myBuiltinTemplates = ContainerUtil.newHashSet(
@@ -111,26 +104,6 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
   }
 
   @Override
-  public boolean isTerminalSymbol(char currentChar) {
-    return currentChar == '.' || currentChar == '!';
-  }
-
-  @Override
-  public void preExpand(final @NotNull PsiFile file, final @NotNull Editor editor) {
-    ThreadingAssertions.assertEventDispatchThread();
-    if (isSemicolonNeeded(file, editor)) {
-      ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().runUndoTransparentAction(() -> {
-        EditorModificationUtil.insertStringAtCaret(editor, ";", false, false);
-        PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
-      }));
-    }
-  }
-
-  @Override
-  public void afterExpand(final @NotNull PsiFile file, final @NotNull Editor editor) {
-  }
-
-  @Override
   public @NotNull PsiFile preCheck(@NotNull PsiFile copyFile, final @NotNull Editor realEditor, final int currentOffset) {
     Document document = copyFile.getFileDocument();
     PsiFile originalFile = copyFile.getOriginalFile();
@@ -156,28 +129,7 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
       }
       copyFile = copyFragmentFile;
     }
-    CharSequence sequence = document.getCharsSequence();
-    StringBuilder fileContentWithSemicolon = new StringBuilder(sequence);
-    if (isSemicolonNeeded(copyFile, realEditor)) {
-      fileContentWithSemicolon.insert(currentOffset, ';');
-      return PostfixLiveTemplate.copyFile(copyFile, fileContentWithSemicolon);
-    }
-
-    return copyFile;
-  }
-
-  @Override
-  public void prepareCopyForModCommand(@NotNull PsiFile copyFile, int currentOffset) {
-    Document document = copyFile.getFileDocument();
-    if (JavaCompletionContributor.semicolonNeeded(copyFile, currentOffset)) {
-      document.insertString(currentOffset, ";");
-      PsiDocumentManager.getInstance(copyFile.getProject()).commitDocument(document);
-    }
-  }
-
-  private static boolean isSemicolonNeeded(@NotNull PsiFile file, @NotNull Editor editor) {
-    int startOffset = CompletionInitializationContext.calcStartOffset(editor.getCaretModel().getCurrentCaret());
-    return JavaCompletionContributor.semicolonNeeded(file, startOffset);
+    return copyWithSemicolon(copyFile, realEditor, currentOffset);
   }
 
   @Override

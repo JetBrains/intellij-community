@@ -20,6 +20,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.IntroduceSite;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -27,18 +28,20 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 /**
- * Where the {@code field} and {@code var} postfix templates introduce a field or a variable: the template key has to be
- * removed from the copy of the file before the refactoring runs on it, and the expression to extract is the one the
- * template already found in a copy prepared the same way. Holding {@code virtualExpr}, which lives in that analysis
- * copy, is deliberate: it is a tree position for {@link PsiTreeUtil#findSameElementInCopy}, and keeps that copy alive.
+ * Where a postfix template introduces a field or a variable: the template key has to be removed from the copy of the
+ * file before the refactoring runs on it, and the expression to extract is the one the template already found in a copy
+ * prepared the same way. The {@code field} and the {@code var} templates use this, and so does the Lombok plugin.
+ * Holding {@code virtualExpr}, which lives in that analysis copy, is deliberate: it is a tree position for
+ * {@link PsiTreeUtil#findSameElementInCopy}, and keeps that copy alive.
  *
  * @param virtualExpr the expression to extract, resolved against the copy the template analysed
  * @param provider    the provider of the expanded template, which may have to pre-process the copy as well
  * @param keyRange    the range of the template key in the original file
  */
-record PostfixIntroduceSite(@NotNull PsiExpression virtualExpr,
-                            @NotNull PostfixTemplateProvider provider,
-                            @NotNull TextRange keyRange) implements IntroduceSite {
+@ApiStatus.Internal
+public record PostfixIntroduceSite(@NotNull PsiExpression virtualExpr,
+                                   @NotNull PostfixTemplateProvider provider,
+                                   @NotNull TextRange keyRange) implements IntroduceSite {
 
   @Override
   public @NotNull ModCommand psiUpdate(@NotNull ActionContext context, @NotNull Consumer<@NotNull ModPsiUpdater> action) {
@@ -61,10 +64,10 @@ record PostfixIntroduceSite(@NotNull PsiExpression virtualExpr,
    * extract. They are resolved against a copy prepared the same way {@link #locate} prepares the copy the refactoring
    * runs on, so that an expression found here can be found there again.
    */
-  static @NotNull List<@NotNull PsiExpression> selectExpressions(@NotNull ActionContext context,
-                                                                 @NotNull PostfixTemplateProvider provider,
-                                                                 @NotNull TextRange keyRange,
-                                                                 @NotNull PostfixTemplateExpressionSelector selector) {
+  public static @NotNull List<@NotNull PsiExpression> selectExpressions(@NotNull ActionContext context,
+                                                                        @NotNull PostfixTemplateProvider provider,
+                                                                        @NotNull TextRange keyRange,
+                                                                        @NotNull PostfixTemplateExpressionSelector selector) {
     Project project = context.project();
     return PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(() -> {
       PsiFile copyFile = (PsiFile)context.file().copy();
@@ -87,10 +90,11 @@ record PostfixIntroduceSite(@NotNull PsiExpression virtualExpr,
    * @param selector   the selector which found them, whose renderer names the chooser entries
    * @param command    what extracting a picked expression does, on the context of the round it is picked in
    */
-  static @NotNull ModCommand chooseExpression(@NotNull ActionContext context,
-                                              @NotNull List<@NotNull PsiExpression> candidates,
-                                              @NotNull PostfixTemplateExpressionSelector selector,
-                                              @NotNull BiFunction<? super @NotNull ActionContext, ? super @NotNull PsiExpression, @NotNull ModCommand> command) {
+  public static @NotNull ModCommand chooseExpression(
+    @NotNull ActionContext context,
+    @NotNull List<@NotNull PsiExpression> candidates,
+    @NotNull PostfixTemplateExpressionSelector selector,
+    @NotNull BiFunction<? super @NotNull ActionContext, ? super @NotNull PsiExpression, @NotNull ModCommand> command) {
     if (candidates.isEmpty()) return ModCommand.nop();
     if (candidates.size() == 1) return command.apply(context, candidates.getFirst());
 

@@ -62,32 +62,38 @@ public final class JavaIntroduceVariableModCommandServiceImpl extends JavaIntrod
   public @NotNull ModCommand introduceVariableCommand(@NotNull ActionContext context,
                                                       @NotNull IntroduceSite site,
                                                       @NotNull ToVariableContext analysis,
-                                                      @Nls @Nullable String familyName) {
+                                                      @Nls @Nullable String familyName,
+                                                      @Nullable String declaredTypeFqn) {
     if (!(analysis instanceof ToVariableContext.Available(@Nls String title, List<OccurrenceChoice> choices))) {
       return errorCommand(analysis);
     }
     if (choices.size() == 1) {
-      return introduceVariableCommand(context, site, choices.getFirst().index());
+      return introduceVariableCommand(context, site, choices.getFirst().index(), declaredTypeFqn);
     }
     //noinspection DialogTitleCapitalization
     return ModCommand.chooseAction(
       title != null ? title : RefactoringBundle.message("replace.multiple.occurrences.found"),
       ContainerUtil.map(choices, choice -> ModCommandAction
-        .of(choice.description(), familyName, pickedContext -> introduceVariableCommand(pickedContext, site, choice.index()))
+        .of(choice.description(), familyName,
+            pickedContext -> introduceVariableCommand(pickedContext, site, choice.index(), declaredTypeFqn))
         .withPresentation(presentation -> presentation.withHighlighting(choice.occurrences().toArray(TextRange.EMPTY_ARRAY)))));
   }
 
   /**
    * A command introducing a variable at {@code site} replacing the occurrences of the choice at {@code choiceIndex} of
    * {@link ToVariableContext.Available#choices()}, and starting an inline rename of it afterwards.
+   *
+   * @param declaredTypeFqn the qualified name of the type to declare the variable with, {@code null} to keep the type
+   *                        of the expression
    */
   private static @NotNull ModCommand introduceVariableCommand(@NotNull ActionContext context,
                                                               @NotNull IntroduceSite site,
-                                                              int choiceIndex) {
+                                                              int choiceIndex,
+                                                              @Nullable String declaredTypeFqn) {
     Consumer<@NotNull ModPsiUpdater> action = updater -> {
       PsiExpression expression = site.locate(updater);
       if (expression == null) return;
-      PsiVariable variable = introduceVariable(expression, choiceIndex);
+      PsiVariable variable = introduceVariable(expression, choiceIndex, declaredTypeFqn);
       if (variable == null) return;
       updater.rename(variable, new VariableNameGenerator(variable, VariableKind.LOCAL_VARIABLE)
         .byExpression(variable.getInitializer())
@@ -101,9 +107,13 @@ public final class JavaIntroduceVariableModCommandServiceImpl extends JavaIntrod
    * Introduces a variable for {@code expression}, replacing the occurrences of the choice at {@code choiceIndex} of
    * {@link ToVariableContext.Available#choices()}.
    *
+   * @param declaredTypeFqn the qualified name of the type to declare the variable with, {@code null} to keep the type
+   *                        of the expression
    * @return the created variable, or {@code null} if the refactoring cannot be performed
    */
-  private static @Nullable PsiVariable introduceVariable(@NotNull PsiExpression expression, int choiceIndex) {
+  private static @Nullable PsiVariable introduceVariable(@NotNull PsiExpression expression,
+                                                         int choiceIndex,
+                                                         @Nullable String declaredTypeFqn) {
     Project project = expression.getProject();
     IntroduceVariableResult result = IntroduceVariableBase.getIntroduceVariableContext(project, expression, null);
     if (!(result instanceof IntroduceVariableResult.Context context)) return null;
@@ -121,7 +131,8 @@ public final class JavaIntroduceVariableModCommandServiceImpl extends JavaIntrod
       ElementToWorkOn.REPLACE_NON_PHYSICAL.set(anchor, true);
       Arrays.stream(occurrences).forEach(occurrence -> ElementToWorkOn.REPLACE_NON_PHYSICAL.set(occurrence, true));
     }
-    IntroduceVariableSettings settings = IntroduceVariableBase.headlessSettings(context, choice, anchor, occurrences);
+    IntroduceVariableSettings settings =
+      IntroduceVariableBase.headlessSettings(context, choice, anchor, occurrences, declaredTypeFqn);
     // Extracts without a write action of its own, as the file being modified is already under one.
     return VariableExtractor.introduceInReadAction(project, context.expression(), anchor, occurrences, settings);
   }
