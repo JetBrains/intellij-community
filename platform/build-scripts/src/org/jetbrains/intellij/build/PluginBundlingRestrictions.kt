@@ -5,7 +5,6 @@ import com.dynatrace.hash4j.hashing.HashFunnel
 import com.dynatrace.hash4j.hashing.HashSink
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
-import org.jetbrains.intellij.build.PluginBundlingRestrictions.Companion.NONE
 import java.util.Objects
 
 /**
@@ -31,7 +30,7 @@ class PluginBundlingRestrictions(
    * See [PluginDistribution]
    */
   @JvmField
-  var includeInDistribution: PluginDistribution = PluginDistribution.ALL
+  var includeInDistribution: PluginDistribution = PluginDistribution.ALL,
 ) {
   companion object {
     @JvmField
@@ -51,19 +50,23 @@ class PluginBundlingRestrictions(
     /**
      * Change this value if the plugin works on some OS only and therefore don't need to be bundled with distributions for other OS.
      */
+    @JvmField
     var supportedOs: PersistentList<OsFamily> = OsFamily.ALL
 
     /**
      * Change this value if the plugin works on some architectures only and
      * therefore don't need to be bundled with distributions for other architectures.
      */
+    @JvmField
     var supportedArch: List<JvmArchitecture> = JvmArchitecture.ALL
 
     /**
      * See [PluginDistribution]
      */
+    @JvmField
     var includeInDistribution: PluginDistribution = PluginDistribution.ALL
 
+    @JvmField
     var marketplace: Boolean = false
 
     internal fun build(): PluginBundlingRestrictions {
@@ -92,16 +95,25 @@ class PluginBundlingRestrictions(
     digest.put(includeInDistribution, EnumHashFunnel)
   }
 
-  override fun toString(): String =
-    if (this === MARKETPLACE) "marketplace"
-    else if (this == NONE) "unrestricted"
-    else "os: ${if (supportedOs == OsFamily.ALL) "unrestricted" else supportedOs.joinToString(",")}, " +
-         "arch: ${if (supportedArch == JvmArchitecture.ALL) "unrestricted" else supportedArch.joinToString(",")}, " +
-         "includeInDistribution=$includeInDistribution)"
+  override fun toString(): String {
+    return when {
+      this === MARKETPLACE -> {
+        "marketplace"
+      }
+      else -> if (this == NONE) {
+        "unrestricted"
+      }
+      else {
+        "os: ${if (supportedOs == OsFamily.ALL) "unrestricted" else supportedOs.joinToString(",")}, " +
+        "arch: ${if (supportedArch == JvmArchitecture.ALL) "unrestricted" else supportedArch.joinToString(",")}, " +
+        "includeInDistribution=$includeInDistribution"
+      }
+    }
+  }
 
-  override fun hashCode(): Int =
-    if (this === MARKETPLACE) -1
-    else Objects.hash(supportedOs, supportedArch, includeInDistribution)
+  override fun hashCode(): Int {
+    return if (this === MARKETPLACE) -1 else Objects.hash(supportedOs, supportedArch, includeInDistribution)
+  }
 
   @Suppress("RedundantIf")
   override fun equals(other: Any?): Boolean {
