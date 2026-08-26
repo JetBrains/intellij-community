@@ -9,6 +9,7 @@ import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.impl.wsl.WslConstants
+import com.intellij.testFramework.TrustedProjectsTestUtil
 import com.intellij.testFramework.common.withEnvVars
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.utils.io.deleteRecursively
@@ -206,20 +207,21 @@ internal class LocalOptionsConfigurerTest : BasePlatformTestCase() {
   fun testUserDefinedEnvsNotPassedForUntrustedProject() {
     setDefaultStartingDirectory(tempDirectory.pathString)
     setEnvDataForTest(EnvironmentVariablesData.create(mapOf("MY_UNTRUSTED_ENV" to "value"), true))
-
-    TrustedProjects.setProjectTrusted(project, false)
-    try {
-      val actual = LocalOptionsConfigurer.configureStartupOptions(
-        ShellStartupOptions.Builder()
-          .shellCommand(listOf("some-shell"))
-          .build(),
-        project
-      )
-      assertThat(actual.envVariables).doesNotContainKey("MY_UNTRUSTED_ENV")
-    }
-    finally {
-      // the light project is shared between tests, and the explicit trusted state is application-level
-      TrustedProjects.setProjectTrusted(project, true)
+    TrustedProjectsTestUtil.withTrustedProjectsCheckEnabled {
+      TrustedProjects.setProjectTrusted(project, false)
+      try {
+        val actual = LocalOptionsConfigurer.configureStartupOptions(
+          ShellStartupOptions.Builder()
+            .shellCommand(listOf("some-shell"))
+            .build(),
+          project
+        )
+        assertThat(actual.envVariables).doesNotContainKey("MY_UNTRUSTED_ENV")
+      }
+      finally {
+        // the light project is shared between tests, and the explicit trusted state is application-level
+        TrustedProjects.setProjectTrusted(project, true)
+      }
     }
   }
 
