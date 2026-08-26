@@ -122,8 +122,22 @@ private const val VERSION_RESERVE_SAMPLE = "0.00.00rc0"
 /** Gap between a section header's caption and the rule that runs on from it. */
 private const val SEPARATOR_RULE_GAP = 6
 
+/**
+ * Space (unscaled px) above a section header, so the rows under it read as a block rather than as one running list.
+ *
+ * Only the caption-then-rule look takes it, and only below the top row. A header at the top of a popup has nothing to be
+ * separated from, and a plain header brings the platform's own allowance for the full-width rule it draws above itself.
+ */
+private const val SEPARATOR_TOP_GAP = 6
+
 /** Gap between the footer strip's caption and its chevron. */
 private const val FOOTER_ICON_GAP = 2
+
+/** The platform's own gap (unscaled px) between a row's text and its `>` arrow, restated so a row without one matches. */
+private const val NEXT_STEP_INSET = 20
+
+/** The same gap, tightened for a row that shows an icon of its own (reload, "…") right before the arrow. */
+private const val NEXT_STEP_TIGHT_INSET = 4
 
 /** Same footprint as the inline "…", for rows that can show it but are not hovered — see `customizeComponent`. */
 private val MORE_ICON_PLACEHOLDER: Icon = EmptyIcon.create(AllIcons.Actions.More)
@@ -141,9 +155,15 @@ private val GEAR_CAPTIONS: Set<String> = setOf(
   PySdkFrontendBundle.message("evo.sdk.status.bar.popup.change.environment"),
 )
 
-/** Captions rendered as the platform's plain group header rather than this popup's caption-then-rule look. */
+/**
+ * Captions rendered as the platform's plain group header rather than this popup's caption-then-rule look.
+ *
+ * Both name the section that closes the popup below the tool list. Which of the two is there depends only on whether an
+ * interpreter is set, so they are drawn the same way and the popup does not change shape when one replaces the other.
+ */
 private val PLAIN_CAPTIONS: Set<String> = setOf(
   PySdkFrontendBundle.message("evo.sdk.status.bar.popup.current.environment"),
+  PySdkFrontendBundle.message("evo.sdk.status.bar.popup.shortcuts"),
 )
 
 /**
@@ -167,6 +187,9 @@ private class GearGroupHeaderSeparator(
   /** True while rendering a section that wants the platform's plain group header instead of this class's look. */
   private val isPlain: Boolean get() = caption in plainCaptions
 
+  /** Space held open above this header — see [SEPARATOR_TOP_GAP]. Zero at the top of a list, where [isHideLine] is set. */
+  private val topGap: Int get() = if (caption == null || isHideLine) 0 else JBUI.scale(SEPARATOR_TOP_GAP)
+
 
   /**
    * The caption's own height, without the allowance [GroupHeaderSeparator] makes for the rule it draws above the text.
@@ -178,6 +201,7 @@ private class GearGroupHeaderSeparator(
   override fun getPreferredElementSize(): Dimension {
     if (isPlain) return super.getPreferredElementSize()   // includes the platform's allowance for the rule above
     val size = if (caption == null) Dimension(0, 0) else getLabelSize(labelInsets)
+    size.height += topGap
     JBInsets.addTo(size, insets)
     return size
   }
@@ -194,6 +218,8 @@ private class GearGroupHeaderSeparator(
     val caption = caption ?: return
     val bounds = Rectangle(width, height)
     JBInsets.removeFrom(bounds, insets)
+    bounds.y += topGap
+    bounds.height -= topGap
     bounds.x += labelInsets.left
     bounds.width -= labelInsets.left + labelInsets.right
     bounds.y += labelInsets.top
@@ -315,6 +341,14 @@ class EvoPopupListElementRenderer(private val popup: EvoTreePopup) : PopupListEl
     val element = value?.element
     val showReload = isSelected && element is EvoTreeLazyNodeElement && element.refreshable && element.state == State.DONE
     val canShowMore = popup.hasAlternatives(value)
+    // Written on every row, not only where it is tightened: the renderer reuses one label for the whole list, so a
+    // border left by the previous row would otherwise follow the arrow down it.
+    arrow.border = when {
+      // An icon of the row's own sits right before the arrow, so the platform's wide gap is tightened to hold both.
+      showReload || canShowMore -> JBUI.Borders.emptyLeft(NEXT_STEP_TIGHT_INSET)
+      ExperimentalUI.isNewUI() -> JBUI.Borders.emptyLeft(NEXT_STEP_INSET)
+      else -> JBUI.Borders.empty()
+    }
     buttonPane.removeAll()
     val gb = GridBag()
       .setDefaultFill(GridBagConstraints.BOTH)
@@ -325,8 +359,6 @@ class EvoPopupListElementRenderer(private val popup: EvoTreePopup) : PopupListEl
     if (showReload) {
       reloadLabel.icon = AllIcons.Actions.Refresh
       buttonPane.add(reloadLabel, gb.next().weightx(0.0))
-      // The platform gives the arrow a wide emptyLeft(20) inset; tighten it so the icon sits right by the arrow.
-      arrow.border = JBUI.Borders.emptyLeft(4)
     }
     if (canShowMore) {
       // The width is reserved on every row that *can* show the icon, and the icon is only painted on the hovered one.
@@ -334,12 +366,28 @@ class EvoPopupListElementRenderer(private val popup: EvoTreePopup) : PopupListEl
       // same reason the version column below is reserved rather than sized when its value arrives.
       moreLabel.icon = if (isSelected) AllIcons.Actions.More else MORE_ICON_PLACEHOLDER
       buttonPane.add(moreLabel, gb.next().weightx(0.0))
-      arrow.border = JBUI.Borders.emptyLeft(4)
     }
     // Every expandable row keeps the platform's standard ">" arrow, even though this popup's submenus always open to the
     // LEFT (see EvoTreePopup.show) — the arrow reads as "has a submenu" rather than as a direction, and matching the
     // platform look everywhere beats being literal about which side it appears on.
     buttonPane.add(arrow, gb.next().weightx(0.0))
+    // Only a row that shows a version has something to line up, so only that row pays the width for the arrow it lacks.
+    if (!arrow.isVisible && value?.reservesVersionColumn == true) {
+      buttonPane.add(Box.createHorizontalStrut(nextStepReserve(arrow)), gb.next().weightx(0.0))
+    }
+  }
+
+  /**
+   * Width to hold open where a row has no `>` arrow, so its version column ends where every other row's does.
+   *
+   * The platform hides the arrow on a row with no submenu, and gives that row the inline-button separator's width back
+   * as right inset — an allowance it drops again as soon as there is an arrow. Both differences are undone here, since
+   * whether a row can be expanded says nothing about where its version should be read.
+   */
+  private fun nextStepReserve(arrow: JLabel): Int {
+    val insets = arrow.insets
+    val width = AllIcons.Icons.Ide.MenuArrow.iconWidth + insets.left + insets.right
+    return max(0, if (ExperimentalUI.isNewUI()) width - myButtonSeparator.preferredSize.width else width)
   }
 
   /**

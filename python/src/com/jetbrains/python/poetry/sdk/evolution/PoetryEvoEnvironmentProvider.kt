@@ -58,7 +58,7 @@ internal class PoetryEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
     val inProjectVenv = discovered.firstOrNull { it.venvRoot == defaultVenvDir(projectDir) }
     val inProjectSection = EvoSectionDto(
       label = PySdkBundle.message("evolution.poetry.in.project"),
-      leaves = listOfNotNull(inProjectVenv?.toLeaf(icon)),
+      leaves = listOfNotNull(inProjectVenv?.toLeaf(this)),
       addNew = inProjectVenv == null,
       addNewFolderPath = projectDir.pathString,
     )

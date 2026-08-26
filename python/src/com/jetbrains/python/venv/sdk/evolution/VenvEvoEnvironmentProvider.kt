@@ -58,14 +58,17 @@ internal class VenvEvoEnvironmentProvider : PyEvoEnvironmentProvider {
   override val icon: Icon get() = tool.icon
 
   /**
-   * Every discovered virtualenv, a uv-created one included.
+   * Every discovered virtualenv, one made by another tool included.
    *
-   * A `uv` marker in `pyvenv.cfg` records which tool made the environment. It does not make the environment a uv-only
-   * one: it is an ordinary virtualenv, pip can work in it, and the user can select it here. This node used to hide such
-   * an environment, so a project whose only environment came from uv showed an empty pip node.
+   * This node used to hide a uv-made environment, which left a project whose only environment came from uv with an empty
+   * pip node. It is listed instead, drawn with the icon of the tool that made it and disabled there, so the environment
+   * is visible where the user looks for it and is still adopted on the node of the tool that manages it.
+   *
+   * The node claims no mark of its own: it creates its environments with the standard library's `venv`, which writes
+   * nothing into `pyvenv.cfg` to say so. An environment naming no tool therefore reads as this node's own.
    */
   override suspend fun loadSections(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto =
-    EvoLoadResultDto.Ok(discovered.toSectionsGroupedByParent(icon, addNew = true, baseDir = pyProject.baseDir))
+    EvoLoadResultDto.Ok(discovered.toSectionsGroupedByParent(this, addNew = true, baseDir = pyProject.baseDir))
 
   /**
    * A plain virtualenv has no tool-specific SDK, so its type is guessed from the path — the generic route the core used

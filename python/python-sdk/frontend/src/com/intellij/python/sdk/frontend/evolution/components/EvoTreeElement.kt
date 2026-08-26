@@ -65,20 +65,18 @@ open class EvoTreeLeafElement(
 ) : EvoTreeElement(presentation)
 
 /**
- * A leaf that cannot be acted on, and says why: disabled, with a warning sign carrying [reason], instead of looking
- * selectable and failing only once clicked.
+ * A leaf that cannot be acted on, and says why: disabled, with [reason] as its tooltip, instead of looking selectable
+ * and failing only once clicked.
  *
- * It reports [State.NOT_AVAILABLE] rather than [State.DONE], which is what makes it unselectable and gives it the sign —
- * the same state a tool node in that position reports.
+ * A disabled presentation is already enough to make the row unselectable (see `EvoActionPopupStep.isSelectable`), so it
+ * stays in [State.DONE] and carries no sign. The sign belongs to a tool node that could not answer, where the row is the
+ * only place the failure can be reported; here the row is one environment among the many the node listed, and a column
+ * of warning signs beside a list of environments reads as a problem with the list.
  */
 class EvoTreeUnavailableLeafElement(action: AnAction, reason: @Nls String) : EvoTreeLeafElement(action) {
   init {
     presentation.isEnabled = false
     presentation.putClientProperty(ActionUtil.TOOLTIP_TEXT, reason)
-  }
-
-  override fun load(project: Project, scope: CoroutineScope, listeners: List<ListPopupStep.ListPopupModelListener>) {
-    state = State.NOT_AVAILABLE
   }
 }
 

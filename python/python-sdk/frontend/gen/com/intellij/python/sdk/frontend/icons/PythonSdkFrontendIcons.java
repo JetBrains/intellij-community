@@ -14,7 +14,8 @@ public final class PythonSdkFrontendIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, PythonSdkFrontendIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon Evo = load("icons/com/intellij/python/sdk/frontend/expui/evo.svg", -1763420600, 0);
-  /** 16x16 */ public static final @NotNull Icon Logo = load("icons/com/intellij/python/sdk/frontend/expui/logo.svg", 1474436172, 0);
-  /** 16x16 */ public static final @NotNull Icon PythonPackages = load("icons/com/intellij/python/sdk/frontend/expui/pythonPackages.svg", 1365153563, 2);
+  /** 16x16 */ public static final @NotNull Icon Associated = load("icons/associated.svg", 673445637, 2);
+  /** 16x16 */ public static final @NotNull Icon Evo = load("icons/evo.svg", -1763420600, 0);
+  /** 16x16 */ public static final @NotNull Icon Logo = load("icons/logo.svg", 1474436172, 0);
+  /** 16x16 */ public static final @NotNull Icon PythonPackages = load("icons/pythonPackages.svg", 1365153563, 2);
 }
