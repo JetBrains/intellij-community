@@ -8,7 +8,12 @@ import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil.DiffStripeTextAttributes
 import com.intellij.openapi.editor.Document
@@ -27,11 +32,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.PeekableIterator
 import com.intellij.util.containers.PeekableIteratorWrapper
-import com.intellij.util.ui.update.DisposableUpdate
-import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.DebouncedUpdates
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 abstract class LineStatusMarkerRenderer internal constructor(
@@ -41,7 +50,31 @@ abstract class LineStatusMarkerRenderer internal constructor(
   private val editorFilter: MarkupEditorFilter? = null,
   private val isMain: Boolean = true // tell clients that it's a "proper" vcs status renderer
 ) {
-  private val updateQueue = MergingUpdateQueue("LineStatusMarkerRenderer", 100, true, MergingUpdateQueue.ANY_COMPONENT, disposable)
+  private val queueScope = LineStatusMarkerRendererCoroutineScopeProvider
+    .getChildScope(project, "LineStatusMarkerRenderer")
+    .also { scope -> Disposer.register(disposable) { scope.cancel() } }
+  private val updateHighlightersQueue = DebouncedUpdates.forScope<Unit>(
+    queueScope,
+    "LineStatusMarkerRenderer.update",
+    100
+  ).runLatest {
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      WriteIntentReadAction.run {
+        updateHighlighters()
+      }
+    }
+  }
+
+  private val validateHighlighterQueue = DebouncedUpdates.forScope<Unit>(
+    queueScope,
+    "LineStatusMarkerRenderer.validate",
+    100
+  ).runLatest {
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      validateHighlighters()
+    }
+  }
+
   private var disposed = false
 
   private val gutterLayer = getGutterLayer()
@@ -80,11 +113,7 @@ abstract class LineStatusMarkerRenderer internal constructor(
   }
 
   fun scheduleUpdate() {
-    updateQueue.queue(DisposableUpdate.createDisposable(updateQueue, "update", Runnable {
-      WriteIntentReadAction.run {
-        updateHighlighters()
-      }
-    }))
+    updateHighlightersQueue.queue(Unit)
   }
 
   /**
@@ -92,14 +121,16 @@ abstract class LineStatusMarkerRenderer internal constructor(
    * IDEA-331139 IDEA-246614
    */
   private fun scheduleValidateHighlighter() {
-    updateQueue.queue(DisposableUpdate.createDisposable(updateQueue, "validate highlighter", Runnable {
-      if (disposed || gutterHighlighter.isValid()) return@Runnable
+    validateHighlighterQueue.queue(Unit)
+  }
 
-      LOG.warn("Line marker highlighter was recovered. This incident will be reported.")
-      disposeHighlighter(gutterHighlighter)
-      gutterHighlighter = createGutterHighlighter()
-      updateHighlighters()
-    }))
+  private fun validateHighlighters() {
+    if (disposed || gutterHighlighter.isValid()) return
+
+    LOG.warn("Line marker highlighter was recovered. This incident will be reported.")
+    disposeHighlighter(gutterHighlighter)
+    gutterHighlighter = createGutterHighlighter()
+    updateHighlighters()
   }
 
   private fun createGutterHighlighter(): RangeHighlighter {
@@ -250,6 +281,20 @@ abstract class LineStatusMarkerRenderer internal constructor(
       catch (e: Exception) {
         LOG.error(e)
       }
+    }
+  }
+}
+
+@Service(value = [Service.Level.APP, Service.Level.PROJECT])
+internal class LineStatusMarkerRendererCoroutineScopeProvider(private val cs: CoroutineScope) {
+  companion object {
+    fun getChildScope(
+      project: Project?,
+      name: String,
+    ): CoroutineScope {
+      val provider = project?.service<LineStatusMarkerRendererCoroutineScopeProvider>()
+                     ?: service<LineStatusMarkerRendererCoroutineScopeProvider>()
+      return provider.cs.childScope(name)
     }
   }
 }
