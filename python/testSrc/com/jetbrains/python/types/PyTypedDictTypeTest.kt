@@ -724,6 +724,77 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       #                     └ WARNING Expected type 'Box[str]', got 'Box[int]' instead
       """)
 
+    @Test
+    @TestFor(issues = ["PY-85440"])
+    fun `bound method of a generic TypedDict`() = test("""
+      from typing import TypedDict
+
+      class D[T](TypedDict):
+          f1: str
+          f2: T
+
+      td: D[int]
+      td.get("f2")
+      #  ^^^ TYPE (key: str, default: Any) -> int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440"])
+    fun `get of a generic TypedDict`() = test("""
+      from typing import TypedDict
+
+      class D[T](TypedDict):
+          f1: str
+          f2: T
+
+      def f(td: D[int]):
+          expr = td.get("f2")
+      #   └ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440"])
+    fun `values of a generic TypedDict`() = test("""
+      from typing import TypedDict
+
+      class D[T](TypedDict):
+          f1: str
+          f2: T
+
+      def f(td: D[int]):
+          expr = td.values()
+      #   └ TYPE list[str | int | Unknown]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440"])
+    fun `items of a generic TypedDict`() = test("""
+      from typing import TypedDict
+
+      class D[T](TypedDict):
+          f1: str
+          f2: T
+
+      def f(td: D[int]):
+          expr = td.items()
+      #   └ TYPE list[tuple[str, str | int | Unknown]]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440"])
+    fun `popitem of a generic TypedDict`() = test("""
+      from typing import TypedDict
+
+      class D[T](TypedDict):
+          f1: str
+          f2: T
+
+      def f(td: D[int]):
+          expr = td.popitem()
+      #   │         ^^^^^^^ WARNING This operation might break TypedDict consistency
+      #   └ TYPE tuple[str, str | int | Unknown]
+      """)
+
   }
 
   @Nested
