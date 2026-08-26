@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
+import com.intellij.openapi.application.CoroutinesKt;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
@@ -17,8 +18,10 @@ import com.intellij.openapi.vcs.changes.ChangeListChange;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.update.DisposableUpdate;
-import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.DebouncedUpdates;
+import com.intellij.util.ui.update.UpdateQueue;
+import kotlin.Unit;
+import kotlinx.coroutines.Dispatchers;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -132,14 +135,13 @@ public abstract class LocalChangesBrowser extends AsyncChangesBrowserBase implem
   }
 
   private class MyChangeListListener extends ChangeListAdapter {
-    private final @NotNull MergingUpdateQueue myUpdateQueue =
-      new MergingUpdateQueue("LocalChangesViewer", 300, true,
-                             LocalChangesBrowser.this, LocalChangesBrowser.this);
+    private final @NotNull UpdateQueue<Unit> myUpdateQueue =
+      DebouncedUpdates.<Unit>forComponent(LocalChangesBrowser.this, "LocalChangesViewer", 300)
+        .withContext(CoroutinesKt.getEDT(Dispatchers.INSTANCE))
+        .runLatest(ignored -> myViewer.rebuildTree());
 
     private void doUpdate() {
-      myUpdateQueue.queue(DisposableUpdate.createDisposable(myUpdateQueue, "update", () -> {
-        myViewer.rebuildTree();
-      }));
+      myUpdateQueue.queue(Unit.INSTANCE);
     }
 
     @Override
