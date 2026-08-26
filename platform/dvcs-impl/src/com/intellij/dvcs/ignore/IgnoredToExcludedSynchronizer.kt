@@ -48,10 +48,8 @@ import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
-import com.intellij.util.Alarm
 import com.intellij.util.messages.impl.subscribeAsFlow
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
+import com.intellij.util.ui.update.DebouncedUpdates
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -75,7 +73,9 @@ private val LOG = logger<IgnoredToExcludedSynchronizer>()
  */
 @Service(Service.Level.PROJECT)
 class IgnoredToExcludedSynchronizer(project: Project, private val cs: CoroutineScope) : FilesProcessorImpl(project, project) {
-  private val queue = MergingUpdateQueue("IgnoredToExcludedSynchronizer", 1000, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD)
+  private val queue = DebouncedUpdates.forScope<Unit>(cs, "IgnoredToExcludedSynchronizer", 1000)
+    .withContext(Dispatchers.Default)
+    .runLatest { performUpdate() }
 
   init {
     cs.launch {
@@ -97,22 +97,24 @@ class IgnoredToExcludedSynchronizer(project: Project, private val cs: CoroutineS
     if (synchronizationTurnOff()) return
     if (isFilesEmpty()) return
 
-    queue.queue(Update.create("update") {
-      val fileIndex = ProjectFileIndex.getInstance(project)
-      val sourceRoots = getProjectSourceRoots(project)
+    queue.queue(Unit)
+  }
 
-      val acquiredFiles = selectValidFiles()
-      LOG.debug("updateNotificationState, acquiredFiles", acquiredFiles)
-      val filesToRemove = acquiredFiles
-        .asSequence()
-        .filter { file -> runReadActionBlocking { fileIndex.isExcluded(file) } || sourceRoots.contains(file) }
-        .toList()
-      LOG.debug("updateNotificationState, filesToRemove", filesToRemove)
+  private fun performUpdate() {
+    val fileIndex = ProjectFileIndex.getInstance(project)
+    val sourceRoots = getProjectSourceRoots(project)
 
-      if (removeFiles(filesToRemove)) {
-        EditorNotifications.getInstance(project).updateAllNotifications()
-      }
-    })
+    val acquiredFiles = selectValidFiles()
+    LOG.debug("updateNotificationState, acquiredFiles", acquiredFiles)
+    val filesToRemove = acquiredFiles
+      .asSequence()
+      .filter { file -> runReadActionBlocking { fileIndex.isExcluded(file) } || sourceRoots.contains(file) }
+      .toList()
+    LOG.debug("updateNotificationState, filesToRemove", filesToRemove)
+
+    if (removeFiles(filesToRemove)) {
+      EditorNotifications.getInstance(project).updateAllNotifications()
+    }
   }
 
   fun isNotEmpty() = !isFilesEmpty()
