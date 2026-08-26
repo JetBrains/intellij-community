@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.statistics.metrics.NumericalMetrics
 import org.jetbrains.kotlin.statistics.metrics.StringListMetrics
 import org.jetbrains.kotlin.statistics.metrics.StringMetrics
 
-private const val BASE_FUS_VERSION = 18
+private const val BASE_FUS_VERSION = 19
 
 object KotlinGradleFUSCollector : CounterUsagesCollector() {
 
@@ -57,13 +57,10 @@ object KotlinGradleFUSCollector : CounterUsagesCollector() {
             BooleanMetrics.ENABLED_COMPILER_PLUGIN_SAM_WITH_RECEIVER,
             BooleanMetrics.ENABLED_COMPILER_REFERENCE_INDEX,
             StringListMetrics.JVM_DEFAULTS,
-            StringListMetrics.USE_OLD_BACKEND
         ),
 
         KotlinGradleEvent(
             GROUP, GradleStatisticsEventGroups.JS,
-            BooleanMetrics.JS_GENERATE_EXTERNALS,
-            StringListMetrics.JS_GENERATE_EXECUTABLE_DEFAULT,
             StringListMetrics.JS_TARGET_MODE,
             BooleanMetrics.JS_SOURCE_MAP,
             StringListMetrics.JS_PROPERTY_LAZY_INITIALIZATION,
