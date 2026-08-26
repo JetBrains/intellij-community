@@ -88,11 +88,22 @@ internal class StandaloneFileRoutingTest {
   }
 
   @Test
+  fun `command line path avoids LightEdit when welcome project claims file`(@TempDir tempDir: Path): Unit = timeoutRunBlocking {
+    welcomeScreenProvider.claimFiles = true
+    val file = createFile(tempDir)
+
+    assertSame(project, CommandLineProcessor.processExternalCommandLine(listOf(file.toString()), null).project)
+    assertEquals(1, welcomeScreenProcessor.openCount)
+    assertEquals(0, lightEditService.openCount)
+  }
+
+  @Test
   fun `edit option avoids LightEdit when welcome project claims file`(@TempDir tempDir: Path): Unit = timeoutRunBlocking {
     welcomeScreenProvider.claimFiles = true
     val file = createFile(tempDir)
 
     assertSame(project, CommandLineProcessor.processExternalCommandLine(listOf("--edit", file.toString()), null).project)
+    assertEquals(1, welcomeScreenProcessor.openCount)
     assertEquals(0, lightEditService.openCount)
   }
 
