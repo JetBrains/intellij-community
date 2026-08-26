@@ -1,6 +1,7 @@
 package com.intellij.grazie.text
 
 import com.intellij.grazie.spellcheck.TypoProblem
+import com.intellij.grazie.style.TextLevelFix
 import com.intellij.grazie.utils.HighlightingUtil.checkedDomains
 import com.intellij.grazie.utils.getAllProblems
 import com.intellij.grazie.utils.getGrazieTracker
@@ -27,7 +28,7 @@ object ProofreadingService {
   internal fun covering(file: PsiFile, range: TextRange): List<TextProblem> {
     return getAllProblems(file, checkedDomains())
       .filter { problem -> range.isEmpty || problem.intersects(range) || problem.text.rangesInFile.any { it.intersects(range) } }
-      .filter { it.hasSuggestions() }
+      .filter { it.maybeHasSuggestions() }
   }
 
   /**
@@ -44,7 +45,7 @@ object ProofreadingService {
 
   @JvmStatic
   internal fun PsiFile.registerProblems(problems: List<TextProblem>) {
-    val problemsWithSuggestions = problems.filter { it.hasSuggestions() }
+    val problemsWithSuggestions = problems.filter { it.maybeHasSuggestions() }
     if (problemsWithSuggestions.isEmpty()) return
     this.getRanges().addAll(computeRanges(problemsWithSuggestions))
   }
@@ -57,9 +58,13 @@ object ProofreadingService {
       CachedValueProvider.Result.create(ConcurrentHashMap.newKeySet(), getGrazieTracker(this))
     }
 
+  @JvmStatic
+  internal fun TextProblem.hasSuggestions(): Boolean =
+    this.suggestions.isNotEmpty() || this.customFixes.filterIsInstance<TextLevelFix>().flatMap { it.changes }.isNotEmpty()
+
   // if a typo's suggestion is to be calculated locally, let's hope there will be suggestion
-  private fun TextProblem.hasSuggestions(): Boolean =
-    this is TypoProblem && !this.isCloud || this.suggestions.isNotEmpty() || this.customFixes.isNotEmpty()
+  private fun TextProblem.maybeHasSuggestions(): Boolean =
+    this is TypoProblem && !this.isCloud || hasSuggestions()
 
   private fun getProblemTextRanges(problem: TextProblem) = problem.highlightRanges.map { problem.text.textRangeToFile(it) }
   private fun TextProblem.intersects(range: TextRange) = getProblemTextRanges(this)

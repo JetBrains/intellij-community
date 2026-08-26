@@ -11,6 +11,7 @@ import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.icons.GrazieIcons
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix.toRangeReplacements
 import com.intellij.grazie.ide.ui.PaddedListCellRenderer
+import com.intellij.grazie.style.TextLevelFix
 import com.intellij.grazie.text.CheckerRunner
 import com.intellij.grazie.text.TextProblem
 import com.intellij.icons.AllIcons
@@ -55,6 +56,7 @@ import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.IconUtil
+import com.intellij.util.text.StringOperation
 import com.intellij.util.text.TextRangeUtil
 import com.intellij.util.ui.JBUI
 import java.awt.Font
@@ -258,19 +260,54 @@ class GrazieMassApplyDialog : DialogWrapper {
     })
   }
 
-  private fun getHighlightings(): List<Highlighting> =
-    problems.map { problem ->
-      val highlightRanges = problem.highlightRanges
-        .map { problem.text.textRangeToFile(it) }
-        .map { addRangeHighlighter(editor, it, BOLD_TEXT_ATTRIBUTES) }
-      val changes = problem.suggestions.map { suggestion ->
-        val replacements = suggestion.changes
-          .flatMap { toRangeReplacements(it.range, it.replacement, problem) }
-          .map { (range, replacement) -> range to replacement }
-        DocumentChange(suggestion.presentableText, replacements, editor, project)
+  private fun getHighlightings(): List<Highlighting> {
+    val preparedProblems = problems.map(::prepareProblem)
+
+    val normalSuggestionRanges = preparedProblems
+      .flatMap { it.changes.flatMap { change -> change.originalReplacements } }
+      .map { it.first }
+    val intersectionFilter = NormalSuggestionRangeFilter(normalSuggestionRanges)
+    val textLevelChanges = mutableSetOf<StringOperation>()
+
+    return preparedProblems.flatMap { prepared ->
+      val customHighlightings = prepared.textLevelFixes
+        .asSequence()
+        .flatMap { fix -> fix.changes.map { TextLevelChange(fix, it) } }
+        .filter { (_, change) -> !intersectionFilter.intersects(change.range) && textLevelChanges.add(change) }
+        .map { (fix, change) -> DocumentChange(fix.text, listOf(change.range to change.replacement.toString()), editor, project) }
+        .map { change ->
+          Highlighting(
+            prepared.problem,
+            listOf(addRangeHighlighter(editor, change.originalReplacements.single().first, BOLD_TEXT_ATTRIBUTES)),
+            listOf(change, IgnoreChange(prepared.problem, change))
+          )
+        }.toList()
+
+      val highlighting = if (prepared.changes.isNotEmpty()) {
+        Highlighting(
+          prepared.problem,
+          prepared.ranges,
+          prepared.changes + IgnoreChange(prepared.problem, prepared.changes.firstOrNull())
+        )
+      } else {
+        null
       }
-      Highlighting(problem, highlightRanges, changes + IgnoreChange(problem, changes.firstOrNull()))
+      customHighlightings + listOfNotNull(highlighting)
     }
+  }
+
+  private fun prepareProblem(problem: TextProblem): PreparedProblem {
+    val ranges = problem.highlightRanges
+      .map { problem.text.textRangeToFile(it) }
+      .map { addRangeHighlighter(editor, it, BOLD_TEXT_ATTRIBUTES) }
+    val changes = problem.suggestions.map { suggestion ->
+      val replacements = suggestion.changes
+        .flatMap { toRangeReplacements(it.range, it.replacement, problem) }
+        .map { (range, replacement) -> range to replacement }
+      DocumentChange(suggestion.presentableText, replacements, editor, project)
+    }
+    return PreparedProblem(problem, ranges, changes, problem.customFixes.filterIsInstance<TextLevelFix>())
+  }
 
   private fun Row.labeledIcon(icon: Icon, problemsExtractor: (HighlightedProblems) -> Int) {
     val problemCount = problemsExtractor(highlightings)
@@ -584,4 +621,25 @@ private enum class MassOptions(@param:NlsSafe val text: String) {
   MULTIPLE(GrazieBundle.message("grazie.mass.apply.dialog.multiple"));
 
   override fun toString(): String = text
+}
+
+private data class PreparedProblem(
+  val problem: TextProblem,
+  val ranges: List<RangeHighlighter>,
+  val changes: List<DocumentChange>,
+  val textLevelFixes: List<TextLevelFix>,
+)
+
+private data class TextLevelChange(
+  val fix: TextLevelFix,
+  val change: StringOperation,
+)
+
+private class NormalSuggestionRangeFilter(private val ranges: List<TextRange>) {
+  private var index = 0
+
+  fun intersects(range: TextRange): Boolean {
+    while (index < ranges.size && ranges[index].endOffset <= range.startOffset) index++
+    return index < ranges.size && ranges[index].intersects(range)
+  }
 }

@@ -12,6 +12,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.text.StringOperation;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +45,11 @@ public class TextLevelFix extends LocalQuickFixAndIntentionActionOnPsiElement im
   @Override
   public @IntentionName @NotNull String getText() {
     return text;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull List<StringOperation> getChanges() {
+    return allChanges;
   }
 
   @Override
