@@ -176,8 +176,8 @@ private fun getToolSpecificDependencies(
           // and only then descend into the nested key.
           groups.safeGet<TomlTable>(group, unquotedDottedKey = false).successOrNull
             ?.safeGet<TomlTable>(specification.tomlKeyFromGroupToPath, unquotedDottedKey = false)?.successOrNull?.let {
-            getToolSpecificDependenciesFromTomlTable(root, it)
-          } ?: emptySet()
+              getToolSpecificDependenciesFromTomlTable(root, it)
+            } ?: emptySet()
         }
       }
       is TomlDependencySpecification.GroupPep621Dependency -> {
@@ -207,8 +207,8 @@ private fun getToolSpecificDependenciesFromTomlTable(root: Path, tomlTable: Toml
     // `ruamel.yaml`), so it must be looked up quoted; `path` is then read from the nested table.
     tomlTable.safeGet<TomlTable>(depName, unquotedDottedKey = false).successOrNull
       ?.safeGet<String>("path", unquotedDottedKey = false)?.successOrNull?.let { depPathString ->
-      parseDepFromPathString(root, depPathString)
-    }
+        parseDepFromPathString(root, depPathString)
+      }
   }.toSet()
 }
 

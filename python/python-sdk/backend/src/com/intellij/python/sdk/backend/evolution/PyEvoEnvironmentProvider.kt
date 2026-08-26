@@ -42,6 +42,12 @@ import com.jetbrains.python.sdk.impl.shortenPath
 import com.jetbrains.python.venvReader.Directory
 import com.jetbrains.python.venvReader.PRUNED_SCAN_DIRS
 import com.jetbrains.python.venvReader.VirtualEnvReader
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -51,12 +57,6 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.isExecutable
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.pathString
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 
 private val LOG: Logger = fileLogger()
 
@@ -208,7 +208,11 @@ interface PyEvoEnvironmentProvider {
    * Lazily compute this node's sections (layout owned by the provider) when it is expanded. [discovered] is the
    * centrally-found list of virtualenvs under the project's base dirs; providers filter it to the subset they own.
    */
-  suspend fun loadSections(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto
+  suspend fun loadSections(
+    pyProject: EvoPyProject,
+    fileSystem: FileSystem<PathHolder.Eel>,
+    discovered: List<DiscoveredVenv>,
+  ): EvoLoadResultDto
 
   /**
    * Builds the correctly-typed SDK for an *existing* environment at [homePath] — the tool's own "select existing"
@@ -465,7 +469,11 @@ fun DiscoveredVenv.toLeaf(icon: Icon): EvoLeafDto {
 @ApiStatus.Internal
 fun List<DiscoveredVenv>.toSectionsGroupedByParent(icon: Icon, addNew: Boolean, baseDir: Path): List<EvoSectionDto> {
   if (isEmpty()) {
-    return if (addNew) listOf(EvoSectionDto(label = null, leaves = emptyList(), addNew = true, addNewFolderPath = baseDir.pathString)) else emptyList()
+    return if (addNew) listOf(EvoSectionDto(label = null,
+                                            leaves = emptyList(),
+                                            addNew = true,
+                                            addNewFolderPath = baseDir.pathString))
+    else emptyList()
   }
   return groupBy { it.venvRoot?.parent }.map { (containingFolder, venvs) ->
     EvoSectionDto(
@@ -484,8 +492,19 @@ fun List<DiscoveredVenv>.toSectionsGroupedByParent(icon: Icon, addNew: Boolean, 
  * `null` for a display-only row.
  */
 @ApiStatus.Internal
-fun evoActionLeaf(title: @Nls String, description: @Nls String? = title, secondaryText: @Nls String? = null, icon: Icon, actionId: String? = null): EvoLeafDto =
-  EvoLeafDto(title = title, description = description, secondaryText = secondaryText, icon = icon.rpcId(), kind = EvoLeafKind.ACTION, actionId = actionId)
+fun evoActionLeaf(
+  title: @Nls String,
+  description: @Nls String? = title,
+  secondaryText: @Nls String? = null,
+  icon: Icon,
+  actionId: String? = null,
+): EvoLeafDto =
+  EvoLeafDto(title = title,
+             description = description,
+             secondaryText = secondaryText,
+             icon = icon.rpcId(),
+             kind = EvoLeafKind.ACTION,
+             actionId = actionId)
 
 /**
  * Builds a leaf for a Python version that is not on the machine: selecting it installs that version and then creates the
