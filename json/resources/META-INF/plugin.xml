@@ -38,13 +38,15 @@
     <module name="intellij.json" loading="embedded"/>
     <module name="intellij.json.backend" required-if-available="intellij.platform.backend"/>
     <module name="intellij.json.networknt.wrapper" required-if-available="intellij.platform.backend"/>
-    <module name="intellij.json.networknt.wrapper.libraries.jsonSchemaValidator" loading="required"/>
     <module name="intellij.json.backend.regexp" loading="optional"/>
     <module name="intellij.json.structureView" loading="optional"/>
     <module name="intellij.json.syntax" loading="embedded"/>
   </content>  
 
+  <!-- `intellij.libraries.jsonSchemaValidator` resolves the joni regular expression engine by name, so both modules must
+       share one classpath. `loading="embedded"` puts them on the plugin's main classloader. -->
   <content>
-    <module name="intellij.libraries.joni" loading="required"/>
+    <module name="intellij.libraries.jsonSchemaValidator" loading="embedded"/>
+    <module name="intellij.libraries.joni" loading="embedded"/>
   </content>
 </idea-plugin>

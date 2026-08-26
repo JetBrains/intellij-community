@@ -8,7 +8,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.json.networknt.wrapper.libraries.jsonSchemaValidator" exported="" />
+    <orderEntry type="module" module-name="intellij.libraries.jsonSchemaValidator" exported="" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3" exported="" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" exported="" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />

@@ -6877,21 +6877,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "com.networknt/json-schema-validator-3.0.0-jetbrains.11.jar_copy",
-    src = "@com_networknt-json-schema-validator-3_0_0-jetbrains_11_http//file",
-    out = "com.networknt/json-schema-validator-3.0.0-jetbrains.11.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "json-networknt-wrapper-libraries-json_schema_validator-json-schema-validator-jetbrains",
-    jar = "@com_networknt-json-schema-validator-3_0_0-jetbrains_11_http//file",
-    source_jar = "@com_networknt-json-schema-validator-3_0_0-jetbrains_11-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "com.networknt/json-schema-validator-1.3.1.jar_copy",
     src = "@com_networknt-json-schema-validator-1_3_1_http//file",
     out = "com.networknt/json-schema-validator-1.3.1.jar",
@@ -12425,6 +12410,21 @@ jvm_import(
     name = "com_jcraft-jsch_agentproxy_pageant-0_0_9_http_import",
     jar = "@com_jcraft-jsch_agentproxy_pageant-0_0_9_http//file",
     source_jar = "@com_jcraft-jsch_agentproxy_pageant-0_0_9-sources_http//file",
+)
+
+copy_file(
+    name = "com.networknt/json-schema-validator-3.0.0-jetbrains.11.jar_copy",
+    src = "@com_networknt-json-schema-validator-3_0_0-jetbrains_11_http//file",
+    out = "com.networknt/json-schema-validator-3.0.0-jetbrains.11.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-json_schema_validator-json-schema-validator-jetbrains",
+    jar = "@com_networknt-json-schema-validator-3_0_0-jetbrains_11_http//file",
+    source_jar = "@com_networknt-json-schema-validator-3_0_0-jetbrains_11-sources_http//file",
+    visibility = ["//visibility:public"],
 )
 
 copy_file(

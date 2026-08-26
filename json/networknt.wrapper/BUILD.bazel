@@ -20,13 +20,13 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "//json/networknt.wrapper/libraries:json-networknt-wrapper-libraries-jsonSchemaValidator",
+        "//libraries/json-schema-validator",
         "//libraries/jackson3/jackson:libraries-jackson3",
         "//libraries/jackson3/databind",
     ],
     deps = [
         # do not sort,
-        "//json/networknt.wrapper/libraries:json-networknt-wrapper-libraries-jsonSchemaValidator",
+        "//libraries/json-schema-validator",
         "//libraries/jackson3/jackson:libraries-jackson3",
         "//libraries/jackson3/databind",
         "@lib//:kotlin-stdlib",
@@ -57,8 +57,8 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "//json/networknt.wrapper/libraries:json-networknt-wrapper-libraries-jsonSchemaValidator",
-        "//json/networknt.wrapper/libraries:json-networknt-wrapper-libraries-jsonSchemaValidator_test_lib",
+        "//libraries/json-schema-validator",
+        "//libraries/json-schema-validator:json-schema-validator_test_lib",
         "//libraries/jackson3/jackson:libraries-jackson3",
         "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
         "//libraries/jackson3/databind",
@@ -67,7 +67,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":networknt.wrapper",
-        "//json/networknt.wrapper/libraries:json-networknt-wrapper-libraries-jsonSchemaValidator_test_lib",
+        "//libraries/json-schema-validator:json-schema-validator_test_lib",
         "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
         "//libraries/jackson3/databind:databind_test_lib",
         "//libraries/joni:joni_test_lib",

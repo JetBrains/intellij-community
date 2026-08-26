@@ -28,6 +28,5 @@
     <orderEntry type="module" module-name="intellij.libraries.jackson3" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3.dataformat.yaml" />
-    <orderEntry type="module" module-name="intellij.libraries.joni" />
   </component>
 </module>

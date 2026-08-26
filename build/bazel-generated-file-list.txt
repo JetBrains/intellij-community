@@ -371,7 +371,6 @@ json/backend/performanceTests
 json/backend/regexp
 json/backend/tests
 json/networknt.wrapper
-json/networknt.wrapper/libraries
 json/networknt.wrapper/tests
 json/structureView
 json/syntax
@@ -496,6 +495,7 @@ libraries/jline
 libraries/jna
 libraries/joni
 libraries/jsch-agent-proxy
+libraries/json-schema-validator
 libraries/jsonpath
 libraries/jsoup
 libraries/jsp
