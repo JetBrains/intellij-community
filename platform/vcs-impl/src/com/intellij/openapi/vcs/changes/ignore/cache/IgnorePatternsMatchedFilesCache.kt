@@ -22,12 +22,12 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.Alarm
-import com.intellij.util.ui.update.DisposableUpdate
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
+import com.intellij.util.ui.update.DebouncedUpdates
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Cache that retrieves matching files using given [Pattern].
@@ -38,7 +38,7 @@ import java.util.regex.Pattern
  * * after project dispose
  */
 @Service(Service.Level.PROJECT)
-internal class IgnorePatternsMatchedFilesCache(private val project: Project) : Disposable {
+internal class IgnorePatternsMatchedFilesCache(private val project: Project, cs: CoroutineScope) : Disposable {
   private val projectFileIndex = ProjectFileIndex.getInstance(project)
 
   private val cache =
@@ -46,8 +46,12 @@ internal class IgnorePatternsMatchedFilesCache(private val project: Project) : D
       .expireAfterAccess(10, TimeUnit.MINUTES)
       .build<String, Collection<VirtualFile>>()
 
-  private val updateQueue = MergingUpdateQueue("IgnorePatternsMatchedFilesCacheUpdateQueue", 500, true, null, this, null,
-                                               Alarm.ThreadToUse.POOLED_THREAD)
+  private val updateQueue = DebouncedUpdates.forScope<Pair<String, Pattern>>(
+    cs,
+    "IgnorePatternsMatchedFilesCacheUpdateQueue",
+    500.milliseconds
+  ).withContext(Dispatchers.Default)
+    .runLatest { (key, pattern) -> cache.put(key, doSearch(pattern)) }
 
   init {
     ApplicationManager.getApplication().messageBus.connect(this)
@@ -90,7 +94,6 @@ internal class IgnorePatternsMatchedFilesCache(private val project: Project) : D
 
   override fun dispose() {
     cache.invalidateAll()
-    updateQueue.cancelAllUpdates()
   }
 
   /**
@@ -110,10 +113,7 @@ internal class IgnorePatternsMatchedFilesCache(private val project: Project) : D
   }
 
   private fun runSearchRequest(key: String, pattern: Pattern) =
-    updateQueue.queue(object : DisposableUpdate(project, key) {
-      override fun canEat(update: Update) = true
-      override fun doRun() = cache.put(key, doSearch(pattern))
-    })
+    updateQueue.queue(key to pattern)
 
   private fun doSearch(pattern: Pattern): Set<VirtualFile> {
     val files = HashSet<VirtualFile>(1000)
