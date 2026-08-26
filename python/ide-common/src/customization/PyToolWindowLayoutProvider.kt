@@ -11,7 +11,7 @@ class PyToolWindowLayoutProvider : DefaultToolWindowLayoutExtension {
 
   override fun buildV2Layout(builder: DefaultToolWindowLayoutBuilder) {
     builder.right.addOrUpdate("Plots") { weight = 0.1f }
-    builder.bottom.addOrUpdate("Python Packages") { weight = 0.1f }
+    builder.right.addOrUpdate("Python Packages") { weight = 0.25f }
     builder.bottom.addOrUpdate("Python Console") { weight = 0.1f }
     thisLogger().info("Python default layout applied")
   }
