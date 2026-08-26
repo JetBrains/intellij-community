@@ -16,6 +16,8 @@ class KotlinFullTypeAliasNameIndex internal constructor() : StringStubIndexExten
 
     override fun getKey(): StubIndexKey<String, KtTypeAlias> = indexKey
 
+    override fun getVersion(): Int = super.getVersion() + 1
+
     @Deprecated("Base method is deprecated", ReplaceWith("KotlinFullTypeAliasNameIndex[key, project, scope]"))
     override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> {
         return Helper[key, project, scope]
