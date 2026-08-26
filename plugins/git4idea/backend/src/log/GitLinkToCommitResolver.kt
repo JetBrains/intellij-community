@@ -3,6 +3,7 @@ package git4idea.log
 
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -10,8 +11,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.LinkDescriptor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
+import com.intellij.util.ui.update.DebouncedUpdates
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogCommitStorageIndex
@@ -26,9 +26,12 @@ import com.intellij.vcs.log.ui.table.VcsLogTableIndex
 import com.intellij.vcs.log.ui.table.links.CommitLinksProvider
 import com.intellij.vcs.log.ui.table.links.CommitLinksResolveListener
 import com.intellij.vcs.log.ui.table.links.NavigateToCommit
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.time.Duration.Companion.milliseconds
 
 internal class GitCommitLinkProvider(private val project: Project) : CommitLinksProvider {
   override fun getLinks(commitId: CommitId): List<LinkDescriptor> {
@@ -43,7 +46,7 @@ internal class GitCommitLinkProvider(private val project: Project) : CommitLinks
 }
 
 @Service(Service.Level.PROJECT)
-internal class GitLinkToCommitResolver(private val project: Project) {
+internal class GitLinkToCommitResolver(private val project: Project, cs: CoroutineScope) {
 
   companion object {
     private const val PREFIX_DELIMITER_LENGTH = 1
@@ -58,8 +61,28 @@ internal class GitLinkToCommitResolver(private val project: Project) {
       .maximumSize(CACHE_MAX_SIZE)
       .build()
 
-  private val resolveQueue = MergingUpdateQueue("resolve links queue", 100, true, null, project, null, false)
-  private val updateQueue = MergingUpdateQueue("after resolve links ui update queue", 100, true, null, project, null, true)
+  private val resolveLinksQueue =
+    DebouncedUpdates.forScope<ResolveRequest>(cs, "resolve links queue", 100.milliseconds)
+      .withContext(Dispatchers.Default)
+      .runBatched { batch -> processResolveBatch(batch) }
+
+  private val updateUiQueue =
+    DebouncedUpdates.forScope<String>(cs, "after resolve links ui update queue", 100.milliseconds)
+      .withContext(Dispatchers.UI)
+      .runBatched { batch -> processUpdateUiBatch(batch) }
+
+  private fun processResolveBatch(batch: List<ResolveRequest>) {
+    val byLogId = batch.groupBy { it.logId }.mapValues { it.value.last() }
+    for ((_, request) in byLogId) {
+      processResolveRequest(request)
+    }
+  }
+
+  private fun processUpdateUiBatch(batch: List<String>) {
+    for (logId in batch.toSet()) {
+      project.messageBus.syncPublisher(CommitLinksResolveListener.TOPIC).onLinksResolved(logId)
+    }
+  }
 
   internal fun getLinks(commitId: CommitId): List<LinkDescriptor> {
     return getCachedOrEmpty(commitId).map { NavigateToCommit(it.range, it.targetHash) }
@@ -81,16 +104,27 @@ internal class GitLinkToCommitResolver(private val project: Project) {
     val processingCount = max(abs(Registry.intValue("vcs.log.render.commit.links.process.chunk")), rowRange.count())
     if (processingCount < 2) return
 
-    resolveQueue.queue(Update.create(logId) {
-      for (i in rowRange) {
-        val commitIndex = model.getId(i) ?: continue
-        val commit = logData.commitMetadataCache.getCachedData(commitIndex) ?: continue
-        resolveLinks(logData, visibleGraph, commit.getCommitId(), commit.subject, processingCount)
-      }
-      updateQueue.queue(Update.create(logId) {
-        project.messageBus.syncPublisher(CommitLinksResolveListener.TOPIC).onLinksResolved(logId)
-      })
-    })
+    resolveLinksQueue.queue(ResolveRequest(logId, logData, model, visibleGraph, startFrom, end, processingCount))
+  }
+
+  private data class ResolveRequest(
+    val logId: String,
+    val logData: VcsLogData,
+    val model: GraphTableModel,
+    val visibleGraph: VisibleGraphImpl<VcsLogCommitStorageIndex>,
+    val startRow: VcsLogTableIndex,
+    val endRow: VcsLogTableIndex,
+    val processingCount: Int
+  )
+
+  private fun processResolveRequest(request: ResolveRequest) {
+    for (i in request.startRow..request.endRow) {
+      val commitIndex = request.model.getId(i) ?: continue
+      val commit = request.logData.commitMetadataCache.getCachedData(commitIndex) ?: continue
+      resolveLinks(request.logData, request.visibleGraph, commit.getCommitId(), commit.subject, request.processingCount)
+    }
+
+    updateUiQueue.queue(request.logId)
   }
 
   @RequiresBackgroundThread
