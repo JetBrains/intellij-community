@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.skeletons;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -45,7 +45,7 @@ import static com.intellij.openapi.util.NlsContexts.ProgressText;
  * One-time, non-reusable instances.
  * <br/>
  */
-public class PySkeletonRefresher {
+public final class PySkeletonRefresher {
   private static final Logger LOG = Logger.getInstance(PySkeletonRefresher.class);
 
   private static int ourGeneratingCount = 0;
@@ -69,7 +69,7 @@ public class PySkeletonRefresher {
   public static void refreshSkeletonsOfSdk(@Nullable Project project,
                                            @Nullable Path skeletonsPath,
                                            @NotNull Sdk sdk)
-    throws InvalidSdkException {
+    throws InvalidSdkException, ExecutionException {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     final String homePath = sdk.getHomePath();
     if (skeletonsPath == null) {
@@ -86,9 +86,6 @@ public class PySkeletonRefresher {
           var failedSkeletons = StringUtil.join(errors, ", ");
           LOG.warn(String.format("%s: %s", PyBundle.message("sdk.some.skeletons.failed"), failedSkeletons));
         }
-      }
-      catch (ExecutionException e) {
-        LOG.error(e);
       }
       finally {
         changeGeneratingSkeletons(-1);

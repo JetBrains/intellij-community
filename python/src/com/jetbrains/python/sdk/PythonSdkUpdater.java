@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.observation.TrackingUtil;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
@@ -76,7 +77,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+import static com.intellij.openapi.util.NlsContexts.NotificationContent;
+import static com.intellij.openapi.util.NlsContexts.NotificationTitle;
 import static com.jetbrains.python.sdk.PythonInterpreterKt.pythonInterpreter;
+import static com.jetbrains.python.statistics.PythonSDKUpdaterIdsHolder.REFRESH_SKELETONS_FAILED;
 import static com.jetbrains.python.statistics.PythonSDKUpdaterIdsHolder.REMOTE_INTERPRETER_SUPPORT_IS_NOT_AVAILABLE;
 
 /**
@@ -94,6 +98,13 @@ public final class PythonSdkUpdater {
   @ApiStatus.Internal
   @TestOnly
   public static void setEnabledInTests(boolean enabled) {
+    if (enabled) {
+      // A test that enables the update relies on a synchronous task: see CoreProgressManager.isSynchronousHeadless.
+      // The update then ends inside the test method. With this property the task runs in the background, it outlives
+      // the test, and it generates skeletons for an interpreter that the fixtures already deleted.
+      LOG.assertTrue(!SystemProperties.getBooleanProperty("intellij.progress.task.ignoreHeadless", false),
+                     "The SDK update in tests needs a synchronous task. Clear 'intellij.progress.task.ignoreHeadless'.");
+    }
     ourEnabledInTests = enabled;
   }
 
@@ -375,7 +386,7 @@ public final class PythonSdkUpdater {
           updateSdkPaths(pythonInterpreter, localRoots);
         }
       }
-      catch (UnsupportedPythonSdkTypeException | InvalidSdkException e) {
+      catch (UnsupportedPythonSdkTypeException | InvalidSdkException | ExecutionException e) {
         notifyOfGenerationFailure(e, pythonInterpreter);
       }
     }
@@ -387,25 +398,36 @@ public final class PythonSdkUpdater {
         return;
       }
       if (exception instanceof UnsupportedPythonSdkTypeException) {
-        NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID)
-          .createNotification(PyBundle.message("sdk.gen.failed.notification.title"),
-                              PyBundle.message("remote.interpreter.support.is.not.available", presentation.getName()),
-                              NotificationType.WARNING)
-          .setDisplayId(REMOTE_INTERPRETER_SUPPORT_IS_NOT_AVAILABLE)
-          .notify(myProject);
+        notifyWarning(PyBundle.message("sdk.gen.failed.notification.title"),
+                      PyBundle.message("remote.interpreter.support.is.not.available", presentation.getName()),
+                      REMOTE_INTERPRETER_SUPPORT_IS_NOT_AVAILABLE);
       }
-      else if (exception instanceof InvalidSdkException) {
-        if (PythonSdkUtil.isRemote(mySdk)) {
-          PythonSdkType.notifyRemoteSdkSkeletonsFail((InvalidSdkException)exception, () -> {
-            if (!isSdkDisposed()) {
-              updateVersionAndPathsSynchronouslyAndScheduleRemaining(mySdk, myProject);
-            }
-          });
-        }
-        else if (pythonInterpreter.getPythonEnvironment() != null) {
-          LOG.error(exception);
+      else if (exception instanceof InvalidSdkException && PythonSdkUtil.isRemote(mySdk)) {
+        PythonSdkType.notifyRemoteSdkSkeletonsFail((InvalidSdkException)exception, () -> {
+          if (!isSdkDisposed()) {
+            updateVersionAndPathsSynchronouslyAndScheduleRemaining(mySdk, myProject);
+          }
+        });
+      }
+      else {
+        // The interpreter does not run: a user can delete or break it at any moment.
+        // That is a problem of the environment, not a defect of the code, so it is a warning and a notification.
+        LOG.warn("Skeleton generation failed for " + presentation.getName(), exception);
+        if (pythonInterpreter.getPythonEnvironment() != null) {
+          notifyWarning(PyBundle.message("sdk.gen.failed.skeletons.title", presentation.getName()),
+                        PyBundle.message("sdk.gen.failed.interpreter.unavailable"),
+                        REFRESH_SKELETONS_FAILED);
         }
       }
+    }
+
+    private void notifyWarning(@NotificationTitle @NotNull String title,
+                               @NotificationContent @NotNull String content,
+                               @NotNull String displayId) {
+      NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID)
+        .createNotification(title, content, NotificationType.WARNING)
+        .setDisplayId(displayId)
+        .notify(myProject);
     }
 
 
