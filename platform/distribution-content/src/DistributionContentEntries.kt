@@ -99,6 +99,30 @@ data class RecipeSource(
   /** Macro-rooted path of the file this source reads. Written only when [label] is absent. */
   @JvmField val path: String? = null,
 
+  /**
+   * Which file of [label] this source reads, when [label] alone cannot say.
+   *
+   * The input manifest keys a library by the container target that groups its jars. It writes one line for each jar
+   * and repeats the key. So every jar of a 26-jar library carries the same [label]. An output that takes fewer jars
+   * than the container declares is unreplayable from [label] alone. This field is what names the one file.
+   *
+   * The value is the name of the file. If two files of one container share a name, the value widens. It becomes the
+   * shortest trailing path of the file that names one file of the container. Every such path is a trailing path of an
+   * execution path, so it means the same thing on another machine.
+   *
+   * The emitter leaves the field out in four cases:
+   * 1. [label] is absent, so no key names a file: the run has no manifest, or the source reads no file at all;
+   * 2. [label] declares one file, which is the file this source reads;
+   * 3. [label] does not declare this source's file, which a consistent manifest never does;
+   * 4. two files of one container shadow each other, as `a/b.jar` and `x/a/b.jar` do, and no width separates the
+   *    shorter of the two.
+   *
+   * Only the second case means one file, and only the input manifest says which case an absent field is. So a replay
+   * that needs one file consults the manifest. Where the manifest declares several files, the replay holds the output
+   * out. It holds it out for the reason it already has, because the source still names no one file.
+   */
+  @JvmField val file: String? = null,
+
   /** The module whose output this source is, where the build recorded one. */
   @JvmField val module: String? = null,
 

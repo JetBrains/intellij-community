@@ -52,6 +52,10 @@ import kotlin.io.path.invariantSeparatorsPathString
  * Every source names the input-manifest key it was declared under ([BazelBuildInputs.labelOf]), never an execution
  * path, so the recipe means the same thing on another machine. A source no manifest declares falls back to a
  * macro-rooted path, which is visible in the report as `path` where a `label` would be.
+ *
+ * A key can name several files, because the manifest keys a library by the container target that groups its jars. Such
+ * a source also names the one file it read, in the cases [RecipeSource.file] lists. Without that field a source of a
+ * 26-jar library states which library it read and not which jar.
  */
 @ApiStatus.Internal
 object DevDistRecipe {
@@ -192,6 +196,7 @@ object DevDistRecipe {
       else -> null
     }
     val label = file?.let(BazelBuildInputs::labelOf)
+    val declaredFile = if (file == null || label == null) null else BazelBuildInputs.declaredFileNameOf(label = label, file = file)
     return RecipeSource(
       kind = when (source) {
         is ZipSource -> "zip"
@@ -204,6 +209,7 @@ object DevDistRecipe {
       },
       label = label,
       path = if (label == null) file?.let { shorten(it) } else null,
+      file = declaredFile,
       module = when (source) {
         is ZipSource -> source.moduleName
         is DirSource -> source.moduleName
