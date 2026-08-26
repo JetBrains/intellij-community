@@ -15,6 +15,7 @@ import com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -34,6 +35,7 @@ import java.awt.Font;
 
 import static com.intellij.openapi.module.ModuleGrouperKt.isQualifiedModuleNamesEnabled;
 
+@InternalIgnoreDependencyViolation
 public class ProjectViewPane extends AbstractProjectViewPaneWithAsyncSupport {
   public static final @NonNls String ID = "ProjectPane";
 

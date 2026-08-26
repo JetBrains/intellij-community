@@ -10,6 +10,7 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.PrimaryModuleManager
@@ -34,6 +35,7 @@ import kotlin.io.path.readText
 
 private val LOG = logger<ModuleAttachProcessor>()
 
+@InternalIgnoreDependencyViolation
 class ModuleAttachProcessor : ProjectAttachProcessor() {
   @ApiStatus.Internal
   companion object {

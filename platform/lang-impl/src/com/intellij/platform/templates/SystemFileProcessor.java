@@ -10,6 +10,7 @@ import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -26,6 +27,7 @@ import java.util.List;
 
 import static com.intellij.configurationStore.StoreUtilKt.getStateSpec;
 
+@InternalIgnoreDependencyViolation
 final class SystemFileProcessor extends ProjectTemplateFileProcessor {
   private static final String[] COMPONENT_NAMES = new String[] {
     FileEditorManager.class.getName(),

@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -35,6 +36,7 @@ private val LOG = logger<ImportNewProjectAttachProcessor>()
  * back from that project's [ModuleManager] and loads its `.iml` into the target project.
  */
 @ApiStatus.Internal
+@InternalIgnoreDependencyViolation
 class ImportNewProjectAttachProcessor : ProjectAttachProcessor() {
   override fun isEnabled(project: Project?, projectDir: Path?, newProject: Project?): Boolean {
     val dotIdeaDir = projectDir?.resolve(Project.DIRECTORY_STORE_FOLDER) ?: return false

@@ -6,6 +6,7 @@ import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollect
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectDataPathRoot
@@ -29,6 +30,7 @@ import kotlin.io.path.exists
 private val LOG = logger<WorkspaceModelCacheAttachProcessor>()
 
 @ApiStatus.Internal
+@InternalIgnoreDependencyViolation
 class WorkspaceModelCacheAttachProcessor : ProjectAttachProcessor() {
   override fun isEnabled(project: Project?, projectDir: Path?, newProject: Project?): Boolean {
     if (projectDir == null) return false
