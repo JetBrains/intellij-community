@@ -16,17 +16,15 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.types.KaBuiltinTypes
-import org.jetbrains.kotlin.analysis.api.session.analysisScope
-import org.jetbrains.kotlin.analysis.api.types.builtinTypes
 import org.jetbrains.kotlin.analysis.api.javaInterop.callableSymbol
 import org.jetbrains.kotlin.analysis.api.javaInterop.namedClassSymbol
-import org.jetbrains.kotlin.analysis.api.resolve.extensions.resolveExtensionScopeWithTopLevelDeclarations
-import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.analysis.api.resolve.extensions.resolveExtensionScopeWithTopLevelDeclarations
+import org.jetbrains.kotlin.analysis.api.session.analysisScope
+import org.jetbrains.kotlin.analysis.api.session.useSiteModule
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -36,6 +34,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.namedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaBuiltinTypes
 import org.jetbrains.kotlin.analysis.api.types.KaCapturedType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
@@ -43,7 +42,8 @@ import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
-import org.jetbrains.kotlin.analysis.api.session.useSiteModule
+import org.jetbrains.kotlin.analysis.api.types.builtinTypes
+import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
@@ -527,6 +527,8 @@ private fun findAllNamesForTypes(
     scope: GlobalSearchScope,
     builtinTypes: KaBuiltinTypes,
 ): Set<Name> {
+    val visitedTypes = hashMapOf<Name, Set<Name>>()
+
     fun findAllNamesForType(type: KaType): Set<Name> = when (type) {
         is KaFlexibleType -> findAllNamesForType(type.lowerBound)
 
@@ -552,9 +554,11 @@ private fun findAllNamesForTypes(
             val typeName = type.classId
                 .shortClassName
 
-            if (typeName.isSpecial)
+            visitedTypes[typeName]?.let { return it }
+
+            val names = if (typeName.isSpecial) {
                 emptySet()
-            else
+            } else {
                 buildSet {
                     add(typeName)
                     addAll(getPossibleTypeAliasExpansionNames(project, typeName, scope))
@@ -565,6 +569,9 @@ private fun findAllNamesForTypes(
                         ?.flatMap { findAllNamesForType(it) }
                         ?.forEach { add(it) }
                 }
+            }
+            visitedTypes[typeName] = names
+            names
         }
 
         else -> emptySet()
