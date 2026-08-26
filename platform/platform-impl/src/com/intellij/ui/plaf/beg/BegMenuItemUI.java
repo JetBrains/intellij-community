@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.client.ClientSystemInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.ui.JBPopupMenuDragSupportKt;
@@ -63,6 +64,7 @@ import java.util.function.Consumer;
  */
 @ApiStatus.Internal
 public final class BegMenuItemUI extends BasicMenuItemUI {
+  private static final @NotNull Logger LOG = Logger.getInstance(BegMenuItemUI.class);
   private static final String KEEP_MENU_OPEN_PROP = "BegMenuItemUI.keep-menu-open";
 
   private static final Rectangle ourEmptyRect = new Rectangle(0, 0, 0, 0);
@@ -573,6 +575,9 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     @Override
     public void mouseReleased(MouseEvent e){
       MenuSelectionManager manager=MenuSelectionManager.defaultManager();
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Handling a regular MOUSE_RELEASED event: " + e);
+      }
       if (handleReleaseOnMenuItem(e, manager)) return;
       manager.processMouseEvent(e);
     }
@@ -603,6 +608,9 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     public void menuDragMouseReleased(MenuDragMouseEvent e) {
       if (e.getButton() != MouseEvent.BUTTON1 && !triggerMenuActionsOnRmbRelease()) return;
       MenuSelectionManager manager=e.getMenuSelectionManager();
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Handling a drag MOUSE_RELEASED event: " + e);
+      }
       if (handleReleaseOnMenuItem(e, manager)) return;
       manager.clearSelectedPath();
     }
@@ -619,6 +627,13 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
         e.getButton() == MouseEvent.BUTTON1 ||
         (triggerMenuActionsOnRmbRelease() && isClickOrNoticeableDrag())
       ) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(
+            "Clicking the menu item: " +
+            "button = " + e.getButton() + ", " +
+            "triggerMenuActionsOnRmbRelease = " + triggerMenuActionsOnRmbRelease()
+          );
+        }
         doClick(manager, e);
       }
       return true;
