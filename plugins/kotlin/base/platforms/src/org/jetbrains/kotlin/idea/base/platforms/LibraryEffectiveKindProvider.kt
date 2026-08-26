@@ -129,7 +129,6 @@ class LibraryEffectiveKindProviderImpl(private val project: Project): LibraryEff
 
         private class ScannerVisitor {
             val classFileType = FileTypeRegistry.getInstance().getFileTypeByExtension("class")
-            val kotlinJavaScriptMetaFileType = FileTypeRegistry.getInstance().getFileTypeByExtension("kjsm")
             val jarFileSystem: JarFileSystem = JarFileSystem.getInstance()
             val fileTypeManager: FileTypeManager = FileTypeManager.getInstance()
 
@@ -158,9 +157,6 @@ class LibraryEffectiveKindProviderImpl(private val project: Project): LibraryEff
                     when {
                         fileType == classFileType ->
                             knownLibraryKindForClassRoot[classRoot] = KnownLibraryKindForIndex.UNKNOWN
-
-                        fileType == kotlinJavaScriptMetaFileType ->
-                            knownLibraryKindForClassRoot[classRoot] = KnownLibraryKindForIndex.JS
 
                         kind == null &&
                                 (fileType == KlibMetaFileType ||
