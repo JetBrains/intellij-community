@@ -2031,12 +2031,11 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
     class Group(TypedDict, Generic[T]):
         key: T
         group: list[T]
-    class GroupWithOtherKey(Group, Generic[T1]):
+    class GroupWithOtherKey(Group[T], Generic[T, T1]):
         some_other_key: T1
     group: GroupWithOtherKey[str, int] = {"key": 1, "group": [], "some_other_key": ''}
-    #                        │                   │                                 ^^ WARNING Expected type 'int', got 'str' instead
-    #                        │                   └ WARNING Expected type 'str', got 'int' instead
-    #                        ^^^^^^^^ WARNING Passed type arguments do not match type parameters [T1] of class 'GroupWithOtherKey'
+    #                                            │                                 ^^ WARNING Expected type 'int', got 'str' instead
+    #                                            └ WARNING Expected type 'str', got 'int' instead
     """.trimIndent())
 
   @Test

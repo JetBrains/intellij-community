@@ -42,7 +42,6 @@ import com.jetbrains.python.psi.types.PyCollectionTypeImpl
 import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
-import com.jetbrains.python.psi.types.PyTypeChecker.collectGenerics
 import com.jetbrains.python.psi.types.PyTypeProviderBase
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
 import com.jetbrains.python.psi.types.PyTypeUtil.notNullToRef
@@ -323,26 +322,8 @@ private fun createTypedDictTypeForClass(cls: PyClass, context: TypeEvalContext):
     closed,
     extraItemsTypeProvider,
     extraItemsQualifiers,
-    collectDeclaredTypeParameters(cls, context),
+    ownTypeParameters(cls, context),
   )
-}
-
-/**
- * Read from the declarations rather than from the item types, which a recursive TypedDict cannot evaluate. Inherited parameters
- * come first, so `class Sub(Base, Generic[T1])` over `class Base(TypedDict, Generic[T])` is parameterized as `Sub[T, T1]`.
- */
-private fun collectDeclaredTypeParameters(cls: PyClass, context: TypeEvalContext): List<PyType?> {
-  val result = LinkedHashSet<PyType?>()
-  for (ancestorType in typedDictAncestors(cls, context)) {
-    when (ancestorType) {
-      is PyTypedDictType -> result.addAll(inheritedTypeParameters(ancestorType, context))
-      is PyClassType -> if (ancestorType.pyClass.isTypingTypedDictInheritor(context)) {
-        result.addAll(ownTypeParameters(ancestorType.pyClass, context))
-      }
-    }
-  }
-  result.addAll(ownTypeParameters(cls, context))
-  return result.toList()
 }
 
 /**
@@ -392,13 +373,7 @@ private fun PyClassLikeType.declaringClass(): PyClass? = when (this) {
   else -> null
 }
 
-/** What a base leaves open: nothing for `Base[int]`, `S` for `Base[list[S]]`, its own parameters for an unspecialized one. */
-private fun inheritedTypeParameters(ancestorType: PyTypedDictType, context: TypeEvalContext): List<PyType?> {
-  val typeArguments = ancestorType.substitutedTypeArguments
-  return if (typeArguments.isEmpty()) ancestorType.declaredTypeParameters.orEmpty()
-  else typeArguments.flatMap { it.collectGenerics(context).allTypeParameters }
-}
-
+/** Read from the declaration, not from the items, which a recursive TypedDict cannot evaluate while it is being built. */
 private fun ownTypeParameters(cls: PyClass, context: TypeEvalContext): List<PyType?> =
   PyTypeChecker.findGenericDefinitionType(cls, context)?.typeArguments.orEmpty()
 
