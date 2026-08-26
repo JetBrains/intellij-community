@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.TrustedProjectsTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
@@ -65,6 +66,12 @@ public class JsonSchemaUntrustedResolveTest extends BasePlatformTestCase {
     """;
 
   private final List<Path> myPathsToDelete = new ArrayList<>();
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    TrustedProjectsTestUtil.enableTrustedProjectsCheck(getTestRootDisposable());
+  }
 
   @Override
   protected void tearDown() throws Exception {
