@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.testFramework.distributionContent
 
-import com.intellij.platform.distributionContent.testFramework.FileEntry
-import com.intellij.platform.distributionContent.testFramework.ModuleEntry
-import com.intellij.platform.distributionContent.testFramework.ProjectLibraryEntry
+import com.intellij.platform.distributionContent.FileEntry
+import com.intellij.platform.distributionContent.ModuleEntry
+import com.intellij.platform.distributionContent.ProjectLibraryEntry
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.elementNames
 import org.junit.jupiter.api.Test
@@ -30,7 +30,7 @@ import org.junit.jupiter.api.assertAll
  * The two classes cannot be compiled together in any build. The converter is a *separate Bazel module* -
  * `module(name = "jps_to_bazel")` in `community/platform/build-scripts/bazel/MODULE.bazel`, which `community/.bazelignore`
  * excludes from the community workspace - and it gets the platform as published Maven artifacts (`@j2b_maven`), which do
- * not carry `intellij.platform.distributionContent.testFramework`. The converter's own JPS module is skipped by the
+ * not carry `intellij.platform.distributionContent`. The converter's own JPS module is skipped by the
  * converter itself (`BazelBuildFileGenerator.computeModuleList`), so it has no generated Bazel target for anything here to
  * depend on either, and a Maven artifact would pin the schema to a *released* platform rather than to the source that
  * writes the reports. So the enforcement lives on this side, where [FileEntry]'s own descriptor - the half that actually
@@ -116,6 +116,14 @@ private val FILE_ENTRY = NarrowSchema(
     // modules. Each plugin's own report is the unit the converter reads, one target per report.
     "bundled" to "plugin index of a platform report; each plugin's own report is the unit read here",
     "nonBundled" to "plugin index of a platform report; each plugin's own report is the unit read here",
+    // Both are written only by the executed-recipe report of a dev-distribution fragment (`DevDistRecipe`), never by
+    // `buildJarContentReport`, so 0 of the checked-in reports the converter reads carry either. `kind` says how the
+    // build produced an output - jar written, directory referenced, file reused - and `sources` states the one ordered
+    // cross-kind source list, both of which are properties of an *assembly run*. The converter's question is the
+    // opposite one: given a committed report, which Bazel target may pack this jar. It answers that from `modules`,
+    // `contentModules` and the JPS model, and a recipe field would tell it about a run it never took.
+    "kind" to "how a dev fragment produced an output; written by no checked-in report",
+    "sources" to "the executed ordered source list of a dev fragment; written by no checked-in report",
   ),
 )
 

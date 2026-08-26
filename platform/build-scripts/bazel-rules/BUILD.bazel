@@ -18,6 +18,23 @@ bool_flag(
     visibility = ["//visibility:public"],
 )
 
+# Whether a dev-distribution fragment writes out the packaging recipe it executed, beside its own outputs.
+#
+# A sibling of `trace_spans` rather than a reuse of it, with the same shape and the same off-means-absent rule.
+# Separate because the two answer different questions and are wanted at different times: `trace_spans` measures a
+# build, and its protocol requires holding it constant across a comparison and reading it only from a cold run, while
+# a recipe is wanted from ordinary builds - by the executed-versus-committed check and by the replay gate, neither of
+# which is a measurement. Folding the recipe into `trace_spans` would make every request for one also take span output
+# and re-key every action a measured comparison had pinned.
+#
+#     bazel build //build:idea_air_dist --@community//platform/build-scripts/bazel-rules:dev_dist_plans \
+#       --output_groups=+dev_dist_plans
+bool_flag(
+    name = "dev_dist_plans",
+    build_setting_default = False,
+    visibility = ["//visibility:public"],
+)
+
 dev_dist_content_test_suite(name = "dev_dist_content_tests")
 
 test_suite(

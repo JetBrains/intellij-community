@@ -30,12 +30,18 @@ export function printUsage() {
   return [
     "Usage:",
     "  bun build/jps-module.mjs register <path-to-iml>... [--fix-iml-eof]",
+    "  bun build/jps-module.mjs unregister <path-to-iml>...",
     "  bun build/jps-module.mjs check <path-to-iml>... [--fix-iml-eof]",
     "",
     "Description:",
     "  Register JPS .iml modules in .idea/modules.xml and, for community modules,",
     "  community/.idea/modules.xml. Entries are ordered by the .iml basename without",
     "  the .iml suffix, matching org.jetbrains.intellij.build.ModulesXml.",
+    "",
+    "  `unregister` drops the entries of the listed modules. Use it for the old path of a",
+    "  renamed or deleted module, which `register` keeps. The listed .iml file does not",
+    "  have to exist. Only a listed module loses its entry, so a partial checkout keeps",
+    "  the rest.",
     "",
     "Options:",
     "  --fix-iml-eof  Remove trailing line breaks from listed .iml files",
@@ -107,11 +113,15 @@ export function parseArguments(argv) {
   if (help) {
     return {help, command, imlPaths, fixImlEof}
   }
-  if (command !== "register" && command !== "check") {
-    throw new UsageError("Command must be 'register' or 'check'.")
+  if (command !== "register" && command !== "unregister" && command !== "check") {
+    throw new UsageError("Command must be 'register', 'unregister' or 'check'.")
   }
   if (imlPaths.length === 0) {
     throw new UsageError("At least one .iml path is required.")
+  }
+  // `unregister` takes the path of a module that is already gone, so there is no file to fix.
+  if (command === "unregister" && fixImlEof) {
+    throw new UsageError("Option --fix-iml-eof does not apply to 'unregister'.")
   }
   for (const imlPath of imlPaths) {
     if (!imlPath.endsWith(".iml")) {
@@ -131,13 +141,13 @@ function isInsidePath(path, parent) {
   return rel !== "" && !rel.startsWith("..") && !isAbsolute(rel)
 }
 
-function resolveImlPath(rawPath, runtime) {
+function resolveImlPath(rawPath, runtime, requireExisting = true) {
   const pathBase = runtime.cwd ?? runtime.rootDir
   const absolutePath = isAbsolute(rawPath) ? resolve(rawPath) : resolve(pathBase, rawPath)
   if (!isInsidePath(absolutePath, runtime.rootDir)) {
     throw new Error(`Refusing to operate on a module outside the repository: ${rawPath}`)
   }
-  if (!runtime.exists(absolutePath)) {
+  if (requireExisting && !runtime.exists(absolutePath)) {
     throw new Error(`Module file does not exist: ${toPosixPath(relative(runtime.rootDir, absolutePath))}`)
   }
   return absolutePath
@@ -217,11 +227,18 @@ function isProjectDirFilepathInsideProject(filepath, projectHome) {
 export function updateModulesXmlContent(text, projectHome, modulesXmlPath, modulePaths, options = {}) {
   const parsed = parseModulesXml(text, modulesXmlPath)
   const dropEntriesOutsideProjectHome = options.dropEntriesOutsideProjectHome ?? false
+  // `remove` turns `modulePaths` from the entries to ensure into the entries to drop.
+  const remove = options.remove ?? false
+  const filepathsToRemove = new Set(remove ? modulePaths.map((modulePath) => createModuleFilePath(projectHome, modulePath)) : [])
   const diagnostics = []
   const entryByFilepath = new Map()
   const keptEntries = []
 
   for (const entry of parsed.entries) {
+    if (filepathsToRemove.has(entry.filepath)) {
+      diagnostics.push(`removed entry for ${entry.filepath}`)
+      continue
+    }
     if (dropEntriesOutsideProjectHome && !isProjectDirFilepathInsideProject(entry.filepath, projectHome)) {
       diagnostics.push(`removed entry outside project for ${entry.filepath}`)
       continue
@@ -243,7 +260,7 @@ export function updateModulesXmlContent(text, projectHome, modulesXmlPath, modul
   }
 
   let nextOriginalIndex = parsed.entries.length
-  for (const modulePath of modulePaths) {
+  for (const modulePath of remove ? [] : modulePaths) {
     const filepath = createModuleFilePath(projectHome, modulePath)
     if (entryByFilepath.has(filepath)) {
       continue
@@ -322,8 +339,9 @@ function createProjectUpdates(imlPaths, runtime) {
 }
 
 export function runOperation(args, runtime = createDefaultRuntime(), io = createDefaultIo()) {
-  const imlPaths = args.imlPaths.map((imlPath) => resolveImlPath(imlPath, runtime))
-  const write = args.command === "register"
+  const remove = args.command === "unregister"
+  const imlPaths = args.imlPaths.map((imlPath) => resolveImlPath(imlPath, runtime, !remove))
+  const write = args.command === "register" || remove
   const changedFiles = []
 
   for (const update of createProjectUpdates(imlPaths, runtime)) {
@@ -336,7 +354,7 @@ export function runOperation(args, runtime = createDefaultRuntime(), io = create
       update.projectHome,
       formatRel(update.modulesXmlPath, runtime.rootDir),
       update.modulePaths,
-      {dropEntriesOutsideProjectHome: update.dropEntriesOutsideProjectHome},
+      {dropEntriesOutsideProjectHome: update.dropEntriesOutsideProjectHome, remove: remove},
     )
     if (!result.changed) {
       continue

@@ -1,14 +1,14 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
-### auto-generated section `build intellij.platform.distributionContent.testFramework` start
+### auto-generated section `build intellij.platform.distributionContent` start
 create_kotlinc_options(
-    name = "custom_distributionContent-testFramework",
+    name = "custom_distribution-content",
     opt_in = ["kotlinx.serialization.ExperimentalSerializationApi"],
 )
 
 jvm_library(
-    name = "distributionContent-testFramework",
+    name = "distribution-content",
     srcs = glob(
         [
             "src/**/*.kt",
@@ -17,8 +17,8 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    kotlinc_opts = ":custom_distributionContent-testFramework",
-    module_name = "intellij.platform.distributionContent.testFramework",
+    kotlinc_opts = ":custom_distribution-content",
+    module_name = "intellij.platform.distributionContent",
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
@@ -31,30 +31,30 @@ jvm_library(
 )
 
 jvm_library(
-    name = "distributionContent-testFramework_test_lib",
+    name = "distribution-content_test_lib",
     testonly = True,
     srcs = glob(
         [],
         allow_empty = True,
     ),
-    kotlinc_opts = ":custom_distributionContent-testFramework",
-    module_name = "intellij.platform.distributionContent.testFramework",
+    kotlinc_opts = ":custom_distribution-content",
+    module_name = "intellij.platform.distributionContent",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":distributionContent-testFramework",
+        ":distribution-content",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )
-### auto-generated section `build intellij.platform.distributionContent.testFramework` end
+### auto-generated section `build intellij.platform.distributionContent` end
 
-### auto-generated section `iml intellij.platform.distributionContent.testFramework` start
+### auto-generated section `iml intellij.platform.distributionContent` start
 exports_files(
     [
-        "intellij.platform.distributionContent.testFramework.iml",
+        "intellij.platform.distributionContent.iml",
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `iml intellij.platform.distributionContent.testFramework` end
+### auto-generated section `iml intellij.platform.distributionContent` end

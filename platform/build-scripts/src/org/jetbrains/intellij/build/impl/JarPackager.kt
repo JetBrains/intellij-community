@@ -37,6 +37,7 @@ import org.jetbrains.intellij.build.buildJar
 import org.jetbrains.intellij.build.checkForNoDiskSpace
 import org.jetbrains.intellij.build.computeHashForModuleOutput
 import org.jetbrains.intellij.build.computeModuleSourcesByContent
+import org.jetbrains.intellij.build.dev.DevDistRecipe
 import org.jetbrains.intellij.build.dev.PrepackedPluginContentJar
 import org.jetbrains.intellij.build.dev.PrepackedPluginContentKey
 import org.jetbrains.intellij.build.findFileInModuleSources
@@ -1061,6 +1062,13 @@ private suspend fun buildAsset(
 ): BuildAssetResult {
   val includedModules = asset.includedModules
   if (asset.isDir) {
+    DevDistRecipe.record(
+      outputFile = asset.file,
+      isDir = true,
+      sources = includedModules.values.flatten(),
+      includedModules = includedModules.keys,
+      layout = layout,
+    )
     val sourceToMetadata = HashMap<Source, SizeAndHash>()
     for (sources in includedModules.values) {
       for (source in sources) {
@@ -1101,6 +1109,17 @@ private suspend fun buildAsset(
     }
     sources
   }
+
+  // The merged list, not the two collections it came from: this is the order the jar writer and the jar cache use, so
+  // it is the only order a recipe of this run can state. Recorded before the early return below, because an output with
+  // no sources is a fact about the run too.
+  DevDistRecipe.record(
+    outputFile = asset.file,
+    isDir = false,
+    sources = sources,
+    includedModules = includedModules.keys,
+    layout = layout,
+  )
 
   if (sources.isEmpty()) {
     return emptyBuildJarsResult()

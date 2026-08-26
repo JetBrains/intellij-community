@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.testFramework.distributionContent
 
-import com.intellij.platform.distributionContent.testFramework.FileEntry
-import com.intellij.platform.distributionContent.testFramework.ProjectLibraryEntry
-import com.intellij.platform.distributionContent.testFramework.ProjectLibraryFile
-import com.intellij.platform.distributionContent.testFramework.deserializeContentData
+import com.intellij.platform.distributionContent.FileEntry
+import com.intellij.platform.distributionContent.ProjectLibraryEntry
+import com.intellij.platform.distributionContent.ProjectLibraryFile
+import com.intellij.platform.distributionContent.deserializeContentData
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThatThrownBy

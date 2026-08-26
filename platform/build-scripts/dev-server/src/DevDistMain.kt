@@ -13,6 +13,7 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.DevBuildFragment
 import org.jetbrains.intellij.build.dev.DevBuildOutput
+import org.jetbrains.intellij.build.dev.DevDistRecipe
 import org.jetbrains.intellij.build.dev.PlatformJarSelector
 import org.jetbrains.intellij.build.dev.PluginFragmentSelector
 import org.jetbrains.intellij.build.dev.PrepackedPluginContentJar
@@ -47,6 +48,7 @@ import kotlin.system.exitProcess
  * dev-distribution fragment Bazel action passes.
  *
  * [TRACE_FILE_OPTION] writes this process's spans out as a side output; without it nothing is written.
+ * `--plan` does the same for the packaging recipe this assembly executed - see [DevDistRecipe].
  */
 fun main(args: Array<String>) {
   val options = parseCommandLineOptions(args)
@@ -148,6 +150,10 @@ private suspend fun assembleDevDistribution(options: CommandLineOptions) {
     System.setProperty("ijent.provided.at", path.invariantSeparatorsPathString)
   }
   val unusedInputs = options.optionalPath("--unused-inputs")
+  // The packaging recipe this assembly is about to execute, written after it has executed it. A pure side output: with
+  // the option absent nothing is recorded and nothing is written, so an assembly that is not asked for its recipe is
+  // byte-for-byte the assembly it was.
+  val planFile = options.optionalPath("--plan")
   configurePreloadedDownloads(options)
   options.checkNoUnknownOptions()
 
@@ -156,6 +162,10 @@ private suspend fun assembleDevDistribution(options: CommandLineOptions) {
   }
 
   lateinit var mainClassName: String
+
+  if (planFile != null) {
+    DevDistRecipe.start(distRoot = outputDir, projectHome = projectDir, scratchDir = scratchDir)
+  }
 
   val runDir = buildProductInProcess(
     BuildRequest(
@@ -188,6 +198,10 @@ private suspend fun assembleDevDistribution(options: CommandLineOptions) {
     if (fragment.isComplete) {
       DevIdeConfig.write(checkNotNull(ideConfigFile) { "--ide-config is required for a complete distribution" }, runDir, mainClassName, platformPrefix, additionalModules)
     }
+  }
+
+  planFile?.let {
+    DevDistRecipe.write(file = it, fragment = fragment.name)
   }
 
   println("Dev distribution fragment '$fragment' assembled into $runDir (main class: $mainClassName${ideConfigFile?.let { ", config: $it" }.orEmpty()})")

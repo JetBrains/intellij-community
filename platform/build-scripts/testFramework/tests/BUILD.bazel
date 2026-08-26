@@ -39,8 +39,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//platform/distribution-content:distributionContent-testFramework",
-        "//platform/distribution-content:distributionContent-testFramework_test_lib",
+        "//platform/distribution-content",
+        "//platform/distribution-content:distribution-content_test_lib",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/kotlinx/serialization/core",

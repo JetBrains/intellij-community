@@ -2,9 +2,9 @@
 package com.intellij.platform.buildScripts.testFramework.pluginModel
 
 import com.intellij.platform.buildScripts.testFramework.distributionContent.ParsedContentReport
-import com.intellij.platform.distributionContent.testFramework.FileEntry
-import com.intellij.platform.distributionContent.testFramework.PluginContentReport
-import com.intellij.platform.distributionContent.testFramework.deserializeContentData
+import com.intellij.platform.distributionContent.FileEntry
+import com.intellij.platform.distributionContent.PluginContentReport
+import com.intellij.platform.distributionContent.deserializeContentData
 import com.intellij.platform.pluginSystem.testFramework.MissingModuleSetDescriptorException
 import com.intellij.platform.pluginSystem.testFramework.buildStalePackagingDataMessage
 import com.intellij.platform.pluginSystem.testFramework.resolveModuleSet

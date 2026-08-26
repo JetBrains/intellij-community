@@ -1459,7 +1459,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/diff-impl/tests/intellij.platform.diff.tests.iml" filepath="$PROJECT_DIR$/platform/diff-impl/tests/intellij.platform.diff.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/discoverability/intellij.platform.discoverability.iml" filepath="$PROJECT_DIR$/platform/discoverability/intellij.platform.discoverability.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/discoverability/intellij.platform.discoverability.tests.iml" filepath="$PROJECT_DIR$/platform/discoverability/intellij.platform.discoverability.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/distribution-content/intellij.platform.distributionContent.testFramework.iml" filepath="$PROJECT_DIR$/platform/distribution-content/intellij.platform.distributionContent.testFramework.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/distribution-content/intellij.platform.distributionContent.iml" filepath="$PROJECT_DIR$/platform/distribution-content/intellij.platform.distributionContent.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/duplicates-analysis/intellij.platform.duplicates.analysis.iml" filepath="$PROJECT_DIR$/platform/duplicates-analysis/intellij.platform.duplicates.analysis.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-tests/durability/intellij.platform.durability.iml" filepath="$PROJECT_DIR$/platform/platform-tests/durability/intellij.platform.durability.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/editor/shared/intellij.platform.editor.iml" filepath="$PROJECT_DIR$/platform/editor/shared/intellij.platform.editor.iml" />

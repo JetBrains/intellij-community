@@ -218,7 +218,7 @@ internal const val LIB_MODULE_PREFIX = "intellij.libraries."
  * One jar of a checked-in content report - `module-content.yaml` here, `plugin-content.yaml` in [computePluginContent] -
  * narrowed to what packing and membership need.
  *
- * A narrow schema rather than `com.intellij.platform.distributionContent.testFramework.FileEntry`: that class lives in
+ * A narrow schema rather than `com.intellij.platform.distributionContent.FileEntry`: that class lives in
  * the platform, and this generator is a standalone Bazel module that gets the platform as published Maven artifacts,
  * which do not include it. Hence also `strictMode = false` - the files carry fields (`reason`, `size`, `files`,
  * `productModules`, ...) this schema deliberately ignores, and enumerating them here would recreate `FileEntry` field by

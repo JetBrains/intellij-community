@@ -3,12 +3,12 @@
 
 package com.intellij.platform.buildScripts.testFramework.distributionContent
 
-import com.intellij.platform.distributionContent.testFramework.FileEntry
-import com.intellij.platform.distributionContent.testFramework.ModuleEntry
-import com.intellij.platform.distributionContent.testFramework.PluginContentReport
-import com.intellij.platform.distributionContent.testFramework.deserializeContentData
-import com.intellij.platform.distributionContent.testFramework.deserializePluginData
-import com.intellij.platform.distributionContent.testFramework.serializeContentEntries
+import com.intellij.platform.distributionContent.FileEntry
+import com.intellij.platform.distributionContent.ModuleEntry
+import com.intellij.platform.distributionContent.PluginContentReport
+import com.intellij.platform.distributionContent.deserializeContentData
+import com.intellij.platform.distributionContent.deserializePluginData
+import com.intellij.platform.distributionContent.serializeContentEntries
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.util.lang.HashMapZipFile
 import kotlinx.serialization.SerializationException

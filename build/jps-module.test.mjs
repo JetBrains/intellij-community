@@ -208,6 +208,34 @@ describe("jps-module modules.xml updates", () => {
   })
 })
 
+describe("jps-module unregister content", () => {
+  it("drops only the listed entry", () => {
+    const content = createModulesXml([
+      "$PROJECT_DIR$/a/intellij.a.iml",
+      "$PROJECT_DIR$/b/intellij.b.iml",
+    ])
+
+    const result = updateModulesXmlContent(content, "/repo", ".idea/modules.xml", ["/repo/a/intellij.a.iml"], {remove: true})
+
+    ok(result.changed)
+    match(result.diagnostics.join("\n"), /removed entry for \$PROJECT_DIR\$\/a\/intellij\.a\.iml/)
+    deepEqual(moduleLines(result.content), [
+      "<module fileurl=\"file://$PROJECT_DIR$/b/intellij.b.iml\" filepath=\"$PROJECT_DIR$/b/intellij.b.iml\" />",
+    ])
+  })
+
+  it("never adds the listed entry back", () => {
+    const content = createModulesXml(["$PROJECT_DIR$/b/intellij.b.iml"])
+
+    const result = updateModulesXmlContent(content, "/repo", ".idea/modules.xml", ["/repo/a/intellij.a.iml"], {remove: true})
+
+    equal(result.changed, false)
+    deepEqual(moduleLines(result.content), [
+      "<module fileurl=\"file://$PROJECT_DIR$/b/intellij.b.iml\" filepath=\"$PROJECT_DIR$/b/intellij.b.iml\" />",
+    ])
+  })
+})
+
 describe("jps-module CLI", () => {
   it("registers community modules in both project structures", async () => {
     const rootDir = await createFixtureRoot()
@@ -351,5 +379,91 @@ describe("jps-module CLI", () => {
 
     equal(exitCode, usageExitCode)
     match(stderr.join("\n"), /At least one \.iml path is required/)
+  })
+
+  it("unregisters a module whose iml is already gone, and keeps the other entries", async () => {
+    const rootDir = await createFixtureRoot()
+    try {
+      await writeTextFile(join(rootDir, ".idea/modules.xml"), createModulesXml([
+        "$PROJECT_DIR$/community/plugins/a/intellij.a.iml",
+        "$PROJECT_DIR$/community/plugins/z/intellij.z.iml",
+      ]))
+      await writeTextFile(join(rootDir, "community/.idea/modules.xml"), createModulesXml([
+        "$PROJECT_DIR$/plugins/a/intellij.a.iml",
+        "$PROJECT_DIR$/plugins/z/intellij.z.iml",
+      ]))
+
+      const {runtime, writes} = createRuntime(rootDir)
+      const {io, stdout, stderr} = createRecordingIo()
+      // The .iml is deliberately absent: this is the old path of a renamed module.
+      const exitCode = await runCli(["unregister", "community/plugins/a/intellij.a.iml"], {runtime, io})
+
+      equal(exitCode, 0)
+      equal(stderr.length, 0)
+      deepEqual(writes.map((path) => path.replace(rootDir, "<root>")), [
+        "<root>/.idea/modules.xml",
+        "<root>/community/.idea/modules.xml",
+      ])
+      match(stdout.join("\n"), /removed entry for \$PROJECT_DIR\$\/community\/plugins\/a\/intellij\.a\.iml/)
+      deepEqual(moduleLines(await readFile(join(rootDir, ".idea/modules.xml"), "utf8")), [
+        "<module fileurl=\"file://$PROJECT_DIR$/community/plugins/z/intellij.z.iml\" filepath=\"$PROJECT_DIR$/community/plugins/z/intellij.z.iml\" />",
+      ])
+      deepEqual(moduleLines(await readFile(join(rootDir, "community/.idea/modules.xml"), "utf8")), [
+        "<module fileurl=\"file://$PROJECT_DIR$/plugins/z/intellij.z.iml\" filepath=\"$PROJECT_DIR$/plugins/z/intellij.z.iml\" />",
+      ])
+    }
+    finally {
+      await rm(rootDir, {recursive: true, force: true})
+    }
+  })
+
+  it("unregisters an ultimate module from the root project only", async () => {
+    const rootDir = await createFixtureRoot()
+    try {
+      await writeTextFile(join(rootDir, ".idea/modules.xml"), createModulesXml([
+        "$PROJECT_DIR$/plugins/demo/intellij.demo.iml",
+      ]))
+      await writeTextFile(join(rootDir, "community/.idea/modules.xml"), createModulesXml([]))
+
+      const {runtime, writes} = createRuntime(rootDir)
+      const {io} = createRecordingIo()
+      const exitCode = await runCli(["unregister", "plugins/demo/intellij.demo.iml"], {runtime, io})
+
+      equal(exitCode, 0)
+      deepEqual(writes.map((path) => path.replace(rootDir, "<root>")), ["<root>/.idea/modules.xml"])
+      equal(moduleLines(await readFile(join(rootDir, ".idea/modules.xml"), "utf8")).length, 0)
+    }
+    finally {
+      await rm(rootDir, {recursive: true, force: true})
+    }
+  })
+
+  it("unregister writes nothing when the entry is already absent", async () => {
+    const rootDir = await createFixtureRoot()
+    try {
+      await writeTextFile(join(rootDir, ".idea/modules.xml"), createModulesXml([
+        "$PROJECT_DIR$/plugins/z/intellij.z.iml",
+      ]))
+      await writeTextFile(join(rootDir, "community/.idea/modules.xml"), createModulesXml([]))
+
+      const {runtime, writes} = createRuntime(rootDir)
+      const {io, stdout} = createRecordingIo()
+      const exitCode = await runCli(["unregister", "plugins/demo/intellij.demo.iml"], {runtime, io})
+
+      equal(exitCode, 0)
+      equal(writes.length, 0)
+      match(stdout.join("\n"), /already canonical/)
+    }
+    finally {
+      await rm(rootDir, {recursive: true, force: true})
+    }
+  })
+
+  it("unregister rejects --fix-iml-eof", async () => {
+    const {io, stderr} = createRecordingIo()
+    const exitCode = await runCli(["unregister", "demo/intellij.demo.iml", "--fix-iml-eof"], {io})
+
+    equal(exitCode, usageExitCode)
+    match(stderr.join("\n"), /--fix-iml-eof does not apply to 'unregister'/)
   })
 })

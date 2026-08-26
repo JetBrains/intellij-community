@@ -65,6 +65,16 @@ object BazelBuildInputs {
    */
   fun resolveAllIfDeclared(label: String): List<Path>? = resolver?.resolveAllIfDeclared(label)
 
+  /**
+   * The manifest key [file] was declared under, or `null` when no manifest is configured or none declares that file.
+   *
+   * The inverse of [resolve], for naming a file the build has already read rather than for finding one: the executed
+   * packaging recipe identifies each source by its key, because a key is the same on every machine and an execution
+   * path is not. It deliberately does **not** mark the input as used - a name is not a read, and counting it as one
+   * would make merely reporting a fragment's recipe shrink its unused-input list.
+   */
+  fun labelOf(file: Path): String? = resolver?.labelOf(file)
+
   fun writeUnusedInputs(file: Path) {
     resolver?.writeUnusedInputs(file) ?: Files.writeString(file, "")
   }
@@ -86,6 +96,13 @@ private data class ExplicitBazelInput(
  */
 internal class ExplicitBazelInputResolver private constructor(
   private val inputs: Map<String, List<ExplicitBazelInput>>,
+  /**
+   * The key each declared file is named by, for [labelOf].
+   *
+   * Built once at load time and never written afterwards, which is why it needs none of this class's synchronization:
+   * it is the only member that is not part of the used-input bookkeeping.
+   */
+  private val labelByPath: Map<Path, String>,
 ) {
   private val usedExecPaths = HashSet<String>()
 
@@ -113,6 +130,8 @@ internal class ExplicitBazelInputResolver private constructor(
     }
   }
 
+  fun labelOf(file: Path): String? = labelByPath.get(file)
+
   @Synchronized
   fun writeUnusedInputs(file: Path) {
     file.parent?.let { Files.createDirectories(it) }
@@ -126,6 +145,7 @@ internal class ExplicitBazelInputResolver private constructor(
   companion object {
     fun load(file: Path): ExplicitBazelInputResolver {
       val inputs = LinkedHashMap<String, MutableList<ExplicitBazelInput>>()
+      val labelByPath = HashMap<Path, String>()
       Files.readAllLines(file).forEachIndexed { index, line ->
         if (line.isBlank()) return@forEachIndexed
         val separator = line.indexOf('\t')
@@ -134,6 +154,10 @@ internal class ExplicitBazelInputResolver private constructor(
         val execPath = line.substring(separator + 1)
         check(!Path.of(execPath).isAbsolute) { "Bazel input path '$execPath' must be relative to the execution root" }
         val input = ExplicitBazelInput(execPath = execPath, absolutePath = Path.of(execPath).toAbsolutePath().normalize())
+        // The label as the manifest writes it, not the apparent-repository alias synthesized below: a report has to
+        // name one key per file, and the written one is the key the generator emitted. First wins, so a file declared
+        // under two keys - a module target and the library container that exports it - is named by the first.
+        labelByPath.putIfAbsent(input.absolutePath, label)
         // A repeated label is how a multi-jar library states its jars, so appending is the normal case and order is
         // preserved. What is still a defect is the *same* file twice under one key: the writer deduplicates
         // (`_collect_libraries`, first-wins), so a repeat here means two producers disagreed about the same key.
@@ -143,7 +167,7 @@ internal class ExplicitBazelInputResolver private constructor(
           declared.add(input)
         }
       }
-      return ExplicitBazelInputResolver(inputs)
+      return ExplicitBazelInputResolver(inputs = inputs, labelByPath = labelByPath)
     }
 
     private fun apparentRepositoryLabel(label: String): String? {

@@ -261,6 +261,18 @@ _TRACE_SPANS_ATTR = {
     ),
 }
 
+# The switch that turns the executed packaging recipe on, carried by the one rule here that runs the assembler.
+#
+# A sibling of the above with the same shape rather than a reuse of it: a recipe and a measurement are wanted at
+# different times, and `trace_spans` has a protocol - hold it constant across a comparison, read it only from a cold
+# run - that a recipe request must not drag a build into. See the flag's own comment in this package's `BUILD.bazel`.
+_DEV_DIST_PLANS_ATTR = {
+    "_dev_dist_plans": attr.label(
+        default = "//platform/build-scripts/bazel-rules:dev_dist_plans",
+        providers = [BuildSettingInfo],
+    ),
+}
+
 def _declare_spans(ctx, args, base):
     """Declare this action's span output and tell its tool where to write it - or do neither.
 
@@ -295,6 +307,51 @@ def _declare_spans(ctx, args, base):
     # here; the rule is "the `File` where path mapping can apply, the string where the file's neighbours use strings".
     args.add("--trace-file=" + spans.path)
     return spans
+
+def _declare_plan(ctx, args, base):
+    """Declare this action's executed-recipe output and tell the assembler where to write it - or do neither.
+
+    Returns the `File`, or None when the flag is off. Same contract as `_declare_spans`: a pure side output that
+    nothing declares as an input and no provider another rule reads carries, so with the flag off there is neither an
+    extra declared output nor an extra argument.
+
+    **Append the returned file to `outputs`; never prepend it.** The reason is `_declare_spans`' reason, and it has
+    already cost this work one whole measurement: the first entry of the list handed to `ctx.actions.run` is the
+    action's primary output, which is what `dev-dist trace` joins a span file to its action by. A plan file put first
+    re-points the profile's `out` at the plan, and then every span file in the build reports "no action produced that
+    output" - a report of nothing, from a build that measured everything.
+
+    Args:
+        ctx: the rule context, for the flag and the declaration.
+        args: the assembler's `Args`, which learns `--plan=` only when the flag is on.
+        base: the declared file's name without the `.plan.yaml` suffix - normally the primary output's stem.
+    """
+    if not ctx.attr._dev_dist_plans[BuildSettingInfo].value:
+        return None
+    plan = ctx.actions.declare_file(base + ".plan.yaml")
+
+    # A string, like every neighbouring path argument in this file - these actions are local-exec and not path-mapped,
+    # so the `File` form buys nothing here. See `_declare_spans` for the full rule.
+    args.add("--plan=" + plan.path)
+    return plan
+
+def _plans_output_group(own, dependencies):
+    """The `dev_dist_plans` output group: this target's own recipe files, plus those of the targets it composes.
+
+    Always present and empty when the flag is off, so `--output_groups=+dev_dist_plans` is a valid request either way.
+
+    Only the fragment rule writes one, because only the fragment runs the assembler; a distribution propagates its
+    fragments' so that one request against a dist collects every recipe it is made of. The project model tree is not
+    carried here as it is for spans - it packs nothing, so it has no recipe to carry.
+    """
+    return depset(
+        direct = [file for file in own if file != None],
+        transitive = [
+            target[OutputGroupInfo].dev_dist_plans
+            for target in dependencies
+            if OutputGroupInfo in target and hasattr(target[OutputGroupInfo], "dev_dist_plans")
+        ],
+    )
 
 def _spans_output_group(own, dependencies):
     """The `trace_spans` output group: this target's own span files, plus those of the targets it composes.
@@ -466,6 +523,10 @@ def _fragment_impl(ctx):
     if spans:
         outputs.append(spans)
 
+    plan = _declare_plan(ctx, args, ctx.label.name)
+    if plan:
+        outputs.append(plan)
+
     ctx.actions.run(
         inputs = depset(
             direct = [
@@ -494,6 +555,8 @@ def _fragment_impl(ctx):
             # dependency of every fragment and of no distribution, so this is the only path by which one request for a
             # dist's spans can reach it.
             trace_spans = _spans_output_group([spans], [ctx.attr.project_model_tree]),
+            # This fragment's executed recipe. Nothing is propagated into it: the tree runs no assembler.
+            dev_dist_plans = _plans_output_group([plan], []),
         ),
         IntellijDevFragmentInfo(
             name = ctx.attr.fragment_name,
@@ -554,7 +617,7 @@ intellij_dev_fragment = rule(
         "preloaded_downloads": attr.label_list(allow_files = True),
         "preloaded_manifests": attr.label_list(allow_files = True),
         "ijent_binaries": attr.label_list(allow_files = True, doc = "The unpacked IJent binaries the assembly bundles at `lib/ijent/`, so that it extracts nothing itself."),
-    } | _TRACE_SPANS_ATTR,
+    } | _TRACE_SPANS_ATTR | _DEV_DIST_PLANS_ATTR,
 )
 
 def _packed_jars_component_impl(ctx):
@@ -792,6 +855,9 @@ def _compose(ctx, fragment_targets):
             # Every span file of this distribution in one request: the composition's own, each fragment's, and - through
             # the fragments - the shared project model tree's. This is the group a measuring run asks for.
             trace_spans = _spans_output_group([spans], fragment_targets),
+            # Every fragment's executed recipe in one request. The composition itself has none: it places files, it
+            # does not pack them.
+            dev_dist_plans = _plans_output_group([], fragment_targets),
         ),
     ]
 
