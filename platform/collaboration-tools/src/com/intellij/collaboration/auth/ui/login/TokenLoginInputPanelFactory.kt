@@ -3,10 +3,12 @@ package com.intellij.collaboration.auth.ui.login
 
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil.asObservableIn
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.util.URIUtil
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.IdeFocusManager
@@ -20,8 +22,14 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.components.BorderLayoutPanel
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import javax.swing.JLabel
 import javax.swing.event.DocumentEvent
 
 /**
@@ -64,6 +72,7 @@ class TokenLoginInputPanelFactory(
         else serverTextField.removeExtension(progressExtension)
       }
     }
+    val hasError = model.errorFlow.map { it != null }.stateIn(cs, SharingStarted.Eagerly, false)
 
     cs.launchNow {
       model.loginState.collectLatest { state ->
@@ -113,11 +122,24 @@ class TokenLoginInputPanelFactory(
           }.enabledIf(TokenGeneratorPredicate(model, serverTextField))
         }
       }
-      row {
-        if (errorPresenter != null) {
-          val errorPanel = ErrorStatusPanelFactory.create(cs, model.errorFlow, errorPresenter, ErrorStatusPanelFactory.Alignment.LEFT)
-          cell(errorPanel)
-        }
+
+      if (errorPresenter != null) {
+        row("") {
+          val iconLabel = JLabel(AllIcons.Ide.FatalError).apply {
+            border = JBUI.Borders.emptyRight(iconTextGap)
+          }
+          val errorComponent = ErrorStatusPanelFactory.create(cs, model.errorFlow, errorPresenter, ErrorStatusPanelFactory.Alignment.LEFT)
+
+          val errorWithIcon = BorderLayoutPanel().apply {
+            isOpaque = false
+            addToLeft(iconLabel)
+            addToCenter(errorComponent)
+          }
+
+          cell(errorWithIcon)
+            .align(AlignX.FILL)
+            .resizableColumn()
+        }.visibleIf(hasError.asObservableIn(cs))
       }
       footer()
     }.withPreferredWidth(350).apply {
