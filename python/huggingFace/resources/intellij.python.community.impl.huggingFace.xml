@@ -35,6 +35,9 @@
     <registryKey defaultValue="true"
                  description="Enable Hugging Face model and dataset cards, see PY-63670"
                  key="python.enable.hugging.face.cards"/>
+    <registryKey defaultValue="false"
+                 description="Render images in Hugging Face model and dataset cards"
+                 key="python.hugging.face.cards.render.images"/>
     <projectSettings service="com.intellij.python.community.impl.huggingFace.cache.HuggingFaceLastCacheRefresh"/>
   </extensions>
 </idea-plugin>

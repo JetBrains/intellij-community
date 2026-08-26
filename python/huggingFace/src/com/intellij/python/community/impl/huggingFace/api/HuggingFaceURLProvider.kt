@@ -4,6 +4,7 @@ package com.intellij.python.community.impl.huggingFace.api
 import com.intellij.python.community.impl.huggingFace.HuggingFaceConstants
 import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
 import org.jetbrains.annotations.ApiStatus
+import java.net.URI
 import java.net.URL
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -104,4 +105,11 @@ object HuggingFaceURLProvider {
 
   fun makeAbsoluteFileLink(entityId: String, relativeFilePath: String): URL =
     URL("$BASE_URL/$entityId/blob/main/$relativeFilePath")
+
+  fun makeAbsoluteFileDownloadLink(
+    entityId: String,
+    entityKind: HuggingFaceEntityKind,
+    relativeFilePath: String,
+  ): URL =
+    URI("${getEntityCardLink(entityId, entityKind)}/resolve/main/${relativeFilePath.removePrefix("./").removePrefix("/")}").toURL()
 }

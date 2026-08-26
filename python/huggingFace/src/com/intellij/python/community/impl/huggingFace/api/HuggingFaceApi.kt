@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceCache
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceMdCacheEntry
@@ -86,12 +87,19 @@ object HuggingFaceApi {
   }
 
   @Nls
-  suspend fun fetchOrRetrieveModelCard(entityDataApiContent: HuggingFaceEntityBasicApiData,
-                               entityId: String,
-                               entityKind: HuggingFaceEntityKind,
-                               prefix: String = "markdown"): String {
-    if (entityDataApiContent.gated != "false") return HuggingFaceDocumentationPlaceholdersUtil.generateGatedEntityMarkdownString(entityId, entityKind)
-    val cached = HuggingFaceMdCardsCache.getData("${prefix}_${entityId}")
+  suspend fun fetchOrRetrieveModelCard(
+    entityDataApiContent: HuggingFaceEntityBasicApiData,
+    entityId: String,
+    entityKind: HuggingFaceEntityKind,
+    prefix: String = "markdown",
+  ): String {
+    if (entityDataApiContent.gated != "false") {
+      return HuggingFaceDocumentationPlaceholdersUtil.generateGatedEntityMarkdownString(entityId, entityKind)
+    }
+    val renderImages = RegistryManager.getInstanceAsync().get(RENDER_IMAGES_REGISTRY_KEY).asBoolean()
+    val imageMode = if (renderImages) "with_images" else "without_images"
+    val cacheKey = "${prefix}_v${CARD_CACHE_FORMAT_VERSION}_${imageMode}_${entityId}"
+    val cached = HuggingFaceMdCardsCache.getData(cacheKey)
     cached?.let { return cached.data }
 
     val mdUrl = HuggingFaceURLProvider.getEntityMarkdownURL(entityId, entityKind).toString()
@@ -99,8 +107,10 @@ object HuggingFaceApi {
 
     return rawDataResult.fold(
       onSuccess = { rawData ->
-        val cleanedData = HuggingFaceReadmeCleaner(rawData, entityId, entityKind).doCleanUp().getMarkdown()
-        HuggingFaceMdCardsCache.saveData("markdown_$entityId", HuggingFaceMdCacheEntry(cleanedData, Instant.now().epochSecond))
+        val cleanedData = HuggingFaceReadmeCleaner(rawData, entityId, entityKind, renderImages)
+          .doCleanUp()
+          .getMarkdown()
+        HuggingFaceMdCardsCache.saveData(cacheKey, HuggingFaceMdCacheEntry(cleanedData, Instant.now().epochSecond))
         cleanedData
       },
       onFailure = { exception ->
@@ -114,4 +124,7 @@ object HuggingFaceApi {
       }
     )
   }
+
+  private const val RENDER_IMAGES_REGISTRY_KEY = "python.hugging.face.cards.render.images"
+  private const val CARD_CACHE_FORMAT_VERSION = 4
 }
