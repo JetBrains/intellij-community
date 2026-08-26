@@ -850,9 +850,10 @@
     <notificationGroup id="Python source root detection" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
                        key="python.source.root.detection.confirm.notification.group"/>
 
-    <toolWindow id="Python Packages" anchor="bottom" secondary="true"
+    <toolWindow id="Python Packages" anchor="right" secondary="false"
                 icon="com.jetbrains.python.icons.PythonIcons.Python.PythonPackages"
                 factoryClass="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowFactory"/>
+    <postStartupActivity implementation="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowMigrationActivity"/>
     <toolWindowExtractorMode id="Python Packages" mode="mirror"/>
     <toolWindowExtractor implementation="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowExtractor"/>
     <statistics.counterUsagesCollector
