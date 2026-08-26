@@ -17,7 +17,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.vcs.impl.shared.RepositoryId;
-import com.intellij.util.Alarm;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -25,8 +24,11 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
-import com.intellij.util.ui.update.DisposableUpdate;
-import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.DebouncedUpdates;
+import com.intellij.util.ui.update.UpdateQueue;
+import kotlin.Unit;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.Dispatchers;
 import com.intellij.vcs.git.branch.GitInOutCountersInProject;
 import com.intellij.vcs.git.branch.GitInOutCountersInRepo;
 import com.intellij.vcs.git.branch.GitInOutProjectState;
@@ -103,7 +105,7 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
   private final @NotNull Set<GitRepository> myDirtyReposWithOutgoing = new HashSet<>();
   private boolean myShouldRequestRemoteInfo;
 
-  private final @NotNull MergingUpdateQueue myQueue;
+  private final @NotNull UpdateQueue<Unit> myQueue;
 
   //store map from local branch to related cached remote branch hash per repository
   private final @NotNull Map<GitRepository, Map<GitLocalBranch, Integer>> myLocalBranchesWithIncoming = new ConcurrentHashMap<>();
@@ -115,11 +117,12 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
   private final @NotNull MultiMap<GitRepository, GitRemote> myAuthSuccessMap = MultiMap.createConcurrentSet();
   private final @NotNull AtomicReference<@Nullable Instant> myLastFetchTime = new AtomicReference<>(null);
 
-  GitBranchIncomingOutgoingManager(@NotNull Project project) {
+  GitBranchIncomingOutgoingManager(@NotNull Project project, @NotNull CoroutineScope cs) {
     myProject = project;
 
-    myQueue = new MergingUpdateQueue("GitBranchIncomingOutgoingManager", 1000, true, null,
-                                     this, null, Alarm.ThreadToUse.POOLED_THREAD);
+    myQueue = DebouncedUpdates.<Unit>forScope(cs, "GitBranchIncomingOutgoingManager", 1000)
+      .withContext(Dispatchers.getDefault())
+      .runLatest(ignored -> this.runUpdate());
   }
 
   @Override
@@ -265,7 +268,7 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
   }
 
   private void scheduleUpdate() {
-    myQueue.queue(DisposableUpdate.createDisposable(this, "update", this::runUpdate));
+    myQueue.queue(Unit.INSTANCE);
   }
 
   private void runUpdate() {
