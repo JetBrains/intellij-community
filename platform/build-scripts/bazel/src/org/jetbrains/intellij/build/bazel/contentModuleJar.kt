@@ -619,6 +619,11 @@ private fun mergedLibraryTargetLabels(
  * (`lib/debugger-memory-agent.jar`); a prepacked module skips `computeSourcesForModule` and would silently never write
  * it, so the owner is vetoed on sight.
  *
+ * When [simplePluginContentEntry] refuses an entry, this fold vetoes every content module the entry names. It does not
+ * veto only the module the path names. That over-approximates, and a measurement puts the cost at zero. The 50 entries
+ * that hold several content modules name 416 distinct modules. Not one of the 416 has a second occurrence that
+ * describes its own self-named jar. So reading such an entry as silent would agree on no extra module.
+ *
  * The fold is tri-state - unseen, agreed on a library set, or vetoed - which one map cannot hold, so `vetoed` is a
  * collection of its own. A vetoed module is also removed from `agreed`, and every veto path does both. That is what
  * keeps the fold an AND: once a module is vetoed no later occurrence brings it back, whatever order the reports are
@@ -803,7 +808,15 @@ private fun simplePluginContentEntryPath(entryName: String, moduleName: String, 
   }
 }
 
-/** The hand-over of a first-tranche plugin entry, or `null` when the entry needs JarPackager. */
+/**
+ * The hand-over of a first-tranche plugin entry, or `null` when the entry needs JarPackager.
+ *
+ * One content module, and that is measured rather than cautious. Every one of the 50 entries that hold several of them
+ * is a plugin main jar. Each names one plugin main module in `modules:`, and none has a path that names any member.
+ * [ContentModuleJar] could order such members with `modules_before` and `modules_after`. A main jar also holds a raw
+ * module output and a patched `META-INF/plugin.xml` the layout builds in memory, so it stays with `JarPackager`. See
+ * [foldPluginContentCandidacy] for what this refusal costs.
+ */
 internal fun simplePluginContentEntry(entry: RecipeEntry): SimplePluginContentEntry? {
   val contentModule = entry.contentModules.singleOrNull() ?: return null
   val moduleName = contentModule.moduleName
