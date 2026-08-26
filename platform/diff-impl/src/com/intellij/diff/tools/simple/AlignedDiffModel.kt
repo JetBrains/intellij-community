@@ -13,6 +13,7 @@ import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 import com.intellij.diff.util.TextDiffType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
@@ -33,8 +34,8 @@ import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.vcs.ex.end
 import com.intellij.openapi.vcs.ex.start
 import com.intellij.ui.ColorUtil
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
+import com.intellij.util.ui.update.DebouncedUpdates
+import kotlinx.coroutines.Dispatchers
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Graphics
@@ -106,7 +107,10 @@ abstract class AlignedDiffModelBase(
   private val editor1: EditorEx,
   private val editor2: EditorEx,
   private val syncScrollable: SyncScrollSupport.SyncScrollable) : AlignedDiffModel {
-  private val queue = MergingUpdateQueue("SimpleAlignedDiffModel", 300, true, parent, this)
+  private val queue = DebouncedUpdates.forComponent<Unit>(parent, "SimpleAlignedDiffModel", 300)
+    .withContext(Dispatchers.EDT)
+    .runLatest { realignChanges() }
+    .cancelOnDispose(this)
 
   protected val textSettings get() = TextDiffViewerUtil.getTextSettings(diffContext)
 
@@ -130,7 +134,7 @@ abstract class AlignedDiffModelBase(
 
   fun scheduleRealignChanges() {
     if (!needAlignChanges()) return
-    queue.queue(Update.create("update") { realignChanges() })
+    queue.queue(Unit)
   }
 
   override fun needAlignChanges(): Boolean {
