@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import com.intellij.util.io.createDirectories
-import com.intellij.util.io.delete
 import com.intellij.util.io.write
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -102,20 +101,10 @@ private suspend fun Path.writeFile(fileName: String, content: (file: Path) -> Un
 }
 
 @TestOnly
-fun TestFixture<Path>.executableFileFixture(fileName: String, content: CharSequence): TestFixture<Path> =
-  testFixture("executableFileFixture") {
-    val dir = this@executableFileFixture.init()
-    val file = dir.writeFile(fileName) {
-      it.writeText(content)
-      NioFiles.setExecutable(it)
-    }
-    initialized(file) {
-      withContext(Dispatchers.IO) {
-        if (file.exists()) {
-          file.delete()
-        }
-      }
-    }
+suspend fun Path.writeExecutableFile(fileName: String, content: CharSequence): Path =
+  writeFile(fileName) {
+    it.writeText(content)
+    NioFiles.setExecutable(it)
   }
 
 
