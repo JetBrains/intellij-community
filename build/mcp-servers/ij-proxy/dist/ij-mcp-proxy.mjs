@@ -21988,6 +21988,9 @@ function createProjectPathManager({
 }
 
 // proxy-tools/handlers/rename.ts
+import { createHash } from "crypto";
+import { createReadStream } from "fs";
+import { readdir } from "fs/promises";
 import path2 from "path";
 
 // proxy-tools/shared.ts
@@ -22170,16 +22173,113 @@ function flattenResultsMap(results) {
 }
 
 // proxy-tools/handlers/rename.ts
-async function handleRenameTool(args, projectPath, callUpstreamTool) {
-  let toolArgs = args ?? {}, filePath = requireString(toolArgs.pathInProject, "pathInProject"), symbolName = requireString(toolArgs.symbolName, "symbolName"), newName = requireString(toolArgs.newName, "newName"), { relative } = resolvePathInProject(projectPath, filePath, "pathInProject"), result = await callUpstreamTool("rename_refactoring", {
+var RENAME_FILE_CHANGES_PREFIX = "IJ_PROXY_RENAME_FILE_CHANGES=";
+async function handleRenameTool(args, projectPath, callUpstreamTool, readDirectoryEntries = readDirectoryEntryNames) {
+  let toolArgs = args ?? {}, filePath = requireString(toolArgs.pathInProject, "pathInProject"), symbolName = requireString(toolArgs.symbolName, "symbolName"), newName = requireString(toolArgs.newName, "newName"), { relative } = resolvePathInProject(projectPath, filePath, "pathInProject"), normalizedRelative = toPosixPath2(relative), candidatePaths = await findCandidatePaths(projectPath, normalizedRelative, symbolName, callUpstreamTool), before = await fingerprintPaths(projectPath, candidatePaths), result = await callUpstreamTool("rename_refactoring", {
     pathInProject: relative,
     symbolName,
     newName
-  }), message = extractTextFromResult(result);
-  if (message)
-    return message;
-  return `Renamed ${symbolName} to ${newName} in ${path2.resolve(projectPath, relative)}`;
+  }), after = await fingerprintPaths(projectPath, candidatePaths), changes = await collectRenameFileChanges(projectPath, normalizedRelative, symbolName, newName, before, after, readDirectoryEntries);
+  return `${extractTextFromResult(result) ?? `Renamed ${symbolName} to ${newName} in ${path2.resolve(projectPath, relative)}`}
+${RENAME_FILE_CHANGES_PREFIX}${JSON.stringify({ version: 1, changes })}`;
 }
+async function findCandidatePaths(projectPath, originalPath, symbolName, callUpstreamTool) {
+  let paths = /* @__PURE__ */ new Set([originalPath]), excludedPaths = /* @__PURE__ */ new Set;
+  for (let page = 0;page < MAX_SEARCH_PAGES; page++) {
+    let searchResult = await callUpstreamTool("search_text", {
+      q: symbolName,
+      limit: MAX_SEARCH_RESULTS,
+      ...excludedPaths.size > 0 ? { paths: [...excludedPaths].sort().map(exactPathExclusion) } : {}
+    }), addedPath = !1;
+    for (let item of extractItems(searchResult)) {
+      let candidatePath = projectRelativePath(projectPath, item.filePath);
+      if (!candidatePath)
+        continue;
+      if (paths.add(candidatePath), !excludedPaths.has(candidatePath))
+        excludedPaths.add(candidatePath), addedPath = !0;
+    }
+    if (!hasMoreSearchResults(searchResult))
+      return [...paths];
+    if (!addedPath)
+      throw Error("Cannot rename safely because search_text returned an incomplete page with no new project files.");
+  }
+  throw Error(`Cannot rename safely because search_text did not finish after ${MAX_SEARCH_PAGES} pages.`);
+}
+async function collectRenameFileChanges(projectPath, originalPath, symbolName, newName, before, after, readDirectoryEntries) {
+  let changedPaths = [.../* @__PURE__ */ new Set([...before.keys(), ...after.keys()])].filter((filePath) => before.get(filePath) !== after.get(filePath)), renamedPath = await inferredRenamedPath(projectPath, originalPath, symbolName, newName, readDirectoryEntries), primary = renamedPath ? { kind: "MOVE", path: renamedPath, previousPath: originalPath } : { kind: "MODIFY", path: originalPath }, primaryPaths = new Set([primary.path, primary.previousPath].filter((value) => value != null)), usages = changedPaths.filter((changedPath) => !primaryPaths.has(changedPath)).sort().map((changedPath) => ({ kind: "MODIFY", path: changedPath }));
+  return [primary, ...usages];
+}
+async function inferredRenamedPath(projectPath, originalPath, symbolName, newName, readDirectoryEntries) {
+  let extension = path2.extname(originalPath);
+  if (path2.basename(originalPath, extension) !== symbolName)
+    return null;
+  let renamedPath = toPosixPath2(path2.join(path2.dirname(originalPath), `${newName}${extension}`)), directoryEntries = await readDirectoryEntries(path2.resolve(projectPath, path2.dirname(originalPath))).catch(() => []);
+  if (directoryEntries.includes(path2.basename(renamedPath)) && !directoryEntries.includes(path2.basename(originalPath)))
+    return renamedPath;
+  return null;
+}
+function hasMoreSearchResults(result) {
+  let structured = extractStructuredContent(result);
+  return structured != null && typeof structured === "object" && !Array.isArray(structured) && structured.more === !0;
+}
+function exactPathExclusion(filePath) {
+  let globPath = escapeGlobPath(filePath);
+  return `!{${globPath},./${globPath}}`;
+}
+function escapeGlobPath(filePath) {
+  let result = "";
+  for (let character of filePath)
+    switch (character) {
+      case "*":
+      case "?":
+      case "{":
+      case "}":
+      case ",":
+        result += `[${character}]`;
+        break;
+      case "[":
+        result += "[[]";
+        break;
+      default:
+        result += character;
+    }
+  return result;
+}
+function projectRelativePath(projectPath, filePath) {
+  try {
+    return toPosixPath2(resolvePathInProject(projectPath, filePath, "search result path").relative);
+  } catch {
+    return null;
+  }
+}
+async function fingerprintPaths(projectPath, paths) {
+  let result = /* @__PURE__ */ new Map;
+  for (let offset = 0;offset < paths.length; offset += FILE_HASH_CONCURRENCY) {
+    let batch = paths.slice(offset, offset + FILE_HASH_CONCURRENCY), fingerprints = await Promise.all(batch.map((filePath) => fingerprintPath(path2.resolve(projectPath, filePath))));
+    batch.forEach((filePath, index) => result.set(filePath, fingerprints[index]));
+  }
+  return result;
+}
+async function fingerprintPath(absolutePath) {
+  try {
+    return await hashFile(absolutePath);
+  } catch {
+    return "unreadable";
+  }
+}
+async function hashFile(absolutePath) {
+  let hash2 = createHash("sha256");
+  for await (let chunk of createReadStream(absolutePath))
+    hash2.update(chunk);
+  return hash2.digest("hex");
+}
+async function readDirectoryEntryNames(directoryPath) {
+  return readdir(directoryPath);
+}
+function toPosixPath2(value) {
+  return value.replace(/\\/g, "/");
+}
+var FILE_HASH_CONCURRENCY = 8, MAX_SEARCH_RESULTS = 5000, MAX_SEARCH_PAGES = 1000;
 
 // proxy-tools/container-handlers.ts
 import path4 from "path";
