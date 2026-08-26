@@ -70,6 +70,8 @@ import javax.swing.SwingUtilities
 import javax.swing.border.Border
 import javax.swing.border.EmptyBorder
 import javax.swing.event.DocumentEvent
+import javax.swing.event.ListSelectionEvent
+import javax.swing.event.ListSelectionListener
 import kotlin.math.max
 import kotlin.math.min
 import kotlinx.coroutines.CoroutineScope
@@ -377,6 +379,14 @@ open class EvoTreePopup private constructor(
 ) : ListPopupImpl(CommonDataKeys.PROJECT.getData(dataContext), aParent, step, null) {
   private val myComponent: Component? = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext)
 
+  /**
+   * True for the popup the widget itself opens, and false for every submenu under it.
+   *
+   * A getter rather than a stored value, so it holds while the superclass constructor still runs. [WizardPopup] assigns
+   * its parent there, and [setShowSubmenuOnHover] can be called from that far up.
+   */
+  private val isTopLevel: Boolean get() = parent == null
+
   override fun getListElementRenderer(): ListCellRenderer<*>? {
     return EvoPopupListElementRenderer(this)
   }
@@ -388,6 +398,18 @@ open class EvoTreePopup private constructor(
       return EvoTreePopup(parent, step, null, dataContext, maxRowCount)
     }
     return super.createPopup(parent, step, parentValue)
+  }
+
+  /**
+   * Keeps hover expansion at the top level. A node inside a submenu expands on click.
+   *
+   * The value is refused here rather than only left unset at construction, because [ListPopupImpl] pushes its own
+   * setting onto every child it creates, and it does so after [createPopup] has returned. Without this, hover expansion
+   * would reach the whole tree, and a pointer crossing the rows of one submenu on its way elsewhere would unfold one
+   * level after another.
+   */
+  override fun setShowSubmenuOnHover(showSubmenuOnHover: Boolean) {
+    super.setShowSubmenuOnHover(showSubmenuOnHover && isTopLevel)
   }
 
   /**
@@ -729,8 +751,8 @@ open class EvoTreePopup private constructor(
 
   init {
     setMaxRowCount(maxRowCount)
-    // Submenus (tool nodes and the uv/pip "add new environment" version list) expand on hover.
-    isShowSubmenuOnHover = true
+    // A tool node expands on hover, and only in the popup the widget opens — see [setShowSubmenuOnHover].
+    isShowSubmenuOnHover = isTopLevel
   }
 
   override fun afterShow() {
@@ -793,6 +815,30 @@ open class EvoTreePopup private constructor(
           shownTooltip = tooltip
           list.setToolTipText(tooltip?.let { HtmlChunk.raw(multiLineTooltip(it)) })
         }
+      }
+    })
+
+    // Selecting another row closes whatever the previous row had opened, so at most one submenu is ever open below this
+    // popup. The platform does this only while it expands on hover, and this popup does that at the top level alone —
+    // see [setShowSubmenuOnHover]. It reads the selection rather than the pointer, so it also covers the keyboard, and
+    // so it inherits the platform's rule that travelling towards an open submenu does not change the selection.
+    list.addListSelectionListener(object : ListSelectionListener {
+      /**
+       * The selection this last acted on.
+       *
+       * The list reports one selection more than once, and a repeat must do nothing. It would close the submenu that
+       * the very same row had just opened.
+       */
+      private var lastIndex: Int = -1
+
+      override fun valueChanged(e: ListSelectionEvent) {
+        // The platform copies every listener of this list onto each child popup it creates, so this same object also
+        // hears a child's selection. Only the list this popup owns may close this popup's child.
+        if (e.source !== list || e.valueIsAdjusting) return
+        val index = list.selectedIndex
+        if (index == lastIndex) return
+        lastIndex = index
+        disposeChildren()
       }
     })
 
