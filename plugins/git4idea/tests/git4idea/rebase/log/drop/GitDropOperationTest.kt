@@ -32,7 +32,7 @@ import java.util.stream.Stream
 @ParameterizedClass(name = "{0}")
 @MethodSource("dropOperations")
 @Suppress("unused")
-internal class GitDropOperationTestBase private constructor(private val testType: String, private val operation: DropTestOperation) {
+internal class GitDropOperationTest private constructor(private val testType: String, private val operation: DropTestOperation) {
   companion object {
     @JvmStatic
     fun dropOperations(): Stream<Arguments> =
