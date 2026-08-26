@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TrustedProjectsTestUtil
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.useProject
 import io.netty.handler.codec.http.HttpHeaderNames
@@ -148,12 +149,15 @@ internal class HeavyBuiltInWebServerTest {
       builder.header("Service-Worker", "script")
 
       val client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build()
-      val responseTrusted = client.send(builder.build(), HttpResponse.BodyHandlers.ofInputStream())
-      assertThat(HttpResponseStatus.valueOf(responseTrusted.statusCode())).isEqualTo(HttpResponseStatus.OK)
+      TrustedProjectsTestUtil.withTrustedProjectsCheckEnabled {
+        TrustedProjects.setProjectTrusted(project, true)
+        val responseTrusted = client.send(builder.build(), HttpResponse.BodyHandlers.ofInputStream())
+        assertThat(HttpResponseStatus.valueOf(responseTrusted.statusCode())).isEqualTo(HttpResponseStatus.OK)
 
-      TrustedProjects.setProjectTrusted(project, false)
-      val responseNotTrusted = client.send(builder.build(), HttpResponse.BodyHandlers.ofInputStream())
-      assertThat(HttpResponseStatus.valueOf(responseNotTrusted.statusCode())).isEqualTo(HttpResponseStatus.NOT_FOUND)
+        TrustedProjects.setProjectTrusted(project, false)
+        val responseNotTrusted = client.send(builder.build(), HttpResponse.BodyHandlers.ofInputStream())
+        assertThat(HttpResponseStatus.valueOf(responseNotTrusted.statusCode())).isEqualTo(HttpResponseStatus.NOT_FOUND)
+      }
     }
   }
 }
