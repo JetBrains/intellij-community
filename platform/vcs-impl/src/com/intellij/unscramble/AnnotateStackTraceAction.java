@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.CoroutinesKt;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -26,7 +27,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -53,8 +53,9 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
+import com.intellij.util.ui.update.DebouncedUpdates;
+import com.intellij.util.ui.update.UpdateQueue;
+import com.intellij.vcs.VcsDisposable;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -63,6 +64,11 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntListIterator;
+import kotlin.Unit;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.CoroutineScopeKt;
+import kotlinx.coroutines.Dispatchers;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,6 +80,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope;
 
 @ApiStatus.Internal
 public final class AnnotateStackTraceAction extends DumbAwareAction {
@@ -177,7 +185,12 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
     ProgressManager.getInstance().run(new Task.Backgroundable(
       project, LangBundle.message("progress.title.getting.file.history"), true) {
       private final Object LOCK = new Object();
-      private final MergingUpdateQueue myUpdateQueue = new MergingUpdateQueue("AnnotateStackTraceAction", 200, true, null);
+      private final CoroutineScope myQueueScope = childScope(
+        VcsDisposable.getInstance(project).getCoroutineScope(),
+        "AnnotateStackTraceAction",
+        EmptyCoroutineContext.INSTANCE,
+        true
+      );
 
       private MyActiveAnnotationGutter myGutter;
 
@@ -189,13 +202,17 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
       @Override
       public void onFinished() {
         actionLock.unlock();
-        Disposer.dispose(myUpdateQueue);
+        CoroutineScopeKt.cancel(myQueueScope, null);
       }
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         Map<VirtualFile, IntList> files2lines = CollectionFactory.createSmallMemoryFootprintMap();
         Int2ObjectMap<LastRevision> revisions = new Int2ObjectOpenHashMap<>();
+
+        UpdateQueue<Unit> updateQueue = DebouncedUpdates.<Unit>forScope(myQueueScope, "AnnotateStackTraceAction", 200)
+          .withContext(CoroutinesKt.getEDT(Dispatchers.INSTANCE))
+          .runLatest(ignored -> updateGutter(indicator, revisions));
 
         ReadAction.runBlocking(() -> {
           for (int line = 0; line < editor.getDocument().getLineCount(); line++) {
@@ -221,15 +238,10 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
             }
           }
 
-          myUpdateQueue.queue(new Update("update") {
-            @Override
-            public void run() {
-              updateGutter(indicator, revisions);
-            }
-          });
+          updateQueue.queue(Unit.INSTANCE);
         }
 
-        // myUpdateQueue can be disposed before the last revisions are passed to the gutter
+        // updateQueue can be disposed before the last revisions are passed to the gutter
         ApplicationManager.getApplication().invokeLater(() -> updateGutter(indicator, revisions));
       }
 
