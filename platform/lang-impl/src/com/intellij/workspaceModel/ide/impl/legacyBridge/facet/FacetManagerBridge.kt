@@ -40,7 +40,7 @@ import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntityIfNotDisposedLegacy
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntitityLegacy
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
 import com.intellij.workspaceModel.ide.toExternalSource
@@ -211,12 +211,12 @@ class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModelBase(
   }
 
   /**
-   * @throws AlreadyDisposedException see [findModuleEntityIfNotDisposedLegacy]: an empty facet list would trick the client into creating a new facet
+   * @throws AlreadyDisposedException see [findModuleEntitityLegacy]: an empty facet list would trick the client into creating a new facet
    * for a module which doesn't exist anymore
    */
   private fun resolveModuleEntity(): ModuleEntity {
     val storage = moduleBridge.diff ?: moduleBridge.entityStorage.current
-    return moduleBridge.findModuleEntityIfNotDisposedLegacy(storage)
+    return moduleBridge.findModuleEntitityLegacy(storage)
   }
 
   internal fun getFacet(entity: FacetEntity): Facet<*>? = facetMapping().getDataByEntity(entity)

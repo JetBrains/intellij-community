@@ -32,6 +32,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
@@ -56,6 +57,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.assertDoesNotThrow
+import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertNotNull
 
 internal val MOCK_FACET_TYPE_ID = FacetEntityTypeId("MockFacetId")
@@ -101,7 +103,7 @@ class FacetModelBridgeTest {
 
     val facetByType = facetManager.getFacetByType(MockFacetType.ID)
     assertNotNull(facetByType)
-    assertEquals(facetData, facetByType!!.configuration.data)
+    assertEquals(facetData, facetByType.configuration.data)
 
     val facetEntity = WorkspaceModel.getInstance(projectModel.project).currentSnapshot.entities(FacetEntity::class.java).first()
     assertEquals(facetConfigXml, facetEntity.configurationXmlTag)
@@ -237,10 +239,14 @@ class FacetModelBridgeTest {
     projectModel.removeModule(module)
 
     // ModuleBridgeCleaner pins the storage of a removed module to the snapshot taken before the removal, so the module entity is still
-    // resolvable and facets remain available instead of AlreadyDisposedException being thrown from FacetModelBridge.getAllFacets
+    // resolvable and facets remain available to the listener instead of AlreadyDisposedException being thrown from
+    // FacetModelBridge.getAllFacets
     assertEquals(listOf(1), facetsInListener)
+
+    // After the disposal the client must stop instead. An empty facet list would trick it into creating a facet for a module which does not
+    // exist anymore, so getAllFacets throws.
     assertTrue(module.isDisposed)
-    assertOneElement(facetManager.allFacets)
+    assertThrows<AlreadyDisposedException> { facetManager.allFacets }
   }
 
   @Test

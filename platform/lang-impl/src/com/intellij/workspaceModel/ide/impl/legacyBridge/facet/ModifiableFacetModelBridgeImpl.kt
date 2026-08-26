@@ -33,7 +33,7 @@ import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStor
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.mutableFacetMapping
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntityIfNotDisposedLegacy
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntitityLegacy
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableFacetModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
@@ -51,7 +51,7 @@ class ModifiableFacetModelBridgeImpl(
    * @throws com.intellij.serviceContainer.AlreadyDisposedException see [moduleEntityNotResolved]
    */
   private val moduleEntity: ModuleEntity
-    get() = moduleBridge.findModuleEntityIfNotDisposedLegacy(diff)
+    get() = moduleBridge.findModuleEntitityLegacy(diff)
 
   override fun addFacet(facet: Facet<*>) {
     addFacet(facet, null)
@@ -254,10 +254,7 @@ class ModifiableFacetModelBridgeImpl(
   override fun isNewFacet(facet: Facet<*>): Boolean {
     val entity = diff.facetMapping().getEntities(facet).singleOrNull()
     if (entity == null) return false
-    return if (entity is FacetEntity) {
-      entity.symbolicId !in initialStorage
-    }
-    else true
+    return entity !is FacetEntity || entity.symbolicId !in initialStorage
   }
 
   override fun addListener(listener: ModifiableFacetModel.Listener, parentDisposable: Disposable) {

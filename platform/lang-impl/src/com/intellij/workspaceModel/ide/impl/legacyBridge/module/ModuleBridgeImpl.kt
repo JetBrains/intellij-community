@@ -106,13 +106,10 @@ open class ModuleBridgeImpl(
     getModuleComponentManager().initModuleContainer(precomputedExtensionModel)
   }
 
-  /**
-   * @throws com.intellij.serviceContainer.AlreadyDisposedException see [moduleEntityNotResolved]: `null` would be indistinguishable from an
-   * option which is simply not set
-   */
   override fun getOptionValue(key: String): String? {
     val storage = entityStorage.current
-    val moduleEntity = this.findModuleEntityIfNotDisposedLegacy(storage)
+    // ADE breaks Gradle import, so we prefer to use stale data for disposed module until fixed
+    val moduleEntity = this.findModuleEntitityLegacy(storage, throwADEIfDisposed = false)
     if (key == Module.ELEMENT_TYPE) {
       return moduleEntity.type?.name
     }

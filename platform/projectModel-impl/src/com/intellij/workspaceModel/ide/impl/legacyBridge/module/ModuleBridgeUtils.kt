@@ -3,6 +3,7 @@
 
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -22,11 +23,18 @@ fun ModuleBridge.findModuleEntity(entityStorage: EntityStorage): ModuleEntity? {
 
 /**
  * Use [com.intellij.workspaceModel.ide.legacyBridge.findModuleEntityIfNotDisposed] from API instead.
+ * To get stale info instead of [AlreadyDisposedException] for disposed modules, disable [throwADEIfDisposed]
  */
 @ApiStatus.Internal
 @ApiStatus.Obsolete
-fun ModuleBridge.findModuleEntityIfNotDisposedLegacy(entityStorage: EntityStorage): ModuleEntity =
-  findModuleEntity(entityStorage) ?: moduleEntityNotResolved(entityStorage)
+fun ModuleBridge.findModuleEntitityLegacy(entityStorage: EntityStorage, throwADEIfDisposed: Boolean = true): ModuleEntity {
+  val entity = findModuleEntity(entityStorage) ?: moduleEntityNotResolved(entityStorage)
+  // See findModuleEntityIfNotDisposed
+  if (throwADEIfDisposed && isDisposed) {
+    throwModuleDisposedException(this)
+  }
+  return entity
+}
 
 
 /**
@@ -43,9 +51,17 @@ internal fun Module.moduleEntityNotResolved(store: EntityStorage): Nothing {
   val id = (this as? ModuleBridge)?.moduleEntityId ?: name
   val message = "Cannot resolve entity of module $id (store = $store)"
   if (isDisposed) {
-    throw AlreadyDisposedException("$message : module already disposed")
+    throwModuleDisposedException(this)
   }
   else {
     throw IllegalStateException("$message : save module first")
   }
 }
+
+internal fun throwModuleDisposedException(module: Module): Nothing {
+  val message = "module ${module.name} already disposed"
+  logger.debug(message)
+  throw AlreadyDisposedException(message)
+}
+
+private val logger = fileLogger()

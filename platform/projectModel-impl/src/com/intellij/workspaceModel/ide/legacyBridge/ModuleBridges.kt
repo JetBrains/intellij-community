@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.moduleEntityNotResolved
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.throwModuleDisposedException
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
 
@@ -38,15 +39,20 @@ fun Module.findModuleEntity(): ModuleEntity? {
 @Internal
 fun Module.findModuleEntityIfNotDisposed(): ModuleEntity {
   val storage = findEntityStorage()
-  return findModuleEntity(storage) ?: moduleEntityNotResolved(storage)
+  // Current storage might still be relevant: for deleted modules `isDisposed` might still be false
+  // see PY-91832
+  val entity = findModuleEntityImpl(storage, (this as ModuleBridge).entityStorage.current) ?: moduleEntityNotResolved(storage)
+  if (isDisposed) {
+    // IJPL-253130: for a deleted module entity `AlreadyDisposedException` must be thrown.
+    throwModuleDisposedException(this)
+  }
+  return entity
 }
 
 /**
  * @return corresponding [ModuleEntity] or null if module isn't associated with entity yet
  */
-fun Module.findModuleEntity(entityStorage: EntityStorage): ModuleEntity? {
-  return entityStorage.moduleMap.getEntities(this as ModuleBridge).firstOrNull() as ModuleEntity?
-}
+fun Module.findModuleEntity(entityStorage: EntityStorage): ModuleEntity? = findModuleEntityImpl(entityStorage)
 
 /**
  * Consider rewriting your code to use [ModuleEntity] directly. This method was introduced to simplify the first
@@ -60,3 +66,6 @@ fun ModuleEntity.findModule(snapshot: EntityStorage): Module? {
 }
 
 private fun Module.findEntityStorage() = (this as ModuleBridge).diff ?: project.workspaceModel.currentSnapshot
+
+private fun Module.findModuleEntityImpl(vararg storages: EntityStorage): ModuleEntity? =
+  storages.firstNotNullOfOrNull { it.moduleMap.getEntities(this as ModuleBridge).firstOrNull() as ModuleEntity? }

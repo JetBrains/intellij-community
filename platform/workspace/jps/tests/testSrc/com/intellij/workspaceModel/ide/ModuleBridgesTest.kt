@@ -1,21 +1,21 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.impl.stores.stateStore as moduleStateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleType
+import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.project.rootManager
@@ -68,6 +68,7 @@ import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.project.stateStore
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
@@ -92,6 +93,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRoot
 import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
+import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntityIfNotDisposed
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -113,10 +115,12 @@ import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import org.junit.jupiter.api.assertThrows
 import java.io.File
 import java.io.PrintStream
 import java.nio.file.Files
 import kotlin.random.Random
+import com.intellij.openapi.components.impl.stores.stateStore as moduleStateStore
 
 class ModuleBridgesTest {
   @Rule
@@ -855,6 +859,51 @@ class ModuleBridgesTest {
     val updatedStore = WorkspaceModel.getInstance(project).currentSnapshot
     assertEmpty(updatedStore.entities(ModuleEntity::class.java).toList())
     assertEmpty(updatedStore.entities(LibraryEntity::class.java).toList())
+  }
+
+  @Test
+  fun `find module entity of a removed module`() {
+    val module = projectModel.createModule()
+    val moduleName = module.name
+    assertEquals(moduleName, module.findModuleEntityIfNotDisposed().name)
+
+    // `moduleRemoved` comes after the entity leaves the current storage, but before the bridge is disposed. ModuleBridgeCleaner pins the
+    // storage of a removed module to the snapshot taken before the removal, so a caller in this window still gets the entity.
+    // Before PY-91832 this window gave an `IllegalStateException`.
+    val namesInListener = mutableListOf<String>()
+    project.messageBus.connect(disposableRule.disposable).subscribe(ModuleListener.TOPIC, object : ModuleListener {
+      override fun moduleRemoved(project: Project, module: Module) {
+        namesInListener.add(module.findModuleEntityIfNotDisposed().name)
+      }
+    })
+
+    projectModel.removeModule(module)
+
+    assertEquals(listOf(moduleName), namesInListener)
+
+    // The pin outlives the disposal, but a disposed module must stop the activity of the caller.
+    assertTrue(module.isDisposed)
+    assertThrows<AlreadyDisposedException> { module.findModuleEntityIfNotDisposed() }
+
+    // Only `findModuleEntityIfNotDisposed` reads the pinned storage. This function reads the current storage alone.
+    assertNull(module.findModuleEntity())
+  }
+
+  @Test
+  fun `find module entity after the entity is removed from the storage`() {
+    WriteCommandAction.runWriteCommandAction(project) {
+      val module = projectModel.createModule()
+
+      // A project reload removes the entity through the workspace model, not through the module manager. This is the PY-91832 path.
+      WorkspaceModel.getInstance(project).updateProjectModel {
+        it.removeEntity(it.entities(ModuleEntity::class.java).single())
+      }
+
+      // The bridge is disposed at this point. `AlreadyDisposedException` is a `ProcessCanceledException`, so a background job that holds a
+      // stale module stops instead of failing. Before PY-91832 this path gave an `IllegalStateException`.
+      assertTrue(module.isDisposed)
+      assertThrows<AlreadyDisposedException> { module.findModuleEntityIfNotDisposed() }
+    }
   }
 
   @Test

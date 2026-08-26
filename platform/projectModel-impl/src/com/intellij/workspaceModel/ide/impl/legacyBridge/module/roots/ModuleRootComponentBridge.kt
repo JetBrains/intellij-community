@@ -24,7 +24,7 @@ import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntityIfNotDisposedLegacy
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntitityLegacy
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.moduleEntityNotResolved
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import org.jetbrains.annotations.ApiStatus
@@ -49,7 +49,7 @@ class ModuleRootComponentBridge(
   private val modelValue = VersionedCache<RootModelBridgeImpl> {
     val storage = moduleBridge.entityStorage.current
     RootModelBridgeImpl(
-      moduleEntity = moduleBridge.findModuleEntityIfNotDisposedLegacy(storage),
+      moduleEntity = moduleBridge.findModuleEntitityLegacy(storage),
       storage = moduleBridge.entityStorage,
       itemUpdater = null,
       // TODO
@@ -116,7 +116,7 @@ class ModuleRootComponentBridge(
 
   @ApiStatus.Internal
   fun getModifiableModelForMultiCommit(accessor: RootConfigurationAccessor, cacheStorageResult: Boolean): ModifiableRootModel = ModifiableRootModelBridgeImpl(
-    (moduleBridge.diff as? MutableEntityStorage) ?: (accessor as? RootConfigurationAccessorForWorkspaceModel)?.actualDiffBuilder
+    moduleBridge.diff ?: (accessor as? RootConfigurationAccessorForWorkspaceModel)?.actualDiffBuilder
     ?: MutableEntityStorage.from(moduleBridge.entityStorage.current.toSnapshot()),
     moduleBridge,
     accessor,
