@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElementVisitor
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.stubs.visitors.PyIncompatibleStubVisitor
 import com.jetbrains.python.inspections.PyInspection
-import com.jetbrains.python.inspections.PyInspectionVisitor
 
 class PyStubPackagesCompatibilityInspection : PyInspection() {
   @Suppress("MemberVisibilityCanBePrivate")
@@ -22,9 +21,6 @@ class PyStubPackagesCompatibilityInspection : PyInspection() {
     isOnTheFly: Boolean,
     session: LocalInspectionToolSession,
   ): PsiElementVisitor {
-    if (PyInspectionVisitor.getContext(session).usesExternalTypeEngine) {
-      return PsiElementVisitor.EMPTY_VISITOR
-    }
     return PyIncompatibleStubVisitor(ignoredStubPackages, holder, session)
   }
 }

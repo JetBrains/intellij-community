@@ -24,6 +24,12 @@ import org.eclipse.lsp4j.Diagnostic
 private const val UNKNOWN_NAME = "unknown-name"
 private const val MISSING_IMPORT = "missing-import"
 private const val MISSING_MODULE_ATTRIBUTE = "missing-module-attribute"
+private const val UNTYPED_IMPORT = "untyped-import"
+
+private val SUPPRESSED_DIAGNOSTIC_CODES = setOf(UNTYPED_IMPORT)
+
+internal fun isSuppressedPyreflyDiagnostic(diagnostic: Diagnostic): Boolean =
+  diagnostic.code?.left in SUPPRESSED_DIAGNOSTIC_CODES
 
 internal fun customizePyreflyQuickFixes(
   holder: AnnotationHolder,

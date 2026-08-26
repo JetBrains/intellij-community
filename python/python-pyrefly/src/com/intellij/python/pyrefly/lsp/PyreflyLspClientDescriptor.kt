@@ -42,6 +42,7 @@ class PyreflyLspClientDescriptor(module: Module) : PyLspToolDescriptor(module, P
         textRange: TextRange,
         quickFixes: List<IntentionAction>,
       ) {
+        if (isSuppressedPyreflyDiagnostic(diagnostic)) return
         val customizedQuickFixes = customizePyreflyQuickFixes(holder, diagnostic, textRange, quickFixes)
         super.createAnnotation(holder, diagnostic, textRange, customizedQuickFixes)
       }
