@@ -9,7 +9,7 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEventDTO
 import com.intellij.platform.projectView.pane.SelectInRequestDTO
-import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
@@ -31,6 +31,6 @@ interface ProjectViewRpc : RemoteApi<Unit> {
   suspend fun findNodeForSelectIn(projectId: ProjectId, selectInRequest: SelectInRequestDTO): ProjectViewNodePathImpl?
 
   companion object {
-    suspend fun getInstance(): ProjectViewRpc = RemoteApiProviderService.resolve(remoteApiDescriptor<ProjectViewRpc>())
+    suspend fun getInstance(): ProjectViewRpc = LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<ProjectViewRpc>())
   }
 }
