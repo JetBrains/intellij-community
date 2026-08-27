@@ -19,6 +19,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -204,7 +205,8 @@ public final class LookupTypedHandler extends TypedActionHandlerBase {
   }
 
   public static @NotNull CharFilter.Result getLookupAction(char charTyped, @NotNull LookupImpl lookup) {
-    CharFilter.Result filtersDecision = getFilterDecision(charTyped, lookup);
+    // WI is caused by IJPL-254001
+    CharFilter.Result filtersDecision = WriteIntentReadAction.compute(() -> getFilterDecision(charTyped, lookup));
     if (filtersDecision != null) {
       return filtersDecision;
     }
