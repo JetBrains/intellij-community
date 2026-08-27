@@ -32,6 +32,12 @@ class MarkdownIncorrectTableFormattingInspectionQuickFixTest: LightPlatformCodeI
   }
 
   @Test
+  fun `reformat intention is unavailable for nicely formatted table`() {
+    myFixture.configureByText("some.md", "| first | second |\n| ----------- | ----------- |")
+    assertNull(myFixture.availableIntentions.find { it.text == reformatIntentionFixText })
+  }
+
+  @Test
   fun `fix cell alignment intention is available without inspection`() {
     myFixture.configureByText("some.md", "| first |\n|------:|\n| some  <caret>|")
     assertNotNull(myFixture.availableIntentions.find { it.text == fixCellAlignmentIntentionText })

@@ -100,10 +100,19 @@ object TableModificationUtils {
     if (cells.isEmpty()) {
       return true
     }
+    val separatorCellText = separatorRow?.getCellText(columnIndex) ?: return false
+    if (tableStyle == TableStyle.ALIGNED &&
+        cells.all { it.hasCorrectPadding(TableStyle.COMPACT) } &&
+        separatorCellText.startsWith(' ') &&
+        separatorCellText.endsWith(' ') &&
+        separatorCellText == " ${separatorCellText.trim()} " &&
+        separatorCellText.trim().length >= 3 &&
+        isSeparatorCellCorrectlyFormatted(separatorCellText)) {
+      return true
+    }
     if (tableStyle == TableStyle.ALIGNED && checkAlignment && !validateColumnAlignment(columnIndex, tableStyle)) {
       return false
     }
-    val separatorCellText = separatorRow?.getCellText(columnIndex)!!
     if (tableStyle != TableStyle.ALIGNED) {
       val alignment = separatorRow?.getCellAlignment(columnIndex) ?: return false
       return separatorCellText == buildSeparatorCellContent(alignment, 0, tableStyle) && cells.all { it.hasCorrectPadding(tableStyle) }

@@ -114,6 +114,29 @@ class MarkdownIncorrectTableFormattingInspectionTest: LightPlatformCodeInsightFi
     }
   }
 
+  @Test
+  fun `no inspection on nicely formatted table`() {
+    doTest(
+      """
+      | Syntax | Description |
+      | ----------- | ----------- |
+      | Header | Title |
+      | Paragraph | Text |
+      """.trimIndent()
+    )
+  }
+
+  @Test
+  fun `shows inspection when nicely formatted table has extra cell spaces in separator row`() {
+    // language=Markdown
+    val expected = """
+    <weak-warning desc="$description">| first | second |
+    | ----------- |-----------|
+    | first | second  |</weak-warning>
+    """.trimIndent()
+    doTest(expected)
+  }
+
   private fun doTest(expected: String) {
     myFixture.configureByText("some.md", expected)
     myFixture.enableInspections(MarkdownIncorrectTableFormattingInspection())
