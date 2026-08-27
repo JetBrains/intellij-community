@@ -93,6 +93,7 @@ Available through ijproxy or JetBrains MCP. Prefer a real refactoring over a man
 ### Tooling rules
 
 - Prefer ijproxy for a content or symbol **search** and for a semantic operation. Fall back to JetBrains MCP, then to `./tools/fd.cmd` (files) and `./tools/rg.cmd` (text and regex), only when ijproxy is unavailable.
+- Ask the Product DSL for a plugin model answer, not `rg` or `bazel cquery`: `bazel run //platform/buildScripts:plugin-model-tool -- --json='<request>'`. The `plugin-model-analyzer` skill holds the request shapes.
 - Do not shell out for a file **search**, inside the repo or outside it. This is enforced: the `Glob` and `Grep` tools are denied, and so are the `grep` and `find` commands in every pipeline position. An absolute path through the wrappers is fine. Pipe into `./tools/rg.cmd` instead of `| grep`, because it reads stdin.
 - `fd.cmd` and `rg.cmd` skip a dot-directory by default. Agent assets live in `.agents/`, `.claude/`, `.junie/`, and `.opencode/`. Pass `-H` (`--hidden`) to find a skill, a guideline, or a hook. Without it you will conclude they do not exist.
 - On Windows and PowerShell, do not pass a literal `<`, `>`, `|`, or `&` through a `.cmd` search wrapper, even inside quotes. For `rg.cmd` alternation, repeat `-e` (`./tools/rg.cmd -n -e "foo" -e "bar" path/to/file.kt`) instead of `"foo|bar"`. To check one file for conflict markers, use `Select-String -SimpleMatch -Pattern '<<<<<<<','=======','>>>>>>>' -Path <file>`.
