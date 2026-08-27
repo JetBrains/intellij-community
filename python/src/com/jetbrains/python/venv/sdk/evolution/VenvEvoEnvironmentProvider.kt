@@ -33,6 +33,8 @@ import java.nio.file.Path
 import javax.swing.Icon
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
+import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 
 /**
  * Contributes the generic "pip" (virtualenv) node — every virtualenv the discovery found. Always available, since a
@@ -52,6 +54,9 @@ internal class VenvEvoEnvironmentProvider : PyEvoEnvironmentProvider {
   private val tool: PyTool get() = PipPyTool.getInstance()
 
   override val toolId: ToolId get() = VENV_TOOL_ID
+
+  /** An interpreter of this node's environments carries this flavor, which is what names this node as the active one. */
+  override val sdkFlavor: Class<out PythonSdkFlavor<*>> get() = VirtualEnvSdkFlavor::class.java
   override val nodeKind: EvoNodeKind get() = EvoNodeKind.TOOL
   override val label: String get() = tool.presentableName
   override val fusId: String get() = tool.fusId

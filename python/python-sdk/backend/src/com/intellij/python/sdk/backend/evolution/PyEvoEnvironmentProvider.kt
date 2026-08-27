@@ -31,6 +31,9 @@ import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.project
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.pySdkAdditionalData
+import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.impl.shortenPath
 import com.jetbrains.python.venvReader.Directory
@@ -208,6 +211,19 @@ interface PyEvoEnvironmentProvider {
    */
   val pyvenvMarker: String? get() = null
 
+  /**
+   * The SDK flavor an interpreter of this node's environments carries, or null when this node owns no SDK of its own.
+   *
+   * It is what lets the widget say which node holds the environment in use — see [nodeIdForSdk]. Declared here, by the
+   * tool, for the same reason [pyvenvMarker] is: which flavor a tool stamps on its SDKs is the tool's own knowledge, and
+   * a table of it kept in the core would drift from the tools it names.
+   *
+   * A flavor names its node exactly. `PyProjectManager.forSdk` is not usable for this: it resolves uv, poetry and hatch
+   * and answers `ToolId("pip")` for everything else, which is a wrong answer rather than a missing one — and does not
+   * even equal the venv node's own id.
+   */
+  val sdkFlavor: Class<out PythonSdkFlavor<*>>? get() = null
+
   fun getNode(): EvoNodeDto = EvoNodeDto(id = toolId.id, label = label, icon = icon.rpcId(), kind = nodeKind, fusId = fusId)
 
   /**
@@ -290,6 +306,25 @@ data class DiscoveredVenv(
 ) {
   /** The environment root directory (`…/<venv>/bin/python` → `<venv>`). */
   val venvRoot: Path? get() = pythonBinary.parent?.parent
+}
+
+/**
+ * The node id whose tool made [sdk], or null when no provider claims its flavor.
+ *
+ * The counterpart of [withCreators] for an SDK rather than a discovered directory: a provider declares the flavor it
+ * stamps ([PyEvoEnvironmentProvider.sdkFlavor]) and the core matches. The flavors are flat siblings of
+ * `CPythonSdkFlavor`, so at most one provider can claim any SDK and the order of the list does not matter.
+ *
+ * Null is a real answer, not a gap: an SDK built without additional data, or one of a flavor no node owns, has no node
+ * to name and the caller must not guess at one.
+ */
+@ApiStatus.Internal
+fun List<PyEvoEnvironmentProvider>.nodeIdForSdk(sdk: Sdk): String? {
+  // `pySdkAdditionalData` throws on an SDK created without any — "buggy code" per its own message. Test the
+  // precondition rather than catch, since an IllegalStateException here could be a ProcessCanceledException.
+  if (sdk.sdkAdditionalData !is PythonSdkAdditionalData) return null
+  val flavor = sdk.pySdkAdditionalData.flavor
+  return firstOrNull { provider -> provider.sdkFlavor?.isInstance(flavor) == true }?.toolId?.id
 }
 
 /**

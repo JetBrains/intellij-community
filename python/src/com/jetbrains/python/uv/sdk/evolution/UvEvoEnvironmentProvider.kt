@@ -38,12 +38,17 @@ import io.github.z4kn4fein.semver.VersionFormatException
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
+import com.jetbrains.python.sdk.uv.UvSdkFlavor
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 
 private const val VERSIONS_KEY: String = "uv.supportedPythonVersions"
 
 internal class UvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
   override val tool: PyTool get() = UvPyTool.getInstance()
   override val toolId: ToolId get() = UV_TOOL_ID
+
+  /** An interpreter of this node's environments carries this flavor, which is what names this node as the active one. */
+  override val sdkFlavor: Class<out PythonSdkFlavor<*>> get() = UvSdkFlavor::class.java
 
   /**
    * `uv venv` writes its own version into the environment's `pyvenv.cfg`, which is what lets every node say that uv made

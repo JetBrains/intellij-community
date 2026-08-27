@@ -32,6 +32,8 @@ import com.jetbrains.python.sdk.pipenv.setupPipEnvSdkWithProgressReport
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.name
+import com.jetbrains.python.sdk.pipenv.PyPipEnvSdkFlavor
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 
 /**
  * Contributes the "Pipenv" node.
@@ -51,6 +53,9 @@ import kotlin.io.path.name
 internal class PipenvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
   override val tool: PyTool get() = PipEnvPyTool.getInstance()
   override val toolId: ToolId get() = PIPENV_TOOL_ID
+
+  /** An interpreter of this node's environments carries this flavor, which is what names this node as the active one. */
+  override val sdkFlavor: Class<out PythonSdkFlavor<*>> get() = PyPipEnvSdkFlavor::class.java
 
   override suspend fun loadSections(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto {
     val projectDir = pyProject.baseDir

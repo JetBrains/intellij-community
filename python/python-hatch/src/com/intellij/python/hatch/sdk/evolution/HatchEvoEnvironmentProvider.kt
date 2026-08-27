@@ -33,10 +33,15 @@ import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import java.nio.file.Path
+import com.intellij.python.hatch.impl.sdk.HatchSdkFlavor
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 
 internal class HatchEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
   override val tool: PyTool get() = HatchPyTool.getInstance()
   override val toolId: ToolId get() = HATCH_TOOL_ID
+
+  /** An interpreter of this node's environments carries this flavor, which is what names this node as the active one. */
+  override val sdkFlavor: Class<out PythonSdkFlavor<*>> get() = HatchSdkFlavor::class.java
 
   override suspend fun loadSections(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto {
     val hatchService = pyProject.module.getHatchService(fileSystem).getOrNull()

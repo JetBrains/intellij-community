@@ -38,6 +38,9 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import com.intellij.openapi.util.Disposer
+import com.intellij.ui.awt.RelativePoint
+import java.awt.Point
 
 private const val ID: String = "EvoPySdkStatusBarWidget"
 
@@ -398,9 +401,26 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
     if (reusable == null) refreshNodes(target.key)
     PyEvoWidgetCollector.popupOpened(project, hasInterpreter = cached.current != null, toolCount = cached.nodes.size)
     val factory = EvoPySdkSwitchPopupFactory(project, target.key, target.name, structure.workspaceRootName(target),
-                                             cached.current, cached.nodes, cached.associated, cached.shortcuts, scope)
+                                             cached.current, cached.nodes, cached.associated, cached.shortcuts, scope,
+                                             reopenPopup = ::reopenPopup)
     val tree = reusable ?: factory.buildTree(context).also { popupTree = it; popupTreeKey = target.key }
     return factory.createPopup(tree, context) { popupClosedAt = System.currentTimeMillis() }
+  }
+
+  /**
+   * Shows the popup again, for a row that changed the list it is showing — the "More Tools" row.
+   *
+   * A popup is laid out and placed once, so a list that gained rows has to be reopened rather than grown underneath the
+   * user. Repeats what `EditorBasedStatusBarPopup.showPopup` does, because that method is private and takes the
+   * `MouseEvent` of a real click: the popup's own preferred height, anchored so its bottom sits on the widget.
+   *
+   * [createPopup] reuses the tree the closing popup was built from — the reuse window is measured from that close, which
+   * has just happened — so this costs no rescan and each tool node keeps whatever it had already loaded.
+   */
+  private fun reopenPopup() {
+    val popup = createPopup(context) ?: return
+    popup.show(RelativePoint(component, Point(0, -popup.content.preferredSize.height)))
+    Disposer.register(this, popup)
   }
 
   override fun ID(): String = ID

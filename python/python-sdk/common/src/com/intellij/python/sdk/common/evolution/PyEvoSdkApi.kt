@@ -268,6 +268,13 @@ data class PyInterpreterDto(
    * shows no package-manager rows regardless of what is open, rather than borrowing the editor's file.
    */
   val dependencyFileUrl: @NonNls String? = null,
+  /**
+   * Id of the node whose tool made this interpreter, or `null` when no node owns its flavor.
+   *
+   * It is what lets the popup promote the one tool in use and fold the others away. `null` is a statement: the popup
+   * then lists every tool, as it did before, rather than promoting a node it guessed at.
+   */
+  val activeNodeId: @NonNls String? = null,
 )
 
 /** Opaque, serializable selector telling the backend which interpreter [PyEvoSdkApi.selectInterpreter] must apply. */
