@@ -16,3 +16,8 @@ One more sample paragraph with `inline` *elements*.
       than one line
 
 Last paragraph that is placed after list
+
+| Column | Meaning       |
+|--------|---------------|
+| A      | A value       |
+| Longer | Another value |

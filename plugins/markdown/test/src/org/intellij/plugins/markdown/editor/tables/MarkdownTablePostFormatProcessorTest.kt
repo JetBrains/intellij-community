@@ -1,6 +1,8 @@
 package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.idea.TestFor
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.intellij.plugins.markdown.formatter.MarkdownFormatterTest.Companion.performReformatting
@@ -72,6 +74,33 @@ class MarkdownTablePostFormatProcessorTest: LightPlatformCodeInsightTestCase() {
     |N|No|
     """.trimIndent()
   )
+
+  @Test
+  fun `table style is applied when reformatting a file`() {
+    runWithTemporaryStyleSettings(project) { settings ->
+      settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).FORMAT_TABLES = true
+      withTableStyle(project, TableStyle.COMPACT) {
+        configureFromFileText(
+          "some.md",
+          """
+          |Character|Meaning|
+          |---------|-------|
+          |Y|Yes|
+          """.trimIndent()
+        )
+        WriteCommandAction.runWriteCommandAction(project) {
+          CodeStyleManager.getInstance(project).reformat(file)
+        }
+        checkResultByText(
+          """
+          | Character | Meaning |
+          | --- | --- |
+          | Y | Yes |
+          """.trimIndent()
+        )
+      }
+    }
+  }
 
   @Test
   fun `reformat table after wrapped block quote does not throw`() {
