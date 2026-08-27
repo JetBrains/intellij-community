@@ -38,7 +38,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
-import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
@@ -62,7 +62,6 @@ import com.intellij.psi.impl.light.LightParameter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
@@ -73,6 +72,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -264,6 +264,8 @@ public final class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLoc
   }
 
   private static class AddCatchBodyFix extends PsiUpdateModCommandQuickFix implements LowPriorityAction {
+    private static final Logger LOG = Logger.getInstance(AddCatchBodyFix.class);
+
     @Override
     public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("inspection.empty.catch.block.generate.body");
@@ -271,38 +273,33 @@ public final class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLoc
 
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      PsiCatchSection catchSection = ObjectUtils.tryCast(element.getParent(), PsiCatchSection.class);
-      if (catchSection == null) return;
+      if (!(element.getParent() instanceof PsiCatchSection catchSection)) return;
       PsiParameter parameter = catchSection.getParameter();
       if (parameter == null) return;
       String parameterName = parameter.getName();
-      FileTemplate template = FileTemplateManager.getInstance(project).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
+      try {
+        FileTemplate template = FileTemplateManager.getInstance(project).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
 
-      if (!StringUtil.isEmptyOrSpaces(template.getText())) {
-        Map<String, Object> props = FileTemplateManager.getInstance(project).getDefaultContextMap();
-        props.put(FileTemplate.ATTRIBUTE_EXCEPTION, parameterName);
-        props.put(FileTemplate.ATTRIBUTE_EXCEPTION_TYPE, parameter.getType().getCanonicalText());
-        PsiDirectory directory = catchSection.getContainingFile().getContainingDirectory();
-        if (directory != null) {
-          JavaTemplateUtil.setPackageNameAttribute(props, directory);
-        }
+        String text;
+        if (!StringUtil.isEmptyOrSpaces(template.getText())) {
+          Map<String, Object> props = FileTemplateManager.getInstance(project).getDefaultContextMap();
+          props.put(FileTemplate.ATTRIBUTE_EXCEPTION, parameterName);
+          props.put(FileTemplate.ATTRIBUTE_EXCEPTION_TYPE, parameter.getType().getCanonicalText());
+          PsiDirectory directory = catchSection.getContainingFile().getContainingDirectory();
+          if (directory != null) {
+            JavaTemplateUtil.setPackageNameAttribute(props, directory);
+          }
 
-        try {
-          PsiCodeBlock block =
-            PsiElementFactory.getInstance(project).createCodeBlockFromText("{\n" + template.getText(props) + "\n}", null);
-          Objects.requireNonNull(catchSection.getCatchBlock()).replace(block);
+          text = "{\n" + template.getText(props) + "\n}";
         }
-        catch (ProcessCanceledException ce) {
-          throw ce;
+        else {
+          text = "{\nthrow new java.lang.RuntimeException(" + parameterName + ");\n}";
         }
-        catch (Exception e) {
-          throw new IncorrectOperationException("Incorrect file template", e);
-        }
-      }
-      else {
-        PsiCodeBlock block =
-          PsiElementFactory.getInstance(project).createCodeBlockFromText("{\nthrow new RuntimeException(" + parameterName + ");\n}", null);
+        PsiCodeBlock block = PsiElementFactory.getInstance(project).createCodeBlockFromText(text, catchSection);
         Objects.requireNonNull(catchSection.getCatchBlock()).replace(block);
+      }
+      catch (IOException | IncorrectOperationException | IllegalStateException e) {
+        LOG.warn(e);
       }
     }
   }
