@@ -65,10 +65,11 @@ public final class PathManagerEx {
    */
   public enum TestDataLookupStrategy {
     /**
-     * Stands for algorithm that retrieves {@code 'test data'} stored at the {@code 'ultimate'} project level assuming
-     * that it's used from the test running in context of {@code 'ultimate'} project as well.
+     * Marks a test class that is located in the {@code 'ultimate'} part of the repository.
      * <p/>
-     * Is assumed to be default strategy for all {@code 'ultimate'} tests.
+     * The ultimate repository has no shared test data root (AT-5106 moved the root {@code 'testData'} directory into
+     * per-plugin locations), so {@link #getTestDataPath(TestDataLookupStrategy)} rejects this strategy.
+     * An ultimate test must provide its own module-specific test data path.
      */
     ULTIMATE,
 
@@ -103,8 +104,7 @@ public final class PathManagerEx {
    */
   private static final List<Pair<TestDataLookupStrategy, String>> TEST_DATA_RELATIVE_PATHS = Arrays.asList(
     new Pair<>(TestDataLookupStrategy.COMMUNITY_FROM_ULTIMATE, FileUtil.toSystemDependentName("community/java/java-tests/testData")),
-    new Pair<>(TestDataLookupStrategy.COMMUNITY, FileUtil.toSystemDependentName("java/java-tests/testData")),
-    new Pair<>(TestDataLookupStrategy.ULTIMATE, "testData"));
+    new Pair<>(TestDataLookupStrategy.COMMUNITY, FileUtil.toSystemDependentName("java/java-tests/testData")));
 
   /**
    * Shorthand for calling {@link #getTestDataPath(TestDataLookupStrategy)} with
@@ -198,6 +198,11 @@ public final class PathManagerEx {
    * @throws IllegalStateException    if it's not possible to find a valid test data path for the given strategy
    */
   public static String getTestDataPath(TestDataLookupStrategy strategy) throws IllegalStateException {
+    if (strategy == TestDataLookupStrategy.ULTIMATE) {
+      throw new IllegalStateException(
+        "The ultimate repository has no shared test data root (AT-5106 moved the root 'testData' directory into per-plugin locations)." +
+        " Use a module-specific test data path instead.");
+    }
     String homePath = PathManager.getHomePath();
     for (Pair<TestDataLookupStrategy, String> pair : TEST_DATA_RELATIVE_PATHS) {
       if (pair.first == strategy) {
