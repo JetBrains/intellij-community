@@ -216,7 +216,7 @@ object PyCallExpressionHelper {
             )
           }
         }
-        selfType to PyTypeUtil.getCallableItems(boundType).toList()
+        selfType to PyTypeUtil.getCallableItems(boundType)
       }
   }
 
