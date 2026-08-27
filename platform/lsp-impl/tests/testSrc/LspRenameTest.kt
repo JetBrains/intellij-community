@@ -24,8 +24,11 @@ import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.PrepareRenameDefaultBehavior
 import org.eclipse.lsp4j.PrepareRenameResult
 import org.eclipse.lsp4j.Range
+import org.eclipse.lsp4j.RenameFile
 import org.eclipse.lsp4j.RenameOptions
+import org.eclipse.lsp4j.TextDocumentEdit
 import org.eclipse.lsp4j.TextEdit
+import org.eclipse.lsp4j.VersionedTextDocumentIdentifier
 import org.eclipse.lsp4j.WorkspaceEdit
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.jsonrpc.messages.Either3
@@ -342,6 +345,43 @@ internal class LspRenameTest {
         renamed qux
         """.trimIndent()
       assertEquals(expectedText, codeInsightFixture.editor.document.text)
+    }
+
+    @Test
+    fun `rename applies RenameFile operation together with text edits`() = timeoutRunBlocking {
+      // given
+      TemplateManagerImpl.setTemplateTesting(project)
+
+      // The scenario emulates the rename of a top-level class: the server edits the text and renames the file
+      val virtualFile = codeInsightFixture.configureByText("Foo.txt", "class <caret>Foo").virtualFile
+      val serverSession = configureServerSession(project, virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
+      val newFileUri = fileUri.removeSuffix("Foo.txt") + "Bar.txt"
+
+      serverSession.expectRequest(serverSession.PREPARE_RENAME, { it.textDocument.uri == fileUri }) {
+        Either3.forSecond(PrepareRenameResult(Range(Position(0, 6), Position(0, 9)), "Foo"))
+      }
+
+      serverSession.expectRequest(serverSession.RENAME, {
+        it.textDocument.uri == fileUri && it.newName == "Bar"
+      }) {
+        WorkspaceEdit(listOf(
+          Either.forLeft(TextDocumentEdit(
+            VersionedTextDocumentIdentifier(fileUri, null),
+            listOf(TextEdit(Range(Position(0, 6), Position(0, 9)), "Bar")),
+          )),
+          Either.forRight(RenameFile(fileUri, newFileUri)),
+        ))
+      }
+
+      // when
+      triggerRename()
+      codeInsightFixture.type("Bar\n")
+
+      // then
+      serverSession.awaitExpected()
+      assertEquals("class Bar", codeInsightFixture.editor.document.text)
+      assertEquals("Bar.txt", virtualFile.name)
     }
 
     @Test
