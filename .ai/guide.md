@@ -10,18 +10,20 @@ To regenerate, run `bazel run @community//.ai:render-guides`.
 
 - A module or plugin directory can hold its own AGENTS or CLAUDE instructions. Follow them when they are present.
 - `*.iml` files are the source of truth. They generate the `BUILD.bazel` files.
-- Register a new or edited JPS module `.iml` with `bun build/jps-module.mjs register <path-to-iml> --fix-iml-eof`, then run `./build/jpsModelToBazel.cmd`. Never edit `.idea/modules.xml` by hand. The command keeps both `modules.xml` files in canonical order: by `.iml` basename without the suffix, as `org.jetbrains.intellij.build.ModulesXml` does.
+- Register a new or edited JPS module `.iml` with `bun build/jps-module.mjs register <path-to-iml> --fix-iml-eof`, then run `./build/jpsModelToBazel.cmd`. Never edit `.idea/modules.xml` by hand. The command keeps both `modules.xml` files in canonical order.
 - User-visible strings belong in `*.properties` for localization.
 
 ## Writing
 
-Write every user-visible artifact in [ASD-STE100 Simplified Technical English](https://www.asd-ste100.org/), and keep it short. This covers comments, KDoc and doc strings, commit messages, documentation, specs, and the reports and summaries you write for the user. Use the active voice and a simple tense, state one topic per sentence, write positively, and use no noun cluster longer than three words. The five that catch most of the damage here:
+Write every user-visible artifact in [ASD-STE100 Simplified Technical English](https://www.asd-ste100.org/), and keep it short. This covers a comment, KDoc, a commit message, documentation, a spec, and a report to the user. Use the active voice and a simple tense, state one topic per sentence, write positively, and use no noun cluster longer than three words. The five that catch most of the damage here:
 
 - Keep a sentence at or under 25 words. `AirSpecReferencesTest` enforces that number on a tagged spec.
 - Make an aside its own sentence. Do not put it between dashes.
 - Keep the articles. Write "the session", not "session".
 - One term per concept. Never introduce a synonym for a term the area already defines.
 - Say what you left out and why. Do not pad a report to look complete.
+
+Each kind of text has one home. Rationale and evidence for a change go in the commit message, not in a code comment. Document a declaration in KDoc on it, not in a `README.md`.
 
 ## Workspace Isolation
 
