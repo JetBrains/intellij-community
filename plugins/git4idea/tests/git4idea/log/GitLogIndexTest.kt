@@ -37,27 +37,35 @@ import git4idea.test.tac
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-
-@TestApplication
-internal class GitLogPhmIndexTest : GitLogIndexTest() {
-  override val useSqlite: Boolean get() = false
-}
-
-@TestApplication
-internal class GitLogSqliteIndexTest : GitLogIndexTest() {
-  override val useSqlite: Boolean get() = true
-}
+import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.ArgumentsProvider
+import org.junit.jupiter.params.provider.ArgumentsSource
+import org.junit.jupiter.params.support.ParameterDeclarations
+import java.util.stream.Stream
 
 /**
  * The shared VCS log index test suite, run against both the persistent-hash-map and the SQLite index implementation.
  */
-internal abstract class GitLogIndexTest {
+@ParameterizedClass(name = "{0}")
+@ArgumentsSource(GitLogIndexTest.Companion.TestArgumentsProvider::class)
+@TestApplication
+internal class GitLogIndexTest(val testType: String, val useSqlite: Boolean) {
+
+  companion object {
+    private class TestArgumentsProvider : ArgumentsProvider {
+      override fun provideArguments(parameters: ParameterDeclarations?, context: ExtensionContext?): Stream<Arguments?> = Stream.of(
+        Arguments.of("GitLogSqliteIndexTest", true),
+        Arguments.of("GitLogPhmIndexTest", false)
+      )
+    }
+  }
+
   private val contextFixture = gitSingleRepoContextFixture()
   private val context: GitSingleRepoContext get() = contextFixture.get()
 
   private val disposableFixture = disposableFixture()
-
-  protected abstract val useSqlite: Boolean
 
   private val defaultUser = VcsUserUtil.createUser(USER_NAME, USER_EMAIL)
 
