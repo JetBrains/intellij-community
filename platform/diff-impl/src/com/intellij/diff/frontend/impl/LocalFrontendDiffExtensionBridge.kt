@@ -174,7 +174,7 @@ private class LocalUnifiedDiffViewer(
   }
 
   override fun transferLineToUnifiedStrict(side: Side, line: Int): Int? {
-    if (!actualState.isActual || line !in 0 until viewer.getDocument(side).lineCount) return null
+    if (!isSideLine(side, line)) return null
     return viewer.transferLineToOnesideStrict(side, line).takeIf { it >= 0 }
   }
 
@@ -196,7 +196,11 @@ private class LocalUnifiedDiffViewer(
     return viewer.transferLineFromOneside(side, line).takeIf { it >= 0 }
   }
 
-  private fun isUnifiedLine(line: Int): Boolean = actualState.isActual && line in 0 until viewer.editor.document.lineCount
+  private fun isUnifiedLine(line: Int): Boolean =
+    actualState.isActual && line in 0 until viewer.editor.document.lineCount
+
+  private fun isSideLine(side: Side, line: Int): Boolean =
+    actualState.isActual && line in 0 until viewer.getDocument(side).lineCount
 }
 
 private fun UnifiedDiffViewer.hasLineNumberMappings(): Boolean =
