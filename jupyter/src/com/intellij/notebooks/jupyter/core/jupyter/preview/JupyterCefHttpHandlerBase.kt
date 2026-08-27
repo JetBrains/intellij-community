@@ -97,13 +97,11 @@ abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Set<Stri
 
   private fun processInternalLibs(uri: String): ByteArray? {
     try {
-      val extension = FileUtilRt.getExtension(uri)
-      // map files used for debugging
-      if (extension in allowedTypes || (ApplicationManager.getApplication().isInternal && extension == "map")) {
+      if (isAllowedFileType(uri)) {
         return readFile(uri)
       }
       else {
-        thisLogger().info("Extension not allowed: ${extension}")
+        thisLogger().info("Extension not allowed: ${FileUtilRt.getExtension(uri)}")
       }
       return null
     }
@@ -111,6 +109,12 @@ abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Set<Stri
       thisLogger().warn("Cannot process: ${uri}", t)
       return null
     }
+  }
+
+  protected fun isAllowedFileType(uri: String): Boolean {
+    val extension = FileUtilRt.getExtension(uri)
+    // map files used for debugging
+    return extension in allowedTypes || (ApplicationManager.getApplication().isInternal && extension == "map")
   }
 
   protected fun getFileFromUrl(fullPath: String): String? {
