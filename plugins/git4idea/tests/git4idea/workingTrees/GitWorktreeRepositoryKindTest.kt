@@ -8,8 +8,8 @@ import git4idea.repo.getAndInit
 import git4idea.test.GitPlatformTestContext
 import git4idea.test.createRepository
 import git4idea.test.gitPlatformContextFixture
-import git4idea.workingTrees.ui.GitRepositoryHeader
 import git4idea.workingTrees.ui.GitRepositoryKind
+import git4idea.workingTrees.ui.GitWorktreeRow
 import git4idea.workingTrees.ui.GitWorktreesUiUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -30,11 +30,12 @@ internal class GitWorktreeRepositoryKindTest {
     val nested = createRepository(project, projectNioRoot.resolve("nested"), true)
     GitRepositoriesHolder.getAndInit(project)
 
-    val headers = GitWorktreesUiUtil.buildEntries(project)
-      .filterIsInstance<GitRepositoryHeader>()
+    val mainWorktreeRows = GitWorktreesUiUtil.buildEntries(project)
+      .filterIsInstance<GitWorktreeRow>()
+      .filter { it.gitWorkingTree.isMain }
       .associateBy { it.repository.root.path }
 
-    assertThat(headers[nested.root.path]?.kind).isEqualTo(GitRepositoryKind.NESTED)
-    assertThat(headers[top.root.path]?.kind).isEqualTo(GitRepositoryKind.TOP_LEVEL)
+    assertThat(mainWorktreeRows[nested.root.path]?.repositoryKind).isEqualTo(GitRepositoryKind.NESTED)
+    assertThat(mainWorktreeRows[top.root.path]?.repositoryKind).isEqualTo(GitRepositoryKind.TOP_LEVEL)
   }
 }

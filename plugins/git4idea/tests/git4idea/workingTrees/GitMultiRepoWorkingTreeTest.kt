@@ -21,7 +21,6 @@ import git4idea.test.git
 import git4idea.test.gitPlatformContextFixture
 import git4idea.workingTrees.dialog.GitWorktreeCreationRequest
 import git4idea.workingTrees.dialog.WorktreeBranchSpec
-import git4idea.workingTrees.ui.GitRepositoryHeader
 import git4idea.workingTrees.ui.GitWorktreeRow
 import git4idea.workingTrees.ui.GitWorktreesUiUtil
 import kotlinx.coroutines.Dispatchers
@@ -64,24 +63,20 @@ internal class GitMultiRepoWorkingTreeTest {
   }
 
   @Test
-  fun `test entries are grouped by repository with a header per repository`(): Unit = with(context) {
+  fun `test entries are grouped by repository, with no separate repository row`(): Unit = with(context) {
     setUpRepos()
     val entries = GitWorktreesUiUtil.buildEntries(project)
 
-    val headerRoots = entries.filterIsInstance<GitRepositoryHeader>().map { it.repository.root.path }
-    assertThat(headerRoots).containsExactlyInAnyOrder(repoA.root.path, repoB.root.path)
-
     val rows = entries.filterIsInstance<GitWorktreeRow>()
+    assertThat(rows).describedAs("Only worktree rows are shown, no repository header entries").hasSameSizeAs(entries)
     assertThat(rows.map { it.repository.root.path }).containsExactlyInAnyOrder(repoA.root.path, repoB.root.path)
     assertThat(rows.all { it.gitWorkingTree.isMain }).describedAs("Each repository contributes its main worktree row").isTrue()
 
-    // a header always precedes the rows of its repository
-    entries.forEachIndexed { index, entry ->
-      if (entry is GitWorktreeRow) {
-        val precedingHeader = entries.subList(0, index).filterIsInstance<GitRepositoryHeader>().lastOrNull()
-        assertThat(precedingHeader?.repository?.root?.path).isEqualTo(entry.repository.root.path)
-      }
-    }
+    // rows of the same repository stay contiguous, even without a header row separating the groups
+    val rootPaths = rows.map { it.repository.root.path }
+    val runs = mutableListOf<String>()
+    rootPaths.forEach { path -> if (runs.isEmpty() || runs.last() != path) runs.add(path) }
+    assertThat(runs).describedAs("Each repository's rows must not be interleaved with another's").hasSize(rootPaths.distinct().size)
   }
 
   @Test
@@ -116,14 +111,14 @@ internal class GitMultiRepoWorkingTreeTest {
   fun `test selected repository is resolved from the selection`(): Unit = with(context) {
     setUpRepos()
     val entries = GitWorktreesUiUtil.buildEntries(project)
-    val headerA = entries.filterIsInstance<GitRepositoryHeader>().single { it.repository.root.path == repoA.root.path }
+    val rowA = entries.filterIsInstance<GitWorktreeRow>().first { it.repository.root.path == repoA.root.path }
     val rowB = entries.filterIsInstance<GitWorktreeRow>().first { it.repository.root.path == repoB.root.path }
 
-    assertThat(GitWorktreesUiUtil.resolveSelectedRepositoryModel(project, listOf(headerA))?.root?.path).isEqualTo(repoA.root.path)
+    assertThat(GitWorktreesUiUtil.resolveSelectedRepositoryModel(project, listOf(rowA))?.root?.path).isEqualTo(repoA.root.path)
     assertThat(GitWorktreesUiUtil.resolveSelectedRepositoryModel(project, listOf(rowB))?.root?.path).isEqualTo(repoB.root.path)
     assertThat(GitWorktreesUiUtil.resolveSelectedRepositoryModel(project, emptyList()))
       .describedAs("Empty selection in a multi-repo project must not resolve a repository").isNull()
-    assertThat(GitWorktreesUiUtil.resolveSelectedRepositoryModel(project, listOf(headerA, rowB)))
+    assertThat(GitWorktreesUiUtil.resolveSelectedRepositoryModel(project, listOf(rowA, rowB)))
       .describedAs("A selection spanning several repositories must not resolve a single repository").isNull()
   }
 

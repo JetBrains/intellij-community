@@ -3,12 +3,14 @@ package git4idea.workingTrees.ui
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import com.intellij.vcs.git.repo.GitRepositoryModel
 import com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryIdCache
 import git4idea.repo.getTagsForCommit
+import git4idea.workingTrees.GitWorktreePendingCreation
 
 /** Stateless helpers backing the Worktrees tab; reads from the shared [GitRepositoryModel]s populated via [GitRepositoriesHolder]. */
 internal object GitWorktreesUiUtil {
@@ -32,12 +34,17 @@ internal object GitWorktreesUiUtil {
     )
   }
 
-  fun buildEntries(project: Project): List<GitWorkingTreesListEntry> {
+  fun buildEntries(
+    project: Project,
+    pendingCreations: Map<FilePath, GitWorktreePendingCreation> = emptyMap(),
+  ): List<GitWorkingTreesListEntry> {
     val repositories = getRepositories(project)
+    val pendingByRepository = pendingCreations.values.groupBy { it.repositoryId }
     return buildWorkingTreesEntries(
       repositories,
       tagNameForCommit = { model, headHash -> findTagNameForCommit(project, model, headHash) },
       repositoryKind = { model -> resolveRepositoryKind(model, repositories) },
+      pendingCreations = { model -> pendingByRepository[model.repositoryId].orEmpty() },
     )
   }
 

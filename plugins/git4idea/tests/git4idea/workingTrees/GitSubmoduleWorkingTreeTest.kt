@@ -16,7 +16,6 @@ import git4idea.test.gitPlatformContextFixture
 import git4idea.test.registerRepo
 import git4idea.update.GitSubmoduleProjectContext
 import git4idea.update.gitSubmoduleProjectFixture
-import git4idea.workingTrees.ui.GitRepositoryHeader
 import git4idea.workingTrees.ui.GitRepositoryKind
 import git4idea.workingTrees.ui.GitWorktreeRow
 import git4idea.workingTrees.ui.GitWorktreesUiUtil
@@ -72,14 +71,15 @@ internal class GitSubmoduleWorkingTreeTest {
   fun `test the worktrees tab classifies the submodule and its parent`(): Unit = with(context) {
     GitRepositoriesHolder.getAndInit(project)
 
-    val headers = GitWorktreesUiUtil.buildEntries(project)
-      .filterIsInstance<GitRepositoryHeader>()
+    val mainWorktreeRows = GitWorktreesUiUtil.buildEntries(project)
+      .filterIsInstance<GitWorktreeRow>()
+      .filter { it.gitWorkingTree.isMain }
       .associateBy { it.repository.root.path }
 
-    assertThat(headers[sub.root.path]?.kind)
+    assertThat(mainWorktreeRows[sub.root.path]?.repositoryKind)
       .describedAs("The submodule must be marked as a submodule")
       .isEqualTo(GitRepositoryKind.SUBMODULE)
-    assertThat(headers[main.root.path]?.kind)
+    assertThat(mainWorktreeRows[main.root.path]?.repositoryKind)
       .describedAs("The parent repository must be top-level")
       .isEqualTo(GitRepositoryKind.TOP_LEVEL)
   }
@@ -119,7 +119,7 @@ internal class GitSubmoduleWorkingTreeTest {
     // The tab shows the parent and the submodule only, and the submodule lists both of its working trees once.
     GitRepositoriesHolder.getAndInit(project)
     val entries = GitWorktreesUiUtil.buildEntries(project)
-    assertThat(entries.filterIsInstance<GitRepositoryHeader>().map { it.repository.root.path })
+    assertThat(entries.filterIsInstance<GitWorktreeRow>().map { it.repository.root.path }.distinct())
       .describedAs("The tab must show only the parent repository and the submodule")
       .containsExactlyInAnyOrder(main.root.path, sub.root.path)
     assertThat(

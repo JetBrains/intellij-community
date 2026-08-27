@@ -17,7 +17,6 @@ import git4idea.test.gitPlatformContextFixture
 import git4idea.test.initRepo
 import git4idea.test.registerRepo
 import git4idea.workingTrees.ui.GitWorktreesUiUtil
-import git4idea.workingTrees.ui.GitRepositoryHeader
 import git4idea.workingTrees.ui.GitWorktreeRow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -60,11 +59,8 @@ internal class GitWorktreeDuplicationTest {
     val capable = GitWorkingTreesService.findWorktreeCapableRepositories(project)
     assertThat(capable.map { it.root.path }).isEqualTo(listOf(main.root.path))
 
-    // The tab lists both worktrees exactly once, with no repository headers and no duplication.
+    // The tab lists both worktrees exactly once, with no duplication.
     val entries = GitWorktreesUiUtil.buildEntries(project)
-    assertThat(entries.filterIsInstance<GitRepositoryHeader>())
-      .describedAs("A single underlying repository must not produce repository headers")
-      .isEmpty()
     val rows = entries.filterIsInstance<GitWorktreeRow>()
     assertThat(rows).describedAs("Both worktrees must be listed exactly once").hasSize(2)
     assertThat(rows.count { it.gitWorkingTree.isMain }).describedAs("Exactly one worktree is the main one").isEqualTo(1)
@@ -91,10 +87,11 @@ internal class GitWorktreeDuplicationTest {
       .describedAs("The linked worktree of the nested repository must merge into it")
       .containsExactlyInAnyOrder(main.root.path, sub.root.path)
 
-    val headerRoots = GitWorktreesUiUtil.buildEntries(project)
-      .filterIsInstance<GitRepositoryHeader>()
+    val rowRoots = GitWorktreesUiUtil.buildEntries(project)
+      .filterIsInstance<GitWorktreeRow>()
       .map { it.repository.root.path }
-    assertThat(headerRoots)
+      .distinct()
+    assertThat(rowRoots)
       .describedAs("The tab must show only the two genuine repositories")
       .containsExactlyInAnyOrder(main.root.path, sub.root.path)
   }
@@ -141,11 +138,8 @@ internal class GitWorktreeDuplicationTest {
     assertThat(capable).hasSize(1)
     assertThat(listOf(wtMain.root.path, wtFeature.root.path)).containsAll(capable.map { it.root.path })
 
-    // The tab lists both working trees exactly once, with no repository headers and no duplication.
+    // The tab lists both working trees exactly once, with no duplication.
     val entries = GitWorktreesUiUtil.buildEntries(project)
-    assertThat(entries.filterIsInstance<GitRepositoryHeader>())
-      .describedAs("A single underlying repository must not produce repository headers")
-      .isEmpty()
     val rows = entries.filterIsInstance<GitWorktreeRow>()
     assertThat(rows.map { it.gitWorkingTree.path.path })
       .describedAs("Both working trees must be listed exactly once")

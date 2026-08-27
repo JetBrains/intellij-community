@@ -12,11 +12,14 @@ import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBList
+import com.intellij.ui.hover.ListHoverListener
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.launchOnShow
 import git4idea.i18n.GitBundle
@@ -42,10 +45,12 @@ internal class GitWorktreesTabPanel(private val project: Project, cs: CoroutineS
   private val listModel = CollectionListModel<GitWorkingTreesListEntry>()
   private val list = JBList<GitWorkingTreesListEntry>(listModel).apply {
     selectionMode = ListSelectionModel.SINGLE_SELECTION
-    cellRenderer = GitWorkingTreesListRenderer()
+    cellRenderer = GitWorkingTreesListRenderer(project)
     accessibleContext.accessibleName = GitBundle.message("toolwindow.working.trees.tab.name")
+    putClientProperty(AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)
     addMouseListener(createPopupHandler())
     ActionManager.getInstance().getAction("Git.WorkingTrees.Open").registerCustomShortcutSet(CommonShortcuts.ENTER, this)
+    ListHoverListener.DEFAULT.addTo(this)
   }
 
   val component: JComponent
@@ -81,7 +86,12 @@ internal class GitWorktreesTabPanel(private val project: Project, cs: CoroutineS
       sink[PlatformCoreDataKeys.HELP_ID] = TOOLWINDOW_CONTENT_HELP_ID
     }
 
-    component = BorderLayoutPanel().addToCenter(wrappedComponent).addToLeft(toolbar.component)
+    val worktreeListPanel = BorderLayoutPanel().addToCenter(wrappedComponent).addToLeft(toolbar.component).apply {
+      preferredSize = JBUI.size(LEFT_PANEL_WIDTH, preferredSize.height)
+    }
+    val rightPanel = BorderLayoutPanel()
+
+    component = BorderLayoutPanel().addToLeft(worktreeListPanel).addToCenter(rightPanel)
   }
 
   private fun createPopupHandler(): PopupHandler = object : PopupHandler() {
@@ -90,13 +100,7 @@ internal class GitWorktreesTabPanel(private val project: Project, cs: CoroutineS
       if (index == -1 || !list.getCellBounds(index, index).contains(x, y)) return
       list.selectedIndex = index
 
-      // A repository header offers repository-scoped actions (create a worktree); a worktree row offers
-      // worktree-scoped actions (open, delete).
-      val groupId = when (listModel.getElementAt(index)) {
-        is GitRepositoryHeader -> "Git.WorkingTrees.ToolwindowGroup.Popup.Repository"
-        is GitWorktreeRow -> "Git.WorkingTrees.ToolwindowGroup.Popup"
-      }
-      val actionGroup = ActionManager.getInstance().getAction(groupId) as ActionGroup
+      val actionGroup = ActionManager.getInstance().getAction("Git.WorkingTrees.ToolwindowGroup.Popup") as ActionGroup
       val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.POPUP, actionGroup)
       popupMenu.setTargetComponent(list)
       popupMenu.component.show(comp, x, y)
@@ -156,5 +160,9 @@ internal class GitWorktreesTabPanel(private val project: Project, cs: CoroutineS
                          SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) { _ ->
       HelpManager.getInstance().invokeHelp(GitWorkingTreesContentProvider.EMPTY_TAB_WORKING_TREE_CONCEPT_HELP_ID)
     }
+  }
+
+  companion object {
+    private const val LEFT_PANEL_WIDTH = 500
   }
 }

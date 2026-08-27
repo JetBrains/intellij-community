@@ -1,96 +1,47 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.workingTrees.ui
 
-import com.intellij.icons.AllIcons
-import com.intellij.ui.ColoredListCellRenderer
-import com.intellij.ui.SimpleTextAttributes
-import com.intellij.util.ui.JBUI
-import git4idea.i18n.GitBundle
+import com.intellij.dvcs.ui.VcsRepositoryIconsProvider
+import com.intellij.openapi.project.Project
+import com.intellij.platform.vcs.impl.shared.ui.RepositoryColorStripe
+import com.intellij.platform.vcs.impl.shared.ui.RepositoryColorStripeSegment
+import com.intellij.ui.hover.ListHoverListener
+import java.awt.Color
+import java.awt.Component
 import javax.swing.JList
+import javax.swing.ListCellRenderer
+import javax.swing.ListModel
 
-internal class GitWorkingTreesListRenderer : ColoredListCellRenderer<GitWorkingTreesListEntry>() {
-  override fun customizeCellRenderer(
-    list: JList<out GitWorkingTreesListEntry?>,
-    value: GitWorkingTreesListEntry?,
+internal class GitWorkingTreesListRenderer(private val project: Project) : ListCellRenderer<GitWorkingTreesListEntry> {
+  private val rowComponent = GitWorkingTreeRowComponent()
+
+  override fun getListCellRendererComponent(
+    list: JList<out GitWorkingTreesListEntry>,
+    value: GitWorkingTreesListEntry,
     index: Int,
-    selected: Boolean,
-    hasFocus: Boolean,
-  ) {
-    iconTextGap = JBUI.scale(4)
-    // ipad and toolTipText must be set explicitly on every cell: the renderer is reused and clear() does not reset them.
-    ipad = JBUI.insets(1, if (value is GitWorktreeRow && value.indented) 16 else 2, 1, 2)
-    // The default JList tooltip lookup delegates to the renderer component under the mouse pointer.
-    toolTipText = value?.tooltipText()
-
-    when (value) {
-      is GitRepositoryHeader -> {
-        icon = AllIcons.Nodes.Folder
-        append(value.presentableName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
-        resolveKindLabel(value.kind)?.let {
-          append("  ")
-          append(it, SimpleTextAttributes.GRAY_ATTRIBUTES)
-        }
-      }
-      is GitWorktreeRow -> customizeWorktreeRow(list, value)
-      null -> {}
-    }
+    isSelected: Boolean,
+    cellHasFocus: Boolean,
+  ): Component {
+    val color = colorFor(value)
+    val part = stripePart(list, index, color)
+    val hovered = !isSelected && ListHoverListener.getHoveredIndex(list) == index
+    return rowComponent.apply { configure(value, isSelected, hovered, cellHasFocus, list.font, color, part) }.component
   }
 
-  private fun customizeWorktreeRow(list: JList<out GitWorkingTreesListEntry?>, value: GitWorktreeRow) {
-    icon = if (value.gitWorkingTree.isCurrent) AllIcons.Actions.Checked else AllIcons.Empty
-
-    val nameAttributes = if (value.gitWorkingTree.isMain) SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES
-    append(value.gitWorkingTree.path.name, nameAttributes)
-
-    val columnGap = JBUI.scale(20)
-    var padding = iconTextGap * 2 + icon.iconWidth + getWorktreeColumnWidth(list) + columnGap
-    appendTextPadding(padding)
-
-    append(value.presentableBranchName, SimpleTextAttributes.GRAY_ATTRIBUTES)
-
-    padding += (getBranchColumnWidth(list) + columnGap)
-    appendTextPadding(padding)
-
-    append(value.location, SimpleTextAttributes.GRAY_ATTRIBUTES)
-
-    padding += (getLocationColumnWidth(list) + columnGap)
-    appendTextPadding(padding)
-
-    val statusText = when {
-      value.gitWorkingTree.isLocked -> GitBundle.message("toolwindow.working.trees.worktree.status.locked")
-      value.gitWorkingTree.isPrunable -> GitBundle.message("toolwindow.working.trees.worktree.status.prunable")
-      else -> null
-    }
-    if (statusText != null) {
-      append(statusText, SimpleTextAttributes.GRAY_ATTRIBUTES)
-    }
+  private fun colorFor(entry: GitWorkingTreesListEntry): Color? {
+    if (!entry.multiRoot) return null
+    return VcsRepositoryIconsProvider.getInstance(project).getColor(entry.repository.repositoryId)
   }
 
-  private fun resolveKindLabel(kind: GitRepositoryKind): String? = when (kind) {
-    GitRepositoryKind.SUBMODULE -> GitBundle.message("toolwindow.working.trees.repository.kind.submodule")
-    GitRepositoryKind.NESTED -> GitBundle.message("toolwindow.working.trees.repository.kind.nested")
-    GitRepositoryKind.TOP_LEVEL -> null
-  }
-
-  private fun getWorktreeColumnWidth(list: JList<out GitWorkingTreesListEntry?>): Int = getMaxWidth(list) { it.gitWorkingTree.path.name }
-  private fun getBranchColumnWidth(list: JList<out GitWorkingTreesListEntry?>): Int = getMaxWidth(list) { it.presentableBranchName }
-  private fun getLocationColumnWidth(list: JList<out GitWorkingTreesListEntry?>): Int = getMaxWidth(list) { it.location }
-
-  private fun getMaxWidth(list: JList<out GitWorkingTreesListEntry?>, toString: (GitWorktreeRow) -> String): Int {
+  private fun stripePart(list: JList<out GitWorkingTreesListEntry>, index: Int, color: Color?): RepositoryColorStripeSegment {
+    if (color == null) return RepositoryColorStripeSegment.SINGLE
     val model = list.model
-    var maxWidth = 0
-
-    val fontMetrics = list.getFontMetrics(list.font)
-
-    for (i in 0 until model.size) {
-      val entry = model.getElementAt(i) as? GitWorktreeRow ?: continue
-      val line = toString(entry)
-      val lineWidth = fontMetrics.stringWidth(line)
-      if (lineWidth > maxWidth) {
-        maxWidth = lineWidth
-      }
-    }
-
-    return maxWidth
+    val repositoryId = repositoryIdAt(model, index)
+    val prev = if (index > 0) repositoryIdAt(model, index - 1) else null
+    val next = if (index < model.size - 1) repositoryIdAt(model, index + 1) else null
+    return RepositoryColorStripe.resolveSegment(prev == repositoryId, next == repositoryId)
   }
+
+  private fun repositoryIdAt(model: ListModel<out GitWorkingTreesListEntry>, index: Int) =
+    model.getElementAt(index).repository.repositoryId
 }
