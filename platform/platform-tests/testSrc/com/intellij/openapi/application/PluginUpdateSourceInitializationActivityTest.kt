@@ -1,48 +1,32 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginSet
-import com.intellij.ide.plugins.loadDescriptorFromFileOrDirInTests
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceInitializationActivity
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceInitializer
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
-import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
-import com.intellij.platform.testFramework.plugins.PluginSpecBuilder
-import com.intellij.platform.testFramework.plugins.installAt
-import com.intellij.platform.testFramework.plugins.plugin as pluginSpec
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.http.url
-import com.intellij.testFramework.rules.InMemoryFsExtension
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.RegisterExtension
 
 @TestApplication
 @RegistryKey(key = "platform.enable.plugin.update.source.feature", value = "true")
 @RegistryKey(key = "update.source.initialization.enabled", value = "true")
 internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestBase() {
-  @RegisterExtension
-  @JvmField
-  val inMemoryFs = InMemoryFsExtension()
   val project = projectFixture()
 
-  private var originalPluginSet: PluginSet? = null
   private var originalCustomRepositoryHosts: List<String>? = null
 
   @AfterEach
   fun cleanUp() {
-    originalPluginSet?.let { PluginManagerCore.setPluginSet(it) }
-    originalPluginSet = null
-
     originalCustomRepositoryHosts?.let { restoreCustomRepositoryHosts(it) }
     originalCustomRepositoryHosts = null
 
@@ -58,7 +42,7 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
     val anotherCustomRepositoryUrl = anotherCustomServer.url + "/custom-repository"
 
     setCustomRepositoryHosts(listOf(customRepositoryUrl, anotherCustomRepositoryUrl))
-    setInstalledPlugins(INSTALLED_PLUGINS)
+    setInstalledPluginMocks(*INSTALLED_PLUGINS.toTypedArray())
 
     setServerPlugins(
       plugins = listOf(
@@ -70,7 +54,7 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
       updates = emptyList(),
     )
 
-    val customRepoPlugins = INSTALLED_PLUGINS.map { it.pluginId }
+    val customRepoPlugins = INSTALLED_PLUGINS.map { it.id }
       .filter { it != FROM_LIST_NO_CUSTOM_REPOSITORY_PLUGIN }
       .map { CustomRepositoryPlugin(it, "9.0") }
     setCustomRepositoryPlugins(customServer, customRepoPlugins)
@@ -106,31 +90,6 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
     executeInitializationActivity()
     for (pluginId in TESTED_PLUGIN_IDS) {
       assertNoPluginUpdateSource(pluginId)
-    }
-  }
-
-  private fun setInstalledPlugins(plugins: List<InstalledPlugin>) {
-    originalPluginSet = originalPluginSet ?: PluginManagerCore.getPluginSetOrNull()
-
-    val pluginsDirPath = inMemoryFs.fs.getPath("/").resolve("plugins")
-    val installedPluginPaths = plugins.map { plugin ->
-      plugin to pluginSpec(plugin.pluginId) {
-        testPlugin(plugin)
-      }.installAt(pluginsDirPath)
-    }
-    val pluginSet = PluginSetTestBuilder.fromDescriptors { loadingContext ->
-      installedPluginPaths.mapNotNull { (plugin, path) ->
-        loadDescriptorFromFileOrDirInTests(path, loadingContext, plugin.isBundled)
-      }
-    }.build()
-    PluginManagerCore.setPluginSet(pluginSet)
-  }
-
-  private fun PluginSpecBuilder.testPlugin(plugin: InstalledPlugin) {
-    version = "1.0"
-    vendor = plugin.vendor
-    if (plugin.allowBundledUpdate) {
-      rootTagAttributes = """allow-bundled-update="true""""
     }
   }
 
@@ -207,7 +166,7 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
 
 
     val TESTED_PLUGIN_IDS = buildList {
-      addAll(INSTALLED_PLUGINS.map { it.pluginId })
+      addAll(INSTALLED_PLUGINS.map { it.id })
       add(UNKNOWN_PLUGIN)
     }
 
@@ -216,16 +175,9 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
       isBundled: Boolean = false,
       allowBundledUpdate: Boolean = false,
       isJetBrainsPlugin: Boolean = false,
-    ): InstalledPlugin {
+    ): InstalledPluginMock {
       val vendor = if (isJetBrainsPlugin) "JetBrains" else "Some Company"
-      return InstalledPlugin(pluginId, isBundled, allowBundledUpdate, vendor)
+      return InstalledPluginMock(pluginId, pluginId, vendor, "1.0", "1.0", "999.9999", true, vendor, isBundled, allowBundledUpdate)
     }
   }
 }
-
-private data class InstalledPlugin(
-  val pluginId: String,
-  val isBundled: Boolean = false,
-  val allowBundledUpdate: Boolean = false,
-  val vendor: String?,
-)

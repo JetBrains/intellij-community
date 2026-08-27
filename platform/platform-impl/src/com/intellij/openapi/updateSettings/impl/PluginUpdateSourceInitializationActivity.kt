@@ -1,13 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginUtils
 import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -81,7 +80,7 @@ object PluginUpdateSourceInitializer {
     }
 
     val marketplaceUpdateSourceId = PluginUpdateSourceService.getInstance().createMarketplacePluginUpdateSourceId()
-    PluginManagerCore.plugins.forEach { plugin ->
+    PluginUpdateSourcePluginsProvider.getInstance().getAllPlugins().forEach { plugin ->
       val customPluginUpdateSources = dataMap[plugin.pluginId] ?: emptyList()
       initializePluginUpdateSourceIfNeeded(plugin, customPluginUpdateSources, safePluginList, marketplaceUpdateSourceId)
     }
@@ -105,7 +104,7 @@ object PluginUpdateSourceInitializer {
   }
 
   private fun initializePluginUpdateSourceIfNeeded(
-    plugin: IdeaPluginDescriptor,
+    plugin: PluginDescriptor,
     customPluginUpdateSources: List<PluginUpdateSourceId>,
     safePluginIdList: List<String>,
     marketplaceUpdateSourceId: PluginUpdateSourceId,

@@ -30,6 +30,7 @@ import org.junit.jupiter.api.BeforeEach
 import java.net.InetSocketAddress
 import java.net.URI
 import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.jar.JarOutputStream
 import java.util.zip.ZipEntry
@@ -67,7 +68,9 @@ internal abstract class UpdateCheckerTestBase {
     updateBrokenPlugins(emptyMap())
 
     val pluginTempPath = Path.of(PathManager.getPluginTempPath())
-    pluginTempPath.deleteChildrenRecursively { true }
+    if (Files.exists(pluginTempPath)) {
+      pluginTempPath.deleteChildrenRecursively { true }
+    }
   }
 
   protected fun createTestServer(disposable: Disposable): HttpServer {
