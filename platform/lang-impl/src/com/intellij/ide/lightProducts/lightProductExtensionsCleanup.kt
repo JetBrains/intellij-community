@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.liteProducts
+package com.intellij.ide.lightProducts
 
 import com.intellij.codeInsight.daemon.impl.GutterIntentionMenuContributor
 import com.intellij.codeInsight.daemon.impl.IntentionMenuContributor
@@ -31,7 +31,7 @@ import com.intellij.util.indexing.FileBasedIndexExtension
 import com.intellij.util.indexing.IndexableSetContributor
 import org.jetbrains.annotations.ApiStatus
 
-private val logger = Logger.getInstance("#com.intellij.ide.liteProducts.LiteProductExtensionsCleanup")
+private val logger = Logger.getInstance("#com.intellij.ide.lightProducts.LightProductExtensionsCleanup")
 
 /**
  * Unregisters application-level extensions that are not needed in lightweight IDE products
@@ -42,7 +42,7 @@ private val logger = Logger.getInstance("#com.intellij.ide.liteProducts.LiteProd
  * and `com.intellij.idea.ultimate.light.customization.IjLightAppExtensionsConfigurator`.
  */
 @ApiStatus.Internal
-fun unregisterExtensionsForLiteProduct() {
+fun unregisterExtensionsForLightProduct() {
   UsageGroupingRuleProvider.EP_NAME.appPoint
     .unregisterExtensions(
       UsageGroupingRuleProviderImpl::class
