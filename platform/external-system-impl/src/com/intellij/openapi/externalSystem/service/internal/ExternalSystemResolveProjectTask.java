@@ -21,7 +21,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
@@ -31,7 +30,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.rmi.RemoteException;
 import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicReference;
@@ -46,7 +44,6 @@ import static com.intellij.openapi.externalSystem.statistics.ExternalSystemTaskI
 public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask {
 
   private final AtomicReference<DataNode<ProjectData>> myExternalProject = new AtomicReference<>();
-  private final @NotNull @Nls String myProjectName;
   private final boolean myIsPreviewMode;
   private final @Nullable String myVmOptions;
   private final @Nullable String myArguments;
@@ -58,7 +55,6 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
     @NotNull ImportSpec importSpec
   ) {
     super(importSpec.getExternalSystemId(), ExternalSystemTaskType.RESOLVE_PROJECT, project, projectPath);
-    myProjectName = generateProjectName(projectPath);
     myIsPreviewMode = importSpec.isPreviewMode();
     myVmOptions = importSpec.getVmOptions();
     myArguments = importSpec.getArguments();
@@ -142,7 +138,7 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
 
     Ref<R> result = new Ref<>();
 
-    String title = ExternalSystemBundle.message("progress.refresh.text", myProjectName, getExternalSystemId().getReadableName());
+    String title = ExternalSystemBundle.message("progress.refresh.text", getProjectName(), getExternalSystemId().getReadableName());
     UnindexedFilesScannerExecutor.getInstance(getIdeProject()).suspendScanningAndIndexingThenRun(title, () -> {
       result.set(computable.get());
     });
@@ -172,17 +168,7 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
   }
 
   public @NotNull @Nls String getProjectName() {
-    return myProjectName;
-  }
-
-  private static @NotNull @NlsSafe String generateProjectName(@NotNull String externalProjectPath) {
-    File projectFile = new File(externalProjectPath);
-    if (projectFile.isFile()) {
-      return projectFile.getParentFile().getName();
-    }
-    else {
-      return projectFile.getName();
-    }
+    return getExternalProjectId().getProjectName();
   }
 
   @Override

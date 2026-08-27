@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.service.project.autoimport;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId;
@@ -11,12 +12,15 @@ import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.openapi.externalSystem.util.ExternalSystemLoggerUtilKt.debugTrace;
 
 
 /**
@@ -30,6 +34,8 @@ import java.util.List;
 @Deprecated
 public class ExternalSystemProjectsWatcherImpl implements ExternalSystemProjectsWatcher {
 
+  private final static @NotNull Logger LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.autoimport");
+
   private final @NotNull Project project;
 
   private static final ExtensionPointName<Contributor> EP_NAME =
@@ -41,6 +47,7 @@ public class ExternalSystemProjectsWatcherImpl implements ExternalSystemProjects
 
   @Override
   public void markDirtyAllExternalProjects() {
+    debugTrace(LOG, "Mark Dirty All External Projects");
     ExternalSystemProjectTracker projectTracker = ExternalSystemProjectTracker.getInstance(project);
     List<ExternalSystemProjectId> projectSettings = findAllProjectSettings();
     ApplicationManager.getApplication().invokeLater(() -> {
@@ -54,6 +61,7 @@ public class ExternalSystemProjectsWatcherImpl implements ExternalSystemProjects
 
   @Override
   public void markDirty(@NotNull Module module) {
+    debugTrace(LOG, "Module (%s): Mark Dirty External Project".formatted(module.getName()));
     ExternalSystemProjectTracker projectTracker = ExternalSystemProjectTracker.getInstance(project);
     String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
     List<ExternalSystemProjectId> projectSettings = findAllProjectSettings();
@@ -70,6 +78,7 @@ public class ExternalSystemProjectsWatcherImpl implements ExternalSystemProjects
 
   @Override
   public void markDirty(@NotNull String projectPath) {
+    debugTrace(LOG, "Project (%s): Mark Dirty External Project".formatted(PathUtil.getFileName(projectPath)));
     ExternalSystemProjectTracker projectTracker = ExternalSystemProjectTracker.getInstance(project);
     List<ExternalSystemProjectId> projectSettings = findAllProjectSettings();
     ApplicationManager.getApplication().invokeLater(() -> {

@@ -46,7 +46,7 @@ class AutoImportProjectSettingsFilesTracker(
   private val parentDisposable: Disposable
 ) {
 
-  private val projectStatus = AutoImportProjectStatus(debugName = "Settings ${projectAware.projectId}")
+  private val projectStatus = AutoImportProjectStatus(debugName = "[settings-tracker] ${projectAware.projectId}")
 
   private val settingsFilesStatus = AtomicReference(SettingsFilesStatus())
 

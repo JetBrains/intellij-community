@@ -390,6 +390,7 @@ a:com.intellij.openapi.externalSystem.service.internal.AbstractExternalSystemTas
 - execute(com.intellij.openapi.progress.ProgressIndicator,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener[]):V
 - execute(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener[]):V
 - getError():java.lang.Throwable
+- getExternalProjectId():com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 - getExternalProjectPath():java.lang.String
 - getExternalSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
 - getId():com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId

@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.service.internal;
 
 import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
@@ -39,6 +40,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.intellij.openapi.externalSystem.util.ExternalSystemLoggerUtilKt.infoWithDebugTrace;
+
 /**
  * Encapsulates particular task performed by external system integration.
  * <p/>
@@ -46,7 +49,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public abstract class AbstractExternalSystemTask extends UserDataHolderBase implements ExternalSystemTask {
 
-  private static final Logger LOG = Logger.getInstance(AbstractExternalSystemTask.class);
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.task");
 
   private final AtomicReference<ExternalSystemTaskState> myState =
     new AtomicReference<>(ExternalSystemTaskState.NOT_STARTED);
@@ -57,6 +60,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
   private final @NotNull ExternalSystemTaskId myId;
   private final @NotNull ProjectSystemId myExternalSystemId;
   private final @NotNull String myExternalProjectPath;
+  private final @NotNull ExternalSystemProjectId myProjectId;
 
   protected AbstractExternalSystemTask(@NotNull ProjectSystemId id,
                                        @NotNull ExternalSystemTaskType type,
@@ -66,10 +70,17 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     myIdeProject = project;
     myId = ExternalSystemTaskId.create(id, type, myIdeProject);
     myExternalProjectPath = externalProjectPath;
+    myProjectId = new ExternalSystemProjectId(id, externalProjectPath);
+
+    infoWithDebugTrace(LOG, "%s: Execution %s is scheduled".formatted(myProjectId, myId));
   }
 
   public @NotNull ProjectSystemId getExternalSystemId() {
     return myExternalSystemId;
+  }
+
+  public @NotNull ExternalSystemProjectId getExternalProjectId() {
+    return myProjectId;
   }
 
   @Override
@@ -144,9 +155,11 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
   @Override
   public void execute(ExternalSystemTaskNotificationListener @NotNull ... listeners) {
     if (!compareAndSetState(ExternalSystemTaskState.NOT_STARTED, ExternalSystemTaskState.IN_PROGRESS)) {
+      infoWithDebugTrace(LOG, "%s: Execution %s is skipped".formatted(myProjectId, myId));
       return;
     }
     try {
+      infoWithDebugTrace(LOG, "%s: Execution %s is started".formatted(myProjectId, myId));
       addProgressListeners(listeners);
       withProcessingManager(() -> {
         withExecutionProgressManager(() -> {
@@ -156,17 +169,21 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
         });
       });
     }
-    catch (CancellationException _) {
-      // the exception shouldn't be thrown due to the legacy architecture decision
-      // if the exception would be thrown, the cancellation will never be handled due to
-      // {@link com.intellij.openapi.externalSystem.util.ExternalSystemUtil.handleSyncResult}
-      LOG.info(String.format("The execution %s was cancelled", myId));
+    catch (CancellationException e) {
+      // The exception shouldn't be re-thrown due to the legacy architecture decision.
+      // @see com.intellij.openapi.externalSystem.util.ExternalSystemUtil.handleSyncResult
+      // @see com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState
+      //noinspection IncorrectCancellationExceptionHandling
+      LOG.infoWithDebug("%s: Execution %s is cancelled".formatted(myProjectId, myId), e);
     }
     catch (Exception e) {
-      LOG.warn(myId + ": Task execution failed", e);
+      LOG.warn("%s: Execution %s is failed".formatted(myProjectId, myId), e);
     }
     catch (Throwable e) {
-      LOG.error(e);
+      LOG.error("%s: Execution %s is failed".formatted(myProjectId, myId));
+    }
+    finally {
+      LOG.info("%s: Execution %s is finished".formatted(myProjectId, myId));
     }
   }
 
@@ -174,12 +191,15 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
   public boolean cancel(ExternalSystemTaskNotificationListener @NotNull ... listeners) {
     var currentTaskState = getState();
     if (currentTaskState.isStopped()) {
+      infoWithDebugTrace(LOG, "%s: Cancellation %s is skipped".formatted(myProjectId, myId));
       return true;
     }
     if (!compareAndSetState(currentTaskState, ExternalSystemTaskState.CANCELING)) {
+      infoWithDebugTrace(LOG, "%s: Cancellation %s is skipped (corrupted state)".formatted(myProjectId, myId));
       return false;
     }
     try {
+      infoWithDebugTrace(LOG, "%s: Cancellation %s is started".formatted(myProjectId, myId));
       addProgressListeners(listeners);
       return withCancellationProgressManager(() -> {
         return withCancellationState(() -> {
@@ -191,10 +211,13 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
       showCancellationFailedNotification(e);
     }
     catch (Exception e) {
-      LOG.debug(e);
+      LOG.warn("%s: Cancellation %s is failed".formatted(myProjectId, myId), e);
     }
     catch (Throwable e) {
-      LOG.error(e);
+      LOG.error("%s: Cancellation %s is failed".formatted(myProjectId, myId), e);
+    }
+    finally {
+      LOG.info("%s: Cancellation %s is finished".formatted(myProjectId, myId));
     }
     return false;
   }
