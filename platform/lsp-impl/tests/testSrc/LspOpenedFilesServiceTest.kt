@@ -23,6 +23,7 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 import java.nio.file.Files
@@ -64,6 +65,85 @@ internal class LspOpenedFilesServiceTest {
     stopClientsAndWait(manager)
   }
 
+  @Test
+  fun `a start request captured before an explicit stop does not revive a client`() = timeoutRunBlocking(2.minutes) {
+    val covered = createLocalFile("covered.txt")
+    val manager = LspClientManagerImpl.getInstanceImpl(project)
+    val service = LspOpenedFilesService.getInstance(project)
+    val providerClass = provider.javaClass
+
+    awaitRunningClient(manager) { service.processOpenedFiles(listOf(covered)) }
+    val descriptor = manager.getClients(providerClass).single().descriptor
+    val staleRequestStamp = manager.startRequestStamp()
+
+    stopClientsAndWait(manager)
+
+    manager.ensureStarted(providerClass, descriptor, staleRequestStamp)!!.join()
+    assertTrue(manager.getClients(providerClass).isEmpty(), "the stale start request must not revive a client")
+
+    // an explicit request with no captured generation still starts a client after the stop
+    awaitRunningClient(manager) { manager.ensureClientStarted(providerClass, descriptor) }
+    stopClientsAndWait(manager)
+  }
+
+  @Test
+  fun `a start request captured before a single-client stop does not revive the client`() = timeoutRunBlocking(2.minutes) {
+    val covered = createLocalFile("covered.txt")
+    val manager = LspClientManagerImpl.getInstanceImpl(project)
+    val service = LspOpenedFilesService.getInstance(project)
+    val providerClass = provider.javaClass
+
+    awaitRunningClient(manager) { service.processOpenedFiles(listOf(covered)) }
+    val client = manager.getClients(providerClass).single()
+    val staleRequestStamp = manager.startRequestStamp()
+
+    stopAndWait(manager) { manager.stopRunningServer(client) }
+
+    manager.ensureStarted(providerClass, client.descriptor, staleRequestStamp)!!.join()
+    assertTrue(manager.getClients(providerClass).isEmpty(), "the stale start request must not revive the client")
+  }
+
+  @Test
+  fun `a single-client stop does not suppress a queued start of a sibling client`() = timeoutRunBlocking(2.minutes) {
+    val covered = createLocalFile("covered.txt")
+    val manager = LspClientManagerImpl.getInstanceImpl(project)
+    val service = LspOpenedFilesService.getInstance(project)
+    val providerClass = provider.javaClass
+
+    awaitRunningClient(manager) { service.processOpenedFiles(listOf(covered)) }
+    val client = manager.getClients(providerClass).single()
+    val siblingDescriptor = FakeLspServerDescriptor(project, LspCustomization(), null, null, presentableName = "FakeLspServerSibling")
+    val staleRequestStamp = manager.startRequestStamp()
+
+    stopAndWait(manager) { manager.stopRunningServer(client) }
+
+    try {
+      withTimeout(30.seconds) {
+        awaitRunningClient(manager) { manager.ensureStarted(providerClass, siblingDescriptor, staleRequestStamp) }
+      }
+    }
+    catch (e: TimeoutCancellationException) {
+      fail { "the sibling client must start, the stop covered only the other client: $e" }
+    }
+    assertEquals(listOf(siblingDescriptor), manager.getClients(providerClass).map { it.descriptor },
+                 "only the sibling client must run, the stale start request must not revive the stopped client")
+
+    stopClientsAndWait(manager)
+  }
+
+  @Test
+  fun `a report after a stop starts a new client for the same file`() = timeoutRunBlocking(2.minutes) {
+    val covered = createLocalFile("covered.txt")
+    val manager = LspClientManagerImpl.getInstanceImpl(project)
+    val service = LspOpenedFilesService.getInstance(project)
+
+    awaitRunningClient(manager) { service.processOpenedFiles(listOf(covered)) }
+    stopClientsAndWait(manager)
+
+    awaitRunningClient(manager) { service.processOpenedFiles(listOf(covered)) }
+    stopClientsAndWait(manager)
+  }
+
   private fun createLocalFile(name: String): VirtualFile {
     val path = tempDir.resolve(name)
     Files.writeString(path, "content")
@@ -73,7 +153,10 @@ internal class LspOpenedFilesServiceTest {
     return file!!
   }
 
-  private suspend fun stopClientsAndWait(manager: LspClientManagerImpl) {
+  private suspend fun stopClientsAndWait(manager: LspClientManagerImpl): Unit =
+    stopAndWait(manager) { manager.stopClients(CoveredFileLspProvider::class.java) }
+
+  private suspend fun stopAndWait(manager: LspClientManagerImpl, stop: () -> Unit) {
     val removed = CompletableDeferred<Unit>()
     val disposable = Disposer.newDisposable("LspOpenedFilesServiceTest")
     try {
@@ -82,7 +165,7 @@ internal class LspOpenedFilesServiceTest {
           removed.complete(Unit)
         }
       }, disposable, false)
-      manager.stopClients(CoveredFileLspProvider::class.java)
+      stop()
       removed.await()
     }
     finally {

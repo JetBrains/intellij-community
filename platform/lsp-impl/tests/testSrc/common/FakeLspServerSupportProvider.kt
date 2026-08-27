@@ -80,7 +80,8 @@ internal open class FakeLspServerDescriptor(
   private val configureLsp4jClient: ((LspServerNotificationsHandler) -> Lsp4jClient)? = null,
   private val supportedFilePredicate: ((VirtualFile) -> Boolean)? = null,
   private val supportedLibraryFilePredicate: ((VirtualFile) -> Boolean)? = null,
-) : ProjectWideLspServerDescriptor(project, "FakeLspServer") {
+  presentableName: String = "FakeLspServer",
+) : ProjectWideLspServerDescriptor(project, presentableName) {
   lateinit var server: FakeLspServer
 
   override fun isSupportedFile(file: VirtualFile) = supportedFilePredicate?.invoke(file) ?: true

@@ -85,12 +85,9 @@ internal class LspDocumentSyncManager(private val client: LspClientImpl) {
   @RequiresWriteLock
   fun open(file: VirtualFile) {
     if (client.state != LspServerState.Running) {
-      // Error should not be logged if the sync manager is disposed of, as the server state
-      // and thus sync manager state might have changed just after entering `open` method
-      // and caller is not able to sync on the server state
-      if (!shutdown.get()) {
-        client.logError("Server is not in the Running state. Ignoring open($file)")
-      }
+      val message = "Server is not in the Running state. Ignoring open($file)"
+      // an open() scheduled before a server stop may land after it: the server is gone on purpose, not an error
+      if (client.state == LspServerState.Initializing && !shutdown.get()) client.logError(message) else client.logInfo(message)
       return
     }
 
