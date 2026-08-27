@@ -404,6 +404,9 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.ide.impl.iml",
+        "resources/idea/ExecutionActions.xml",
+        "resources/idea/LangActions.xml",
+        "resources/idea/PlatformActions.xml",
         "resources/intellij.platform.ide.impl.actions.xml",
         "resources/intellij.platform.ide.impl.xml",
         "module-content.yaml",

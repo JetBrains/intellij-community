@@ -22,9 +22,9 @@ object CommunityProductFragments {
 
     // Core action sets
     deprecatedInclude("intellij.platform.lang.impl", "idea/PriorityEditorLangActions.xml")
-    deprecatedInclude("intellij.platform.resources", "idea/PlatformActions.xml")
-    deprecatedInclude("intellij.platform.resources", "idea/ExecutionActions.xml")
-    deprecatedInclude("intellij.platform.resources", "idea/LangActions.xml")
+    deprecatedInclude("intellij.platform.ide.impl", "idea/PlatformActions.xml")
+    deprecatedInclude("intellij.platform.ide.impl", "idea/ExecutionActions.xml")
+    deprecatedInclude("intellij.platform.ide.impl", "idea/LangActions.xml")
   }
 
   /**

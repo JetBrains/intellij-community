@@ -588,7 +588,7 @@ via dependency 'unique.module.name.51.backend.support' -> descriptor 'unique.mod
   fun testPredefinedSharedDependencyOverridesFrontendSuffix() {
     addModuleWithXmlDescriptor(
       moduleName = "intellij.platform.resources",
-      descriptorRelativePathToResourcesDirectory = "idea/PlatformActions.xml",
+      descriptorRelativePathToResourcesDirectory = "META-INF/WorkspaceModel.xml",
       pluginXmlContent = """
         <idea-plugin/>
       """.trimIndent(),
@@ -619,7 +619,7 @@ via dependency 'unique.module.name.51.backend.support' -> descriptor 'unique.mod
   fun testTransitivelyPredefinedSharedDependencyOverridesFrontendSuffix() {
     addModuleWithXmlDescriptor(
       moduleName = "intellij.platform.resources",
-      descriptorRelativePathToResourcesDirectory = "idea/PlatformActions.xml",
+      descriptorRelativePathToResourcesDirectory = "META-INF/WorkspaceModel.xml",
       pluginXmlContent = """
         <idea-plugin/>
       """.trimIndent(),

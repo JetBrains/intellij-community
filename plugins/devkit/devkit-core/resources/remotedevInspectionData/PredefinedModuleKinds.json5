@@ -5,8 +5,8 @@
 // {
 //   kind: "moduleId",                                               // Required. Allowed values: "moduleId", "pluginId", "xmlDescriptorFile".
 //   id: "intellij.platform.frontend",                               // Required for "moduleId" and "pluginId" entries. Must be omitted otherwise.
-//   moduleName: "intellij.platform.resources",                      // Required for "xmlDescriptorFile" entries. Must be omitted otherwise.
-//   descriptorRelativePath: "src/idea/PlatformActions.xml",         // Required for "xmlDescriptorFile" entries. Relative to the module content root.
+//   moduleName: "intellij.platform.ide.impl",                       // Required for "xmlDescriptorFile" entries. Must be omitted otherwise.
+//   descriptorRelativePath: "resources/idea/PlatformActions.xml",   // Required for "xmlDescriptorFile" entries. Relative to the module content root.
 //   moduleKind: "frontend",                                         // Required. Allowed values: "frontend", "backend", "shared", "monolith".
 //   apiUsagePolicy: "backendWithNonUiApiPermit",                    // Optional. Allowed values: "backendWithNonUiApiPermit". Omit for default reporting.
 // }
@@ -186,10 +186,9 @@
   {kind: "pluginId", id: "com.intellij.modules.ultimate", moduleKind: "shared"},
   {kind: "pluginId", id: "com.intellij.modules.lang", moduleKind: "shared"},
 
-  {kind: "xmlDescriptorFile", moduleName: "intellij.platform.resources", descriptorRelativePath: "src/idea/PlatformActions.xml", moduleKind: "shared"},
-  {kind: "xmlDescriptorFile", moduleName: "intellij.platform.resources", descriptorRelativePath: "src/idea/ExecutionActions.xml", moduleKind: "shared"},
-  {kind: "xmlDescriptorFile", moduleName: "intellij.platform.resources", descriptorRelativePath: "src/idea/LangActions.xml", moduleKind: "shared"},
-  {kind: "xmlDescriptorFile", moduleName: "intellij.platform.resources", descriptorRelativePath: "src/idea/ProblemsViewActions.xml", moduleKind: "shared"},
+  {kind: "xmlDescriptorFile", moduleName: "intellij.platform.ide.impl", descriptorRelativePath: "resources/idea/PlatformActions.xml", moduleKind: "shared"},
+  {kind: "xmlDescriptorFile", moduleName: "intellij.platform.ide.impl", descriptorRelativePath: "resources/idea/ExecutionActions.xml", moduleKind: "shared"},
+  {kind: "xmlDescriptorFile", moduleName: "intellij.platform.ide.impl", descriptorRelativePath: "resources/idea/LangActions.xml", moduleKind: "shared"},
   {kind: "xmlDescriptorFile", moduleName: "intellij.platform.resources", descriptorRelativePath: "src/META-INF/WorkspaceModel.xml", moduleKind: "shared"},
   {kind: "xmlDescriptorFile", moduleName: "intellij.platform.resources", descriptorRelativePath: "src/META-INF/WorkspaceModelImpl.xml", moduleKind: "shared"},
   {kind: "xmlDescriptorFile", moduleName: "intellij.platform.resources", descriptorRelativePath: "src/META-INF/ProjectModel.xml", moduleKind: "shared"},

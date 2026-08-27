@@ -33,7 +33,8 @@ class KtActionReferenceTest : JavaCodeInsightFixtureTestCase() {
     moduleBuilder.addLibrary("platform-impl", PathUtil.getJarPathForClass(EditorEmptyTextPainter::class.java))
     moduleBuilder.addLibrary("platform-editor", PathUtil.getJarPathForClass(ActionManager::class.java))
     moduleBuilder.addLibrary("execution", PathUtil.getJarPathForClass(DefaultRunExecutor::class.java))
-    moduleBuilder.addLibrary("platform-resources", PathManager.getResourceRoot(LocalInspectionEP::class.java, "/idea/PlatformActions.xml")!!)
+    moduleBuilder.addLibrary("platform-resources", PathManager.getResourceRoot(LocalInspectionEP::class.java, "/idea/PlatformApplicationInfo.xml")!!)
+    moduleBuilder.addLibrary("platform-impl-resources", PathManager.getResourceRoot(EditorEmptyTextPainter::class.java, "/idea/PlatformActions.xml")!!)
     moduleBuilder.addLibrary("lang-impl-resources", PathManager.getResourceRoot(EditorEmptyTextPainter::class.java, "/intellij.platform.lang.impl.actions.xml")!!)
     moduleBuilder.addLibrary("testFramework", PathUtil.getJarPathForClass(CodeInsightTestFixture::class.java))
   }
