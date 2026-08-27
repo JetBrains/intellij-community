@@ -7,9 +7,11 @@ import com.intellij.util.messages.Topic
 
 interface PsiPolySymbolReferenceProviderListener {
 
-  fun beforeProvideReferences(referenceHost: PsiExternalReferenceHost, targetSymbol: Symbol?)
+  fun beforeProvideReferences(referenceHost: PsiExternalReferenceHost, targetSymbol: Symbol?, addAfterAction: (Runnable) -> Unit) {
+  }
 
-  fun afterProvideReferences(referenceHost: PsiExternalReferenceHost, targetSymbol: Symbol?)
+  fun afterProvideReferences(referenceHost: PsiExternalReferenceHost, targetSymbol: Symbol?) {
+  }
 
   companion object {
     @JvmField

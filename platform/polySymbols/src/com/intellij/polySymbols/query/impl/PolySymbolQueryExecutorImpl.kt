@@ -3,6 +3,7 @@ package com.intellij.polySymbols.query.impl
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.RecursionManager
@@ -412,7 +413,8 @@ class PolySymbolQueryExecutorImpl(
         ApplicationManager.getApplication().messageBus.syncPublisher(PolySymbolQueryExecutorListener.TOPIC)
       else
         null
-      publisher?.beforeQuery(params)
+      val actions = mutableListOf<Runnable>()
+      publisher?.beforeQuery(params, actions::add)
       try {
         var i = 0
         while (i < path.size - 1) {
@@ -438,6 +440,15 @@ class PolySymbolQueryExecutorImpl(
         finalProcessor(scope, lastSection, params)
       }
       finally {
+        actions.reversed().forEach {
+          try {
+            it.run()
+          }
+          catch (e: Throwable) {
+            rethrowControlFlowException(e)
+            thisLogger().error(e)
+          }
+        }
         publisher?.afterQuery(params)
         nestingLevel--
       }

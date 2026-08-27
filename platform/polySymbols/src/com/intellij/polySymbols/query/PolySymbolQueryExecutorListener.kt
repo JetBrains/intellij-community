@@ -5,9 +5,11 @@ import com.intellij.util.messages.Topic
 
 interface PolySymbolQueryExecutorListener {
 
-  fun beforeQuery(queryParams: PolySymbolQueryParams)
+  fun beforeQuery(queryParams: PolySymbolQueryParams, addAfterQueryAction: (Runnable) -> Unit) {
+  }
 
-  fun afterQuery(queryParams: PolySymbolQueryParams)
+  fun afterQuery(queryParams: PolySymbolQueryParams) {
+  }
 
   companion object {
     @JvmField

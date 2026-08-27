@@ -1006,8 +1006,8 @@
 *:com.intellij.polySymbols.query.PolySymbolQueryExecutorListener
 - *sf:Companion:com.intellij.polySymbols.query.PolySymbolQueryExecutorListener$Companion
 - sf:TOPIC:com.intellij.util.messages.Topic
-- a:afterQuery(com.intellij.polySymbols.query.PolySymbolQueryParams):V
-- a:beforeQuery(com.intellij.polySymbols.query.PolySymbolQueryParams):V
+- afterQuery(com.intellij.polySymbols.query.PolySymbolQueryParams):V
+- beforeQuery(com.intellij.polySymbols.query.PolySymbolQueryParams,kotlin.jvm.functions.Function1):V
 *f:com.intellij.polySymbols.query.PolySymbolQueryExecutorListener$Companion
 *:com.intellij.polySymbols.query.PolySymbolQueryParams
 - accept(com.intellij.polySymbols.PolySymbol):Z
@@ -1206,8 +1206,8 @@
 *:com.intellij.polySymbols.references.PsiPolySymbolReferenceProviderListener
 - *sf:Companion:com.intellij.polySymbols.references.PsiPolySymbolReferenceProviderListener$Companion
 - sf:TOPIC:com.intellij.util.messages.Topic
-- a:afterProvideReferences(com.intellij.model.psi.PsiExternalReferenceHost,com.intellij.model.Symbol):V
-- a:beforeProvideReferences(com.intellij.model.psi.PsiExternalReferenceHost,com.intellij.model.Symbol):V
+- afterProvideReferences(com.intellij.model.psi.PsiExternalReferenceHost,com.intellij.model.Symbol):V
+- beforeProvideReferences(com.intellij.model.psi.PsiExternalReferenceHost,com.intellij.model.Symbol,kotlin.jvm.functions.Function1):V
 *f:com.intellij.polySymbols.references.PsiPolySymbolReferenceProviderListener$Companion
 *:com.intellij.polySymbols.search.PolySymbolSearchTarget
 - com.intellij.find.usages.api.SearchTarget
