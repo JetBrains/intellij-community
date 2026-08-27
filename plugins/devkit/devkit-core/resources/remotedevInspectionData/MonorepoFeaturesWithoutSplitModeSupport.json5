@@ -10,7 +10,8 @@
     "plugins/llm-experimental//*",
     "plugins/llm-installer//*",
     "community/python//*",
-    "language-server//*"
+    "language-server//*",
+    "draft//*"
   ],
 
   moduleNames: [
