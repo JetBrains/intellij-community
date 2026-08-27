@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table
 
-import com.intellij.ui.scale.JBUIScale.scale
-import com.intellij.util.ui.GraphicsUtil
+import com.intellij.platform.vcs.impl.shared.ui.RepositoryColorStripe
+import com.intellij.platform.vcs.impl.shared.ui.RepositoryColorStripeSegment
 import com.intellij.util.ui.JBUI
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.ui.VcsLogColorManager
@@ -14,7 +14,7 @@ import javax.swing.JTable
 import javax.swing.SwingConstants
 
 internal class NewUiRootCellRenderer(properties: VcsLogUiProperties, colorManager: VcsLogColorManager) : RootCellRenderer(properties, colorManager) {
-  private var stripePart: RootStripePart = RootStripePart.SINGLE
+  private var stripePart: RepositoryColorStripeSegment = RepositoryColorStripeSegment.SINGLE
 
   init {
     setTextAlign(SwingConstants.LEFT)
@@ -23,21 +23,13 @@ internal class NewUiRootCellRenderer(properties: VcsLogUiProperties, colorManage
   override fun paintBackground(g: Graphics2D, x: Int, width: Int, height: Int) {
     g.color = myBorderColor
     g.fillRect(x, 0, width, height)
-    val config = GraphicsUtil.setupAAPainting(g)
 
-    val y = 0
-    val x = LEFT_RIGHT_GAP
-    val arc = ARC
-    val stripeWidth = if (isNarrow) NARROW_STRIPE_WIDTH else width - 2 * LEFT_RIGHT_GAP
-
-    g.color = myColor
-    when (stripePart) {
-      RootStripePart.START -> g.fillRoundRect(x, y, stripeWidth, height + arc, arc, arc)
-      RootStripePart.MIDDLE -> g.fillRect(x, y, stripeWidth, height)
-      RootStripePart.END -> g.fillRoundRect(x, y - arc, stripeWidth, height + BOTTOM_GAP, arc, arc)
-      RootStripePart.SINGLE -> g.fillRoundRect(x, y, stripeWidth, height - BOTTOM_GAP, arc, arc)
+    if (isNarrow) {
+      RepositoryColorStripe.paintSegment(g, myColor, height, stripePart)
     }
-    config.restore()
+    else {
+      RepositoryColorStripe.paintSegment(g, myColor, height, stripePart, width = width - 2 * RepositoryColorStripe.LEFT_GAP)
+    }
   }
 
   override fun getTableCellRendererComponent(table: JTable,
@@ -63,38 +55,11 @@ internal class NewUiRootCellRenderer(properties: VcsLogUiProperties, colorManage
   override fun getRootNameInsets(): Insets = JBUI.insets(0, 4)
 
   companion object {
-    private val LEFT_RIGHT_GAP
-      get() = scale(2)
-
-    private val BOTTOM_GAP
-      get() = scale(2)
-
-    private val ARC
-      get() = scale(4)
-
-    private val NARROW_STRIPE_WIDTH
-      get() = scale(4)
-
-    private fun getRootPart(current: RootCell?, table: JTable, row: Int, column: Int): RootStripePart {
-      if (current == null) return RootStripePart.SINGLE
+    private fun getRootPart(current: RootCell?, table: JTable, row: Int, column: Int): RepositoryColorStripeSegment {
+      if (current == null) return RepositoryColorStripeSegment.SINGLE
       val prev = if (row > 0) table.getValueAt(row - 1, column) else null
-      val next = if (row <= table.rowCount - 2) table.getValueAt(row + 1, column) else null
-      val isPrevSame = prev != null && prev == current
-      val isNextSame = next != null && next == current
-
-      return when {
-        isPrevSame && isNextSame -> RootStripePart.MIDDLE
-        !isPrevSame && !isNextSame -> RootStripePart.SINGLE
-        isPrevSame -> RootStripePart.END
-        else -> RootStripePart.START
-      }
-    }
-
-    private enum class RootStripePart {
-      START,
-      MIDDLE,
-      END,
-      SINGLE
+      val next = if (row < table.rowCount - 1) table.getValueAt(row + 1, column) else null
+      return RepositoryColorStripe.resolveSegment(prev != null && prev == current, next != null && next == current)
     }
   }
 }

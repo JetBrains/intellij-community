@@ -40,7 +40,7 @@ class VcsRepositoryIconsProvider(project: Project, cs: CoroutineScope) {
     return if (color != null) CheckboxIcon.createAndScale(color) else PlatformIcons.FOLDER_ICON
   }
 
-  private fun getColor(repositoryId: RepositoryId): Color? {
+  fun getColor(repositoryId: RepositoryId): Color? {
     val repoColor = state.colors[repositoryId]
 
     if (repoColor == null) {
