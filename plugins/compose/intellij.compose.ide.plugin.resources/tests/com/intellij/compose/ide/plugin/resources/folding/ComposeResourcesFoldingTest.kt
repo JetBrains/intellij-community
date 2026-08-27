@@ -5,9 +5,9 @@ import com.intellij.compose.ide.plugin.resources.ComposeResourcesTestCase
 import com.intellij.compose.ide.plugin.resources.TARGET_GRADLE_VERSION
 import com.intellij.lang.folding.FoldingDescriptor
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiManager
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.kotlin.test.TestMetadata
@@ -15,12 +15,10 @@ import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 import kotlin.test.assertNotNull as kAssertNotNull
 
-private const val DEFAULT_STRINGS_FILE_SUFFIX =
-  "composeApp/src/commonMain/composeResources/values/strings.xml"
+private const val DEFAULT_STRINGS_FILE_SUFFIX = "composeApp/src/commonMain/composeResources/values/strings.xml"
 private const val ORIGINAL_STRING_VALUE = "<string name=\"test\">test</string>"
 private const val PRIORITIZED_STRING_TEXT = "default value"
-private const val PRIORITIZED_STRING_VALUE =
-  "<string name=\"test\">$PRIORITIZED_STRING_TEXT</string>"
+private const val PRIORITIZED_STRING_VALUE = "<string name=\"test\">$PRIORITIZED_STRING_TEXT</string>"
 
 class ComposeResourcesFoldingTest : ComposeResourcesTestCase() {
 
@@ -107,10 +105,13 @@ class ComposeResourcesFoldingTest : ComposeResourcesTestCase() {
   }
 
   private fun replaceDefaultStringValue(files: List<VirtualFile>) {
-    val stringsFile = files.first { it.path.endsWith(DEFAULT_STRINGS_FILE_SUFFIX) }
+    val stringsFile = kAssertNotNull(
+      files.firstOrNull { it.path.endsWith(DEFAULT_STRINGS_FILE_SUFFIX) },
+      "Default strings.xml not found at '$DEFAULT_STRINGS_FILE_SUFFIX'",
+    )
     val documentManager = PsiDocumentManager.getInstance(myProject)
     val psiFile = kAssertNotNull(
-      com.intellij.psi.PsiManager.getInstance(myProject).findFile(stringsFile),
+      PsiManager.getInstance(myProject).findFile(stringsFile),
       "Default strings.xml should have a PSI file",
     )
     val document = kAssertNotNull(
@@ -121,7 +122,7 @@ class ComposeResourcesFoldingTest : ComposeResourcesTestCase() {
     val valueOffset = document.text.indexOf(ORIGINAL_STRING_VALUE)
     assertTrue("Default string resource should exist", valueOffset >= 0)
 
-    WriteCommandAction.runWriteCommandAction(myProject) {
+    runWriteAction {
       document.replaceString(
         valueOffset,
         valueOffset + ORIGINAL_STRING_VALUE.length,
