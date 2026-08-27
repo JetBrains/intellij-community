@@ -14,6 +14,7 @@ import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.DependencyScope
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
+import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity
 import com.intellij.platform.workspace.jps.entities.ModuleDependency
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -25,6 +26,7 @@ import com.intellij.platform.workspace.jps.entities.SourceRootEntityBuilder
 import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
 import com.intellij.platform.workspace.jps.entities.exModuleOptions
 import com.intellij.platform.workspace.jps.entities.modifyContentRootEntity
+import com.intellij.platform.workspace.jps.entities.modifyExcludeUrlEntity
 import com.intellij.platform.workspace.jps.entities.modifyExternalSystemModuleOptionsEntity
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.jps.entities.modifySourceRootEntity
@@ -198,21 +200,18 @@ private fun deleteModule(
   // but only if the underlying directory still physically exists on disk.
   val otherContentRoots = projectStorage.entities<ContentRootEntity>().filter { it.module != module }.toList()
 
-  val sourcesByTarget = mutableMapOf<ContentRootEntity, MutableList<SourceRootEntity>>()
-  val excludesByTarget = mutableMapOf<ContentRootEntity, MutableList<ExcludeUrlEntity>>()
+  val sourcesByTarget = mutableMapOf<ContentRootEntity, MutableList<SourceRootEntityBuilder>>()
+  val excludesByTarget = mutableMapOf<ContentRootEntity, MutableList<ExcludeUrlEntityBuilder>>()
   for (cr in module.contentRoots) {
-    val crPath = cr.url.toPath()
-    val parent = otherContentRoots.filter { crPath.startsWith(it.url.toPath()) }.maxByOrNull { it.url.url.length } ?: continue
-    val existingSources = parent.sourceRoots.map { it.url }.toSet()
-    val existingExcludes = parent.excludedUrls.map { it.url }.toSet()
+    val parent = otherContentRoots.deepestContaining(cr.url.toPath()) ?: continue
     for (sr in cr.sourceRoots) {
-      if (sr.url !in existingSources && sr.url.toPath().exists()) {
-        sourcesByTarget.getOrPut(parent) { mutableListOf() }.add(sr)
+      if (sr.url.toPath().exists()) {
+        sourcesByTarget.getOrPut(parent) { mutableListOf() }.add(copyOfSourceRoot(sr, parent.entitySource))
       }
     }
     for (eu in cr.excludedUrls) {
-      if (eu.url !in existingExcludes && eu.url.toPath().exists()) {
-        excludesByTarget.getOrPut(parent) { mutableListOf() }.add(eu)
+      if (eu.url.toPath().exists()) {
+        excludesByTarget.getOrPut(parent) { mutableListOf() }.add(ExcludeUrlEntity(eu.url, parent.entitySource))
       }
     }
   }
@@ -293,27 +292,12 @@ private fun updateModule(
     }
   }
 
-  existingContentRoot?.let {
-    it to it.sourceRoots.map { sr -> sr.url.url }.toSet()
-  }?.takeIf { (cr, existingUrls) ->
-    cr.entitySource != entitySource || desiredSourceRootUrls.any { it.url !in existingUrls }
-  }?.let { (cr, existingUrls) ->
-    // A modification keeps the properties of a root. A new entity for the same url loses them.
-    for (sourceRoot in cr.sourceRoots.filter { it.entitySource != entitySource }) {
-      for (properties in sourceRoot.javaSourceRoots) {
-        projectStorage.modifyJavaSourceRootPropertiesEntity(properties) { this.entitySource = entitySource }
-      }
-      projectStorage.modifySourceRootEntity(sourceRoot) { this.entitySource = entitySource }
-    }
-    projectStorage.modifyContentRootEntity(cr) {
-      this.entitySource = entitySource
-      val newSourceRoots = desiredSourceRootUrls.filter { d -> d.url !in existingUrls }
-        .map { url -> pyProjectSourceRoot(url, entitySource) }
-      this.sourceRoots = (sourceRoots + newSourceRoots).distinctBy { it.url.url }
-      this.excludedUrls = excludedUrls.map { eu ->
-        if (eu.entitySource != entitySource) ExcludeUrlEntity(eu.url, entitySource) else eu
-      }
-    }
+  existingContentRoot?.let { cr ->
+    projectStorage.mergeRoots(
+      target = cr,
+      sourcesToAdd = desiredSourceRootUrls.map { pyProjectSourceRoot(it, entitySource) },
+      entitySource = entitySource,
+    )
   }
 
   existingPyProjectToml?.takeIf {
@@ -397,13 +381,12 @@ private fun ensureNoSrcIntersectsWithOtherRoots(projectStorage: MutableEntitySto
   val allContentRoots = projectStorage.entities<ModuleEntity>().flatMap { it.contentRoots }.toList()
 
   val pathsToRemove = mutableMapOf<ContentRootEntity, MutableSet<Path>>()
-  val sourcesToAdd = mutableMapOf<ContentRootEntity, MutableList<SourceRootEntity>>()
-  val excludesToAdd = mutableMapOf<ContentRootEntity, MutableList<ExcludeUrlEntity>>()
+  val sourcesToAdd = mutableMapOf<ContentRootEntity, MutableList<SourceRootEntityBuilder>>()
+  val excludesToAdd = mutableMapOf<ContentRootEntity, MutableList<ExcludeUrlEntityBuilder>>()
 
   /** Find the innermost content root containing [path] that belongs to a different module than [cr]. */
   fun clashTarget(path: Path, cr: ContentRootEntity): ContentRootEntity? {
-    val innermost = allContentRoots.filter { path.startsWith(it.url.toPath()) }.maxByOrNull { it.url.url.length }
-    return innermost?.takeIf { it.module != cr.module }?.also {
+    return allContentRoots.deepestContaining(path)?.takeIf { it.module != cr.module }?.also {
       pathsToRemove.getOrPut(cr) { mutableSetOf() }.add(path)
     }
   }
@@ -411,11 +394,11 @@ private fun ensureNoSrcIntersectsWithOtherRoots(projectStorage: MutableEntitySto
   for (cr in allContentRoots) {
     for (sr in cr.sourceRoots) {
       val target = clashTarget(sr.url.toPath(), cr) ?: continue
-      if (target.sourceRoots.none { it.url == sr.url }) sourcesToAdd.getOrPut(target) { mutableListOf() }.add(sr)
+      sourcesToAdd.getOrPut(target) { mutableListOf() }.add(copyOfSourceRoot(sr, target.entitySource))
     }
     for (eu in cr.excludedUrls) {
       val target = clashTarget(eu.url.toPath(), cr) ?: continue
-      if (target.excludedUrls.none { it.url == eu.url }) excludesToAdd.getOrPut(target) { mutableListOf() }.add(eu)
+      excludesToAdd.getOrPut(target) { mutableListOf() }.add(ExcludeUrlEntity(eu.url, target.entitySource))
     }
   }
 
@@ -431,27 +414,55 @@ private fun ensureNoSrcIntersectsWithOtherRoots(projectStorage: MutableEntitySto
   }
 }
 
-/**
- * Add collected source roots and excluded URLs to their target content roots in a single modification per target.
- *
- * A url reaches the target once. The caller collects a root for each content root of the module it deletes, against one
- * snapshot of the target, so two content roots that hold one url would otherwise write two entities for one directory.
- */
+/** Add the collected roots to their target content roots, with one modification for each target. */
 private fun MutableEntityStorage.addRelocatedRoots(
-  sourcesByTarget: Map<ContentRootEntity, List<SourceRootEntity>>,
-  excludesByTarget: Map<ContentRootEntity, List<ExcludeUrlEntity>>,
+  sourcesByTarget: Map<ContentRootEntity, List<SourceRootEntityBuilder>>,
+  excludesByTarget: Map<ContentRootEntity, List<ExcludeUrlEntityBuilder>>,
 ) {
   for (target in (sourcesByTarget.keys + excludesByTarget.keys)) {
-    modifyContentRootEntity(target) {
-      sourcesByTarget[target]?.let { roots ->
-        val urls = this.sourceRoots.mapTo(mutableSetOf()) { it.url.url }
-        this.sourceRoots += roots.filter { urls.add(it.url.url) }.map { copyOfSourceRoot(it, this.entitySource) }
-      }
-      excludesByTarget[target]?.let { roots ->
-        val urls = this.excludedUrls.mapTo(mutableSetOf()) { it.url.url }
-        this.excludedUrls += roots.filter { urls.add(it.url.url) }.map { ExcludeUrlEntity(it.url, this.entitySource) }
-      }
+    mergeRoots(target, sourcesByTarget[target] ?: emptyList(), excludesByTarget[target] ?: emptyList())
+  }
+}
+
+/**
+ * Write [sourcesToAdd] and [excludesToAdd] to [target]. One directory gets one entity.
+ *
+ * The target keeps the entity that it holds for a url already. The function also drops a second entity for one
+ * directory that the target holds, so the sync converges. [entitySource] stamps the target and each root of it.
+ *
+ * The function makes no modification when nothing changes. A needless modification sends a change event and rewrites
+ * the `.iml` file.
+ */
+private fun MutableEntityStorage.mergeRoots(
+  target: ContentRootEntity,
+  sourcesToAdd: List<SourceRootEntityBuilder> = emptyList(),
+  excludesToAdd: List<ExcludeUrlEntityBuilder> = emptyList(),
+  entitySource: EntitySource = target.entitySource,
+) {
+  val sourceUrls = target.sourceRoots.map { it.url.url }
+  val excludeUrls = target.excludedUrls.map { it.url.url }
+  val newSources = sourcesToAdd.filter { it.url.url !in sourceUrls }
+  val newExcludes = excludesToAdd.filter { it.url.url !in excludeUrls }
+  val holdsDuplicate = sourceUrls.size != sourceUrls.toSet().size || excludeUrls.size != excludeUrls.toSet().size
+  val holdsOtherSource = target.entitySource != entitySource
+                         || target.sourceRoots.any { it.entitySource != entitySource }
+                         || target.excludedUrls.any { it.entitySource != entitySource }
+  if (newSources.isEmpty() && newExcludes.isEmpty() && !holdsDuplicate && !holdsOtherSource) return
+
+  // A modification keeps the properties of a root, which a new entity for the same url loses.
+  for (sourceRoot in target.sourceRoots.filter { it.entitySource != entitySource }) {
+    for (properties in sourceRoot.javaSourceRoots) {
+      modifyJavaSourceRootPropertiesEntity(properties) { this.entitySource = entitySource }
     }
+    modifySourceRootEntity(sourceRoot) { this.entitySource = entitySource }
+  }
+  for (excludedUrl in target.excludedUrls.filter { it.entitySource != entitySource }) {
+    modifyExcludeUrlEntity(excludedUrl) { this.entitySource = entitySource }
+  }
+  modifyContentRootEntity(target) {
+    this.entitySource = entitySource
+    this.sourceRoots = (this.sourceRoots + newSources).distinctBy { it.url.url }
+    this.excludedUrls = (this.excludedUrls + newExcludes).distinctBy { it.url.url }
   }
 }
 
@@ -478,6 +489,10 @@ private fun copyOfSourceRoot(sourceRoot: SourceRootEntity, entitySource: EntityS
   SourceRootEntity(sourceRoot.url, sourceRoot.rootTypeId, entitySource) {
     javaSourceRoots = sourceRoot.javaSourceRoots.map { JavaSourceRootPropertiesEntity(it.generated, it.packagePrefix, entitySource) }
   }
+
+/** The content root that contains [path] and lies deepest. */
+private fun List<ContentRootEntity>.deepestContaining(path: Path): ContentRootEntity? =
+  filter { path.startsWith(it.url.toPath()) }.maxByOrNull { it.url.url.length }
 
 private suspend fun generatePyProjectTomlEntries(
   fsInfo: FSWalkInfoWithToml,
