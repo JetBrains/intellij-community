@@ -59,6 +59,7 @@ interface TestContainer {
     fun applyDefaultVMOptions(context: IDETestContext): IDETestContext {
       return when (context.testCase.ideInfo.productCode == IdeInfoType.ANDROID_STUDIO.productCode) {
         true -> context
+          .redirectJarRepositoriesToCacheRedirector()
           .addProjectToTrustedLocations()
           .disableFusSendingOnIdeClose()
           .disableReportingStatisticsToProduction()
@@ -69,6 +70,7 @@ interface TestContainer {
             withEnv("STUDIO_VM_OPTIONS", context.ide.patchedVMOptionsFile.toString())
           }
         false -> context
+          .redirectJarRepositoriesToCacheRedirector()
           .disableLoadShellEnv()
           .disableInstantIdeShutdown()
           .disableFusSendingOnIdeClose()

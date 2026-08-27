@@ -83,6 +83,12 @@ open class IDETestContext(
   companion object {
     const val OPENTELEMETRY_FILE: String = "opentelemetry.json"
 
+    /** Keeps the name of `ArtifactRepositoryManager.PRIORITY_REPOSITORY_URL_PROPERTY`. */
+    const val JAR_REPOSITORY_PRIORITY_URL_PROPERTY: String = "idea.jar.repository.priority.url"
+
+    /** The mirror of Maven Central that the IDE artifact downloads must use in a test. */
+    const val CACHE_REDIRECTOR_MAVEN_CENTRAL_URL: String = "https://cache-redirector.jetbrains.com/maven-central"
+
     val SEARCH_EVERYWHERE_REGISTRY_KEYS: List<String> get() = listOf(
       "search.everywhere.new.enabled",
       "search.everywhere.new.cwm.client.enabled",
@@ -804,6 +810,17 @@ open class IDETestContext(
     applyVMOptionsPatch {
       addSystemProperty("kotest.assertions.collection.enumerate.size", Int.MAX_VALUE)
     }
+
+  /**
+   * Points the artifact downloads of the IDE at [CACHE_REDIRECTOR_MAVEN_CENTRAL_URL].
+   *
+   * `JarRepositoryManager` runs Eclipse Aether on the repositories of the project. The property
+   * puts the mirror first, and it keeps the repositories of the project as a fallback. A Gradle or
+   * a Maven redirect does not reach this code, because Aether reads no build-system configuration.
+   */
+  fun redirectJarRepositoriesToCacheRedirector(): IDETestContext = applyVMOptionsPatch {
+    addSystemProperty(JAR_REPOSITORY_PRIORITY_URL_PROPERTY, CACHE_REDIRECTOR_MAVEN_CENTRAL_URL)
+  }
 
   fun acceptNonTrustedCertificates(): IDETestContext {
     writeConfigFile("options/certificates.xml", """
