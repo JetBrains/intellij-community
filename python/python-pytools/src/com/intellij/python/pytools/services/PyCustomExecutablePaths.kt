@@ -27,9 +27,10 @@ import java.nio.file.Path
  * It replaces the former per-project `PyToolsState` custom path and the per-tool `PropertiesComponent`
  * keys (`PyCharm.Uv.Path` etc.), which are migrated in once via [noStateLoaded] and then deprecated.
  *
- * Absolute paths are host-specific, hence [RoamingType.LOCAL]. Entries are a best-effort cache: a
- * machine id can go stale (e.g. a recreated Docker container), so a missing/invalid entry is never an
- * error — callers fall back to auto-detection.
+ * Absolute paths are host-specific, hence [RoamingType.LOCAL]. An entry can go stale, for instance when a Docker
+ * container is recreated, and that is never an error. An entry whose machine no longer resolves is ignored, and the
+ * caller auto-detects instead. An entry that resolves but whose file is gone reports the tool as absent: the entry
+ * names one exact file the user chose, so [PyExecutableCache] does not look for that tool elsewhere.
  */
 @Service(Service.Level.APP)
 @State(
