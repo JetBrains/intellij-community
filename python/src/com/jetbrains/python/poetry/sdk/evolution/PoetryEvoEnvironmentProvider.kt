@@ -13,7 +13,6 @@ import com.intellij.python.sdk.backend.evolution.defaultVenvDir
 import com.intellij.python.sdk.backend.evolution.evoCreateEnvLeaf
 import com.intellij.python.sdk.backend.evolution.evoInstallPythonLeaf
 import com.intellij.python.sdk.backend.evolution.evoEnvLeaf
-import com.intellij.python.sdk.backend.evolution.resolvePythonExecutable
 import com.intellij.python.sdk.backend.evolution.toDisplayPath
 import com.intellij.python.sdk.backend.evolution.toLeaf
 import com.intellij.python.sdk.backend.evolution.toSectionLabel
@@ -28,6 +27,7 @@ import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.evolution.systemPythonOptions
 import com.jetbrains.python.sdk.impl.PySdkBundle
+import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import com.jetbrains.python.sdk.poetry.createNewPoetrySdk
 import com.jetbrains.python.sdk.poetry.createPoetrySdk
 import com.jetbrains.python.sdk.poetry.runPoetry
@@ -74,7 +74,7 @@ internal class PoetryEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
       // add-new version rows do ("Python 3.13") instead of showing a bare number. Only the label changes: the lookup
       // below still matches on the plain version, which is what poetry puts at the end of the cache env's folder name.
       val title = PySdkBundle.message("evolution.python.version", versionStr)
-      val existingBinary = poetryEnvRoots.firstOrNull { it.name.endsWith(versionStr) }?.resolvePythonExecutable()
+      val existingBinary = poetryEnvRoots.firstOrNull { it.name.endsWith(versionStr) }?.resolvePythonBinary()
       val leaf = when {
         // Not on the machine: offer to install it. Its token is the version rather than an interpreter path, so it
         // cannot be handed to the create step as-is — evoInstallPythonLeaf is what asks for the install first.
