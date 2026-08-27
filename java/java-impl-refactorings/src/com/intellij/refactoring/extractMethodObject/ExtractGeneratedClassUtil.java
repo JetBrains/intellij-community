@@ -18,6 +18,7 @@ import com.intellij.psi.PsiImportStatementBase;
 import com.intellij.psi.PsiImportStaticStatement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiModifier;
@@ -33,6 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -72,8 +74,8 @@ final class ExtractGeneratedClassUtil {
 
     generatedFile.setPackageName(packageName);
     extractedClass = PsiTreeUtil.findChildOfType(generatedFile, PsiClass.class);
-    copyStaticImports(generatedInnerClass, generatedFile, elementFactory);
     assert extractedClass != null;
+    copyStaticImports(generatedInnerClass, extractedClass, generatedFile, elementFactory);
     PsiElement codeBlock = PsiTreeUtil.findFirstParent(anchor, false, element -> element instanceof PsiCodeBlock);
     if (codeBlock == null) {
       codeBlock = anchor.getParent();
@@ -101,22 +103,38 @@ final class ExtractGeneratedClassUtil {
   }
 
   private static void copyStaticImports(@NotNull PsiElement from,
+                                        @NotNull PsiElement target,
                                         @NotNull PsiJavaFile destFile,
                                         @NotNull PsiElementFactory elementFactory) {
     PsiJavaFile fromFile = PsiTreeUtil.getParentOfType(from, PsiJavaFile.class);
     if (fromFile != null) {
+      List<PsiJavaCodeReferenceElement> references = collectUnqualifiedReferences(target);
       PsiImportList sourceImportList = fromFile.getImportList();
       if (sourceImportList != null) {
         PsiImportList destImportList = destFile.getImportList();
         LOG.assertTrue(destImportList != null, "import list of destination file should not be null");
-        for (PsiImportStatementBase importStatement : sourceImportList.getAllImportStatements()) {
-          if (importStatement instanceof PsiImportStaticStatement && isPublic((PsiImportStaticStatement)importStatement)) {
-            PsiElement importStatementCopy = copy((PsiImportStaticStatement)importStatement, elementFactory);
-            if (importStatementCopy != null) {
-              destImportList.add(importStatementCopy);
-            }
-            else {
-              LOG.warn("Unable to copy static import statement: " + importStatement.getText());
+        Set<PsiJavaCodeReferenceElement> coveredReferences = new HashSet<>();
+        for (PsiImportStatementBase importStatement : destImportList.getAllImportStatements()) {
+          if (importStatement instanceof PsiImportStaticStatement staticImport) {
+            coveredReferences.addAll(findImportedReferences(staticImport, references));
+          }
+        }
+        for (boolean onDemand : new boolean[]{false, true}) {
+          for (PsiImportStatementBase importStatement : sourceImportList.getAllImportStatements()) {
+            if (importStatement instanceof PsiImportStaticStatement staticImport &&
+                staticImport.isOnDemand() == onDemand && isPublic(staticImport)) {
+              List<PsiJavaCodeReferenceElement> importedReferences = findImportedReferences(staticImport, references);
+              importedReferences.removeAll(coveredReferences);
+              if (!importedReferences.isEmpty()) {
+                PsiElement importStatementCopy = copy(staticImport, elementFactory);
+                if (importStatementCopy != null) {
+                  destImportList.add(importStatementCopy);
+                  coveredReferences.addAll(importedReferences);
+                }
+                else {
+                  LOG.warn("Unable to copy static import statement: " + importStatement.getText());
+                }
+              }
             }
           }
         }
@@ -124,10 +142,67 @@ final class ExtractGeneratedClassUtil {
     }
   }
 
+  private static @NotNull List<PsiJavaCodeReferenceElement> collectUnqualifiedReferences(@NotNull PsiElement element) {
+    List<PsiJavaCodeReferenceElement> references = new ArrayList<>();
+    element.accept(new JavaRecursiveElementVisitor() {
+      @Override
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
+        if (reference.getQualifier() == null) {
+          references.add(reference);
+        }
+        super.visitReferenceElement(reference);
+      }
+    });
+    return references;
+  }
+
+  private static @NotNull List<PsiJavaCodeReferenceElement> findImportedReferences(
+    @NotNull PsiImportStaticStatement staticImport,
+    @NotNull List<PsiJavaCodeReferenceElement> references) {
+    List<PsiJavaCodeReferenceElement> result = new ArrayList<>();
+    if (!staticImport.isOnDemand()) {
+      PsiJavaCodeReferenceElement importReference = staticImport.getImportReference();
+      if (importReference == null) return result;
+
+      for (JavaResolveResult target : importReference.multiResolve(false)) {
+        PsiElement importedElement = target.getElement();
+        if (importedElement != null) {
+          for (PsiJavaCodeReferenceElement reference : references) {
+            if (reference.isReferenceTo(importedElement) && !result.contains(reference)) {
+              result.add(reference);
+            }
+          }
+        }
+      }
+      return result;
+    }
+
+    PsiClass importedClass = staticImport.resolveTargetClass();
+    if (importedClass == null) return result;
+
+    for (PsiJavaCodeReferenceElement reference : references) {
+      PsiElement target = reference.resolve();
+      if (target instanceof PsiMember member &&
+          member.hasModifierProperty(PsiModifier.PUBLIC) &&
+          member.hasModifierProperty(PsiModifier.STATIC)) {
+        PsiClass containingClass = member.getContainingClass();
+        if (containingClass != null &&
+            (importedClass.getManager().areElementsEquivalent(importedClass, containingClass) ||
+             importedClass.isInheritor(containingClass, true))) {
+          result.add(reference);
+        }
+      }
+    }
+    return result;
+  }
+
   private static @Nullable PsiElement copy(@NotNull PsiImportStaticStatement importStatement,
-                                           @NotNull PsiElementFactory elementFactory) {
+                                            @NotNull PsiElementFactory elementFactory) {
     PsiClass targetClass = importStatement.resolveTargetClass();
     String memberName = importStatement.getReferenceName();
+    if (importStatement.isOnDemand()) {
+      memberName = "*";
+    }
     if (targetClass != null && memberName != null) {
       return elementFactory.createImportStaticStatement(targetClass, memberName);
     }
@@ -138,6 +213,9 @@ final class ExtractGeneratedClassUtil {
   private static boolean isPublic(@NotNull PsiImportStaticStatement staticImport) {
     PsiClass targetClass = staticImport.resolveTargetClass();
     if (targetClass != null && isPublicClass(targetClass)) {
+      if (staticImport.isOnDemand()) {
+        return true;
+      }
       PsiJavaCodeReferenceElement reference = staticImport.getImportReference();
       if (reference != null) {
         JavaResolveResult[] targets = reference.multiResolve(false);

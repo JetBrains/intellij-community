@@ -1,0 +1,8 @@
+imports: import java.util.List;import static java.util.Collections.emptyList;
+call text: List<Object> result = Test.invoke();
+class: 
+public class GeneratedEvaluationClass {
+    static List<Object> invoke() {
+        return emptyList();
+    }
+}

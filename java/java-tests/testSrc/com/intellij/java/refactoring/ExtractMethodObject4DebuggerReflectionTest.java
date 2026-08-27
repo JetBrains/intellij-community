@@ -1,12 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.JavaCodeFragmentFactory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
@@ -110,10 +112,22 @@ public class ExtractMethodObject4DebuggerReflectionTest extends LightJavaCodeIns
     });
   }
 
+  public void testStaticMethodImport() {
+    doTest("emptyList()", "/StaticImports.java", true);
+  }
+
+  public void testStaticClassImport() {
+    doTest("Entry.comparingByKey()", "/StaticImports.java", true);
+  }
+
+  public void testStaticWildcardMethodImport() {
+    doTest("emptyList()", "/StaticWildcardImports.java", true);
+  }
+
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return super.getTestDataPath() + "/refactoring/extractMethodObject4Debugger";
+    return PathManagerEx.getCommunityHomePath() + "/java/java-tests/testData/refactoring/extractMethodObject4Debugger";
   }
 
   private void doTest(@NotNull String evaluatedText) throws PrepareFailedException {
@@ -122,6 +136,12 @@ public class ExtractMethodObject4DebuggerReflectionTest extends LightJavaCodeIns
   }
 
   private void doTest(@NotNull String evaluatedText, @NotNull String pathToSource) throws PrepareFailedException {
+    doTest(evaluatedText, pathToSource, false);
+  }
+
+  private void doTest(@NotNull String evaluatedText,
+                      @NotNull String pathToSource,
+                      boolean includeImports) throws PrepareFailedException {
     String testName = getTestName(true);
     configureByFile(pathToSource);
     final int offset = getEditor().getCaretModel().getOffset();
@@ -132,7 +152,14 @@ public class ExtractMethodObject4DebuggerReflectionTest extends LightJavaCodeIns
       ExtractLightMethodObjectHandler.extractLightMethodObject(getProject(), context, fragment, "test", JavaSdkVersion.JDK_1_9);
     assertNotNull(extractedData);
     assertFalse(extractedData.useMagicAccessor());
-    String actualText = "call text: " + extractedData.getGeneratedCallText() + "\n" +
+    String importsText = "";
+    if (includeImports) {
+      PsiJavaFile generatedFile = (PsiJavaFile)extractedData.getGeneratedInnerClass().getContainingFile();
+      assertNotNull(generatedFile.getImportList());
+      String imports = generatedFile.getImportList().getText().trim();
+      importsText = "imports: " + (imports.isEmpty() ? "<none>" : imports) + "\n";
+    }
+    String actualText = importsText + "call text: " + extractedData.getGeneratedCallText() + "\n" +
                         "class: " + "\n" +
                         extractedData.getGeneratedInnerClass().getText();
     UsefulTestCase.assertSameLinesWithFile(getTestDataPath() + "/outs/" + testName + ".out", actualText, true);
