@@ -111,14 +111,26 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
   private int myCachedWidth = -1;
   private int myCachedHeight = -1;
   private final @NotNull DocRenderLinkActivationHandler myLinkActivationHandler;
+  private final boolean myHighQualityImages;
 
   public DocRenderer(@NotNull DocRenderItem item) {
-    this(item, DocRenderDefaultLinkActivationHandler.INSTANCE);
+    this(item, DocRenderDefaultLinkActivationHandler.INSTANCE, false);
+  }
+
+  public DocRenderer(@NotNull DocRenderItem item, boolean highQualityImages) {
+    this(item, DocRenderDefaultLinkActivationHandler.INSTANCE, highQualityImages);
   }
 
   public DocRenderer(@NotNull DocRenderItem item, @NotNull DocRenderLinkActivationHandler linkActivationHandler) {
+    this(item, linkActivationHandler, false);
+  }
+
+  public DocRenderer(@NotNull DocRenderItem item,
+                     @NotNull DocRenderLinkActivationHandler linkActivationHandler,
+                     boolean highQualityImages) {
     myItem = item;
     myLinkActivationHandler = linkActivationHandler;
+    myHighQualityImages = highQualityImages;
   }
 
   void update(boolean updateSize, boolean updateContent, List<Runnable> foldingTasks) {
@@ -216,6 +228,10 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       EditorInlineHtmlPane component = getRendererComponent(editor, componentWidth, bgColor);
       Graphics dg = g.create(startX + scale(LEFT_INSET), filledStartY + topBottomInset, componentWidth, componentHeight);
       UISettings.setupAntialiasing(dg);
+      if (myHighQualityImages && dg instanceof Graphics2D graphics2D) {
+        graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        graphics2D.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+      }
       component.paint(dg);
       dg.dispose();
     }

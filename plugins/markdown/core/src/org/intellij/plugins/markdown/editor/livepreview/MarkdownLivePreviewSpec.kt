@@ -18,6 +18,12 @@ sealed interface MarkdownLivePreviewSpec {
   /** Conceals a full logical line and paints it as a horizontal rule. */
   data class HorizontalRule(override val range: TextRange) : MarkdownLivePreviewSpec
 
+  /** Conceals complete logical lines and paints a local image. */
+  data class Image(
+    override val range: TextRange,
+    val destination: String,
+  ) : MarkdownLivePreviewSpec
+
   /** Replaces a list marker with a depth-aware bullet placeholder. */
   data class Bullet(
     override val range: TextRange,

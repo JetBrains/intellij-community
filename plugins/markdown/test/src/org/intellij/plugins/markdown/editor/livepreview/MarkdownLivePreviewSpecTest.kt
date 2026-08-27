@@ -4,7 +4,7 @@ package org.intellij.plugins.markdown.editor.livepreview
 import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
-class MarkdownConcealSpecTest: BasePlatformTestCase() {
+class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
 
   fun testEmphasisMarkersAreConcealed() {
     val content = "Some **bold**, *italic* and ~~gone~~ text"
@@ -40,8 +40,32 @@ class MarkdownConcealSpecTest: BasePlatformTestCase() {
     assertEquals(listOf("[", "](https://example.org)", "**", "**"), concealed(content))
   }
 
-  fun testImageSyntaxIsNotConcealed() {
-    assertEmpty(concealed("![alt text](images/img.png)"))
+  fun testStandaloneLocalImageConcealsItsCompleteLine() {
+    val content = "  ![alt text](images/img.png)  "
+    val image = elements(content).single() as MarkdownLivePreviewSpec.Image
+
+    assertEquals(content, content.substring(image.range.startOffset, image.range.endOffset))
+    assertEquals("images/img.png", image.destination)
+  }
+
+  fun testInlineAndNestedImagesAreNotConcealed() {
+    assertEmpty(images("Text ![alt](image.png) here"))
+    assertEmpty(images("before\n![alt](image.png)\nafter"))
+    assertEmpty(images("- ![alt](image.png)"))
+    assertEmpty(images("> ![alt](image.png)"))
+  }
+
+  fun testUnsupportedImageDestinationsAreNotConcealed() {
+    assertEmpty(elements("![alt](https://example.org/image.png)"))
+    assertEmpty(elements("![alt](//example.org/image.png)"))
+    assertEmpty(elements("![alt](data:image/png;base64,AAAA)"))
+    assertEmpty(elements("![alt][image]\n\n[image]: image.png"))
+  }
+
+  fun testFileUriIsALocalImageDestination() {
+    val image = images("![alt](file:///project/image.png)").single()
+
+    assertEquals("file:///project/image.png", image.destination)
   }
 
   fun testReferenceLinksAreNotConcealed() {
@@ -129,6 +153,7 @@ class MarkdownConcealSpecTest: BasePlatformTestCase() {
   private fun MarkdownLivePreviewSpec.concealedRanges(): List<TextRange> = when (this) {
     is MarkdownLivePreviewSpec.Conceal -> conceals
     is MarkdownLivePreviewSpec.HorizontalRule -> listOf(range)
+    is MarkdownLivePreviewSpec.Image -> listOf(range)
     is MarkdownLivePreviewSpec.Bullet -> listOf(concealRange)
   }
 
@@ -148,4 +173,7 @@ class MarkdownConcealSpecTest: BasePlatformTestCase() {
 
   private fun revealRanges(content: String): List<String> =
     elements(content).map { content.substring(it.range.startOffset, it.range.endOffset) }
+
+  private fun images(content: String): List<MarkdownLivePreviewSpec.Image> =
+    elements(content).filterIsInstance<MarkdownLivePreviewSpec.Image>()
 }

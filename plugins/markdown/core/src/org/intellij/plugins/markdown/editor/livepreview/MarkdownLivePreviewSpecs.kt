@@ -6,20 +6,15 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.tree.IElementType
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownImage
 import org.jetbrains.annotations.ApiStatus
 
 /**
  * Elements we report specs for but never look inside.
- *
- * Code keeps its markup literal, so `` `**not bold**` `` must show its asterisks. Images and tables are
- * not part of the live preview yet: descending into an image would reach the [MarkdownElementTypes.INLINE_LINK]
- * it wraps and hide the link syntax while leaving a stray `!` behind, so `![alt](url)` stays fully visible
- * instead. A link destination is already covered whole by the `](url)` conceal, so there is nothing to
- * find inside it, and a wrapped autolink holds the very brackets it already reports - descending would
- * report them a second time through its inner leaf.
  */
 private val NoDescendTypes: Set<IElementType> = setOf(
   MarkdownElementTypes.CODE_FENCE,
@@ -74,6 +69,7 @@ private fun PsiElement.toDecorationSpecs(): MarkdownLivePreviewSpec? {
     MarkdownElementTypes.STRIKETHROUGH -> delimiterConceals(MarkdownTokenTypes.TILDE)
     MarkdownElementTypes.CODE_SPAN -> delimiterConceals(MarkdownTokenTypes.BACKTICK)
     MarkdownElementTypes.INLINE_LINK -> toInlineLinkSpecs()
+    MarkdownElementTypes.IMAGE -> toImageSpec()
     // `<https://example.org>` becomes a composite holding the brackets, while `<name@example.org>` stays
     // flat and keeps them as siblings, so the two forms need different lookups.
     MarkdownElementTypes.AUTOLINK -> toAutolinkSpecs()
@@ -85,25 +81,73 @@ private fun PsiElement.toDecorationSpecs(): MarkdownLivePreviewSpec? {
   }
 }
 
+private fun PsiElement.toImageSpec(): MarkdownLivePreviewSpec.Image? {
+  val image = this as? MarkdownImage ?: return null
+  val paragraph = image.parent ?: return null
+  if (PsiUtilCore.getElementType(paragraph) != MarkdownElementTypes.PARAGRAPH) return null
+  val linkDestination = image.linkDestination ?: return null
+  val destination = linkDestination.text.markdownDestination()
+  if (!destination.isLocalDestination()) return null
+  val imageRange = textRange
+  val paragraphRange = paragraph.textRange
+  val imageStart = imageRange.startOffset - paragraphRange.startOffset
+  val imageEnd = imageRange.endOffset - paragraphRange.startOffset
+  val paragraphText = paragraph.text
+  if (!paragraphText.isBlank(0, imageStart) || !paragraphText.isBlank(imageEnd, paragraphText.length)) {
+    return null
+  }
+  val lineRange = image.wholeLineRange() ?: return null
+  return MarkdownLivePreviewSpec.Image(lineRange, destination)
+}
+
 private fun PsiElement.toSetextCodeSpanUnderlineSpec(): MarkdownLivePreviewSpec? {
-  val header = parent?.takeIf { PsiUtilCore.getElementType(it) == MarkdownElementTypes.SETEXT_2 } ?: return null
+  val header = parent ?: return null
+  if (PsiUtilCore.getElementType(header) != MarkdownElementTypes.SETEXT_2) return null
   val content = header.children.singleOrNull { PsiUtilCore.getElementType(it) == MarkdownTokenTypes.SETEXT_CONTENT } ?: return null
   if (content.children.singleOrNull { PsiUtilCore.getElementType(it) == MarkdownElementTypes.CODE_SPAN } == null) return null
   return toHorizontalRuleSpec()
 }
 
 private fun PsiElement.toHorizontalRuleSpec(): MarkdownLivePreviewSpec.HorizontalRule {
-  val contents = containingFile.viewProvider.contents
-  var start = (textRange.endOffset - 1).coerceAtLeast(textRange.startOffset)
-  while (start > 0 && contents[start - 1] != '\n') start--
+  return MarkdownLivePreviewSpec.HorizontalRule(wholeLineRange() ?: textRange)
+}
+
+private fun PsiElement.wholeLineRange(): TextRange? {
+  var start = textRange.startOffset
+  var previous = PsiTreeUtil.prevLeaf(this, true)
+  while (previous != null) {
+    val text = previous.text
+    val lineBreak = maxOf(text.lastIndexOf('\n'), text.lastIndexOf('\r'))
+    if (lineBreak >= 0) {
+      if (!text.isBlank(lineBreak + 1, text.length)) return null
+      start = previous.textRange.startOffset + lineBreak + 1
+      break
+    }
+    if (!text.isBlank(0, text.length)) return null
+    start = previous.textRange.startOffset
+    previous = PsiTreeUtil.prevLeaf(previous, true)
+  }
+
   var end = textRange.endOffset
-  while (end < contents.length && contents[end] != '\n') end++
-  val line = TextRange(start, end)
-  return MarkdownLivePreviewSpec.HorizontalRule(line)
+  var next = PsiTreeUtil.nextLeaf(this, true)
+  while (next != null) {
+    val text = next.text
+    val lineBreak = text.firstLineBreak()
+    if (lineBreak >= 0) {
+      if (!text.isBlank(0, lineBreak)) return null
+      end = next.textRange.startOffset + lineBreak
+      break
+    }
+    if (!text.isBlank(0, text.length)) return null
+    end = next.textRange.endOffset
+    next = PsiTreeUtil.nextLeaf(next, true)
+  }
+  return TextRange(start, end)
 }
 
 private fun PsiElement.toBulletSpec(): MarkdownLivePreviewSpec.Bullet? {
-  val listItem = parent?.takeIf { PsiUtilCore.getElementType(it) == MarkdownElementTypes.LIST_ITEM } ?: return null
+  val listItem = parent ?: return null
+  if (PsiUtilCore.getElementType(listItem) != MarkdownElementTypes.LIST_ITEM) return null
   if (PsiUtilCore.getElementType(listItem.parent) != MarkdownElementTypes.UNORDERED_LIST ||
       PsiUtilCore.getElementType(nextSibling) == MarkdownTokenTypes.CHECK_BOX) {
     return null
@@ -138,8 +182,10 @@ private fun PsiElement.delimiterConceals(delimiter: IElementType): MarkdownLiveP
 private fun PsiElement.toInlineLinkSpecs(): MarkdownLivePreviewSpec.Conceal? {
   val linkText = childList().firstOrNull { PsiUtilCore.getElementType(it) == MarkdownElementTypes.LINK_TEXT } ?: return null
   val textChildren = linkText.childList()
-  val openBracket = textChildren.firstOrNull()?.takeIf { PsiUtilCore.getElementType(it) == MarkdownTokenTypes.LBRACKET } ?: return null
-  val closeBracket = textChildren.lastOrNull()?.takeIf { PsiUtilCore.getElementType(it) == MarkdownTokenTypes.RBRACKET } ?: return null
+  val openBracket = textChildren.firstOrNull() ?: return null
+  if (PsiUtilCore.getElementType(openBracket) != MarkdownTokenTypes.LBRACKET) return null
+  val closeBracket = textChildren.lastOrNull() ?: return null
+  if (PsiUtilCore.getElementType(closeBracket) != MarkdownTokenTypes.RBRACKET) return null
   val end = textRange.endOffset
   // An empty title, or a link whose destination part is missing, has nothing worth hiding.
   if (closeBracket.textRange.startOffset <= openBracket.textRange.endOffset || end <= closeBracket.textRange.startOffset) {
@@ -158,8 +204,10 @@ private fun PsiElement.toAutolinkSpecs(): MarkdownLivePreviewSpec.Conceal? {
       TextRange(range.endOffset - 1, range.endOffset),
     )
   }
-  val openBracket = prevSibling?.takeIf { PsiUtilCore.getElementType(it) == MarkdownTokenTypes.LT } ?: return null
-  val closeBracket = nextSibling?.takeIf { PsiUtilCore.getElementType(it) == MarkdownTokenTypes.GT } ?: return null
+  val openBracket = prevSibling ?: return null
+  if (PsiUtilCore.getElementType(openBracket) != MarkdownTokenTypes.LT) return null
+  val closeBracket = nextSibling ?: return null
+  if (PsiUtilCore.getElementType(closeBracket) != MarkdownTokenTypes.GT) return null
   return MarkdownLivePreviewSpec.Conceal(
     range = TextRange(openBracket.textRange.startOffset, closeBracket.textRange.endOffset),
     conceals = listOf(openBracket.textRange, closeBracket.textRange),
@@ -172,3 +220,34 @@ private fun PsiElement.inlineConceal(vararg conceals: TextRange): MarkdownLivePr
 }
 
 private fun PsiElement.childList(): List<PsiElement> = node.getChildren(null).map { it.psi }
+
+private fun String.markdownDestination(): String {
+  return if (length >= 2 && first() == '<' && last() == '>') substring(1, length - 1) else this
+}
+
+private fun String.isLocalDestination(): Boolean {
+  if (isBlank() || startsWith("//")) return false
+  val colon = indexOf(':')
+  if (colon <= 0) return true
+  val hasScheme = take(colon).withIndex().all { (index, char) ->
+    if (index == 0) char.isLetter() else char.isLetterOrDigit() || char == '+' || char == '.' || char == '-'
+  }
+  return !hasScheme || startsWith("file:", ignoreCase = true)
+}
+
+private fun String.isBlank(start: Int, end: Int): Boolean {
+  for (offset in start until end) {
+    if (!this[offset].isWhitespace()) return false
+  }
+  return true
+}
+
+private fun String.firstLineBreak(): Int {
+  val lineFeed = indexOf('\n')
+  val carriageReturn = indexOf('\r')
+  return when {
+    lineFeed < 0 -> carriageReturn
+    carriageReturn < 0 -> lineFeed
+    else -> minOf(lineFeed, carriageReturn)
+  }
+}

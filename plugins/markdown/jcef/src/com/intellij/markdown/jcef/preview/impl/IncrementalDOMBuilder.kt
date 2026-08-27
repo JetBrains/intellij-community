@@ -4,11 +4,9 @@ package com.intellij.markdown.jcef.preview.impl
 import com.intellij.ide.trustedProjects.TrustedProjects.isProjectTrusted
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.toNioPathOrNull
+import org.intellij.plugins.markdown.ui.preview.MarkdownImagePathResolver
 import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import org.intellij.plugins.markdown.ui.preview.html.PreviewEncodingUtil
@@ -22,8 +20,6 @@ import org.jsoup.nodes.TextNode
 import org.jsoup.parser.Parser
 import org.jsoup.parser.Tag
 import org.jsoup.parser.TagSet
-import java.net.URLDecoder
-import java.nio.charset.Charset
 
 @ApiStatus.Internal
 class IncrementalDOMBuilder(
@@ -124,38 +120,23 @@ class IncrementalDOMBuilder(
     val fileSchemeResourceProcessor = fileSchemeResourceProcessor ?: return
     val projectPath = projectRoot.toNioPathOrNull() ?: return
 
-    var path = node.attr("src")
-    val hasFileHost = path.startsWith("file:/")
+    val originalPath = node.attr("src")
+    val hasFileHost = originalPath.startsWith("file:/")
     if (hasFileHost && !node.hasAttr("from-extension")) {
       return
     }
     if (!hasFileHost) {
-      path = URLDecoder.decode(path, Charset.defaultCharset())
-      if (SystemInfo.isWindows) {
-        path = StringUtil.replace(path, "\\", "/")
-      }
-
-      if (!path.startsWith('/')) {
-        path = findRelativePath(baseFile, path) ?: return
-      }
-      else {
-        if (SystemInfo.isWindows) {
-          path = path.trimStart('/')
-        }
-        path = findRelativePath(projectRoot, path) ?: path
-      }
-      path = FileUtil.toSystemIndependentName(path)
+      val path = MarkdownImagePathResolver.resolve(baseFile, projectRoot, originalPath, isProjectTrusted(projectPath))
+      val resolved = path as? MarkdownImagePathResolver.Resolution.Found ?: return
+      node.attr("data-original-src", resolved.url)
+      node.attr("src", PreviewStaticServer.getStaticUrl(fileSchemeResourceProcessor, resolved.url))
+      return
     }
 
-    if (!hasFileHost && !isProjectTrusted(projectPath) && !path.startsWith(projectPath.toString())) return
-
-    val processed = PreviewStaticServer.getStaticUrl(fileSchemeResourceProcessor, path)
-    node.attr("data-original-src", path)
-    node.attr("src", processed)
-  }
-
-  private fun findRelativePath(baseFile: VirtualFile, relPath: String): String? {
-    return baseFile.findFileByRelativePath(relPath)?.toNioPathOrNull()?.normalize()?.toString()
+    val path = MarkdownImagePathResolver.resolve(baseFile, projectRoot, originalPath)
+    val resolved = path as? MarkdownImagePathResolver.Resolution.Found ?: return
+    node.attr("data-original-src", originalPath)
+    node.attr("src", PreviewStaticServer.getStaticUrl(fileSchemeResourceProcessor, resolved.url))
   }
 
   private fun shouldPreprocessImageNode(node: Node): Boolean {

@@ -51,6 +51,14 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="markdown.live.preview.image.max.bytes"
+                 defaultValue="4194304"
+                 description="Maximum image file size in bytes for Markdown live preview."/>
+    <registryKey key="markdown.live.preview.image.max.pixels"
+                 defaultValue="2100000"
+                 description="Maximum image pixel count for Markdown live preview."/>
+  </extensions>
   <extensions defaultExtensionNs="org.intellij.markdown">
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.ProcessImagesExtension$Provider"/>
   </extensions>
