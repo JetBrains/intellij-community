@@ -44,7 +44,7 @@ import javax.swing.SwingConstants
 internal class GitWorktreesTabPanel(private val project: Project, cs: CoroutineScope) {
   private val viewModel = GitWorktreesViewModel(project, cs)
   private val listModel = CollectionListModel<GitWorkingTreesListEntry>()
-  private val list = JBList<GitWorkingTreesListEntry>(listModel).apply {
+  private val list = JBList(listModel).apply {
     selectionMode = ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
     cellRenderer = GitWorkingTreesListRenderer(project)
     accessibleContext.accessibleName = GitBundle.message("toolwindow.working.trees.tab.name")

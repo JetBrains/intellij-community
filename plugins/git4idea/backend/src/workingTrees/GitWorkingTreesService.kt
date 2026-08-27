@@ -223,7 +223,7 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
     val errorOutput: List<String> = emptyList(),
   ) {
     companion object {
-      val SUCCESS = Result(true, "")
+      val SUCCESS: Result = Result(true, "")
 
       fun createFailure(@NlsContexts.NotificationContent errorOutputAsHtmlString: @NlsSafe String,
                         errorOutput: List<String> = emptyList()): Result {
