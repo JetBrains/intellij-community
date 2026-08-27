@@ -165,6 +165,10 @@ class PluginManagerConfigurable() : SearchableConfigurable, Configurable.NoScrol
     createPanelIfNeeded(option).openMarketplaceTab(option)
   }
 
+  /**
+   * If the plugin settings must be opened with the Installed tab selected and search applied, consider
+   * [PluginManagerConfigurableUtils.showInstalledTabWithSearch], see IJPL-254032 for details.
+   */
   @RequiresEdt
   fun openInstalledTab(option: String) {
     createPanelIfNeeded(option).openInstalledTab(option)

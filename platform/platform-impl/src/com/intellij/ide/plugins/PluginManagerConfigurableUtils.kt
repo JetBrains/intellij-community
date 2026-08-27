@@ -1,7 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerOpenSourceEnum
 import com.intellij.ide.plugins.newui.TabbedPaneHeaderComponent
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.JBColor
@@ -33,5 +37,25 @@ object PluginManagerConfigurableUtils {
         configurable.apply()
       }
     }
+  }
+
+  @JvmStatic
+  fun showInstalledTabWithSearch(
+    project: Project?,
+    searchQuery: @NlsSafe String,
+    openSource: PluginManagerOpenSourceEnum? = null,
+  ) {
+    val configurable = PluginManagerConfigurable().apply {
+      if (openSource != null) {
+        setOpenSource(openSource)
+      }
+    }
+    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, Runnable {
+      configurable.openInstalledTab("")
+      val search = configurable.enableSearch(searchQuery, true)
+      if (search != null) {
+        ApplicationManager.getApplication().invokeLater(search)
+      }
+    })
   }
 }

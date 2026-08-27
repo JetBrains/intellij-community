@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.buildtool.quickfix
 import com.intellij.build.issue.BuildIssue
 import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.ide.plugins.PluginManagerConfigurable
+import com.intellij.ide.plugins.PluginManagerConfigurableUtils
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -63,9 +64,7 @@ class EnableMaven2QuickFix : BuildIssueQuickFix {
 
   override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
     ApplicationManager.getApplication().invokeLater {
-      ShowSettingsUtil.getInstance().showSettingsDialog(project, PluginManagerConfigurable::class.java) {
-        it.openInstalledTab(MAVEN2_SEARCH_STRING)
-      }
+      PluginManagerConfigurableUtils.showInstalledTabWithSearch(project, MAVEN2_SEARCH_STRING)
     }
     return CompletableFuture.completedFuture(null)
   }
