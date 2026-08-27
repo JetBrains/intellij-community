@@ -43,7 +43,8 @@ Ensures every third-party library that reaches a distribution has a license entr
 
 - The Maven descriptor filter and the JetBrains group filter of the `third_party_libraries` build step. The rule applies neither filter, so it stays stricter than the build step.
 - Validation of the license text or the license identifier in an entry.
-- A module that a plugin layout adds through `withModule`, that the graph does not hold, and that no module in the graph depends on. `intellij.platform.eelHelper`, `intellij.java.debugger.agent.holder` and `intellij.builtInHelp` are of this shape: a layout packs the module into its own jar, so nothing depends on it. The `third_party_libraries` build step covers such a library. Convert the module to a content module to bring it back into this rule. `IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST` in `JarPackager` tracks the same migration for a project library, see IJPL-252908.
+- A module that only a plugin layout holds. The product DSL model holds no plugin layout, so the rule can never reach such a module. It is out of scope while the graph does not hold it, and while no module in the graph depends on it. `intellij.platform.eelHelper` and `intellij.builtInHelp` are of this shape. The `third_party_libraries` build step is then the only gate for the libraries of that module. Convert the module to a content module to bring it into this rule. `IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST` in `JarPackager` tracks the same migration for a project library, see IJPL-252908.
+- The Android plugin. `intellij.android.plugin` holds `studio-platform`, and `intellij.android.app-inspection.inspectors.network.model` holds `brotli-dec`. Android is an external plugin, so the owner of that plugin decides whether to convert either module.
 
 ## Related
 
