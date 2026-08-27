@@ -8,6 +8,7 @@ import com.intellij.util.SystemProperties
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonInterpreterPresentation
+import com.jetbrains.python.sdk.PythonInterpreterPresentationProvider
 import com.jetbrains.python.sdk.isRunAsRootViaSudo
 import com.jetbrains.python.sdk.isSdkSeemsValid
 import com.jetbrains.python.sdk.pySdkAdditionalData
@@ -27,6 +28,10 @@ internal fun Sdk.buildPresentationInfo(customName: String? = null): PythonInterp
   val version = versionString?.let { VERSION_NUMBER_RE.find(it)?.value }
   val secondary = listOfNotNull(sudo, version).joinToString(" ").ifEmpty { null }
 
+  // The tool that owns the interpreter may write its short label, where the shortened path reads badly. It replaces only
+  // the default: a caller that passed a [customName] named this one rendering, and keeps that name everywhere.
+  val toolShortName = if (customName == null) PythonInterpreterPresentationProvider.shortNameFor(this) else null
+
   val displayName = customName ?: name
   // Only the default path-derived name is safe to compact via the basename heuristic;
   // a custom label like `SSH (sftp://...)` or a caller-supplied [customName] must be
@@ -40,6 +45,7 @@ internal fun Sdk.buildPresentationInfo(customName: String? = null): PythonInterp
     modifier = modifier,
     icon = icon(this),
     isPathDerivedName = isPathDerivedName,
+    toolShortName = toolShortName,
   )
 }
 
