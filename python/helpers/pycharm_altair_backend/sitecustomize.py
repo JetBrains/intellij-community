@@ -4,16 +4,10 @@ import os
 import sys
 import traceback
 
-SHOW_DEBUG_INFO = os.getenv('PYCHARM_DEBUG', 'False').lower() in ['true', '1']
+from datalore.log import debug, SHOW_DEBUG_INFO
 
-def debug(message):
-    if SHOW_DEBUG_INFO:
-        sys.stderr.write(message)
-        sys.stderr.write("\n")
 
 def init_altair_render():
-    from datalore.display import display
-
     is_python_3_or_higher = sys.version_info[0] >= 3
     if not is_python_3_or_higher:
         debug("PyCharm Altair backend is not supported for Python 2")
@@ -57,6 +51,8 @@ def init_altair_render():
             debug("Failed to render HTML")
         finally:
             alt.renderers.enable(saved_renderer)
+
+        from datalore.display import display
         display(DisplayDataObject(html_str, image_str))
 
     alt.renderers.register("browser", pycharm_renderer)

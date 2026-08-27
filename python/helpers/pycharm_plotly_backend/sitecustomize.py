@@ -3,18 +3,10 @@ import os
 import sys
 import traceback
 
-SHOW_DEBUG_INFO = os.getenv('PYCHARM_DEBUG', 'False').lower() in ['true', '1']
-
-
-def debug(message):
-    if SHOW_DEBUG_INFO:
-        sys.stderr.write(message)
-        sys.stderr.write("\n")
+from datalore.log import debug, SHOW_DEBUG_INFO
 
 
 def init_plotly_render():
-    from datalore.display import display, debug
-
     is_python_3_or_higher = sys.version_info[0] >= 3
     if not is_python_3_or_higher:
         debug("Pycharm Plotly backend is not supported for Python 2")
@@ -93,6 +85,7 @@ def init_plotly_render():
                 debug("Failed to render image")
                 debug(traceback.format_exc())
 
+            from datalore.display import display
             display(DisplayDataObject(html,image_str))
 
     debug("Set plotly default render")

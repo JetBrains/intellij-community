@@ -11,7 +11,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.figure import Figure
 from mpl_toolkits.mplot3d import Axes3D
 
-from datalore.display import debug, display, SHOW_DEBUG_INFO
+from datalore.log import debug
 
 PY3 = sys.version_info[0] >= 3
 IS_INTERACTIVE_PLOT = False
@@ -118,6 +118,8 @@ class FigureCanvasInterAgg(FigureCanvasAgg):
         else:
             debug("Using non-interactive mode (Run without Python Console)")
         plot_index = index if is_interactive else -1
+
+        from datalore.display import display
         display(DisplayDataObject(plot_index, width, buffer, html_string))
 
     def draw(self):
