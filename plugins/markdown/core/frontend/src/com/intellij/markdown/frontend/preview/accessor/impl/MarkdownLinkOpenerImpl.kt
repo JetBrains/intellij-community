@@ -224,6 +224,7 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
       return hostName == null ||
              hostName.startsWith("127.") ||
              hostName.endsWith(":1") ||
+             hostName.endsWith(".test") ||
              com.intellij.util.io.isLocalHost(hostName, false, false)
     }
 
