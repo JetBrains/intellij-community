@@ -479,6 +479,18 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
               print(f"{test}")""");
   }
 
+  // PY-83501
+  public void testExhaustiveIsInstanceChainNoUnboundWarning() {
+    doTestByText("""
+      def f(value: int | str) -> int:
+          if isinstance(value, str):
+              out = 1
+          elif isinstance(value, int):
+              out = 2
+          return out
+      """);
+  }
+
   // PY-82876
   public void testExhaustivePatternAssertNever() {
     doTestByText("""

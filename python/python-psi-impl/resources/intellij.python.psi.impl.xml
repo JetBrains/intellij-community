@@ -964,7 +964,7 @@
                  description="Hard cap on the statement list size (chars) for incremental reparse."/>
     <registryKey key="python.statement.lists.incremental.reparse.max.ratio.percent" defaultValue="10"
                  description="Maximum statement list size as a percentage of the containing file for incremental reparse."/>
-    <registryKey key="python.strict.type.narrow" defaultValue="false"
+    <registryKey key="python.strict.type.narrow" defaultValue="true"
                  description="Allows narrowing types exhaustively to Never"/>
     <registryKey key="python.typing.literal.types.for.literals" defaultValue="true"
                  description="Infer literal types (e.g. Literal[42]) for integer, boolean and string literal expressions"/>

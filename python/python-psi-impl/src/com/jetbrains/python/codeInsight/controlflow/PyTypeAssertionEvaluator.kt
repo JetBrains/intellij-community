@@ -216,7 +216,7 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
             types.add(type)
           }
         }
-        PyUnionType.union(types)
+        if (types.isEmpty()) null else PyUnionType.union(types)
       }
     }
   }
