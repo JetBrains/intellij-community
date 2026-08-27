@@ -21,6 +21,7 @@ import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.productLayout.CommunityModuleSets
+import org.jetbrains.intellij.build.productLayout.CommunityProductFragments
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
 import org.jetbrains.intellij.build.productLayout.productModules
 import java.io.File
@@ -187,7 +188,7 @@ class MPSProperties : JetBrainsProductProperties() {
     override fun getProductContentDescriptor(): ProductModulesContentSpec = productModules {
         alias("com.intellij.modules.java-capable")
 
-        deprecatedInclude("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml")
+        include(CommunityProductFragments.platformCoreFragment())
 
         moduleSet(CommunityModuleSets.ideCommon())
 

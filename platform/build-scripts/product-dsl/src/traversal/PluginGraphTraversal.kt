@@ -31,7 +31,8 @@ internal fun collectOwningPlugins(
     val moduleNode = contentModule(moduleName) ?: return@query emptySet()
     val owners = LinkedHashSet<OwningPlugin>()
     moduleNode.owningPlugins(includeTestSources) { pluginNode ->
-      val idValue = pluginNode.pluginIdOrNull ?: return@owningPlugins
+      // the core plugin is an implicit dependency of every plugin, so it is never a declarable owner
+      val idValue = pluginNode.pluginIdOrNull?.takeUnless { it == PluginId.CORE } ?: return@owningPlugins
       owners.add(OwningPlugin(pluginNode.name(), idValue, pluginNode.isTest))
     }
     owners

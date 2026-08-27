@@ -46,17 +46,6 @@ internal fun StringBuilder.appendOpeningTag(
 }
 
 /**
- * Checks if the spec includes a platform lang plugin that provides id/name.
- */
-internal fun ProductModulesContentSpec.includesPlatformLangPlugin(): Boolean {
-  return deprecatedXmlIncludes.any {
-    it.resourcePath == "META-INF/PlatformLangPlugin.xml" ||
-    it.resourcePath == "META-INF/JavaIdePlugin.xml" ||
-    it.resourcePath == "META-INF/pycharm-core.xml"
-  }
-}
-
-/**
  * Generates xi:include directives or inline content for deprecated XML includes.
  */
 internal fun generateXIncludes(

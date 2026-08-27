@@ -2,9 +2,16 @@
 <!-- To regenerate, run 'Generate Product Layouts' or directly CommunityModuleSets.main() -->
 <!-- Source: org.jetbrains.intellij.build.mps.MPSProperties.getProductContentDescriptor() -->
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <id>com.intellij</id>
+  <name>IDEA CORE</name>
   <module value="com.intellij.modules.java-capable"/>
+  <module value="com.intellij.modules.lang"/>
+  <module value="com.intellij.modules.platform"/>
 
-  <xi:include href="/META-INF/PlatformLangPlugin.xml"/>
+  <xi:include href="/idea/PriorityEditorLangActions.xml"/>
+  <xi:include href="/idea/PlatformActions.xml"/>
+  <xi:include href="/idea/ExecutionActions.xml"/>
+  <xi:include href="/idea/LangActions.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.ide.common.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.jsp.base.xml"/>
   <!-- region additional -->

@@ -19,7 +19,6 @@ import org.jetbrains.intellij.build.productLayout.xml.appendOpeningTag
 import org.jetbrains.intellij.build.productLayout.xml.appendXmlHeader
 import org.jetbrains.intellij.build.productLayout.xml.buildModuleAliasesXml
 import org.jetbrains.intellij.build.productLayout.xml.generateXIncludes
-import org.jetbrains.intellij.build.productLayout.xml.includesPlatformLangPlugin
 import org.jetbrains.intellij.build.productLayout.xml.withEditorFold
 import org.jetbrains.intellij.build.productLayout.discovery.TEST_PRODUCT_CLASS_NAME
 import java.nio.file.Files
@@ -27,13 +26,10 @@ import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 
 internal fun appendDefaultProductPluginMetadata(sb: StringBuilder, spec: ProductModulesContentSpec) {
-  // Add id/name/vendor if NOT getting them from xi:include (e.g., PlatformLangPlugin.xml)
-  if (!spec.includesPlatformLangPlugin()) {
-    sb.append("  <id>com.intellij</id>\n")
-    sb.append("  <name>IDEA CORE</name>\n")
-    if (spec.vendor != null) {
-      sb.append("  <vendor>${spec.vendor}</vendor>\n")
-    }
+  sb.append("  <id>com.intellij</id>\n")
+  sb.append("  <name>IDEA CORE</name>\n")
+  if (spec.vendor != null) {
+    sb.append("  <vendor>${spec.vendor}</vendor>\n")
   }
 }
 

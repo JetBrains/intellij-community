@@ -1005,7 +1005,7 @@ value class GraphScope @PublishedApi internal constructor(
     val pluginId = store.nodeId(targetName, NODE_PLUGIN)
     if (pluginId >= 0) {
       val resolvedPluginId = store.pluginIdOrNull(pluginId)
-      if (resolvedPluginId != null) {
+      if (resolvedPluginId != null && resolvedPluginId != PluginId.CORE) {
         return DependencyClassification.PluginDep(resolvedPluginId)
       }
       return DependencyClassification.Skip

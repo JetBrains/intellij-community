@@ -24,6 +24,11 @@ import kotlinx.serialization.Serializable
 value class PluginId(val value: String) : Comparable<PluginId> {
   override fun compareTo(other: PluginId): Int = value.compareTo(other.value)
   override fun toString(): String = value
+
+  companion object {
+    /** The core plugin. Every plugin depends on it implicitly, so a generated descriptor never names it. */
+    val CORE: PluginId = PluginId("com.intellij")
+  }
 }
 
 /**

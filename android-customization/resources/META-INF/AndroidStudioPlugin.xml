@@ -2,14 +2,21 @@
 <!-- To regenerate, run 'Generate Product Layouts' or directly CommunityModuleSets.main() -->
 <!-- Source: org.jetbrains.intellij.build.AndroidStudioProperties.getProductContentDescriptor() -->
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <id>com.intellij</id>
+  <name>IDEA CORE</name>
   <module value="com.intellij.modules.all"/>
   <module value="com.intellij.modules.androidstudio"/>
   <module value="com.intellij.modules.java-capable"/>
   <module value="com.intellij.modules.jsp.base"/>
+  <module value="com.intellij.modules.lang"/>
+  <module value="com.intellij.modules.platform"/>
   <module value="com.intellij.modules.python-core-capable"/>
   <module value="com.intellij.modules.python-in-non-pycharm-ide-capable"/>
 
-  <xi:include href="/META-INF/PlatformLangPlugin.xml"/>
+  <xi:include href="/idea/PriorityEditorLangActions.xml"/>
+  <xi:include href="/idea/PlatformActions.xml"/>
+  <xi:include href="/idea/ExecutionActions.xml"/>
+  <xi:include href="/idea/LangActions.xml"/>
   <xi:include href="/META-INF/DesignerCorePlugin.xml">
     <xi:fallback/>
   </xi:include>
