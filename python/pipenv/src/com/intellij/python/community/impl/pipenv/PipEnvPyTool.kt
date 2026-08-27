@@ -19,8 +19,7 @@ class PipEnvPyTool : PyTool, PackageManagerPyTool {
   override val presentableName: String = "Pipenv"
   override val packageName: PyPackageName = PyPackageName.from("pipenv")
   override val description: String get() = message("python.pipenv.tool.description")
-  // TODO: Provide a special icon for pipenv
-  override val icon: Icon get() = PythonCommunityImplPipenvIcons.PythonClosed
+  override val icon: Icon get() = PythonCommunityImplPipenvIcons.Pipenv
 
   @Suppress("CompanionObjectInExtension")
   companion object {

@@ -1056,6 +1056,14 @@
                             order="after PoetryEvoProvider"
                             implementation="com.jetbrains.python.conda.sdk.evolution.CondaEvoEnvironmentProvider"/>
 
+    <!-- A pipenv cache environment is named after a hash of the project path, so it is labelled by its version. -->
+    <interpreterPresentationProvider implementation="com.jetbrains.python.sdk.pipenv.PipenvInterpreterPresentationProvider"/>
+
+    <!-- Between conda and pip, like hatch: pipenv is a project tool, so it precedes the generic pip fallback. -->
+    <evoEnvironmentProvider id="PipenvEvoProvider"
+                            order="after CondaEvoProvider, before PipEvoProvider"
+                            implementation="com.jetbrains.python.pipenv.sdk.evolution.PipenvEvoEnvironmentProvider"/>
+
     <!-- pip is last of the tools: it is the one every machine has, so it is the fallback rather than a preference.
          Anchored on conda rather than on hatch, which is optional: an anchor that does not resolve is ignored, so
          naming hatch would leave pip unconstrained whenever that module is absent. Hatch inserts itself between the
