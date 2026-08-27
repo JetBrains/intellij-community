@@ -100,6 +100,7 @@ private const val ASSOCIATED_NODE_ID: String = EvoNodeIds.ASSOCIATED
 
 private fun EvoLeafDto.toStubAction(): AnAction = object : AnAction({ title }, { description ?: "" }, icon.icon()), DumbAware {
   init {
+    templatePresentation.setPlainText(title)
     secondaryText?.let { templatePresentation.putClientProperty(ActionUtil.SECONDARY_TEXT, it) }
   }
 
