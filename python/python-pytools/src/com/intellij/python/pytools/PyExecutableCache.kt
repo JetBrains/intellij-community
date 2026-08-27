@@ -17,7 +17,12 @@ import java.nio.file.Path
  */
 @ApiStatus.Internal
 interface PyExecutableCache {
-  /** The resolved executable path for [executable] on [eelDescriptor]'s machine, or `null` if not found. */
+  /**
+   * The resolved executable path for [executable] on [eelDescriptor]'s machine, or `null` if not found.
+   *
+   * The path is always one that exists right now. A tool removed from the machine leaves a stale answer behind, in
+   * the custom-path store and in the detection cache alike, and neither is handed out.
+   */
   suspend fun get(eelDescriptor: EelDescriptor, executable: PyExecutable): Path?
 
   /** Drop the cached detection for [executable] on [eelDescriptor]'s machine (no-op if unresolved). */
