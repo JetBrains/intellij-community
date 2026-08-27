@@ -2,8 +2,10 @@
 package git4idea.log
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.TestFixture
+import com.intellij.testFramework.junit5.fixture.registryKeyFixture
+import com.intellij.testFramework.junit5.fixture.testFixture
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.CollectConsumer
 import com.intellij.util.Consumer
@@ -50,6 +52,8 @@ import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ValueSource
 
 /**
  * Prior to 1.8.0 --regexp-ignore-case does not work when --fixed-strings parameter is specified,
@@ -60,15 +64,10 @@ private val FIXED_STRINGS_WORKS_WITH_IGNORE_CASE = GitVersion(1, 8, 0, 0)
 private const val EXPERIMENTAL_REFS_COLLECTION = "git.log.provider.experimental.refs.collection"
 
 @TestApplication
-@RegistryKey(EXPERIMENTAL_REFS_COLLECTION, "false")
-internal class GitReadRecentCommitsTest : GitReadRecentCommitsTestBase()
+internal class GitLogProviderTest {
+  private val fixture = gitSingleRepoContextFixture().gitLogProviderTestFixture()
+  private val context: GitSingleRepoContext get() = fixture.get()
 
-@TestApplication
-@RegistryKey(EXPERIMENTAL_REFS_COLLECTION, "true")
-internal class GitExperimentalReadRecentCommitsTest : GitReadRecentCommitsTestBase()
-
-@TestApplication
-internal class GitLogProviderTest : GitLogProviderTestBase() {
   @Test
   fun `test all log with tagged branch`(): Unit = with(context) {
     prepareSomeHistory()
@@ -313,7 +312,13 @@ internal class GitLogProviderTest : GitLogProviderTestBase() {
   }
 }
 
-internal abstract class GitReadRecentCommitsTestBase : GitLogProviderTestBase() {
+@TestApplication
+@ParameterizedClass(name = "experimental refs collection = {0}")
+@ValueSource(booleans = [false, true])
+internal class GitReadRecentCommitsTest(experimentalRefsCollection: Boolean) {
+  private val fixture = gitSingleRepoContextFixture().gitLogProviderTestFixture(experimentalRefsCollection)
+  private val context: GitSingleRepoContext get() = fixture.get()
+
   @Test
   fun `test init with tagged branch`(): Unit = with(context) {
     prepareSomeHistory()
@@ -394,51 +399,57 @@ internal abstract class GitReadRecentCommitsTestBase : GitLogProviderTestBase() 
   }
 }
 
-internal abstract class GitLogProviderTestBase {
-  private val contextFixture = gitSingleRepoContextFixture()
-  protected val context: GitSingleRepoContext get() = contextFixture.get()
 
-  protected val GitSingleRepoContext.objectsFactory: VcsLogObjectsFactory
-    get() = project.getService(VcsLogObjectsFactory::class.java)
+private fun TestFixture<GitSingleRepoContext>.gitLogProviderTestFixture(experimentalRefsCollection: Boolean? = null): TestFixture<GitSingleRepoContext> {
 
-  protected val defaultUser: VcsUser = VcsUserUtil.createUser(USER_NAME, USER_EMAIL)
-
-  protected fun GitSingleRepoContext.readCommitsFromGit(): List<VcsCommitMetadataImpl> {
-    val output = git("log --all --date-order --full-history --sparse --pretty='%H|%P|%ct|%s|%B'")
-    return StringUtil.splitByLines(output).map { record ->
-      val items = ArrayUtilRt.toStringArray(StringUtil.split(record, "|", true, false))
-      val time = items[2].toLong() * 1000
-      VcsCommitMetadataImpl(
-        HashImpl.build(items[0]),
-        items[1].split(" ".toRegex()).dropLastWhile { it.isEmpty() }.map { HashImpl.build(it) },
-        time,
-        projectRoot,
-        items[3],
-        defaultUser,
-        items[4],
-        defaultUser,
-        time
-      )
+  return testFixture {
+    experimentalRefsCollection?.let { value ->
+      registryKeyFixture(EXPERIMENTAL_REFS_COLLECTION) { setValue(value) }.init()
     }
+    initialized(init()) {}
   }
-
-  protected fun GitSingleRepoContext.prepareSomeHistory() {
-    repo.tac("a.txt")
-    git("tag ATAG")
-    repo.tac("b.txt")
-  }
-
-  protected fun GitSingleRepoContext.createTaggedBranch() {
-    val hash = repo.last()
-    repo.tac("c.txt")
-    repo.tac("d.txt")
-    repo.tac("e.txt")
-    git("tag poor-tag")
-    git("reset --hard $hash")
-  }
-
-  protected fun VcsShortCommitDetails.shortPresentation(): String =
-    "${id.toShortString()}\n$authorTime\n$author\n$commitTime\n$committer\n$subject"
-
-  protected fun VcsCommitMetadata.metadataPresentation(): String = "${shortPresentation()}\n$fullMessage"
 }
+
+private val GitSingleRepoContext.objectsFactory: VcsLogObjectsFactory
+  get() = project.getService(VcsLogObjectsFactory::class.java)
+
+private val defaultUser: VcsUser = VcsUserUtil.createUser(USER_NAME, USER_EMAIL)
+
+private fun GitSingleRepoContext.readCommitsFromGit(): List<VcsCommitMetadataImpl> {
+  val output = git("log --all --date-order --full-history --sparse --pretty='%H|%P|%ct|%s|%B'")
+  return StringUtil.splitByLines(output).map { record ->
+    val items = ArrayUtilRt.toStringArray(StringUtil.split(record, "|", true, false))
+    val time = items[2].toLong() * 1000
+    VcsCommitMetadataImpl(
+      HashImpl.build(items[0]),
+      items[1].split(" ".toRegex()).dropLastWhile { it.isEmpty() }.map { HashImpl.build(it) },
+      time,
+      projectRoot,
+      items[3],
+      defaultUser,
+      items[4],
+      defaultUser,
+      time
+    )
+  }
+}
+
+private fun GitSingleRepoContext.prepareSomeHistory() {
+  repo.tac("a.txt")
+  git("tag ATAG")
+  repo.tac("b.txt")
+}
+
+private fun GitSingleRepoContext.createTaggedBranch() {
+  val hash = repo.last()
+  repo.tac("c.txt")
+  repo.tac("d.txt")
+  repo.tac("e.txt")
+  git("tag poor-tag")
+  git("reset --hard $hash")
+}
+
+private fun VcsShortCommitDetails.shortPresentation(): String =
+  "${id.toShortString()}\n$authorTime\n$author\n$commitTime\n$committer\n$subject"
+
+private fun VcsCommitMetadata.metadataPresentation(): String = "${shortPresentation()}\n$fullMessage"
