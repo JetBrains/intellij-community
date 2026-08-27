@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
     <module name="intellij.libraries.kotlinc.kotlin.script.runtime"/>
+    <module name="intellij.libraries.kotlinc.kotlin.scripting.jvm"/>
     <module name="intellij.platform.core"/>
   </dependencies>
   <!-- endregion -->

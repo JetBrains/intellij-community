@@ -1,10 +1,6 @@
 - name: lib/intellij.kotlin.jsr223.jar
   contentModules:
   - name: intellij.kotlin.jsr223
-  library: kotlinc.kotlin-scripting-jvm
-  files:
-  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2/kotlin-scripting-jvm-2.jar
-  reason: <- intellij.kotlin.jsr223
 - name: lib/intellij.libraries.kotlinc.kotlin.compiler.common.jar
   modules:
   - name: intellij.libraries.kotlinc.kotlin.compiler.common
@@ -17,6 +13,12 @@
     libraries:
       kotlinc.kotlin-script-runtime:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2/kotlin-script-runtime-2.jar
+- name: lib/intellij.libraries.kotlinc.kotlin.scripting.jvm.jar
+  contentModules:
+  - name: intellij.libraries.kotlinc.kotlin.scripting.jvm
+    libraries:
+      kotlinc.kotlin-scripting-jvm:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2/kotlin-scripting-jvm-2.jar
 - name: lib/kotlin-scripting-plugin.jar
   modules:
   - name: intellij.kotlin.jsr223.plugin

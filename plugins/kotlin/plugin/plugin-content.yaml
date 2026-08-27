@@ -160,6 +160,12 @@
     libraries:
       kotlinc.kotlin-script-runtime:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2/kotlin-script-runtime-2.jar
+- name: lib/intellij.libraries.kotlinc.kotlin.scripting.jvm.jar
+  contentModules:
+  - name: intellij.libraries.kotlinc.kotlin.scripting.jvm
+    libraries:
+      kotlinc.kotlin-scripting-jvm:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2/kotlin-scripting-jvm-2.jar
 - name: lib/intellij.libraries.kotlinc.low.level.api.fir.jar
   contentModules:
   - name: intellij.libraries.kotlinc.low.level.api.fir
@@ -212,9 +218,6 @@
   - name: kotlinc.kotlin-scripting-dependencies
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2/kotlin-scripting-dependencies-2.jar
-  - name: kotlinc.kotlin-scripting-jvm
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2/kotlin-scripting-jvm-2.jar
   modules:
   - name: intellij.kotlin.plugin
   contentModules:

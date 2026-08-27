@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinc.kotlin.scripting.jvm.jar
+  modules:
+  - name: intellij.libraries.kotlinc.kotlin.scripting.jvm
+    libraries:
+      kotlinc.kotlin-scripting-jvm:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2/kotlin-scripting-jvm-2.jar

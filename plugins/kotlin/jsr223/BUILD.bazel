@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.kotlin.jsr223` start
 jvm_library(
@@ -24,9 +25,11 @@ jvm_library(
         "//platform/util",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/kotlin-script-runtime:libraries-kotlinc-kotlin-script-runtime",
-        "@lib//:kotlinc-kotlin-scripting-jvm",
+        "//libraries/kotlinc/kotlin-scripting-jvm:libraries-kotlinc-kotlin-scripting-jvm",
     ],
 )
+
+content_module_jar(module = ":jsr223")
 
 jvm_library(
     name = "jsr223_test_lib",
@@ -44,6 +47,7 @@ jvm_library(
         "//platform/util:util_test_lib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//libraries/kotlinc/kotlin-script-runtime:libraries-kotlinc-kotlin-script-runtime_test_lib",
+        "//libraries/kotlinc/kotlin-scripting-jvm:libraries-kotlinc-kotlin-scripting-jvm_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.jsr223` end

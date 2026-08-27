@@ -27,10 +27,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
     const val MAIN_FRONTEND_MODULE_NAME: String = "kotlin.frontend.split"
     private const val SERIALIZATION_COMPILER_PLUGIN_MODULE = "intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin"
 
-    private val KOTLIN_SCRIPTING_LIBRARIES = java.util.List.of(
-      "kotlinc.kotlin-scripting-jvm"
-    )
-
     private val MODULES_SHARED_WITH_CLIENT = java.util.List.of(
       "intellij.kotlin.base.codeInsight.minimal",
       "intellij.kotlin.highlighting.minimal"
@@ -43,6 +39,7 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "intellij.libraries.kotlinc.analysis.api.platform.interface",
       "intellij.libraries.kotlinc.kotlin.compiler.fir",
       "intellij.libraries.kotlinc.kotlin.script.runtime",
+      "intellij.libraries.kotlinc.kotlin.scripting.jvm",
       "intellij.libraries.kotlinc.low.level.api.fir",
       "intellij.libraries.kotlinc.symbol.light.classes",
     )
@@ -56,7 +53,7 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "kotlinc.kotlin-build-tools-api",
       "kotlinc.kotlin-build-tools-impl",
       "kotlinc.kotlin-build-tools-cri-impl",
-    ) + KOTLIN_SCRIPTING_LIBRARIES
+    )
 
     private val LIBRARIES = java.util.List.of(
       "kotlinc.kotlin-compiler-fe10",

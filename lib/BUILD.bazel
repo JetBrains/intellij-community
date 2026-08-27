@@ -7643,28 +7643,6 @@ java_library(
 )
 
 copy_file(
-    name = "org.jetbrains.kotlin/kotlin-scripting-jvm-2.5.0-dev-5674.jar_copy",
-    src = "@org_jetbrains_kotlin-kotlin-scripting-jvm-2_5_0-dev-5674_http//file",
-    out = "org.jetbrains.kotlin/kotlin-scripting-jvm-2.5.0-dev-5674.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "kotlinc-kotlin-scripting-jvm",
-    jar = "@org_jetbrains_kotlin-kotlin-scripting-jvm-2_5_0-dev-5674_http//file",
-    source_jar = "@org_jetbrains_kotlin-kotlin-scripting-jvm-2_5_0-dev-5674-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "kotlinc-kotlin-scripting-jvm-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlin-scripting-jvm"],
-)
-
-copy_file(
     name = "org.jetbrains.kotlin/kotlin-swift-export-for-ide-2.5.0-dev-5674.jar_copy",
     src = "@org_jetbrains_kotlin-kotlin-swift-export-for-ide-2_5_0-dev-5674_http//file",
     out = "org.jetbrains.kotlin/kotlin-swift-export-for-ide-2.5.0-dev-5674.jar",
@@ -13289,6 +13267,21 @@ jvm_import(
     name = "libraries-kotlinc-kotlin-script-runtime-kotlinc-kotlin-script-runtime",
     jar = "@org_jetbrains_kotlin-kotlin-script-runtime-2_5_0-dev-5674_http//file",
     source_jar = "@org_jetbrains_kotlin-kotlin-script-runtime-2_5_0-dev-5674-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.jetbrains.kotlin/kotlin-scripting-jvm-2.5.0-dev-5674.jar_copy",
+    src = "@org_jetbrains_kotlin-kotlin-scripting-jvm-2_5_0-dev-5674_http//file",
+    out = "org.jetbrains.kotlin/kotlin-scripting-jvm-2.5.0-dev-5674.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-kotlinc-kotlin-scripting-jvm-kotlinc-kotlin-scripting-jvm",
+    jar = "@org_jetbrains_kotlin-kotlin-scripting-jvm-2_5_0-dev-5674_http//file",
+    source_jar = "@org_jetbrains_kotlin-kotlin-scripting-jvm-2_5_0-dev-5674-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

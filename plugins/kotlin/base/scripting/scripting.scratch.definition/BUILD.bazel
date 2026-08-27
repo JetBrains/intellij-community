@@ -22,7 +22,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlinc-kotlin-scripting-common",
-        "@lib//:kotlinc-kotlin-scripting-jvm",
+        "//libraries/kotlinc/kotlin-scripting-jvm:libraries-kotlinc-kotlin-scripting-jvm",
         "@lib//:kotlin-stdlib",
     ],
 )
@@ -39,7 +39,11 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.kotlin.base.scripting.scratch.definition",
     visibility = ["//visibility:public"],
-    runtime_deps = [":scripting.scratch.definition"],
+    runtime_deps = [
+        # do not sort,
+        ":scripting.scratch.definition",
+        "//libraries/kotlinc/kotlin-scripting-jvm:libraries-kotlinc-kotlin-scripting-jvm_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.kotlin.base.scripting.scratch.definition` end
 

@@ -139,7 +139,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "kotlinc.kotlin-jps-common",
   "kotlinc.kotlin-scripting-common",
   "kotlinc.kotlin-scripting-compiler-impl",
-  "kotlinc.kotlin-scripting-jvm",
   "layoutlib",
   "libthrift",
   "okhttp",

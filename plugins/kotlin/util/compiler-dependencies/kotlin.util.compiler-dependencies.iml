@@ -37,7 +37,7 @@
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-scripting-common" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-scripting-dependencies" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-scripting-jvm" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.scripting.jvm" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.script.runtime" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-build-tools-api" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-build-tools-impl" level="project" />
