@@ -34,12 +34,17 @@ import com.jetbrains.python.sdk.poetry.runPoetry
 import java.nio.file.Path
 import kotlin.io.path.name
 import kotlin.io.path.pathString
+import com.jetbrains.python.sdk.poetry.PyPoetrySdkFlavor
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 
 private const val VERSIONS_KEY: String = "poetry.systemPythons"
 
 internal class PoetryEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
   override val tool: PyTool get() = PoetryPyTool.getInstance()
   override val toolId: ToolId get() = POETRY_TOOL_ID
+
+  /** An interpreter of this node's environments carries this flavor, which is what names this node as the active one. */
+  override val sdkFlavor: Class<out PythonSdkFlavor<*>> get() = PyPoetrySdkFlavor::class.java
 
   override suspend fun loadSections(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto {
     val projectDir = pyProject.baseDir

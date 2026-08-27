@@ -120,6 +120,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
+import com.intellij.python.sdk.backend.evolution.nodeIdForSdk
 
 private val LOG = logger<PyEvoSdkApiProvider>()
 
@@ -374,6 +375,9 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
       icon = presentation.icon.rpcId(),
       ref = PyInterpreterRef.ExistingSdk(sdk.name),
       dependencyFileUrl = manager?.getRootDependenciesFile()?.virtualFile?.url,
+      // Which node's tool made this interpreter, so the popup can promote that one tool and fold the rest away. Null
+      // when no node claims its flavor, and the popup then lists them all.
+      activeNodeId = providers.nodeIdForSdk(sdk),
     )
   }
 

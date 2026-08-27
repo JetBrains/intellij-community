@@ -213,6 +213,14 @@ interface EvoAlternatives {
 }
 
 /**
+ * A row that reveals more of the list rather than selecting an environment, drawn in the platform's link colour.
+ *
+ * The colour is the whole of it: such a row is an ordinary leaf, laid out like any other, and its own icon says which
+ * way the list is about to grow. It keeps the hover highlight and the keyboard, which a painted strip would not.
+ */
+interface EvoLinkRow
+
+/**
  * The two views of an "add new environment" version list, and which of them is showing.
  *
  * *Collapsed* is one row per Python version — the version is the choice, and the interpreter backing it is the IDE's

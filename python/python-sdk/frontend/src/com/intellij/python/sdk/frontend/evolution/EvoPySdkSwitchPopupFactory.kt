@@ -136,6 +136,13 @@ internal class EvoPySdkSwitchPopupFactory(
   /** The "Shortcuts" rows shown when there is no current interpreter — the IDE's autoconfigure suggestion(s). */
   val shortcuts: List<EvoLeafDto>,
   val scope: CoroutineScope,
+  /**
+   * Shows the widget's popup again, over the tree it already built — how the "More Tools" row reveals the rest.
+   *
+   * A popup is laid out and placed once, so a list this much bigger has to be reopened rather than grown in place; the
+   * widget owns the anchoring, and reopening within its tree-reuse window costs no rescan.
+   */
+  val reopenPopup: () -> Unit,
 ) {
   /**
    * The statistics identity of [nodeId] among the nodes this popup was built from.
@@ -469,6 +476,31 @@ internal class EvoPySdkSwitchPopupFactory(
     return group.getChildren(event).filterNot { it is Separator }.map { EvoTreeActionLeafElement(it) }
   }
 
+  /**
+   * The group that acts on whatever interpreter is current — the last group of the popup.
+   *
+   * With an interpreter it is titled generically rather than by that interpreter: the rows below act on whatever is
+   * current, and the widget itself already names it. It carries no icon either, so the header renders as an ordinary
+   * separator (see `GearGroupHeaderSeparator`), unlike the tool section above it.
+   *
+   * Without one it holds the "Shortcuts" rows instead — the IDE's autoconfigure suggestion(s), selecting one runs it —
+   * and is omitted entirely when there is nothing to suggest, rather than leaving an empty "Shortcuts" header.
+   */
+  private fun currentEnvSection(traceId: String, context: DataContext): EvoTreeSection? = when (currentInterpreter) {
+    null -> shortcuts.takeIf { it.isNotEmpty() }?.let { leaves ->
+      EvoTreeSection(
+        label = ListSeparator(PySdkFrontendBundle.message("evo.sdk.status.bar.popup.shortcuts")),
+        elements = leaves.map { EvoTreeLeafElement(selectEnvAction(project, pyProjectKey, it, SHORTCUTS_NODE_ID, EvoNodeStats(EvoNodeKind.SHORTCUTS), traceId, scope)) },
+      )
+    }
+    else -> EvoTreeSection(
+      label = ListSeparator(PySdkFrontendBundle.message("evo.sdk.status.bar.popup.current.environment")),
+      elements = packageManagerActions(context) + EvoTreeLeafElement(managePackagesAction),
+      // Which environment, on hover — the identity the caption no longer spells out.
+      labelTooltip = currentInterpreter.description,
+    )
+  }
+
   /** A single "Associated environments" node holding the interpreters the classic widget lists, shown inside the tool list. */
   private fun associatedInterpretersNode(traceId: String): EvoTreeStaticNodeElement =
     EvoTreeStaticNodeElement(
@@ -496,65 +528,103 @@ internal class EvoPySdkSwitchPopupFactory(
     val projectId = project.projectId()
     val traceId = UUID.randomUUID().toString()
 
-    // Tool nodes, with a single "Associated environments" node inserted just before "Advanced".
-    val toolNodeElements = buildList<EvoTreeElement> {
-      for (node in nodes) {
-        if (node.id == ADVANCED_NODE_ID && associated.isNotEmpty()) add(associatedInterpretersNode(traceId))
-        add(EvoTreeLazyNodeElement(node.label, node.icon.icon(), EvoNodeStats.of(node), showOutput = { showToolOutput(node.id, traceId) }) { force ->
-          val result = evoRpc { requestEvoNode(projectId, pyProjectKey, node.id, traceId, force) }
-          val refreshable = (result as? EvoLoadResultDto.Ok)?.refreshable == true
-          val collapsed = result.toSections(node.id, traceId)
-          // A tool whose rows carry interpreters (poetry) can be expanded like the add-new list; one whose rows do not
-          // gets no toggle, since toExpandedSections is then empty.
-          val expanded = result.toExpandedSections(node.id, traceId)
-          val versionRows = if (expanded.isEmpty()) null else EvoVersionRows(collapsed, expanded)
-          val loaded = EvoLoadedNode(versionRows?.sections() ?: collapsed, refreshable, versionRows = versionRows)
-            .withoutLoneAddNewStep()
-          // A tool that answered, but with nothing to offer, is not an error — and not something to leave as a row that
-          // opens an empty submenu either. Report it the way a backend warning is reported: disabled, with a sign.
-          if (loaded.sections.none { it.elements.isNotEmpty() }) {
-            throw EvoWarningException(PySdkFrontendBundle.message("evo.sdk.status.bar.popup.node.empty"))
-          }
-          loaded
-        })
+    // The node whose tool made the environment in use, and the rest. The active one leads the list, and while the list
+    // is collapsed it is the only tool row on it. Null when the backend named no node (see PyInterpreterDto.activeNodeId)
+    // or named one this machine does not have — the list then holds every tool, exactly as it did before.
+    val activeNodeId = currentInterpreter?.activeNodeId
+    // Every tool, in the order the providers are registered in — the order the expanded list keeps. The active one is
+    // remembered as well, but not moved: only the collapsed list singles it out.
+    val toolsInOrder = mutableListOf<EvoTreeElement>()
+    var activeTool: EvoTreeElement? = null
+    // "Associated environments" lists interpreters already configured and "Advanced" opens the full add-interpreter set,
+    // so neither switches the interpreter with a tool the project uses. They are never folded away.
+    val nonToolNodes = mutableListOf<EvoTreeElement>()
+    for (node in nodes) {
+      val element = EvoTreeLazyNodeElement(node.label, node.icon.icon(), EvoNodeStats.of(node), showOutput = { showToolOutput(node.id, traceId) }) { force ->
+        val result = evoRpc { requestEvoNode(projectId, pyProjectKey, node.id, traceId, force) }
+        val refreshable = (result as? EvoLoadResultDto.Ok)?.refreshable == true
+        val collapsed = result.toSections(node.id, traceId)
+        // A tool whose rows carry interpreters (poetry) can be expanded like the add-new list; one whose rows do not
+        // gets no toggle, since toExpandedSections is then empty.
+        val expanded = result.toExpandedSections(node.id, traceId)
+        val versionRows = if (expanded.isEmpty()) null else EvoVersionRows(collapsed, expanded)
+        val loaded = EvoLoadedNode(versionRows?.sections() ?: collapsed, refreshable, versionRows = versionRows)
+          .withoutLoneAddNewStep()
+        // A tool that answered, but with nothing to offer, is not an error — and not something to leave as a row that
+        // opens an empty submenu either. Report it the way a backend warning is reported: disabled, with a sign.
+        if (loaded.sections.none { it.elements.isNotEmpty() }) {
+          throw EvoWarningException(PySdkFrontendBundle.message("evo.sdk.status.bar.popup.node.empty"))
+        }
+        loaded
       }
-      if (associated.isNotEmpty() && nodes.none { it.id == ADVANCED_NODE_ID }) add(associatedInterpretersNode(traceId))
+      if (node.id == ADVANCED_NODE_ID) {
+        nonToolNodes += element
+        continue
+      }
+      toolsInOrder += element
+      // The slot has to be free as well, which guards a backend that named one node twice: the first wins.
+      if (node.id == activeNodeId && activeTool == null) activeTool = element
     }
+    // Above "Advanced", where it has always sat.
+    if (associated.isNotEmpty()) nonToolNodes.add(0, associatedInterpretersNode(traceId))
 
-    val externalToolsSection = EvoTreeSection(
+    val toolsCaption = ListSeparator(PySdkFrontendBundle.message(
       // "Change" once there is something to change: the section switches the interpreter rather than setting a first one.
-      label = ListSeparator(PySdkFrontendBundle.message(
-        if (currentInterpreter == null) "evo.sdk.status.bar.popup.select.environment"
-        else "evo.sdk.status.bar.popup.change.environment")),
-      elements = toolNodeElements,
-    )
+      if (currentInterpreter == null) "evo.sdk.status.bar.popup.select.environment"
+      else "evo.sdk.status.bar.popup.change.environment"))
 
-    val currentEnvSection = when (currentInterpreter) {
-      // No interpreter: the "Shortcuts" section holds the IDE's autoconfigure suggestion(s); selecting one runs it.
-      // Omitted entirely when there is nothing to suggest (no empty "Shortcuts" separator).
-      null -> shortcuts.takeIf { it.isNotEmpty() }?.let { leaves ->
-        EvoTreeSection(
-          label = ListSeparator(PySdkFrontendBundle.message("evo.sdk.status.bar.popup.shortcuts")),
-          elements = leaves.map { EvoTreeLeafElement(selectEnvAction(project, pyProjectKey, it, SHORTCUTS_NODE_ID, EvoNodeStats(EvoNodeKind.SHORTCUTS), traceId, scope)) },
-        )
-      }
-      // Titled generically rather than by the interpreter: the rows below act on whatever is current, and the widget
-      // itself already names it. No icon either, so this header renders as an ordinary separator (see
-      // `GearGroupHeaderSeparator`), unlike the tool sections above it.
-      else -> EvoTreeSection(
-        label = ListSeparator(PySdkFrontendBundle.message("evo.sdk.status.bar.popup.current.environment")),
-        elements = packageManagerActions(context) + EvoTreeLeafElement(managePackagesAction),
-        // Which environment, on hover — the identity the caption no longer spells out.
-        labelTooltip = currentInterpreter.description,
+    val currentEnvSection = currentEnvSection(traceId, context)
+
+    /** [toolSections] plus the group that acts on whatever interpreter is current, which is always last. */
+    fun sectionsWith(toolSections: List<EvoTreeSection>): List<EvoTreeSection> =
+      toolSections + listOfNotNull(currentEnvSection)
+
+    // Copied, so a section never holds a list still being built above it.
+    val allTools = toolsInOrder.toList()
+    val nonTools = nonToolNodes.toList()
+
+    /**
+     * [tools] under the caption, then a rule over the nodes that are not a tool.
+     *
+     * The rule is a separator with no caption, which draws as a plain full-width line — see
+     * `GearGroupHeaderSeparator.isPlain`. With no tool row at all there is nothing to divide, so those nodes keep the
+     * caption above them instead of following a rule that separates them from nothing.
+     */
+    fun toolSections(tools: List<EvoTreeElement>): List<EvoTreeSection> = when {
+      tools.isEmpty() -> listOf(EvoTreeSection(label = toolsCaption, elements = nonTools))
+      else -> listOfNotNull(
+        EvoTreeSection(label = toolsCaption, elements = tools),
+        nonTools.takeIf { it.isNotEmpty() }?.let { EvoTreeSection(label = ListSeparator(""), elements = it) },
       )
     }
 
-    // Current-interpreter group is the last group.
+    // The list as it stands before anything is folded away: every tool in its registered order, the active one among
+    // them rather than lifted out of it.
+    val expandedSections = toolSections(allTools)
+
+    // The tree the "Show more" row swaps the expanded sections into. It cannot be built before that row exists, and
+    // the row cannot be built before the tree it acts on — so the row reaches it through this.
+    var builtTree: EvoTreeStaticNodeElement? = null
+    val showMore = showMoreRow {
+      val tree = builtTree ?: return@showMoreRow
+      tree.sections.clear()
+      tree.sections.addAll(sectionsWith(expandedSections))
+      // The widget reuses this very tree within its reuse window, so the reopened popup shows what was just swapped in.
+      reopenPopup()
+    }
+
+    // Collapsed: the tool in use, then the "Show more" row standing in for the tools it hides. The rule below them is
+    // the same one the expanded list has, so folding the tools away does not change the shape of the list.
+    val collapsedSections = activeTool?.takeIf { allTools.size > 1 }?.let { active ->
+      toolSections(listOf(active, showMore))
+    }
+
+    // Collapsed when there is a tool in use and others to fold away; the full list otherwise.
     return EvoTreeStaticNodeElement(
       text = "",
       icon = AllIcons.Language.Python,
-      sections = listOfNotNull(externalToolsSection, currentEnvSection),
-    )
+      sections = sectionsWith(collapsedSections ?: expandedSections),
+    ).also { builtTree = it }
   }
 
   /**

@@ -36,6 +36,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.intellij.python.sdk.frontend.evolution.components.EvoLinkRow
 
 /**
  * Remembers the tool node whose interpreter configuration is currently in progress, so the status-bar widget shows that
@@ -265,6 +266,21 @@ internal fun installInterpreterRow(
 internal fun installActionRow(onChosen: () -> Unit): EvoTreeLeafElement {
   val action = object : AnAction({ PySdkFrontendBundle.message("evo.sdk.status.bar.popup.add.new.install.action") },
                                  { "" }, AllIcons.Actions.Download), DumbAware {
+    override fun actionPerformed(e: AnActionEvent) = onChosen()
+  }
+  return EvoTreeLeafElement(action)
+}
+
+/**
+ * The row that reveals the tools a collapsed widget list leaves out, running [onChosen] when picked.
+ *
+ * An ordinary leaf, so choosing it closes the popup and runs [onChosen] afterwards — which is what a list that has to be
+ * rebuilt from the top wants anyway. The chevron sits in the row's own icon column and points the way the list is about
+ * to grow; [EvoLinkRow] is what colours the text.
+ */
+internal fun showMoreRow(onChosen: () -> Unit): EvoTreeLeafElement {
+  val action = object : AnAction({ PySdkFrontendBundle.message("evo.sdk.status.bar.popup.show.more") }, { "" },
+                                AllIcons.General.ChevronRight), DumbAware, EvoLinkRow {
     override fun actionPerformed(e: AnActionEvent) = onChosen()
   }
   return EvoTreeLeafElement(action)

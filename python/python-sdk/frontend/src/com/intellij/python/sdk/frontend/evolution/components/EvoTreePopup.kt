@@ -138,6 +138,7 @@ private const val SEPARATOR_TOP_GAP = 6
 /** Gap between the footer strip's caption and its chevron. */
 private const val FOOTER_ICON_GAP = 2
 
+
 /** The platform's own gap (unscaled px) between a row's text and its `>` arrow, restated so a row without one matches. */
 private const val NEXT_STEP_INSET = 20
 
@@ -176,8 +177,8 @@ private val PLAIN_CAPTIONS: Set<String> = setOf(
  * the [gearCaptions] sections (the "Select/Change Environment" header). A painted separator can't hold real action
  * components, so the gear click is hit-tested and handled in [EvoTreePopup].
  *
- * [plainCaptions] opt back out of this class's custom look entirely, rendering as the platform's own group header — a
- * full-width rule with the caption below it — for headers that read better as an ordinary divider.
+ * [plainCaptions] — and a section headed by a rule and no caption — opt back out of this class's custom look entirely,
+ * rendering as the platform's own group header: a full-width rule with the caption below it. See [isPlain].
  */
 private class GearGroupHeaderSeparator(
   private val labelInsets: Insets,
@@ -189,8 +190,18 @@ private class GearGroupHeaderSeparator(
   /** True while this reused component is currently rendering the gear-bearing section. */
   val showsGear: Boolean get() = caption in gearCaptions
 
-  /** True while rendering a section that wants the platform's plain group header instead of this class's look. */
-  private val isPlain: Boolean get() = caption in plainCaptions
+  /**
+   * True while rendering a section that wants the platform's plain group header instead of this class's look.
+   *
+   * A section headed by a rule and no caption is one of them, and this class's look cannot draw it: the rule is placed
+   * beside the caption, and there is no caption to place it beside. The superclass paints its rule before it looks at
+   * one, and sizes itself to that rule, which is the whole of such a header.
+   *
+   * [isVisible] is what finds those sections. `SeparatorWithText.getCaption` reports a blank caption as null, so the
+   * `ListSeparator("")` above such a section is indistinguishable here from a row that has no separator at all — but the
+   * renderer shows this component only where the model does say a separator belongs.
+   */
+  private val isPlain: Boolean get() = caption?.let { it in plainCaptions } ?: isVisible
 
   /** Space held open above this header — see [SEPARATOR_TOP_GAP]. Zero at the top of a list, where [isHideLine] is set. */
   private val topGap: Int get() = if (caption == null || isHideLine) 0 else JBUI.scale(SEPARATOR_TOP_GAP)
@@ -352,6 +363,10 @@ class EvoPopupListElementRenderer(private val popup: EvoTreePopup) : PopupListEl
       myTextLabel.isEnabled = value.isEnabled && !popup.isEditingNameInvalid()
       reserveVersionColumn(value)
     }
+    // A row that reveals more of the list is drawn in the platform's link colour, so it reads as a control rather than
+    // as an environment. Only when unselected: the selection foreground is what stays legible on the highlight, and the
+    // superclass sets that on every row, so nothing has to be undone here.
+    if (value?.isLinkRow == true && !isSelected) myTextLabel.foreground = JBUI.CurrentTheme.Link.Foreground.ENABLED
 
     // Put a reload icon right next to the submenu arrow for the hovered refreshable tool row (click handled in EvoTreePopup).
     val arrow = myNextStepLabel ?: return
