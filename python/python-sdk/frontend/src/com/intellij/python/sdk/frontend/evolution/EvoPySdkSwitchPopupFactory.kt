@@ -71,6 +71,7 @@ import com.intellij.openapi.application.EDT
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.intellij.openapi.util.text.StringUtil
 
 private val managePackagesAction = object : AnAction(
   { PySdkFrontendBundle.message("evo.sdk.python.packaging.interpreter.widget.manage.packages") },
@@ -94,6 +95,13 @@ private const val ADVANCED_NODE_ID: String = EvoNodeIds.ADVANCED
  * process. A literal because the constant declaring it is internal to the process-output module — the packaging tool
  * window is reached the same way elsewhere in this plugin.
  */
+/**
+ * Longest environment name a row shows before its middle is elided, with the whole of it moving to the row's tooltip.
+ *
+ * The same budget a section header's path gets (`toSectionLabel`), so a name and a path are cut to one width.
+ */
+private const val ROW_TITLE_MAX_CHARS: Int = 50
+
 private const val PROCESS_OUTPUT_TOOL_WINDOW_ID: String = "PythonProcessOutput"
 
 private const val ASSOCIATED_NODE_ID: String = EvoNodeIds.ASSOCIATED
@@ -156,7 +164,28 @@ internal class EvoPySdkSwitchPopupFactory(
     else -> nodes.firstOrNull { it.id == nodeId }?.let { EvoNodeStats.of(it) } ?: EvoNodeStats(EvoNodeKind.OTHER)
   }
 
+  /**
+   * A leaf row, with a long environment name middle-elided and the whole of it on hover.
+   *
+   * Every row of every tool passes through here, which is why the eliding sits here rather than in each of the backend's
+   * leaf builders: one place decides how wide a row may be. A name is cut the way a section header's path already is —
+   * a row wider than the popup widens the popup, and it is anchored on the widget, so it grows away from the screen.
+   *
+   * The tooltip is set only where the cut actually dropped something, so a name that fits is not given a tooltip
+   * repeating what is already on the row — and never over a tooltip the row already has: a row that cannot be acted on
+   * carries the reason why, which matters more than the rest of its name. A row titled by its path ([asPathTitledRow])
+   * replaces it afterwards with the full path, which is the more useful of the two there.
+   */
   private fun EvoLeafDto.toElement(nodeId: String, traceId: String): EvoTreeElement {
+    val elided = StringUtil.trimMiddle(title, ROW_TITLE_MAX_CHARS)
+    val element = (if (elided == title) this else copy(title = elided)).toRowElement(nodeId, traceId)
+    if (elided != title && element.presentation.getClientProperty(ActionUtil.TOOLTIP_TEXT) == null) {
+      element.presentation.putClientProperty(ActionUtil.TOOLTIP_TEXT, title)
+    }
+    return element
+  }
+
+  private fun EvoLeafDto.toRowElement(nodeId: String, traceId: String): EvoTreeElement {
     // Checked first: a row that cannot be acted on has no version picker to offer either.
     unavailable?.let { reason ->
       return EvoTreeUnavailableLeafElement(selectEnvAction(project, pyProjectKey, this, nodeId, nodeStats(nodeId), traceId, scope), reason)
