@@ -59,7 +59,7 @@ Keep IDE-serialized `.iml` files in canonical form. Do not:
 
 ## Tools
 
-Never use the `code-search` skill. The search tools below replace it.
+Never use the `code-search` skill. The search tools below replace it. Recipes, the Windows rules, and the full tool inventory: [Tools Reference](./tools.md).
 
 ### Search & navigation (ijproxy preferred)
 
@@ -70,25 +70,15 @@ Codex exposes these as `mcp__ijproxy__<name>`. Inspect the deferred tool catalog
 
 ### IDE-backed semantic tools
 
-Available through ijproxy or JetBrains MCP. Prefer a real refactoring over a manual search and replace.
-
-- Inspections & symbol info: `lint_files`, `get_symbol_info`
-- Refactors: `rename` (ijproxy) / `rename_refactoring` (JetBrains MCP)
-- Formatting: `reformat_file`
-- Concurrency checks: `find_threading_requirements_usages`, `find_lock_requirements_usages`
-- Project structure & VCS: `get_project_modules`, `get_project_dependencies`, `get_repositories`, `git_status`
-- Run configs: `get_run_configurations`, `execute_run_configuration`
+Available through ijproxy or JetBrains MCP: `lint_files`, `get_symbol_info`, `rename`, `reformat_file`, the threading and lock checks, and the project, VCS and run-configuration tools. Prefer a real refactoring over a manual search and replace.
 
 ### Tooling rules
 
-- Prefer ijproxy for a content or symbol **search** and for a semantic operation. Fall back to JetBrains MCP, then to `{{TOOLS_DIR}}/fd.cmd` (files) and `{{TOOLS_DIR}}/rg.cmd` (text and regex), only when ijproxy is unavailable.
+- Prefer ijproxy for a content or symbol **search** and for a semantic operation. Fall back to JetBrains MCP, then to `{{TOOLS_DIR}}/fd.cmd` (files) and `{{TOOLS_DIR}}/rg.cmd` (text and regex), only when ijproxy is unavailable. Pass `-H` to see a dot-directory such as `.agents/`.
 - Ask the Product DSL for a plugin model answer, not `rg` or `bazel cquery`: `bazel run //platform/buildScripts:plugin-model-tool -- --json='<request>'`. The `plugin-model-analyzer` skill holds the request shapes.
-- Do not shell out for a file **search**, inside the repo or outside it. This is enforced: the `Glob` and `Grep` tools are denied, and so are the `grep` and `find` commands in every pipeline position. An absolute path through the wrappers is fine. Pipe into `{{TOOLS_DIR}}/rg.cmd` instead of `| grep`, because it reads stdin.
-- `fd.cmd` and `rg.cmd` skip a dot-directory by default. Agent assets live in `.agents/`, `.claude/`, `.junie/`, and `.opencode/`. Pass `-H` (`--hidden`) to find a skill, a guideline, or a hook. Without it you will conclude they do not exist.
-- On Windows and PowerShell, do not pass a literal `<`, `>`, `|`, or `&` through a `.cmd` search wrapper, even inside quotes. For `rg.cmd` alternation, repeat `-e` (`{{TOOLS_DIR}}/rg.cmd -n -e "foo" -e "bar" path/to/file.kt`) instead of `"foo|bar"`. To check one file for conflict markers, use `Select-String -SimpleMatch -Pattern '<<<<<<<','=======','>>>>>>>' -Path <file>`.
-- Prefer a documented wrapper command over a hand-rolled equivalent. A spelling the allowlist knows runs without a prompt. A novel one does not. Add a new entry to `community/.ai/tool-permissions.json` and rerun `bazel run @community//.ai:render-guides`. Never edit a harness allowlist by hand.
-- Shell is allowed where this guide documents it, and for git, build, and test. Prefer `git_status` when that tool is available.
-- Outside the working copy, shell access is task-scoped. Read what this repo's tooling produced, or what the user or a skill named: build output, an IDE sandbox (`system/`, `config/`, `idea.log`), a tool cache, or a VM workspace a skill documents. Do not survey the machine. Do not list or read the home directory, `~/Downloads`, another checkout, mail, or browser and messaging data. Report a failed step instead of hunting for an artifact nobody named. If the task needs a path outside that set, ask first.
+- Do not shell out for a file **search**, inside the repo or outside it. This is enforced: the `Glob` and `Grep` tools are denied, and so are the `grep` and `find` commands in every pipeline position.
+- Prefer a spelling the allowlist knows, because a novel one asks for a prompt. Add a new entry to `community/.ai/tool-permissions.json`, never to a harness allowlist.
+- Shell is allowed where this guide documents it, and for git, build, and test. Prefer `git_status` when that tool is available. Outside the working copy it is task-scoped: read what this repo's tooling produced, or what the user or a skill named, and never survey the machine.
 
 ### Skills
 
