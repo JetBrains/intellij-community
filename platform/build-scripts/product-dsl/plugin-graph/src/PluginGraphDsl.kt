@@ -205,7 +205,8 @@ value class GraphScope @PublishedApi internal constructor(
   /** Get module node by ID */
   fun contentModuleWithNamespace(moduleId: PluginModuleId): ContentModuleWithNamespaceNode? {
     val stringId = if (moduleId.namespace != null) "${moduleId.namespace}:${moduleId.name}" else moduleId.name
-    val id = store.nodeId(stringId, NODE_CONTENT_MODULE)
+    // the builder indexes this node under NODE_CONTENT_MODULE_WITH_NAMESPACE, so read that index
+    val id = store.nodeId(stringId, NODE_CONTENT_MODULE_WITH_NAMESPACE)
     return if (id >= 0) ContentModuleWithNamespaceNode(id) else null
   }
 

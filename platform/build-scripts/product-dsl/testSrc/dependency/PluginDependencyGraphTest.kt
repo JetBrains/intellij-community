@@ -344,6 +344,42 @@ class PluginDependencyGraphTest {
   }
 
   @Test
+  fun `contentModuleWithNamespace finds a namespaced copy and a private copy`() {
+    runBlocking(Dispatchers.Default) {
+      val shared = PluginModuleId("plugin.b.shared", PluginModuleId.DEFAULT_NAMESPACE)
+      val private = PluginModuleId("plugin.b.private", null)
+      val targetModule = TargetName("plugin.b")
+      val info = pluginInfo(
+        pluginId = "com.b",
+        contentModules = listOf(
+          ContentModuleInfo(moduleId = shared, loadingMode = ModuleLoadingRuleValue.REQUIRED),
+          ContentModuleInfo(moduleId = private, loadingMode = ModuleLoadingRuleValue.EMBEDDED),
+        ),
+        source = PluginSource.DISCOVERED,
+      )
+
+      val builder = PluginGraphBuilder()
+      builder.addTarget(targetModule)
+      builder.registerReferencedPlugins(object : PluginContentProvider {
+        override suspend fun getOrExtract(pluginModule: TargetName): PluginContentInfo? {
+          return if (pluginModule == targetModule) info else null
+        }
+      })
+
+      builder.build().query {
+        // the builder indexes this node under its own kind, so a lookup against the by-name index finds nothing
+        val sharedNode = requireNotNull(contentModuleWithNamespace(shared))
+        assertThat(sharedNode.moduleId()).isEqualTo(shared)
+
+        val privateNode = requireNotNull(contentModuleWithNamespace(private))
+        assertThat(privateNode.moduleId()).isEqualTo(private)
+
+        assertThat(contentModuleWithNamespace(PluginModuleId("plugin.b.absent", null))).isNull()
+      }
+    }
+  }
+
+  @Test
   fun `seeded plugin node survives extraction merge`() {
     runBlocking(Dispatchers.Default) {
       val pluginModule = TargetName("intellij.platform.recentFiles.plugin")
