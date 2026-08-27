@@ -28,6 +28,7 @@ This directory is the normative spec for product-dsl validation behavior. Each f
 | Test plugin plugin dependencies | `TestPluginPluginDependencyValidator` | `testPluginPluginDependencyValidation` | [test-plugin-plugin-dependency.md](test-plugin-plugin-dependency.md) |
 | Content module dependencies (bundled plugins) | `ContentModuleDependencyValidator` | `pluginContentModuleValidation` | [content-module-dependency.md](content-module-dependency.md) |
 | Duplicate plugin content modules | `PluginContentDuplicatesValidator` | `pluginContentDuplicateValidation` | [plugin-content-duplicates.md](plugin-content-duplicates.md) |
+| Content module copy conflicts | `ContentModuleCopyConflictValidator` | `contentModuleCopyConflictValidation` | [content-module-copy-conflict.md](content-module-copy-conflict.md) |
 | Test plugin descriptor ID conflicts | `PluginDescriptorIdConflictValidator` | `pluginDescriptorIdConflictValidation` | [plugin-descriptor-id-conflicts.md](plugin-descriptor-id-conflicts.md) |
 | Product module set validation | `ProductModuleSetValidator` | `productModuleSetValidation` | [product-module-set.md](product-module-set.md) |
 | Embedded content module dependencies | `EmbeddedContentModuleDependencyValidator` | `embeddedContentModuleDependencyValidation` | [embedded-content-module-dependency.md](embedded-content-module-dependency.md) |

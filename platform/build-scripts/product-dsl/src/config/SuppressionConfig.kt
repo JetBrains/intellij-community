@@ -47,6 +47,25 @@ data class PluginSuppression(
 )
 
 /**
+ * An allowed conflict between embedded copies of one content module name.
+ *
+ * The key is the duplicated content module name, so a new owner of that name stays silent.
+ * A name that is not listed still fails, which is the point of the entry.
+ * Read `docs/validators/content-module-copy-conflict.md` for the rule and for each listed name.
+ */
+@Serializable
+data class ContentModuleCopyConflictException(
+  /**
+   * Why the entry exists, and which plugins own the copies. Free text.
+   *
+   * An entry is one of two kinds, and the text must start with the kind.
+   * `DEBT:` marks a real defect that nobody has fixed yet, and it is expected to go away.
+   * `INTENTIONAL:` marks a duplication that the repository wants, and that entry is permanent.
+   */
+  @JvmField val reason: String = "",
+)
+
+/**
  * Validation exceptions for a content module.
  */
 @Serializable
@@ -94,6 +113,21 @@ data class SuppressionConfig(
   @JvmField val validationExceptions: Map<ContentModuleName, ValidationException> = emptyMap(),
 
   /**
+   * Allowed conflicts between embedded copies of one content module name.
+   *
+   * Key: the duplicated content module name (e.g., "intellij.libraries.flexmark")
+   * Value: why the entry exists, which plugins own the copies, and whether it is debt or intentional
+   *
+   * Suppresses [org.jetbrains.intellij.build.productLayout.model.error.ContentModuleCopyConflictError]
+   * by name, so a new owner of a listed name is silent and a new name still fails.
+   *
+   * The generator copies this map without a change, like [validationExceptions], so an entry survives
+   * regeneration. A stale entry is therefore not reported. Remove a `DEBT:` entry when the copies go away.
+   * Never remove an `INTENTIONAL:` entry, because the generator would then fail on a wanted pattern.
+   */
+  @JvmField val contentModuleCopyConflicts: Map<ContentModuleName, ContentModuleCopyConflictException> = emptyMap(),
+
+  /**
    * Direct error key suppression for pipeline errors.
    *
    * Keys match [org.jetbrains.intellij.build.productLayout.model.error.ValidationError.suppressionKey].
@@ -118,6 +152,12 @@ data class SuppressionConfig(
     if (errorKey.startsWith(MISSING_PLUGIN_ID_PREFIX)) {
       val pluginName = errorKey.removePrefix(MISSING_PLUGIN_ID_PREFIX)
       if (plugins[ContentModuleName(pluginName)]?.allowMissingPluginId == true) {
+        return true
+      }
+    }
+    if (errorKey.startsWith(CONTENT_MODULE_COPY_CONFLICT_PREFIX)) {
+      val moduleName = errorKey.removePrefix(CONTENT_MODULE_COPY_CONFLICT_PREFIX)
+      if (contentModuleCopyConflicts.containsKey(ContentModuleName(moduleName))) {
         return true
       }
     }
@@ -167,6 +207,7 @@ data class SuppressionConfig(
 
   companion object {
     private const val MISSING_PLUGIN_ID_PREFIX = "missing-plugin-id:"
+    private const val CONTENT_MODULE_COPY_CONFLICT_PREFIX = "contentModuleCopyConflict:"
     private val json = Json {
       prettyPrint = true
       prettyPrintIndent = "  "  // 2-space indent

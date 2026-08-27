@@ -10,6 +10,7 @@ import com.intellij.platform.pluginGraph.TargetName
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import org.jetbrains.intellij.build.productLayout.model.ModuleSourceInfo
 import org.jetbrains.intellij.build.productLayout.stats.AnsiStyle
+import org.jetbrains.intellij.build.productLayout.traversal.ContentModuleCopyConflict
 
 /**
  * Error when content module IML dependencies on main plugin modules are not declared in XML.
@@ -121,6 +122,69 @@ data class DuplicatePluginContentModulesError(
     appendLine()
     appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
     appendLine()
+  }
+}
+
+/**
+ * Error when a content module reaches two embedded copies of one content module name.
+ *
+ * One error covers one duplicated name in one product, so [suppressionKey] can grandfather that name.
+ */
+internal data class ContentModuleCopyConflictError(
+  override val context: String,
+  /** The content module name that two or more bundled plugins declare as embedded content. */
+  val duplicatedModule: ContentModuleName,
+  @JvmField val conflicts: List<ContentModuleCopyConflict>,
+  override val ruleName: String = "ContentModuleCopyConflictValidation",
+) : ValidationError {
+  override val category: ErrorCategory get() = ErrorCategory.CONTENT_MODULE_COPY_CONFLICT
+
+  override val suppressionKey: String get() = suppressionKeyFor(duplicatedModule)
+
+  override fun format(s: AnsiStyle): String = buildString {
+    appendLine("${s.red}${s.bold}Product '${context}' reaches two embedded copies of '${duplicatedModule.value}'${s.reset}")
+    appendLine()
+    appendLine("${s.yellow}Two bundled plugins declare this content module name as embedded content.${s.reset}")
+    appendLine("${s.yellow}Each copy joins the main classloader of its own plugin and holds its own classes.${s.reset}")
+    appendLine("${s.yellow}Each module below reaches both copies, so it loads the same class from two classloaders.${s.reset}")
+    appendLine()
+
+    for (conflict in conflicts.sortedBy { it.module.value }) {
+      appendLine("  ${s.red}*${s.reset} ${s.bold}${conflict.module.value}${s.reset} reaches:")
+      for (owner in conflict.owners) {
+        appendLine("      - copy of ${owner.plugin.value}, runtime ID ${owner.moduleId}")
+        appendLine("        ${s.gray}${owner.path.joinToString(separator = " -> ")}${s.reset}")
+      }
+    }
+
+    appendLine()
+    appendLine("${s.yellow}Why this matters:${s.reset} the same class arrives from two classloaders, which raises a LinkageError")
+    appendLine("and drops every feature that passes such a class across the boundary.")
+    appendLine()
+    appendLine("${s.blue}Fix:${s.reset}")
+    appendLine("1. Let the plugin that owns the API hold the one copy, and let each dependent plugin reuse it.")
+    appendLine("2. Or break the dependency path so no module reaches two copies.")
+    appendLine("3. Or, as a last resort, declare the module once as shared content of a module set.")
+    appendLine("   Read build/decisions/0005-a-library-copy-belongs-to-the-plugin-that-owns-its-api.md.")
+    appendLine()
+    appendLine("${s.blue}Or grandfather temporarily:${s.reset} add to contentModuleCopyConflicts in suppressions.json:")
+    appendLine("       ${s.gray}\"${duplicatedModule.value}\": { \"reason\": \"owners: ...\" }${s.reset}")
+    appendLine()
+    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+    appendLine()
+  }
+
+  companion object {
+    /**
+     * The suppression key of one duplicated name.
+     *
+     * The spelling follows `suppressedErrors`, whose only producer is `"nonStandardRoot:$moduleName"`:
+     * a camelCase prefix, a colon, then the content module name.
+     * The camelCase prefix also keeps this key apart from the kebab-case ID that [errorId] builds.
+     */
+    fun suppressionKeyFor(duplicatedModule: ContentModuleName): String {
+      return "contentModuleCopyConflict:${duplicatedModule.value}"
+    }
   }
 }
 

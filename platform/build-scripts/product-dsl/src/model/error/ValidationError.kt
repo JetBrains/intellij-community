@@ -26,6 +26,8 @@ enum class ErrorCategory {
   PLUGIN_CONTENT_DUPLICATE,
   /** [PluginDescriptorIdConflictError] - hard failure, not suppressible */
   PLUGIN_DESCRIPTOR_ID_CONFLICT,
+  /** [ContentModuleCopyConflictError] - suppressible per name via contentModuleCopyConflicts */
+  CONTENT_MODULE_COPY_CONFLICT,
   /** [PluginDependencyNotBundledError] - hard failure, not suppressible */
   PLUGIN_PLUGIN_DEP_MISSING,
   /** [DuplicatePluginDependencyDeclarationError] - hard failure, not suppressible */
@@ -120,6 +122,7 @@ fun ValidationError.errorId(): String {
     is MissingContentModulePluginDependencyError -> "missing-plugin-dep:$context"
     is DuplicatePluginContentModulesError -> "plugin-content-dup:$context"
     is PluginDescriptorIdConflictError -> "plugin-descriptor-id-conflict:$context"
+    is ContentModuleCopyConflictError -> "content-module-copy-conflict:$context:${duplicatedModule.value}"
     is PluginDependencyError -> "plugin-dep:${pluginName.value}"
     is PluginDependencyNotBundledError -> "plugin-plugin-dep:${pluginName.value}"
     is DuplicatePluginDependencyDeclarationError -> "plugin-plugin-dep-dup:${pluginName.value}"

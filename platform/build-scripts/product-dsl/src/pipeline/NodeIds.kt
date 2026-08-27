@@ -109,6 +109,9 @@ internal object NodeIds {
   /** Conflicting descriptor IDs between production and test plugins */
   @JvmField val PLUGIN_DESCRIPTOR_ID_CONFLICT_VALIDATION = NodeId("pluginDescriptorIdConflictValidation", NodeCategory.VALIDATION)
 
+  /** A content module that reaches two embedded copies of one content module name */
+  @JvmField val CONTENT_MODULE_COPY_CONFLICT_VALIDATION = NodeId("contentModuleCopyConflictValidation", NodeCategory.VALIDATION)
+
   /** Test library scope validation */
   @JvmField val TEST_LIBRARY_SCOPE_VALIDATION = NodeId("testLibraryScopeValidation", NodeCategory.VALIDATION)
 
