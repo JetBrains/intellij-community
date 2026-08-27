@@ -39,6 +39,8 @@ jvm_library(
         "//plugins/compose/intellij.compose.ide.plugin.projectStructureTests:ide-plugin-projectStructureTests_test_lib",
         "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared-tests",
         "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared-tests_test_lib",
+        "//plugins/compose/intellij.compose.ide.plugin.resources:ide-plugin-resources-tests",
+        "//plugins/compose/intellij.compose.ide.plugin.resources:ide-plugin-resources-tests_test_lib",
     ],
 )
 ### auto-generated section `build intellij.compose.ide.plugin.tests.main` end

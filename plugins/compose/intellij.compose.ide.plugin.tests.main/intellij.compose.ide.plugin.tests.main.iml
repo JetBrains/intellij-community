@@ -13,5 +13,6 @@
     <orderEntry type="module" module-name="intellij.compose.ide.plugin.k2.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.compose.ide.plugin.projectStructureTests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.compose.ide.plugin.shared.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.compose.ide.plugin.resources.tests" scope="TEST" />
   </component>
 </module>
