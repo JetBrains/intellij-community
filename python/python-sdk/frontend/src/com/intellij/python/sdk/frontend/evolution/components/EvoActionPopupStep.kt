@@ -36,6 +36,18 @@ open class EvoActionPopupStep(
 ) : ListPopupStepEx<EvoTreeItem> {
   private val listeners: MutableList<ListPopupStep.ListPopupModelListener> = arrayListOf()
 
+  /**
+   * Takes in the rows [node]'s loader swaps in after this step was built.
+   *
+   * A tool node's submenu can be opened while the node still loads (it shows an [EvoTreeMessageLeafElement] until then),
+   * so this step is not the one that started the load and would otherwise never hear that the real rows arrived. They
+   * are loaded first, since [isSelectable] holds nothing selectable until they are, and only then is the list repainted.
+   */
+  private val onNodeRowsArrived = ListPopupStep.ListPopupModelListener {
+    loadNewElements()
+    listeners.forEach { it.onModelChanged() }
+  }
+
   init {
     // Rows that gate themselves (the package-manager actions) get their own update() run against this popup's data
     // context — which carries the project's dependency file — so their presentation is truthful before anything is
@@ -49,6 +61,16 @@ open class EvoActionPopupStep(
         updateAction(element.action, event)
       }
     loadNewElements()
+    node.addModelListener(onNodeRowsArrived)
+  }
+
+  /**
+   * The popup this step served is being disposed — `ListPopupImpl.dispose` removes itself here — so stop holding it
+   * through [node]. The tree outlives the popup: the widget reuses it on the next open.
+   */
+  override fun removeListener(listener: ListPopupStep.ListPopupModelListener) {
+    listeners.remove(listener)
+    node.removeModelListener(onNodeRowsArrived)
   }
 
   /**
@@ -187,7 +209,7 @@ open class EvoActionPopupStep(
     // delivers a click only to the row that is already selected (`ListPopupImpl.MyList.processMouseEvent`), leaving an
     // unselectable row unclickable however precisely it is hit. It still reads as disabled: its presentation stays so,
     // and `hasSubstep` keeps the submenu arrow off it.
-    (value.opensProcessOutput || (value.element.state == State.DONE && value.isEnabled))
+    (value.opensProcessOutput || (value.isReady && value.isEnabled))
 
   override fun getIconFor(value: EvoTreeItem?): Icon? = value?.icon
 
@@ -195,12 +217,14 @@ open class EvoActionPopupStep(
 
   override fun getSecondaryTextFor(value: EvoTreeItem?): @Nls String? = value?.secondaryText
 
-  override fun getSecondaryIconFor(t: EvoTreeItem?): @Nls Icon? = when (t?.element?.state) {
-    State.LOADING -> AnimatedIcon.Default.INSTANCE
-    State.ERROR -> AllIcons.General.Error
+  override fun getSecondaryIconFor(t: EvoTreeItem?): @Nls Icon? = when {
+    t == null -> null
+    // Not every loading row carries the spinner: a tool node reports its load inside its submenu — see [showsLoader].
+    t.showsLoader -> AnimatedIcon.Default.INSTANCE
+    t.element.state == State.ERROR -> AllIcons.General.Error
     // A tool that is simply unavailable, or answered with nothing, is not a failure — but it did not work either, so it
     // gets a sign of its own rather than looking like an ordinary disabled row with nothing to say.
-    State.NOT_AVAILABLE -> AllIcons.General.Warning
+    t.element.state == State.NOT_AVAILABLE -> AllIcons.General.Warning
     else -> null
   }
 
@@ -214,14 +238,14 @@ open class EvoActionPopupStep(
   override fun isFinal(value: EvoTreeItem?): Boolean {
     value ?: return true
     // to make ... actions menu even for non-disabled items all steps have to be final
-    return value.element is EvoTreeLeafElement || value.element.state != State.DONE
+    return value.element is EvoTreeLeafElement || !value.isReady
   }
 
   // The platform passes a null value during layout measurement, so the param must be nullable. Offer a submenu only
   // for a loaded, non-empty node — otherwise an empty child popup can crash Swing layout.
   override fun hasSubstep(selectedValue: EvoTreeItem?): Boolean {
     val element = selectedValue?.element as? EvoTreeNodeElement ?: return false
-    return selectedValue.isSubstepSuppressed && element.state == State.DONE && element.hasContent()
+    return selectedValue.isSubstepSuppressed && selectedValue.isReady && element.hasContent()
   }
 
   override fun canceled() {}
