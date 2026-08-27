@@ -54,6 +54,9 @@
     <extensionPoint qualifiedName="Pythonid.evoEnvironmentProvider"
                     interface="com.intellij.python.sdk.backend.evolution.PyEvoEnvironmentProvider"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.interpreterPresentationProvider"
+                    interface="com.jetbrains.python.sdk.PythonInterpreterPresentationProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">

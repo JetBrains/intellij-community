@@ -28,6 +28,13 @@ data class PythonInterpreterPresentation(
   val modifier: @NlsSafe String?,
   val icon: Icon,
   val isPathDerivedName: Boolean,
+  /**
+   * A short label the interpreter's own tool supplies, or `null` to shorten [name] as usual.
+   *
+   * It replaces [shortName] alone. [name], [fullName] and [longName] stay the SDK name, because they are read where
+   * there is room for the path, and the path is what tells two environments apart.
+   */
+  val toolShortName: @NlsSafe String? = null,
 ) {
   /** `name [suffix]` or `name` when [suffix] is null. Example: `~/Projects/myapp/long/path/.venv [3.12.1]`. */
   val fullName: @NlsSafe String = if (suffix == null) name else "$name [$suffix]"
@@ -43,8 +50,11 @@ data class PythonInterpreterPresentation(
    *  Up to 50 chars. For path-derived names: drops the path prefix. For free-form labels:
    *  trims the middle of the whole string. Keeps `[suffix]` verbatim.
    *  Example: `myenv [3.12.1]`.
+   *
+   *  A [toolShortName] is taken as it stands, with no `[suffix]` after it. The tool wrote the whole label, so appending
+   *  the version to it would state the version twice.
    */
-  val shortName: @NlsSafe String = compactName(50, false)
+  val shortName: @NlsSafe String = toolShortName ?: compactName(50, false)
 
   /**
    * Fits the label in [maxLength] chars; `[suffix]` is kept as-is.
