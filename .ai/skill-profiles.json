@@ -1,0 +1,69 @@
+{
+  "$comment": [
+    "The per-developer skill profiles that community/.ai/skill-profile.mjs applies.",
+    "",
+    "`areas` groups the skills that serve one area. Each skill belongs to one area at most. A skill",
+    "that no area names is core: every profile keeps it, and a new skill is therefore on until",
+    "somebody puts it in an area. This is one grouping table, not one list for each profile, so a",
+    "new skill does not need an edit in each profile.",
+    "",
+    "`profiles` names the areas a role keeps. The script turns off every skill in each other area.",
+    "The `off` state hides the skill from the model and from the / menu. Use `--state name-only` to",
+    "keep the name.",
+    "",
+    "The script writes to .claude/settings.local.json, which git ignores, so a profile is yours",
+    "alone. It records what it wrote in .claude/local/skill-profile.json, and `reset` reads that",
+    "record to remove its own entries only."
+  ],
+  "areas": {
+    "air": ["acp-sync", "aia-activation-test-conventions", "air", "air-release-backport", "vm-ui-tests"],
+    "build": ["bazel-test-migration", "convert-lib-to-product-module", "module-set-pluginization", "plugin-model-analyzer"],
+    "clion": ["clion-devbuild-test-wiring", "clion-test-in-tc"],
+    "dotnet": ["dotnet-building", "dotnet-testing"],
+    "jewel": ["jewel-markdown", "jewel-pr-preparer", "jewel-release-helper"],
+    "kotlin-mpp": ["kmt-tc-duty"],
+    "python": ["compare-python-typecheckers", "py-junit5-tests"],
+    "remote-dev": [
+      "investigate-split-completion",
+      "remote-dev",
+      "remote-dev-actions",
+      "remote-dev-code-placement",
+      "remote-dev-language-plugin",
+      "remote-dev-module-layout",
+      "remote-dev-rpc",
+      "remote-dev-settings-sync",
+      "remote-dev-split-data-model",
+      "setup-local-daemon-libraries",
+      "setup-local-rd-flow",
+      "setup-released-daemon-libraries",
+      "split-mode-debug-run-config"
+    ],
+    "teamcity": [
+      "find-test-on-teamcity",
+      "fix-project-leak-from-tc-report",
+      "mute-teamcity-test",
+      "teamcity-batch-verify",
+      "teamcity-flaky-probe"
+    ],
+    "toolbox": ["tbx-update-jetbrainsd", "toolbox-agent-ssh-deploy"],
+    "ui": [
+      "compose",
+      "icon-resources",
+      "icons",
+      "kotlin-ui-dsl",
+      "kotlin-ui-swing-component-architecture",
+      "ui-accessibility"
+    ],
+    "visuals": ["miro-boards", "notebook-for-experiment"]
+  },
+  "profiles": {
+    "air": {"keeps": ["air", "ui", "visuals"]},
+    "dotnet": {"keeps": ["dotnet", "clion", "teamcity"]},
+    "jewel": {"keeps": ["jewel", "ui"]},
+    "minimal": {"keeps": []},
+    "platform": {"keeps": ["build", "remote-dev", "teamcity", "ui"]},
+    "python": {"keeps": ["build", "python", "teamcity"]},
+    "remote-dev": {"keeps": ["build", "remote-dev", "ui"]},
+    "toolbox": {"keeps": ["teamcity", "toolbox"]}
+  }
+}

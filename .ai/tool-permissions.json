@@ -46,6 +46,7 @@
     ["./bazel-build-all.cmd"],
     ["./build/jpsModelToBazel.cmd"],
     ["bun", "build/jps-module.mjs"],
+    ["bun", "community/.ai/skill-profile.mjs"],
     ["{{TOOLS_DIR}}/rg.cmd"],
     ["{{TOOLS_DIR}}/fd.cmd"],
     ["{{TOOLS_DIR}}/bun.cmd"],

@@ -413,6 +413,31 @@ describe('render-guides skills', () => {
 
       ok(!existsSync(join(claudeDir, 'INDEX.md')), 'the index belongs beside canonical sources, not in generated trees')
       ok(!existsSync(join(junieDir, 'INDEX.md')), 'the index belongs beside canonical sources, not in generated trees')
+
+      const agentsIndexWithoutCatalogue = readFileSync(agentsIndexPath, 'utf8')
+      ok(
+        !agentsIndexWithoutCatalogue.includes('OPTIONAL.md'),
+        'the index points at the catalogue only when the directory has one',
+      )
+    } finally {
+      rmSync(rootDir, {recursive: true, force: true})
+    }
+  })
+
+  it('points at the optional-skill catalogue beside the index', async () => {
+    const {rootDir, communitySourceDir, agentsDir, claudeDir, junieDir, communityClaudeDir} = createFixture()
+
+    try {
+      writeSkill(join(communitySourceDir, 'testing'), 'testing', 'body')
+      writeFileSync(join(agentsDir, 'OPTIONAL.md'), '# Optional skills\n', 'utf8')
+
+      await renderSkills({communitySourceDir, agentsDir, claudeDir, junieDir, communityClaudeDir, edition: 'ULTIMATE'})
+
+      const agentsIndex = readFileSync(join(agentsDir, 'INDEX.md'), 'utf8')
+      ok(agentsIndex.includes('[OPTIONAL.md](OPTIONAL.md)'), 'the index should point at the catalogue beside it')
+
+      const communityIndex = readFileSync(join(communitySourceDir, 'INDEX.md'), 'utf8')
+      ok(!communityIndex.includes('OPTIONAL.md'), 'the community index has no catalogue beside it')
     } finally {
       rmSync(rootDir, {recursive: true, force: true})
     }
