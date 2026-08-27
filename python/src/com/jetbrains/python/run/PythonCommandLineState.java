@@ -110,7 +110,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -912,24 +911,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
       initPythonPath(commandLine, passParentEnvs, pathList, sdkHome);
     }
   }
-
-  @ApiStatus.Internal
-  public static @NotNull Map<String, String> buildPythonPath(@NotNull AbstractPythonRunConfiguration<?> configuration,
-                                                             boolean passParentEnvs) {
-    Map<String, String> envs = new HashMap<>(configuration.getEnvs());
-    Module module = configuration.getModule();
-    Sdk sdk = configuration.getSdk();
-
-    if (sdk != null) {
-      List<String> pathList = new ArrayList<>();
-      pathList.addAll(getAddedPaths(sdk));
-      pathList.addAll(collectPythonPath(module, configuration.shouldAddContentRoots(), configuration.shouldAddSourceRoots()));
-      PythonEnvUtil.initPythonPath(envs, passParentEnvs, pathList);
-    }
-
-    return envs;
-  }
-
 
   @ApiStatus.Internal
   public static void buildPythonPath(@NotNull Project project,
