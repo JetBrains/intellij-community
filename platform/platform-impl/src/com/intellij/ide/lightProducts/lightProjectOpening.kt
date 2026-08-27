@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.liteProducts
+package com.intellij.ide.lightProducts
 
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
@@ -34,7 +34,7 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.name
 import kotlin.time.Duration.Companion.seconds
 
-private val logger = Logger.getInstance("#com.intellij.ide.liteProducts.LiteProjectOpening")
+private val logger = Logger.getInstance("#com.intellij.ide.lightProducts.LightProjectOpening")
 
 private const val PROJECTS_DIR_NAME = "projects"
 
@@ -42,7 +42,7 @@ private const val PROJECTS_DIR_NAME = "projects"
  * Opens the project at [path] the way lightweight IDE products
  * (the JetBrains Client frontend and JetBrains Light) do:
  * the project settings are stored in a separate directory derived from [projectStoreSeed]
- * (see [createLiteProjectStoreDir]), the project is hidden from the recent projects list,
+ * (see [createLightProjectStoreDir]), the project is hidden from the recent projects list,
  * and closing its window does not show the welcome frame.
  *
  * [beforeInit] is invoked before the project is initialized, prior to associating the project with its Eel descriptor.
@@ -50,15 +50,15 @@ private const val PROJECTS_DIR_NAME = "projects"
  * a `null` result leaves the project without an Eel machine.
  */
 @ApiStatus.Internal
-suspend fun openLiteProject(
+suspend fun openProjectForLightProduct(
   path: Path,
   projectStoreSeed: String,
   beforeInit: (Project) -> Unit = {},
-  eelMachineInitializer: suspend (EelDescriptor) -> EelMachine? = ::defaultLiteEelMachineInitializer,
+  eelMachineInitializer: suspend (EelDescriptor) -> EelMachine? = ::defaultLightEelMachineInitializer,
 ): Project? {
   val eelDescriptor = path.getEelDescriptor()
 
-  val projectFile = createLiteProjectStoreDir(projectStoreSeed)
+  val projectFile = createLightProjectStoreDir(projectStoreSeed)
   val options = OpenProjectTask {
     isNewProject = !ProjectUtil.isValidProjectPath(projectFile)
     projectRootDir = if (path.isDirectory()) path else path.parent
@@ -98,12 +98,12 @@ suspend fun openLiteProject(
 }
 
 /**
- * Creates the directory where the settings of a lite project identified by [projectStoreSeed] are stored:
+ * Creates the directory where the settings of a light project identified by [projectStoreSeed] are stored:
  * either a persistent per-project directory (when `rdct.persist.project.settings` is enabled)
  * or a fresh temporary directory removed on IDE exit.
  */
 @ApiStatus.Internal
-fun createLiteProjectStoreDir(projectStoreSeed: String): Path {
+fun createLightProjectStoreDir(projectStoreSeed: String): Path {
   if (Registry.`is`("rdct.persist.project.settings", false)) {
     val projectHash = DigestUtil.sha1Hex(projectStoreSeed)
     return PathManager.getOriginalConfigDir().resolve(PROJECTS_DIR_NAME).resolve(projectHash).also {
@@ -116,7 +116,7 @@ fun createLiteProjectStoreDir(projectStoreSeed: String): Path {
 }
 
 @ApiStatus.Internal
-suspend fun defaultLiteEelMachineInitializer(descriptor: EelDescriptor): EelMachine? {
+suspend fun defaultLightEelMachineInitializer(descriptor: EelDescriptor): EelMachine? {
   logger.info("Initializing Eel for descriptor=$descriptor")
   val machine = withTimeoutOrNull(30.seconds) {
     try {
