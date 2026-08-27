@@ -2,15 +2,20 @@
 package com.intellij.diff.frontend.impl
 
 import com.intellij.diff.tools.fragmented.LineNumberConvertor
-import junit.framework.TestCase
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
-internal class FrontendUnifiedDiffSegmentMappingTest : TestCase() {
+@TestApplication
+internal class FrontendUnifiedDiffSegmentMappingTest {
+  @Test
   fun testUnchangedContent() {
     assertEquivalent(
       Segment(0, 0, 8, 8),
     )
   }
 
+  @Test
   fun testInsertedDeletedAndModifiedBlocks() {
     assertEquivalent(
       Segment(0, 0, 3, 3),
@@ -21,16 +26,19 @@ internal class FrontendUnifiedDiffSegmentMappingTest : TestCase() {
     )
   }
 
+  @Test
   fun testEmptySide() {
     assertEquivalent(
       Segment(0, 0, 5, 0),
     )
   }
 
+  @Test
   fun testEmptyContent() {
     assertEquivalent()
   }
 
+  @Test
   fun testFinalLineWithoutTrailingNewline() {
     assertEquivalent(
       Segment(0, 0, 1, 1),
@@ -46,10 +54,10 @@ internal class FrontendUnifiedDiffSegmentMappingTest : TestCase() {
     val mapping = FrontendUnifiedDiffSegmentMapping(convertor.ranges)
 
     for (line in -2..20) {
-      assertEquals("strict unified line $line", convertor.convert(line), mapping.unifiedToSide(line, strict = true))
-      assertEquals("approximate unified line $line", convertor.convertApproximate(line), mapping.unifiedToSide(line, strict = false))
-      assertEquals("strict side line $line", convertor.convertInv(line), mapping.sideToUnified(line, strict = true))
-      assertEquals("approximate side line $line", convertor.convertApproximateInv(line), mapping.sideToUnified(line, strict = false))
+      assertEquals(convertor.convert(line), mapping.unifiedToSide(line, strict = true), "strict unified line $line")
+      assertEquals(convertor.convertApproximate(line), mapping.unifiedToSide(line, strict = false), "approximate unified line $line")
+      assertEquals(convertor.convertInv(line), mapping.sideToUnified(line, strict = true), "strict side line $line")
+      assertEquals(convertor.convertApproximateInv(line), mapping.sideToUnified(line, strict = false), "approximate side line $line")
     }
   }
 
