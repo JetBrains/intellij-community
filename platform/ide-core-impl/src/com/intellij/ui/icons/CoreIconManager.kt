@@ -193,7 +193,9 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
 
   override fun createLayered(vararg icons: Icon): Icon = LayeredIcon.layeredIcon(icons)
 
-  override fun createIconWithOverlay(mainIcon: Icon, overlayIcon: Icon): Icon = iconWithAutoOverlay(mainIcon, overlayIcon)
+  override fun createIconWithOverlay(mainIcon: Icon, overlayIcon: Icon): Icon {
+    return IconWithAutoOverlayLowLevelFactory.createIconWithAutoOverlay(mainIcon, overlayIcon)
+  }
 
   override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon = IconUtil.getIcon(file, flags, project)
 
