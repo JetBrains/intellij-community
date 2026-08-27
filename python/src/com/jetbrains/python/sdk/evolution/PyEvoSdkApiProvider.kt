@@ -74,7 +74,6 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector
 import com.jetbrains.python.sdk.add.v2.EelFileSystem
@@ -94,6 +93,7 @@ import com.jetbrains.python.sdk.configuration.getSdkCreator
 import com.jetbrains.python.sdk.configurePythonSdk
 import com.jetbrains.python.sdk.evolution.PyEvoSdkApiImpl.rootScope
 import com.jetbrains.python.sdk.evolution.PyEvoSdkApiImpl.slowLoadThreshold
+import com.jetbrains.python.sdk.findPythonSdk
 import com.jetbrains.python.sdk.getAssignablePythonSdks
 import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.isAssociatedWithModule
@@ -356,9 +356,13 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
 
   override suspend fun getCurrentInterpreter(projectId: ProjectId, pyProjectKey: String): PyInterpreterDto? {
     val pyProject = resolvePyProject(projectId, pyProjectKey) ?: return null
-    val sdk = PythonSdkUtil.findPythonSdk(pyProject.module) ?: return null
-    // The current-interpreter display works with Eel-based interpreters; remote/target SDKs surface only in the associated list.
-    if (sdk.sdkAdditionalData is PyRemoteSdkAdditionalDataMarker) return null
+    // Waits for the project model, so a widget refresh during startup reads a configured SDK rather than the `null` a
+    // half-loaded SDK table answers with — one of the two ways the widget said "No interpreter" for a project that had
+    // one (PY-91871).
+    val sdk = pyProject.module.findPythonSdk() ?: return null
+    // The other way was here: a remote or target SDK (WSL, SSH, Docker) used to be left out, and is now reported like
+    // any other. Nothing below reads the interpreter's machine — the presentation is the label the classic widget
+    // shows, and the dependency file is resolved from the module.
     val presentation = sdk.pyInterpreterPresentation()
     // `PythonPackageManager.forSdk` reads `sdk.pySdkAdditionalData`, which throws on an SDK created without any —
     // "buggy code" per its own message. Test the precondition instead of catching: an IllegalStateException cannot be
@@ -398,8 +402,10 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
   override suspend fun listShortcuts(projectId: ProjectId, pyProjectKey: String): List<EvoLeafDto> {
     val pyProject = resolvePyProject(projectId, pyProjectKey) ?: return emptyList()
     val module = pyProject.module
-    // Only at setup time (no interpreter yet): listing evaluates every configurator, so we never do it once an SDK is set.
-    if (PythonSdkUtil.findPythonSdk(module) != null) return emptyList()
+    // Only at setup time (no interpreter yet): listing evaluates every configurator, so we never do it once an SDK is
+    // set. Waiting for the project model matters here too: a `null` read during startup offered a project that already
+    // had an interpreter the whole "Shortcuts" section (PY-91871).
+    if (module.findPythonSdk() != null) return emptyList()
     // Every setup option the IDE can offer for this module (the same set the "no interpreter configured" inspection
     // ranks), sorted best-first. A single tool can have several configurators with distinct tool ids but the same
     // suggestion (e.g. uv's "uv" and "uvBase" both offer "Set up uv environment"), so collapse by the visible label and
