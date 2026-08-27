@@ -318,7 +318,7 @@ class GhosttyTerminalSession internal constructor(
           // An idle tick (nothing changed, no force paint pending) costs one lock
           // acquisition and nothing else — no FFI reads.
           val forcePaint = consumeSyncOutputForcePaintLocked()
-          if (changedSinceLastProjection || forcePaint) {
+          if (changedSinceLastProjection || forcePaint || projector.isHistoryReplaced) {
             val events = syncLocked(bypassSyncOutputDeferral = forcePaint)
             if (events.isNotEmpty()) {
               emitOutputBlocking(events)
@@ -481,7 +481,11 @@ class GhosttyTerminalSession internal constructor(
 
     val change = emulator.takeChanges()
     val scrollbackRows = emulator.scrollbackRows
-    val contentChanged = change != ScreenChange.None || scrollbackRows != lastScrollbackRows
+    // isHistoryReplaced: the projector replaced the history with the screen alone and restores it on the
+    // first projection that finalizes nothing, so it has to run even when nothing changed.
+    val contentChanged = change != ScreenChange.None ||
+                         scrollbackRows != lastScrollbackRows ||
+                         projector.isHistoryReplaced
     lastScrollbackRows = scrollbackRows
 
     if (contentChanged) {

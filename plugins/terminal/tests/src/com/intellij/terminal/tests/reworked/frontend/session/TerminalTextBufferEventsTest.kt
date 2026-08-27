@@ -216,6 +216,25 @@ internal class TerminalTextBufferEventsTest(emulatorType: TerminalEmulatorType) 
     }
   }
 
+  @Test
+  fun `Ghostty restores the history once a burst stops, without any further output`() {
+    // A burst makes the projector report the screen alone, and it restores the history on the first
+    // projection that finalizes nothing. Nothing is written after the burst here, so that projection happens
+    // only because the session keeps projecting while the read is owed - otherwise the output stopping is
+    // exactly what stops the projection that would notice it.
+    assumeGhostty()
+    runSessionTest { _, connector, collector ->
+      connector.feed((0 until 2_000).joinToString("\r\n") { "line-$it" })
+
+      collector.awaitEvent<TerminalContentUpdatedEvent> {
+        it.startLineLogicalIndex == 0L && it.text.startsWith("line-0\n") && it.text.contains("line-1999")
+      }
+      val lines = collector.documentLines()
+      assertThat(lines.first()).isEqualTo("line-0")
+      assertThat(lines).contains("line-1999")
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // (4) Alternate screen buffer — scenarios of popular full-screen programs
   // ---------------------------------------------------------------------------

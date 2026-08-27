@@ -10,6 +10,8 @@ import com.intellij.terminal.emulator.TerminalColor
 import com.intellij.terminal.emulator.TerminalEmulator
 import com.intellij.terminal.emulator.TerminalRow
 import com.intellij.terminal.emulator.Underline
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.impl.dto.CursorShapeDto
 import org.jetbrains.plugins.terminal.session.impl.dto.MouseFormatDto
@@ -33,7 +35,9 @@ import org.jetbrains.plugins.terminal.session.impl.dto.TextStyleOptionDto
  * Not thread-safe: it reads the emulator, so every call must be serialized with all other emulator access —
  * in practice, every call is made under [GhosttyTerminalSession]'s lock.
  */
-internal class TerminalEmulatorOutputProjector(private val emulator: TerminalEmulator) {
+@ApiStatus.Internal
+@VisibleForTesting
+class TerminalEmulatorOutputProjector(private val emulator: TerminalEmulator) {
 
   // Measures rows finalized into scrollback since the last buildContentUpdate call. Created with the
   // emulator; closed on teardown.
@@ -44,6 +48,13 @@ internal class TerminalEmulatorOutputProjector(private val emulator: TerminalEmu
   private var screenTopLogical = 0L
 
   /**
+   * True, while the history is replaced by the active screen alone: exact tracking was lost, and reading the
+   * retained scrollback is deferred until the output stops. See buildContentUpdate.
+   */
+  var isHistoryReplaced: Boolean = false
+    private set
+
+  /**
    * Projects the buffer changes since the last call into a [TerminalContentUpdatedEvent], reading and emitting only
    * the changed tail — the scrollback lines finalized since the last call, followed by the active screen — instead
    * of the whole buffer. That is O(newlyScrolledLines + screenRows) rows per call rather than O(scrollbackRows),
@@ -52,11 +63,18 @@ internal class TerminalEmulatorOutputProjector(private val emulator: TerminalEmu
    *
    * [TerminalContentUpdatedEvent.startLineLogicalIndex] grows as lines scroll off into history ([screenTopLogical]),
    * as long as [historyMark] can report exactly how many rows were finalized since the last call — which it
-   * can as long as that count does not exceed what the scrollback currently retains. When it can't (a burst
-   * finalized more than the whole retained scrollback since the last call, whether from one write or many
-   * between two projection ticks), there is no way to keep the old numbering consistent with what is still
-   * retained, so this resets instead: [screenTopLogical] goes back to `0` and the event reports the *entire*
-   * currently retained scrollback plus the active screen as the new start of the output.
+   * can as long as that count does not exceed what the scrollback currently retains.
+   *
+   * Two things end that: the count exceeding the retained scrollback, which makes the old numbering
+   * unrecoverable, or one update finalizing more than [HISTORY_REPLACE_LINES] rows, where reading them all
+   * costs more than the content is worth. Either way this reports the active screen alone at index `0` and
+   * keeps doing that — cheap, bounded by the screen height — until an update finalizes *nothing*, meaning the
+   * output stopped. It then reads the retained scrollback once and resumes exact tracking. Waiting for a full
+   * stop, rather than for the output to merely slow down, keeps the one expensive read out of the burst.
+   *
+   * The trade-off: as long as anything keeps scrolling (output arrives faster than [OUTPUT_POLL_INTERVAL]),
+   * the model holds only the visible screen, so steady output that never pauses keeps its scrollback hidden until it does.
+   * But it should be an exceptional case when - even if it adds one line every 20ms, it is still 50 new lines a second.
    */
   fun buildContentUpdate(): TerminalContentUpdatedEvent {
     val screenRows = emulator.size.rows
@@ -66,8 +84,37 @@ internal class TerminalEmulatorOutputProjector(private val emulator: TerminalEmu
     historyMark.reset()
 
     val canTrackExactly = finalizedSinceLastEmit in 0..curScrollbackRows
-    var fromH = if (canTrackExactly) curScrollbackRows - finalizedSinceLastEmit else 0
-    val startLogical = if (canTrackExactly) screenTopLogical else 0L
+    // Nothing at all scrolled since the last update.
+    val outputStopped = finalizedSinceLastEmit == 0
+    val tooMuchToRead = finalizedSinceLastEmit > HISTORY_REPLACE_LINES
+
+    // This update's window: where it starts in scrollback, and the absolute index that start maps to.
+    var fromH: Int
+    val startLogical: Long
+    when {
+      // The history is already replaced, and the output has not stopped: keep reporting the screen alone.
+      isHistoryReplaced && !outputStopped -> {
+        fromH = curScrollbackRows
+        startLogical = 0L
+      }
+      // The output stopped: read the retained scrollback once and resume exact tracking.
+      isHistoryReplaced -> {
+        isHistoryReplaced = false
+        fromH = 0
+        startLogical = 0L
+      }
+      // Either the numbering is unrecoverable, or this window is simply too big to be worth reading.
+      !canTrackExactly || tooMuchToRead -> {
+        isHistoryReplaced = true
+        fromH = curScrollbackRows
+        startLogical = 0L
+      }
+      // Normal scenario: report the changed tail
+      else -> {
+        fromH = curScrollbackRows - finalizedSinceLastEmit
+        startLogical = screenTopLogical
+      }
+    }
     // A soft-wrapped logical line can straddle that boundary: its first rows were finalized by an earlier emit and
     // the rest only now. [startLineLogicalIndex] addresses whole logical lines, and the model replaces from the
     // start of that line, so a tail that began mid-line would truncate it to its last rows. Back up to the line's
@@ -258,3 +305,10 @@ internal class TerminalEmulatorOutputProjector(private val emulator: TerminalEmu
     MouseEncoding.URXVT -> MouseFormatDto.MOUSE_FORMAT_URXVT
   }
 }
+
+/**
+ * How many rows one update may finalize before the projector stops reading the history and reports the active
+ * screen alone (see [TerminalEmulatorOutputProjector.buildContentUpdate]). Above this, reading the newly
+ * finalized rows costs more than the content is worth: under a burst it is about to scroll out anyway.
+ */
+private const val HISTORY_REPLACE_LINES = 1000
