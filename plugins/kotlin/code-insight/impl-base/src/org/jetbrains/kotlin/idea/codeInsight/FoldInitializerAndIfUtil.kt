@@ -13,16 +13,17 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.diagnostics
-import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.types.classId
-import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.components.returnType
-import org.jetbrains.kotlin.analysis.api.types.type
-import org.jetbrains.kotlin.analysis.api.types.withNullability
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.type
+import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.expressionComparedToNull
@@ -60,7 +61,7 @@ data class FoldInitializerAndIfExpressionData(
 )
 
 @ApiStatus.Internal
-@OptIn(KaExperimentalApi::class)
+@OptIn(KaExperimentalApi::class, KaUnstableDiagnosticApi::class)
 context(_: KaSession)
 fun prepareData(element: KtIfExpression, enforceNonNullableTypeIfPossible: Boolean = false): FoldInitializerAndIfExpressionData? {
     if (element.`else` != null) return null

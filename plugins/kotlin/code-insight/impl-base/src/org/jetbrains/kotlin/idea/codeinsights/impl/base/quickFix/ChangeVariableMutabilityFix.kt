@@ -8,6 +8,7 @@ import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
@@ -55,6 +56,7 @@ class ChangeVariableMutabilityFix(
         }
     }
 
+    @OptIn(KaUnstableDiagnosticApi::class)
     companion object {
 
         val VAL_WITH_SETTER_FACTORY: QuickFixesPsiBasedFactory<KtPropertyAccessor> =

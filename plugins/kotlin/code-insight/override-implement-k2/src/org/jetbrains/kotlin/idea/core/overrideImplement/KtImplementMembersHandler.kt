@@ -10,10 +10,11 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableImplementationState
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi
 import org.jetbrains.kotlin.analysis.api.scopes.memberScope
 import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableImplementationState
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -104,6 +105,7 @@ internal class KtImplementAsConstructorParameterQuickfix(private val members: Co
     }
 }
 
+@OptIn(KaUnstableDiagnosticApi::class)
 object MemberNotImplementedQuickfixFactories {
 
     val abstractMemberNotImplemented: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.AbstractMemberNotImplemented> =

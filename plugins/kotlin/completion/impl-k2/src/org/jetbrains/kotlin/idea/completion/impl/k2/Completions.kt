@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi
 import org.jetbrains.kotlin.analysis.api.resolution.KaApplicableCallCandidateInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaInapplicableCallCandidateInfo
@@ -131,6 +132,7 @@ internal fun KotlinUnknownPositionContext.isAfterRangeToken(): Boolean {
  * @return `true` if the context is after a double dot (`..`) not associated with a `rangeTo` operation,
  *         otherwise `false`.
  */
+@OptIn(KaUnstableDiagnosticApi::class)
 context(_: KaSession)
 internal fun KotlinRawPositionContext.isAfterRangeOperator(): Boolean {
     if (this !is KotlinExpressionNameReferencePositionContext) return false

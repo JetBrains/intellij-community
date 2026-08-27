@@ -16,20 +16,21 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
-import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
-import org.jetbrains.kotlin.analysis.api.types.createInheritanceTypeSubstitutor
-import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
-import org.jetbrains.kotlin.analysis.api.visibility.isVisibleInClass
+import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi
 import org.jetbrains.kotlin.analysis.api.javaInterop.namedClassSymbol
 import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.components.returnType
-import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.createInheritanceTypeSubstitutor
+import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.analysis.api.visibility.isVisibleInClass
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinPsiElementMemberChooserObject
@@ -90,6 +91,7 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
             superClassSymbol.classKind == KaClassKind.CLASS && superClassSymbol.classId != StandardClassIds.Any && superClassSymbol.classId != StandardClassIds.Enum
         }
 
+    @OptIn(KaUnstableDiagnosticApi::class)
     context(_: KaSession)
     private fun KtProperty.isPropertyNotInitialized(): Boolean {
         // TODO: when KT-63221 is fixed use `diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)` instead

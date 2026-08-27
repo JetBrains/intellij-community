@@ -1,4 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(KaUnstableDiagnosticApi::class)
+
 package org.jetbrains.kotlin.j2k.postProcessings
 
 import com.intellij.psi.PsiElement
@@ -13,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.UnsafeC
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.UnsafeInfixCall
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.UnsafeOperatorCall
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.UselessCast
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi
 import org.jetbrains.kotlin.idea.base.psi.isNullExpression
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddExclExclCallFixFactories
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.TypeMismatchFactories
