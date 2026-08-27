@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.execution.build.output;
 
 import com.intellij.build.output.BuildOutputParser;
+import com.intellij.build.output.GroovycOutputParser;
 import com.intellij.build.output.JavacOutputParser;
 import com.intellij.build.output.KotlincOutputParser;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -33,6 +34,7 @@ public final class GradleOutputParserProvider implements ExternalSystemOutputPar
     parsers.add(new GradleBuildScriptErrorParser());
     parsers.add(new JavacOutputParser("java", "scala"));
     parsers.add(new KotlincOutputParser());
+    parsers.add(new GroovycOutputParser());
     return parsers;
   }
 }
