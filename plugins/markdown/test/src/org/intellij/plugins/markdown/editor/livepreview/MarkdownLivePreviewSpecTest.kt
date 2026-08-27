@@ -150,6 +150,26 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertTrue(breaks.all { it.range.length > 0 })
   }
 
+  fun testFrontMatterDelimitersAndThematicBreaksAreConcealed() {
+    val content = """
+      |---
+      |name: valid-skill
+      |description: Does useful work.
+      |---
+      |
+      |---
+      |***
+      |___
+      |tail
+    """.trimMargin()
+    val breaks = elements(content).filterIsInstance<MarkdownLivePreviewSpec.HorizontalRule>()
+
+    assertEquals(
+      listOf("---", "---", "---", "***", "___"),
+      breaks.map { content.substring(it.range.startOffset, it.range.endOffset) },
+    )
+  }
+
   private fun MarkdownLivePreviewSpec.concealedRanges(): List<TextRange> = when (this) {
     is MarkdownLivePreviewSpec.Conceal -> conceals
     is MarkdownLivePreviewSpec.HorizontalRule -> listOf(range)

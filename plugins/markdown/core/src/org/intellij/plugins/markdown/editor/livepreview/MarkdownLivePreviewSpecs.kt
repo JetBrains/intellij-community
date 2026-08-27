@@ -76,6 +76,7 @@ private fun PsiElement.toDecorationSpecs(): MarkdownLivePreviewSpec? {
     in LeafAutolinkTypes -> toAutolinkSpecs()
     MarkdownTokenTypes.LIST_BULLET -> toBulletSpec()
     MarkdownTokenTypes.HORIZONTAL_RULE -> toHorizontalRuleSpec()
+    MarkdownElementTypes.FRONT_MATTER_HEADER_DELIMITER -> toFrontMatterDelimiterSpec()
     MarkdownTokenTypes.SETEXT_2 -> toSetextCodeSpanUnderlineSpec()
     else -> null
   }
@@ -110,6 +111,10 @@ private fun PsiElement.toSetextCodeSpanUnderlineSpec(): MarkdownLivePreviewSpec?
 
 private fun PsiElement.toHorizontalRuleSpec(): MarkdownLivePreviewSpec.HorizontalRule {
   return MarkdownLivePreviewSpec.HorizontalRule(wholeLineRange() ?: textRange)
+}
+
+private fun PsiElement.toFrontMatterDelimiterSpec(): MarkdownLivePreviewSpec? {
+  return if (text.all { it == '-' }) toHorizontalRuleSpec() else null
 }
 
 private fun PsiElement.wholeLineRange(): TextRange? {

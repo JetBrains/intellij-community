@@ -259,6 +259,33 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
   }
 
   @Test
+  fun testFrontMatterDelimitersAndThematicBreakUseRuleDecorations() {
+    val content = """
+      |---
+      |name: valid-skill
+      |description: Does useful work.
+      |---
+      |
+      |---
+      |tail
+    """.trimMargin()
+    configure("$content<caret>")
+
+    assertEquals(3, thematicBreakHighlighters().size)
+    assertEquals(listOf("---", "---", "---"), concealed())
+    assertEquals(content, myFixture.editor.document.text)
+
+    val bodyRule = thematicBreakHighlighters().last()
+    moveCaretTo(bodyRule.startOffset)
+    assertEquals(listOf("---", "---"), concealed())
+    assertEquals(2, thematicBreakHighlighters().size)
+
+    moveCaretTo(content.length)
+    assertEquals(listOf("---", "---", "---"), concealed())
+    assertEquals(3, thematicBreakHighlighters().size)
+  }
+
+  @Test
   fun testStandaloneLocalImageRendersAndRevealsItsSource() {
     addPng(120, 60)
     val content = "![alt](image.png)\n\ntail"
