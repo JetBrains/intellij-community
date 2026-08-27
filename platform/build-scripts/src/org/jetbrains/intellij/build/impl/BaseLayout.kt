@@ -58,8 +58,6 @@ sealed class BaseLayout {
 
   fun hasLibrary(name: String): Boolean = includedProjectLibraries.any { it.libraryName == name }
 
-  fun findProjectLibrary(name: String): ProjectLibraryData? = includedProjectLibraries.firstOrNull { it.libraryName == name }
-
   fun filteredIncludedModuleNames(excludedRelativeJarPath: String, includeFromSubdirectories: Boolean = true): Sequence<String> {
     return _includedModules.asSequence().filter {
       it.relativeOutputFile != excludedRelativeJarPath && (includeFromSubdirectories || !it.relativeOutputFile.contains('/')) 

@@ -18,27 +18,14 @@ import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 class PlatformLayout(@JvmField val descriptorCacheContainer: DescriptorCacheContainer = DescriptorCacheContainer()) : BaseLayout() {
   internal var libAsProductModule: Set<String> = emptySet()
 
-  private val projectLibraryToPolicy: MutableMap<String, ProjectLibraryPackagingPolicy> = HashMap()
+  private val excludedProjectLibraries: MutableSet<String> = HashSet()
   private val productModuleOutputFileOverrides: MutableMap<String, String> = HashMap()
-
-  internal enum class ProjectLibraryPackagingPolicy {
-    EXCLUDE,
-    ALWAYS_PACK_TO_PLUGIN,
-  }
 
   fun hasLibrary(name: String, moduleName: String): Boolean {
     return super.hasLibrary(name) || (!moduleName.startsWith(LIB_MODULE_PREFIX) && libAsProductModule.contains(name))
   }
 
-  fun isProjectLibraryExcluded(name: String): Boolean = projectLibraryToPolicy.get(name) == ProjectLibraryPackagingPolicy.EXCLUDE
-
-  internal fun alwaysPackToPlugin(names: List<String>) {
-    for (name in names) {
-      projectLibraryToPolicy.put(name, ProjectLibraryPackagingPolicy.ALWAYS_PACK_TO_PLUGIN)
-    }
-  }
-
-  fun isLibraryAlwaysPackedIntoPlugin(name: String): Boolean = projectLibraryToPolicy.get(name) == ProjectLibraryPackagingPolicy.ALWAYS_PACK_TO_PLUGIN
+  fun isProjectLibraryExcluded(name: String): Boolean = excludedProjectLibraries.contains(name)
 
   override fun getRelativeJarPath(moduleName: String): String = APP_BACKEND_JAR
 
@@ -63,6 +50,6 @@ class PlatformLayout(@JvmField val descriptorCacheContainer: DescriptorCacheCont
   internal fun getProductModuleOutputFile(moduleName: String): String? = productModuleOutputFileOverrides.get(moduleName)
 
   fun withoutProjectLibrary(libraryName: String) {
-    projectLibraryToPolicy.put(libraryName, ProjectLibraryPackagingPolicy.EXCLUDE)
+    excludedProjectLibraries.add(libraryName)
   }
 }

@@ -245,8 +245,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: Map<Str
   for ((libName, dependentModules) in projectLibrariesUsedByPlugins) {
     if (layout.hasLibrary(libName) ||
         libAsProductModule.contains(libName) ||
-        layout.isProjectLibraryExcluded(libName) ||
-        layout.isLibraryAlwaysPackedIntoPlugin(libName)) {
+        layout.isProjectLibraryExcluded(libName)) {
       continue
     }
 

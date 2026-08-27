@@ -565,49 +565,40 @@ class JarPackager private constructor(
     val excludedModuleLibraries = if (layout is PluginLayout) layout.excludedModuleLibraries.get(moduleName) ?: emptyList() else emptyList()
     val excludedProjectLibraries = if (layout is PluginLayout) layout.excludedProjectLibraries else emptySet()
     for (element in helper.getLibraryDependencies(module, withTests = withTests)) {
-      var projectLibraryData: ProjectLibraryData? = null
       val libRef = element.libraryReference
       val isProjectLibrary = libRef.parentReference !is JpsModuleReference
+      val projectLibraryData: ProjectLibraryData?
       if (isProjectLibrary) {
         val libName = libRef.libraryName
         if (excludedProjectLibraries.contains(libName)) {
           continue
         }
 
-        if (includeProjectLib || (isAutoPlugin && IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST.contains(libName))) {
-          if (platformLayout!!.hasLibrary(libName, moduleName) || layout.hasLibrary(libName)) {
-            continue
-          }
-
-          if (helper.hasLibraryInDependencyChainOfModuleDependencies(dependentModule = module, libraryName = libName, siblings = layout.includedModules, withTests = withTests)) {
-            continue
-          }
-
-          if (layout !is PluginLayout && item.isProductModule()) {
-            projectLibraryData = ProjectLibraryData(libraryName = libName, owner = item, reason = null)
-          }
-          else {
-            projectLibraryData = ProjectLibraryData(libraryName = libName, reason = "<- $moduleName", owner = item)
-          }
-        }
-        else if (platformLayout != null && platformLayout.isLibraryAlwaysPackedIntoPlugin(libName)) {
-          platformLayout.findProjectLibrary(libName)?.let {
-            throw IllegalStateException("Library $libName must not be included into platform layout: $it")
-          }
-
-          if (layout.hasLibrary(libName)) {
-            continue
-          }
-
-          projectLibraryData = ProjectLibraryData(libraryName = libName, reason = "<- $moduleName (always packed into plugin)", owner = item)
-        }
-        else {
+        if (!includeProjectLib && !(isAutoPlugin && IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST.contains(libName))) {
           if (isAutoPlugin &&
               !isProjectLibraryProvided(libName = libName, layout = layout, module = module, withTests = withTests)) {
             implicitProjectLibraryViolations.computeIfAbsent(libName) { TreeSet() }.add(moduleName)
           }
           continue
         }
+
+        if (platformLayout!!.hasLibrary(libName, moduleName) || layout.hasLibrary(libName)) {
+          continue
+        }
+
+        if (helper.hasLibraryInDependencyChainOfModuleDependencies(dependentModule = module, libraryName = libName, siblings = layout.includedModules, withTests = withTests)) {
+          continue
+        }
+
+        projectLibraryData = if (layout !is PluginLayout && item.isProductModule()) {
+          ProjectLibraryData(libraryName = libName, owner = item, reason = null)
+        }
+        else {
+          ProjectLibraryData(libraryName = libName, reason = "<- $moduleName", owner = item)
+        }
+      }
+      else {
+        projectLibraryData = null
       }
 
       val library = requireNotNull(element.library) { "cannot find $libRef" }
