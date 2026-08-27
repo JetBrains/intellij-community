@@ -22,7 +22,6 @@ import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.vcsUtil.VcsUtil
@@ -44,6 +43,10 @@ import git4idea.workingTrees.dialog.GitWorktreeDialogContext
 import git4idea.workingTrees.dialog.WorktreeBranchSpec
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.nio.file.Files
@@ -124,10 +127,13 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
     PropertiesComponent.getInstance(project).setValue(LAST_PARENT_PATH_KEY, path)
   }
 
-  private val rootsUnderCreation = ContainerUtil.newConcurrentSet<FilePath>()
+  private val _pendingCreations = MutableStateFlow<Map<FilePath, GitWorktreePendingCreation>>(emptyMap())
+
+  /** Worktrees whose `git worktree add` is still running, keyed by target path; feeds the tab's synthetic "creating" rows. */
+  val pendingCreations: StateFlow<Map<FilePath, GitWorktreePendingCreation>> = _pendingCreations.asStateFlow()
 
   internal fun isWorkingTreeCreationInProgress(workingTree: GitWorkingTree): Boolean {
-    return rootsUnderCreation.contains(workingTree.path)
+    return _pendingCreations.value.containsKey(workingTree.path)
   }
 
   internal fun collectDataAndCreateWorkingTree(
@@ -242,12 +248,13 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
     force: Boolean,
     reportOwnProgress: Boolean,
   ): GitWorkingTreesService.Result {
-    rootsUnderCreation.add(request.workingTreePath)
+    val pending = GitWorktreePendingCreation.from(request)
+    _pendingCreations.update { it + (request.workingTreePath to pending) }
     try {
       return gitWTService.createWorkingTree(request, force, reportOwnProgress)
     }
     finally {
-      rootsUnderCreation.remove(request.workingTreePath)
+      _pendingCreations.update { it - request.workingTreePath }
     }
   }
 
