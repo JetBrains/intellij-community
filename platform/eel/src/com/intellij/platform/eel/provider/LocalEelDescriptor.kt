@@ -3,6 +3,7 @@ package com.intellij.platform.eel.provider
 
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.eel.osNameAsEelOsFamily
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -10,10 +11,6 @@ data object LocalEelDescriptor : EelDescriptor {
   override val name: String = "Local: ${System.getProperty("os.name")}"
 
   override val osFamily: EelOsFamily by lazy {
-    val osName = System.getProperty("os.name").lowercase()
-    when {
-      osName.startsWith("windows") -> EelOsFamily.Windows
-      else -> EelOsFamily.Posix
-    }
+    System.getProperty("os.name").osNameAsEelOsFamily()
   }
 }

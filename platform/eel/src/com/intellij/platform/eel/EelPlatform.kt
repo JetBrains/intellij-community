@@ -173,3 +173,12 @@ val EelOsFamily.pathSeparator: String
     EelOsFamily.Posix -> ":"
     EelOsFamily.Windows -> ";"
   }
+
+@ApiStatus.Experimental
+fun String.osNameAsEelOsFamily(): EelOsFamily {
+  val osName = this.lowercase()
+  return when {
+    osName.startsWith("windows") -> EelOsFamily.Windows
+    else -> EelOsFamily.Posix
+  }
+}
