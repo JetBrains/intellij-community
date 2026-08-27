@@ -183,7 +183,7 @@ public final class UnnecessaryFullyQualifiedNameInspection extends BaseInspectio
       final PsiDocComment containingComment = PsiTreeUtil.getParentOfType(reference, PsiDocComment.class);
       if (containingComment != null) {
         final PsiFile file = reference.getContainingFile();
-        if ("package-info.java".equals(file.getName())) {
+        if (PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
           return;
         }
         final JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(reference.getContainingFile());
@@ -321,7 +321,7 @@ public final class UnnecessaryFullyQualifiedNameInspection extends BaseInspectio
     }
 
     private static boolean acceptFqnInJavadoc(PsiJavaFile javaFile, CodeStyleSettings styleSettings) {
-      if ("package-info.java".equals(javaFile.getName())) {
+      if (PsiPackage.PACKAGE_INFO_FILE.equals(javaFile.getName())) {
         return true;
       }
       return styleSettings.getCustomSettings(JavaCodeStyleSettings.class).useFqNamesInJavadocAlways();

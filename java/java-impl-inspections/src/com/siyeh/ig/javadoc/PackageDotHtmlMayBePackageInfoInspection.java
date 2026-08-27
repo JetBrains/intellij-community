@@ -168,7 +168,7 @@ public final class PackageDotHtmlMayBePackageInfoInspection extends BaseInspecti
       if (aPackage == null) {
         return;
       }
-      final boolean exists = directory.findFile("package-info.java") != null;
+      final boolean exists = directory.findFile(PsiPackage.PACKAGE_INFO_FILE) != null;
       registerError(psiFile, aPackage, exists);
     }
   }

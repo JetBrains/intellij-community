@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -526,7 +526,7 @@ public final class JavaDocUtil {
   }
 
   public static boolean isInsidePackageInfo(@Nullable PsiDocComment containingComment) {
-    return containingComment != null && "package-info.java".equals(containingComment.getContainingFile().getName());
+    return containingComment != null && PsiPackage.PACKAGE_INFO_FILE.equals(containingComment.getContainingFile().getName());
   }
 
   public static boolean isDanglingDocComment(@NotNull PsiDocComment comment, boolean ignoreCopyright) {

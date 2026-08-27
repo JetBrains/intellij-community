@@ -34,6 +34,7 @@ import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.psi.PsiMethodReferenceUtil;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiParserFacade;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiStatement;
@@ -525,7 +526,7 @@ final class FieldExtractor {
       if (FileTypeUtils.isInServerPageFile(file)) {
         return JavaRefactoringBundle.message("error.not.supported.for.jsp", helper.getRefactoringName());
       }
-      else if ("package-info.java".equals(file.getName())) {
+      else if (PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
         return JavaRefactoringBundle.message("error.not.supported.for.package.info", helper.getRefactoringName());
       }
     }

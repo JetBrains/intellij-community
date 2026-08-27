@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.ReadAction;
@@ -98,7 +98,7 @@ public final class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage
 
     @Override
     public boolean contains(final @NotNull VirtualFile file) {
-      return "package-info.java".equals(file.getName());
+      return PsiPackage.PACKAGE_INFO_FILE.equals(file.getName());
     }
 
     @Override

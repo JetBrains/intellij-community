@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.javadoc;
 
 import com.intellij.analysis.AnalysisScope;
@@ -105,7 +105,7 @@ public final class MissingPackageInfoInspection extends PackageGlobalInspection 
 
         @Override
         public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-          Icon icon = FileTypeRegistry.getInstance().getFileTypeByFileName("package-info.java").getIcon();
+          Icon icon = FileTypeRegistry.getInstance().getFileTypeByFileName(PsiPackage.PACKAGE_INFO_FILE).getIcon();
           HtmlChunk fragment = HtmlChunk.fragment(HtmlChunk.text(getFamilyName()), HtmlChunk.icon("file", icon));
           return new IntentionPreviewInfo.Html(fragment);
         }
