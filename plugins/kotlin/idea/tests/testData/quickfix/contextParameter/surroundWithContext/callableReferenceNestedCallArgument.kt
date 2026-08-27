@@ -1,0 +1,15 @@
+// "Surround call with 'context(TODO())'" "true"
+// COMPILER_ARGUMENTS: -Xcontext-parameters -Xcallable-references-to-contextual
+// K2_ERROR: CANNOT_INFER_PARAMETER_TYPE
+// K2_ERROR: NONE_APPLICABLE
+// K2_ERROR: NO_CONTEXT_ARGUMENT
+context(x: String)
+fun shout(): String {
+    return x.uppercase() + "!"
+}
+
+fun main() {
+    run { println(::shout<caret>) }
+}
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.SurroundCallWithContextFix

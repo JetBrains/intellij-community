@@ -1,0 +1,14 @@
+// "Surround call with 'context(TODO())'" "true"
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// K2_ERROR: NO_CONTEXT_ARGUMENT
+context(x: String)
+fun shout(): String {
+    return x.uppercase() + "!"
+}
+
+fun main() {
+    val result = context(TODO("Provide String") as String) { "prefix: " + shout() }
+    println(result)
+}
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.SurroundCallWithContextFix

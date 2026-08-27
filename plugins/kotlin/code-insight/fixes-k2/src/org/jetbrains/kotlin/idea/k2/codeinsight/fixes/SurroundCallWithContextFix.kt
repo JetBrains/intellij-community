@@ -7,9 +7,14 @@ import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
+import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtReturnExpression
+import org.jetbrains.kotlin.psi.KtThrowExpression
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal class SurroundCallWithContextFix(
     element: KtExpression,
@@ -23,16 +28,17 @@ internal class SurroundCallWithContextFix(
 
     override fun invoke(context: ActionContext, element: KtExpression, updater: ModPsiUpdater) {
         val psiFactory = KtPsiFactory(context.project)
+        val target = element.getExpressionToSurround()
         val expressionText = buildString {
             append(wrapper.keyword)
             append('(')
             arguments.joinTo(this) { it.renderExpression() }
             append(')')
-            append("{ ${element.text} }")
+            append("{ ${target.text} }")
         }
         val newExpression = psiFactory.createExpression(expressionText)
         shortenReferences(newExpression)
-        val replaced = element.replace(newExpression) as? KtCallExpression ?: return
+        val replaced = target.replace(newExpression) as? KtCallExpression ?: return
 
         val todoExpressions = replaced.valueArguments.zip(arguments)
             .mapNotNull { (valueArgument, argument) ->
@@ -43,6 +49,17 @@ internal class SurroundCallWithContextFix(
         val templateBuilder = updater.templateBuilder()
         for (todoExpression in todoExpressions) {
             templateBuilder.field(todoExpression, todoExpression.text)
+        }
+    }
+
+    private fun KtExpression.getExpressionToSurround(): KtExpression {
+        var current = this
+        while (true) {
+            val parent = current.getStrictParentOfType<KtExpression>() ?: return current
+            if (parent is KtDeclaration|| parent is KtBlockExpression || parent is KtReturnExpression ||
+                parent is KtThrowExpression
+            ) return current
+            current = parent
         }
     }
 
