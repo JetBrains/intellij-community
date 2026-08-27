@@ -2,6 +2,8 @@
 package org.jetbrains.intellij.build.dev
 
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.intellij.build.impl.BazelBuildInputs
+import org.jetbrains.intellij.build.impl.checkProducedPluginDescriptor
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -137,6 +139,63 @@ class DevDistPluginDescriptorTest {
     assertThatThrownBy { parseDevDistPluginDescriptorRequest(listOf("--tomorrow=1")) }
       .isInstanceOf(IllegalArgumentException::class.java)
       .hasMessageContaining("--tomorrow")
+  }
+
+  /**
+   * The seam a fragment reads the produced descriptor through, and the guard on what it read.
+   *
+   * The guard is what replaces the byte comparison the descriptor gate loses for these plugins: once a fragment reads
+   * the produced file, the gate holds that plugin out rather than compare the file against a record of itself. So the
+   * three cases below are the negative control of the guard, and the accepted arm is the reference.
+   */
+  @Test
+  fun `a produced descriptor whose stamps agree is accepted`() {
+    checkProducedPluginDescriptor(
+      mainModule = MAIN_MODULE,
+      content = REFERENCE,
+      pluginVersion = "263.20260101.0",
+      compatibleSinceUntil = "263.SNAPSHOT" to "263.SNAPSHOT",
+    )
+  }
+
+  @Test
+  fun `a produced descriptor whose version is not this assembly's is refused`() {
+    assertThatThrownBy {
+      checkProducedPluginDescriptor(
+        mainModule = MAIN_MODULE,
+        content = REFERENCE,
+        pluginVersion = "263.20260102.0",
+        compatibleSinceUntil = "263.SNAPSHOT" to "263.SNAPSHOT",
+      )
+    }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining(MAIN_MODULE)
+      .hasMessageContaining("263.20260102.0")
+  }
+
+  @Test
+  fun `a produced descriptor whose compatibility range is not this assembly's is refused`() {
+    assertThatThrownBy {
+      checkProducedPluginDescriptor(
+        mainModule = MAIN_MODULE,
+        content = REFERENCE,
+        pluginVersion = "263.20260101.0",
+        compatibleSinceUntil = "263.1" to "263.*",
+      )
+    }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining("since-build='263.1'")
+  }
+
+  /**
+   * With no input manifest there is no declaration to read, so every plugin takes the computed path.
+   *
+   * Required and not cosmetic: the key is not a Bazel label, so the runfiles fallback the other probe takes would throw
+   * on it. The in-process dev assembly runs with no manifest.
+   */
+  @Test
+  fun `no produced descriptor is found without an input manifest`() {
+    assertThat(BazelBuildInputs.producedPluginDescriptorIfDeclared(MAIN_MODULE)).isNull()
   }
 
   private fun patch(request: DevDistPluginDescriptorRequest): String = runBlocking {

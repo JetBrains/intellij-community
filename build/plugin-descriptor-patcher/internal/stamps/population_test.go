@@ -216,12 +216,23 @@ func TestThePopulationRoundTripsAndStampsByteForByte(t *testing.T) {
 	}
 	sort.Slice(cases, func(i int, j int) bool { return cases[i].name < cases[j].name })
 
+	// A record the fragment read from a produced descriptor holds no stage text at all, so there is nothing here to
+	// compare. Such a record is skipped by name and counted, never failed: it is a legitimate arm of the assembly and
+	// not a damaged artifact. What it costs is coverage, which is why the count is printed.
+	skipped := 0
+
 	roundTrip := &arm{name: "rawTextPatcher -> reserialized"}
 	stamped := &arm{name: "reserialized -> stamps"}
 	// The class (a) arm is not a mirror: `patched` is the text a real assembly wrote into the plugin's main jar.
 	assembled := &arm{name: "stamps against patched"}
 	for _, it := range cases {
 		t.Run(it.name, func(t *testing.T) {
+			if it.plugin.Origin == originProduced {
+				skipped++
+				t.Skip("the fragment read this descriptor from a produced file, so the artifact holds no stage of " +
+					"the patch. Empty the product entry of build/dev_dist_plugin_descriptors.bzl and rebuild to " +
+					"cover it here")
+			}
 			source, states := it.plugin.stageText(stageRawTextPatcher)
 			if !states {
 				t.Fatal("the artifact holds no `rawTextPatcher` text, so this record states no input")
@@ -249,8 +260,11 @@ func TestThePopulationRoundTripsAndStampsByteForByte(t *testing.T) {
 			}
 		})
 	}
-	roundTrip.report(t, len(cases))
-	stamped.report(t, len(cases))
+	if skipped != 0 {
+		t.Logf("%-28s %3d records, which the fragment read from a produced descriptor", "skipped", skipped)
+	}
+	roundTrip.report(t, len(cases)-skipped)
+	stamped.report(t, len(cases)-skipped)
 	assembled.report(t, assembled.same+assembled.different+assembled.absent)
 }
 

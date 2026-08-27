@@ -27,6 +27,66 @@ DevDistPluginDescriptorInfo = provider(
     },
 )
 
+# The manifest key a fragment reads a produced descriptor under. Its own namespace: every other key of the input
+# manifest is a Bazel label string, so it starts with `@` or `//`, and a module jar's key also ends in `.jar`. This one
+# starts with a word and holds no `//`, so it can collide with nothing already there.
+#
+# Written once here and once in Kotlin, in `BazelBuildInputs.producedPluginDescriptorIfDeclared`. Both spellings name
+# each other, because a drift between them reads as "no descriptor was declared" and the patch then runs as before.
+DEV_DIST_DESCRIPTOR_KEY_PREFIX = "dev-dist-descriptor:"
+
+DevDistPluginDescriptorSetInfo = provider(
+    doc = """The produced descriptors of one fragment of one product.
+
+    A set target and not a `label_list` on the fragment, for two reasons the plan states. A descriptor target is
+    per (plugin, product), and 16 of the 43 plugins have their main module in `@community//` while these targets are
+    root-repository ones - so the plugin's own package cannot name its own descriptor target. And `//build` cannot
+    compute which fragment lays out which plugin: the generated plan holds that partition, and it lives in this
+    package.""",
+    fields = {
+        "descriptors": "A depset of `struct(plugin_main_module, descriptor)`, one per plugin the fragment patches.",
+    },
+)
+
+def _dev_dist_plugin_descriptor_set_impl(ctx):
+    return [
+        DevDistPluginDescriptorSetInfo(
+            descriptors = depset([
+                struct(
+                    plugin_main_module = target[DevDistPluginDescriptorInfo].plugin_main_module,
+                    descriptor = target[DevDistPluginDescriptorInfo].descriptor,
+                )
+                for target in ctx.attr.descriptors
+            ]),
+        ),
+    ]
+
+_dev_dist_plugin_descriptor_set = rule(
+    doc = "One fragment's produced plugin descriptors, as the one label a fragment declares.",
+    implementation = _dev_dist_plugin_descriptor_set_impl,
+    attrs = {
+        "descriptors": attr.label_list(
+            doc = """The `dev_dist_plugin_descriptor` targets of the plugins this fragment lays out.
+
+The provider gate is the whole check, for `prepacked_content_modules`' reason: a target that produces no descriptor has
+no plugin to name, and Bazel must refuse it at analysis rather than a reader a whole build later.""",
+            providers = [DevDistPluginDescriptorInfo],
+        ),
+    },
+)
+
+def dev_dist_plugin_descriptor_set_target_name(platform_prefix, fragment_name):
+    """This set's target name - `("idea", "plugins_rest")` gives `"idea_plugins_rest_descriptors"`.
+
+    Public because two packages write it: this one declares the target, and `//build` names it on the fragment. It is
+    spelled the way `dev_dist_content_sets.bzl` spells a content set, so the two sets of one fragment read alike.
+
+    Args:
+        platform_prefix: the product's platform prefix.
+        fragment_name: the fragment name, `plugins_` included.
+    """
+    return "%s_%s_descriptors" % (platform_prefix, fragment_name)
+
 def _dev_dist_plugin_descriptor_impl(ctx):
     module_name = ctx.attr.descriptor_module[_KtJvmInfo].module_name
     if not module_name:
@@ -206,13 +266,20 @@ _DEVIATION_FIELDS = [
     "main_jar_name",
 ]
 
-def dev_dist_plugin_descriptors(name, product, visibility = ["//visibility:public"]):
-    """One `dev_dist_plugin_descriptor` target per plugin the plan names, and a `filegroup` over all of them.
+def dev_dist_plugin_descriptors(name, product, platform_prefix, visibility = ["//visibility:public"]):
+    """One `dev_dist_plugin_descriptor` target per plugin the plan names, a `filegroup` over all of them, and one set
+    target per plugin fragment.
+
+    A set exists for every name `product.fragments` holds, and an empty one for a fragment the plan names no plugin
+    for. That is what makes the population a single-file toggle: with `plugins = []` every label `//build` names still
+    resolves, and every fragment then declares nothing.
 
     Args:
         name: the `filegroup`'s name. `./build/dev-dist.cmd descriptors` names it.
         product: one product's entry of `DEV_DIST_PLUGIN_DESCRIPTORS`.
-        visibility: the `filegroup`'s visibility. The per-plugin targets are public, like every other target here.
+        platform_prefix: the product's platform prefix, which names the set targets.
+        visibility: the `filegroup`'s and the sets' visibility. The per-plugin targets are public, like every other
+            target here.
     """
     population = {plugin.main_module: None for plugin in product.plugins}
 
@@ -244,3 +311,26 @@ def dev_dist_plugin_descriptors(name, product, visibility = ["//visibility:publi
         tags = ["manual"],
         visibility = visibility,
     )
+
+    # A plugin whose fragment the product does not name would be declared to no fragment, and the analysis test of
+    # `//build:idea_dev_plugins_descriptor_declaration_test` would then compare a plan entry against nothing. Refused
+    # here, where the plan is read, rather than there.
+    by_fragment = {fragment: [] for fragment in product.fragments}
+    for plugin in product.plugins:
+        if plugin.fragment not in by_fragment:
+            fail("dev_dist_plugin_descriptors: '%s' names fragment '%s', which is not in %s" % (
+                plugin.main_module,
+                plugin.fragment,
+                product.fragments,
+            ))
+        by_fragment[plugin.fragment].append(":" + dev_dist_plugin_descriptor_target_name(plugin.module))
+
+    for fragment in product.fragments:
+        _dev_dist_plugin_descriptor_set(
+            name = dev_dist_plugin_descriptor_set_target_name(platform_prefix, fragment),
+            descriptors = by_fragment[fragment],
+            # `manual` for the per-plugin targets' reason: a wildcard build must run none of these actions on its own.
+            # An explicit dependency still builds them, which is how a fragment that declares a set gets its files.
+            tags = ["manual"],
+            visibility = visibility,
+        )

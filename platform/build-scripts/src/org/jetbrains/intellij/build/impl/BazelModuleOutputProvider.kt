@@ -17,6 +17,14 @@ import kotlin.io.path.isRegularFile
 
 private const val BAZEL_BUILD_INPUTS_MANIFEST_PROPERTY = "intellij.build.bazel.inputs.manifest"
 
+/**
+ * The manifest key a produced plugin descriptor is declared under, ahead of the plugin's main module.
+ *
+ * The same string as `DEV_DIST_DESCRIPTOR_KEY_PREFIX` in `dev_dist_plugin_descriptor.bzl`, which is where the key is
+ * written. A namespace of its own: every other key is a Bazel label string, so it starts with `@` or `//`.
+ */
+private const val DEV_DIST_DESCRIPTOR_KEY_PREFIX = "dev-dist-descriptor:"
+
 @Internal
 object BazelBuildInputs {
   val isConfigured: Boolean
@@ -47,6 +55,27 @@ object BazelBuildInputs {
   fun resolveIfDeclared(label: String): Path? {
     val resolver = resolver ?: return BazelRunfiles.getFileByLabel(BazelLabel.fromString(label))
     return resolver.resolveIfDeclared(label)
+  }
+
+  /**
+   * The patched `META-INF/plugin.xml` a packing action produced for the plugin whose main module is
+   * [pluginMainModule], or `null` when this fragment was handed none.
+   *
+   * **A producer choice, and not a probe.** A declared descriptor means an action of its own already wrote the text
+   * this fragment would compute, so the fragment reads it. An undeclared one means no such action exists for this
+   * plugin, and the fragment patches the descriptor as it always did. Absence is therefore legal, which rules out
+   * [resolve]; and the read *packs bytes*, which [resolveIfDeclared]'s own contract forbids. This is a third thing, so
+   * it says so in a function of its own.
+   *
+   * `null` when no manifest is configured, deliberately and not for tidiness. [resolveIfDeclared] falls back to
+   * `BazelRunfiles.getFileByLabel` there, and this key is not a label, so that fallback would throw. The in-process dev
+   * assembly runs with no manifest and must take the computed path.
+   *
+   * The primitive underneath marks the execution path as used, which is what keeps the `.unused-inputs` measurement
+   * honest: a declared descriptor the fragment never read is reported as unused, under origin `descriptor`.
+   */
+  fun producedPluginDescriptorIfDeclared(pluginMainModule: String): Path? {
+    return resolver?.resolveIfDeclared(DEV_DIST_DESCRIPTOR_KEY_PREFIX + pluginMainModule)
   }
 
   /**

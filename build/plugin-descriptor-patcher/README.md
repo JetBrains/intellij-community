@@ -71,9 +71,33 @@ Refresh the fixture, and copy the files out at once, because a later Bazel run w
     bazel test @community//build/plugin-descriptor-patcher/internal/stamps:stamps_test \
       --test_env=IJ_DESCRIPTOR_CASES=<dir> --test_arg=-test.v
 
-The artifact is not committed, because it is megabytes of one product's descriptors. Over `//build:idea_air_dist` the
-three arms report 163 of 163 for `rawTextPatcher` to `reserialized`, 163 of 163 for `reserialized` to `stamps`, and 43
-of 43 for the class (a) stamps text against `patched`, which is the text the assembly put in the plugin's main jar.
+The artifact is not committed, because it is megabytes of one product's descriptors.
+
+**Which arm you build decides what this gate can cover.** A fragment that is handed a produced descriptor reads that
+file and runs no stage of the patch, so its record states `"origin": "produced"` and holds no stage text. The gate
+skips such a record by name and prints the count. Over `//build:idea_air_dist` as it stands, that is 43 of the 163, and
+the class (a) arm is then empty:
+
+    skipped                        43 records, which the fragment read from a produced descriptor
+    rawTextPatcher -> reserialized 120 identical, 0 differing, 0 absent of 120
+    reserialized -> stamps         120 identical, 0 differing, 0 absent of 120
+    stamps against patched           0 identical, 0 differing, 0 absent of 0
+
+To cover all 163, build the fixture from the arm that computes every descriptor: empty `plugins` and every deviation
+list of the product entry in `build/dev_dist_plugin_descriptors.bzl`, build, copy the files out, and restore the file.
+That arm runs every stage of every descriptor, so its artifact holds every stage text. Measured on 2026-08-27 over one
+artifact of that shape, the gate reports 163 of 163 for `rawTextPatcher` to `reserialized`. It reports 163 of 163 for
+`reserialized` to `stamps`, and 43 of 43 for the class (a) stamps text against `patched`. That last text is what the
+assembly put in the plugin's main jar. Keep the artifact you build there: the declaring arm overwrites it.
+
+**One coverage is gone, and no arm gives it back.** `./build/dev-dist.cmd descriptors` compares the JVM tool's output
+with the recorded text of the same plugin. The declaring arm holds those 43 plugins out, because the fragment read the
+file the tool wrote. The arm above builds no descriptor target at all, so that gate exits 2 there with
+`produced no *.plugin.xml`. So the two producers of those 43 descriptors are compared byte for byte on no arm any more.
+This is a structural consequence of the switch. Restoring it needs a mode in which the fragment computes the text
+anyway and records both producers, and nobody has designed one. The cross-arm evidence that exists is the
+whole-distribution comparison of the two arms; see
+[what making a fragment read its produced descriptor moved](../../../build/dev-dist-measurements.md#what-making-a-fragment-read-its-produced-descriptor-moved-and-what-the-two-arms-proved).
 
 `<dir>/request.txt` states the stamp scalars, one `key=value` a line, because the artifact records no scalar. A
 `key@<main module>=value` line states one plugin's deviation. Three plugins of this product need one, for a per-layout

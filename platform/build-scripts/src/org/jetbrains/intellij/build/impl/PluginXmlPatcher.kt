@@ -19,6 +19,7 @@ import org.jetbrains.intellij.build.dev.DevDistDescriptorStage
 import org.jetbrains.intellij.build.dev.DevDistDescriptorStages
 import org.jetbrains.intellij.build.dev.DevDistPatchedDescriptors
 import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
+import java.nio.file.Files
 
 private val buildNumberRegex = Regex("""(\d+\.)+\d+""")
 private val digitDotDigitRegex = Regex("""\d+\.\d+""")
@@ -139,10 +140,43 @@ internal suspend fun applyPluginDescriptorPatch(
 }
 
 /**
- * Builds the patch request from the product layout, runs [applyPluginDescriptorPatch], then publishes the result twice.
+ * Refuses a produced descriptor whose stamps are not the ones this assembly computed.
  *
- * Both publishes are load-bearing. The module output patch puts the text into the plugin's main jar.
- * `computeModuleSourcesByContent` reads the cached copy back, and it fails without it.
+ * Three plain substrings, and no XML parse: a parse here would be the work the produced file exists to remove. It is
+ * what replaces the byte comparison the descriptor gate loses for these plugins. Once a fragment reads the produced
+ * file, `./build/dev-dist.cmd descriptors` holds that plugin out - it would otherwise compare the file against a record
+ * of itself - so this check is the one runtime statement that the plan's product scalars still agree with the assembly.
+ *
+ * It covers `<version>`, `since-build` and `until-build`. It cannot cover `release_date`, `release_version` or
+ * `retain_product_descriptor`: those reach a `<product-descriptor>`, and no source of this population states one.
+ */
+internal fun checkProducedPluginDescriptor(
+  mainModule: String,
+  content: String,
+  pluginVersion: String?,
+  compatibleSinceUntil: Pair<String, String>,
+) {
+  if (pluginVersion != null) {
+    check(content.contains("<version>$pluginVersion</version>")) {
+      "The produced descriptor of '$mainModule' does not state the version this assembly computed ('$pluginVersion')"
+    }
+  }
+  for ((attribute, value) in listOf("since-build" to compatibleSinceUntil.first, "until-build" to compatibleSinceUntil.second)) {
+    check(content.contains("$attribute=\"$value\"")) {
+      "The produced descriptor of '$mainModule' does not state $attribute='$value', which this assembly computed"
+    }
+  }
+}
+
+/**
+ * Builds the patch request from the product layout, runs [applyPluginDescriptorPatch], then publishes the result through
+ * [publishPatchedPluginXml].
+ *
+ * ### Two producers of the text, one publisher of it
+ *
+ * A fragment that was handed a produced descriptor reads that file and runs no stage of the patch. Which plugins those
+ * are is the fragment's `patched_descriptors` declaration, and a plugin it does not name takes the computed path
+ * unchanged. What the two paths publish, and how, is the same - see [publishPatchedPluginXml].
  */
 internal suspend fun patchPluginXml(
   moduleOutputPatcher: ModuleOutputPatcher,
@@ -156,9 +190,6 @@ internal suspend fun patchPluginXml(
   context: BuildContext,
 ) {
   val pluginModule = context.outputProvider.findRequiredModule(pluginLayout.mainModule)
-  // What this patch does to the descriptor, stage by stage, when a dev assembly was asked for it.
-  // See `DevDistPatchedDescriptors`.
-  val stages = DevDistPatchedDescriptors.stagesOrNull()
   val sourceContent = getUnprocessedPluginXmlContent(pluginModule, context.outputProvider).decodeToString()
   val descriptorContent = pluginLayout.rawPluginXmlPatcher(sourceContent, context)
 
@@ -169,9 +200,45 @@ internal suspend fun patchPluginXml(
   }
 
   val pluginVersion = getPluginVersion(plugin = pluginLayout, descriptorContent = descriptorContent, context = context)
+  val compatibleSinceUntil = pluginVersion.sinceUntil ?: getCompatiblePlatformVersionRange(compatibleBuildRange, context.buildNumber)
   // The embedding stage runs per `<module/>`, and a layout that scrambles paths returns from every one of them. Decided
   // once here, so that the report states the decision the run made and not a second computation over the layout.
   val embedsContentModules = pluginLayout.pathsToScramble.isEmpty()
+
+  // The other producer of this text. A declared descriptor is the file a `dev_dist_plugin_descriptor` action wrote, and
+  // reading it is what this fragment does instead of parsing the descriptor, resolving its includes and embedding its
+  // content modules. The seam sits here rather than at the module lookup, because everything above it is data the
+  // produced path needs as well: the source text goes into the report, and the version and the compatibility range are
+  // what `checkProducedPluginDescriptor` holds the file to.
+  val producedDescriptor = BazelBuildInputs.producedPluginDescriptorIfDeclared(pluginLayout.mainModule)
+  if (producedDescriptor != null) {
+    val produced = Files.readString(producedDescriptor)
+    checkProducedPluginDescriptor(
+      mainModule = pluginLayout.mainModule,
+      content = produced,
+      pluginVersion = pluginVersion.pluginVersion,
+      compatibleSinceUntil = compatibleSinceUntil,
+    )
+    DevDistPatchedDescriptors.recordProduced(
+      mainModule = pluginLayout.mainModule,
+      directoryName = pluginLayout.directoryName,
+      mainJar = pluginLayout.getMainJarName(),
+      embedsContentModules = embedsContentModules,
+      source = sourceContent,
+      patched = produced,
+    )
+    publishPatchedPluginXml(
+      moduleOutputPatcher = moduleOutputPatcher,
+      pluginDescriptorCache = pluginDescriptorCache,
+      mainModule = pluginLayout.mainModule,
+      content = produced,
+    )
+    return
+  }
+
+  // What this patch does to the descriptor, stage by stage, when a dev assembly was asked for it.
+  // See `DevDistPatchedDescriptors`.
+  val stages = DevDistPatchedDescriptors.stagesOrNull()
 
   // see comment in productModuleLayout
   val xIncludeResolver = XIncludeElementResolverImpl(
@@ -190,7 +257,7 @@ internal suspend fun patchPluginXml(
       sourceContent = sourceContent,
       rawPatchedContent = descriptorContent,
       pluginVersion = pluginVersion.pluginVersion,
-      compatibleSinceUntil = pluginVersion.sinceUntil ?: getCompatiblePlatformVersionRange(compatibleBuildRange, context.buildNumber),
+      compatibleSinceUntil = compatibleSinceUntil,
       releaseDate = releaseDate,
       releaseVersion = releaseVersion,
       toPublish = pluginsToPublish.contains(pluginLayout),
@@ -222,8 +289,34 @@ internal suspend fun patchPluginXml(
     },
     patchText = { pluginLayout.pluginXmlPatcher(it, context) },
   )
+  publishPatchedPluginXml(
+    moduleOutputPatcher = moduleOutputPatcher,
+    pluginDescriptorCache = pluginDescriptorCache,
+    mainModule = pluginLayout.mainModule,
+    content = content,
+  )
+}
+
+/**
+ * Publishes the patched descriptor, which both producers of the text do the same way.
+ *
+ * Both publishes are load-bearing, and the second one is the quiet one. The module output patch puts the text into the
+ * plugin's main jar. The cache is read back by `computeModuleSourcesByContent`, by the scramble path and by the
+ * module-repository header, each of which fails without it, and by
+ * `getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader`, which falls back to the **unpatched** source text - a
+ * class-load failure at IDE start rather than a diff.
+ *
+ * `IF_EQUAL` holds for a produced descriptor more strongly than for a computed one: the file is one manifest entry
+ * resolved to one path, so two reads of it are the same bytes by construction.
+ */
+private fun publishPatchedPluginXml(
+  moduleOutputPatcher: ModuleOutputPatcher,
+  pluginDescriptorCache: ScopedCachedDescriptorContainer,
+  mainModule: String,
+  content: String,
+) {
   // OS-specific plugins being built several times - we expect that plugin.xml must be the same
-  moduleOutputPatcher.patchModuleOutput(moduleName = pluginLayout.mainModule, path = PLUGIN_XML_RELATIVE_PATH, content = content, overwrite = PatchOverwriteMode.IF_EQUAL)
+  moduleOutputPatcher.patchModuleOutput(moduleName = mainModule, path = PLUGIN_XML_RELATIVE_PATH, content = content, overwrite = PatchOverwriteMode.IF_EQUAL)
   pluginDescriptorCache.put(PLUGIN_XML_RELATIVE_PATH, content.toByteArray())
 }
 

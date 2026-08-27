@@ -35,11 +35,21 @@ type artifactStep struct {
 
 // artifactPlugin is one plugin's record. The fields this gate does not read are left out.
 type artifactPlugin struct {
-	MainModule string         `json:"mainModule"`
-	Steps      []artifactStep `json:"steps"`
-	Source     string         `json:"source"`
-	Patched    string         `json:"patched"`
+	MainModule string `json:"mainModule"`
+	// Origin is absent for a descriptor the fragment patched itself, which is what every record of the older schema is.
+	// A record of [originProduced] holds no step, because the fragment ran no stage of the patch: it read the file a
+	// `dev_dist_plugin_descriptor` action wrote.
+	Origin  string         `json:"origin"`
+	Steps   []artifactStep `json:"steps"`
+	Source  string         `json:"source"`
+	Patched string         `json:"patched"`
 }
+
+// The `origin` values of `DevDistDescriptorOrigin`. An absent value is [originComputed].
+const (
+	originComputed = "computed"
+	originProduced = "produced"
+)
 
 type artifactReport struct {
 	Fragment string           `json:"fragment"`
