@@ -527,7 +527,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
       var pair = ApplicationManager.getApplication().isWriteAccessAllowed()
                  ? new Pair<>(EmptyCoroutineContext.INSTANCE, emptyFunction)
-                 : IntelliJLockingUtil.getGlobalThreadingSupport().parallelizeLock();
+                 : IntelliJLockingUtil.getGlobalThreadingSupport().parallelizeLock(false);
       lockContextWrapper = (r) -> {
         ThreadContext.installThreadContext(pair.getFirst(), true, () -> {
           r.run();

@@ -57,7 +57,6 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
@@ -75,7 +74,6 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import java.util.Collections
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
@@ -580,7 +578,7 @@ class PlatformUtilitiesTest {
 
   @Test
   fun `parallelization of write-intent lock removes write-intent access`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val (lockContext, lockCleanup) = getGlobalThreadingSupport().parallelizeLock()
+    val (lockContext, lockCleanup) = getGlobalThreadingSupport().parallelizeLock(true)
     installThreadContext(lockContext).use {
       try {
         assertThat(application.isWriteIntentLockAcquired).isFalse

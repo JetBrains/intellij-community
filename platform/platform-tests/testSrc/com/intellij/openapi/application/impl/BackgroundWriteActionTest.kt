@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.concurrency.currentThreadContext
@@ -787,7 +787,7 @@ class BackgroundWriteActionTest {
       executed.set(true)
     }
     assertThat(executed.get()).isFalse
-    val clenanup = getGlobalThreadingSupport().parallelizeLock().second
+    val clenanup = getGlobalThreadingSupport().parallelizeLock(true).second
     try {
       assertThat(executed.get()).isTrue
     } finally {

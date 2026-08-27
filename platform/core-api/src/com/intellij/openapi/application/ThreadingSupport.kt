@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.openapi.application.ThreadingSupport.ExecutorResult.Completion
@@ -256,9 +256,20 @@ interface ThreadingSupport {
    * - If the current thread holds _Write-Intent-Read_ lock, then a new instance of a lock is created,
    *   and all coroutines with the returned [CoroutineContext] operate with this new instance of a lock.
    * - If the current thread holds _Write_ lock, then this Write lock is downgraded to _Write-Intent-Read_. **This is a dangerous operation!**
+   *
+   * To make it a bit easier to use parallelization in write actions, the Platform permits the following pattern:
+   * ```
+   * writeAction {
+   *   readAction {
+   *     runBlockingCancellable {}
+   *   }
+   * }
+   * ```
+   * This pattern should not work for `runWithModalProgressBlocking` though -- it is important to parallelize the strongest lock there.
+   * To handle these differences, we allow specifying [checkTopmostReadAction]
    */
   @ApiStatus.Internal
-  fun parallelizeLock(): Pair<CoroutineContext, CleanupAction>
+  fun parallelizeLock(checkTopmostReadAction: Boolean): Pair<CoroutineContext, CleanupAction>
 
   /**
    * Returns current coroutine context element that corresponds to the read-write lock.

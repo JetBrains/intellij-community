@@ -64,6 +64,7 @@ import com.intellij.openapi.extensions.impl.createExtensionPoints
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.CeProcessCanceledException
+import com.intellij.openapi.progress.LockParallelizationSharingPolicy
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.getLockPermitContext
@@ -95,7 +96,17 @@ import com.intellij.util.messages.impl.MessageDeliveryListener
 import com.intellij.util.messages.impl.PluginListenerDescriptor
 import com.intellij.util.messages.impl.listenerClassName
 import com.intellij.util.runSuppressing
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -1810,7 +1821,7 @@ private fun throwAlreadyDisposedIfNotUnderIndicatorOrJob(self: Any, cause: Throw
 
 private fun <X> runBlockingInitialization(action: suspend CoroutineScope.() -> X): X {
   return prepareThreadContext { ctx -> // reset thread context
-    val (lockPermitContext, cleanup) = getLockPermitContext(ctx, false)
+    val (lockPermitContext, cleanup) = getLockPermitContext(ctx, LockParallelizationSharingPolicy.NO_SHARING)
     val external = ctx.fold<CoroutineContext>(EmptyCoroutineContext) { acc, element ->
       if (element is ExternalIntelliJContextElement) acc + element else acc
     }
@@ -1844,20 +1855,20 @@ private fun <X> runBlockingInitialization(action: suspend CoroutineScope.() -> X
  */
 @Suppress("INVISIBLE_REFERENCE")
 private inline fun <T> resetThreadLocalEventLoop(action: () -> T): T {
-  val existingEventLoop = ThreadLocalEventLoop.currentOrNull()
-  ThreadLocalEventLoop.resetEventLoop()
+  val existingEventLoop = kotlinx.coroutines.ThreadLocalEventLoop.currentOrNull()
+  kotlinx.coroutines.ThreadLocalEventLoop.resetEventLoop()
   try {
     return action()
   }
   finally {
     if (existingEventLoop != null) {
-      ThreadLocalEventLoop.setEventLoop(existingEventLoop)
+      kotlinx.coroutines.ThreadLocalEventLoop.setEventLoop(existingEventLoop)
     }
   }
 }
 
 @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "CANNOT_OVERRIDE_INVISIBLE_MEMBER", "ERROR_SUPPRESSION")
-private class NestedBlockingEventLoop(override val thread: Thread) : EventLoopImplBase() {
+private class NestedBlockingEventLoop(override val thread: Thread) : kotlinx.coroutines.EventLoopImplBase() {
   override fun shouldBeProcessedFromContext(): Boolean = true
 }
 

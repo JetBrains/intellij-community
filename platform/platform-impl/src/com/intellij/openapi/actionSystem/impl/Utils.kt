@@ -113,7 +113,6 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Runnable
@@ -1446,7 +1445,7 @@ internal inline fun <R> runBlockingForActionExpand(
     }
     else {
       installThreadContext(ctx, true) {
-        getGlobalThreadingSupport().parallelizeLock()
+        getGlobalThreadingSupport().parallelizeLock(true)
       }
     }
     try {

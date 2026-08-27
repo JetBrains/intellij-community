@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl
 
 import com.intellij.codeWithMe.ClientId
@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.progress.CeProcessCanceledException
 import com.intellij.openapi.progress.CoroutineSuspenderElementKey
 import com.intellij.openapi.progress.CoroutineSuspenderImpl
+import com.intellij.openapi.progress.LockParallelizationSharingPolicy
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicatorModel
@@ -76,8 +77,35 @@ import com.intellij.util.ui.RawSwingDispatcher
 import fleet.kernel.rete.collect
 import fleet.kernel.rete.filter
 import fleet.kernel.tryWithEntities
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.takeWhile
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.AWTEvent
@@ -376,9 +404,9 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
       val modalityContext = newModalityState.asContextElement()
       val pipe = cs.createProgressPipe()
       val (permitCtx, cleanup) = if (ApplicationManager.getApplication().isWriteAccessAllowed) {
-        runReadActionBlocking { getLockPermitContext(true) }
+        runReadActionBlocking { getLockPermitContext(LockParallelizationSharingPolicy.SHARING_CHECK_TOPMOST_RA) }
       } else {
-        getLockPermitContext(true)
+        getLockPermitContext(LockParallelizationSharingPolicy.SHARING_NO_CHECK_TOPMOST_RA)
       }
       val taskJob = async(dispatcherCtx + modalityContext + permitCtx) {
         progressStarted(descriptor.title, descriptor.cancellation, pipe.progressUpdates())

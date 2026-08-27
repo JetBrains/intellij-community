@@ -196,7 +196,7 @@ private inline fun <T> wrapInReadActionIfCurrentlyWriteAction(crossinline action
 private fun getLockContext(currentThreadContext: CoroutineContext): Pair<CoroutineContext, AccessToken> {
   val parallelize = with(ApplicationManager.getApplication()) {
     installThreadContext(currentThreadContext) {
-      isReadAccessAllowed
+      if (isReadAccessAllowed) LockParallelizationSharingPolicy.SHARING_CHECK_TOPMOST_RA else LockParallelizationSharingPolicy.NO_SHARING
     }
   }
   return getLockPermitContext(currentThreadContext, parallelize)
@@ -630,20 +630,27 @@ fun assertRunBlockingBackgroundThreadAndNoWriteAction() {
 }
 
 @Internal
-fun getLockPermitContext(forSharing: Boolean = false): Pair<CoroutineContext, AccessToken> {
+fun getLockPermitContext(forSharing: LockParallelizationSharingPolicy = LockParallelizationSharingPolicy.NO_SHARING): Pair<CoroutineContext, AccessToken> {
   return getLockPermitContext(currentThreadContext(), forSharing)
 }
 
 @Internal
-fun getLockPermitContext(baseContext: CoroutineContext, forSharing: Boolean): Pair<CoroutineContext, AccessToken> {
+enum class LockParallelizationSharingPolicy {
+  NO_SHARING, // just to get an element from context
+  SHARING_CHECK_TOPMOST_RA, // for runBlockingCancellable
+  SHARING_NO_CHECK_TOPMOST_RA // for runWithModalProgressBlocking
+}
+
+@Internal
+fun getLockPermitContext(baseContext: CoroutineContext, policy: LockParallelizationSharingPolicy): Pair<CoroutineContext, AccessToken> {
   val application = ApplicationManager.getApplication()
   return if (application != null) {
     val (context, cleanup) = installThreadContext(baseContext, true) {
       val threadingSupport = application.threadingSupport
       when {
         threadingSupport == null -> EmptyCoroutineContext to AccessToken.EMPTY_ACCESS_TOKEN
-        forSharing -> {
-          val (context, cleanup) = threadingSupport.parallelizeLock()
+        policy != LockParallelizationSharingPolicy.NO_SHARING -> {
+          val (context, cleanup) = threadingSupport.parallelizeLock(policy == LockParallelizationSharingPolicy.SHARING_CHECK_TOPMOST_RA)
           context to object : AccessToken() {
             override fun finish() {
               cleanup()

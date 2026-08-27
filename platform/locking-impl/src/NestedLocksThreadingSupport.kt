@@ -569,7 +569,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     }
   }
 
-  override fun parallelizeLock(): Pair<CoroutineContext, CleanupAction> {
+  override fun parallelizeLock(checkTopmostReadAction: Boolean): Pair<CoroutineContext, CleanupAction> {
     val baseContext = currentThreadContext()
     val currentComputationStateElement = baseContext[ComputationStateContextElement]
     // we suppose that the caller passes `baseContext` that is actually correct
@@ -580,7 +580,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     // now we need to parallelize the existing permit
     val currentPermit = currentComputationState.getThisThreadPermit()
 
-    if (isInTopmostReadAction()) {
+    if (checkTopmostReadAction && isInTopmostReadAction()) {
       // this case is identical to the branch of parallelization of read lock. Regardless of what permit is currently being held by this thread,
       // the caller requested parallelization while being in a read action, hence we need to parallelize a read.
       val (newComputationState, cleanup) = currentComputationState.parallelizeRead()
