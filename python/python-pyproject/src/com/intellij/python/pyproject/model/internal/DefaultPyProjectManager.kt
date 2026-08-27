@@ -22,8 +22,10 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.pathString
 import kotlin.io.path.writeText
 
-internal object DefaultPyProjectManager : PyProjectManager {
-  override val flavorDataType: Class<PythonSdkFlavor.UnknownFlavor> = PythonSdkFlavor.UnknownFlavor::class.java
+internal class DefaultPyProjectManager : PyProjectManager {
+  // Matches any flavor, so this manager must be the last one.
+  // `intellij.python.pyproject.xml` registers it with `order="last"`.
+  override val flavorDataType: Class<PythonSdkFlavor<*>> = PythonSdkFlavor::class.java
 
   override suspend fun createProject(
     where: Directory,

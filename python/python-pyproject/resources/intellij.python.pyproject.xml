@@ -56,6 +56,8 @@
                               implementation="com.intellij.python.pyproject.psi.PyProjectTomlPathReferenceContributor"/>
     <applicationService serviceImplementation="com.intellij.python.pyproject.model.internal.pyProject.PyProjectServiceImpl"
                         serviceInterface="com.jetbrains.python.project.impl.PyProjectService"/>
+    <python.pyproject.model.pyprojectmanager implementation="com.intellij.python.pyproject.model.internal.DefaultPyProjectManager"
+                                             order="last"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
