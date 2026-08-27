@@ -99,7 +99,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
 
     if (isStressTest()) {
       IntentionManager.getInstance().getAvailableIntentions();  // hack to avoid slowdowns in PyExtensionFactory
-      PathManagerEx.getTestDataPath(); // to cache stuff
+      PathManagerEx.guessTestDataLookupStrategy(); // to cache stuff; the ultimate repository has no shared testData root, so do not resolve the path itself
       ReferenceProvidersRegistry.getInstance(); // pre-load tons of classes
       InjectedLanguageManager.getInstance(getProject()); // zillion of Dom Sem classes
       LanguageAnnotators.INSTANCE.allForLanguage(JavaLanguage.INSTANCE); // pile of annotator classes loads
