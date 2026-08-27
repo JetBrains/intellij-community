@@ -87,7 +87,6 @@
     <projectService serviceInterface="com.intellij.openapi.diff.DirDiffManager"
                     serviceImplementation="com.intellij.openapi.diff.impl.dir.DirDiffManagerImpl"/>
     <diff.DiffExtension implementation="com.intellij.diff.actions.ShowBlankDiffWindowDiffExtension"/>
-    <diff.frontendDiffExtension implementation="com.intellij.diff.impl.FrontendDiffDebugExtension"/>
     <projectService serviceInterface="com.intellij.diff.editor.DiffEditorTabFilesManager"
                     serviceImplementation="com.intellij.diff.editor.DiffEditorTabFilesManagerImpl"/>
     <fileEditorProvider implementation="com.intellij.diff.editor.DiffFileEditorProvider"/>
