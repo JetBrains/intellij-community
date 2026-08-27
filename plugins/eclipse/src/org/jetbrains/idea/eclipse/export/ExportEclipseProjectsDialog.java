@@ -105,7 +105,8 @@ public class ExportEclipseProjectsDialog extends DialogWrapper {
     myUserLibrariesTF.setText(project.getBasePath() + File.separator + project.getName() + ".userlibraries");
     myUserLibrariesTF.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
       .withTitle(EclipseBundle.message("button.browse.dialog.title.locate.user.libraries"))
-      .withDescription(EclipseBundle.message("button.browse.dialog.description.locate.user.libraries.file")));
+      .withDescription(EclipseBundle.message("button.browse.dialog.description.locate.user.libraries.file"))
+      .withEnvironmentRestricted(true));
     myExportProjectLibrariesCb.setSelected(true);
     myExportProjectLibrariesCb.addActionListener(new ActionListener() {
       @Override
