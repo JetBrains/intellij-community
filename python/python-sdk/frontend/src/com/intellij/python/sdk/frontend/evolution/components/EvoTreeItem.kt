@@ -57,12 +57,12 @@ class EvoTreeItem(
   /**
    * True when this row reports a load of its own.
    *
-   * A tool node's load is reported inside its submenu instead, on its "Loading…" row: a spinner on every tool of the
-   * main list is what made opening the widget look busy (PY-91873). A reload the user asked for is the exception — see
-   * [EvoTreeLazyNodeElement.isReloading].
+   * Never a tool node: a first load is reported on the "Loading…" row of the node's own submenu, and a reload in a
+   * panel of its own opened in that submenu's place. A spinner on the tools of the main list is what made opening the
+   * widget look busy (PY-91873), and a slow tool held that spinner for as long as it ran.
    */
   val showsLoader: Boolean
-    get() = element.state == State.LOADING && (element !is EvoTreeLazyNodeElement || element.isReloading)
+    get() = element.state == State.LOADING && element !is EvoTreeLazyNodeElement
 
   val keepPopupOnPerform: KeepPopupOnPerform
     get() = element.presentation.getKeepPopupOnPerform()

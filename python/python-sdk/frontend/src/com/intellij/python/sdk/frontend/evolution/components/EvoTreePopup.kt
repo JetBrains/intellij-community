@@ -21,6 +21,7 @@ import com.intellij.python.sdk.common.evolution.EvoNodeStats
 import com.intellij.python.sdk.common.evolution.PyEvoWidgetCollector
 import com.intellij.python.sdk.frontend.PySdkFrontendBundle
 import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.ScreenUtil
@@ -62,6 +63,7 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JList
+import javax.swing.Timer
 import javax.swing.JPanel
 import javax.swing.JViewport
 import javax.swing.ListCellRenderer
@@ -499,6 +501,25 @@ open class EvoTreePopup private constructor(
   private val evoStep: EvoActionPopupStep? get() = listStep as? EvoActionPopupStep
 
   /**
+   * Repaints the list while any visible row carries a spinner, one tick per frame of it.
+   *
+   * Started in [afterShow] and stopped in [dispose], so it lives exactly as long as this popup. A tick over a list with
+   * no spinner costs one scan of the rows on screen and paints nothing.
+   */
+  private val loaderRepaintTimer: Timer = Timer(AnimatedIcon.Default.DELAY) {
+    if (showsAnyLoader()) list.repaint()
+  }
+
+  /** True when a row of this popup is drawing a spinner right now — see [EvoTreeItem.showsLoader]. */
+  private fun showsAnyLoader(): Boolean {
+    val model = list.model
+    for (row in 0 until model.size) {
+      if ((model.getElementAt(row) as? EvoTreeItem)?.showsLoader == true) return true
+    }
+    return false
+  }
+
+  /**
    * Settles this popup once a tool node's rows replace its "Loading…" row (see [EvoTreeMessageLeafElement]).
    *
    * The platform only grows the popup from its current position, which for a submenu of this widget means growing over
@@ -638,6 +659,66 @@ open class EvoTreePopup private constructor(
       if (parentPopup.isDisposed) return@invokeLater
       parentPopup.disposeChildren()
       parentPopup.handleSelect(false, null)
+    }
+  }
+
+  /**
+   * Reloads the tool of [item] and reports it in a panel of its own, then opens the real submenu once it ends.
+   *
+   * The reload leaves the node's rows and controls alone, so nothing has to be rebuilt from a half-replaced state: while
+   * it runs, the submenu is an independent "Loading…" panel ([EvoActionPopupStep.loadingStep]), and when it ends the
+   * node's own submenu is opened over its finished state — header, expand/collapse footer and all.
+   *
+   * A reload that failed opens nothing: the node is disabled and carries the sign, and the rows it had stay readable
+   * behind it.
+   */
+  private fun reloadShowingLoadingPanel(item: EvoTreeItem) {
+    val node = item.element as? EvoTreeLazyNodeElement ?: return
+    val step = evoStep ?: return
+    // Registered before the load starts, so a reload that ends quickly cannot end before anyone is listening.
+    node.whenLoadFinished { openSubmenuOf(node) }
+    step.reloadItem(item)
+    openChildStep(step.loadingStep(), node)
+  }
+
+  /**
+   * The row selected here, when it is still the one showing [element]; null when the user moved on.
+   *
+   * Addressed by element rather than by row: [EvoActionPopupStep.getValues] builds a fresh [EvoTreeItem] for every row
+   * each time the model is rebuilt, and a load rebuilds it — so an item held across one is no longer the item in the
+   * model, while the element it wraps lives in the tree and outlasts every popup.
+   */
+  private fun selectedItemFor(element: EvoTreeElement): EvoTreeItem? {
+    val row = list.selectedIndex
+    if (row < 0) return null
+    val item = list.model.getElementAt(row) as? EvoTreeItem ?: return null
+    return item.takeIf { it.element === element }
+  }
+
+  /**
+   * Opens [element]'s own submenu, replacing whatever is open, once the event that asked for it has been dispatched.
+   *
+   * Only [element] is reopened, never simply "the selection": a slow reload gives the user time to move on, and the row
+   * they moved to is not the one whose load finished.
+   *
+   * Deferred for the same reason [toggleExpandedAndReopen] defers: this runs from the list's own mouse handler, or from a
+   * loader's callback, and disposing a child popup underneath either is not safe.
+   */
+  private fun openSubmenuOf(element: EvoTreeElement) {
+    SwingUtilities.invokeLater {
+      if (isDisposed || selectedItemFor(element) == null) return@invokeLater
+      disposeChildren()
+      handleSelect(false, null)
+    }
+  }
+
+  /** Replaces any open child popup with one showing [step], anchored on [element]'s row. */
+  private fun openChildStep(step: PopupStep<*>, element: EvoTreeElement) {
+    SwingUtilities.invokeLater {
+      if (isDisposed) return@invokeLater
+      val item = selectedItemFor(element) ?: return@invokeLater
+      disposeChildren()
+      handleNextStep(step, item, null)
     }
   }
 
@@ -852,6 +933,14 @@ open class EvoTreePopup private constructor(
     // crosses one and a cursor left over from the popup that was just disposed would stay for as long as the pointer
     // remains inside. Component.setCursor updates the native cursor outright, which is what breaks that.
     list.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+    // An AnimatedIcon painted by a renderer advances only when the component it is painted on is repainted, and it asks
+    // for that repaint itself only when it can find the list behind the renderer and that list allows it. This is the
+    // property that allows it, and it is what every other list and tree with a spinner sets.
+    list.putClientProperty(AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)
+    // It did not animate the loader here even so, and the icon asks for nothing when it cannot resolve that list — so
+    // the repaint is driven from here as well rather than left to a lookup this popup evidently falls outside of. A tick
+    // repaints only while a spinner is actually on screen, and the timer dies with the popup.
+    loaderRepaintTimer.start()
     // Resolve lazy detail (e.g. interpreter version) for the rows currently in the viewport, and again for any
     // rows scrolled into view later — never for the whole list up front. See [EvoLazyDetail].
     (list.parent as? JViewport)?.addChangeListener { resolveVisibleDetails() }
@@ -872,7 +961,8 @@ open class EvoTreePopup private constructor(
           CommonDataKeys.PROJECT.getData(dataContext)?.let { project ->
             PyEvoWidgetCollector.controlUsed(project, PyEvoWidgetCollector.Control.RELOAD, item.evoNodeStats() ?: EvoNodeStats(EvoNodeKind.OTHER))
           }
-          evoStep?.reloadItem(item)
+          reloadShowingLoadingPanel(item)
+          return
         }
         if (settingsGearAt(e.point)) openPackageManagersSettings()
       }
@@ -1143,6 +1233,7 @@ open class EvoTreePopup private constructor(
 
 
   override fun dispose() {
+    loaderRepaintTimer.stop()
     myDisposeCallback?.run()
     ActionMenu.showDescriptionInStatusBar(true, myComponent, null)
     super.dispose()

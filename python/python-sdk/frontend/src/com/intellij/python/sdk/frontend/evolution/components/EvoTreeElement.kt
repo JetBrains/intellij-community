@@ -1,12 +1,12 @@
 package com.intellij.python.sdk.frontend.evolution.components
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.NonNls
 import com.intellij.python.sdk.common.evolution.EvoNodeStats
 import com.intellij.python.sdk.common.evolution.PyEvoWidgetCollector
 import com.intellij.openapi.ui.popup.ListPopupStep
@@ -130,6 +130,20 @@ class EvoTreeMessageLeafElement(
     this.state = state
   }
 }
+
+/**
+ * A throwaway node whose submenu is one "Loading…" row and nothing else — the panel shown while a node reloads.
+ *
+ * Independent of the node being reloaded on purpose. That node keeps its rows and its controls, so the real submenu can
+ * be rebuilt complete once the load ends, and this panel carries no header or footer of its own because it has none of
+ * the state that draws them.
+ */
+internal fun loadingNodeElement(reloading: EvoTreeNodeElement): EvoTreeStaticNodeElement =
+  EvoTreeStaticNodeElement(
+    text = reloading.presentation.text ?: "",
+    icon = reloading.presentation.icon ?: AllIcons.Actions.Refresh,
+    sections = listOf(loadingSection()),
+  )
 
 /** The "Loading…" row a tool node shows until its loader answers — see [EvoTreeMessageLeafElement]. */
 private fun loadingSection(): EvoTreeSection =
@@ -348,26 +362,30 @@ class EvoTreeLazyNodeElement(
   var refreshable: Boolean = false
     private set
 
-  /**
-   * True only while a reload the user asked for runs, so that reload is the one load reported on this row.
-   *
-   * Every other load reports itself inside the submenu, on the [EvoTreeMessageLeafElement] row. A reload has no such row
-   * to report it — it keeps the rows it already has, so an open submenu never flashes empty — and the click that started
-   * it needs an answer.
-   */
-  @Volatile
-  var isReloading: Boolean = false
-    private set
-
   init {
     // The row is openable from the start, and its submenu says "Loading…" until the loader answers. See
     // [EvoTreeMessageLeafElement] for why the load is reported there and not here.
     sections.add(loadingSection())
   }
 
+  /**
+   * Runs [onFinished] once, when the load now in flight ends — however it ends.
+   *
+   * The listener retires itself, so a node that is reloaded again gets a fresh one rather than a growing pile. A state
+   * change to [State.LOADING] is the start of that load, not its end, so it is skipped.
+   */
+  fun whenLoadFinished(onFinished: () -> Unit) {
+    addModelListener(object : ListPopupStep.ListPopupModelListener {
+      override fun onModelChanged() {
+        if (state == State.LOADING) return
+        removeModelListener(this)
+        onFinished()
+      }
+    })
+  }
+
   private fun updateState(state: State, listeners: List<ListPopupStep.ListPopupModelListener>) {
     this.state = state
-    if (state != State.LOADING) isReloading = false
     presentation.putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
     // A tool that failed, or answered with nothing, is disabled and carries the sign. One that is still loading stays
     // enabled, so the user can open it and read the load there.
@@ -378,7 +396,14 @@ class EvoTreeLazyNodeElement(
   override fun load(project: Project, scope: CoroutineScope, listeners: List<ListPopupStep.ListPopupModelListener>): Unit =
     load(project, scope, listeners, forceRefresh = false)
 
-  /** Reloads bypassing any backend cache (the tool's reload icon), so a long-cached tool (conda) re-scans. */
+  /**
+   * Reloads bypassing any backend cache (the tool's reload icon), so a long-cached tool (conda) re-scans.
+   *
+   * Leaves this node's own rows, and the [versionRows]/[editableName]/[fixedName] that describe them, exactly as they
+   * are. [EvoTreePopup] shows a panel of its own while the load runs ([loadingNodeElement]) and opens the real submenu
+   * once it ends, so the state here is never half-replaced: emptying it cost poetry its expand/collapse control, which
+   * the submenu builds once when it opens and cannot add later.
+   */
   fun reload(project: Project, scope: CoroutineScope, listeners: List<ListPopupStep.ListPopupModelListener>): Unit =
     load(project, scope, listeners, forceRefresh = true)
 
@@ -407,10 +432,10 @@ class EvoTreeLazyNodeElement(
         // The [sections] list backs the popup's Swing model (via EvoActionPopupStep.getValues) and updateState fires
         // ListPopupModelListener.onModelChanged. Both must run on the EDT — mutating the model off-EDT corrupts the
         // list UI (transient duplicated rows, wrong size, AIOOBE in WideSelectionListUI). Only the loader runs on IO.
-        withContext(Dispatchers.EDT) {
-          isReloading = forceRefresh
-          updateState(State.LOADING, listeners)
-        }
+        // A first load is reported inside the submenu, on the "Loading…" row this node is built holding. A reload keeps
+        // its rows and is reported in a panel of its own instead — see [reload]. Reporting either on the node's own row
+        // put a spinner on the widget list, which PY-91873 removed.
+        withContext(Dispatchers.EDT) { updateState(State.LOADING, listeners) }
         try {
           val loaded = withBackgroundProgress(project, PySdkFrontendBundle.message("evolution.progress.title.loading", presentation.text), true) {
             loader.invoke(forceRefresh)
@@ -420,7 +445,8 @@ class EvoTreeLazyNodeElement(
             editableName = loaded.editableName
             fixedName = loaded.fixedName
             versionRows = loaded.versionRows
-            // Swap in the new data only once it's ready, so an open submenu never flashes empty during a reload.
+            // Swap in the new data only once it's ready, so an open submenu goes straight from "Loading…" to the
+            // rows and never flashes empty.
             sections.clear()
             sections.addAll(loaded.sections)
             updateState(State.DONE, listeners)
@@ -453,8 +479,9 @@ class EvoTreeLazyNodeElement(
   /**
    * True while the only rows this node has are its own messages — it has never loaded any environment.
    *
-   * A node that did keeps those rows through a failed reload, so what worked last time stays readable; one that did not
-   * has a "Loading…" row to retire, and a submenu opened over it would otherwise spin for good.
+   * Such a node has a "Loading…" row to replace, and a submenu opened over it would otherwise spin for good. One that
+   * did load environments keeps them through a failed reload, so what worked last time stays readable; the row itself
+   * carries the sign and the reason.
    */
   private val showsMessageOnly: Boolean
     get() = sections.all { section -> section.elements.all { it is EvoTreeMessageLeafElement } }

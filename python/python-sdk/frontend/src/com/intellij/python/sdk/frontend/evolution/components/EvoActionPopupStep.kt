@@ -101,6 +101,14 @@ open class EvoActionPopupStep(
   }
 
   /**
+   * The panel shown while [node] reloads: one "Loading…" row, over a node of its own.
+   *
+   * Built here for the same reason [alternativesStep] is — it inherits this step's data context and scope. It is a
+   * separate node so the reloading one keeps its rows and its controls; see [loadingNodeElement].
+   */
+  fun loadingStep(): EvoActionPopupStep = EvoActionPopupStep(null, loadingNodeElement(node), dataContext, scope)
+
+  /**
    * Expands the version list into its individual interpreters, or collapses it back.
    *
    * Only the node's sections are updated — no listener is notified and nothing is loaded — because the caller rebuilds
