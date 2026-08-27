@@ -44,6 +44,7 @@ internal class ProjectFileBasedIndexStartupActivity : RequiredForSmartMode {
 
   override fun runActivity(project: Project) {
     if (isIndexingActivitiesSuppressedSync(project)) {
+      // TODO-ANK: this looks contra intuitive: why one should leave dumb mode if indexes are not there and will never be built?
       return
     }
 
