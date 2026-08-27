@@ -54,6 +54,7 @@ public class GitInit extends DumbAwareAction {
     fcd.setTitle(GitBundle.message("init.destination.directory.title"));
     fcd.setDescription(GitBundle.message("init.destination.directory.description"));
     fcd.setHideIgnored(false);
+    fcd.setEnvironmentRestricted(true);
     VirtualFile baseDir = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (baseDir == null || !baseDir.isDirectory()) {
       baseDir = project.getBaseDir();
