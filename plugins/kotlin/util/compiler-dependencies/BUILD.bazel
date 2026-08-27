@@ -20,6 +20,7 @@ jvm_library(
         "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir",
         "//libraries/kotlinc/kotlinx-serialization-compiler-plugin:libraries-kotlinc-kotlinx-serialization-compiler-plugin",
         "//libraries/kotlinc/low-level-api-fir:libraries-kotlinc-low-level-api-fir",
+        "//libraries/kotlinc/kotlin-script-runtime:libraries-kotlinc-kotlin-script-runtime",
     ],
 )
 
@@ -68,7 +69,7 @@ jvm_library(
         "@lib//:kotlinc-kotlin-scripting-dependencies-provided",
         "@lib//:kotlinc-kotlin-scripting-compiler-impl-provided",
         "@lib//:kotlinc-kotlin-scripting-jvm-provided",
-        "@lib//:kotlinc-kotlin-script-runtime-provided",
+        "//libraries/kotlinc/kotlin-script-runtime:libraries-kotlinc-kotlin-script-runtime_test_lib",
         "@lib//:kotlinc-kotlin-build-tools-api-provided",
         "@lib//:kotlinc-kotlin-build-tools-impl-provided",
         "@lib//:kotlinc-kotlin-build-tools-cri-impl-provided",

@@ -21,7 +21,7 @@ jvm_library(
     deps = [
         # do not sort,
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
-        "@lib//:kotlinc-kotlin-script-runtime",
+        "//libraries/kotlinc/kotlin-script-runtime:libraries-kotlinc-kotlin-script-runtime",
         "@lib//:kotlinc-kotlin-scripting-common",
         "//platform/projectModel-api:projectModel",
         "@lib//:kotlinc-kotlin-scripting-jvm",
@@ -68,6 +68,7 @@ jvm_library(
         # do not sort,
         ":scripting.shared",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/kotlin-script-runtime:libraries-kotlinc-kotlin-script-runtime_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/core-impl:core-impl_test_lib",

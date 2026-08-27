@@ -10,5 +10,7 @@
   <!-- kotlin.jsr223 is included in kotlin plugin as well. To avoid conflicts, it's private and is not included in the common namespace -->
   <content>
     <module name="intellij.kotlin.jsr223" loading="embedded"/>
+    <!-- several plugins include this wrapper. To avoid conflicts, it's private and is not included in the common namespace -->
+    <module name="intellij.libraries.kotlinc.kotlin.script.runtime" loading="embedded"/>
   </content>
 </idea-plugin>

@@ -5951,20 +5951,6 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_kotlin-kotlin-script-runtime-2_5_0-dev-5674_http",
-    downloaded_file_path = "kotlin-script-runtime-2.5.0-dev-5674.jar",
-    sha256 = "ba87cbfd0bd667ddb1e8216f00cb998bd121db30383ce880a336ca231b8ad8b5",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-script-runtime/2.5.0-dev-5674/kotlin-script-runtime-2.5.0-dev-5674.jar",
-)
-
-http_file(
-    name = "org_jetbrains_kotlin-kotlin-script-runtime-2_5_0-dev-5674-sources_http",
-    downloaded_file_path = "kotlin-script-runtime-2.5.0-dev-5674-sources.jar",
-    sha256 = "275d90c0c92e9680aff9c013394f3f395bc46dc23762107c4fdccd9887a58561",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-script-runtime/2.5.0-dev-5674/kotlin-script-runtime-2.5.0-dev-5674-sources.jar",
-)
-
-http_file(
     name = "org_jetbrains_kotlin-kotlin-scripting-common-2_5_0-dev-5674_http",
     downloaded_file_path = "kotlin-scripting-common-2.5.0-dev-5674.jar",
     sha256 = "a938b4f399af3bf2eb55e8cf8fe70636435e4e9cc363733dc7efa6679798bc12",
@@ -10589,6 +10575,20 @@ http_file(
     downloaded_file_path = "kotlin-compiler-fir-for-ide-2.5.0-dev-5674-sources.jar",
     sha256 = "8d9c2eddbb448edcfb7fff3960c0c99e928fb94e5816c52b49b21f728fab270d",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.5.0-dev-5674/kotlin-compiler-fir-for-ide-2.5.0-dev-5674-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlin-kotlin-script-runtime-2_5_0-dev-5674_http",
+    downloaded_file_path = "kotlin-script-runtime-2.5.0-dev-5674.jar",
+    sha256 = "ba87cbfd0bd667ddb1e8216f00cb998bd121db30383ce880a336ca231b8ad8b5",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-script-runtime/2.5.0-dev-5674/kotlin-script-runtime-2.5.0-dev-5674.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlin-kotlin-script-runtime-2_5_0-dev-5674-sources_http",
+    downloaded_file_path = "kotlin-script-runtime-2.5.0-dev-5674-sources.jar",
+    sha256 = "275d90c0c92e9680aff9c013394f3f395bc46dc23762107c4fdccd9887a58561",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-script-runtime/2.5.0-dev-5674/kotlin-script-runtime-2.5.0-dev-5674-sources.jar",
 )
 
 http_file(

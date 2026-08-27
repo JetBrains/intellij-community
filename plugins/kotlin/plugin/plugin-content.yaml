@@ -154,6 +154,12 @@
     libraries:
       kotlinc.kotlin-compiler-fir:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2/kotlin-compiler-fir-for-ide-2.jar
+- name: lib/intellij.libraries.kotlinc.kotlin.script.runtime.jar
+  contentModules:
+  - name: intellij.libraries.kotlinc.kotlin.script.runtime
+    libraries:
+      kotlinc.kotlin-script-runtime:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2/kotlin-script-runtime-2.jar
 - name: lib/intellij.libraries.kotlinc.low.level.api.fir.jar
   contentModules:
   - name: intellij.libraries.kotlinc.low.level.api.fir
@@ -197,9 +203,6 @@
   - name: kotlinc.kotlin-gradle-statistics
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2/kotlin-gradle-statistics-for-ide-2.jar
-  - name: kotlinc.kotlin-script-runtime
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2/kotlin-script-runtime-2.jar
   - name: kotlinc.kotlin-scripting-common
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2/kotlin-scripting-common-2.jar

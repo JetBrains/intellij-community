@@ -14,6 +14,7 @@
     <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.kotlin.tooling.core"/>
     <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinc.kotlin.script.runtime"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>

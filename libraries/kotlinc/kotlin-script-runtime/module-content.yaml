@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinc.kotlin.script.runtime.jar
+  modules:
+  - name: intellij.libraries.kotlinc.kotlin.script.runtime
+    libraries:
+      kotlinc.kotlin-script-runtime:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2/kotlin-script-runtime-2.jar

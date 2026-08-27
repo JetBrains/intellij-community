@@ -28,7 +28,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
     private const val SERIALIZATION_COMPILER_PLUGIN_MODULE = "intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin"
 
     private val KOTLIN_SCRIPTING_LIBRARIES = java.util.List.of(
-      "kotlinc.kotlin-script-runtime",
       "kotlinc.kotlin-scripting-jvm"
     )
 
@@ -43,6 +42,7 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "intellij.libraries.kotlinc.analysis.api.k2",
       "intellij.libraries.kotlinc.analysis.api.platform.interface",
       "intellij.libraries.kotlinc.kotlin.compiler.fir",
+      "intellij.libraries.kotlinc.kotlin.script.runtime",
       "intellij.libraries.kotlinc.low.level.api.fir",
       "intellij.libraries.kotlinc.symbol.light.classes",
     )
