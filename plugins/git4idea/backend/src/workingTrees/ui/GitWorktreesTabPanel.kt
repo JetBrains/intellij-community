@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.help.HelpManager
@@ -49,7 +50,7 @@ internal class GitWorktreesTabPanel(private val project: Project, cs: CoroutineS
     accessibleContext.accessibleName = GitBundle.message("toolwindow.working.trees.tab.name")
     putClientProperty(AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)
     addMouseListener(createPopupHandler())
-    ActionManager.getInstance().getAction("Git.WorkingTrees.Open").registerCustomShortcutSet(CommonShortcuts.ENTER, this)
+    ActionUtil.wrap("Git.WorkingTrees.Open").registerCustomShortcutSet(CommonShortcuts.ENTER, this)
     ListHoverListener.DEFAULT.addTo(this)
   }
 
