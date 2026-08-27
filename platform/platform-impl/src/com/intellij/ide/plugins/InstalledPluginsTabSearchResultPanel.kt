@@ -47,6 +47,7 @@ class InstalledPluginsTabSearchResultPanel(
   private val mySelectionListener: Consumer<in PluginsGroupComponent?>,
   private val mySearchInMarketplaceTabHandler: Consumer<String?>?,
   private val myPluginModelFacade: PluginModelFacade,
+  private val myWaitForInstalledPanelModel: suspend () -> Unit,
 ) : SearchResultPanel(coroutineScope, installedController, panel, false) {
   override fun setupEmptyText() {
     myPanel.getEmptyText().setText(IdeBundle.message("plugins.configurable.nothing.found"))
@@ -79,6 +80,7 @@ class InstalledPluginsTabSearchResultPanel(
     val searchIndex = updateAndGetSearchIndex()
     myPluginModelFacade.getModel().setInvalidFixCallback(null)
     val parser = SearchQueryParser.Installed(query)
+    myWaitForInstalledPanelModel()
     val descriptors = myPluginModelFacade.getModel().installedDescriptors
 
     if (!parser.vendors.isEmpty()) {

@@ -51,6 +51,7 @@ import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -94,6 +95,8 @@ class InstalledPluginsTab @RequiresEdt constructor(
   private val installedPanel = createInstalledPanel(eventHandler)
 
   private var pluginUpdateSubscription: PluginUpdateSubscription? = null
+  @Volatile
+  private var installedPanelModelJob: Job? = null
 
   private val tracker: PluginManagerUiTracker = PluginManagerUiTracker()
 
@@ -130,7 +133,7 @@ class InstalledPluginsTab @RequiresEdt constructor(
 
   private fun computeAndApplyInstalledPanelModel() {
     val myPluginModel = pluginModelFacade.getModel()
-    coroutineScope.launch(Dispatchers.IO) {
+    installedPanelModelJob = coroutineScope.launch(Dispatchers.IO) {
       val totalStart = TimeSource.Monotonic.markNow()
       try {
         val model = fetchInstalledPanelModel(myPluginModel)
@@ -145,6 +148,10 @@ class InstalledPluginsTab @RequiresEdt constructor(
         throw e
       }
     }
+  }
+
+  private suspend fun waitForInstalledPanelModel() {
+    installedPanelModelJob?.join()
   }
 
   private suspend fun fetchInstalledPanelModel(myPluginModel: MyPluginModel): CreateInstalledPanelModel {
@@ -452,6 +459,7 @@ class InstalledPluginsTab @RequiresEdt constructor(
       selectionListener,
       if (searchInMarketplaceTabHandler == null) null else Consumer<String?> { query -> searchInMarketplaceTabHandler.accept(query!!) },
       pluginModelFacade,
+      ::waitForInstalledPanelModel,
     )
     return searchPanel
   }
