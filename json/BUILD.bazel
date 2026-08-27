@@ -101,14 +101,20 @@ exports_files(
 
 ### auto-generated section `dev content intellij.json` start
 dev_dist_plugin_content(
+    content_modules = [
+        "//libraries/joni",
+        "//libraries/json-schema-validator",
+    ],
     descriptor_module = ":json",
+    libraries = [
+        "@lib//:libraries-joni-joni",
+        "@lib//:libraries-json_schema_validator-json-schema-validator-jetbrains",
+    ],
     prepacked_content_modules = [
         "//json/backend/regexp:regexp_content_module_jar",
         "//json/backend:backend_content_module_jar",
-        "//json/networknt.wrapper/libraries:json-networknt-wrapper-libraries-jsonSchemaValidator_content_module_jar",
         "//json/networknt.wrapper:networknt.wrapper_content_module_jar",
         "//json/structureView:structureView_content_module_jar",
-        "//libraries/joni:joni_content_module_jar",
     ],
     prepacked_jars = {
         "//json/syntax:syntax_content_module_jar": "intellij.json.syntax.jar",
