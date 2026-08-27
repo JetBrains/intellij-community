@@ -48,7 +48,7 @@ class KotlinFirPluginXmlFunctionalTest : JavaCodeInsightFixtureTestCase() {
     //moduleBuilder.addLibrary("platform-util", PathUtil.getJarPathForClass(Iconable::class.java))
     moduleBuilder.addLibrary("platform-analysis", PathUtil.getJarPathForClass(LocalInspectionEP::class.java))
     moduleBuilder.addLibrary("platform-resources",
-                             checkNotNull(PathManager.getResourceRoot(RegistryManager::class.java, "/META-INF/PlatformLangPlugin.xml")))
+                             checkNotNull(PathManager.getResourceRoot(RegistryManager::class.java, "/idea/PlatformActions.xml")))
     moduleBuilder.addLibrary("platform-ide-core", PathUtil.getJarPathForClass(Configurable::class.java))
     moduleBuilder.addLibrary("platform-ide-core-impl", PathUtil.getJarPathForClass(NotificationGroupEP::class.java))
     moduleBuilder.addLibrary("platform-editor", PathUtil.getJarPathForClass(AdvancedSettings::class.java))

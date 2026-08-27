@@ -1810,8 +1810,8 @@ private fun compileExcludeSortKey(pattern: String): String = pattern.lowercase()
  * `META-INF/plugin.xml`, and the fragments those `xi:include`.
  *
  * The whole tree, not the root and its `META-INF/`. A reference beginning with `/` is taken verbatim
- * (`org.jetbrains.intellij.build.impl.toLoadPath`), so a descriptor can name any path in the module - the platform's
- * own `META-INF/PlatformLangPlugin.xml` includes `/idea/PlatformActions.xml` - and a predicate that assumes two
+ * (`org.jetbrains.intellij.build.impl.toLoadPath`), so a descriptor can name any path in the module - every product
+ * root descriptor includes `/idea/PlatformActions.xml` - and a predicate that assumes two
  * directories leaves those unexported, which is an analysis error the moment the plan names one.
  *
  * Deliberately a superset. An `exports_files` entry costs nothing - only what `build/dev_dist_plan.bzl` and the

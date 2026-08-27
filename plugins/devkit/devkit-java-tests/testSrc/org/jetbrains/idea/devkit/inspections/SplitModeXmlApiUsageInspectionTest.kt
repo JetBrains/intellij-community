@@ -126,7 +126,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
   fun testModuleKindCanBePredefinedForDescriptorPath() {
     val pluginXml = addModuleWithXmlDescriptor(
       moduleName = "intellij.platform.resources",
-      descriptorRelativePathToResourcesDirectory = "META-INF/PlatformLangPlugin.xml",
+      descriptorRelativePathToResourcesDirectory = "idea/PlatformActions.xml",
       pluginXmlContent = """
         <idea-plugin>
           <dependencies>
@@ -148,7 +148,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
   fun testPredefinedModuleSkipsAllSplitModeInspections() {
     val pluginXml = addModuleWithXmlDescriptor(
       moduleName = "intellij.platform.resources",
-      descriptorRelativePathToResourcesDirectory = "META-INF/PlatformLangPlugin.xml",
+      descriptorRelativePathToResourcesDirectory = "idea/PlatformActions.xml",
       pluginXmlContent = """
         <idea-plugin>
           <dependencies>
@@ -784,7 +784,7 @@ Module 'unique.module.name.37'  -> backend">typedHandler</warning>/>
   fun testPredefinedSharedContainingPluginOverridesFrontendNamingConvention() {
     addModuleWithXmlDescriptor(
       moduleName = "intellij.platform.resources",
-      descriptorRelativePathToResourcesDirectory = "META-INF/PlatformLangPlugin.xml",
+      descriptorRelativePathToResourcesDirectory = "idea/PlatformActions.xml",
       pluginXmlContent = """
         <idea-plugin>
           <content>

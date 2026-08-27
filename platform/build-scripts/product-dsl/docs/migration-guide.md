@@ -251,7 +251,7 @@ override fun getProductContentDescriptor(): ProductModulesContentSpec = productM
   alias("com.intellij.codeServer")
   
   // Only XML includes - modules not available at runtime
-  deprecatedInclude("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml")
+  deprecatedInclude("intellij.platform.resources", "idea/PlatformActions.xml")
   deprecatedInclude("intellij.platform.resources", "META-INF/ProjectModel.xml")
   // ... more deprecatedInclude calls
   

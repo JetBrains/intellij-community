@@ -82,8 +82,8 @@ private fun resolvesMainClassloaderClasses(entry: ContentDescriptor.ModuleDescri
  * The entry's file may be an id-less fragment of the effective descriptor, so the owning plugin id is resolved
  * through the include graph: a file declaring an id answers directly; a fragment belongs to the core plugin only
  * when every production descriptor xi-including it does; a root without an own id may still take the id from a
- * fragment it includes (product descriptors include the id-carrying PlatformLangPlugin.xml). Only whole-descriptor
- * includes count either way: a sub-selecting `xpointer` carries neither the `<content>` entries nor the `<id>`.
+ * fragment it includes. Only whole-descriptor includes count either way: a sub-selecting `xpointer` carries
+ * neither the `<content>` entries nor the `<id>`.
  */
 private fun isPartOfCorePluginDescriptor(file: XmlFile, currentPath: MutableSet<XmlFile>): Boolean {
   return visitOnce(currentPath, file, onCycle = false) {

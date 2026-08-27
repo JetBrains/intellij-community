@@ -34,7 +34,7 @@ annotation class ProductDslMarker
  * Represents an XML include directive that references a resource within a module.
  *
  * @param contentModuleName The JPS module name containing the resource (e.g., "intellij.platform.resources")
- * @param resourcePath The path to the resource within the module (e.g., "META-INF/PlatformLangPlugin.xml")
+ * @param resourcePath The path to the resource within the module (e.g., "idea/PlatformActions.xml")
  * @param optional If true, this include is always generated with xi:fallback and never inlined (safe for files that may not exist)
  */
 @Serializable
@@ -261,7 +261,7 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
 
   /**
    * Add an XML include (xi:include directive) by specifying module name and resource path.
-   * Example: deprecatedInclude("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml")
+   * Example: deprecatedInclude("intellij.platform.resources", "idea/PlatformActions.xml")
    *
    * For optional includes that may not exist in all builds (always uses xi:fallback):
    * Example: deprecatedInclude("intellij.rider.languages", "intellij.rider.languages.xml", optional = true)
@@ -560,7 +560,7 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
  * override fun getProductContentModules(): ProductModulesContentSpec {
  *   return productModules {
  *     // XML includes (optional)
- *     include("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml")
+ *     include("intellij.platform.resources", "idea/PlatformActions.xml")
  *     include("intellij.gateway", "META-INF/Gateway.xml")
  *
  *     // Module sets

@@ -3,8 +3,8 @@
   <!-- Components and extensions declared in this file work ONLY in PyCharm, not in Python plugin.
        Both Community and Professional editions.
 
-       Note: Module alias, PlatformLangPlugin.xml, and remoteServers includes are provided by
-       CommunityProductFragments.pycharmCoreFragment() in product definitions. -->
+       Note: The module aliases, the core action includes, and the remoteServers includes are
+       provided by CommunityProductFragments.pycharmCoreFragment() in product definitions. -->
 
   <extensions defaultExtensionNs="com.intellij">
     <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>

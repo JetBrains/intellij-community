@@ -73,7 +73,6 @@ exports_files(
         "generated/META-INF/intellij.moduleSets.xml.without.structureView.xml",
         "generated/META-INF/intellij.moduleSets.xml.xml",
         "src/DefaultColorSchemesManager.xml",
-        "src/META-INF/PlatformLangPlugin.xml",
         "src/PageSizes.xml",
         "src/defaultFileTypes.xml",
         "src/idea/DefaultKeymap.xml",

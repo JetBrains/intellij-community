@@ -140,8 +140,7 @@ suspend fun collectPluginDescriptors(
         }
 
         if (xml.getChildTextTrim("id") == "com.intellij" ||
-            hasPluginAliasThatIndicatesThatItIsAProduct(xml) ||
-            includesPlatformCorePluginDescriptor(xml)) {
+            hasPluginAliasThatIndicatesThatItIsAProduct(xml)) {
           Span.current().addEvent(
             "skip module",
             Attributes.of(
@@ -303,18 +302,6 @@ private fun hasPluginAliasThatIndicatesThatItIsAProduct(xml: Element): Boolean {
   return xml.getChildren("module").any {
     val alias = it.getAttributeValue("value")
     alias == "com.intellij.marketplace" || alias == "com.jetbrains.gateway"
-  }
-}
-
-/**
- * A product/core descriptor may declare its `com.intellij` id via an `xi:include` of the platform core
- * descriptor (`PlatformLangPlugin.xml`) rather than an explicit `<id>com.intellij</id>`
- * (see `generator.kt`, which omits the id when the spec includes it). Such descriptors are product cores,
- * not publishable plugins, so the collector must skip them.
- */
-private fun includesPlatformCorePluginDescriptor(xml: Element): Boolean {
-  return xml.getChildren("include", JDOMUtil.XINCLUDE_NAMESPACE).any {
-    it.getAttributeValue("href")?.endsWith("META-INF/PlatformLangPlugin.xml") == true
   }
 }
 

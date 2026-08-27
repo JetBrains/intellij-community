@@ -707,7 +707,7 @@ if (!pluginLayout.pathsToScramble.isEmpty()) {
 ```xml
 <!-- CLionPlugin.xml: Example of problematic inlined content -->
 <idea-plugin>
-  <!-- <editor-fold desc="Inlined from PlatformLangPlugin.xml"> -->
+  <!-- <editor-fold desc="Inlined from the platform core descriptor"> -->
   <id>com.intellij</id>
   <name>IDEA CORE</name>
   <module value="com.intellij.modules.platform" />
@@ -727,7 +727,7 @@ if (!pluginLayout.pathsToScramble.isEmpty()) {
 ```xml
 <!-- CLionPlugin.xml: Clean xi:include references -->
 <idea-plugin>
-  <xi:include href="META-INF/PlatformLangPlugin.xml"/>
+  <xi:include href="/idea/PlatformActions.xml"/>
   <xi:include href="intellij.platform.remoteServers.impl.xml"/>
   <xi:include href="META-INF/ultimate.xml"/>
 </idea-plugin>
