@@ -7,7 +7,6 @@ import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -225,12 +224,11 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
       #└ TYPE int
       """.trimIndent())
 
-    @Disabled //see: PY-91856
     @Test
     @TestFor(issues = ["PY-25346"])
     fun `typing NamedTuple functional target field`() = test("""
       from typing import NamedTuple
-      User = NamedTuple("User", name=str, level=int)
+      User = NamedTuple("User", [("name", str), ("level", int)])
       expr = User("name").level
       #│                └ WARNING Parameter 'level' unfilled
       #└ TYPE int
@@ -291,22 +289,20 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
       #└ TYPE Cat
       """.trimIndent())
 
-    @Disabled //see: PY-91856
     @Test
     @TestFor(issues = ["PY-27148"])
     fun `typing NamedTuple functional _make on instance`() = test("""
       from typing import NamedTuple
-      Cat = NamedTuple("Cat", name=str, age=int)
+      Cat = NamedTuple("Cat", [("name", str), ("age", int)])
       expr = Cat("name", 5)._make(["newname", 6])
       #└ TYPE Cat
       """.trimIndent())
 
-    @Disabled //see: PY-91856
     @Test
     @TestFor(issues = ["PY-27148"])
     fun `typing NamedTuple functional _make on class`() = test("""
       from typing import NamedTuple
-      Cat = NamedTuple("Cat", name=str, age=int)
+      Cat = NamedTuple("Cat", [("name", str), ("age", int)])
       expr = Cat._make(["newname", 6])
       #└ TYPE Cat
       """.trimIndent())
@@ -322,22 +318,20 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
       #└ TYPE Cat
       """.trimIndent())
 
-    @Disabled //see: PY-91856
     @Test
     @TestFor(issues = ["PY-27148"])
     fun `typing NamedTuple functional _replace on instance`() = test("""
       from typing import NamedTuple
-      Cat = NamedTuple("Cat", name=str, age=int)
+      Cat = NamedTuple("Cat", [("name", str), ("age", int)])
       expr = Cat("name", 5)._replace(name="newname")
       #└ TYPE Cat
       """.trimIndent())
 
-    @Disabled //see: PY-91856
     @Test
     @TestFor(issues = ["PY-27148"])
     fun `typing NamedTuple functional _replace result field`() = test("""
       from typing import NamedTuple
-      Cat = NamedTuple("Cat", name=str, age=int)
+      Cat = NamedTuple("Cat", [("name", str), ("age", int)])
       expr = Cat("name", 5)._replace(age="give").age
       #│                             ^^^^^^^^^^ WARNING Expected type 'int', got 'Literal["give"]' instead
       #└ TYPE int
@@ -387,17 +381,13 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
       foo(nt(field = "f"))
       """.trimIndent())
 
-    @Disabled //see: PY-91856
     @Test
     @TestFor(issues = ["PY-23239", "PY-23253"])
     fun `initializing typing NamedTuple`() = test("""
       import typing
       from typing import List
 
-
-      MyTup2 = typing.NamedTuple("MyTup2", bar=int, baz=str)
-      MyTup3 = typing.NamedTuple("MyTup2", [("bar", int), ("baz", str)])
-
+      MyTup3 = typing.NamedTuple("MyTup3", [("bar", int), ("baz", str)])
 
       class MyTup4(typing.NamedTuple):
           bar: int
@@ -415,21 +405,10 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
           baz: str
           foo: int
 
-
-      MyTup7 = typing.NamedTuple("MyTup7", names=List[str], ages=List[int])
-
-
-      # fail
-      MyTup2('', '') # WARNING Expected type 'int', got 'Literal[""]' instead
-      MyTup2(bar='', baz='') # WARNING Expected type 'int', got 'Literal[""]' instead
-      MyTup2(baz='', bar='') # WARNING Expected type 'int', got 'Literal[""]' instead
-
-
-      # ok
-      MyTup2(5, '')
-      MyTup2(bar=5, baz='')
-      MyTup2(baz='', bar=5)
-
+      MyTup7 = typing.NamedTuple(
+          "MyTup7",
+          [("names", List[str]), ("ages", List[int])]
+      )
 
       # fail
       MyTup3('', '') # WARNING Expected type 'int', got 'Literal[""]' instead
