@@ -8,6 +8,17 @@ Module sets are **reusable collections of modules** that can be referenced as a 
 - **Organization**: Grouping related modules by functionality (e.g., VCS, XML, essential platform)
 - **Composition**: Building complex products from simple, composable building blocks
 
+## A module set is the last resort for a library module
+
+A library module takes the lowest route that works. A library that one plugin uses belongs to that plugin, as
+private content. A library whose types cross a plugin boundary belongs to the plugin that owns the API, and
+every dependent plugin reuses that copy. Only when neither route works does the module join a module set,
+because a set ships the library to every product that includes the set.
+
+Read [ADR 0005](../../../../../build/decisions/0005-a-library-copy-belongs-to-the-plugin-that-owns-its-api.md)
+for the decision, and [content-module-copy-conflict.md](validators/content-module-copy-conflict.md) for the rule
+that enforces the middle route.
+
 ## How Module Sets Work
 
 Module sets are **defined in Kotlin code** and **auto-generate XML files**:

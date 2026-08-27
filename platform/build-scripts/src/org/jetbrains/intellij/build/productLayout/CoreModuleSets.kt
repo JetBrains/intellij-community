@@ -18,6 +18,12 @@ package org.jetbrains.intellij.build.productLayout
  * CommunityModuleSets builds on top of these with IDE features (essential, debugger, vcs, xml, etc.)
  * and has a one-way dependency on CoreModuleSets.
  *
+ * **A shared module set is the last resort for a library module.** Take the lowest route that works.
+ * A library that one plugin uses belongs to that plugin, as private content. A library whose types cross
+ * a plugin boundary belongs to the plugin that owns the API, and every dependent plugin reuses that copy.
+ * Only when neither route works does the module join a set here, because a set ships it to every product.
+ * Read `build/decisions/0005-a-library-copy-belongs-to-the-plugin-that-owns-its-api.md`.
+ *
  * **How to regenerate XML files:**
  * - IDE: Run configuration "Generate Product Layouts"
  * - Bazel: `bazel run //platform/buildScripts:plugin-model-tool`

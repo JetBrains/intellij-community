@@ -2,6 +2,11 @@
 
 Validation ensures module and plugin dependencies are resolvable at runtime and that descriptors remain consistent with the graph. The authoritative, validator-level specs live in [docs/validators/](validators/README.md).
 
+A library module takes the lowest route that works: private plugin content, then reuse of the copy held by the
+plugin that owns the API, then a shared module set. Read
+[ADR 0005](../../../../../build/decisions/0005-a-library-copy-belongs-to-the-plugin-that-owns-its-api.md). Rule
+17 below enforces the middle route.
+
 ## Rule Index
 
 | # | Validator | Scope | Spec |
