@@ -28,6 +28,7 @@ import com.intellij.platform.diagnostic.telemetry.impl.agent.TelemetryAgentProvi
 import com.intellij.platform.diagnostic.telemetry.impl.agent.TelemetryAgentResolver.getAgentLocation
 import com.intellij.platform.diagnostic.telemetry.rt.context.TelemetryContext
 import com.intellij.util.PathUtil
+import com.intellij.util.text.VersionComparatorUtil
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -76,6 +77,11 @@ open class MavenServerCMDState(
     configureSslRelatedOptions(defs)
 
     defs.put("java.awt.headless", "true")
+
+    if (VersionComparatorUtil.compare(myDistribution.version, "4.1.0-snapshot") >= 0) {
+      defs.putIfAbsent("org.jline.terminal.exec", "false")
+    }
+
     for (each in defs.entries) {
       params.vmParametersList.defineProperty(each.key, each.value)
     }
