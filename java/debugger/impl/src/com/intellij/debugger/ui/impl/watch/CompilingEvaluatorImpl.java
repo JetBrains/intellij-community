@@ -4,6 +4,7 @@ package com.intellij.debugger.ui.impl.watch;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.evaluation.AdditionalContextProvider;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.IncorrectCodeFragmentException;
 import com.intellij.execution.configurations.JavaParameters;
@@ -26,6 +27,9 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
@@ -44,7 +48,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -169,13 +175,15 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
           XDebugSession currentSession = XDebuggerManager.getInstance(project).getCurrentSession();
           JavaSdkVersion javaVersion = getJavaVersion(currentSession);
           PsiElement physicalContext = findPhysicalContext(psiContext);
+          PsiCodeFragment fragment = fragmentFactory.apply(psiContext);
           LightMethodObjectExtractedData data = ExtractLightMethodObjectHandler.extractLightMethodObject(
             project,
             physicalContext != null ? physicalContext : psiContext,
-            fragmentFactory.apply(psiContext),
+            fragment,
             generatedClassName != null ? generatedClassName : getGeneratedClassName(),
             javaVersion,
-            generatedClassName);
+            generatedClassName,
+            findAdditionalContextVariables(fragment));
           if (data != null) {
             return new CompilingEvaluatorImpl(project, psiContext, data);
           }
@@ -194,6 +202,18 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
       element = element.getContext();
     }
     return element;
+  }
+
+  private static @NotNull List<PsiLocalVariable> findAdditionalContextVariables(@NotNull PsiCodeFragment fragment) {
+    Map<String, PsiLocalVariable> result = new LinkedHashMap<>();
+    for (PsiReferenceExpression expression : PsiTreeUtil.findChildrenOfType(fragment, PsiReferenceExpression.class)) {
+      PsiElement target = expression.resolve();
+      if (target instanceof PsiLocalVariable variable &&
+          variable.getUserData(AdditionalContextProvider.getADDITIONAL_CONTEXT_ELEMENT_KEY()) != null) {
+        result.putIfAbsent(variable.getName(), variable);
+      }
+    }
+    return new ArrayList<>(result.values());
   }
 
   public static @Nullable JavaSdkVersion getJavaVersion(@Nullable XDebugSession session) {

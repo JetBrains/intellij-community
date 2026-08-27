@@ -54,6 +54,7 @@ import com.intellij.psi.controlFlow.ControlFlowOptions;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.controlFlow.LocalsOrMyInstanceFieldsControlFlowPolicy;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.extractMethod.AbstractExtractDialog;
 import com.intellij.refactoring.extractMethod.InputVariables;
@@ -82,7 +83,7 @@ public final class ExtractLightMethodObjectHandler {
                                                                                   final @NotNull PsiCodeFragment fragment,
                                                                                   @NotNull String methodName,
                                                                                   @Nullable JavaSdkVersion javaVersion) throws PrepareFailedException {
-    return extractLightMethodObject(project, originalContext, fragment, methodName, javaVersion, null);
+    return extractLightMethodObject(project, originalContext, fragment, methodName, javaVersion, null, List.of());
   }
 
   @ApiStatus.Internal
@@ -91,7 +92,8 @@ public final class ExtractLightMethodObjectHandler {
                                                                                   final @NotNull PsiCodeFragment fragment,
                                                                                   @NotNull String methodName,
                                                                                   @Nullable JavaSdkVersion javaVersion,
-                                                                                  @Nullable String explicitGeneratedEvaluationClassName) throws PrepareFailedException {
+                                                                                  @Nullable String explicitGeneratedEvaluationClassName,
+                                                                                  @NotNull List<? extends PsiVariable> contextVariables) throws PrepareFailedException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     PsiElement[] elements = completeToStatementArray(fragment, elementFactory);
     if (elements == null) {
@@ -172,6 +174,13 @@ public final class ExtractLightMethodObjectHandler {
       anchor = codeBlock.getStatements()[0];
       originalAnchor = anchor;
       container = codeBlock;
+    }
+
+    for (PsiVariable variable : contextVariables) {
+      PsiType type = variable.getType();
+      String declaration = "final " + type.getCanonicalText() + " " + variable.getName() + " = " +
+                           PsiTypesUtil.getDefaultValueOfType(type) + ";";
+      container.addBefore(elementFactory.createStatementFromText(declaration, anchor), anchor);
     }
 
     final PsiElement firstElementCopy = container.addRangeBefore(elements[0], elements[elements.length - 1], anchor);
