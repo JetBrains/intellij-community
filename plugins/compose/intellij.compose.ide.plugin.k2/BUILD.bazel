@@ -13,6 +13,11 @@ jvm_provided_library(
     lib = "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir",
 )
 
+jvm_provided_library(
+    name = "libraries_kotlinc_libraries-kotlinc-kotlin-jps-common_provided",
+    lib = "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
+)
+
 jvm_library(
     name = "ide-plugin-k2",
     srcs = glob(
@@ -58,11 +63,11 @@ jvm_library(
         "//platform/external-system-impl:externalSystem-impl",
         "//plugins/kotlin/base/facet",
         "//platform/lang-core",
-        "@lib//:kotlinc-kotlin-jps-common-provided",
         "//plugins/kotlin/base/compiler-configuration",
         "//plugins/kotlin/code-insight/inspections-k2:kotlin-codeInsight-inspections",
         "//plugins/kotlin/project-configuration",
         ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-fir_provided",
+        ":libraries_kotlinc_libraries-kotlinc-kotlin-jps-common_provided",
     ],
 )
 
@@ -106,7 +111,8 @@ jvm_library(
         "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir_test_lib",
         "//plugins/kotlin/base/facet:facet_test_lib",
         "//platform/lang-core:lang-core_test_lib",
-        "@lib//:kotlinc-kotlin-jps-common-provided",
+        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
+        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common_test_lib",
         "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
         "//plugins/kotlin/code-insight/inspections-k2:kotlin-codeInsight-inspections_test_lib",
         "//plugins/kotlin/project-configuration:project-configuration_test_lib",

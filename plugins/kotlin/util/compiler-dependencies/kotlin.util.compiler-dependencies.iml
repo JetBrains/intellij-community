@@ -31,7 +31,7 @@
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.compose-compiler-plugin" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.js-plain-objects-compiler-plugin" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-dataframe-compiler-plugin" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-jps-common" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.jps.common" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-objcexport-header-generator" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-swift-export" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.scripting.common" />

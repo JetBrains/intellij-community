@@ -14,6 +14,6 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.low.level.api.fir" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.symbol.light.classes" scope="RUNTIME" />
-    <orderEntry type="library" scope="RUNTIME" name="kotlinc.kotlin-jps-common" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.jps.common" scope="RUNTIME" />
   </component>
 </module>

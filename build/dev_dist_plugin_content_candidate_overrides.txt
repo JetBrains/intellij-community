@@ -11,7 +11,6 @@
 +intellij.java.rt
 +intellij.kotlin.base.codeInsight.minimal
 +intellij.kotlin.highlighting.minimal
--intellij.kotlin.runConfigurations.jvm
 -intellij.libraries.jsr305
 -intellij.libraries.kotlin.gradle.plugin.idea
 -intellij.libraries.kotlin.gradle.plugin.idea.proto

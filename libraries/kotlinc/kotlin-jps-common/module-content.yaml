@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinc.kotlin.jps.common.jar
+  modules:
+  - name: intellij.libraries.kotlinc.kotlin.jps.common
+    libraries:
+      kotlinc.kotlin-jps-common:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2/kotlin-jps-common-for-ide-2.jar

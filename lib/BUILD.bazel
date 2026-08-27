@@ -7467,28 +7467,6 @@ java_library(
 )
 
 copy_file(
-    name = "org.jetbrains.kotlin/kotlin-jps-common-for-ide-2.5.0-dev-5674.jar_copy",
-    src = "@org_jetbrains_kotlin-kotlin-jps-common-for-ide-2_5_0-dev-5674_http//file",
-    out = "org.jetbrains.kotlin/kotlin-jps-common-for-ide-2.5.0-dev-5674.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "kotlinc-kotlin-jps-common",
-    jar = "@org_jetbrains_kotlin-kotlin-jps-common-for-ide-2_5_0-dev-5674_http//file",
-    source_jar = "@org_jetbrains_kotlin-kotlin-jps-common-for-ide-2_5_0-dev-5674-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "kotlinc-kotlin-jps-common-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":kotlinc-kotlin-jps-common"],
-)
-
-copy_file(
     name = "org.jetbrains.kotlin/kotlin-jps-plugin-classpath-2.4.10.jar_copy",
     src = "@org_jetbrains_kotlin-kotlin-jps-plugin-classpath-2_4_10_http//file",
     out = "org.jetbrains.kotlin/kotlin-jps-plugin-classpath-2.4.10.jar",
@@ -13208,6 +13186,21 @@ jvm_import(
     name = "libraries-kotlinc-kotlin-compiler-fir-kotlinc-kotlin-compiler-fir",
     jar = "@org_jetbrains_kotlin-kotlin-compiler-fir-for-ide-2_5_0-dev-5674_http//file",
     source_jar = "@org_jetbrains_kotlin-kotlin-compiler-fir-for-ide-2_5_0-dev-5674-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.jetbrains.kotlin/kotlin-jps-common-for-ide-2.5.0-dev-5674.jar_copy",
+    src = "@org_jetbrains_kotlin-kotlin-jps-common-for-ide-2_5_0-dev-5674_http//file",
+    out = "org.jetbrains.kotlin/kotlin-jps-common-for-ide-2.5.0-dev-5674.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-kotlinc-kotlin-jps-common-kotlinc-kotlin-jps-common",
+    jar = "@org_jetbrains_kotlin-kotlin-jps-common-for-ide-2_5_0-dev-5674_http//file",
+    source_jar = "@org_jetbrains_kotlin-kotlin-jps-common-for-ide-2_5_0-dev-5674-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

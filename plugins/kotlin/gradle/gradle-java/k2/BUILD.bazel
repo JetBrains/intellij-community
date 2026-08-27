@@ -22,7 +22,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:kotlinc-kotlin-jps-common",
+        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
         "//plugins/kotlin/base/plugin",
         "//plugins/gradle/java",
         "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting",
@@ -43,6 +43,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-gradle-java",
+        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common_test_lib",
         "//plugins/kotlin/base/plugin:plugin_test_lib",
         "//plugins/gradle/java:java_test_lib",
         "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting_test_lib",
@@ -116,7 +117,8 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//plugins/kotlin/gradle/gradle-java/tests.shared",
         "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
-        "@lib//:kotlinc-kotlin-jps-common",
+        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
+        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common_test_lib",
         "@lib//:kotlinc-kotlin-compiler-tests",
         "//plugins/kotlin/tests-common:common-tests",
         "//plugins/kotlin/tests-common:common-tests_test_lib",

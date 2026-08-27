@@ -23,7 +23,7 @@ jvm_library(
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/low-level-api-fir:libraries-kotlinc-low-level-api-fir",
         "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
-        "@lib//:kotlinc-kotlin-jps-common",
+        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
     ],
 )
 
@@ -46,6 +46,7 @@ jvm_library(
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//libraries/kotlinc/low-level-api-fir:libraries-kotlinc-low-level-api-fir_test_lib",
         "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
+        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.plugin` end
@@ -74,6 +75,7 @@ dev_dist_plugin_content(
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir",
+        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
         "//libraries/kotlinc/kotlin-script-runtime:libraries-kotlinc-kotlin-script-runtime",
         "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common",
         "//libraries/kotlinc/kotlin-scripting-compiler-impl:libraries-kotlinc-kotlin-scripting-compiler-impl",
@@ -83,7 +85,6 @@ dev_dist_plugin_content(
         "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
         "//plugins/kotlin/base/code-insight/minimal",
         "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
-        "//plugins/kotlin/run-configurations/jvm",
     ],
     descriptor_module = ":plugin",
     libraries = [
@@ -100,7 +101,6 @@ dev_dist_plugin_content(
         "@lib//:kotlinc-kotlin-compiler-ir",
         "@lib//:kotlinc-kotlin-dataframe-compiler-plugin",
         "@lib//:kotlinc-kotlin-gradle-statistics",
-        "@lib//:kotlinc-kotlin-jps-common",
         "@lib//:kotlinc-kotlin-jps-plugin-classpath",
         "@lib//:kotlinc-kotlin-scripting-dependencies",
         "@lib//:kotlinc-lombok-compiler-plugin",
@@ -118,6 +118,7 @@ dev_dist_plugin_content(
         "@lib//:libraries-kotlinc-analysis-api-platform-interface-kotlinc-analysis-api-platform-interface",
         "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common",
         "@lib//:libraries-kotlinc-kotlin-compiler-fir-kotlinc-kotlin-compiler-fir",
+        "@lib//:libraries-kotlinc-kotlin-jps-common-kotlinc-kotlin-jps-common",
         "@lib//:libraries-kotlinc-kotlin-script-runtime-kotlinc-kotlin-script-runtime",
         "@lib//:libraries-kotlinc-kotlin-scripting-common-kotlinc-kotlin-scripting-common",
         "@lib//:libraries-kotlinc-kotlin-scripting-compiler-impl-kotlinc-kotlin-scripting-compiler-impl",
@@ -217,6 +218,7 @@ dev_dist_plugin_content(
         "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings_content_module_jar",
         "//plugins/kotlin/refactorings/rename.k2:kotlin-refactorings-rename_content_module_jar",
         "//plugins/kotlin/run-configurations/junit:junit_content_module_jar",
+        "//plugins/kotlin/run-configurations/jvm:jvm_content_module_jar",
         "//plugins/kotlin/run-configurations/testng:testng_content_module_jar",
         "//plugins/kotlin/spellchecker:spellchecker_content_module_jar",
         "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-base_content_module_jar",

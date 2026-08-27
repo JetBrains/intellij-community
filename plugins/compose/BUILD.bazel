@@ -51,7 +51,6 @@ dev_dist_plugin_content(
     libraries = [
         "@lib//:kotlinc-compose-compiler-plugin",
         "@lib//:kotlinc-kotlin-compiler-tests",
-        "@lib//:kotlinc-kotlin-jps-common",
         "@lib//:studio-platform",
     ],
     prepacked_content_modules = [

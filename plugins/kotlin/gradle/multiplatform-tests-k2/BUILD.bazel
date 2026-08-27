@@ -13,7 +13,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//plugins/kotlin:kotlin-plugin-community-main",
-        "@lib//:kotlinc-kotlin-jps-common",
+        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
         "//plugins/kotlin/base/util",
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/base/facet",
@@ -57,7 +57,8 @@ jvm_library(
         # do not sort,
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
-        "@lib//:kotlinc-kotlin-jps-common",
+        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
+        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common_test_lib",
         "//plugins/kotlin/base/project-model",
         "//plugins/kotlin/base/project-model:project-model_test_lib",
         "//platform/analysis-api:analysis",

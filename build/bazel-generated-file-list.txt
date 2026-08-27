@@ -535,6 +535,7 @@ libraries/kotlinc/analysis-api-k2
 libraries/kotlinc/analysis-api-platform-interface
 libraries/kotlinc/kotlin-compiler-common
 libraries/kotlinc/kotlin-compiler-fir
+libraries/kotlinc/kotlin-jps-common
 libraries/kotlinc/kotlin-script-runtime
 libraries/kotlinc/kotlin-scripting-common
 libraries/kotlinc/kotlin-scripting-compiler-impl

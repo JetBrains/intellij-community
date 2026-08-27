@@ -154,6 +154,12 @@
     libraries:
       kotlinc.kotlin-compiler-fir:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2/kotlin-compiler-fir-for-ide-2.jar
+- name: lib/intellij.libraries.kotlinc.kotlin.jps.common.jar
+  contentModules:
+  - name: intellij.libraries.kotlinc.kotlin.jps.common
+    libraries:
+      kotlinc.kotlin-jps-common:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2/kotlin-jps-common-for-ide-2.jar
 - name: lib/intellij.libraries.kotlinc.kotlin.script.runtime.jar
   contentModules:
   - name: intellij.libraries.kotlinc.kotlin.script.runtime
@@ -269,11 +275,6 @@
   library: kotlinc.kotlin-dataframe-compiler-plugin
   files:
   - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2/kotlin-dataframe-compiler-plugin-for-ide-2.jar
-  reason: withProjectLibrary
-- name: lib/kotlinc.kotlin-jps-common.jar
-  library: kotlinc.kotlin-jps-common
-  files:
-  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2/kotlin-jps-common-for-ide-2.jar
   reason: withProjectLibrary
 - name: lib/kotlinc.kotlinx-serialization-compiler-plugin.jar
   modules:

@@ -7,6 +7,7 @@
     <module name="intellij.gradle.java"/>
     <module name="intellij.kotlin.base.plugin"/>
     <module name="intellij.kotlin.highlighting"/>
+    <module name="intellij.libraries.kotlinc.kotlin.jps.common"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>
