@@ -22,13 +22,14 @@ Validation ensures module and plugin dependencies are resolvable at runtime and 
 | 14 | Embedded content module dependencies | Product | [embedded-content-module-dependency.md](validators/embedded-content-module-dependency.md) |
 | 15 | Unused embedded library modules | Module set | [unused-embedded-library-module.md](validators/unused-embedded-library-module.md) |
 | 16 | Unused shared library modules | Module set | [unused-shared-library-module.md](validators/unused-shared-library-module.md) |
-| 17 | Library license coverage | Content module | [library-license.md](validators/library-license.md) |
+| 17 | Content module copy conflicts | Product | [content-module-copy-conflict.md](validators/content-module-copy-conflict.md) |
+| 18 | Library license coverage | Content module | [library-license.md](validators/library-license.md) |
 
 ## When Validation Runs
 
+- Bazel: `bazel run //platform/buildScripts:plugin-model-tool`
 - IDE: run configuration "Generate Product Layouts"
 - CLI: `UltimateModuleSets.main()` or `CommunityModuleSets.main()`
-- Bazel: `bazel run //platform/buildScripts:plugin-model-tool`
 
 ## Terminology
 

@@ -191,8 +191,8 @@ The generation uses a **5-stage pipeline architecture** with pluggable generator
 
 For running the generator and common commands, see [quick-start.md](quick-start.md#run-commands).
 
+- **Bazel (preferred):** `bazel run //platform/buildScripts:plugin-model-tool`
 - **IDE:** Run configuration `Generate Product Layouts`
-- **Bazel:** `bazel run //platform/buildScripts:plugin-model-tool`
 - **JSON Analysis:** See [programmatic-content.md#json-analysis-endpoint](programmatic-content.md#json-analysis-endpoint)
 
 ## File Organization

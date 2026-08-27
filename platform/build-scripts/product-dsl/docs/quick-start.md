@@ -28,8 +28,8 @@ Get started with product-dsl in 5 minutes.
    ```
 
 3. **Run the generator**:
-   - IDE: Run configuration **"Generate Product Layouts"**
-   - Or: `bazel run //platform/buildScripts:plugin-model-tool`
+   - Bazel: `bazel run //platform/buildScripts:plugin-model-tool`
+   - Or the IDE run configuration **"Generate Product Layouts"**
 
 4. **Commit the changes** (both Kotlin and generated XML).
 
@@ -53,9 +53,10 @@ Get started with product-dsl in 5 minutes.
    ```
 
 2. **Run the generator** to create XML:
+   ```bash
+   bazel run //platform/buildScripts:plugin-model-tool
    ```
-   Run "Generate Product Layouts"
-   ```
+   The IDE run configuration **"Generate Product Layouts"** does the same.
 
 3. **Use in a product** (see Task 3).
 
@@ -154,8 +155,8 @@ override fun getProductContentDescriptor() = productModules {
 
 | Method | Command |
 |--------|---------|
+| Bazel (preferred) | `bazel run //platform/buildScripts:plugin-model-tool` |
 | IDE | Run "Generate Product Layouts" |
-| Bazel | `bazel run //platform/buildScripts:plugin-model-tool` |
 | JSON | `--json` flag for analysis output |
 
 ---

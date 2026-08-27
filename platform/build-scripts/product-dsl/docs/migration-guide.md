@@ -168,13 +168,13 @@ embeddedModule("fleet.andel", includeDependencies = true)
 
 Before committing changes:
 
-1. **Run Generate Product Layouts**
+1. **Run the generator**
    ```bash
-   # Via JetBrains MCP
-   execute_run_configuration(name="Generate Product Layouts")
-   
-   # Or directly
+   # Preferred
    bazel run //platform/buildScripts:plugin-model-tool
+   
+   # Or via JetBrains MCP
+   execute_run_configuration(name="Generate Product Layouts")
    ```
 
 2. **Check for duplicate content modules**

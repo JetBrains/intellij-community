@@ -35,7 +35,11 @@ Static generation creates XML files for non-dev mode:
 
 Static generation is triggered by running:
 
-Run the `Generate Product Layouts` run configuration, or directly invoke the appropriate main method:
+```bash
+bazel run //platform/buildScripts:plugin-model-tool
+```
+
+The IDE run configuration `Generate Product Layouts` does the same. You can also invoke the appropriate main method directly:
 
 ```bash
 CommunityModuleSets.main()  # for community products
@@ -95,11 +99,15 @@ This tells the generator which file to regenerate for this product.
 Run the generator to create the complete plugin.xml file:
 
 ```bash
+bazel run //platform/buildScripts:plugin-model-tool
+```
+
+You can also use the IDE run configuration "Generate Product Layouts", or a main method:
+
+```bash
 UltimateModuleSets.main()   # for ultimate + community + products
 CommunityModuleSets.main()  # for community products only
 ```
-
-Or use the IDE's "Generate Product Layouts" run configuration.
 
 This will generate a complete plugin.xml file like:
 

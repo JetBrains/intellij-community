@@ -46,7 +46,12 @@ fun discoverModuleSets(provider: Any): List<ModuleSet> {
 
 To regenerate XML files from Kotlin code:
 
-**Using JetBrains MCP (Recommended):**
+**Using Bazel (recommended):**
+```bash
+bazel run //platform/buildScripts:plugin-model-tool
+```
+
+**Using JetBrains MCP:**
 ```kotlin
 mcp__jetbrains__execute_run_configuration(configurationName="Generate Product Layouts")
 ```
@@ -281,7 +286,7 @@ See `/create-module-set` slash command for detailed instructions on creating a n
 **Quick checklist:**
 1. Add function to appropriate file (`CommunityModuleSets.kt` or `UltimateModuleSets.kt`)
 2. Write comprehensive KDoc (see existing examples)
-3. Run "Generate Product Layouts" to create XML
+3. Run `bazel run //platform/buildScripts:plugin-model-tool` to create XML, or the "Generate Product Layouts" run configuration
 4. Reference from products via `moduleSet(yourSet())`
 
 ## Discovering Available Module Sets

@@ -32,7 +32,7 @@ File diff detected: community/platform/platform-resources/generated/META-INF/int
   Change type: MODIFY
 ```
 
-**Cause**: Running "Generate Product Layouts" detected changes that need to be applied.
+**Cause**: A generator run detected changes that need to be applied.
 
 **Fix**: The generator auto-applies diffs. Commit the changes or run the generator again.
 
@@ -344,7 +344,7 @@ Module intellij.platform.ide.impl has testing libraries in production scope:
 Run 'Generate Product Layouts' to fix automatically.
 ```
 
-**Auto-Fix**: Run "Generate Product Layouts" to move test libraries to TEST scope.
+**Auto-Fix**: Run `bazel run //platform/buildScripts:plugin-model-tool` to move test libraries to TEST scope. The "Generate Product Layouts" run configuration does the same.
 
 ---
 
@@ -505,7 +505,7 @@ bazel run --ui_event_filters=-info --noshow_progress //platform/buildScripts:plu
    - Product missing set → add to product
    - Cross-plugin with non-critical loading → add to `knownPlugins`
    - Missing infrastructure → add to module set
-4. **Verify**: Run "Generate Product Layouts" again
+4. **Verify**: Run `bazel run //platform/buildScripts:plugin-model-tool` again, or the "Generate Product Layouts" run configuration
 
 ---
 

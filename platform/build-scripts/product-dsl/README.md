@@ -4,8 +4,8 @@ A Kotlin DSL for defining IntelliJ product module composition and generating mod
 
 ## How to Run
 
+- **Bazel (preferred):** `bazel run //platform/buildScripts:plugin-model-tool`
 - **IDE:** Run configuration `Generate Product Layouts`
-- **Bazel:** `bazel run //platform/buildScripts:plugin-model-tool`
 - **CLI flags:**
   - `--json` outputs model analysis
   - `--json='{"filter":"products"}'` for specific sections
