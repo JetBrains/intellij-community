@@ -67,10 +67,10 @@ internal class ProcessTreeCellRenderer(private val uiContext: ProcessOutputUiCon
   }
 
   private fun updateEastLabel(treeNode: ProcessTreeNode) {
-    val activeFilters = uiContext.controller.processTreeUiState.filters.active
+    val activeFilters = uiContext.controller.treeSectionState.filters
 
     eastLabel.text =
-      if (TreeFilter.Item.SHOW_TIME in activeFilters) {
+      if (activeFilters[TreeFilter.Item.SHOW_TIME]) {
         treeNode.formattedTimestamp
       }
       else {
@@ -78,7 +78,7 @@ internal class ProcessTreeCellRenderer(private val uiContext: ProcessOutputUiCon
       }
 
     eastLabel.icon =
-      if (TreeFilter.Item.SHOW_PROCESS_WEIGHT in activeFilters) {
+      if (activeFilters[TreeFilter.Item.SHOW_PROCESS_WEIGHT]) {
         when (treeNode) {
           is ProcessTreeNode.Context -> null
           is ProcessTreeNode.Process ->

@@ -1,227 +1,119 @@
 package com.intellij.python.processOutput.frontend.ui.components
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
-import com.intellij.python.processOutput.common.OutputKindDto
-import com.intellij.python.processOutput.common.OutputLineDto
-import com.intellij.python.processOutput.frontend.InfoTag
-import com.intellij.python.processOutput.frontend.OutputFilter
-import com.intellij.python.processOutput.frontend.OutputTag
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.python.processOutput.frontend.ProcessOutputBundle.message
-import com.intellij.python.processOutput.frontend.ProcessOutputController
-import com.intellij.python.processOutput.frontend.ProcessStatus
-import com.intellij.python.processOutput.frontend.formatFull
-import com.intellij.python.processOutput.frontend.ui.Colors
-import com.intellij.python.processOutput.frontend.ui.Icons
-import com.intellij.python.processOutput.frontend.ui.commandString
+import com.intellij.python.processOutput.frontend.ui.ProcessOutputUiContext
 import com.intellij.python.processOutput.frontend.ui.shortenedCommandString
+import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.SideBorder
+import com.intellij.ui.components.JBLabel
+import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.awt.BorderLayout
+import java.awt.Dimension
+import javax.swing.JComponent
+import javax.swing.JPanel
 
-@Composable
-internal fun OutputSection(controller: ProcessOutputController) {
-    val selectedProcess by controller.selectedProcess.collectAsState()
+internal class OutputSection(private val uiContext: ProcessOutputUiContext) {
+  private val titleLabel: JBLabel = JBLabel()
 
-    Column {
-        Toolbar {
-            Box(modifier = Modifier.weight(1f)) {
-                selectedProcess?.also {
-                    InterText(
-                        text = it.data.shortenedCommandString,
-                        overflow = TextOverflow.Ellipsis,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                }
-            }
+  val component: JComponent
+    field = JPanel(BorderLayout())
 
-            ComposeFilterActionGroup(
-                tooltipText = message("process.output.buttons.displayOptions"),
-                state = controller.processOutputUiState.filters,
-                onFilterItemToggled = { filterItem, enabled ->
-                    controller.onOutputFilterItemToggled(filterItem, enabled)
-                },
-                modifier = Modifier.testTag(OutputSectionTestTags.FILTERS_BUTTON),
-                menuModifier = Modifier.testTag(OutputSectionTestTags.FILTERS_MENU),
-            )
+  init {
+    titleLabel.font = JBFont.label().asBold()
+    titleLabel.minimumSize = Dimension(0, titleLabel.minimumSize.height)
 
-            ActionIconButton(
-                modifier = Modifier.testTag(OutputSectionTestTags.COPY_OUTPUT_BUTTON),
-                iconKey = Icons.Keys.Copy,
-                tooltipText = message("process.output.output.buttons.copyOutput"),
-                enabled = selectedProcess != null,
-                onClick = {
-                    selectedProcess?.let {
-                        controller.copyOutputToClipboard(it)
-                    }
-                },
-            )
-        }
-
-        if (selectedProcess == null) {
-            EmptyContainerNotice(
-                text = message("process.output.output.blankMessage"),
-                modifier = Modifier.testTag(OutputSectionTestTags.NOT_SELECTED_TEXT),
-            )
-        } else {
-            OutputView(controller)
-        }
+    uiContext.coroutineScope.launch(Dispatchers.EDT) {
+      uiContext.controller.selectedProcess.collect { process ->
+        titleLabel.text = process?.data?.shortenedCommandString ?: ""
+      }
     }
-}
 
-@Composable
-private fun OutputView(controller: ProcessOutputController) {
-    val isInfoExpanded by controller.processOutputUiState.isInfoExpanded.collectAsState()
-    val isOutputExpanded by controller.processOutputUiState.isOutputExpanded.collectAsState()
-    val selectedProcess by controller.selectedProcess.collectAsState()
-    val verticalScrollState = remember { controller.processOutputUiState.verticalScrollState }
-    val horizontalScrollState = remember { controller.processOutputUiState.horizontalScrollState }
-    val filters = remember { controller.processOutputUiState.filters }
+    component.add(toolbar(), BorderLayout.NORTH)
+    component.add(OutputConsole(uiContext).component, BorderLayout.CENTER)
+  }
 
-    selectedProcess?.let { loggedProcess ->
-        val data = loggedProcess.data
-        var lines by remember { mutableStateOf(emptyList<OutputLineDto>()) }
-        val status by loggedProcess.status.collectAsState()
-        val outputLines = remember(lines, filters, status) {
-            buildList {
-                for (line in lines) {
-                    add(ConsoleLine(line.kind.tag, AnnotatedString(line.text)))
-                }
+  private fun toolbar(): JPanel {
+    val panel = JPanel(BorderLayout())
 
-                when (val status = status) {
-                    ProcessStatus.Running -> {}
-                    is ProcessStatus.Done -> {
-                        val textColor = if (status.exitCode != 0)
-                            Colors.ErrorText
-                        else
-                            Color.Unspecified
+    panel.border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
 
-                        val exitText = buildAnnotatedString {
-                            withStyle(SpanStyle(color = textColor)) {
-                                append(status.exitCode.toString())
-                                status.additionalMessageToUser?.also { message ->
-                                    append(": ")
-                                    append(message)
-                                }
-                            }
-                        }
+    val titleWrapper = JPanel(BorderLayout())
+    titleWrapper.isOpaque = false
+    titleWrapper.border = JBUI.Borders.empty(Styling.TITLE_VERTICAL_PADDING, Styling.TITLE_HORIZONTAL_PADDING)
+    titleWrapper.add(titleLabel, BorderLayout.CENTER)
 
-                        add(
-                            ConsoleLine(tag = OutputTag.EXIT, text = exitText),
-                        )
-                    }
-                }
-            }
+    panel.add(titleWrapper, BorderLayout.CENTER)
+    panel.add(actionToolbar().component, BorderLayout.EAST)
+
+    return panel
+  }
+
+  private fun actionToolbar(): ActionToolbar {
+    val actionToolbar =
+      ActionManager
+        .getInstance()
+        .createActionToolbar(
+          ActionPlaces.TOOLWINDOW_CONTENT,
+          actionGroup(),
+          true,
+        )
+
+    actionToolbar.targetComponent = uiContext.rootPanel
+
+    return actionToolbar
+  }
+
+  private fun actionGroup(): DefaultActionGroup {
+    val group = DefaultActionGroup()
+
+    group.add(
+      filterActionGroup(
+        name = message("process.output.output.buttons.displayOptions"),
+        state = uiContext.controller.outputSectionState.filters,
+        onFilterItemToggled = { filterItem, enabled ->
+          uiContext.controller.onOutputFilterItemToggled(filterItem, enabled)
         }
-        val infoLines = remember(data) {
-            buildList {
-                add(ConsoleLine(InfoTag.STARTED, AnnotatedString(data.startedAt.formatFull())))
-                add(ConsoleLine(InfoTag.COMMAND, AnnotatedString(data.commandString)))
-                data.pid?.also { pid ->
-                    add(ConsoleLine(InfoTag.PID, AnnotatedString(pid.toString())))
-                }
-                data.cwd?.also { cwd ->
-                    add(ConsoleLine(InfoTag.CWD, AnnotatedString(cwd)))
-                }
-                add(ConsoleLine(InfoTag.TARGET, AnnotatedString(data.target)))
+      )
+    )
 
-                for ((key, value) in data.env.entries) {
-                    add(ConsoleLine(InfoTag.ENV, AnnotatedString("$key=$value")))
-                }
-            }
+    group.add(
+      object : DumbAwareAction(message("process.output.output.buttons.copyOutput")) {
+        init {
+          templatePresentation.icon = AllIcons.General.Copy
         }
 
-        LaunchedEffect(loggedProcess) {
-            snapshotFlow { loggedProcess.lines.toList() }
-                .collect { lines = it }
+        override fun update(e: AnActionEvent) {
+          e.presentation.isEnabled = uiContext.controller.selectedProcess.value != null
         }
 
-        ConsoleContainer(
-            verticalScrollState = verticalScrollState,
-            horizontalScrollState = horizontalScrollState,
-            wrapContent = filters.active.contains(OutputFilter.Item.WRAP_CONTENT),
-        ) {
-            CollapsibleListSection(
-                text = message("process.output.output.sections.info"),
-                modifier = Modifier.testTag(OutputSectionTestTags.INFO_SECTION),
-                isExpanded = isInfoExpanded,
-                onToggle = { controller.toggleProcessInfo() },
-            )
+        override fun getActionUpdateThread(): ActionUpdateThread =
+          ActionUpdateThread.BGT
 
-            if (isInfoExpanded) {
-                ConsoleOutput(
-                    lines = infoLines,
-                    formatter = InfoTag.formatter,
-                    inputTestTag = OutputSectionTestTags.INFO_SECTION_CONTENT,
-                    tagTestTag = OutputSectionTestTags.INFO_SECTION_TAG,
-                    copyButtonTestTag = OutputSectionTestTags.INFO_SECTION_COPY_BUTTON,
-                )
-            }
-
-            CollapsibleListSection(
-                text = message("process.output.output.sections.output"),
-                modifier = Modifier.testTag(OutputSectionTestTags.OUTPUT_SECTION),
-                isExpanded = isOutputExpanded,
-                onToggle = { controller.toggleProcessOutput() },
-            )
-
-            if (isOutputExpanded) {
-                ConsoleOutput(
-                    lines = outputLines,
-                    formatter = OutputTag.formatter,
-                    displayTags = filters.active.contains(OutputFilter.Item.SHOW_TAGS),
-                    displayCopyButtons = true,
-                    onCopy = { line, index ->
-                        when (line.tag) {
-                            OutputTag.EXIT ->
-                                controller.copyOutputExitInfoToClipboard(loggedProcess)
-                            OutputTag.OUTPUT, OutputTag.ERROR ->
-                                controller.copyOutputTagAtIndexToClipboard(loggedProcess, index)
-                        }
-                    },
-                    inputTestTag = OutputSectionTestTags.OUTPUT_SECTION_CONTENT,
-                    tagTestTag = OutputSectionTestTags.OUTPUT_SECTION_TAG,
-                    copyButtonTestTag = OutputSectionTestTags.OUTPUT_SECTION_COPY_BUTTON,
-                )
-            }
+        override fun actionPerformed(e: AnActionEvent) {
+          uiContext.controller.selectedProcess.value?.also {
+            uiContext.controller.copyOutputToClipboard(it)
+          }
         }
-    }
-}
+      }
+    )
 
-private val OutputKindDto.tag
-    get() =
-        when (this) {
-            OutputKindDto.OUT -> OutputTag.OUTPUT
-            OutputKindDto.ERR -> OutputTag.ERROR
-        }
+    return group
+  }
 
-internal object OutputSectionTestTags {
-    const val NOT_SELECTED_TEXT = "ProcessOutput.Output.NotSelectedText"
-    const val INFO_SECTION = "ProcessOutput.Output.InfoSection"
-    const val INFO_SECTION_CONTENT = "ProcessOutput.Output.InfoSectionContent"
-    const val INFO_SECTION_TAG = "ProcessOutput.Output.InfoSection.Tag"
-    const val INFO_SECTION_COPY_BUTTON = "ProcessOutput.Output.InfoSection.CopyButton"
-    const val OUTPUT_SECTION = "ProcessOutput.Output.OutputSection"
-    const val OUTPUT_SECTION_CONTENT = "ProcessOutput.Output.OutputSectionContent"
-    const val OUTPUT_SECTION_TAG = "ProcessOutput.Output.OutputSection.Tag"
-    const val OUTPUT_SECTION_COPY_BUTTON = "ProcessOutput.Output.OutputSection.CopyButton"
-    const val FILTERS_TAGS = "ProcessOutput.Output.FiltersTags"
-    const val FILTERS_WRAP = "ProcessOutput.Output.FiltersWrap"
-    const val FILTERS_BUTTON = "ProcessOutput.Output.FiltersButton"
-    const val FILTERS_MENU = "ProcessOutput.Output.FiltersMenu"
-    const val COPY_OUTPUT_BUTTON = "ProcessOutput.Output.CopyButton"
+  private object Styling {
+    const val TITLE_VERTICAL_PADDING = 2
+    const val TITLE_HORIZONTAL_PADDING = 8
+  }
 }

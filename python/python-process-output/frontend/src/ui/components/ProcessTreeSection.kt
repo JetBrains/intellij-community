@@ -58,7 +58,7 @@ internal class ProcessTreeSection(private val uiContext: ProcessOutputUiContext)
     searchTextField.textEditor.emptyText.text = message("process.output.tree.search.placeholder")
     searchTextField.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
-        if (uiContext.controller.processTreeUiState.searchQuery.value == searchTextField.text) {
+        if (uiContext.controller.treeSectionState.searchQuery.value == searchTextField.text) {
           return
         }
 
@@ -67,7 +67,7 @@ internal class ProcessTreeSection(private val uiContext: ProcessOutputUiContext)
     })
 
     uiContext.coroutineScope.launch(Dispatchers.EDT) {
-      uiContext.controller.processTreeUiState.searchQuery.collect {
+      uiContext.controller.treeSectionState.searchQuery.collect {
         if (searchTextField.text == it) {
           return@collect
         }
@@ -99,8 +99,8 @@ internal class ProcessTreeSection(private val uiContext: ProcessOutputUiContext)
 
     group.add(
       filterActionGroup(
-        name = message("process.output.buttons.displayOptions"),
-        state = uiContext.controller.processTreeUiState.filters,
+        name = message("process.output.tree.buttons.displayOptions"),
+        state = uiContext.controller.treeSectionState.filters,
         onFilterItemToggled = { filterItem, enabled ->
           uiContext.controller.onTreeFilterItemToggled(filterItem, enabled)
         }

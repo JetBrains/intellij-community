@@ -5,7 +5,6 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.python.processOutput.frontend.ui.ProcessOutputUiContext
 import com.intellij.ui.OnePixelSplitter
-import org.jetbrains.jewel.bridge.JewelComposePanel
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -20,7 +19,7 @@ internal class ProcessOutputToolWindow(project: Project, toolWindow: ToolWindow)
     val splitter = OnePixelSplitter(false, SPLITTER_PROPORTION_KEY, SPLITTER_DEFAULT_PROPORTION)
 
     splitter.firstComponent = ProcessTreeSection(uiContext).component
-    splitter.secondComponent = JewelComposePanel { OutputSection(uiContext.controller) }
+    splitter.secondComponent = OutputSection(uiContext).component
 
     val panel = JPanel(BorderLayout())
 

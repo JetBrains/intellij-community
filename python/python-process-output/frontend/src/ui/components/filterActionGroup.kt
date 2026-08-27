@@ -15,10 +15,7 @@ internal inline fun <TFilter, reified TItem> filterActionGroup(
   name: @Nls String,
   state: FilterActionGroupState<TFilter, TItem>,
   crossinline onFilterItemToggled: (filterItem: TItem, enabled: Boolean) -> Unit,
-): ActionGroup where
-  TItem : Enum<TItem>,
-  TItem : FilterItem,
-  TFilter : Filter<TItem> {
+): ActionGroup where TItem : Enum<TItem>, TItem : FilterItem, TFilter : Filter<TItem> {
   val group = DefaultActionGroup(name, null, AllIcons.Actions.Show)
   group.isPopup = true
 
@@ -26,17 +23,11 @@ internal inline fun <TFilter, reified TItem> filterActionGroup(
     group.add(
       object : DumbAwareToggleAction(entry.title) {
         override fun isSelected(e: AnActionEvent): Boolean =
-          state.active.contains(entry)
+          state[entry]
 
         override fun setSelected(e: AnActionEvent, value: Boolean) {
-          if (value) {
-            state.active += entry
-          }
-          else {
-            state.active -= entry
-          }
-
-          onFilterItemToggled(entry, state.active.contains(entry))
+          state[entry] = value
+          onFilterItemToggled(entry, value)
         }
 
         override fun getActionUpdateThread(): ActionUpdateThread {

@@ -1,11 +1,5 @@
 package com.intellij.python.processOutput.frontend
 
-import androidx.compose.foundation.ScrollState
-import androidx.compose.runtime.mutableStateSetOf
-import androidx.compose.runtime.snapshotFlow
-import androidx.compose.runtime.snapshots.Snapshot
-import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.runtime.snapshots.SnapshotStateSet
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -28,7 +22,6 @@ import com.intellij.python.processOutput.common.TraceContextDto
 import com.intellij.python.processOutput.common.TraceContextKind
 import com.intellij.python.processOutput.common.TraceContextUuid
 import com.intellij.python.processOutput.frontend.ProcessOutputBundle.message
-import com.intellij.python.processOutput.frontend.ui.components.OutputSectionTestTags
 import com.intellij.python.processOutput.frontend.ui.shortenedCommandString
 import java.util.WeakHashMap
 import kotlin.time.Duration.Companion.milliseconds
@@ -40,7 +33,6 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -81,15 +73,16 @@ sealed interface ProcessStatus {
 @ApiStatus.Internal
 data class LoggedProcess(
   val data: LoggedProcessDto,
-  val lines: List<OutputLineDto>,
+  val lines: StateFlow<List<OutputLineDto>>,
   val status: StateFlow<ProcessStatus>,
 )
 
 internal interface ProcessOutputController {
   val selectedProcess: StateFlow<LoggedProcess?>
-  val processStatusUpdates: Flow<LoggedProcess>
-  val processTreeUiState: TreeUiState
-  val processOutputUiState: OutputUiState
+
+  val treeSectionState: TreeSectionState
+  val outputSectionState: OutputSectionState
+  val events: Flow<Event>
 
 
   fun search(query: String)
@@ -103,10 +96,15 @@ internal interface ProcessOutputController {
   fun copyOutputToClipboard(loggedProcess: LoggedProcess)
   fun copyOutputTagAtIndexToClipboard(loggedProcess: LoggedProcess, fromIndex: Int)
   fun copyOutputExitInfoToClipboard(loggedProcess: LoggedProcess)
+
+  sealed interface Event {
+    data class StatusUpdate(val loggedProcess: LoggedProcess) : Event
+    data object OutputScrollDown : Event
+  }
 }
 
 @ApiStatus.Internal
-data class TreeUiState(
+data class TreeSectionState(
   val filters: FilterActionGroupState<TreeFilter, TreeFilter.Item>,
   val searchQuery: StateFlow<String>,
   val treeRoot: StateFlow<List<ProcessTreeNode>>,
@@ -117,11 +115,23 @@ class FilterActionGroupState<TFilter, TItem>(treeFilter: TFilter)
   where TItem : Enum<TItem>,
         TItem : FilterItem,
         TFilter : Filter<TItem> {
-  internal val active: SnapshotStateSet<TItem> = mutableStateSetOf()
+  internal val active: StateFlow<Set<TItem>>
+    field = MutableStateFlow(treeFilter.defaultActive)
 
-  init {
-    active.addAll(treeFilter.defaultActive)
+  operator fun set(filterItem: TItem, toggled: Boolean) {
+    val activeSnapshot = active.value
+
+    active.value =
+      if (toggled) {
+        activeSnapshot + filterItem
+      }
+      else {
+        activeSnapshot - filterItem
+      }
   }
+
+  operator fun get(filterItem: TItem): Boolean =
+    filterItem in active.value
 }
 
 @ApiStatus.Internal
@@ -134,12 +144,11 @@ interface Filter<TItem>
 @ApiStatus.Internal
 interface FilterItem {
   val title: @Nls String
-  val testTag: String?
 }
 
 @ApiStatus.Internal
 object TreeFilter : Filter<TreeFilter.Item> {
-  enum class Item(override val title: String, override val testTag: String? = null) : FilterItem {
+  enum class Item(override val title: String) : FilterItem {
     SHOW_TIME(message("process.output.filters.tree.time")),
     SHOW_PROCESS_WEIGHT(message("process.output.filters.tree.processWeight")),
     SHOW_BACKGROUND_PROCESSES(message("process.output.filters.tree.backgroundProcesses")),
@@ -150,15 +159,9 @@ object TreeFilter : Filter<TreeFilter.Item> {
 
 @ApiStatus.Internal
 object OutputFilter : Filter<OutputFilter.Item> {
-  enum class Item(override val title: String, override val testTag: String) : FilterItem {
-    SHOW_TAGS(
-      title = message("process.output.filters.output.tags"),
-      testTag = OutputSectionTestTags.FILTERS_TAGS,
-    ),
-    WRAP_CONTENT(
-      title = message("process.output.filters.output.wrap"),
-      testTag = OutputSectionTestTags.FILTERS_WRAP,
-    );
+  enum class Item(override val title: String) : FilterItem {
+    SHOW_TAGS(message("process.output.filters.output.tags")),
+    WRAP_CONTENT(message("process.output.filters.output.wrap"));
   }
 
   override val defaultActive: Set<Item> = setOf(Item.SHOW_TAGS, Item.WRAP_CONTENT)
@@ -230,17 +233,15 @@ sealed class ProcessTreeNode : DefaultMutableTreeNode() {
 }
 
 @ApiStatus.Internal
-data class OutputUiState(
+data class OutputSectionState(
   val filters: FilterActionGroupState<OutputFilter, OutputFilter.Item>,
   val isInfoExpanded: StateFlow<Boolean>,
   val isOutputExpanded: StateFlow<Boolean>,
-  val verticalScrollState: ScrollState,
-  val horizontalScrollState: ScrollState,
 )
 
 internal class InternalLoggedProcess(
   val data: LoggedProcessDto,
-  val lines: SnapshotStateList<OutputLineDto>,
+  val lines: MutableStateFlow<List<OutputLineDto>>,
   val status: MutableStateFlow<ProcessStatus>,
 )
 
@@ -251,28 +252,27 @@ internal class ProcessOutputControllerService(
 ) : ProcessOutputController {
   internal val loggedProcesses = MutableStateFlow<List<LoggedProcess>>(listOf())
 
-  private val processOutputInfoExpanded = MutableStateFlow(false)
-  private val processOutputOutputExpanded = MutableStateFlow(true)
+  private val isInfoExpandedFlow = MutableStateFlow(false)
+  private val isOutputExpandedFlow = MutableStateFlow(true)
   private val searchQuery = MutableStateFlow("")
   private val processTreeState = MutableStateFlow<List<ProcessTreeNode>>(emptyList())
 
-  override val processStatusUpdates: Flow<LoggedProcess>
+  override val events: Flow<ProcessOutputController.Event>
     field = MutableSharedFlow()
-  override val selectedProcess: MutableStateFlow<LoggedProcess?> = MutableStateFlow(null)
+  override val selectedProcess: StateFlow<LoggedProcess?>
+    field = MutableStateFlow(null)
 
-  override val processTreeUiState: TreeUiState =
-    TreeUiState(
+  override val treeSectionState: TreeSectionState =
+    TreeSectionState(
       filters = FilterActionGroupState(TreeFilter),
       searchQuery = searchQuery,
       treeRoot = processTreeState,
     )
 
-  override val processOutputUiState: OutputUiState = OutputUiState(
+  override val outputSectionState: OutputSectionState = OutputSectionState(
     filters = FilterActionGroupState(OutputFilter),
-    isInfoExpanded = processOutputInfoExpanded,
-    isOutputExpanded = processOutputOutputExpanded,
-    verticalScrollState = ScrollState(0),
-    horizontalScrollState = ScrollState(0),
+    isInfoExpanded = isInfoExpandedFlow,
+    isOutputExpanded = isOutputExpandedFlow,
   )
 
   private val traceContextCache = boundedLinkedHashMap<TraceContextUuid, TraceContextDto>(
@@ -304,11 +304,6 @@ internal class ProcessOutputControllerService(
 
     selectedProcess.value = process
 
-    coroutineScope.launch(Dispatchers.EDT) {
-      processOutputUiState.verticalScrollState.scrollTo(0)
-      processOutputUiState.horizontalScrollState.scrollTo(0)
-    }
-
     ProcessOutputUsageCollector.treeProcessSelected()
   }
 
@@ -321,28 +316,28 @@ internal class ProcessOutputControllerService(
   }
 
   override fun toggleProcessInfo() {
-    val expanded = processOutputInfoExpanded.value
+    val expanded = isInfoExpandedFlow.value
 
-    processOutputInfoExpanded.value = !expanded
+    isInfoExpandedFlow.value = !expanded
 
     ProcessOutputUsageCollector.outputProcessInfoToggled(!expanded)
   }
 
   override fun toggleProcessOutput() {
-    val expanded = processOutputOutputExpanded.value
+    val expanded = isOutputExpandedFlow.value
 
-    processOutputOutputExpanded.value = !expanded
+    isOutputExpandedFlow.value = !expanded
 
     ProcessOutputUsageCollector.outputProcessOutputToggled(!expanded)
   }
 
   override fun copyOutputToClipboard(loggedProcess: LoggedProcess) {
-    val showTags = processOutputUiState.filters.active.contains(OutputFilter.Item.SHOW_TAGS)
+    val showTags = outputSectionState.filters[OutputFilter.Item.SHOW_TAGS]
 
     val stringToCopy = buildString {
       var lastTag: OutputTag? = null
 
-      loggedProcess.lines.forEach { line ->
+      loggedProcess.lines.value.forEach { line ->
         if (showTags) {
           val tag = when (line.kind) {
             OutputKindDto.OUT -> OutputTag.OUTPUT
@@ -393,7 +388,7 @@ internal class ProcessOutputControllerService(
     fromIndex: Int,
   ) {
     val stringToCopy = buildString {
-      val lines = loggedProcess.lines
+      val lines = loggedProcess.lines.value
 
       lines
         .drop(fromIndex)
@@ -444,16 +439,10 @@ internal class ProcessOutputControllerService(
       searchQuery.value = ""
 
       // expand process output section
-      processOutputOutputExpanded.value = true
-
-      // wait until output has recomposed
-      delay(100.milliseconds)
+      isOutputExpandedFlow.value = true
 
       // scroll output all the way to the bottom left
-      processOutputUiState.verticalScrollState.scrollTo(
-        processOutputUiState.verticalScrollState.maxValue,
-      )
-      processOutputUiState.horizontalScrollState.scrollTo(0)
+      events.emit(ProcessOutputController.Event.OutputScrollDown)
     }
 
     ProcessOutputUsageCollector.toolwindowOpenedDueToError()
@@ -480,7 +469,7 @@ internal class ProcessOutputControllerService(
 
             val internalProcess = InternalLoggedProcess(
               data = event.loggedProcess,
-              lines = SnapshotStateList(),
+              lines = MutableStateFlow(emptyList()),
               status = MutableStateFlow(ProcessStatus.Running),
             )
 
@@ -504,18 +493,15 @@ internal class ProcessOutputControllerService(
             val internalProcess = processMap[event.processId]
 
             if (internalProcess != null) {
-              Snapshot.withMutableSnapshot {
-                val lines = internalProcess.lines
+              val newLines = internalProcess.lines.value.toMutableList()
 
-                lines += event.outputLine
+              newLines += event.outputLine
 
-                if (lines.size > ProcessOutputControllerServiceLimits.MAX_LINES) {
-                  lines.removeRange(
-                    0,
-                    lines.size - ProcessOutputControllerServiceLimits.MAX_LINES,
-                  )
-                }
+              if (newLines.size > ProcessOutputControllerServiceLimits.MAX_LINES) {
+                newLines.subList(0, newLines.size - ProcessOutputControllerServiceLimits.MAX_LINES).clear()
               }
+
+              internalProcess.lines.value = newLines
             }
           }
           is ProcessOutputEventDto.ProcessExit -> {
@@ -528,11 +514,13 @@ internal class ProcessOutputControllerService(
                   exitCode = event.exitValue,
                 )
 
-              processStatusUpdates.emit(
-                LoggedProcess(
-                  internalProcess.data,
-                  internalProcess.lines,
-                  internalProcess.status,
+              events.emit(
+                ProcessOutputController.Event.StatusUpdate(
+                  LoggedProcess(
+                    internalProcess.data,
+                    internalProcess.lines,
+                    internalProcess.status,
+                  )
                 )
               )
             }
@@ -655,8 +643,8 @@ internal class ProcessOutputControllerService(
     combine(
       backgroundErrorProcesses,
       loggedProcesses.debounce(100.milliseconds),
-      processTreeUiState.searchQuery,
-      snapshotFlow { processTreeUiState.filters.active.toSet() },
+      treeSectionState.searchQuery,
+      treeSectionState.filters.active,
     )
     { backgroundErrorProcesses, processList, search, filters ->
       val lowercaseSearch = search.trim().lowercase()

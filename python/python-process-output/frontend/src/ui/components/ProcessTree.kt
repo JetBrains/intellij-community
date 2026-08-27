@@ -1,9 +1,9 @@
 package com.intellij.python.processOutput.frontend.ui.components
 
-import androidx.compose.runtime.snapshotFlow
 import com.intellij.openapi.application.EDT
 import com.intellij.python.processOutput.frontend.LoggedProcess
 import com.intellij.python.processOutput.frontend.ProcessOutputBundle.message
+import com.intellij.python.processOutput.frontend.ProcessOutputController
 import com.intellij.python.processOutput.frontend.ui.ProcessOutputUiContext
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ClientProperty
@@ -57,13 +57,13 @@ internal class ProcessTree(private val uiContext: ProcessOutputUiContext) {
     component.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
 
     uiContext.coroutineScope.launch(Dispatchers.EDT) {
-      uiContext.controller.processTreeUiState.treeRoot.collect { newNodes ->
+      uiContext.controller.treeSectionState.treeRoot.collect { newNodes ->
         synchronizeTree(newNodes, component)
       }
     }
 
     uiContext.coroutineScope.launch(Dispatchers.EDT) {
-      snapshotFlow { uiContext.controller.processTreeUiState.filters.active.toSet() }.collect {
+      uiContext.controller.treeSectionState.filters.active.collect {
         tree.repaint()
       }
     }
@@ -108,8 +108,13 @@ internal class ProcessTree(private val uiContext: ProcessOutputUiContext) {
     }
 
     uiContext.coroutineScope.launch(Dispatchers.EDT) {
-      uiContext.controller.processStatusUpdates.collect {
-        tree.repaint()
+      uiContext.controller.events.collect { event ->
+        when (event) {
+          is ProcessOutputController.Event.StatusUpdate -> {
+            tree.repaint()
+          }
+          ProcessOutputController.Event.OutputScrollDown -> {}
+        }
       }
     }
   }

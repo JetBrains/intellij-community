@@ -6,13 +6,13 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 
 internal object ProcessOutputBundle {
-    private const val BUNDLE_FQN: @NonNls String = "messages.ProcessOutputBundle"
-    private val BUNDLE = DynamicBundle(ProcessOutputBundle::class.java, BUNDLE_FQN)
+  private const val BUNDLE_FQN: @NonNls String = "messages.ProcessOutputBundle"
+  private val BUNDLE = DynamicBundle(ProcessOutputBundle::class.java, BUNDLE_FQN)
 
-    fun message(
-        key: @PropertyKey(resourceBundle = BUNDLE_FQN) String,
-        vararg params: Any,
-    ): @Nls String {
-        return BUNDLE.getMessage(key, *params)
-    }
+  fun message(
+    key: @PropertyKey(resourceBundle = BUNDLE_FQN) String,
+    vararg params: Any,
+  ): @Nls String {
+    return BUNDLE.getMessage(key, *params)
+  }
 }

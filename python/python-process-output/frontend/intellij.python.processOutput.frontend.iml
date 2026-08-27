@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 25" allPlatforms="JVM [25]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -P plugin:androidx.compose.compiler.plugins.kotlin:generateFunctionKeyMetaAnnotations=true -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -opt-in=kotlin.time.ExperimentalTime -Xcontext-parameters -progressive" />
+          <option name="additionalArguments" value="-Xjvm-default=all -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -opt-in=kotlin.time.ExperimentalTime -Xcontext-parameters -progressive" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
@@ -12,13 +12,6 @@
             <stringArg name="apiVersion" arg="2.4" />
             <stringArg name="languageVersion" arg="2.4" />
           </stringArguments>
-          <arrayArguments>
-            <arrayArg name="pluginClasspaths">
-              <args>
-                <arg>$KOTLIN_COMPOSE_COMPILER_PLUGIN$</arg>
-              </args>
-            </arrayArg>
-          </arrayArguments>
         </compilerArguments>
       </configuration>
     </facet>
@@ -36,11 +29,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.core" />
-    <orderEntry type="module" module-name="intellij.libraries.skiko" />
-    <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.foundation" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.ui" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.ideLafBridge" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.python.community.execService" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community" scope="TEST" />
@@ -49,10 +37,8 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinTest" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinTestAssertionsCoreJvm" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.test.junit" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.intUi.standalone" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
-    <orderEntry type="module" module-name="intellij.libraries.compose.runtime.desktop" />
     <orderEntry type="module" module-name="intellij.libraries.mockk" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.mockk.jvm" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
@@ -60,7 +46,6 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.python.processOutput.common" />
     <orderEntry type="module" module-name="intellij.python.community.junit5Tests.framework" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop.junit" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.debug" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />

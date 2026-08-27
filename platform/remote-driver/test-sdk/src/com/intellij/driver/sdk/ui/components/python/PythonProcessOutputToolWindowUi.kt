@@ -11,10 +11,6 @@ private const val TOOL_WINDOW_PANEL_NAME: String = "Python.ProcessOutput.ToolWin
 
 /**
  * UI for the "Python Process Output" tool window (id: `PythonProcessOutput`).
- *
- * It is a Compose/Jewel tool window, so its elements are matched by the Compose attributes exposed by the
- * remote-driver Compose extension: `testtag` (from `Modifier.testTag`), `visible_text` (from Compose `Text`)
- * and `contentdescription`.
  */
 fun IdeaFrameUI.pythonProcessOutputToolWindow(action: PythonProcessOutputToolWindowUi.() -> Unit = {}): PythonProcessOutputToolWindowUi =
   x(PythonProcessOutputToolWindowUi::class.java) {
@@ -28,7 +24,7 @@ fun IdeaFrameUI.pythonProcessOutputToolWindow(action: PythonProcessOutputToolWin
 class PythonProcessOutputToolWindowUi(data: ComponentData) : ToolWindowUiComponent(data) {
   // --- process tree toolbar (left pane) ---
   val searchField: UiComponent = x { byAttribute("name", SEARCH_FIELD_NAME) }
-  val viewOptionsButton: UiComponent = x { byAccessibleName(DISPLAY_OPTIONS_BUTTON_ACCESSIBLE_NAME) }
+  val processTreeDisplayOptionsButton: UiComponent = x { byAccessibleName(PROCESS_TREE_DISPLAY_OPTIONS_BUTTON_ACCESSIBLE_NAME) }
   val expandAllButton: UiComponent = x { byAccessibleName(EXPAND_ALL_BUTTON_ACCESSIBLE_NAME) }
   val collapseAllButton: UiComponent = x { byAccessibleName(COLLAPSE_ALL_BUTTON_ACCESSIBLE_NAME) }
 
@@ -47,10 +43,9 @@ class PythonProcessOutputToolWindowUi(data: ComponentData) : ToolWindowUiCompone
       )
 
   // --- process output (right pane) ---
-  val processInfoSection: UiComponent = x { byAttribute("testtag", INFO_SECTION) }
-  val processOutputSection: UiComponent = x { byAttribute("testtag", OUTPUT_SECTION) }
-  val outputContent: UiComponent = x { byAttribute("testtag", OUTPUT_SECTION_CONTENT) }
-  val copyOutputButton: UiComponent = x { byAttribute("testtag", COPY_OUTPUT_BUTTON) }
+  val processInfoSection: UiComponent = x { byAttribute("name", INFO_SECTION_NAME) }
+  val processOutputSection: UiComponent = x { byAttribute("name", OUTPUT_SECTION_NAME) }
+  val copyOutputButton: UiComponent = x { byAccessibleName(COPY_OUTPUT_BUTTON_ACCESSIBLE_NAME) }
 
   fun text(value: String): UiComponent = x { byVisibleText(value) }
 
@@ -59,14 +54,13 @@ class PythonProcessOutputToolWindowUi(data: ComponentData) : ToolWindowUiCompone
     const val PROCESS_TREE_NAME: String = "Python.ProcessOutput.Tree"
 
     const val SEARCH_FIELD_NAME: String = "Python.ProcessOutput.Tree.SearchField"
-    const val DISPLAY_OPTIONS_BUTTON_ACCESSIBLE_NAME: String = "Display Options"
+    const val PROCESS_TREE_DISPLAY_OPTIONS_BUTTON_ACCESSIBLE_NAME: String = "Process Tree Display Options"
     const val EXPAND_ALL_BUTTON_ACCESSIBLE_NAME: String = "Expand All"
     const val COLLAPSE_ALL_BUTTON_ACCESSIBLE_NAME: String = "Collapse All"
 
     // process output
-    const val INFO_SECTION: String = "ProcessOutput.Output.InfoSection"
-    const val OUTPUT_SECTION: String = "ProcessOutput.Output.OutputSection"
-    const val OUTPUT_SECTION_CONTENT: String = "ProcessOutput.Output.OutputSectionContent"
-    const val COPY_OUTPUT_BUTTON: String = "ProcessOutput.Output.CopyButton"
+    const val INFO_SECTION_NAME: String = "Python.ProcessOutput.Output.Info"
+    const val OUTPUT_SECTION_NAME: String = "Python.ProcessOutput.Output.Output"
+    const val COPY_OUTPUT_BUTTON_ACCESSIBLE_NAME: String = "Copy Output"
   }
 }
