@@ -39,6 +39,7 @@ import org.jetbrains.plugins.terminal.LocalTerminalTtyConnector
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.TerminalEmulatorType
 import org.jetbrains.plugins.terminal.TerminalUtil
+import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.original
 import org.jetbrains.plugins.terminal.session.impl.TerminalBeepEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalClearBufferEvent
@@ -111,7 +112,15 @@ class GhosttyTerminalSession internal constructor(
   override val coroutineScope: CoroutineScope,
 ) : TerminalSession {
 
-  private val emulator: TerminalEmulator = createTerminalEmulator(initialSize)
+  private val emulator: TerminalEmulator = createTerminalEmulator(
+    initialSize,
+    // Ghostty's scrollback is measured in bytes, not characters.
+    // Taking into account that a single cell is ~9 bytes, then, to occupy `defaultMaxOutputLength` chars,
+    // we need `9 x defaultMaxOutputLength`, in the case of very dense output.
+    // Let's use 10 as a multiplier to have a bit more.
+    // But in the case of sparse output, such bytes budget may include even fewer characters.
+    maxScrollbackBytes = 10 * TerminalUiUtils.getDefaultMaxOutputLength(),
+  )
 
   // Projects emulator state into the output-event DTOs and owns the
   // incremental-emission bookkeeping. Created with the emulator; closed on teardown.

@@ -102,6 +102,30 @@ import java.nio.charset.StandardCharsets
  *
  * Not thread-safe: serialize all calls externally (it uses a shared Arena but reusable scratch
  * buffers).
+ *
+ * @param maxScrollbackBytes Maximum size, in bytes, of Ghostty's own scrollback pages.
+ *   This is a page budget, not a text budget. It does not count characters,
+ *   and it does not directly bound the retained text.
+ *
+ *   Ghostty stores every row in a fixed-size page. It evicts one whole page at a time, oldest
+ *   first, and never evicts the page under the active viewport. Two pages is the enforced
+ *   minimum, so a smaller budget silently becomes two pages.
+ *
+ *   One page holds a fixed byte size, about 400 KB, rounded up to the host's memory-page size. So
+ *   the exact page size depends on the OS and the CPU architecture: about 400 KB on a 16 KB-page
+ *   host (Apple Silicon macOS), about 392 KB on a typical 4 KB-page host (most x86_64 Linux).
+ *
+ *   Inside a page, every cell costs a fixed 8 bytes, whether it holds a character or is blank. A
+ *   row of `cols` columns costs `8 * (cols + 1)` bytes; the `+1` is the row header. So:
+ *   ```
+ *   rowsPerPage = floor(pageGridBytes / (8 * (cols + 1)))
+ *   ```
+ *   `pageGridBytes` is the page's byte budget left after its style, grapheme, and hyperlink
+ *   tables, about 383 KB on a 16 KB-page host. That gives about 591 rows per page at 80 columns,
+ *   and about 317 rows per page at 150 columns.
+ *
+ *   A blank cell costs the same as a printed one. Sparse output (short lines) therefore retains
+ *   far fewer real characters per byte than dense output (lines that fill the width).
  */
 internal class GhosttyTerminalEmulator(
   initialSize: TerminalSize,
