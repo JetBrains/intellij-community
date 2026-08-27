@@ -264,7 +264,21 @@ public final class PythonSdkType extends SdkType {
    */
   public static void patchEnvironmentVariablesForVirtualenv(@NotNull Map<String, String> environment,
                                                             @NotNull Sdk sdk) {
-    final Map<String, String> virtualEnv = SdkExtKt.activationEnvironmentBlocking(sdk).getSuccessOrNull();
+    applyActivationEnvironment(environment, SdkExtKt.activationEnvironmentBlocking(sdk).getSuccessOrNull());
+  }
+
+  /**
+   * Merges an activation environment that the caller already read into {@code environment}.
+   * <p>
+   * Use this method when the caller runs on the EDT and cannot call {@code SdkExtKt.activationEnvironmentBlocking},
+   * which needs a background thread.
+   *
+   * @param environment the environment to patch
+   * @param virtualEnv  the activation environment, or {@code null} when the read failed
+   */
+  @ApiStatus.Internal
+  public static void applyActivationEnvironment(@NotNull Map<String, String> environment,
+                                                @Nullable Map<String, String> virtualEnv) {
     if (virtualEnv != null && !virtualEnv.isEmpty()) {
       for (Map.Entry<String, String> entry : virtualEnv.entrySet()) {
         final String key = entry.getKey();
