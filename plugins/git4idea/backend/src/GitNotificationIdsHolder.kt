@@ -140,6 +140,10 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       WORKING_TREES_PRUNED,
       WORKING_TREES_PRUNING_FAILED,
       WORKTREE_BRANCH_UPDATE_FAILED,
+      WORKING_TREE_LOCKED,
+      WORKING_TREE_LOCK_FAILED,
+      WORKING_TREE_UNLOCKED,
+      WORKING_TREE_UNLOCK_FAILED,
       ADD_COMMIT_TO_REMOTE_BRANCH_CONFLICT,
       ADD_COMMIT_TO_REMOTE_BRANCH_FAILED,
       ADD_COMMIT_TO_REMOTE_BRANCH_NOTHING_TO_DO,
@@ -281,6 +285,10 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val WORKING_TREES_PRUNED: String = "git.working.trees.pruned"
     const val WORKING_TREES_PRUNING_FAILED: String = "git.working.trees.pruning.failed"
     const val WORKTREE_BRANCH_UPDATE_FAILED: String = "git.worktree.branch.update.failed"
+    const val WORKING_TREE_LOCKED: String = "git.working.tree.locked"
+    const val WORKING_TREE_LOCK_FAILED: String = "git.working.tree.lock.failed"
+    const val WORKING_TREE_UNLOCKED: String = "git.working.tree.unlocked"
+    const val WORKING_TREE_UNLOCK_FAILED: String = "git.working.tree.unlock.failed"
     const val ADD_COMMIT_TO_REMOTE_BRANCH_CONFLICT: String = "git.add.commit.to.remote.branch.conflict"
     const val ADD_COMMIT_TO_REMOTE_BRANCH_FAILED: String = "git.add.commit.to.remote.branch.failed"
     const val ADD_COMMIT_TO_REMOTE_BRANCH_NOTHING_TO_DO: String = "git.add.commit.to.remote.branch.nothing.to.do"

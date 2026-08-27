@@ -475,6 +475,51 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
     }
   }
 
+  fun lockWorkingTree(project: Project, repository: GitRepository, tree: GitWorkingTree) {
+    runWorkingTreeLockOperation(
+      project, repository,
+      progressTitle = GitBundle.message("progress.title.locking.worktree"),
+      failureId = GitNotificationIdsHolder.WORKING_TREE_LOCK_FAILED,
+      failureTitle = GitBundle.message("Git.WorkingTrees.lock.worktree.failure.notification.title"),
+      successId = GitNotificationIdsHolder.WORKING_TREE_LOCKED,
+      successMessage = GitBundle.message("Git.WorkingTrees.lock.worktree.success.message", tree.path.name),
+    ) { service<Git>().lockWorkingTree(repository, tree) }
+  }
+
+  fun unlockWorkingTree(project: Project, repository: GitRepository, tree: GitWorkingTree) {
+    runWorkingTreeLockOperation(
+      project, repository,
+      progressTitle = GitBundle.message("progress.title.unlocking.worktree"),
+      failureId = GitNotificationIdsHolder.WORKING_TREE_UNLOCK_FAILED,
+      failureTitle = GitBundle.message("Git.WorkingTrees.unlock.worktree.failure.notification.title"),
+      successId = GitNotificationIdsHolder.WORKING_TREE_UNLOCKED,
+      successMessage = GitBundle.message("Git.WorkingTrees.unlock.worktree.success.message", tree.path.name),
+    ) { service<Git>().unlockWorkingTree(repository, tree) }
+  }
+
+  private fun runWorkingTreeLockOperation(
+    project: Project,
+    repository: GitRepository,
+    progressTitle: @NlsContexts.ProgressTitle String,
+    failureId: String,
+    failureTitle: @NlsContexts.NotificationTitle String,
+    successId: String,
+    successMessage: @NlsContexts.NotificationContent String,
+    operation: suspend () -> GitCommandResult,
+  ) {
+    coroutineScope.launch {
+      val result = withBackgroundProgress(project, progressTitle, cancellable = true) { operation() }
+
+      if (!result.success()) {
+        VcsNotifier.getInstance(project).notifyError(failureId, failureTitle, result.errorOutputAsHtmlString, true)
+        return@launch
+      }
+
+      repository.workingTreeHolder.scheduleReload()
+      VcsNotifier.getInstance(project).notifySuccess(successId, "", successMessage)
+    }
+  }
+
   suspend fun openProjectInNewWindow(path: Path): Project? {
     val generalSettings = GeneralSettings.getInstance()
     val savedConfirmOpen = generalSettings.confirmOpenNewProject

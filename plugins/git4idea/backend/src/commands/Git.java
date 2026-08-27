@@ -361,6 +361,12 @@ public interface Git {
   GitCommandResult pruneWorktrees(@NotNull GitRepository repository);
 
   @NotNull
+  GitCommandResult lockWorkingTree(@NotNull GitRepository repository, @NotNull GitWorkingTree tree);
+
+  @NotNull
+  GitCommandResult unlockWorkingTree(@NotNull GitRepository repository, @NotNull GitWorkingTree tree);
+
+  @NotNull
   GitCommandResult runHook(@NotNull GitRepository repository,
                            @NotNull String hookName,
                            @NotNull List<String> hookArgs,

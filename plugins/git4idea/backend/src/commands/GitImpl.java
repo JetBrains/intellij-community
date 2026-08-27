@@ -930,6 +930,28 @@ public class GitImpl extends GitImplBase {
   }
 
   @Override
+  public @NotNull GitCommandResult lockWorkingTree(@NotNull GitRepository repository, @NotNull GitWorkingTree tree) {
+    GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.WORKTREE);
+    handler.setSilent(false);
+    handler.setStdoutSuppressed(false);
+    handler.setStderrSuppressed(false);
+    handler.addParameters("lock");
+    handler.addAbsoluteFile(tree.getPath().getIOFile());
+    return runCommand(handler);
+  }
+
+  @Override
+  public @NotNull GitCommandResult unlockWorkingTree(@NotNull GitRepository repository, @NotNull GitWorkingTree tree) {
+    GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.WORKTREE);
+    handler.setSilent(false);
+    handler.setStdoutSuppressed(false);
+    handler.setStderrSuppressed(false);
+    handler.addParameters("unlock");
+    handler.addAbsoluteFile(tree.getPath().getIOFile());
+    return runCommand(handler);
+  }
+
+  @Override
   public @NotNull GitCommandResult runHook(@NotNull GitRepository repository,
                                            @NotNull String hookName,
                                            @NotNull List<String> hookArgs,

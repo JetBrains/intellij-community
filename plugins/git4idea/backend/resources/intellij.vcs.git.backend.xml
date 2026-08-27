@@ -619,6 +619,7 @@
             icon="AllIcons.General.Refresh" use-shortcut-of="Synchronize"/>
     <action id="Git.WorkingTrees.Prune" class="git4idea.workingTrees.ui.actions.PruneWorkingTreesAction"
             icon="AllIcons.Actions.ClearCash"/>
+    <action id="Git.WorkingTrees.ToggleLock" class="git4idea.workingTrees.ui.actions.GitToggleLockWorkingTreeAction"/>
 
     <group id="Git.WorkingTrees.ToolwindowGroup.Toolbar">
       <reference ref="Git.CreateNewWorkingTree"/>
@@ -631,6 +632,7 @@
 
     <group id="Git.WorkingTrees.ToolwindowGroup.Popup" popup="true">
       <reference ref="Git.WorkingTrees.Open"/>
+      <reference ref="Git.WorkingTrees.ToggleLock"/>
       <separator/>
       <reference ref="Git.WorkingTrees.Remove"/>
     </group>
