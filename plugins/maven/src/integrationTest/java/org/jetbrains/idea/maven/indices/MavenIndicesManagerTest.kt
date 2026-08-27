@@ -46,13 +46,13 @@ class MavenIndicesManagerTest(mavenVersion: String, modelVersion: String) {
   private var myIndicesFixture: MavenIndicesTestFixture? = null
 
   @BeforeEach
-  fun setUp() {
+  fun setUp() = runBlocking {
     myIndicesFixture = MavenIndicesTestFixture(maven.dir, maven.project, maven.testRootDisposable)
     myIndicesFixture!!.setUp()
   }
 
   @AfterEach
-  fun tearDown() {
+  fun tearDown() = runBlocking {
     myIndicesFixture!!.tearDown()
   }
 

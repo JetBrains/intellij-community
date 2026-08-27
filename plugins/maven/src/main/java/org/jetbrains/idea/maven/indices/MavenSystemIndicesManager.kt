@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.indices
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.RoamingType
@@ -57,10 +57,8 @@ import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists
 import kotlin.io.path.name
 
-
 interface IndexChangeProgressListener {
   fun indexStatusChanged(state: MavenIndexUpdateState)
-
 }
 
 @Service
@@ -75,15 +73,10 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
   private val mutex = Mutex()
   private val luceneUpdateStatusMap = ConcurrentHashMap<String, MavenIndexUpdateState>()
 
-  @Volatile
-  private var needPoll: Boolean = false
-
-
   init {
-
     ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
       override fun projectClosed(project: Project) {
-        gc()
+        cs.launchTracked { gc() }
       }
     })
   }
@@ -239,8 +232,11 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
     if (status == null) return IndexUpdatingState.IDLE else return IndexUpdatingState.UPDATING
   }
 
-  fun gc() {
-    val validIndices = ReadAction.compute<Set<Any>, Throwable> {
+  /**
+   * Removes every index that no open project uses.
+   */
+  suspend fun gc() {
+    val validIndices = readAction {
       val existed = Collections.newSetFromMap(IdentityHashMap<Any, Boolean>())
       getOpenedProjects()
         .filter { !it.isDisposed }
@@ -434,10 +430,6 @@ class IndexStateList : BaseState() {
 
     @get:OptionTag("updateTimestampe")
     var timestamp by property(-1L)
-
-  }
-
-  companion object {
 
   }
 }

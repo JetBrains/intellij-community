@@ -7,7 +7,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry.Companion.get
 import com.intellij.util.ArrayUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.idea.maven.indices.MavenArchetypeManager
 import org.jetbrains.idea.maven.indices.MavenIndicesManager
 import org.jetbrains.idea.maven.indices.MavenSystemIndicesManager
@@ -16,7 +18,6 @@ import org.jetbrains.idea.maven.project.MavenSettingsCache
 import org.jetbrains.idea.maven.server.MavenServerManager
 import java.io.IOException
 import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
 
 class MavenIndicesTestFixture(
   private val myDir: Path,
@@ -46,21 +47,25 @@ class MavenIndicesTestFixture(
   }
 
   @Throws(Exception::class)
-  fun setUp() {
+  suspend fun setUp() {
     setUpBeforeImport()
     setUpAfterImport()
   }
 
-  fun setUpAfterImport() {
+  /**
+   * Waits for the index list update the Maven import starts.
+   *
+   * The function waits for a background read action. On the EDT it therefore deadlocks: the EDT holds the
+   * write-intent lock, a pending write action blocks the read action, and that write action needs the lock.
+   * See IDEA-393211.
+   */
+  @RequiresBackgroundThread
+  suspend fun setUpAfterImport() {
     MavenSystemIndicesManager.getInstance().setTestIndicesDir(myDir.resolve("MavenIndices"))
-    //todo: rewrite al this to coroutines
-    val f = CompletableFuture<Void?>()
-    this.indicesManager.scheduleUpdateIndicesList {
-      f.complete(null)
-      null
-    }
-    f.join()
-    this.indicesManager.waitForGavUpdateCompleted()
+    val listUpdated = CompletableDeferred<Unit>()
+    this.indicesManager.scheduleUpdateIndicesList { listUpdated.complete(Unit) }
+    listUpdated.await()
+    MavenSystemIndicesManager.getInstance().waitAllGavsUpdatesCompleted()
     runInEdt { UIUtil.dispatchAllInvocationEvents() }
   }
 
@@ -69,7 +74,7 @@ class MavenIndicesTestFixture(
     myRepositoryHelper!!.copy(relPath!!, myLocalRepoDir!!)
   }
 
-  fun tearDown() {
+  suspend fun tearDown() {
     MavenSystemIndicesManager.getInstance().gc()
     MavenServerManager.getInstance().closeAllConnectorsAndWait()
     Disposer.dispose(this.indicesManager)

@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspe
 import com.intellij.maven.testFramework.MavenWrapperTestFixture
 import com.intellij.maven.testFramework.utils.MavenProjectJDKTestFixture
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.TestDialog
@@ -20,8 +19,6 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.replaceService
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.dom.inspections.MavenModelInspection
@@ -139,7 +136,7 @@ internal class MavenDomTestFixtureImpl internal constructor(
     }
 
     if (null != indices) {
-      withContext(Dispatchers.EDT) { indicesFixture!!.setUpAfterImport() }
+      indicesFixture!!.setUpAfterImport()
     }
   }
 

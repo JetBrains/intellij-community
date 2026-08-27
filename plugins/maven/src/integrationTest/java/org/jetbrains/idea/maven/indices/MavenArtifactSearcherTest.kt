@@ -7,10 +7,7 @@ import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
 import com.intellij.maven.testFramework.fixtures.testRootDisposable
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.testFramework.junit5.TestApplication
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -37,17 +34,13 @@ class MavenArtifactSearcherTest(mavenVersion: String, modelVersion: String) {
 
   @Throws(Exception::class)
   @BeforeEach
-  fun setUp() {
-    runBlocking(Dispatchers.EDT) {
-      writeIntentReadAction {
-        myIndicesFixture = MavenIndicesTestFixture(maven.dir, maven.project, maven.testRootDisposable)
-        myIndicesFixture.setUp()
-      }
-    }
+  fun setUp() = runBlocking {
+    myIndicesFixture = MavenIndicesTestFixture(maven.dir, maven.project, maven.testRootDisposable)
+    myIndicesFixture.setUp()
   }
 
   @AfterEach
-  fun tearDown() = runBlocking(Dispatchers.EDT) {
+  fun tearDown() = runBlocking {
     myIndicesFixture.tearDown()
   }
 

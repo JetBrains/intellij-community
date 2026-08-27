@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.indices
 
 import com.intellij.maven.testFramework.fixtures.MavenIndicesTestFixture
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeIntentReadAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
@@ -49,23 +48,17 @@ class MavenSearcherTest(mavenVersion: String, modelVersion: String) {
 
   @Throws(Exception::class)
   @BeforeEach
-  fun setUp() {
-    runBlocking(Dispatchers.EDT) {
-      writeIntentReadAction {
-        myIndicesFixture = MavenIndicesTestFixture(maven.dir, maven.project, maven.testRootDisposable)
-        myIndicesFixture.setUp()
-      }
-    }
-    runBlocking {
-      MavenSystemIndicesManager.getInstance().waitAllGavsUpdatesCompleted()
-      myRepo = MavenIndexUtils.getLocalRepository(maven.project)!!
-      MavenLuceneIndexer.getInstance().update(listOf(myRepo), true)
-      MavenSystemIndicesManager.getInstance().waitAllLuceneUpdatesCompleted()
-    }
+  fun setUp() = runBlocking {
+    myIndicesFixture = MavenIndicesTestFixture(maven.dir, maven.project, maven.testRootDisposable)
+    myIndicesFixture.setUp()
+    MavenSystemIndicesManager.getInstance().waitAllGavsUpdatesCompleted()
+    myRepo = MavenIndexUtils.getLocalRepository(maven.project)!!
+    MavenLuceneIndexer.getInstance().update(listOf(myRepo), true)
+    MavenSystemIndicesManager.getInstance().waitAllLuceneUpdatesCompleted()
   }
 
   @AfterEach
-  fun tearDown() = runBlocking(Dispatchers.EDT) {
+  fun tearDown() = runBlocking {
     myIndicesFixture.tearDown()
   }
 
