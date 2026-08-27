@@ -73,9 +73,9 @@ class DefaultPluginUpdatesProvider(private val coroutineScope: CoroutineScope) :
         updateMutex.withLock {
           runCatching {
             val model = (PluginUpdateHandler.getInstance().loadAndStorePluginUpdates(null))
-            val pluginUpdates = PluginUpdatesEvent(model.pluginUpdates.markLocal(),
-                                                    model.disabledPluginUpdates.markLocal(),
-                                                    model.updatesFromCustomRepositories.markLocal())
+            val pluginUpdates = PluginUpdatesEvent(model.pluginUpdates.markLocalIfUnset(),
+                                                    model.disabledPluginUpdates.markLocalIfUnset(),
+                                                    model.updatesFromCustomRepositories.markLocalIfUnset())
             lastPluginUpdates = pluginUpdates
             emitUpdates(pluginUpdates)
           }.getOrHandleException { e -> LOG.warn("Failed to load plugin updates:", e) }
@@ -116,5 +116,11 @@ class DefaultPluginUpdatesProvider(private val coroutineScope: CoroutineScope) :
     )
   }
 
-  private fun List<PluginDto>.markLocal(): List<PluginDto> = onEach { it.source = PluginSource.LOCAL }
+  /**
+   * Sets the source of an update that the handler left unset.
+   * The combined handler of the split frontend already sets LOCAL, REMOTE, or BOTH.
+   */
+  private fun List<PluginDto>.markLocalIfUnset(): List<PluginDto> = onEach {
+    if (it.source == null) it.source = PluginSource.LOCAL
+  }
 }
