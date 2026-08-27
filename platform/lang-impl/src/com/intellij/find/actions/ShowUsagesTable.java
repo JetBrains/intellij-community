@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.platform.ide.navigation.NavigationOptions;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.ExperimentalUI;
@@ -58,8 +57,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-
-import static com.intellij.platform.ide.navigation.NavigateUtil.requestNavigate;
 
 @ApiStatus.Internal
 public final class ShowUsagesTable extends JBTable implements UiDataProvider {
@@ -194,6 +191,7 @@ public final class ShowUsagesTable extends JBTable implements UiDataProvider {
         DataContext dataContext = parameters.editor != null ?
                                   DataManager.getInstance().getDataContext(parameters.editor.getContentComponent()) : null;
         var usageInfosToNavigate = new SmartList<UsageInfo>();
+        var navigatablesToNavigate = new SmartList<Navigatable>();
         for (Object usage : usages) {
           if (usage instanceof UsageInfo usageInfo) {
             PsiElement selectedElement = usageInfo.getElement();
@@ -213,14 +211,14 @@ public final class ShowUsagesTable extends JBTable implements UiDataProvider {
             usageInfosToNavigate.add(usageInfo);
           }
           else if (usage instanceof Navigatable navigatable) {
-            requestNavigate(parameters.project, navigatable, NavigationOptions.requestFocus(), dataContext);
+            navigatablesToNavigate.add(navigatable);
           }
         }
         var popup = PopupUtil.getPopupContainerFor(this);
         if (popup instanceof AbstractPopup abstractPopup) {
           abstractPopup.setForceCancelOnFocusLoss(true); // Disable the Wayland focus workaround and allow it to close.
         }
-        UsageNavigation.getInstance(parameters.project).navigate(usageInfosToNavigate, true);
+        UsageNavigation.getInstance(parameters.project).navigate(usageInfosToNavigate, navigatablesToNavigate, true);
       }
     };
   }

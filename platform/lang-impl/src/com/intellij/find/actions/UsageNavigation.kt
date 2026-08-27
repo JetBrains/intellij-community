@@ -12,6 +12,7 @@ import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.ide.navigation.toNavigationOptions
+import com.intellij.pom.Navigatable
 import com.intellij.usageView.UsageInfo
 import com.intellij.usages.Usage
 import com.intellij.usages.impl.UsageViewStatisticsCollector
@@ -48,7 +49,7 @@ internal class UsageNavigation(private val project: Project, private val cs: Cor
     }
   }
 
-  fun navigate(infos: List<UsageInfo>, requestFocus: Boolean) {
+  fun navigate(infos: List<UsageInfo>, navigatables: List<Navigatable>, requestFocus: Boolean) {
     cs.launch {
       NavigationService.getInstance(project).navigateRequests(NavigationOptions.defaultOptions().requestFocus(requestFocus)) {
         readAction {
@@ -59,6 +60,8 @@ internal class UsageNavigation(private val project: Project, private val cs: Cor
                        ?: return@mapNotNull null
             UsageViewStatisticsCollector.logUsageNavigate(project, info)
             NavigationRequest.sourceNavigationRequest(project, file, offset)
+          } + navigatables.mapNotNull {
+            it.navigationRequest()
           }
         }
       }
