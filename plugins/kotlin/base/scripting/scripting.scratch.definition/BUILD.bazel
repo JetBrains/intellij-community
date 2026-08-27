@@ -21,7 +21,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:kotlinc-kotlin-scripting-common",
+        "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common",
         "//libraries/kotlinc/kotlin-scripting-jvm:libraries-kotlinc-kotlin-scripting-jvm",
         "@lib//:kotlin-stdlib",
     ],
@@ -42,6 +42,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":scripting.scratch.definition",
+        "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common_test_lib",
         "//libraries/kotlinc/kotlin-scripting-jvm:libraries-kotlinc-kotlin-scripting-jvm_test_lib",
     ],
 )

@@ -15,6 +15,7 @@
     <module name="intellij.kotlin.base.util"/>
     <module name="intellij.libraries.kotlinc.analysis.api"/>
     <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinc.kotlin.scripting.common"/>
     <module name="intellij.libraries.kotlinc.symbol.light.classes"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>

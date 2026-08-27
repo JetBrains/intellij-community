@@ -102,7 +102,7 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-objcexport-header-generator", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-swift-export", kotlincCoordinates)
 
-        kotlincWithStandardNaming("kotlinc.kotlin-scripting-common", kotlincCoordinates)
+        kotlincWithStandardNaming("kotlinc.kotlin-scripting-common", kotlincCoordinates, convertedToModule = true)
         kotlincWithStandardNaming("kotlinc.kotlin-scripting-dependencies", kotlincCoordinates)
         kotlincWithStandardNaming("kotlinc.kotlin-scripting-compiler-impl", kotlincCoordinates)
         kotlincWithStandardNaming("kotlinc.kotlin-scripting-jvm", kotlincCoordinates, convertedToModule = true)

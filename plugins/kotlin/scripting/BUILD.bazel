@@ -30,7 +30,7 @@ jvm_library(
         "//platform/core-api:core",
         "@lib//:kotlin-stdlib",
         "//platform/util",
-        "@lib//:kotlinc-kotlin-scripting-common",
+        "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common",
     ],
 )
 
@@ -51,6 +51,7 @@ jvm_library(
         ":scripting",
         "//platform/core-api:core_test_lib",
         "//platform/util:util_test_lib",
+        "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common_test_lib",
     ],
 )
 ### auto-generated section `build kotlin.scripting` end

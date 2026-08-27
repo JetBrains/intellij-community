@@ -35,6 +35,7 @@
     <module name="intellij.libraries.kotlinc.analysis.api.platform.interface"/>
     <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
     <module name="intellij.libraries.kotlinc.kotlin.compiler.fir"/>
+    <module name="intellij.libraries.kotlinc.kotlin.scripting.common"/>
     <module name="intellij.libraries.kotlinc.low.level.api.fir"/>
     <module name="intellij.libraries.kotlinc.symbol.light.classes"/>
     <module name="intellij.platform.analysis"/>

@@ -1,0 +1,50 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.libraries.kotlinc.kotlin.scripting.common` start
+jvm_library(
+    name = "libraries-kotlinc-kotlin-scripting-common",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.kotlinc.kotlin.scripting.common",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kotlinc-kotlin-scripting-common-kotlinc-kotlin-scripting-common"],
+    runtime_deps = ["@lib//:libraries-kotlinc-kotlin-scripting-common-kotlinc-kotlin-scripting-common"],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-kotlinc-kotlin-scripting-common-kotlinc-kotlin-scripting-common"],
+    module = ":libraries-kotlinc-kotlin-scripting-common",
+)
+
+jvm_library(
+    name = "libraries-kotlinc-kotlin-scripting-common_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.kotlinc.kotlin.scripting.common",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kotlinc-kotlin-scripting-common-kotlinc-kotlin-scripting-common"],
+    runtime_deps = [":libraries-kotlinc-kotlin-scripting-common"],
+)
+### auto-generated section `build intellij.libraries.kotlinc.kotlin.scripting.common` end
+
+### auto-generated section `iml intellij.libraries.kotlinc.kotlin.scripting.common` start
+exports_files(
+    [
+        "intellij.libraries.kotlinc.kotlin.scripting.common.iml",
+        "resources/intellij.libraries.kotlinc.kotlin.scripting.common.xml",
+        "module-content.yaml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.kotlinc.kotlin.scripting.common` end
