@@ -166,6 +166,12 @@
     libraries:
       kotlinc.kotlin-scripting-common:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2/kotlin-scripting-common-2.jar
+- name: lib/intellij.libraries.kotlinc.kotlin.scripting.compiler.impl.jar
+  contentModules:
+  - name: intellij.libraries.kotlinc.kotlin.scripting.compiler.impl
+    libraries:
+      kotlinc.kotlin-scripting-compiler-impl:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2/kotlin-scripting-compiler-impl-2.jar
 - name: lib/intellij.libraries.kotlinc.kotlin.scripting.jvm.jar
   contentModules:
   - name: intellij.libraries.kotlinc.kotlin.scripting.jvm
@@ -215,9 +221,6 @@
   - name: kotlinc.kotlin-gradle-statistics
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/2/kotlin-gradle-statistics-for-ide-2.jar
-  - name: kotlinc.kotlin-scripting-compiler-impl
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2/kotlin-scripting-compiler-impl-2.jar
   - name: kotlinc.kotlin-scripting-dependencies
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2/kotlin-scripting-dependencies-2.jar

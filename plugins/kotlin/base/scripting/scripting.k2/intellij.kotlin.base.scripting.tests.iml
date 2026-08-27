@@ -18,7 +18,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.script.runtime" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.scripting.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.scripting.jvm" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.scripting.compiler.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.compilerConfiguration" scope="TEST" />

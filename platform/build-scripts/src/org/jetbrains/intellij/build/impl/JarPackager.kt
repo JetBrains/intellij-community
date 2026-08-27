@@ -137,7 +137,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "kmp-wizard-shared",
   "kotlin-metadata",
   "kotlinc.kotlin-jps-common",
-  "kotlinc.kotlin-scripting-compiler-impl",
   "layoutlib",
   "libthrift",
   "okhttp",

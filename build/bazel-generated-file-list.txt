@@ -537,6 +537,7 @@ libraries/kotlinc/kotlin-compiler-common
 libraries/kotlinc/kotlin-compiler-fir
 libraries/kotlinc/kotlin-script-runtime
 libraries/kotlinc/kotlin-scripting-common
+libraries/kotlinc/kotlin-scripting-compiler-impl
 libraries/kotlinc/kotlin-scripting-jvm
 libraries/kotlinc/kotlinx-serialization-compiler-plugin
 libraries/kotlinc/low-level-api-fir

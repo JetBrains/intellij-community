@@ -5951,20 +5951,6 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_kotlin-kotlin-scripting-compiler-impl-2_5_0-dev-5674_http",
-    downloaded_file_path = "kotlin-scripting-compiler-impl-2.5.0-dev-5674.jar",
-    sha256 = "74953e6835cf15730995b621de95f91eb4e1c323dccfb983195b200556487316",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.5.0-dev-5674/kotlin-scripting-compiler-impl-2.5.0-dev-5674.jar",
-)
-
-http_file(
-    name = "org_jetbrains_kotlin-kotlin-scripting-compiler-impl-2_5_0-dev-5674-sources_http",
-    downloaded_file_path = "kotlin-scripting-compiler-impl-2.5.0-dev-5674-sources.jar",
-    sha256 = "77adfd764ef688ddf577818e548c0ac16b936209d797d9d6c55558ca090e57b8",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.5.0-dev-5674/kotlin-scripting-compiler-impl-2.5.0-dev-5674-sources.jar",
-)
-
-http_file(
     name = "org_jetbrains_kotlin-kotlin-scripting-dependencies-2_5_0-dev-5674_http",
     downloaded_file_path = "kotlin-scripting-dependencies-2.5.0-dev-5674.jar",
     sha256 = "4a2c4c24a175c5df4564b55ba8ac8db1d9ed1a1d09e9825d9a83291e287906ee",
@@ -10575,6 +10561,20 @@ http_file(
     downloaded_file_path = "kotlin-scripting-common-2.5.0-dev-5674-sources.jar",
     sha256 = "aedeed28584af314c5b9536b33f1d56d655cbc80e954cc07120cd81cd246606a",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-common/2.5.0-dev-5674/kotlin-scripting-common-2.5.0-dev-5674-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlin-kotlin-scripting-compiler-impl-2_5_0-dev-5674_http",
+    downloaded_file_path = "kotlin-scripting-compiler-impl-2.5.0-dev-5674.jar",
+    sha256 = "74953e6835cf15730995b621de95f91eb4e1c323dccfb983195b200556487316",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.5.0-dev-5674/kotlin-scripting-compiler-impl-2.5.0-dev-5674.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlin-kotlin-scripting-compiler-impl-2_5_0-dev-5674-sources_http",
+    downloaded_file_path = "kotlin-scripting-compiler-impl-2.5.0-dev-5674-sources.jar",
+    sha256 = "77adfd764ef688ddf577818e548c0ac16b936209d797d9d6c55558ca090e57b8",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.5.0-dev-5674/kotlin-scripting-compiler-impl-2.5.0-dev-5674-sources.jar",
 )
 
 http_file(

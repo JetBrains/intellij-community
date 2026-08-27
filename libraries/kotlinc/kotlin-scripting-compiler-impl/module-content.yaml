@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinc.kotlin.scripting.compiler.impl.jar
+  modules:
+  - name: intellij.libraries.kotlinc.kotlin.scripting.compiler.impl
+    libraries:
+      kotlinc.kotlin-scripting-compiler-impl:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2/kotlin-scripting-compiler-impl-2.jar

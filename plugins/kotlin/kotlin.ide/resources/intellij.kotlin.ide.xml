@@ -20,6 +20,7 @@
     <module name="intellij.libraries.jsoup"/>
     <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
     <module name="intellij.libraries.kotlinc.kotlin.scripting.common"/>
+    <module name="intellij.libraries.kotlinc.kotlin.scripting.compiler.impl"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.analysis.impl"/>
     <module name="intellij.platform.core"/>

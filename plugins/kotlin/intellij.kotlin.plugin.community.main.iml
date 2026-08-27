@@ -130,7 +130,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" exported="" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler-ir" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.scripting.common" exported="" />
-    <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.scripting.compiler.impl" exported="" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.scripting.jvm" exported="" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.platform.interface" exported="" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api" exported="" />
