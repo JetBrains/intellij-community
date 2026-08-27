@@ -43,6 +43,10 @@ internal class MySampleTest {
 - Join path segments with the `/` operator (from `...alsoWin.pyproject.div`) in
   `contentRoot` / `sourceRoots` for cross-platform path matching, e.g.
   `"sub" / "child"`. Never put a literal separator inside the string (no `"sub/child"`).
+- `assertProjectStructure` adds `<contentRoot>/src` to the expectation of every pyproject
+  module, so list only the *extra* source roots. The sync records that root even when the
+  directory does not exist yet (PY-89039), and `PyProjectTomlImplicitSrcRootTest` states the
+  rule itself.
 - `ExpectedModule` defaults to `type = PYPROJECT`. The implicit module created
   by `PyDefaultTestApplication` is `PYTHON` — reference it as
   `ExpectedModule(f.implicitModuleName, type = PYTHON, ...)`.

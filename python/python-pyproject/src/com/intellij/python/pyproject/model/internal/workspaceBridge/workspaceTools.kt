@@ -42,6 +42,7 @@ import com.intellij.python.pyproject.model.spi.PyProjectManager
 import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
 import com.intellij.python.pyproject.model.spi.WorkspaceName
 import com.intellij.python.pyproject.model.spi.plus
+import com.intellij.python.pyproject.model.spi.resolveSrcRoots
 import com.intellij.python.pyproject.safeGet
 import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.toPath
@@ -424,15 +425,26 @@ private fun ensureNoSrcIntersectsWithOtherRoots(projectStorage: MutableEntitySto
   }
 }
 
-/** Add collected source roots and excluded URLs to their target content roots in a single modification per target. */
+/**
+ * Add collected source roots and excluded URLs to their target content roots in a single modification per target.
+ *
+ * A url reaches the target once. The caller collects a root for each content root of the module it deletes, against one
+ * snapshot of the target, so two content roots that hold one url would otherwise write two entities for one directory.
+ */
 private fun MutableEntityStorage.addRelocatedRoots(
   sourcesByTarget: Map<ContentRootEntity, List<SourceRootEntity>>,
   excludesByTarget: Map<ContentRootEntity, List<ExcludeUrlEntity>>,
 ) {
   for (target in (sourcesByTarget.keys + excludesByTarget.keys)) {
     modifyContentRootEntity(target) {
-      sourcesByTarget[target]?.let { roots -> this.sourceRoots += roots.map { SourceRootEntity(it.url, it.rootTypeId, this.entitySource) } }
-      excludesByTarget[target]?.let { roots -> this.excludedUrls += roots.map { ExcludeUrlEntity(it.url, this.entitySource) } }
+      sourcesByTarget[target]?.let { roots ->
+        val urls = this.sourceRoots.mapTo(mutableSetOf()) { it.url.url }
+        this.sourceRoots += roots.filter { urls.add(it.url.url) }.map { SourceRootEntity(it.url, it.rootTypeId, this.entitySource) }
+      }
+      excludesByTarget[target]?.let { roots ->
+        val urls = this.excludedUrls.mapTo(mutableSetOf()) { it.url.url }
+        this.excludedUrls += roots.filter { urls.add(it.url.url) }.map { ExcludeUrlEntity(it.url, this.entitySource) }
+      }
     }
   }
 }
@@ -466,7 +478,9 @@ private suspend fun parseRawEntries(fsInfo: FSWalkInfoWithToml, pyProjectManager
     val participatedManagers = mutableSetOf<ToolId>()
     val root = tomlFile.parent
     val sourceRootsAndTools = pyProjectManagers.flatMap { tool -> tool.getSrcRoots(toml.toml, root).map { Pair(tool, it) } }.toSet()
-    val sourceRoots = sourceRootsAndTools.map { it.second }.toSet() + findSrc(root)
+    // `resolveSrcRoots` normalizes the path, the same way it does for a directory a build backend declares.
+    // `toVirtualFileUrl` only makes a path absolute, so a path that is not normal gives a second url for one directory.
+    val sourceRoots = sourceRootsAndTools.map { it.second }.toSet() + resolveSrcRoots(root, listOf("src"))
     participatedManagers.addAll(sourceRootsAndTools.map { it.first.id })
     if (participatedManagers.isEmpty()) {
       for (tool in pyProjectManagers) {
@@ -631,11 +645,6 @@ private sealed interface PyProjectTomlToolRelation {
 
 
 private val changeWorkspaceMutex = Mutex()
-
-private suspend fun findSrc(root: Directory): Set<Directory> = withContext(Dispatchers.IO) {
-  val src = root.resolve("src")
-  if (src.exists()) setOf(src) else emptySet()
-}
 
 private val PYTHON_MODULE_TYPE_ID: ModuleTypeId = ModuleTypeId(PYTHON_MODULE_ID)
 

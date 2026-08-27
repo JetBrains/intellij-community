@@ -23,6 +23,7 @@ import com.intellij.platform.workspace.jps.entities.ModuleTypeId
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.project.stateStore
+import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.model.internal.PY_PROJECT_SYSTEM_ID
 import com.intellij.python.pyproject.model.internal.autoImportBridge.PyExternalSystemProjectAware
@@ -64,6 +65,19 @@ internal data class ExpectedModule(
   val excludedFolders: List<String> = emptyList(),
   val imlFileName: String = "$name.iml",
 )
+
+/**
+ * The source roots that [PyProjectTomlSyncTestFixture.assertProjectStructure] expects for [expected].
+ *
+ * The sync marks `<content root>/src` as a source root of every pyproject module. It does that even when the
+ * directory does not exist yet, so a directory the user creates later needs no second sync (PY-89039).
+ * A test therefore lists only the extra source roots. `PyProjectTomlImplicitSrcRootTest` states the rule itself.
+ */
+private fun expectedSourceRoots(expected: ExpectedModule): List<String> {
+  if (expected.type != PYPROJECT) return expected.sourceRoots
+  val implicitSrc = if (expected.contentRoot == ".") "src" else expected.contentRoot / "src"
+  return (expected.sourceRoots + implicitSrc).distinct()
+}
 
 /** Name of the bystander Java module created by the fixture to verify it is never modified by sync. */
 internal const val BYSTANDER_JAVA = "_bystander_java"
@@ -355,7 +369,7 @@ internal class PyProjectTomlSyncTestFixture(val project: Project, val root: Virt
         .isEqualTo(expected.contentRoot)
       assertThat(sourceRootNames(expected.name))
         .describedAs("Module '${expected.name}' source roots")
-        .containsExactlyInAnyOrderElementsOf(expected.sourceRoots)
+        .containsExactlyInAnyOrderElementsOf(expectedSourceRoots(expected))
       assertThat(excludeNames(expected.name))
         .describedAs("Module '${expected.name}' excluded folders")
         .containsExactlyInAnyOrderElementsOf(expected.excludedFolders)

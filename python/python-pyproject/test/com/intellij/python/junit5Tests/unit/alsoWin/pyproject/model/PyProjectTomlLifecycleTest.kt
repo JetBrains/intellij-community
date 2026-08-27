@@ -353,7 +353,9 @@ internal class PyProjectTomlLifecycleTest {
     f.reloadProject()
     f.assertProjectStructure(ExpectedModule("child", contentRoot = "sub"), ExpectedModule("root", contentRoot = "."))
 
-    // Create physical directories for a source root and an excluded folder inside the child module
+    // Create physical directories for a source root and an excluded folder inside the child module.
+    // The sync already marks `sub/src` as a source root of the child module (PY-89039), so the source root below is a
+    // second entity for the same url. `addRelocatedRoots` must send that url to the parent module once.
     val virtualFileUrlManager = f.project.workspaceModel.getVirtualFileUrlManager()
     val subUrl = f.root.findChild("sub")!!.toNioPath().toVirtualFileUrl(virtualFileUrlManager)
     val srcDir = edtWriteAction { f.root.findChild("sub")!!.createDirectory("src") }
