@@ -8,6 +8,8 @@ import com.intellij.python.pyproject.model.spi.ProjectStructureInfo
 import com.intellij.python.pyproject.model.spi.PyProjectManager
 import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
 import com.intellij.python.pyproject.model.spi.TomlDependencySpecification
+import com.intellij.python.pyproject.model.spi.resolveSrcRoots
+import com.intellij.python.pyproject.safeGetArr
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
@@ -59,10 +61,25 @@ internal class DefaultPyProjectManager : PyProjectManager {
     rootIndex: Map<Directory, ProjectName>,
   ): ProjectStructureInfo? = null
 
+  /**
+   * `setuptools` is a build backend without a manager of its own, so the default manager reports its source roots.
+   *
+   * ```toml
+   * [tool.setuptools.packages.find]
+   * where = ["my_src", "my_other_src"]  # -> both directories
+   * ```
+   *
+   * See PY-88898.
+   */
   override suspend fun getSrcRoots(
     toml: TomlTable,
     projectRoot: Directory,
-  ): Set<Directory> = emptySet()
+  ): Set<Directory> {
+    val where = toml.safeGetArr<String>(SETUPTOOLS_PACKAGES_FIND_WHERE, unquotedDottedKey = true).successOrNull ?: return emptySet()
+    return resolveSrcRoots(projectRoot, where)
+  }
 
   override fun getTomlDependencySpecifications(): List<TomlDependencySpecification> = emptyList()
 }
+
+private const val SETUPTOOLS_PACKAGES_FIND_WHERE: String = "tool.setuptools.packages.find.where"

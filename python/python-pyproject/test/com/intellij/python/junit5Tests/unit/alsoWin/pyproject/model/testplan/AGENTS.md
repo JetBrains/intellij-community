@@ -52,7 +52,7 @@ internal class MySampleTest {
   PEP 735 `[dependency-groups]`. Entries that appear only in `[tool.uv.sources]`
   do NOT produce a module dep — see `UvWorkspaceCodeInsightCheckTest.kt`.
 - Known gaps are documented with `assertThrows<AssertionError>` plus a
-  `PY-xxxxx` ticket reference (see `SomeProjectsWithSrcNonstandardNamingTest.kt`),
+  `PY-xxxxx` ticket reference (see `HatchWorkspaceTest.kt`),
   not by deleting/weakening the assertion.
 
 ## Adding a new sample

@@ -15,9 +15,11 @@ import com.intellij.python.pyproject.model.spi.PyProjectManager
 import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
 import com.intellij.python.pyproject.model.spi.PySdkDependencyGroupSupport
 import com.intellij.python.pyproject.model.spi.TomlDependencySpecification
+import com.intellij.python.pyproject.model.spi.resolveSrcRoots
 import com.intellij.python.pyproject.psi.spi.PyProjectTomlPathValue
 import com.intellij.python.pyproject.psi.spi.isPathDependencyKey
 import com.intellij.python.pyproject.safeGet
+import com.intellij.python.pyproject.safeGetArr
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.poetry.PoetryDependencyGroupSupport
@@ -43,7 +45,20 @@ internal class PoetryPyProjectManager : PyProjectManager {
     return runPoetry(where, *args, "-n").mapSuccess { }
   }
 
-  override suspend fun getSrcRoots(toml: TomlTable, projectRoot: Directory): Set<Directory> = emptySet()
+  /**
+   * A poetry package entry keeps the package under `from`, so `from` names the source root (PY-88898):
+   *
+   * ```toml
+   * [tool.poetry]
+   * packages = [{ include = "my_package", from = "my_src" }]  # -> my_src
+   * ```
+   *
+   * An entry without `from` keeps the package in the project root, so a flat layout gives no source root.
+   */
+  override suspend fun getSrcRoots(toml: TomlTable, projectRoot: Directory): Set<Directory> {
+    val packages = toml.safeGetArr<TomlTable>(POETRY_PACKAGES_KEY, unquotedDottedKey = true).successOrNull ?: return emptySet()
+    return resolveSrcRoots(projectRoot, packages.mapNotNull { it.safeGet<String>(FROM, unquotedDottedKey = false).successOrNull })
+  }
 
   override suspend fun getProjectStructure(
     entries: Map<ProjectName, PyProjectTomlProject>,
@@ -112,6 +127,7 @@ internal class PoetryPyProjectManager : PyProjectManager {
 }
 
 private const val FROM = "from"
-private val POETRY_PACKAGES = listOf("tool", "poetry", "packages")
+private const val POETRY_PACKAGES_KEY = "tool.poetry.packages"
+private val POETRY_PACKAGES = POETRY_PACKAGES_KEY.split('.')
 private val PACKAGES_INCLUDE_KEY = POETRY_PACKAGES + "include"
 private val PACKAGES_FROM_KEY = POETRY_PACKAGES + FROM

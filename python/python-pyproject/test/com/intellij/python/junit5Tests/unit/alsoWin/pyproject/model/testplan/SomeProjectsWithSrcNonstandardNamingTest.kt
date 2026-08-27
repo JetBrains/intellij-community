@@ -3,6 +3,7 @@ package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.testplan
 
 import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
+import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.ExpectedModule
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.PYTHON
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTomlSyncFixture
@@ -10,10 +11,13 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 
 private const val BASE = $$"$CONTENT_ROOT/../testData/monorepo/some_projects_with_src_nonstandard_naming"
 
+/**
+ * PY-88898: each sample here holds its packages in a directory that is not named `src`, and declares that
+ * directory in `pyproject.toml`. The build backend of the sample names the table that carries the declaration.
+ */
 @PyDefaultTestApplication
 @TestClassInfo(contentRootPath = "python-pyproject/test")
 @TestDataPath("$BASE/flat_layout_poetry")
@@ -27,6 +31,7 @@ internal class FlatLayoutPoetryTest {
   @Test
   fun sanity(): Unit = timeoutRunBlocking {
     f.reloadProject()
+    // A flat layout keeps its packages in the content root, so it declares no source root.
     f.assertProjectStructure(
       ExpectedModule(f.implicitModuleName, type = PYTHON, contentRoot = ".", sourceRoots = listOf(".")),
       ExpectedModule("poetry", contentRoot = "poetry"),
@@ -48,14 +53,11 @@ internal class HatchBuildTargetsWheelTest {
   @Test
   fun sanity(): Unit = timeoutRunBlocking {
     f.reloadProject()
-    // PY-88898 py workspace: to support source roots described in pyproject.toml
-    assertThrows<AssertionError> {
-      f.assertProjectStructure(
-        ExpectedModule(f.implicitModuleName, type = PYTHON, contentRoot = ".", sourceRoots = listOf(".")),
-        ExpectedModule("uv1", contentRoot = "uv1", sourceRoots = listOf("uv1/my_src")),
-        ExpectedModule("uv2", contentRoot = "uv2", deps = listOf("uv1")),
-      )
-    }
+    f.assertProjectStructure(
+      ExpectedModule(f.implicitModuleName, type = PYTHON, contentRoot = ".", sourceRoots = listOf(".")),
+      ExpectedModule("uv1", contentRoot = "uv1", sourceRoots = listOf("uv1" / "my_src")),
+      ExpectedModule("uv2", contentRoot = "uv2", deps = listOf("uv1")),
+    )
   }
 }
 
@@ -74,7 +76,7 @@ internal class PoetryPackagesIncludeTest {
     f.reloadProject()
     f.assertProjectStructure(
       ExpectedModule(f.implicitModuleName, type = PYTHON, contentRoot = ".", sourceRoots = listOf(".")),
-      ExpectedModule("poetry1", contentRoot = "poetry1"),
+      ExpectedModule("poetry1", contentRoot = "poetry1", sourceRoots = listOf("poetry1" / "my_src")),
       ExpectedModule("uv2", contentRoot = "uv2", deps = listOf("poetry1")),
     )
   }
@@ -93,14 +95,11 @@ internal class SetuptoolsPackagesFindTest {
   @Test
   fun sanity(): Unit = timeoutRunBlocking {
     f.reloadProject()
-    // PY-88898 py workspace: to support source roots described in pyproject.toml
-    assertThrows<AssertionError> {
-      f.assertProjectStructure(
-        ExpectedModule(f.implicitModuleName, type = PYTHON, contentRoot = ".", sourceRoots = listOf(".")),
-        ExpectedModule("uv1", contentRoot = "uv1", sourceRoots = listOf("uv1/my_src")),
-        ExpectedModule("uv2", contentRoot = "uv2", deps = listOf("uv1")),
-      )
-    }
+    f.assertProjectStructure(
+      ExpectedModule(f.implicitModuleName, type = PYTHON, contentRoot = ".", sourceRoots = listOf(".")),
+      ExpectedModule("uv1", contentRoot = "uv1", sourceRoots = listOf("uv1" / "my_src")),
+      ExpectedModule("uv2", contentRoot = "uv2", deps = listOf("uv1")),
+    )
   }
 }
 
@@ -117,14 +116,11 @@ internal class SetuptoolsPackagesFindMultipleSourceRootsTest {
   @Test
   fun sanity(): Unit = timeoutRunBlocking {
     f.reloadProject()
-    // PY-88898 py workspace: to support source roots described in pyproject.toml
-    assertThrows<AssertionError> {
-      f.assertProjectStructure(
-        ExpectedModule(f.implicitModuleName, type = PYTHON, contentRoot = ".", sourceRoots = listOf(".")),
-        ExpectedModule("uv1", contentRoot = "uv1", sourceRoots = listOf("uv1/my_src", "uv1/my_src2")),
-        ExpectedModule("uv2", contentRoot = "uv2", deps = listOf("uv1")),
-      )
-    }
+    f.assertProjectStructure(
+      ExpectedModule(f.implicitModuleName, type = PYTHON, contentRoot = ".", sourceRoots = listOf(".")),
+      ExpectedModule("uv1", contentRoot = "uv1", sourceRoots = listOf("uv1" / "my_src", "uv1" / "my_src2")),
+      ExpectedModule("uv2", contentRoot = "uv2", deps = listOf("uv1")),
+    )
   }
 }
 
@@ -141,13 +137,10 @@ internal class UvBuildBackendTest {
   @Test
   fun sanity(): Unit = timeoutRunBlocking {
     f.reloadProject()
-    // PY-88898 py workspace: to support source roots described in pyproject.toml
-    assertThrows<AssertionError> {
-      f.assertProjectStructure(
-        ExpectedModule(f.implicitModuleName, type = PYTHON, contentRoot = ".", sourceRoots = listOf(".")),
-        ExpectedModule("uv1", contentRoot = "uv1", sourceRoots = listOf("uv1/my_src")),
-        ExpectedModule("uv2", contentRoot = "uv2", deps = listOf("uv1")),
-      )
-    }
+    f.assertProjectStructure(
+      ExpectedModule(f.implicitModuleName, type = PYTHON, contentRoot = ".", sourceRoots = listOf(".")),
+      ExpectedModule("uv1", contentRoot = "uv1", sourceRoots = listOf("uv1" / "my_src")),
+      ExpectedModule("uv2", contentRoot = "uv2", deps = listOf("uv1")),
+    )
   }
 }

@@ -60,7 +60,12 @@ interface PyProjectManager : PyProjectCreator, PyDependencyGroupLocator, PyProje
   ): ProjectStructureInfo?
 
   /**
-   * Tool that supports build systems might return additional src directories
+   * Tool that supports build systems might return additional src directories.
+   *
+   * [toml] is the `pyproject.toml` content, [projectRoot] is the directory that holds it.
+   * Report the directories the build backend declares as source roots, and use [resolveSrcRoots]
+   * to turn the toml paths into them. A non-empty answer also makes this tool a participant of the project,
+   * so answer only for a table this tool owns.
    */
   suspend fun getSrcRoots(toml: TomlTable, projectRoot: Directory): Set<Directory>
 

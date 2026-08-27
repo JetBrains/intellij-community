@@ -16,11 +16,12 @@ import com.intellij.python.pyproject.model.spi.PyProjectManager
 import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
 import com.intellij.python.pyproject.model.spi.PySdkDependencyGroupSupport
 import com.intellij.python.pyproject.model.spi.TomlDependencySpecification
+import com.intellij.python.pyproject.model.spi.resolveSrcRoots
 import com.intellij.python.pyproject.psi.spi.PyProjectTomlPathValue
 import com.intellij.python.pyproject.psi.spi.isPathDependencyKey
 import com.intellij.python.pyproject.safeGet
-import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.pytools.runtime.PyToolRuntime
+import com.intellij.python.sdk.backend.resolveExecutable
 import com.intellij.python.uv.backend.UvPyTool
 import com.intellij.python.uv.backend.runtime.createUvToolRuntime
 import com.intellij.python.uv.backend.runtime.uvCli
@@ -50,7 +51,7 @@ import kotlin.io.path.relativeTo
 internal class UvPyProjectManager : PyProjectManager, PyProjectCreator by ToolBasedProjectCreator(
   object : ToolBasedProjectCreator.PyToolFuns {
     override suspend fun createRuntime(fs: EelFileSystem, where: Directory): Result<PyToolRuntime, PyError> {
-      val tool = UvPyTool.getInstance().resolveExecutable(fs)
+      val tool = fs.resolveExecutable(UvPyTool.getInstance())
                  ?: return PyResult.localizedError(PySdkBundle.message("path.validation.file.not.found", "uv"))
       return Result.success(createUvToolRuntime(tool.path))
     }
@@ -68,7 +69,19 @@ internal class UvPyProjectManager : PyProjectManager, PyProjectCreator by ToolBa
 
   override val dependencyGroupSupport: PySdkDependencyGroupSupport = UvDependencyGroupSupport
 
-  override suspend fun getSrcRoots(toml: TomlTable, projectRoot: Directory): Set<Directory> = emptySet()
+  /**
+   * The uv build backend keeps the module under `module-root`, which is `src` unless the toml says otherwise (PY-88898):
+   *
+   * ```toml
+   * [tool.uv.build-backend]
+   * module-root = "my_src"  # -> my_src
+   * ```
+   */
+  override suspend fun getSrcRoots(toml: TomlTable, projectRoot: Directory): Set<Directory> {
+    val buildBackend = toml.safeGet<TomlTable>(UV_BUILD_BACKEND, unquotedDottedKey = true).successOrNull ?: return emptySet()
+    val moduleRoot = buildBackend.safeGet<String>(MODULE_ROOT, unquotedDottedKey = false).successOrNull ?: DEFAULT_MODULE_ROOT
+    return resolveSrcRoots(projectRoot, listOf(moduleRoot))
+  }
 
   override suspend fun getProjectStructure(
     entries: Map<ProjectName, PyProjectTomlProject>,
@@ -204,6 +217,12 @@ internal class UvPyProjectManager : PyProjectManager, PyProjectCreator by ToolBa
 
 private const val UV_SOURCES = "tool.uv.sources"
 private const val UV_WORKSPACE = "tool.uv.workspace"
+private const val UV_BUILD_BACKEND = "tool.uv.build-backend"
+private const val MODULE_ROOT = "module-root"
+
+/** What uv uses as `module-root` when the `[tool.uv.build-backend]` table leaves it out. */
+private const val DEFAULT_MODULE_ROOT = "src"
+
 private val WORKSPACE_MEMBERS_KEY = "$UV_WORKSPACE.members".split('.')
 private val WORKSPACE_EXCLUDE_KEY = "$UV_WORKSPACE.exclude".split('.')
 

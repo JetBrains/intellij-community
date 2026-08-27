@@ -3,6 +3,7 @@ package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.testplan
 
 import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
+import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.ExpectedModule
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.PYTHON
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model.pyProjectTomlSyncFixture
@@ -10,7 +11,6 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 
 @PyDefaultTestApplication
 @TestClassInfo(contentRootPath = "python-pyproject/test")
@@ -22,16 +22,16 @@ internal class MonorepoCustomSourceRootSetuptoolsTest {
 
   private val f by pyProjectTomlSyncFixture(projectFixture)
 
+  /**
+   * PY-88898: both projects declare their own source directory in `[tool.setuptools.packages.find] where`.
+   */
   @Test
   fun sanity(): Unit = timeoutRunBlocking {
     f.reloadProject()
-    // PY-88898 py workspace: to support source roots described in pyproject.toml
-    assertThrows<AssertionError> {
-      f.assertProjectStructure(
-        ExpectedModule(f.implicitModuleName, type = PYTHON, contentRoot = ".", sourceRoots = listOf(".")),
-        ExpectedModule("myprj1", contentRoot = "prj1", sourceRoots = listOf("prj1/mysrc1")),
-        ExpectedModule("myprj2", contentRoot = "prj2", sourceRoots = listOf("prj2/mysrc2")),
-      )
-    }
+    f.assertProjectStructure(
+      ExpectedModule(f.implicitModuleName, type = PYTHON, contentRoot = ".", sourceRoots = listOf(".")),
+      ExpectedModule("myprj1", contentRoot = "prj1", sourceRoots = listOf("prj1" / "mysrc1")),
+      ExpectedModule("myprj2", contentRoot = "prj2", sourceRoots = listOf("prj2" / "mysrc2")),
+    )
   }
 }
