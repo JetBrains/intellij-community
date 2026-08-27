@@ -128,6 +128,10 @@ object MarkdownCodeFenceUtils {
 
   @Internal
   @JvmStatic
+  fun hasIndent(element: MarkdownCodeFence): Boolean = !getIndent(element).isNullOrEmpty()
+
+  @Internal
+  @JvmStatic
   fun getLanguageInfoString(language: Language, context: PsiElement?): String {
     return CodeFenceLanguageProvider.EP_NAME.extensionList.firstNotNullOfOrNull {
       it.getInfoStringForLanguage(language, context)

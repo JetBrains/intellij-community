@@ -50,6 +50,7 @@ public class EnterBetweenBracesFinalHandler implements EnterHandlerDelegate {
 
     final Data data = new Data(file, document, caretOffset);
     final String indentInsideJavadoc = data.getIndentInsideJavadoc(helper, editor);
+    final boolean shouldFormat = EnterHandlerDelegate.shouldRunInjectedFormatting(file);
 
     originalHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), dataContext);
 
@@ -61,7 +62,9 @@ public class EnterBetweenBracesFinalHandler implements EnterHandlerDelegate {
       editor.getDocument().insertString(editor.getCaretModel().getOffset(), "*" + indentInsideJavadoc);
     }
 
-    helper.formatAtOffset(file, editor, editor.getCaretModel().getOffset(), EnterHandler.getLanguage(dataContext));
+    if (shouldFormat) {
+      helper.formatAtOffset(file, editor, editor.getCaretModel().getOffset(), EnterHandler.getLanguage(dataContext));
+    }
     return indentInsideJavadoc == null ? Result.Continue : Result.DefaultForceIndent;
   }
 
@@ -141,6 +144,11 @@ public class EnterBetweenBracesFinalHandler implements EnterHandlerDelegate {
       }
     }
     return ourDefaultBetweenDelegate;
+  }
+
+  @ApiStatus.Internal
+  public static boolean isBracePair(@Nullable Language language, char leftBrace, char rightBrace) {
+    return getLanguageImplementation(language).isBracePair(leftBrace, rightBrace);
   }
 
   @ApiStatus.Internal

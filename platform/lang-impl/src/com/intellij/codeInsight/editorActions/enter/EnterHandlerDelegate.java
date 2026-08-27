@@ -2,12 +2,14 @@
 
 package com.intellij.codeInsight.editorActions.enter;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,5 +118,23 @@ public interface EnterHandlerDelegate {
     @NotNull DataContext dataContext
   ) {
     return Result.Continue;
+  }
+
+  /**
+   * Allows a handler to veto language-specific formatting of an injected fragment after Enter. An implementation must return {@code false}
+   * only for injection hosts it owns and must restore the indentation that the suppressed formatter would otherwise provide.
+   */
+  @ApiStatus.Internal
+  default boolean shouldFormatInjectedFragment(@NotNull PsiFile file) {
+    return true;
+  }
+
+  /**
+   * Checks whether language-specific formatting should be performed for an injected fragment after Enter.
+   */
+  @ApiStatus.Internal
+  static boolean shouldRunInjectedFormatting(@NotNull PsiFile file) {
+    if (!InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) return true;
+    return EP_NAME.findFirstSafe(delegate -> !delegate.shouldFormatInjectedFragment(file)) == null;
   }
 }

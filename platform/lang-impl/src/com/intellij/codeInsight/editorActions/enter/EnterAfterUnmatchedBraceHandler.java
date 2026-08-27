@@ -208,7 +208,13 @@ public class EnterAfterUnmatchedBraceHandler implements EnterHandlerDelegate {
     boolean closingBraceIndentAdjusted;
     try {
       PsiDocumentManager.getInstance(project).commitDocument(document);
-      CodeStyleManager.getInstance(project).adjustLineIndent(file, new TextRange(caretOffset, rBracesInsertOffset + 2));
+      // Keep automatic closing-brace insertion, but skip formatting for injected fragments whose host opts out.
+      if (EnterHandlerDelegate.shouldRunInjectedFormatting(file)) {
+        // Two line feeds are inserted before formatting: one before the generated braces and one at the caret.
+        // The range must end immediately before the generated braces, so both insertions shift its end by one.
+        int endOffsetBeforeGeneratedBraces = rBracesInsertOffset + 2;
+        CodeStyleManager.getInstance(project).adjustLineIndent(file, new TextRange(caretOffset, endOffsetBeforeGeneratedBraces));
+      }
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
