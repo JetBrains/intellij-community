@@ -167,7 +167,7 @@ public final class PyRecursiveTypeVisitor extends PyTypeVisitorExt<PyRecursiveTy
         return typeArguments;
       }
       // TODO this is not entirely correct. Field types of a non-generic typed dict are not used in its notation.
-      return ContainerUtil.map(typedDictType.getFields().values(), field -> field.getType());
+      return ContainerUtil.map(typedDictType.fields(myTypeEvalContext).values(), field -> field.getType());
     }
 
     @Override

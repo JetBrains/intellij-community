@@ -11,8 +11,14 @@ import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyTargetExpression
+import com.jetbrains.python.psi.impl.PyBuiltinCache
+import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyTypedDictType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * What the laziness of [PyTypedDictType] is worth, asserted on observable state: whether an item
@@ -52,7 +58,7 @@ class PyTypedDictLazyEvaluationTest : PyTestCase() {
 
     assertEmpty(items.filter { context.getKnownType(it) != null })
 
-    assertEquals(setOf("name", "year"), typedDictType.fields.keys)
+    assertEquals(setOf("name", "year"), typedDictType.fields(context).keys)
     assertEmpty(items.filter { context.getKnownType(it) == null })
   }
 
@@ -73,7 +79,7 @@ class PyTypedDictLazyEvaluationTest : PyTestCase() {
     val name = itemsOf(file, "Extra").single()
 
     assertNull(context.getKnownType(name))
-    assertEquals("int", typedDictType.extraItemsType?.name)
+    assertEquals("int", typedDictType.extraItemsType(context)?.name)
     assertNull("Asking for the extra items type must not evaluate the declared items", context.getKnownType(name))
   }
 
@@ -104,7 +110,7 @@ class PyTypedDictLazyEvaluationTest : PyTestCase() {
       """.trimIndent())
     val context = TypeEvalContext.codeAnalysis(myFixture.project, file)
 
-    val itemTypes = parameterTypeOf(file, "f", context).fields.values
+    val itemTypes = parameterTypeOf(file, "f", context).fields(context).values
 
     // Every item of T0 is a T1, and T1 is one type, not one per item: this is the DAG the eager implementation used to expand
     // into a tree of its own instances.
@@ -126,7 +132,49 @@ class PyTypedDictLazyEvaluationTest : PyTestCase() {
     val context = TypeEvalContext.codeAnalysis(myFixture.project, file)
     val typedDictType = parameterTypeOf(file, "f", context)
 
-    assertSame(typedDictType.fields, typedDictType.fields)
+    assertSame(typedDictType.fields(context), typedDictType.fields(context))
+  }
+
+  fun testConcurrentAccessPublishesOneValue() {
+    val file = configure("""
+      from typing import TypedDict
+
+
+      class Movie(TypedDict):
+          name: str
+      """.trimIndent())
+    val context = TypeEvalContext.codeAnalysis(myFixture.project, file)
+    val declaration = file.findTopLevelClass("Movie") as PyClass
+    val evaluationsStarted = CountDownLatch(2)
+    val evaluationsMayFinish = CountDownLatch(1)
+    val evaluationCount = AtomicInteger()
+    val typedDictType = PyTypedDictType(
+      "Movie",
+      fieldsProvider = {
+        val evaluation = evaluationCount.incrementAndGet()
+        evaluationsStarted.countDown()
+        evaluationsMayFinish.await(10, TimeUnit.SECONDS)
+        mapOf("field-$evaluation" to PyTypedDictType.FieldTypeAndTotality(null, PyAnyType.unknown))
+      },
+      PyBuiltinCache.getInstance(declaration).dictType!!.pyClass,
+      false,
+      declaration,
+    )
+    val executor = Executors.newFixedThreadPool(2)
+
+    try {
+      val first = executor.submit<Map<String, PyTypedDictType.FieldTypeAndTotality>> { typedDictType.fields(context) }
+      val second = executor.submit<Map<String, PyTypedDictType.FieldTypeAndTotality>> { typedDictType.fields(context) }
+
+      assertTrue("Both evaluations must start", evaluationsStarted.await(10, TimeUnit.SECONDS))
+      evaluationsMayFinish.countDown()
+
+      assertSame(first.get(10, TimeUnit.SECONDS), second.get(10, TimeUnit.SECONDS))
+    }
+    finally {
+      evaluationsMayFinish.countDown()
+      executor.shutdownNow()
+    }
   }
 
   fun testAskingForOneItemDoesNotEvaluateTheWholeHierarchy() {

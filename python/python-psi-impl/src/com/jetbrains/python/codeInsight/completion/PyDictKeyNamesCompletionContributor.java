@@ -90,7 +90,7 @@ public final class PyDictKeyNamesCompletionContributor extends CompletionContrib
     final TypeEvalContext typeEvalContext = TypeEvalContext.codeCompletion(operand.getProject(), operand.getContainingFile());
     final PyType type = typeEvalContext.getType(operand);
     if (type instanceof PyTypedDictType dictType) {
-      for (String key : dictType.getFields().keySet()) {
+      for (String key : dictType.fields(typeEvalContext).keySet()) {
         dictCompletion.addKey(key);
       }
       return true;

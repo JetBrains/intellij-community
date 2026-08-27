@@ -114,23 +114,23 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
     List<String> keys = getIndexExpressionPossibleValues(indexExpression, context, String.class);
     if (keys.isEmpty()) {
       if (typedDictType.isClosed() || !isStringIndex(indexExpression, context)) return PyAnyType.getUnknown();
-      PyType extraItemsType = typedDictType.getExtraItemsType();
+      PyType extraItemsType = typedDictType.extraItemsType(context);
       if (extraItemsType == null || isUnknown(extraItemsType)) return PyAnyType.getUnknown();
       // Non-literal `str` key: the value can be any declared item or an explicitly typed extra item.
       List<PyType> types =
-        new ArrayList<>(ContainerUtil.map(typedDictType.getFields().values(), PyTypedDictType.FieldTypeAndTotality::getType));
+        new ArrayList<>(ContainerUtil.map(typedDictType.fields(context).values(), PyTypedDictType.FieldTypeAndTotality::getType));
       types.add(extraItemsType);
       return PyUnionType.union(types);
     }
 
     List<PyType> types = new ArrayList<>();
     for (String key : keys) {
-      PyTypedDictType.FieldTypeAndTotality field = typedDictType.getFields().get(key);
+      PyTypedDictType.FieldTypeAndTotality field = typedDictType.fields(context).get(key);
       if (field != null) {
         types.add(field.getType());
         continue;
       }
-      PyType extraItemsType = typedDictType.isClosed() ? null : typedDictType.getExtraItemsType();
+      PyType extraItemsType = typedDictType.isClosed() ? null : typedDictType.extraItemsType(context);
       types.add(extraItemsType != null ? extraItemsType : PyAnyType.getUnknown());
     }
     return PyUnionType.union(types);

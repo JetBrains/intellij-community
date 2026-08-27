@@ -84,7 +84,7 @@ class PyMappingPatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyMappin
 private fun PyType?.getValueType(sequenceMember: PyKeyValuePattern, context: TypeEvalContext): PyType? {
   if (this is PyTypedDictType) {
     val key = sequenceMember.getKeyString(context)
-    if (key != null) return getElementType(key)
+    if (key != null) return getElementType(key, context)
   }
   val mappingType = this.convertToType("typing.Mapping", sequenceMember, context)
                     ?: return PyNeverType.NEVER

@@ -1346,11 +1346,12 @@ public class PyStubsTest extends PyTestCase {
     assertTrue(stub.isClosed());
     assertEquals("bool", stub.getExtraItemsType());
 
-    final PyType typeFromStub = TypeEvalContext.codeInsightFallback(myFixture.getProject()).getType(attribute);
+    final TypeEvalContext stubContext = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+    final PyType typeFromStub = stubContext.getType(attribute);
     assertInstanceOf(typeFromStub, PyTypedDictType.class);
     final PyTypedDictType typedDictFromStub = (PyTypedDictType)typeFromStub;
     assertTrue(typedDictFromStub.isClosed());
-    final PyType stubExtraItemsType = typedDictFromStub.getExtraItemsType();
+    final PyType stubExtraItemsType = typedDictFromStub.extraItemsType(stubContext);
     assertNotNull(stubExtraItemsType);
     assertEquals("bool", stubExtraItemsType.getName());
     assertNotParsed(file);
@@ -1358,11 +1359,12 @@ public class PyStubsTest extends PyTestCase {
     final FileASTNode astNode = file.getNode();
     assertNotNull(astNode);
 
-    final PyType typeFromAst = TypeEvalContext.userInitiated(myFixture.getProject(), file).getType(attribute);
+    final TypeEvalContext astContext = TypeEvalContext.userInitiated(myFixture.getProject(), file);
+    final PyType typeFromAst = astContext.getType(attribute);
     assertInstanceOf(typeFromAst, PyTypedDictType.class);
     final PyTypedDictType typedDictFromAst = (PyTypedDictType)typeFromAst;
     assertTrue(typedDictFromAst.isClosed());
-    final PyType astExtraItemsType = typedDictFromAst.getExtraItemsType();
+    final PyType astExtraItemsType = typedDictFromAst.extraItemsType(astContext);
     assertNotNull(astExtraItemsType);
     assertEquals("bool", astExtraItemsType.getName());
   }
@@ -1374,11 +1376,11 @@ public class PyStubsTest extends PyTestCase {
     final PyClass cls = file.findTopLevelClass("ClosedDict");
     assertNotNull(cls);
 
-    final PyTypedDictType typeFromStub = PyTypedDictTypeProvider.Helper.INSTANCE.getTypedDictTypeForResolvedElement(
-      cls, TypeEvalContext.codeInsightFallback(myFixture.getProject()));
+    final TypeEvalContext stubContext = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+    final PyTypedDictType typeFromStub = PyTypedDictTypeProvider.Helper.INSTANCE.getTypedDictTypeForResolvedElement(cls, stubContext);
     assertInstanceOf(typeFromStub, PyTypedDictType.class);
     assertTrue(typeFromStub.isClosed());
-    final PyType stubExtraItemsType = typeFromStub.getExtraItemsType();
+    final PyType stubExtraItemsType = typeFromStub.extraItemsType(stubContext);
     assertNotNull(stubExtraItemsType);
     assertEquals("bool", stubExtraItemsType.getName());
     assertNotParsed(file);
@@ -1386,11 +1388,11 @@ public class PyStubsTest extends PyTestCase {
     final FileASTNode astNode = file.getNode();
     assertNotNull(astNode);
 
-    final PyTypedDictType typeFromAst = PyTypedDictTypeProvider.Helper.INSTANCE.getTypedDictTypeForResolvedElement(
-      cls, TypeEvalContext.userInitiated(myFixture.getProject(), file));
+    final TypeEvalContext astContext = TypeEvalContext.userInitiated(myFixture.getProject(), file);
+    final PyTypedDictType typeFromAst = PyTypedDictTypeProvider.Helper.INSTANCE.getTypedDictTypeForResolvedElement(cls, astContext);
     assertInstanceOf(typeFromAst, PyTypedDictType.class);
     assertTrue(typeFromAst.isClosed());
-    final PyType astExtraItemsType = typeFromAst.getExtraItemsType();
+    final PyType astExtraItemsType = typeFromAst.extraItemsType(astContext);
     assertNotNull(astExtraItemsType);
     assertEquals("bool", astExtraItemsType.getName());
   }
@@ -1434,21 +1436,24 @@ public class PyStubsTest extends PyTestCase {
     assertNotNull(stub);
     assertEquals(expectedCalleeName, stub.getCalleeName());
 
-    final PyType typeFromStub = TypeEvalContext.codeInsightFallback(myFixture.getProject()).getType(attribute);
-    doTestTypedDict(expectedName, expectedFieldsNames, expectedFieldsTypes, typeFromStub);
+    final TypeEvalContext stubContext = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+    final PyType typeFromStub = stubContext.getType(attribute);
+    doTestTypedDict(expectedName, expectedFieldsNames, expectedFieldsTypes, typeFromStub, stubContext);
     assertNotParsed(file);
 
     final FileASTNode astNode = file.getNode();
     assertNotNull(astNode);
 
-    final PyType typeFromAst = TypeEvalContext.userInitiated(myFixture.getProject(), file).getType(attribute);
-    doTestTypedDict(expectedName, expectedFieldsNames, expectedFieldsTypes, typeFromAst);
+    final TypeEvalContext astContext = TypeEvalContext.userInitiated(myFixture.getProject(), file);
+    final PyType typeFromAst = astContext.getType(attribute);
+    doTestTypedDict(expectedName, expectedFieldsNames, expectedFieldsTypes, typeFromAst, astContext);
   }
 
   private static void doTestTypedDict(@NotNull String expectedName,
                                       @NotNull List<String> expectedFieldsNames,
                                       @NotNull List<String> expectedFieldsTypes,
-                                      @Nullable PyType type) {
+                                      @Nullable PyType type,
+                                      @NotNull TypeEvalContext context) {
     assertInstanceOf(type, PyTypedDictType.class);
     final PyTypedDictType typedDictType = (PyTypedDictType)type;
 
@@ -1457,7 +1462,7 @@ public class PyStubsTest extends PyTestCase {
     final Iterator<String> fieldsNamesIterator = expectedFieldsNames.iterator();
     final Iterator<String> fieldsTypesIterator = expectedFieldsTypes.iterator();
 
-    for (Map.Entry<String, PyTypedDictType.FieldTypeAndTotality> entry : typedDictType.getFields().entrySet()) {
+    for (Map.Entry<String, PyTypedDictType.FieldTypeAndTotality> entry : typedDictType.fields(context).entrySet()) {
       assertTrue(fieldsNamesIterator.hasNext());
       assertTrue(fieldsTypesIterator.hasNext());
 

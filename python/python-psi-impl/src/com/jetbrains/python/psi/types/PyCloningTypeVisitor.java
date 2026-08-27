@@ -142,12 +142,12 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
     // Cloned lazily, so that cloning a TypedDict does not force item types that may refer back to it.
     return new PyTypedDictType(
       typedDictType.getName(),
-      () -> cloneFields(typedDictType),
+      evalContext -> cloneFields(typedDictType, evalContext),
       typedDictType.myClass,
       typedDictType.isDefinition(),
       typedDictType.getDeclarationElement(),
       typedDictType.isClosed(),
-      () -> cloneExtraItems(typedDictType),
+      evalContext -> cloneExtraItems(typedDictType, evalContext),
       typedDictType.getDeclaredTypeParameters(),
       cloneTypedDictTypeArguments(typedDictType));
   }
@@ -157,16 +157,18 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
     return cloneTypeArguments(typedDictType.getTypeArguments());
   }
 
-  private @NotNull PyTypedDictType.FieldTypeAndTotality cloneExtraItems(@NotNull PyTypedDictType typedDictType) {
+  private @NotNull PyTypedDictType.FieldTypeAndTotality cloneExtraItems(@NotNull PyTypedDictType typedDictType,
+                                                                       @NotNull TypeEvalContext context) {
     return cloneDeferred(() -> {
-      PyTypedDictType.FieldTypeAndTotality extraItems = typedDictType.getExtraItems();
+      PyTypedDictType.FieldTypeAndTotality extraItems = typedDictType.extraItems(context);
       return new PyTypedDictType.FieldTypeAndTotality(extraItems.getValue(), clone(extraItems.getType()), extraItems.getQualifiers());
     });
   }
 
-  private @NotNull Map<String, PyTypedDictType.FieldTypeAndTotality> cloneFields(@NotNull PyTypedDictType typedDictType) {
+  private @NotNull Map<String, PyTypedDictType.FieldTypeAndTotality> cloneFields(@NotNull PyTypedDictType typedDictType,
+                                                                                @NotNull TypeEvalContext context) {
     // TODO Copied from PyTypeChecker.substitute, revise
-    return cloneDeferred(() -> typedDictType.getFields().entrySet().stream().collect(
+    return cloneDeferred(() -> typedDictType.fields(context).entrySet().stream().collect(
       Collectors.toMap(
         Map.Entry::getKey,
         field -> new PyTypedDictType.FieldTypeAndTotality(
