@@ -619,6 +619,33 @@ private fun mergedLibraryTargetLabels(
  * (`lib/debugger-memory-agent.jar`); a prepacked module skips `computeSourcesForModule` and would silently never write
  * it, so the owner is vetoed on sight.
  *
+ * **That veto stays, and a 2026-08-27 measurement says why.** It refuses 47 owning modules, of which 9 would otherwise
+ * be candidates. `validatePrepackedPluginContentHandoff` refuses all 9 a second time, and it throws where this fold
+ * skips. So dropping the veto here turns a jar that quietly goes missing into a build that fails.
+ *
+ * **A report records that a library left the module's jar. It does not record which mechanism took it out, and the
+ * mechanism decides the answer.** The two mechanisms sit on opposite sides of the call a hand-off skips.
+ *
+ * - `isSeparateLibraryJar` inside `computeSourcesForModuleLibs` writes 6 of the 9 siblings.
+ *   `computeSourcesForModule` is the only caller, and a handed-off module skips it. So those siblings genuinely go missing, and the veto corrects.
+ * - A `withModuleLibrary` call in a `PluginLayout` writes the other 3. `JarPackager.pack` calls
+ *   `computeModuleCustomLibrarySources` on its own line, outside the skipped call, so those siblings ship whatever this
+ *   generator does. The veto is conservative for all 3, and their own jars weigh 1 664 567 bytes together.
+ *
+ * This generator exists to keep the evaluation of a product layout out of a fragment action. So it cannot read which
+ * mechanism took a library out, and it keeps both cases.
+ *
+ * A per-occurrence *owner* refusal costs nothing measurable either. It is a different refusal from the per-occurrence
+ * *entry* refusal this KDoc weighs at 24 modules, above and below.
+ *
+ * The veto is repo-global, and 37 of the 47 owners have no
+ * self-named jar in any report, so no rule would make them candidates. 10 owners do have one. For every one of the 10
+ * the *same* report both gives the module its own jar and writes the sibling. One of the 10 is
+ * `intellij.java.debugger.impl`, and another occurrence vetoes it anyway. So a narrower rule would gain no module.
+ *
+ * The bytes agree, and `dev-dist-measurements.md` holds the per-owner table. The 9 own 68 277 444 bytes of self-named
+ * jar on one composite tree, and one module holds 97.1 % of that.
+ *
  * When [simplePluginContentEntry] refuses an entry, this fold vetoes every content module the entry names. It does not
  * veto only the module the path names. That over-approximates, and a measurement puts the cost at zero. The 50 entries
  * that hold several content modules name 416 distinct modules. Not one of the 416 has a second occurrence that
