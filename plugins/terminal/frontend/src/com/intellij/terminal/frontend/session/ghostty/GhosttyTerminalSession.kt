@@ -72,9 +72,7 @@ import kotlin.time.Duration.Companion.milliseconds
  *   [TerminalOutputEvent] model (content / cursor / state) by
  *   [TerminalEmulatorOutputProjector] and pushed to [getOutputFlow] on a fixed cadence
  *   ([OUTPUT_POLL_INTERVAL], like the JediTerm pipeline), so a burst of writes
- *   coalesces into one delta; the read loop forces an early projection only when
- *   unreported history nears eviction (see
- *   [TerminalEmulatorOutputProjector.isUnemittedHistoryEvictionImminent]);
+ *   coalesces into one delta;
  * - OSC 1341 shell-integration commands are received via
  *   [TerminalEmulator.customCommandListener], parsed by the shared
  *   [TerminalShellIntegrationController], and turned into
@@ -90,11 +88,13 @@ import kotlin.time.Duration.Companion.milliseconds
  * ### Known gaps vs. the JediTerm pipeline (this backend is experimental)
  * - **Partial state**: `isAutoNewLine` and `isAltSendsEscape` are absent from the
  *   emulator API, so they keep their defaults.
- * - **Scrollback overflow**: content updates are incremental (only the changed tail);
- *   a [com.intellij.terminal.emulator.HistoryMark] keeps the appended-line count exact
- *   even past the scrollback cap, so the tail is under-reported only in the extreme
- *   case where a single write scrolls past the entire retained scrollback (see
- *   [TerminalEmulatorOutputProjector.buildContentUpdate]).
+ * - **Scrollback overflow**: content updates are incremental (only the changed tail),
+ *   tracked exactly via a [com.intellij.terminal.emulator.HistoryMark] — except that a
+ *   burst fast enough to finalize more than the whole retained scrollback between two
+ *   projection ticks makes the old numbering unrecoverable, so the projector resets and reports
+ *   only the currently visible tail instead (see
+ *   [TerminalEmulatorOutputProjector.buildContentUpdate]) — already-shown history can be
+ *   dropped in that case.
  * - **Buffer switch mid-frame**: when one projection window contains both an
  *   alternate-screen switch and drawing, only the newly active buffer's frame is
  *   emitted — the old buffer's last pre-switch changes are not (the JediTerm pipeline
@@ -255,16 +255,7 @@ class GhosttyTerminalSession internal constructor(
             if (disposed) break
             emulator.write(String(buffer, 0, count))
             changedSinceLastProjection = true
-            projector.noteOutputWritten()
             responses = takeResponsesLocked()
-            // Projection is normally the polling job's duty (below); step in only when
-            // so much history piled up unreported that further output would evict it
-            // unseen. Deferral is bypassed: painting a mid-block frame beats losing
-            // scrollback for good, and a program that scrolls this much inside one
-            // synchronized-output block is not composing a frame anyway.
-            if (projector.isUnemittedHistoryEvictionImminent()) {
-              projectAndEmitLocked(bypassSyncOutputDeferral = true)
-            }
           }
           flushResponses(responses)
         }
@@ -319,7 +310,10 @@ class GhosttyTerminalSession internal constructor(
           // acquisition and nothing else — no FFI reads.
           val forcePaint = consumeSyncOutputForcePaintLocked()
           if (changedSinceLastProjection || forcePaint) {
-            projectAndEmitLocked(bypassSyncOutputDeferral = forcePaint)
+            val events = syncLocked(bypassSyncOutputDeferral = forcePaint)
+            if (events.isNotEmpty()) {
+              emitOutputBlocking(events)
+            }
           }
           responses = takeResponsesLocked()
         }
@@ -423,21 +417,6 @@ class GhosttyTerminalSession internal constructor(
   private fun tryEmitOutput(events: List<TerminalOutputEvent>, requireCollector: Boolean): Boolean {
     val mayEmit = !requireCollector || outputFlow.subscriptionCount.value > 0
     return mayEmit && outputFlow.tryEmit(events)
-  }
-
-  /**
-   * Must be called under [lock]. Projects the current emulator state into output
-   * events and emits them, blocking — still under the lock — until the collector
-   * takes them.
-   *
-   * Emitting under the lock is the backpressure, the same shape the JediTerm pipeline
-   * gets by emitting under its text-buffer lock: while a slow (or absent) collector
-   * keeps this blocked, the read loop cannot take the lock to feed the emulator more
-   * output, the PTY buffer fills, and the shell itself stops writing.
-   */
-  private fun projectAndEmitLocked(bypassSyncOutputDeferral: Boolean = false) {
-    val events = syncLocked(bypassSyncOutputDeferral)
-    if (events.isNotEmpty()) emitOutputBlocking(events)
   }
 
   /**

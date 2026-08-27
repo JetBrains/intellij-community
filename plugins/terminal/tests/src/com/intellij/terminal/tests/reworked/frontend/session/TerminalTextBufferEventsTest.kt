@@ -69,15 +69,75 @@ internal class TerminalTextBufferEventsTest(emulatorType: TerminalEmulatorType) 
     assertThat(collector.documentLines()).isEqualTo((0 until 40).map { "L%02d".format(it) })
   }
 
+  @Test
+  fun `a later increment reports only the new tail, not a full resend`() = runSessionTest { _, connector, collector ->
+    // 24-row screen: 40 lines push the first 16 into scrollback.
+    connector.feed((0 until 40).joinToString("\r\n") { "L%02d".format(it) })
+    collector.awaitEvent<TerminalContentUpdatedEvent> { it.cursorLogicalLineIndex == 39L }
+
+    val mark = collector.currentEventCount()
+    connector.feed("\r\n" + (40 until 45).joinToString("\r\n") { "L%02d".format(it) })
+    val second = collector.awaitEventAfter<TerminalContentUpdatedEvent>(mark) { it.cursorLogicalLineIndex == 44L }
+
+    assertThat(second.startLineLogicalIndex).isGreaterThan(0L)
+    assertThat(second.text).doesNotContain("L00")
+    assertThat(collector.documentLines()).isEqualTo((0 until 45).map { "L%02d".format(it) })
+  }
+
+  @Test
+  fun `a logical line wrapped across the scrollback boundary survives intact`() = runSessionTest { _, connector, collector ->
+    // Logical line 0 is two 80-column rows. 30 more lines scroll both rows into history.
+    val wrapped = "X".repeat(160)
+    connector.feed(wrapped + "\r\n" + (0 until 30).joinToString("\r\n") { "Y%02d".format(it) })
+
+    collector.awaitEvent<TerminalContentUpdatedEvent> { it.cursorLogicalLineIndex == 30L }
+
+    val lines = collector.documentLines()
+    assertThat(lines).hasSize(31)
+    assertThat(lines[0]).isEqualTo(wrapped) // not split into two 80-char rows, not truncated
+    assertThat(lines.drop(1)).isEqualTo((0 until 30).map { "Y%02d".format(it) })
+  }
+
+  @Test
+  fun `resize that shrinks the screen moves rows into scrollback`() = runSessionTest { session, connector, collector ->
+    // All 15 lines fit the 24-row screen: nothing is in scrollback yet.
+    connector.feed((0 until 15).joinToString("\r\n") { "R%02d".format(it) })
+    collector.awaitEvent<TerminalContentUpdatedEvent> { it.cursorLogicalLineIndex == 14L }
+
+    val mark = collector.currentEventCount()
+    // JediTerm's change tracker reacts to a width change or new cell content, not a pure row-count shrink -
+    // and a bare "\r\n" into a blank line is not new content either. Ghostty has no such gap; see below.
+    session.getInputChannel().send(TerminalResizeEvent(TerminalGridSize(columns = 80, rows = 5)))
+    connector.feed("\r\nz")
+    collector.awaitEventAfter<TerminalContentUpdatedEvent>(mark) { it.text.contains("R14") }
+
+    assertThat(collector.documentLines().dropLast(1)).isEqualTo((0 until 15).map { "R%02d".format(it) })
+  }
+
+  @Test
+  fun `Ghostty reports a screen-shrinking resize immediately, without a follow-up write`() = runSessionTest { session, connector, collector ->
+    // Ghostty's projector re-reads scrollbackRows every poll tick, so a resize alone is enough here, unlike
+    // JediTerm above. Ghostty-only: a strictly stronger guarantee, not a required cross-emulator one.
+    assumeGhostty()
+
+    connector.feed((0 until 15).joinToString("\r\n") { "R%02d".format(it) })
+    collector.awaitEvent<TerminalContentUpdatedEvent> { it.cursorLogicalLineIndex == 14L }
+
+    val mark = collector.currentEventCount()
+    session.getInputChannel().send(TerminalResizeEvent(TerminalGridSize(columns = 80, rows = 5)))
+    collector.awaitEventAfter<TerminalContentUpdatedEvent>(mark) { it.text.contains("R14") }
+
+    assertThat(collector.documentLines()).isEqualTo((0 until 15).map { "R%02d".format(it) })
+  }
+
   // ---------------------------------------------------------------------------
   // (3) Exceeding the scrollback size — oldest lines are dropped
   // ---------------------------------------------------------------------------
 
   @Test
   fun `oldest lines are dropped once the scrollback limit is exceeded`() {
-    // JediTerm tracks discarded history via growing absolute line indices, which is directly observable as a
-    // content update whose first line has a positive logical index. The Ghostty backend re-reports a bounded
-    // window from index 0 instead, and its scrollback overflow is covered by the emulator module's ScrollingTest.
+    // JediTerm reports discarded history via a growing startLineLogicalIndex. Ghostty resets to index 0
+    // instead (see the burst test below); its own overflow is covered by the emulator module's ScrollingTest.
     assumeJediTerm()
     // Shrink the scrollback so the overflow is reached with a small number of lines.
     setMaxScrollbackLines(100)
@@ -93,8 +153,9 @@ internal class TerminalTextBufferEventsTest(emulatorType: TerminalEmulatorType) 
 
   @Test
   fun `document tail stays complete while the scrollback keeps evicting`() {
-    // Shrink JediTerm's scrollback cap so the prefill below overflows it; the Ghostty cap is a fixed
-    // ~1 MiB, which the prefill overflows too (~1000 rows at this width).
+    // Ghostty can drop already-shown history under a fast burst instead of blocking writes (see the burst
+    // test below); JediTerm has no such tradeoff, so this is JediTerm-only.
+    assumeJediTerm()
     setMaxScrollbackLines(100)
 
     runSessionTest { _, connector, collector ->
@@ -102,9 +163,8 @@ internal class TerminalTextBufferEventsTest(emulatorType: TerminalEmulatorType) 
       connector.feed((1..PREFILL_LINES).joinToString("") { "prefill-$it\r\n" })
       collector.awaitEvent<TerminalContentUpdatedEvent> { it.cursorLogicalLineIndex == PREFILL_LINES.toLong() }
 
-      // (2) Print lines 1..N, in feeds small enough that the Ghostty session's eviction flush is
-      // guaranteed to keep the event stream complete between them — a single PTY read outrunning the
-      // whole retained scrollback loses lines by design (a documented gap, not this test's subject).
+      // (2) Print lines 1..N, in feeds small enough that JediTerm's own eviction accounting keeps the
+      // event stream complete between them.
       for (batchStart in 1..TAIL_LINES step FEED_BATCH_LINES) {
         connector.feed((batchStart until batchStart + FEED_BATCH_LINES).joinToString("") { "$it\r\n" })
       }
@@ -123,6 +183,36 @@ internal class TerminalTextBufferEventsTest(emulatorType: TerminalEmulatorType) 
       assertThat(mismatch)
         .describedAs("first mismatching tail line: expected '${expected.getOrNull(mismatch)}', found '${tail.getOrNull(mismatch)}'")
         .isEqualTo(-1)
+    }
+  }
+
+  @Test
+  fun `a burst that outpaces the scrollback cap resets to the visible tail, then tracking resumes normally`() {
+    // Ghostty counterpart of `document tail stays complete...` above: it resets instead of blocking writes.
+    assumeGhostty()
+
+    runSessionTest { _, connector, collector ->
+      connector.feed((0 until 10).joinToString("\r\n") { "BEFORE$it" })
+      collector.awaitEvent<TerminalContentUpdatedEvent> { it.text.contains("BEFORE9") }
+
+      // ~2000 blank lines fit in one PTY read (4096-char buffer), so this is one atomic emulator.write() -
+      // an overflow with no timing race against the poll.
+      connector.feed("\r\n" + "\r\n".repeat(2_000))
+      collector.awaitEvent<TerminalContentUpdatedEvent> { it.startLineLogicalIndex == 0L }
+
+      // The index only ever grows or resets to 0, never rewinds partway.
+      val updates = collector.contentUpdates()
+      for (i in 1 until updates.size) {
+        assertThat(updates[i].startLineLogicalIndex >= updates[i - 1].startLineLogicalIndex || updates[i].startLineLogicalIndex == 0L)
+          .describedAs("event $i: index went from ${updates[i - 1].startLineLogicalIndex} to ${updates[i].startLineLogicalIndex} without a reset")
+          .isTrue()
+      }
+
+      // Recovery may take one more reset if the scrollback is still settling; the end result must be correct either way.
+      val mark = collector.currentEventCount()
+      connector.feed("AFTER1\r\nAFTER2")
+      collector.awaitEventAfter<TerminalContentUpdatedEvent>(mark) { it.text.contains("AFTER2") }
+      assertThat(collector.documentLines().takeLast(2)).isEqualTo(listOf("AFTER1", "AFTER2"))
     }
   }
 
@@ -199,6 +289,10 @@ internal class TerminalTextBufferEventsTest(emulatorType: TerminalEmulatorType) 
     Assume.assumeTrue("Not applicable to the Ghostty emulator", emulatorType == TerminalEmulatorType.JediTerm)
   }
 
+  private fun assumeGhostty() {
+    Assume.assumeTrue("Not applicable to the JediTerm emulator", emulatorType == TerminalEmulatorType.Ghostty)
+  }
+
   /** Shrinks the JediTerm scrollback cap until the end of the test; the Ghostty cap is not configurable. */
   private fun setMaxScrollbackLines(count: Int) {
     val maxLinesKey = "terminal.buffer.max.lines.count"
@@ -218,9 +312,9 @@ internal class TerminalTextBufferEventsTest(emulatorType: TerminalEmulatorType) 
     private const val TAIL_LINES = 100_000
 
     /**
-     * Lines per feed while printing the tail: with the scrollback retaining ~1000 rows, the Ghostty
-     * eviction flush (at most a quarter of the retained rows unreported, then a forced projection per
-     * write) stays ahead of eviction as long as one read adds well under half the retained rows.
+     * Lines per feed while printing the tail (JediTerm-only, see `document tail stays complete while the
+     * scrollback keeps evicting`): small enough that JediTerm's own eviction accounting stays exact between
+     * feeds.
      */
     private const val FEED_BATCH_LINES = 250
   }

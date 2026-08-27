@@ -127,11 +127,10 @@ object TerminalSessionTestUtil {
     project: Project,
     coroutineScope: CoroutineScope,
     emulatorType: TerminalEmulatorType? = null,
-    initialSize: TermSize = TermSize(80, 24),
   ): Pair<TerminalSession, LoopbackTtyConnector> {
     val connector = LoopbackTtyConnector()
     val options = ShellStartupOptions.Builder()
-      .initialTermSize(initialSize)
+      .initialTermSize(TermSize(80, 24))
       .processType(TerminalProcessType.NON_SHELL)
       .workingDirectory(System.getProperty("user.home"))
       .emulatorType(emulatorType)

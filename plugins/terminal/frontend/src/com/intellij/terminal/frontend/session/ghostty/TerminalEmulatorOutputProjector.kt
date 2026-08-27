@@ -12,9 +12,9 @@ import com.intellij.terminal.emulator.TerminalRow
 import com.intellij.terminal.emulator.Underline
 import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.impl.dto.CursorShapeDto
-import org.jetbrains.plugins.terminal.session.impl.dto.Osc8HyperlinkDto
 import org.jetbrains.plugins.terminal.session.impl.dto.MouseFormatDto
 import org.jetbrains.plugins.terminal.session.impl.dto.MouseModeDto
+import org.jetbrains.plugins.terminal.session.impl.dto.Osc8HyperlinkDto
 import org.jetbrains.plugins.terminal.session.impl.dto.StyleRangeDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalColorDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalStateDto
@@ -26,39 +26,22 @@ import org.jetbrains.plugins.terminal.session.impl.dto.TextStyleOptionDto
  * DTO model for [GhosttyTerminalSession]: incremental content updates ([buildContentUpdate]), cursor positions
  * ([computeCursor]), and terminal-state snapshots ([buildState]).
  *
- * Owns the incremental-emission state — the absolute logical index of the current screen top and the boundary
- * of the not-yet-emitted history tail, both advanced by [buildContentUpdate] — together with the [HistoryMark]
- * backing them; [close] releases the mark.
+ * Owns the incremental-emission state — the absolute logical index of the current screen top, advanced (or reset,
+ * see [buildContentUpdate]) by each call — together with the [HistoryMark] used to measure how much history was
+ * finalized since the last call; [close] releases the mark.
  *
  * Not thread-safe: it reads the emulator, so every call must be serialized with all other emulator access —
  * in practice, every call is made under [GhosttyTerminalSession]'s lock.
  */
 internal class TerminalEmulatorOutputProjector(private val emulator: TerminalEmulator) {
 
-  // Tracks the finalized-history / active-screen boundary so buildContentUpdate can append exactly the
-  // lines that scrolled off since the last emit — staying correct even after the scrollback cap starts
-  // evicting, where a raw scrollbackRows delta plateaus. Created with the emulator; closed on teardown.
+  // Measures rows finalized into scrollback since the last buildContentUpdate call. Created with the
+  // emulator; closed on teardown.
   private val historyMark: HistoryMark = emulator.markHistoryBoundary()
 
-  // Absolute logical index of the current screen top (grows as lines scroll off into history); the anchor for
-  // incremental content updates.
+  // Absolute logical index of the current screen top (grows as lines scroll off into history, or resets to
+  // 0 when buildContentUpdate can no longer track it exactly); the anchor for incremental content updates.
   private var screenTopLogical = 0L
-
-  // scrollbackRows as of the last content emit; the fallback boundary of the not-yet-emitted history tail
-  // for the degraded case where the finalized-row count was lost (see unreportedCountLost).
-  private var emittedScrollbackRows = 0
-
-  // Rows finalized into scrollback since the last content emit. Accumulated write-by-write
-  // ([noteOutputWritten]) rather than read off the mark at emit time: the mark is a reference into the
-  // bounded scrollback, and eviction is page-granular, so an anchor left alone across many writes can be
-  // swept away long before the appended rows reach the retained-row count — silently shifting the line
-  // accounting. Folding after every write means the anchor only ever spans one write.
-  private var unreportedFinalizedRows = 0
-
-  // Set when a single write finalized more rows than the whole retained scrollback, evicting the
-  // write-scoped anchor: that write's count is unrecoverable, and buildContentUpdate degrades to the
-  // scrollbackRows delta.
-  private var unreportedCountLost = false
 
   /**
    * Projects the buffer changes since the last call into a [TerminalContentUpdatedEvent], reading and emitting only
@@ -67,34 +50,24 @@ internal class TerminalEmulatorOutputProjector(private val emulator: TerminalEmu
    * which matters a lot for this backend where every row read crosses the FFI boundary. (Plus the rows of one
    * soft-wrapped line where it straddles the boundary, and one row read to detect that it does.)
    *
-   * [TerminalContentUpdatedEvent.startLineLogicalIndex] grows as lines scroll off into history ([screenTopLogical]).
-   * The number of newly finalized rows is accumulated write-by-write from [historyMark] (see
-   * [noteOutputWritten]), so it stays exact even after the scrollback cap starts evicting (where the raw
-   * `scrollbackRows` delta plateaus) — including page-granular eviction sweeping past long-lived anchors.
-   * When some counted rows were evicted before this emit, the count still keeps the logical indices right
-   * (one line per lost row; their wrap flags are unrecoverable). The only residual gap versus the JediTerm
-   * pipeline: a single [emulator] write scrolling past the whole retained scrollback evicts even the
-   * write-scoped anchor ([HistoryMark.finalizedLineCount] returns `-1`), and we degrade to the
-   * `scrollbackRows` delta, which then under-reports — those lines are gone with no way to recover.
+   * [TerminalContentUpdatedEvent.startLineLogicalIndex] grows as lines scroll off into history ([screenTopLogical]),
+   * as long as [historyMark] can report exactly how many rows were finalized since the last call — which it
+   * can as long as that count does not exceed what the scrollback currently retains. When it can't (a burst
+   * finalized more than the whole retained scrollback since the last call, whether from one write or many
+   * between two projection ticks), there is no way to keep the old numbering consistent with what is still
+   * retained, so this resets instead: [screenTopLogical] goes back to `0` and the event reports the *entire*
+   * currently retained scrollback plus the active screen as the new start of the output.
    */
   fun buildContentUpdate(): TerminalContentUpdatedEvent {
     val screenRows = emulator.size.rows
-    foldFinalizedRows() // a resize (reflow) can finalize rows without a write
     val curScrollbackRows = emulator.scrollbackRows
-    // Rows finalized since the last emit whose content was evicted before this emit could report them:
-    // the reportable tail starts below them, but the logical indices must still account for them —
-    // approximated as one line per row, since their wrap flags are gone with them.
-    var evictedUnreportedRows = 0
-    var fromH = when {
-      // The count for one write is unknown (see unreportedCountLost): degrade to the scrollbackRows
-      // delta, which under-reports at the cap — those lines are gone with no way to recover.
-      unreportedCountLost -> emittedScrollbackRows.coerceIn(0, curScrollbackRows)
-      unreportedFinalizedRows > curScrollbackRows -> {
-        evictedUnreportedRows = unreportedFinalizedRows - curScrollbackRows
-        0
-      }
-      else -> curScrollbackRows - unreportedFinalizedRows
-    }
+    // finalizedLineCount() also picks up rows a resize (reflow) finalized without a write.
+    val finalizedSinceLastEmit = historyMark.finalizedLineCount()
+    historyMark.reset()
+
+    val canTrackExactly = finalizedSinceLastEmit in 0..curScrollbackRows
+    var fromH = if (canTrackExactly) curScrollbackRows - finalizedSinceLastEmit else 0
+    val startLogical = if (canTrackExactly) screenTopLogical else 0L
     // A soft-wrapped logical line can straddle that boundary: its first rows were finalized by an earlier emit and
     // the rest only now. [startLineLogicalIndex] addresses whole logical lines, and the model replaces from the
     // start of that line, so a tail that began mid-line would truncate it to its last rows. Back up to the line's
@@ -115,7 +88,6 @@ internal class TerminalEmulatorOutputProjector(private val emulator: TerminalEmu
     }
     backedUp.reverse()
     val newHistoryRows = curScrollbackRows - fromH
-    val startLogical = screenTopLogical + evictedUnreportedRows
 
     // Read only the tail: the newly finalized history rows followed by the active screen.
     val rows = ArrayList<TerminalRow>(newHistoryRows + screenRows)
@@ -158,12 +130,8 @@ internal class TerminalEmulatorOutputProjector(private val emulator: TerminalEmu
     val cursorLine = startLogical + completedLogicalLines(rows, line)
 
     // The finalized history rows move the screen top forward by their logical-line count. The mark is
-    // already re-anchored (foldFinalizedRows above); consuming the fold's bookkeeping starts the next
-    // emit's window here.
+    // already re-anchored above; this starts the next emit's window here.
     screenTopLogical = startLogical + completedLogicalLines(rows, newHistoryRows)
-    emittedScrollbackRows = curScrollbackRows
-    unreportedFinalizedRows = 0
-    unreportedCountLost = false
 
     return TerminalContentUpdatedEvent(
       text = text.toString(),
@@ -173,47 +141,6 @@ internal class TerminalEmulatorOutputProjector(private val emulator: TerminalEmu
       cursorColumnIndex = column,
       osc8Hyperlinks = linkRuns.map { Osc8HyperlinkDto(it.start.toLong(), it.end.toLong(), it.value) },
     )
-  }
-
-  /**
-   * Must be called after every [emulator] write: folds the rows that write finalized into the pending
-   * bookkeeping and re-anchors [historyMark], so the anchor never has to survive more than one write's
-   * worth of page-granular eviction. One native read (plus a reset when rows were finalized) per write.
-   */
-  fun noteOutputWritten() {
-    foldFinalizedRows()
-  }
-
-  /**
-   * Whether so many rows were finalized into history since the last [buildContentUpdate] that further
-   * output risks evicting them before they are ever emitted. The session checks this after every write
-   * (after [noteOutputWritten]) and forces an early projection instead of waiting for the next regular
-   * one.
-   *
-   * The threshold is a quarter of the retained scrollback, floored at [HISTORY_FLUSH_MIN_LINES] so
-   * ordinary bursts keep coalescing. A quarter, not half: the cap trims in large chunks, so the
-   * retained-row count oscillates roughly 25-30% below the value sampled here, and the backlog must
-   * stay under that trough with headroom for one more write. A single write large enough to blow
-   * through the headroom still loses content — the same content a projection after every single write
-   * would lose ([foldFinalizedRows] keeps the line *accounting* exact even then).
-   */
-  fun isUnemittedHistoryEvictionImminent(): Boolean {
-    // A lost count means unreported rows are already being evicted: project now before more is lost.
-    return unreportedCountLost || unreportedFinalizedRows >= maxOf(HISTORY_FLUSH_MIN_LINES, emulator.scrollbackRows / 4)
-  }
-
-  /**
-   * Folds the rows finalized since [historyMark] was last anchored into [unreportedFinalizedRows] and
-   * re-anchors the mark at the current boundary.
-   */
-  private fun foldFinalizedRows() {
-    val sinceAnchor = historyMark.finalizedLineCount()
-    when {
-      sinceAnchor < 0 -> unreportedCountLost = true // the anchor itself was evicted: this window's count is gone
-      sinceAnchor > 0 -> unreportedFinalizedRows += sinceAnchor
-      else -> return // nothing finalized: the anchor already sits at the boundary
-    }
-    historyMark.reset()
   }
 
   /**
@@ -331,11 +258,3 @@ internal class TerminalEmulatorOutputProjector(private val emulator: TerminalEmu
     MouseEncoding.URXVT -> MouseFormatDto.MOUSE_FORMAT_URXVT
   }
 }
-
-/**
- * The floor of the eviction-flush threshold (see [TerminalEmulatorOutputProjector.isUnemittedHistoryEvictionImminent]):
- * below this many unreported lines a forced projection never fires, so bursts keep coalescing even while the
- * scrollback is still small. Well under the rows the default ~1 MiB scrollback retains (about a thousand at
- * 80 columns).
- */
-private const val HISTORY_FLUSH_MIN_LINES = 256
