@@ -3,6 +3,8 @@ package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model
 
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.python.junit5Tests.unit.alsoWin.pyproject.div
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -60,5 +62,30 @@ internal class PyProjectTomlImplicitSrcRootTest {
         .describedAs("`src` must be a source root right after its creation")
         .isTrue()
     }
+  }
+
+  /**
+   * The user marks the directory that the sync marks already, and the model keeps one source root.
+   *
+   * `ModifiableContentEntryBridge.findDuplicate` compares a java source root by its properties, so the sync must give
+   * each source root a `JavaSourceRootPropertiesEntity`. Without that child the bridge finds no duplicate and writes a
+   * second entity for one directory.
+   */
+  @Test
+  fun `the source root that the user marks makes no second entity`(): Unit = timeoutRunBlocking(30.seconds) {
+    val sub = edtWriteAction { f.root.createDirectory("sub").also { it.writePyprojectTomlWithProject("child") } }
+
+    f.reloadProject()
+
+    val src = edtWriteAction { sub.createDirectory("src") }
+    val module = ModuleManager.getInstance(f.project).findModuleByName("child")!!
+    edtWriteAction {
+      val model = ModuleRootManager.getInstance(module).modifiableModel
+      model.contentEntries.single().addSourceFolder(src, false)
+      model.commit()
+    }
+
+    // No second reloadProject() on purpose: the bridge itself must refuse the second entity.
+    assertThat(f.sourceRootNames("child")).containsExactly("sub" / "src")
   }
 }

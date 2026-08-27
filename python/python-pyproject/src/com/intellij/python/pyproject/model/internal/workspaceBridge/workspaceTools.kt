@@ -1,6 +1,9 @@
 package com.intellij.python.pyproject.model.internal.workspaceBridge
 
 import com.intellij.configurationStore.saveSettings
+import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
+import com.intellij.java.workspace.entities.javaSourceRoots
+import com.intellij.java.workspace.entities.modifyJavaSourceRootPropertiesEntity
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
@@ -18,11 +21,13 @@ import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
 import com.intellij.platform.workspace.jps.entities.ModuleTypeId
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntityBuilder
 import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
 import com.intellij.platform.workspace.jps.entities.exModuleOptions
 import com.intellij.platform.workspace.jps.entities.modifyContentRootEntity
 import com.intellij.platform.workspace.jps.entities.modifyExternalSystemModuleOptionsEntity
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
+import com.intellij.platform.workspace.jps.entities.modifySourceRootEntity
 import com.intellij.platform.workspace.jps.entities.sdkId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -274,9 +279,7 @@ private fun updateModule(
 
       if (existingContentRoot == null) {
         this.contentRoots = listOf(ContentRootEntity(entryRootUrl, emptyList(), entitySource) {
-          this.sourceRoots = desiredSourceRootUrls.map { url ->
-            SourceRootEntity(url, JAVA_SOURCE_ROOT_TYPE, entitySource)
-          }
+          this.sourceRoots = desiredSourceRootUrls.map { pyProjectSourceRoot(it, entitySource) }
         })
       }
       if (existingPyProjectToml == null) {
@@ -295,13 +298,18 @@ private fun updateModule(
   }?.takeIf { (cr, existingUrls) ->
     cr.entitySource != entitySource || desiredSourceRootUrls.any { it.url !in existingUrls }
   }?.let { (cr, existingUrls) ->
+    // A modification keeps the properties of a root. A new entity for the same url loses them.
+    for (sourceRoot in cr.sourceRoots.filter { it.entitySource != entitySource }) {
+      for (properties in sourceRoot.javaSourceRoots) {
+        projectStorage.modifyJavaSourceRootPropertiesEntity(properties) { this.entitySource = entitySource }
+      }
+      projectStorage.modifySourceRootEntity(sourceRoot) { this.entitySource = entitySource }
+    }
     projectStorage.modifyContentRootEntity(cr) {
       this.entitySource = entitySource
       val newSourceRoots = desiredSourceRootUrls.filter { d -> d.url !in existingUrls }
-        .map { url -> SourceRootEntity(url, JAVA_SOURCE_ROOT_TYPE, entitySource) }
-      this.sourceRoots = (sourceRoots.map { sr ->
-        if (sr.entitySource != entitySource) SourceRootEntity(sr.url, sr.rootTypeId, entitySource) else sr
-      } + newSourceRoots).distinctBy { it.url.url }
+        .map { url -> pyProjectSourceRoot(url, entitySource) }
+      this.sourceRoots = (sourceRoots + newSourceRoots).distinctBy { it.url.url }
       this.excludedUrls = excludedUrls.map { eu ->
         if (eu.entitySource != entitySource) ExcludeUrlEntity(eu.url, entitySource) else eu
       }
@@ -346,9 +354,7 @@ private fun addNewModule(
       dependencies += ModuleDependency(ModuleId(depName.name), true, DependencyScope.COMPILE, false)
     }
     contentRoots = listOf(ContentRootEntity(entryRootUrl, emptyList(), entitySource) {
-      sourceRoots = entry.sourceRoots.map { srcRoot ->
-        SourceRootEntity(srcRoot.toVirtualFileUrl(virtualFileUrlManager), JAVA_SOURCE_ROOT_TYPE, entitySource)
-      }
+      sourceRoots = entry.sourceRoots.map { pyProjectSourceRoot(it.toVirtualFileUrl(virtualFileUrlManager), entitySource) }
     })
     type = PYTHON_MODULE_TYPE_ID
     pyProjectTomlEntity = PyProjectTomlWorkspaceEntity(participatedTools, tomlDirUrl, entitySource)
@@ -439,7 +445,7 @@ private fun MutableEntityStorage.addRelocatedRoots(
     modifyContentRootEntity(target) {
       sourcesByTarget[target]?.let { roots ->
         val urls = this.sourceRoots.mapTo(mutableSetOf()) { it.url.url }
-        this.sourceRoots += roots.filter { urls.add(it.url.url) }.map { SourceRootEntity(it.url, it.rootTypeId, this.entitySource) }
+        this.sourceRoots += roots.filter { urls.add(it.url.url) }.map { copyOfSourceRoot(it, this.entitySource) }
       }
       excludesByTarget[target]?.let { roots ->
         val urls = this.excludedUrls.mapTo(mutableSetOf()) { it.url.url }
@@ -448,6 +454,30 @@ private fun MutableEntityStorage.addRelocatedRoots(
     }
   }
 }
+
+/**
+ * Make a source root that the IDE can compare with a root that the user marks.
+ *
+ * `ModifiableContentEntryBridge` compares a java source root by its properties. A root without a
+ * `JavaSourceRootPropertiesEntity` never matches, so the bridge writes a second entity for one directory. The `.iml`
+ * serializer gives that child to every java source root that it reads. This factory keeps a new root equal to the same
+ * root after a reload.
+ */
+private fun pyProjectSourceRoot(url: VirtualFileUrl, entitySource: EntitySource): SourceRootEntityBuilder =
+  SourceRootEntity(url, JAVA_SOURCE_ROOT_TYPE, entitySource) {
+    javaSourceRoots = listOf(JavaSourceRootPropertiesEntity(generated = false, packagePrefix = "", entitySource = entitySource))
+  }
+
+/**
+ * Copy [sourceRoot] for another content root, with [entitySource].
+ *
+ * A child entity cannot change its parent, so a root that moves needs a copy. The copy keeps the root type and the java
+ * source properties. A resource root and a custom properties root lose their properties, as they do in the old code.
+ */
+private fun copyOfSourceRoot(sourceRoot: SourceRootEntity, entitySource: EntitySource): SourceRootEntityBuilder =
+  SourceRootEntity(sourceRoot.url, sourceRoot.rootTypeId, entitySource) {
+    javaSourceRoots = sourceRoot.javaSourceRoots.map { JavaSourceRootPropertiesEntity(it.generated, it.packagePrefix, entitySource) }
+  }
 
 private suspend fun generatePyProjectTomlEntries(
   fsInfo: FSWalkInfoWithToml,
