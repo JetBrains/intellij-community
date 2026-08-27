@@ -91,6 +91,9 @@ private const val GEAR_HOVER_ARC: Int = 4
 /** Downward nudge (unscaled px) from vertical center, so the gear's optical center lines up with the caption text. */
 private const val GEAR_VERTICAL_OFFSET = 1
 
+/** Clear space (unscaled px) between the header caption and the gear, so the two never touch — a word space. */
+private const val GEAR_CAPTION_GAP = 6
+
 /** Gap (unscaled px) between a submenu and the left edge of the parent popup it is placed next to. */
 private const val SUBMENU_LEFT_GAP = 2
 
@@ -201,10 +204,16 @@ private class GearGroupHeaderSeparator(
   override fun getPreferredElementSize(): Dimension {
     if (isPlain) return super.getPreferredElementSize()   // includes the platform's allowance for the rule above
     val size = if (caption == null) Dimension(0, 0) else getLabelSize(labelInsets)
+    // Ask for the gear's own footprint as well. Without it the popup is sized to the caption alone, and a caption that
+    // just fits leaves the gear — painted over the same line — sitting on its last word.
+    if (showsGear) size.width += gearFootprint()
     size.height += topGap
     JBInsets.addTo(size, insets)
     return size
   }
+
+  /** Width the gear needs at the right end of its header: the icon, its right inset, and the gap before it. */
+  private fun gearFootprint(): Int = gearIcon().iconWidth + JBUI.scale(GEAR_RIGHT_INSET + GEAR_CAPTION_GAP)
 
   /**
    * Paints the caption and, filling the rest of the line, the rule — `Python 3.14 ───────`.
@@ -224,6 +233,13 @@ private class GearGroupHeaderSeparator(
     bounds.width -= labelInsets.left + labelInsets.right
     bounds.y += labelInsets.top
     bounds.height -= labelInsets.top + labelInsets.bottom
+    // The gear occupies the right end of this very line, so take that end away before the caption is laid out in what
+    // is left. Otherwise the caption is laid out across the whole line and only ellipsizes at the popup's edge, which
+    // let a long caption run under the gear.
+    if (showsGear) {
+      val room = gearBounds().x - JBUI.scale(GEAR_CAPTION_GAP) - bounds.x
+      bounds.width = max(0, min(bounds.width, room))
+    }
 
     val metrics = g.fontMetrics
     val iconR = Rectangle()
@@ -481,6 +497,31 @@ open class EvoTreePopup private constructor(
     (nextStep != null || evoStep?.hasPendingFinalAction() == true) && super.handleNextStep(nextStep, parentValue, e)
 
   private val evoStep: EvoActionPopupStep? get() = listStep as? EvoActionPopupStep
+
+  /**
+   * Settles this popup once a tool node's rows replace its "Loading…" row (see [EvoTreeMessageLeafElement]).
+   *
+   * The platform only grows the popup from its current position, which for a submenu of this widget means growing over
+   * the parent it opened to the left of, and it leaves the selection alone. Neither is right for rows that arrive after
+   * the popup was shown: a message row cannot be selected, so nothing is selected while a node loads.
+   */
+  override fun onModelChanged() {
+    super.onModelChanged()
+    selectFirstSelectableRow()
+    repositionLeftOfParent()
+  }
+
+  /** Selects the first row the user can act on, when the selection is empty. */
+  private fun selectFirstSelectableRow() {
+    if (list.selectedIndex >= 0) return
+    val step = listStep
+    for (row in 0 until list.model.size) {
+      if (step.isSelectable(list.model.getElementAt(row))) {
+        list.selectedIndex = row
+        break
+      }
+    }
+  }
 
   /** True while this is an add-new submenu whose typed name is invalid (blank/taken) — the renderer greys its version rows. */
   fun isEditingNameInvalid(): Boolean = evoStep?.editableName?.isValid == false

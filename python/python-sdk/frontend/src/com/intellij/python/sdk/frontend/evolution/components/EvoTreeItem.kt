@@ -42,6 +42,28 @@ class EvoTreeItem(
   val isEnabled: Boolean
     get() = element.isEnabled
 
+  /**
+   * True once this row can be acted on: a loaded row, or a tool node whose submenu can already be opened.
+   *
+   * A tool node is openable before its loader answers, because it shows an [EvoTreeMessageLeafElement] until the real
+   * rows arrive. Only a node that failed, or answered with nothing, is closed to the user.
+   */
+  val isReady: Boolean
+    get() = when (element) {
+      is EvoTreeLazyNodeElement -> element.state != State.ERROR && element.state != State.NOT_AVAILABLE
+      else -> element.state == State.DONE
+    }
+
+  /**
+   * True when this row reports a load of its own.
+   *
+   * A tool node's load is reported inside its submenu instead, on its "Loading…" row: a spinner on every tool of the
+   * main list is what made opening the widget look busy (PY-91873). A reload the user asked for is the exception — see
+   * [EvoTreeLazyNodeElement.isReloading].
+   */
+  val showsLoader: Boolean
+    get() = element.state == State.LOADING && (element !is EvoTreeLazyNodeElement || element.isReloading)
+
   val keepPopupOnPerform: KeepPopupOnPerform
     get() = element.presentation.getKeepPopupOnPerform()
 
