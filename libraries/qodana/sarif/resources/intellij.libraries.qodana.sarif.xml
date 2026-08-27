@@ -1,8 +1,19 @@
 <!--
-  This module is not included in the core plugin.
-  If a plugin needs to use this library, it should register this module as its own content module using a 'content' tag without
-  the 'namespace' attribute. This way the module is registered in an implicit per-plugin namespace and won't clash at runtime
-  with other copies of this module registered in other plugins.
+  This module is not part of the core platform. Two plugins hold a private copy.
+
+  The Qodana plugin holds an embedded copy, because the 'intellij.qodana' main module uses SARIF and
+  Qodana extension point signatures pass SARIF values across a plugin boundary. A plugin that passes a
+  SARIF value to Qodana must reuse that copy: depend on 'intellij.qodana.sarif', the wrapper in the
+  'jetbrains' namespace, and register no copy of its own.
+
+  The DFA Analysis plugin holds a copy that is not embedded, for its content module
+  'intellij.dfa.analysis.rml.utils'. No SARIF value crosses the OpenGrep to Qodana boundary, so the RML
+  side stays free of the Qodana plugin. A copy that is not embedded keeps its own classloader, so only a
+  module that names it can see it.
+
+  Register no third copy. Two copies that one module can reach put the same class in two classloaders
+  and raise a LinkageError.
+  See QD-15883 and build/decisions/0005-a-library-copy-belongs-to-the-plugin-that-owns-its-api.md.
 -->
 <idea-plugin visibility="private">
 </idea-plugin>
