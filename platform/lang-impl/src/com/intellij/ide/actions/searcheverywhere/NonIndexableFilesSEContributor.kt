@@ -216,7 +216,13 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
       PairProgressIndicator(installedIndicator, progressIndicator)
     } else progressIndicator
 
-    assert(wrappedIndicator.isRunning || wrappedIndicator.isCanceled)
+    if (!wrappedIndicator.isRunning && !wrappedIndicator.isCanceled) {
+      assert(false) {
+        "The indicator is neither running nor canceled." +
+        " thread='${Thread.currentThread().name}'" +
+        ", wrappedIndicator: ${describeIndicatorState(wrappedIndicator)}"
+      }
+    }
 
     @Suppress("UsagesOfObsoleteApi") // must use it due to using the old contributors api
     ProgressManager.getInstance().executeProcessUnderProgress(
@@ -324,6 +330,27 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
   }
 
   override fun createExtendedInfo(): @Nls ExtendedInfo = createPsiExtendedInfo(fallbackToContentFileSetRoot = true)
+
+  /**
+   * Reports the state of the indicator for a diagnostic message.
+   * It also reports the state of both delegates of a [PairProgressIndicator].
+   */
+  private fun describeIndicatorState(indicator: ProgressIndicator?): String {
+    if (indicator == null) return "null"
+    // It does not report the fraction, because a call on an indeterminate indicator can log an error.
+    val state = "${indicator.javaClass.name}@${System.identityHashCode(indicator)}" +
+                " running=${indicator.isRunning}, canceled=${indicator.isCanceled}" +
+                ", indeterminate=${indicator.isIndeterminate}" +
+                ", modality=${indicator.modalityState}" +
+                ", text='${indicator.text}', text2='${indicator.text2}'"
+    // The recursion reads the delegate fields, so it does not call this toString again.
+    return when (indicator) {
+      is PairProgressIndicator ->
+        "$state, main=[${describeIndicatorState(indicator.delegateMain)}]" +
+        ", subordinate=[${describeIndicatorState(indicator.delegateSubordinate)}]"
+      else -> state
+    }
+  }
 
   companion object {
     @ApiStatus.Internal
