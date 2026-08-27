@@ -16,13 +16,17 @@ import git4idea.test.add
 import git4idea.test.checkout
 import git4idea.test.commit
 import git4idea.test.git
+import git4idea.test.gitSingleRepoContextFixture
 import git4idea.test.gitUsingOrtMergeAlg
 import git4idea.test.mv
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 @TestApplication
-internal class GitChangeProviderConflictTest : GitChangeProviderTest() {
+internal class GitChangeProviderConflictTest {
+  private val fixture = gitSingleRepoContextFixture(makeInitialCommit = false).gitChangeProviderFixture()
+  private val context: GitChangeProviderTestContext get() = fixture.get()
+
   /**
    * "modify-modify" merge conflict.
    * 1. Create a file and commit it.
@@ -35,7 +39,7 @@ internal class GitChangeProviderConflictTest : GitChangeProviderTest() {
   @Test
   fun `test conflict MM`(): Unit = with(context) {
     modifyFileInBranches("a.txt", FileAction.MODIFY, FileAction.MODIFY)
-    assertProviderChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS)
+    assertProviderChanges(aTxt, FileStatus.MERGED_WITH_CONFLICTS)
     assertManagerConflicts(Conflict("a.txt", Status.MODIFIED, Status.MODIFIED))
   }
 
@@ -45,7 +49,7 @@ internal class GitChangeProviderConflictTest : GitChangeProviderTest() {
   @Test
   fun `test conflict MD`(): Unit = with(context) {
     modifyFileInBranches("a.txt", FileAction.MODIFY, FileAction.DELETE)
-    assertProviderChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS)
+    assertProviderChanges(aTxt, FileStatus.MERGED_WITH_CONFLICTS)
     assertManagerConflicts(Conflict("a.txt", Status.MODIFIED, Status.DELETED))
   }
 
@@ -55,7 +59,7 @@ internal class GitChangeProviderConflictTest : GitChangeProviderTest() {
   @Test
   fun `test conflict DM`(): Unit = with(context) {
     modifyFileInBranches("a.txt", FileAction.DELETE, FileAction.MODIFY)
-    assertProviderChanges(atxt, FileStatus.MERGED_WITH_CONFLICTS)
+    assertProviderChanges(aTxt, FileStatus.MERGED_WITH_CONFLICTS)
     assertManagerConflicts(Conflict("a.txt", Status.DELETED, Status.MODIFIED))
   }
 
@@ -102,14 +106,14 @@ internal class GitChangeProviderConflictTest : GitChangeProviderTest() {
     modifyFileInBranches("a.txt", FileAction.RENAME, FileAction.RENAME)
     val newMasterFile = projectNioRoot.resolve("a.txt_master_new")
     val newFeatureFile = projectNioRoot.resolve("a.txt_feature_new")
-    assertProviderChangesInPaths(listOf(newMasterFile, newFeatureFile).map { VcsUtil.getFilePath(it.toFile()) },
+    assertProviderChangesInPaths(listOf(newMasterFile, newFeatureFile).map { VcsUtil.getFilePath(it, false) },
                                  listOf(FileStatus.MERGED_WITH_CONFLICTS, FileStatus.MERGED_WITH_CONFLICTS))
     assertManagerConflicts(Conflict("a.txt_master_new", Status.ADDED, Status.MODIFIED),
                            Conflict("a.txt_feature_new", Status.MODIFIED, Status.ADDED),
                            Conflict("a.txt", Status.DELETED, Status.DELETED))
   }
 
-  private fun GitSingleRepoContext.modifyFileInBranches(filename: String, masterAction: FileAction, featureAction: FileAction) {
+  private fun GitChangeProviderTestContext.modifyFileInBranches(filename: String, masterAction: FileAction, featureAction: FileAction) {
     git("checkout -b feature")
     performActionOnFileAndRecordToIndex(filename, "feature", featureAction)
     repo.commit("commit to feature")
@@ -121,7 +125,7 @@ internal class GitChangeProviderConflictTest : GitChangeProviderTest() {
     refresh()
   }
 
-  private fun GitSingleRepoContext.performActionOnFileAndRecordToIndex(filename: String, branchName: String, action: FileAction) {
+  private fun GitChangeProviderTestContext.performActionOnFileAndRecordToIndex(filename: String, branchName: String, action: FileAction) {
     if (action != FileAction.CREATE) {
       assertThat(projectNioRoot.resolve(filename)).exists()
     }

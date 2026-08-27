@@ -13,6 +13,8 @@ import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ContentRevision
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.junit5.fixture.TestFixture
+import com.intellij.testFramework.junit5.fixture.testFixture
 import com.intellij.testFramework.vcs.MockChangeListManagerGate
 import com.intellij.testFramework.vcs.MockChangelistBuilder
 import com.intellij.util.containers.CollectionFactory
@@ -24,10 +26,8 @@ import git4idea.test.GitSingleRepoContext
 import git4idea.test.addCommit
 import git4idea.test.createFile
 import git4idea.test.createFileStructure
-import git4idea.test.gitSingleRepoContextFixture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assumptions.assumeTrue
-import org.junit.jupiter.api.BeforeEach
 import java.io.File
 
 /**
@@ -36,47 +36,23 @@ import java.io.File
  * 2. Manually adds them to a dirty scope.
  * 3. Calls ChangeProvider.getChanges() and checks that the changes are there.
  */
-internal abstract class GitChangeProviderTest {
-  private val contextFixture = gitSingleRepoContextFixture(makeInitialCommit = false)
-  protected val context: GitSingleRepoContext get() = contextFixture.get()
-
-  private lateinit var changeProvider: GitChangeProvider
-  protected lateinit var dirtyScope: GitVcsDirtyScope
-
-  protected lateinit var atxt: VirtualFile
-  protected lateinit var dir_ctxt: VirtualFile
-  protected lateinit var subdir_dtxt: VirtualFile
-
-  @BeforeEach
-  fun setUpChangeProvider() {
-    with(context) {
-      changeProvider = vcs.changeProvider as GitChangeProvider
-
-      createFileStructure(projectRoot, "a.txt", "b.txt", "dir/c.txt", "dir/subdir/d.txt")
-      addCommit("initial")
-
-      atxt = getVirtualFile("a.txt")
-      dir_ctxt = getVirtualFile("dir/c.txt")
-      subdir_dtxt = getVirtualFile("dir/subdir/d.txt")
-
-      dirtyScope = GitVcsDirtyScope(project)
-
-      cd(projectPath)
-    }
-  }
-
-  private fun GitSingleRepoContext.getVirtualFile(relativePath: String) =
-    VfsUtil.findFileByIoFile(File(projectPath, relativePath), true)!!
-
+internal class GitChangeProviderTestContext(
+  private val delegate: GitSingleRepoContext,
+  private val changeProvider: GitChangeProvider,
+  val dirtyScope: GitVcsDirtyScope,
+  val aTxt: VirtualFile,
+  val dirCTxt: VirtualFile,
+  val subdirDTxt: VirtualFile,
+) : GitSingleRepoContext by delegate {
   /**
    * Checks that the given files have respective statuses in the change list retrieved from the change provider.
    * Pass null in the [fileStatuses] list to indicate that the corresponding file has not changed.
    */
-  protected fun GitSingleRepoContext.assertProviderChanges(virtualFiles: List<VirtualFile>, fileStatuses: List<FileStatus?>) {
+  fun GitSingleRepoContext.assertProviderChanges(virtualFiles: List<VirtualFile>, fileStatuses: List<FileStatus?>) {
     assertProviderChangesInPaths(virtualFiles.map { VcsUtil.getFilePath(it) }, fileStatuses)
   }
 
-  protected fun GitSingleRepoContext.assertProviderChangesInPaths(paths: List<FilePath>, fileStatuses: List<FileStatus?>) {
+  fun GitSingleRepoContext.assertProviderChangesInPaths(paths: List<FilePath>, fileStatuses: List<FileStatus?>) {
     assertThat(fileStatuses).hasSameSizeAs(paths)
     val result = getProviderChanges()
     for (i in paths.indices) {
@@ -97,11 +73,11 @@ internal abstract class GitChangeProviderTest {
     }
   }
 
-  protected fun GitSingleRepoContext.assertProviderChanges(virtualFile: VirtualFile, fileStatus: FileStatus?) {
+  fun GitSingleRepoContext.assertProviderChanges(virtualFile: VirtualFile, fileStatus: FileStatus?) {
     assertProviderChanges(listOf(virtualFile), listOf(fileStatus))
   }
 
-  protected fun GitSingleRepoContext.assumeWorktreeRenamesSupported() {
+  fun GitSingleRepoContext.assumeWorktreeRenamesSupported() {
     assumeTrue(vcs.version.isLaterOrEqual(GitVersion(2, 17, 0, 0))) {
       "Worktree renames are not supported by git: ${vcs.version}"
     }
@@ -117,32 +93,28 @@ internal abstract class GitChangeProviderTest {
     return builder.changes.associateByTo(map) { ChangesUtil.getFilePath(it) }
   }
 
-  protected fun GitSingleRepoContext.create(parent: VirtualFile, name: String): VirtualFile {
+  fun GitSingleRepoContext.create(parent: VirtualFile, name: String): VirtualFile {
     val file = createFile(parent, name, "content" + Math.random())
     dirty(file)
     return file
   }
 
-  protected fun GitSingleRepoContext.edit(file: VirtualFile, content: String) {
+  fun GitSingleRepoContext.edit(file: VirtualFile, content: String) {
     editFileInCommand(project, file, content)
     dirty(file)
   }
 
-  protected fun GitSingleRepoContext.deleteFile(file: VirtualFile) {
+  fun GitSingleRepoContext.deleteFile(file: VirtualFile) {
     dirty(file)
     deleteFileInCommand(project, file)
   }
 
   @Suppress("unused") // kept for symmetry with the other file operations
-  protected fun GitSingleRepoContext.copy(file: VirtualFile, newParent: VirtualFile): VirtualFile {
+  fun GitSingleRepoContext.copy(file: VirtualFile, newParent: VirtualFile): VirtualFile {
     dirty(file)
     val newFile = copyFileInCommand(project, file, newParent, file.name)
     dirty(newFile)
     return newFile
-  }
-
-  protected fun dirty(file: VirtualFile?) {
-    dirtyScope.addDirtyFile(VcsUtil.getFilePath(file ?: return))
   }
 
   private fun GitSingleRepoContext.tos(fp: FilePath) = FileUtil.getRelativePath(File(projectPath), fp.ioFile)
@@ -152,8 +124,34 @@ internal abstract class GitChangeProviderTest {
     Change.Type.DELETED -> "D: " + tos(change.beforeRevision)!!
     Change.Type.MOVED -> "M: " + tos(change.beforeRevision) + " -> " + tos(change.afterRevision)
     Change.Type.MODIFICATION -> "M: " + tos(change.afterRevision)!!
-    else -> "~: " + tos(change.beforeRevision) + " -> " + tos(change.afterRevision)
   }
 
   private fun GitSingleRepoContext.tos(revision: ContentRevision?) = tos(revision!!.file)
 }
+
+internal fun GitChangeProviderTestContext.dirty(file: VirtualFile?) {
+  dirtyScope.addDirtyFile(VcsUtil.getFilePath(file ?: return))
+}
+
+internal fun TestFixture<GitSingleRepoContext>.gitChangeProviderFixture(): TestFixture<GitChangeProviderTestContext> =
+  testFixture {
+    val context = init()
+    with(context) {
+      createFileStructure(projectRoot, "a.txt", "b.txt", "dir/c.txt", "dir/subdir/d.txt")
+      addCommit("initial")
+
+      val fixtureContext = GitChangeProviderTestContext(
+        context,
+        vcs.changeProvider as GitChangeProvider,
+        GitVcsDirtyScope(project),
+        getVirtualFile("a.txt"),
+        getVirtualFile("dir/c.txt"),
+        getVirtualFile("dir/subdir/d.txt"),
+      )
+      cd(projectPath)
+      initialized(fixtureContext) {}
+    }
+  }
+
+private fun GitSingleRepoContext.getVirtualFile(relativePath: String) =
+  VfsUtil.findFileByIoFile(File(projectPath, relativePath), true)!!

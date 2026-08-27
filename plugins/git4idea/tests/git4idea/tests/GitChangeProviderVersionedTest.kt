@@ -13,17 +13,20 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.vcsUtil.VcsUtil
-import git4idea.test.GitSingleRepoContext
 import git4idea.test.add
 import git4idea.test.addCommit
 import git4idea.test.assertChangesWithRefresh
 import git4idea.test.createDir
 import git4idea.test.git
+import git4idea.test.gitSingleRepoContextFixture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 @TestApplication
-internal class GitChangeProviderVersionedTest : GitChangeProviderTest() {
+internal class GitChangeProviderVersionedTest {
+  private val fixture = gitSingleRepoContextFixture(makeInitialCommit = false).gitChangeProviderFixture()
+  private val context: GitChangeProviderTestContext get() = fixture.get()
+
   @Test
   fun `test create file`(): Unit = with(context) {
     val file = create(projectRoot, "new.txt")
@@ -51,8 +54,8 @@ internal class GitChangeProviderVersionedTest : GitChangeProviderTest() {
 
   @Test
   fun `test edit file`(): Unit = with(context) {
-    edit(atxt, "new content")
-    assertProviderChanges(atxt, MODIFIED)
+    edit(aTxt, "new content")
+    assertProviderChanges(aTxt, MODIFIED)
 
     assertChangesWithRefresh {
       modified("a.txt")
@@ -61,9 +64,9 @@ internal class GitChangeProviderVersionedTest : GitChangeProviderTest() {
 
   @Test
   fun `test staged modification`(): Unit = with(context) {
-    edit(atxt, "new content")
-    repo.add(atxt.path)
-    assertProviderChanges(atxt, MODIFIED)
+    edit(aTxt, "new content")
+    repo.add(aTxt.path)
+    assertProviderChanges(aTxt, MODIFIED)
 
     assertChangesWithRefresh {
       modified("a.txt")
@@ -72,10 +75,10 @@ internal class GitChangeProviderVersionedTest : GitChangeProviderTest() {
 
   @Test
   fun `test staged unstaged modification`(): Unit = with(context) {
-    edit(atxt, "new content")
-    repo.add(atxt.path)
-    edit(atxt, "new contents and some extra")
-    assertProviderChanges(atxt, MODIFIED)
+    edit(aTxt, "new content")
+    repo.add(aTxt.path)
+    edit(aTxt, "new contents and some extra")
+    assertProviderChanges(aTxt, MODIFIED)
 
     assertChangesWithRefresh {
       modified("a.txt")
@@ -84,11 +87,11 @@ internal class GitChangeProviderVersionedTest : GitChangeProviderTest() {
 
   @Test
   fun `test reverted staged modification`(): Unit = with(context) {
-    val oldContent = VfsUtil.loadText(atxt)
-    edit(atxt, "new content")
-    repo.add(atxt.path)
-    edit(atxt, oldContent)
-    assertProviderChanges(atxt, null)
+    val oldContent = VfsUtil.loadText(aTxt)
+    edit(aTxt, "new content")
+    repo.add(aTxt.path)
+    edit(aTxt, oldContent)
+    assertProviderChanges(aTxt, null)
 
     assertChangesWithRefresh {
     }
@@ -100,7 +103,7 @@ internal class GitChangeProviderVersionedTest : GitChangeProviderTest() {
     repo.add(file.path)
     cd(projectRoot)
     rm("new.txt")
-    assertProviderChanges(atxt, null)
+    assertProviderChanges(aTxt, null)
 
     assertChangesWithRefresh {
     }
@@ -108,8 +111,8 @@ internal class GitChangeProviderVersionedTest : GitChangeProviderTest() {
 
   @Test
   fun `test delete file`(): Unit = with(context) {
-    deleteFile(atxt)
-    assertProviderChanges(atxt, DELETED)
+    deleteFile(aTxt)
+    assertProviderChanges(aTxt, DELETED)
 
     assertChangesWithRefresh {
       deleted("a.txt")
@@ -125,7 +128,7 @@ internal class GitChangeProviderVersionedTest : GitChangeProviderTest() {
         FileUtil.delete(VfsUtilCore.virtualToIoFile(dir))
       }
     }
-    assertProviderChanges(listOf(dir_ctxt, subdir_dtxt),
+    assertProviderChanges(listOf(dirCTxt, subdirDTxt),
                           listOf(DELETED, DELETED))
 
     assertChangesWithRefresh {
@@ -136,13 +139,13 @@ internal class GitChangeProviderVersionedTest : GitChangeProviderTest() {
 
   @Test
   fun `test simultaneous operations on multiple files`(): Unit = with(context) {
-    edit(atxt, "new afile content")
-    edit(dir_ctxt, "new cfile content")
-    deleteFile(subdir_dtxt)
-    val newfile = create(projectRoot, "newfile.txt")
+    edit(aTxt, "new afile content")
+    edit(dirCTxt, "new cfile content")
+    deleteFile(subdirDTxt)
+    val newFile = create(projectRoot, "newfile.txt")
     repo.add()
 
-    assertProviderChanges(listOf(atxt, dir_ctxt, subdir_dtxt, newfile),
+    assertProviderChanges(listOf(aTxt, dirCTxt, subdirDTxt, newFile),
                           listOf(MODIFIED, MODIFIED, DELETED, ADDED))
 
     assertChangesWithRefresh {
@@ -287,7 +290,7 @@ internal class GitChangeProviderVersionedTest : GitChangeProviderTest() {
     }
   }
 
-  private fun GitSingleRepoContext.assertProviderChangesIn(files: List<String>, fileStatuses: List<FileStatus?>) {
+  private fun GitChangeProviderTestContext.assertProviderChangesIn(files: List<String>, fileStatuses: List<FileStatus?>) {
     assertProviderChangesInPaths(files.map { VcsUtil.getFilePath(projectRoot, it) }, fileStatuses)
   }
 }
