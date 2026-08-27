@@ -30,6 +30,9 @@
       <module name="intellij.platform.util.ui"/>
     </dependencies>
     <!-- endregion -->
+    <actions resource-bundle="messages.ActionsBundle">
+      <action id="CopyReference" class="com.intellij.markdown.backend.reference.headers.MarkdownHeaderCopyAction" overrides="true"/>
+    </actions>
     <extensions defaultExtensionNs="com.intellij">
       <highlightingPassFactory implementation="com.intellij.markdown.backend.editor.livepreview.MarkdownLivePreviewPassFactory"/>
       <completion.contributor
@@ -132,6 +135,8 @@
 
       <stubIndex implementation="com.intellij.markdown.backend.index.HeaderTextIndex"/>
       <stubIndex implementation="com.intellij.markdown.backend.index.HeaderAnchorIndex"/>
+
+      <qualifiedNameProvider implementation="com.intellij.markdown.backend.reference.headers.MarkdownHeaderQualifiedNameProvider"/>
 
       <pathReferenceProvider implementation="com.intellij.markdown.backend.reference.paths.RelativeFileWithoutExtensionReferenceProvider"/>
       <anchorReferenceProvider implementation="com.intellij.markdown.backend.reference.paths.LineNumberPathReferenceProvider"/>
