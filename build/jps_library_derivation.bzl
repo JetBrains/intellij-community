@@ -96,14 +96,16 @@ def local_path_to_jar_target(rel_path, is_community_only, community_root_rel):
     selection in dependency.kt:234-248.
 
     Priority order (same as Kotlin):
-      1. Under ultimate lib root (lib/)          → @ultimate_lib//<parent>:<file>
-      2. Under community lib root                → @lib//<parent>:<file>
-      3. Under community root (ultimate mode)    → @community//<parent>:<file>
-      4. Otherwise (project root)                → //<parent>:<file>
+      1. Under community lib/kotlin-snapshot/    → @lib//:<path under lib/>
+      2. Under ultimate lib root (lib/)          → @ultimate_lib//<parent>:<file>
+      3. Under community lib root                → @lib//<parent>:<file>
+      4. Under community root (ultimate mode)    → @community//<parent>:<file>
+      5. Otherwise (project root)                → //<parent>:<file>
 
     For community-only mode, community root IS the project root, so:
-      1. Under lib/                              → @lib//<parent>:<file>
-      2. Otherwise                               → //<parent>:<file>
+      1. Under lib/kotlin-snapshot/              → @lib//:<path under lib/>
+      2. Under lib/                              → @lib//<parent>:<file>
+      3. Otherwise                               → //<parent>:<file>
 
     Args:
         rel_path: project-root-relative path (after stripping $PROJECT_DIR$/)
@@ -117,7 +119,12 @@ def local_path_to_jar_target(rel_path, is_community_only, community_root_rel):
     if is_community_only:
         # Community-only: project root IS community root
         lib_prefix = "lib/"
-        if rel_path.startswith(lib_prefix):
+
+        # kt-master development places snapshot Kotlin libraries as a maven repo under lib/kotlin-snapshot,
+        # whose BUILD file stays at lib/ (dependency.kt getLocalLibBazelFileDir, lib.kt libraryJarTargets).
+        if rel_path.startswith(lib_prefix + "kotlin-snapshot/"):
+            return "@lib//:" + rel_path[len(lib_prefix):]
+        elif rel_path.startswith(lib_prefix):
             lib_rel = rel_path[len(lib_prefix):]
             return _path_to_label("@lib", lib_rel)
         else:
@@ -127,7 +134,9 @@ def local_path_to_jar_target(rel_path, is_community_only, community_root_rel):
         community_lib_prefix = community_root_rel + "/lib/" if community_root_rel else "lib/"
         ultimate_lib_prefix = "lib/"
 
-        if rel_path.startswith(community_lib_prefix):
+        if rel_path.startswith(community_lib_prefix + "kotlin-snapshot/"):
+            return "@lib//:" + rel_path[len(community_lib_prefix):]
+        elif rel_path.startswith(community_lib_prefix):
             lib_rel = rel_path[len(community_lib_prefix):]
             return _path_to_label("@lib", lib_rel)
         elif rel_path.startswith(ultimate_lib_prefix):

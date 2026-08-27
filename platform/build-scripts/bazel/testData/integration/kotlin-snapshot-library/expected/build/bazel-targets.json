@@ -27,7 +27,7 @@
         "external/lib+/kotlin-snapshot/org/jetbrains/kotlin/analysis-api-for-ide/2.3.255-dev-255/analysis-api-for-ide-2.3.255-dev-255.jar"
       ],
       "jarTargets": [
-        "@lib//kotlin-snapshot/org/jetbrains/kotlin/analysis-api-for-ide/2.3.255-dev-255:analysis-api-for-ide-2.3.255-dev-255.jar"
+        "@lib//:kotlin-snapshot/org/jetbrains/kotlin/analysis-api-for-ide/2.3.255-dev-255/analysis-api-for-ide-2.3.255-dev-255.jar"
       ],
       "sourceJars": []
     }

@@ -190,6 +190,40 @@ def _local_path_ultimate_project_root_test_impl(ctx):
 
 local_path_ultimate_project_root_test = unittest.make(_local_path_ultimate_project_root_test_impl)
 
+# Test: community mode, path under lib/kotlin-snapshot/ → @lib//:<path under lib/>
+def _local_path_community_kotlin_snapshot_test_impl(ctx):
+    env = unittest.begin(ctx)
+    result = local_path_to_jar_target(
+        "lib/kotlin-snapshot/org/jetbrains/kotlin/analysis-api-for-ide/2.5.255-dev-255/analysis-api-for-ide-2.5.255-dev-255.jar",
+        True,
+        "",
+    )
+    asserts.equals(
+        env,
+        "@lib//:kotlin-snapshot/org/jetbrains/kotlin/analysis-api-for-ide/2.5.255-dev-255/analysis-api-for-ide-2.5.255-dev-255.jar",
+        result,
+    )
+    return unittest.end(env)
+
+local_path_community_kotlin_snapshot_test = unittest.make(_local_path_community_kotlin_snapshot_test_impl)
+
+# Test: ultimate mode, path under community/lib/kotlin-snapshot/ → @lib//:<path under lib/>
+def _local_path_ultimate_kotlin_snapshot_test_impl(ctx):
+    env = unittest.begin(ctx)
+    result = local_path_to_jar_target(
+        "community/lib/kotlin-snapshot/org/jetbrains/kotlin/analysis-api-for-ide/2.5.255-dev-255/analysis-api-for-ide-2.5.255-dev-255.jar",
+        False,
+        "community",
+    )
+    asserts.equals(
+        env,
+        "@lib//:kotlin-snapshot/org/jetbrains/kotlin/analysis-api-for-ide/2.5.255-dev-255/analysis-api-for-ide-2.5.255-dev-255.jar",
+        result,
+    )
+    return unittest.end(env)
+
+local_path_ultimate_kotlin_snapshot_test = unittest.make(_local_path_ultimate_kotlin_snapshot_test_impl)
+
 # Test: _path_to_label edge case — file with no parent directory → //:<file>
 def _local_path_no_parent_test_impl(ctx):
     env = unittest.begin(ctx)
@@ -294,6 +328,8 @@ def jps_library_derivation_test_suite(name):
         local_path_ultimate_lib_test,
         local_path_ultimate_community_nonlib_test,
         local_path_ultimate_project_root_test,
+        local_path_community_kotlin_snapshot_test,
+        local_path_ultimate_kotlin_snapshot_test,
         local_path_no_parent_test,
         # is_snapshot_version tests
         is_snapshot_version_true_test,

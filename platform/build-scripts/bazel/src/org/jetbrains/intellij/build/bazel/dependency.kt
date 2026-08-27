@@ -381,7 +381,7 @@ private fun getLocalLibBazelFileDir(files: List<Path>, communityRoot: Path): Pat
   return dir
 }
 
-private fun underKotlinSnapshotLibRoot(dir: Path, communityRoot: Path) =
+internal fun underKotlinSnapshotLibRoot(dir: Path, communityRoot: Path) =
   dir.startsWith(communityRoot.resolve("lib").resolve("kotlin-snapshot"))
 
 private fun getFileMavenFileDescription(m2Repo: Path, lib: JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>, jar: Path): MavenFileDescription {

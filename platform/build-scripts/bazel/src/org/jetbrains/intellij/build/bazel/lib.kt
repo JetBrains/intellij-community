@@ -431,6 +431,7 @@ internal fun libraryJarTargets(library: Library, communityRoot: Path, ultimateRo
       val ultimateLibRoot = ultimateRoot?.resolve("lib")
       val communityLibRoot = communityRoot.resolve("lib")
       when {
+        underKotlinSnapshotLibRoot(normalized, communityRoot) -> "@lib//:${normalized.relativeTo(communityLibRoot).invariantSeparatorsPathString}"
         ultimateLibRoot != null && normalized.startsWith(ultimateLibRoot) -> normalized.toBazelFileLabel("@ultimate_lib", ultimateLibRoot)
         normalized.startsWith(communityLibRoot) -> normalized.toBazelFileLabel("@lib", communityLibRoot)
         projectRoot == ultimateRoot && normalized.startsWith(communityRoot) -> normalized.toBazelFileLabel("@community", communityRoot)
