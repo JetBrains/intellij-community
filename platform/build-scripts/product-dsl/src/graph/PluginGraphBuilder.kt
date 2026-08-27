@@ -16,6 +16,7 @@ import com.intellij.platform.pluginGraph.EDGE_CONTAINS_MODULE
 import com.intellij.platform.pluginGraph.EDGE_INCLUDES_MODULE_SET
 import com.intellij.platform.pluginGraph.EDGE_MAIN_TARGET
 import com.intellij.platform.pluginGraph.EDGE_NESTED_SET
+import com.intellij.platform.pluginGraph.EDGE_PLUGIN_DECLARES_ALIAS
 import com.intellij.platform.pluginGraph.EDGE_PLUGIN_XML_DEPENDS_ON_CONTENT_MODULE
 import com.intellij.platform.pluginGraph.EDGE_PLUGIN_XML_DEPENDS_ON_PLUGIN
 import com.intellij.platform.pluginGraph.EDGE_TARGET_DEPENDS_ON
@@ -439,6 +440,10 @@ internal class PluginGraphBuilder(
    * Add plugin.xml dependency edges (plugin + content-module deps).
    * Uses plugin IDs only; aliases must be modeled as dedicated alias nodes.
    * Unresolved IDs become placeholder plugin nodes.
+   *
+   * The last step adds [EDGE_PLUGIN_DECLARES_ALIAS] from each plugin to the nodes that carry its
+   * aliases. A dependency edge keeps its target, so a caller that must follow an alias dependency
+   * takes the alias edge as an extra hop.
    */
   fun addPluginDependencyEdges(pluginInfos: Map<TargetName, PluginContentInfo>) {
     if (pluginInfos.isEmpty()) {
@@ -486,6 +491,32 @@ internal class PluginGraphBuilder(
       }
       for (moduleDep in content.moduleDependencies) {
         addPluginModuleDependencyEdge(sourceId, moduleDep)
+      }
+    }
+
+    // last, so that a placeholder node which the loop above created is already in the index
+    linkPluginAliases(idIndex)
+  }
+
+  /**
+   * Link each plugin to the nodes that carry its aliases.
+   *
+   * A plugin declares an alias with `<module value="..."/>`. The graph keeps the alias on the
+   * declaring plugin, and it keeps the alias ID on a separate node. That node is an alias node
+   * which a product bundles, or a placeholder node for an unresolved ID.
+   * A dependency on the alias points at that node, so this edge is the hop to the declaring plugin.
+   *
+   * The step creates no node. An alias that no node names stays out of the graph, because no
+   * dependency edge can point at it.
+   */
+  private fun linkPluginAliases(index: Map<String, MutableList<Int>>) {
+    store.aliases.forEach { nodeId, aliases ->
+      for (alias in aliases) {
+        for (targetId in index.get(alias).orEmpty()) {
+          if (targetId != nodeId) {
+            addEdge(nodeId, targetId, EDGE_PLUGIN_DECLARES_ALIAS)
+          }
+        }
       }
     }
   }

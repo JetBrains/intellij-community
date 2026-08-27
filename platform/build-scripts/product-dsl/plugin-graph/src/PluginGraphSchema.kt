@@ -135,8 +135,17 @@ const val EDGE_CONTAINS_CONTENT_WITH_NAMESPACE: Int = 15
 /** Edge type: Test Plugin contains Content Module */
 const val EDGE_CONTAINS_CONTENT_TEST_WITH_NAMESPACE: Int = 16
 
+/**
+ * Edge type: Plugin declares a Plugin alias (from plugin.xml `<module value="..."/>`).
+ *
+ * The target is the node that carries the alias ID. It is an alias node that a product bundles,
+ * or a placeholder node for an unresolved ID. The source is the plugin that declares the alias.
+ * A dependency on an alias points at the target, so this edge is the hop to the declaring plugin.
+ */
+const val EDGE_PLUGIN_DECLARES_ALIAS: Int = 17
+
 /** Number of edge types (for array sizing) */
-internal const val EDGE_TYPE_COUNT: Int = 17
+internal const val EDGE_TYPE_COUNT: Int = 18
 
 // endregion
 
@@ -149,6 +158,9 @@ internal const val EDGE_TYPE_COUNT: Int = 17
 // - EDGE_CONTENT_MODULE_DEPENDS_ON / EDGE_CONTENT_MODULE_DEPENDS_ON_TEST: runtime deps from XML.
 // - EDGE_PLUGIN_XML_DEPENDS_ON_PLUGIN: plugin.xml <plugin> deps; optional + legacy/modern format flags packed per edge.
 // - EDGE_PLUGIN_XML_DEPENDS_ON_CONTENT_MODULE: plugin.xml <module> deps (content modules).
+//
+// EDGE_PLUGIN_DECLARES_ALIAS is not a dependency edge. It declares a second name for a plugin.
+// A walk that must follow a dependency on an alias takes this edge as an extra step.
 //
 // endregion
 
@@ -616,7 +628,7 @@ fun storesReverseEdges(edgeId: Int): Boolean {
 @PublishedApi
 internal fun edgeTargetWrapper(edgeId: Int): (Int) -> TypedNode {
   return when (edgeId) {
-    EDGE_BUNDLES, EDGE_BUNDLES_TEST, EDGE_PLUGIN_XML_DEPENDS_ON_PLUGIN -> ::PluginNode
+    EDGE_BUNDLES, EDGE_BUNDLES_TEST, EDGE_PLUGIN_XML_DEPENDS_ON_PLUGIN, EDGE_PLUGIN_DECLARES_ALIAS -> ::PluginNode
     EDGE_CONTAINS_CONTENT, EDGE_CONTAINS_CONTENT_TEST, EDGE_CONTAINS_MODULE, EDGE_ALLOWS_MISSING, EDGE_PLUGIN_XML_DEPENDS_ON_CONTENT_MODULE -> ::ContentModuleNode
     EDGE_INCLUDES_MODULE_SET, EDGE_NESTED_SET -> ::ModuleSetNode
     EDGE_BACKED_BY, EDGE_MAIN_TARGET, EDGE_TARGET_DEPENDS_ON -> ::TargetNode
@@ -636,6 +648,7 @@ internal fun edgeSourceWrapper(edgeId: Int): (Int) -> TypedNode {
     EDGE_NESTED_SET -> ::ModuleSetNode
     EDGE_BACKED_BY -> ::ContentModuleNode
     EDGE_MAIN_TARGET, EDGE_PLUGIN_XML_DEPENDS_ON_PLUGIN, EDGE_PLUGIN_XML_DEPENDS_ON_CONTENT_MODULE -> ::PluginNode
+    EDGE_PLUGIN_DECLARES_ALIAS -> ::PluginNode
     EDGE_TARGET_DEPENDS_ON -> ::TargetNode
     EDGE_ALLOWS_MISSING -> ::ProductNode
     EDGE_CONTENT_MODULE_DEPENDS_ON, EDGE_CONTENT_MODULE_DEPENDS_ON_TEST -> ::ContentModuleNode

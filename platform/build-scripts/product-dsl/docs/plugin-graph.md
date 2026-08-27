@@ -40,6 +40,7 @@ Plugin --containsContentTest(loadingMode)--> ContentModule
 Plugin --mainTarget--> Target (plugin's build target)
 Plugin --dependsOnPlugin(optional, legacy/modern flags)--> Plugin (plugin.xml <plugin> deps)
 Plugin --dependsOnContentModule--> ContentModule (plugin.xml <module> deps)
+Plugin --declaresAlias--> Plugin (plugin.xml <module value="..."/> alias targets)
 ModuleSet --containsModule(loadingMode)--> ContentModule
 ModuleSet --nestedSet--> ModuleSet (nested hierarchy)
 ContentModule --backedBy--> Target (build target backing content module)
@@ -55,6 +56,8 @@ Dependency edges intentionally use different names because they live on differen
 - `EDGE_CONTENT_MODULE_DEPENDS_ON` / `EDGE_CONTENT_MODULE_DEPENDS_ON_TEST`: runtime deps between content modules.
 - `EDGE_PLUGIN_XML_DEPENDS_ON_PLUGIN`: plugin.xml `<plugin>` deps (optional + legacy/modern format flags packed into the edge).
 - `EDGE_PLUGIN_XML_DEPENDS_ON_CONTENT_MODULE`: plugin.xml `<module>` deps between plugins and content modules.
+- `EDGE_PLUGIN_DECLARES_ALIAS`: not a dependency. It links a plugin to the node that carries its `<module value="..."/>` alias.
+  A dependency on an alias points at that node, so a walk that must reach the declaring plugin takes this edge as an extra hop.
 
 Keeping these separate avoids mixing node kinds (Target vs ContentModule vs Plugin) and keeps traversal APIs type-safe.
 
@@ -132,6 +135,7 @@ graph.query {
 | `PluginNode`    | `mainTarget`             | `TargetNode`       |
 | `PluginNode`    | `dependsOnPlugin`        | `PluginDependency` |
 | `PluginNode`    | `dependsOnContentModule` | `ModuleNode`       |
+| `PluginNode`    | `declaresAlias`          | `PluginNode`       |
 | `ModuleSetNode` | `containsModule`         | `ModuleNode`       |
 | `ModuleSetNode` | `nestedSet`              | `ModuleSetNode`    |
 | `ModuleNode`    | `backedBy`               | `TargetNode`       |

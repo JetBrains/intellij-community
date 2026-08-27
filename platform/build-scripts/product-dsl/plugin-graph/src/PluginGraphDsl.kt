@@ -278,6 +278,16 @@ value class GraphScope @PublishedApi internal constructor(
   val PluginNode.dependsOnContentModule: EdgeInvoker<ContentModuleNode>
     get() = EdgeInvoker.Companion.create(EDGE_PLUGIN_XML_DEPENDS_ON_CONTENT_MODULE, id)
 
+  /**
+   * Plugin → Plugin (the nodes that carry an alias of this plugin).
+   *
+   * A plugin declares an alias with `<module value="..."/>`. A dependency on that alias points at
+   * an alias node or at a placeholder node, not at this plugin. Take this edge to add the hop.
+   * [dependsOnPlugin] never folds the hop in, so a caller must ask for it.
+   */
+  val PluginNode.declaresAlias: EdgeInvoker<PluginNode>
+    get() = EdgeInvoker.Companion.create(EDGE_PLUGIN_DECLARES_ALIAS, id)
+
   // endregion
 
   // region Forward Edge Properties (ModuleSetNode)
@@ -489,6 +499,14 @@ value class GraphScope @PublishedApi internal constructor(
   /** Plugin ← Plugin (plugins that depend on this plugin) */
   val PluginNode.requiredByPlugin: ReverseEdgeInvoker<PluginNode>
     get() = ReverseEdgeInvoker.Companion.create(EDGE_PLUGIN_XML_DEPENDS_ON_PLUGIN, id)
+
+  /**
+   * Plugin ← Plugin (plugins that declare this node as an alias).
+   *
+   * This node holds an alias ID. The result is the plugins that own the alias.
+   */
+  val PluginNode.aliasDeclaredByPlugin: ReverseEdgeInvoker<PluginNode>
+    get() = ReverseEdgeInvoker.Companion.create(EDGE_PLUGIN_DECLARES_ALIAS, id)
 
   /** Plugin ← Product: Iterate all products bundling this plugin (production + test) */
   inline fun PluginNode.bundledByProducts(action: (ProductNode) -> Unit) {

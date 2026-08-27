@@ -236,6 +236,33 @@ class PluginDependencyGraphTest {
   }
 
   @Test
+  fun `declaresAlias adds the hop from the alias node to the declaring plugin`() {
+    val graph = buildGraph(
+      TargetName("plugin.a") to pluginInfo(
+        pluginId = "com.a",
+        pluginDependencies = setOf(PluginId("alias.c")),
+      ),
+      TargetName("plugin.c") to pluginInfo(
+        pluginId = "com.c",
+        pluginAliases = listOf(PluginId("alias.c")),
+      ),
+    )
+
+    graph.query {
+      val pluginC = requireNotNull(plugin("plugin.c"))
+      val aliasNodes = mutableListOf<String>()
+      pluginC.declaresAlias { alias -> aliasNodes.add(alias.name().value) }
+      assertThat(aliasNodes).containsExactly("alias.c")
+
+      // the dependency of plugin.a lands on the alias node, so the reverse edge names plugin.c
+      val aliasNode = requireNotNull(plugin("alias.c"))
+      val declaringPlugins = mutableListOf<String>()
+      aliasNode.aliasDeclaredByPlugin { declaring -> declaringPlugins.add(declaring.name().value) }
+      assertThat(declaringPlugins).containsExactly("plugin.c")
+    }
+  }
+
+  @Test
   fun `pluginsById distinguishes alias nodes from placeholders`() {
     val builder = PluginGraphBuilder()
     val aliasId = PluginId("alias.c")
