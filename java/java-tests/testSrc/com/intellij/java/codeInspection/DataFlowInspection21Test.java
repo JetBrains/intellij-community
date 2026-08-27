@@ -393,4 +393,9 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testUnboxedMethodReferenceVoidType() {
     doTest();
   }
+
+  public void testNullMarkedPutIfAbsent() {
+    addJSpecifyNullMarked(myFixture);
+    doTest();
+  }
 }
