@@ -184,6 +184,8 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//platform/welcome-screen",
         "//platform/welcome-screen:welcome-screen_test_lib",
+        "//platform/welcome-screen-impl:welcomeScreen-impl",
+        "//platform/welcome-screen-impl:welcomeScreen-impl_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//platform/statistics",

@@ -11,6 +11,9 @@ internal class WelcomeScreenProjectFrameCapabilitiesProvider : ProjectFrameCapab
   /**
    * Maps welcome-screen project classification to generic frame capabilities.
    *
+   * A welcome-screen project suppresses indexing and background activities, so the projectless
+   * state has no startup loading (IJPL-253309).
+   *
    * Startup UI policy is intentionally not provided here; it is contributed by module-specific
    * providers that consume [ProjectFrameCapability.WELCOME_EXPERIENCE].
    */
@@ -21,6 +24,8 @@ internal class WelcomeScreenProjectFrameCapabilitiesProvider : ProjectFrameCapab
 
     return buildSet {
       add(ProjectFrameCapability.WELCOME_EXPERIENCE)
+      add(ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES)
+      add(ProjectFrameCapability.SUPPRESS_INDEXING_ACTIVITIES)
 
       if (!WelcomeScreenProjectProvider.isVcsEnabled(project)) {
         add(ProjectFrameCapability.SUPPRESS_VCS_UI)
