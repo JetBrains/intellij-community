@@ -319,11 +319,11 @@
     <!-- region nested: essential > debugger -->
     <module name="intellij.platform.debugger.impl.frontend"/>
     <module name="intellij.platform.debugger.impl.backend"/>
-    <module name="intellij.platform.debugger.impl.shared" loading="embedded"/>
-    <module name="intellij.platform.debugger.impl.rpc" loading="embedded"/>
-    <module name="intellij.platform.debugger.impl.ui" loading="embedded"/>
-    <module name="intellij.platform.debugger" loading="embedded"/>
-    <module name="intellij.platform.debugger.impl" loading="embedded"/>
+    <module name="intellij.platform.debugger.impl.shared"/>
+    <module name="intellij.platform.debugger.impl.rpc"/>
+    <module name="intellij.platform.debugger.impl.ui"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.debugger.impl"/>
     <!-- endregion -->
 
     <!-- region direct modules -->
