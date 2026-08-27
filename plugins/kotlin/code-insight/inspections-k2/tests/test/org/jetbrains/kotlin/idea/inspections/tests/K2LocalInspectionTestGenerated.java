@@ -1277,6 +1277,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/intentions/destructuringInLambda/mapIndexedLast.kt");
         }
 
+        @TestMetadata("mapIndexedLastInspectionSettings.kt")
+        public void testMapIndexedLastInspectionSettings() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/mapIndexedLastInspectionSettings.kt");
+        }
+
+        @TestMetadata("mapIndexedLastWithLanguageSettings.kt")
+        public void testMapIndexedLastWithLanguageSettings() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/mapIndexedLastWithLanguageSettings.kt");
+        }
+
         @TestMetadata("noIt.kt")
         public void testNoIt() throws Exception {
             runTest("../../../idea/tests/testData/intentions/destructuringInLambda/noIt.kt");

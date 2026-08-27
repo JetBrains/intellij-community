@@ -51,7 +51,7 @@ class KotlinQuickFixIntentionPreviewTest : KotlinLightCodeInsightFixtureTestCase
             data class X(val x: Int, val y: Int)
             
             val lambda : (X) -> Unit = { <caret>x -> println(x.x+x.y) }""".trimIndent(),
-            "Use destructuring declaration",
+            "Use positional destructuring declaration",
             """
             data class X(val x: Int, val y: Int)
 

@@ -100,7 +100,7 @@ internal class DestructuringDeclarationInspection(
         element.getUsageScopeElement() != null
 
     override fun getProblemHighlightType(element: KtDeclaration, context: UsagesToRemove): ProblemHighlightType =
-        if (reportNonParameterCases || element.parent is KtForExpression) {
+        if (reportNonParameterCases || element.parent is KtForExpression || context.useFullFormNameBasedDestructuring) {
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING
         } else {
             ProblemHighlightType.INFORMATION
@@ -143,16 +143,20 @@ internal class DestructuringDeclarationInspection(
 }
 
 internal class UseDestructureDeclarationFix<T: KtDeclaration>(private val context: UsagesToRemove) : KotlinModCommandQuickFix<T>() {
-    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("use.destructuring.declaration")
+    override fun getFamilyName(): @IntentionFamilyName String =
+        if (context.useFullFormNameBasedDestructuring) {
+            KotlinBundle.message("use.full.name.based.destructuring.declaration")
+        } else {
+            KotlinBundle.message("use.positional.destructuring.declaration")
+        }
 
     override fun applyFix(
         project: Project, element: T, updater: ModPsiUpdater
     ) {
-        val (usagesToRemove, removeSelectorInLoopRange, useNameBasedDestructuring) = context
         val psiFactory = KtPsiFactory(element.project)
         val parent = element.parent
         val (container, anchor) = if (parent is KtParameterList) parent.parent to null else parent to element
-        val modifiableUsagesToRemove = usagesToRemove.map { usageData ->
+        val modifiableUsagesToRemove = context.data.map { usageData ->
             usageData.copy(
                 usagesToReplace = usageData.usagesToReplace.map { updater.getWritable(it) }.toMutableList(),
                 declarationToDrop = updater.getWritable(usageData.declarationToDrop)
@@ -175,7 +179,7 @@ internal class UseDestructureDeclarationFix<T: KtDeclaration>(private val contex
         modifiableUsagesToRemove.forEach { usageData ->
             val (descriptor, usagesToReplace, variableToDrop, name) = usageData
             val isUnusedComponent = usageData.isUnusedComponent()
-            val suggestedName = if (isUnusedComponent && underscoreSupported && !allUnused && !useNameBasedDestructuring) {
+            val suggestedName = if (isUnusedComponent && underscoreSupported && !allUnused && !context.useFullFormNameBasedDestructuring) {
                 "_"
             } else {
                 KotlinNameSuggester.suggestNameByName(name ?: descriptor) { nameValidator.validate(it) }
@@ -189,8 +193,8 @@ internal class UseDestructureDeclarationFix<T: KtDeclaration>(private val contex
                 }
             }
 
-            if (!useNameBasedDestructuring || !isUnusedComponent || allUnused) {
-                val entry = if (useNameBasedDestructuring) {
+            if (!context.useFullFormNameBasedDestructuring || !isUnusedComponent || allUnused) {
+                val entry = if (context.useFullFormNameBasedDestructuring) {
                     buildFullNameBasedDestructuringEntry(suggestedName, descriptor)
                 } else {
                     suggestedName
@@ -205,7 +209,7 @@ internal class UseDestructureDeclarationFix<T: KtDeclaration>(private val contex
                 runWriteActionIfPhysical(element) {
                     val type = element.typeReference?.let { ": ${it.text}" } ?: ""
                     element.replace(psiFactory.createDestructuringParameter("($joinedNames)$type"))
-                    if (removeSelectorInLoopRange && loopRange is KtDotQualifiedExpression) {
+                    if (context.removeSelectorInLoopRange && loopRange is KtDotQualifiedExpression) {
                         loopRange.replace(loopRange.receiverExpression)
                     }
                 }
@@ -225,7 +229,7 @@ internal class UseDestructureDeclarationFix<T: KtDeclaration>(private val contex
             is KtVariableDeclaration -> {
                 val rangeAfterEq = PsiChildRange(element.initializer, element.lastChild)
                 val modifierList = element.modifierList?.copied<KtModifierList>()
-                val declarationPattern = if (useNameBasedDestructuring) {
+                val declarationPattern = if (context.useFullFormNameBasedDestructuring) {
                     "($joinedNames) = $0"
                 } else {
                     "val ($joinedNames) = $0"
@@ -237,7 +241,7 @@ internal class UseDestructureDeclarationFix<T: KtDeclaration>(private val contex
                         )
                     ) as KtModifierListOwner
 
-                    if (modifierList != null && !useNameBasedDestructuring) {
+                    if (modifierList != null && !context.useFullFormNameBasedDestructuring) {
                         result.setModifierList(modifierList)
                     }
                 }
@@ -252,7 +256,7 @@ internal class UseDestructureDeclarationFix<T: KtDeclaration>(private val contex
 internal data class UsagesToRemove(
     val data: List<UsageData>,
     val removeSelectorInLoopRange: Boolean,
-    val useNameBasedDestructuring: Boolean,
+    val useFullFormNameBasedDestructuring: Boolean,
 )
 
 internal data class SingleUsageData(val callableName: String?, val usageToReplace: KtExpression?, val declarationToDrop: KtDeclaration?)
@@ -322,7 +326,7 @@ private fun collectUsagesToRemove(declaration: KtDeclaration, maxUnusedComponent
 
     val (
         isMapEntry: Boolean,
-        useNameBasedDestructuring: Boolean,
+        useFullFormNameBasedDestructuring: Boolean,
         componentNames: List<String>
     ) = if (classSymbol is KaNamedClassSymbol && classSymbol.isData) {
         val primaryCtor = classSymbol.declaredMemberScope.constructors.firstOrNull { it.isPrimary } ?: return null
@@ -347,12 +351,12 @@ private fun collectUsagesToRemove(declaration: KtDeclaration, maxUnusedComponent
     val removeSelectorInLoopRange = isMapEntry && removeEntriesEntrySetInLoopRange(declaration)
     val droppedLastUnused = usagesToRemove.dropLastWhile { it.usagesToReplace.isEmpty() && it.declarationToDrop == null }
     val data = droppedLastUnused.ifEmpty { usagesToRemove }
-    if (!useNameBasedDestructuring) {
+    if (!useFullFormNameBasedDestructuring) {
         val allUnused = data.all { it.isUnusedComponent() }
         val unusedComponentsToKeep = if (allUnused) 0 else data.count { it.isUnusedComponent() }
         if (unusedComponentsToKeep > maxUnusedComponentsInDestructuring) return null
     }
-    return UsagesToRemove(data, removeSelectorInLoopRange, useNameBasedDestructuring)
+    return UsagesToRemove(data, removeSelectorInLoopRange, useFullFormNameBasedDestructuring)
 }
 
 private fun PsiElement.hasBadRefences(

@@ -1,0 +1,4 @@
+<inspection_tool class="DestructuringDeclarationInspection">
+  <option name="reportNonParameterCases" value="true" />
+  <option name="maxUnusedComponentsInDestructuring" value="3" />
+</inspection_tool>
