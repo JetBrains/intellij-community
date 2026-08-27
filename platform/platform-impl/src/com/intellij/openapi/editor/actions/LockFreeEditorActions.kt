@@ -3,7 +3,7 @@
 
 package com.intellij.openapi.editor.actions
 
-import com.intellij.idea.AppMode
+import com.intellij.openapi.editor.actionSystem.LockFreeEditorActionsCore
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.util.PlatformUtils
@@ -15,6 +15,9 @@ object LockFreeEditorActions {
 
   @JvmStatic
   fun needLockForArrowActions(): Boolean {
+    if (LockFreeEditorActionsCore.overrideNeedLockForArrowActions) {
+      return true
+    }
     if (!canUseLockFreeActionsInCurrentProductMode()) {
       return true
     }
