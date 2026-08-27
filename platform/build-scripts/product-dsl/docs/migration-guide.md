@@ -183,7 +183,7 @@ Before committing changes:
 
 3. **Verify tests pass**
    ```bash
-   ./tests.cmd -Dintellij.build.test.patterns=com.intellij.idea.ultimate.build.smokeTests.AllProductsPackagingTest
+   ./bazel.cmd test //build:all-products-packaging_test
    ```
 
 4. **Use MCP to analyze transitive dependencies**

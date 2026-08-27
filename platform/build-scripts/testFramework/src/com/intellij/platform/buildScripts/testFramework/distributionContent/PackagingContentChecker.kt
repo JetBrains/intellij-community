@@ -148,7 +148,6 @@ data class PackagingSuiteValidationSpec(
   @JvmField val threshold: Int = 50,
   @JvmField val isBlocking: Boolean = false,
   @JvmField val alwaysCreateSuccessTest: Boolean = false,
-  @JvmField val requiresCompilation: Boolean = true,
   @JvmField val skipIfAborted: Boolean = true,
   @JvmField val validator: PackagingSuiteValidator,
 )
@@ -251,10 +250,13 @@ class PackagingSuiteFixture private constructor(
             )
           }
         }
-        val compileProductionModulesDeferred = scope.async(start = CoroutineStart.LAZY) {
+        // The gate compiles nothing. Under Bazel `compileModules` has an empty body, and a JPS run reuses the
+        // project output, so the call resolves the project dependencies and marks the output as available. The
+        // suite does it once, and every derived context shares the result through `JpsCompilationData`.
+        val moduleOutputDeferred = scope.async(start = CoroutineStart.LAZY) {
           withTelemetrySpan(
             telemetry = telemetry,
-            name = "compile shared production modules",
+            name = "prepare shared module output",
             configure = { span ->
               span.setAttribute("packaging.target.count", spec.targets.size.toLong())
             },
@@ -268,14 +270,14 @@ class PackagingSuiteFixture private constructor(
           scope = scope,
           spec = spec,
           suiteContextDeferred = suiteContextDeferred,
-          compileProductionModulesDeferred = compileProductionModulesDeferred,
+          moduleOutputDeferred = moduleOutputDeferred,
           telemetry = telemetry,
         )
         val packagingTasks = createPackagingTasks(
           scope = scope,
           spec = spec,
           suiteContextDeferred = suiteContextDeferred,
-          compileProductionModulesDeferred = compileProductionModulesDeferred,
+          moduleOutputDeferred = moduleOutputDeferred,
           validationTasks = validationTasks,
           telemetry = telemetry,
           waitForScheduledStart = optimizedFullSuiteScheduling,
@@ -502,12 +504,8 @@ private fun scheduleFullSuiteWork(
   pluginCheckTasks: List<PluginCheckTask>,
   targetValidationTasks: List<TargetValidationTask>,
 ) {
-  startBlockingValidationTasks(validationTasks)
-  // Start non-blocking + source-only (no compile gate) validations immediately — they are independent
-  // of compilation and of blocking validations, so they should overlap with model-generation/compile.
-  validationTasks.startAllDeferreds { task ->
-    if (!task.spec.isBlocking && !task.spec.requiresCompilation) task.resultDeferred else null
-  }
+  // Every validation awaits the shared module output on its own, and no validation awaits another one.
+  validationTasks.startAllDeferreds { it.resultDeferred }
   val targetValidationPackagingTasks = targetValidationTasks.mapTo(LinkedHashSet()) { it.packagingTask }
   targetValidationPackagingTasks.startAllPackagingTasks()
   targetValidationTasks.startAllDeferreds { it.resultDeferred }
@@ -517,13 +515,6 @@ private fun scheduleFullSuiteWork(
   val remainingPackagingTasks = packagingTasks.filter { it !in targetValidationPackagingTasks }
   val pluginCheckTasksByPackagingTask = pluginCheckTasks.associateBy { it.packagingTask }
 
-  scope.launch(Dispatchers.Default) {
-    validationTasks.filter { it.spec.isBlocking }.map { it.resultDeferred }.awaitAll()
-    validationTasks.startAllDeferreds { task ->
-      // independent ones already started above
-      if (task.spec.isBlocking || !task.spec.requiresCompilation) null else task.resultDeferred
-    }
-  }
   scope.launch(Dispatchers.Default) {
     startRemainingTasksWithRollingReplenishment(
       startedTasks = targetValidationPackagingTasks,
@@ -604,81 +595,27 @@ private fun createValidationTasks(
   scope: CoroutineScope,
   spec: PackagingSuiteSpec,
   suiteContextDeferred: Deferred<PackagingSuiteContext>,
-  compileProductionModulesDeferred: Deferred<Unit>,
+  moduleOutputDeferred: Deferred<Unit>,
   telemetry: PackagingSuiteTelemetry?,
 ): List<ValidationTask> {
-  val blockingTasks = ArrayList<ValidationTask>()
-  for (validation in spec.validations) {
-    if (!validation.isBlocking) {
-      continue
-    }
-
-    blockingTasks.add(
-      ValidationTask(
-        spec = validation,
-        resultDeferred = scope.async(start = CoroutineStart.LAZY) {
-          captureTaskResult {
-            withTelemetrySpan(
-              telemetry = telemetry,
-              name = "suite validation: ${validation.name}",
-              configure = { span ->
-                span.setAttribute("packaging.validation.name", validation.name)
-              },
-            ) {
-              awaitPackagingSuiteValidationCompilationIfRequired(validation = validation, compileProductionModulesDeferred = compileProductionModulesDeferred)
-              validation.validator(suiteContextDeferred.await())
-            }
+  return spec.validations.map { validation ->
+    ValidationTask(
+      spec = validation,
+      resultDeferred = scope.async(start = CoroutineStart.LAZY) {
+        captureTaskResult {
+          withTelemetrySpan(
+            telemetry = telemetry,
+            name = "suite validation: ${validation.name}",
+            configure = { span ->
+              span.setAttribute("packaging.validation.name", validation.name)
+            },
+          ) {
+            moduleOutputDeferred.await()
+            validation.validator(suiteContextDeferred.await())
           }
-        },
-      )
+        }
+      },
     )
-  }
-
-  val blockingIterator = blockingTasks.iterator()
-  val result = ArrayList<ValidationTask>(spec.validations.size)
-  for (validation in spec.validations) {
-    if (validation.isBlocking) {
-      result.add(blockingIterator.next())
-      continue
-    }
-
-    // A "source-only" non-blocking validation (no compilation gate) is independent of blocking validations
-    // and can run in parallel with model-generation/compilation. It is scheduled immediately in
-    // scheduleFullSuiteWork and skips the ensureBlockingValidationsSucceededOrAbort gate here.
-    val runIndependently = !validation.requiresCompilation
-    result.add(
-      ValidationTask(
-        spec = validation,
-        resultDeferred = scope.async(start = CoroutineStart.LAZY) {
-          captureTaskResult {
-            withTelemetrySpan(
-              telemetry = telemetry,
-              name = "suite validation: ${validation.name}",
-              configure = { span ->
-                span.setAttribute("packaging.validation.name", validation.name)
-              },
-            ) {
-              if (!runIndependently) {
-                ensureBlockingValidationsSucceededOrAbort(blockingTasks)
-                awaitPackagingSuiteValidationCompilationIfRequired(validation = validation, compileProductionModulesDeferred = compileProductionModulesDeferred)
-              }
-              validation.validator(suiteContextDeferred.await())
-            }
-          }
-        },
-      )
-    )
-  }
-  return result
-}
-
-@Internal
-suspend fun awaitPackagingSuiteValidationCompilationIfRequired(
-  validation: PackagingSuiteValidationSpec,
-  compileProductionModulesDeferred: Deferred<Unit>,
-) {
-  if (validation.requiresCompilation) {
-    compileProductionModulesDeferred.await()
   }
 }
 
@@ -686,7 +623,7 @@ private fun createPackagingTasks(
   scope: CoroutineScope,
   spec: PackagingSuiteSpec,
   suiteContextDeferred: Deferred<PackagingSuiteContext>,
-  compileProductionModulesDeferred: Deferred<Unit>,
+  moduleOutputDeferred: Deferred<Unit>,
   validationTasks: List<ValidationTask>,
   telemetry: PackagingSuiteTelemetry?,
   waitForScheduledStart: Boolean,
@@ -711,7 +648,7 @@ private fun createPackagingTasks(
               },
             ) {
               ensureBlockingValidationsSucceededOrAbort(blockingTasks)
-              compileProductionModulesDeferred.await()
+              moduleOutputDeferred.await()
               val suiteContext = suiteContextDeferred.await()
               val context = createDerivedBuildContext(
                 sharedCompilationContext = suiteContext.compilationContext,

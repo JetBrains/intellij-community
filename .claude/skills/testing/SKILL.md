@@ -80,8 +80,10 @@ xmllint --xpath '//testcase[failure or error]/@name | //testcase[failure or erro
 When changing `ProductProperties`, `productImplementationModules`, product content descriptors, plugin/module-set packaging, or generated product layout XML, also run:
 
 ```bash
-./tests.cmd --module intellij.idea.ultimate.build.tests --test com.intellij.idea.ultimate.build.smokeTests.AllProductsPackagingTest
+./bazel.cmd test //build:all-products-packaging_test
 ```
+
+This suite is the one exception to the `tests.cmd` rule above. It has a Bazel target of its own, which runs the one class, prints the Bazel summary, and writes `out/bazel-testlogs/build/all-products-packaging_test/test.xml`.
 
 ### Windows PowerShell note
 

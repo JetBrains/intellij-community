@@ -150,7 +150,7 @@ Run this suite before relying on TeamCity after pluginization or plugin dependen
 3. Fast project structure/root packages:
    `./tests.cmd --module intellij.projectStructureTests --test com.intellij.ideaProjectStructure.fast.IntelliJProjectPackageNamesTest`
 4. Product packaging baseline:
-   `./tests.cmd --module intellij.idea.ultimate.build.tests --test com.intellij.idea.ultimate.build.smokeTests.AllProductsPackagingTest`
+   `./bazel.cmd test //build:all-products-packaging_test`
 5. CLion packaging baseline:
    `./tests.cmd --module intellij.clion.build.tests --test org.jetbrains.intellij.build.clion.CLionPackagingTest`
 6. Rider packaging baseline:
