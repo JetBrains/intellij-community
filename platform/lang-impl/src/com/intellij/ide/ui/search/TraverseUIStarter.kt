@@ -543,8 +543,7 @@ class TraverseUIStarter : ModernApplicationStarter() {
       }
     }
     if (DEBUGGER_CONFIGURABLE_CLASS == configurable.javaClass.name) {
-      val clazz = ReflectionUtil.forName(DEBUGGER_CONFIGURABLE_CLASS)
-      val rootConfigurable = ReflectionUtil.getField(clazz, configurable, Configurable::class.java, "myRootConfigurable")
+      val rootConfigurable = ReflectionUtil.getField(configurable.javaClass, configurable, Configurable::class.java, "myRootConfigurable")
       if (rootConfigurable != null) {
         return rootConfigurable
       }
