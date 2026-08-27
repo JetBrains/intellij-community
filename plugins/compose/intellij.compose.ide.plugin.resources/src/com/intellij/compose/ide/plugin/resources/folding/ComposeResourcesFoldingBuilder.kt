@@ -62,7 +62,7 @@ private fun KtSimpleNameExpression.getFoldingDescriptor(): FoldingDescriptor? {
 
 private fun getResourcePlaceholderText(psiElements: List<PsiElement>): String? {
   val sortedPsiElements = psiElements.sortedBy { psiElement ->
-    psiElement.containingFile.parent?.name != ResourceType.STRING.dirName
+    psiElement.containingFile?.parent?.name != ResourceType.STRING.dirName
   }
 
   for (psiElement in sortedPsiElements) {
