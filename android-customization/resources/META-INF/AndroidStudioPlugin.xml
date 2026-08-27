@@ -9,14 +9,11 @@
   <module value="com.intellij.modules.java-capable"/>
   <module value="com.intellij.modules.jsp.base"/>
   <module value="com.intellij.modules.lang"/>
+  <module value="com.intellij.modules.lang.actions"/>
   <module value="com.intellij.modules.platform"/>
   <module value="com.intellij.modules.python-core-capable"/>
   <module value="com.intellij.modules.python-in-non-pycharm-ide-capable"/>
 
-  <xi:include href="/idea/PriorityEditorLangActions.xml"/>
-  <xi:include href="/idea/PlatformActions.xml"/>
-  <xi:include href="/idea/ExecutionActions.xml"/>
-  <xi:include href="/idea/LangActions.xml"/>
   <xi:include href="/META-INF/DesignerCorePlugin.xml">
     <xi:fallback/>
   </xi:include>

@@ -7,11 +7,12 @@ package org.jetbrains.intellij.build.productLayout
  */
 object CommunityProductFragments {
   /**
-   * Platform core fragment: provides the core plugin aliases and the core action includes.
+   * Platform core fragment: provides the core plugin aliases.
    *
    * Includes:
-   * - The `com.intellij.modules.platform` and `com.intellij.modules.lang` module aliases
-   * - The shared core action sets (priority editor, platform, execution, lang)
+   * - The `com.intellij.modules.platform`, `com.intellij.modules.lang`, and `com.intellij.modules.lang.actions` module aliases
+   *
+   * The shared core action sets are not included here; `CoreActionsPrelude` loads them at runtime.
    *
    * Use this fragment in every product; it replaces the retired PlatformLangPlugin.xml include.
    */
@@ -19,12 +20,7 @@ object CommunityProductFragments {
     // Module capability aliases
     alias("com.intellij.modules.platform")
     alias("com.intellij.modules.lang")
-
-    // Core action sets
-    deprecatedInclude("intellij.platform.lang.impl", "idea/PriorityEditorLangActions.xml")
-    deprecatedInclude("intellij.platform.ide.impl", "idea/PlatformActions.xml")
-    deprecatedInclude("intellij.platform.ide.impl", "idea/ExecutionActions.xml")
-    deprecatedInclude("intellij.platform.ide.impl", "idea/LangActions.xml")
+    alias("com.intellij.modules.lang.actions")
   }
 
   /**

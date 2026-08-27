@@ -59,7 +59,7 @@ override fun getProductContentModules(): ProductModulesContentSpec {
   return productModules {
     // XML includes (optional - can also be defined in plugin.xml manually)
     // Specify module name and resource path within that module
-    deprecatedInclude("intellij.platform.resources", "idea/PlatformActions.xml")
+    deprecatedInclude("intellij.java.ide.resources", "META-INF/JavaIdePlugin.xml")
     deprecatedInclude("intellij.gateway", "META-INF/Gateway.xml")
     
     // Include module sets

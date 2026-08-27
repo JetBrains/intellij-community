@@ -1,6 +1,6 @@
+<!--suppress ModuleNotRegisteredAsPluginContent -->
+<!-- CoreActionsPrelude loads this file as a resource; keep it free of xi:include -->
 <idea-plugin>
-  <module value="com.intellij.modules.lang.actions"/>
-
   <actions>
     <reference ref="IncrementalSearch"/>
 

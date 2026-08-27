@@ -6,12 +6,9 @@
   <name>IDEA CORE</name>
   <module value="com.intellij.modules.java-capable"/>
   <module value="com.intellij.modules.lang"/>
+  <module value="com.intellij.modules.lang.actions"/>
   <module value="com.intellij.modules.platform"/>
 
-  <xi:include href="/idea/PriorityEditorLangActions.xml"/>
-  <xi:include href="/idea/PlatformActions.xml"/>
-  <xi:include href="/idea/ExecutionActions.xml"/>
-  <xi:include href="/idea/LangActions.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.ide.common.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.jsp.base.xml"/>
   <!-- region additional -->

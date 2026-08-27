@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.ProjectType
+import com.intellij.platform.pluginSystem.parser.impl.elements.ActionElement
 import com.intellij.platform.pluginSystem.parser.impl.elements.ActionElement.ActionDescriptorAction
 import com.intellij.platform.pluginSystem.parser.impl.elements.ActionElement.ActionElementGroup
 import com.intellij.platform.pluginSystem.parser.impl.elements.ActionElement.ActionElementName
@@ -41,11 +42,13 @@ internal class ActionPluginRegistrar {
     descriptors: Sequence<IdeaPluginDescriptorImpl>,
     keymapToOperations: MutableMap<String, MutableList<KeymapShortcutOperation>>,
     actionRegistrar: ActionRegistrar,
+    prelude: CoreActionsPrelude? = null,
   ) {
     registerActionsImpl(state = state,
                         descriptors = descriptors,
                         keymapToOperations = keymapToOperations,
-                        actionRegistrar = actionRegistrar)
+                        actionRegistrar = actionRegistrar,
+                        prelude = prelude)
   }
 
   fun unloadActions(
@@ -88,11 +91,21 @@ private fun registerActionsImpl(
   descriptors: Sequence<IdeaPluginDescriptorImpl>,
   keymapToOperations: MutableMap<String, MutableList<KeymapShortcutOperation>>,
   actionRegistrar: ActionRegistrar,
+  prelude: CoreActionsPrelude?,
 ) {
   val deferred = DeferredActionRegistrations()
+  if (prelude != null) {
+    registerPluginActions(state = state,
+                          module = prelude.coreModule,
+                          elements = prelude.elements,
+                          keymapToOperations = keymapToOperations,
+                          actionRegistrar = actionRegistrar,
+                          deferred = deferred)
+  }
   for (module in descriptors) {
     registerPluginActions(state = state,
                           module = module,
+                          elements = module.actions,
                           keymapToOperations = keymapToOperations,
                           actionRegistrar = actionRegistrar,
                           deferred = deferred)
@@ -104,11 +117,11 @@ private fun registerActionsImpl(
 private fun registerPluginActions(
   state: ActionPluginRegistrarState,
   module: IdeaPluginDescriptorImpl,
+  elements: List<ActionElement>,
   keymapToOperations: MutableMap<String, MutableList<KeymapShortcutOperation>>,
   actionRegistrar: ActionRegistrar,
   deferred: DeferredActionRegistrations?,
 ) {
-  val elements = module.actions
   if (elements.isEmpty()) {
     return
   }

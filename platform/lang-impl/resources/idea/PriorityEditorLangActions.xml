@@ -4,6 +4,8 @@ and before same-stroke partners registered in content modules:
 the first registered enabled action wins keymap dispatch
 (e.g. Generate must beat NewElement on its shortcuts)
 -->
+<!--suppress ModuleNotRegisteredAsPluginContent -->
+<!-- CoreActionsPrelude loads this file as a resource; keep it free of xi:include -->
 <idea-plugin>
   <actions>
     <group id="LookupActions">

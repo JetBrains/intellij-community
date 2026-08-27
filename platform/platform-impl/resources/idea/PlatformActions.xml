@@ -1,3 +1,5 @@
+<!--suppress ModuleNotRegisteredAsPluginContent -->
+<!-- CoreActionsPrelude loads this file as a resource; keep it free of xi:include -->
 <idea-plugin>
   <actions>
     <reference ref="QuickActionPopup"/>

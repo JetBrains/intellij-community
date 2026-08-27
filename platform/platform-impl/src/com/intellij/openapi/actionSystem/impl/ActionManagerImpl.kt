@@ -141,9 +141,11 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     val state = ActionManagerState()
     val actionPreInitRegistrar = ActionPreInitRegistrar(idToAction = idToAction, boundShortcuts = boundShortcuts, state = state)
     val keymapToOperations = HashMap<String, MutableList<KeymapShortcutOperation>>()
-    doRegisterActions(descriptors = PluginManagerCore.getPluginSet().sequenceResolvedSortedDescriptorsForRegistration(),
+    val pluginSet = PluginManagerCore.getPluginSet()
+    doRegisterActions(descriptors = pluginSet.sequenceResolvedSortedDescriptorsForRegistration(),
                       keymapToOperations = keymapToOperations,
-                      actionRegistrar = actionPreInitRegistrar)
+                      actionRegistrar = actionPreInitRegistrar,
+                      prelude = loadCoreActionsPrelude(pluginSet))
 
     coroutineScope.launch {
       CustomActionsSchema.getInstanceAsync().incrementModificationStamp()
@@ -240,8 +242,12 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     descriptors: Sequence<IdeaPluginDescriptorImpl>,
     keymapToOperations: MutableMap<String, MutableList<KeymapShortcutOperation>>,
     actionRegistrar: ActionRegistrar,
+    prelude: CoreActionsPrelude? = null,
   ) {
-    pluginRegistrar.registerActions(descriptors = descriptors, keymapToOperations = keymapToOperations, actionRegistrar = actionRegistrar)
+    pluginRegistrar.registerActions(descriptors = descriptors,
+                                    keymapToOperations = keymapToOperations,
+                                    actionRegistrar = actionRegistrar,
+                                    prelude = prelude)
   }
 
   internal fun getKeymapPendingOperations(keymapName: String): List<KeymapShortcutOperation> {

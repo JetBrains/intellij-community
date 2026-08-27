@@ -711,7 +711,7 @@ if (!pluginLayout.pathsToScramble.isEmpty()) {
   <id>com.intellij</id>
   <name>IDEA CORE</name>
   <module value="com.intellij.modules.platform" />
-  <xi:include href="/idea/PlatformActions.xml" />
+  <xi:include href="/META-INF/OCFeaturesBundlePlugin.xml" />
   <!-- ... 300+ more lines ... -->
   <!-- </editor-fold> -->
 </idea-plugin>
@@ -727,7 +727,7 @@ if (!pluginLayout.pathsToScramble.isEmpty()) {
 ```xml
 <!-- CLionPlugin.xml: Clean xi:include references -->
 <idea-plugin>
-  <xi:include href="/idea/PlatformActions.xml"/>
+  <xi:include href="/META-INF/OCFeaturesBundlePlugin.xml"/>
   <xi:include href="intellij.platform.remoteServers.impl.xml"/>
   <xi:include href="META-INF/ultimate.xml"/>
 </idea-plugin>

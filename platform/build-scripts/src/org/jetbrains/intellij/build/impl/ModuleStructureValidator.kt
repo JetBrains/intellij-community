@@ -39,6 +39,15 @@ private val nonPathAttributes = hashSetOf(
   "id", "value", "key", "testServiceImplementation", "defaultExtensionNs", "qualifiedName", "childrenEPName"
 )
 
+// keep in sync with CORE_ACTION_SET_PATHS in CoreActionsPrelude.kt (platform-impl);
+// ActionManager loads these at runtime, so no product root includes them
+private val coreActionSetDescriptors = listOf(
+  "idea/PriorityEditorLangActions.xml",
+  "idea/PlatformActions.xml",
+  "idea/ExecutionActions.xml",
+  "idea/LangActions.xml",
+)
+
 private val pathElements = hashSetOf("interface-class", "implementation-class")
 private val predefinedTypes = hashSetOf("java.lang.Object", "javax.imageio.spi.IIOServiceProvider") // jdk classes are not resolved in runtime
 private val ignoreModules = hashSetOf("intellij.java.testFramework", "intellij.platform.uast.testFramework")
@@ -244,7 +253,17 @@ class ModuleStructureValidator(
       val generatedXmlElement = productXml.xml.byteInputStream().use(::readXmlAsModel)
       validateGeneratedXmlDescriptors(generatedXmlElement, roots, libraries, allDescriptors)
     }
-    
+
+    coreActionSetDescriptors.forEach { ref ->
+      val descriptorFile = findDescriptorFile(ref, roots)
+      if (descriptorFile == null) {
+        errors.add(AssertionError("Core action set '$ref' is not present in the product modules; CoreActionsPrelude loads it at startup"))
+      }
+      else {
+        validateXmlDescriptorsRec(descriptorFile, roots, libraries, allDescriptors)
+      }
+    }
+
     validateXmlRegistrations(allDescriptors)
   }
 
