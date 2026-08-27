@@ -290,6 +290,8 @@ jvm_library(
         "//plugins/kotlin/base/plugin:plugin_test_lib",
         "//android/android:core",
         "//android/android:core_test_lib",
+        "//android/gradle-dsl-kotlin",
+        "//android/gradle-dsl-kotlin:gradle-dsl-kotlin_test_lib",
         "@lib//:studio-platform",
         "//platform/util:util-ui",
         "//platform/util:util-ui_test_lib",
