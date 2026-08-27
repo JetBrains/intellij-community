@@ -523,11 +523,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     PyType memberType = PyTypeUtil.getTypeOfMember(resolveResults, context, anchor);
     PyType specializedMemberType = PyTypeUtil.specializeMemberType(classType, selfType, memberType, context);
 
-    final Ref<PyType> descriptorType = PyDescriptorTypeUtil.getDunderGetReturnType(anchor, selfType, specializedMemberType, context);
-    if (descriptorType != null) {
-      return descriptorType.get();
-    }
-
     boolean isFunction = specializedMemberType instanceof PyCallableType && !(specializedMemberType instanceof PyClassLikeType) ||
                          specializedMemberType instanceof PyOverloadType;
     if (isFunction) {
@@ -544,7 +539,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return PyTypeUtil.bindFunction(selfType, specializedMemberType, memberOwner, context, errors);
     }
 
-    return specializedMemberType;
+    final PyClassType noneType = PyBuiltinCache.getInstance(anchor).getNoneType();
+    return noneType == null
+           ? specializedMemberType
+           : PyDescriptorTypeUtil.applyDescriptorGet(selfType, specializedMemberType, noneType, context);
   }
 
   private static @Nullable Ref<PyType> getTypeFromTarget(@NotNull PsiElement target,

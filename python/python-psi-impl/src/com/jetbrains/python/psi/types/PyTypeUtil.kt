@@ -340,6 +340,7 @@ object PyTypeUtil {
    * @see compositeTransform
    * @see PyUnionType.map
    */
+  @JvmStatic
   @ApiStatus.Experimental
   fun PyType?.compositeMap(mapper: (PyType?) -> PyType?): PyType? =
     if (this is PyCompositeType) compositeTransform { members -> members.map { it.compositeMap(mapper) } }

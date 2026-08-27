@@ -25,20 +25,17 @@ public final class PyDescriptorTypeUtil {
 
   private PyDescriptorTypeUtil() { }
 
-  public static @Nullable Ref<PyType> getDunderGetReturnType(@NotNull PyExpression expression,
-                                                             @NotNull PyInstantiableType<?> instanceType,
-                                                             @Nullable PyType attributeType,
-                                                             @NotNull TypeEvalContext context) {
-    final PyClassType noneType = PyBuiltinCache.getInstance(expression).getNoneType();
-    if (noneType == null) return null;
-    if (attributeType instanceof PyUnionType unionType) {
-      return mapDescriptorUnion(unionType, member -> getDunderGetReturnType(expression, instanceType, member, context));
-    }
-
+  public static @Nullable PyType applyDescriptorGet(@NotNull PyInstantiableType<?> instanceType,
+                                                    @Nullable PyType attributeType,
+                                                    @NotNull PyClassType noneType,
+                                                    @NotNull TypeEvalContext context) {
     List<PyCallableArgument> arguments = instanceType.isDefinition()
                                          ? List.of(new PyCallableArgument(noneType), new PyCallableArgument(instanceType))
                                          : List.of(new PyCallableArgument(instanceType), new PyCallableArgument(instanceType.toClass()));
-    return PyCallExpressionHelper.getSpecialMethodCallType(attributeType, PyNames.DUNDER_GET, arguments, context);
+    return PyTypeUtil.compositeMap(attributeType, type -> {
+      Ref<PyType> dunderGetCallType = PyCallExpressionHelper.getSpecialMethodCallType(type, PyNames.DUNDER_GET, arguments, context);
+      return dunderGetCallType != null ? dunderGetCallType.get() : type;
+    });
   }
 
   public static @Nullable Ref<PyType> getExpectedValueTypeForDunderSet(@NotNull PyQualifiedExpression expression,
