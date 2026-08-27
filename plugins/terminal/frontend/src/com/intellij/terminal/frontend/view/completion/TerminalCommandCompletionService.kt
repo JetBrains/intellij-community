@@ -312,7 +312,8 @@ class TerminalCommandCompletionService(
     val nextSuggestions = TerminalCompletionUtil.getNextSuggestionsString(this).takeIf { it.isNotEmpty() }
 
     val element = LookupElementBuilder.create(this, name)
-      .withPresentableText(displayName ?: name)
+      // Escape a control character, so the item is not shown as a plain name. It could hide a command otherwise.
+      .withPresentableText((displayName ?: name).escapeControlCharacters())
       .withTailText(nextSuggestions, true)
       .withIcon(TerminalStatefulDelegatingIcon(actualIcon))
     // Actual insertion logic is performed in TerminalLookupListener

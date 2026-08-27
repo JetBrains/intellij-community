@@ -86,6 +86,31 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
           }
         }
       }
+      subcommand("insert-value-control-chars") {
+        argument {
+          suggestions {
+            listOf(
+              ShellCompletionSuggestion("files") {
+                priority(100)
+                insertValue("a${KILL_LINE}b")
+              },
+              ShellCompletionSuggestion("figures")
+            )
+          }
+        }
+      }
+      subcommand("control-chars") {
+        argument {
+          suggestions {
+            listOf(
+              ShellCompletionSuggestion("zzbeta${KILL_LINE}id$ACCEPT_LINE") {
+                priority(100)
+              },
+              ShellCompletionSuggestion("zzalpha")
+            )
+          }
+        }
+      }
     }
   }
 
@@ -223,6 +248,56 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
 
     val expectedText = "test_cmd insert-value-no-escape files ''"
     val expectedCursorOffset = TerminalOffset.of(expectedText.length.toLong() - 1)
+    fixture.assertOutputModelState(expectedText, expectedCursorOffset)
+  }
+
+  @Test
+  fun `test control characters are escaped on insertion`() = doTest { fixture ->
+    fixture.type("test_cmd control-chars zz")
+    fixture.callCompletionPopup()
+    val lookup = fixture.getActiveLookup() ?: error("No active lookup")
+    assertThat(lookup.currentItem?.lookupString)
+      .isEqualTo("zzbeta${KILL_LINE}id$ACCEPT_LINE")
+
+    fixture.insertSelectedItem()
+
+    val expectedText = """test_cmd control-chars zzbeta$'\025'id$'\017'"""
+    val expectedCursorOffset = TerminalOffset.of(expectedText.length.toLong())
+    fixture.assertOutputModelState(expectedText, expectedCursorOffset)
+  }
+
+  // PowerShell wraps the token in single quotes, where a control character has no literal form.
+  @Test
+  fun `test control characters are removed on insertion (Windows)`() {
+    doTest(isPowerShell = true) { fixture ->
+      fixture.type("test_cmd control-chars zz")
+      fixture.callCompletionPopup()
+      val lookup = fixture.getActiveLookup() ?: error("No active lookup")
+      assertThat(lookup.currentItem?.lookupString)
+        .isEqualTo("zzbeta${KILL_LINE}id$ACCEPT_LINE")
+
+      fixture.insertSelectedItem()
+
+      val expectedText = "test_cmd control-chars 'zzbetaid'"
+      val expectedCursorOffset = TerminalOffset.of(expectedText.length.toLong() - 1)
+      fixture.assertOutputModelState(expectedText, expectedCursorOffset)
+    }
+  }
+
+  // A custom insert value is the final shell text. `$'...'` is an escape only outside quotes, and this
+  // path cannot know the quoting, so the control character is removed instead.
+  @Test
+  fun `test control characters are removed from an insert value that skips escaping`() = doTest { fixture ->
+    fixture.type("test_cmd insert-value-control-chars fi")
+    fixture.callCompletionPopup()
+    val lookup = fixture.getActiveLookup() ?: error("No active lookup")
+    assertThat(lookup.currentItem?.lookupString)
+      .isEqualTo("files")
+
+    fixture.insertSelectedItem()
+
+    val expectedText = "test_cmd insert-value-control-chars ab"
+    val expectedCursorOffset = TerminalOffset.of(expectedText.length.toLong())
     fixture.assertOutputModelState(expectedText, expectedCursorOffset)
   }
 

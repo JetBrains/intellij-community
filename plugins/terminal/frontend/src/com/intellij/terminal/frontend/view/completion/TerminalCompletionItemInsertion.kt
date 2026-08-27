@@ -73,6 +73,20 @@ private fun calculateInsertionInfo(
   initialBeforeReplacementLength: Int,
   initialAfterReplacementLength: Int,
 ): CompletionItemInsertionInfo {
+  val info = doCalculateInsertionInfo(process, suggestion, typedPrefixLength,
+                                     initialBeforeReplacementLength, initialAfterReplacementLength)
+  // The unix shell branch escapes a control character itself, so nothing is removed there.
+  // Every other branch can return one, and it must never reach the shell.
+  return info.copy(insertValue = info.insertValue.removeControlCharacters())
+}
+
+private fun doCalculateInsertionInfo(
+  process: TerminalCommandCompletionProcess,
+  suggestion: ShellCompletionSuggestion,
+  typedPrefixLength: Int,
+  initialBeforeReplacementLength: Int,
+  initialAfterReplacementLength: Int,
+): CompletionItemInsertionInfo {
   val baseInsertValue = suggestion.insertValue ?: suggestion.name
 
   if (!suggestion.shouldEscape) {

@@ -1,5 +1,6 @@
 package com.intellij.terminal.tests.reworked.frontend.completion
 
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.application.EDT
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.tests.reworked.frontend.completion.TerminalCompletionFixture.Companion.doWithCompletionFixture
@@ -7,6 +8,7 @@ import com.intellij.terminal.tests.reworked.util.EchoingTerminalSession
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.Dispatchers
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
 import org.jetbrains.plugins.terminal.session.impl.TerminalStartupOptionsImpl
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
@@ -78,6 +80,41 @@ internal class TerminalCompletionUnixShellsEscapingTest : BasePlatformTestCase()
       fixture.callCompletionPopup()
       fixture.insertCompletionItem(item)
       fixture.assertCommandTextState("""test_cmd with\!\ \!some\ te\!xt<cursor>""")
+    }
+  }
+
+  @Test
+  fun `control characters are escaped on insertion`() {
+    doTest { fixture ->
+      val item = "zzbeta${KILL_LINE}id$ACCEPT_LINE"
+      fixture.mockSuggestions(
+        prefixReplacementIndex = 0,
+        item,
+        "dummy"
+      )
+      fixture.type("test_cmd ")
+      fixture.callCompletionPopup()
+      fixture.insertCompletionItem(item)
+      fixture.assertCommandTextState("""test_cmd zzbeta$'\025'id$'\017'<cursor>""")
+    }
+  }
+
+  @Test
+  fun `the popup shows the escaped control characters`() {
+    doTest { fixture ->
+      val item = "zzbeta${KILL_LINE}id$ACCEPT_LINE"
+      fixture.mockSuggestions(
+        prefixReplacementIndex = 0,
+        item,
+        "dummy"
+      )
+      fixture.type("test_cmd ")
+      fixture.callCompletionPopup()
+
+      val element = fixture.getLookupElements().single { it.lookupString == item }
+      val presentation = LookupElementPresentation()
+      element.renderElement(presentation)
+      assertThat(presentation.itemText).isEqualTo("""zzbeta$'\025'id$'\017'""")
     }
   }
 
