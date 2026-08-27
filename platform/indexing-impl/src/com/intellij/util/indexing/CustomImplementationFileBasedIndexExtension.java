@@ -11,7 +11,8 @@ import java.io.IOException;
 public interface CustomImplementationFileBasedIndexExtension<K, V> {
   @NotNull
   UpdatableIndex<K, V, FileContent, ?> createIndexImplementation(@NotNull FileBasedIndexExtension<K, V> extension,
-                                                                 @NotNull VfsAwareIndexStorageLayout<K, V> indexStorageLayout)
+                                                                 @NotNull VfsAwareIndexStorageLayout<K, V> indexStorageLayout,
+                                                                 boolean isInitialBuild)
     throws StorageException, IOException;
 
   default void handleInitializationError(@NotNull Throwable e) { }

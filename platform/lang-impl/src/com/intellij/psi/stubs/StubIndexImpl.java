@@ -254,7 +254,7 @@ public final class StubIndexImpl extends StubIndexEx {
 
   @Override
   @ApiStatus.Internal
-  public void initializeStubIndexes() {
+  public void initializeStubIndexes(boolean isInitialStubUpdatingIndexBuild) {
     assert !myInitialized;
 
     myPerFileElementTypeStubModificationTracker.undispose();
@@ -265,7 +265,7 @@ public final class StubIndexImpl extends StubIndexEx {
       FileBasedIndex.getInstance();
 
       myStateFuture = new CompletableFuture<>();
-      myGenesisFuture = IndexDataInitializer.submitGenesisTask(new StubIndexInitialization());
+      myGenesisFuture = IndexDataInitializer.submitGenesisTask(new StubIndexInitialization(isInitialStubUpdatingIndexBuild));
     }
   }
 
@@ -386,11 +386,13 @@ public final class StubIndexImpl extends StubIndexEx {
   }
 
   private final class StubIndexInitialization extends IndexDataInitializer<AsyncState> {
+    private final boolean myIsInitialStubUpdatingIndexBuild;
     private final AsyncState state = new AsyncState();
     private final IndexVersionRegistrationSink indicesRegistrationSink = new IndexVersionRegistrationSink();
 
-    StubIndexInitialization() {
+    StubIndexInitialization(boolean isInitialStubUpdatingIndexBuild) {
       super("stub index");
+      myIsInitialStubUpdatingIndexBuild = isInitialStubUpdatingIndexBuild;
     }
 
     @Override
@@ -398,7 +400,7 @@ public final class StubIndexImpl extends StubIndexEx {
       indicesRegistrationSink.logChangedAndFullyBuiltIndices(LOG, "Following stub indices will be updated:",
                                                              "Following stub indices will be built:");
 
-      if (indicesRegistrationSink.hasChangedIndexes()) {
+      if (indicesRegistrationSink.hasChangedIndexes() || !myIsInitialStubUpdatingIndexBuild && indicesRegistrationSink.hasNewIndexes()) {
         final Throwable e = new Throwable(indicesRegistrationSink.changedIndices());
         // avoid direct forceRebuild as it produces dependency cycle (IDEA-105485)
         AppUIExecutor.onWriteThread(ModalityState.nonModal()).later().submit(() -> forceRebuild(e));

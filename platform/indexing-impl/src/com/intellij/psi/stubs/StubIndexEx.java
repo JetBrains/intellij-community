@@ -83,7 +83,7 @@ public abstract class StubIndexEx extends StubIndex {
   private final StubProcessingHelper myStubProcessingHelper = new StubProcessingHelper();
 
   @ApiStatus.Internal
-  public abstract void initializeStubIndexes();
+  public abstract void initializeStubIndexes(boolean isInitialStubUpdatingIndexBuild);
 
   @ApiStatus.Internal
   public abstract void initializationFailed(@NotNull Throwable error);

@@ -19,6 +19,10 @@ public final class IndexVersionRegistrationSink {
     return ContainerUtil.find(indexVersionDiffs.values(), diff -> isRebuildRequired(diff)) != null;
   }
 
+  public boolean hasNewIndexes() {
+    return ContainerUtil.find(indexVersionDiffs.values(), diff -> diff instanceof IndexVersion.IndexVersionDiff.InitialBuild) != null;
+  }
+
   public @NotNull String changedIndices() {
     return buildString(diff -> isRebuildRequired(diff));
   }

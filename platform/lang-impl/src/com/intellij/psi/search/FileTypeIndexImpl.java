@@ -63,7 +63,8 @@ public final class FileTypeIndexImpl
   @Override
   @Internal
   public @NotNull UpdatableIndex<FileType, Void, FileContent, ?> createIndexImplementation(@NotNull FileBasedIndexExtension<FileType, Void> extension,
-                                                                                           @NotNull VfsAwareIndexStorageLayout<FileType, Void> indexStorageLayout)
+                                                                                           @NotNull VfsAwareIndexStorageLayout<FileType, Void> indexStorageLayout,
+                                                                                           boolean isInitialBuild)
     throws StorageException, IOException {
     return USE_MAPPED_INDEX ? new MappedFileTypeIndex(extension) : new FileTypeMapReduceIndex(extension, indexStorageLayout);
   }
