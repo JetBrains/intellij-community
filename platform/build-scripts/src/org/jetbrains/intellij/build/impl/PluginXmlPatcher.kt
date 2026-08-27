@@ -12,9 +12,11 @@ import org.jetbrains.intellij.build.CompatibleBuildRange
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.classPath.DescriptorSearchScope
 import org.jetbrains.intellij.build.classPath.XIncludeElementResolverImpl
+import org.jetbrains.intellij.build.classPath.descriptorResolveContext
 import org.jetbrains.intellij.build.classPath.embedContentModule
 import org.jetbrains.intellij.build.classPath.resolveIncludes
 import org.jetbrains.intellij.build.dev.DevDistDescriptorStage
+import org.jetbrains.intellij.build.dev.DevDistDescriptorStages
 import org.jetbrains.intellij.build.dev.DevDistPatchedDescriptors
 import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
 
@@ -45,6 +47,103 @@ fun getCompatiblePlatformVersionRange(compatibleBuildRange: CompatibleBuildRange
   return Pair(sinceBuild, untilBuild)
 }
 
+/**
+ * Every fact [applyPluginDescriptorPatch] needs, as data.
+ *
+ * The patch has two producers. The assembly builds this request from the product layout. A packing action reads it from
+ * a generated plan, with no JPS project model and no product layout. So the type holds no build context, no plugin
+ * layout and no platform layout, and the shared body cannot reach one through it.
+ */
+internal class PluginDescriptorPatchRequest(
+  /** The plugin's main module, which the descriptor belongs to. */
+  @JvmField val mainModule: String,
+  /** The plugin's directory under `plugins/`. Reported by `DevDistPatchedDescriptors` only. */
+  @JvmField val directoryName: String,
+  /** The main jar's name as the layout declares it. Reported by `DevDistPatchedDescriptors` only. */
+  @JvmField val mainJarName: String,
+  /** The descriptor as the plugin's main module output holds it. */
+  @JvmField val sourceContent: String,
+  /** [sourceContent] after the raw text patch of the layout. Equal to [sourceContent] when there is no such patch. */
+  @JvmField val rawPatchedContent: String,
+  @JvmField val pluginVersion: String?,
+  @JvmField val compatibleSinceUntil: Pair<String, String>,
+  @JvmField val releaseDate: String,
+  @JvmField val releaseVersion: String,
+  @JvmField val toPublish: Boolean,
+  @JvmField val retainProductDescriptorForBundledPlugin: Boolean,
+  @JvmField val isEap: Boolean,
+  /** Whether the content-module stage was allowed to run. Reported by `DevDistPatchedDescriptors` only. */
+  @JvmField val embedsContentModules: Boolean,
+)
+
+/**
+ * Applies the descriptor patch and returns the text the plugin's main jar receives.
+ *
+ * This is the body both producers of a patched descriptor share. One body means the two cannot disagree, so a byte
+ * comparison of their outputs guards the [request] and not the code.
+ *
+ * @param embedContentModules the content-module stage. It is not data: it runs over the element this body parsed, and
+ *   the assembly decides which `<module/>` survives with a filter that reads the JPS project model.
+ * @param patchText the last stage. It is not data for the same reason: it runs over the text this body produced.
+ */
+internal suspend fun applyPluginDescriptorPatch(
+  request: PluginDescriptorPatchRequest,
+  xIncludeResolver: XIncludeElementResolverImpl,
+  stages: DevDistDescriptorStages?,
+  embedContentModules: suspend (rootElement: Element) -> Unit,
+  patchText: (text: String) -> String,
+): String {
+  stages?.add(DevDistDescriptorStage.SOURCE, request.sourceContent)
+  stages?.add(DevDistDescriptorStage.RAW_TEXT_PATCHER, request.rawPatchedContent)
+
+  @Suppress("TestOnlyProblems")
+  val content = try {
+    val element = JDOMUtil.load(request.rawPatchedContent)
+    stages?.add(DevDistDescriptorStage.RESERIALIZED, JDOMUtil.write(element))
+    doPatchPluginXml(
+      rootElement = element,
+      pluginModuleName = request.mainModule,
+      pluginVersion = request.pluginVersion,
+      releaseDate = request.releaseDate,
+      releaseVersion = request.releaseVersion,
+      compatibleSinceUntil = request.compatibleSinceUntil,
+      toPublish = request.toPublish,
+      retainProductDescriptorForBundledPlugin = request.retainProductDescriptorForBundledPlugin,
+      isEap = request.isEap,
+    )
+    stages?.add(DevDistDescriptorStage.STAMPS, JDOMUtil.write(element))
+
+    resolveIncludes(element = element, elementResolver = xIncludeResolver)
+    stages?.add(DevDistDescriptorStage.INCLUDES, JDOMUtil.write(element))
+
+    embedContentModules(element)
+    val embedded = JDOMUtil.write(element)
+    stages?.add(DevDistDescriptorStage.CONTENT_MODULES, embedded)
+    val patched = patchText(embedded)
+    stages?.add(DevDistDescriptorStage.TEXT_PATCHER, patched)
+    patched
+  }
+  catch (e: Throwable) {
+    throw RuntimeException("Could not patch descriptor (module=${request.mainModule})", e)
+  }
+  stages?.let {
+    DevDistPatchedDescriptors.record(
+      mainModule = request.mainModule,
+      directoryName = request.directoryName,
+      mainJar = request.mainJarName,
+      embedsContentModules = request.embedsContentModules,
+      stages = it,
+    )
+  }
+  return content
+}
+
+/**
+ * Builds the patch request from the product layout, runs [applyPluginDescriptorPatch], then publishes the result twice.
+ *
+ * Both publishes are load-bearing. The module output patch puts the text into the plugin's main jar.
+ * `computeModuleSourcesByContent` reads the cached copy back, and it fails without it.
+ */
 internal suspend fun patchPluginXml(
   moduleOutputPatcher: ModuleOutputPatcher,
   platformLayout: PlatformLayout,
@@ -61,9 +160,7 @@ internal suspend fun patchPluginXml(
   // See `DevDistPatchedDescriptors`.
   val stages = DevDistPatchedDescriptors.stagesOrNull()
   val sourceContent = getUnprocessedPluginXmlContent(pluginModule, context.outputProvider).decodeToString()
-  stages?.add(DevDistDescriptorStage.SOURCE, sourceContent)
   val descriptorContent = pluginLayout.rawPluginXmlPatcher(sourceContent, context)
-  stages?.add(DevDistDescriptorStage.RAW_TEXT_PATCHER, descriptorContent)
 
   val compatibleBuildRange = context.productProperties.customCompatibleBuildRange ?: when {
     pluginLayout.pluginCompatibilityExactVersion || isIncludePluginsInBuiltinCustomRepository(context) -> CompatibleBuildRange.EXACT
@@ -76,70 +173,55 @@ internal suspend fun patchPluginXml(
   // once here, so that the report states the decision the run made and not a second computation over the layout.
   val embedsContentModules = pluginLayout.pathsToScramble.isEmpty()
 
-  @Suppress("TestOnlyProblems")
-  val content = try {
-    val element = JDOMUtil.load(descriptorContent)
-    stages?.add(DevDistDescriptorStage.RESERIALIZED, JDOMUtil.write(element))
-    doPatchPluginXml(
-      rootElement = element,
-      pluginModuleName = pluginLayout.mainModule,
+  // see comment in productModuleLayout
+  val xIncludeResolver = XIncludeElementResolverImpl(
+    searchPath = listOf(
+      DescriptorSearchScope(pluginLayout.includedModules.mapTo(LinkedHashSet()) { it.moduleName }, pluginDescriptorCache),
+      DescriptorSearchScope(platformLayout.includedModules.mapTo(LinkedHashSet()) { it.moduleName }, platformDescriptorCache),
+    ),
+    context = descriptorResolveContext(context),
+  )
+
+  val content = applyPluginDescriptorPatch(
+    request = PluginDescriptorPatchRequest(
+      mainModule = pluginLayout.mainModule,
+      directoryName = pluginLayout.directoryName,
+      mainJarName = pluginLayout.getMainJarName(),
+      sourceContent = sourceContent,
+      rawPatchedContent = descriptorContent,
       pluginVersion = pluginVersion.pluginVersion,
+      compatibleSinceUntil = pluginVersion.sinceUntil ?: getCompatiblePlatformVersionRange(compatibleBuildRange, context.buildNumber),
       releaseDate = releaseDate,
       releaseVersion = releaseVersion,
-      compatibleSinceUntil = pluginVersion.sinceUntil ?: getCompatiblePlatformVersionRange(compatibleBuildRange, context.buildNumber),
       toPublish = pluginsToPublish.contains(pluginLayout),
       retainProductDescriptorForBundledPlugin = pluginLayout.retainProductDescriptorForBundledPlugin,
       isEap = context.applicationInfo.isEAP,
-    )
-    stages?.add(DevDistDescriptorStage.STAMPS, JDOMUtil.write(element))
-
-    // see comment in productModuleLayout
-    val xIncludeResolver = XIncludeElementResolverImpl(
-      searchPath = listOf(
-        DescriptorSearchScope(pluginLayout.includedModules.mapTo(LinkedHashSet()) { it.moduleName }, pluginDescriptorCache),
-        DescriptorSearchScope(platformLayout.includedModules.mapTo(LinkedHashSet()) { it.moduleName }, platformDescriptorCache),
-      ),
-      context = context,
-    )
-    resolveIncludes(element = element, elementResolver = xIncludeResolver)
-    stages?.add(DevDistDescriptorStage.INCLUDES, JDOMUtil.write(element))
-
-    val dependencyHelper = (context as BuildContextImpl).jarPackagerDependencyHelper
-    val frontendModuleFilter = context.getFrontendModuleFilter()
-    filterAndProcessContentModules(rootElement = element, pluginMainModuleName = pluginLayout.mainModule, context = context) { moduleElement, moduleName, _ ->
-      if (!embedsContentModules) {
-        return@filterAndProcessContentModules
-      }
-
-      embedContentModule(
-        moduleElement = moduleElement,
-        pluginDescriptorContainer = pluginDescriptorCache,
-        xIncludeResolver = xIncludeResolver,
-        moduleName = moduleName,
-        dependencyHelper = dependencyHelper,
-        pluginLayout = pluginLayout,
-        frontendModuleFilter = frontendModuleFilter,
-        outputProvider = context.outputProvider,
-      )
-    }
-    val embedded = JDOMUtil.write(element)
-    stages?.add(DevDistDescriptorStage.CONTENT_MODULES, embedded)
-    val patched = pluginLayout.pluginXmlPatcher(embedded, context)
-    stages?.add(DevDistDescriptorStage.TEXT_PATCHER, patched)
-    patched
-  }
-  catch (e: Throwable) {
-    throw RuntimeException("Could not patch descriptor (module=${pluginLayout.mainModule})", e)
-  }
-  stages?.let {
-    DevDistPatchedDescriptors.record(
-      mainModule = pluginLayout.mainModule,
-      directoryName = pluginLayout.directoryName,
-      mainJar = pluginLayout.getMainJarName(),
       embedsContentModules = embedsContentModules,
-      stages = it,
-    )
-  }
+    ),
+    xIncludeResolver = xIncludeResolver,
+    stages = stages,
+    embedContentModules = { element ->
+      val dependencyHelper = (context as BuildContextImpl).jarPackagerDependencyHelper
+      val frontendModuleFilter = context.getFrontendModuleFilter()
+      filterAndProcessContentModules(rootElement = element, pluginMainModuleName = pluginLayout.mainModule, context = context) { moduleElement, moduleName, _ ->
+        if (!embedsContentModules) {
+          return@filterAndProcessContentModules
+        }
+
+        embedContentModule(
+          moduleElement = moduleElement,
+          pluginDescriptorContainer = pluginDescriptorCache,
+          xIncludeResolver = xIncludeResolver,
+          moduleName = moduleName,
+          dependencyHelper = dependencyHelper,
+          pluginLayout = pluginLayout,
+          frontendModuleFilter = frontendModuleFilter,
+          outputProvider = context.outputProvider,
+        )
+      }
+    },
+    patchText = { pluginLayout.pluginXmlPatcher(it, context) },
+  )
   // OS-specific plugins being built several times - we expect that plugin.xml must be the same
   moduleOutputPatcher.patchModuleOutput(moduleName = pluginLayout.mainModule, path = PLUGIN_XML_RELATIVE_PATH, content = content, overwrite = PatchOverwriteMode.IF_EQUAL)
   pluginDescriptorCache.put(PLUGIN_XML_RELATIVE_PATH, content.toByteArray())

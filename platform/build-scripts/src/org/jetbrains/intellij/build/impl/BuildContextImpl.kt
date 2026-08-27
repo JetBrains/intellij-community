@@ -10,7 +10,6 @@ import com.intellij.platform.runtime.product.serialization.RawProductModules
 import com.intellij.platform.runtime.product.serialization.ResourceFileResolver
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.util.containers.with
-import com.intellij.util.text.SemVer
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -186,18 +185,7 @@ class BuildContextImpl internal constructor(
   }
 
   override val pluginBuildNumber: String by lazy {
-    var value = buildNumber
-    if (value.endsWith(SnapshotBuildNumber.SNAPSHOT_SUFFIX)) {
-      //replace `SNAPSHOT` word with a big number to make the version match Semantic Versioning format
-      value = value.replace(SnapshotBuildNumber.SNAPSHOT_SUFFIX, ".99999999")
-    }
-    if (isNightly(value)) {
-      value = "$value.0"
-    }
-    check(SemVer.parseFromText(value) != null) {
-      "The plugin build number $value is expected to match the Semantic Versioning, see https://semver.org"
-    }
-    value
+    computePluginBuildNumber(buildNumber = buildNumber, buildDateInSeconds = options.buildDateInSeconds)
   }
 
   override fun reportDistributionBuildNumber() {

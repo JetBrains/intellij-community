@@ -301,7 +301,7 @@ suspend fun createCachedProductDescriptor(
       modules = platformLayout.includedModules.mapTo(LinkedHashSet()) { it.moduleName },
       descriptorCache = platformDescriptorCache,
     )),
-    context = context,
+    context = descriptorResolveContext(context),
   )
   for (content in mainPluginDescriptor.getChildren("content")) {
     for (moduleElement in content.getChildren("module")) {
@@ -428,7 +428,7 @@ internal suspend fun generatePluginClassPath(
           DescriptorSearchScope(pluginLayout.includedModules.mapTo(LinkedHashSet()) { it.moduleName }, pluginDescriptorContainer),
           DescriptorSearchScope(platformLayout.includedModules.mapTo(LinkedHashSet()) { it.moduleName }, platformDescriptorContainer),
         ),
-        context = context)
+        context = descriptorResolveContext(context))
 
       embedContentModules(
         rootElement = rootElement,

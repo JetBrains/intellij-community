@@ -1,0 +1,40 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_test")
+
+# Hand-maintained: no gazelle target is wired up in this repository, so adding a `.go` file means editing `srcs` here.
+
+go_binary(
+    name = "plugin-descriptor-patcher",
+    srcs = ["main.go"],
+    # Strip the symbol table and DWARF. A panic trace keeps its function names and line numbers either way, because
+    # those come from the runtime's own pclntab.
+    gc_linkopts = [
+        "-s",
+        "-w",
+    ],
+    importpath = "jetbrains.com/plugin-descriptor-patcher",
+    # pure disables cgo, so the Go-internal linker is used: the hermetic LLVM toolchain links PIE executables, which
+    # is incompatible with the non-PIC objects produced by the Go compiler.
+    pure = "on",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//build/plugin-descriptor-patcher/internal/descriptorxml",
+        "//build/plugin-descriptor-patcher/internal/stamps",
+    ],
+)
+
+# main.go is listed twice, the shape `//build/content-module-packer` uses for the same reason: the canonical rules_go
+# shape would be a go_library that the binary and the test both embed, and a descriptor action will declare the binary
+# above as an input. What this covers is the argument surface and the refusal of an unported stage. The bytes are gated
+# under `internal/`.
+go_test(
+    name = "plugin-descriptor-patcher_test",
+    srcs = [
+        "main.go",
+        "main_test.go",
+    ],
+    pure = "on",
+    deps = [
+        "//build/plugin-descriptor-patcher/internal/descriptorxml",
+        "//build/plugin-descriptor-patcher/internal/stamps",
+    ],
+)

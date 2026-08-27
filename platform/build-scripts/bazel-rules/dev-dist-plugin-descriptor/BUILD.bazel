@@ -1,0 +1,15 @@
+load("@rules_java//java:defs.bzl", "java_binary")
+
+# The tool of `dev_dist_plugin_descriptor`. A binary of its own and not a mode of `//build:dev_dist_assembler`: the
+# assembler's every option exists to serve an assembly, and this one must evaluate no product layout and load no JPS
+# project model. `DevDistPluginDescriptorMain`'s own doc carries the prohibition list a reviewer reads against the code.
+#
+# `runtime_deps` names `intellij.platform.buildScripts` because the patch body lives there and is `internal` to it:
+# `applyPluginDescriptorPatch`, `XIncludeElementResolverImpl` and `ScopedCachedDescriptorContainer` are all in that
+# module, and the main is in it for that reason. No jar set is carried as `data` - this tool resolves nothing by label.
+java_binary(
+    name = "dev-dist-plugin-descriptor",
+    main_class = "org.jetbrains.intellij.build.dev.DevDistPluginDescriptorMain",
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/build-scripts"],
+)

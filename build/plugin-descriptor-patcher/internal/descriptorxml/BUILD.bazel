@@ -1,0 +1,24 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+# Hand-maintained: no gazelle target is wired up in this repository, so adding a `.go` file means editing `srcs` here.
+
+go_library(
+    name = "descriptorxml",
+    srcs = [
+        "read.go",
+        "tree.go",
+        "write.go",
+    ],
+    importpath = "jetbrains.com/plugin-descriptor-patcher/internal/descriptorxml",
+    visibility = ["//visibility:public"],
+)
+
+# The byte gate of the round trip. Every expectation in `roundtrip_test.go` is a text the platform's own
+# `JDOMUtil.write(JDOMUtil.load(...))` produced on a real classpath, one construct a case. The whole-population arm is
+# `//build/plugin-descriptor-patcher/internal/stamps:stamps_test`, which needs a recorded artifact and skips without one.
+go_test(
+    name = "descriptorxml_test",
+    srcs = ["roundtrip_test.go"],
+    pure = "on",
+    deps = [":descriptorxml"],
+)

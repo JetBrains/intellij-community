@@ -176,6 +176,17 @@ data class DevDistDescriptorStep(
   @JvmField val bytes: Int,
   /** Whether this step changed the text the step before it produced. Absent for [DevDistDescriptorStage.SOURCE]. */
   @JvmField val changed: Boolean? = null,
+  /**
+   * The text this step produced, or `null` when a reader recovers that text without it.
+   *
+   * No text is stored twice. A step states its text only when the step changed the text, and the text is not
+   * [DevDistPluginDescriptor.patched]. Two rules recover the rest. A step that changed nothing carries the text of
+   * the step ahead of it, and a step that changed the text and states none carries `patched`.
+   *
+   * A text equal to [DevDistPluginDescriptor.source] is stated, because no reader can tell it from `patched` by the
+   * flags alone. Such a step needs a stage to undo the stage ahead of it, and this product has none of them.
+   */
+  @JvmField val text: String? = null,
 )
 
 @Serializable
@@ -227,21 +238,26 @@ internal class DevDistDescriptorStages {
     require(texts.firstOrNull()?.first == DevDistDescriptorStage.SOURCE) {
       "The descriptor of '$mainModule' was not recorded from its source: ${texts.map { it.first }}"
     }
+    val patched = texts.last().second
     return DevDistPluginDescriptor(
       mainModule = mainModule,
       directoryName = directoryName,
       mainJar = mainJar,
       embedsContentModules = embedsContentModules,
       steps = texts.mapIndexed { index, (stage, text) ->
+        val changed = if (index == 0) null else text != texts[index - 1].second
         DevDistDescriptorStep(
           stage = stage,
           // the descriptor goes into the jar as UTF-8, so a character count would not be the size of anything
           bytes = text.toByteArray(StandardCharsets.UTF_8).size,
-          changed = if (index == 0) null else text != texts.get(index - 1).second,
+          changed = changed,
+          // See `DevDistDescriptorStep.text`. The step ahead holds the text of a step that changed nothing, and
+          // `patched` holds the text of the last step that changed one.
+          text = if (changed == true && text != patched) text else null,
         )
       },
       source = texts.first().second,
-      patched = texts.last().second,
+      patched = patched,
     )
   }
 }

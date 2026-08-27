@@ -11,6 +11,7 @@ import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.classPath.DescriptorSearchScope
 import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.classPath.XIncludeElementResolverImpl
+import org.jetbrains.intellij.build.classPath.descriptorResolveContext
 import org.jetbrains.intellij.build.classPath.resolveIncludes
 import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
 import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
@@ -134,7 +135,7 @@ private suspend fun generateProjectStructureMapping(
         DescriptorSearchScope(pluginLayout.includedModules.mapTo(LinkedHashSet()) { it.moduleName }, pluginDescriptorCache),
         DescriptorSearchScope(platformLayout.includedModules.mapTo(LinkedHashSet()) { it.moduleName }, platformDescriptorCache),
       ),
-      context = context
+      context = descriptorResolveContext(context),
     )
     resolveIncludes(element = element, elementResolver = xIncludeResolver)
 

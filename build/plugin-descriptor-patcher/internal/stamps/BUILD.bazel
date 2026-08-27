@@ -1,0 +1,30 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+# Hand-maintained: no gazelle target is wired up in this repository, so adding a `.go` file means editing `srcs` here.
+
+go_library(
+    name = "stamps",
+    srcs = ["stamps.go"],
+    importpath = "jetbrains.com/plugin-descriptor-patcher/internal/stamps",
+    visibility = ["//visibility:public"],
+    deps = ["//build/plugin-descriptor-patcher/internal/descriptorxml"],
+)
+
+# `stamps_test.go` holds the curated cases, each an output the platform's `doPatchPluginXml` produced.
+# `population_test.go` holds the whole-population arm: it reads the `*.patched-descriptors.json` a dev assembly wrote,
+# named by `IJ_DESCRIPTOR_CASES`, and skips when the variable is unset. The artifact is megabytes of one product's
+# descriptors and is not committed. `artifact_test.go` is its reader. See the two files' own docs.
+go_test(
+    name = "stamps_test",
+    srcs = [
+        "artifact_test.go",
+        "population_test.go",
+        "stamps_test.go",
+    ],
+    env_inherit = ["IJ_DESCRIPTOR_CASES"],
+    pure = "on",
+    deps = [
+        ":stamps",
+        "//build/plugin-descriptor-patcher/internal/descriptorxml",
+    ],
+)

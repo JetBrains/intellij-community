@@ -21,6 +21,7 @@ internal class PrepackedPluginContentTest {
         actualRelativeOutputFile = relation.relativeOutputFile,
         hasModuleExclusions = false,
         hasPatchedOutput = false,
+        hasInMemoryDescriptor = false,
         hasGeneratedSearchableOptions = false,
         hasSeparateLibraryJar = false,
         hasLayoutPlacedModuleLibrary = false,
@@ -37,6 +38,7 @@ internal class PrepackedPluginContentTest {
         actualRelativeOutputFile = "intellij.plugin.content.jar",
         hasModuleExclusions = false,
         hasPatchedOutput = false,
+        hasInMemoryDescriptor = false,
         hasGeneratedSearchableOptions = false,
         hasSeparateLibraryJar = false,
         hasLayoutPlacedModuleLibrary = false,
@@ -55,6 +57,16 @@ internal class PrepackedPluginContentTest {
   }
 
   /**
+   * The plugin's main jar takes its `META-INF/plugin.xml` from `patchPluginXml`, which computes the text during the
+   * assembly. A packing action holds no such source, so the handed-off jar would ship with no descriptor at all. Every
+   * main jar of this product carries one, so the refusal is about a real population.
+   */
+  @Test
+  fun `rejects a jar that receives a computed descriptor`() {
+    assertRejected("which receives a computed META-INF/plugin.xml", hasInMemoryDescriptor = true)
+  }
+
+  /**
    * The cases a byte comparison of the module jar cannot see: the separated library jar is a *sibling* the handoff never
    * writes, and a test plugin module is packed from a different output root altogether.
    */
@@ -69,6 +81,7 @@ internal class PrepackedPluginContentTest {
     message: String,
     hasModuleExclusions: Boolean = false,
     hasPatchedOutput: Boolean = false,
+    hasInMemoryDescriptor: Boolean = false,
     hasGeneratedSearchableOptions: Boolean = false,
     hasSeparateLibraryJar: Boolean = false,
     hasLayoutPlacedModuleLibrary: Boolean = false,
@@ -80,6 +93,7 @@ internal class PrepackedPluginContentTest {
         actualRelativeOutputFile = relation.relativeOutputFile,
         hasModuleExclusions = hasModuleExclusions,
         hasPatchedOutput = hasPatchedOutput,
+        hasInMemoryDescriptor = hasInMemoryDescriptor,
         hasGeneratedSearchableOptions = hasGeneratedSearchableOptions,
         hasSeparateLibraryJar = hasSeparateLibraryJar,
         hasLayoutPlacedModuleLibrary = hasLayoutPlacedModuleLibrary,

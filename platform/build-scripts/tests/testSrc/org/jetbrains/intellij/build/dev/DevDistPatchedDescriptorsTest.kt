@@ -34,6 +34,57 @@ internal class DevDistPatchedDescriptorsTest {
     assertThat(record.patched).isEqualTo("<idea-plugin />")
   }
 
+  /**
+   * Every stage's text is recoverable, and no text is stored twice.
+   *
+   * The three ways a step states no text are all here: the source, a step that changed nothing, and the last step
+   * that changed the text.
+   */
+  @Test
+  fun `a step states its text only when no other field holds that text`() {
+    val stages = DevDistDescriptorStages()
+    stages.add(DevDistDescriptorStage.SOURCE, "<idea-plugin/>")
+    stages.add(DevDistDescriptorStage.RAW_TEXT_PATCHER, "<idea-plugin/>")
+    stages.add(DevDistDescriptorStage.RESERIALIZED, "<idea-plugin />")
+    stages.add(DevDistDescriptorStage.STAMPS, "<idea-plugin><version>1</version></idea-plugin>")
+
+    val record = record(stages)
+
+    assertThat(record.steps.map { it.stage to it.text }).containsExactly(
+      // the record's own `source` field holds it
+      DevDistDescriptorStage.SOURCE to null,
+      // the step ahead of it holds it
+      DevDistDescriptorStage.RAW_TEXT_PATCHER to null,
+      // nothing else holds it, so the step states it
+      DevDistDescriptorStage.RESERIALIZED to "<idea-plugin />",
+      // the record's own `patched` field holds it
+      DevDistDescriptorStage.STAMPS to null,
+    )
+  }
+
+  /**
+   * A step whose text is the source text states that text.
+   *
+   * The flags alone cannot tell such a step from the last step that changed the text, so the reader would answer
+   * `patched` for it. No stage of this product undoes the stage ahead of it, and the rule is here for the one that
+   * does.
+   */
+  @Test
+  fun `a step that returns to the source text states it`() {
+    val stages = DevDistDescriptorStages()
+    stages.add(DevDistDescriptorStage.SOURCE, "<idea-plugin/>")
+    stages.add(DevDistDescriptorStage.RAW_TEXT_PATCHER, "<idea-plugin />")
+    stages.add(DevDistDescriptorStage.RESERIALIZED, "<idea-plugin/>")
+    stages.add(DevDistDescriptorStage.STAMPS, "<idea-plugin><version>1</version></idea-plugin>")
+
+    assertThat(record(stages).steps.map { it.text }).containsExactly(
+      null,
+      "<idea-plugin />",
+      "<idea-plugin/>",
+      null,
+    )
+  }
+
   /** A descriptor is UTF-8 in the jar, so the size of a non-ASCII one is not its character count. */
   @Test
   fun `a step is measured in the bytes the jar receives`() {
@@ -137,6 +188,7 @@ internal class DevDistPatchedDescriptorsTest {
       .contains("\"steps\"")
       .contains("\"bytes\"")
       .contains("\"changed\"")
+      .contains("\"text\": \"<idea-plugin>RESERIALIZED</idea-plugin>\"")
       .contains("\"stage\": \"source\"")
       .contains("\"stage\": \"rawTextPatcher\"")
       .contains("\"stage\": \"reserialized\"")

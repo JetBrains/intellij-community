@@ -15,6 +15,7 @@ import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.PluginDistribution
 import org.jetbrains.intellij.build.classPath.DescriptorSearchScope
 import org.jetbrains.intellij.build.classPath.XIncludeElementResolverImpl
+import org.jetbrains.intellij.build.classPath.descriptorResolveContext
 import org.jetbrains.intellij.build.classPath.resolveIncludes
 import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
@@ -195,7 +196,7 @@ suspend fun collectPluginDescriptors(
                 searchInDependencies = DescriptorSearchScope.SearchMode.PLUGIN_COLLECTOR,
               ),
             ),
-            context = context
+            context = descriptorResolveContext(context),
           )
         )
 

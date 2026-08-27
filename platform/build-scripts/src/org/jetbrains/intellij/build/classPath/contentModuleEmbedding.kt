@@ -231,7 +231,7 @@ internal suspend fun resolveAndCacheDescriptorForEmbeddedProduct(
         descriptorCache = platformDescriptorContainer
       ),
     ),
-    context = context
+    context = descriptorResolveContext(context),
   )
 
   withContext(Dispatchers.IO) {
@@ -352,15 +352,40 @@ internal suspend fun resolveAndEmbedContentModuleDescriptor(
   moduleElement.setContent(CDATA(JDOMUtil.write(descriptor)))
 }
 
+/**
+ * What [XIncludeElementResolverImpl] reads from the build.
+ *
+ * The resolver needs a module output and one product name. It does not need a build context, a plugin layout or a
+ * platform layout. A descriptor patch that runs with no JPS project model supplies its own implementation, and it
+ * pre-seeds every descriptor cache so that [outputProvider] is never asked.
+ */
+internal interface DescriptorResolveContext {
+  val outputProvider: ModuleOutputProvider
+
+  /** The simple name of the product-properties class. */
+  val productPropertiesName: String
+}
+
+/** Reads the two facts of [DescriptorResolveContext] out of a build context. */
+internal fun descriptorResolveContext(context: BuildContext): DescriptorResolveContext = BuildContextDescriptorResolveContext(context)
+
+private class BuildContextDescriptorResolveContext(private val context: BuildContext) : DescriptorResolveContext {
+  override val outputProvider: ModuleOutputProvider
+    get() = context.outputProvider
+
+  override val productPropertiesName: String
+    get() = context.productProperties::class.java.simpleName
+}
+
 internal class XIncludeElementResolverImpl(
   private val searchPath: List<DescriptorSearchScope>,
-  private val context: BuildContext,
+  private val context: DescriptorResolveContext,
 ) {
   fun copyWithExtraSearchPath(moduleName: String, container: ScopedCachedDescriptorContainer): XIncludeElementResolverImpl {
     for (scope in searchPath) {
       if (scope.modules.contains(moduleName)) {
         // mostly all our products have incorrect layout (especially rider or clion), so, check only IDEA for now
-        if (context.productProperties::class.java.simpleName == "org.jetbrains.intellij.build.IdeaUltimateProperties") {
+        if (context.productPropertiesName == "org.jetbrains.intellij.build.IdeaUltimateProperties") {
           require(scope.descriptorCache == container) {
             "Module '$moduleName' is already in search path with a different descriptor cache container. " +
             "Expected the same container instance, but found a mismatch. This indicates an inconsistency in descriptor caching."

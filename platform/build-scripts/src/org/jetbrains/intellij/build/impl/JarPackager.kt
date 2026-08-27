@@ -28,6 +28,7 @@ import org.jetbrains.intellij.build.JarPackagerDependencyHelper
 import org.jetbrains.intellij.build.LazySource
 import org.jetbrains.intellij.build.MAVEN_REPO
 import org.jetbrains.intellij.build.NativeFileHandler
+import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.SignNativeFileMode
 import org.jetbrains.intellij.build.Source
@@ -353,6 +354,9 @@ class JarPackager private constructor(
       actualRelativeOutputFile = relativeOutputFile,
       hasModuleExclusions = !pluginLayout.moduleExcludes.get(moduleName).isNullOrEmpty(),
       hasPatchedOutput = moduleOutputPatcher.getPatchedContent(moduleName).isNotEmpty(),
+      // The plugin's descriptor lands in the jar of the main module, which is the layout's main jar.
+      hasInMemoryDescriptor = relativeOutputFile == pluginLayout.getMainJarName() &&
+                              moduleOutputPatcher.getPatchedContent(pluginLayout.mainModule).containsKey(PLUGIN_XML_RELATIVE_PATH),
       hasGeneratedSearchableOptions = !searchableOptionSet?.createSourceByModule(moduleName).isNullOrEmpty(),
       // The JPS model's declared paths, not the resolved jars. `isSeparateLibraryJar` is a pure name predicate and this
       // is a guard, so a name is all it needs - and the two agree: a Maven library's Bazel jar target is named
@@ -871,6 +875,7 @@ internal fun validatePrepackedPluginContentHandoff(
   actualRelativeOutputFile: String,
   hasModuleExclusions: Boolean,
   hasPatchedOutput: Boolean,
+  hasInMemoryDescriptor: Boolean,
   hasGeneratedSearchableOptions: Boolean,
   hasSeparateLibraryJar: Boolean,
   hasLayoutPlacedModuleLibrary: Boolean,
@@ -882,6 +887,14 @@ internal fun validatePrepackedPluginContentHandoff(
   }
   check(!hasModuleExclusions) { "Prepacked plugin content $relation has module exclusions" }
   check(!hasPatchedOutput) { "Prepacked plugin content $relation has patched module output" }
+  // `patchPluginXml` computes the plugin's `META-INF/plugin.xml` during the assembly, so that text exists in no file and
+  // a packing action cannot hold it. A handed-off jar would ship without its descriptor, and no byte gate would see it:
+  // `dev-dist.cmd jars` compares the action's output against the `JarPackager` jar, and neither holds the descriptor.
+  // The failure surfaces at IDE start. `hasPatchedOutput` asks about one module. This clause asks about the jar,
+  // because a relation keyed by a jar can name a jar whose descriptor comes from another module of the same plugin.
+  check(!hasInMemoryDescriptor) {
+    "Prepacked plugin content $relation would replace '$actualRelativeOutputFile', which receives a computed $PLUGIN_XML_RELATIVE_PATH"
+  }
   check(!hasGeneratedSearchableOptions) { "Prepacked plugin content $relation has generated searchable options" }
   // `computeSourcesForModuleLibs` lifts every `isSeparateLibraryJar` file out of the module jar into its own `lib/<name>.jar`. That call
   // sits inside `computeSourcesForModule`, so for a handed-off module the sibling jar is never written at all - while the module jar it
