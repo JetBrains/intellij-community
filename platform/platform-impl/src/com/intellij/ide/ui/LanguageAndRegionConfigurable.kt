@@ -8,6 +8,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.Region
 import com.intellij.ide.RegionSettings
 import com.intellij.ide.RegionSettings.RegionSettingsListener
+import com.intellij.ide.RegionSettingsService
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.ui.localization.statistics.EventSource
 import com.intellij.ide.ui.localization.statistics.LocalizationActionsStatistics
@@ -47,10 +48,6 @@ import javax.swing.JComponent
 import javax.swing.ListCellRenderer
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.PopupMenuEvent
-
-/**
- * @author Alexander Lobas
- */
 
 @Internal
 object LanguageAndRegionUi {
@@ -139,15 +136,15 @@ object LanguageAndRegionUi {
     panel.row(IdeBundle.message("combobox.region")) {
       val helpUrl = HelpManagerImpl.getHelpUrl("region-settings")
 
-      var appliedRegion = RegionSettings.getRegion()
+      var appliedRegion = getCurrentRegionInSettings()
       val model = CollectionComboBoxModel(Region.entries.sortedBy { it.displayOrdinal }.toMutableList(), appliedRegion)
       val regionBox = comboBox(model).accessibleName(IdeBundle.message("combobox.region")).widthGroup(comboGroup)
 
       if (propertyGraph != null && connection != null) {
-        val property = propertyGraph.lazyProperty { RegionSettings.getRegion() }
+        val property = propertyGraph.lazyProperty { getCurrentRegionInSettings() }
 
         property.afterChange(parentDisposable) {
-          if (it == RegionSettings.getRegion()) {
+          if (it == getCurrentRegionInSettings()) {
             return@afterChange
           }
 
@@ -158,7 +155,7 @@ object LanguageAndRegionUi {
         regionBox.bindItem(property)
 
         connection.subscribe(RegionSettingsListener.UPDATE_TOPIC, RegionSettingsListener {
-          model.selectedItem = RegionSettings.getRegion()
+          model.selectedItem = getCurrentRegionInSettings()
         })
 
         regionBox.gap(RightGap.SMALL)
@@ -249,14 +246,19 @@ object LanguageAndRegionUi {
   internal val ITEM_MORE_LANGUAGES = Locale("more languages")
 }
 
+private fun getCurrentRegionInSettings(): Region {
+  return RegionSettingsService.getInstance().getCurrentRegionIfKnown() ?: Region.NOT_SET
+}
+
 internal class LanguageAndRegionConfigurable :
   BoundSearchableConfigurable(IdeBundle.message("title.language.and.region"), "language-region-settings", "preferences.language.and.region") {
   private lateinit var initSelectionLanguage: Locale
   private lateinit var initSelectionRegion: Region
   private val eventSource: EventSource = EventSource.SETTINGS
+
   override fun createPanel(): DialogPanel {
     initSelectionLanguage = LocalizationUtil.getLocale(true)
-    initSelectionRegion = RegionSettings.getRegion()
+    initSelectionRegion = getCurrentRegionInSettings()
 
     return panel {
       LanguageAndRegionUi.createContent(this, null, disposable!!, null, eventSource)
@@ -265,8 +267,9 @@ internal class LanguageAndRegionConfigurable :
 
   override fun apply() {
     super.apply()
+
     val selectedLocale = LocalizationUtil.getLocale(true)
-    val selectedRegion = RegionSettings.getRegion()
+    val selectedRegion = getCurrentRegionInSettings()
     if (initSelectionLanguage.toLanguageTag() != selectedLocale.toLanguageTag() ||
         initSelectionRegion != selectedRegion) {
       LocalizationActionsStatistics.settingsUpdated(selectedLocale, initSelectionLanguage, selectedRegion, initSelectionRegion, eventSource)
