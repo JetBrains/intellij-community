@@ -11,12 +11,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.python.community.common.tools.ToolId
-import com.intellij.python.community.execService.Args
-import com.intellij.python.community.execService.ExecService
-import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.sdk.common.evolution.EvoAddNewDto
 import com.intellij.python.sdk.common.evolution.EvoAddNewOptionDto
 import com.intellij.python.sdk.common.evolution.EvoBasePythonDto
@@ -28,11 +24,9 @@ import com.intellij.python.sdk.common.evolution.EvoNodeKind
 import com.intellij.python.sdk.common.evolution.EvoSectionDto
 import com.intellij.python.sdk.common.evolution.PyEvoRegistry
 import com.intellij.python.sdk.common.evolution.PyInterpreterRef
-import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.getOrNull
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.project
 import com.jetbrains.python.sdk.add.v2.FileSystem
@@ -54,7 +48,6 @@ import java.nio.file.Path
 import javax.swing.Icon
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
-import kotlin.io.path.isExecutable
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.pathString
 
@@ -623,19 +616,3 @@ fun evoEnvLeaf(title: @Nls String, pythonBinary: Path?, icon: Icon, version: @Nl
 @ApiStatus.Internal
 fun evoWarning(message: @Nls String): EvoLoadResultDto = EvoLoadResultDto.Warning(message)
 
-@ApiStatus.Internal
-fun Path.resolvePythonExecutable(): Path? {
-  val candidates = if (SystemInfo.isWindows) listOf(Path.of("bin", "python.exe")) else listOf(Path.of("bin", "python"))
-  return candidates.firstNotNullOfOrNull { rel -> resolve(rel).takeIf { it.isExecutable() } }
-}
-
-private const val VERSION_PREFIX = "Python "
-
-internal fun String?.parsePythonVersion(): String? =
-  this?.trim()?.takeIf { it.startsWith(VERSION_PREFIX) }?.removePrefix(VERSION_PREFIX)?.trim()?.takeIf { it.isNotEmpty() }
-
-@ApiStatus.Internal
-suspend fun PythonBinary.getPythonVersion(): @NlsSafe String? {
-  val stdout = ExecService().execGetStdout(this, Args("--version")).getOrNull()
-  return stdout.parsePythonVersion()
-}

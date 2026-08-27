@@ -14,7 +14,6 @@ import com.intellij.python.sdk.backend.evolution.EvoToolContext
 import com.intellij.python.sdk.backend.evolution.PyToolEvoEnvironmentProvider
 import com.intellij.python.sdk.backend.evolution.evoEnvLeaf
 import com.intellij.python.sdk.backend.evolution.evoWarning
-import com.intellij.python.sdk.backend.evolution.resolvePythonExecutable
 import com.intellij.python.sdk.backend.evolution.toDisplayPath
 import com.intellij.python.sdk.backend.evolution.toSectionLabel
 import com.intellij.python.sdk.backend.evolution.toolMissing
@@ -37,6 +36,7 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.impl.PySdkBundle
+import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import java.nio.file.Path
 import kotlin.io.path.name
 
@@ -145,6 +145,6 @@ internal class CondaEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
         val root = Path.of(pathStr)
         // An env created with `-p` has no name column, so the line starts with the marker/path: fall back to the dir name.
         val realName = parts.first().takeIf { it.isNotBlank() } ?: root.name
-        CondaEnv(realName, root, root.resolvePythonExecutable())
+        CondaEnv(realName, root, root.resolvePythonBinary())
       }
 }

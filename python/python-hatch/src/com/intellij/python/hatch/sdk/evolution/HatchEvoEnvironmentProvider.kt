@@ -21,7 +21,6 @@ import com.intellij.python.sdk.backend.evolution.PyToolEvoEnvironmentProvider
 import com.intellij.python.sdk.backend.evolution.evoCreateEnvLeaf
 import com.intellij.python.sdk.backend.evolution.evoEnvLeaf
 import com.intellij.python.sdk.backend.evolution.evoWarning
-import com.intellij.python.sdk.backend.evolution.resolvePythonExecutable
 import com.intellij.python.sdk.common.evolution.EvoLeafDto
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
 import com.intellij.python.sdk.common.evolution.EvoSectionDto
@@ -32,6 +31,7 @@ import com.jetbrains.python.hatch.sdk.createSdk
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.impl.PySdkBundle
+import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import java.nio.file.Path
 
 internal class HatchEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
@@ -43,7 +43,7 @@ internal class HatchEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
                        ?: return evoWarning(PyHatchBundle.message("evolution.hatch.executable.is.not.found"))
     val environments = hatchService.findVirtualEnvironments().getOrNull() ?: return EvoLoadResultDto.Ok(emptyList())
     val leaves = environments.map { env ->
-      val binary = env.pythonVirtualEnvironment?.pythonHomePath?.path?.resolvePythonExecutable()
+      val binary = env.pythonVirtualEnvironment?.pythonHomePath?.path?.resolvePythonBinary()
       // Materialized env → select it; a declared-but-not-created env → create it on click (token = env name).
       // A not-created env carries its declared `python` option, which [decorate] turns into the version picker.
       if (binary != null) evoEnvLeaf(title = env.hatchEnvironment.name, pythonBinary = binary, icon = icon)
@@ -58,7 +58,7 @@ internal class HatchEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
     val module = context.pyProject.module
     val hatchService = module.getHatchService(context.fileSystem).getOr { return it }
     val env = hatchService.findVirtualEnvironments().getOr { return it }.firstOrNull { candidate ->
-      candidate.pythonVirtualEnvironment?.pythonHomePath?.path?.resolvePythonExecutable()?.toString() == homePath.toString()
+      candidate.pythonVirtualEnvironment?.pythonHomePath?.path?.resolvePythonBinary()?.toString() == homePath.toString()
     } ?: return PyResult.localizedError(PySdkBundle.message("evolution.error.env.not.found", homePath.toString()))
     // A missing working directory is not fatal: hatch is driven from the module's base dir in that case, as before.
     val workingDir = resolveHatchWorkingDirectory(context.pyProject.project, module).getOrNull() ?: context.pyProject.baseDir

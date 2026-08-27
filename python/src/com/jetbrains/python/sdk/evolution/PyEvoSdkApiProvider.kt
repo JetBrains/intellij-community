@@ -22,6 +22,7 @@ import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.python.community.common.tools.ToolId
+import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
 import com.intellij.python.community.impl.installer.PySdkToInstallManager
 import com.intellij.python.community.services.systemPython.SystemPython
@@ -38,7 +39,6 @@ import com.intellij.python.sdk.backend.evolution.EvoPyProject
 import com.intellij.python.sdk.backend.evolution.EvoToolContext
 import com.intellij.python.sdk.backend.evolution.PyEvoEnvironmentProvider
 import com.intellij.python.sdk.backend.evolution.discoverVenvs
-import com.intellij.python.sdk.backend.evolution.getPythonVersion
 import com.intellij.python.sdk.backend.evolution.toDisplayPath
 import com.intellij.python.sdk.backend.evolution.toSectionLabel
 import com.intellij.python.sdk.backend.evolution.withCreators
@@ -720,7 +720,13 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     val binary = homePath.toNioPathOrNull() ?: return null
     // Detect the version in the tool's own coroutine (the same one that listed its envs), so it appears under that tool.
     val label = providers.firstOrNull { it.toolId.id == nodeId }?.label ?: nodeId
-    return toolScope(project, traceId, nodeId, label).async { binary.getPythonVersion() }.await()
+    return toolScope(project, traceId, nodeId, label).async {
+      // Validating runs the interpreter rather than only asking it for a version. A python that answers `--version` and
+      // then fails to run is reported as broken here, instead of showing a version for something unusable.
+      val info = binary.validatePythonAndGetInfo().getOrNull() ?: return@async null
+      // The reported patch version when the probe captured one; otherwise the level it parsed, never a second probe.
+      info.version ?: info.languageLevel.toPythonVersion()
+    }.await()
   }
 
   override suspend fun addInterpreter(projectId: ProjectId, pyProjectKey: String, nodeId: String): EvoSelectResultDto {
