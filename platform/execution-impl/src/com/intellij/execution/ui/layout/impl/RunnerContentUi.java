@@ -946,7 +946,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
         final Content content = event.getContent();
         content.removePropertyChangeListener(RunnerContentUi.this);
 
-        GridImpl grid = (GridImpl)findGridFor(content);
+        GridImpl grid = getGrids().filter(candidate -> candidate.findCell(content) != null).findFirst().orElse(null);
         if (grid != null) {
           grid.remove(content);
           if (grid.isEmpty()) {
