@@ -91,6 +91,10 @@ import javax.swing.JPanel
 import javax.swing.KeyStroke
 
 private val GO_TO_EP_NAME = ExtensionPointName<GotoRelatedProvider>("com.intellij.gotoRelatedProvider")
+// tmp, to be removed
+private val shouldPreferLegacyNavigationPath: Boolean
+  get() = Registry.`is`("ide.navigation.blocking.open.for.cached")
+
 
 fun getPsiElementPopup(elements: Array<PsiElement>, title: @NlsContexts.PopupTitle String?): JBPopup {
   return PsiTargetNavigator(elements).createPopup(project = elements[0].project, title = title)
@@ -217,6 +221,16 @@ internal suspend fun openFileWithPsiElementAsync(element: PsiElement, searchForO
     element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, true)
   }
 
+  if (shouldPreferLegacyNavigationPath) {
+    val fileToOpen = readAction {
+      element.takeIf { it.isValid }?.navigationElement?.containingFile?.takeIf { it.isValid }?.virtualFile
+    }
+    val cachedDocument = fileToOpen?.let { serviceAsync<FileDocumentManager>().getCachedDocument(it) }
+    if (!hasDecompiler || cachedDocument != null) {
+      return navigateBlocking(element, openAsNative, searchForOpen, requestFocus, commandProcessor)
+    }
+  }
+
   // Content loading may take an indefinite time, there is no way to tell in advance whether a given open
   // will need it. The blocking openFile(file, window, options) overload waits for the composite to become
   // available via blockingWaitForCompositeFileOpen on the EDT, which keeps the document-load coroutine bound to
@@ -225,6 +239,36 @@ internal suspend fun openFileWithPsiElementAsync(element: PsiElement, searchForO
   // the load stays cancellable
   return navigateWithoutCommand(element, openAsNative, searchForOpen, requestFocus, commandProcessor,
                                 registerUndo = hasDecompiler)
+}
+
+private suspend fun navigateBlocking(
+  element: PsiElement,
+  openAsNative: Boolean,
+  searchForOpen: Boolean,
+  requestFocus: Boolean,
+  commandProcessor: CommandProcessorEx,
+): Boolean = try {
+  withContext(Dispatchers.EDT) {
+    // all navigations inside should be treated as a single operation, so that 'Back' action undoes it in one go
+    val commandHandle = commandProcessor.startCommand(element.project, "", null, UndoConfirmationPolicy.DEFAULT)
+                        ?: return@withContext false
+    try {
+      if (openAsNative || !activatePsiElementIfOpen(element, searchForOpen, requestFocus)) {
+        val navigationItem = element as NavigationItem
+        if (navigationItem.canNavigate()) {
+          navigationItem.navigate(requestFocus)
+          return@withContext true
+        }
+      }
+    }
+    finally {
+      commandProcessor.finishCommand(commandHandle, null)
+      element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null)
+    }
+    false
+  }
+} finally {
+  element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null)
 }
 
 /**
