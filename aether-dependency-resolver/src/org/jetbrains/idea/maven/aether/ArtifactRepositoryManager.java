@@ -51,6 +51,7 @@ import org.eclipse.aether.version.Version;
 import org.eclipse.aether.version.VersionConstraint;
 import org.eclipse.aether.version.VersionRange;
 import org.eclipse.aether.version.VersionScheme;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,6 +73,18 @@ import java.util.stream.Collectors;
  * all necessary params like a path to local repo should be passed in constructor
  */
 public final class ArtifactRepositoryManager {
+  /**
+   * Holds the URL of a repository. Every request puts that repository before the requested
+   * repositories, so it answers first. Any URL is possible. The intended use is a mirror, which then
+   * answers before the repositories of the project.
+   * <p>
+   * A version range is one exception. Aether merges the metadata of every repository, and it takes
+   * the highest version. That repository loses the priority when it holds no artifact with that
+   * version.
+   */
+  @ApiStatus.Internal
+  public static final String PRIORITY_REPOSITORY_URL_PROPERTY = "idea.jar.repository.priority.url";
+
   private static final Logger LOG = Logger.getInstance(ArtifactRepositoryManager.class);
   
   private static final VersionScheme ourVersioning = new GenericVersionScheme();
@@ -398,17 +411,18 @@ public final class ArtifactRepositoryManager {
     }
     else {
       session = mySessionFactory.createDefaultSession();
+      List<RemoteRepository> repositories = getRepositories();
       for (Artifact artifact : toArtifacts(groupId, artifactId, constraints, Collections.singleton(kind))) {
         if (ourVersioning.parseVersionConstraint(artifact.getVersion()).getRange() != null) {
-          VersionRangeRequest versionRangeRequest = new VersionRangeRequest(artifact, Collections.unmodifiableList(myRemoteRepositories), null);
+          VersionRangeRequest versionRangeRequest = new VersionRangeRequest(artifact, repositories, null);
           VersionRangeResult result = RepositorySystemHolder.getInstance().resolveVersionRange(session, versionRangeRequest);
           if (!result.getVersions().isEmpty()) {
             Artifact newArtifact = artifact.setVersion(result.getHighestVersion().toString());
-            requests.add(new ArtifactRequest(newArtifact, Collections.unmodifiableList(myRemoteRepositories), null));
+            requests.add(new ArtifactRequest(newArtifact, repositories, null));
           }
         }
         else {
-          requests.add(new ArtifactRequest(artifact, Collections.unmodifiableList(myRemoteRepositories), null));
+          requests.add(new ArtifactRequest(artifact, repositories, null));
         }
       }
     }
@@ -585,12 +599,30 @@ public final class ArtifactRepositoryManager {
     );
   }
 
+  /**
+   * Returns the repositories for a request. {@link #PRIORITY_REPOSITORY_URL_PROPERTY} adds one
+   * repository before the requested repositories.
+   * <p>
+   * Must be called on a background thread without holding a read lock. A constructor can run on any
+   * thread, so a constructor must not call this method.
+   */
+  private @NotNull List<RemoteRepository> getRepositories() {
+    String priorityUrl = System.getProperty(PRIORITY_REPOSITORY_URL_PROPERTY, "").trim();
+    if (priorityUrl.isEmpty()) {
+      return Collections.unmodifiableList(myRemoteRepositories);
+    }
+    List<RemoteRepository> repositories = new ArrayList<>(myRemoteRepositories.size() + 1);
+    repositories.add(createRemoteRepository("priority", priorityUrl, null, true));
+    repositories.addAll(myRemoteRepositories);
+    return Collections.unmodifiableList(repositories);
+  }
+
   private CollectRequest createCollectRequest(String groupId, String artifactId, Collection<VersionConstraint> versions, Set<ArtifactKind> kinds) {
     CollectRequest request = new CollectRequest();
     for (Artifact artifact : toArtifacts(groupId, artifactId, versions, kinds)) {
       request.addDependency(new Dependency(artifact, JavaScopes.COMPILE));
     }
-    return request.setRepositories(Collections.unmodifiableList(myRemoteRepositories));
+    return request.setRepositories(getRepositories());
   }
 
   private VersionRangeRequest createVersionRangeRequest(String groupId, String artifactId, VersionConstraint versioning, ArtifactKind artifactKind) {
@@ -598,8 +630,9 @@ public final class ArtifactRepositoryManager {
     for (Artifact artifact : toArtifacts(groupId, artifactId, Collections.singleton(versioning), EnumSet.of(artifactKind))) {
       request.setArtifact(artifact); // will be at most 1 artifact
     }
-    List<RemoteRepository> repositories = new ArrayList<>(myRemoteRepositories.size());
-    for (RemoteRepository repository : myRemoteRepositories) {
+    List<RemoteRepository> source = getRepositories();
+    List<RemoteRepository> repositories = new ArrayList<>(source.size());
+    for (RemoteRepository repository : source) {
       RepositoryPolicy policy = new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_ALWAYS, RepositoryPolicy.CHECKSUM_POLICY_WARN);
       repositories.add(new RemoteRepository.Builder(repository).setPolicy(policy).build());
     }

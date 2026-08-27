@@ -7,6 +7,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.repository.RemoteRepository;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -126,6 +127,112 @@ public class ArtifactRepositoryManagerTest extends UsefulTestCase {
                (fileName.endsWith(".pom") || fileName.endsWith(".jar"));
       }).collect(Collectors.toList()));
     }
+  }
+
+  public void testThePropertyRepositoryAnswersFirst() throws Exception {
+    Path priority = createTestRepository("from the priority repository");
+    try {
+      assertEquals("from the priority repository", resolveWithPriorityProperty(priority.toUri().toString()));
+    }
+    finally {
+      NioFiles.deleteRecursively(priority);
+    }
+  }
+
+  public void testABlankPropertyAddsNoRepository() throws Exception {
+    assertEquals("from the requested repository", resolveWithPriorityProperty("  "));
+  }
+
+  public void testNoPropertyAddsNoRepository() throws Exception {
+    assertEquals("from the requested repository", resolveWithPriorityProperty(null));
+  }
+
+  /**
+   * Gives the manager one directory that holds the artifact, and sets
+   * {@link ArtifactRepositoryManager#PRIORITY_REPOSITORY_URL_PROPERTY} to the given value. The
+   * content of the resolved file tells you which repository answered. The test needs no network.
+   *
+   * @param propertyValue the value of the property, or null for no property
+   */
+  private static String resolveWithPriorityProperty(@Nullable String propertyValue) throws Exception {
+    Path requested = createTestRepository("from the requested repository");
+    Path local = Files.createTempDirectory("aether-priority-local");
+    try {
+      if (propertyValue != null) {
+        System.setProperty(ArtifactRepositoryManager.PRIORITY_REPOSITORY_URL_PROPERTY, propertyValue);
+      }
+      try {
+        return Files.readString(resolveSingleArtifact(local, requested).toPath());
+      }
+      finally {
+        System.clearProperty(ArtifactRepositoryManager.PRIORITY_REPOSITORY_URL_PROPERTY);
+      }
+    }
+    finally {
+      NioFiles.deleteRecursively(requested);
+      NioFiles.deleteRecursively(local);
+    }
+  }
+
+  private static Path createTestRepository(String jarContent) throws Exception {
+    Path repository = Files.createTempDirectory("aether-repository");
+    writeTestArtifact(repository, "single", "pom", "", pom("single"));
+    writeTestArtifact(repository, "single", "jar", "", jarContent);
+    return repository;
+  }
+
+  /**
+   * The priority repository helps only because Aether keeps the order of the list. This test locks
+   * the order down. It uses two local directories, so it needs no network.
+   */
+  public void testTheFirstRepositoryOfTheListAnswers() throws Exception {
+    // Both repositories hold the artifact. Only the content tells you which one answered.
+    Path first = createTestRepository("from the first repository");
+    Path second = createTestRepository("from the second repository");
+    Path local = Files.createTempDirectory("aether-order-local");
+    try {
+      File file = resolveSingleArtifact(local, first, second);
+      assertEquals("single-1.jar", file.getName());
+      assertEquals("from the first repository", Files.readString(file.toPath()));
+    }
+    finally {
+      NioFiles.deleteRecursively(first);
+      NioFiles.deleteRecursively(second);
+      NioFiles.deleteRecursively(local);
+    }
+  }
+
+  /**
+   * A priority repository that holds no artifact must not break the resolution. Aether reads the
+   * next repository of the list.
+   */
+  public void testTheNextRepositoryAnswersWhenTheFirstOneMisses() throws Exception {
+    // The first repository stays empty.
+    Path first = Files.createTempDirectory("aether-fallback-first");
+    Path second = createTestRepository("from the second repository");
+    Path local = Files.createTempDirectory("aether-fallback-local");
+    try {
+      File file = resolveSingleArtifact(local, first, second);
+      assertEquals("single-1.jar", file.getName());
+      assertEquals("from the second repository", Files.readString(file.toPath()));
+    }
+    finally {
+      NioFiles.deleteRecursively(first);
+      NioFiles.deleteRecursively(second);
+      NioFiles.deleteRecursively(local);
+    }
+  }
+
+  private static File resolveSingleArtifact(Path localRepository, Path... repositories) throws Exception {
+    List<RemoteRepository> remoteRepositories = new ArrayList<>();
+    for (Path repository : repositories) {
+      remoteRepositories.add(
+        new RemoteRepository.Builder("test-" + remoteRepositories.size(), "default", repository.toUri().toString()).build());
+    }
+    ArtifactRepositoryManager manager =
+      new ArtifactRepositoryManager(localRepository.toFile(), remoteRepositories, ProgressConsumer.DEAF);
+    Collection<File> files = manager.resolveDependency("test", "single", "1", false, Collections.emptyList());
+    return assertOneElement(files);
   }
 
   private static void assertCoordinates(Artifact artifact, String groupId, String artifactId, String version) {
