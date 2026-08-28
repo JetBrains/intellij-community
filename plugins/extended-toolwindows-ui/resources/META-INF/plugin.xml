@@ -7,7 +7,6 @@
 
   <content namespace="jetbrains">
     <module name="intellij.extendedToolWindowsUi.frontend"/>
-    <module name="intellij.extendedToolWindowsUi.backend"/>
   </content>
 
   <description><![CDATA[

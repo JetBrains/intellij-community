@@ -1184,7 +1184,6 @@ plugins/evaluation-plugin/languages/java
 plugins/evaluation-plugin/languages/kotlin
 plugins/evaluation-plugin/languages/python
 plugins/extended-toolwindows-ui
-plugins/extended-toolwindows-ui/backend
 plugins/extended-toolwindows-ui/frontend
 plugins/filePrediction
 plugins/filePrediction/java
