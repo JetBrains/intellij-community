@@ -2,6 +2,7 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS", "BAZEL_TARGETS_JSON_COMMUNITY")
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//build:intellij_dev.bzl", "INTELLIJ_ADD_OPENS")
 
 # Can't name the target 'installers' since it triggers elevation in Windows
@@ -17,6 +18,12 @@ java_binary(
 )
 
 ### auto-generated section `build intellij.pycharm.community.build` start
+create_kotlinc_options(
+    name = "custom_build",
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
 jvm_library(
     name = "build",
     srcs = glob(
@@ -27,6 +34,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_build",
     module_name = "intellij.pycharm.community.build",
     visibility = ["//visibility:public"],
     deps = [
@@ -48,6 +56,7 @@ jvm_library(
         "//python/python-parser:parser",
         "//jps/model-api:model",
         "//libraries/jsoup",
+        "//platform/eel",
     ],
 )
 
@@ -58,6 +67,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_build",
     module_name = "intellij.pycharm.community.build",
     visibility = ["//visibility:public"],
     runtime_deps = [
@@ -89,6 +99,7 @@ jvm_library(
         "//RegExpSupport:regexp-tests_test_lib",
         "//platform/xdebugger-impl:debugger-impl-tests",
         "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
+        "//platform/eel:eel_test_lib",
     ],
 )
 ### auto-generated section `build intellij.pycharm.community.build` end
@@ -103,6 +114,12 @@ exports_files(
 ### auto-generated section `iml intellij.pycharm.community.build` end
 
 ### auto-generated section `build intellij.pycharm.community.build.tests` start
+create_kotlinc_options(
+    name = "custom_pycharm-community-build-tests",
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
 jvm_library(
     name = "pycharm-community-build-tests",
     srcs = glob(
@@ -128,6 +145,7 @@ jvm_library(
         "//python/build",
         "//python/build:build_test_lib",
     ],
+    kotlinc_opts = ":custom_pycharm-community-build-tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,

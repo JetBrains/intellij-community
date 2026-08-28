@@ -1,7 +1,14 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.python.community.plugin` start
+create_kotlinc_options(
+    name = "custom_community-plugin",
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
 jvm_library(
     name = "community-plugin",
     srcs = glob(
@@ -28,6 +35,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_community-plugin",
     module_name = "intellij.python.community.plugin",
     visibility = ["//visibility:public"],
     runtime_deps = [

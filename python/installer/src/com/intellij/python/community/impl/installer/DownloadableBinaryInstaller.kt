@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.impl.installer
 
 import com.google.common.hash.Hashing
@@ -6,8 +6,8 @@ import com.google.common.io.Files
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.eel.fs.EelFileUtils
 import com.intellij.util.io.HttpRequests
 import com.jetbrains.python.sdk.Binary
 import com.jetbrains.python.sdk.Resource
@@ -64,7 +64,7 @@ internal abstract class DownloadableBinaryInstaller : BinaryInstaller {
       process(files, indicator)
     }
     finally {
-      files.values.forEach { runCatching { FileUtil.delete(it) } }
+      files.values.forEach { runCatching { EelFileUtils.deleteRecursively(it) } }
     }
   }
 
@@ -109,6 +109,6 @@ internal abstract class DownloadableBinaryInstaller : BinaryInstaller {
   }
 
   override fun getPreview(binary: Binary): ResourcePreview {
-    return ResourcePreview.Companion.of(getResourcesToDownload(binary).firstOrNull())
+    return ResourcePreview.of(getResourcesToDownload(binary).firstOrNull())
   }
 }

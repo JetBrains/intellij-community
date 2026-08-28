@@ -1,7 +1,14 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.python.test.env.core` start
+create_kotlinc_options(
+    name = "custom_core",
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
 resourcegroup(
     name = "core_test_resources",
     srcs = glob(
@@ -49,6 +56,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_core",
     module_name = "intellij.python.test.env.core",
     resource_jars = [":core_test_resources"],
     resource_strip_prefix = "resources",

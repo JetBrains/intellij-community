@@ -1,7 +1,14 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.python.test.env.uv` start
+create_kotlinc_options(
+    name = "custom_uv",
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
 jvm_library(
     name = "uv",
     srcs = glob(
@@ -41,6 +48,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_uv",
     module_name = "intellij.python.test.env.uv",
     resource_strip_prefix = "resources",
     resources = glob(

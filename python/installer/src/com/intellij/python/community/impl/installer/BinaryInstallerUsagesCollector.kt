@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.impl.installer
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 import com.intellij.util.system.CpuArch
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.jetbrains.python.sdk.Product
 import com.jetbrains.python.sdk.Release
 import com.jetbrains.python.sdk.installer.BinaryInstallerException
@@ -87,6 +88,7 @@ object BinaryInstallerUsagesCollector : CounterUsagesCollector() {
         version?.let {
           add(this@ContextFields.version.with(it))
         }
+        @OptIn(LowLevelLocalMachineAccess::class) // We only support local installation
         add(cpuArch.with(CpuArch.CURRENT))
       }
     }

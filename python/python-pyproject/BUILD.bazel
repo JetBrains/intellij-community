@@ -136,6 +136,12 @@ exports_files(
 ### auto-generated section `iml intellij.python.pyproject` end
 
 ### auto-generated section `build intellij.python.pyproject.tests` start
+create_kotlinc_options(
+    name = "custom_pyproject-tests",
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
 jvm_library(
     name = "pyproject-tests",
     srcs = glob(
@@ -161,6 +167,7 @@ jvm_library(
         "//python/python-pyproject:pyproject",
         "//python/python-pyproject:pyproject_test_lib",
     ],
+    kotlinc_opts = ":custom_pyproject-tests",
     resource_strip_prefix = "testResources",
     resources = glob(
         ["testResources/**/*"],

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.intellij.util.system.CpuArch
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.intellij.util.text.SemVer
 import org.jetbrains.annotations.ApiStatus
@@ -90,18 +91,25 @@ object PyVersionMapping {
       ?: error("No build information found for Python $fullVersion")
 
     // Detect platform
-    val platform = when (OS.CURRENT) {
+    @OptIn(LowLevelLocalMachineAccess::class)  // tests are for local only
+    val os = OS.CURRENT
+    val platform = when (os) {
       OS.Windows -> "windows"
       OS.macOS -> "darwin"
       OS.Linux -> "linux"
-      else -> error("Unsupported platform: ${OS.CURRENT}")
+      else -> error("Unsupported platform: $os")
     }
 
     // Detect architecture
+
+    @OptIn(LowLevelLocalMachineAccess::class)  // tests are for local only
+    val cpuArch = CpuArch.CURRENT
     val baseArch = when {
       CpuArch.isArm64() -> "aarch64"
       CpuArch.isIntel64() -> "x86_64"
-      else -> error("Unsupported architecture: ${CpuArch.CURRENT}")
+      else -> {
+        error("Unsupported architecture: $cpuArch")
+      }
     }
     
     // For ARM64, try both aarch64 and arm64 as synonyms on all platforms

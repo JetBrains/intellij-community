@@ -7,6 +7,7 @@ import com.intellij.python.test.env.core.PyEnvironment
 import com.intellij.python.test.env.core.PyEnvironmentProvider
 import com.intellij.python.test.env.core.PyEnvironmentSpec
 import com.intellij.python.test.env.core.executeProcess
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.jetbrains.python.PythonBinary
 import kotlinx.coroutines.Dispatchers
@@ -146,6 +147,7 @@ class UvPyEnvironmentProvider : PyEnvironmentProvider<UvPyEnvironmentSpec>("uv")
 
       // Find Python executable in created venv
       logger.info("Looking for Python executable in: $envPath")
+      @OptIn(LowLevelLocalMachineAccess::class)  // Tests are for local
       val pythonPath = if (OS.CURRENT == OS.Windows) {
         envPath.resolve("Scripts").resolve("python.exe")
       }

@@ -1,9 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.pycharm.sdks
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.Version
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.PathUtilRt
 import com.intellij.util.Urls
 import com.intellij.util.io.HttpRequests
@@ -114,7 +114,7 @@ class PythonUpdater {
       return Resource(resUrl, file.fileSize(), sha256)
     }
     finally {
-      files.values.forEach { runCatching { FileUtil.delete(it) } }
+      files.values.forEach { runCatching { NioFiles.deleteRecursively(it) } }
     }
   }
 

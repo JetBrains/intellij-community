@@ -91,6 +91,12 @@ exports_files(
 ### auto-generated section `iml intellij.python.venv` end
 
 ### auto-generated section `build intellij.python.venv.tests` start
+create_kotlinc_options(
+    name = "custom_venv-tests",
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
 jvm_library(
     name = "venv-tests",
     srcs = glob(
@@ -108,6 +114,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_venv-tests",
     module_name = "intellij.python.venv.tests",
     resource_strip_prefix = "testResources",
     resources = glob(

@@ -78,6 +78,12 @@ exports_files(
 ### auto-generated section `iml intellij.python.community.services.internal.impl` end
 
 ### auto-generated section `build intellij.python.community.services.internal.impl.tests` start
+create_kotlinc_options(
+    name = "custom_python-community-services-internal-impl-tests",
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
 jvm_library(
     name = "python-community-services-internal-impl-tests",
     srcs = glob(
@@ -103,6 +109,7 @@ jvm_library(
         "//python/services/internal-impl:python-community-services-internal-impl",
         "//python/services/internal-impl:python-community-services-internal-impl_test_lib",
     ],
+    kotlinc_opts = ":custom_python-community-services-internal-impl-tests",
     resource_strip_prefix = "testResources",
     resources = glob(
         ["testResources/**/*"],

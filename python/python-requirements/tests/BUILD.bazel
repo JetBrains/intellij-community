@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 jps_test(
     name = "tests_test",
@@ -10,6 +11,12 @@ jps_test(
 ### skip generation section `test intellij.python.requirements.tests`
 
 ### auto-generated section `build intellij.python.requirements.tests` start
+create_kotlinc_options(
+    name = "custom_tests",
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
 jvm_library(
     name = "tests",
     srcs = glob(
@@ -35,6 +42,7 @@ jvm_library(
         "//python/python-requirements/backend",
         "//python/python-requirements/backend:backend_test_lib",
     ],
+    kotlinc_opts = ":custom_tests",
     resource_strip_prefix = "testResources",
     resources = glob(
         ["testResources/**/*"],

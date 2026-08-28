@@ -1,6 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS", "BAZEL_TARGETS_JSON_COMMUNITY")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 jps_test(
     name = "junit5_test",
@@ -14,6 +15,12 @@ jps_test(
 ### skip generation section `test intellij.python.test.env.junit5`
 
 ### auto-generated section `build intellij.python.test.env.junit5` start
+create_kotlinc_options(
+    name = "custom_junit5",
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
 jvm_library(
     name = "junit5",
     srcs = glob(
@@ -56,6 +63,7 @@ jvm_library(
         "//python:python-community-impl",
         "//python:python-community-impl_test_lib",
     ],
+    kotlinc_opts = ":custom_junit5",
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.framework
 
 import com.intellij.platform.eel.EelOsFamily
@@ -25,7 +25,6 @@ suspend fun waitNoError(delay: Duration = 100.milliseconds, repeat: Int = 50, ch
       return
     }
     catch (_: AssertionError) {
-      false
       delay(delay)
     }
   }

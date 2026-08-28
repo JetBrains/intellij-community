@@ -1,7 +1,14 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.python.test.env.junit4` start
+create_kotlinc_options(
+    name = "custom_junit4",
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
 jvm_library(
     name = "junit4",
     srcs = glob(
@@ -29,6 +36,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_junit4",
     module_name = "intellij.python.test.env.junit4",
     resource_strip_prefix = "resources",
     resources = glob(
