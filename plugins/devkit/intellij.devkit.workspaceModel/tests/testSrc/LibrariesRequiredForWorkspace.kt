@@ -93,7 +93,7 @@ internal object LibrariesRequiredForWorkspace {
         listOf(cidrProjectModel)
       }
       "intellij.cidr.projectModel" -> {
-        listOf(cidrPsiBase, cidrUtilExecution)
+        listOf(cidrPsiBase, cidrUtilExecution, workspaceJpsEntities)
       }
       "intellij.android.projectSystem.gradle" -> {
         listOf(androidProjectSystem, androidGradleModels, androidStudioPlatform, gradle, gradleToolingExtension)
