@@ -1221,6 +1221,10 @@ public class GeneratedParserUtilBase {
   }
 
 
+  /**
+   * @deprecated use {@link DummyBlockType.DummyBlock} instead.
+   */
+  @Deprecated(forRemoval = true)
   public static class DummyBlock extends DummyBlockType.DummyBlock{}
 
   private static class MyList<E> extends ArrayList<E> {
