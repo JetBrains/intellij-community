@@ -3,6 +3,10 @@ package com.intellij.history.core
 
 import com.intellij.history.core.changes.ChangeSet
 import com.intellij.history.core.changes.CreateFileChange
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.indexing.impl.IndexDebugProperties
+import com.intellij.util.io.StorageLockContext
+import com.intellij.util.io.storage.AbstractStorage
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -10,10 +14,13 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ValueSource
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption.WRITE
 
 @ParameterizedClass(name = "with cache: {0}")
 @ValueSource(booleans = [true, false])
+@TestApplication //needed for recovery since it wants notifications
 internal class PersistentChangeListStorageTest(
   private val useCache: Boolean,
 ) {
@@ -247,10 +254,80 @@ internal class PersistentChangeListStorageTest(
     assertThat(storage.lastId).isEqualTo(id2)
   }
 
+  @Test
+  fun `storage recovers when the data table was not closed`() {
+    storage.writeNextSet(createChangeSet(storage.nextId(), 1000L))
+    storage.flush()
+    storage.close(/*dropStorages: */false)
+    Files.write(storageDataPath(), ByteArray(Int.SIZE_BYTES), WRITE)
+
+    val previousDebugValue = IndexDebugProperties.DEBUG
+    IndexDebugProperties.DEBUG = true
+    try {
+      storage = createStorage()
+    }
+    finally {
+      IndexDebugProperties.DEBUG = previousDebugValue
+    }
+
+    assertThat(storage.iterate().asSequence().toList())
+      .describedAs("The recovered storage must not contain data from the damaged table")
+      .isEmpty()
+  }
+
+  @Test
+  fun `storage accepts writes after recovery from a recursive record chain`() {
+    val originalChangeSet = createChangeSet(storage.nextId(), 1000L)
+    storage.writeNextSet(originalChangeSet)
+    storage.flush()
+    storage.close(/*dropStorages: */false)
+    makeLastRecordPointToItself()
+    storage = createStorage()
+
+    assertThat(storage.iterate().asSequence().toList())
+      .describedAs("Reading a recursive record chain must start storage recovery")
+      .extracting<Long> { it.id }
+      .containsExactly(originalChangeSet.id)
+
+    val recoveredChangeSet = createChangeSet(storage.nextId(), 2000L)
+    storage.writeNextSet(recoveredChangeSet)
+    storage.flush()
+
+    assertThat(storage.iterate().asSequence().toList())
+      .`as`("The recovered storage must accept new changes")
+      .extracting<Long> { it.id }
+      .containsExactly(recoveredChangeSet.id)
+  }
+
+  /** Returns the data file that contains the serialized change sets. */
+  private fun storageDataPath(): Path = tempDir.resolve("storage/$STORAGE_FILE_NAME${AbstractStorage.DATA_EXTENSION}")
+
+  /** Creates a recursive record chain that the storage must recover from. */
+  private fun makeLastRecordPointToItself() {
+    val context = StorageLockContext(false, true)
+    val table = LocalHistoryRecordsTable(
+      tempDir.resolve("storage/$STORAGE_FILE_NAME${AbstractStorage.INDEX_EXTENSION}"),
+      context,
+    )
+    context.lockWrite()
+    try {
+      val lastRecord = table.lastRecord
+      table.setPrevRecord(lastRecord, lastRecord)
+      table.close()
+    }
+    finally {
+      context.unlockWrite()
+    }
+  }
+
   private fun createChangeSet(id: Long, timestamp: Long, path: String = "file.txt"): ChangeSet {
     val cs = ChangeSet(id, timestamp)
     cs.addChange(CreateFileChange(id, path))
     cs.lock()
     return cs
+  }
+
+  private companion object {
+    private const val STORAGE_FILE_NAME = "changes"
   }
 }

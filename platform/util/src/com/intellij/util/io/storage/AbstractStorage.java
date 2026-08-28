@@ -43,7 +43,7 @@ public abstract class AbstractStorage implements IStorage {
 
   protected AbstractRecordsTable myRecordsTable;
   protected DataTable myDataTable;
-  protected StorageLockContext myContext;
+  protected final StorageLockContext myContext;
   private final CapacityAllocationPolicy myCapacityAllocationPolicy;
 
   public static boolean deleteFiles(String storageFilePath) {
@@ -93,6 +93,7 @@ public abstract class AbstractStorage implements IStorage {
                             @NotNull StorageLockContext context,
                             @Nullable CapacityAllocationPolicy capacityAllocationPolicy) throws IOException {
     this.storagePath = storageFilePath;
+    myContext = context;
     myCapacityAllocationPolicy = capacityAllocationPolicy != null ? capacityAllocationPolicy
                                                                   : CapacityAllocationPolicy.DEFAULT;
     tryInit(storageFilePath, context, 0);
@@ -131,7 +132,13 @@ public abstract class AbstractStorage implements IStorage {
     catch (IOException e) {
       LOG.info(e.getMessage());
       if (recordsTable != null) {
-        IOUtil.closeSafe(LOG, recordsTable);
+        context.lockWrite();
+        try {
+          IOUtil.closeSafe(LOG, recordsTable);
+        }
+        finally {
+          context.unlockWrite();
+        }
       }
 
       boolean deleted = deleteFiles(storageFilePath);
@@ -148,7 +155,6 @@ public abstract class AbstractStorage implements IStorage {
 
     myRecordsTable = recordsTable;
     myDataTable = dataTable;
-    myContext = context;
 
     if (myDataTable.isCompactNecessary()) {
       compact(storageFilePath);
@@ -292,8 +298,8 @@ public abstract class AbstractStorage implements IStorage {
   @TestOnly
   public byte[] readBytesTestAccessor(int record) throws IOException {
     return readBytes(record);
-  } 
-  
+  }
+
   protected void appendBytes(int record, ByteArraySequence bytes) throws IOException {
     final int delta = bytes.getLength();
     if (delta == 0) return;
