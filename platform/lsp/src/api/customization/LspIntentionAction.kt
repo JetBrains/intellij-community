@@ -154,11 +154,6 @@ open class LspIntentionAction(protected val lspClient: LspClient, private val in
     val uriToCreatedDocumentMap = mutableMapOf<String, Document>()
 
     workspaceEdit.documentChanges?.let { documentChanges ->
-      if (documentChanges.any { it.isRight && it.right is DeleteFile }) {
-        // TODO support DeleteFile as well
-        return@applyWorkspaceEdit
-      }
-
       documentChanges.forEach { editOrResourceOperation ->
         editOrResourceOperation.left?.let { textDocumentEdit ->
           val document = uriToDocumentMap[textDocumentEdit.textDocument.uri] ?: uriToCreatedDocumentMap[textDocumentEdit.textDocument.uri]
@@ -172,7 +167,7 @@ open class LspIntentionAction(protected val lspClient: LspClient, private val in
         editOrResourceOperation.right?.let { resourceOperation ->
           when (resourceOperation) {
             is CreateFile -> createFile(resourceOperation)?.let { uriToCreatedDocumentMap[resourceOperation.uri] = it }
-            is DeleteFile -> {} // TODO implement
+            is DeleteFile -> if (deleteFile(resourceOperation)) uriToCreatedDocumentMap.remove(resourceOperation.uri)
             is RenameFile -> renameFile(resourceOperation)?.let { uriToCreatedDocumentMap[resourceOperation.newUri] = it }
           }
         }
@@ -226,6 +221,36 @@ open class LspIntentionAction(protected val lspClient: LspClient, private val in
 
     return FileDocumentManager.getInstance().getDocument(file)
       .also { if (it == null) thisLogger().warn("No Document for renamed file ${file.path}") }
+  }
+
+  /**
+   * @return `true` when the file was deleted
+   */
+  private fun deleteFile(deleteFile: DeleteFile): Boolean {
+    val fileUri = deleteFile.uri
+
+    val file = lspClient.descriptor.findFileByUri(fileUri)
+    if (file == null) {
+      if (deleteFile.options?.ignoreIfNotExists != true) {
+        thisLogger().warn("Ignoring DeleteFile($fileUri): file not found")
+      }
+      return false
+    }
+
+    if (file.isDirectory && file.children.isNotEmpty() && deleteFile.options?.recursive != true) {
+      thisLogger().warn("Ignoring DeleteFile($fileUri): the directory is not empty, and the delete is not recursive")
+      return false
+    }
+
+    try {
+      file.delete(this)
+    }
+    catch (e: IOException) {
+      thisLogger().warn("Failed to apply DeleteFile($fileUri)", e)
+      return false
+    }
+
+    return true
   }
 
   private fun findOrCreateParentDir(fileUri: String): VirtualFile? {

@@ -20,6 +20,7 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.eclipse.lsp4j.DeleteFile
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.PrepareRenameDefaultBehavior
 import org.eclipse.lsp4j.PrepareRenameResult
@@ -34,6 +35,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.jsonrpc.messages.Either3
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
@@ -382,6 +384,44 @@ internal class LspRenameTest {
       serverSession.awaitExpected()
       assertEquals("class Bar", codeInsightFixture.editor.document.text)
       assertEquals("Bar.txt", virtualFile.name)
+    }
+
+    @Test
+    fun `rename applies DeleteFile operation together with text edits`() = timeoutRunBlocking {
+      // given
+      TemplateManagerImpl.setTemplateTesting(project)
+
+      // The scenario emulates a rename that makes another file obsolete: the server edits the text and deletes that file
+      val virtualFile = codeInsightFixture.configureByText("Baz.txt", "class <caret>Baz").virtualFile
+      val obsoleteFile = codeInsightFixture.addFileToProject("Obsolete.txt", "obsolete content").virtualFile
+      val serverSession = configureServerSession(project, virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
+      val obsoleteFileUri = serverSession.fileUri(obsoleteFile)
+
+      serverSession.expectRequest(serverSession.PREPARE_RENAME, { it.textDocument.uri == fileUri }) {
+        Either3.forSecond(PrepareRenameResult(Range(Position(0, 6), Position(0, 9)), "Baz"))
+      }
+
+      serverSession.expectRequest(serverSession.RENAME, {
+        it.textDocument.uri == fileUri && it.newName == "Qux"
+      }) {
+        WorkspaceEdit(listOf(
+          Either.forLeft(TextDocumentEdit(
+            VersionedTextDocumentIdentifier(fileUri, null),
+            listOf(TextEdit(Range(Position(0, 6), Position(0, 9)), "Qux")),
+          )),
+          Either.forRight(DeleteFile(obsoleteFileUri)),
+        ))
+      }
+
+      // when
+      triggerRename()
+      codeInsightFixture.type("Qux\n")
+
+      // then
+      serverSession.awaitExpected()
+      assertEquals("class Qux", codeInsightFixture.editor.document.text)
+      assertFalse(obsoleteFile.isValid)
     }
 
     @Test

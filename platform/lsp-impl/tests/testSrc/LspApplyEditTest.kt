@@ -12,6 +12,8 @@ import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import org.eclipse.lsp4j.ApplyWorkspaceEditParams
+import org.eclipse.lsp4j.DeleteFile
+import org.eclipse.lsp4j.DeleteFileOptions
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
 import org.eclipse.lsp4j.TextDocumentEdit
@@ -114,5 +116,44 @@ class LspApplyEditTest {
       assertEquals("FIRST file", FileDocumentManager.getInstance().getDocument(file1)?.text)
       assertEquals("SECOND file", FileDocumentManager.getInstance().getDocument(file2)?.text)
     }
+  }
+
+  @Test
+  fun `apply edit with a single DeleteFile operation`() = timeoutRunBlocking {
+    // The IntelliJ language server sends a delete quick fix in exactly this shape: one DeleteFile, nothing else
+    val file1 = codeInsightFixture.configureByText("file1.txt", "first file").virtualFile
+    val file2 = codeInsightFixture.addFileToProject("file2.txt", "second file").virtualFile
+    val serverSession = configureServerSession(project, file1)
+
+    val response = serverSession.sendRequest(serverSession.APPLY_EDIT) {
+      ApplyWorkspaceEditParams(WorkspaceEdit(listOf(
+        Either.forRight(DeleteFile(serverSession.fileUri(file2))),
+      )))
+    }
+
+    assertTrue(response.isApplied)
+    assertFalse(file2.isValid)
+    assertEquals("first file", codeInsightFixture.editor.document.text)
+  }
+
+  @Test
+  fun `DeleteFile of a missing file with ignoreIfNotExists applies the rest of the edit`() = timeoutRunBlocking {
+    val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
+    val serverSession = configureServerSession(project, virtualFile)
+
+    val response = serverSession.sendRequest(serverSession.APPLY_EDIT) {
+      ApplyWorkspaceEditParams(WorkspaceEdit(listOf(
+        Either.forRight(DeleteFile("file:///nonexistent/path/to/file.txt").apply {
+          options = DeleteFileOptions().apply { ignoreIfNotExists = true }
+        }),
+        Either.forLeft(TextDocumentEdit(
+          VersionedTextDocumentIdentifier(serverSession.fileUri(virtualFile), null),
+          listOf(TextEdit(Range(Position(0, 0), Position(0, 5)), "goodbye")),
+        )),
+      )))
+    }
+
+    assertTrue(response.isApplied)
+    assertEquals("goodbye world", codeInsightFixture.editor.document.text)
   }
 }

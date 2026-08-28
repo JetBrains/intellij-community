@@ -80,7 +80,7 @@ internal fun createClientCapabilities(lspCustomization: LspCustomization): Clien
     //configuration = true // keep false by default because [getWorkspaceConfiguration] returns null by default
     workspaceEdit = WorkspaceEditCapabilities().apply {
       documentChanges = true
-      resourceOperations = listOf(ResourceOperationKind.Create)
+      resourceOperations = listOf(ResourceOperationKind.Create, ResourceOperationKind.Rename, ResourceOperationKind.Delete)
       failureHandling = FailureHandlingKind.Abort
       normalizesLineEndings = true
     }
