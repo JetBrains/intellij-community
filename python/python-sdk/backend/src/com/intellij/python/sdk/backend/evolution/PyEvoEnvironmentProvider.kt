@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.sdk.common.evolution.EvoAddNewDto
 import com.intellij.python.sdk.common.evolution.EvoAddNewOptionDto
@@ -21,6 +22,7 @@ import com.intellij.python.sdk.common.evolution.EvoLeafKind
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
 import com.intellij.python.sdk.common.evolution.EvoNodeDto
 import com.intellij.python.sdk.common.evolution.EvoNodeKind
+import com.intellij.python.sdk.common.evolution.EvoRecreateDto
 import com.intellij.python.sdk.common.evolution.EvoSectionDto
 import com.intellij.python.sdk.common.evolution.PyEvoRegistry
 import com.intellij.python.sdk.common.evolution.PyInterpreterRef
@@ -38,6 +40,13 @@ import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.impl.shortenPath
 import com.jetbrains.python.venvReader.Directory
 import com.jetbrains.python.venvReader.VirtualEnvReader
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -46,12 +55,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.pathString
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
+
 
 private val LOG: Logger = fileLogger()
 
@@ -274,6 +278,28 @@ interface PyEvoEnvironmentProvider {
    */
   suspend fun decorate(context: EvoToolContext, result: EvoLoadResultDto): EvoLoadResultDto = result
 
+  /**
+   * How this tool would rebuild the environment [leaf] stands for, or `null` when it cannot rebuild that one.
+   *
+   * Capability and options are one answer because they are one decision: a tool that can rebuild a row knows what it
+   * could rebuild it on, and a tool that cannot has nothing to offer. Asked per row rather than per node, because the
+   * answer differs row by row — a hatch environment's own Python specifier constrains its bases and no other's.
+   *
+   * Called for a row the core already admitted: an environment that exists ([PyInterpreterRef.DetectedPath]), that this
+   * node can act on ([EvoLeafDto.unavailable] unset), and that lives inside the project. Those are facts about the row
+   * and the project rather than about the tool, so the core decides them once — see [ownedEnvBinaryIn].
+   */
+  suspend fun recreateSpecFor(context: EvoToolContext, leaf: EvoLeafDto): EvoRecreateDto? = null
+
+  /**
+   * Destroys the environment whose interpreter is [homePath], builds a fresh one in the same place on
+   * [EvoRecreateSpec.baseToken], and returns its SDK — the counterpart of [createSdkForNewEnv].
+   *
+   * There is no rollback and none is expected: destroy, create, and report a failure as the result. A provider that
+   * could not destroy the environment must return that failure rather than build over the wreckage.
+   */
+  suspend fun recreateEnv(context: EvoToolContext, homePath: Path, spec: EvoRecreateSpec): PyResult<Sdk> = notSupported()
+
   companion object {
     @ApiStatus.Internal
     val EP_NAME: ExtensionPointName<PyEvoEnvironmentProvider> = ExtensionPointName.create("Pythonid.evoEnvironmentProvider")
@@ -427,6 +453,36 @@ suspend fun listEntryNames(dir: Path): List<@NlsSafe String> = withContext(Dispa
   }
 }
 
+/** What a rebuild is asked for: the base to build on, in the tool's own token, and whether to fill it afterwards. */
+@ApiStatus.Internal
+class EvoRecreateSpec(val baseToken: @NonNls String, val syncPackages: Boolean)
+
+/**
+ * The interpreter of the environment [this] names, when that environment is the project's own to destroy; `null`
+ * otherwise — the gate deciding which rows may be rebuilt.
+ *
+ * Two rules, both facts about the ref and the project rather than about any tool, so no provider restates them. Only an
+ * environment that exists has anything to destroy. And only an environment under [baseDir] is the project's own to
+ * take: a system interpreter, a pyenv install, a named conda env, a poetry cache env and a pipenv env are all shared
+ * with whatever else uses them.
+ *
+ * [baseDir] is the workspace root's, not one module's, because the members of a uv or poetry workspace share the
+ * environment kept there.
+ *
+ * The comparison is lexical over normalized paths, so an environment reached through a symlink reads as not owned. That
+ * is the safe direction: it withholds a destructive affordance rather than offering it where it should not be.
+ */
+@ApiStatus.Internal
+fun PyInterpreterRef?.ownedEnvBinaryIn(baseDir: Path): Path? {
+  val binary = when (this) {
+    is PyInterpreterRef.DetectedPath -> homePath.toNioPathOrNull()
+    is PyInterpreterRef.CreateEnv, is PyInterpreterRef.ExistingSdk, is PyInterpreterRef.Autoconfigure, null -> null
+  } ?: return null
+  val normalized = binary.normalize()
+  val root = baseDir.normalize()
+  return binary.takeIf { normalized != root && normalized.startsWith(root) }
+}
+
 /**
  * "That environment already exists", so a create never silently overwrites or recreates one.
  *
@@ -542,6 +598,7 @@ fun DiscoveredVenv.toLeaf(owner: PyEvoEnvironmentProvider): EvoLeafDto {
     kind = EvoLeafKind.SELECT_ENV,
     ref = PyInterpreterRef.DetectedPath(pythonBinary.pathString),
     unavailable = otherTool?.let { PySdkBundle.message("evolution.env.owned.by.other.tool", it.label) },
+    ownerNodeId = otherTool?.toolId?.id,
   )
 }
 

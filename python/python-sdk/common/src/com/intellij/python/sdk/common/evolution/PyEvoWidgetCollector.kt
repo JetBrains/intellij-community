@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NonNls
  */
 @ApiStatus.Internal
 object PyEvoWidgetCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("python.sdk.widget", 1)
+  private val GROUP = EventLogGroup("python.sdk.widget", 2)
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -41,6 +41,9 @@ object PyEvoWidgetCollector : CounterUsagesCollector() {
 
     /** A base interpreter picked from the expanded per-version listing. */
     EXPANDED_VERSION,
+
+    /** A base Python picked in a row's rebuild panel, which destroys that environment and builds it again. */
+    RECREATE,
 
     /** A Python version row in an "Add new" submenu. */
     ADD_NEW_VERSION,
@@ -84,6 +87,9 @@ object PyEvoWidgetCollector : CounterUsagesCollector() {
 
     /** A tool node's inline reload icon (force re-scan, bypassing the backend cache). */
     RELOAD,
+
+    /** A row's inline rebuild icon, opening the panel of base Pythons it could be built again on. */
+    RECREATE_ENV,
 
     /** The gear on the "Select Environment" header, opening Settings | Python | Tools | Package Manager. */
     GEAR_SETTINGS,

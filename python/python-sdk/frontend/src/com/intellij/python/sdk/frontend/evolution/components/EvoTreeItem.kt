@@ -81,6 +81,10 @@ class EvoTreeItem(
   val opensProcessOutput: Boolean
     get() = showOutput != null && (element.state == State.ERROR || element.state == State.NOT_AVAILABLE)
 
+  /** The panel that rebuilds this row's environment, or null when the row offers no rebuild — see [EvoRecreatable]. */
+  val recreatePanel: EvoTreeNodeElement?
+    get() = ((element as? EvoTreeLeafElement)?.action as? EvoRecreatable)?.recreatePanel
+
   /** True when this row reveals more of the list rather than selecting an environment — see [EvoLinkRow]. */
   val isLinkRow: Boolean
     get() = (element as? EvoTreeLeafElement)?.action is EvoLinkRow

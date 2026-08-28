@@ -36,6 +36,7 @@ import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.performToolInstallation
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
+import com.intellij.python.sdk.backend.evolution.EvoRecreateSpec
 import com.intellij.python.sdk.backend.evolution.EvoToolContext
 import com.intellij.python.sdk.backend.evolution.PyEvoEnvironmentProvider
 import com.intellij.python.sdk.backend.evolution.discoverVenvs
@@ -50,6 +51,7 @@ import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
 import com.intellij.python.sdk.common.evolution.EvoNodeDto
 import com.intellij.python.sdk.common.evolution.EvoNodeIds
 import com.intellij.python.sdk.common.evolution.EvoPyProjectDto
+import com.intellij.python.sdk.common.evolution.EvoRecreateRequestDto
 import com.intellij.python.sdk.common.evolution.EvoSelectResultDto
 import com.intellij.python.sdk.common.evolution.PyEvoRegistry
 import com.intellij.python.sdk.common.evolution.PyEvoSdkApi
@@ -60,6 +62,7 @@ import com.intellij.python.sdk.common.evolution.PyInterpreterDto
 import com.intellij.python.sdk.common.evolution.PyInterpreterRef
 import com.intellij.python.sdk.common.evolution.evoRefKind
 import com.intellij.python.sdk.common.evolution.evoReusesExistingEnv
+import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.intellij.python.uv.common.UV_TOOL_ID
 import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.ErrorSink
@@ -454,8 +457,10 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
           val fs = eelFileSystem(pyProject)
           val context = EvoToolContext(pyProject, fs, ErrorSink()) { envSpecifiers -> systemPythonOptions(pyProject.baseDir, fs, envSpecifiers) }
           val loaded = provider.loadSections(pyProject, fs, discovered)
-          // The node's own decorations: its add-new flow, then whatever else the tool adds (hatch's version pickers).
-          provider.decorate(context, withProviderAddNewEnv(loaded, provider, context))
+          // The node's own decorations: its add-new flow, then whatever else the tool adds (hatch's version pickers),
+          // and last the rows it offers to rebuild — last because a decoration can still mark a row unavailable, and an
+          // unavailable row is not one to destroy.
+          withRecreate(provider.decorate(context, withProviderAddNewEnv(loaded, provider, context)), provider, context)
         }
         .await()
     }
@@ -571,6 +576,66 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     }
   }
 
+  override suspend fun recreateEnvironment(
+    projectId: ProjectId,
+    pyProjectKey: String,
+    nodeId: String,
+    request: EvoRecreateRequestDto,
+  ): EvoSelectResultDto {
+    val startedAt = System.nanoTime()
+    val result = doRecreateEnvironment(projectId, pyProjectKey, nodeId, request)
+    projectId.findProjectOrNull()?.let { project ->
+      PyEvoWidgetCollector.interpreterApplied(
+        project = project,
+        node = evoNodeStats(nodeId),
+        // A rebuild always ends in an environment this tool made, whatever stood there before.
+        refKind = PyEvoWidgetCollector.RefKind.CREATE_ENV,
+        outcome = when (result) {
+          is EvoSelectResultDto.Ok -> PyEvoWidgetCollector.Outcome.OK
+          is EvoSelectResultDto.Error -> PyEvoWidgetCollector.Outcome.ERROR
+        },
+        downloadedBase = request.installPythonVersion != null,
+        durationMs = (System.nanoTime() - startedAt) / 1_000_000,
+      )
+    }
+    return result
+  }
+
+  /**
+   * Destroys one environment and builds it again on another base Python.
+   *
+   * Takes the same SDK-configuration lock the select path takes, for the same two reasons: it serializes concurrent
+   * configuration, and the widget's spinner reads that lock. The install-if-missing step is the select path's as well,
+   * so a rebuild onto a version this machine lacks behaves the way a create onto one does.
+   *
+   * The ownership gate is checked again here, under the lock. The path came back off the wire, and this is the one call
+   * that deletes something: a broken round trip must not be able to name a directory outside the project.
+   */
+  private suspend fun doRecreateEnvironment(
+    projectId: ProjectId,
+    pyProjectKey: String,
+    nodeId: String,
+    request: EvoRecreateRequestDto,
+  ): EvoSelectResultDto {
+    val pyProject = resolvePyProject(projectId, pyProjectKey)
+                    ?: return EvoSelectResultDto.Error(PySdkBundle.message("evolution.error.pyproject.not.found", pyProjectKey))
+    val fileSystem = eelFileSystem(pyProject)
+    // The frontend echoes back a path this backend serialized, so an unparseable one is a broken round-trip.
+    val homePath = request.envHomePath.toNioPathOrNull()
+                   ?: return EvoSelectResultDto.Error(PySdkBundle.message("evolution.error.env.not.found", request.envHomePath))
+    return withSdkConfigurationLock(pyProject.project) {
+      val baseToken = installedBaseToken(request.baseToken, request.installPythonVersion, fileSystem)
+        .getOr { return@withSdkConfigurationLock it.error.toSelectError(pyProject.project) }
+      val spec = EvoRecreateSpec(baseToken, request.syncPackages)
+      val sdk = selectedSdk(nodeId, pyProject, fileSystem) { provider, context -> provider.recreateEnv(context, homePath, spec) }
+        .getOr { return@withSdkConfigurationLock it.error.toSelectError(pyProject.project) }
+      refreshRebuiltSdk(sdk, pyProject.project)
+      pyProject.applySdk(sdk)
+      PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(sdk, false)
+      EvoSelectResultDto.Ok
+    }
+  }
+
   /**
    * Installs the base interpreter a [PyInterpreterRef.CreateEnv] asks for, and returns the ref pointing at what landed.
    * Any other ref, and any `CreateEnv` that already names an interpreter, is returned untouched.
@@ -580,7 +645,39 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
    */
   private suspend fun installBaseIfRequested(ref: PyInterpreterRef, fileSystem: EelFileSystem): PyResult<PyInterpreterRef> {
     val create = ref as? PyInterpreterRef.CreateEnv ?: return PyResult.success(ref)
-    val version = create.installPythonVersion ?: return PyResult.success(ref)
+    if (create.installPythonVersion == null) return PyResult.success(ref)
+    val token = installedBaseToken(create.token, create.installPythonVersion, fileSystem).getOr { return it }
+    return PyResult.success(create.copy(token = token, installPythonVersion = null))
+  }
+
+  /**
+   * Re-reads the version and the paths of an SDK whose environment was just rebuilt.
+   *
+   * The IDE keeps one SDK per interpreter path, and a rebuild keeps the path — so `createSdk` finds that SDK and adopts
+   * it rather than making another, which also means it never sets its paths up again. Everything the SDK cached still
+   * describes the environment that was destroyed: the old version string, the old standard library, the old packages.
+   * Without this the widget goes on showing the Python that is no longer there.
+   *
+   * Done here, once, rather than in each provider: whichever tool rebuilt it, the interpreter behind that path is a
+   * different one now. A refresh that fails is logged and nothing more — the environment is already rebuilt, and there
+   * is nothing to undo.
+   */
+  private suspend fun refreshRebuiltSdk(sdk: Sdk, project: Project) {
+    val updated = withContext(Dispatchers.IO) {
+      PythonSdkUpdater.updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, project)
+    }
+    if (!updated) LOG.warn("Evo: rebuilt '${sdk.name}', but could not re-read its version and paths")
+  }
+
+  /**
+   * The base interpreter to build on: [token] as it stands, or the interpreter that lands after [installPythonVersion]
+   * is installed.
+   *
+   * Written against a bare token rather than a ref, because a rebuild asks the same question a create does and carries
+   * no ref to ask it with.
+   */
+  private suspend fun installedBaseToken(token: String, installPythonVersion: String?, fileSystem: EelFileSystem): PyResult<String> {
+    val version = installPythonVersion ?: return PyResult.success(token)
     // An EelFileSystem always has a descriptor, unlike the generic FileSystem the option listing works with.
     val eelApi = fileSystem.eelDescriptor.toEelApi()
     val installer = SystemPythonService().getInstaller(eelApi)
@@ -590,7 +687,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     val installed = SystemPythonService().findSystemPythons(eelApi, forceRefresh = true)
                       .firstOrNull { it.pythonInfo.languageLevel.toPythonVersion() == version }
                     ?: return PyResult.localizedError(PySdkBundle.message("evolution.error.install.not.found", version))
-    return PyResult.success(create.copy(token = installed.pythonBinary.pathString, installPythonVersion = null))
+    return PyResult.success(installed.pythonBinary.pathString)
   }
 
   /** Runs [build] on the provider owning [nodeId], or fails when no provider claims it (an unknown or removed tool). */
@@ -710,6 +807,37 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     if (result !is EvoLoadResultDto.Ok) return result
     return result.copy(sections = result.sections.map { section ->
       if (!section.addNew) section else section.copy(addNewEnv = provider.addNewEnvSpec(context, section) ?: section.addNewEnv)
+    })
+  }
+
+  /**
+   * Marks the rows this node offers to rebuild, and says what each may be rebuilt on.
+   *
+   * The core rules out only what it can judge without knowing any tool: a row that stands for no environment yet, and a
+   * row another tool owns — such a row is disabled here, and a node that refuses to *select* an environment must not
+   * destroy it either.
+   *
+   * Whether the environment is the project's own to destroy is left to the provider, because only it can tell. The test
+   * used to live here as "inside the project directory", which read a hatch environment in hatch's own data dir, a
+   * poetry cache environment and a pipenv environment as somebody else's — though each is built for one project and
+   * shared with nothing. A provider that keeps no record of its own
+   * uses [com.intellij.python.sdk.backend.evolution.ownedEnvBinaryIn] for the same judgement.
+   *
+   * The node the user acts on is the tool that acts, a row another tool made included. Rebuilding uv's `.venv` from the
+   * Poetry node yields a Poetry environment, the same one that node's "add new" would have made — so the tool follows
+   * the node, exactly as every other row on it does. What changes is the environment's manager, which is why the
+   * frontend says so before anything is destroyed.
+   *
+   * Such a row stays disabled for *selection*: adopting it here would type its SDK to a tool that does not manage it.
+   * Rebuilding is the opposite — it makes the environment this node's own.
+   */
+  private suspend fun withRecreate(result: EvoLoadResultDto, provider: PyEvoEnvironmentProvider, context: EvoToolContext): EvoLoadResultDto {
+    if (result !is EvoLoadResultDto.Ok) return result
+    return result.copy(sections = result.sections.map { section ->
+      section.copy(leaves = section.leaves.map { leaf ->
+        if (leaf.ref !is PyInterpreterRef.DetectedPath) leaf
+        else leaf.copy(recreate = provider.recreateSpecFor(context, leaf))
+      })
     })
   }
 

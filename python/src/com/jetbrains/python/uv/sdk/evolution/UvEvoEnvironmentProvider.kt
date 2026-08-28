@@ -4,9 +4,11 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.pytools.PyTool
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pytools.runtime.PyToolRuntime
 import com.intellij.python.sdk.backend.evolution.DiscoveredVenv
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
+import com.intellij.python.sdk.backend.evolution.EvoRecreateSpec
 import com.intellij.python.sdk.backend.evolution.EvoToolContext
 import com.intellij.python.sdk.backend.evolution.PyToolEvoEnvironmentProvider
 import com.intellij.python.sdk.backend.evolution.envExistsError
@@ -17,7 +19,9 @@ import com.intellij.python.sdk.backend.evolution.toSectionsGroupedByParent
 import com.intellij.python.sdk.backend.evolution.toolMissing
 import com.intellij.python.sdk.common.evolution.EvoAddNewDto
 import com.intellij.python.sdk.common.evolution.EvoAddNewOptionDto
+import com.intellij.python.sdk.common.evolution.EvoLeafDto
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
+import com.intellij.python.sdk.common.evolution.EvoRecreateDto
 import com.intellij.python.sdk.common.evolution.EvoSectionDto
 import com.intellij.python.sdk.common.evolution.PyInterpreterRef
 import com.intellij.python.uv.backend.PyUvBundle
@@ -31,6 +35,7 @@ import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.evolution.requiresPython
 import com.jetbrains.python.sdk.impl.PySdkBundle
+import com.jetbrains.python.sdk.impl.resolvePythonHome
 import com.jetbrains.python.sdk.uv.setupExistingEnvAndSdk
 import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnv
 import io.github.z4kn4fein.semver.Version
@@ -83,16 +88,7 @@ internal class UvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
     val uvExecutable = executableOrNull(context.fileSystem) ?: return toolMissing()
     val venvDir = context.resolveNewVenvDir(ref)
     if (venvDir.exists()) return envExistsError(venvDir.fileName.toString())
-    // The token is a version this provider itself serialized in addNewEnvSpec, so a malformed one is a bug in the
-    // round-trip rather than bad user input — say so instead of silently falling back to uv's default Python.
-    val version = ref.token.takeIf { it.isNotBlank() }?.let { token ->
-      try {
-        Version.parse(token, strict = false)
-      }
-      catch (e: VersionFormatException) {
-        return PyResult.localizedError(PySdkBundle.message("evolution.error.bad.python.version", token, e.message ?: ""))
-      }
-    }
+    val version = parseVersion(ref.token).getOr { return it }
     return setupNewUvSdkAndEnv(
       uvExecutable = uvExecutable,
       workingDir = context.pyProject.baseDir,
@@ -100,6 +96,57 @@ internal class UvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
       fileSystem = context.fileSystem,
       version = version,
       errorSink = context.errorSink,
+    )
+  }
+
+  /**
+   * The version this token names, or `null` for the blank token meaning uv's own default Python.
+   *
+   * The token is a version this provider itself serialized, so a malformed one is a bug in the round-trip rather than
+   * bad user input — say so instead of silently falling back to uv's default Python.
+   */
+  private fun parseVersion(token: String): PyResult<Version?> {
+    val trimmed = token.takeIf { it.isNotBlank() } ?: return PyResult.success(null)
+    return try {
+      PyResult.success(Version.parse(trimmed, strict = false))
+    }
+    catch (e: VersionFormatException) {
+      PyResult.localizedError(PySdkBundle.message("evolution.error.bad.python.version", trimmed, e.message ?: ""))
+    }
+  }
+
+  /**
+   * Every uv environment here may be rebuilt, on the same versions the add-new row offers.
+   *
+   * The version list is the one [addNewEnvSpec] already memoized for this request, so offering the rebuild costs no
+   * further uv call. There is nothing per-row to weigh: a uv environment is an ordinary virtualenv, and uv fetches
+   * whatever interpreter it is asked for.
+   */
+  override suspend fun recreateSpecFor(context: EvoToolContext, leaf: EvoLeafDto): EvoRecreateDto? {
+    val versions = context.cached(VERSIONS_KEY) { supportedPythonVersions(context) }.takeIf { it.isNotEmpty() } ?: return null
+    // Without a `pyproject.toml` there is no project for `uv sync` to read, so the rebuilt env can only come back empty.
+    return EvoRecreateDto(options = versions, canSyncPackages = context.pyProject.baseDir.resolve(PY_PROJECT_TOML).exists())
+  }
+
+  /**
+   * Rebuilds the environment in place with `uv venv --clear`.
+   *
+   * uv empties the directory rather than removing and remaking it, so this is one step and not a delete followed by a
+   * create. That suits the rule the widget works to: a failure leaves the folder standing and broken, and says so,
+   * instead of leaving the project with nothing where an environment used to be.
+   */
+  override suspend fun recreateEnv(context: EvoToolContext, homePath: Path, spec: EvoRecreateSpec): PyResult<Sdk> {
+    val uvExecutable = executableOrNull(context.fileSystem) ?: return toolMissing()
+    val version = parseVersion(spec.baseToken).getOr { return it }
+    return setupNewUvSdkAndEnv(
+      uvExecutable = uvExecutable,
+      workingDir = context.pyProject.baseDir,
+      venvPath = PathHolder.Eel(homePath.resolvePythonHome()),
+      fileSystem = context.fileSystem,
+      version = version,
+      errorSink = context.errorSink,
+      overrideExistingEnv = true,
+      sync = spec.syncPackages,
     )
   }
 

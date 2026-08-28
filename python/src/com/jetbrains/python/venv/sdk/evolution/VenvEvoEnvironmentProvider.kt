@@ -9,15 +9,19 @@ import com.intellij.python.community.services.systemPython.createVenvFromSystemP
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.sdk.backend.evolution.DiscoveredVenv
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
+import com.intellij.python.sdk.backend.evolution.EvoRecreateSpec
 import com.intellij.python.sdk.backend.evolution.EvoToolContext
 import com.intellij.python.sdk.backend.evolution.PyEvoEnvironmentProvider
 import com.intellij.python.sdk.backend.evolution.envExistsError
 import com.intellij.python.sdk.backend.evolution.firstFreeVenvDir
 import com.intellij.python.sdk.backend.evolution.listEntryNames
+import com.intellij.python.sdk.backend.evolution.ownedEnvBinaryIn
 import com.intellij.python.sdk.backend.evolution.resolveNewVenvDir
 import com.intellij.python.sdk.backend.evolution.toSectionsGroupedByParent
 import com.intellij.python.sdk.common.evolution.EvoAddNewDto
+import com.intellij.python.sdk.common.evolution.EvoLeafDto
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
+import com.intellij.python.sdk.common.evolution.EvoRecreateDto
 import com.intellij.python.sdk.common.evolution.EvoNodeKind
 import com.intellij.python.sdk.common.evolution.EvoSectionDto
 import com.intellij.python.sdk.common.evolution.PyInterpreterRef
@@ -28,7 +32,9 @@ import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.configuration.VENV_TOOL_ID
 import com.jetbrains.python.sdk.createSdkGuessingTypeByPath
+import com.jetbrains.python.sdk.evolution.deleteEnvDir
 import com.jetbrains.python.sdk.impl.PySdkBundle
+import com.jetbrains.python.sdk.impl.resolvePythonHome
 import java.nio.file.Path
 import javax.swing.Icon
 import kotlin.io.path.exists
@@ -92,9 +98,43 @@ internal class VenvEvoEnvironmentProvider : PyEvoEnvironmentProvider {
   override suspend fun createSdkForNewEnv(context: EvoToolContext, ref: PyInterpreterRef.CreateEnv): PyResult<Sdk> {
     val venvDir = context.resolveNewVenvDir(ref)
     if (venvDir.exists()) return envExistsError(venvDir.fileName.toString())
+    return createVenvIn(context, venvDir, ref.token)
+  }
+
+  /**
+   * Every virtualenv on this node may be rebuilt, on any system Python the machine has.
+   *
+   * The list is the one [addNewEnvSpec] offers, since a rebuild picks its base the same way a create does. No packages
+   * choice: pip has no lock file to read one from, and a `requirements.txt` lying beside the project is a guess rather
+   * than a record of what the environment held.
+   *
+   * This node keeps no record of what it made — a plain virtualenv names no tool — so its only way to tell an
+   * environment it may destroy from one it merely found is where the environment sits. Hence [ownedEnvBinaryIn]: an
+   * interpreter outside the project belongs to something else, whatever put it there.
+   */
+  override suspend fun recreateSpecFor(context: EvoToolContext, leaf: EvoLeafDto): EvoRecreateDto? {
+    leaf.ref.ownedEnvBinaryIn(context.pyProject.baseDir) ?: return null
+    val options = context.systemPythonOptions().takeIf { it.isNotEmpty() } ?: return null
+    return EvoRecreateDto(options = options, canSyncPackages = false)
+  }
+
+  /**
+   * Deletes the environment and builds another in its place, since `venv` has no command that replaces one.
+   *
+   * The delete comes first and its failure ends this: building over a directory that refused to go would leave the two
+   * environments mixed together in one folder.
+   */
+  override suspend fun recreateEnv(context: EvoToolContext, homePath: Path, spec: EvoRecreateSpec): PyResult<Sdk> {
+    val venvDir = homePath.resolvePythonHome()
+    deleteEnvDir(venvDir).getOr { return it }
+    return createVenvIn(context, venvDir, spec.baseToken)
+  }
+
+  /** Creates a virtualenv in [venvDir] from the system Python whose binary is [baseToken], then types its SDK by path. */
+  private suspend fun createVenvIn(context: EvoToolContext, venvDir: Path, baseToken: String): PyResult<Sdk> {
     val eelApi = context.fileSystem.eelDescriptor?.toEelApi() ?: localEel
-    val systemPython = SystemPythonService().findSystemPythons(eelApi).firstOrNull { it.pythonBinary.pathString == ref.token }
-                       ?: return PyResult.localizedError(PySdkBundle.message("evolution.error.base.python.not.found", ref.token))
+    val systemPython = SystemPythonService().findSystemPythons(eelApi).firstOrNull { it.pythonBinary.pathString == baseToken }
+                       ?: return PyResult.localizedError(PySdkBundle.message("evolution.error.base.python.not.found", baseToken))
     val venvPython = createVenvFromSystemPython(systemPython, venvDir).getOr { return it }
     return createSdkGuessingTypeByPath(
       PathHolder.Eel(venvPython),

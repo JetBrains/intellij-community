@@ -33,6 +33,14 @@ open class EvoActionPopupStep(
   private val node: EvoTreeNodeElement,
   private val dataContext: DataContext,
   private val scope: CoroutineScope,
+  /**
+   * Shows a fresh step in place of this one, for a panel that no row of the parent opens.
+   *
+   * A panel opened from a row's inline icon cannot be reopened by choosing the row under it. That row is a leaf, so
+   * [onChosen] queues its action and closes the popup, which performs the very thing the panel was opened instead of.
+   * Null for an ordinary submenu, which reopens the way it opened — see `EvoTreePopup.toggleExpandedAndReopen`.
+   */
+  val reopenWith: ((EvoActionPopupStep) -> Unit)? = null,
 ) : ListPopupStepEx<EvoTreeItem> {
   private val listeners: MutableList<ListPopupStep.ListPopupModelListener> = arrayListOf()
 
@@ -96,6 +104,17 @@ open class EvoActionPopupStep(
   fun loadingStep(): EvoActionPopupStep = EvoActionPopupStep(null, loadingNodeElement(node), dataContext, scope)
 
   /**
+   * A child step over [node], which reopens itself through [reopenWith] rather than through the row below it.
+   *
+   * Built here for the same reason [loadingStep] is: it inherits this step's data context and scope.
+   */
+  fun childStep(node: EvoTreeNodeElement, reopenWith: (EvoActionPopupStep) -> Unit): EvoActionPopupStep =
+    EvoActionPopupStep(null, node, dataContext, scope, reopenWith)
+
+  /** This step again, over the same node, whose sections [toggleExpanded] may just have rewritten. */
+  fun respawn(): EvoActionPopupStep = EvoActionPopupStep(myTitle, node, dataContext, scope, reopenWith)
+
+  /**
    * Expands the version list into its individual interpreters, or collapses it back.
    *
    * Only the node's sections are updated — no listener is notified and nothing is loaded — because the caller rebuilds
@@ -122,6 +141,10 @@ open class EvoActionPopupStep(
   /** The name to show in this submenu's header when it cannot be edited (hatch's declared env) — see [EvoTreeNodeElement]. */
   val fixedName: String? get() = node.fixedName
 
+  /** The caption above this submenu's header, or null for the "add new" wording — see [EvoTreeNodeElement]. */
+  val headerCaption: @Nls String? get() = node.headerCaption
+
+
   override fun onChosen(
     selectedValue: EvoTreeItem,
     finalChoice: Boolean
@@ -135,6 +158,9 @@ open class EvoActionPopupStep(
       return PopupStep.FINAL_CHOICE
     }
     if (!node.isEnabled) return PopupStep.FINAL_CHOICE
+    // A disabled row that [isSelectable] admits for its inline icon: selecting it must do nothing at all. Only the icon
+    // acts on such a row, and running the row's own action here would select the environment the icon rebuilds.
+    if (!selectedValue.isEnabled) return null
 
     return when (val element = selectedValue.element) {
       // Only open a submenu for a loaded, non-empty node — an empty popup crashes Swing layout (AIOOBE 0). The
@@ -204,7 +230,12 @@ open class EvoActionPopupStep(
     // delivers a click only to the row that is already selected (`ListPopupImpl.MyList.processMouseEvent`), leaving an
     // unselectable row unclickable however precisely it is hit. It still reads as disabled: its presentation stays so,
     // and `hasSubstep` keeps the submenu arrow off it.
-    (value.opensProcessOutput || (value.isReady && value.isEnabled))
+    //
+    // A row offering a rebuild is selectable for the same reason: the inline icon is painted on the hovered row and
+    // hit-tested there, so a row nothing can select can carry no icon. An environment another tool owns is such a row —
+    // disabled here because adopting it would type its SDK to the wrong tool, and still rebuildable by its owner. See
+    // [onChosen], which keeps choosing a disabled row inert.
+    (value.opensProcessOutput || value.recreatePanel != null || (value.isReady && value.isEnabled))
 
   override fun getIconFor(value: EvoTreeItem?): Icon? = value?.icon
 

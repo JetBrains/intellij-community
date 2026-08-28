@@ -164,6 +164,11 @@ internal suspend fun <P : PathHolder> setupNewUvSdkAndEnv(
   errorSink: ErrorSink,
   overrideExistingEnv: Boolean = false,
   inheritSitePackages: Boolean = false,
+  /**
+   * Install the project's dependencies into the new environment. Off leaves it as `uv venv` made it, which is what a
+   * rebuild wants when the user cleared the sync box. Ignored where there is no project to sync from.
+   */
+  sync: Boolean = true,
 ): PyResult<Sdk> {
   val shouldInitProject = !workingDir.resolve(PY_PROJECT_TOML).exists()
   val normalizedUvExecutablePath = fileSystem.normalizePathToRemote(uvExecutable)
@@ -181,8 +186,11 @@ internal suspend fun <P : PathHolder> setupNewUvSdkAndEnv(
     usePip = false
   ).getOr { return it }
 
-  if (!shouldInitProject) {
-    uv.sync()
+  if (!shouldInitProject && sync) {
+    // Told which interpreter to sync with, not left to choose: uv reads `.python-version` and `requires-python`, and
+    // where its choice differs from the environment just built it deletes that one and builds another — undoing the
+    // version the caller asked for. Null keeps uv's own choice, which is right when the caller expressed none.
+    uv.sync(version)
       .onFailure { errorSink.emit(it) }
       .onSuccess { SaveAndSyncHandler.getInstance().scheduleRefresh() }
   }

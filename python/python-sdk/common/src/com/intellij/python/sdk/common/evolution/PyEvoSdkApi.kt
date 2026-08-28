@@ -101,6 +101,20 @@ interface PyEvoSdkApi : RemoteApi<Unit> {
   suspend fun selectInterpreter(projectId: ProjectId, pyProjectKey: String, ref: PyInterpreterRef, nodeId: String): EvoSelectResultDto
 
   /**
+   * Destroys the environment [EvoRecreateRequestDto.envHomePath] names, builds it again in the same place on a
+   * different base Python, and assigns the result — a row's inline rebuild affordance. [nodeId] is the tool node the
+   * row came from, which is the tool that does the work.
+   *
+   * Separate from [selectInterpreter] rather than a fifth [PyInterpreterRef]: this acts on an environment that already
+   * exists, it is the one call that destroys something, and a new ref would add a branch meaning "not applicable" to
+   * every exhaustive `when` over that interface.
+   *
+   * Nothing is kept back to roll forward to: the old environment is gone before the new one is attempted, so a failure
+   * leaves the project without one and says so. The frontend confirms with the user before it calls this.
+   */
+  suspend fun recreateEnvironment(projectId: ProjectId, pyProjectKey: String, nodeId: String, request: EvoRecreateRequestDto): EvoSelectResultDto
+
+  /**
    * Resolves the interpreter version (`python --version`) for the environment at [homePath], on demand — the
    * frontend calls this lazily as a row scrolls into view, so we never spawn a process per environment up front.
    * The probe runs in the [nodeId] tool's [com.jetbrains.python.TraceContext] (the same context the tool's env
@@ -218,6 +232,10 @@ suspend fun requestEvoAssociatedInterpreters(projectId: ProjectId, pyProjectKey:
 @ApiStatus.Internal
 suspend fun requestEvoSelectInterpreter(projectId: ProjectId, pyProjectKey: String, ref: PyInterpreterRef, nodeId: String): EvoSelectResultDto =
   PyEvoSdkApi().selectInterpreter(projectId, pyProjectKey, ref, nodeId)
+
+@ApiStatus.Internal
+suspend fun requestEvoRecreateEnvironment(projectId: ProjectId, pyProjectKey: String, nodeId: String, request: EvoRecreateRequestDto): EvoSelectResultDto =
+  PyEvoSdkApi().recreateEnvironment(projectId, pyProjectKey, nodeId, request)
 
 @ApiStatus.Internal
 suspend fun requestEvoResolveVersion(projectId: ProjectId, pyProjectKey: String, nodeId: String, homePath: String, traceId: String): String? =
@@ -491,6 +509,24 @@ data class EvoLeafDto(
    * does. Empty everywhere else — including a hatch declared env, whose token is an env name and not an interpreter.
    */
   val bases: List<EvoBasePythonDto> = emptyList(),
+  /**
+   * How the environment this row stands for may be rebuilt on another Python, or `null` when it may not — the whole of
+   * the row's inline rebuild affordance.
+   *
+   * Set by the core, from the owning tool, only for a row that is an environment that exists, that this node can act
+   * on, and that lives inside the project. Distinct from [bases], which offers a finer base for a row that has not
+   * created anything yet: an environment that exists was built from whatever it was built from.
+   */
+  val recreate: EvoRecreateDto? = null,
+  /**
+   * The node that manages this environment, when it is not the node showing the row — uv's `.venv`, listed under pip and
+   * under Poetry as well because either could adopt an ordinary virtualenv.
+   *
+   * Such a row is [unavailable] for selection there, since adopting it on the wrong node would type its SDK to the wrong
+   * tool. A rebuild is different: it is performed by the tool that owns the environment, whichever node the user reached
+   * it from, so this says which tool that is. `null` when the row is the showing node's own.
+   */
+  val ownerNodeId: @NonNls String? = null,
 )
 
 @ApiStatus.Internal
@@ -628,6 +664,41 @@ data class EvoBasePythonDto(
   val qualifier: @NlsSafe String? = null,
   /** Creation token: this interpreter's binary path, passed back as [PyInterpreterRef.CreateEnv.token]. */
   val token: @NonNls String,
+)
+
+/**
+ * What an existing environment may be rebuilt on, and what the rebuild can do — see [EvoLeafDto.recreate].
+ *
+ * [options] is shaped as the "add new" list is, so the panel the frontend opens is the same panel: one row per Python
+ * version, expandable into that version's own installs.
+ */
+@ApiStatus.Internal
+@Serializable
+data class EvoRecreateDto(
+  val options: List<EvoAddNewOptionDto>,
+  /**
+   * The tool can fill the rebuilt environment from its lock file or its `pyproject.toml`, so the panel offers that as a
+   * choice. `false` leaves the choice out rather than showing one that would do nothing — pip has no lock to read.
+   */
+  val canSyncPackages: Boolean = false,
+)
+
+/** What [PyEvoSdkApi.recreateEnvironment] is asked to do. */
+@ApiStatus.Internal
+@Serializable
+data class EvoRecreateRequestDto(
+  /** The interpreter binary of the environment to destroy — the value that row's [PyInterpreterRef.DetectedPath] carries. */
+  val envHomePath: @NonNls String,
+  /**
+   * The base to build on, exactly as the chosen row carried it: an [EvoBasePythonDto.token], or an
+   * [EvoAddNewOptionDto.token] when the row stood for a version. What it means is the tool's own business, as it is for
+   * [PyInterpreterRef.CreateEnv.token].
+   */
+  val baseToken: @NonNls String,
+  /** A version this machine does not have: install it first, then build on what landed — see [EvoAddNewOptionDto.installable]. */
+  val installPythonVersion: @NonNls String? = null,
+  /** Fill the rebuilt environment from the tool's lock or `pyproject.toml`. Ignored where [EvoRecreateDto.canSyncPackages] is false. */
+  val syncPackages: Boolean = true,
 )
 
 /** Result of [PyEvoSdkApi.loadNode]: sections on success, or a warning/critical error message. */
