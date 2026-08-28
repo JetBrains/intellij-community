@@ -72,6 +72,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -959,7 +960,8 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     }
   }
 
-  private static boolean hasNewOptions(@NotNull Configurable configurable) {
+  @VisibleForTesting
+  public static boolean hasNewOptions(@NotNull Configurable configurable) {
     if (isNewOptions(configurable)) {
       return true;
     }
