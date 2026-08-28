@@ -187,8 +187,12 @@ private suspend fun embedContentModulesFromPlan(
       xIncludeResolver = xIncludeResolver,
       outputProvider = RefusingModuleOutputProvider,
       descriptorModifier = { descriptor ->
-        // `separate-jar` matters only for an embedded descriptor that declares a package - see `embedContentModule`.
-        if (descriptor.getAttributeValue("package") != null && request.separateJarModules.contains(moduleName)) {
+        // The three gates `embedContentModule` applies, in its order. The middle one is the reason a name that holds a
+        // `/` never takes the attribute: such a name points at a descriptor of another module, and the assembly asks
+        // the verdict of the module before the `/` only when the two are the same string.
+        if (descriptor.getAttributeValue("package") != null &&
+            moduleName.substringBeforeLast('/') == moduleName &&
+            request.separateJarModules.contains(moduleName)) {
           descriptor.setAttribute("separate-jar", "true")
         }
       },

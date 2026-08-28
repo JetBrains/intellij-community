@@ -76,6 +76,25 @@ class DevDistPluginDescriptorTest {
     assertThat(patch(fixture(dir))).isEqualTo(REFERENCE)
   }
 
+  /**
+   * A content module name that holds a `/` never takes `separate-jar`, even when the plan names it.
+   *
+   * The third gate of `embedContentModule`: the verdict is asked of the module before the `/`, and only when that name
+   * and the content module name are the same string. Such a name points at a descriptor another module owns, and the
+   * assembly refuses the attribute for it. 19 of this product's 1 540 embedded pairs hold a `/`.
+   *
+   * The plan lists no such name today, because the generator applies the same gate. This asserts that the action
+   * refuses one anyway, so the two producers agree by construction and not by the plan's current content.
+   */
+  @Test
+  fun `a content module name with a slash takes no separate-jar`(@TempDir dir: Path) {
+    val text = patch(slashFixture(dir, separateJarModules = setOf(SPLIT)))
+
+    assertThat(text).doesNotContain("separate-jar")
+    // The plan's own name, without the `/`, still takes it - so the refusal is about the `/` and not about the plan.
+    assertThat(patch(slashFixture(dir, separateJarModules = setOf(BACKEND)))).contains("separate-jar=\"true\"")
+  }
+
   /** A descriptor the plan does not declare must fail loudly, and never load a project model to find it. */
   @Test
   fun `an undeclared content module descriptor fails loudly`(@TempDir dir: Path) {
@@ -242,11 +261,59 @@ class DevDistPluginDescriptorTest {
       platformModules = emptyList(),
     )
   }
+
+  /** A descriptor whose `<content>` names one plain module and one whose name holds a `/`. */
+  private fun slashFixture(dir: Path, separateJarModules: Set<String>): DevDistPluginDescriptorRequest {
+    Files.writeString(dir.resolve("build.txt"), "263.SNAPSHOT\n")
+    Files.writeString(dir.resolve("slash-plugin.xml"), SLASH_SOURCE)
+    Files.writeString(dir.resolve("$BACKEND.xml"), """<idea-plugin package="$BACKEND" />""")
+    Files.writeString(dir.resolve(SPLIT_DESCRIPTOR), """<idea-plugin package="$BACKEND.split" />""")
+    return fixture(dir).let { base ->
+      DevDistPluginDescriptorRequest(
+        output = base.output,
+        mainModule = base.mainModule,
+        directoryName = base.directoryName,
+        mainJarName = base.mainJarName,
+        source = dir.resolve("slash-plugin.xml"),
+        buildNumberFile = base.buildNumberFile,
+        buildDateInSeconds = base.buildDateInSeconds,
+        releaseDate = base.releaseDate,
+        releaseVersion = base.releaseVersion,
+        isEap = base.isEap,
+        exactVersion = base.exactVersion,
+        retainProductDescriptor = base.retainProductDescriptor,
+        embedsContentModules = true,
+        contentModules = listOf(BACKEND, SPLIT),
+        separateJarModules = separateJarModules,
+        pluginDescriptors = mapOf(
+          "$BACKEND.xml" to dir.resolve("$BACKEND.xml"),
+          SPLIT_DESCRIPTOR to dir.resolve(SPLIT_DESCRIPTOR),
+        ),
+        platformDescriptors = emptyMap(),
+        pluginModules = base.pluginModules,
+        platformModules = emptyList(),
+      )
+    }
+  }
 }
 
 private const val MAIN_MODULE = "intellij.example"
 private const val BACKEND = "intellij.example.backend"
 private const val FRONTEND = "intellij.example.frontend"
+
+/** A content module whose name holds a `/`: its descriptor belongs to [BACKEND], not to a module of its own. */
+private const val SPLIT = "$BACKEND/split"
+private const val SPLIT_DESCRIPTOR = "$BACKEND.split.xml"
+
+private val SLASH_SOURCE = """
+  <idea-plugin>
+    <id>com.example</id>
+    <content>
+      <module name="$BACKEND"/>
+      <module name="$SPLIT"/>
+    </content>
+  </idea-plugin>
+""".trimIndent()
 
 private val SOURCE = """
   <idea-plugin>

@@ -33,3 +33,16 @@ internal class FrontendModuleFilterImpl private constructor(
 internal object EmptyFrontendModuleFilter : FrontendModuleFilter {
   override fun isModuleCompatibleWithFrontend(moduleName: String): Boolean = false
 }
+
+/**
+ * The filter a product with an embedded frontend root module gets, over the JPS project alone.
+ *
+ * Public because a second caller needs the same answer outside an assembly: the dev-distribution descriptor plan
+ * precomputes `separate-jar` per (plugin, content module), and a packed dev distribution keeps
+ * [org.jetbrains.intellij.build.BuildOptions.enableEmbeddedFrontend] at its default, so it gets this filter and not
+ * [EmptyFrontendModuleFilter].
+ */
+fun createFrontendModuleFilter(project: JpsProject): FrontendModuleFilter = FrontendModuleFilterImpl.createFrontendModuleFilter(project)
+
+/** The filter a product without an embedded frontend root module gets: nothing is frontend-compatible. */
+fun emptyFrontendModuleFilter(): FrontendModuleFilter = EmptyFrontendModuleFilter

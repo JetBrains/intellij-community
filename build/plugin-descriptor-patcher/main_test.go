@@ -9,122 +9,232 @@ import (
 	"testing"
 )
 
-// What this file covers is the argument surface and the refusal. The bytes are gated in `internal/descriptorxml` and
-// `internal/stamps`, against the platform.
+// What this file covers is the request surface: the option spelling the rule states, the scalars this binary computes
+// from the build number, and the failure of a request the rule cannot state. The bytes are gated in
+// `internal/descriptorxml`, `internal/stamps` and `internal/structural`, and over a whole product by
+// `./build/dev-dist.cmd descriptors`.
 
-func TestAStampedDescriptorIsWritten(t *testing.T) {
+// requestFile writes a parameter file of the shape `dev_dist_plugin_descriptor` passes, and returns its path.
+func requestFile(t *testing.T, dir string, lines ...string) string {
+	t.Helper()
+	path := filepath.Join(dir, "arguments.txt")
+	write(t, path, strings.Join(lines, "\n")+"\n")
+	return path
+}
+
+// buildNumberFile writes the declared build-number file, which is `@community//:build.txt` in the rule.
+func buildNumberFile(t *testing.T, dir string, value string) string {
+	t.Helper()
+	path := filepath.Join(dir, "build.txt")
+	write(t, path, value+"\n")
+	return path
+}
+
+func TestTheWholeRequestIsPatched(t *testing.T) {
 	dir := t.TempDir()
 	source := filepath.Join(dir, "plugin.xml")
-	output := filepath.Join(dir, "out", "plugin.xml")
-	write(t, source, "<idea-plugin><id>a</id><description>&lt;b&gt;x&lt;/b&gt;</description></idea-plugin>")
+	output := filepath.Join(dir, "out", "intellij.example.plugin.xml")
+	write(t, source, `<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude"><id>a</id>`+
+		`<description>&lt;b&gt;x&lt;/b&gt;</description>`+
+		`<xi:include href="extra.xml"/>`+
+		`<content><module name="a.b"/><module name="dropped"/></content></idea-plugin>`)
+	write(t, filepath.Join(dir, "extra.xml"), `<idea-plugin><extensions/></idea-plugin>`)
+	write(t, filepath.Join(dir, "a.b.xml"), `<idea-plugin package="a.b"/>`)
 
-	code := run([]string{
-		"--source=" + source, "--output=" + output,
-		"--version=1.2.3", "--since-build=263", "--until-build=263.*",
-		"--release-date=20260101", "--release-version=2026300", "--eap",
-	})
+	code := run([]string{"--flagfile=" + requestFile(t, dir,
+		"--out="+output,
+		"--main-module=intellij.example",
+		"--directory-name=example",
+		"--main-jar-name=example.jar",
+		"--source="+source,
+		"--build-number-file="+buildNumberFile(t, dir, "263.SNAPSHOT"),
+		"--build-date-seconds=1767225600",
+		"--release-date=20260101",
+		"--release-version=2026300",
+		"--eap=true",
+		"--exact-version=false",
+		"--retain-product-descriptor=false",
+		"--embed-content-modules=true",
+		"--content-module=a.b",
+		"--separate-jar=a.b",
+		"--plugin-descriptor=META-INF/extra.xml="+filepath.Join(dir, "extra.xml"),
+		"--plugin-descriptor=a.b.xml="+filepath.Join(dir, "a.b.xml"),
+		"--plugin-module=intellij.example",
+		"--platform-module=intellij.platform.core",
+	)})
 	if code != 0 {
 		t.Fatalf("exit %d", code)
 	}
-	want := "<idea-plugin>\n" +
-		"  <id>a</id>\n" +
-		"  <version>1.2.3</version>\n" +
-		"  <idea-version since-build=\"263\" until-build=\"263.*\" />\n" +
-		"  <description><![CDATA[<b>x</b>]]></description>\n" +
-		"</idea-plugin>"
+
+	// `263.SNAPSHOT` with the pinned build date gives the version. The range is computed from the **build number** and
+	// not from that version (`DevDistPluginDescriptorMain.kt:117`), and `263.SNAPSHOT` matches no numeric shape, so
+	// both ends are the build number itself. That is what `//build:idea_air_dist` stamps today.
+	want := `<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <id>a</id>
+  <version>263.20260101.0</version>
+  <idea-version since-build="263.SNAPSHOT" until-build="263.SNAPSHOT" />
+  <description><![CDATA[<b>x</b>]]></description>
+  <extensions />
+  <content>
+    <module name="a.b"><![CDATA[<idea-plugin package="a.b" separate-jar="true" />]]></module>
+  </content>
+</idea-plugin>`
 	if got := read(t, output); got != want {
 		t.Errorf("got:\n%s\nwant:\n%s", got, want)
 	}
 }
 
-func TestAFlagFileCarriesTheSameOptions(t *testing.T) {
+// Plain arguments are accepted too, so the binary is runnable by hand
+// (`DevDistPluginDescriptorMain.kt:283-288`).
+func TestPlainArgumentsAreAccepted(t *testing.T) {
 	dir := t.TempDir()
 	source := filepath.Join(dir, "plugin.xml")
 	output := filepath.Join(dir, "plugin.out.xml")
 	write(t, source, "<idea-plugin><id>a</id></idea-plugin>")
-	flagFile := filepath.Join(dir, "arguments.txt")
-	write(t, flagFile, "# a generated header\n\n--source="+source+"\n--output="+output+"\n--version=9\n--since-build=1\n--until-build=2\n")
 
-	if code := run([]string{"--flagfile=" + flagFile}); code != 0 {
+	code := run([]string{
+		"--out=" + output,
+		"--main-module=intellij.example",
+		"--source=" + source,
+		"--build-number-file=" + buildNumberFile(t, dir, "263.100.5"),
+		"--release-date=20260101",
+		"--release-version=2026300",
+	})
+	if code != 0 {
 		t.Fatalf("exit %d", code)
 	}
-	want := "<idea-plugin>\n  <id>a</id>\n  <version>9</version>\n  <idea-version since-build=\"1\" until-build=\"2\" />\n</idea-plugin>"
+	// No `.SNAPSHOT`, so the version is the build number. `--eap` is absent, so the range is
+	// `NEWER_WITH_SAME_BASELINE`: the number without its last segment, and the baseline with a star.
+	want := "<idea-plugin>\n  <id>a</id>\n  <version>263.100.5</version>\n" +
+		"  <idea-version since-build=\"263.100\" until-build=\"263.*\" />\n</idea-plugin>"
 	if got := read(t, output); got != want {
 		t.Errorf("got:\n%s\nwant:\n%s", got, want)
 	}
 }
 
-// The two unported stages must refuse, and the refusal must not leave an output behind. A half-patched descriptor that
-// looks written is worse than a failed action.
-func TestAnUnportedStageIsRefused(t *testing.T) {
-	cases := map[string]string{
-		"an xi:include": "<idea-plugin xmlns:xi=\"http://www.w3.org/2001/XInclude\"><id>a</id><xi:include href=\"h\"/></idea-plugin>",
-		"an xi:include one level down": "<idea-plugin xmlns:xi=\"http://www.w3.org/2001/XInclude\"><id>a</id>" +
-			"<extensions><xi:include href=\"h\"/></extensions></idea-plugin>",
-		"a declared content module": "<idea-plugin><id>a</id><content><module name=\"a.b\"/></content></idea-plugin>",
+// `--exact-version` pins both ends to the build number (`PluginXmlPatcher.kt:28-30`).
+func TestAnExactVersionPinsBothEnds(t *testing.T) {
+	dir := t.TempDir()
+	source := filepath.Join(dir, "plugin.xml")
+	output := filepath.Join(dir, "plugin.out.xml")
+	write(t, source, "<idea-plugin><id>a</id></idea-plugin>")
+
+	code := run([]string{
+		"--out=" + output, "--main-module=intellij.example", "--source=" + source,
+		"--build-number-file=" + buildNumberFile(t, dir, "263.100.5"),
+		"--release-date=20260101", "--release-version=2026300",
+		"--exact-version=true", "--eap=true",
+	})
+	if code != 0 {
+		t.Fatalf("exit %d", code)
 	}
-	for name, descriptor := range cases {
+	if got := read(t, output); !strings.Contains(got, `since-build="263.100.5" until-build="263.100.5"`) {
+		t.Errorf("got:\n%s", got)
+	}
+}
+
+// An option the parser does not know fails the run, which is what keeps the two producers on one spelling: a rule that
+// grows an option reaches both binaries or neither (`DevDistPluginDescriptorMain.kt:375`).
+func TestAnUnknownOptionIsRefused(t *testing.T) {
+	if code := run([]string{"--not-an-option=1"}); code != 2 {
+		t.Errorf("exit %d, want 2", code)
+	}
+}
+
+// A boolean is strict, the way Kotlin's `toBooleanStrict` is.
+func TestALooseBooleanIsRefused(t *testing.T) {
+	if code := run([]string{"--eap=yes"}); code != 2 {
+		t.Errorf("exit %d, want 2", code)
+	}
+}
+
+func TestAMissingRequiredOptionIsRefused(t *testing.T) {
+	dir := t.TempDir()
+	source := filepath.Join(dir, "plugin.xml")
+	write(t, source, "<idea-plugin/>")
+	for name, arguments := range map[string][]string{
+		"no --out":               {"--main-module=m", "--source=" + source, "--build-number-file=b"},
+		"no --main-module":       {"--out=o", "--source=" + source, "--build-number-file=b"},
+		"no --source":            {"--out=o", "--main-module=m", "--build-number-file=b"},
+		"no --build-number-file": {"--out=o", "--main-module=m", "--source=" + source},
+	} {
 		t.Run(name, func(t *testing.T) {
-			dir := t.TempDir()
-			source := filepath.Join(dir, "plugin.xml")
-			output := filepath.Join(dir, "plugin.out.xml")
-			write(t, source, descriptor)
-			if code := run([]string{"--source=" + source, "--output=" + output, "--version=1", "--since-build=1", "--until-build=2"}); code != 1 {
-				t.Fatalf("exit %d, want 1", code)
-			}
-			if _, err := os.Stat(output); !os.IsNotExist(err) {
-				t.Errorf("the refusal wrote %s", output)
+			if code := run(arguments); code != 2 {
+				t.Errorf("exit %d, want 2", code)
 			}
 		})
 	}
 }
 
-// An empty `<content>` reaches no unported stage. 42 of the 43 plugins the JVM tool already patches are of that shape.
-func TestAnEmptyContentElementIsNotRefused(t *testing.T) {
-	dir := t.TempDir()
-	source := filepath.Join(dir, "plugin.xml")
-	output := filepath.Join(dir, "plugin.out.xml")
-	write(t, source, "<idea-plugin><id>a</id><content></content></idea-plugin>")
-	if code := run([]string{"--source=" + source, "--output=" + output, "--version=1", "--since-build=1", "--until-build=2"}); code != 0 {
-		t.Fatalf("exit %d", code)
+// A descriptor pair that is not `<load path>=<file>` is refused (`DevDistPluginDescriptorMain.kt:380-384`).
+func TestAMalformedDescriptorPairIsRefused(t *testing.T) {
+	if code := run([]string{"--plugin-descriptor=no-separator"}); code != 2 {
+		t.Errorf("exit %d, want 2", code)
+	}
+	if code := run([]string{"--plugin-descriptor==only-a-file"}); code != 2 {
+		t.Errorf("exit %d, want 2", code)
 	}
 }
 
-// A `<module` inside a CDATA section is prose, not a declaration. A text search would refuse this descriptor.
-func TestAModuleInsideCdataIsNotADeclaration(t *testing.T) {
+// A failure of any stage must leave no output behind. A half-patched descriptor that looks written is worse than a
+// failed action: a wrong descriptor fails at class-load time inside the IDE, where nothing here can see it.
+func TestAFailedStageWritesNoOutput(t *testing.T) {
 	dir := t.TempDir()
-	source := filepath.Join(dir, "plugin.xml")
-	output := filepath.Join(dir, "plugin.out.xml")
-	write(t, source, "<idea-plugin><id>a</id><description><![CDATA[<content><module name=\"x\"/></content>]]></description></idea-plugin>")
-	if code := run([]string{"--source=" + source, "--output=" + output, "--version=1", "--since-build=1", "--until-build=2"}); code != 0 {
-		t.Fatalf("exit %d", code)
-	}
-	if got := read(t, output); !strings.Contains(got, "<![CDATA[<content><module name=\"x\"/></content>]]>") {
-		t.Errorf("the CDATA section did not survive:\n%s", got)
+	for name, descriptor := range map[string]string{
+		"an unresolvable include": `<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">` +
+			`<xi:include href="absent.xml"/></idea-plugin>`,
+		"an undeclared content module": `<idea-plugin><content><module name="a.b"/></content></idea-plugin>`,
+		"a malformed descriptor":       `<idea-plugin><id>a</id>`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			own := filepath.Join(dir, strings.ReplaceAll(name, " ", "-"))
+			if err := os.MkdirAll(own, 0o755); err != nil {
+				t.Fatal(err)
+			}
+			source := filepath.Join(own, "plugin.xml")
+			output := filepath.Join(own, "plugin.out.xml")
+			write(t, source, descriptor)
+			code := run([]string{
+				"--out=" + output, "--main-module=intellij.example", "--source=" + source,
+				"--build-number-file=" + buildNumberFile(t, own, "263.100.5"),
+				"--release-date=20260101", "--release-version=2026300",
+				"--content-module=a.b",
+			})
+			if code != 1 {
+				t.Fatalf("exit %d, want 1", code)
+			}
+			if _, err := os.Stat(output); !os.IsNotExist(err) {
+				t.Errorf("the failure wrote %s", output)
+			}
+		})
 	}
 }
 
-func TestMissingArgumentsAreRefused(t *testing.T) {
-	if code := run([]string{"--source=x"}); code != 2 {
-		t.Errorf("exit %d, want 2", code)
-	}
-	if code := run([]string{"--output=x"}); code != 2 {
-		t.Errorf("exit %d, want 2", code)
+// A build number the platform's semantic-version check refuses must fail here too, rather than reaching a jar
+// (`SnapshotBuildNumber.kt:59-61`).
+func TestABuildNumberThatIsNotSemanticIsRefused(t *testing.T) {
+	dir := t.TempDir()
+	source := filepath.Join(dir, "plugin.xml")
+	write(t, source, "<idea-plugin/>")
+	code := run([]string{
+		"--out=" + filepath.Join(dir, "o.xml"), "--main-module=m", "--source=" + source,
+		"--build-number-file=" + buildNumberFile(t, dir, "263.x.1"),
+		"--release-date=20260101", "--release-version=2026300",
+	})
+	if code != 1 {
+		t.Errorf("exit %d, want 1", code)
 	}
 }
 
 func TestAnUnreadableSourceFails(t *testing.T) {
 	dir := t.TempDir()
-	if code := run([]string{"--source=" + filepath.Join(dir, "absent.xml"), "--output=" + filepath.Join(dir, "o.xml")}); code != 1 {
-		t.Errorf("exit %d, want 1", code)
-	}
-}
-
-func TestAMalformedSourceFails(t *testing.T) {
-	dir := t.TempDir()
-	source := filepath.Join(dir, "plugin.xml")
-	write(t, source, "<idea-plugin><id>a</id>")
-	if code := run([]string{"--source=" + source, "--output=" + filepath.Join(dir, "o.xml")}); code != 1 {
+	code := run([]string{
+		"--out=" + filepath.Join(dir, "o.xml"), "--main-module=m",
+		"--source=" + filepath.Join(dir, "absent.xml"),
+		"--build-number-file=" + buildNumberFile(t, dir, "263.100.5"),
+		"--release-date=20260101", "--release-version=2026300",
+	})
+	if code != 1 {
 		t.Errorf("exit %d, want 1", code)
 	}
 }

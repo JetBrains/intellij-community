@@ -52,6 +52,21 @@ bool_flag(
     visibility = ["//visibility:public"],
 )
 
+# Whether every `dev_dist_plugin_descriptor` target also runs the JVM reference tool, beside the Go executor.
+#
+# The fourth flag of this shape, and the only one that adds an **action** rather than a side output of one. The two
+# producers write one plugin's descriptor from one request, and `./build/dev-dist.cmd descriptors --two-producer`
+# compares their bytes. Off means the reference file does not exist, so an ordinary build runs one action per plugin
+# and the primary action's key is the same either way.
+#
+#     bazel build //build/dev-dist-descriptors:idea_plugin_descriptors \
+#       --@community//platform/build-scripts/bazel-rules:dev_dist_descriptor_reference
+bool_flag(
+    name = "dev_dist_descriptor_reference",
+    build_setting_default = False,
+    visibility = ["//visibility:public"],
+)
+
 dev_dist_content_test_suite(name = "dev_dist_content_tests")
 
 test_suite(

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.jdom.Element
 import org.jdom.Namespace
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.impl.BuildUtils
 import org.jetbrains.intellij.build.impl.SnapshotBuildNumber
@@ -258,6 +259,31 @@ private fun withAppInfoOverride(
   }
 
   return JDOMUtil.write(element)
+}
+
+/**
+ * The application-info scalars of a dev distribution of [productProperties], with no build context.
+ *
+ * The dev-distribution descriptor plan stamps `release_date`, `release_version` and the EAP flag into every produced
+ * plugin descriptor, and the assembly stamps the same three from [BuildContext.applicationInfo]. One reader, so the
+ * two cannot disagree.
+ *
+ * [buildDateInSeconds] is the value the descriptor action pins, because an EAP product states no `majorReleaseDate`
+ * and [formatMajorReleaseDate] then formats the build date instead.
+ */
+@Internal
+fun loadDevDistributionApplicationInfo(
+  project: JpsProject,
+  productProperties: ProductProperties,
+  buildDateInSeconds: Long,
+): ApplicationInfoProperties {
+  return ApplicationInfoPropertiesImpl(
+    project = project,
+    productProperties = productProperties,
+    // `isDevDistribution` holds back the EAP expiration report: a dev distribution stamps no build date, so a pinned
+    // one that is months old says nothing about whether the IDE starts.
+    buildOptions = BuildOptions(buildDateInSeconds = buildDateInSeconds, isDevDistribution = true),
+  )
 }
 
 //copy of ApplicationInfoImpl.shortenCompanyName

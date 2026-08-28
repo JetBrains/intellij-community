@@ -22,16 +22,24 @@ each one per plugin.
 | `rawTextPatcher` | **never**. It is a per-layout Kotlin lambda, so a plugin that states one is not a candidate |
 | `reserialized` | `internal/descriptorxml`. `JDOMUtil.load` and `JDOMUtil.write`, byte for byte |
 | `stamps` | `internal/stamps`. `doPatchPluginXml` |
-| `includes` | **owed**. `xi:include` needs the plugin's descriptor closure |
-| `contentModules` | **owed**. The embedding needs the same closure and the content-module filter |
+| `includes` | `internal/structural`. `resolveIncludes` over a seeded descriptor cache |
+| `contentModules` | `internal/structural`. `resolveAndEmbedContentModuleDescriptor`, driven by the plan |
 | `textPatcher` | **never**, for the reason `rawTextPatcher` never does |
 
-The binary **refuses** a descriptor that would reach `includes` or `contentModules`, rather than writing a text that
-silently lost an include or an embedded body. A wrong descriptor fails at class-load time inside the IDE, where nothing
-here can see it.
+The two structural stages read **other** descriptors, and they read them from the files the action declares and from
+nothing else. Every other step of the platform's search needs a JPS project model, and
+`DevDistPluginDescriptorMain.kt` refuses to load one. So an include no declared file answers **fails**. The failure
+names the load path and every declared one, because the fix is always a missing entry in the generated plan.
 
-**No Bazel rule runs this binary.** `dev_dist_plugin_descriptor` still runs the JVM tool, and that tool stays the
-reference until the two structural stages land.
+The stage that would silently lose bytes is the content-module filter, and the plan drives it. The plan states the
+survivors in order. The action refuses a descriptor that lists them in another order: the two are joined by position,
+and a wrong join takes the wrong `separate-jar` verdicts in silence.
+
+**This binary is the executor of `dev_dist_plugin_descriptor`**
+([`dev_dist_plugin_descriptor.bzl`](../../platform/build-scripts/bazel-rules/dev_dist_plugin_descriptor.bzl)). The JVM
+tool it replaced, `@community//platform/build-scripts/bazel-rules/dev-dist-plugin-descriptor`, stays as the second
+producer. Both take one request: the same option spelling and the same `--flagfile` parameter file, which is why the
+swap was an executable swap.
 
 ## Why the round trip is the load-bearing half
 
@@ -75,29 +83,27 @@ The artifact is not committed, because it is megabytes of one product's descript
 
 **Which arm you build decides what this gate can cover.** A fragment that is handed a produced descriptor reads that
 file and runs no stage of the patch, so its record states `"origin": "produced"` and holds no stage text. The gate
-skips such a record by name and prints the count. Over `//build:idea_air_dist` as it stands, that is 43 of the 163, and
-the class (a) arm is then empty:
+skips such a record by name and prints the count. Over `//build:idea_air_dist` as it stands that is 43 of the 163, and
+two of the four arms are then empty. Measured on 2026-08-28:
 
     skipped                        43 records, which the fragment read from a produced descriptor
     rawTextPatcher -> reserialized 120 identical, 0 differing, 0 absent of 120
     reserialized -> stamps         120 identical, 0 differing, 0 absent of 120
     stamps against patched           0 identical, 0 differing, 0 absent of 0
+    the structural stages inert      0 identical, 0 differing, 0 absent of 0
+    structural elsewhere           120 records, whose structural stages moved bytes
 
 To cover all 163, build the fixture from the arm that computes every descriptor: empty `plugins` and every deviation
-list of the product entry in `build/dev_dist_plugin_descriptors.bzl`, build, copy the files out, and restore the file.
-That arm runs every stage of every descriptor, so its artifact holds every stage text. Measured on 2026-08-27 over one
-artifact of that shape, the gate reports 163 of 163 for `rawTextPatcher` to `reserialized`. It reports 163 of 163 for
-`reserialized` to `stamps`, and 43 of 43 for the class (a) stamps text against `patched`. That last text is what the
-assembly put in the plugin's main jar. Keep the artifact you build there: the declaring arm overwrites it.
+list of the product entry in `build/dev_dist_plugin_descriptors.bzl`, re-run the generator, build, copy the files out,
+and restore the file. That arm runs every stage of every descriptor, so its artifact holds every stage text. Measured on
+2026-08-27 over one artifact of that shape, the gate reports 163 of 163 for `rawTextPatcher` to `reserialized`, 163 of
+163 for `reserialized` to `stamps`, and 43 of 43 for the class (a) stamps text against `patched`. That last text is what
+the assembly put in the plugin's main jar. Keep the artifact you build there: the declaring arm overwrites it.
 
-**One coverage is gone, and no arm gives it back.** `./build/dev-dist.cmd descriptors` compares the JVM tool's output
-with the recorded text of the same plugin. The declaring arm holds those 43 plugins out, because the fragment read the
-file the tool wrote. The arm above builds no descriptor target at all, so that gate exits 2 there with
-`produced no *.plugin.xml`. So the two producers of those 43 descriptors are compared byte for byte on no arm any more.
-This is a structural consequence of the switch. Restoring it needs a mode in which the fragment computes the text
-anyway and records both producers, and nobody has designed one. The cross-arm evidence that exists is the
-whole-distribution comparison of the two arms; see
-[what making a fragment read its produced descriptor moved](../../../build/dev-dist-measurements.md#what-making-a-fragment-read-its-produced-descriptor-moved-and-what-the-two-arms-proved).
+**The two structural stages have no byte arm in this gate, by construction.** They read other descriptors, and the
+artifact records one plugin's stage texts and no descriptor closure. So a record whose structural stages moved bytes is
+counted and skipped here. The fourth arm proves inertness only. Over a descriptor the platform's own stages did not
+change, the Go stages must change nothing either.
 
 `<dir>/request.txt` states the stamp scalars, one `key=value` a line, because the artifact records no scalar. A
 `key@<main module>=value` line states one plugin's deviation. Three plugins of this product need one, for a per-layout
@@ -106,5 +112,42 @@ version suffix. A wrong scalar is loud: it moves the `<version>` of every record
 An artifact of the older schema recorded a byte count and no text. The gate then reports the stages it cannot answer
 as absent and fails, rather than passing a case against nothing.
 
-`./build/dev-dist.cmd descriptors` is the other half of the story: it compares the JVM tool's output against the same
-recorded artifact. This package does not replace that gate and does not depend on it.
+## The two-producer gate, which is where the structural stages are proved
+
+    ./build/dev-dist.cmd descriptors --two-producer
+
+Every `dev_dist_plugin_descriptor` target runs both producers over one parameter file, and the mode compares their
+bytes per plugin. It reads no artifact and assembles no distribution. So **every** plugin of the population is
+compared, the ones whose fragment now reads the produced file included. Those are the ones the artifact gate can only
+hold out. On 2026-08-28 it reported **158 of 158 byte-identical, 0 differing**.
+
+That is the coverage the produced-descriptor switch had taken away, and it is back. The earlier statement here, that no
+arm could give it back, was wrong about the mechanism. The missing piece was a second producer inside the rule, not a
+fragment that computes the text anyway.
+
+Two negative controls of that gate, each proved both ways. An include placed at position 0 rather than at its own
+position makes the content-order assertion refuse `intellij.database.plugin` outright, and the build fails. An embedded
+descriptor written as text rather than as CDATA gives 43 identical and 115 differing. That is exactly the split between
+the plugins that embed no content module and the ones that embed at least one.
+
+## The artifact gate, and what it now compares
+
+    ./build/dev-dist.cmd descriptors
+
+It compares the descriptor a `dev_dist_plugin_descriptor` action wrote against the text a dev assembly recorded for the
+same plugin. Since the swap, this binary produced the compared bytes. On 2026-08-28 it reported **115 of 115
+byte-identical, 0 differing**, with 48 plugins held out by name and reason.
+
+## Per-action cost, and why there is no worker
+
+Measured on darwin arm64 on 2026-08-28, over `//build/dev-dist-descriptors:idea_plugin_descriptors` with the action's
+output deleted and the caches bypassed (`--disk_cache= --noremote_accept_cached`):
+
+| producer | 158 actions, wall | 158 actions, critical path | one action |
+|---|---|---|---|
+| this binary | 5.96 s | 0.81 s | 76 to 141 ms |
+| the JVM tool | 29.2 s | 12.61 s | 472 to 764 ms |
+
+The largest descriptor of the product, `intellij.database.plugin` with 116 content modules and a 470 KB output, is
+137 ms. The smallest is 76 ms. So the cost is the sandbox and not the process start, and a worker cannot remove a
+sandbox. `content-module-packer` is a worker because it runs ~2 500 actions; this rule runs one per plugin.

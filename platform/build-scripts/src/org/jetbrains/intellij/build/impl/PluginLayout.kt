@@ -61,9 +61,27 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
 
   @Internal
   @JvmField
-  var rawPluginXmlPatcher: (String, BuildContext) -> String = { s, _ -> s }
+  var rawPluginXmlPatcher: (String, BuildContext) -> String = IDENTITY_DESCRIPTOR_PATCHER
 
-  var pluginXmlPatcher: (String, BuildContext) -> String = { s, _ -> s }
+  var pluginXmlPatcher: (String, BuildContext) -> String = IDENTITY_DESCRIPTOR_PATCHER
+
+  /**
+   * Whether the layout replaces the raw descriptor text before the stamps run - see [rawPluginXmlPatcher].
+   *
+   * A reader cannot compare the field against the default itself, because the default is one shared instance a caller
+   * outside this file cannot name. The dev-distribution descriptor plan needs the answer: a plugin whose raw text is
+   * patched by code cannot be produced by an action that reads a plan.
+   */
+  val hasRawPluginXmlPatcher: Boolean
+    get() = rawPluginXmlPatcher !== IDENTITY_DESCRIPTOR_PATCHER
+
+  /** [hasRawPluginXmlPatcher] for [pluginXmlPatcher], the post-stamp half. */
+  val hasPluginXmlPatcher: Boolean
+    get() = pluginXmlPatcher !== IDENTITY_DESCRIPTOR_PATCHER
+
+  /** Whether the layout stamps a version of its own instead of the IDE build version - see [versionEvaluator]. */
+  val hasCustomVersion: Boolean
+    get() = versionEvaluator !== PLUGIN_VERSION_AS_IDE
 
   var directoryNameSetExplicitly: Boolean = false
   var bundlingRestrictions: PluginBundlingRestrictions = PluginBundlingRestrictions.NONE
@@ -736,6 +754,14 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
 }
 
 private val PLUGIN_VERSION_AS_IDE = PluginVersionEvaluator { _, ideBuildVersion, _ -> PluginVersionEvaluatorResult(pluginVersion = ideBuildVersion) }
+
+/**
+ * The default of both descriptor patchers, as one instance.
+ *
+ * One instance and not a lambda per layout, so that [PluginLayout.hasRawPluginXmlPatcher] can tell a layout that
+ * declares no patcher from one whose patcher happens to return its input.
+ */
+private val IDENTITY_DESCRIPTOR_PATCHER: (String, BuildContext) -> String = { s, _ -> s }
 
 private const val OS_SPECIFIC_DEPENDENCIES_PLUGIN_XML_PLACEHOLDER: String = "<!-- OS/ARCH-DEPENDENCY-PLACEHOLDER -->"
 

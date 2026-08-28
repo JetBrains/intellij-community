@@ -4,8 +4,38 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.platform.runtime.product.ProductMode
 import org.jetbrains.intellij.build.ContentModuleFilter
 import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.impl.moduleBased.JpsProductModeMatcher
 import org.jetbrains.jps.model.JpsProject
+
+/**
+ * The filter a product applies to an optional `<module/>` of the platform or of a bundled plugin.
+ *
+ * One body, two callers, so the two cannot drift: [BuildContextImpl] asks during an assembly, and the
+ * dev-distribution descriptor plan asks during generation. The plan carries the survivors, which is what lets a
+ * produced descriptor be written by an action that loads no project model.
+ *
+ * [bundledPluginModules] is a lambda because the [ProductMode.MONOLITH] branches never ask for it, and computing the
+ * bundled list is not free.
+ */
+fun createContentModuleFilter(
+  project: JpsProject,
+  productProperties: ProductProperties,
+  outputProvider: ModuleOutputProvider,
+  bundledPluginModules: () -> List<String>,
+): ContentModuleFilter {
+  if (productProperties.productMode == ProductMode.MONOLITH) {
+    if (productProperties.productLayout.skipUnresolvedContentModules) {
+      return SkipUnresolvedOptionalContentModuleFilter(outputProvider)
+    }
+    return IncludeAllContentModuleFilter
+  }
+  return ContentModuleByProductModeFilter(
+    project = project,
+    bundledPluginModules = bundledPluginModules(),
+    productMode = productProperties.productMode,
+  )
+}
 
 /**
  * An instance of [ContentModuleFilter] which excludes modules not compatible with the given [ProductMode] from the platform part and bundled plugins.

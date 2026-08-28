@@ -4,7 +4,10 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "stamps",
-    srcs = ["stamps.go"],
+    srcs = [
+        "stamps.go",
+        "version.go",
+    ],
     importpath = "jetbrains.com/plugin-descriptor-patcher/internal/stamps",
     visibility = ["//visibility:public"],
     deps = ["//build/plugin-descriptor-patcher/internal/descriptorxml"],
@@ -20,11 +23,13 @@ go_test(
         "artifact_test.go",
         "population_test.go",
         "stamps_test.go",
+        "version_test.go",
     ],
     env_inherit = ["IJ_DESCRIPTOR_CASES"],
     pure = "on",
     deps = [
         ":stamps",
         "//build/plugin-descriptor-patcher/internal/descriptorxml",
+        "//build/plugin-descriptor-patcher/internal/structural",
     ],
 )

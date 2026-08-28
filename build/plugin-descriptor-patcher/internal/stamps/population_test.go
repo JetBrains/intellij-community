@@ -11,6 +11,7 @@ import (
 
 	"jetbrains.com/plugin-descriptor-patcher/internal/descriptorxml"
 	"jetbrains.com/plugin-descriptor-patcher/internal/stamps"
+	"jetbrains.com/plugin-descriptor-patcher/internal/structural"
 )
 
 // The population gate: every recorded descriptor of a real product, one case each, compared by bytes.
@@ -34,19 +35,35 @@ import (
 //
 // A later Bazel run with the flag off prunes the files from the symlink farm, so copy them out at once.
 //
-// ### The three arms
+// ### The four arms
 //
 // | arm | what it compares | population |
 // |---|---|---|
 // | `rawTextPatcher` -> `reserialized` | `descriptorxml.Read` and `Write` against the recorded round trip | every plugin |
 // | `reserialized` -> `stamps` | `stamps.Apply` against the recorded stamps text | every plugin |
 // | `stamps` against `patched` | the stamps text a real assembly put in the plugin's main jar | class (a) only |
+// | the two structural stages are inert | `structural` over a descriptor the platform's own stages did not change | where both reported no change |
 //
 // The round trip starts at `rawTextPatcher` and not at `source`, because that is the text the platform hands to
 // `JDOMUtil.load`. The two are the same text for every plugin whose layout states no raw lambda.
 //
 // The third arm is the one that is not a mirror. For a class (a) plugin the patch ends at the stamps stage, so
 // `patched` **is** the stamps text, and the comparison is against bytes a real assembly wrote.
+//
+// ### Why the fourth arm only proves inertness, and what covers the rest
+//
+// `includes` and `contentModules` read **other** descriptors, and the artifact records none of them: it holds one
+// plugin's stage texts and no descriptor closure. So this gate cannot resolve an include here at all, and a record
+// whose structural stages changed the text is counted and skipped rather than guessed at.
+//
+// The whole-population byte coverage of the two structural stages is two gates outside this package, both over a real
+// product:
+//
+//	./build/dev-dist.cmd descriptors                 # the Go executor against the text a dev assembly recorded
+//	./build/dev-dist.cmd descriptors --two-producer   # the Go executor against the JVM reference tool
+//
+// The second one is the closer mirror of this file: one rule declares both producers over one parameter file, so every
+// plugin of the population is compared and nothing is held out.
 const casesVariable = "IJ_DESCRIPTOR_CASES"
 
 // defaultRequest is what a fixture with no `request.txt` runs with.
@@ -225,6 +242,9 @@ func TestThePopulationRoundTripsAndStampsByteForByte(t *testing.T) {
 	stamped := &arm{name: "reserialized -> stamps"}
 	// The class (a) arm is not a mirror: `patched` is the text a real assembly wrote into the plugin's main jar.
 	assembled := &arm{name: "stamps against patched"}
+	// The structural arm proves inertness only - see this file's own doc for what covers the rest.
+	inert := &arm{name: "the structural stages inert"}
+	structuralElsewhere := 0
 	for _, it := range cases {
 		t.Run(it.name, func(t *testing.T) {
 			if it.plugin.Origin == originProduced {
@@ -258,6 +278,15 @@ func TestThePopulationRoundTripsAndStampsByteForByte(t *testing.T) {
 				}
 				assembled.compare(t, patched, it.plugin.Patched, true)
 			}
+
+			if it.plugin.changedAt(stageIncludes) || it.plugin.changedAt(stageContentModules) {
+				structuralElsewhere++
+				return
+			}
+			if !states {
+				return
+			}
+			inert.compare(t, runInertStructuralStages(t, want, it.plugin.MainModule), want, true)
 		})
 	}
 	if skipped != 0 {
@@ -266,6 +295,47 @@ func TestThePopulationRoundTripsAndStampsByteForByte(t *testing.T) {
 	roundTrip.report(t, len(cases)-skipped)
 	stamped.report(t, len(cases)-skipped)
 	assembled.report(t, assembled.same+assembled.different+assembled.absent)
+	inert.report(t, inert.same+inert.different+inert.absent)
+	if structuralElsewhere != 0 {
+		t.Logf("%-28s %3d records, whose structural stages moved bytes; "+
+			"`./build/dev-dist.cmd descriptors --two-producer` compares those",
+			"structural elsewhere", structuralElsewhere)
+	}
+}
+
+// runInertStructuralStages runs both structural stages over a descriptor the platform's own stages did not change, and
+// returns the text they produce.
+//
+// The seed is empty and `Embeds` is false, which is what makes the case runnable without the descriptor closure the
+// artifact does not hold. The plan's content modules are the descriptor's own, in its own order, because a stage the
+// platform reported as changing nothing removed no `<module/>`.
+//
+// So this catches a stage that moves a byte it should not: an include walk that rewrites a descriptor with no include,
+// a filter that drops a module the plan names, or an order assertion that reads the descriptor's own order wrongly.
+func runInertStructuralStages(t *testing.T, stampsText string, mainModule string) string {
+	t.Helper()
+	element, err := descriptorxml.Read(stampsText)
+	if err != nil {
+		t.Fatalf("read: %v", err)
+	}
+	var modules []string
+	for _, content := range element.ChildElementsNamed("content") {
+		for _, module := range content.ChildElementsNamed("module") {
+			if name, stated := module.Attribute("name"); stated {
+				modules = append(modules, name)
+			}
+		}
+	}
+	cache := structural.NewCache(nil)
+	resolver := structural.NewResolver([]structural.Scope{{Modules: []string{mainModule}, Cache: cache}})
+	if err := structural.ResolveIncludes(element, resolver); err != nil {
+		t.Fatalf("the includes stage must be inert here: %v", err)
+	}
+	request := structural.ContentRequest{MainModule: mainModule, Modules: modules, Embeds: false}
+	if err := structural.EmbedContentModules(element, request, cache, resolver); err != nil {
+		t.Fatalf("the content stage must be inert here: %v", err)
+	}
+	return descriptorxml.Write(element)
 }
 
 // firstDifference names where two texts part, with the line and both sides of it. A whole diff of a 40 KB descriptor

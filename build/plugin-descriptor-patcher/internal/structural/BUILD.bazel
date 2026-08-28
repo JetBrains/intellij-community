@@ -1,0 +1,32 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+# Hand-maintained: no gazelle target is wired up in this repository, so adding a `.go` file means editing `srcs` here.
+
+go_library(
+    name = "structural",
+    srcs = [
+        "embed.go",
+        "includes.go",
+        "resolver.go",
+    ],
+    importpath = "jetbrains.com/plugin-descriptor-patcher/internal/structural",
+    visibility = ["//visibility:public"],
+    deps = ["//build/plugin-descriptor-patcher/internal/descriptorxml"],
+)
+
+# The curated cases, one branch of the two structural stages each, with a negative control per branch. The
+# whole-population arms live outside this package and both compare against a real product:
+# `./build/dev-dist.cmd descriptors` against the text a dev assembly recorded, and its `--two-producer` mode against
+# the JVM reference tool over the same declared inputs.
+go_test(
+    name = "structural_test",
+    srcs = [
+        "embed_test.go",
+        "includes_test.go",
+    ],
+    pure = "on",
+    deps = [
+        ":structural",
+        "//build/plugin-descriptor-patcher/internal/descriptorxml",
+    ],
+)

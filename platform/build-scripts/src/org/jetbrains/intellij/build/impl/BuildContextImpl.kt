@@ -356,17 +356,12 @@ class BuildContextImpl internal constructor(
 
   private val _contentModuleFilter by lazy { computeContentModuleFilter() }
 
-  private fun computeContentModuleFilter(): ContentModuleFilter {
-    if (productProperties.productMode == ProductMode.MONOLITH) {
-      if (productProperties.productLayout.skipUnresolvedContentModules) {
-        return SkipUnresolvedOptionalContentModuleFilter(outputProvider)
-      }
-      return IncludeAllContentModuleFilter
-    }
-
-    val bundledPluginModules = getBundledPluginModules()
-    return ContentModuleByProductModeFilter(project = project, bundledPluginModules = bundledPluginModules, productMode = productProperties.productMode)
-  }
+  private fun computeContentModuleFilter(): ContentModuleFilter = createContentModuleFilter(
+    project = project,
+    productProperties = productProperties,
+    outputProvider = outputProvider,
+    bundledPluginModules = { getBundledPluginModules() },
+  )
 
   override fun getContentModuleFilter(): ContentModuleFilter = _contentModuleFilter
 

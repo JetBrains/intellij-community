@@ -19,13 +19,14 @@ go_binary(
     deps = [
         "//build/plugin-descriptor-patcher/internal/descriptorxml",
         "//build/plugin-descriptor-patcher/internal/stamps",
+        "//build/plugin-descriptor-patcher/internal/structural",
     ],
 )
 
 # main.go is listed twice, the shape `//build/content-module-packer` uses for the same reason: the canonical rules_go
 # shape would be a go_library that the binary and the test both embed, and a descriptor action will declare the binary
-# above as an input. What this covers is the argument surface and the refusal of an unported stage. The bytes are gated
-# under `internal/`.
+# above as an input. What this covers is the request surface: the option spelling the rule states, and the scalars this
+# binary computes from the declared build-number file. The bytes are gated under `internal/`.
 go_test(
     name = "plugin-descriptor-patcher_test",
     srcs = [
@@ -36,5 +37,6 @@ go_test(
     deps = [
         "//build/plugin-descriptor-patcher/internal/descriptorxml",
         "//build/plugin-descriptor-patcher/internal/stamps",
+        "//build/plugin-descriptor-patcher/internal/structural",
     ],
 )

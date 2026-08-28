@@ -2,33 +2,31 @@
 
 // Command plugin-descriptor-patcher writes the `META-INF/plugin.xml` a plugin's main jar receives.
 //
-// It is the Go counterpart of `applyPluginDescriptorPatch`
+// It is the executor of the `dev_dist_plugin_descriptor` rule
+// (`community/platform/build-scripts/bazel-rules/dev_dist_plugin_descriptor.bzl`), and the Go counterpart of
+// `applyPluginDescriptorPatch`
 // (`community/platform/build-scripts/src/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt:89`).
-// `build/decisions/0006-content-module-in-jar-out-composer-places-it.md` puts the executors in Go and leaves the JVM in
-// the generator, and a descriptor feeds every plugin main jar, so a JVM action for it sits on the build's critical path.
+// `build/decisions/0006-content-module-in-jar-out-composer-places-it.md` puts the executors in Go, and a descriptor
+// feeds every plugin main jar, so a JVM action for it sits on the build's critical path.
 //
-// ### What this covers, and what it refuses
+// ### The stages
 //
-// The patch has seven stages. This binary runs the first three:
+// The patch has seven stages, and this binary runs four of them:
 //
-//	source → rawTextPatcher → reserialized → stamps
+//	source → rawTextPatcher → reserialized → stamps → includes → contentModules → textPatcher
 //
-// `rawTextPatcher` is a per-layout lambda, so it is not data and never reaches this binary: a plugin whose layout
-// states one is not a candidate. `reserialized` is the round trip of `internal/descriptorxml`, and `stamps` is
-// `internal/stamps`.
+// `rawTextPatcher` and `textPatcher` are per-layout Kotlin lambdas, so they are code and not data: a plugin whose
+// layout states one is held out of this rule's population by the generated plan. `reserialized` is the round trip of
+// `internal/descriptorxml`, `stamps` is `internal/stamps`, and the two structural stages are `internal/structural`.
 //
-// The last three stages are **not ported**. `includes` resolves `xi:include`, `contentModules` embeds a content
-// module's own descriptor, and `textPatcher` is the second per-layout lambda. Both structural stages need the
-// descriptor closure of the plugin, which another step owns. So this binary **refuses** a descriptor that would reach
-// one of them, rather than writing a text that silently lost an include or an embedded body. The refusal is the point:
-// a wrong descriptor fails at class-load time inside the IDE, where nothing here can see it.
+// ### The reference producer
 //
-// No Bazel rule runs this binary yet. `dev_dist_plugin_descriptor` still runs the JVM tool, which stays the reference
-// (`community/platform/build-scripts/bazel-rules/dev_dist_plugin_descriptor.bzl`).
+// `@community//platform/build-scripts/bazel-rules/dev-dist-plugin-descriptor` is the JVM tool this binary replaced. It
+// stays, and it takes the same request: `./build/dev-dist.cmd descriptors --two-producer` runs both over the same
+// declared inputs and compares their bytes per plugin. That is the gate that makes a second implementation safe.
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -37,11 +35,8 @@ import (
 
 	"jetbrains.com/plugin-descriptor-patcher/internal/descriptorxml"
 	"jetbrains.com/plugin-descriptor-patcher/internal/stamps"
+	"jetbrains.com/plugin-descriptor-patcher/internal/structural"
 )
-
-// xIncludeNamespace is the XInclude namespace URI. A descriptor that states the prefix without declaring it reaches the
-// reader with the prefix and no URI, which is why the refusal below tests both.
-const xIncludeNamespace = "http://www.w3.org/2001/XInclude"
 
 func main() {
 	if code := run(os.Args[1:]); code != 0 {
@@ -49,137 +44,256 @@ func main() {
 	}
 }
 
-type options struct {
-	flagFile string
-	source   string
-	output   string
-	request  stamps.Request
+// request is one plugin's request, as the rule states it.
+//
+// It is `DevDistPluginDescriptorRequest` (`DevDistPluginDescriptorMain.kt:56-82`), field for field and option for
+// option. The two binaries take one request spelling, so the rule's executable is the only thing the swap changed.
+type request struct {
+	output          string
+	mainModule      string
+	directoryName   string
+	mainJarName     string
+	source          string
+	buildNumberFile string
+	buildDateSecond int64
+	releaseDate     string
+	releaseVersion  string
+	isEap           bool
+	exactVersion    bool
+	retainProduct   bool
+	embedsContent   bool
+	contentModules  []string
+	separateJar     map[string]bool
+	// pluginDescriptors and platformDescriptors are the descriptors the patch can reach, keyed by load path.
+	pluginDescriptors   map[string]string
+	platformDescriptors map[string]string
+	pluginModules       []string
+	platformModules     []string
 }
 
 func run(arguments []string) int {
-	opts, err := parseOptions(arguments)
+	lines, err := readArgumentLines(arguments)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 		return 2
 	}
-
-	source, err := os.ReadFile(opts.source)
+	parsed, err := parseRequest(lines)
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
+		return 2
+	}
+	content, err := patch(parsed)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "ERROR: could not patch the descriptor (module=%s): %v\n", parsed.mainModule, err)
+		return 1
+	}
+	if err := os.MkdirAll(filepath.Dir(parsed.output), 0o755); err != nil {
 		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 		return 1
 	}
-	element, err := descriptorxml.Read(string(source))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "ERROR: %s: %v\n", opts.source, err)
-		return 1
-	}
-	if reason := unportedStage(element); reason != "" {
-		fmt.Fprintf(os.Stderr, "ERROR: %s needs a stage this binary does not run: %s\n", opts.source, reason)
-		return 1
-	}
-
-	stamps.Apply(element, opts.request)
-	if err := os.MkdirAll(filepath.Dir(opts.output), 0o755); err != nil {
-		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
-		return 1
-	}
-	if err := os.WriteFile(opts.output, []byte(descriptorxml.Write(element)), 0o644); err != nil {
+	if err := os.WriteFile(parsed.output, []byte(content), 0o644); err != nil {
 		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 		return 1
 	}
 	return 0
 }
 
-// unportedStage names the stage a descriptor would reach that this binary does not run, or the empty string.
-//
-// It walks the tree. A text search would read a `<module` inside a CDATA section as a declared content module, which
-// `build/internal/content/descriptor.go` measured at 152 false survivors over one product.
-func unportedStage(root *descriptorxml.Element) string {
-	if name := findXInclude(root); name != "" {
-		return "the includes stage, because it states " + name
-	}
-	if content := root.Child("content"); content != nil {
-		for _, child := range content.Children {
-			if child.Kind == descriptorxml.KindElement && child.Element.Name == "module" {
-				name, _ := child.Element.Attribute("name")
-				return "the contentModules stage, because <content> declares the module " + name
-			}
-		}
-	}
-	return ""
-}
-
-func findXInclude(element *descriptorxml.Element) string {
-	for _, child := range element.Children {
-		if child.Kind != descriptorxml.KindElement {
-			continue
-		}
-		if child.Element.Name == "include" && (child.Element.URI == xIncludeNamespace || child.Element.Prefix == "xi") {
-			return "an <" + child.Element.Prefix + ":include> element"
-		}
-		if found := findXInclude(child.Element); found != "" {
-			return found
-		}
-	}
-	return ""
-}
-
-func parseOptions(arguments []string) (options, error) {
-	var opts options
-	flags := flag.NewFlagSet(filepath.Base(os.Args[0]), flag.ContinueOnError)
-	flags.StringVar(&opts.flagFile, "flagfile", "",
-		"read the options from this file instead, one `--option=value` a line")
-	flags.StringVar(&opts.source, "source", "", "the plugin's own `META-INF/plugin.xml`")
-	flags.StringVar(&opts.output, "output", "", "where to write the patched descriptor")
-	flags.StringVar(&opts.request.Version, "version", "", "the text of `<version>`")
-	flags.StringVar(&opts.request.SinceBuild, "since-build", "", "the `since-build` of `<idea-version>`")
-	flags.StringVar(&opts.request.UntilBuild, "until-build", "", "the `until-build` of `<idea-version>`")
-	flags.StringVar(&opts.request.ReleaseDate, "release-date", "", "the `release-date` of `<product-descriptor>`")
-	flags.StringVar(&opts.request.ReleaseVersion, "release-version", "", "the `release-version` of `<product-descriptor>`")
-	flags.BoolVar(&opts.request.ToPublish, "to-publish", false, "the plugin is published, so `<product-descriptor>` survives")
-	flags.BoolVar(&opts.request.RetainProductDescriptorForBundledPlugin, "retain-product-descriptor", false,
-		"a bundled plugin keeps its `<product-descriptor>`")
-	flags.BoolVar(&opts.request.IsEap, "eap", false, "the product is an EAP, so `<product-descriptor>` gains `eap=\"true\"`")
-	flags.Usage = func() {
-		fmt.Fprintf(os.Stderr, "usage: %s --source=<path> --output=<path> [stamps]\n", flags.Name())
-		fmt.Fprintf(os.Stderr, "   or: %s --flagfile=<path>\n", flags.Name())
-		flags.PrintDefaults()
-	}
-	if err := flags.Parse(arguments); err != nil {
-		return opts, err
-	}
-	if opts.flagFile != "" {
-		lines, err := readFlagFile(opts.flagFile)
-		if err != nil {
-			return opts, err
-		}
-		if err := flags.Parse(lines); err != nil {
-			return opts, err
-		}
-	}
-	if opts.source == "" || opts.output == "" {
-		return opts, fmt.Errorf("both --source and --output are required")
-	}
-	return opts, nil
-}
-
-// readFlagFile reads one `--option=value` a line, the shape a Bazel `--flagfile=%s` parameter file takes. A blank line
-// and a `#` line are skipped, so a generated file can carry a header.
-func readFlagFile(path string) ([]string, error) {
-	content, err := os.ReadFile(path)
+// patch is `patchPluginDescriptorFromPlan` and the body it calls
+// (`DevDistPluginDescriptorMain.kt:85-143`, `PluginXmlPatcher.kt:89-140`).
+func patch(parsed request) (string, error) {
+	buildNumberContent, err := os.ReadFile(parsed.buildNumberFile)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	var lines []string
-	for number, line := range strings.Split(string(content), "\n") {
-		line = strings.TrimSpace(strings.TrimRight(line, "\r"))
-		if line == "" || strings.HasPrefix(line, "#") {
+	buildNumber := strings.TrimSpace(string(buildNumberContent))
+	pluginVersion, err := stamps.PluginBuildNumber(buildNumber, parsed.buildDateSecond)
+	if err != nil {
+		return "", err
+	}
+	compatibleBuildRange := stamps.RangeNewerWithSameBaseline
+	switch {
+	case parsed.exactVersion:
+		compatibleBuildRange = stamps.RangeExact
+	case parsed.isEap:
+		compatibleBuildRange = stamps.RangeRestrictedToSameRelease
+	}
+	sinceBuild, untilBuild := stamps.CompatiblePlatformVersionRange(compatibleBuildRange, buildNumber)
+
+	source, err := os.ReadFile(parsed.source)
+	if err != nil {
+		return "", err
+	}
+	pluginCache, err := readSeed(parsed.pluginDescriptors)
+	if err != nil {
+		return "", err
+	}
+	platformCache, err := readSeed(parsed.platformDescriptors)
+	if err != nil {
+		return "", err
+	}
+	resolver := structural.NewResolver([]structural.Scope{
+		{Modules: parsed.pluginModules, Cache: pluginCache},
+		{Modules: parsed.platformModules, Cache: platformCache},
+	})
+
+	element, err := descriptorxml.Read(string(source))
+	if err != nil {
+		return "", err
+	}
+	stamps.Apply(element, stamps.Request{
+		Version:        pluginVersion,
+		SinceBuild:     sinceBuild,
+		UntilBuild:     untilBuild,
+		ReleaseDate:    parsed.releaseDate,
+		ReleaseVersion: parsed.releaseVersion,
+		// A dev distribution publishes no plugin: `PluginBuilder` passes an empty set on this path
+		// (`DevDistPluginDescriptorMain.kt:120`).
+		ToPublish:                               false,
+		RetainProductDescriptorForBundledPlugin: parsed.retainProduct,
+		IsEap:                                   parsed.isEap,
+	})
+	if err := structural.ResolveIncludes(element, resolver); err != nil {
+		return "", err
+	}
+	err = structural.EmbedContentModules(element, structural.ContentRequest{
+		MainModule:  parsed.mainModule,
+		Modules:     parsed.contentModules,
+		SeparateJar: parsed.separateJar,
+		Embeds:      parsed.embedsContent,
+	}, pluginCache, resolver)
+	if err != nil {
+		return "", err
+	}
+	// `patchText` is the identity here, for `rawTextPatcher`'s reason.
+	return descriptorxml.Write(element), nil
+}
+
+func readSeed(files map[string]string) (*structural.Cache, error) {
+	seed := make(map[string][]byte, len(files))
+	for loadPath, file := range files {
+		data, err := os.ReadFile(file)
+		if err != nil {
+			return nil, err
+		}
+		seed[loadPath] = data
+	}
+	return structural.NewCache(seed), nil
+}
+
+// readArgumentLines is `readArgumentLines` (`DevDistPluginDescriptorMain.kt:283-288`).
+//
+// The rule passes one `--flagfile=<path>` of a multiline parameter file, the way `content_module_jar` and `ij_plugin`
+// do. Plain arguments are accepted too, so the binary is runnable by hand.
+func readArgumentLines(arguments []string) ([]string, error) {
+	if len(arguments) == 1 && strings.HasPrefix(arguments[0], "--flagfile=") {
+		content, err := os.ReadFile(strings.TrimPrefix(arguments[0], "--flagfile="))
+		if err != nil {
+			return nil, err
+		}
+		return strings.Split(strings.ReplaceAll(string(content), "\r\n", "\n"), "\n"), nil
+	}
+	return arguments, nil
+}
+
+// parseRequest is `parseDevDistPluginDescriptorRequest` (`DevDistPluginDescriptorMain.kt:290-378`).
+//
+// An option the parser does not know fails the run. That is the platform's rule too, and it is what keeps the two
+// producers on one spelling: a rule that grows an option reaches both binaries or neither.
+func parseRequest(lines []string) (request, error) {
+	parsed := request{
+		embedsContent:       true,
+		separateJar:         map[string]bool{},
+		pluginDescriptors:   map[string]string{},
+		platformDescriptors: map[string]string{},
+	}
+	for _, line := range lines {
+		if line == "" {
 			continue
 		}
-		if !strings.HasPrefix(line, "--") {
-			return nil, fmt.Errorf("%s line %s: expected `--option=value`, got %q", path, strconv.Itoa(number+1), line)
+		option, value, _ := strings.Cut(line, "=")
+		var err error
+		switch option {
+		case "--out":
+			parsed.output = value
+		case "--main-module":
+			parsed.mainModule = value
+		case "--directory-name":
+			// Reported by `DevDistPatchedDescriptors` only, so this binary reads it and writes it nowhere.
+			parsed.directoryName = value
+		case "--main-jar-name":
+			parsed.mainJarName = value
+		case "--source":
+			parsed.source = value
+		case "--build-number-file":
+			parsed.buildNumberFile = value
+		case "--build-date-seconds":
+			parsed.buildDateSecond, err = strconv.ParseInt(value, 10, 64)
+		case "--release-date":
+			parsed.releaseDate = value
+		case "--release-version":
+			parsed.releaseVersion = value
+		case "--eap":
+			parsed.isEap, err = parseBooleanStrict(value)
+		case "--exact-version":
+			parsed.exactVersion, err = parseBooleanStrict(value)
+		case "--retain-product-descriptor":
+			parsed.retainProduct, err = parseBooleanStrict(value)
+		case "--embed-content-modules":
+			parsed.embedsContent, err = parseBooleanStrict(value)
+		case "--content-module":
+			parsed.contentModules = append(parsed.contentModules, value)
+		case "--separate-jar":
+			parsed.separateJar[value] = true
+		case "--plugin-descriptor":
+			err = putDescriptor(parsed.pluginDescriptors, value)
+		case "--platform-descriptor":
+			err = putDescriptor(parsed.platformDescriptors, value)
+		case "--plugin-module":
+			parsed.pluginModules = append(parsed.pluginModules, value)
+		case "--platform-module":
+			parsed.platformModules = append(parsed.platformModules, value)
+		default:
+			err = fmt.Errorf("unknown option '%s'", option)
 		}
-		lines = append(lines, line)
+		if err != nil {
+			return parsed, err
+		}
 	}
-	return lines, nil
+	for _, required := range []struct {
+		option string
+		value  string
+	}{
+		{"--out", parsed.output},
+		{"--main-module", parsed.mainModule},
+		{"--source", parsed.source},
+		{"--build-number-file", parsed.buildNumberFile},
+	} {
+		if required.value == "" {
+			return parsed, fmt.Errorf("%s is required", required.option)
+		}
+	}
+	// `--release-date` and `--release-version` are mandatory on the rule, so an empty one is a request the rule cannot
+	// state. They reach `<product-descriptor>` alone, and 1 of the 163 plugins states one.
+	return parsed, nil
+}
+
+// parseBooleanStrict is Kotlin's `String.toBooleanStrict`, which accepts exactly `true` and `false`.
+func parseBooleanStrict(value string) (bool, error) {
+	switch value {
+	case "true":
+		return true, nil
+	case "false":
+		return false, nil
+	}
+	return false, fmt.Errorf("'%s' is neither 'true' nor 'false'", value)
+}
+
+// putDescriptor is `putDescriptor` (`DevDistPluginDescriptorMain.kt:380-384`).
+func putDescriptor(into map[string]string, value string) error {
+	loadPath, file, found := strings.Cut(value, "=")
+	if !found || loadPath == "" {
+		return fmt.Errorf("a descriptor is '<load path>=<file>', and '%s' is not", value)
+	}
+	into[loadPath] = file
+	return nil
 }

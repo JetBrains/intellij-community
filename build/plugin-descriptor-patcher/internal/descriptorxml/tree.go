@@ -95,6 +95,65 @@ func (e *Element) Child(name string) *Element {
 	return nil
 }
 
+// ChildInNamespace returns the first child element with this name in this namespace URI, or nil.
+//
+// It is `Element.getChild(String, Namespace)`
+// (`community/platform/util/jdom/src/org/jdom/Element.java:1425-1435`), which matches on the URI and never on the
+// prefix. The includes stage needs it for `xi:fallback`, whose namespace is the `xi:include`'s own.
+func (e *Element) ChildInNamespace(name string, uri string) *Element {
+	for i := range e.Children {
+		child := e.Children[i]
+		if child.Kind == KindElement && child.Element.Name == name && child.Element.URI == uri {
+			return child.Element
+		}
+	}
+	return nil
+}
+
+// ChildElements returns every child element, in document order.
+//
+// It is `Element.getChildren()` (`community/platform/util/jdom/src/org/jdom/Element.java:1470-1472`), which filters
+// the content list down to elements and keeps every namespace.
+func (e *Element) ChildElements() []*Element {
+	var result []*Element
+	for i := range e.Children {
+		if e.Children[i].Kind == KindElement {
+			result = append(result, e.Children[i].Element)
+		}
+	}
+	return result
+}
+
+// ChildElementsNamed returns every child element with this name and **no namespace**.
+//
+// It is `Element.getChildren(String)` (`community/platform/util/jdom/src/org/jdom/Element.java:1497-1499`), which
+// resolves against `Namespace.NO_NAMESPACE` the way [Element.Child] does.
+func (e *Element) ChildElementsNamed(name string) []*Element {
+	var result []*Element
+	for i := range e.Children {
+		child := e.Children[i]
+		if child.Kind == KindElement && child.Element.Name == name && child.Element.Prefix == "" && child.Element.URI == "" {
+			result = append(result, child.Element)
+		}
+	}
+	return result
+}
+
+// ReplaceChildAt replaces the child at this position with these elements.
+//
+// It is `Element.setContent(int, Collection)`
+// (`community/platform/util/jdom/src/org/jdom/Element.java:781-785`), which removes the one child and inserts the
+// collection where it stood. An empty replacement therefore deletes the child, which is how an `xi:include` that
+// resolves to nothing leaves the tree.
+func (e *Element) ReplaceChildAt(index int, replacement []*Element) {
+	nodes := make([]Node, 0, len(replacement))
+	for _, element := range replacement {
+		nodes = append(nodes, ElementNode(element))
+	}
+	tail := append([]Node{}, e.Children[index+1:]...)
+	e.Children = append(append(e.Children[:index], nodes...), tail...)
+}
+
 // IndexOfChild returns the position of a child element inside `Children`, or -1.
 //
 // The position is what decides the bytes when the patch inserts an element after an anchor, so it counts every child
