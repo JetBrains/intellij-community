@@ -1,5 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.platform.projectView.frontend` start
 jvm_library(
@@ -42,6 +43,8 @@ jvm_library(
     ],
 )
 
+content_module_jar(module = ":frontend")
+
 jvm_library(
     name = "frontend_test_lib",
     testonly = True,
@@ -80,6 +83,8 @@ jvm_library(
 exports_files(
     [
         "intellij.platform.projectView.frontend.iml",
+        "resources/intellij.platform.projectView.frontend.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
