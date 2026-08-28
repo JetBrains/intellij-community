@@ -12,7 +12,9 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.VisibleForTesting
 import org.eclipse.lsp4j.MessageType
 import org.eclipse.lsp4j.jsonrpc.messages.Message
 import org.eclipse.lsp4j.jsonrpc.messages.NotificationMessage
@@ -62,10 +64,7 @@ internal class LspClientConsole(project: Project) : Disposable {
       is NotificationMessage -> "notification '${message.method}'"
       else -> "message"
     }
-    val payloadPreview = if (json.length > MAX_TRAFFIC_PAYLOAD_LENGTH) {
-      "${json.take(MAX_TRAFFIC_PAYLOAD_LENGTH)}… (${json.length - MAX_TRAFFIC_PAYLOAD_LENGTH} more characters)"
-    }
-    else json
+    val payloadPreview = trafficPayloadPreview(json)
     val contentType = if (outbound) ConsoleViewContentType.LOG_DEBUG_OUTPUT else ConsoleViewContentType.LOG_VERBOSE_OUTPUT
     val tag = if (outbound) "OUT" else "IN"
     val arrow = if (outbound) "→" else "←"
@@ -76,7 +75,7 @@ internal class LspClientConsole(project: Project) : Disposable {
       json = json.take(MAX_STORED_PAYLOAD_LENGTH),
       truncated = json.length > MAX_STORED_PAYLOAD_LENGTH,
     ))
-    console.print(": ${payloadPreview.trimEnd()}\n", contentType)
+    console.print(": $payloadPreview\n", contentType)
   }
 
   @Synchronized
@@ -129,6 +128,17 @@ internal class LspClientConsole(project: Project) : Disposable {
   override fun dispose() {
     panel = null
   }
+}
+
+/** Keeps the whole payload on one console line. The hyperlink popup shows the formatted payload. */
+@VisibleForTesting
+internal fun trafficPayloadPreview(json: String): @NlsSafe String {
+  // collapseWhiteSpace does not treat '\r' as white space, so normalize the line separators first
+  val singleLine = StringUtil.collapseWhiteSpace(StringUtil.convertLineSeparators(json))
+  return if (singleLine.length > MAX_TRAFFIC_PAYLOAD_LENGTH) {
+    "${singleLine.take(MAX_TRAFFIC_PAYLOAD_LENGTH)}… (${singleLine.length - MAX_TRAFFIC_PAYLOAD_LENGTH} more characters)"
+  }
+  else singleLine
 }
 
 private fun MessageType.levelTag(): @NlsSafe String = when (this) {
