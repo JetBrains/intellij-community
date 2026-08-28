@@ -4,9 +4,10 @@ package com.intellij.terminal.tests.reworked.frontend.session
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.frontend.view.activeOutputModel
+import com.intellij.terminal.tests.reworked.util.ESC
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.text
-import com.intellij.terminal.tests.reworked.util.TerminalViewFixture
 import com.intellij.terminal.tests.reworked.util.TerminalViewTestCase
+import com.intellij.terminal.tests.reworked.util.assertOutputModelState
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
@@ -16,7 +17,6 @@ import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
 import org.junit.jupiter.api.Test
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -407,15 +407,6 @@ internal class TerminalTextBufferEventsTest(emulatorType: TerminalEmulatorType) 
     Disposer.register(disposable) { AdvancedSettings.setInt(capacityKey, previousCapacity) }
   }
 
-  /** Awaits [condition] on [model] via [TerminalViewFixture.awaitOutputModelState] and asserts it was met. */
-  private suspend fun TerminalViewFixture.assertOutputModelState(
-    model: TerminalOutputModel,
-    timeout: Duration = 10.seconds,
-    condition: (TerminalOutputModel) -> Boolean,
-  ) {
-    assertThat(awaitOutputModelState(model, timeout, condition)).isTrue()
-  }
-
   private fun TerminalOutputModel.cursorLine(): Long = getLineByOffset(cursorOffset).toAbsolute()
 
   private fun TerminalOutputModel.cursorColumn(): Long = cursorOffset - getStartOfLine(getLineByOffset(cursorOffset))
@@ -424,9 +415,6 @@ internal class TerminalTextBufferEventsTest(emulatorType: TerminalEmulatorType) 
   private fun longLine(length: Int): String = (0 until length).map { 'a' + it % 26 }.joinToString("")
 
   companion object {
-    /** Escape (0x1B): introduces CSI/OSC control sequences. */
-    private val ESC: String = Char(0x1B).toString()
-
     /** Enough lines to overflow both emulators' (shrunken, see [setMaxScrollbackLines]) scrollback caps. */
     private const val PREFILL_LINES = 2_000
 

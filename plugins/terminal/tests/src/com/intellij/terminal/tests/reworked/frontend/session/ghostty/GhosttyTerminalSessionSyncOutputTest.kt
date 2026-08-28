@@ -4,10 +4,12 @@ package com.intellij.terminal.tests.reworked.frontend.session.ghostty
 import com.intellij.terminal.tests.reworked.util.LoopbackTtyConnector
 import com.intellij.terminal.tests.reworked.util.TerminalOutputEventCollector
 import com.intellij.terminal.tests.reworked.util.awaitEvent
+import com.intellij.terminal.tests.reworked.util.promptStartedOsc
 import kotlinx.coroutines.delay
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.session.impl.TerminalBeepEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalPromptStartedEvent
 import org.junit.Test
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -30,7 +32,9 @@ import kotlin.time.Duration.Companion.milliseconds
  * [an open block emits nothing, then delivers everything at once] is the only one that sees an event of any
  * kind escaping an open block; [the watchdog paints a block the program never closes] is the only one that
  * needs the timer to fire at all; [expiring one block does not stop the next one from deferring] is the only
- * one that sees a watchdog paint disable the deferral of what follows.
+ * one that sees a watchdog paint disable the deferral of what follows;
+ * [a shell-integration command paints inside an open block] is the only one that states the exception to the
+ * deferral. The three above it feed no OSC 1341, so they still catch an exception that grows too wide.
  */
 internal class GhosttyTerminalSessionSyncOutputTest : GhosttyTerminalSessionTestCase() {
 
@@ -92,6 +96,26 @@ internal class GhosttyTerminalSessionSyncOutputTest : GhosttyTerminalSessionTest
     assertThat(frame.text)
       .describedAs("the watchdog paint disabled deferral for what followed, which streamed out half-built")
       .contains("nextblock")
+  }
+
+  /**
+   * The one thing that must escape an open block. An OSC 1341 shell-integration command carries no position,
+   * so the consumer reads the cursor offset of the output model when it handles the event. A frame that
+   * arrives later records the command boundary too far forward. So the session forces projection
+   * at the command and accepts a half-drawn frame.
+   */
+  @Test
+  fun `a shell-integration command paints inside an open block`() = runSessionTest { _, connector, collector ->
+    connector.feedInsideOpenBlock(BEGIN + "before")
+
+    connector.feed(promptStartedOsc() + "after")
+
+    val frame = collector.awaitEvent<TerminalContentUpdatedEvent> { it.text.contains("before") }
+    assertThat(frame.text)
+      .describedAs("the forced frame must stop at the command, or the boundary lands too far forward")
+      .doesNotContain("after")
+    // The event has to follow that frame, not precede it.
+    collector.awaitEvent<TerminalPromptStartedEvent>()
   }
 
   /**

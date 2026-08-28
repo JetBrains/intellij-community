@@ -78,7 +78,8 @@ import kotlin.time.Duration.Companion.milliseconds
  * - OSC 1341 shell-integration commands are received via
  *   [TerminalEmulator.customCommandListener], parsed by the shared
  *   [TerminalShellIntegrationController], and turned into
- *   `TerminalShellIntegrationEvent`s (and the shell-integration state flag);
+ *   `TerminalShellIntegrationEvent`s (and the shell-integration state flag).
+ *   Each command forces a projection and an emission at its own position, off the [OUTPUT_POLL_INTERVAL] cadence.
  * - the bell ([TerminalListener.onBell]) becomes a `TerminalBeepEvent`;
  * - emulator responses ([TerminalListener.onRespondToHost]) and input events are
  *   written back to the PTY;
@@ -263,11 +264,16 @@ class GhosttyTerminalSession internal constructor(
       }
     }
 
-    // OSC 1341 (JetBrains shell integration): the emulator's custom-command listener
-    // fires synchronously inside emulator.write, i.e. under [lock] on the read thread,
-    // and the controller delivers the parsed events on the same thread — so the sink
-    // only queues; syncLocked() then flushes the events in order.
-    shellIntegrationController.addEventSink { event -> pendingEvents.add(event) }
+    // OSC 1341 (JetBrains shell integration): the emulator's custom-command listener fires
+    // synchronously inside emulator.write, i.e. under [lock] on the read thread, and the controller
+    // delivers the parsed events on the same thread.
+    // Commands force a projection to ensure that the event is delivered in order with other emulator changes.
+    shellIntegrationController.addEventSink { event ->
+      pendingEvents.add(event)
+      // Bypass the synchronized-output deferral on purpose.
+      // A half-drawn frame costs less than an OSC 1341 command boundary that lands at the wrong offset.
+      flushPendingEventsLocked(bypassSyncOutputDeferral = true)
+    }
     emulator.customCommandListener = TerminalCustomCommandListener(shellIntegrationController::processCustomCommand)
 
     // Read the PTY on a dedicated daemon thread rather than a coroutine in the session
@@ -341,10 +347,7 @@ class GhosttyTerminalSession internal constructor(
           // acquisition and nothing else — no FFI reads.
           val forcePaint = consumeSyncOutputForcePaintLocked()
           if (changedSinceLastProjection || forcePaint || projector.isHistoryReplaced) {
-            val events = syncLocked(bypassSyncOutputDeferral = forcePaint)
-            if (events.isNotEmpty()) {
-              emitOutputBlocking(events)
-            }
+            flushPendingEventsLocked(bypassSyncOutputDeferral = forcePaint)
           }
           responses = takeResponsesLocked()
         }
@@ -537,6 +540,16 @@ class GhosttyTerminalSession internal constructor(
     }
 
     return events
+  }
+
+  /**
+   * Must be called under [lock]. Projects the emulator state now and emits it together with the events queued so far.
+   */
+  private fun flushPendingEventsLocked(bypassSyncOutputDeferral: Boolean) {
+    val events = syncLocked(bypassSyncOutputDeferral)
+    if (events.isNotEmpty()) {
+      emitOutputBlocking(events)
+    }
   }
 
   /**

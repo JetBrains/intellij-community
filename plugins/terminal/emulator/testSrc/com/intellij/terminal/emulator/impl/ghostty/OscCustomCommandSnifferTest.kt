@@ -4,6 +4,8 @@ package com.intellij.terminal.emulator.impl.ghostty
 import com.intellij.terminal.emulator.BELL_CHAR
 import com.intellij.terminal.emulator.ESC_STR
 import com.intellij.terminal.emulator.OscTerminator
+import com.intellij.terminal.emulator.ScreenChange
+import com.intellij.terminal.emulator.TerminalColor
 import com.intellij.terminal.emulator.TerminalCustomCommandListener
 import com.intellij.terminal.emulator.csi
 import com.intellij.terminal.emulator.esc
@@ -368,6 +370,39 @@ internal class OscCustomCommandSnifferTest {
 
     assertThat(screenWhenNotified).containsExactly("a", "abb")
     session.assertScreenLines("abbccc")
+  }
+
+  @Test
+  fun theListenerMayTakeChangesAndTheRestOfTheWriteStillReportsItsOwn() = session(20, 3) { session ->
+    val changesInsideTheListener = ArrayList<ScreenChange>()
+    session.customCommandListener = TerminalCustomCommandListener {
+      changesInsideTheListener.add(session.takeChanges())
+    }
+
+    session.write("head" + osc("1341;a") + "tail")
+
+    assertThat(changesInsideTheListener)
+      .describedAs("the damage of the bytes before the command")
+      .containsExactly(ScreenChange.Rows(intArrayOf(0)))
+    assertThat(session.takeChanges())
+      .describedAs("the damage of the bytes after the command")
+      .isEqualTo(ScreenChange.Rows(intArrayOf(0)))
+    assertThat(session.screenLine(0).toStyledText().text).isEqualTo("headtail")
+  }
+
+  @Test
+  fun theListenerSeesAPaletteChangeThatPrecedesTheCommand() = session(20, 3) { session ->
+    val colorInsideTheListener = ArrayList<TerminalColor.Rgb>()
+    session.customCommandListener = TerminalCustomCommandListener {
+      colorInsideTheListener.add(session.paletteColor(200))
+    }
+
+    // Reading first clears the emulator's palette cache flag, so the `write` below has to set it again.
+    // Without this the assertion holds for the wrong reason.
+    session.paletteColor(200)
+    session.write(osc("4;200;#123456") + osc("1341;a"))
+
+    assertThat(colorInsideTheListener).containsExactly(TerminalColor.Rgb(0x12, 0x34, 0x56))
   }
 }
 

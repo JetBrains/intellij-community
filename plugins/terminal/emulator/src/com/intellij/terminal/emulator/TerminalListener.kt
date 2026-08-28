@@ -32,7 +32,9 @@ interface TerminalListener {
  * Receives application-specific *custom* OSC commands — `ESC]1341;arg1;arg2…` closed by BEL or ST.
  *
  * OSC 1341 is the JetBrains shell-integration command number. Delivered synchronously inside
- * [TerminalEmulator.write]; the callback must not re-enter the emulator.
+ * [TerminalEmulator.write], with everything before the command applied and nothing after it.
+ * So the callback may read the emulator and see the state of the emulator before applying the command.
+ * It must not call [TerminalEmulator.write] or [TerminalEmulator.resize].
  */
 @ApiStatus.Internal
 fun interface TerminalCustomCommandListener {

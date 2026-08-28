@@ -1,10 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.tests.reworked.frontend.session.ghostty
 
+import com.intellij.terminal.emulator.TerminalCustomCommandListener
 import com.intellij.terminal.emulator.TerminalEmulator
 import com.intellij.terminal.emulator.TerminalSize
 import com.intellij.terminal.emulator.createTerminalEmulator
 import com.intellij.terminal.frontend.session.ghostty.TerminalEmulatorOutputProjector
+import com.intellij.terminal.tests.reworked.util.promptStartedOsc
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.impl.dto.CursorShapeDto
@@ -486,6 +488,29 @@ internal class TerminalEmulatorOutputProjectorTest {
     emulator.resize(TerminalSize(40, 24))
 
     assertThat(collectUpdate().text.count { it == 'A' }).isEqualTo(100)
+  }
+
+  // ---------------------------------------------------------------------------
+  // Two updates from one write
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `a custom command inside one write yields two composable updates`() = withProjector(rows = 3) {
+    val insideTheListener = ArrayList<TerminalContentUpdatedEvent>()
+    emulator.customCommandListener = TerminalCustomCommandListener { insideTheListener.add(collectUpdate()) }
+
+    write("a\r\nb\r\nc")
+    assertThat(collectUpdate().startLineLogicalIndex).isEqualTo(0L)
+
+    write("\r\nd" + promptStartedOsc() + "\r\ne")
+
+    val atTheCommand = insideTheListener.single()
+    assertThat(atTheCommand.startLineLogicalIndex).isEqualTo(0L)
+    assertThat(atTheCommand.text).isEqualTo("a\nb\nc\nd")
+
+    val afterTheCommand = collectUpdate()
+    assertThat(afterTheCommand.startLineLogicalIndex).isEqualTo(1L)
+    assertThat(afterTheCommand.text).isEqualTo("b\nc\nd\ne")
   }
 
   // ---------------------------------------------------------------------------

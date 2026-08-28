@@ -6,12 +6,16 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.view.activeOutputModel
 import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
+import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.text
+import com.intellij.terminal.tests.reworked.util.TerminalViewFixture.Companion.BLOCKS_MODEL_POLL_INTERVAL
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.dispatchAllEventsInIdeEventQueue
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.TerminalEmulatorType
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
@@ -20,9 +24,11 @@ import org.jetbrains.plugins.terminal.view.TerminalCursorOffsetChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
 import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlocksModel
 import kotlin.coroutines.resume
 import kotlin.math.ceil
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -103,6 +109,28 @@ internal class TerminalViewFixture(project: Project, emulatorType: TerminalEmula
     return result != null
   }
 
+  /**
+   * Suspends until [condition] holds for [model], checking immediately and then again every
+   * [BLOCKS_MODEL_POLL_INTERVAL]. Returns `false` if [timeout] elapses first.
+   *
+   * This polls on purpose. [org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlocksModelListener]
+   * reports an added, a removed and a replaced block, but never an offset update - so a listener never sees
+   * `commandStartOffset`, `outputStartOffset` or `exitCode` change on the active block.
+   */
+  @RequiresEdt
+  suspend fun awaitBlocksModelState(
+    model: TerminalBlocksModel,
+    timeout: Duration = 10.seconds,
+    condition: (TerminalBlocksModel) -> Boolean,
+  ): Boolean {
+    val result = withTimeoutOrNull(timeout) {
+      while (!condition(model)) {
+        delay(BLOCKS_MODEL_POLL_INTERVAL)
+      }
+    }
+    return result != null
+  }
+
   /** Like [awaitOutputModelState], but the condition is that [model] renders as [pattern]. */
   @Suppress("unused") // part of the fixture's contract; no current caller needs a styled/hyperlink pattern yet.
   suspend fun awaitOutputModelMatches(
@@ -118,4 +146,31 @@ internal class TerminalViewFixture(project: Project, emulatorType: TerminalEmula
   override fun close() {
     scope.cancel()
   }
+
+  companion object {
+    /** How often [awaitBlocksModelState] re-checks its condition. */
+    private val BLOCKS_MODEL_POLL_INTERVAL: Duration = 10.milliseconds
+  }
+}
+
+/** Awaits [condition] on [model] via [TerminalViewFixture.awaitOutputModelState] and asserts it was met. */
+internal suspend fun TerminalViewFixture.assertOutputModelState(
+  model: TerminalOutputModel,
+  timeout: Duration = 10.seconds,
+  condition: (TerminalOutputModel) -> Boolean,
+) {
+  assertThat(awaitOutputModelState(model, timeout, condition))
+    .describedAs("the output model never satisfied the condition; it holds:\n${model.text}")
+    .isTrue()
+}
+
+/** Awaits [condition] on [model] via [TerminalViewFixture.awaitBlocksModelState] and asserts it was met. */
+internal suspend fun TerminalViewFixture.assertBlocksModelState(
+  model: TerminalBlocksModel,
+  timeout: Duration = 10.seconds,
+  condition: (TerminalBlocksModel) -> Boolean,
+) {
+  assertThat(awaitBlocksModelState(model, timeout, condition))
+    .describedAs("the blocks model never satisfied the condition; it holds:\n${model.blocks.joinToString("\n")}")
+    .isTrue()
 }

@@ -1,9 +1,23 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.tests.reworked.frontend.session
 
+import com.intellij.terminal.tests.reworked.util.BEL
+import com.intellij.terminal.tests.reworked.util.ESC
 import com.intellij.terminal.tests.reworked.util.LoopbackTtyConnector
+import com.intellij.terminal.tests.reworked.util.TerminalOutputEventCollector
+import com.intellij.terminal.tests.reworked.util.aliasesReceivedOsc
 import com.intellij.terminal.tests.reworked.util.awaitEvent
 import com.intellij.terminal.tests.reworked.util.awaitEventAfter
+import com.intellij.terminal.tests.reworked.util.awaitStateBefore
+import com.intellij.terminal.tests.reworked.util.commandFinishedOsc
+import com.intellij.terminal.tests.reworked.util.commandStartedOsc
+import com.intellij.terminal.tests.reworked.util.completionFinishedOsc
+import com.intellij.terminal.tests.reworked.util.encodeShellIntegrationValue
+import com.intellij.terminal.tests.reworked.util.indexOfEvent
+import com.intellij.terminal.tests.reworked.util.promptFinishedOsc
+import com.intellij.terminal.tests.reworked.util.promptStartedOsc
+import com.intellij.terminal.tests.reworked.util.shellIntegrationInitializedOsc
+import com.intellij.terminal.tests.reworked.util.shellIntegrationOsc
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.TerminalEmulatorType
 import org.jetbrains.plugins.terminal.session.TerminalGridSize
@@ -20,6 +34,7 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalPromptFinishedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalPromptStartedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalResizeEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
+import org.jetbrains.plugins.terminal.session.impl.TerminalShellIntegrationEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalStateChangedEvent
 import org.jetbrains.plugins.terminal.session.impl.dto.MouseFormatDto
 import org.jetbrains.plugins.terminal.session.impl.dto.MouseModeDto
@@ -170,56 +185,139 @@ internal class TerminalSessionOutputEventsTest(emulatorType: TerminalEmulatorTyp
       .isEqualTo("MAIN")
   }
 
+  // ---------------------------------------------------------------------------
+  // Shell integration: where a command lands in the event stream
+  // ---------------------------------------------------------------------------
+
   @Test
-  fun `shell integration OSC sequences produce shell integration events`() = runSessionTest { _, connector, collector ->
-    connector.feed(shellIntegrationOsc("prompt_started"))
-    collector.awaitEvent<TerminalPromptStartedEvent>()
+  fun `prompt_started reports the cursor before the prompt is printed`() = runSessionTest { _, connector, collector ->
+    enableShellIntegration(connector, collector)
 
-    connector.feed(shellIntegrationOsc("prompt_finished"))
-    collector.awaitEvent<TerminalPromptFinishedEvent>()
+    connector.feed(JUNK_LINE + promptStartedOsc() + PROMPT)
 
-    connector.feed(shellIntegrationOsc("aliases_received;result=${"alias ll='ls -l'".encodeShellIntegrationValue()}"))
-    val aliases = collector.awaitEvent<TerminalAliasesReceivedEvent>()
-    assertThat(aliases.aliasesRaw).isEqualTo("alias ll='ls -l'")
-
-    connector.feed(shellIntegrationOsc("command_started;command=${"ls -la".encodeShellIntegrationValue()}"))
-    val started = collector.awaitEvent<TerminalCommandStartedEvent>()
-    assertThat(started.command).isEqualTo("ls -la")
-
-    // `command_finished` is only reported after a preceding `command_started`.
-    connector.feed(shellIntegrationOsc("command_finished;exit_code=0;current_directory=${"/home/user".encodeShellIntegrationValue()}"))
-    val finished = collector.awaitEvent<TerminalCommandFinishedEvent>()
-    assertThat(finished.command).isEqualTo("ls -la")
-    assertThat(finished.exitCode).isEqualTo(0)
-    assertThat(finished.currentDirectory).isEqualTo("/home/user")
-
-    connector.feed(shellIntegrationOsc("completion_finished;result=${"completion-result".encodeShellIntegrationValue()}"))
-    val completion = collector.awaitEvent<TerminalCompletionFinishedEvent>()
-    assertThat(completion.result).isEqualTo("completion-result")
+    val state = collector.awaitStateBefore<TerminalPromptStartedEvent>()
+    assertThat(state.cursorOffset)
+      .describedAs("the block must start after \"junk\\n\" and before the prompt text, but was %s", state)
+      .isEqualTo(5)
+    assertThat(state.text).isEqualTo("junk\n")
   }
 
   @Test
-  fun `initialized shell integration event reports history path after enabling integration`() = runSessionTest { _, connector, collector ->
+  fun `prompt_finished reports the cursor between the prompt and the typed command`() = runSessionTest { _, connector, collector ->
+    enableShellIntegration(connector, collector)
+
+    connector.feed(JUNK_LINE + promptStartedOsc() + PROMPT + promptFinishedOsc() + COMMAND)
+
+    val state = collector.awaitStateBefore<TerminalPromptFinishedEvent>()
+    assertThat(state.cursorOffset)
+      .describedAs("the typed command must start after \"junk\\n$ \", but was %s", state)
+      .isEqualTo(7)
+    assertThat(state.text).isEqualTo("junk\n$PROMPT")
+  }
+
+  @Test
+  fun `command_started reports the cursor at the start of the output`() = runSessionTest { _, connector, collector ->
+    enableShellIntegration(connector, collector)
+
+    connector.feed(
+      JUNK_LINE + promptStartedOsc() + PROMPT + promptFinishedOsc() + COMMAND + "\r\n" +
+      commandStartedOsc(COMMAND) + WORKING_DIRECTORY
+    )
+
+    val state = collector.awaitStateBefore<TerminalCommandStartedEvent>()
+    assertThat(state.cursorOffset)
+      .describedAs("the output must start after \"junk\\n$ pwd\\n\" and before the first output line, but was %s", state)
+      .isEqualTo(11)
+    assertThat(state.text).isEqualTo("junk\n$PROMPT$COMMAND\n")
+  }
+
+  @Test
+  fun `the commands of one chunk arrive in order, once each`() = runSessionTest { _, connector, collector ->
+    enableShellIntegration(connector, collector)
+    val mark = collector.currentEventCount()
+
+    connector.feed(
+      promptStartedOsc() + PROMPT + promptFinishedOsc() + COMMAND + "\r\n" +
+      commandStartedOsc(COMMAND) + WORKING_DIRECTORY + "\r\n" +
+      commandFinishedOsc(exitCode = 3, workingDirectory = WORKING_DIRECTORY)
+    )
+
+    // `command_finished` closes the script, so its arrival proves the whole chunk was processed.
+    collector.awaitEvent<TerminalCommandFinishedEvent>()
+
+    assertThat(collector.eventsSince(mark).filterIsInstance<TerminalShellIntegrationEvent>())
+      .describedAs("the order, the multiplicity and the payload of every command in the chunk")
+      .containsExactly(
+        TerminalPromptStartedEvent,
+        TerminalPromptFinishedEvent,
+        TerminalCommandStartedEvent(COMMAND),
+        TerminalCommandFinishedEvent(COMMAND, 3, WORKING_DIRECTORY),
+      )
+  }
+
+  @Test
+  fun `command_finished with no started command reports nothing`() = runSessionTest { _, connector, collector ->
+    enableShellIntegration(connector, collector)
+    val mark = collector.currentEventCount()
+
+    // `prompt_started` follows in the same chunk, so its arrival proves `command_finished` was processed.
+    connector.feed(commandFinishedOsc(exitCode = 0, workingDirectory = WORKING_DIRECTORY) + promptStartedOsc())
+
+    collector.awaitEvent<TerminalPromptStartedEvent>()
+    assertThat(collector.eventsSince(mark).filterIsInstance<TerminalShellIntegrationEvent>())
+      .describedAs("`command_finished` has no command to report, so it must report nothing")
+      .containsExactly(TerminalPromptStartedEvent)
+  }
+
+  @Test
+  fun `initialized is reported before the first command that needs a position`() = runSessionTest { _, connector, collector ->
+    // One chunk, and no priming: the frontend creates the shell integration from the session state, and it
+    // discards a positional command that arrives before that state.
+    connector.feed(shellIntegrationInitializedOsc(WORKING_DIRECTORY) + promptStartedOsc())
+
+    collector.awaitEvent<TerminalPromptStartedEvent>()
+    val enabledIndex = collector.indexOfEvent<TerminalStateChangedEvent> { it.state.isShellIntegrationEnabled }
+    assertThat(enabledIndex).describedAs("no state reported the shell integration as enabled").isNotNegative()
+    assertThat(enabledIndex)
+      .describedAs("the state that enables the shell integration must precede the first positional command")
+      .isLessThan(collector.indexOfEvent<TerminalPromptStartedEvent>())
+  }
+
+  // ---------------------------------------------------------------------------
+  // Shell integration: what a command reports
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `initialized enables the shell integration and reports the history path`() = runSessionTest { _, connector, collector ->
     connector.feed(shellIntegrationOsc(
-      "initialized;current_directory=${"/home/user".encodeShellIntegrationValue()};history_path=${"/home/user/.bash_history".encodeShellIntegrationValue()}"
+      "initialized;current_directory=${WORKING_DIRECTORY.encodeShellIntegrationValue()}" +
+      ";history_path=${HISTORY_PATH.encodeShellIntegrationValue()}"
     ))
 
     val state = collector.awaitEvent<TerminalStateChangedEvent> { it.state.isShellIntegrationEnabled }
     assertThat(state.state.isShellIntegrationEnabled).isTrue()
-
-    val historyPath = collector.awaitEvent<TerminalCommandHistoryPathReceivedEvent>()
-    assertThat(historyPath.path).isEqualTo("/home/user/.bash_history")
+    assertThat(collector.awaitEvent<TerminalCommandHistoryPathReceivedEvent>().path).isEqualTo(HISTORY_PATH)
   }
 
   @Test
-  fun `initialized shell integration event reports missing history path`() = runSessionTest { _, connector, collector ->
-    connector.feed(shellIntegrationOsc(
-      "initialized;current_directory=${"/home/user".encodeShellIntegrationValue()}"
-    ))
+  fun `initialized without a history path reports a null path`() = runSessionTest { _, connector, collector ->
+    connector.feed(shellIntegrationInitializedOsc(WORKING_DIRECTORY))
 
     collector.awaitEvent<TerminalStateChangedEvent> { it.state.isShellIntegrationEnabled }
-    val historyPath = collector.awaitEvent<TerminalCommandHistoryPathReceivedEvent>()
-    assertThat(historyPath.path).isNull()
+    assertThat(collector.awaitEvent<TerminalCommandHistoryPathReceivedEvent>().path).isNull()
+  }
+
+  @Test
+  fun `aliases and completion results are decoded`() = runSessionTest { _, connector, collector ->
+    enableShellIntegration(connector, collector)
+
+    // Neither command marks a boundary: each one reports a value the frontend stores, so neither needs a
+    // position, and one case covers both.
+    connector.feed(aliasesReceivedOsc(ALIASES))
+    assertThat(collector.awaitEvent<TerminalAliasesReceivedEvent>().aliasesRaw).isEqualTo(ALIASES)
+
+    connector.feed(completionFinishedOsc(COMPLETION_RESULT))
+    assertThat(collector.awaitEvent<TerminalCompletionFinishedEvent>().result).isEqualTo(COMPLETION_RESULT)
   }
 
   // ---------------------------------------------------------------------------
@@ -316,14 +414,6 @@ internal class TerminalSessionOutputEventsTest(emulatorType: TerminalEmulatorTyp
     assertThat(keypad.state.isApplicationKeypad).isTrue()
   }
 
-  @Test
-  fun `shell integration initialized enables shell integration in state`() = runSessionTest { _, connector, collector ->
-    connector.feed(shellIntegrationOsc("initialized;current_directory=${"/home/user".encodeShellIntegrationValue()}"))
-
-    val event = collector.awaitEvent<TerminalStateChangedEvent> { it.state.isShellIntegrationEnabled }
-    assertThat(event.state.isShellIntegrationEnabled).isTrue()
-  }
-
   // ---------------------------------------------------------------------------
   // Group C: rich styles -> TerminalContentUpdatedEvent.styles
   // ---------------------------------------------------------------------------
@@ -408,21 +498,27 @@ internal class TerminalSessionOutputEventsTest(emulatorType: TerminalEmulatorTyp
       .containsExactly("first", "second", "third")
   }
 
-  /**
-   * Builds a JetBrains shell-integration OSC sequence (`ESC ] 1341 ; <payload> BEL`), the same one the
-   * bundled shell-integration scripts emit and [com.intellij.terminal.frontend.session.TerminalShellIntegrationController] parses.
-   */
-  private fun shellIntegrationOsc(payload: String): String = "${ESC}]1341;$payload${BEL}"
+}
 
-  /** Hex-encodes a shell-integration parameter value, matching the scripts' `__jetbrains_intellij_encode`. */
-  private fun String.encodeShellIntegrationValue(): String =
-    toByteArray(Charsets.UTF_8).joinToString("") { "%02x".format(it.toInt() and 0xFF) }
+/** The prompt the shell-integration cases print. Two characters, so an expected offset stays readable. */
+private const val PROMPT = "$ "
 
-  companion object {
-    /** Escape (0x1B): introduces CSI/OSC control sequences. */
-    private val ESC: String = Char(0x1B).toString()
+/** Output printed before a prompt, so a position case fails visibly when the event lands at offset 0. */
+private const val JUNK_LINE = "junk\r\n"
 
-    /** Bell (0x07): rings the terminal bell and also terminates OSC strings. */
-    private val BEL: String = Char(0x07).toString()
-  }
+private const val COMMAND = "pwd"
+private const val WORKING_DIRECTORY = "/home/user"
+private const val HISTORY_PATH = "/home/user/.bash_history"
+private const val ALIASES = "alias ll='ls -l'"
+private const val COMPLETION_RESULT = "completion-result"
+
+/**
+ * Enables the shell integration and returns once the session reported both of the events that `initialized`
+ * produces. Every positional command needs the integration enabled first. Awaiting both events also keeps a
+ * later [TerminalOutputEventCollector.currentEventCount] mark free of this step's own events.
+ */
+private suspend fun enableShellIntegration(connector: LoopbackTtyConnector, collector: TerminalOutputEventCollector) {
+  connector.feed(shellIntegrationInitializedOsc(WORKING_DIRECTORY))
+  collector.awaitEvent<TerminalStateChangedEvent> { it.state.isShellIntegrationEnabled }
+  collector.awaitEvent<TerminalCommandHistoryPathReceivedEvent>()
 }

@@ -463,11 +463,17 @@ internal class GhosttyTerminalEmulator(
     else {
       writeToVt(data, 0, data.size)
     }
-    paletteDirty = true // only a write (OSC 4 / 104 / RIS) may change palette
   }
 
-  /** Feeds `data[offset, offset + length)` to the engine. */
+  /**
+   * Feeds `data[offset, offset + length)` to the engine.
+   *
+   * Marks the palette dirty per slice, not once per [write]. A listener that reads the palette between two
+   * slices must see what the slices before it changed.
+   */
   private fun writeToVt(data: ByteArray, offset: Int, length: Int) {
+    paletteDirty = true // only a write (OSC 4 / 104 / RIS) may change palette
+
     // Feed [scratchWrite]-sized chunks.
     // An empty write still reaches the engine.
     var written = 0

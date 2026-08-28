@@ -249,7 +249,8 @@ class TestTerminalSessionResult(
  *
  * Besides the raw events, every event is applied to real output models the way `StateAwareTerminalSession`
  * applies them in production, so a test can assert the document the whole event stream produces — see
- * [documentText] and [alternateBufferText].
+ * [documentText] and [alternateBufferText] — or the document at one point in the stream, which is how a test
+ * states where an event that carries no position of its own landed — see [stateBefore].
  *
  * Pass a low-level `session` (see `TerminalSessionTestUtil.createLoopbackTerminalSession`'s
  * `isLowLevelSession`) when the test asserts the exact order or content of specific output events: a
@@ -265,18 +266,15 @@ internal class TerminalOutputEventCollector(
   // and history queries only work through this accumulator — see the class KDoc.
   private val events = MutableSharedFlow<TerminalOutputEvent>(replay = Int.MAX_VALUE)
 
-  // Content and cursor updates go to the model of the buffer that the last applied state says is active,
-  // mirroring StateAwareTerminalSession. Guarded by modelLock: the collection coroutine writes, tests read.
+  // Guarded by modelLock: the collection coroutine writes, tests read.
   private val modelLock = ReentrantLock()
-  private val outputModel = TerminalTestUtil.createOutputModel()
-  private val alternateBufferModel = TerminalTestUtil.createOutputModel()
-  private var isAlternateScreenBuffer = false
+  private val mirror = TerminalOutputModelMirror()
 
   init {
     scope.launch {
       session.getOutputFlow().collect { batch ->
         for (event in batch) {
-          applyToModel(event)
+          modelLock.withLock { mirror.apply(event) }
           events.emit(event)
         }
       }
@@ -308,32 +306,83 @@ internal class TerminalOutputEventCollector(
   fun contentUpdates(): List<TerminalContentUpdatedEvent> = events.replayCache.filterIsInstance<TerminalContentUpdatedEvent>()
 
   /**
+   * The number of events collected before the first event of [type] matching [predicate], which is also that
+   * event's index. Returns -1 when no such event arrived. Prefer the reified [indexOfEvent] extension.
+   */
+  fun <T : TerminalOutputEvent> indexOfEvent(type: Class<T>, predicate: (T) -> Boolean = { true }): Int =
+    events.replayCache.indexOfFirst { event -> type.isInstance(event) && predicate(type.cast(event)) }
+
+  /**
+   * The primary-buffer state the frontend reads when it handles the event at [eventIndex]: every event before
+   * it applied, and that event and everything after it not applied yet.
+   *
+   * This is how `TerminalShellIntegrationEventsHandler` positions a shell-integration command. It flushes the
+   * pending content updates, then reads [org.jetbrains.plugins.terminal.view.TerminalOutputModel.cursorOffset].
+   * So a session that emits the command *after* the content that follows its OSC sequence shows up here as a
+   * cursor offset that is too far forward, which is what a wrong block boundary is made of.
+   */
+  fun stateBefore(eventIndex: Int): TerminalOutputSnapshot {
+    require(eventIndex >= 0) { "No such event was collected, so it has no position in the stream" }
+    val replay = TerminalOutputModelMirror()
+    for (event in events.replayCache.take(eventIndex)) {
+      replay.apply(event)
+    }
+    return replay.primarySnapshot()
+  }
+
+  /**
    * The primary-buffer document produced by applying every collected event to a real output model —
    * what the UI would show (modulo rendering) after this session's whole event stream.
    */
-  fun documentText(): String = modelLock.withLock { outputModel.document.text }
+  fun documentText(): String = modelLock.withLock { mirror.primaryText() }
 
   /** [documentText] split into logical lines: a soft-wrapped line stays a single entry. */
   fun documentLines(): List<String> = documentText().split('\n')
 
   /** The alternate-buffer document; see [documentText]. */
-  fun alternateBufferText(): String = modelLock.withLock { alternateBufferModel.document.text }
+  fun alternateBufferText(): String = modelLock.withLock { mirror.alternateText() }
+}
 
-  private fun applyToModel(event: TerminalOutputEvent) {
-    modelLock.withLock {
-      when (event) {
-        is TerminalInitialStateEvent -> {
-          outputModel.restoreFromState(event.outputModelState.toState())
-          alternateBufferModel.restoreFromState(event.alternateBufferState.toState())
-          isAlternateScreenBuffer = event.sessionState.isAlternateScreenBuffer
-        }
-        is TerminalStateChangedEvent -> isAlternateScreenBuffer = event.state.isAlternateScreenBuffer
-        is TerminalContentUpdatedEvent -> currentModel().updateContent(event)
-        is TerminalCursorPositionChangedEvent -> currentModel().updateCursorPosition(event.logicalLineIndex, event.columnIndex)
-        else -> Unit
+/**
+ * The primary output model at one point in the event stream — see [TerminalOutputEventCollector.stateBefore].
+ *
+ * [cursorOffset] counts characters from the start of the model, so an expectation is a plain character count.
+ */
+internal class TerminalOutputSnapshot(val text: String, val cursorOffset: Int) {
+  override fun toString(): String = "cursor at $cursorOffset in ${text.replace("\n", "\\n")}"
+}
+
+/**
+ * Applies output events to real output models the way `StateAwareTerminalSession` does: a content or cursor
+ * update goes to the model of the buffer that the last applied state reports as active.
+ */
+private class TerminalOutputModelMirror {
+  private val outputModel = TerminalTestUtil.createOutputModel()
+  private val alternateBufferModel = TerminalTestUtil.createOutputModel()
+  private var isAlternateScreenBuffer = false
+
+  fun apply(event: TerminalOutputEvent) {
+    when (event) {
+      is TerminalInitialStateEvent -> {
+        outputModel.restoreFromState(event.outputModelState.toState())
+        alternateBufferModel.restoreFromState(event.alternateBufferState.toState())
+        isAlternateScreenBuffer = event.sessionState.isAlternateScreenBuffer
       }
+      is TerminalStateChangedEvent -> isAlternateScreenBuffer = event.state.isAlternateScreenBuffer
+      is TerminalContentUpdatedEvent -> currentModel().updateContent(event)
+      is TerminalCursorPositionChangedEvent -> currentModel().updateCursorPosition(event.logicalLineIndex, event.columnIndex)
+      else -> Unit
     }
   }
+
+  fun primaryText(): String = outputModel.document.text
+
+  fun alternateText(): String = alternateBufferModel.document.text
+
+  fun primarySnapshot(): TerminalOutputSnapshot = TerminalOutputSnapshot(
+    text = primaryText(),
+    cursorOffset = (outputModel.cursorOffset - outputModel.startOffset).toInt(),
+  )
 
   private fun currentModel(): MutableTerminalOutputModel =
     if (isAlternateScreenBuffer) alternateBufferModel else outputModel
@@ -352,3 +401,19 @@ internal suspend inline fun <reified T : TerminalOutputEvent> TerminalOutputEven
   skipCount: Int,
   noinline predicate: (T) -> Boolean = { true },
 ): T = awaitEvent(T::class.java, skipCount, predicate)
+
+/** The index of the first event of type [T] matching [predicate]; -1 when no such event was collected. */
+internal inline fun <reified T : TerminalOutputEvent> TerminalOutputEventCollector.indexOfEvent(
+  noinline predicate: (T) -> Boolean = { true },
+): Int = indexOfEvent(T::class.java, predicate)
+
+/**
+ * Suspends until an event of type [T] matching [predicate] arrives, then returns the output-model state the
+ * frontend reads when it handles that event — see [TerminalOutputEventCollector.stateBefore].
+ */
+internal suspend inline fun <reified T : TerminalOutputEvent> TerminalOutputEventCollector.awaitStateBefore(
+  noinline predicate: (T) -> Boolean = { true },
+): TerminalOutputSnapshot {
+  awaitEvent<T>(predicate)
+  return stateBefore(indexOfEvent<T>(predicate))
+}
