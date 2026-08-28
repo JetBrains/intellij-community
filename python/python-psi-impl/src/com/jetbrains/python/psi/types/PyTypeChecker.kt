@@ -2223,6 +2223,40 @@ object PyTypeChecker {
         return cloneTypeArguments(typedDictType.typeArgumentsOrDeclaredParameters.orEmpty())
       }
 
+      /**
+       * The items are substituted through [substitute] rather than through this visitor, so that the
+       * parameterized TypedDict holds the substitutions it needs rather than the traversal that produced it, and each
+       * item is substituted on a traversal of its own once something asks for it.
+       */
+      override fun visitPyTypedDictType(typedDictType: PyTypedDictType): PyType {
+        return PyTypedDictType(
+          typedDictType.name,
+          { evalContext ->
+            typedDictType.fields(evalContext).mapValues { (_, field) ->
+              PyTypedDictType.FieldTypeAndTotality(
+                field.value,
+                substitute(field.type, substitutions, evalContext),
+                field.qualifiers,
+              )
+            }
+          },
+          typedDictType.pyClass,
+          typedDictType.isDefinition,
+          typedDictType.declarationElement,
+          typedDictType.isClosed,
+          { evalContext ->
+            val extraItems = typedDictType.extraItems(evalContext)
+            PyTypedDictType.FieldTypeAndTotality(
+              extraItems.value,
+              substitute(extraItems.type, substitutions, evalContext),
+              extraItems.qualifiers,
+            )
+          },
+          typedDictType.declaredTypeParameters,
+          cloneTypedDictTypeArguments(typedDictType),
+        )
+      }
+
       override fun visitPyTupleType(tupleType: PyTupleType): PyType {
         val tupleClass = tupleType.pyClass
         val oldElementTypes = if (tupleType.isHomogeneous) listOf(tupleType.iteratedItemType)
