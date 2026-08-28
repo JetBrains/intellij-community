@@ -13,12 +13,10 @@ import com.intellij.platform.problemsView.frontend.actions.dtoToIntentionActionD
 import com.intellij.platform.problemsView.shared.ProblemsViewApi
 import com.intellij.platform.project.projectId
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.atomic.AtomicReference
 
 internal data class QuickFixModel(
   val quickFixModelId: String,
@@ -37,33 +35,48 @@ internal class FrontendProblemsViewQuickFixService(
   private val coroutineScope: CoroutineScope,
 ) {
 
-  private val selectedProblemModel = MutableStateFlow<FrontendHighlightingProblemModel?>(null)
-
-  init {
-    coroutineScope.launch {
-      selectedProblemModel
-        .map { it?.problem }
-        .distinctUntilChanged()
-        .collectLatest(::loadQuickFixes)
-    }
-  }
+  private val selectedProblemModel = AtomicReference<FrontendHighlightingProblemModel?>()
+  private val quickFixLoadingMutex = Mutex()
 
   fun selectProblem(problem: HighlightingProblem?) {
-    val newSelectedProblem = problem?.takeIf { it.highlighter.backendId != null }
+    val selectedProblem = problem?.takeIf { it.highlighter.backendId != null }
+    if (selectedProblemModel.get()?.problem == selectedProblem) return
 
-    selectedProblemModel.update { currentProblemModel ->
-      if (currentProblemModel?.problem == newSelectedProblem) currentProblemModel
-      else newSelectedProblem?.let(::FrontendHighlightingProblemModel)
-    }
+    val newSelection = selectedProblem?.let(::FrontendHighlightingProblemModel)
+    val previousSelection = selectedProblemModel.getAndSet(newSelection)
+    previousSelection?.quickFixModel?.let(::discardBackendQuickFixModel)
   }
 
-  fun getQuickFixModel(problem: HighlightingProblem): QuickFixModel? {
-    val currentProblemModel = selectedProblemModel.value
-    return currentProblemModel?.quickFixModel?.takeIf { currentProblemModel.problem == problem }
+  suspend fun loadQuickFixModel(problem: HighlightingProblem): QuickFixModel? = quickFixLoadingMutex.withLock {
+    loadQuickFixModelIfSelected(problem)
+  }
+
+  private suspend fun loadQuickFixModelIfSelected(problem: HighlightingProblem): QuickFixModel? {
+    val selectionAtLoadStart = selectedProblemModel.get()?.takeIf { it.problem == problem } ?: return null
+    selectionAtLoadStart.quickFixModel?.let { return it }
+
+    val quickFixModel = ProblemsViewApi.getInstance().loadQuickFixes(
+      project.projectId(),
+      problem.file.rpcId(),
+      problem.highlighter.backendId ?: return null,
+    )?.toQuickFixModel() ?: return null
+
+    if (storeQuickFixModelIfSelectionUnchanged(selectionAtLoadStart, quickFixModel)) return quickFixModel
+
+    discardBackendQuickFixModel(quickFixModel)
+    return null
+  }
+
+  private fun storeQuickFixModelIfSelectionUnchanged(
+    selectionAtLoadStart: FrontendHighlightingProblemModel,
+    quickFixModel: QuickFixModel,
+  ): Boolean {
+    val selectionWithQuickFixes = selectionAtLoadStart.copy(quickFixModel = quickFixModel)
+    return selectedProblemModel.compareAndSet(selectionAtLoadStart, selectionWithQuickFixes)
   }
 
   fun executeQuickFix(quickFixModelId: String, intentionId: String) {
-    val currentProblemModel = selectedProblemModel.value ?: return
+    val currentProblemModel = selectedProblemModel.get() ?: return
     if (currentProblemModel.quickFixModel?.quickFixModelId != quickFixModelId) return
     if (!selectedProblemModel.compareAndSet(currentProblemModel, currentProblemModel.copy(quickFixModel = null))) return
 
@@ -76,25 +89,10 @@ internal class FrontendProblemsViewQuickFixService(
     selectProblem(null)
   }
 
-  private suspend fun loadQuickFixes(problem: HighlightingProblem?) {
-    if (problem == null) {
-      discardBackendQuickFixes()
-      return
+  private fun discardBackendQuickFixModel(quickFixModel: QuickFixModel) {
+    coroutineScope.launch {
+      ProblemsViewApi.getInstance().discardQuickFixModel(project.projectId(), quickFixModel.quickFixModelId)
     }
-
-    val quickFixModel = ProblemsViewApi.getInstance().loadQuickFixes(
-      project.projectId(),
-      problem.file.rpcId(),
-      problem.highlighter.backendId ?: return,
-    )?.toQuickFixModel()
-
-    val currentProblemModel = selectedProblemModel.value ?: return
-    if (currentProblemModel.problem != problem) return
-    if (!selectedProblemModel.compareAndSet(currentProblemModel, currentProblemModel.copy(quickFixModel = quickFixModel))) return
-  }
-
-  private suspend fun discardBackendQuickFixes() {
-    ProblemsViewApi.getInstance().discardQuickFixes(project.projectId())
   }
 
   private fun QuickFixModelDto.toQuickFixModel(): QuickFixModel {

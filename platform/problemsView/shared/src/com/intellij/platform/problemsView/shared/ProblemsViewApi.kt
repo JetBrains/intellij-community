@@ -22,7 +22,7 @@ interface ProblemsViewApi : RemoteApi<Unit> {
     highlighterId: Long,
   ): QuickFixModelDto?
 
-  suspend fun discardQuickFixes(projectId: ProjectId)
+  suspend fun discardQuickFixModel(projectId: ProjectId, quickFixModelId: String)
 
   suspend fun executeQuickFix(projectId: ProjectId, quickFixModelId: String, intentionId: String)
 

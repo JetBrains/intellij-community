@@ -25,9 +25,9 @@ internal class BackendProblemsViewApi : ProblemsViewApi {
     return BackendProblemsViewQuickFixService.getInstance(project).loadQuickFixes(fileId, highlighterId)
   }
 
-  override suspend fun discardQuickFixes(projectId: ProjectId) {
+  override suspend fun discardQuickFixModel(projectId: ProjectId, quickFixModelId: String) {
     val project = projectId.findProjectOrNull() ?: return
-    BackendProblemsViewQuickFixService.getInstance(project).discardQuickFixes()
+    BackendProblemsViewQuickFixService.getInstance(project).discardQuickFixModel(quickFixModelId)
   }
 
   override suspend fun executeQuickFix(projectId: ProjectId, quickFixModelId: String, intentionId: String) {

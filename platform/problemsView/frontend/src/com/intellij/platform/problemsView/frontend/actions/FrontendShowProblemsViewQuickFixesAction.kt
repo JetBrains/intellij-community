@@ -18,16 +18,21 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SELECTED_ITEM
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.ApplicationManager.getApplication
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.platform.problemsView.frontend.FrontendHighlightingPanel
 import com.intellij.platform.problemsView.frontend.FrontendProblemsViewQuickFixService
+import com.intellij.platform.problemsView.frontend.QuickFixModel
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.awt.AnchoredPoint
 import com.intellij.ui.awt.RelativePoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.awt.event.MouseEvent
 
 internal class FrontendShowProblemsViewQuickFixesAction : AnAction(), ActionRemoteBehaviorSpecification.Frontend {
@@ -49,8 +54,18 @@ internal class FrontendShowProblemsViewQuickFixesAction : AnAction(), ActionRemo
     val problem = (event.getData(SELECTED_ITEM) as? ProblemNode)?.problem as? HighlightingProblem ?: return
 
     val quickFixService = FrontendProblemsViewQuickFixService.getInstance(project)
-    val quickFixModel = quickFixService.getQuickFixModel(problem) ?: return
 
+    event.coroutineScope.launch {
+      val quickFixModel = quickFixService.loadQuickFixModel(problem) ?: return@launch
+
+      withContext(Dispatchers.EDT) {
+        showQuickFixes(event, problem, quickFixModel)
+      }
+    }
+  }
+
+  private fun showQuickFixes(event: AnActionEvent, problem: HighlightingProblem, quickFixModel: QuickFixModel) {
+    val project = event.project ?: return
     val psiFile = PsiManager.getInstance(project).findFile(problem.file) ?: return
     val editor = event.getData(ProblemsViewPanel.PREVIEW_DATA_KEY) ?: getEditor(problem.file, project, true) ?: return
     val cachedIntentions = createCachedIntentions(

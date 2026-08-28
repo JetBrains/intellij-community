@@ -73,8 +73,9 @@ internal class BackendProblemsViewQuickFixService(private val project: Project) 
     )
   }
 
-  fun discardQuickFixes() {
-    currentQuickFixModel.set(null)
+  fun discardQuickFixModel(quickFixModelId: String) {
+    val quickFixModel = currentQuickFixModel.get()?.takeIf { it.quickFixModelId == quickFixModelId } ?: return
+    currentQuickFixModel.compareAndSet(quickFixModel, null)
   }
 
   @RequiresReadLock

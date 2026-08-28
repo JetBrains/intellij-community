@@ -56,7 +56,7 @@ internal class BackendProblemsViewQuickFixServiceTest {
       assertNotEquals(first.quickFixes.single().intentionId, second.quickFixes.single().intentionId)
       UUID.fromString(first.quickFixes.single().intentionId)
       assertTrue(service.hasLoadedQuickFixes())
-      service.discardQuickFixes()
+      service.discardQuickFixModel(second.quickFixModelId)
     }
   }
 
@@ -66,10 +66,27 @@ internal class BackendProblemsViewQuickFixServiceTest {
     withEditor {
       val highlighterId = addQuickFix()
       val service = BackendProblemsViewQuickFixService.getInstance(project)
-      assertNotNull(service.loadQuickFixes(testFile.virtualFile.rpcId(), highlighterId))
+      val quickFixModel = requireNotNull(service.loadQuickFixes(testFile.virtualFile.rpcId(), highlighterId))
 
-      service.discardQuickFixes()
+      service.discardQuickFixModel(quickFixModel.quickFixModelId)
 
+      assertFalse(service.hasLoadedQuickFixes())
+    }
+  }
+
+  @Test
+  @Timeout(30)
+  fun `discard does not remove a newer quick fix model`(): Unit = timeoutRunBlocking {
+    withEditor {
+      val highlighterId = addQuickFix()
+      val service = BackendProblemsViewQuickFixService.getInstance(project)
+      val first = requireNotNull(service.loadQuickFixes(testFile.virtualFile.rpcId(), highlighterId))
+      val second = requireNotNull(service.loadQuickFixes(testFile.virtualFile.rpcId(), highlighterId))
+
+      service.discardQuickFixModel(first.quickFixModelId)
+      assertTrue(service.hasLoadedQuickFixes())
+
+      service.discardQuickFixModel(second.quickFixModelId)
       assertFalse(service.hasLoadedQuickFixes())
     }
   }
