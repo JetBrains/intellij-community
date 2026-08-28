@@ -8,6 +8,7 @@ import com.intellij.ide.starter.models.IdeInfo
 import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.utils.FileSystem.deleteRecursivelyQuietly
 import com.intellij.ide.starter.utils.HttpClient
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.testFramework.teamCity.TeamCityReporter
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
@@ -69,29 +70,94 @@ object TeamCityClient {
     return requireNotNull(result) { "Request ${request.uri} failed" }
   }
 
-  /** @return <BuildId, BuildNumber> */
-  fun getLastSuccessfulBuild(ideInfo: IdeInfo): Pair<String, String> {
-    val tag = if (!ideInfo.tag.isNullOrBlank()) "tag:${ideInfo.tag}," else ""
-    val number = if (!ideInfo.buildNumber.isBlank()) "number:${ideInfo.buildNumber}," else ""
-    val fullUrl = guestAuthUri.resolve("builds?locator=buildType:${ideInfo.buildType},${tag}${number}status:SUCCESS,state:(finished:true),count:1,history:false")
+  /**
+   * Get all successful builds matching the specified criteria.
+   * @return List of <BuildId, BuildNumber> pairs, sorted from latest to oldest.
+   */
+  fun getSuccessfulBuildsList(
+    buildType: String,
+    tag: String? = null,
+    buildNumber: String? = null,
+    count: Int = 10,
+    additionalRequestActions: (HttpRequest) -> HttpRequest = { it },
+  ): List<Pair<String, BuildNumber?>> {
+    val tagFilter = if (!tag.isNullOrBlank()) "tag:$tag," else ""
+    val numberFilter = if (!buildNumber.isNullOrBlank()) "number:$buildNumber," else ""
+    val fullUrl = guestAuthUri
+      .resolve("builds?locator=buildType:$buildType,${tagFilter}${numberFilter}status:SUCCESS,state:(finished:true),count:$count,history:false")
 
-    val build = get(fullUrl).properties().first { it.key == "build" }.value
-    val buildId = build.findValue("id").asText()
-    val buildNumber = ideInfo.buildNumber.ifBlank { build.findValue("number").asText() }
-    return Pair(buildId, buildNumber)
+    return get(fullUrl, additionalRequestActions)
+      .flatten()
+      .map { buildInfo ->
+        Pair(
+          buildInfo.findValue("id")?.asText() ?: "",
+          BuildNumber.fromString(buildNumber ?: buildInfo.findValue("number")?.asText()),
+        )
+      }
   }
+
+  @Deprecated(
+    "Use getLastSuccessfulBuildInfo instead",
+    ReplaceWith(
+      "getLastSuccessfulBuildInfo(ideInfo)",
+      "com.intellij.ide.starter.ci.teamcity.TeamCityClient.getLastSuccessfulBuildInfo",
+    )
+  )
+  fun getLastSuccessfulBuild(ideInfo: IdeInfo): Pair<String, String> = with(getLastSuccessfulBuildInfo(ideInfo)) {
+    first to (second?.toString() ?: "")
+  }
+
+  /** @return <BuildId, BuildNumber> */
+  fun getLastSuccessfulBuildInfo(ideInfo: IdeInfo): Pair<String, BuildNumber?> = getSuccessfulBuildsList(
+    buildType = ideInfo.buildType,
+    tag = ideInfo.tag,
+    buildNumber = ideInfo.buildNumber.takeIf { it.isNotBlank() },
+    count = 1,
+  ).single()
 
   /**
    * @return the major version of the master branch by accessing the build number Teamcity configuration
    */
-  fun getMasterMajorVersion(): String {
-    val url = guestAuthUri.resolve("builds?locator=buildType:ijplatform_master_IdeaInstallersBuildNumber,branch:master,status:SUCCESS,state:(finished:true),count:1")
-    return get(url).findValue("number").asText().split(".")[0]
-  }
+  fun getMasterMajorVersion(): String = getSuccessfulBuildsList(
+    buildType = "ijplatform_master_IdeaInstallersBuildNumber",
+    count = 1,
+  ).singleOrNull()?.second?.baselineVersion?.toString() ?: error("Master version was not found")
 
   fun downloadArtifact(buildId: String, artifactName: String, outPath: Path) {
     val artifactUrl = guestAuthUri.resolve("builds/id:$buildId/artifacts/content/$artifactName")
     HttpClient.download(artifactUrl.toString(), outPath)
+  }
+
+  /**
+   * Download a patch artifact for the given [targetBuildNumber] from a build tagged with [tag].
+   * The [patchArtifactName] must be the exact artifact file name (e.g., `IU-262.1234.5-262.1234.6-patch-win.jar`)
+   * @see [UpdateIdeUtils.resolvePatchArtifactName]
+   * @return true if the artifact was downloaded successfully, false otherwise
+   */
+  fun downloadPatchArtifact(
+    patchBuildType: String,
+    targetBuildNumber: String,
+    patchArtifactName: String,
+    tag: String?,
+    outPath: Path,
+    additionalRequestActions: (HttpRequest) -> HttpRequest = { it },
+  ) {
+    logOutput("Downloading patch from TeamCity: buildType=$patchBuildType, targetBuildNumber=$targetBuildNumber, tag=$tag, patchArtifactName=$patchArtifactName")
+    val (buildId, _) = getSuccessfulBuildsList(
+      buildType = patchBuildType,
+      tag = tag,
+      buildNumber = targetBuildNumber,
+      count = 1,
+      additionalRequestActions = additionalRequestActions
+    ).firstOrNull() ?: error("No build found for type $patchBuildType with number $targetBuildNumber")
+
+    runCatching {
+      downloadArtifact(buildId, patchArtifactName, outPath)
+      logOutput("Patch downloaded to: $outPath")
+    }.onFailure { t ->
+      logError("Failed to download patch artifact $patchArtifactName from build $buildId")
+      throw t
+    }
   }
 
   private fun printTcArtifactsPublishMessage(spec: String) {
