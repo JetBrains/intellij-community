@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.changes.ui.AsyncChangesBrowserBase
 import com.intellij.openapi.vcs.changes.ui.AsyncChangesTreeModel
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+import com.intellij.openapi.vcs.changes.ui.installFileDragSource
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.GuiUtils
 import com.intellij.ui.ScrollableContentBorder.Companion.setup
@@ -60,6 +61,9 @@ class VcsLogChangesBrowser(
     }
 
     init()
+
+    // A drag of a file row must reach a target outside the tree, such as an editor or an agent session.
+    myViewer.installFileDragSource(this)
 
     hideViewerBorder()
     setup(viewerScrollPane, Side.TOP)
