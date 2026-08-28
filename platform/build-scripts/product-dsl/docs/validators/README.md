@@ -39,6 +39,7 @@ This directory is the normative spec for product-dsl validation behavior. Each f
 | Test library scope | `TestLibraryScopeValidator` | `testLibraryScopeValidation` | [test-library-scope.md](test-library-scope.md) |
 | Library license coverage | `LibraryLicenseValidator` | `libraryLicenseValidation` | [library-license.md](library-license.md) |
 | Suppression config keys | `SuppressionConfigValidator` | `suppressionConfigValidation` | [suppression-config.md](suppression-config.md) |
+| Module in multiple plugins | `collectModulesInMultiplePlugins` | - (no `PipelineNode`, so no NodeId) | [module-in-multiple-plugins.md](module-in-multiple-plugins.md) |
 
 ## Related docs
 

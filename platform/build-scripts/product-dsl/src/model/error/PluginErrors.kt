@@ -707,3 +707,89 @@ data class PluginVariantOverlapError(
     appendLine()
   }
 }
+
+/**
+ * Error when one JPS module goes into the main jar directory of two plugins.
+ *
+ * A plugin that packs a module holds its own copy of the classes. The copies grow the distribution. A third plugin
+ * that depends on both plugins then loads one class from two classloaders, which raises a `LinkageError`.
+ *
+ * The subject is a static layout entry, which a plugin declares through `spec.withModule`. That mechanism is on the
+ * way out, so the rule is a ratchet on a dying mechanism. A content module that two plugins declare with no namespace
+ * is a different shape, and that shape is legal. Read
+ * `docs/IntelliJ-Platform/4_man/Plugin-Model/Including-content-module-in-multiple-plugins.md`, which is IJPL-A-1893.
+ *
+ * The producer of this error lives above this module, because a plugin layout is a build-script type. So the error
+ * carries plain names rather than the layout itself.
+ *
+ * One instance holds either the duplicated modules or the stale allowlist entries. Many products share one plugin
+ * layout registry, so neither report carries a product name.
+ */
+data class ModuleInMultiplePluginsError(
+  override val context: String,
+  @JvmField val duplicates: List<ModuleOwners> = emptyList(),
+  @JvmField val staleAllowlistEntries: List<String> = emptyList(),
+  override val ruleName: String = "ModuleInMultiplePluginsValidation",
+) : ValidationError {
+  override val category: ErrorCategory get() = ErrorCategory.MODULE_IN_MULTIPLE_PLUGINS
+
+  /**
+   * @param moduleName the JPS module that two or more plugins pack
+   * @param owners the main module of each plugin that packs it
+   */
+  data class ModuleOwners(
+    @JvmField val moduleName: String,
+    @JvmField val owners: List<String>,
+  )
+
+  override fun format(s: AnsiStyle): String = buildString {
+    if (duplicates.isEmpty()) {
+      appendLine("${s.red}${s.bold}The allowlist of modules in multiple plugins holds a stale entry${s.reset}")
+      appendLine()
+      for (moduleName in staleAllowlistEntries.sorted()) {
+        appendLine("  ${s.red}*${s.reset} ${s.bold}$moduleName${s.reset}")
+      }
+      appendLine()
+      appendLine("${s.blue}No plugin layout registry duplicates a name above.${s.reset}")
+      appendLine("${s.blue}Fix:${s.reset} remove the name from $ALLOWLIST_NAME in $ALLOWLIST_FILE.")
+      appendLine()
+      appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+      appendLine()
+      return@buildString
+    }
+
+    appendLine("${s.red}${s.bold}Two plugin layouts pack one module${s.reset}")
+    appendLine()
+    appendLine("${s.yellow}Each plugin holds its own copy of the classes, so the copies grow the distribution.${s.reset}")
+    appendLine("${s.yellow}A third plugin that depends on both plugins loads one class from two classloaders.${s.reset}")
+    appendLine("${s.yellow}Many products share one plugin layout registry, so the report names no product.${s.reset}")
+    appendLine()
+
+    for ((moduleName, owners) in duplicates.sortedBy { it.moduleName }) {
+      appendLine("  ${s.red}*${s.reset} ${s.bold}$moduleName${s.reset}")
+      for (owner in owners.sorted()) {
+        appendLine("      - $owner")
+      }
+    }
+
+    appendLine()
+    appendLine("${s.blue}Fix:${s.reset}")
+    appendLine("1. Move the module to the platform, so that every plugin reads the one copy.")
+    appendLine("2. Or extract a new plugin that holds the module, and let each plugin depend on it.")
+    appendLine("3. Or grandfather the name: add it to $ALLOWLIST_NAME in $ALLOWLIST_FILE.")
+    appendLine()
+    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+    appendLine()
+  }
+
+  companion object {
+    /** The context of the duplicate report. Many products share one plugin layout registry, so it names no product. */
+    const val LAYOUT_REGISTRY_CONTEXT: String = "plugin-layouts"
+
+    /** The context of the stale report. The report reads every registry at once, so it names no product. */
+    const val ALLOWLIST_CONTEXT: String = "allowlist"
+
+    private const val ALLOWLIST_NAME = "KNOWN_MODULES_IN_MULTIPLE_PLUGINS"
+    private const val ALLOWLIST_FILE = "platform/buildScripts/src/productLayout/ultimateGenerator.kt"
+  }
+}

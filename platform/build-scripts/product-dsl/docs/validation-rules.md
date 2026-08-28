@@ -29,6 +29,7 @@ plugin that owns the API, then a shared module set. Read
 | 16 | Unused shared library modules | Module set | [unused-shared-library-module.md](validators/unused-shared-library-module.md) |
 | 17 | Content module copy conflicts | Product | [content-module-copy-conflict.md](validators/content-module-copy-conflict.md) |
 | 18 | Library license coverage | Content module | [library-license.md](validators/library-license.md) |
+| 19 | Module in multiple plugins | Plugin layouts | [module-in-multiple-plugins.md](validators/module-in-multiple-plugins.md) |
 
 ## When Validation Runs
 

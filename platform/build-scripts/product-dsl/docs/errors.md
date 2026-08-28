@@ -18,6 +18,7 @@ Complete reference of validation errors, their causes, and fixes.
 | [MissingContentModulePluginDep](#missing-content-module-plugin-dependency) | Error | No | Content module missing plugin dep |
 | [MissingTestPluginPluginDep](#missing-test-plugin-plugin-dependency) | Error | No | Test plugin missing plugin dep |
 | [MissingLibraryLicenseError](#missing-library-license) | Error | No | Library in a distribution has no license entry |
+| [ModuleInMultiplePluginsError](#module-in-multiple-plugins) | Error | No | Two plugin layouts pack one JPS module |
 | [DSL Constraint Errors](#dsl-constraint-errors) | Error | No | Invalid DSL usage |
 | [Suppressible Errors](#suppressible-errors) | Warning | Yes | Errors detected during generation |
 
@@ -380,6 +381,44 @@ Fix:
 **Auto-Fix**: No. The error is a hard failure. No suppression and no allowlist exist.
 
 **Spec**: [validators/library-license.md](validators/library-license.md)
+
+---
+
+## Module In Multiple Plugins
+
+Emitted by `collectModulesInMultiplePlugins` (ruleName `ModuleInMultiplePluginsValidation`, category `MODULE_IN_MULTIPLE_PLUGINS`).
+
+```
+Two plugin layouts pack one module
+
+Each plugin holds its own copy of the classes, so the copies grow the distribution.
+A third plugin that depends on both plugins loads one class from two classloaders.
+Many products share one plugin layout registry, so the report names no product.
+
+  * intellij.javaee.jax.ws.utils
+      - intellij.javaee.jax.rs
+      - intellij.javaee.jax.ws
+
+Fix:
+1. Move the module to the platform, so that every plugin reads the one copy.
+2. Or extract a new plugin that holds the module, and let each plugin depend on it.
+3. Or grandfather the name: add it to KNOWN_MODULES_IN_MULTIPLE_PLUGINS in platform/buildScripts/src/productLayout/ultimateGenerator.kt.
+
+[Rule: ModuleInMultiplePluginsValidation]
+```
+
+**Cause**: Two plugin layouts pack one JPS module through `spec.withModule`, so each plugin holds a private copy of the classes.
+
+The rule reads the other direction too. An allowlist entry that no plugin layout registry duplicates any more is stale, and the report names that entry.
+
+**Fixes**:
+1. **Move the module to the platform**, so that every plugin reads the one copy
+2. **Extract a new plugin** that holds the module, and let each plugin depend on it
+3. **Grandfather the name** in `KNOWN_MODULES_IN_MULTIPLE_PLUGINS` in `platform/buildScripts/src/productLayout/ultimateGenerator.kt`
+
+**Auto-Fix**: No. The error is a hard failure. The allowlist is the whole suppression mechanism, and `suppressions.json` holds no entry for this rule.
+
+**Spec**: [validators/module-in-multiple-plugins.md](validators/module-in-multiple-plugins.md)
 
 ---
 
