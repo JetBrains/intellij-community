@@ -66,9 +66,12 @@ private val logger = logger<RoutingContext>()
  */
 internal const val MCP_SESSION_ID_HEADER: String = "mcp-session-id"
 
-internal val SSE_HEARTBEAT_PERIOD = 5.seconds
+internal const val SSE_HEARTBEAT_PERIOD_REGISTRY_KEY: String = "mcp.server.sse.heartbeat.period.ms"
 
 private val SSE_HEARTBEAT_EVENT = ServerSentEvent(comments = "heartbeat")
+
+private val sseHeartbeatPeriod: Duration
+  get() = Registry.intValue(SSE_HEARTBEAT_PERIOD_REGISTRY_KEY, 5_000).coerceAtLeast(1).milliseconds
 
 internal const val STREAMABLE_SESSION_IDLE_TIMEOUT_REGISTRY_KEY: String = "mcp.server.streamable.session.idle.timeout.ms"
 
@@ -182,7 +185,7 @@ fun Application.mcpPatched(
 
     sse("/sse") {
       heartbeat {
-        period = SSE_HEARTBEAT_PERIOD
+        period = sseHeartbeatPeriod
       }
 
       mcpSseEndpoint("/message", sseTransports, block)
@@ -409,7 +412,7 @@ private fun Job.endsTogetherWith(other: Job) {
 
 private suspend fun ServerSSESession.heartbeatUntilDisconnected() {
   while (trySendHeartbeat()) {
-    delay(SSE_HEARTBEAT_PERIOD)
+    delay(sseHeartbeatPeriod)
   }
 }
 

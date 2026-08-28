@@ -6,6 +6,8 @@ import com.intellij.mcpserver.McpToolsProvider
 import com.intellij.mcpserver.impl.util.asTool
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
+import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
+import com.intellij.testFramework.common.waitUntil
 import com.intellij.util.application
 import kotlinx.coroutines.delay
 import kotlin.reflect.KFunction
@@ -31,4 +33,18 @@ suspend fun <T> withRegisteredTestTools(
   }
   @Suppress("UNCHECKED_CAST")
   return result as T
+}
+
+/** [waitUntil] reports only that a condition held, so the value that satisfied it is returned here. */
+suspend fun <T : Any> waitUntilNotNull(
+  message: String,
+  timeout: Duration = DEFAULT_TEST_TIMEOUT,
+  produce: suspend () -> T?,
+): T {
+  var produced: T? = null
+  waitUntil(message, timeout) {
+    produced = produce()
+    produced != null
+  }
+  return checkNotNull(produced)
 }

@@ -1153,6 +1153,15 @@ Implementation details:
 
 These overrides are **not a public API** — they are JetBrains-internal knobs for evaluation and should not be depended on by downstream plugins.
 
+### 17.7 Session lifetime registry keys
+
+| Registry key                                    | Default  | Effect                                                                                                                               |
+|-------------------------------------------------|----------|--------------------------------------------------------------------------------------------------------------------------------------|
+| `mcp.server.streamable.session.idle.timeout.ms` | `300000` | How long an idle session lives. A session that never initialized is capped at 30 seconds, because its client never received the id.  |
+| `mcp.server.sse.heartbeat.period.ms`            | `5000`   | Period between the heartbeats of a notification stream. A failed heartbeat is how the server finds a stream that its client dropped. |
+
+Both keys are declared in [`intellij.mcpserver.xml`](resources/intellij.mcpserver.xml). A test that must not wait minutes overrides them with `@RegistryKey`.
+
 ---
 
 ## 18. Built-in IDE diagnostics tool

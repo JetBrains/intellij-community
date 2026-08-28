@@ -2,55 +2,58 @@
 package com.intellij.mcpserver
 
 import com.intellij.mcpserver.impl.McpServerService
-import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
-import com.intellij.mcpserver.impl.util.network.SSE_HEARTBEAT_PERIOD
-import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
+import com.intellij.mcpserver.impl.util.network.SSE_HEARTBEAT_PERIOD_REGISTRY_KEY
+import com.intellij.mcpserver.impl.util.network.STREAMABLE_SESSION_IDLE_TIMEOUT_REGISTRY_KEY
+import com.intellij.mcpserver.impl.util.network.UNINITIALIZED_SESSION_CLOSED
+import com.intellij.testFramework.LoggedErrorProcessor
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import io.ktor.client.HttpClient
-import io.ktor.client.request.HttpRequestBuilder
-import io.ktor.client.request.header
-import io.ktor.client.request.post
-import io.ktor.client.request.prepareGet
-import io.ktor.client.request.setBody
-import io.ktor.client.statement.HttpResponse
-import io.ktor.client.statement.bodyAsChannel
-import io.ktor.client.statement.bodyAsText
-import io.ktor.http.ContentType
-import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.contentType
-import io.ktor.utils.io.readUTF8Line
-import io.modelcontextprotocol.kotlin.sdk.types.DEFAULT_NEGOTIATED_PROTOCOL_VERSION
+import io.modelcontextprotocol.kotlin.sdk.types.ClientCapabilities
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Timeout
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-private const val MCP_SESSION_ID_HEADER = "mcp-session-id"
-private val ACCEPTED_CONTENT_TYPES = "${ContentType.Application.Json}, ${ContentType.Text.EventStream}"
-
-private val INITIALIZE_REQUEST =
-  """{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"$DEFAULT_NEGOTIATED_PROTOCOL_VERSION",""" +
-  """"capabilities":{},"clientInfo":{"name":"session lifetime test","version":"1.0"}}}"""
-private const val INITIALIZED_NOTIFICATION = """{"jsonrpc":"2.0","method":"notifications/initialized"}"""
-private const val TOOLS_LIST_REQUEST = """{"jsonrpc":"2.0","id":2,"method":"tools/list"}"""
-
-/** A dead SSE connection is noticed only on the next write into it, so allow the server two heartbeats plus slack. */
-private val DISCONNECT_PROPAGATION_DELAY = SSE_HEARTBEAT_PERIOD * 2 + 2.seconds
+/** Every wait below is bounded on its own, so this only stops a hang from running to the CI limit. */
+private val TEST_TIMEOUT = 120.seconds
 
 private const val NOTIFICATION_STREAM_RECONNECTS = 2
 
-private const val REQUEST_ONLY_POLLS = 10
-private val REQUEST_ONLY_POLL_PERIOD = 2.seconds
+/** A short heartbeat is what makes the server find a dropped notification stream in a fraction of a second. */
+private const val FAST_HEARTBEAT_PERIOD_MS = "500"
+private val FAST_HEARTBEAT_PERIOD = FAST_HEARTBEAT_PERIOD_MS.toInt().milliseconds
 
 /**
- * A Streamable HTTP session is identified by its `mcp-session-id` and lives independently of any single HTTP request:
- * the standalone GET notification stream may be dropped and reopened at will, and a client that never opens one at all
- * must keep working. See IJPL-246574.
+ * The heartbeat loop writes and then delays, so the write that finds a dropped stream comes a period later. Two
+ * periods leave room for that write, and for the server to act on it.
+ */
+private val DROPPED_STREAM_DISCOVERY_PERIOD = FAST_HEARTBEAT_PERIOD * 2
+
+/** Short enough to keep a test that waits for a close quick, long enough not to expire mid-request. */
+private const val SHORT_IDLE_TIMEOUT_MS = "1500"
+
+/** A session in use is polled several times per idle timeout, so that a stalled machine cannot fake an idle one. */
+private const val CONTINUOUS_USE_IDLE_TIMEOUT_MS = "5000"
+private const val CONTINUOUS_USE_POLLS = 10
+private val CONTINUOUS_USE_POLL_PERIOD = 1.seconds
+
+/** A client that declares roots is asked for them, and the one in these tests never answers. */
+private val ROOTS_CAPABILITY = ClientCapabilities(roots = ClientCapabilities.Roots(listChanged = true))
+
+/** Nothing marks the end of an error that is never reported, and a session's teardown is long over by then. */
+private val ERROR_REPORTING_SETTLE_PERIOD = 2.seconds
+
+/**
+ * A Streamable HTTP session is identified by its `mcp-session-id`, and it lives independently of any single HTTP
+ * request. The standalone GET notification stream may be dropped and reopened at will, and a client that never opens
+ * one at all must keep working. A session must not outlive its client either. An abandoned session is closed once it
+ * falls idle, and closing a session releases everything the IDE was holding for it. See IJPL-246574.
  */
 @TestApplication
 class StreamableHttpSessionLifetimeTest {
@@ -60,90 +63,134 @@ class StreamableHttpSessionLifetimeTest {
   }
 
   @Test
-  @Timeout(120)
-  fun session_outlives_notification_stream_reconnects(): Unit = streamableHttpSession {
-    repeat(NOTIFICATION_STREAM_RECONNECTS) { reconnect ->
-      openAndDropNotificationStream()
-      delay(DISCONNECT_PROPAGATION_DELAY)
+  @RegistryKey(SSE_HEARTBEAT_PERIOD_REGISTRY_KEY, FAST_HEARTBEAT_PERIOD_MS)
+  fun session_outlives_notification_stream_reconnects(): Unit = mcpServerTest {
+    initialize()
 
-      listTools().assertOk("request after notification stream reconnect #$reconnect")
+    for (reconnect in 1..NOTIFICATION_STREAM_RECONNECTS) {
+      openAndKillNotificationStream()
+      delay(DROPPED_STREAM_DISCOVERY_PERIOD)
+
+      assertThat(trackedSessionIds()).describedAs("sessions the IDE holds after drop #$reconnect").contains(sessionId)
+      listTools().assertOk("a request after notification stream drop #$reconnect")
     }
   }
 
   @Test
-  @Timeout(120)
-  fun session_survives_active_use_without_a_notification_stream(): Unit = streamableHttpSession {
-    repeat(REQUEST_ONLY_POLLS) { poll ->
-      delay(REQUEST_ONLY_POLL_PERIOD)
+  @RegistryKey(STREAMABLE_SESSION_IDLE_TIMEOUT_REGISTRY_KEY, CONTINUOUS_USE_IDLE_TIMEOUT_MS)
+  fun session_in_continuous_use_is_never_closed(): Unit = mcpServerTest {
+    initialize()
 
-      listTools().assertOk("request #${poll + 1} of a session that never opened a notification stream")
+    for (poll in 1..CONTINUOUS_USE_POLLS) {
+      delay(CONTINUOUS_USE_POLL_PERIOD)
+
+      listTools().assertOk("request #$poll of a session that never opened a notification stream")
     }
   }
 
-  private fun streamableHttpSession(action: suspend McpSessionUnderTest.() -> Unit) = runBlocking(Dispatchers.Default) {
-    McpServerService.getInstance().start()
-    try {
-      val url = checkNotNull(McpServerConnectionAddressProvider.getInstanceOrNull()) { "No MCP address provider" }.serverStreamUrl
-      HttpClient().use { client ->
-        McpSessionUnderTest(client, url, project.basePath).apply { initialize() }.action()
+  @Test
+  fun delete_closes_the_session_and_a_second_delete_reports_it_gone(): Unit = mcpServerTest {
+    initialize()
+    val deletedSessionId = sessionId
+
+    deleteSession().assertOk("a delete of a live session")
+
+    listTools().assertSessionNotFound("a request right after the session was deleted")
+    deleteSession().assertSessionNotFound("a second delete of the same session")
+    awaitSessionClosed(deletedSessionId, "the deleted session")
+  }
+
+  /** The legacy transport has no session to delete. Its stream is the session, and the session ends with it. */
+  @Test
+  fun legacy_sse_session_is_closed_when_its_stream_ends(): Unit = mcpServerTest {
+    val log = WatchedLog()
+    LoggedErrorProcessor.executeWith(log).use {
+      val alreadyTracked = trackedSessionIds()
+      withLegacySseSession { legacy ->
+        legacy.initialize()
+        val legacySessionId = awaitSessionOpened(alreadyTracked)
+
+        legacy.kill()
+
+        awaitSessionClosed(legacySessionId, "the legacy SSE session whose stream was killed")
+        legacy.listTools().assertNotFound("a request carrying the id of a killed legacy SSE session")
+      }
+      delay(ERROR_REPORTING_SETTLE_PERIOD)
+    }
+
+    log.assertNoErrors("while a legacy SSE stream was killed")
+  }
+
+  @Test
+  fun live_sessions_are_closed_when_the_server_stops(): Unit = mcpServerTest {
+    initialize()
+    val servedSessionId = sessionId
+
+    McpServerService.getInstance().stop()
+
+    awaitSessionClosed(servedSessionId, "the session the server was serving when it stopped")
+  }
+
+  /** A short idle timeout is what keeps each of these tests to a few seconds. */
+  @Nested
+  @RegistryKey(STREAMABLE_SESSION_IDLE_TIMEOUT_REGISTRY_KEY, SHORT_IDLE_TIMEOUT_MS)
+  inner class AbandonedSessions {
+    @Test
+    fun idle_session_is_closed_and_the_client_reinitializes(): Unit = mcpServerTest {
+      initialize()
+      val abandonedSessionId = sessionId
+
+      awaitSessionClosed(abandonedSessionId, "the abandoned session")
+
+      listTools().assertSessionNotFound("a request carrying the id of a closed session")
+
+      initialize()
+
+      assertThat(sessionId).describedAs("the session opened after the close").isNotEqualTo(abandonedSessionId)
+      listTools().assertOk("a request in the session opened after the close")
+    }
+
+    /** The server has to create a session before it can tell that the request does not initialize one. */
+    @Test
+    fun request_that_initializes_no_session_leaks_none(): Unit = mcpServerTest {
+      val log = WatchedLog()
+      LoggedErrorProcessor.executeWith(log).use {
+        listTools().assertBadRequest("a request with neither a session id nor an initialization")
+
+        log.awaitWarning("it closed the session of a request that never initialized one") {
+          it.startsWith(UNINITIALIZED_SESSION_CLOSED)
+        }
       }
     }
-    finally {
-      McpServerService.getInstance().stop()
+
+    /**
+     * A roots request has nowhere to go when the client never opened a notification stream, so it is still pending
+     * when the session is closed. Failing it is part of closing the session, and must not be reported as an IDE error.
+     */
+    @Test
+    fun close_of_a_roots_capable_session_reports_no_errors(): Unit = mcpServerTest {
+      val log = WatchedLog()
+      LoggedErrorProcessor.executeWith(log).use {
+        initialize(ROOTS_CAPABILITY)
+        val abandonedSessionId = sessionId
+        awaitSessionClosed(abandonedSessionId, "the abandoned session")
+        delay(ERROR_REPORTING_SETTLE_PERIOD)
+      }
+
+      log.assertNoErrors("while a roots-capable session was closed")
     }
   }
-}
 
-private class McpSessionUnderTest(
-  private val client: HttpClient,
-  private val url: String,
-  private val projectBasePath: String?,
-) {
-  private var assignedSessionId: String? = null
-
-  suspend fun initialize() {
-    val initialize = postJsonRpc(INITIALIZE_REQUEST)
-    initialize.assertOk("initialize")
-
-    assignedSessionId = checkNotNull(initialize.headers[MCP_SESSION_ID_HEADER]) { "initialize did not assign a session id" }
-    postJsonRpc(INITIALIZED_NOTIFICATION)
-  }
-
-  suspend fun listTools(): HttpResponse = postJsonRpc(TOOLS_LIST_REQUEST)
-
-  /** A dedicated [HttpClient] is used because the server observes the disconnect only when the connection goes away. */
-  suspend fun openAndDropNotificationStream() {
-    HttpClient().use { streamClient ->
-      streamClient.prepareGet(url) {
-        header(HttpHeaders.Accept, ContentType.Text.EventStream.toString())
-        mcpHeaders()
-      }.execute { response ->
-        response.assertStreaming("notification stream of a live session")
-        assertThat(response.bodyAsChannel().readUTF8Line()).describedAs("first streamed line").isNotNull()
+  private fun mcpServerTest(action: suspend McpTestClient.() -> Unit) =
+    timeoutRunBlocking(timeout = TEST_TIMEOUT, context = Dispatchers.Default) {
+      McpServerService.getInstance().start()
+      try {
+        HttpClient().use { client ->
+          McpTestClient(client, project.basePath).action()
+        }
+      }
+      finally {
+        McpServerService.getInstance().stop()
       }
     }
-  }
-
-  private suspend fun postJsonRpc(body: String): HttpResponse =
-    client.post(url) {
-      header(HttpHeaders.Accept, ACCEPTED_CONTENT_TYPES)
-      contentType(ContentType.Application.Json)
-      mcpHeaders()
-      setBody(body)
-    }
-
-  private fun HttpRequestBuilder.mcpHeaders() {
-    projectBasePath?.let { header(IJ_MCP_SERVER_PROJECT_PATH, it) }
-    assignedSessionId?.let { header(MCP_SESSION_ID_HEADER, it) }
-  }
-}
-
-/** Asserts on a response whose body ends, so the body can be quoted when the assertion fails. */
-private suspend fun HttpResponse.assertOk(what: String) {
-  assertThat(status).describedAs("$what: ${bodyAsText()}").isEqualTo(HttpStatusCode.OK)
-}
-
-/** Asserts on a response that keeps streaming, whose body must therefore never be read to its end. */
-private fun HttpResponse.assertStreaming(what: String) {
-  assertThat(status).describedAs(what).isEqualTo(HttpStatusCode.OK)
 }
