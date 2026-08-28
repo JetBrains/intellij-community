@@ -44,6 +44,12 @@
     <module name="intellij.libraries.clikt" loading="embedded"/>
     <module name="intellij.libraries.xerial.snappy.java" loading="embedded"/>
   </content>
+  <!-- Not embedded, unlike the two above: intellij.evaluationPlugin.llm is a regular content module and reaches the
+       Carpet and Parquet classes through its own declared dependency. No 'namespace' attribute, so this is a private
+       copy for this plugin only. -->
+  <content>
+    <module name="intellij.libraries.jerolba.carpet.record"/>
+  </content>
 
   <dependencies>
     <module name="intellij.libraries.commons.io"/>
