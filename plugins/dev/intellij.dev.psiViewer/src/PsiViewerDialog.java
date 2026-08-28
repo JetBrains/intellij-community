@@ -101,6 +101,7 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.ArrayUtil;
@@ -123,6 +124,7 @@ import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
+import javax.swing.GroupLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -186,6 +188,8 @@ public class PsiViewerDialog extends DialogWrapper implements UiDataProvider {
 
   private final JPanel myPanel;
   private final ComboBox<PsiViewerSourceWrapper> myFileTypeComboBox;
+  private final JPanel myOptionsPanel;
+  private final JLabel myOptionsLabel;
   private final JCheckBox myShowWhiteSpacesBox;
   private final JCheckBox myShowTreeNodesCheckBox;
   private final JCheckBox myShowEmptyPropertiesCheckBox;
@@ -266,58 +270,19 @@ public class PsiViewerDialog extends DialogWrapper implements UiDataProvider {
       myPanel = new JPanel();
       myPanel.setLayout(new GridLayoutManager(3, 1, new Insets(0, 0, 0, 0), -1, -1));
       final JPanel panel1 = new JPanel();
-      panel1.setLayout(new GridLayoutManager(1, 7, new Insets(0, 0, 0, 0), -1, -1));
+      panel1.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
       panel1.setDoubleBuffered(true);
       myPanel.add(panel1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_VERTICAL,
                                               GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
                                               GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-      myShowWhiteSpacesBox = new JCheckBox();
-      myShowWhiteSpacesBox.setMargin(new Insets(0, 0, 0, 0));
-      myShowWhiteSpacesBox.setSelected(true);
-      myShowWhiteSpacesBox.setText("Show PsiWhiteSpace");
-      myShowWhiteSpacesBox.setMnemonic('W');
-      myShowWhiteSpacesBox.setDisplayedMnemonicIndex(8);
-      panel1.add(myShowWhiteSpacesBox, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
-                                                           GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-                                                           GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-      myShowTreeNodesCheckBox = new JCheckBox();
-      myShowTreeNodesCheckBox.setMargin(new Insets(0, 0, 0, 0));
-      myShowTreeNodesCheckBox.setSelected(true);
-      myShowTreeNodesCheckBox.setText("Show tree nodes");
-      myShowTreeNodesCheckBox.setMnemonic('N');
-      myShowTreeNodesCheckBox.setDisplayedMnemonicIndex(10);
-      panel1.add(myShowTreeNodesCheckBox, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
-                                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-                                                              GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
       final JPanel panel2 = new JPanel();
-      panel2.setLayout(new BorderLayout(0, 0));
-      panel1.add(panel2, new GridConstraints(0, 6, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+      panel2.setLayout(new GridLayoutManager(1, 3, new Insets(0, 0, 0, 0), -1, -1));
+      panel1.add(panel2, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_VERTICAL,
                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null,
-                                             0, false));
-      myExtensionLabel = new JLabel();
-      myExtensionLabel.setText("Extension:");
-      myExtensionLabel.setDisplayedMnemonic('X');
-      myExtensionLabel.setDisplayedMnemonicIndex(1);
-      panel2.add(myExtensionLabel, BorderLayout.WEST);
-      myExtensionComboBox = new JComboBox();
-      panel2.add(myExtensionComboBox, BorderLayout.CENTER);
+                                             GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
       final JPanel panel3 = new JPanel();
       panel3.setLayout(new BorderLayout(0, 0));
-      panel1.add(panel3, new GridConstraints(0, 5, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
-                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null,
-                                             0, false));
-      myDialectLabel = new JBLabel();
-      myDialectLabel.setText("Dialect:");
-      myDialectLabel.setDisplayedMnemonic('D');
-      myDialectLabel.setDisplayedMnemonicIndex(0);
-      panel3.add(myDialectLabel, BorderLayout.WEST);
-      myDialectComboBox = new JComboBox();
-      panel3.add(myDialectComboBox, BorderLayout.CENTER);
-      final JPanel panel4 = new JPanel();
-      panel4.setLayout(new BorderLayout(0, 0));
-      panel1.add(panel4, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+      panel2.add(panel3, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null,
                                              0, false));
@@ -326,33 +291,91 @@ public class PsiViewerDialog extends DialogWrapper implements UiDataProvider {
       label1.setText("Show PSI structure for:");
       label1.setDisplayedMnemonic('P');
       label1.setDisplayedMnemonicIndex(5);
-      panel4.add(label1, BorderLayout.WEST);
+      panel3.add(label1, BorderLayout.WEST);
       myFileTypeComboBox = new ComboBox();
       myFileTypeComboBox.setMaximumRowCount(30);
-      panel4.add(myFileTypeComboBox, BorderLayout.CENTER);
+      panel3.add(myFileTypeComboBox, BorderLayout.CENTER);
+      final JPanel panel4 = new JPanel();
+      panel4.setLayout(new BorderLayout(0, 0));
+      panel2.add(panel4, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null,
+                                             0, false));
+      myDialectLabel = new JBLabel();
+      myDialectLabel.setText("Dialect:");
+      myDialectLabel.setDisplayedMnemonic('D');
+      myDialectLabel.setDisplayedMnemonicIndex(0);
+      panel4.add(myDialectLabel, BorderLayout.WEST);
+      myDialectComboBox = new JComboBox();
+      panel4.add(myDialectComboBox, BorderLayout.CENTER);
+      final JPanel panel5 = new JPanel();
+      panel5.setLayout(new BorderLayout(0, 0));
+      panel2.add(panel5, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null,
+                                             0, false));
+      myExtensionLabel = new JLabel();
+      myExtensionLabel.setText("Extension:");
+      myExtensionLabel.setDisplayedMnemonic('X');
+      myExtensionLabel.setDisplayedMnemonicIndex(1);
+      panel5.add(myExtensionLabel, BorderLayout.WEST);
+      myExtensionComboBox = new JComboBox();
+      panel5.add(myExtensionComboBox, BorderLayout.CENTER);
+      myOptionsPanel = new JPanel();
+      myOptionsPanel.setLayout(new GridLayoutManager(1, 5, new Insets(0, 0, 0, 0), -1, -1));
+      panel1.add(myOptionsPanel, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_VERTICAL,
+                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myOptionsLabel = new JLabel();
+      myOptionsLabel.setText("Options:");
+      myOptionsPanel.add(myOptionsLabel,
+                         new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                             GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0,
+                                             false));
+      myShowWhiteSpacesBox = new JCheckBox();
+      myShowWhiteSpacesBox.setMargin(new Insets(0, 0, 0, 0));
+      myShowWhiteSpacesBox.setSelected(true);
+      myShowWhiteSpacesBox.setText("Show PsiWhiteSpace");
+      myShowWhiteSpacesBox.setMnemonic('W');
+      myShowWhiteSpacesBox.setDisplayedMnemonicIndex(8);
+      myOptionsPanel.add(myShowWhiteSpacesBox,
+                         new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                             GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myShowTreeNodesCheckBox = new JCheckBox();
+      myShowTreeNodesCheckBox.setMargin(new Insets(0, 0, 0, 0));
+      myShowTreeNodesCheckBox.setSelected(true);
+      myShowTreeNodesCheckBox.setText("Show tree nodes");
+      myShowTreeNodesCheckBox.setMnemonic('N');
+      myShowTreeNodesCheckBox.setDisplayedMnemonicIndex(10);
+      myOptionsPanel.add(myShowTreeNodesCheckBox,
+                         new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                             GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
       myShowEmptyPropertiesCheckBox = new JCheckBox();
       myShowEmptyPropertiesCheckBox.setEnabled(true);
       myShowEmptyPropertiesCheckBox.setMargin(new Insets(0, 0, 0, 0));
       myShowEmptyPropertiesCheckBox.setSelected(false);
       myShowEmptyPropertiesCheckBox.setText("Show empty properties");
-      panel1.add(myShowEmptyPropertiesCheckBox, new GridConstraints(0, 3, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
-                                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK |
-                                                                    GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
-                                                                    null, null, null, 0, false));
+      myOptionsPanel.add(myShowEmptyPropertiesCheckBox,
+                         new GridConstraints(0, 3, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                             GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
       myUpdatePsiTreeCheckbox = new JBCheckBox();
       myUpdatePsiTreeCheckbox.setText("Update PSI tree on file changes");
-      panel1.add(myUpdatePsiTreeCheckbox,
-                 new GridConstraints(0, 4, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
-                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myOptionsPanel.add(myUpdatePsiTreeCheckbox,
+                         new GridConstraints(0, 4, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                             GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
       myTextSeparator = new TitledSeparator();
       myTextSeparator.setText("&Text");
       myTextSeparator.setToolTipText("Type or paste source code which you want to explore, then click Build PSI Tree");
       myPanel.add(myTextSeparator, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                        GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-      final JPanel panel5 = new JPanel();
-      panel5.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
-      myPanel.add(panel5, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+      final JPanel panel6 = new JPanel();
+      panel6.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
+      myPanel.add(panel6, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
                                               GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                               GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null,
                                               0, false));
@@ -360,7 +383,7 @@ public class PsiViewerDialog extends DialogWrapper implements UiDataProvider {
       myTextSplit.setDividerLocation(134);
       myTextSplit.setDividerSize(4);
       myTextSplit.setOrientation(0);
-      panel5.add(myTextSplit, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+      panel6.add(myTextSplit, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
                                                   new Dimension(200, 200), null, 0, false));
@@ -369,13 +392,13 @@ public class PsiViewerDialog extends DialogWrapper implements UiDataProvider {
       myTextPanel = new JPanel();
       myTextPanel.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
       myTextSplit.setLeftComponent(myTextPanel);
-      final JPanel panel6 = new JPanel();
-      panel6.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
-      myTextSplit.setRightComponent(panel6);
+      final JPanel panel7 = new JPanel();
+      panel7.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
+      myTextSplit.setRightComponent(panel7);
       myTreeSplit = new JSplitPane();
       myTreeSplit.setDividerLocation(98);
       myTreeSplit.setDividerSize(4);
-      panel6.add(myTreeSplit, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+      panel7.add(myTreeSplit, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
                                                   new Dimension(200, 200), null, 0, false));
@@ -609,6 +632,9 @@ public class PsiViewerDialog extends DialogWrapper implements UiDataProvider {
       }
     }
 
+    // The combo box holds every file type, so its own preferred width is also its minimum width.
+    // Clamp it, or the dialog gets a minimum width larger than the screen. The popup stays wide.
+    myFileTypeComboBox.setMinimumAndPreferredWidth(JBUI.scale(220));
     myFileTypeComboBox.setSwingPopup(false);
     myFileTypeComboBox.setModel(new CollectionComboBoxModel<>(new ArrayList<>(mySourceWrappers), lastUsed));
     myFileTypeComboBox.setRenderer(LcrJavaHelper.create(
@@ -672,6 +698,7 @@ public class PsiViewerDialog extends DialogWrapper implements UiDataProvider {
     myTreeStructure.setShowTreeNodes(settings.showTreeNodes);
     myShowEmptyPropertiesCheckBox.setSelected(myPsiViewerPropertiesTabViewModel.getShowEmptyProperties());
     myUpdatePsiTreeCheckbox.setSelected(settings.updatePsiTreeOnChanges);
+    alignOptionsRowOnBaseline();
     myTextPanel.setLayout(new BorderLayout());
     myTextPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
 
@@ -691,6 +718,32 @@ public class PsiViewerDialog extends DialogWrapper implements UiDataProvider {
     //GuiUtils.replaceJSplitPaneWithIDEASplitter(myTreeSplit, true);
     GuiUtils.replaceJSplitPaneWithIDEASplitter(myTextSplit, true);
     super.init();
+  }
+
+  /**
+   * Puts the "Options:" label and the check boxes on one text baseline.
+   * <p>
+   * {@link GridLayoutManager} centers a cell by the component height, and a check box is taller than a label.
+   * It also has no baseline support, so the two texts get different baselines. {@link GroupLayout} aligns them.
+   * The form still declares a grid, because the GUI Designer supports no baseline layout.
+   */
+  private void alignOptionsRowOnBaseline() {
+    JComponent[] row =
+      {myOptionsLabel, myShowWhiteSpacesBox, myShowTreeNodesCheckBox, myShowEmptyPropertiesCheckBox, myUpdatePsiTreeCheckbox};
+    GroupLayout layout = new GroupLayout(myOptionsPanel);
+    GroupLayout.SequentialGroup horizontal = layout.createSequentialGroup();
+    GroupLayout.ParallelGroup vertical = layout.createParallelGroup(GroupLayout.Alignment.BASELINE);
+    for (int i = 0; i < row.length; i++) {
+      if (i > 0) {
+        // Not scaled, because GridLayoutManager applies this gap unscaled in the combo box row above.
+        horizontal.addGap(AbstractLayout.DEFAULT_HGAP);
+      }
+      horizontal.addComponent(row[i]);
+      vertical.addComponent(row[i]);
+    }
+    layout.setHorizontalGroup(horizontal);
+    layout.setVerticalGroup(vertical);
+    myOptionsPanel.setLayout(layout);
   }
 
   private void rebuildPsiAndUpdateEditor() {
