@@ -48,11 +48,11 @@ internal object MarkdownBlocks {
       MarkdownTokenTypes.TABLE_SEPARATOR -> TableSeparatorFormattingBlock(node, settings, spacing, align(node), wrap)
       MarkdownElementTypes.CODE_SPAN -> MarkdownFormattingBlock(
         node, settings, spacing, align(node),
-        wrap ?: Wrap.createWrap(if (shouldWrapCodeSpan(settings)) WrapType.NORMAL else WrapType.NONE, false)
+        wrap ?: Wrap.createWrap(if (shouldWrapText(node, settings)) WrapType.NORMAL else WrapType.NONE, false)
       )
       in emphasisLikeElements -> EmphasisFormattingBlock(settings, spacing, node, align(node), wrap)
       MarkdownElementTypes.PARAGRAPH -> when {
-        isInsideBlockquote(node) && !shouldWrapInsideBlockquote(settings) -> MarkdownFormattingBlock(node, settings, spacing, align(node), wrap)
+        isInsideBlockquote(node) && !shouldWrapText(node, settings) -> MarkdownFormattingBlock(node, settings, spacing, align(node), wrap)
         else -> MarkdownWrappingFormattingBlock(settings, spacing, node, align(node), wrap)
       }
       else -> MarkdownFormattingBlock(node, settings, spacing, align(node), wrap)
@@ -63,13 +63,10 @@ internal object MarkdownBlocks {
     return node.parents(withSelf = false).any { it.hasType(MarkdownTokenTypeSets.BLOCK_QUOTE) }
   }
 
-  private fun shouldWrapInsideBlockquote(settings: CodeStyleSettings): Boolean {
+  internal fun shouldWrapText(node: ASTNode, settings: CodeStyleSettings): Boolean {
     val customSettings = settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java)
-    return customSettings.WRAP_TEXT_IF_LONG && customSettings.WRAP_TEXT_INSIDE_BLOCKQUOTES
-  }
-
-  private fun shouldWrapCodeSpan(settings: CodeStyleSettings): Boolean {
-    return settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).WRAP_TEXT_IF_LONG
+    return customSettings.WRAP_TEXT_IF_LONG
+           && (customSettings.WRAP_TEXT_INSIDE_BLOCKQUOTES || !isInsideBlockquote(node))
   }
 
   /** Filter out real whitespace blocks from sequence */

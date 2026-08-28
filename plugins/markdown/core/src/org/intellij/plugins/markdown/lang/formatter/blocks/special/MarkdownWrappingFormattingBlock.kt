@@ -73,12 +73,9 @@ internal open class MarkdownWrappingFormattingBlock(
     return result
   }
 
-  private fun createWrapForChildren(): Wrap? {
-    val wrapType = when {
-      obtainCustomSettings().WRAP_TEXT_IF_LONG -> WrapType.NORMAL
-      else -> WrapType.NONE
-    }
-    return Wrap.createWrap(wrapType, false)
+  protected fun createWrapForChildren(wrapFirstElement: Boolean = false): Wrap {
+    val wrapType = if (MarkdownBlocks.shouldWrapText(node, settings)) WrapType.NORMAL else WrapType.NONE
+    return Wrap.createWrap(wrapType, wrapFirstElement)
   }
 
   protected open fun processTextElement(result: MutableCollection<Block>, node: ASTNode, wrapping: Wrap?, wrapFirstElement: Boolean) {

@@ -103,6 +103,8 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
 
   fun `test blockquote with emphasis wrap`() = doTest(rightMargin = 80, insertQuoteArrows = true)
 
+  fun `test do not wrap text inside block quotes`() = doTest(rightMargin = 80, wrapTextInsideBlockquotes = false)
+
   fun `test blockquote with list item wrap`() = doTest(rightMargin = 80, insertQuoteArrows = true)
 
   fun `test blockquote with numbered list`() = doTest(rightMargin = 80, insertQuoteArrows = true)
@@ -167,6 +169,7 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
     insertQuoteArrows: Boolean = false,
     wrapOnTyping: Boolean = true,
     wrapTextIfLong: Boolean = true,
+    wrapTextInsideBlockquotes: Boolean = true,
   ) {
     val before = getTestName(true) + "_before.md"
     val after = getTestName(true) + "_after.md"
@@ -178,6 +181,7 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
         }
         getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).apply {
           WRAP_TEXT_IF_LONG = wrapTextIfLong
+          WRAP_TEXT_INSIDE_BLOCKQUOTES = wrapTextInsideBlockquotes
           KEEP_LINE_BREAKS_INSIDE_TEXT_BLOCKS = keepLineBreaks
           // These tests are not aware of the fact that tables can be reformatted now by TablePostFormatProcessor
           // and wrapping block quotes can be fixed be BlockQuotePostFormatProcessor
