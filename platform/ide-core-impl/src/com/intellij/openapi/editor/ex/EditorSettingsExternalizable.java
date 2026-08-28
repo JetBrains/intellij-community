@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.ide.GeneralSettings;
@@ -18,7 +18,6 @@ import com.intellij.openapi.editor.actions.CaretStopOptions;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.util.xmlb.annotations.OptionTag;
@@ -27,6 +26,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -47,8 +47,8 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   public static final UINumericRange BLINKING_RANGE = new UINumericRange(500, 10, 1500);
   public static final UINumericRange TOOLTIPS_DELAY_RANGE = new UINumericRange(500, 1, 5000);
 
-  private static final String SOFT_WRAP_FILE_MASKS_ENABLED_DEFAULT = "*";
-  private static final @NonNls String SOFT_WRAP_FILE_MASKS_DISABLED_DEFAULT = "*.md; *.txt; *.rst; *.adoc";
+  /** The default soft wrap masks. An unchanged value is not persisted, so the default can evolve. */
+  private static final @NonNls String SOFT_WRAP_FILE_MASKS_DEFAULT = "*.md; *.txt; *.rst; *.adoc";
 
   private static final EditorSettings.LineNumerationType DEFAULT_LINE_NUMERATION = EditorSettings.LineNumerationType.ABSOLUTE;
   private static final EditorSettings.CaretEasing DEFAULT_CARET_EASING = EditorSettings.CaretEasing.SNAPPY;
@@ -61,7 +61,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     // todo: unused? schedule for removal?
     public String LINE_SEPARATOR;
     public String USE_SOFT_WRAPS;
-    public String SOFT_WRAP_FILE_MASKS;
+    public String SOFT_WRAP_FILE_MASKS = SOFT_WRAP_FILE_MASKS_DEFAULT;
     public boolean USE_CUSTOM_SOFT_WRAP_INDENT = true;
     public int CUSTOM_SOFT_WRAP_INDENT = 0;
     public boolean IS_VIRTUAL_SPACE = false;
@@ -228,6 +228,8 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   @NonInjectable
   public EditorSettingsExternalizable(@NotNull OsSpecificState state) {
     myOsSpecificState = state;
+    // A fresh instance must carry the defaults before `loadState` runs, or without it.
+    parseRawSoftWraps();
   }
 
   public static EditorSettingsExternalizable getInstance() {
@@ -267,11 +269,20 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   private void parseRawSoftWraps() {
     myPlacesToUseSoftWraps.clear();
 
-    if (StringUtil.isEmpty(myOptions.USE_SOFT_WRAPS)) {
+    String rawValue = myOptions.USE_SOFT_WRAPS;
+    if (rawValue == null) {
+      // The user made no choice yet: apply the default.
+      Application application = ApplicationManager.getApplication();
+      boolean unitTestMode = application != null && application.isUnitTestMode();
+      myPlacesToUseSoftWraps.addAll(defaultSoftWrapPlaces(unitTestMode));
+      return;
+    }
+    if (rawValue.isEmpty()) {
+      // An empty stored value records an explicit "off" choice.
       return;
     }
 
-    String[] placeNames = myOptions.USE_SOFT_WRAPS.split(COMPOSITE_PROPERTY_SEPARATOR);
+    String[] placeNames = rawValue.split(COMPOSITE_PROPERTY_SEPARATOR);
     for (String placeName : placeNames) {
       try {
         SoftWrapAppliancePlaces place = SoftWrapAppliancePlaces.valueOf(placeName);
@@ -286,18 +297,37 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     storeRawSoftWraps();
   }
 
+  /**
+   * Soft wraps are on in the main editor by default.
+   * Unit tests keep the old default, so that the editor tests stay deterministic.
+   */
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static @NotNull Set<SoftWrapAppliancePlaces> defaultSoftWrapPlaces(boolean unitTestMode) {
+    return unitTestMode ? EnumSet.noneOf(SoftWrapAppliancePlaces.class) : EnumSet.of(SoftWrapAppliancePlaces.MAIN_EDITOR);
+  }
+
   private void storeRawSoftWraps() {
-    StringBuilder buffer = new StringBuilder();
-    for (SoftWrapAppliancePlaces placeToStore : myPlacesToUseSoftWraps) {
-      buffer.append(placeToStore).append(COMPOSITE_PROPERTY_SEPARATOR);
+    String newValue;
+    if (myPlacesToUseSoftWraps.equals(defaultSoftWrapPlaces(false))) {
+      // The stored value records a deviation from the default. The default state itself stays unstored,
+      // so a future default applies to a user who returns to it.
+      // Compare with the semantic default, not with the test-mode default: storage is mode-independent.
+      newValue = null;
     }
-    if (!buffer.isEmpty()) {
-      buffer.setLength(buffer.length() - 1);
+    else {
+      StringBuilder buffer = new StringBuilder();
+      for (SoftWrapAppliancePlaces placeToStore : myPlacesToUseSoftWraps) {
+        buffer.append(placeToStore).append(COMPOSITE_PROPERTY_SEPARATOR);
+      }
+      if (!buffer.isEmpty()) {
+        buffer.setLength(buffer.length() - 1);
+      }
+      newValue = buffer.toString();
     }
-    String newValue = buffer.toString();
 
     String old = myOptions.USE_SOFT_WRAPS;
-    if (newValue.equals(old)) return;  // `newValue` is not null
+    if (Objects.equals(newValue, old)) return;
     myOptions.USE_SOFT_WRAPS = newValue;
     myPropertyChangeSupport.firePropertyChange(PropNames.PROP_USE_SOFT_WRAPS, old, newValue);
   }
@@ -644,9 +674,6 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
       myPlacesToUseSoftWraps.remove(place);
     }
     storeRawSoftWraps();
-    if (place == SoftWrapAppliancePlaces.MAIN_EDITOR) {
-      setSoftWrapFileMasks(getSoftWrapFileMasks());
-    }
   }
 
   public boolean isUseCustomSoftWrapIndent() {
@@ -1126,11 +1153,8 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public @NotNull String getSoftWrapFileMasks() {
-    String storedValue = myOptions.SOFT_WRAP_FILE_MASKS;
-    if (storedValue != null) {
-      return storedValue;
-    }
-    return isUseSoftWraps() ? SOFT_WRAP_FILE_MASKS_ENABLED_DEFAULT : SOFT_WRAP_FILE_MASKS_DISABLED_DEFAULT;
+    // xmlb writes null into the field when the stored option carries no `value` attribute.
+    return Objects.requireNonNullElse(myOptions.SOFT_WRAP_FILE_MASKS, SOFT_WRAP_FILE_MASKS_DEFAULT);
   }
 
   public void setSoftWrapFileMasks(@NotNull String value) {
