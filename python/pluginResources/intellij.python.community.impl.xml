@@ -598,7 +598,7 @@
                              id="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
                              key="external.documentation.python.plugin"/> <!--id is used in PyCharmCorePluginConfigurator-->
 
-    <applicationConfigurable groupId="project.propDebugger"
+    <applicationConfigurable groupId="reference.idesettings.debugger.python"
                              id="debugger.dataViews.python.type.renderers"
                              instance="com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersConfigurable"
                              key="configurable.PyUserTypeRenderersConfigurable.display.name"/> <!--id is used in PyCharmCorePluginConfigurator-->

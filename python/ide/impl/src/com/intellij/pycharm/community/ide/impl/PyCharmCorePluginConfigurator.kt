@@ -113,7 +113,7 @@ internal class PyCharmCorePluginConfigurator : ApplicationInitializedListener {
           ep.groupWeight = 60
         }
         "debugger.dataViews.python.type.renderers" -> {
-          ep.groupId = "reference.idesettings.debugger.python"
+          // groupId already points at the Python Debugger page, see intellij.python.community.impl.xml
           ep.key = "configurable.PyUserTypeRenderersConfigurable.pycharm.display.name"
           ep.bundle="messages.PyBundle"
           ep.groupWeight = 30

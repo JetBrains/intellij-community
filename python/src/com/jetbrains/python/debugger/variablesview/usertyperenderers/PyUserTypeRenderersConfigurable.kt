@@ -1,12 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.variablesview.usertyperenderers
 
+import com.intellij.ide.DataManager
 import com.intellij.ide.util.ElementsChooser
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComponentValidator
@@ -20,7 +22,6 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.TableUtil
 import com.intellij.ui.ToolbarDecorator
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.LabelPosition
 import com.intellij.ui.dsl.builder.panel
@@ -56,6 +57,8 @@ import javax.swing.table.AbstractTableModel
 class PyUserTypeRenderersConfigurable : SearchableConfigurable {
 
   private val CONFIGURABLE_ID = "debugger.dataViews.python.type.renderers"
+
+  private val PY_DEBUGGER_CONFIGURABLE_ID = "reference.idesettings.debugger.python"
 
   private val PANEL_SPLIT_PROPORTION = 0.3f
 
@@ -104,16 +107,26 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
       }
       myMainPanel.removeAll()
       val border = IdeBorderFactory.createEmptyBorder(JBUI.insets(10, 0))
-      val message = PyBundle.message("configurable.PyUserTypeRenderersConfigurable.description")
+      val description = panel {
+        row {
+          // The link takes the reader to the page that owns the backend selector.
+          text(PyBundle.message("configurable.PyUserTypeRenderersConfigurable.description")) { openDebuggerPage() }
+        }
+      }.apply { setBorder(border) }
 
-      myMainPanel.add(
-        JBUI.Panels.simplePanel(JBLabel(message)).withBorder(border),
-        BorderLayout.NORTH
-      )
+      myMainPanel.add(description, BorderLayout.NORTH)
 
       myMainPanel.add(splitter, BorderLayout.CENTER)
     }
     return myMainPanel
+  }
+
+  private fun openDebuggerPage() {
+    DataManager.getInstance().dataContextFromFocusAsync.onSuccess { context ->
+      Settings.KEY.getData(context)?.let { settings ->
+        settings.select(settings.find(PY_DEBUGGER_CONFIGURABLE_ID))
+      }
+    }
   }
 
   override fun reset() {
@@ -176,7 +189,7 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
     (debugSession?.debugProcess as? PyDebugProcess)?.let { debugProcess ->
       debugProcess.setUserTypeRenderersSettings()
       debugProcess.dropFrameCaches()
-      debugProcess.session?.rebuildViews()
+      debugProcess.session.rebuildViews()
     }
   }
 
