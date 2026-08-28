@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.AreaInstance
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.KeyedExtensionCollector
 import com.intellij.util.KeyedLazyInstance
 import org.jetbrains.annotations.TestOnly
@@ -53,5 +54,23 @@ object ExtensionTestUtil {
     @Suppress("DEPRECATION")
     point.registerExtension(bean)
     collector.clearCache()
+  }
+
+  /**
+   * Registers [bean] until [parentDisposable] is disposed.
+   * Prefer it over the permanent overload: a bean leaked into the application-level extension point
+   * affects all the tests running later in the same JVM.
+   */
+  @JvmStatic
+  fun <T, BEAN_TYPE : KeyedLazyInstance<T>, KeyT> addExtension(
+    area: ExtensionsAreaImpl,
+    collector: KeyedExtensionCollector<T, KeyT>,
+    bean: BEAN_TYPE,
+    parentDisposable: Disposable,
+  ) {
+    val point = area.getExtensionPoint<BEAN_TYPE>(collector.name)
+    point.registerExtension(bean, parentDisposable)
+    collector.clearCache()
+    Disposer.register(parentDisposable) { collector.clearCache() }
   }
 }

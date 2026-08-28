@@ -345,9 +345,12 @@ public class UsageViewTest extends BasePlatformTestCase {
       throw new IllegalStateException("oh no");
     };
 
+    // the extension point is application-level, so the decompiler must be unregistered after the test,
+    // otherwise it would be used by all the tests running later in the same JVM
     ExtensionTestUtil.addExtension((ExtensionsAreaImpl)ApplicationManager.getApplication().getExtensionArea(),
                                    BinaryFileTypeDecompilers.getInstance(),
-                                   new FileTypeExtensionPoint<>(ArchiveFileType.INSTANCE.getName(), decompiler));
+                                   new FileTypeExtensionPoint<>(ArchiveFileType.INSTANCE.getName(), decompiler),
+                                   getTestRootDisposable());
 
     PsiFile psiFile = myFixture.addFileToProject("X.jar", "xxx");
     assertEquals(ArchiveFileType.INSTANCE, psiFile.getFileType());
