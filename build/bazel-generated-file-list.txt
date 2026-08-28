@@ -494,6 +494,7 @@ libraries/kotlinx/serialization/cbor
 libraries/kotlinx/serialization/core
 libraries/kotlinx/serialization/json
 libraries/kotlinx/serialization/protobuf
+libraries/kryo2
 libraries/kryo5
 libraries/ktor/client
 libraries/ktor/client-cio

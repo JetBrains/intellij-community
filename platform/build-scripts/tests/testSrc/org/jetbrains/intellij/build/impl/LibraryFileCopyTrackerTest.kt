@@ -31,10 +31,11 @@ internal class LibraryFileCopyTrackerTest {
   fun `detects jars packed separately`() {
     assertThat(isSeparateLibraryJar("mockk-agent-1.14.5.jar")).isTrue()
     assertThat(isSeparateLibraryJar("byte-buddy-1.17.7.jar")).isTrue()
-    assertThat(isSeparateLibraryJar("objenesis-3.4.jar")).isTrue()
     assertThat(isSeparateLibraryJar("kotlin-reflect-rt.jar")).isTrue()
     assertThat(isSeparateLibraryJar("maven-resolver-provider.jar")).isTrue()
     assertThat(isSeparateLibraryJar("code-agents-agent.jar")).isFalse()
     assertThat(isSeparateLibraryJar("kotlin-stdlib.jar")).isFalse()
+    // an ordinary library: it must stay inside the content module that wraps it, or that module's jar ends up empty
+    assertThat(isSeparateLibraryJar("objenesis-3.4.jar")).isFalse()
   }
 }
