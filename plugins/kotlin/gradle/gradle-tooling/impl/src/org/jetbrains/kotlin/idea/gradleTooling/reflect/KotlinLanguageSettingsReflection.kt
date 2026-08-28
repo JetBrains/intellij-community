@@ -4,6 +4,7 @@
 package org.jetbrains.kotlin.idea.gradleTooling.reflect
 
 import java.io.File
+import kotlin.reflect.full.functions
 import kotlin.reflect.full.memberProperties
 
 fun KotlinLanguageSettingsReflection(languageSettings: Any): KotlinLanguageSettingsReflection =
@@ -34,6 +35,8 @@ private class KotlinLanguageSettingsReflectionImpl(private val instance: Any) : 
     }
 
     override val enabledLanguageFeatures: Set<String>? by lazy {
+        // This is needed for hassle-free removal of getEnabledLanguageFeatures on KGP side (KT-84918)
+        if (instance.javaClass.methods.none {it.name == "getEnabledLanguageFeatures"}) return@lazy null
         instance.callReflective("getEnabledLanguageFeatures", parameters(), returnType<Iterable<String>>(), logger)?.toSet()
     }
 
