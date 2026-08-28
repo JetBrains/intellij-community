@@ -44,5 +44,5 @@ class IjentCoroutinesUtilTest {
 }
 
 object MockReconnectUiHandle : ReconnectUiHandle {
-  override fun requestDialogImmediately(): ReconnectUiDialog = throw UnsupportedOperationException()
+  override suspend fun requestDialogImmediately() = throw UnsupportedOperationException()
 }
