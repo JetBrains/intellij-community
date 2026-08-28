@@ -3343,12 +3343,12 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class Base(Generic[T, T1, DefaultStrT]): ...
     class Foo(Base[int, float]): ...
     foo = Foo[int]()
-    #         ^^^ WARNING Class 'Foo' is already parameterized
+    #         ^^^ WARNING Class 'Foo' is not generic
 
     class Bar(Generic[T]): ...
     class Baz(Bar[int]): ...
     baz = Baz[int]()
-    #         ^^^ WARNING Class 'Baz' is already parameterized
+    #         ^^^ WARNING Class 'Baz' is not generic
 
     class NoErr(Bar[int]):
          def __class_getitem__(cls, item) -> str:
@@ -3379,7 +3379,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     Alias = Base[int, float]
     class Foo(Alias): ...
     foo = Foo[int]()
-    #         ^^^ WARNING Class 'Foo' is already parameterized
+    #         ^^^ WARNING Class 'Foo' is not generic
     """)
 
   @Test

@@ -608,7 +608,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
           pass
 
       def f(c: Child, wrong: Child[str]):
-      #                            ^^^ WARNING Class 'Child' is already parameterized
+      #                            ^^^ WARNING Class 'Child' is not generic
           base = Base[int]
       #   └ TYPE type[Base[int]]
           expr = c["value"]
