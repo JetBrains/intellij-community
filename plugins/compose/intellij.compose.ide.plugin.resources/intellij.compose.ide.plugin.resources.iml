@@ -69,5 +69,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
     <orderEntry type="module" module-name="intellij.kotlin.base.analysis.utils" />
+    <orderEntry type="module" module-name="intellij.platform.monolith" />
   </component>
 </module>
