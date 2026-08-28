@@ -50,11 +50,11 @@ internal class ChangeListDragBeanFileFlavorTest {
   }
 
   @Test
-  fun `deletion alone gives null, not an empty list`() {
+  fun `deletion is exposed through the before revision`() {
     val bean = bean(changes = listOf(change(LocalFilePath("/project/gone.md", false), null)))
 
-    // An empty list would reach the drop handlers as a drop of zero files, so null is the correct result.
-    assertNull(bean.asFileList())
+    // The file is gone from disk, but the path still names it, so the drag keeps it.
+    assertEquals(listOf(File("/project/gone.md")), bean.asFileList())
   }
 
   @Test

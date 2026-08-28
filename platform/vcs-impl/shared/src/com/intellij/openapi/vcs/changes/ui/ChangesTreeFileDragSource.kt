@@ -30,7 +30,7 @@ fun ChangesTree.installFileDragSource(disposable: Disposable) {
 
 private fun createFileDragStartBean(tree: ChangesTree, info: DnDActionInfo): DnDDragStartBean? {
   if (!info.isMove) return null
-  val paths = selectedAfterPaths(tree)
+  val paths = selectedFilePaths(tree)
   if (paths.isEmpty()) return null
   return DnDDragStartBean(ChangesTreeFileDragBean(paths))
 }
@@ -42,11 +42,14 @@ private fun createFileDragImage(tree: ChangesTree, info: DnDActionInfo): DnDImag
 }
 
 /**
- * The after path is the location of the change on disk. It is null for a deletion, which has no file to drag.
+ * The after path is the location of the change on disk. A deletion has no after path, and the before path
+ * still names the file, so [ChangesUtil.getFilePath] keeps a deletion in the drag.
+ *
  * A selected directory row contributes every change under it, because [VcsTreeModelData.selected] walks the subtree.
  */
-private fun selectedAfterPaths(tree: ChangesTree): List<FilePath> {
+private fun selectedFilePaths(tree: ChangesTree): List<FilePath> {
   return VcsTreeModelData.selected(tree)
     .iterateUserObjects(Change::class.java)
-    .mapNotNull { change -> ChangesUtil.getAfterPath(change) }
+    .map { change -> ChangesUtil.getFilePath(change) }
+    .toList()
 }

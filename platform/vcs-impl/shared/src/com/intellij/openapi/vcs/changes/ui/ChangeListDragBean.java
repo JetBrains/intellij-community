@@ -65,8 +65,9 @@ public class ChangeListDragBean implements FileFlavorProvider {
   public @Nullable List<java.io.File> asFileList() {
     List<FilePath> paths = new ArrayList<>();
     for (Change change : myChanges) {
-      // The after path is the location of the change on disk. It is null for a deletion, which has no file to drag.
-      paths.add(ChangesUtil.getAfterPath(change));
+      // The after path is the location of the change on disk. A deletion has no after path, and the before
+      // path still names the file, so getFilePath keeps a deletion in the drag.
+      paths.add(ChangesUtil.getFilePath(change));
     }
     paths.addAll(myUnversionedFiles);
     paths.addAll(myIgnoredFiles);
