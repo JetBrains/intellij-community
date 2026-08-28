@@ -199,7 +199,8 @@ public final class JavaDocUtil {
     String fragmentName = refTextCorrected.substring(fragmentIndex + 2);
     for (JavaDocFragmentData fragmentData : JavaDocFragmentAnchorCacheKt.getJavaDocFragmentsForClass(manager.getProject(), aClass)) {
       if (fragmentName.equals(fragmentData.getName())) {
-        PsiElement ref = PsiUtilCore.getElementAtOffset(aClass.getContainingFile(), fragmentData.getOffset());
+        PsiElement ref = PsiUtilCore.getElementAtOffset(JavaDocFragmentAnchorCacheKt.getMaybeSourceClass(aClass).getContainingFile(),
+                                                        fragmentData.getOffset());
         PsiDocComment docComment = PsiTreeUtil.getParentOfType(ref, PsiDocComment.class, false);
         if (docComment == null) return null;
         PsiElement owner = docComment.getOwner();
