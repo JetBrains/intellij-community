@@ -13,8 +13,10 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatu
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.modules
 import com.intellij.platform.backend.observation.launchTracked
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.entities
 import com.intellij.project.stateStore
 import com.intellij.python.pyproject.model.internal.PY_PROJECT_SYSTEM_ID
 import com.intellij.python.pyproject.model.internal.PyProjectScopeService
@@ -25,7 +27,7 @@ import com.intellij.python.pyproject.model.internal.workspaceBridge.collectExclu
 import com.intellij.python.pyproject.model.internal.workspaceBridge.rebuildProjectModel
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.messages.Topic
-import com.jetbrains.python.sdk.baseDir
+import com.intellij.workspaceModel.ide.toPath
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -52,7 +54,13 @@ class PyExternalSystemProjectAware private constructor(
   private fun getRootPaths(): Set<Path> {
     // guessPath doesn't work: it returns first module path
     val projectRootDir = project.stateStore.projectBasePath
-    val modulePaths = project.modules.asSequence().mapNotNull { it.baseDir?.toNioPath() }
+    // Read the content root from the workspace model, not through `Module.baseDir`. `baseDir` gives a `VirtualFile`, and
+    // the VFS resolves a Windows 8.3 short name while `projectBasePath` keeps it. Two forms of one directory make
+    // `computeMinimalRoots` keep two roots, so the walk finds one `pyproject.toml` twice and the sync adds a second
+    // module `<name>@1` (PY-91133). The rest of the sync compares against the workspace url too.
+    val modulePaths = project.workspaceModel.currentSnapshot.entities<ModuleEntity>()
+      .flatMap { it.contentRoots }
+      .map { it.url.toPath() }
     return computeMinimalRoots(sequenceOf(projectRootDir) + modulePaths)
   }
 

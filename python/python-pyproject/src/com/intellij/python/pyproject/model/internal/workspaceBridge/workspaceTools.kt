@@ -83,7 +83,10 @@ internal suspend fun rebuildProjectModel(project: Project, files: FSWalkInfoWith
     val currentSnapshot = project.workspaceModel.currentSnapshot
 
     // All module names (Python and non-Python) — module names must be unique across the project.
-    val allModuleNames: Set<String> = currentSnapshot.entities<ModuleEntity>().map { it.name }.toSet()
+    // A stale registration does not reserve its name. `applyProjectModel` removes it (PY-91133).
+    val allModuleNames: Set<String> = currentSnapshot.entities<ModuleEntity>()
+      .filterNot { it.isStaleRegistration() }
+      .map { it.name }.toSet()
 
     // Existing Python module names keyed by their content root directory.
     val existingPythonNames: Map<Path, String> =
@@ -123,9 +126,14 @@ private fun applyProjectModel(
   val newEntries = entries - matched.keys
   val orphanModules = pyProjectTomlModules - matched.values.toSet()
 
+  // An entry took the name of a stale registration, because `rebuildProjectModel` freed that name.
+  // Remove the dead module first. If no entry took the name, keep the module and change nothing.
+  val entryNames = entries.map { it.name.name }.toSet()
+  val staleModules = allModules.filter { it.isStaleRegistration() && it.name in entryNames }
+
   logIfNeeded(projectStorage, "before apply")
 
-  for (module in orphanModules) {
+  for (module in orphanModules + staleModules) {
     deleteModule(module, projectStorage)
   }
   for ((entry, module) in matched) {
@@ -189,6 +197,16 @@ private fun matchEntriesToModules(
 
   return matched
 }
+
+/**
+ * This is a workaround for IJPL-254167.
+ *
+ * JPS makes such a module when `modules.xml` points to an `.iml` file that JPS cannot read.
+ * The module then has no type and no content root, so it adds nothing to the project model.
+ * It also held its own name, and the importer gave the new module the name `<name>@1` (PY-91133).
+ */
+private fun ModuleEntity.isStaleRegistration(): Boolean =
+  type == null && contentRoots.isEmpty() && !entitySource.isPythonEntity
 
 private fun deleteModule(
   module: ModuleEntity,
