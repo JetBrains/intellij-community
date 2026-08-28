@@ -512,7 +512,7 @@ class ChangeListManagerImpl(
             val statusChanged = filesHolder != newDataHolder.composite
             filesHolder = newDataHolder.composite
             if (statusChanged) {
-              val isUnchangedUpdating = isInUpdate || isUnversionedInUpdateMode || isIgnoredInUpdateMode
+              val isUnchangedUpdating = isInUpdate() || isUnversionedInUpdateMode || isIgnoredInUpdateMode
               delayedNotificator.unchangedFileStatusChanged(!isUnchangedUpdating)
             }
             LOG.debug("[update] - success")
@@ -549,7 +549,7 @@ class ChangeListManagerImpl(
     finally {
       dirtyScopeManager.changesProcessed()
 
-      delayedNotificator.changedFileStatusChanged(!isInUpdate)
+      delayedNotificator.changedFileStatusChanged(!isInUpdate())
       delayedNotificator.changeListUpdateDone()
 
       stateProvider.setInUpdateMode(false)
@@ -877,7 +877,7 @@ class ChangeListManagerImpl(
    * Notify that [VcsManagedFilesHolder] state was changed.
    */
   fun notifyUnchangedFileStatusChanged() {
-    val isUnchangedUpdating = isInUpdate || isUnversionedInUpdateMode || isIgnoredInUpdateMode
+    val isUnchangedUpdating = isInUpdate() || isUnversionedInUpdateMode || isIgnoredInUpdateMode
     delayedNotificator.unchangedFileStatusChanged(!isUnchangedUpdating)
     delayedNotificator.changeListUpdateDone()
   }

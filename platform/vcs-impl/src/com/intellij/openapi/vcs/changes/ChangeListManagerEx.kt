@@ -1,85 +1,85 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vcs.changes;
+package com.intellij.openapi.vcs.changes
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
-
-import java.util.Collection;
-import java.util.List;
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.concurrency.Promise
 
 @ApiStatus.Experimental
-public abstract class ChangeListManagerEx extends ChangeListManager {
-  public static @NotNull ChangeListManagerEx getInstanceEx(@NotNull Project project) {
-    return (ChangeListManagerEx)getInstance(project);
-  }
+@ApiStatus.NonExtendable
+abstract class ChangeListManagerEx protected constructor() : ChangeListManager() {
+  abstract fun isInUpdate(): Boolean
 
-  public abstract boolean isInUpdate();
+  abstract fun getUpdateException(): VcsException?
 
-  public abstract @Nullable VcsException getUpdateException();
+  abstract fun getAffectedLists(changes: Collection<Change>): Collection<LocalChangeList>
 
-  public abstract @NotNull Collection<LocalChangeList> getAffectedLists(@NotNull Collection<? extends Change> changes);
+  abstract fun addChangeList(
+    @NonNls name: String,
+    @NonNls comment: String?,
+    data: ChangeListData?,
+  ): LocalChangeList
 
-  public abstract @NotNull LocalChangeList addChangeList(@NotNull @NonNls String name,
-                                                         @Nullable @NonNls String comment,
-                                                         @Nullable ChangeListData data);
-
-  public abstract boolean editChangeListData(@NotNull @NonNls String name, @Nullable ChangeListData newData);
+  abstract fun editChangeListData(@NonNls name: String, newData: ChangeListData?): Boolean
 
   /**
    * @param automatic true is changelist switch operation was not triggered by user (and, for example, will be reverted soon)
-   *                  4ex: This flag disables automatic empty changelist deletion.
+   * 4ex: This flag disables automatic empty changelist deletion.
    */
-  public abstract void setDefaultChangeList(@NotNull LocalChangeList list, boolean automatic);
+  abstract fun setDefaultChangeList(list: LocalChangeList, automatic: Boolean)
 
   /**
    * Add unversioned files into VCS under modal progress dialog
    *
    * @see com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
    */
-  public abstract void addUnversionedFiles(@Nullable LocalChangeList list, @NotNull List<? extends VirtualFile> unversionedFiles);
+  abstract fun addUnversionedFiles(list: LocalChangeList?, files: List<VirtualFile>)
 
   /**
    * Blocks modal dialogs that we don't want to popup during some process, for example, above the commit dialog.
    * They will be shown when notifications are unblocked.
    */
   @RequiresEdt
-  public abstract void blockModalNotifications();
+  abstract fun blockModalNotifications()
 
   @RequiresEdt
-  public abstract void unblockModalNotifications();
+  abstract fun unblockModalNotifications()
 
   /**
    * Temporarily disable CLM update.
    * For example, to preserve FilePath->ChangeList mapping during "stash-do_smth-unstash" routine.
    */
-  public abstract void freeze(@NotNull @Nls String reason);
+  abstract fun freeze(@Nls reason: String)
 
-  public abstract void unfreeze();
+  abstract fun unfreeze()
 
   /**
    * Wait until all current pending tasks are finished.
-   * <p>
+   *
+   *
    * Do not execute this method while holding the read lock - it might be a long operation,
    * and CLM update can trigger synchronous VFS refresh that needs an EDT callback (causing a deadlock).
    *
-   * @see #invokeAfterUpdate(boolean, Runnable)
+   * @see ChangeListManager.invokeAfterUpdate
    */
   @RequiresBackgroundThread
-  public abstract void waitForUpdate();
+  abstract fun waitForUpdate()
 
   /**
    * Wait until all current pending tasks are finished.
    *
-   * @see #waitForUpdate()
+   * @see waitForUpdate
    */
-  public abstract @NotNull Promise<?> promiseWaitForUpdate();
+  abstract fun promiseWaitForUpdate(): Promise<*>
+
+  companion object {
+    @JvmStatic
+    fun getInstanceEx(project: Project): ChangeListManagerEx = getInstance(project) as ChangeListManagerEx
+  }
 }
