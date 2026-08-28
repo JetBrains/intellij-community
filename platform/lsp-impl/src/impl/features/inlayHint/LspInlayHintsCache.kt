@@ -3,9 +3,10 @@ package com.intellij.platform.lsp.impl.features.inlayHint
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.customization.LspInlayHintSupport
 import com.intellij.platform.lsp.impl.LspClientImpl
-import com.intellij.platform.lsp.impl.aggregatePerDocumentResults
+import com.intellij.platform.lsp.impl.aggregateToPullResult
 import com.intellij.platform.lsp.impl.features.inlayCommon.LspInlayApplier
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspHighlightingCache
+import com.intellij.platform.lsp.impl.features.highlightingCommon.LspPullResult
 import org.eclipse.lsp4j.InlayHint
 import org.eclipse.lsp4j.InlayHintParams
 import org.eclipse.lsp4j.Range
@@ -21,7 +22,7 @@ internal class LspInlayHintsCache(private val lspClient: LspClientImpl) : LspHig
            customizer.shouldAskServerForInlayHints(file)
   }
 
-  override suspend fun sendRequest(file: VirtualFile): List<Pair<Range, InlayHint>>? {
+  override suspend fun sendRequest(file: VirtualFile): LspPullResult<InlayHint> {
     val perDocument = lspClient.documentMapping.forEachDocumentInFile(file) { lspDocument, range ->
       val params = InlayHintParams(lspDocument.id, range)
       lspClient.sendRequest { it.textDocumentService.inlayHint(params) }?.map {
@@ -29,7 +30,7 @@ internal class LspInlayHintsCache(private val lspClient: LspClientImpl) : LspHig
         Range(mappedPosition, mappedPosition) to it
       }
     }
-    return perDocument.aggregatePerDocumentResults()
+    return perDocument.aggregateToPullResult()
   }
 
   override suspend fun onResponseReceived(file: VirtualFile) {

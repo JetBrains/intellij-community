@@ -3,9 +3,10 @@ package com.intellij.platform.lsp.impl.features.codeLens
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.customization.LspCodeLensSupport
 import com.intellij.platform.lsp.impl.LspClientImpl
-import com.intellij.platform.lsp.impl.aggregatePerDocumentResults
+import com.intellij.platform.lsp.impl.aggregateToPullResult
 import com.intellij.platform.lsp.impl.features.LspFeaturesRefreshing
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspHighlightingCache
+import com.intellij.platform.lsp.impl.features.highlightingCommon.LspPullResult
 import org.eclipse.lsp4j.CodeLens
 import org.eclipse.lsp4j.CodeLensParams
 import org.eclipse.lsp4j.Range
@@ -18,7 +19,7 @@ internal class LspCodeLensCache(private val lspClient: LspClientImpl) : LspHighl
            customizer.shouldAskServerForCodeLenses(file)
   }
 
-  override suspend fun sendRequest(file: VirtualFile): List<Pair<Range, CodeLens>>? {
+  override suspend fun sendRequest(file: VirtualFile): LspPullResult<CodeLens> {
     val resolveSupported = lspClient.serverCapabilities?.codeLensProvider?.resolveProvider == true
     val perDocument = lspClient.documentMapping.forEachDocumentInFile(file) { lspDocument ->
       val params = CodeLensParams(lspDocument.id)
@@ -37,7 +38,7 @@ internal class LspCodeLensCache(private val lspClient: LspClientImpl) : LspHighl
 
       lenses.map { lspDocument.toHostRange(it.range) to it }
     }
-    return perDocument.aggregatePerDocumentResults()
+    return perDocument.aggregateToPullResult()
   }
 
   override suspend fun onResponseReceived(file: VirtualFile) {

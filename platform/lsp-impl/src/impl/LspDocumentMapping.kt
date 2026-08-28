@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClient
+import com.intellij.platform.lsp.impl.features.highlightingCommon.LspPullResult
 import com.intellij.platform.lsp.util.getLsp4jRange
 import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -131,6 +132,15 @@ class LspDocumentMapping(private val lspClient: LspClientImpl) {
 internal fun <T> List<List<T>?>.aggregatePerDocumentResults(): List<T>? {
   if (all { it == null }) return null
   return filterNotNull().flatten()
+}
+
+/**
+ * Like [aggregatePerDocumentResults], but wraps the outcome into an [LspPullResult]
+ * for [com.intellij.platform.lsp.impl.features.highlightingCommon.LspHighlightingCache.sendRequest].
+ */
+internal fun <T> List<List<Pair<Range, T>>?>.aggregateToPullResult(): LspPullResult<T> {
+  val aggregated = aggregatePerDocumentResults() ?: return LspPullResult.Failed
+  return LspPullResult.Full(aggregated)
 }
 
 /**

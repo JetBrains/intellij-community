@@ -3,9 +3,10 @@ package com.intellij.platform.lsp.impl.features.inlayHintColor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.customization.LspDocumentColorSupport
 import com.intellij.platform.lsp.impl.LspClientImpl
-import com.intellij.platform.lsp.impl.aggregatePerDocumentResults
+import com.intellij.platform.lsp.impl.aggregateToPullResult
 import com.intellij.platform.lsp.impl.features.inlayCommon.LspInlayApplier
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspHighlightingCache
+import com.intellij.platform.lsp.impl.features.highlightingCommon.LspPullResult
 import org.eclipse.lsp4j.Color
 import org.eclipse.lsp4j.DocumentColorParams
 import org.eclipse.lsp4j.Range
@@ -18,14 +19,14 @@ internal class LspDocumentColorCache(private val lspClient: LspClientImpl) : Lsp
     lspClient.descriptor.lspCustomization.documentColorCustomizer is LspDocumentColorSupport &&
     lspClient.supportsDocumentColor(file)
 
-  override suspend fun sendRequest(file: VirtualFile): List<Pair<Range, Color>>? {
+  override suspend fun sendRequest(file: VirtualFile): LspPullResult<Color> {
     val perDocument = lspClient.documentMapping.forEachDocumentInFile(file) { lspDocument ->
       val params = DocumentColorParams(lspDocument.id)
       lspClient.sendRequest { it.textDocumentService.documentColor(params) }?.map {
         lspDocument.toHostRange(it.range) to it.color
       }
     }
-    return perDocument.aggregatePerDocumentResults()
+    return perDocument.aggregateToPullResult()
   }
 
   override suspend fun onResponseReceived(file: VirtualFile) {

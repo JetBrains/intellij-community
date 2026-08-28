@@ -4,8 +4,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.customization.LspDocumentLinkSupport
 import com.intellij.platform.lsp.impl.LspClientImpl
-import com.intellij.platform.lsp.impl.aggregatePerDocumentResults
+import com.intellij.platform.lsp.impl.aggregateToPullResult
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspHighlightingCache
+import com.intellij.platform.lsp.impl.features.highlightingCommon.LspPullResult
 import org.eclipse.lsp4j.DocumentLink
 import org.eclipse.lsp4j.DocumentLinkParams
 import org.eclipse.lsp4j.Range
@@ -18,14 +19,14 @@ internal class LspDocumentLinkCache(private val lspClient: LspClientImpl) : LspH
     lspClient.descriptor.lspCustomization.documentLinkCustomizer is LspDocumentLinkSupport &&
     lspClient.supportsDocumentLink(file)
 
-  override suspend fun sendRequest(file: VirtualFile): List<Pair<Range, LspDocumentLink>>? {
+  override suspend fun sendRequest(file: VirtualFile): LspPullResult<LspDocumentLink> {
     val perDocument = lspClient.documentMapping.forEachDocumentInFile(file) { lspDocument ->
       val params = DocumentLinkParams(lspDocument.id)
       lspClient.sendRequest { it.textDocumentService.documentLink(params) }?.map {
         lspDocument.toHostRange(it.range) to LspDocumentLink(it)
       }
     }
-    return perDocument.aggregatePerDocumentResults()
+    return perDocument.aggregateToPullResult()
   }
 
   override suspend fun onResponseReceived(file: VirtualFile) {

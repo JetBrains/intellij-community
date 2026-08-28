@@ -186,6 +186,18 @@ class LspClientImpl internal constructor(
     }
   }
 
+  /**
+   * Handles a server-forced `workspace/diagnostic/refresh`: re-pulls diagnostics for every opened file even without
+   * a document edit. Invalidating the cache keeps the current diagnostics on screen (no flicker);
+   * [LspHighlightingApplier.scheduleHighlightingRefresh] kicks the re-pull and applies the fresh results once they land.
+   */
+  internal fun refreshDiagnostics() {
+    forEachOpenedFile { file ->
+      highlightingCacheRegistry.pullDiagnosticsCache.serverForcedRefresh(file)
+      LspHighlightingApplier.getInstance(project).scheduleHighlightingRefresh(file)
+    }
+  }
+
   @RequiresBackgroundThread
   @RequiresReadLock
   internal fun getSemanticTokens(file: VirtualFile): List<LspCachedHighlighting<LspSemanticToken>> =

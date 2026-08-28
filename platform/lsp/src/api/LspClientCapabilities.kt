@@ -23,6 +23,7 @@ import org.eclipse.lsp4j.CompletionListCapabilities
 import org.eclipse.lsp4j.DefinitionCapabilities
 import org.eclipse.lsp4j.DiagnosticCapabilities
 import org.eclipse.lsp4j.DiagnosticTag
+import org.eclipse.lsp4j.DiagnosticWorkspaceCapabilities
 import org.eclipse.lsp4j.DiagnosticsTagSupport
 import org.eclipse.lsp4j.DidChangeWatchedFilesCapabilities
 import org.eclipse.lsp4j.DocumentHighlightCapabilities
@@ -92,6 +93,9 @@ internal fun createClientCapabilities(lspCustomization: LspCustomization): Clien
       refreshSupport = true
     }
     inlayHint = InlayHintWorkspaceCapabilities().apply {
+      refreshSupport = true
+    }
+    diagnostics = DiagnosticWorkspaceCapabilities().apply {
       refreshSupport = true
     }
     symbol = SymbolCapabilities(true).apply {

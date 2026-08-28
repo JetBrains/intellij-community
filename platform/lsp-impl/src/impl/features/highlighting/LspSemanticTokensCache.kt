@@ -9,12 +9,12 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.customization.LspSemanticTokensSupport
 import com.intellij.platform.lsp.impl.LspClientImpl
-import com.intellij.platform.lsp.impl.aggregatePerDocumentResults
+import com.intellij.platform.lsp.impl.aggregateToPullResult
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspHighlightingCache
+import com.intellij.platform.lsp.impl.features.highlightingCommon.LspPullResult
 import com.intellij.platform.lsp.util.getLsp4jPosition
 import com.intellij.platform.lsp.util.getOffsetInDocument
 import com.intellij.psi.PsiManager
-import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
@@ -35,23 +35,23 @@ internal class LspSemanticTokensCache(private val lspClient: LspClientImpl) : Ls
     return supportsFull == true
   }
 
-  override suspend fun sendRequest(file: VirtualFile): List<Pair<Range, LspSemanticToken>>? {
-    val psiModTracker = PsiModificationTracker.getInstance(lspClient.project)
-    val modCount = psiModTracker.modificationCount
-    val legend = lspClient.serverCapabilities?.semanticTokensProvider?.legend ?: return null
+  override suspend fun sendRequest(file: VirtualFile): LspPullResult<LspSemanticToken> {
+    val legend = lspClient.serverCapabilities?.semanticTokensProvider?.legend ?: return LspPullResult.Failed
+    val initialDocModStamp = readAction { FileDocumentManager.getInstance().getDocument(file)?.modificationStamp }
+                             ?: return LspPullResult.Failed
 
     val perDocument = lspClient.documentMapping.forEachDocumentInFile(file) { lspDocument, cellRange ->
       val response = lspClient.sendRequest {
         it.textDocumentService.semanticTokensFull(SemanticTokensParams(lspDocument.id))
       } ?: return@forEachDocumentInFile null
 
-      if (psiModTracker.modificationCount != modCount) {
-        // The result will be ignored anyway in `LspHighlightingCache.responseReceived`, so let's save time by not calling decodeSemanticTokens()
-        return@forEachDocumentInFile emptyList()
-      }
-
       readAction {
         val hostDocument = FileDocumentManager.getInstance().getDocument(file) ?: return@readAction null
+
+        if (hostDocument.modificationStamp != initialDocModStamp) {
+          // The result will be ignored anyway in `LspHighlightingCache.responseReceived`, so let's save time by not calling decodeSemanticTokens()
+          return@readAction emptyList()
+        }
         val document = lspDocument.prepareDocument(hostDocument) { host ->
           val cellStartOffset = getOffsetInDocument(host, cellRange.start) ?: return@prepareDocument null
           val cellEndOffset = getOffsetInDocument(host, cellRange.end) ?: return@prepareDocument null
@@ -64,7 +64,7 @@ internal class LspSemanticTokensCache(private val lspClient: LspClientImpl) : Ls
         }
       }
     }
-    return perDocument.aggregatePerDocumentResults()
+    return perDocument.aggregateToPullResult()
   }
 
   @RequiresReadLock

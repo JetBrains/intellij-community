@@ -320,7 +320,13 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
   }
 
   override fun refreshInlineValues(): CompletableFuture<Void> = completedFuture(null)
-  override fun refreshDiagnostics(): CompletableFuture<Void> = completedFuture(null)
+
+  override fun refreshDiagnostics(): CompletableFuture<Void> {
+    if (!project.isDisposed) {
+      lspClient.refreshDiagnostics()
+    }
+    return completedFuture(null)
+  }
 
 
   override fun showMessageRequest(params: ShowMessageRequestParams): CompletableFuture<MessageActionItem> {

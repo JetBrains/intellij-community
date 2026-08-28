@@ -6,8 +6,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.LspCoroutineScopeService
 import com.intellij.platform.lsp.impl.LspDocument
-import com.intellij.platform.lsp.impl.documentMapping
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspHighlightingCache
+import com.intellij.platform.lsp.impl.features.highlightingCommon.LspPullResult
 import com.intellij.psi.util.PsiModificationTracker
 import kotlinx.coroutines.launch
 import org.eclipse.lsp4j.PublishDiagnosticsParams
@@ -28,7 +28,10 @@ internal class LspPublishDiagnosticsCache(
 
   override fun isSupportedForFile(file: VirtualFile): Boolean = true
 
-  override suspend fun sendRequest(file: VirtualFile): List<Pair<Range, LspDiagnosticAndLazyQuickFixes>>? = null
+  // The server pushes the data; scheduling a pull would only spawn a doomed no-op coroutine per read.
+  override val supportsPull: Boolean get() = false
+
+  override suspend fun sendRequest(file: VirtualFile): LspPullResult<LspDiagnosticAndLazyQuickFixes> = LspPullResult.Failed
 
   internal fun diagnosticsReceived(params: PublishDiagnosticsParams) {
     // the file is expected to be null if the server is dropping diagnostics for a deleted/renamed/moved file
