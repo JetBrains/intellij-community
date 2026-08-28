@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApp
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.createExpressionByPattern
@@ -40,7 +39,7 @@ internal class ReplaceWithOrdinaryAssignmentIntention : KotlinApplicableModComma
     context(session: KaSession)
     override fun prepareContext(element: KtBinaryExpression): Unit? = isApplicableTo(element).asUnit
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     private fun isApplicableTo(element: KtBinaryExpression): Boolean {
         val operationReference = element.operationReference
         if (element.operationToken !in KtTokens.AUGMENTED_ASSIGNMENTS) return false

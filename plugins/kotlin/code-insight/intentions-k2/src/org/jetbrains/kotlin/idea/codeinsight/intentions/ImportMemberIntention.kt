@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.resolveCompanionObjectShortRe
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
@@ -59,7 +58,7 @@ internal class ImportMemberIntention :
     override fun isApplicableByPsi(element: KtElement): Boolean =
         (element is KtDotQualifiedExpression && !element.isInImportDirective()) || element is KtUserType
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtElement): Context? {
         val reference = element.actualReference ?: return null

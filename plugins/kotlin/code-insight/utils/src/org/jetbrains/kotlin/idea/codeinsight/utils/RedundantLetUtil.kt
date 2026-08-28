@@ -3,10 +3,7 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
@@ -16,9 +13,11 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -201,7 +200,6 @@ private fun KtDotQualifiedExpression.deleteFirstReceiver(): KtExpression {
     return this
 }
 
-@OptIn(KaContextParameterApi::class)
 context(_: KaSession)
 private fun KtFunctionLiteral.valueParameterReferences(callExpression: KtCallExpression): List<KtNameReferenceExpression> {
     val valueParameterSymbol = symbol.valueParameters.singleOrNull() ?: return emptyList()
@@ -265,14 +263,12 @@ private fun KtCallExpression.isApplicable(parameterName: String): Boolean {
 private fun KtExpression.nameUsed(name: String, except: KtNameReferenceExpression? = null): Boolean =
     anyDescendantOfType<KtNameReferenceExpression> { it != except && it.getReferencedName() == name }
 
-@OptIn(KaContextParameterApi::class)
 context(_: KaSession)
 private fun KtDotQualifiedExpression.hasFunctionVariableCall(): Boolean {
     val calleeExpression = callExpression?.calleeExpression ?: return false
     return calleeExpression.resolveToCall()?.successfulVariableAccessCall() != null
 }
 
-@OptIn(KaContextParameterApi::class)
 context(_: KaSession)
 private fun KtDotQualifiedExpression.getHasNullableReceiverExtensionCall(): Boolean {
     val hasNullableType = selectorExpression?.resolveToCall()?.let { resolvedCall ->

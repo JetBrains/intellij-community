@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.Applicabilit
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.MovePropertyToConstructorInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.MovePropertyToConstructorUtils.isMovableToConstructorByPsi
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.MovePropertyToConstructorUtils.moveToConstructor
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.resolution.KtResolvable
@@ -46,7 +45,7 @@ internal class CanBePrimaryConstructorPropertyInspection :
 
     override fun isApplicableByPsi(element: KtProperty): Boolean = element.isMovableToConstructorByPsi()
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtProperty): MovePropertyToConstructorInfo? {
         val initializer = element.initializer ?: return null

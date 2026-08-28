@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.inspections.utils
 
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
@@ -29,7 +28,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
  * @param lambdaArgument The lambda argument to check
  * @return True if nested lambdas would conflict with implicit 'it'
  */
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 internal fun hasImplicitItConflicts(lambdaArgument: KtLambdaArgument): Boolean {
     // Check if 'it' is already used in the current scope

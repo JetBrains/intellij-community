@@ -54,7 +54,6 @@ import org.jetbrains.kotlin.psi.KtDeclarationWithReturnType
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
@@ -401,7 +400,7 @@ private fun PsiElement.hasBadRefences(
     }
 }
 
-@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+@OptIn(KaExperimentalApi::class)
 private fun removeEntriesEntrySetInLoopRange(
     declaration: KtDeclaration
 ): Boolean {

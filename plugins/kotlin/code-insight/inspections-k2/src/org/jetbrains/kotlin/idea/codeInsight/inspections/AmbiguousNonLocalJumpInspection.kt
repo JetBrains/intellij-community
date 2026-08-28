@@ -6,10 +6,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractCallsInPlaceContractEffectDeclaration
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractInvocationKind
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
@@ -21,9 +21,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AddLoopLabelFix
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtBreakExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtContinueExpression
@@ -97,7 +95,7 @@ private fun findCallExprThatCausesUnlabeledNonLocalBreakOrContinueAmbiguity(jump
     .mapNotNull { checkAmbiguityForUnlabeledNonLocalBreakOrContinue(it) }
     .firstOrNull()
 
-@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+@OptIn(KaExperimentalApi::class)
 private fun checkAmbiguityForUnlabeledNonLocalBreakOrContinue(functionLiteral: PsiElement): AmbiguousCallInfo? {
     val callExpression = functionLiteral.findMatchingCallExpr() ?: return null
     analyze(callExpression) {

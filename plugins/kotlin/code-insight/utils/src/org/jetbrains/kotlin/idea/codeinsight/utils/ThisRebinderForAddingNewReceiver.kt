@@ -6,7 +6,6 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.isAncestor
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
@@ -28,7 +27,6 @@ import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
  */
 @ApiStatus.Internal
 object ThisRebinderForAddingNewReceiver {
-    @OptIn(KaContextParameterApi::class)
     context(_: KaSession)
     fun createContext(element: KtElement): Context {
         val nonDotCalls = mutableListOf<KtExpression>()

@@ -31,10 +31,10 @@ import org.jetbrains.kotlin.psi.KtLoopExpression
 import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
-import org.jetbrains.kotlin.psi.lookupLocally as lookupLocallyImpl
 import org.jetbrains.kotlin.references.KotlinPsiReferenceProviderContributor
 import org.jetbrains.kotlin.resolution.KtResolvableCall
 import org.jetbrains.kotlin.resolve.references.ReferenceAccess
+import org.jetbrains.kotlin.psi.lookupLocally as lookupLocallyImpl
 
 @OptIn(KaImplementationDetail::class)
 internal class KaBaseSimpleNameReference(
@@ -45,7 +45,7 @@ internal class KaBaseSimpleNameReference(
         return super<KaBaseReference>.isReferenceToImportAlias(alias)
     }
 
-    @OptIn(KtExperimentalApi::class, KaExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     override fun KaSession.resolveToSymbols(): Collection<KaSymbol> {
         // Resolved calls are preferable for navigation since they provide a more precise location.
         // For instance, it is the case for constructor calls

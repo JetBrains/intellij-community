@@ -1,15 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
-import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
@@ -36,7 +35,6 @@ fun KtNameReferenceExpression.getFunctionLiteralByImplicitLambdaParameter(): KtF
 }
 
 
-@OptIn(KaContextParameterApi::class)
 context(_: KaSession)
 fun KtNameReferenceExpression.getImplicitLambdaParameterSymbol(): KaValueParameterSymbol? {
     val parameterSymbol = mainReference.resolveToSymbol() as? KaValueParameterSymbol ?: return null
@@ -44,7 +42,6 @@ fun KtNameReferenceExpression.getImplicitLambdaParameterSymbol(): KaValueParamet
     return parameterSymbol
 }
 
-@OptIn(KaContextParameterApi::class)
 context(_: KaSession)
 fun KaValueParameterSymbol.getFunctionLiteralByImplicitLambdaParameterSymbol(): KtFunctionLiteral? {
     if (!isImplicitLambdaParameter) return null

@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenOptionsForIde
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
@@ -92,7 +91,7 @@ fun KtSimpleNameExpression.canBeRedundantCompanionReference(): Boolean {
  *
  * For that, it is required to do resolve to ensure that the semantics of the code do not change.
  */
-@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+@OptIn(KaExperimentalApi::class)
 @ApiStatus.Internal
 context(_: KaSession)
 fun KtSimpleNameExpression.isRedundantCompanionReference(): Boolean {

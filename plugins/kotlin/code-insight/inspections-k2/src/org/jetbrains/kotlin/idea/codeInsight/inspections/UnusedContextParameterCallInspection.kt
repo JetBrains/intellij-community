@@ -28,7 +28,6 @@ import org.jetbrains.kotlin.idea.codeinsight.intentions.contexts.ContextParamete
 import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames.contextCallableId
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtBreakExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -123,7 +122,7 @@ internal class UnusedContextParameterCallInspection :
         )
     }
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun isSideEffectFree(expression: KtExpression): Boolean {
         return when (val unwrapped = KtPsiUtil.deparenthesize(expression)) {

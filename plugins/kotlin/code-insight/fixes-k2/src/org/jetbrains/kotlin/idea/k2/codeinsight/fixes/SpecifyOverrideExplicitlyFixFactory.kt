@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDelegatedSuperTypeEntry
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -95,7 +94,7 @@ internal object SpecifyOverrideExplicitlyFixFactory {
             listOf(SpecifyOverrideExplicitlyFix(ktClass, elementContext))
         }
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtDelegatedSuperTypeEntry.getSymbol(): KaNamedSymbol? {
         val nameReferenceExpression = delegateExpression as? KtNameReferenceExpression ?: return null

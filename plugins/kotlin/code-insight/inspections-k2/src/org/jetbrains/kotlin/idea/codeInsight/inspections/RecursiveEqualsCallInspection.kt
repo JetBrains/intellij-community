@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.isEqualsMethodSymbol
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -85,7 +84,7 @@ internal class RecursiveEqualsCallInspection : KotlinApplicableInspectionBase.Si
         }
     }
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtExpression): Unit? {
         val argumentExpr = when (element) {

@@ -6,7 +6,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.startOffset
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
@@ -15,7 +14,6 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaSuccessCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.contextParameters
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.highlighting.BeforeResolveHighlightingExtension
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -37,7 +35,6 @@ internal class ParameterNamesHighlightingVisitor(
             ?.languageVersionSettings
             ?.supportsFeature(LanguageFeature.ExplicitContextArguments) == true
 
-    @OptIn(KaExperimentalApi::class)
     override fun visitArgument(argument: KtValueArgument) {
         val argumentName = argument.getArgumentName() ?: return
         val eq = argument.equalsToken ?: return

@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
-import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
@@ -88,7 +87,6 @@ object FoldIfOrWhenToFunctionCallUtils {
         element.replace(headCall.getQualifiedExpressionForSelectorOrThis()).reformatted()
     }
 
-    @OptIn(KaContextParameterApi::class)
     context(_: KaSession)
     private fun KtCallExpression.fqNameAndParameters(): Pair<FqName, List<KaVariableSignature<KaValueParameterSymbol>>>? {
         val functionCall = resolveToCall()?.singleFunctionCallOrNull() ?: return null

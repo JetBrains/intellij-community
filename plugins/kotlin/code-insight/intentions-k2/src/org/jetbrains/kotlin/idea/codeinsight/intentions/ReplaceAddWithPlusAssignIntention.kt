@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApp
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
@@ -40,7 +39,7 @@ internal class ReplaceAddWithPlusAssignIntention : KotlinApplicableModCommandAct
     override fun isApplicableByPsi(element: KtDotQualifiedExpression): Boolean =
         element.callExpression?.valueArguments?.size == 1 && element.calleeName in setOf("add", "addAll")
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtDotQualifiedExpression): Unit? {
         if (element.isUsedAsExpression) return null

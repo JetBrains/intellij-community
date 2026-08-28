@@ -38,7 +38,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinMo
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.collectReferencesInFile
 import org.jetbrains.kotlin.idea.util.CommentSaver
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
@@ -179,7 +178,7 @@ class ConvertToExplicitBackingFieldsInspection :
         return returnedProperty
     }
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun resolveToProperty(expression: KtNameReferenceExpression): KtProperty? {
         val symbol = expression.resolveSymbol() as? KaPropertySymbol ?: return null

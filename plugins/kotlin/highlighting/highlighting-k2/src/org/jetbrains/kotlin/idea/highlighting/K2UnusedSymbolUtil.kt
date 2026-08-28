@@ -119,7 +119,6 @@ import org.jetbrains.kotlin.psi.KtContextParameterList
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtEnumEntry
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
@@ -275,7 +274,6 @@ object K2UnusedSymbolUtil {
         return declaration is KtParameter && !(declaration.parent.parent is KtPrimaryConstructor && declaration.hasValOrVar())
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun getPsiToReportProblem(declaration: KtNamedDeclaration, isJavaEntryPointInspection: UnusedDeclarationInspectionBase): PsiElement? {
         val symbol = declaration.symbol
@@ -586,7 +584,7 @@ object K2UnusedSymbolUtil {
      * In the above code, CC is not referenced by any expressions other than `import C.CC.value`,
      * but `C.CC.value` is used by `fun value() = value`, so we cannot delete `import C.CC.value`, and we have to keep CC.
      */
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun checkPrivateDeclaration(
         declaration: KtNamedDeclaration,
@@ -704,14 +702,14 @@ object K2UnusedSymbolUtil {
         return containingFile.anyDescendantOfType(PsiReferenceExpression::isQualifiedNameInEnumStaticMethods)
     }
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtImportDirective.resolveReferenceToSymbol(): KaSymbol? = when (importedReference) {
         is KtReferenceExpression -> importedReference as KtReferenceExpression
         else -> importedReference?.getChildOfType<KtReferenceExpression>()
     }?.resolveSymbol()
 
-    @OptIn(KtExperimentalApi::class, KaExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtImportDirective.isUsedStarImportOfEnumStaticFunctions(): Boolean {
         if (importPath?.isAllUnder != true) return false
@@ -721,7 +719,7 @@ object K2UnusedSymbolUtil {
 
         val enumStaticMethods = ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES.map { FqName("$importedEnumFqName.$it") }
 
-        @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+        @OptIn(KaExperimentalApi::class)
         fun KtExpression.isNameInEnumStaticMethods(): Boolean {
             if (getQualifiedExpressionForSelector() != null) return false
             if (((this as? KtNameReferenceExpression)?.parent as? KtCallableReferenceExpression)?.receiverExpression != null) return false

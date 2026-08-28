@@ -42,7 +42,6 @@ import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
@@ -82,7 +81,7 @@ internal class ImportAllMembersIntention :
         (element is KtExpression && element.isOnTheLeftOfQualificationDot && !element.isInImportDirective()) ||
                 element is KtUserType
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtElement): Context? {
         if (element.actualReference == null) {
@@ -195,7 +194,7 @@ val KtElement.elementToImport: KtElement?
         else -> null
     }
 
-@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun isReferenceToObjectMemberOrUnresolved(qualifiedAccess: KtExpression): Boolean {
     val selectorExpression: KtExpression? = qualifiedAccess.getQualifiedExpressionForReceiver()?.selectorExpression
@@ -222,7 +221,7 @@ private fun KtFile.hasImportedEnumSyntheticMethodCall(): Boolean = importDirecti
     val importedEnumFqName = importDirective.importedFqName ?: return false
     if ((importDirective.importedReference?.mainReference?.resolve() as? KtClass)?.isEnum() != true) return false
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     fun KtExpression.isFqNameInEnumStaticMethods(): Boolean {
         if (getQualifiedExpressionForSelector() != null) return false
         if (((this as? KtNameReferenceExpression)?.parent as? KtCallableReferenceExpression)?.receiverExpression != null) return false

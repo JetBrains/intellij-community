@@ -144,7 +144,6 @@ fun checkDeclarationNewNameConflicts(
     result: MutableList<UsageInfo>,
     filterCandidate: (KaDeclarationSymbol) -> Boolean
 ) {
-    @OptIn(KaExperimentalApi::class)
     fun getPotentialConflictCandidates(symbol: KaDeclarationSymbol, declaration: KtNamedDeclaration, newName: Name): Sequence<KaDeclarationSymbol> {
         val containingSymbol = symbol.containingDeclaration ?: findPackage(declaration.containingKtFile.packageFqName)
 
@@ -171,7 +170,6 @@ fun checkDeclarationNewNameConflicts(
         }
 
         if (symbol is KaTypeParameterSymbol) {
-            @OptIn(KaExperimentalApi::class)
             val typeParameters = (containingSymbol as? KaDeclarationSymbol)?.typeParameters?.filter { it.name == newName }?.asSequence() ?: return emptySequence()
 
             val outerTypeParameters = generateSequence<KtClassOrObject>(declaration.getStrictParentOfType()) {

@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
@@ -35,7 +34,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal object CoroutineBlockingCallInspectionUtils {
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun isInSuspendLambdaOrFunction(ktElement: KtElement): Boolean {
         val lambdaArgument = ktElement.parentOfType<KtLambdaArgument>()

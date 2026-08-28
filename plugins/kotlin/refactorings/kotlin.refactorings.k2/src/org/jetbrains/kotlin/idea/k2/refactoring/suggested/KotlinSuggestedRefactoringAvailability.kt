@@ -42,7 +42,6 @@ import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasBody
@@ -54,7 +53,7 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
     SuggestedRefactoringAvailability(refactoringSupport) {
     private val HAS_USAGES = Key<Boolean>("KotlinSuggestedRefactoringAvailability.HAS_USAGES")
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     override fun amendStateInBackground(state: SuggestedRefactoringState): Iterator<SuggestedRefactoringState> {
         return iterator {
             if (state.additionalData[HAS_USAGES] == null) {

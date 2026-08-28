@@ -6,7 +6,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.PropertyTypeMismatchOnOverride
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.ReturnTypeMismatchOnOverride
@@ -66,7 +65,6 @@ internal object ChangeSuperTypeListEntryTypeArgumentFixFactory {
     val changeSuperTypeListEntryTypeArgumentPropertyTypeFixFactory = changeSuperTypeListEntry<PropertyTypeMismatchOnOverride>()
 
 
-    @OptIn(KaExperimentalApi::class)
     private inline fun <reified DIAGNOSTIC : KaDiagnosticWithPsi<KtNamedDeclaration>> changeSuperTypeListEntry() =
         KotlinQuickFixFactory.ModCommandBased { diagnostic: DIAGNOSTIC ->
             val (overrideSymbol, superSymbol) = when (diagnostic) {

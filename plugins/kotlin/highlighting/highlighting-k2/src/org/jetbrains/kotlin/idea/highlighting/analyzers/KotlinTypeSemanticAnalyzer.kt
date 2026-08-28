@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtConstructorCalleeExpression
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtInstanceExpressionWithLabel
 import org.jetbrains.kotlin.psi.KtIntersectionType
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
@@ -45,7 +44,7 @@ internal class KotlinTypeSemanticAnalyzer(holder: HighlightInfoHolder, session: 
         }
     }
 
-    @OptIn(KtExperimentalApi::class, KaExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     private fun highlightSimpleNameExpression(expression: KtSimpleNameExpression): Unit = context(session) {
         if (expression.isCalleeExpression()) return
         val parent = expression.parent

@@ -3,12 +3,11 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -85,7 +84,6 @@ object DemorgansLawUtils {
         return EmptinessCheckFunctionUtils.invertFunctionCall(this) as? KtQualifiedExpression
     }
 
-    @OptIn(KaContextParameterApi::class)
     context(_: KaSession)
     private val KtExpression?.isBoolean: Boolean
         get() = this != null && this.expressionType?.classId == KaStandardTypeClassIds.BOOLEAN

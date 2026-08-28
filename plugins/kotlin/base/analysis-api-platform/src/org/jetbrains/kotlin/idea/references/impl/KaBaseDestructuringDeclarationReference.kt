@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtImplementationDetail
 import org.jetbrains.kotlin.psi.KtImportAlias
 import org.jetbrains.kotlin.references.KotlinPsiReferenceProviderContributor
@@ -32,7 +31,7 @@ internal class KaBaseDestructuringDeclarationReference(
                 (element.parent as? KtDestructuringDeclaration)?.hasSquareBrackets() != true
     }
 
-    @OptIn(KtExperimentalApi::class, KaExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     override fun KaSession.resolveToSymbols(): Collection<KaSymbol> {
         val element = element
         // TODO(KT-82708): Only the initializer symbol is expected

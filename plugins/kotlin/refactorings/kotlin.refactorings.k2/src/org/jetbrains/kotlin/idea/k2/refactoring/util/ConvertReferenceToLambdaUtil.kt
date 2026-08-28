@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.idea.k2.refactoring.moveFunctionLiteralOutsideParent
 import org.jetbrains.kotlin.idea.refactoring.getLastLambdaExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtValueArgument
@@ -43,7 +42,7 @@ import org.jetbrains.kotlin.types.Variance
 
 object ConvertReferenceToLambdaUtil {
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(s: KaSession)
     fun prepareLambdaExpressionText(
         element: KtCallableReferenceExpression,

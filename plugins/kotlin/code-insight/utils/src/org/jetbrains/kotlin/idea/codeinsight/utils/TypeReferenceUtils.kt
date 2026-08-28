@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
-import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.render
@@ -20,7 +19,7 @@ fun KtCallableDeclaration.setTypeReference(typeString: String, shortenReferences
     }
 }
 
-@OptIn(KaExperimentalApi::class, KaContextParameterApi::class)
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 fun KtCallableDeclaration.setType(type: KaType, shortenReferences: Boolean = true) {
     if (type is KaErrorType) return

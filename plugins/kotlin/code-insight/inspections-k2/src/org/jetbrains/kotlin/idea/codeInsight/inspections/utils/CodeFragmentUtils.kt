@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCollectionLiteralExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtExpressionCodeFragment
 import org.jetbrains.kotlin.psi.KtLambdaExpression
@@ -95,7 +94,7 @@ internal fun createFragmentToWithFunction(
  * @param name The name of the counterpart function
  * @return True if the counterpart name resolves to a standard library function
  */
-@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+@OptIn(KaExperimentalApi::class)
 internal fun nameResolvesToStdlib(expression: KtCallExpression, calleeName: String, name: String): Boolean {
     val factory = KtPsiFactory(expression.project)
 

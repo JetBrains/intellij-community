@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc
 import com.google.common.html.HtmlEscapers
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotated
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
@@ -199,7 +198,7 @@ internal class KotlinIdeDeclarationRenderer(
 
 
     //todo rewrite after KT-66192 is implemented
-    @OptIn(KaExperimentalApi::class, KaImplementationDetail::class)
+    @OptIn(KaExperimentalApi::class)
     inner class ContextParametersListRendererWithHighlighting: KaContextReceiverListRenderer {
         override fun renderContextReceivers(
             analysisSession: KaSession,

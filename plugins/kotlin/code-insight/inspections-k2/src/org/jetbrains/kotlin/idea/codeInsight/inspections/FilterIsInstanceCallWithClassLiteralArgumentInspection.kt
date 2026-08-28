@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtClassLiteralExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtVisitorVoid
@@ -105,7 +104,7 @@ private fun KtValueArgument.isClassLiteral(): Boolean =
 private fun KtValueArgument.classLiteral(): KtClassLiteralExpression? =
     (getArgumentExpression() as? KtDotQualifiedExpression)?.receiverExpression as? KtClassLiteralExpression
 
-@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KtElement.resolveToClassSymbol(): KaNamedClassSymbol? =
     (this as? KtResolvable)?.resolveSymbol() as? KaNamedClassSymbol

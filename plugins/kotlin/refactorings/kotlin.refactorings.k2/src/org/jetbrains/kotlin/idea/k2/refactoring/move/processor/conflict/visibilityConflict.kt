@@ -52,7 +52,6 @@ import org.jetbrains.kotlin.idea.refactoring.getContainer
 import org.jetbrains.kotlin.idea.refactoring.pullUp.willBeMoved
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
@@ -92,7 +91,7 @@ fun PsiNamedElement.isVisibleTo(usage: PsiElement): Boolean {
     }
 }
 
-@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun PsiNamedElement.isVisibleTo(usage: KtElement): Boolean {
     val file = (usage.containingFile as? KtFile)?.symbol ?: return false
@@ -212,7 +211,7 @@ private fun KaSymbol.isProtectedVisibleFrom(refererSymbol: KaSymbol): Boolean {
 /**
  * Check whether the moved internal usages are still visible towards their physical declaration.
  */
-@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+@OptIn(KaExperimentalApi::class)
 fun checkVisibilityConflictsForInternalUsages(
     topLevelDeclarationsToMove: Collection<KtNamedDeclaration>,
     allDeclarationsToMove: Collection<KtNamedDeclaration>,

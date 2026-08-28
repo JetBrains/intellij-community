@@ -75,7 +75,6 @@ import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDoubleColonExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtEscapeStringTemplateEntry
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
@@ -485,7 +484,7 @@ object K2SemanticMatcher {
         }
     }
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun elementsMatchOrBothAreNull(targetElement: KtElement?, patternElement: KtElement?, context: MatchingContext): Boolean {
         if (targetElement == null || patternElement == null) return targetElement == null && patternElement == null
@@ -934,7 +933,7 @@ object K2SemanticMatcher {
         return true
     }
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun areNonCallsMatchingByResolve(
         targetExpression: KtExpression,
@@ -1021,7 +1020,6 @@ object K2SemanticMatcher {
         null -> patternReceiver == null
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KaCallableMemberCall<*, *>.getTypeArguments(): List<KaType?> = symbol.typeParameters.map { typeArgumentsMapping[it] }
 
@@ -1030,7 +1028,7 @@ object K2SemanticMatcher {
     private fun KaExplicitReceiverValue.getSymbolForThisExpressionOrNull(): KaSymbol? =
         (expression as? KtThisExpression)?.resolveSymbol()
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun areReferencesMatchingByResolve(
         targetReference: KtExpression,

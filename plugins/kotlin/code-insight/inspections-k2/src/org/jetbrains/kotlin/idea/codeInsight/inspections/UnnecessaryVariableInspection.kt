@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections
 
-import org.jetbrains.kotlin.resolution.KtResolvable
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
@@ -34,9 +33,7 @@ import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
@@ -49,6 +46,7 @@ import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.psi.psiUtil.nextLeafs
 import org.jetbrains.kotlin.psi.psiUtil.prevLeafs
+import org.jetbrains.kotlin.resolution.KtResolvable
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -104,7 +102,7 @@ internal class UnnecessaryVariableInspection : AbstractKotlinInspection() {
         val enclosingElement = KtPsiUtil.getEnclosingElementForLocalDeclaration(property) ?: return null
         val initializer = property.initializer ?: return null
 
-        @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+        @OptIn(KaExperimentalApi::class)
         context(session: KaSession)
         fun isExactCopy(): Boolean {
             if (property.isVar || initializer !is KtNameReferenceExpression || property.typeReference != null) return false
@@ -132,7 +130,7 @@ internal class UnnecessaryVariableInspection : AbstractKotlinInspection() {
             return nameValidator.validate(copyName)
         }
 
-        @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+        @OptIn(KaExperimentalApi::class)
         context(session: KaSession)
         fun isReturnOnly(): Boolean {
             val nextStatement = property.getNextSiblingIgnoringWhitespaceAndComments() as? KtReturnExpression ?: return false

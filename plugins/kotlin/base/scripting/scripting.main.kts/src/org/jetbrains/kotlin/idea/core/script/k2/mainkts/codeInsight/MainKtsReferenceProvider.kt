@@ -20,12 +20,10 @@ import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.Unmodifiable
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtFile
 
 class MainKtsReferenceProvider : ImplicitReferenceProvider {
-    @OptIn(KaAllowAnalysisOnEdt::class)
     fun isImportAnnotation(element: KtAnnotationEntry): Boolean = element.matchesAnnotationFqn(IMPORT_FQN)
 
     override fun getImplicitReference(

@@ -43,7 +43,6 @@ import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDeclarationWithInitializer
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtLambdaExpression
@@ -214,7 +213,7 @@ class SuspiciousCallableReferenceInLambdaInspection : KotlinApplicableInspection
     }
 }
 
-@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun buildReferenceText(element: KtLambdaExpression, callableRefExpr: KtCallableReferenceExpression): String {
     val callableReference = callableRefExpr.callableReference
@@ -234,7 +233,7 @@ private fun buildReferenceText(element: KtLambdaExpression, callableRefExpr: KtC
     }
 }
 
-@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun canMove(lambdaExpression: KtLambdaExpression): Boolean {
     val body = lambdaExpression.bodyExpression?.statements?.singleOrNull() as? KtCallableReferenceExpression ?: return false

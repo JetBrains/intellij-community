@@ -95,7 +95,6 @@ import org.jetbrains.kotlin.psi.KtDelegatedSuperTypeEntry
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtLambdaArgument
@@ -683,7 +682,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         return (diagnostics.any { diagnostic -> diagnostic is KaFirDiagnostic.CannotInferParameterType })
     }
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     override fun filterContainersWithContainedLambdasByAnalyze(
         containersWithContainedLambdas: Sequence<ContainerWithContained>,
         physicalExpression: KtExpression,

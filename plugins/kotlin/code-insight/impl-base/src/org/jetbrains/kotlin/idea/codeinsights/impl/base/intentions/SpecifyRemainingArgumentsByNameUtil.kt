@@ -39,7 +39,6 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -299,7 +298,7 @@ object SpecifyRemainingArgumentsByNameUtil {
     /**
      * Calculates the [RemainingArgumentsData] for the [element].
      */
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     fun findRemainingNamedArguments(element: KtValueArgumentList): RemainingArgumentsData? {
         val functionCall = element.parent as? KtCallExpression ?: return null

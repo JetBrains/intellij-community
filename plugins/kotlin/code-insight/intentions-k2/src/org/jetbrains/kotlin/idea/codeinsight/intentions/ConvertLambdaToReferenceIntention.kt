@@ -57,7 +57,6 @@ import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtDynamicType
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtLabeledExpression
 import org.jetbrains.kotlin.psi.KtLambdaArgument
@@ -359,7 +358,7 @@ private fun KtNameReferenceExpression.renderTargetReceiverType(): String {
     return receiverType.render(position = Variance.IN_VARIANCE)
 }
 
-@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KtExpression.isReferenceToPackage(): Boolean {
     val selectorOrThis = (this as? KtQualifiedExpression)?.selectorExpression ?: this
@@ -396,7 +395,6 @@ private fun isConvertibleCallInLambdaByAnalyze(
     if (!lambdaParameterIsSuspend && calleeFunctionIsSuspend == true) return false
     if (lambdaParameterIsSuspend && calleeFunctionIsSuspend == false && !languageVersionSettings.supportsFeature(LanguageFeature.SuspendConversion)) return false
 
-    @OptIn(KaExperimentalApi::class)
     if (symbol.typeParameters.isNotEmpty() && lambdaExpression.parentValueArgument()?.parent is KtCallExpression) return false
 
     // No references to Java synthetic properties

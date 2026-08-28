@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinMo
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtVisitor
@@ -96,7 +95,7 @@ internal class ConvertNaNEqualityInspection :
     }
 }
 
-@OptIn(KtExperimentalApi::class, KaExperimentalApi::class)
+@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun isNaNExpression(expression: KtExpression): Boolean {
     if (expression.text?.endsWith(NAN_NAME) != true) return false

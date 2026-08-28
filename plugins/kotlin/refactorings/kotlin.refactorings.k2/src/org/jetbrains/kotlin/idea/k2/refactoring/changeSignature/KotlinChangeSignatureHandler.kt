@@ -35,7 +35,6 @@ import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -66,7 +65,7 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
         runChangeSignature(project, editor, callableDeclaration, dataContext)
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class, KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
     fun findDeclaration(element: PsiElement, context: PsiElement, project: Project, editor: Editor?): PsiElement? {
         if (element !is KtElement) return element
         val module = context.getKaModule(project, useSiteModule = null)

@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.ReplaceExplic
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.ReplaceExplicitLambdaParameterWithItUtils.getLambda
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -75,7 +74,7 @@ internal class ReplaceExplicitFunctionLiteralParamWithItIntention : SelfTargetin
 
 }
 
-@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+@OptIn(KaExperimentalApi::class)
 private fun targetFunctionLiteral(element: KtElement, caretOffset: Int, editor: Editor? = null): KtFunctionLiteral? {
     val expression = element.getParentOfType<KtNameReferenceExpression>(false)
     if (expression != null) {

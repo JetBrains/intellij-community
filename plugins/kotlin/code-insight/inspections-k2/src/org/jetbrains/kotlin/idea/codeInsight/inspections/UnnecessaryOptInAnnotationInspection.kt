@@ -55,7 +55,6 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtClassLiteralExpression
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -216,7 +215,7 @@ private class MarkerCollector(private val moduleApiVersion: ApiVersion) {
         }
     }
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun collectMarkers(expression: KtReferenceExpression) {
         val symbols = expression.resolveSymbols()
@@ -266,7 +265,7 @@ private class MarkerCollector(private val moduleApiVersion: ApiVersion) {
         }
     }
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun collectMarkers(delegate: KtPropertyDelegate) {
         delegate.resolveSymbols().forEach { (it as? KaAnnotatedSymbol)?.collectMarkers() }

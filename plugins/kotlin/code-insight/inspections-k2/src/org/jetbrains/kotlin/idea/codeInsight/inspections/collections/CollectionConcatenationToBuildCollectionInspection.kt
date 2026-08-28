@@ -39,7 +39,6 @@ import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtLabeledExpression
@@ -252,7 +251,7 @@ class CollectionConcatenationToBuildCollectionInspection :
     /**
      * The `+`/`-` operators may be overridden by the user, so we ensure that these operations are from the standard library.
      */
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtOperationReferenceExpression.isDefaultStdlibCollectionOperation(): Boolean {
         val resolvedTo = resolveSymbol() as? KaCallableSymbol ?: return false

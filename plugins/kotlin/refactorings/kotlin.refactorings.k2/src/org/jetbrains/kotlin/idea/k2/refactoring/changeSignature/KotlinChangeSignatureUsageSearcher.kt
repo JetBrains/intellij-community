@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
@@ -122,7 +121,6 @@ internal object KotlinChangeSignatureUsageSearcher {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     private fun findContextParameterReferences(
         ktCallableDeclaration: KtCallableDeclaration,
         result: MutableList<in UsageInfo>,

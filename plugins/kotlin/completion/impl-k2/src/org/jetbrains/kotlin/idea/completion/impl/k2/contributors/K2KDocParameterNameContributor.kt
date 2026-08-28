@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 import com.intellij.codeInsight.lookup.LookupElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.signatures.asSignature
 import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
+import org.jetbrains.kotlin.analysis.api.signatures.asSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
@@ -14,10 +14,10 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.KtOutsideTowerScopeKinds
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.KtOutsideTowerScopeKinds
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.ImportStrategy
@@ -69,7 +69,6 @@ internal class K2KDocParameterNameContributor : K2SimpleCompletionContributor<KD
     private fun getParametersForKDoc(
         ownerDeclarationSymbol: KaDeclarationSymbol
     ): Sequence<KaDeclarationSymbol> = sequence {
-        @OptIn(KaExperimentalApi::class)
         yieldAll(ownerDeclarationSymbol.typeParameters)
 
         val valueParameters = when (ownerDeclarationSymbol) {

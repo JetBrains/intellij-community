@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.completion.implCommon.keywords
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -79,7 +78,6 @@ class BreakContinueKeywordHandler(keyword: KtKeywordToken) : CompletionKeywordHa
     ): Collection<LookupElement> = createLookups(expression)
 }
 
-@OptIn(KaContextParameterApi::class)
 context(_: KaSession)
 fun isInlineFunctionCall(call: KtCallExpression?): Boolean =
     (call?.calleeExpression as? KtReferenceExpression)?.mainReference

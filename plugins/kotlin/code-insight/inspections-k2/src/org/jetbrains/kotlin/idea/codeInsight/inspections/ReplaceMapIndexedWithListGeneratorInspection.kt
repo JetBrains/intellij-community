@@ -24,9 +24,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinMo
 import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.hasUsages
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtLabeledExpression
@@ -77,7 +75,7 @@ internal class ReplaceMapIndexedWithListGeneratorInspection :
     override fun getApplicableRanges(element: KtCallExpression): List<TextRange> =
         ApplicabilityRanges.calleeExpression(element)
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): Context? {
         val resolvedCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null

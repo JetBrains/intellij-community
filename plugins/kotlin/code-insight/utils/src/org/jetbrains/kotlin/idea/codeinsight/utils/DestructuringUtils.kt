@@ -4,7 +4,6 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
@@ -58,7 +57,6 @@ fun extractDataClassParameters(type: KaClassType): List<KaValueParameterSymbol>?
  * Returns the class type of the value being destructured: either the initializer expression's type
  * or the destructured parameter's type (lambda case)
  */
-@OptIn(KaContextParameterApi::class)
 @ApiStatus.Internal
 context(_: KaSession)
 fun KtDestructuringDeclaration.getDestructuredClassType(): KaClassType? {

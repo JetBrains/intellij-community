@@ -7,7 +7,6 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
@@ -117,7 +116,6 @@ internal class ConvertToForEachFunctionCallIntention :
         commentSaver.restore(result)
     }
 
-    @OptIn(KaContextParameterApi::class)
     context(_: KaSession)
     private fun KaType.isLoopRangeType(): Boolean {
         fun KaType.fqNameMatches() = (this as? KaUsualClassType)?.classId?.asSingleFqName() in loopRangeTypeFqNames

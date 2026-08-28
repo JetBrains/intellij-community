@@ -80,7 +80,6 @@ abstract class AbstractKotlinCompilerPluginInspection(protected val kotlinCompil
     }
 
     companion object {
-        @OptIn(KaPlatformInterface::class)
         @ApiStatus.Internal
         fun KaModule.hasCompilerPluginExtension(filter: (FirExtensionRegistrarAdapter) -> Boolean): Boolean =
             findCompilerPluginExtensionOrNull(filter) != null

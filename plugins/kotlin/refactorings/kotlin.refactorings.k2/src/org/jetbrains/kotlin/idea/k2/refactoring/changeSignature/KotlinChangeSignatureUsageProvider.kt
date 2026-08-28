@@ -35,7 +35,6 @@ import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtConstructorCalleeExpression
 import org.jetbrains.kotlin.psi.KtConstructorDelegationCall
 import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtParameter
@@ -69,7 +68,7 @@ class KotlinChangeSignatureUsageProvider : ChangeSignatureUsageProvider {
         return KotlinOverrideUsageInfo(unwrapped, baseMethod, isCaller(changeInfo, unwrapped))
     }
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     override fun createUsageInfo(
         changeInfo: ChangeInfo,
         reference: PsiReference,

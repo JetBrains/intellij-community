@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFi
 import org.jetbrains.kotlin.idea.codeinsight.utils.SurroundWithNullCheckUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.SurroundWithNullCheckUtils.hasAcceptableParent
 import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
 import org.jetbrains.kotlin.psi.KtReferenceExpression
@@ -78,7 +77,7 @@ internal object SurroundWithNullCheckFixFactory {
         createQuickFixIfApplicableToUnsafeCall(diagnostic)
     }
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun createQuickFixIfApplicableToUnsafeCall(diagnostic: KaFirDiagnostic<*>): List<SurroundWithNullCheckFix> {
         val element = when (diagnostic) {

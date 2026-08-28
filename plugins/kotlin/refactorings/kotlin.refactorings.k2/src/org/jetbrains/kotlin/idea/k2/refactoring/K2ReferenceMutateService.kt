@@ -52,7 +52,6 @@ import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtEnumEntry
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -446,7 +445,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         }
     }
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     override fun handleElementRename(ktReference: KtReference, newElementName: String): PsiElement? {
         @OptIn(KaAllowAnalysisFromWriteAction::class)
         return allowAnalysisFromWriteAction {

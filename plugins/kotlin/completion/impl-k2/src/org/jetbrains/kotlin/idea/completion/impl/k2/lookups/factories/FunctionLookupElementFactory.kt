@@ -16,10 +16,6 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.types.createSubstitutor
-import org.jetbrains.kotlin.analysis.api.types.lowerBoundIfFlexible
-import org.jetbrains.kotlin.analysis.api.symbols.samConstructor
-import org.jetbrains.kotlin.analysis.api.types.upperBoundIfFlexible
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
@@ -34,6 +30,9 @@ import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
+import org.jetbrains.kotlin.analysis.api.types.createSubstitutor
+import org.jetbrains.kotlin.analysis.api.types.lowerBoundIfFlexible
+import org.jetbrains.kotlin.analysis.api.types.upperBoundIfFlexible
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.findSamSymbolOrNull
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
@@ -42,9 +41,9 @@ import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.base.serialization.names.KotlinNameSerializer
 import org.jetbrains.kotlin.idea.completion.acceptOpeningBrace
 import org.jetbrains.kotlin.idea.completion.handlers.isCharAt
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.toMatchingVariadicCallableOrNull
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.insertString
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.insertStringAndInvokeCompletion
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.toMatchingVariadicCallableOrNull
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.TrailingLambdaInsertionHandlerFactory
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CallableInsertionStrategy
@@ -246,7 +245,6 @@ internal data class WithCallArgsInsertionHandler(
 }
 
 object FunctionInsertionHelper {
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun functionCanBeCalledWithoutExplicitTypeArguments(
         symbol: KaFunctionSymbol,

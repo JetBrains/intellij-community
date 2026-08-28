@@ -18,10 +18,8 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinAp
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.asQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ChangeVariableMutabilityFix
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.isBackingFieldRequired
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtProperty
@@ -88,7 +86,7 @@ context(session: KaSession)
 internal fun isBackingFieldReference(expression: KtExpression?, property: KtProperty): Boolean =
     expression is KtNameReferenceExpression && isBackingFieldReference(expression, property)
 
-@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun isBackingFieldReference(namedReference: KtNameReferenceExpression, property: KtProperty): Boolean {
     if (namedReference.text != KtTokens.FIELD_KEYWORD.value) return false

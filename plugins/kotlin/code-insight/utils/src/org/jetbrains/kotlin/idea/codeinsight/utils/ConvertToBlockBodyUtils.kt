@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
-import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.returnType
@@ -44,7 +43,7 @@ object ConvertToBlockBodyUtils {
     fun isConvertibleByPsi(element: KtDeclarationWithBody): Boolean =
         (element is KtNamedFunction || element is KtPropertyAccessor) && !element.hasBlockBody() && element.hasBody()
 
-    @OptIn(KaExperimentalApi::class, KaContextParameterApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     fun createContext(
         declaration: KtDeclarationWithBody,

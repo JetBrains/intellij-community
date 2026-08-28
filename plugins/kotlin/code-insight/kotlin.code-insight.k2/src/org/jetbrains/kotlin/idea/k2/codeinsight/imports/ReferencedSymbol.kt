@@ -3,10 +3,8 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.visibility.isVisibleInClass
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
-import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.expressions.contextSensitiveResolutionStatus
 import org.jetbrains.kotlin.analysis.api.resolution.KaContextSensitiveResolutionStatus
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
@@ -16,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -35,6 +34,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.types.isFunctionType
 import org.jetbrains.kotlin.analysis.api.types.isSuspendFunctionType
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.analysis.api.visibility.isVisibleInClass
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.references.KDocReference
@@ -46,7 +46,6 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
@@ -190,7 +189,7 @@ private fun isStaticallyImportedReceiver(
     }
 }
 
-@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun resolveDispatchReceiver(element: KtElement, targetSymbol: KaCallableSymbol): KaReceiverValue? {
     val adjustedElement = element.callableReferenceExpressionForCallableReference()
@@ -261,7 +260,6 @@ private fun isTypeAliasedInnerClassConstructorCall(target: KaSymbol, reference: 
             reference.resolveToSymbols().any { it is KaConstructorSymbol && it.containingDeclaration == target }
 }
 
-@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun resolveExtensionReceiverForFunctionalTypeVariable(
     referenceExpression: KtNameReferenceExpression?,

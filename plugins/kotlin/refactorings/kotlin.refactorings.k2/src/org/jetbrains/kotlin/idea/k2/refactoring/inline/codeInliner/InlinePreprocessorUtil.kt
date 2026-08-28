@@ -253,7 +253,6 @@ internal fun removeContracts(codeToInline: MutableCodeToInline) {
 /**
  * Mark parameter/receiver usages inside the function. To use the marks during parameter -> argument substitution
  */
-@OptIn(KaExperimentalApi::class)
 internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, originalDeclaration: KtDeclaration) {
     val isAnonymousFunction = originalDeclaration is KtNamedFunction && originalDeclaration.nameIdentifier == null
     val isAnonymousFunctionWithReceiver = isAnonymousFunction && originalDeclaration.receiverTypeReference != null

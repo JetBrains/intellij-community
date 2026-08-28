@@ -37,7 +37,6 @@ import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtSuperExpression
@@ -51,7 +50,7 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 
 internal class KotlinK2UsageTypeProvider : KotlinUsageTypeProvider() {
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     override fun getUsageTypeEnumByReference(refExpr: KtReferenceExpression): UsageTypeEnum? {
         val reference = refExpr.mainReference
         check(reference is KtSimpleReference<*>) { "Reference should be KtSimpleReference but not ${reference::class}" }

@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.AddQualifiersUtil
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.resolution.KtResolvableCall
 
@@ -30,7 +29,7 @@ internal class AddFullQualifierIntention :
     override fun getActionPresentation(context: ActionContext, element: KtNameReferenceExpression): Presentation =
         Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtNameReferenceExpression): Context? {
         val contextSymbol = ((element as? KtResolvableCall)?.resolveCall() as? KaSingleCall<*, *>)?.symbol ?: element.resolveSymbol()

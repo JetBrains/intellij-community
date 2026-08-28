@@ -74,7 +74,6 @@ import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtBreakExpression
 import org.jetbrains.kotlin.psi.KtContinueExpression
 import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -347,7 +346,7 @@ private fun IExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
     if (propagatingMarkerDescriptors.isNotEmpty() || optInMarkerNames.isNotEmpty()) {
         originalElements.forEach { element ->
             element.accept(object : KtTreeVisitorVoid() {
-                @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+                @OptIn(KaExperimentalApi::class)
                 override fun visitReferenceExpression(expression: KtReferenceExpression) {
                     super.visitReferenceExpression(expression)
 

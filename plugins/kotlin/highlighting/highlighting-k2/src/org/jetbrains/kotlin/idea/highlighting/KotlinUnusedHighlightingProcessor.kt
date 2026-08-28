@@ -62,7 +62,6 @@ import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtContextParameterList
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtEnumEntry
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtInstanceExpressionWithLabel
@@ -127,7 +126,7 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
         }
     }
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun registerLocalReferences(elements: List<PsiElement>) {
         val registerDeclarationAccessVisitor = object : KtVisitorVoid() {

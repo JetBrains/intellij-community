@@ -40,7 +40,6 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.isSamConversionAliasedWithVarian
 import org.jetbrains.kotlin.idea.k2.refactoring.util.LambdaToAnonymousFunctionUtil
 import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
@@ -167,7 +166,7 @@ private fun prepareFunctionText(
     }
 }
 
-@OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun getFunctionalInterfaceSymbol(
     diagnostic: KaFirDiagnostic.InterfaceAsFunction,

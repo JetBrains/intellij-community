@@ -39,7 +39,6 @@ import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticName
 import org.jetbrains.kotlin.idea.highlighting.K2HighlightingBundle
 import org.jetbrains.kotlin.idea.highlighting.analyzers.KotlinFunctionCallSemanticAnalyzer.Companion.getHighlightInfoTypeForCallFromExtension
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtInstanceExpressionWithLabel
 import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
@@ -51,7 +50,7 @@ internal class KotlinVariableReferenceSemanticAnalyzer(holder: HighlightInfoHold
         highlightSimpleNameExpression(expression)
     }
 
-    @OptIn(KtExperimentalApi::class, KaExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     private fun highlightSimpleNameExpression(expression: KtSimpleNameExpression) {
         context(session) {
             if (expression.isAssignmentReference()) return

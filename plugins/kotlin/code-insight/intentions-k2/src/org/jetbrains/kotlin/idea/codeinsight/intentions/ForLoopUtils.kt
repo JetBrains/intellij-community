@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtContinueExpression
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtLabeledExpression
@@ -75,7 +74,7 @@ object ForLoopUtils {
             !lambda.anyDescendantOfType<KtLabeledExpression> { it.getLabelName() == candidate }
         }
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     internal fun suggestLoopVariableName(lambda: KtLambdaExpression, factory: KtPsiFactory): KtParameter {
         val body = lambda.bodyExpression
@@ -93,7 +92,7 @@ object ForLoopUtils {
         return factory.createLoopParameter(suggestedName)
     }
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     internal fun replaceImplicitItReferences(lambda: KtLambdaExpression, newParameter: KtParameter, factory: KtPsiFactory) {
         val body = lambda.bodyExpression ?: return
@@ -156,7 +155,7 @@ object ForLoopUtils {
         return body.referencesSymbol(loopParameter.symbol)
     }
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtExpression.referencesSymbol(symbol: KaSymbol): Boolean =
         anyDescendantOfType<KtNameReferenceExpression> { ref ->

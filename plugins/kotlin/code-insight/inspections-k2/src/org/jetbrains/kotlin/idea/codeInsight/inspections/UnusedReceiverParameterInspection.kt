@@ -59,7 +59,6 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassLiteralExpression
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtFunction
@@ -304,7 +303,7 @@ private fun isUsageOfReifiedType(reifiedTypes: Set<KaTypeParameterSymbol>, eleme
 /**
  * Returns whether the [symbol] is being used by the [element] by referencing it.
  */
-@OptIn(KtExperimentalApi::class, KaExperimentalApi::class)
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun isUsageOfSymbol(symbol: KaDeclarationSymbol, element: KtElement): Boolean {
     if (element !is KtExpression) return false
@@ -332,7 +331,7 @@ private fun isUsageOfSymbol(symbol: KaDeclarationSymbol, element: KtElement): Bo
         }
     }
 
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class)
     fun processOperators(e: KtResolvableCall): Boolean {
         return e.resolveSymbols().filterIsInstance<KaFunctionSymbol>().any { receiverType?.symbol == it.containingDeclaration }
     }
