@@ -6,6 +6,7 @@ import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
@@ -15,11 +16,10 @@ import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
 private const val CONSOLE_SETTINGS_HELP_REFERENCE: String = "reference.project.settings.console"
-private const val CONSOLE_SETTINGS_HELP_REFERENCE_PYTHON: String = "reference.project.settings.console.python"
 
 
 @ApiStatus.Internal
-class PyConsoleOptionsConfigurable(private val myProject: Project) : SearchableConfigurable.Parent.Abstract(), Configurable.NoScroll {
+class PyConsoleOptionsConfigurable(private val myProject: Project) : SearchableConfigurable.Parent.Abstract() {
 
   enum class CodeCompletionOption {
     RUNTIME, STATIC;
@@ -32,19 +32,25 @@ class PyConsoleOptionsConfigurable(private val myProject: Project) : SearchableC
 
   private var myPanel: DialogPanel? = null
 
+  /**
+   * The former "Python Console" child page. Its settings now live on this page.
+   *
+   * Recreated for every [createComponent] call: the panel owns a one-shot [com.intellij.openapi.Disposable]
+   * for its SDK-table subscription, so a reused instance would subscribe to a disposed parent.
+   */
+  private var myPythonConsolePanel: PyConsoleSpecificOptionsPanel? = null
+
   override fun getId(): String = "pyconsole"
 
   override fun getDisplayName(): @Nls String = PyBundle.message("configurable.PyConsoleOptionsConfigurable.display.name")
 
   override fun getHelpTopic(): String = CONSOLE_SETTINGS_HELP_REFERENCE
 
+  override fun hasOwnContent(): Boolean = true
+
   override fun buildConfigurables(): Array<Configurable> {
     val result = mutableListOf<Configurable>()
-    val pythonPanel = PyConsoleSpecificOptionsPanel(myProject)
-    result.add(createChildConfigurable(PyBundle.message("configurable.PyConsoleOptionsConfigurable.child.display.name"),
-                                       pythonPanel,
-                                       PyConsoleOptions.getInstance(myProject).pythonConsoleSettings,
-                                       CONSOLE_SETTINGS_HELP_REFERENCE_PYTHON))
+    // The Python console page is merged into this one. Only the framework consoles stay as child pages.
     for (provider in PyConsoleOptionsProvider.EP_NAME.extensionList) {
       if (provider.isApplicableTo(myProject)) {
         result.add(createChildConfigurable(provider.name,
@@ -61,50 +67,57 @@ class PyConsoleOptionsConfigurable(private val myProject: Project) : SearchableC
     return myPanel!!
   }
 
-  override fun isModified(): Boolean = myPanel?.isModified() == true
+  // myPanel guards every call below. The platform may ask about state before createComponent, and
+  // PyConsoleSpecificOptionsPanel keeps its settings in lateinit fields until its panel is built.
+  override fun isModified(): Boolean =
+    myPanel?.let { it.isModified() || myPythonConsolePanel?.isModified == true } == true
 
   override fun apply() {
     myPanel?.apply()
+    myPythonConsolePanel?.apply()
   }
 
   override fun reset() {
     myPanel?.reset()
+    myPythonConsolePanel?.reset()
   }
 
   override fun disposeUIResources() {
     myPanel = null
+    myPythonConsolePanel?.disposeUIResources()
+    myPythonConsolePanel = null
+    super.disposeUIResources()
   }
 
   private fun createPanel(): DialogPanel {
     val consoleOptions = PyConsoleOptions.getInstance(myProject)
+    val pythonConsolePanel = PyConsoleSpecificOptionsPanel(myProject)
+    myPythonConsolePanel = pythonConsolePanel
+    val pythonConsole = pythonConsolePanel.createPanel(consoleOptions.pythonConsoleSettings)
     return panel {
-      group(PyBundle.message("form.console.options.settings.title.system.settings")) {
-        row {
-          @Suppress("DialogTitleCapitalization") // 'Debug Console' in text is a name and properly capitalized.
-          checkBox(PyBundle.message("form.console.options.always.show.debug.console"))
-            .bindSelected(consoleOptions::isShowDebugConsoleByDefault)
-        }
-        row {
-          checkBox(PyBundle.message("form.console.options.use.ipython.if.available"))
-            .bindSelected(consoleOptions::isIpythonEnabled)
-        }
-        row {
-          checkBox(PyBundle.message("form.console.options.show.console.variables.by.default"))
-            .bindSelected(consoleOptions::isShowVariableByDefault)
-        }
-        row {
-          checkBox(PyBundle.message("form.console.options.use.existing.console.for.run.with.python.console"))
-            .bindSelected(consoleOptions::isUseExistingConsole)
-        }
-        row {
-          checkBox(PyBundle.message("form.console.options.use.command.queue"))
-            .bindSelected(consoleOptions::isCommandQueueEnabled)
-        }
-        row(PyBundle.message("form.console.options.code.completion")) {
-          comboBox(CodeCompletionOption.entries)
-            .bindItem({ consoleOptions.codeCompletionOption }, { if (it != null) consoleOptions.codeCompletionOption = it })
-        }
+      row {
+        checkBox(PyBundle.message("form.console.options.use.ipython.if.available"))
+          .bindSelected(consoleOptions::isIpythonEnabled)
       }
+      row {
+        checkBox(PyBundle.message("form.console.options.show.console.variables.by.default"))
+          .bindSelected(consoleOptions::isShowVariableByDefault)
+      }
+      row {
+        checkBox(PyBundle.message("form.console.options.use.existing.console.for.run.with.python.console"))
+          .bindSelected(consoleOptions::isUseExistingConsole)
+      }
+      row {
+        checkBox(PyBundle.message("form.console.options.use.command.queue"))
+          .bindSelected(consoleOptions::isCommandQueueEnabled)
+      }
+      row(PyBundle.message("form.console.options.code.completion")) {
+        comboBox(CodeCompletionOption.entries)
+          .bindItem({ consoleOptions.codeCompletionOption }, { if (it != null) consoleOptions.codeCompletionOption = it })
+      }
+      row {
+        cell(pythonConsole).align(Align.FILL)
+      }.resizableRow()
     }
   }
 
