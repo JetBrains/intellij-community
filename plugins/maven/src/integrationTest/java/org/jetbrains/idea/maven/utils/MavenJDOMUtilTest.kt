@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.utils
 
-import com.intellij.idea.IJIgnore
 import com.intellij.maven.testFramework.fixtures.createProjectSubFile
 import com.intellij.maven.testFramework.fixtures.mavenFixture
 import com.intellij.maven.testFramework.fixtures.projectPath
@@ -29,7 +28,6 @@ import org.junit.jupiter.api.fail
 import java.io.IOException
 import java.nio.file.Files
 
-@IJIgnore(issue = "IDEA-386161")
 @TestApplication
 class MavenJDOMUtilTest {
   private val maven by mavenFixture()
