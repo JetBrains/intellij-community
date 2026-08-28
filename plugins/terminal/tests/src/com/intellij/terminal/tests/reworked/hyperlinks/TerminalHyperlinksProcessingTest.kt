@@ -27,6 +27,7 @@ import com.intellij.terminal.frontend.view.hyperlinks.HYPERLINKS_OUTPUT_MODEL_FL
 import com.intellij.terminal.frontend.view.hyperlinks.installHyperlinksProcessing
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil
 import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.AwaitCancellationAndInvoke
@@ -353,7 +354,7 @@ internal class TerminalHyperlinksProcessingTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `many links, slow filter, several updates`() = withFixture {
+  fun `many links, slow filter, several updates`() = withFixture(timeout = SLOW_FILTER_TEST_TIMEOUT) {
     filter.delayPerLine = 1
     updateModel(0L, generateLines(0, 499, links = (0..499).toList()))
     delay(OUTPUT_MODEL_FLUSH_AWAIT_DELAY)
@@ -395,7 +396,7 @@ internal class TerminalHyperlinksProcessingTest : BasePlatformTestCase() {
 
   @Test
   fun `link trimming, slow filter, just started`() {
-    withFixture {
+    withFixture(timeout = SLOW_FILTER_TEST_TIMEOUT) {
       filter.delayPerLine = 1
       updateModel(0L, generateLines(0, 499, links = (0..499).toList()))
       delay(100.milliseconds)
@@ -410,7 +411,7 @@ internal class TerminalHyperlinksProcessingTest : BasePlatformTestCase() {
 
   @Test
   fun `link trimming, slow filter, partially done`() {
-    withFixture {
+    withFixture(timeout = SLOW_FILTER_TEST_TIMEOUT) {
       filter.delayPerLine = 1
       updateModel(0L, generateLines(0, 499, links = (0..499).toList()))
       delay(400.milliseconds)
@@ -641,8 +642,9 @@ internal class TerminalHyperlinksProcessingTest : BasePlatformTestCase() {
     }
   }
 
-  private fun withFixture(test: suspend Fixture.() -> Unit) =
+  private fun withFixture(timeout: Duration = DEFAULT_TEST_TIMEOUT, test: suspend Fixture.() -> Unit) =
     timeoutRunBlocking(
+      timeout = timeout,
       context = Dispatchers.EDT + ModalityState.any().asContextElement(),
       coroutineName = "BackendTerminalHyperlinkHighlighterTest"
     ) {
@@ -1006,6 +1008,11 @@ private val HIGHLIGHT4 =
 private const val MAX_LENGTH = 10000 // filters are processed in 200-line chunks, this should be enough to have multiple chunks
 
 private val OUTPUT_MODEL_FLUSH_AWAIT_DELAY: Duration = HYPERLINKS_OUTPUT_MODEL_FLUSH_DELAY * 2
+
+// The test's fake filter simulates slowness with Thread.sleep(delayPerLine) on every line, thousands of times for the
+// largest scenarios here. Windows' OS timer resolution (~15.6 ms) can round each 1 ms sleep up by an order of
+// magnitude, especially on a loaded/virtualized CI agent, so DEFAULT_TEST_TIMEOUT (10s) isn't enough headroom.
+private val SLOW_FILTER_TEST_TIMEOUT: Duration = DEFAULT_TEST_TIMEOUT * 6
 
 private fun String.indexOfSingle(substring: String): Int {
   val indexOfFirst = indexOf(substring)
