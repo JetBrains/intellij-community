@@ -81,14 +81,16 @@ named editor action.
 
 **Limited.** Templates support the `TemplateBuilder`-style subset only. `ModUpdateReferences` /
 `trackDeclaration` covers the suggested-refactoring path, not a real change-signature. The member
-chooser lacks extras of the Swing `MemberChooser` (e.g. no 'copy javadoc' button).
+chooser is an `OptPane` (via `ModEditOptions`) built around the `OptMultiSelector` control, so it can
+carry any supported `OptPane` control — checkboxes and the like — but not arbitrary Swing widgets.
+A `ModEditOptions` options form runs in the IDE only. An LSP client cannot show it.
 `ModUpdateSystemOptions` is `@ApiStatus.Experimental`.
 
-**Not supported — do not convert a fix that needs these.** Arbitrary UI dialogs (apart from the modeled
-Rename UI, chooser, options form, or conflicts list); project model / Gradle / Maven / SDK /
-language-level configuration; multi-step refactoring engines; **adding** a new Java external annotation
-(`ModCommandAwareExternalAnnotationsManager` edits and removes only, because adding may require
-configuring an annotation root); launching external programs.
+**Not supported — do not convert a fix that needs these.** Arbitrary UI dialogs — anything beyond the
+modeled Rename UI, chooser, `ModEditOptions` options form (which carries only simple controls with simple
+interactions between them), or conflicts list; project model / Gradle / Maven / SDK / language-level
+configuration that `OptionControllerProvider` cannot model as plain read/write properties; multi-step
+refactoring engines; launching external programs.
 
 ## Execution modes
 
@@ -117,18 +119,3 @@ Two consequences worth designing around:
 
 You do not need to special-case a chooser with a single option: it is executed directly without showing
 UI.
-
-## Renamed and removed API
-
-These spellings no longer exist, but still turn up in older code and write-ups:
-
-| Gone | Use instead |
-|---|---|
-| `ModCommands` facade (`ModCommands.psiUpdate`) | `ModCommand.psiUpdate` — every static lives on `ModCommand` |
-| `ModChooseMember` | `ModCommand.chooseMultipleMembers`, backed by `ModEditOptions` |
-| `asQuickFix()` | `LocalQuickFix.from(ModCommandAction)` (`asIntention()` still exists) |
-| `ModPsiNavigator`, `ModPsiNavigator.fromEditor` | `ModNavigator` (`com.intellij.openapi.editor`); adapt with `editor.asModNavigator()` |
-
-Newer additions, in case a write-up says they are missing: `ModOpenUrl` / `ModCommand.openUrl` (opening a
-browser **is** supported), `ModMoveFile`, `ModLaunchEditorAction`, `ModRegisterTabOut` and
-`LocalQuickFixWithModCommandFallback`.

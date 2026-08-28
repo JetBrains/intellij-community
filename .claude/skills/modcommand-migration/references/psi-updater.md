@@ -1,6 +1,7 @@
 # Working inside `psiUpdate`
 
-`ModCommand.psiUpdate` is how nearly every converted fix is written. It:
+`ModCommand.psiUpdate` is how most converted fixes are written — roughly 90–95%; the rest merely show a
+message, navigate, copy to clipboard, update a system option, and the like. It:
 
 1. creates a **non-physical copy** of the file containing the element,
 2. calls your lambda with a copy of that element (and, optionally, a `ModPsiUpdater`),
@@ -44,6 +45,12 @@ record ActionContext(Project project, PsiFile file, int offset, TextRange select
 extends `ModNavigator`. It has a notion of a **current file** — the file of the starting element — and
 several methods retarget it if you pass an element from a different file.
 
+`ModNavigator` is the small, shared set of navigation/editor operations that lets one utility method
+serve both worlds: new callers pass the `ModPsiUpdater` they already hold, and old callers holding a real
+`Editor` adapt it with `Editor.asModNavigator()`. So when a public helper needs only those operations,
+type its parameter as `ModNavigator` to keep supporting `Editor`-based callers (see the
+`FixDocCommentAction` example at the end of this file).
+
 ### Reaching other files
 
 ```java
@@ -60,14 +67,25 @@ too, but the copy only supports creating new files inside it.
 ### Editor state (all no-ops in batch — never branch on `isOnTheFly`)
 
 ```java
-void moveCaretTo(int offset);  void moveCaretTo(PsiElement element);  int getCaretOffset();
+void moveCaretTo(int offset);  void moveCaretTo(PsiElement element);
 void select(TextRange range);  void select(PsiElement element);
 void highlight(PsiElement element);  void highlight(PsiElement, TextAttributesKey);
 void highlight(TextRange, TextAttributesKey);
-Document getDocument();  // the writable copy's document
 ```
 
 Offsets are adjusted automatically if you keep editing after positioning the caret.
+
+### Query methods
+
+These only read state, so they work in every mode — unlike the editor-state calls above they are not
+no-ops in batch:
+
+```java
+int getCaretOffset();    // current caret; initial value from ActionContext, else 0
+Document getDocument();  // the writable copy's document
+PsiFile getPsiFile();    // the current (writable copy) file
+Project getProject();
+```
 
 ### Interactive follow-ups
 
@@ -117,7 +135,9 @@ usually 1–3 lines where the old code needed an `Editor`, a PSI commit and a ph
 
 Inside the lambda everything is non-physical, so old physicality checks are meaningless:
 
-- `isPhysical()` branches — delete them. If the branch existed for intention preview, it is redundant now.
+- `isPhysical()` branches — delete them. If the branch existed for intention preview, it is redundant now;
+  when you genuinely still need to detect preview, call `IntentionPreviewUtils.isIntentionPreviewActive()`
+  (`com.intellij.codeInsight.intention.preview.IntentionPreviewUtils`) rather than an `isPhysical()` check.
 - "is this element synthetic?" → `element instanceof SyntheticElement`
 - "was this created by a factory, detached from a file?" →
   `element.getContainingFile() instanceof DummyHolder`
@@ -176,13 +196,17 @@ and `SpringUpdateSchemaIntention.updateSchema`
 | Forbidden | Instead |
 |---|---|
 | `WriteCommandAction`, `WriteAction`, `CommandProcessor` | nothing — the executor owns the write action |
-| `doPostponedOperationsAndUnblockDocument` | nothing — `psiUpdate` unblocks the copy for you at the end |
-| `preparePsiElementForWrite`, `FileModificationService` | `updater.getWritable` |
+| `preparePsiElementForWrite`, `FileModificationService` | nothing — just drop the check; the executor unlocks every changed file itself before applying (`ModCommandBatchExecutorImpl#ensureWritable`). Obtaining a *writable copy* of an element is a separate concern — `updater.getWritable` |
 | `Editor`, `FileEditorManager`, `DataContext`, `CommonDataKeys` | `ActionContext` in, `ModPsiUpdater` out |
-| `editor.getDocument()` | `element.getContainingFile().getFileDocument()` |
+| `editor.getDocument()` | `element.getContainingFile().getFileDocument()`, or `updater.getDocument()` for the single-file case |
 | `TemplateManager` + `TemplateBuilder` + editor | `updater.templateBuilder()` |
 | `RefactoringUI`/`DialogWrapper`/`showAndGet` | a chooser, `ModEditOptions`, `showConflicts` — or do not convert |
 | balloons / `HintManager` | `updater.message` or `updater.cancel` |
+
+`doPostponedOperationsAndUnblockDocument` is **not** forbidden on the non-physical copy: calling it at the
+very end of `psiUpdate` is useless (the framework unblocks the copy for you), but it is legitimate
+in-between — e.g. to do one part of the change through PSI, unblock, then finish the rest through the
+document directly.
 
 A shared helper that legitimately needs to write to an editor can take `ModNavigator` instead of
 `Editor`; callers holding a real editor pass `editor.asModNavigator()`. Real example:

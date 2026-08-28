@@ -67,8 +67,6 @@ Leave these as `LocalQuickFix`. Trying to force them through the ModCommand API 
 - **refactoring engines without a corresponding ModCommand** — `SafeDeleteProcessor`, full
   change-signature, extract-method. Standard rename is modeled by `ModStartRename`; the narrow
   'suggested refactoring' case is available via `ModPsiUpdater.trackDeclaration`
-- **adding** a new Java external annotation — `ModCommandAwareExternalAnnotationsManager` can edit and
-  remove, not add, because adding may need an annotation root (project model + UI)
 - **launching external programs**
 
 Optionally give such a fix a reduced ModCommand path for headless clients by implementing

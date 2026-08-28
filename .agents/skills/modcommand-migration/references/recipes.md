@@ -159,7 +159,8 @@ build an empty map when there are no messages; a non-empty map containing an emp
 
 `ModCommand.chooseAction` + `ModCommand.psiUpdateStep`. Each option is a child `ModCommandAction`, gets
 its own preview, and can highlight what it will affect via `Presentation.withHighlighting` — which
-`psiUpdateStep`'s `range` argument sets up for you.
+`psiUpdateStep`'s `range` argument sets up for you. `psiUpdateStep` is only a convenience factory,
+though; when it does not fit, build the child `ModCommandAction`s by hand instead.
 
 ```java
 List<ModCommandAction> actions = ContainerUtil.map(declarations, var -> ModCommand.psiUpdateStep(
