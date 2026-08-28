@@ -13,10 +13,9 @@ import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFsError
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
-import com.intellij.platform.ijent.IjentCalledContextElement
+import com.intellij.platform.ijent.IjentCallerContextElement
 import com.intellij.platform.ijent.IjentCallerContext
 import com.intellij.platform.ijent.allowCancellableNio
-import com.intellij.platform.ijent.unavailableDialogTimeout
 import com.intellij.util.IntelliJCoroutinesFacade
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
@@ -89,8 +88,9 @@ fun <T> EelDescriptor.fsBlocking(body: suspend () -> T): T {
   // Deployers that may need user interaction (SSH) fail fast when triggered from inside this call
   // instead of deadlocking: see com.intellij.platform.ijent.throwIfInsideIjentFsBlocking.
   return IntelliJCoroutinesFacade.runAndCompensateParallelism(500.milliseconds) {
-    fsBlockingWithoutParallelismCompensation {
-      showModalDialogOnTimeout(this, IjentCallerContext.computeCallerContext().unavailableDialogTimeout()) {
+    val callerContext = IjentCallerContext.computeCallerContext()
+    fsBlockingWithoutParallelismCompensation(callerContext) {
+      showModalDialogOnTimeout(this, callerContext) {
         body()
       }
     }
@@ -102,23 +102,23 @@ fun IjentCallerContext.Companion.computeCallerContext(): IjentCallerContext {
   return IjentCallerContext(
     isRead = application.isReadAccessAllowed,
     isWrite = application.isWriteAccessAllowed,
-    isDispatchThread = application.isDispatchThread
+    isDispatchThread = application.isDispatchThread,
+    reconnectUi = ReconnectUiHandleImpl(),
   )
 }
 
 @Suppress("RAW_RUN_BLOCKING")
 @VisibleForTesting
 @ApiStatus.Internal
-fun <T> fsBlockingWithoutParallelismCompensation(body: suspend (IjentCallerContext) -> T): T {
-  val callerContext = IjentCallerContext.computeCallerContext()
+fun <T> fsBlockingWithoutParallelismCompensation(callerContext: IjentCallerContext, body: suspend (IjentCallerContext) -> T): T {
   if (callerContext.allowCancellableNio()) {
     return prepareThreadContext { ctx ->
-      runBlocking(ctx + IjentCalledContextElement(callerContext) + NestedBlockingEventLoop(Thread.currentThread())) {
+      runBlocking(ctx + IjentCallerContextElement(callerContext) + NestedBlockingEventLoop(Thread.currentThread())) {
         body(callerContext)
       }
     }
   }
-  return runBlocking(IjentCalledContextElement(callerContext) + NestedBlockingEventLoop(Thread.currentThread())) {
+  return runBlocking(IjentCallerContextElement(callerContext) + NestedBlockingEventLoop(Thread.currentThread())) {
     body(callerContext)
   }
 }

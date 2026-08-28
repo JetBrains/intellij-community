@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test
 class IjentCoroutinesUtilTest {
   @Test
   fun `throws when the caller blocks EDT`(): Unit = runBlocking {
-    val element = IjentCalledContextElement(IjentCallerContext(isRead = false, isWrite = false, isDispatchThread = true))
+    val element = IjentCallerContextElement(IjentCallerContext(isRead = false, isWrite = false, isDispatchThread = true, reconnectUi = MockReconnectUiHandle))
     withContext(element) {
       val err = shouldThrow<IllegalStateException> {
         throwIfInsideIjentFsBlocking()
@@ -27,7 +27,7 @@ class IjentCoroutinesUtilTest {
 
   @Test
   fun `throws when the caller is a background thread`(): Unit = runBlocking {
-    val element = IjentCalledContextElement(IjentCallerContext(isRead = true, isWrite = false, isDispatchThread = false))
+    val element = IjentCallerContextElement(IjentCallerContext(isRead = true, isWrite = false, isDispatchThread = false, reconnectUi = MockReconnectUiHandle))
     withContext(element) {
       shouldThrow<IllegalStateException> {
         throwIfInsideIjentFsBlocking()
@@ -41,4 +41,8 @@ class IjentCoroutinesUtilTest {
       throwIfInsideIjentFsBlocking()
     }
   }
+}
+
+object MockReconnectUiHandle : ReconnectUiHandle {
+  override fun requestDialogImmediately(): ReconnectUiDialog = throw UnsupportedOperationException()
 }

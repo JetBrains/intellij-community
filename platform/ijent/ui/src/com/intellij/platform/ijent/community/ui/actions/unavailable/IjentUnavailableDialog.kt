@@ -29,6 +29,7 @@ import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandler
 import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandlerResult
 import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandlerResult.ProjectCloseDecision
 import com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandlerResult.UnrelatedIjent
+import com.intellij.platform.ijent.community.impl.nio.ReconnectUiDialogImpl
 import com.intellij.platform.ijent.community.ui.actions.IjentImplBundle
 import com.intellij.platform.ijent.community.ui.actions.dashboard.IjentStatDashboard
 import com.intellij.platform.ijent.community.ui.actions.dashboard.printTable
@@ -62,7 +63,7 @@ import kotlin.time.Duration.Companion.seconds
 
 private class EdtOnceTask : OnceTask<ProjectCloseDecision>() {
   override suspend fun <R> executeUnderLockIfNotAlreadyAcquired(f: suspend () -> R): R {
-    return if (IjentCallerContext.getSaved()?.isDispatchThread == true) {
+    return if (checkNotNull(IjentCallerContext.getSaved()).isDispatchThread) {
       check(ApplicationManager.getApplication().isDispatchThread)
       f()
     }
@@ -102,7 +103,7 @@ internal class NotRespondingFilesystemDialogService {
 }
 
 internal class IjentUnavailableDialogHandler : IjentUnavailableHandler {
-  override suspend fun showModalDialog(eelDescriptor: EelDescriptor): IjentUnavailableHandlerResult {
+  override suspend fun showModalDialog(eelDescriptor: EelDescriptor, uiHandle: ReconnectUiDialogImpl): IjentUnavailableHandlerResult {
     val activeProject = ProjectUtil.getActiveProject()
     val projectsToClose = ProjectManager.getInstance().openProjects.filter {
       it.getEelDescriptor() == eelDescriptor

@@ -22,8 +22,8 @@ import com.intellij.platform.eel.fs.WalkDirectoryEntryResult
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.ijent.IjentApi
-import com.intellij.platform.ijent.IjentCalledContextElement
 import com.intellij.platform.ijent.IjentCallerContext
+import com.intellij.platform.ijent.IjentCallerContextElement
 import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.IjentWindowsApi
@@ -44,6 +44,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * A wrapper for [IjentFileSystemApi] that launches a new IJent through [delegateFactory] if an operation
@@ -100,7 +101,7 @@ private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
   private val delegate = AtomicReference<Deferred<I>?>(null)
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  private fun getDelegate(): Deferred<I> =
+  private fun getDelegate(callerContext: IjentCallerContextElement?): Deferred<I> =
     delegate.updateAndGet { oldDelegate ->
       if (
         oldDelegate != null && (
@@ -111,25 +112,26 @@ private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
       )
         oldDelegate
       else
-        coroutineScope.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
+        coroutineScope.async(Dispatchers.IO + (callerContext ?: EmptyCoroutineContext), start = CoroutineStart.LAZY) {
           @Suppress("UNCHECKED_CAST")
           descriptor.toEelApi() as I
         }
     }!!
 
   suspend fun <R> withDelegateRetrying(block: suspend F.() -> R): R {
+    val callerContext = IjentCallerContext.getSavedElement()
     if (isIjentInitialized?.invoke() == false) {
-      checkEarlyAccess()
+      checkEarlyAccess(callerContext)
     }
 
     return try {
-      withDelegateFirstAttempt(block)
+      withDelegateFirstAttempt(callerContext, block)
     }
     catch (err: Throwable) {
       val unwrapped = IjentUnavailableException.unwrapFromCancellationExceptions(err)
       if (unwrapped is IjentUnavailableException.CommunicationFailure) {
         // TODO There must be a request ID, in order to ensure in idempotency of mutating calls.
-        withDelegateSecondAttempt(block)
+        withDelegateSecondAttempt(callerContext, block)
       }
       else {
         throw unwrapped
@@ -137,8 +139,8 @@ private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
     }
   }
 
-  private suspend fun awaitDelegate(): I {
-    val delegate = getDelegate()
+  private suspend fun awaitDelegate(callerContext: IjentCallerContextElement?): I {
+    val delegate = getDelegate(callerContext)
     if (deploymentMayRequireUserInteraction && !delegate.isCompleted && isIjentInitialized?.invoke() != true) {
       // A deployment is about to start (or is in flight) in a detached scope that does not inherit
       // the caller's coroutine context, so the awaiting side performs the check (IJPL-245001).
@@ -149,17 +151,17 @@ private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
   }
 
   /** The function exists just to have a special marker in stacktraces. */
-  private suspend fun <R> withDelegateFirstAttempt(block: suspend F.() -> R): R =
-    @Suppress("UNCHECKED_CAST") (awaitDelegate().fs as F).block()
+  private suspend fun <R> withDelegateFirstAttempt(callerContext: IjentCallerContextElement?, block: suspend F.() -> R): R =
+    @Suppress("UNCHECKED_CAST") (awaitDelegate(callerContext).fs as F).block()
 
   /** The function exists just to have a special marker in stacktraces. */
-  private suspend fun <R> withDelegateSecondAttempt(block: suspend F.() -> R): R =
+  private suspend fun <R> withDelegateSecondAttempt(callerContext: IjentCallerContextElement?, block: suspend F.() -> R): R =
     IjentUnavailableException.unwrapFromCancellationExceptions {
-      @Suppress("UNCHECKED_CAST") (awaitDelegate().fs as F).block()
+      @Suppress("UNCHECKED_CAST") (awaitDelegate(callerContext).fs as F).block()
     }
 }
 
-private suspend fun checkEarlyAccess() {
+private fun checkEarlyAccess(callerContext: IjentCallerContextElement?) {
   val application = ApplicationManagerEx.getApplicationEx()
   if (application?.isUnitTestMode != false) {
     return
@@ -170,8 +172,7 @@ private suspend fun checkEarlyAccess() {
     return
   }
 
-  val callerContext = IjentCallerContext.getSaved() ?: IjentCallerContext.computeCallerContext()
-  if (!callerContext.isDispatchThread) {
+  if (!(callerContext?.callerContext ?: IjentCallerContext.computeCallerContext()).isDispatchThread) {
     return
   }
 
@@ -393,7 +394,7 @@ private class IjentFailSafeFileSystemWindowsApiImpl(
   override val user: EelUserWindowsInfo by lazy {
     // A plain runBlocking would carry no IjentCalledContextElement; capture the thread state (EDT, locks)
     // afresh so that awaitDelegate can detect a deployment awaited from a blocking call (IJPL-245001).
-    runBlocking(IjentCalledContextElement(IjentCallerContext.computeCallerContext())) {
+    runBlocking(IjentCallerContextElement(IjentCallerContext.computeCallerContext())) {
       holder.withDelegateRetrying { user }
     }
   }

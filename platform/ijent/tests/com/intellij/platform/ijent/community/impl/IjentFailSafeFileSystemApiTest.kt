@@ -4,8 +4,9 @@ package com.intellij.platform.ijent.community.impl
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.ijent.IjentCalledContextElement
 import com.intellij.platform.ijent.IjentCallerContext
+import com.intellij.platform.ijent.IjentCallerContextElement
+import com.intellij.platform.ijent.MockReconnectUiHandle
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import io.kotest.assertions.throwables.shouldThrow
@@ -46,8 +47,8 @@ class IjentFailSafeFileSystemApiTest {
     scope.cancel()
   }
 
-  private fun fsBlockingMarker(): IjentCalledContextElement =
-    IjentCalledContextElement(IjentCallerContext(isRead = false, isWrite = false, isDispatchThread = true))
+  private fun fsBlockingMarker(): IjentCallerContextElement =
+    IjentCallerContextElement(IjentCallerContext(isRead = false, isWrite = false, isDispatchThread = true, reconnectUi = MockReconnectUiHandle))
 
   private suspend fun IjentFileSystemApi.touch() {
     (this as IjentFileSystemPosixApi).listDirectory(EelPath.parse("/", descriptor))

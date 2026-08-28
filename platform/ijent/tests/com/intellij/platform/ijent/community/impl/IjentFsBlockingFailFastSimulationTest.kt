@@ -4,6 +4,7 @@ package com.intellij.platform.ijent.community.impl
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.ijent.community.impl.nio.fsBlocking
 import com.intellij.platform.ijent.community.impl.nio.fsBlockingWithoutParallelismCompensation
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.testFramework.junit5.TestApplication
@@ -59,7 +60,7 @@ class IjentFsBlockingFailFastSimulationTest {
     ) as IjentFileSystemPosixApi
 
   private fun listRootThroughFsBlocking(fs: IjentFileSystemPosixApi) {
-    fsBlockingWithoutParallelismCompensation {
+    fs.fsBlocking {
       fs.listDirectory(EelPath.parse("/", descriptor))
     }
   }
