@@ -71,7 +71,7 @@ abstract class ProjectViewPaneService(
 
   private suspend fun describe(pane: ProjectViewPaneModel): ProjectViewPaneDescriptorImpl {
     val builder = ProjectViewPaneDescriptorBuilderImpl()
-    builder.isFrontend = isFrontend
+    builder.kind = if (isFrontend) ProjectViewPaneKind.LIGHT else ProjectViewPaneKind.BACKEND
     val descriptor = pane.describe(builder)
     return descriptor as ProjectViewPaneDescriptorImpl
   }

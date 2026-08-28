@@ -12,6 +12,7 @@ import com.intellij.platform.projectView.pane.FrontendProjectViewPaneAggregator
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
+import com.intellij.platform.projectView.pane.ProjectViewPaneKind
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
 import com.intellij.platform.projectView.pane.SelectInRequestDTO
@@ -72,29 +73,44 @@ internal class FrontendProjectViewPaneAggregatorImpl(
   }
 
   override suspend fun getPaneStateFlow(paneDescriptor: ProjectViewPaneDescriptorImpl): Flow<ProjectViewPaneStateEvent> {
-    return if (paneDescriptor.isFrontend) {
-      frontendService().getPaneStateFlow(paneDescriptor.id)
-    }
-    else {
-      backendService().getPaneStateFlow(project.projectId(), paneDescriptor.id).map { it.toEvent() }
+    return when (paneDescriptor.kind) {
+      ProjectViewPaneKind.LIGHT -> {
+        frontendService().getPaneStateFlow(paneDescriptor.id)
+      }
+      ProjectViewPaneKind.BACKEND -> {
+        backendService().getPaneStateFlow(project.projectId(), paneDescriptor.id).map { it.toEvent() }
+      }
+      ProjectViewPaneKind.UI_ONLY -> {
+        TODO("Not implemented yet")
+      }
     }
   }
 
   override suspend fun getPaneRequestChannel(paneDescriptor: ProjectViewPaneDescriptorImpl): SendChannel<ProjectViewPaneRequest> {
-    return if (paneDescriptor.isFrontend) {
-      frontendService().getPaneRequestChannel(paneDescriptor.id)
-    }
-    else {
-      backendService().getPaneRequestChannel(project.projectId(), paneDescriptor.id)
+    return when (paneDescriptor.kind) {
+      ProjectViewPaneKind.LIGHT -> {
+        frontendService().getPaneRequestChannel(paneDescriptor.id)
+      }
+      ProjectViewPaneKind.BACKEND -> {
+        backendService().getPaneRequestChannel(project.projectId(), paneDescriptor.id)
+      }
+      ProjectViewPaneKind.UI_ONLY -> {
+        TODO("Not implemented yet")
+      }
     }
   }
 
   override suspend fun findNodeForOpenedFile(paneDescriptor: ProjectViewPaneDescriptorImpl, editorChoice: EditorChoice, isInvokedManually: Boolean): ProjectViewNodePath? {
-    return if (paneDescriptor.isFrontend) {
-      frontendService().findNodeForOpenedFile(paneDescriptor.id, editorChoice, isInvokedManually)
-    }
-    else {
-      backendService().findNodeForOpenedFile(project.projectId(), paneDescriptor.id, editorChoice, isInvokedManually)
+    return when (paneDescriptor.kind) {
+      ProjectViewPaneKind.LIGHT -> {
+        frontendService().findNodeForOpenedFile(paneDescriptor.id, editorChoice, isInvokedManually)
+      }
+      ProjectViewPaneKind.BACKEND -> {
+        backendService().findNodeForOpenedFile(project.projectId(), paneDescriptor.id, editorChoice, isInvokedManually)
+      }
+      ProjectViewPaneKind.UI_ONLY -> {
+        TODO("Not implemented yet")
+      }
     }
   }
 
