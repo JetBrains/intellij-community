@@ -534,7 +534,8 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     if (fragmentData == null) return null;
     final int offset = fragmentData.getSecond().getOffset();
 
-    final PsiElement target = fragmentData.getFirst().getContainingFile().getViewProvider().findElementAt(offset);
+    final PsiElement target =
+      JavaDocFragmentAnchorCacheKt.getMaybeSourceClass(fragmentData.getFirst()).getContainingFile().getViewProvider().findElementAt(offset);
     if (!(target instanceof PsiDocToken)) return null;
 
     return new PsiSymbolReference() {

@@ -5,6 +5,8 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.impl.compiled.ClsClassImpl
 import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.javadoc.PsiDocFragmentName
 import com.intellij.psi.util.CachedValueProvider.Result
@@ -28,10 +30,11 @@ private class JavaDocFragmentCacheService {
   fun getAnchors(project: Project, psiClass: PsiClass): LinkedHashSet<JavaDocFragmentData> {
     val manager = CachedValuesManager.getManager(project)
     return manager.getCachedValue(psiClass) {
+      val targetClass = getMaybeSourceClass(psiClass)
       val result = LinkedHashSet<JavaDocFragmentData>().apply {
-        addAll(findIdsFromComment(psiClass.docComment))
-        for (method in psiClass.methods) addAll(findIdsFromComment(method.docComment))
-        for (field in psiClass.fields) addAll(findIdsFromComment(field.docComment))
+        addAll(findIdsFromComment(targetClass.docComment))
+        for (method in targetClass.methods) addAll(findIdsFromComment(method.docComment))
+        for (field in targetClass.fields) addAll(findIdsFromComment(field.docComment))
       }
       Result.create(result, PsiModificationTracker.MODIFICATION_COUNT)
     }
@@ -78,4 +81,15 @@ fun resolveJavaDocFragment(project: Project, fragmentName: PsiDocFragmentName): 
              ?: return null
 
   return psiClass to data
+}
+
+/** Returns the source class if available for a given compiled class */
+fun getMaybeSourceClass(clazz: PsiClass): PsiClass {
+  if (clazz is ClsClassImpl) {
+    val navigationClass: PsiElement = clazz.getNavigationElement()
+    if (navigationClass is PsiClass) {
+      return navigationClass
+    }
+  }
+  return clazz
 }
