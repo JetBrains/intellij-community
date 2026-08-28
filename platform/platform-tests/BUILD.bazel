@@ -66,6 +66,7 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/eel-impl",
         "//plugins/jcef/plugin",
+        "//platform/platform-impl/jcef",
     ],
 )
 
@@ -111,6 +112,7 @@ jvm_library(
         "//platform/platform-impl/internal:internal_test_lib",
         "//platform/platform-impl/ui:ui_test_lib",
         "//plugins/jcef/plugin:plugin_test_lib",
+        "//platform/platform-impl/jcef:jcef_test_lib",
         "//platform/platform-impl/bootstrap/eel:eel_test_lib",
         "//platform/platform-impl/update-checker:update-checker_test_lib",
         "//platform/platform-impl/eel:ide-impl-wsl_test_lib",
