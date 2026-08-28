@@ -49,6 +49,19 @@ object StandardKotlinNames {
         @JvmField val plusAssign: CallableId = CallableId(BASE_COLLECTIONS_PACKAGE, Name.identifier("plusAssign"))
         @JvmField val minusAssign: CallableId = CallableId(BASE_COLLECTIONS_PACKAGE, Name.identifier("minusAssign"))
 
+        @JvmField val mutableFactories: List<CallableId> = listOf(
+            "mutableListOf",
+            "arrayListOf",
+            "mutableSetOf",
+            "hashSetOf",
+            "linkedSetOf",
+            "sortedSetOf",
+            "mutableMapOf",
+            "hashMapOf",
+            "linkedMapOf",
+            "sortedMapOf",
+        ).map { CallableId(BASE_COLLECTIONS_PACKAGE, Name.identifier(it)) }
+
         @JvmField val transformations: List<FqName> =
             collectionTransformationFunctionNames.map { BASE_COLLECTIONS_PACKAGE + it }
 

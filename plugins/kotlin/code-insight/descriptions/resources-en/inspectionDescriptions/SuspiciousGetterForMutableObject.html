@@ -1,0 +1,53 @@
+<html>
+<body>
+Reports property getters that return a new mutable object on each access.
+<p>
+A property that holds a mutable object normally keeps one object. Every caller then reads and changes that same object.
+</p>
+<p>
+A getter breaks this. It runs again on each access and returns a new object, so a caller changes an object that no other caller reads.
+</p>
+<p>
+The inspection covers the coroutine objects <code>Job</code>, <code>SupervisorJob</code>,
+<code>CompletableDeferred</code>, <code>CoroutineScope</code>, <code>MainScope</code>,
+<code>MutableStateFlow</code>, <code>MutableSharedFlow</code>, <code>Channel</code>,
+<code>Mutex</code> and <code>Semaphore</code>.
+</p>
+<p>
+It also covers a mutable collection factory such as <code>mutableListOf</code> or <code>mutableMapOf</code>.
+</p>
+<p>Example:</p>
+<pre><code>
+  class Service {
+      val job get() = Job()
+      val items get() = mutableListOf&lt;String&gt;()
+
+      fun add(value: String) {
+          items.add(value) // lost: this writes to a new list
+      }
+
+      fun stop() {
+          job.cancel() // no effect: this cancels a new job
+      }
+  }
+</code></pre>
+<p>To share one object, declare the property with an initializer:</p>
+<pre><code>
+  class Service {
+      val job = Job()
+      val items = mutableListOf&lt;String&gt;()
+
+      fun add(value: String) {
+          items.add(value)
+      }
+
+      fun stop() {
+          job.cancel()
+      }
+  }
+</code></pre>
+<p>
+If you want a factory, use a function instead. A name such as <code>newJob()</code> shows the intent to the caller.
+</p>
+</body>
+</html>

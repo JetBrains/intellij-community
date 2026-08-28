@@ -1,0 +1,9 @@
+// WITH_COROUTINES
+// PROBLEM: Getter returns a new 'MutableSharedFlow' on each access
+// FIX: Convert property getter to initializer
+
+import kotlinx.coroutines.flow.MutableSharedFlow
+
+class Service {
+    val events <caret>get() = MutableSharedFlow<Int>()
+}

@@ -1,0 +1,9 @@
+// WITH_COROUTINES
+// PROBLEM: Getter returns a new 'MainScope' on each access
+// FIX: Convert property getter to initializer
+
+import kotlinx.coroutines.MainScope
+
+class Service {
+    val scope <caret>get() = MainScope()
+}
