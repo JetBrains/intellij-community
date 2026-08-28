@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.python.junit5Tests.framework.metaInfo.Repository
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
-import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.junit5.fixture.moduleInProjectFixture
@@ -28,7 +27,6 @@ import kotlin.time.Duration.Companion.minutes
  * the workspace project and primary module, while the annotation still supplies the mock SDK and [CodeInsightTestFixture].
  */
 @TestClassInfo(Repository.PY_COMMUNITY)
-@TestDataPath($$"$CONTENT_ROOT/../testData/junit5/showcase/multimodule")
 @PyCodeInsightTestApplication
 @Subsystems.CodeInsight
 @Layers.Functional

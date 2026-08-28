@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python;
+package com.jetbrains.python.tools.sdkTools;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,7 +11,9 @@ import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.python.community.helpersLocator.PythonHelpersLocator;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
@@ -47,7 +49,7 @@ public final class PythonMockSdk {
   }
 
   public static @NotNull Sdk create(@NotNull LanguageLevel level, VirtualFile @NotNull ... additionalRoots) {
-    return create(PythonTestUtil.getTestDataPath() + "/MockSdk", level, additionalRoots);
+    return create(PythonHelpersLocator.getPythonCommunityPath() + "/testData/MockSdk", level, additionalRoots);
   }
 
   private static @NotNull Sdk create(@NotNull String sdkPath, @NotNull LanguageLevel level, VirtualFile @NotNull ... additionalRoots) {

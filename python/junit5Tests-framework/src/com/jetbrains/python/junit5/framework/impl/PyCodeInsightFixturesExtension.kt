@@ -11,7 +11,7 @@ import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
-import com.jetbrains.python.PythonMockSdk
+import com.jetbrains.python.tools.sdkTools.PythonMockSdk
 import com.jetbrains.python.junit5.framework.pyCodeInsightFixture
 import com.jetbrains.python.junit5.framework.pyMockSdkFixture
 import com.jetbrains.python.psi.LanguageLevel

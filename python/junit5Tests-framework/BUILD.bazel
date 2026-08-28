@@ -122,6 +122,18 @@ jvm_library(
         "//platform/lang-core:lang-core_test_lib",
         "//platform/util/jdom",
         "//platform/util/jdom:jdom_test_lib",
+        "//python/python-pyproject:pyproject",
+        "//python/python-pyproject:pyproject_test_lib",
+        "//platform/core-ui",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/core-impl",
+        "//platform/core-impl:core-impl_test_lib",
+        "//libraries/kotlin/reflect",
+        "//libraries/kotlin/reflect:reflect_test_lib",
+        "//platform/external-system-api:externalSystem",
+        "//platform/external-system-api:externalSystem_test_lib",
+        "//python/testFramework",
+        "//python/testFramework:testFramework_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.community.junit5Tests.framework` end

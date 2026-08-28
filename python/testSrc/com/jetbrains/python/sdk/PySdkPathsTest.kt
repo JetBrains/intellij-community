@@ -28,7 +28,7 @@ import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.rules.ProjectModelRule
-import com.jetbrains.python.PythonMockSdk
+import com.jetbrains.python.tools.sdkTools.PythonMockSdk
 import com.jetbrains.python.PythonPluginDisposable
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyUtil

@@ -30,6 +30,7 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
+import com.jetbrains.python.tools.sdkTools.PythonMockSdk
 
 @RunsInEdt
 @Subsystems.IDE

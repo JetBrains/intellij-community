@@ -45,7 +45,7 @@ fun TestFixture<Project>.pyMockSdkFixture(module: TestFixture<Module>, sdkProvid
 /**
  * Creates a [CodeInsightTestFixture] without the platform's `@TestDataPath` resolution.
  *
- * The platform's [com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture] resolves
+ * The platform's `com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture` resolves
  * `@TestDataPath` using `$PROJECT_ROOT` prefix, which is incompatible with Python tests that use `$CONTENT_ROOT`.
  * The test data path is set later by [PyTestDataExtension].
  */

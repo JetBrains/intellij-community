@@ -7,7 +7,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
-import com.jetbrains.python.PythonMockSdk
+import com.jetbrains.python.tools.sdkTools.PythonMockSdk
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.junit5.framework.pyMockSdkFixture

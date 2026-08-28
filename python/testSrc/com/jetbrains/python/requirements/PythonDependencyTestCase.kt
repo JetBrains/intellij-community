@@ -6,7 +6,7 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.PythonMockSdk
+import com.jetbrains.python.tools.sdkTools.PythonMockSdk
 import com.jetbrains.python.PythonTestUtil
 import com.jetbrains.python.fixtures.PyLightProjectDescriptor
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails

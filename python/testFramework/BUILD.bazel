@@ -41,6 +41,8 @@ jvm_library(
         "//platform/ide-core",
         "//platform/util:util-ui",
         "//python:python-community-impl",
+        "//python/impl.helperLocator:community-helpersLocator",
+        "//platform/util/jdom",
         ":libraries_junit4_provided",
     ],
 )
@@ -74,6 +76,8 @@ jvm_library(
         "//platform/ide-core:ide-core_test_lib",
         "//platform/util:util-ui_test_lib",
         "//python:python-community-impl_test_lib",
+        "//python/impl.helperLocator:community-helpersLocator_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
     ],

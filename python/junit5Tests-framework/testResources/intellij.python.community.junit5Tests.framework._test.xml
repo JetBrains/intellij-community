@@ -10,6 +10,7 @@
     <module name="intellij.libraries.junit5.jupiter"/>
     <module name="intellij.libraries.junit5.params"/>
     <module name="intellij.libraries.junit5.pioneer"/>
+    <module name="intellij.libraries.kotlin.reflect"/>
     <module name="intellij.libraries.mockk.jvm"/>
     <module name="intellij.libraries.sshd.osgi"/>
     <module name="intellij.libraries.system.stubs.jupiter"/>
@@ -17,10 +18,13 @@
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.analysis.impl"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ex"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.externalSystem"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.lang.core"/>
@@ -30,7 +34,9 @@
     <module name="intellij.platform.testFramework.junit5.projectStructure"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.python.community.impl.poetry.common"/>
+    <module name="intellij.python.community.testFramework"/>
     <module name="intellij.python.psi.impl"/>
+    <module name="intellij.python.pyproject"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>

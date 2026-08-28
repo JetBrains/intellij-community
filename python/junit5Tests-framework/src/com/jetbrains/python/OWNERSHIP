@@ -1,0 +1,3 @@
+# Moved here from community/python/testSrc; ownership stays with the Python team.
+/junit5/**
+owner 'Python Ecosystem'

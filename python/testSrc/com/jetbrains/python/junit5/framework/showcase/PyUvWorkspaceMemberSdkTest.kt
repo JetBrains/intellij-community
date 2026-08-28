@@ -10,7 +10,6 @@ import com.intellij.python.pyproject.model.api.ModuleSdkState
 import com.intellij.python.pyproject.model.api.autoConfigureSdkExistingOnly
 import com.intellij.python.pyproject.model.api.configureSdkIfNeeded
 import com.intellij.python.pyproject.model.api.getModuleSdkState
-import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.junit5.fixture.moduleInProjectFixture
@@ -36,7 +35,6 @@ import kotlin.time.Duration.Companion.minutes
  * `json`.
  */
 @TestClassInfo(Repository.PY_COMMUNITY)
-@TestDataPath($$"$CONTENT_ROOT/../testData/junit5/showcase/py91376workspace")
 @PyCodeInsightTestApplication
 @Subsystems.CodeInsight
 @Layers.Functional
