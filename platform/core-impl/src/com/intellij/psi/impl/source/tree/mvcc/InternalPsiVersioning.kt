@@ -41,6 +41,39 @@ object InternalPsiVersioning {
 
   private const val LOCK_PROHIBITION_FREEZE_PSI_VERSION_ADVICE = "Lock usage is forbidden by `PsiVersioningService#freezePsiVersion`. It is not allowed to use locks while PSI snapshot is frozen"
 
+  /**
+   * PSI Versions are represented as a [Long].
+   * Each time write action finishes, we increment the modified version by [MAIN_TIMELINE_DELTA].
+   *
+   * Note, that [MAIN_TIMELINE_DELTA] is not equal to `1`.
+   * This is because we sometimes want to perform changes on top of some snapshot, but not publish such changes as write action does.
+   * An example is lightweight commit -- we might want to modify a snapshot of syntax tree without letting anyone to observe it.
+   *
+   * [FORKED_TIMELINE_DELTA] is used to increment the version when exclusive modification is performed.
+   *
+   * We can graphically represent the version history in the following way:
+   * ```text
+   * forked versions:        ------- 3         ------ 7
+   *                        /                 /
+   * main versions:   >--- 2 ------ 4 ------ 6 ------ 8 -->
+   * ```
+   * Here, `3` and `7` are forked versions, which are created when exclusive modification is performed.
+   *
+   * Technically, there is no restriction on how many forks we can make -- e.g., [MAIN_TIMELINE_DELTA] can be more than `2`,
+   * and we could have many possible [FORKED_TIMELINE_DELTA], but the number of such exclusive scopes must be bounded by some static constant.
+   * We use `2` because it is enough for our purposes for now.
+   *
+   * Such approach means that we reserve least significant bits for marking branching into new versions.
+   * We also could use the most significant bits, but we think that it is nicer to debug versioning when versions themselves look adequate.
+   */
+  internal const val MAIN_TIMELINE_DELTA: Long = 2L
+
+  internal const val FORKED_TIMELINE_DELTA: Long = 1L
+
+  /**
+   * We reserve **one** least significant bit for version manipulations
+   */
+  internal const val FORKED_TIMELINE_MASK = 2L
   // it is important that this property is final so that JIT is able to optimize away such calls in production
   @TestOnly
   val IS_UNDER_TESTING: Boolean = System.getProperty("idea.is.unit.tests").toBoolean()
@@ -294,9 +327,10 @@ object InternalPsiVersioning {
     }
 
     fun incrementVersion(expected: Long) {
+      val nextVersion = expected + MAIN_TIMELINE_DELTA
       // the published version is always frozen, we have no right to remove it until it ends
-      frozenPsiVersionsRegistry[expected + 1] = 1
-      val versionAdvanced = version.compareAndSet(expected, expected + 1)
+      frozenPsiVersionsRegistry[nextVersion] = 1
+      val versionAdvanced = version.compareAndSet(expected, nextVersion)
       assert(versionAdvanced) {
         "Version modification failed: could not increment the version with $expected, because global version version is ${version.get()}"
       }
@@ -488,7 +522,7 @@ object InternalPsiVersioning {
     return if (storedThreadLocal == null) {
       val psiVersionRegistry = PsiVersionRegistry.instance
       val existingVersion = psiVersionRegistry.latestPublishedVersion
-      val newVersion = existingVersion + 1
+      val newVersion = existingVersion + MAIN_TIMELINE_DELTA
       val currentlyModifiedCleanables = CurrentlyModifiedCleanables()
       @Suppress("DEPRECATION")
       val threadContextInstallation = installThreadContext(context + PsiVersionWriteContextElement(newVersion, currentlyModifiedCleanables), true)

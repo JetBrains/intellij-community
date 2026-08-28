@@ -1347,13 +1347,13 @@ internal class PersistentTreeElementSnapshotTest {
     WriteIntentReadAction.run {
       val existingVersion = InternalPsiVersioning.getCurrentPsiVersion()
       runWriteAction {
-        assertEquals(existingVersion + 1, InternalPsiVersioning.getCurrentPsiVersion())
-      }
-      assertEquals(existingVersion + 1, InternalPsiVersioning.getCurrentPsiVersion())
-      runWriteAction {
         assertEquals(existingVersion + 2, InternalPsiVersioning.getCurrentPsiVersion())
       }
       assertEquals(existingVersion + 2, InternalPsiVersioning.getCurrentPsiVersion())
+      runWriteAction {
+        assertEquals(existingVersion + 4, InternalPsiVersioning.getCurrentPsiVersion())
+      }
+      assertEquals(existingVersion + 4, InternalPsiVersioning.getCurrentPsiVersion())
     }
   }
 }

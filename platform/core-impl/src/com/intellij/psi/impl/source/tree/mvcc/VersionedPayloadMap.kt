@@ -13,6 +13,36 @@ import org.jetbrains.annotations.Debug
  *
  * The map is untyped because we did not want to annoy ourselves with the array factories; this data structure is low-level anyway.
  *
+ * ### Reachability
+ *
+ * One important part of this structure is the relation of _reachability_.
+ *
+ * Informally, reachability describes how a snapshot at one version can use snapshots in previous versions.
+ * If version `A` is reachable from version `B`, then snapshot `A` can refer to the data stored for `B`.
+ * This is important to ensure efficient reuse of data computed by previous versions in newer versions.
+ *
+ * Formally, reachability is a partial order on [Long] that is generated as a reflexive and transitive closure from the following rule:
+ *
+ * - **If `x` is even, then both `x + 1` and `x + 2` are reachable from `x`**
+ *
+ * If we denote reachability as `->`, then an example of reachability can be the following:
+ * ```text
+ * 0 -> 2, 2 -> 4, 4 -> 6, ...
+ * 0 -> 1, 2 -> 3, 4 -> 5, ...
+ * ```
+ * Note, that we don't have `1 -> 2`: `2` is not reachable from `1`.
+ *
+ * Another way to visualize reachability is by looking at the following picture:
+ * ```text
+ *         -- 3     -- 5     -- 7
+ *        /        /        /
+ *  >--- 2 ------ 4 ------ 6 ----- -->
+ * ```
+ * The formal definition of reachability is an implementation detail, and it can evolve alongside versioned syntax structure.
+ *
+ * The implementation of this structure is tightly coupled with
+ * [InternalPsiVersioning.MAIN_TIMELINE_DELTA], [InternalPsiVersioning.FORKED_TIMELINE_MASK], [InternalPsiVersioning.FORKED_TIMELINE_DELTA]
+ *
  * Structural changes in these classes should be reflected in `org.jetbrains.idea.devkit.hprof.PersistentSyntaxTreeHprofProcessor`
  */
 @ApiStatus.Internal
@@ -47,20 +77,25 @@ sealed interface VersionedPayloadMap {
   fun insert(version: Long, payload: Any?): VersionedPayloadMap?
 
   /**
-   * Removes all entries where the version is smaller than [threshold].
+   * Removes the entries that reach the same versions that [barrier] can reach.
    *
-   * At least one version that is not greater than [threshold] must remain,
-   * because the map needs to return the same results on [lowerBound] as if [cleanupStaleVersions] was not invoked:
+   * This method is the main actor of garbage collection: if at some point we realize that the version history has advanced far enough,
+   * we can clean the references to "old" versions.
+   *
+   * The map needs to return the same results on [lowerBound] as if [cleanupStaleVersions] was not invoked.
    * ```kotlin
-   * map.cleanupStaleVersions(100).lowerBound(100) == map.lowerBound(100)
+   * // for every `version` reachable from `barrier`:
+   * map.cleanupStaleVersions(barrier).lowerBound(version) == map.lowerBound(version)
    * ```
+   *
+   * The passed [barrier] always belongs to the main timeline, i.e., it is even.
    *
    * @return `null` if no changes in the map were performed, or a new instance of with the updated data otherwise
    */
-  fun cleanupStaleVersions(threshold: Long): VersionedPayloadMap?
+  fun cleanupStaleVersions(barrier: Long): VersionedPayloadMap?
 
   /**
-   * Returns the payload with the biggest version that is not greater than [targetVersion],
+   * Returns the payload with the closest version from which [targetVersion] is [isReachable],
    * or `null` if there is no such element or the element was explicitly removed.
    *
    * ```kotlin
@@ -87,7 +122,7 @@ sealed interface VersionedPayloadMap {
 private object VersionedPayloadMap0: VersionedPayloadMap {
   override fun size(): Int = 0
   override fun insert(version: Long, payload: Any?): VersionedPayloadMap = VersionedPayloadMap1(version, payload)
-  override fun cleanupStaleVersions(threshold: Long): VersionedPayloadMap = this
+  override fun cleanupStaleVersions(barrier: Long): VersionedPayloadMap? = null
   override fun lowerBound(targetVersion: Long): Any? = null
   override fun explicitlyRemoved(targetVersion: Long): Boolean = false
   override fun arrayOfPairs(): Array<VersionedPayload> = emptyArray()
@@ -116,10 +151,17 @@ private class VersionedPayloadMap1(
     }
   }
 
-  override fun cleanupStaleVersions(threshold: Long): VersionedPayloadMap? = null
+  override fun cleanupStaleVersions(barrier: Long): VersionedPayloadMap? {
+    return if (isCollectable(version, barrier)) {
+      VersionedPayloadMap0
+    }
+    else {
+      null
+    }
+  }
 
   override fun lowerBound(targetVersion: Long): Any? {
-    return if (isVisibleAsLowerBound(version, targetVersion)) payload else null
+    return if (isReachable(version, targetVersion)) payload else null
   }
 
   override fun explicitlyRemoved(targetVersion: Long): Boolean {
@@ -162,20 +204,27 @@ private class VersionedPayloadMap2(
     return ArrayVersionedPayloadMap(longArrayOf(version, version1, version2), arrayOf(payload, payload1, payload2))
   }
 
-  override fun cleanupStaleVersions(threshold: Long): VersionedPayloadMap? {
-    return if (version2 <= threshold) {
+  override fun cleanupStaleVersions(barrier: Long): VersionedPayloadMap? {
+    return if (isReachable(version2, barrier)) {
       VersionedPayloadMap1(version2, payload2)
     }
-    else {
+    else if (isCollectable(version1, barrier)) {
+      if (isCollectable(version2, barrier)) VersionedPayloadMap0 else VersionedPayloadMap1(version2, payload2)
+    }
+    else if (isCollectable(version2, barrier) && isReachable(version1, barrier)) {
+      // `version2` belongs to a forked timeline that no live version can observe
+      VersionedPayloadMap1(version1, payload1)
+    } else {
+      // `version2` cannot stand in for `version1`: it is either not stale yet, or it belongs to a live forked timeline
       null
     }
   }
 
   override fun lowerBound(targetVersion: Long): Any? {
-    if (isVisibleAsLowerBound(version2, targetVersion)) {
+    if (isReachable(version2, targetVersion)) {
       return payload2
     }
-    if (isVisibleAsLowerBound(version1, targetVersion)) {
+    if (isReachable(version1, targetVersion)) {
       return payload1
     }
     return null
@@ -254,28 +303,58 @@ private class ArrayVersionedPayloadMap(
     return ArrayVersionedPayloadMap(newVersions, newPayloads)
   }
 
-  override fun cleanupStaleVersions(threshold: Long): VersionedPayloadMap? {
-    var i = 0
-    // since versions are ordered, we can perform garbage collection efficiently
-    while (i < payloads.size) {
-      if (versions[i] > threshold) {
+  override fun cleanupStaleVersions(barrier: Long): VersionedPayloadMap? {
+    // since versions are ordered, we can perform garbage collection efficiently -- we iterate from the end
+    // everything below the newest even entry at or below the barrier is invisible to every live version
+    var i = versions.size - 1
+    while (i >= 0) {
+      if (isReachable(versions[i], barrier)) {
         break
       }
-      i++
+      i--
     }
-    if (i <= 1) {
+    if (i < 0) {
+      i = 0
+    }
+    // the retained range can still hold forked entries that the barrier cannot reach, and they go away as well.
+    // the first pass only counts the survivors, so we allocate nothing when there is nothing to do
+    var survivorCount = 0
+    for (j in i until versions.size) {
+      if (!isCollectable(versions[j], barrier)) {
+        ++survivorCount
+      }
+    }
+    if (survivorCount == versions.size) {
       // there are no elements to cleanup
       return null
     }
-    val newElements: Array<Any?> = payloads.copyOfRange(i - 1, payloads.size)
-    val newVersions: LongArray = versions.copyOfRange(i - 1, versions.size)
-    return createVersionedPayloadMap(newVersions, newElements)
+    val newPayloads: Array<Any?>
+    val newVersions: LongArray
+    if (survivorCount == versions.size - i) {
+      // every entry of the retained range survives, so we copy the range at once
+      newPayloads = payloads.copyOfRange(i, payloads.size)
+      newVersions = versions.copyOfRange(i, versions.size)
+    }
+    else {
+      newPayloads = arrayOfNulls<Any?>(survivorCount)
+      newVersions = LongArray(survivorCount)
+      var k = 0
+      for (j in i until versions.size) {
+        if (isCollectable(versions[j], barrier)) {
+          continue
+        }
+        newVersions[k] = versions[j]
+        newPayloads[k] = payloads[j]
+        ++k
+      }
+    }
+    return createVersionedPayloadMap(newVersions, newPayloads)
   }
 
   override fun lowerBound(targetVersion: Long): Any? {
     var i = versions.size - 1
     while (i >= 0) {
-      if (isVisibleAsLowerBound(versions[i], targetVersion)) {
+      if (isReachable(versions[i], targetVersion)) {
         return payloads[i]
       }
       --i
@@ -305,8 +384,22 @@ private class ArrayVersionedPayloadMap(
 }
 
 
-private fun isVisibleAsLowerBound(version: Long, targetVersion: Long): Boolean {
-  return targetVersion >= version
+/**
+ * Returns `true` if [laterVersion] is reachable from [earlierVersion].
+ */
+private fun isReachable(earlierVersion: Long, laterVersion: Long): Boolean {
+  return laterVersion == earlierVersion || (laterVersion > earlierVersion && !earlierVersion.isForked())
+}
+
+private fun Long.isForked(): Boolean = this % InternalPsiVersioning.FORKED_TIMELINE_MASK == InternalPsiVersioning.FORKED_TIMELINE_DELTA
+
+/**
+ * Returns `true` if the payload stored for [version] is invisible to every version that is reachable from [barrier].
+ *
+ * A forked version is observable by itself only, so a forked entry below the [barrier] is garbage.
+ */
+private fun isCollectable(version: Long, barrier: Long): Boolean {
+  return version.isForked() && barrier > version
 }
 
 private fun createVersionedPayloadMap(versions: LongArray, payloads: Array<Any?>): VersionedPayloadMap {
