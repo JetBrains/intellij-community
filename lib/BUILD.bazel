@@ -2630,20 +2630,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.deps.ift/git-learning-project-212.0.2.jar_copy",
-    src = "@org_jetbrains_intellij_deps_ift-git-learning-project-212_0_2_http//file",
-    out = "org.jetbrains.intellij.deps.ift/git-learning-project-212.0.2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "git-learning-project",
-    jar = "@org_jetbrains_intellij_deps_ift-git-learning-project-212_0_2_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "com.android.tools.smali/smali-baksmali-3.0.3.jar_copy",
     src = "@com_android_tools_smali-smali-baksmali-3_0_3_http//file",
     out = "com.android.tools.smali/smali-baksmali-3.0.3.jar",
@@ -11346,6 +11332,20 @@ jvm_import(
     name = "com_vladsch_flexmark-flexmark-youtrack-converter-0_64_8_http_import",
     jar = "@com_vladsch_flexmark-flexmark-youtrack-converter-0_64_8_http//file",
     source_jar = "@com_vladsch_flexmark-flexmark-youtrack-converter-0_64_8-sources_http//file",
+)
+
+copy_file(
+    name = "org.jetbrains.intellij.deps.ift/git-learning-project-212.0.2.jar_copy",
+    src = "@org_jetbrains_intellij_deps_ift-git-learning-project-212_0_2_http//file",
+    out = "org.jetbrains.intellij.deps.ift/git-learning-project-212.0.2.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-git-learning-project-git-learning-project",
+    jar = "@org_jetbrains_intellij_deps_ift-git-learning-project-212_0_2_http//file",
+    visibility = ["//visibility:public"],
 )
 
 copy_file(

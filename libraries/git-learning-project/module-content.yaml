@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.git.learning.project.jar
+  modules:
+  - name: intellij.libraries.git.learning.project
+    libraries:
+      git-learning-project:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/ift/git-learning-project/212/git-learning-project-212.jar

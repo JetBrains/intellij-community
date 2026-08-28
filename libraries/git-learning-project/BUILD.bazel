@@ -1,0 +1,49 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.libraries.git.learning.project` start
+jvm_library(
+    name = "git-learning-project",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.git.learning.project",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-git-learning-project-git-learning-project"],
+    runtime_deps = ["@lib//:libraries-git-learning-project-git-learning-project"],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-git-learning-project-git-learning-project"],
+    module = ":git-learning-project",
+)
+
+jvm_library(
+    name = "git-learning-project_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.git.learning.project",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-git-learning-project-git-learning-project"],
+    runtime_deps = [":git-learning-project"],
+)
+### auto-generated section `build intellij.libraries.git.learning.project` end
+
+### auto-generated section `iml intellij.libraries.git.learning.project` start
+exports_files(
+    [
+        "intellij.libraries.git.learning.project.iml",
+        "resources/intellij.libraries.git.learning.project.xml",
+        "module-content.yaml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.git.learning.project` end

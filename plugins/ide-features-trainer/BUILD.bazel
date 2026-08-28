@@ -162,10 +162,10 @@ dev_dist_plugin_content(
     descriptor_module = ":featuresTrainer",
     libraries = [
         "@lib//:assertj-swing",
-        "@lib//:git-learning-project",
         "@lib//:libraries-assertj-core-assert_j",
     ],
     prepacked_content_modules = [
+        "//libraries/git-learning-project:git-learning-project_content_module_jar",
         "//plugins/ide-features-trainer/tips:tips_content_module_jar",
         "//plugins/kotlin/onboarding-promoter:onboarding-promoter_content_module_jar",
     ],

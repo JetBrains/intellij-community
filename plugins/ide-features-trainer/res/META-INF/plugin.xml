@@ -62,6 +62,12 @@
   <content>
     <module name="intellij.libraries.assertj.core" loading="embedded"/>
   </content>
+  <!-- Not embedded, unlike the one above: intellij.vcs.git.featuresTrainer is a regular content module, and it reads
+       the learning project through its own classloader, which has the wrapper as a parent. No 'namespace' attribute,
+       so this is a private copy for this plugin only. -->
+  <content>
+    <module name="intellij.libraries.git.learning.project"/>
+  </content>
 
   <resource-bundle>messages.LearnBundle</resource-bundle>
 

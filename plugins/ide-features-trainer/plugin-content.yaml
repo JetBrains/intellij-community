@@ -9,11 +9,6 @@
   contentModules:
   - name: intellij.vcs.git.featuresTrainer
   - name: intellij.featuresTrainer.onboarding
-- name: lib/git-learning-project.jar
-  library: git-learning-project
-  files:
-  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/ift/git-learning-project/212/git-learning-project-212.jar
-  reason: <- intellij.vcs.git.featuresTrainer
 - name: lib/intellij.libraries.assertj.core.jar
   contentModules:
   - name: intellij.libraries.assertj.core
@@ -26,3 +21,9 @@
 - name: lib/modules/intellij.kotlin.onboarding.promoter.jar
   contentModules:
   - name: intellij.kotlin.onboarding.promoter
+- name: lib/modules/intellij.libraries.git.learning.project.jar
+  contentModules:
+  - name: intellij.libraries.git.learning.project
+    libraries:
+      git-learning-project:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/ift/git-learning-project/212/git-learning-project-212.jar

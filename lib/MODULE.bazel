@@ -2031,13 +2031,6 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_intellij_deps_ift-git-learning-project-212_0_2_http",
-    downloaded_file_path = "git-learning-project-212.0.2.jar",
-    sha256 = "648eaffe833416e2accea4bf82b980f0e91ae51ef065f5bc74fa3481c373e9fd",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/ift/git-learning-project/212.0.2/git-learning-project-212.0.2.jar",
-)
-
-http_file(
     name = "com_android_tools_smali-smali-baksmali-3_0_3_http",
     downloaded_file_path = "smali-baksmali-3.0.3.jar",
     sha256 = "ffd6f3fbba2453440e4c04add42b9f903d84151b5b71f7e6bbb181d8096397a4",
@@ -8951,6 +8944,13 @@ http_file(
     downloaded_file_path = "flexmark-youtrack-converter-0.64.8-sources.jar",
     sha256 = "ceacb63385bfe87d2cfd6a6ce39fa52d2ebf806ba58c3f63786ee4274fbf930e",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-youtrack-converter/0.64.8/flexmark-youtrack-converter-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps_ift-git-learning-project-212_0_2_http",
+    downloaded_file_path = "git-learning-project-212.0.2.jar",
+    sha256 = "648eaffe833416e2accea4bf82b980f0e91ae51ef065f5bc74fa3481c373e9fd",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/ift/git-learning-project/212.0.2/git-learning-project-212.0.2.jar",
 )
 
 http_file(

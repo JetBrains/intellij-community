@@ -29,7 +29,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:git-learning-project",
+        "//libraries/git-learning-project",
         "//plugins/ide-features-trainer:featuresTrainer",
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
@@ -68,6 +68,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":vcs-git-featuresTrainer",
+        "//libraries/git-learning-project:git-learning-project_test_lib",
         "//plugins/ide-features-trainer:featuresTrainer_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core_test_lib",
@@ -142,7 +143,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:git-learning-project",
+        "//libraries/git-learning-project",
+        "//libraries/git-learning-project:git-learning-project_test_lib",
         "//plugins/ide-features-trainer:featuresTrainer",
         "//plugins/ide-features-trainer:featuresTrainer_test_lib",
         "//platform/analysis-api:analysis",

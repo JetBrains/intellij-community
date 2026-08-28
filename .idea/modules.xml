@@ -1062,6 +1062,7 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/fastutil/intellij.libraries.fastutil.iml" filepath="$PROJECT_DIR$/libraries/fastutil/intellij.libraries.fastutil.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/ffmpeg/intellij.libraries.ffmpeg.iml" filepath="$PROJECT_DIR$/libraries/ffmpeg/intellij.libraries.ffmpeg.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/flexmark/intellij.libraries.flexmark.iml" filepath="$PROJECT_DIR$/libraries/flexmark/intellij.libraries.flexmark.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/git-learning-project/intellij.libraries.git.learning.project.iml" filepath="$PROJECT_DIR$/libraries/git-learning-project/intellij.libraries.git.learning.project.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/gradle/intellij.libraries.gradle.iml" filepath="$PROJECT_DIR$/libraries/gradle/intellij.libraries.gradle.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/groovy/intellij.libraries.groovy.iml" filepath="$PROJECT_DIR$/libraries/groovy/intellij.libraries.groovy.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/groovy/ant/intellij.libraries.groovy.ant.iml" filepath="$PROJECT_DIR$/libraries/groovy/ant/intellij.libraries.groovy.ant.iml" />
