@@ -111,7 +111,7 @@ class McpWslForwarderService(private val cs: CoroutineScope) {
     // In unit-test mode, mirror BuiltInServerManagerImpl's short-circuit: do not start collectors or
     // touch WSL from tests that merely instantiate the service graph.
     //
-    // Also stay completely off when the registry flag is not explicitly set — no coroutines
+    // Also stay completely off when the registry flag is set to `false` — no coroutines
     // launched in [cs], no subscription to McpServerService.serverPortFlow.
     //
     if (!ApplicationManager.getApplication().isUnitTestMode && isFeatureEnabled()) {
@@ -400,7 +400,7 @@ class McpWslForwarderService(private val cs: CoroutineScope) {
 
   @OptIn(LowLevelLocalMachineAccess::class)
   private fun isFeatureEnabled(): Boolean =
-    Registry.`is`(FORWARDER_REGISTRY_KEY, false) && OS.CURRENT == OS.Windows
+    Registry.`is`(FORWARDER_REGISTRY_KEY, true) && OS.CURRENT == OS.Windows
 
   /**
    * @return the IDE-side loopback port on which the MCP SSE server is listening, or `null` if the server is
@@ -439,8 +439,8 @@ class McpWslForwarderService(private val cs: CoroutineScope) {
 
   companion object {
     /**
-     * Prototype gate for the WSL forwarder. Default `false` — must stay off in
-     * released builds until the design has soaked.
+     * Gate for the WSL forwarder. Default `true`. Set the key to `false` to switch the feature off.
+     * See `intellij.mcpserver.xml`
      */
     const val FORWARDER_REGISTRY_KEY: String = "ide.mcp.wsl.forward.enabled"
 
