@@ -14,6 +14,7 @@ import com.intellij.openapi.fileEditor.impl.EditorSkeletonBlock.SkeletonBlockWid
 import com.intellij.openapi.fileEditor.impl.EditorSkeletonBlock.SkeletonBlockWidth.NORMAL
 import com.intellij.openapi.fileEditor.impl.EditorSkeletonBlock.SkeletonBlockWidth.SMALL
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
@@ -26,6 +27,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -38,13 +40,15 @@ import javax.swing.Box
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingConstants
+import kotlin.math.sin
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Component that paints a skeleton for a file editor.
  * This component is needed for Remote Dev when latency is quite high.
  *
- * The skeleton fades in over [skeletonDelayMs] while [cs] is active, then stays static.
+ * The skeleton fades in over [skeletonDelayMs] while [cs] is active.
+ * The skeleton then pulses when the animation registry key is enabled.
  * [nowMs] is the clock the fade-in is measured against; tests replace it to advance the fade-in deterministically.
  */
 @ApiStatus.Internal
@@ -54,16 +58,15 @@ class EditorSkeleton(
   val skeletonDelayMs: Long,
   nowMs: () -> Long = System::currentTimeMillis,
 ) : JComponent() {
-  private val colorManager = EditorSkeletonColorManager(skeletonDelayMs, nowMs)
+  private var animationJob: Job? = null
+  private val colorManager = EditorSkeletonColorManager(
+    skeletonDelayMs = skeletonDelayMs,
+    nowMs = nowMs,
+    animationEnabled = RegistryManager.getInstance().`is`(ANIMATION_ENABLED_KEY),
+    animationDurationMs = RegistryManager.getInstance().intValue(ANIMATION_DURATION_KEY).toLong(),
+  )
 
   init {
-    cs.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
-      while (isActive && !colorManager.isFadeInComplete) {
-        delay(TICK_MS)
-        tickFadeIn()
-      }
-    }
-
     // This listener is required for the rare case when the color scheme changes while the skeleton is showing.
     // Reload the cached colors and repaint the already-created component to keep it consistent with the new scheme.
     // If the skeleton has already been removed, repaint() is harmless: Swing discards repaint requests for detached components.
@@ -80,13 +83,24 @@ class EditorSkeleton(
     add(createEditorComponent(), BorderLayout.CENTER)
   }
 
+  internal fun startAnimation(cs: CoroutineScope) {
+    animationJob = cs.launch(Dispatchers.Default) {
+      while (isActive) {
+        delay(TICK_MS)
+        repaint()
+      }
+    }
+  }
+
   fun tickFadeIn() {
-    colorManager.updateCurrentTime()
+    updateAnimationState()
     repaint()
   }
 
   override fun paint(g: Graphics) {
     colorManager.markPainted()
+    updateAnimationState()
+
     val g2 = g.create() as Graphics2D
     GraphicsUtil.setupAAPainting(g2)
     try {
@@ -94,6 +108,13 @@ class EditorSkeleton(
     }
     finally {
       g2.dispose()
+    }
+  }
+
+  private fun updateAnimationState() {
+    colorManager.updateCurrentTime()
+    if (!colorManager.needsUpdates) {
+      animationJob?.cancel()
     }
   }
 
@@ -276,13 +297,19 @@ class EditorSkeleton(
     @get:ApiStatus.Internal
     val EDITOR_BACKGROUND_COLOR: Color
       get() = EditorColorsManager.getInstance().globalScheme.defaultBackground
+
+    private const val ANIMATION_ENABLED_KEY = "editor.skeleton.animation.enabled"
+    private const val ANIMATION_DURATION_KEY = "editor.skeleton.animation.duration.ms"
   }
 }
 
 private class EditorSkeletonColorManager(
   private val skeletonDelayMs: Long,
   private val nowMs: () -> Long,
+  animationEnabled: Boolean,
+  private val animationDurationMs: Long,
 ) {
+  private val animationEnabled = animationEnabled && animationDurationMs > 0
   private var ramp = createRamp()
   private var fadeInStartTime: Long? = null
   private var currentColor = ramp.colorAt(0.0)
@@ -292,8 +319,8 @@ private class EditorSkeletonColorManager(
   val color: Color
     get() = currentColor
 
-  val isFadeInComplete: Boolean
-    get() = fadeInComplete
+  val needsUpdates: Boolean
+    get() = !fadeInComplete || animationEnabled
 
   fun markPainted() {
     hasBeenPainted = true
@@ -325,11 +352,18 @@ private class EditorSkeletonColorManager(
   }
 
   private fun colorAt(now: Long): Color {
-    val progress = fadeInProgress(now - checkNotNull(fadeInStartTime))
-    if (progress >= 1.0) {
-      fadeInComplete = true
-    }
-    return ramp.colorAt(progress)
+    val elapsedMs = now - checkNotNull(fadeInStartTime)
+    val progress = fadeInProgress(elapsedMs)
+    if (progress < 1.0) return ramp.colorAt(progress)
+
+    fadeInComplete = true
+    val color = ramp.colorAt(1.0)
+    if (!animationEnabled) return color
+
+    val animationElapsedMs = elapsedMs - skeletonDelayMs.coerceAtLeast(0)
+    val t = (animationElapsedMs % animationDurationMs).toDouble() / animationDurationMs.toDouble()
+    val opacity = 0.3 + 0.35 * (sin(2 * Math.PI * (t - 0.75)) + 1)
+    return ColorUtil.withAlpha(color, opacity)
   }
 
   private val curve = Easing.bezier(0.4, 0.0, 1.0, 1.0)

@@ -1106,6 +1106,7 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
     if (skeleton == null) return
     if (components.isEmpty()) {
       add(skeleton, BorderLayout.CENTER)
+      skeleton.startAnimation(skeletonScope)
     }
   }
 
