@@ -10872,6 +10872,20 @@ http_file(
 )
 
 http_file(
+    name = "org_apache_thrift-libthrift-0_19_0_http",
+    downloaded_file_path = "libthrift-0.19.0.jar",
+    sha256 = "2b6e6550b40467ede7b3034a1a9eb9148fbf920cfdae5bf0b1d2bb3d4e780625",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/thrift/libthrift/0.19.0/libthrift-0.19.0.jar",
+)
+
+http_file(
+    name = "org_apache_thrift-libthrift-0_19_0-sources_http",
+    downloaded_file_path = "libthrift-0.19.0-sources.jar",
+    sha256 = "93334310686b6594800b431db134b5f37c3a02ad8dda71a9ea93d999389fc721",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/thrift/libthrift/0.19.0/libthrift-0.19.0-sources.jar",
+)
+
+http_file(
     name = "org_apache_logging_log4j-log4j-to-slf4j-2_20_0_http",
     downloaded_file_path = "log4j-to-slf4j-2.20.0.jar",
     sha256 = "88e731d7f455da59dfa08769527f87d6c496053a712637df7b999f6977933a2c",
@@ -12577,20 +12591,6 @@ http_file(
     downloaded_file_path = "core-3.5.1-sources.jar",
     sha256 = "57cd4543bfb94f301800b8b28d37b91194fa38ee3d87c10d412d49d522a37965",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/zxing/core/3.5.1/core-3.5.1-sources.jar",
-)
-
-http_file(
-    name = "org_apache_thrift-libthrift-0_19_0_http",
-    downloaded_file_path = "libthrift-0.19.0.jar",
-    sha256 = "2b6e6550b40467ede7b3034a1a9eb9148fbf920cfdae5bf0b1d2bb3d4e780625",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/thrift/libthrift/0.19.0/libthrift-0.19.0.jar",
-)
-
-http_file(
-    name = "org_apache_thrift-libthrift-0_19_0-sources_http",
-    downloaded_file_path = "libthrift-0.19.0-sources.jar",
-    sha256 = "93334310686b6594800b431db134b5f37c3a02ad8dda71a9ea93d999389fc721",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/thrift/libthrift/0.19.0/libthrift-0.19.0-sources.jar",
 )
 
 http_file(

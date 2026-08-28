@@ -4,6 +4,12 @@
     libraries:
       jsr305:
       - name: $MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3/jsr305-3.jar
+- name: lib/modules/intellij.libraries.libthrift.jar
+  contentModules:
+  - name: intellij.libraries.libthrift
+    libraries:
+      libthrift:
+      - name: $MAVEN_REPOSITORY$/org/apache/thrift/libthrift/0/libthrift-0.jar
 - name: lib/modules/intellij.libraries.mlapi.catboost.jar
   contentModules:
   - name: intellij.libraries.mlapi.catboost
@@ -56,15 +62,6 @@
   contentModules:
   - name: intellij.python.community.impl.installer
 - name: lib/modules/intellij.python.community.impl.jar
-  projectLibraries:
-  - name: com.jetbrains.fus.reporting.ap.validation.all
-    files:
-    - name: $MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/2/ap-validation-all-2.jar
-    reason: <- intellij.python.community.impl
-  - name: libthrift
-    files:
-    - name: $MAVEN_REPOSITORY$/org/apache/thrift/libthrift/0/libthrift-0.jar
-    reason: <- intellij.python.community.impl
   contentModules:
   - name: intellij.python.community.impl
     libraries:
@@ -72,6 +69,10 @@
       - name: $MAVEN_REPOSITORY$/completion/ml/python/features/ml-completion-prev-exprs-models/1/ml-completion-prev-exprs-models-1.jar
       completion-ranking-python-with-full-line:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0/completion-ranking-python-with-full-line-0.jar
+  library: com.jetbrains.fus.reporting.ap.validation.all
+  files:
+  - name: $MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/2/ap-validation-all-2.jar
+  reason: <- intellij.python.community.impl
 - name: lib/modules/intellij.python.community.impl.pipenv.jar
   contentModules:
   - name: intellij.python.community.impl.pipenv

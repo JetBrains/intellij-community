@@ -127,7 +127,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "jps-javac-extension",
   "kotlin-metadata",
   "layoutlib",
-  "libthrift",
   "okhttp",
   "openai.java",
   "org.apache.ivy",

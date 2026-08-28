@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.libthrift.jar
+  modules:
+  - name: intellij.libraries.libthrift
+    libraries:
+      libthrift:
+      - name: $MAVEN_REPOSITORY$/org/apache/thrift/libthrift/0/libthrift-0.jar

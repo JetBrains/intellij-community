@@ -74,7 +74,6 @@ dev_dist_plugin_content(
         "@lib//:libraries-mlapi-catboost-jetbrains-mlapi-catboost",
         "@lib//:libraries-mlapi-catboost-jetbrains-mlapi-catboost-shadow-need-slf4j",
         "@lib//:libraries-tuweni-toml-tuweni-toml",
-        "@lib//:libthrift",
         "@lib//:python-community-impl-completion-ranking-python-with-full-line",
         "@lib//:python-community-impl-ml-completion-prev-exprs-models",
         "@lib//:slf4j-api",
@@ -82,6 +81,7 @@ dev_dist_plugin_content(
         "@lib//ant/lib:ant",
     ],
     prepacked_content_modules = [
+        "//libraries/libthrift:libthrift_content_module_jar",
         "//python/IntelliLang-python:langInjection_content_module_jar",
         "//python/aliasProvider:aliasProvider_content_module_jar",
         "//python/common:common_content_module_jar",

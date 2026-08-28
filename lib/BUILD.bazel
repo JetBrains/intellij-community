@@ -13627,6 +13627,21 @@ jvm_import(
 )
 
 copy_file(
+    name = "org.apache.thrift/libthrift-0.19.0.jar_copy",
+    src = "@org_apache_thrift-libthrift-0_19_0_http//file",
+    out = "org.apache.thrift/libthrift-0.19.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-libthrift-libthrift",
+    jar = "@org_apache_thrift-libthrift-0_19_0_http//file",
+    source_jar = "@org_apache_thrift-libthrift-0_19_0-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "org.apache.logging.log4j/log4j-to-slf4j-2.20.0.jar_copy",
     src = "@org_apache_logging_log4j-log4j-to-slf4j-2_20_0_http//file",
     out = "org.apache.logging.log4j/log4j-to-slf4j-2.20.0.jar",
@@ -15684,21 +15699,6 @@ jvm_import(
     name = "libraries-zxing-core-zxing-core",
     jar = "@com_google_zxing-core-3_5_1_http//file",
     source_jar = "@com_google_zxing-core-3_5_1-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.apache.thrift/libthrift-0.19.0.jar_copy",
-    src = "@org_apache_thrift-libthrift-0_19_0_http//file",
-    out = "org.apache.thrift/libthrift-0.19.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "libthrift",
-    jar = "@org_apache_thrift-libthrift-0_19_0_http//file",
-    source_jar = "@org_apache_thrift-libthrift-0_19_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
