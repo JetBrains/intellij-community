@@ -9,8 +9,7 @@ import com.intellij.util.PerformanceAssertions
 internal class PerformanceAssertionsImpl: PerformanceAssertions() {
   override fun checkDoesNotAffectHighlighting() {
     ReferenceProvidersRegistry.assertNotContributingReferences()
-    if (!PerformanceAssertions.isAssertDoesNotAffectHighlightingSuppressed() &&
-        !DaemonCodeAnalyzerImpl.assertHighlightingPassNotRunning()) {
+    if (!DaemonCodeAnalyzerImpl.assertHighlightingPassNotRunning()) {
       Logger.getInstance(PassRunningAssert::class.java).error("the expensive method should not be called inside the highlighting pass")
     }
   }

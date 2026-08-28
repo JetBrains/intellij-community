@@ -9,7 +9,6 @@ import com.intellij.json.psi.JsonObject
 import com.intellij.json.psi.JsonStringLiteral
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.util.PerformanceAssertions
 import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.DomManager
 import org.jetbrains.idea.devkit.DevKitBundle
@@ -51,19 +50,17 @@ internal class UnknownIdInMetaInformationInspection : LocalInspectionTool() {
     val manager = DomManager.getDomManager(project)
     val found = AtomicBoolean(false)
 
-    PerformanceAssertions.suppressAssertDoesNotAffectHighlighting("IJPL-252911").use {
-      processExtensionDeclarations(textToSearch, project, false) { extension, tag ->
-        val extensionName = extension.extensionPoint?.effectiveQualifiedName
-        if (extensionName != "com.intellij.localInspection" && extensionName != "com.intellij.globalInspection") {
-          return@processExtensionDeclarations true
-        }
-        val domElement = manager.getDomElement(tag) ?: return@processExtensionDeclarations true
-        if (id == getShortNameByElement(domElement)) {
-          found.set(true)
-          return@processExtensionDeclarations false
-        }
+    processExtensionDeclarations(textToSearch, project, false) { extension, tag ->
+      val extensionName = extension.extensionPoint?.effectiveQualifiedName
+      if (extensionName != "com.intellij.localInspection" && extensionName != "com.intellij.globalInspection") {
         return@processExtensionDeclarations true
       }
+      val domElement = manager.getDomElement(tag) ?: return@processExtensionDeclarations true
+      if (id == getShortNameByElement(domElement)) {
+        found.set(true)
+        return@processExtensionDeclarations false
+      }
+      return@processExtensionDeclarations true
     }
 
     return found.get()

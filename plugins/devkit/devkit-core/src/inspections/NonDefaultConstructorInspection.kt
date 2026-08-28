@@ -12,7 +12,6 @@ import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiParameterList
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.xml.XmlTag
-import com.intellij.util.PerformanceAssertions
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -70,10 +69,7 @@ internal class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass
       area = getArea(extensionPoint)
       isService = extensionPoint?.beanClass?.stringValue == serviceBeanFqn
       if (isService) {
-        val extensionCandidates = PerformanceAssertions.suppressAssertDoesNotAffectHighlighting("IJPL-252911").use {
-          locateExtensionsByPsiClass(javaPsi)
-        }
-        for (candidate in extensionCandidates) {
+        for (candidate in locateExtensionsByPsiClass(javaPsi)) {
           val extensionTag = candidate.pointer.element ?: continue
           val clientName = extensionTag.getAttribute("client")?.value ?: continue
 
@@ -167,38 +163,36 @@ private fun findExtensionPoint(clazz: UClass, project: Project): ExtensionPoint?
 private fun findExtensionPointByImplementationClass(searchString: String, qualifiedName: String, project: Project): ExtensionPoint? {
   var result: ExtensionPoint? = null
   val strictMatch = searchString === qualifiedName
-  PerformanceAssertions.suppressAssertDoesNotAffectHighlighting("IJPL-252911").use {
-    processExtensionDeclarations(searchString, project, strictMatch = strictMatch) { extension, tag ->
-      val point = extension.extensionPoint ?: return@processExtensionDeclarations true
-      if (point.name.value == "psi.symbolReferenceProvider") {
-        return@processExtensionDeclarations true
-      }
-
-      when (point.beanClass.stringValue) {
-        null -> {
-          if (tag.attributes.any { it.name == Extension.IMPLEMENTATION_ATTRIBUTE && it.value == qualifiedName }) {
-            result = point
-            return@processExtensionDeclarations false
-          }
-        }
-        serviceBeanFqn -> {
-          if (tag.attributes.any { it.name == "serviceImplementation" && it.value == qualifiedName }) {
-            result = point
-            return@processExtensionDeclarations false
-          }
-        }
-        else -> {
-          // bean EP
-          if (tag.name == "className" || tag.subTags.any {
-              it.name == "className" && (strictMatch || it.textMatches(qualifiedName))
-            } || checkAttributes(tag, qualifiedName)) {
-            result = point
-            return@processExtensionDeclarations false
-          }
-        }
-      }
-      true
+  processExtensionDeclarations(searchString, project, strictMatch = strictMatch) { extension, tag ->
+    val point = extension.extensionPoint ?: return@processExtensionDeclarations true
+    if (point.name.value == "psi.symbolReferenceProvider") {
+      return@processExtensionDeclarations true
     }
+
+    when (point.beanClass.stringValue) {
+      null -> {
+        if (tag.attributes.any { it.name == Extension.IMPLEMENTATION_ATTRIBUTE && it.value == qualifiedName }) {
+          result = point
+          return@processExtensionDeclarations false
+        }
+      }
+      serviceBeanFqn -> {
+        if (tag.attributes.any { it.name == "serviceImplementation" && it.value == qualifiedName }) {
+          result = point
+          return@processExtensionDeclarations false
+        }
+      }
+      else -> {
+        // bean EP
+        if (tag.name == "className" || tag.subTags.any {
+            it.name == "className" && (strictMatch || it.textMatches(qualifiedName))
+          } || checkAttributes(tag, qualifiedName)) {
+          result = point
+          return@processExtensionDeclarations false
+        }
+      }
+    }
+    true
   }
   return result
 }

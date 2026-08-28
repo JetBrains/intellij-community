@@ -20,7 +20,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.util.CommonProcessors
-import com.intellij.util.PerformanceAssertions
 import com.intellij.util.Processor
 import com.intellij.util.xml.DomUtil
 import org.jetbrains.annotations.NonNls
@@ -189,13 +188,7 @@ internal sealed class DescriptionTypeResolver(
     return getDefaultDescriptionDirName(psiClass)
   }
 
-  protected fun locateExtensions(): List<ExtensionCandidate> {
-    return PerformanceAssertions.suppressAssertDoesNotAffectHighlighting("IJPL-252911").use {
-      locateExtensionsByPsiClass(psiClass)
-    }
-  }
-
-  protected fun processExtensions(candidates: List<ExtensionCandidate> = locateExtensions(), processor: Processor<Extension?>): Boolean {
+  protected fun processExtensions(candidates: List<ExtensionCandidate> = locateExtensionsByPsiClass(psiClass), processor: Processor<Extension?>): Boolean {
     assert(epFqn != null)
     for (candidate in candidates) {
       val extension: Extension? = DomUtil.findDomElement<Extension?>(candidate.pointer.getElement(), Extension::class.java, false)
@@ -234,7 +227,7 @@ internal sealed class DescriptionTypeResolver(
 private class IntentionDescriptionTypeResolver(module: Module, psiClass: PsiClass) : DescriptionTypeResolver(DescriptionType.INTENTION, module, psiClass, INTENTION_ACTION_EP) {
 
   override fun skipIfNotRegisteredInPluginXml(): Boolean {
-    val candidates = locateExtensions()
+    val candidates = locateExtensionsByPsiClass(psiClass)
 
     // 1. not registered at all
     if (candidates.isEmpty()) {
@@ -321,3 +314,4 @@ private class InspectionDescriptionTypeResolver(module: Module, psiClass: PsiCla
     return isLastMethodDefinitionIn(methodName, psiClass.getSuperClass())
   }
 }
+

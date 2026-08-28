@@ -9,7 +9,6 @@ import com.intellij.lang.jvm.util.JvmInheritanceUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
-import com.intellij.util.PerformanceAssertions
 import com.intellij.util.xml.DomUtil
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
@@ -26,9 +25,7 @@ internal class LightServiceMigrationCodeInspection : DevKitUastInspectionBase(UC
     }
     if (isVersion193OrHigher(psiClass) || ApplicationManager.getApplication().isUnitTestMode) {
       if (isLightService(psiClass)) return ProblemDescriptor.EMPTY_ARRAY
-      val candidate = PerformanceAssertions.suppressAssertDoesNotAffectHighlighting("IJPL-252911").use {
-        locateExtensionsByPsiClass(psiClass)
-      }.singleOrNull() ?: return ProblemDescriptor.EMPTY_ARRAY
+      val candidate = locateExtensionsByPsiClass(psiClass).singleOrNull() ?: return ProblemDescriptor.EMPTY_ARRAY
       val extension = DomUtil.findDomElement(candidate.pointer.element, Extension::class.java, false)
                       ?: return ProblemDescriptor.EMPTY_ARRAY
       val (serviceImplementation, level) = getServiceImplementation(extension) ?: return ProblemDescriptor.EMPTY_ARRAY

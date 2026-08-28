@@ -16,7 +16,6 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.xml.XmlTag
-import com.intellij.util.PerformanceAssertions
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
@@ -160,13 +159,11 @@ internal class StatefulEpInspection : DevKitUastInspectionBase(UField::class.jav
 
   private fun findEpCandidates(project: Project, className: String): Collection<XmlTag> {
     val result = Collections.synchronizedList(SmartList<XmlTag>())
-    PerformanceAssertions.suppressAssertDoesNotAffectHighlighting("IJPL-252911").use {
-      processExtensionsByClassName(project, className) { tag, _ ->
-        if (tag.getAttributeValue("forClass")?.contains(className) != true) {
-          result.add(tag)
-        }
-        true
+    processExtensionsByClassName(project, className) { tag, _ ->
+      if (tag.getAttributeValue("forClass")?.contains(className) != true) {
+        result.add(tag)
       }
+      true
     }
     return result
   }

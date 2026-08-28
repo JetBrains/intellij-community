@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiField
-import com.intellij.util.PerformanceAssertions
 import com.intellij.util.xml.DomManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.dom.Extension
@@ -71,10 +70,7 @@ fun getLevelType(project: Project, uClass: UClass): LevelType {
   val domManager = DomManager.getDomManager(project)
   var isModuleService = false
   val levels = HashSet<Service.Level>()
-  val candidates = PerformanceAssertions.suppressAssertDoesNotAffectHighlighting("IJPL-252911").use {
-    locateExtensionsByPsiClass(javaPsi)
-  }
-  for (candidate in candidates) {
+  for (candidate in locateExtensionsByPsiClass(javaPsi)) {
     val tag = candidate.pointer.element ?: continue
     val element = domManager.getDomElement(tag) ?: continue
     if (element is Extension && ExtensionUtil.hasServiceBeanFqn(element)) {
@@ -154,10 +150,7 @@ internal fun isServiceRegisteredInXml(uClass: UClass): Boolean {
   val project = uClass.sourcePsi?.project ?: return false
   val domManager = DomManager.getDomManager(project)
   val psiClass = uClass.javaPsi
-  val candidates = PerformanceAssertions.suppressAssertDoesNotAffectHighlighting("IJPL-252911").use {
-    locateExtensionsByPsiClass(psiClass)
-  }
-  for (candidate in candidates) {
+  for (candidate in locateExtensionsByPsiClass(psiClass)) {
     val tag = candidate.pointer.element ?: continue
     val element = domManager.getDomElement(tag) ?: continue
     if (element is Extension) {

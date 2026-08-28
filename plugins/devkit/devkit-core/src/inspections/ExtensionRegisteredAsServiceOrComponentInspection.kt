@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.xml.XmlTag
-import com.intellij.util.PerformanceAssertions
 import com.intellij.util.xml.DomManager
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
@@ -23,9 +22,7 @@ internal class ExtensionRegisteredAsServiceOrComponentInspection : DevKitJvmInsp
     var isExtension = false
     var isService = false
 
-    val extensionsCandidates = PerformanceAssertions.suppressAssertDoesNotAffectHighlighting("IJPL-252911").use {
-      locateExtensionsByPsiClass(psiClass)
-    }
+    val extensionsCandidates = locateExtensionsByPsiClass(psiClass)
     val domManager = DomManager.getDomManager(project)
 
     for (candidate in extensionsCandidates) {

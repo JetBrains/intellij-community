@@ -8,7 +8,6 @@ import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.PerformanceAssertions;
 import com.intellij.util.Processor;
 import com.intellij.util.xml.DomTarget;
 import com.intellij.util.xml.GenericAttributeValue;
@@ -49,10 +48,8 @@ abstract class ExtensionReferenceBase extends PsiReferenceBase<PsiElement> imple
     if (StringUtil.isEmptyOrSpaces(resolveId)) return null;
 
     final CommonProcessors.FindProcessor<Extension> resolveProcessor = new CommonProcessors.FindFirstProcessor<>();
-    try (var ignored = PerformanceAssertions.suppressAssertDoesNotAffectHighlighting("IJPL-252911")) {
-      ExtensionLocatorKt.findExtensionCandidate(myElement.getProject(), getExtensionPointFqn(), resolveProcessor,
-                                                resolveId, extension -> getNameElement(extension));
-    }
+    ExtensionLocatorKt.findExtensionCandidate(myElement.getProject(), getExtensionPointFqn(), resolveProcessor,
+                                              resolveId, extension -> getNameElement(extension));
 
     final Extension value = resolveProcessor.getFoundValue();
     if (value == null) return null;

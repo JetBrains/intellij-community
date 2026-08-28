@@ -10,7 +10,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.PsiClass
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.util.PerformanceAssertions
 import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import com.intellij.util.xml.highlighting.DomHighlightingHelper
@@ -35,10 +34,7 @@ internal class LightServiceMigrationXMLInspection : DevKitPluginXmlInspectionBas
           JvmInheritanceUtil.isInheritor(aClass, PersistentStateComponent::class.java.canonicalName)) {
         return
       }
-      val extensions = PerformanceAssertions.suppressAssertDoesNotAffectHighlighting("IJPL-252911").use {
-        locateExtensionsByPsiClass(aClass)
-      }
-      if (extensions.size != 1) return
+      if (locateExtensionsByPsiClass(aClass).size != 1) return
       val uClass = aClass.toUElement(UClass::class.java)
       if (uClass == null || containsUnitTestOrHeadlessModeCheck(uClass)) return
       if (aClass.hasAnnotation(Service::class.java.canonicalName)) {
