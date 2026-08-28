@@ -1403,6 +1403,7 @@ plugins/gradle/codeInsight/groovy/backend/tests.integration
 plugins/gradle/codeInsight/kotlin
 plugins/gradle/codeInsight/kotlin/backend
 plugins/gradle/codeInsight/kotlin/backend/tests.integration
+plugins/gradle/codeInsight/kotlin/testFramework
 plugins/gradle/codeInsight/properties
 plugins/gradle/codeInsight/properties/backend
 plugins/gradle/codeInsight/properties/backend/tests.integration
