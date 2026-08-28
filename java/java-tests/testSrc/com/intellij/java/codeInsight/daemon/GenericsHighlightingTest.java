@@ -419,6 +419,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testArrayContainsInTypeParameterWithSerializableBound() { doTest7(true); }
   public void testIntersectTypeParameterBounds() { doTest7(false); }
   public void testTopLevelCaptureConversion() { doTest7(false); }
+  public void testCaptureConversionForAssignmentExpression() { doTest7(false); }
   public void testNoCaptureConversionForArrayType() { doTest7(false); }
   public void testErasureOfMethodCallExpressionTypeIfItDoesntDependOnGenericsParameter() { doTest7(false); }
   public void testUncheckedConversionInReturnType() { doTest7(false); }

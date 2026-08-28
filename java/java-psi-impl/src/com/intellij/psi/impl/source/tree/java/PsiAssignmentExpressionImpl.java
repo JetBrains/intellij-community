@@ -63,7 +63,8 @@ public class PsiAssignmentExpressionImpl extends ExpressionPsiElement implements
           return rExpression.getType();
         }
       }
-      return type;
+      //15.26: the type of the assignment expression is the type of the variable after capture conversion
+      return type == null ? null : PsiUtil.captureToplevelWildcards(type, this);
     }
     return null;
   }
