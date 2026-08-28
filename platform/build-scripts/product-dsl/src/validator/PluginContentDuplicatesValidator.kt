@@ -18,7 +18,19 @@ import org.jetbrains.intellij.build.productLayout.pipeline.PipelineNode
 /**
  * Duplicate plugin content module validation.
  *
- * Purpose: Detect content modules declared by both production and test plugins in the same product.
+ * Purpose: Detect one runtime content module ID that two bundled plugins of one product declare.
+ * The subject is the runtime ID, which `PluginModuleId.toActualId` builds from the module name and the namespace.
+ * The runtime keeps one descriptor per ID. `resolveIdConflicts` drops a whole plugin to break the tie.
+ * So a shared ID makes a bundled plugin disappear.
+ *
+ * The rule reports a production plugin paired with a production plugin, and a production plugin paired with a test
+ * plugin. A pair of test plugins stays out, because a product loads one test plugin at a time.
+ *
+ * A content module that two plugins declare in a `<content>` tag with no namespace stays legal.
+ * `toActualId` gives each such copy an implicit namespace per plugin, so the runtime IDs differ and no pair forms.
+ * Read `docs/IntelliJ-Platform/4_man/Plugin-Model/Including-content-module-in-multiple-plugins.md`, which is
+ * IJPL-A-1893. `ContentModuleCopyConflictValidator` holds the classloader half of that shape.
+ *
  * Inputs: plugin graph product bundling and plugin content edges.
  * Output: `DuplicatePluginContentModulesError`.
  * Auto-fix: none.
@@ -61,7 +73,11 @@ private fun validateDuplicatePluginContentModulesForProduct(
 
   val duplicates = LinkedHashMap<PluginModuleId, List<DuplicatePluginContentModulesError.PluginOwner>>()
   for ((moduleId, prodOwners) in productionOwners) {
-    val testOwnersForModule = testOwners[moduleId] ?: continue
+    val testOwnersForModule = testOwners[moduleId] ?: emptySet()
+    // A test plugin alone never forms a pair, so one production owner needs a second owner from either side.
+    if (prodOwners.size == 1 && testOwnersForModule.isEmpty()) {
+      continue
+    }
 
     val combined = LinkedHashSet<DuplicatePluginContentModulesError.PluginOwner>(
       prodOwners.size + testOwnersForModule.size

@@ -4,7 +4,11 @@ Entry point: `PluginContentDuplicatesValidator` (`NodeIds.PLUGIN_CONTENT_DUPLICA
 
 ## Overview
 
-Detects content modules declared by both production and test plugins bundled in the same product. Such duplicates cause runtime errors when the IDE loads plugin content.
+Detects one runtime content module ID that two bundled plugins of one product declare.
+
+The subject is the runtime ID. `PluginModuleId.toActualId` builds it from the module name and the namespace. The
+runtime keeps one descriptor per ID. `resolveIdConflicts` drops a whole plugin to break the tie, so a shared ID makes
+a bundled plugin disappear.
 
 ## Inputs
 
@@ -13,17 +17,19 @@ Detects content modules declared by both production and test plugins bundled in 
 ## Rules
 
 - For each product:
-  - Collect content modules declared by bundled production plugins.
-  - Collect content modules declared by bundled test plugins.
-  - If a content module appears in both sets, report a duplicate with the owning plugins.
+  - Collect the runtime content module IDs that the bundled production plugins declare, with the owner of each ID.
+  - Collect the same for the bundled test plugins.
+  - Report an ID that two production plugins declare.
+  - Report an ID that a production plugin and a test plugin declare.
+  - Keep an ID that only test plugins share, because a product loads one test plugin at a time.
 
 ## Suppression and allowlists
 
-- None.
+- None. No product in the repository holds such a pair today, so the rule has no grandfathered entry.
 
 ## Output
 
-- `DuplicatePluginContentModulesError` per product.
+- `DuplicatePluginContentModulesError` per product. `PluginOwner.isTestPlugin` marks a test plugin owner.
 
 ## Auto-fix
 
@@ -31,6 +37,13 @@ Detects content modules declared by both production and test plugins bundled in 
 
 ## Non-goals
 
+- A content module that two plugins declare in a `<content>` tag with no namespace. That shape is legal.
+  `toActualId` gives each such copy an implicit namespace per plugin, so the runtime IDs differ and no pair forms.
+  Read
+  `docs/IntelliJ-Platform/4_man/Plugin-Model/Including-content-module-in-multiple-plugins.md`, which is IJPL-A-1893.
+  Never report that shape here.
+- The classloader cost of such a private copy. `ContentModuleCopyConflictValidator` holds that half of the question.
+- A JPS module that two static plugin layouts pack. `collectModulesInMultiplePlugins` holds that shape.
 - Module set duplication detection (handled by `ProductModuleSetValidator`).
 
 ## Related
@@ -38,3 +51,5 @@ Detects content modules declared by both production and test plugins bundled in 
 - [validation-rules.md](../validation-rules.md)
 - [errors.md](../errors.md)
 - [product-module-set.md](product-module-set.md)
+- [content-module-copy-conflict.md](content-module-copy-conflict.md)
+- [module-in-multiple-plugins.md](module-in-multiple-plugins.md)

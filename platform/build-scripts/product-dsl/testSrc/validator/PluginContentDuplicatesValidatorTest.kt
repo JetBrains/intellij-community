@@ -57,13 +57,14 @@ class PluginContentDuplicatesValidatorTest {
 
   @Test
   fun `ignores duplicate between production plugins`(): Unit = runBlocking(Dispatchers.Default) {
+    // A `<content>` tag with no namespace asks for a private copy per plugin, which IJPL-A-1893 allows.
     val graph = pluginGraph {
       product("IDEA") {
         bundlesPlugin("plugin.a")
         bundlesPlugin("plugin.b")
       }
-      plugin("plugin.a") { content("shared.module") }
-      plugin("plugin.b") { content("shared.module") }
+      plugin("plugin.a") { content("shared.module", namespace = null) }
+      plugin("plugin.b") { content("shared.module", namespace = null) }
     }
 
     val model = testGenerationModel(graph)
@@ -81,6 +82,90 @@ class PluginContentDuplicatesValidatorTest {
       }
       testPlugin("test.a") { content("shared.module") }
       testPlugin("test.b") { content("shared.module") }
+    }
+
+    val model = testGenerationModel(graph)
+    val errors = runValidationRule(PluginContentDuplicatesValidator, model)
+
+    assertThat(errors).isEmpty()
+  }
+
+  @Test
+  fun `reports duplicate between production plugins in the same namespace`(): Unit = runBlocking(Dispatchers.Default) {
+    val graph = pluginGraph {
+      product("IDEA") {
+        bundlesPlugin("plugin.a")
+        bundlesPlugin("plugin.b")
+      }
+      plugin("plugin.a") { content("shared.module", namespace = PluginModuleId.DEFAULT_NAMESPACE) }
+      plugin("plugin.b") { content("shared.module", namespace = PluginModuleId.DEFAULT_NAMESPACE) }
+    }
+
+    val model = testGenerationModel(graph)
+    val errors = runValidationRule(PluginContentDuplicatesValidator, model)
+
+    assertThat(errors).hasSize(1)
+    val error = errors[0] as DuplicatePluginContentModulesError
+    val owners = error.duplicates[PluginModuleId("shared.module", namespace = PluginModuleId.DEFAULT_NAMESPACE)]
+    assertThat(owners).isNotNull
+    assertThat(owners!!.map { it.pluginName.value })
+      .containsExactlyInAnyOrder("plugin.a", "plugin.b")
+    assertThat(owners.any { it.isTestPlugin }).isFalse()
+  }
+
+  @Test
+  fun `reports duplicate between production plugins in one custom namespace`(): Unit = runBlocking(Dispatchers.Default) {
+    val graph = pluginGraph {
+      product("IDEA") {
+        bundlesPlugin("plugin.a")
+        bundlesPlugin("plugin.b")
+      }
+      plugin("plugin.a") { content("shared.module", namespace = "custom") }
+      plugin("plugin.b") { content("shared.module", namespace = "custom") }
+    }
+
+    val model = testGenerationModel(graph)
+    val errors = runValidationRule(PluginContentDuplicatesValidator, model)
+
+    assertThat(errors).hasSize(1)
+    val error = errors[0] as DuplicatePluginContentModulesError
+    assertThat(error.duplicates.keys)
+      .containsExactlyInAnyOrder(PluginModuleId("shared.module", namespace = "custom"))
+  }
+
+  @Test
+  fun `ignores duplicate between production plugins without a namespace`(): Unit = runBlocking(Dispatchers.Default) {
+    // The implicit namespace comes from the plugin ID, so the two runtime IDs differ.
+    val graph = pluginGraph {
+      product("IDEA") {
+        bundlesPlugin("plugin.a")
+        bundlesPlugin("plugin.b")
+      }
+      plugin("plugin.a") {
+        pluginId("com.example.a")
+        content("shared.module", namespace = null)
+      }
+      plugin("plugin.b") {
+        pluginId("com.example.b")
+        content("shared.module", namespace = null)
+      }
+    }
+
+    val model = testGenerationModel(graph)
+    val errors = runValidationRule(PluginContentDuplicatesValidator, model)
+
+    assertThat(errors).isEmpty()
+  }
+
+  @Test
+  fun `ignores duplicate between production plugins with different namespaces`(): Unit = runBlocking(Dispatchers.Default) {
+    val graph = pluginGraph {
+      product("IDEA") {
+        bundlesPlugin("plugin.a")
+        bundlesPlugin("plugin.b")
+      }
+      plugin("plugin.a") { content("shared.module", namespace = PluginModuleId.DEFAULT_NAMESPACE) }
+      plugin("plugin.b") { content("shared.module", namespace = "custom") }
     }
 
     val model = testGenerationModel(graph)
