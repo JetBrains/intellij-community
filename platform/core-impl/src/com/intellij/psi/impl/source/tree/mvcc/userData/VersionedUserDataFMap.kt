@@ -578,6 +578,9 @@ private fun VersionedPayloadMap?.normalize(): VersionedPayloadMap? {
  * Returns the payload map without stale versions, `null` if the key can be dropped, or `this` if nothing has changed.
  */
 private fun VersionedPayloadMap.cleaned(minVersion: Long): VersionedPayloadMap? {
+  require(minVersion % 2 == 0L) {
+    "Version for cleanup must be even"
+  }
   val cleanedPayloadMap = cleanupStaleVersions(minVersion) ?: this
   return cleanedPayloadMap.normalize()
 }
@@ -635,11 +638,7 @@ private fun VersionedUserDataFMap.cleanupStorage(minVersion: Long): VersionedUse
 }
 
 private fun VersionedUserDataFMap.runGarbageCollection(): VersionedUserDataFMap {
-  val registry = InternalPsiVersioning.PsiVersionRegistry.instance
-  var minVersion = Long.MAX_VALUE
-  for (version in registry.getFrozenKeys()) {
-    minVersion = minOf(minVersion, version)
-  }
+  val minVersion = InternalPsiVersioning.PsiVersionRegistry.instance.minVersionForCleaning()
   return cleanup(minVersion)
 }
 

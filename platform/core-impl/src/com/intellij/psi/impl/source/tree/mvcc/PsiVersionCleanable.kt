@@ -20,8 +20,7 @@ interface PsiVersionCleanable {
    *
    * This function is expected to be fast and context-independent, as it can be called in any environment.
    *
-   * @param liveVersions the set of versions that can be used by at least one client
-   * @param minVersion the minimum of [liveVersions]. In the majority of cases the clients want to compute the minimum of [liveVersions] for their needs.
+   * @param minVersion the threshold after which reachable versions should remain. Always belongs to the main timeline.
    */
-  fun liveVersionChanged(minVersion: Long, liveVersions: Set<Long>)
+  fun liveVersionChanged(minVersion: Long)
 }

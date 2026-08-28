@@ -16,8 +16,8 @@ import com.intellij.psi.impl.source.DummyHolder
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.psi.impl.source.tree.CompositeElement
 import com.intellij.psi.impl.source.tree.CompositePsiElement
-import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.impl.source.tree.LazyParseableElement
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.impl.source.tree.TreeElement
 import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning
 import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning.PsiVersioningLockingListener
@@ -889,6 +889,47 @@ internal class PersistentTreeElementSnapshotTest {
       assertFailsWith<ThreadingSupport.LockAccessDisallowed> {
         WriteIntentReadAction.run {}
       }
+    }
+  }
+
+  /**
+   * AI-generated test.
+   */
+  @Test
+  fun `forked timeline preserves captured PSI across modification blocks`(@TestDisposable disposable: Disposable) {
+    installVersioningListeners(disposable)
+
+    val root = runSyncVersionedWriteAction {
+      composite("root", leaf("a"))
+    }
+    val capturedSnapshot = branchSnapshot("root", 0, leafSnapshot("a", 0))
+    val publishedSnapshot = branchSnapshot("root", 0, leafSnapshot("a", 0), leafSnapshot("x", 1))
+    val firstForkedSnapshot = branchSnapshot("root", 0, leafSnapshot("a", 0), leafSnapshot("b", 1))
+    val secondForkedSnapshot = branchSnapshot("root", 0, leafSnapshot("a", 0), leafSnapshot("b", 1), leafSnapshot("c", 2))
+    val timeline = PsiVersioningService.forkTimeline()
+
+    try {
+      runSyncVersionedWriteAction {
+        root.addChild(leaf("x"))
+      }
+      assertEquals(publishedSnapshot, liveSnapshot(root))
+
+      PsiVersioningService.executeWithTimeline(timeline) {
+        assertEquals(capturedSnapshot, snapshot(root))
+        root.addChild(PsiVersioningService.createVersionedPsiElements(root as ASTNode) { leaf("b") })
+        assertEquals(firstForkedSnapshot, snapshot(root))
+      }
+      assertEquals(publishedSnapshot, liveSnapshot(root))
+
+      PsiVersioningService.executeWithTimeline(timeline) {
+        assertEquals(firstForkedSnapshot, snapshot(root))
+        root.addChild(PsiVersioningService.createVersionedPsiElements(root as ASTNode) { leaf("c") })
+        assertEquals(secondForkedSnapshot, snapshot(root))
+      }
+      assertEquals(publishedSnapshot, liveSnapshot(root))
+    }
+    finally {
+      PsiVersioningService.forgetForkedTimeline(timeline)
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.mvcc
 
 import com.intellij.concurrency.ExternalIntelliJContextElement
@@ -75,6 +75,8 @@ object InternalPsiVersioning {
    * We reserve **one** least significant bit for version manipulations
    */
   internal const val FORKED_TIMELINE_MASK = 2L
+
+
   // it is important that this property is final so that JIT is able to optimize away such calls in production
   @TestOnly
   val IS_UNDER_TESTING: Boolean = System.getProperty("idea.is.unit.tests").toBoolean()
@@ -172,6 +174,16 @@ object InternalPsiVersioning {
     ThreadingAssertions.softAssertReadAccess()
   }
 
+  /**
+   * Checks whether the current computation runs in [com.intellij.psi.util.PsiVersioningService.doExecuteWithTimeline]
+   *
+   * It is better to avoid branching on this condition. It is intended to be used only in low-level Platform code that needs to react to isolated execution.
+   */
+  @JvmStatic
+  fun isInForkedTimeline(): Boolean {
+    return getCurrentPsiVersion() % FORKED_TIMELINE_MASK != 0L
+  }
+
   @JvmStatic
   fun getCurrentPsiVersion(): Long {
     val tlValue = threadLocalVersioningTracker.get()
@@ -245,6 +257,10 @@ object InternalPsiVersioning {
         threadLocalStorage.remove()
       }
     }
+
+    override fun toString(): String {
+      return "FrozenPsiVersion: $version"
+    }
   }
 
   typealias PsiVersion = Long
@@ -317,6 +333,10 @@ object InternalPsiVersioning {
 
     private val garbageCollector = ApplicationManager.getApplication().serviceOrNull<PsiVersioningGarbageCollector>()
 
+    /**
+     * A pointer to the latest published version
+     * each write action this atomic variable gets advanced by [MAIN_TIMELINE_DELTA], this publishing a new version for read actions
+     */
     private val version = AtomicLong(0)
 
     val latestPublishedVersion: Long
@@ -345,6 +365,13 @@ object InternalPsiVersioning {
     fun forgetFrozenVersionUnsafe(version: Long) {
       decrementFrozenVersion(version)
     }
+    fun minVersionForCleaning(): Long {
+      // we select the lowest even version for cleanup -- we need to retain only this version for guaranteed semantics preservation
+      // there is always at least one frozen version, so we never observe an empty collection
+      return frozenPsiVersionsRegistry.keys.minOf {
+        it - (it and 1)
+      }
+    }
 
     internal fun registerCleanablesForVersion(version: Long, cleanables: Collection<PsiVersionCleanable>) {
       garbageCollector?.registerCleanablesForVersion(version, cleanables)
@@ -358,6 +385,7 @@ object InternalPsiVersioning {
       assert(versionAdvanced) {
         "Version modification failed: could not increment the version with $expected, because global version version is ${version.get()}"
       }
+      // now we permit the previous version to be garbage collected
       decrementFrozenVersion(expected)
     }
 
@@ -371,7 +399,7 @@ object InternalPsiVersioning {
         }
       }
       if (newValue == null) {
-        garbageCollector?.liveVersionsChanged(getFrozenKeys())
+        garbageCollector?.liveVersionsChanged(minVersionForCleaning())
       }
     }
 
@@ -486,7 +514,7 @@ object InternalPsiVersioning {
       cleanupVersioningSection()
     }
 
-    override fun beforeWriteLockTemporarilyReleased(): Unit {
+    override fun beforeWriteLockTemporarilyReleased() {
       writeActionFinished(Any::class.java) // we publish the incremented version here so that the published version is incremented
       val token = initReadActionSection()
       cleanupTokenList.get().add(token)
@@ -525,8 +553,12 @@ object InternalPsiVersioning {
     val installedVersion = threadLocalVersioningTracker.get()
     val combinedToken = if (installedVersion == null) {
       threadLocalVersioningTracker.set(latestVersion)
+      val value = elementMarker is PsiVersionFreezeMarker && elementMarker.beforeStarted(currentThreadContext())
       object : AccessToken() {
         override fun finish() {
+          if (elementMarker is PsiVersionFreezeMarker) {
+            elementMarker.afterCompleted(currentThreadContext(), value)
+          }
           threadLocalVersioningTracker.remove()
           threadContextToken.finish()
         }

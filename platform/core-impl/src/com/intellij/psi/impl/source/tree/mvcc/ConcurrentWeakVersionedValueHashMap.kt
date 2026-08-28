@@ -381,7 +381,7 @@ class ConcurrentWeakVersionedValueHashMap<K: Any, V: Any> : ConcurrentMap<K, V>,
     return versions.any { getLiveVersionedValue(it) != null }
   }
 
-  override fun liveVersionChanged(minVersion: Long, liveVersions: Set<Long>) {
+  override fun liveVersionChanged(minVersion: Long) {
     for ((key, payloadMap) in actualMap) {
       cleanupStaleEntry(key, payloadMap, minVersion)
     }

@@ -150,13 +150,8 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
    * This makes the cleanup procedure wait-free.
    */
   private void runGarbageCollection(@NotNull VarHandleWrapper wrapper, @NotNull VersionedPayloadMap versionedMap) {
-    PsiVersionRegistry service = PsiVersionRegistry.getInstance();
-    long minVersion = Long.MAX_VALUE;
-    for (long l : service.getFrozenKeys()) {
-      minVersion = Long.min(minVersion, l);
-    }
-    long finalMinVersion = minVersion;
-    VersionedPayloadMap newMap = versionedMap.cleanupStaleVersions(finalMinVersion);
+    long minVersionForCleaning = PsiVersionRegistry.getInstance().minVersionForCleaning();
+    VersionedPayloadMap newMap = versionedMap.cleanupStaleVersions(minVersionForCleaning);
     if (newMap != null) {
       wrapper.compareAndSet(this, versionedMap, newMap);
     }

@@ -29,7 +29,7 @@ internal class AsyncPsiVersioningGarbageCollector(val scope: CoroutineScope) : P
 
   private val versionCleanables = ConcurrentHashMap<Long, ConcurrentLinkedQueue<WeakReference<PsiVersionCleanable>>>()
 
-  private val liveVersions: AtomicReference<Set<Long>> = AtomicReference()
+  private val latestBarrier: AtomicReference<Long> = AtomicReference()
   private val timeoutQueue: Channel<Unit> = Channel()
 
   private val actualCleanupScope = scope.childScope("Actual stale version cleaner")
@@ -45,7 +45,7 @@ internal class AsyncPsiVersioningGarbageCollector(val scope: CoroutineScope) : P
     scope.launch {
       while (true) {
         timeoutQueue.receive()
-        val currentLiveVersions = liveVersions.getAndSet(null)
+        val currentLiveVersions = latestBarrier.getAndSet(null)
         if (currentLiveVersions != null) {
           actualCleanupScope.launch {
             cleanupReferences(currentLiveVersions)
@@ -55,8 +55,8 @@ internal class AsyncPsiVersioningGarbageCollector(val scope: CoroutineScope) : P
     }
   }
 
-  override fun liveVersionsChanged(latestLiveVersions: Set<Long>) {
-    liveVersions.set(latestLiveVersions)
+  override fun liveVersionsChanged(latestBarrier: Long) {
+    this.latestBarrier.set(latestBarrier)
   }
 
   override suspend fun awaitCleanup() {
@@ -70,7 +70,7 @@ internal class AsyncPsiVersioningGarbageCollector(val scope: CoroutineScope) : P
     if (cleanables.isEmpty()) return
     val references = cleanables.map(::WeakReference)
     addReferences(version, references)
-    liveVersionsChanged(InternalPsiVersioning.PsiVersionRegistry.instance.getFrozenKeys())
+    liveVersionsChanged(InternalPsiVersioning.PsiVersionRegistry.instance.minVersionForCleaning())
   }
 
   private fun addReferences(version: Long, references: Collection<WeakReference<PsiVersionCleanable>>) {
@@ -79,20 +79,19 @@ internal class AsyncPsiVersioningGarbageCollector(val scope: CoroutineScope) : P
     }
   }
 
-  fun cleanupReferences(latestLiveVersions: Set<Long>) {
-    val minVersion = latestLiveVersions.min() // at least one version is always alive -- the version that corresponds to read actions
+  fun cleanupReferences(minVersion: Long) {
     for (version in versionCleanables.keys) {
       if (version > minVersion) continue
       val bucket = versionCleanables.remove(version) ?: continue
       for (reference in bucket) {
         val cleanable = reference.get() ?: continue
-        cleanable.liveVersionChanged(minVersion, latestLiveVersions)
+        cleanable.liveVersionChanged(minVersion)
       }
     }
   }
 
   override fun cleanupNow() {
-    cleanupReferences(InternalPsiVersioning.PsiVersionRegistry.instance.getFrozenKeys())
+    cleanupReferences(InternalPsiVersioning.PsiVersionRegistry.instance.minVersionForCleaning())
   }
 
   override fun pendingVersionCleanableCount(): Int = versionCleanables.values.sumOf { it.size }

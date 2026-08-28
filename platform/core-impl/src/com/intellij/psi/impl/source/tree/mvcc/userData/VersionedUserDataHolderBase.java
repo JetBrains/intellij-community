@@ -10,8 +10,6 @@ import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
-
 /**
  * A base class for implementors of {@link UserDataHolderEx} which are intended for usage in the versioned environment.
  * <p>
@@ -50,7 +48,7 @@ public abstract class VersionedUserDataHolderBase extends UserDataHolderBase imp
   }
 
   @Override
-  public void liveVersionChanged(long minVersion, @NotNull Set<Long> liveVersions) {
+  public void liveVersionChanged(long minVersion) {
     KeyFMap oldMap = getUserMap();
     VersionedUserDataFMap oldVersionedMap = VersionedUserDataFMap.from(oldMap);
     VersionedUserDataFMap cleanedMap = oldVersionedMap.cleanup(minVersion);

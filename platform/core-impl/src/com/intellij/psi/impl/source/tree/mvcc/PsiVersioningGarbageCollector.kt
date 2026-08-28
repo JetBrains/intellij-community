@@ -22,9 +22,9 @@ interface PsiVersioningGarbageCollector {
   fun registerCleanablesForVersion(version: Long, cleanables: Collection<PsiVersionCleanable>)
 
   /**
-   * This method needs to be called by the Platform when it detects that the set of live versions is now different.
+   * This method needs to be called by the Platform when it detects that the earlier live version is now different.
    */
-  fun liveVersionsChanged(latestLiveVersions: Set<Long>)
+  fun liveVersionsChanged(latestBarrier: Long)
 
   /**
    * Used by test code to await garbage collection if it is asynchronous.

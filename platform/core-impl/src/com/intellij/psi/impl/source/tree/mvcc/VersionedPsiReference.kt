@@ -130,8 +130,11 @@ class VersionedPsiReference<T: Any> : PsiVersionCleanable {
     }
   }
 
-  override fun liveVersionChanged(minVersion: Long, liveVersions: Set<Long>) {
+  override fun liveVersionChanged(minVersion: Long) {
     val map = getMap()
+    require(minVersion % 2 == 0L) {
+      "Version for cleanup must be even"
+    }
     val newMap = map.cleanupStaleVersions(minVersion) ?: return
     ACCESSOR.compareAndSet(this, map, newMap)
   }
