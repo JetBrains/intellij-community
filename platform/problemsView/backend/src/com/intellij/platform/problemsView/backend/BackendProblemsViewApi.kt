@@ -12,8 +12,6 @@ import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 
 internal class BackendProblemsViewApi : ProblemsViewApi {
@@ -39,14 +37,9 @@ internal class BackendProblemsViewApi : ProblemsViewApi {
 
   override suspend fun getProjectErrorsFlow(projectId: ProjectId): Flow<List<ProblemEventDto>> {
     val project = projectId.findProjectOrNull() ?: return emptyFlow()
-    return flow {
-      val lifetime = ProjectErrorsLifetimeProvider.getInstance(project).getLifetime()
-      emitAll(
-        ProjectErrorsCollector.getInstance(project).getProblemEventsFlow()
-          .batchEvents()
-          .map { batch -> buildChangelistFromEventsBatch(batch, project, lifetime) }
-      )
-    }
+    return ProjectErrorsCollector.getInstance(project).getProblemEventsFlow()
+      .batchEvents()
+      .map { batch -> buildChangelistFromEventsBatch(batch, project) }
   }
 
   override suspend fun changeProblemsViewImplementationForNextIdeRunAndRestart(shouldEnableSplitImplementation: Boolean) {

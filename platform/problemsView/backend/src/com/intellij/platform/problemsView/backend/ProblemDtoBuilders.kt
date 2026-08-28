@@ -8,71 +8,76 @@ import com.intellij.analysis.problemsView.toolWindow.splitApi.GenericProblemDto
 import com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemDto
 import com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemEvent
 import com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemEventDto
-import com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemLifetime
+import com.intellij.ide.ui.icons.rpcIdOrNull
+import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import kotlinx.coroutines.isActive
 
 private val LOG = Logger.getInstance("com.intellij.platform.problemsView.backend.ProblemDtoBuilders")
 
 internal fun buildChangelistFromEventsBatch(
   eventsBatch: List<ProblemEvent>,
   project: Project,
-  lifetime: ProblemLifetime
 ): List<ProblemEventDto> {
-  return eventsBatch.mapNotNull { event ->
-    if(!lifetime.isActive()) {
-      LOG.warn("Lifetime is no longer active, skipping any remaining events associated with this scope: $lifetime")
-      return emptyList()
-    }
+  val idStore = ProjectErrorsIdStore.getInstance(project)
 
+  return eventsBatch.mapNotNull { event ->
+    val problem = event.problem
     when (event) {
       is ProblemEvent.Appeared -> {
-        val problemDto = buildProblemDto(event.problem, lifetime, project)
-        ProblemEventDto.Appeared(problemDto)
+        val problemId = idStore.getOrCreate(problem)
+        ProblemEventDto.Appeared(buildProblemDto(problem, problemId))
       }
       is ProblemEvent.Disappeared -> {
-        val problemId = ProblemLifetimeManager.getInstance(project).removeProblemId(event.problem, lifetime)
+        val problemId = idStore.remove(problem)
         if (problemId == null) {
-          logMissingIdErrorWithDiagnostic(
-            problem = event.problem,
-            lifetime = lifetime
-          )
-          return@mapNotNull null
+          logMissingProblemId(problem)
+          null
         }
-        ProblemEventDto.Disappeared(problemId)
+        else {
+          ProblemEventDto.Disappeared(problemId)
+        }
       }
       is ProblemEvent.Updated -> {
-        val problemDto = buildProblemDto(event.problem, lifetime, project)
-        ProblemEventDto.Updated(problemDto)
+        val problemId = idStore.getOrCreate(problem)
+        ProblemEventDto.Updated(buildProblemDto(problem, problemId))
       }
     }
   }
 }
 
-internal fun buildFileProblemDto(problem: FileProblem, lifetime: ProblemLifetime, project: Project): FileProblemDto {
-  val lifecycleManager = ProblemLifetimeManager.getInstance(project)
-  val problemId = lifecycleManager.getOrCreateProblemId(problem, lifetime)
-  return convertFileProblemToDto(problem, problemId)
-}
-
-internal fun buildGenericProblemDto(problem: Problem, lifetime: ProblemLifetime, project: Project): GenericProblemDto {
-  val lifecycleManager = ProblemLifetimeManager.getInstance(project)
-  val problemId = lifecycleManager.getOrCreateProblemId(problem, lifetime)
-  return convertGenericProblemToDto(problem, problemId)
-}
-
-internal fun buildProblemDto(problem: Problem, lifetime: ProblemLifetime, project: Project): ProblemDto {
+internal fun buildProblemDto(problem: Problem, problemId: String): ProblemDto {
   return when (problem) {
-    is FileProblem -> buildFileProblemDto(problem, lifetime, project)
-    else -> buildGenericProblemDto(problem, lifetime, project)
+    is FileProblem -> convertFileProblemToDto(problem, problemId)
+    else -> convertGenericProblemToDto(problem, problemId)
   }
 }
 
-private fun logMissingIdErrorWithDiagnostic(problem: Problem, lifetime: ProblemLifetime){
-  val message = buildString {
-    appendLine("Problem ID not found for Disappeared event.")
+private fun convertFileProblemToDto(problem: FileProblem, problemId: String): FileProblemDto {
+  return FileProblemDto(
+    id = problemId,
+    text = problem.text,
+    description = problem.description ?: "",
+    icon = problem.icon.rpcIdOrNull(),
+    filePath = problem.file.path,
+    fileId = problem.file.rpcId(),
+    line = problem.line,
+    column = problem.column,
+  )
+}
 
+private fun convertGenericProblemToDto(problem: Problem, problemId: String): GenericProblemDto {
+  return GenericProblemDto(
+    id = problemId,
+    text = problem.text,
+    description = problem.description ?: "",
+    icon = problem.icon.rpcIdOrNull(),
+  )
+}
+
+private fun logMissingProblemId(problem: Problem) {
+  LOG.debug(buildString {
+    appendLine("Problem ID not found for Disappeared event.")
     appendLine("Problem:")
     appendLine("  type=${problem.javaClass.name}")
     appendLine("  hashCode=${problem.hashCode()}")
@@ -80,8 +85,5 @@ private fun logMissingIdErrorWithDiagnostic(problem: Problem, lifetime: ProblemL
     if (problem is FileProblem) {
       appendLine("  file='${problem.file.path}', line=${problem.line}, column=${problem.column}")
     }
-    appendLine("Lifetime: active=${lifetime.coroutineScope.isActive}, scope=${lifetime.coroutineScope}")
-  }
-
-  LOG.debug(message)
+  })
 }
