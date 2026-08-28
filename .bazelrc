@@ -5,6 +5,9 @@
 ### --- ###
 import %workspace%/common.bazelrc
 
+# The community Go targets do not use Cgo.
+common --@rules_go//go/config:pure
+
 try-import %workspace%/../build/remote_cache.bazelrc
 
 # Enable remote cache key scrubbing
