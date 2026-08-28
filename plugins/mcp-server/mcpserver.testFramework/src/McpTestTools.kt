@@ -9,6 +9,8 @@ import com.intellij.openapi.util.use
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.util.application
+import io.modelcontextprotocol.kotlin.sdk.client.Client
+import io.modelcontextprotocol.kotlin.sdk.types.Tool
 import kotlinx.coroutines.delay
 import kotlin.reflect.KFunction
 import kotlin.time.Duration
@@ -34,6 +36,9 @@ suspend fun <T> withRegisteredTestTools(
   @Suppress("UNCHECKED_CAST")
   return result as T
 }
+
+suspend fun Client.awaitTool(name: String): Tool =
+  waitUntilNotNull("the server offers the tool $name") { listTools().tools.singleOrNull { it.name == name } }
 
 /** [waitUntil] reports only that a condition held, so the value that satisfied it is returned here. */
 suspend fun <T : Any> waitUntilNotNull(

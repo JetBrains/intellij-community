@@ -9,6 +9,7 @@ import com.intellij.mcpserver.impl.util.asTool
 import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
 import com.intellij.mcpserver.impl.util.projectPathParameterName
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
+import com.intellij.mcpserver.testFramework.awaitTool
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
@@ -30,7 +31,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -70,70 +70,58 @@ class TransportTest {
   @ParameterizedTest
   @MethodSource("getTransports")
   fun list_tools_has_title(transport: TransportHolder) = transportTest(transport) { client ->
-    delay(500.milliseconds)
     Disposer.newDisposable().use { disposable ->
       application.extensionArea.getExtensionPoint(McpToolsProvider.EP).registerExtension(object : McpToolsProvider {
         override fun getTools(): List<McpTool> = listOf(this@TransportTest::test_tool.asTool())
       }, disposable)
-      delay(500.milliseconds)
 
-      val tool = client.listTools().tools.single { it.name == "test_tool" }
+      val tool = client.awaitTool("test_tool")
       assertEquals("Test title", tool.title)
     }
-    delay(500.milliseconds)
   }
 
   @ParameterizedTest
   @MethodSource("getTransports")
   fun list_tools_has_annotations(transport: TransportHolder) = transportTest(transport) { client ->
-    delay(500.milliseconds)
     Disposer.newDisposable().use { disposable ->
       application.extensionArea.getExtensionPoint(McpToolsProvider.EP).registerExtension(object : McpToolsProvider {
         override fun getTools(): List<McpTool> = listOf(this@TransportTest::test_tool.asTool())
       }, disposable)
-      delay(500.milliseconds)
 
-      val tool = client.listTools().tools.single { it.name == "test_tool" }
+      val tool = client.awaitTool("test_tool")
       assertThat(tool.annotations?.readOnlyHint).isTrue()
       assertThat(tool.annotations?.openWorldHint).isFalse()
     }
-    delay(500.milliseconds)
   }
 
   @ParameterizedTest
   @MethodSource("getTransports")
   fun tool_call_has_project(transport: TransportHolder) = transportTest(transport) { client ->
-    delay(500.milliseconds)
     Disposer.newDisposable().use { disposable ->
       application.extensionArea.getExtensionPoint(McpToolsProvider.EP).registerExtension(object : McpToolsProvider {
         override fun getTools(): List<McpTool> = listOf(this@TransportTest::test_tool.asTool())
       }, disposable)
-      // tools change is being listened in a background coroutine, so we have to wait a bit
-      delay(500.milliseconds)
+      client.awaitTool("test_tool")
       client.callTool("test_tool", emptyMap())
 
       val actual = withTimeout(2000.milliseconds) { projectFromTool.await() }
       assertThat(actual).isEqualTo(project)
     }
-    // the same to unregistration. Otherwise, tools change notification is being sent into a closed transport
-    delay(500.milliseconds) // delay for exit from use {}
   }
 
   @ParameterizedTest
   @MethodSource("getTransports")
   fun tool_call_prefers_project_path_argument_over_session_project(transport: TransportHolder) = transportTest(transport) { client ->
-    delay(500.milliseconds)
     Disposer.newDisposable().use { disposable ->
       application.extensionArea.getExtensionPoint(McpToolsProvider.EP).registerExtension(object : McpToolsProvider {
         override fun getTools(): List<McpTool> = listOf(this@TransportTest::test_tool.asTool())
       }, disposable)
-      delay(500.milliseconds)
+      client.awaitTool("test_tool")
       client.callTool("test_tool", mapOf(projectPathParameterName to requireNotNull(secondProject.basePath)))
 
       val actual = withTimeout(2000.milliseconds) { projectFromTool.await() }
       assertThat(actual).isEqualTo(secondProject)
     }
-    delay(500.milliseconds)
   }
 
   @ParameterizedTest
