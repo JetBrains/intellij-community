@@ -1,4 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("DestructuringDeclaration")
+
 package org.jetbrains.intellij.build.productLayout
 
 import com.intellij.platform.pluginGraph.PluginGraph
@@ -116,12 +118,12 @@ suspend fun runModuleSetMain(
         // Update suppressions mode: only update suppressions.json, no XML changes
         val result = generateXmlImpl(outputProvider, options)
         println("Suppressions config updated.")
-        printGenerationSummary(result.stats, result.errors)
+        printGenerationSummary(result.stats, result.errors, committed = true)
       }
       else {
         // Default mode: Generate XML files but NOT suppressions.json
         val result = generateXmlImpl(outputProvider, options)
-        printGenerationSummary(result.stats, result.errors)
+        printGenerationSummary(result.stats, result.errors, committed = options.commitChanges)
         if (!options.commitChanges) {
           for (diff in result.diffs) {
             println("out of sync: ${projectRoot.relativize(diff.path)} (${diff.changeType})")

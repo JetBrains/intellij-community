@@ -1,4 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("DestructuringDeclaration")
+
 package org.jetbrains.intellij.build.productLayout.util
 
 import org.jetbrains.intellij.build.productLayout.model.error.FileChangeType
@@ -54,11 +56,16 @@ internal fun FileUpdateStrategy.withUpdateSuppressions(updateSuppressions: Boole
 }
 
 /**
- * Deferred file writer - collects changes during generation,
- * commits only when explicitly requested.
- * Use when you want to validate before writing.
+ * Deferred file writer. It collects the changes during generation, and it commits them only on request.
+ * Use it when you want to validate before you write.
+ *
+ * The class is public, because a generator outside this module needs it. The dev-distribution plan generator is that
+ * caller.
+ *
+ * [commit] stays off [FileUpdateStrategy], because [GeneratedArtifactWritePolicy] filters a delegate and owns no write.
+ * A `commit` there would be a second commit gate beside the one in the generation pipeline.
  */
-internal class DeferredFileUpdater(private val projectRoot: Path) : FileUpdateStrategy {
+class DeferredFileUpdater(private val projectRoot: Path) : FileUpdateStrategy {
   private val _diffs = CopyOnWriteArrayList<FileDiff>()
 
   override fun updateIfChanged(path: Path, newContent: String): FileChangeStatus {
