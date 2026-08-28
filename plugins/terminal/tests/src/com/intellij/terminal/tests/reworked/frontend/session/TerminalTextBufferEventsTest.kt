@@ -54,6 +54,48 @@ internal class TerminalTextBufferEventsTest(emulatorType: TerminalEmulatorType) 
   }
 
   // ---------------------------------------------------------------------------
+  // (1b) A soft-wrapped line stays one logical document line
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `a soft-wrapped line is one logical document line`() = doTest { fixture ->
+    val model = fixture.view.activeOutputModel()
+
+    // The terminal is 80 columns wide; 200 characters occupy three rows (80 + 80 + 40) but stay one logical line.
+    val line = longLine(200)
+    fixture.connector.feed(line)
+    fixture.assertOutputModelState(model) { it.text == line }
+
+    assertThat(model.text.split("\n")).containsExactly(line)
+  }
+
+  @Test
+  fun `the cursor on a soft-wrapped line reports the logical line and column`() = doTest { fixture ->
+    val model = fixture.view.activeOutputModel()
+
+    val line = longLine(200)
+    fixture.connector.feed(line)
+    fixture.assertOutputModelState(model) { it.text == line }
+
+    // The cursor sits on grid row 2, column 40 — logically it is still on line 0, column 200.
+    assertThat(model.cursorLine()).isEqualTo(0L)
+    assertThat(model.cursorColumn()).isEqualTo(200L)
+  }
+
+  @Test
+  fun `wrapped lines scrolling into history advance the logical index by one line each`() = doTest { fixture ->
+    val model = fixture.view.activeOutputModel()
+
+    // 40 lines of three rows each = 120 grid rows on a 24-row screen, so most of them scroll into history and
+    // the model has to keep counting logical lines, not rows.
+    val lines = (0 until 40).map { "line$it-" + longLine(180) + "-end$it" }
+    fixture.connector.feed(lines.joinToString("\r\n"))
+    fixture.assertOutputModelState(model) { it.cursorLine() == lines.size - 1L }
+
+    assertThat(model.text.split("\n")).isEqualTo(lines)
+  }
+
+  // ---------------------------------------------------------------------------
   // (2) Adding text to the scrollback
   // ---------------------------------------------------------------------------
 
@@ -371,6 +413,11 @@ internal class TerminalTextBufferEventsTest(emulatorType: TerminalEmulatorType) 
   }
 
   private fun TerminalOutputModel.cursorLine(): Long = getLineByOffset(cursorOffset).toAbsolute()
+
+  private fun TerminalOutputModel.cursorColumn(): Long = cursorOffset - getStartOfLine(getLineByOffset(cursorOffset))
+
+  /** A [length]-character line of repeating letters — long enough to soft-wrap on the 80-column test terminal. */
+  private fun longLine(length: Int): String = (0 until length).map { 'a' + it % 26 }.joinToString("")
 
   companion object {
     /** Escape (0x1B): introduces CSI/OSC control sequences. */
