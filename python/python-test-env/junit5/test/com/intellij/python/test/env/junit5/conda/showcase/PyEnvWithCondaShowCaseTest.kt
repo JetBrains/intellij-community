@@ -3,7 +3,6 @@ package com.intellij.python.test.env.junit5.conda.showcase
 
 import com.intellij.python.community.junit5Tests.framework.conda.CondaEnv
 import com.intellij.python.community.junit5Tests.framework.conda.PyEnvTestCaseWithConda
-import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import org.junit.jupiter.api.Assertions
@@ -15,10 +14,13 @@ import kotlin.io.path.isRegularFile
 
 /**
  * Ensures [com.intellij.python.junit5Tests.framework.env.PythonBinaryPath] works.
+ *
+ * Do not add [com.intellij.python.junit5Tests.framework.env.PyEnvTestCase] to this class.
+ * [PyEnvTestCaseWithConda] carries it as a meta-annotation with the conda environment.
+ * A direct annotation wins over a meta-annotation, and the class then gets a venv.
  */
 @PyEnvTestCaseWithConda
-@PyEnvTestCase
-class PyEnvWithCondaShowCaseTest {
+internal class PyEnvWithCondaShowCaseTest {
   @Test
   fun checkPythonPath(@PythonBinaryPath python: Path) {
     ensurePythonWorks(python)
