@@ -3,6 +3,7 @@ package com.intellij.util.io.keyStorage;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.DirectBufferWrapper;
@@ -256,7 +257,11 @@ public final class AppendableStorageBackedByResizableMappedFile<Data> implements
    * bytes already in a file on the same positions, and set .same to be true or false
    */
   private @NotNull CheckerOutputStream buildOldComparerStream(final int startingOffsetInFile) throws IOException {
-    final PagedFileStorage storage = this.storage.getPagedFileStorage();
+    if (startingOffsetInFile < 0) {
+      //actually, we could strengthen the comparison to <=0, since there is a header at the beginning of the file
+      throw new CorruptedException("offsetInFile(=" + startingOffsetInFile + ") must be >=0");
+    }
+    PagedFileStorage storage = this.storage.getPagedFileStorage();
 
     if (fileLength <= startingOffsetInFile) {
       return new CheckerOutputStream() {

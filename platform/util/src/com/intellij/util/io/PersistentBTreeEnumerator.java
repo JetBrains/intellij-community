@@ -650,9 +650,12 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
             if (indexNodeValueAddress > 0) {
               // organize collision type reference
               int duplicatedValueOff = nextDuplicatedValueRecord();
+
+              //insert into collision storage first, btree next -- to improve chances of not having dangled pointer
+              // btree->collision storage in case of incorrect app shutdown
+              myCollisionResolutionStorage.putInt(duplicatedValueOff, indexNodeValueAddress); // we will set collision offset in next if
               myBTree.put(valueHC, -duplicatedValueOff);
 
-              myCollisionResolutionStorage.putInt(duplicatedValueOff, indexNodeValueAddress); // we will set collision offset in next if
               collisionAddress = duplicatedValueOff;
               ++myCollisions;
             }
