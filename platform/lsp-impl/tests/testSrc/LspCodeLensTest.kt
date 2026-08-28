@@ -94,6 +94,31 @@ class LspCodeLensTest {
     serverSession.awaitExpected()
   }
 
+  @Test
+  fun `codicon tokens are stripped from a code lens title`() = timeoutRunBlocking {
+    val psiFile = sharedFileFixture.get()
+    val codeInsightContext = readAction { psiFile.codeInsightContext }
+
+    val virtualFile = psiFile.virtualFile
+    val serverSession = configureServerSession(project, virtualFile)
+
+    serverSession.expectRequest(serverSession.CODE_LENS, {
+      it.textDocument.uri == serverSession.fileUri(virtualFile) && editorFixture.get().document.textLength > 0
+    }) {
+      listOf(
+        CodeLens(Range(Position(0, 0), Position(0, 1)), Command("$(play) Run", "run"), null),
+        CodeLens(Range(Position(0, 0), Position(0, 1)), Command("$(debug) Debug", "debug"), null),
+      )
+    }
+
+    checkCodeLensRetrying("""
+      /*<# block [Run   Debug] #>*/
+      fun main() {}
+    """.trimIndent(), codeInsightContext)
+
+    serverSession.awaitExpected()
+  }
+
   // The code lens cache is not guaranteed to update between `doHighlighting` and `codeVisionHost.calculateCodeVisionSync`,
   // so a retry with delay is necessary
   private suspend fun checkCodeLensRetrying(expectedText: String, codeInsightContext: CodeInsightContext) {
