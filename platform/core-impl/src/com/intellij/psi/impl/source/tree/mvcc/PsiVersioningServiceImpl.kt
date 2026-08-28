@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.source.tree.mvcc
 
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.allowUsingFrozenPsi
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.psi.PsiElement
@@ -24,6 +25,58 @@ internal class PsiVersioningServiceImpl : PsiVersioningService {
       runReadActionBlocking {
         action()
       }
+    }
+  }
+
+  class OpaquePsiVersionImpl(val actualVersion: Long) : PsiVersioningService.OpaquePsiVersion
+
+  override fun doForkTimeline(): PsiVersioningService.OpaquePsiVersion {
+    require(getCurrentVersion() % InternalPsiVersioning.MAIN_TIMELINE_DELTA == 0L) {
+      "It is not allowed to fork an already forked timeline. Ensure that you don't have `executeWithTimeline` in your stacktrace"
+    }
+    val forkedVersion = capturePublishedFork()
+    return OpaquePsiVersionImpl(forkedVersion)
+  }
+
+  fun capturePublishedFork(): Long {
+    while (true) {
+      val currentVersion = getCurrentVersion() // atomic read #1
+      val forkedTimelineVersion = currentVersion + InternalPsiVersioning.FORKED_TIMELINE_DELTA
+      InternalPsiVersioning.PsiVersionRegistry.instance.rememberFrozenVersionUnsafe(forkedTimelineVersion)
+      InternalPsiVersioning.PsiVersionRegistry.instance.rememberFrozenVersionUnsafe(currentVersion)
+      val currentVersion2 = getCurrentVersion() // atomic read #2
+      if (currentVersion == currentVersion2) {
+        // nothing has changed while we were modifying frozen version maps
+        // so everything is now correctly published, we can safely return data
+        return forkedTimelineVersion
+      } else {
+        // current version has advanced while we were publishing data
+        // now we need to roll back the side effects and try again
+        InternalPsiVersioning.PsiVersionRegistry.instance.forgetFrozenVersionUnsafe(forkedTimelineVersion)
+        InternalPsiVersioning.PsiVersionRegistry.instance.forgetFrozenVersionUnsafe(currentVersion)
+      }
+    }
+  }
+
+  override fun doForgetForkedTimeline(opaqueVersion: PsiVersioningService.OpaquePsiVersion) {
+    require(opaqueVersion is OpaquePsiVersionImpl) {
+      "$opaqueVersion must be created by ${PsiVersioningServiceImpl::class.simpleName}"
+    }
+    InternalPsiVersioning.PsiVersionRegistry.instance.forgetFrozenVersionUnsafe(opaqueVersion.actualVersion)
+    InternalPsiVersioning.PsiVersionRegistry.instance.forgetFrozenVersionUnsafe(opaqueVersion.actualVersion - InternalPsiVersioning.FORKED_TIMELINE_DELTA)
+  }
+
+  override fun <T> doExecuteWithTimeline(
+    opaqueVersion: PsiVersioningService.OpaquePsiVersion,
+    action: () -> T,
+  ): T {
+    require(opaqueVersion is OpaquePsiVersionImpl) {
+      "$opaqueVersion must be created by ${PsiVersioningServiceImpl::class.simpleName}"
+    }
+    return if (allowUsingFrozenPsi) {
+      InternalPsiVersioning.exclusivePsiModificationScopeWithExplicitVersion(opaqueVersion.actualVersion, action)
+    } else {
+      WriteIntentReadAction.compute(action)
     }
   }
 

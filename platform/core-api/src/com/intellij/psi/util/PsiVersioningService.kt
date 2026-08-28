@@ -9,6 +9,15 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface PsiVersioningService {
+
+  /**
+   * An object representing a key to a PSI version.
+   * This object can be used for executing computations that work with a specific PSI snapshot or for mutating PSI in its own isolated transaction.
+   *
+   * The exact implementation is deliberately hidden.
+   */
+  interface OpaquePsiVersion
+
   companion object {
 
     /**
@@ -63,6 +72,53 @@ interface PsiVersioningService {
     @ApiStatus.Internal
     fun isInsideVersioningButNotLocks(): Boolean = getInstance().isInsideVersioningButNotLocks()
 
+    /**
+     * Captures a descriptor of the current versioned snapshot.
+     *
+     * This function is useful for performing isolated incremental modifications of versioned structures,
+     * such as PSI modifications on top of local patches over document.
+     *
+     * We can graphically represent the effect of this function as the following:
+     * ```kotlin
+     * forked version:         ------ A*         ------ C*
+     *                        /                 /
+     * main versions:   >--- A ------ B ------ C ------ D -->
+     * ```
+     * Here, `forkTimeline` invoked with published version `A` would result in `A*`.
+     *
+     * The returned object would represent the key to `A*` and allow to perform operations inside via [executeWithTimeline].
+     *
+     * The results will be discarded when [forgetForkedTimeline] is executed. Please design your use-cases carefully to avoid memory leaks.
+     */
+    @JvmStatic
+    fun forkTimeline(): OpaquePsiVersion = getInstance().doForkTimeline()
+
+    /**
+     * Releases the resources associated with [opaqueVersion].
+     */
+    @JvmStatic
+    fun forgetForkedTimeline(opaqueVersion: OpaquePsiVersion): Unit = getInstance().doForgetForkedTimeline(opaqueVersion)
+
+    /**
+     * Runs [action] where each access to versioned structures interacts with [opaqueVersion].
+     *
+     * We can graphically represent the effect of this function as the following:
+     * ```kotlin
+     * executeWithTimeline:       ------ A*         ------ C*
+     *                           /                 /
+     * normal execution:   >--- A ------ B ------ C ------ D -->
+     * ```
+     * Here, [forkTimeline] executed at version `A` will allow working in `A*` via [executeWithTimeline].
+     *
+     * All changes to versioned structures (e.g. PSI) made inside [executeWithTimeline] are invisible to other modifications to this structure.
+     * The changes are effectively discarded after [forgetForkedTimeline] is invoked.
+     *
+     * It is possible to perform a [lightweight document commit][com.intellij.psi.PsiDocumentManager.commitDocument] inside this block.
+     */
+    @JvmStatic
+    fun <T> executeWithTimeline(opaqueVersion: OpaquePsiVersion, action: () -> T): T = getInstance().doExecuteWithTimeline(opaqueVersion, action)
+
+
     private fun getInstance(): PsiVersioningService {
       return ApplicationManager.getApplication().serviceOrNull<PsiVersioningService>() ?: Fallback
     }
@@ -75,6 +131,17 @@ interface PsiVersioningService {
 
   @ApiStatus.Internal
   fun <T> runAndFreezePsiVersion(action: () -> T): T = action()
+
+  private object IgnoredOpaquePsiVersion: OpaquePsiVersion
+
+  @ApiStatus.Internal
+  fun doForkTimeline(): OpaquePsiVersion = IgnoredOpaquePsiVersion
+
+  @ApiStatus.Internal
+  fun doForgetForkedTimeline(opaqueVersion: OpaquePsiVersion): Unit = Unit
+
+  @ApiStatus.Internal
+  fun <T> doExecuteWithTimeline(opaqueVersion: OpaquePsiVersion, action: () -> T): T = action()
 
   @ApiStatus.Internal
   fun getCurrentVersion(): Long = -1

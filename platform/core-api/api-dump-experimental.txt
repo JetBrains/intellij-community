@@ -479,11 +479,18 @@ f:com.intellij.psi.util.PsiTreeUtilKt
 - *sf:Companion:com.intellij.psi.util.PsiVersioningService$Companion
 - *s:createVersionedPsiElements(com.intellij.lang.ASTNode,kotlin.jvm.functions.Function0):java.lang.Object
 - *s:createVersionedPsiElements(com.intellij.psi.PsiElement,kotlin.jvm.functions.Function0):java.lang.Object
+- *s:executeWithTimeline(com.intellij.psi.util.PsiVersioningService$OpaquePsiVersion,kotlin.jvm.functions.Function0):java.lang.Object
+- *s:forgetForkedTimeline(com.intellij.psi.util.PsiVersioningService$OpaquePsiVersion):V
+- *s:forkTimeline():com.intellij.psi.util.PsiVersioningService$OpaquePsiVersion
 - *s:freezePsiVersion(kotlin.jvm.functions.Function0):java.lang.Object
 *f:com.intellij.psi.util.PsiVersioningService$Companion
 - f:createVersionedPsiElements(com.intellij.lang.ASTNode,kotlin.jvm.functions.Function0):java.lang.Object
 - f:createVersionedPsiElements(com.intellij.psi.PsiElement,kotlin.jvm.functions.Function0):java.lang.Object
+- f:executeWithTimeline(com.intellij.psi.util.PsiVersioningService$OpaquePsiVersion,kotlin.jvm.functions.Function0):java.lang.Object
+- f:forgetForkedTimeline(com.intellij.psi.util.PsiVersioningService$OpaquePsiVersion):V
+- f:forkTimeline():com.intellij.psi.util.PsiVersioningService$OpaquePsiVersion
 - f:freezePsiVersion(kotlin.jvm.functions.Function0):java.lang.Object
+*:com.intellij.psi.util.PsiVersioningService$OpaquePsiVersion
 f:com.intellij.util.CoroutinesKt
 - *sf:awaitCancellationAndInvoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2):V
 - *bs:awaitCancellationAndInvoke$default(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,I,java.lang.Object):V

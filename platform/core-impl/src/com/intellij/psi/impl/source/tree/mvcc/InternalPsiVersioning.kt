@@ -40,6 +40,7 @@ object InternalPsiVersioning {
   private const val SUSPENDING_WRITE_ACTION_METHOD_NAME = "executeSuspendingWriteAction"
 
   private const val LOCK_PROHIBITION_FREEZE_PSI_VERSION_ADVICE = "Lock usage is forbidden by `PsiVersioningService#freezePsiVersion`. It is not allowed to use locks while PSI snapshot is frozen"
+  private const val LOCK_PROHIBITION_FORKED_TIMELINE_ADVICE = "Lock usage is forbidden by `PsiVersioningService#executeWithTimeline`. It is not allowed to use locks while computation in a forked timeline is running"
 
   /**
    * PSI Versions are represented as a [Long].
@@ -112,6 +113,21 @@ object InternalPsiVersioning {
   fun assertNotInFreezePsiVersion() {
     if (PsiVersionFreezeMarker.isAvailable()) {
       error("This function is not allowed inside `freezePsiVersion` block")
+    }
+  }
+
+
+  fun <T> exclusivePsiModificationScopeWithExplicitVersion(version: Long, action: () -> T): T {
+    if (ApplicationManager.getApplication().isWriteAccessAllowed || ApplicationManager.getApplication().isWriteIntentLockAcquired) {
+      return action()
+    }
+    require(version % FORKED_TIMELINE_MASK != 0L) {
+      "Cannot execute exclusive modification scope with version $version. The scope must be forked with `forkTimeline`"
+    }
+    return ApplicationManagerEx.getApplicationEx().withLocksProhibited(LOCK_PROHIBITION_FORKED_TIMELINE_ADVICE) {
+      initFreezePsiVersionSection(true, version).use {
+        action()
+      }
     }
   }
 
@@ -320,6 +336,14 @@ object InternalPsiVersioning {
       } finally {
         decrementFrozenVersion(version)
       }
+    }
+
+    fun rememberFrozenVersionUnsafe(version: Long) {
+      frozenPsiVersionsRegistry.compute(version) { _, v -> if (v == null) 1 else v + 1 }
+    }
+
+    fun forgetFrozenVersionUnsafe(version: Long) {
+      decrementFrozenVersion(version)
     }
 
     internal fun registerCleanablesForVersion(version: Long, cleanables: Collection<PsiVersionCleanable>) {
