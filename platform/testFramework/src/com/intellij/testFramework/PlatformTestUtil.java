@@ -1573,6 +1573,39 @@ public final class PlatformTestUtil {
     });
   }
 
+  /**
+   * Wait and dispatch events during timeout, like {@link #waitWithEventsDispatching(Supplier, BooleanSupplier, int, Runnable)}.
+   * Unlike that method, this method does not fail the test when the timeout runs out.
+   * It runs {@code onTimeout} instead, then returns {@code false}.
+   *
+   * @return {@code true} if {@code condition} became true before the timeout ran out.
+   */
+  public static boolean tryWaitWithEventsDispatching(@NotNull BooleanSupplier condition,
+                                                      int timeoutInSeconds,
+                                                      @NotNull Runnable onTimeout) {
+    var deadlineNs = System.nanoTime() + Duration.ofSeconds(timeoutInSeconds).toNanos();
+    Boolean conditionMetBeforeTimeout = ((CoreProgressManager)ProgressManager.getInstance()).suppressAllDeprioritizationsDuringLongTestsExecutionIn(() -> {
+      while (true) {
+        try {
+          if (condition.getAsBoolean()) {
+            return true;
+          }
+          if (System.nanoTime() >= deadlineNs) {
+            onTimeout.run();
+            return false;
+          }
+          dispatchAllEventsInIdeEventQueue(deadlineNs);
+          //noinspection BusyWait
+          Thread.sleep(10);
+        }
+        catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
+    return conditionMetBeforeTimeout;
+  }
+
   public static PsiElement findElementBySignature(@NotNull String signature, @NotNull String fileRelativePath, @NotNull Project project) {
     var filePath = Path.of(requireNonNull(project.getBasePath(), () -> project.toString()), fileRelativePath);
     var virtualFile = LocalFileSystem.getInstance().findFileByNioFile(filePath);
