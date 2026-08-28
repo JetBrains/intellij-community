@@ -47,7 +47,7 @@ func embedOrFail(t *testing.T, descriptor string, request structural.ContentRequ
 func TestAKeptModuleReceivesItsDescriptorAsCdata(t *testing.T) {
 	got := embedOrFail(t,
 		`<idea-plugin><content><module name="a.b"/></content></idea-plugin>`,
-		structural.ContentRequest{MainModule: "intellij.example", Modules: []string{"a.b"}, Embeds: true},
+		structural.ContentRequest{MainModule: "intellij.example", Embeds: true},
 		map[string]string{"a.b.xml": `<idea-plugin package="a.b"><extensions/></idea-plugin>`})
 
 	equals(t, got, `<idea-plugin>
@@ -74,12 +74,12 @@ func TestTheDescriptorFileNameOfAContentModule(t *testing.T) {
 	}
 }
 
-// A `<module/>` the plan does not name is removed, wherever it stands. The assembly's own filter reads the JPS project
-// model, and the plan states the survivors instead (`DevDistPluginDescriptorMain.kt:152-170`).
-func TestAModuleThePlanDoesNotNameIsRemoved(t *testing.T) {
+// A `<module/>` the plan refuses is removed, wherever it stands. The assembly's own filter reads the JPS project model,
+// and the plan states its refusals instead (`DevDistPluginDescriptorMain.kt:152-170`).
+func TestAModuleThePlanRefusesIsRemoved(t *testing.T) {
 	got := embedOrFail(t,
 		`<idea-plugin><content><module name="a"/><module name="dropped"/><module name="b"/></content></idea-plugin>`,
-		structural.ContentRequest{MainModule: "intellij.example", Modules: []string{"a", "b"}, Embeds: false},
+		structural.ContentRequest{MainModule: "intellij.example", Refused: []string{"dropped"}, Embeds: false},
 		nil)
 
 	equals(t, got, `<idea-plugin>
@@ -96,7 +96,7 @@ func TestTheFilterRunsOverEveryContentBlock(t *testing.T) {
 	got := embedOrFail(t,
 		`<idea-plugin><content><module name="a"/><module name="x"/></content>`+
 			`<content><module name="y"/><module name="b"/></content></idea-plugin>`,
-		structural.ContentRequest{MainModule: "intellij.example", Modules: []string{"a", "b"}, Embeds: false},
+		structural.ContentRequest{MainModule: "intellij.example", Refused: []string{"x", "y"}, Embeds: false},
 		nil)
 
 	equals(t, got, `<idea-plugin>
@@ -109,41 +109,46 @@ func TestTheFilterRunsOverEveryContentBlock(t *testing.T) {
 </idea-plugin>`)
 }
 
-// The order assertion. The plan states the modules as a list and the descriptor as elements, and the two are joined by
-// position: a descriptor in another order would take the wrong `separate-jar` verdicts in silence
-// (`DevDistPluginDescriptorMain.kt:172-175`).
-func TestAReorderedPlanIsRefused(t *testing.T) {
+// The invariant of the refusal list: every refusal must reach a `<module/>`. A refusal that reaches none is a plan the
+// descriptor has moved away from (`DevDistPluginDescriptorMain.kt:172-175`).
+func TestAnUnmatchedRefusalIsRefused(t *testing.T) {
 	_, err := embed(t,
-		`<idea-plugin><content><module name="a"/><module name="b"/></content></idea-plugin>`,
-		structural.ContentRequest{MainModule: "intellij.example", Modules: []string{"b", "a"}, Embeds: true},
-		map[string]string{"a.xml": `<idea-plugin/>`, "b.xml": `<idea-plugin/>`})
+		`<idea-plugin><content><module name="a"/></content></idea-plugin>`,
+		structural.ContentRequest{MainModule: "intellij.example", Refused: []string{"absent"}, Embeds: true},
+		map[string]string{"a.xml": `<idea-plugin/>`})
 	if err == nil {
-		t.Fatal("a reordered plan must be refused")
+		t.Fatal("an unmatched refusal must be refused")
 	}
-	// The message states both orders, because a reader has to see which side moved.
-	for _, expected := range []string{"[b, a]", "[a, b]", "intellij.example"} {
+	// The message states the plugin and the name it could not find, because that pair is the whole repair.
+	for _, expected := range []string{"absent", "intellij.example"} {
 		if !strings.Contains(err.Error(), expected) {
 			t.Errorf("the refusal must state %s: %v", expected, err)
 		}
 	}
 }
 
-// The negative control of the case above: the same two modules in the descriptor's own order pass.
-func TestThePlansOwnOrderPasses(t *testing.T) {
-	embedOrFail(t,
+// The negative control of the case above: a refusal the descriptor does state passes, and takes that module out.
+func TestAMatchedRefusalPasses(t *testing.T) {
+	got := embedOrFail(t,
 		`<idea-plugin><content><module name="a"/><module name="b"/></content></idea-plugin>`,
-		structural.ContentRequest{MainModule: "intellij.example", Modules: []string{"a", "b"}, Embeds: true},
+		structural.ContentRequest{MainModule: "intellij.example", Refused: []string{"b"}, Embeds: true},
 		map[string]string{"a.xml": `<idea-plugin/>`, "b.xml": `<idea-plugin/>`})
+	if strings.Contains(got, `name="b"`) {
+		t.Errorf("the refused module must be gone:\n%s", got)
+	}
 }
 
-// A plan naming a module the descriptor does not state is refused too: the kept list is then shorter than the plan.
-func TestAPlanNamingAnAbsentModuleIsRefused(t *testing.T) {
-	_, err := embed(t,
-		`<idea-plugin><content><module name="a"/></content></idea-plugin>`,
-		structural.ContentRequest{MainModule: "intellij.example", Modules: []string{"a", "absent"}, Embeds: true},
-		map[string]string{"a.xml": `<idea-plugin/>`})
-	if err == nil {
-		t.Fatal("a plan naming an absent module must be refused")
+// An empty refusal list keeps every `<module/>` the descriptor states. This is what every plugin of the `idea` product
+// takes today, because its `ContentModuleFilter` refuses nothing.
+func TestAnEmptyRefusalListKeepsEveryModule(t *testing.T) {
+	got := embedOrFail(t,
+		`<idea-plugin><content><module name="a"/><module name="b"/></content></idea-plugin>`,
+		structural.ContentRequest{MainModule: "intellij.example", Embeds: true},
+		map[string]string{"a.xml": `<idea-plugin/>`, "b.xml": `<idea-plugin/>`})
+	for _, expected := range []string{`name="a"`, `name="b"`} {
+		if !strings.Contains(got, expected) {
+			t.Errorf("%s must survive:\n%s", expected, got)
+		}
 	}
 }
 
@@ -178,7 +183,6 @@ func TestTheThreeSeparateJarGates(t *testing.T) {
 				`<idea-plugin><content><module name="`+it.module+`"/></content></idea-plugin>`,
 				structural.ContentRequest{
 					MainModule:  "intellij.example",
-					Modules:     []string{it.module},
 					SeparateJar: it.separateJar,
 					Embeds:      true,
 				},
@@ -198,7 +202,6 @@ func TestSeparateJarIsAppendedAfterThePackage(t *testing.T) {
 		`<idea-plugin><content><module name="a.b"/></content></idea-plugin>`,
 		structural.ContentRequest{
 			MainModule:  "intellij.example",
-			Modules:     []string{"a.b"},
 			SeparateJar: map[string]bool{"a.b": true},
 			Embeds:      true,
 		},
@@ -216,7 +219,7 @@ func TestSeparateJarIsAppendedAfterThePackage(t *testing.T) {
 func TestALayoutThatEmbedsNothingStillFilters(t *testing.T) {
 	got := embedOrFail(t,
 		`<idea-plugin><content><module name="a"/><module name="dropped"/></content></idea-plugin>`,
-		structural.ContentRequest{MainModule: "intellij.example", Modules: []string{"a"}, Embeds: false},
+		structural.ContentRequest{MainModule: "intellij.example", Refused: []string{"dropped"}, Embeds: false},
 		// no descriptor is declared, and none is asked for
 		nil)
 
@@ -232,7 +235,7 @@ func TestALayoutThatEmbedsNothingStillFilters(t *testing.T) {
 func TestAModuleThatAlreadyHoldsContentIsLeftAlone(t *testing.T) {
 	got := embedOrFail(t,
 		`<idea-plugin><content><module name="a.b"><![CDATA[<idea-plugin package="already"/>]]></module></content></idea-plugin>`,
-		structural.ContentRequest{MainModule: "intellij.example", Modules: []string{"a.b"}, Embeds: true},
+		structural.ContentRequest{MainModule: "intellij.example", Embeds: true},
 		map[string]string{"a.b.xml": `<idea-plugin package="fresh"/>`})
 
 	if !strings.Contains(got, "already") || strings.Contains(got, "fresh") {
@@ -245,7 +248,7 @@ func TestAModuleThatAlreadyHoldsContentIsLeftAlone(t *testing.T) {
 func TestAnEmbeddedDescriptorResolvesItsOwnIncludes(t *testing.T) {
 	got := embedOrFail(t,
 		`<idea-plugin><content><module name="a.b"/></content></idea-plugin>`,
-		structural.ContentRequest{MainModule: "intellij.example", Modules: []string{"a.b"}, Embeds: true},
+		structural.ContentRequest{MainModule: "intellij.example", Embeds: true},
 		map[string]string{
 			"a.b.xml":            `<idea-plugin` + xi + ` package="a.b"><xi:include href="extra.xml"/></idea-plugin>`,
 			"META-INF/extra.xml": `<idea-plugin><extensions/></idea-plugin>`,
@@ -265,7 +268,7 @@ func TestAnEmbeddedDescriptorResolvesItsOwnIncludes(t *testing.T) {
 func TestAnUndeclaredContentModuleDescriptorFails(t *testing.T) {
 	_, err := embed(t,
 		`<idea-plugin><content><module name="a.b"/></content></idea-plugin>`,
-		structural.ContentRequest{MainModule: "intellij.example", Modules: []string{"a.b"}, Embeds: true},
+		structural.ContentRequest{MainModule: "intellij.example", Embeds: true},
 		nil)
 	if err == nil || !strings.Contains(err.Error(), "a.b.xml") {
 		t.Errorf("got %v", err)
@@ -288,7 +291,7 @@ func TestAModuleInsideCdataIsNotADeclaration(t *testing.T) {
 	got := embedOrFail(t,
 		`<idea-plugin><description><![CDATA[<content><module name="prose"/></content>]]></description>`+
 			`<content><module name="a"/></content></idea-plugin>`,
-		structural.ContentRequest{MainModule: "intellij.example", Modules: []string{"a"}, Embeds: false},
+		structural.ContentRequest{MainModule: "intellij.example", Refused: []string{"a"}, Embeds: false},
 		nil)
 	if !strings.Contains(got, "&lt;module name=&quot;prose&quot;/&gt;") {
 		t.Errorf("the prose must survive:\n%s", got)
@@ -300,7 +303,7 @@ func TestAModuleInsideCdataIsNotADeclaration(t *testing.T) {
 func TestAnEmbeddedDescriptorWithProseDoesNotNestACdataFrame(t *testing.T) {
 	got := embedOrFail(t,
 		`<idea-plugin><content><module name="a.b"/></content></idea-plugin>`,
-		structural.ContentRequest{MainModule: "intellij.example", Modules: []string{"a.b"}, Embeds: true},
+		structural.ContentRequest{MainModule: "intellij.example", Embeds: true},
 		map[string]string{"a.b.xml": `<idea-plugin package="a.b"><description><![CDATA[<b>x</b>]]></description></idea-plugin>`})
 
 	if strings.Count(got, "<![CDATA[") != 1 || strings.Count(got, "]]>") != 1 {

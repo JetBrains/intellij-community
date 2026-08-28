@@ -75,8 +75,13 @@ internal class DevDistPluginDescriptorRequest(
   @JvmField val exactVersion: Boolean,
   @JvmField val retainProductDescriptor: Boolean,
   @JvmField val embedsContentModules: Boolean,
-  /** The filtered content-module names, in the order the descriptor must keep them. */
-  @JvmField val contentModules: List<String>,
+  /**
+   * The content modules the product's filter refuses. Normally empty.
+   *
+   * The survivors are the descriptor's own `<content>`, which this action already declares as an input. So the plan
+   * states the refusals, and a refusal that reaches no `<module/>` fails the action.
+   */
+  @JvmField val refusedContentModules: List<String>,
   /** Which content module's embedded descriptor takes `separate-jar="true"`. A deviation, so normally empty. */
   @JvmField val separateJarModules: Set<String>,
   /** The descriptors this plugin's patch can reach, keyed by the load path a resolver asks for. */
@@ -164,8 +169,11 @@ internal suspend fun patchPluginDescriptorFromPlan(request: DevDistPluginDescrip
  * The content-module stage, driven by the plan instead of by a `ContentModuleFilter`.
  *
  * The assembly's `collectContentModules` removes an optional `<module/>` its filter refuses, and that filter reads the
- * JPS project model. The plan states the survivors in order instead, so this removes every `<module/>` the plan does not
- * name and keeps the rest where they are.
+ * JPS project model. The plan states the refusals instead, so this removes the `<module/>` of each refused name and
+ * keeps the rest where they are.
+ *
+ * Every refusal must be found. A refusal that reaches no `<module/>` is a plan the descriptor has moved away from, so
+ * this fails and names what it could not find.
  */
 private suspend fun embedContentModulesFromPlan(
   rootElement: Element,
@@ -173,7 +181,8 @@ private suspend fun embedContentModulesFromPlan(
   pluginCache: ScopedCachedDescriptorContainer,
   xIncludeResolver: XIncludeElementResolverImpl,
 ) {
-  val survivors = LinkedHashSet(request.contentModules)
+  val refused = LinkedHashSet(request.refusedContentModules)
+  val found = HashSet<String>()
   val kept = ArrayList<Pair<Element, String>>()
   for (content in rootElement.getChildren("content")) {
     val iterator = content.getChildren("module").iterator()
@@ -182,18 +191,20 @@ private suspend fun embedContentModulesFromPlan(
       val moduleName = requireNotNull(moduleElement.getAttributeValue("name")) {
         "A <module/> of ${request.mainModule} states no name"
       }
-      if (survivors.contains(moduleName)) {
-        kept.add(moduleElement to moduleName)
+      if (refused.contains(moduleName)) {
+        found.add(moduleName)
+        iterator.remove()
       }
       else {
-        iterator.remove()
+        kept.add(moduleElement to moduleName)
       }
     }
   }
 
-  check(kept.map { it.second } == request.contentModules) {
-    "The plan of ${request.mainModule} states the content modules ${request.contentModules}, " +
-    "and its descriptor states ${kept.map { it.second }}"
+  val missing = refused.filterNot { found.contains(it) }
+  check(missing.isEmpty()) {
+    "The plan of ${request.mainModule} refuses the content modules $missing. " +
+    "Its descriptor states no <module/> of those names"
   }
 
   if (!request.embedsContentModules) {
@@ -414,7 +425,7 @@ internal fun parseDevDistPluginDescriptorRequest(lines: List<String>): DevDistPl
   var exactVersion = false
   var retainProductDescriptor = false
   var embedsContentModules = true
-  val contentModules = ArrayList<String>()
+  val refusedContentModules = ArrayList<String>()
   val separateJarModules = LinkedHashSet<String>()
   val pluginDescriptors = LinkedHashMap<String, Path>()
   val pluginDescriptorsInJar = LinkedHashMap<String, Path>()
@@ -446,7 +457,7 @@ internal fun parseDevDistPluginDescriptorRequest(lines: List<String>): DevDistPl
       "--exact-version" -> exactVersion = value.toBooleanStrict()
       "--retain-product-descriptor" -> retainProductDescriptor = value.toBooleanStrict()
       "--embed-content-modules" -> embedsContentModules = value.toBooleanStrict()
-      "--content-module" -> contentModules.add(value)
+      "--refused-content-module" -> refusedContentModules.add(value)
       "--separate-jar" -> separateJarModules.add(value)
       "--plugin-descriptor" -> putDescriptor(pluginDescriptors, value)
       "--plugin-descriptor-in-jar" -> putDescriptor(pluginDescriptorsInJar, value)
@@ -474,7 +485,7 @@ internal fun parseDevDistPluginDescriptorRequest(lines: List<String>): DevDistPl
     exactVersion = exactVersion,
     retainProductDescriptor = retainProductDescriptor,
     embedsContentModules = embedsContentModules,
-    contentModules = contentModules,
+    refusedContentModules = refusedContentModules,
     separateJarModules = separateJarModules,
     pluginDescriptors = pluginDescriptors,
     pluginDescriptorsInJar = pluginDescriptorsInJar,

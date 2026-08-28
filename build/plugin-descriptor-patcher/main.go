@@ -65,8 +65,9 @@ type request struct {
 	exactVersion    bool
 	retainProduct   bool
 	embedsContent   bool
-	contentModules  []string
-	separateJar     map[string]bool
+	// refusedContentModules are the content modules the product's filter refuses. Normally empty.
+	refusedContentModules []string
+	separateJar           map[string]bool
 	// pluginDescriptors and platformDescriptors are the descriptors the patch can reach, keyed by load path.
 	pluginDescriptors   map[string]string
 	platformDescriptors map[string]string
@@ -175,7 +176,7 @@ func patch(parsed request) (string, error) {
 	}
 	err = structural.EmbedContentModules(element, structural.ContentRequest{
 		MainModule:  parsed.mainModule,
-		Modules:     parsed.contentModules,
+		Refused:     parsed.refusedContentModules,
 		SeparateJar: parsed.separateJar,
 		Embeds:      parsed.embedsContent,
 	}, pluginCache, resolver)
@@ -298,8 +299,8 @@ func parseRequest(lines []string) (request, error) {
 			parsed.retainProduct, err = parseBooleanStrict(value)
 		case "--embed-content-modules":
 			parsed.embedsContent, err = parseBooleanStrict(value)
-		case "--content-module":
-			parsed.contentModules = append(parsed.contentModules, value)
+		case "--refused-content-module":
+			parsed.refusedContentModules = append(parsed.refusedContentModules, value)
 		case "--separate-jar":
 			parsed.separateJar[value] = true
 		case "--plugin-descriptor":

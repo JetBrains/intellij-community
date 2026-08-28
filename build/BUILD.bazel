@@ -5,6 +5,7 @@ load("//build:intellij_dev.bzl", "INTELLIJ_ADD_OPENS")
 load("//build:intellij_dev_community.bzl", "intellij_dev_binary_community")
 load("//build:jps_to_bazel_targets_json.bzl", "jps_to_bazel_targets_json")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+load("//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_product_info")
 load(":dev_launch_dependencies_test.bzl", "dev_launch_dependencies_test_suite")
 load(":jps_library_derivation_pipeline_test.bzl", "jps_library_derivation_pipeline_test_suite")
 load(":jps_library_derivation_test.bzl", "jps_library_derivation_test_suite")
@@ -36,6 +37,19 @@ filegroup(
         "dev_dist_plugin_content_candidate_overrides.txt",
         "dev_dist_plugin_content_vetoes.txt",
     ],
+    visibility = ["//visibility:public"],
+)
+
+# Which product a `dev_dist_plugin_descriptor` action stamps for. One plugin's patched descriptor differs between two
+# products in three scalars only, so the scalars are a configuration and one descriptor target serves every product.
+#
+# The default states no product, and the leaf rule fails on it. A product's own set target transitions its descriptors
+# onto the product's own `dev_dist_product_info`, so nothing a distribution reads ever sees this default.
+dev_dist_product_info(name = "no_dev_dist_product_info")
+
+label_flag(
+    name = "dev_dist_product_info",
+    build_setting_default = ":no_dev_dist_product_info",
     visibility = ["//visibility:public"],
 )
 

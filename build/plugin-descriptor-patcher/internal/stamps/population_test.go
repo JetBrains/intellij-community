@@ -45,8 +45,8 @@ import (
 // | the two structural stages are inert | `structural` over a descriptor the platform's own stages did not change | where both reported no change |
 //
 // "Every computed plugin" is one record of `//build:idea_air_dist` today, `intellij.devkit`, because every fragment
-// reads its produced descriptor. Empty `fragment_reads` of the product entry to build the arm that computes all 163 -
-// see the README.
+// reads its produced descriptor. Set `fragment_reads` of the product entry to `"none"` to build the arm that computes
+// all 163 - see the README.
 //
 // The round trip starts at `rawTextPatcher` and not at `source`, because that is the text the platform hands to
 // `JDOMUtil.load`. The two are the same text for every plugin whose layout states no raw lambda.
@@ -254,8 +254,8 @@ func TestThePopulationRoundTripsAndStampsByteForByte(t *testing.T) {
 			if it.plugin.Origin == originProduced {
 				skipped++
 				t.Skip("the fragment read this descriptor from a produced file, so the artifact holds no stage of " +
-					"the patch. Empty `fragment_reads` of the product entry in build/dev_dist_plugin_descriptors.bzl " +
-					"and rebuild to cover it here; emptying `plugins` instead would remove the producer as well")
+					"the patch. Set `fragment_reads` of the product entry in build/dev_dist_plugin_descriptors.bzl to " +
+					"\"none\" and rebuild to cover it here; emptying `plugins` instead would remove the producer as well")
 			}
 			source, states := it.plugin.stageText(stageRawTextPatcher)
 			if !states {
@@ -311,31 +311,23 @@ func TestThePopulationRoundTripsAndStampsByteForByte(t *testing.T) {
 // returns the text they produce.
 //
 // The seed is empty and `Embeds` is false, which is what makes the case runnable without the descriptor closure the
-// artifact does not hold. The plan's content modules are the descriptor's own, in its own order, because a stage the
-// platform reported as changing nothing removed no `<module/>`.
+// artifact does not hold. The refusal list is empty, because a stage the platform reported as changing nothing removed
+// no `<module/>`.
 //
 // So this catches a stage that moves a byte it should not: an include walk that rewrites a descriptor with no include,
-// a filter that drops a module the plan names, or an order assertion that reads the descriptor's own order wrongly.
+// or a filter that removes a `<module/>` no refusal names.
 func runInertStructuralStages(t *testing.T, stampsText string, mainModule string) string {
 	t.Helper()
 	element, err := descriptorxml.Read(stampsText)
 	if err != nil {
 		t.Fatalf("read: %v", err)
 	}
-	var modules []string
-	for _, content := range element.ChildElementsNamed("content") {
-		for _, module := range content.ChildElementsNamed("module") {
-			if name, stated := module.Attribute("name"); stated {
-				modules = append(modules, name)
-			}
-		}
-	}
 	cache := structural.NewCache(nil)
 	resolver := structural.NewResolver([]structural.Scope{{Modules: []string{mainModule}, Cache: cache}})
 	if err := structural.ResolveIncludes(element, resolver); err != nil {
 		t.Fatalf("the includes stage must be inert here: %v", err)
 	}
-	request := structural.ContentRequest{MainModule: mainModule, Modules: modules, Embeds: false}
+	request := structural.ContentRequest{MainModule: mainModule, Embeds: false}
 	if err := structural.EmbedContentModules(element, request, cache, resolver); err != nil {
 		t.Fatalf("the content stage must be inert here: %v", err)
 	}

@@ -29,14 +29,14 @@ class DevDistPluginDescriptorTest {
   }
 
   /**
-   * Control (a): the plan loses one content-module name.
+   * Control (a): the plan refuses one content module.
    *
-   * The action removes every `<module/>` the plan does not name, because that is how the assembly's `ContentModuleFilter`
-   * refuses an optional module. So a plan that lost a name loses the `<module/>` and its embedded body.
+   * The action removes the `<module/>` of every refused name, because that is how the assembly's `ContentModuleFilter`
+   * refuses an optional module. So a refusal takes the `<module/>` and its embedded body out.
    */
   @Test
-  fun `a dropped content module changes the text`(@TempDir dir: Path) {
-    val damaged = patch(fixture(dir, contentModules = listOf(BACKEND)))
+  fun `a refused content module changes the text`(@TempDir dir: Path) {
+    val damaged = patch(fixture(dir, refusedContentModules = listOf(FRONTEND)))
 
     assertThat(damaged).isNotEqualTo(REFERENCE)
     assertThat(damaged).doesNotContain(FRONTEND)
@@ -44,15 +44,15 @@ class DevDistPluginDescriptorTest {
   }
 
   /**
-   * Control (b): the plan states the two content modules in the other order.
+   * Control (b): the plan refuses a name the descriptor does not state.
    *
-   * This one is **refused** rather than applied, and that is the honest shape of it. The surviving order is the
-   * descriptor's own order, and no plan can change where an XML child sits. What the plan's order is for is exactly this
-   * guard: a plan whose order disagrees with the descriptor is a plan that is describing another descriptor.
+   * This one is **refused** rather than applied, and it is the invariant the refusal list carries. A refusal that
+   * reaches no `<module/>` is a plan the descriptor has moved away from, and the action must not emit a text that
+   * silently ignored it.
    */
   @Test
-  fun `a reordered content list is refused`(@TempDir dir: Path) {
-    assertThatThrownBy { patch(fixture(dir, contentModules = listOf(FRONTEND, BACKEND))) }
+  fun `a refusal the descriptor does not state is refused`(@TempDir dir: Path) {
+    assertThatThrownBy { patch(fixture(dir, refusedContentModules = listOf("intellij.example.absent"))) }
       .isInstanceOf(RuntimeException::class.java)
       .hasMessageContaining("Could not patch descriptor (module=$MAIN_MODULE)")
 
@@ -127,8 +127,8 @@ class DevDistPluginDescriptorTest {
       "--exact-version=true",
       "--retain-product-descriptor=true",
       "--embed-content-modules=false",
-      "--content-module=intellij.a",
-      "--content-module=intellij.b",
+      "--refused-content-module=intellij.a",
+      "--refused-content-module=intellij.b",
       "--separate-jar=intellij.b",
       "--plugin-descriptor=intellij.a.xml=${dir.resolve("a.xml")}",
       "--platform-descriptor=x/y.xml=${dir.resolve("y.xml")}",
@@ -145,7 +145,7 @@ class DevDistPluginDescriptorTest {
     assertThat(request.exactVersion).isTrue()
     assertThat(request.retainProductDescriptor).isTrue()
     assertThat(request.embedsContentModules).isFalse()
-    assertThat(request.contentModules).containsExactly("intellij.a", "intellij.b")
+    assertThat(request.refusedContentModules).containsExactly("intellij.a", "intellij.b")
     assertThat(request.separateJarModules).containsExactly("intellij.b")
     assertThat(request.pluginDescriptors).containsOnlyKeys("intellij.a.xml")
     assertThat(request.platformDescriptors).containsOnlyKeys("x/y.xml")
@@ -223,7 +223,7 @@ class DevDistPluginDescriptorTest {
 
   private fun fixture(
     dir: Path,
-    contentModules: List<String> = listOf(BACKEND, FRONTEND),
+    refusedContentModules: List<String> = emptyList(),
     separateJarModules: Set<String> = emptySet(),
     declareContentModuleDescriptors: Boolean = true,
   ): DevDistPluginDescriptorRequest {
@@ -245,7 +245,7 @@ class DevDistPluginDescriptorTest {
       exactVersion = false,
       retainProductDescriptor = false,
       embedsContentModules = true,
-      contentModules = contentModules,
+      refusedContentModules = refusedContentModules,
       separateJarModules = separateJarModules,
       pluginDescriptors = if (declareContentModuleDescriptors) {
         mapOf(
@@ -283,7 +283,7 @@ class DevDistPluginDescriptorTest {
         exactVersion = base.exactVersion,
         retainProductDescriptor = base.retainProductDescriptor,
         embedsContentModules = true,
-        contentModules = listOf(BACKEND, SPLIT),
+        refusedContentModules = emptyList(),
         separateJarModules = separateJarModules,
         pluginDescriptors = mapOf(
           "$BACKEND.xml" to dir.resolve("$BACKEND.xml"),

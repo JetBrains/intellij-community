@@ -12,13 +12,14 @@ import (
 // ContentRequest is the plan's statement about one plugin's content modules.
 //
 // It is the subset of `DevDistPluginDescriptorRequest` the content stage reads
-// (`DevDistPluginDescriptorMain.kt:56-82`). The plan states the survivors in order, because the assembly's own filter
-// reads the JPS project model and no action may.
+// (`DevDistPluginDescriptorMain.kt:56-82`). The plan states the refusals, because the assembly's own filter reads the
+// JPS project model and no action may. The survivors are the descriptor's own `<content>`, which this action already
+// declares as an input.
 type ContentRequest struct {
 	// MainModule names the plugin in every failure.
 	MainModule string
-	// Modules are the content modules that survive the filter, in the order the descriptor must keep them.
-	Modules []string
+	// Refused are the content modules the product's filter refuses. Normally empty.
+	Refused []string
 	// SeparateJar is which content module's embedded descriptor takes `separate-jar="true"`. A deviation, so normally
 	// empty.
 	SeparateJar map[string]bool
@@ -29,21 +30,20 @@ type ContentRequest struct {
 
 // EmbedContentModules is `embedContentModulesFromPlan` (`DevDistPluginDescriptorMain.kt:146-198`).
 //
-// Two things happen, in this order. Every `<module/>` the plan does not name is removed, wherever it stands. Then each
+// Two things happen, in this order. Every `<module/>` the plan refuses is removed, wherever it stands. Then each
 // survivor receives its own module's descriptor as a CDATA body, unless the layout embeds none.
 //
-// The order assertion between the two is not a sanity check. The plan states the content modules as a list, the
-// descriptor states them as elements, and the two are joined by position: a descriptor that lists them in another order
-// would take the wrong `separate-jar` verdicts in silence. So the action refuses, and the refusal names both orders.
+// The invariant between the two is that every refusal is found. A refusal that reaches no `<module/>` is a plan the
+// descriptor has moved away from, so the action refuses and names what it could not find.
 func EmbedContentModules(
 	rootElement *descriptorxml.Element,
 	request ContentRequest,
 	cache *Cache,
 	resolver *Resolver,
 ) error {
-	survivors := make(map[string]bool, len(request.Modules))
-	for _, name := range request.Modules {
-		survivors[name] = true
+	refused := make(map[string]bool, len(request.Refused))
+	for _, name := range request.Refused {
+		refused[name] = true
 	}
 
 	type keptModule struct {
@@ -51,26 +51,32 @@ func EmbedContentModules(
 		name    string
 	}
 	var kept []keptModule
-	var keptNames []string
+	found := make(map[string]bool, len(request.Refused))
 	for _, content := range rootElement.ChildElementsNamed("content") {
 		for _, moduleElement := range content.ChildElementsNamed("module") {
 			moduleName, stated := moduleElement.Attribute("name")
 			if !stated {
 				return fmt.Errorf("a <module/> of %s states no name", request.MainModule)
 			}
-			if survivors[moduleName] {
-				kept = append(kept, keptModule{element: moduleElement, name: moduleName})
-				keptNames = append(keptNames, moduleName)
+			if refused[moduleName] {
+				found[moduleName] = true
+				content.RemoveChild(moduleElement)
 				continue
 			}
-			content.RemoveChild(moduleElement)
+			kept = append(kept, keptModule{element: moduleElement, name: moduleName})
 		}
 	}
 
-	if !sameOrder(keptNames, request.Modules) {
+	var missing []string
+	for _, name := range request.Refused {
+		if !found[name] {
+			missing = append(missing, name)
+		}
+	}
+	if len(missing) != 0 {
 		return fmt.Errorf(
-			"the plan of %s states the content modules [%s], and its descriptor states [%s]",
-			request.MainModule, strings.Join(request.Modules, ", "), strings.Join(keptNames, ", "))
+			"the plan of %s refuses the content modules [%s]. Its descriptor states no <module/> of those names",
+			request.MainModule, strings.Join(missing, ", "))
 	}
 
 	if !request.Embeds {
@@ -83,19 +89,6 @@ func EmbedContentModules(
 		}
 	}
 	return nil
-}
-
-// sameOrder is Kotlin's `List<String> == List<String>`, which is element-wise and ordered.
-func sameOrder(left []string, right []string) bool {
-	if len(left) != len(right) {
-		return false
-	}
-	for i := range left {
-		if left[i] != right[i] {
-			return false
-		}
-	}
-	return true
 }
 
 // resolveAndEmbedContentModuleDescriptor is `resolveAndEmbedContentModuleDescriptor`

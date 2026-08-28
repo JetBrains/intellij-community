@@ -55,7 +55,7 @@ func TestTheWholeRequestIsPatched(t *testing.T) {
 		"--exact-version=false",
 		"--retain-product-descriptor=false",
 		"--embed-content-modules=true",
-		"--content-module=a.b",
+		"--refused-content-module=dropped",
 		"--separate-jar=a.b",
 		"--plugin-descriptor=META-INF/extra.xml="+filepath.Join(dir, "extra.xml"),
 		"--plugin-descriptor=a.b.xml="+filepath.Join(dir, "a.b.xml"),
@@ -198,7 +198,6 @@ func TestAFailedStageWritesNoOutput(t *testing.T) {
 				"--out=" + output, "--main-module=intellij.example", "--source=" + source,
 				"--build-number-file=" + buildNumberFile(t, own, "263.100.5"),
 				"--release-date=20260101", "--release-version=2026300",
-				"--content-module=a.b",
 			})
 			if code != 1 {
 				t.Fatalf("exit %d, want 1", code)

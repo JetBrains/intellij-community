@@ -112,9 +112,9 @@ of the 163, and the arms cover the one record the assembly still computes. Measu
 That one is `intellij.devkit`, the additional plugin the plan does not cover. `intellij.dev` left this set when its
 descriptor got a label - see `containingBazelPackageLabel` in `platform/buildScripts/src/productLayout/devDistPluginDescriptorPlan.kt`.
 
-To cover all 163, build the fixture from the arm that computes every descriptor. Empty `fragment_reads` of the product
-entry in `build/dev_dist_plugin_descriptors.bzl`, build, copy the files out, and restore the file. That one key is the
-switch: it keeps every producer and takes only the declaration away, so the fragments run every stage of every
+To cover all 163, build the fixture from the arm that computes every descriptor. Set `fragment_reads` of the product
+entry in `build/dev_dist_plugin_descriptors.bzl` to `"none"`, build, copy the files out, and restore the file. That one
+key is the switch: it keeps every producer and takes only the declaration away, so the fragments run every stage of every
 descriptor and the artifact holds every stage text. Emptying `plugins` instead removes the producer, and the two-producer
 gate below then has nothing to compare. Measured on 2026-08-27 over one artifact of that shape, the gate reports 163 of
 163 for `rawTextPatcher` to `reserialized`, 163 of 163 for `reserialized` to `stamps`, and 43 of 43 for the class (a)
