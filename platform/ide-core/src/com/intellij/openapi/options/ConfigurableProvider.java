@@ -15,6 +15,14 @@ public abstract class ConfigurableProvider {
   public abstract @Nullable Configurable createConfigurable();
 
   /**
+   * @return optional class hint to not eagerly instantiate configurable when it gets cast to a required type
+   * by {@link com.intellij.openapi.options.ex.ConfigurableWrapper#cast(java.lang.Class, com.intellij.openapi.options.UnnamedConfigurable)}
+   */
+  public @Nullable Class<?> getConfigurableType() {
+    return null;
+  }
+
+  /**
    * Defines whether this provider creates a configurable or not.
    * Note that the {@code createConfigurable} method will be called
    * if this method returns {@code true}.

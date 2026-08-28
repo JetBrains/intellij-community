@@ -832,6 +832,7 @@ c:com.intellij.openapi.options.ConfigurableEP
 a:com.intellij.openapi.options.ConfigurableProvider
 - <init>():V
 - canCreateConfigurable():Z
+- getConfigurableType():java.lang.Class
 com.intellij.openapi.options.ConfigurableWithId
 - com.intellij.openapi.options.Configurable
 - a:getId():java.lang.String

@@ -336,8 +336,9 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
 
   public final @Nullable Class<?> findClassOrNull(@NotNull String className) {
     try {
-      ClassLoader classLoader = pluginDescriptor == null ? null : pluginDescriptor.getPluginClassLoader();
-      return Class.forName(className, true, classLoader);
+      if (pluginDescriptor == null) return Class.forName(className);
+
+      return componentManager.loadClass(className, pluginDescriptor);
     }
     catch (Throwable t) {
       if (pluginDescriptor == null) {
@@ -429,6 +430,11 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
     protected boolean canCreateElement() {
       return myProvider.canCreateConfigurable();
     }
+
+    @Override
+    protected Class<?> getType() {
+      return myProvider.getConfigurableType();
+    }
   }
 
   private static final class ClassProducer extends ObjectProducer {
@@ -462,6 +468,18 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
     @Override
     protected boolean canCreateElement() {
       return true;
+    }
+
+    @Override
+    protected Class<?> getType() {
+      if (pluginDescriptor == null) return null;
+
+      try {
+        return componentManager.loadClass(className, pluginDescriptor);
+      }
+      catch (ClassNotFoundException ignored) {}
+
+      return null;
     }
   }
 
