@@ -107,6 +107,8 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
 
   fun `test blockquote with numbered list`() = doTest(rightMargin = 80, insertQuoteArrows = true)
 
+  fun `test blockquote wrapping does not create numbered list`() = doTest(rightMargin = 120, insertQuoteArrows = true)
+
   fun `test unusual whitespace before text`() = doTest(rightMargin = 20)
 
   fun `test do not wrap codespan when wrap settings disabled`() = doTest(
