@@ -5,6 +5,7 @@ import com.intellij.find.usages.api.SearchTarget
 import com.intellij.find.usages.api.UsageHandler
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.model.Pointer
+import com.intellij.model.Symbol
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataMap
 import com.intellij.openapi.actionSystem.DataSink
@@ -18,6 +19,7 @@ import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.platform.lsp.api.LspBundle
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.customization.LspFindReferencesSupport
+import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.util.getLsp4jPosition
 import com.intellij.util.IconUtil
@@ -63,8 +65,7 @@ internal class LspSearchTargetsRule : UiDataRule {
 
     val lspClients = LspClientManagerImpl.getInstanceImpl(project)
                        .getClientsWithThisFileOpen(file)
-                       .filter { it.descriptor.lspCustomization.findReferencesCustomizer is LspFindReferencesSupport }
-                       .filter { it.supportsFindReferences(file) }
+                       .filter { it.isFindReferencesEnabledFor(file) }
                        .takeIf { it.isNotEmpty() }
                      ?: return null
 
@@ -72,8 +73,17 @@ internal class LspSearchTargetsRule : UiDataRule {
   }
 }
 
-internal class LspSearchTarget(val lspClients: Collection<LspClient>, val file: VirtualFile, val position: Position) : SearchTarget {
-  override fun createPointer(): Pointer<out SearchTarget> = Pointer.hardPointer(this)
+internal fun LspClientImpl.isFindReferencesEnabledFor(file: VirtualFile): Boolean =
+  descriptor.lspCustomization.findReferencesCustomizer is LspFindReferencesSupport && supportsFindReferences(file)
+
+/**
+ * Also a [Symbol] so that [LspImplicitReferenceProvider][com.intellij.platform.lsp.impl.features.navigation.LspImplicitReferenceProvider]
+ * can resolve a reference to it when the caret is on a declaration.
+ * The symbol has no navigation targets, so the 'Go To Declaration or Usages' action falls back to 'Show Usages'.
+ * It must not implement `NavigationTarget` or `NavigatableSymbol`: that would turn the fallback back into a self-navigation.
+ */
+internal class LspSearchTarget(val lspClients: Collection<LspClient>, val file: VirtualFile, val position: Position) : SearchTarget, Symbol {
+  override fun createPointer(): Pointer<out LspSearchTarget> = Pointer.hardPointer(this)
 
   // It would be great to have something more meaningful here. For example, guess a word at caret.
   // We can get the text range of the declaration from the server

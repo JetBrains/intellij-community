@@ -6,12 +6,12 @@ import com.intellij.codeInsight.navigation.GotoTargetHandler
 import com.intellij.codeInsight.navigation.actions.GotoImplementationAction
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
-import com.intellij.openapi.components.service
 import com.intellij.platform.lsp.api.customization.LspCustomization
 import com.intellij.platform.lsp.api.customization.LspGoToImplementationCustomizer
 import com.intellij.platform.lsp.api.customization.LspGoToImplementationDisabled
 import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
+import com.intellij.platform.lsp.common.withCurrentAction
 import com.intellij.platform.lsp.impl.features.navigation.CurrentActionHolder
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.psi.PsiNamedElement
@@ -50,17 +50,12 @@ internal class LspGotoImplementationTest {
   /**
    * Runs the same computation as the "Go To Implementation" action, without the target chooser popup.
    * The action gate in `LspImplementationDeclarationSearcher` reads [CurrentActionHolder],
-   * so the holder is set the same way `CurrentActionListener` sets it during the real action.
+   * so [withCurrentAction] fakes the running action.
    */
   private suspend fun gotoImplementationData(): GotoTargetHandler.GotoData? {
     return withContext(Dispatchers.EDT) {
-      val holder = service<CurrentActionHolder>()
-      holder.currentActionClass = GotoImplementationAction::class.java
-      try {
+      withCurrentAction(GotoImplementationAction::class.java) {
         GotoImplementationHandler().getSourceAndTargetElements(codeInsightFixture.editor, codeInsightFixture.file)
-      }
-      finally {
-        holder.currentActionClass = null
       }
     }
   }
