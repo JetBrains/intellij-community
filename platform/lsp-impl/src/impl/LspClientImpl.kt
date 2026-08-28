@@ -165,6 +165,11 @@ class LspClientImpl internal constructor(
   internal fun fileEdited(file: VirtualFile, e: DocumentEvent) {
     highlightingCacheRegistry.fileEdited(file, e)
     eventBroadcaster.fileEdited(this, file)
+    if (isFileOpened(file)) {
+      // Re-apply the cached highlightings with the edit-adjusted ranges. Without this, highlightings
+      // applied before the edit keep their pre-edit offsets until the next daemon pass.
+      LspHighlightingApplier.getInstance(project).scheduleHighlightingRefresh(file)
+    }
   }
 
   internal fun refreshSemanticTokens() {
