@@ -2,6 +2,11 @@
 package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model
 
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
@@ -190,5 +195,57 @@ internal class PyProjectTomlRelocationTest {
       ExpectedModule("child", contentRoot = "sub", excludedFolders = listOf("sub" / ".venv")),
       ExpectedModule("parent", contentRoot = "."),
     )
+  }
+
+  @Test
+  fun `exclude relocated into a module survives a relocation out of the same module`(): Unit = timeoutRunBlocking(30.seconds) {
+    edtWriteAction {
+      f.root.writePyprojectTomlWithProject("parent")
+      f.root.createDirectory("build")
+      val mid = f.root.createDirectory("mid")
+      mid.writePyprojectTomlWithProject("middle")
+      mid.createDirectory("cache")
+      val deep = mid.createDirectory("deep")
+      deep.writePyprojectTomlWithProject("leaf")
+      deep.createDirectory("out")
+    }
+
+    // First sync creates the three modules
+    f.reloadProject()
+    f.assertProjectStructure(
+      ExpectedModule("leaf", contentRoot = "mid" / "deep"),
+      ExpectedModule("middle", contentRoot = "mid"),
+      ExpectedModule("parent", contentRoot = "."),
+    )
+
+    // Mark the folders as excluded, as the settings window does
+    val mid = f.root.findChild("mid")!!
+    excludeFolderOnModule("parent", f.root.findChild("build")!!)
+    excludeFolderOnModule("parent", mid.findChild("cache")!!)
+    excludeFolderOnModule("middle", mid.findChild("deep")!!.findChild("out")!!)
+
+    // The second sync moves each excluded folder to the module that owns the directory
+    f.reloadProject()
+    f.assertProjectStructure(
+      ExpectedModule("leaf", contentRoot = "mid" / "deep", excludedFolders = listOf("mid" / "deep" / "out")),
+      ExpectedModule("middle", contentRoot = "mid", excludedFolders = listOf("mid" / "cache")),
+      ExpectedModule("parent", contentRoot = ".", excludedFolders = listOf("build")),
+    )
+  }
+
+  /**
+   * Marks [dir] as excluded on the module named [moduleName].
+   * This uses [com.intellij.openapi.roots.ModifiableRootModel], as the project settings window does.
+   */
+  private suspend fun excludeFolderOnModule(moduleName: String, dir: VirtualFile) {
+    val module = readAction { ModuleManager.getInstance(f.project).findModuleByName(moduleName)!! }
+    edtWriteAction {
+      val model = ModuleRootManager.getInstance(module).modifiableModel
+      val contentEntry = model.contentEntries.first { entry ->
+        entry.file?.let { VfsUtilCore.isAncestor(it, dir, false) } == true
+      }
+      contentEntry.addExcludeFolder(dir)
+      model.commit()
+    }
   }
 }
