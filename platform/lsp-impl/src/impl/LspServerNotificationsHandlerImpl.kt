@@ -239,6 +239,10 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
       is WorkDoneProgressBegin -> {
         progressJobs[tokenId]?.cancel()
 
+        // A Begin after the server stopped must not start an indicator: End will never arrive,
+        // and cancelAllProgress() has already run, so nothing would ever stop the indicator
+        if (lspClient.state == LspServerState.ShutdownNormally || lspClient.state == LspServerState.ShutdownUnexpectedly) return
+
         val job = LspClientManagerImpl.getInstanceImpl(project).cs.launch {
 
           progressTasks[tokenId] = ProgressTask(
@@ -273,6 +277,13 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
         }
 
         progressJobs[tokenId] = job
+
+        // The server may have stopped between the check above and this registration;
+        // cancelAllProgress() could have run in between and missed this job
+        if (lspClient.state == LspServerState.ShutdownNormally || lspClient.state == LspServerState.ShutdownUnexpectedly) {
+          progressTasks.remove(tokenId)
+          progressJobs.remove(tokenId)?.cancel()
+        }
       }
       is WorkDoneProgressReport -> {
         progressTasks.computeIfPresent(tokenId) { _, currentState ->
