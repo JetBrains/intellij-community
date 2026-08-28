@@ -2,6 +2,7 @@
 package org.jetbrains.bazel.wasmjs.test.harness.cli
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.nio.file.Files
@@ -17,10 +18,9 @@ class TestRunExecutionTestState {
   }
 
   @Test
-  fun `soft deadline stays positive for timeouts at or below the teardown grace`() {
-    assertEquals(15.seconds - 15.seconds / 4, softDeadline(15.seconds))
-    assertEquals(4.seconds - 1.seconds, softDeadline(4.seconds))
-    assertTrue(softDeadline(1.seconds).isPositive())
+  fun `soft deadline throws for timeouts at or below the teardown grace`() {
+    assertThrows(IllegalArgumentException::class.java) { softDeadline(15.seconds) }
+    assertThrows(IllegalArgumentException::class.java) { softDeadline(1.seconds) }
   }
 
   @Test
