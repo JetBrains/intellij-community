@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
+import com.intellij.platform.lsp.impl.features.highlighting.LspHighlightingApplier
 import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -101,6 +102,9 @@ internal class LspDocumentSyncManager(private val client: LspClientImpl) {
       client.documentMapping.getAdapterForFile(file).sendDidOpen(client, file, document)
 
       client.notifyFileOpened(file)
+      // In the pull model the client is responsible for the initial pull of a just-opened file.
+      // A pull-only server (no publishDiagnostics) would otherwise stay silent until the first daemon pass.
+      LspHighlightingApplier.getInstance(client.project).scheduleHighlightingRefresh(file)
       application.messageBus.syncPublisher(BreadcrumbsXmlWrapper.FORCE_RELOAD_BREADCRUMBS).run()
     }
     else {

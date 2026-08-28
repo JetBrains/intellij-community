@@ -1,6 +1,7 @@
 package com.intellij.platform.lsp
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.editor.impl.DocumentImpl
@@ -229,6 +230,7 @@ internal class LspDiagnosticsTest {
       val virtualFile = codeInsightFixture.configureByText("test.txt", """
       <error descr="error message">hello</error> world
       """.trimIndent()).virtualFile
+      val expectedData = stripHighlightingMarkup()
       val serverSession = configureServerSession(project, virtualFile)
 
       serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
@@ -237,7 +239,7 @@ internal class LspDiagnosticsTest {
         )))
       }
 
-      checkHighlightingByPolling()
+      checkHighlightingByPolling(expectedData)
     }
 
     @Test
@@ -249,6 +251,7 @@ internal class LspDiagnosticsTest {
       <EOLError descr="EOL error 1"></EOLError>
       line 2<EOLError descr="EOL error 2"></EOLError>
       line 3<EOLError descr="EOF error"></EOLError><EOLError descr="EOL error 3"></EOLError>""".trimIndent()).virtualFile
+      val expectedData = stripHighlightingMarkup()
       val serverSession = configureServerSession(project, virtualFile)
 
       serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
@@ -263,7 +266,7 @@ internal class LspDiagnosticsTest {
         )))
       }
 
-      checkHighlightingByPolling()
+      checkHighlightingByPolling(expectedData)
     }
 
     @Test
@@ -273,6 +276,7 @@ internal class LspDiagnosticsTest {
       val virtualFile = codeInsightFixture.configureByText("test.txt", """
       <error descr="error">hello</error> world
       """.trimIndent()).virtualFile
+      val expectedData = stripHighlightingMarkup()
       val serverSession = configureServerSession(project, virtualFile)
       val uri = serverSession.fileUri(virtualFile)
 
@@ -283,7 +287,7 @@ internal class LspDiagnosticsTest {
         )))
       }
 
-      checkHighlightingByPolling()
+      checkHighlightingByPolling(expectedData)
 
       // Phase 2: edit the document, server replies with an empty diagnostics list.
       // The cache must apply that reply (clear the previous error), not treat the empty reply as "no response".
@@ -316,6 +320,7 @@ internal class LspDiagnosticsTest {
       <warning descr="w6">text-7xl</warning> <warning descr="w7">text-8xl</warning>
       <warning descr="w8">text-9xl</warning>
       "></div>""".trimIndent()).virtualFile
+      val initialData = stripHighlightingMarkup()
       val serverSession = configureServerSession(project, virtualFile)
 
       // Phase 1: answer the initial pull with 8 warnings and verify all are shown.
@@ -332,7 +337,7 @@ internal class LspDiagnosticsTest {
         )))
       }
 
-      checkHighlightingByPolling()
+      checkHighlightingByPolling(initialData)
 
       // Phase 2: apply 5 edits; the cache's pending-edit adjustment must produce the same surviving
       // set as the publish variant of this test. No second pull response is registered so the
@@ -368,6 +373,7 @@ internal class LspDiagnosticsTest {
       val virtualFile = codeInsightFixture.configureByText("test.txt", """
       <error descr="error">hello</error> world
       """.trimIndent()).virtualFile
+      val expectedData = stripHighlightingMarkup()
       val serverSession = configureServerSession(project, virtualFile)
       val uri = serverSession.fileUri(virtualFile)
 
@@ -386,11 +392,9 @@ internal class LspDiagnosticsTest {
       // The PSI never changes in this test, so the daemon runs the LSP pass only once.
       // Re-trigger the cache read the same way the reactive path does.
       val fixture = codeInsightFixture as CodeInsightTestFixtureImpl
-      val data = ExpectedHighlightingData(fixture.editor.document, true, true, false)
-      data.init()
       waitUntilAssertSucceeds {
         LspHighlightingApplier.getInstance(project).scheduleHighlightingRefresh(virtualFile)
-        fixture.collectAndCheckHighlighting(data)
+        fixture.collectAndCheckHighlighting(expectedData)
       }
     }
 
@@ -467,6 +471,7 @@ internal class LspDiagnosticsTest {
       val virtualFile = codeInsightFixture.configureByText("test.txt", """
       <error descr="error">hello</error> world
       """.trimIndent()).virtualFile
+      val expectedData = stripHighlightingMarkup()
       val serverSession = configureServerSession(project, virtualFile)
       val uri = serverSession.fileUri(virtualFile)
 
@@ -475,7 +480,7 @@ internal class LspDiagnosticsTest {
           Diagnostic(Range(Position(0, 0), Position(0, 5)), "error", DiagnosticSeverity.Error, null)
         )).apply { resultId = "r1" })
       }
-      checkHighlightingByPolling()
+      checkHighlightingByPolling(expectedData)
 
       // The next pull must carry the resultId of the accepted report.
       serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri && it.previousResultId == "r1" }) {
@@ -496,6 +501,7 @@ internal class LspDiagnosticsTest {
       val virtualFile = codeInsightFixture.configureByText("test.txt", """
       <error descr="error">hello</error> world
       """.trimIndent()).virtualFile
+      val expectedData = stripHighlightingMarkup()
       val serverSession = configureServerSession(project, virtualFile)
       val uri = serverSession.fileUri(virtualFile)
 
@@ -504,7 +510,7 @@ internal class LspDiagnosticsTest {
           Diagnostic(Range(Position(0, 0), Position(0, 5)), "error", DiagnosticSeverity.Error, null)
         )).apply { resultId = "r1" })
       }
-      checkHighlightingByPolling()
+      checkHighlightingByPolling(expectedData)
 
       // A change in another file marks the cache stale, and the server answers "unchanged".
       val unchangedRequest = serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri && it.previousResultId == "r1" }) {
@@ -660,6 +666,38 @@ internal class LspDiagnosticsTest {
       tripwire.cancel()
     }
 
+    /**
+     * A pull-only server sends no `publishDiagnostics`. The client owns the initial pull,
+     * so the diagnostics of a just-opened file must arrive without a highlighting pass.
+     */
+    @Test
+    fun `file open triggers the initial pull without a highlighting pass`(): Unit = timeoutRunBlocking {
+      // The first file only starts the server; its own on-open pull is not interesting here.
+      val firstFile = codeInsightFixture.configureByText("first.txt", "hello").virtualFile
+      val serverSession = configureServerSession(project, firstFile)
+
+      val newFile = codeInsightFixture.addFileToProject("new.txt", "hello world").virtualFile
+      serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == serverSession.fileUri(newFile) }) {
+        DocumentDiagnosticReport(RelatedFullDocumentDiagnosticReport(listOf(
+          Diagnostic(Range(Position(0, 0), Position(0, 5)), "on-open error", DiagnosticSeverity.Error, null)
+        )))
+      }
+
+      val diagnosticsArrived = async(start = CoroutineStart.UNDISPATCHED) {
+        awaitDiagnosticsFromLspServer(project, newFile)
+      }
+      withContext(Dispatchers.EDT) {
+        codeInsightFixture.openFileInEditor(newFile)
+      }
+      diagnosticsArrived.await()
+
+      val client = LspClientManagerImpl.getInstanceImpl(project).getClients(FakeLspServerSupportProvider::class.java).first()
+      assertTrue(
+        readAction { client.getDiagnosticsAndQuickFixes(newFile) }.isNotEmpty(),
+        "the diagnostics of a just-opened file must be pulled without a highlighting pass",
+      )
+    }
+
     @Test
     fun `workspace diagnostic refresh triggers a full re-pull`(): Unit = timeoutRunBlocking {
       (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
@@ -667,6 +705,7 @@ internal class LspDiagnosticsTest {
       val virtualFile = codeInsightFixture.configureByText("test.txt", """
       <error descr="stale">hello</error> world
       """.trimIndent()).virtualFile
+      val expectedData = stripHighlightingMarkup()
       val serverSession = configureServerSession(project, virtualFile)
       val uri = serverSession.fileUri(virtualFile)
 
@@ -675,7 +714,7 @@ internal class LspDiagnosticsTest {
           Diagnostic(Range(Position(0, 0), Position(0, 5)), "stale", DiagnosticSeverity.Error, null)
         )).apply { resultId = "r1" })
       }
-      checkHighlightingByPolling()
+      checkHighlightingByPolling(expectedData)
 
       // The forced re-pull must not send previousResultId, so the server answers with a full report.
       serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri && it.previousResultId == null }) {
@@ -712,6 +751,7 @@ internal class LspDiagnosticsTest {
       val virtualFile = codeInsightFixture.configureByText("test.txt", """
       <error descr="error">hello</error> world
       """.trimIndent()).virtualFile
+      val expectedData = stripHighlightingMarkup()
       val serverSession = configureServerSession(project, virtualFile)
 
       serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
@@ -720,7 +760,7 @@ internal class LspDiagnosticsTest {
         )))
       }
 
-      checkHighlightingByPolling()
+      checkHighlightingByPolling(expectedData)
 
       // reportErrorsToWolf runs asynchronously after highlights are applied to the editor
       waitUntilAssertSucceeds(message = "File with error diagnostics should be reported as a problem file") {
@@ -733,6 +773,7 @@ internal class LspDiagnosticsTest {
       (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
 
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
+      val expectedData = stripHighlightingMarkup()
       val serverSession = configureServerSession(project, virtualFile)
 
       serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
@@ -741,7 +782,7 @@ internal class LspDiagnosticsTest {
 
       val recorder = ProblemEventRecorder().subscribe(project, codeInsightFixture.testRootDisposable)
 
-      checkHighlightingByPolling()
+      checkHighlightingByPolling(expectedData)
 
       // The pass calls reportErrorsToWolf asynchronously after applying highlights; give it time to run
       // so any spurious event would be observed.
@@ -760,6 +801,7 @@ internal class LspDiagnosticsTest {
       val virtualFile = codeInsightFixture.configureByText("test.txt", """
       <error descr="error">hello</error> world
       """.trimIndent()).virtualFile
+      val expectedData = stripHighlightingMarkup()
       val serverSession = configureServerSession(project, virtualFile)
       val uri = serverSession.fileUri(virtualFile)
 
@@ -770,7 +812,7 @@ internal class LspDiagnosticsTest {
         )))
       }
 
-      checkHighlightingByPolling()
+      checkHighlightingByPolling(expectedData)
 
       waitUntilAssertSucceeds(message = "Wolf must register the file after the first error diagnostic") {
         assertTrue(wolf.isProblemFile(virtualFile))
@@ -803,6 +845,7 @@ internal class LspDiagnosticsTest {
       val virtualFile = codeInsightFixture.configureByText("test.txt", """
       <error descr="error">hello</error> world
       """.trimIndent()).virtualFile
+      val expectedData = stripHighlightingMarkup()
       val serverSession = configureServerSession(project, virtualFile)
       val uri = serverSession.fileUri(virtualFile)
 
@@ -813,7 +856,7 @@ internal class LspDiagnosticsTest {
         )))
       }
 
-      checkHighlightingByPolling()
+      checkHighlightingByPolling(expectedData)
 
       waitUntilAssertSucceeds(message = "Wolf must register the file after the initial pull") {
         assertTrue(wolf.isProblemFile(virtualFile))
@@ -861,6 +904,7 @@ internal class LspDiagnosticsTest {
       """.trimIndent())
       assertCustomPsiTree(psiFile)
       val virtualFile = psiFile.virtualFile
+      val expectedData = stripHighlightingMarkup()
       val serverSession = configureServerSession(project, virtualFile)
 
       serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
@@ -870,7 +914,7 @@ internal class LspDiagnosticsTest {
         )))
       }
 
-      checkHighlightingByPolling()
+      checkHighlightingByPolling(expectedData)
     }
 
     @Test
@@ -882,6 +926,7 @@ internal class LspDiagnosticsTest {
       """.trimIndent())
       assertCustomPsiTree(psiFile)
       val virtualFile = psiFile.virtualFile
+      val expectedData = stripHighlightingMarkup()
       val serverSession = configureServerSession(project, virtualFile)
 
       serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
@@ -891,7 +936,7 @@ internal class LspDiagnosticsTest {
         )))
       }
 
-      checkHighlightingByPolling()
+      checkHighlightingByPolling(expectedData)
     }
   }
 
@@ -1013,14 +1058,22 @@ internal class LspDiagnosticsTest {
     return data
   }
 
-  private suspend fun checkHighlightingByPolling() {
+  /**
+   * Removes the expected-highlighting markup from the editor document.
+   * Call this before the LSP server opens the file. The on-open pull captures the document stamp,
+   * so a later markup-stripping edit would invalidate the pull response,
+   * and the fake server answers each expectation only once.
+   */
+  private fun stripHighlightingMarkup(): ExpectedHighlightingData {
     val fixture = codeInsightFixture as CodeInsightTestFixtureImpl
-    val document = fixture.editor.document
-    val data = ExpectedHighlightingData(document, true, true, false)
+    val data = ExpectedHighlightingData(fixture.editor.document, true, true, false)
     data.init()
+    return data
+  }
 
+  private suspend fun checkHighlightingByPolling(data: ExpectedHighlightingData) {
     waitUntilAssertSucceeds {
-      fixture.collectAndCheckHighlighting(data)
+      (codeInsightFixture as CodeInsightTestFixtureImpl).collectAndCheckHighlighting(data)
     }
   }
 }

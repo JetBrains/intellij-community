@@ -471,9 +471,12 @@ internal class LspNotebookDocumentProtocolTest {
     fun `textDocument documentLink -- request uses cell URI for notebook file`(): Unit = timeoutRunBlocking {
       (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
 
+      // The bootstrap file starts the server before the notebook exists. The expectations below must be
+      // registered before the notebook opens, because the client pulls as soon as the file is opened.
       val content = "hello world\n---\ncell one"
-      val virtualFile = codeInsightFixture.configureByText("test.test-notebook", content).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val bootstrapFile = codeInsightFixture.configureByText("bootstrap.txt", "bootstrap").virtualFile
+      val serverSession = configureServerSession(project, bootstrapFile)
+      val virtualFile = codeInsightFixture.addFileToProject("test.test-notebook", content).virtualFile
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.DOCUMENT_LINK, { params ->
@@ -484,6 +487,9 @@ internal class LspNotebookDocumentProtocolTest {
         params.textDocument.uri == "$fileUri#cell-1"
       }) { emptyList() }
 
+      withContext(Dispatchers.EDT) {
+        codeInsightFixture.openFileInEditor(virtualFile)
+      }
       codeInsightFixture.doHighlighting()
       serverSession.awaitExpected()
     }
@@ -513,9 +519,12 @@ internal class LspNotebookDocumentProtocolTest {
     fun `textDocument semanticTokensFull -- request uses cell URI for notebook file`(): Unit = timeoutRunBlocking {
       (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
 
+      // The bootstrap file starts the server before the notebook exists. The expectations below must be
+      // registered before the notebook opens, because the client pulls as soon as the file is opened.
       val content = "hello world\n---\ncell one"
-      val virtualFile = codeInsightFixture.configureByText("test.test-notebook", content).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val bootstrapFile = codeInsightFixture.configureByText("bootstrap.txt", "bootstrap").virtualFile
+      val serverSession = configureServerSession(project, bootstrapFile)
+      val virtualFile = codeInsightFixture.addFileToProject("test.test-notebook", content).virtualFile
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.SEMANTIC_TOKENS_FULL, { params ->
@@ -526,6 +535,9 @@ internal class LspNotebookDocumentProtocolTest {
         params.textDocument.uri == "$fileUri#cell-1"
       }) { SemanticTokens(emptyList()) }
 
+      withContext(Dispatchers.EDT) {
+        codeInsightFixture.openFileInEditor(virtualFile)
+      }
       codeInsightFixture.doHighlighting()
       serverSession.awaitExpected()
     }
@@ -534,9 +546,12 @@ internal class LspNotebookDocumentProtocolTest {
     fun `textDocument diagnostic -- pull diagnostics request uses cell URI for notebook file`(): Unit = timeoutRunBlocking {
       (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
 
+      // The bootstrap file starts the server before the notebook exists. The expectations below must be
+      // registered before the notebook opens, because the client pulls as soon as the file is opened.
       val content = "hello world\n---\ncell one"
-      val virtualFile = codeInsightFixture.configureByText("test.test-notebook", content).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val bootstrapFile = codeInsightFixture.configureByText("bootstrap.txt", "bootstrap").virtualFile
+      val serverSession = configureServerSession(project, bootstrapFile)
+      val virtualFile = codeInsightFixture.addFileToProject("test.test-notebook", content).virtualFile
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.DIAGNOSTIC, { params ->
@@ -547,6 +562,9 @@ internal class LspNotebookDocumentProtocolTest {
         params.textDocument.uri == "$fileUri#cell-1"
       }) { DocumentDiagnosticReport(RelatedFullDocumentDiagnosticReport(emptyList())) }
 
+      withContext(Dispatchers.EDT) {
+        codeInsightFixture.openFileInEditor(virtualFile)
+      }
       codeInsightFixture.doHighlighting()
       serverSession.awaitExpected()
     }
@@ -614,9 +632,12 @@ internal class LspNotebookDocumentProtocolTest {
       // Cell 0 = "cell zero" (host lines 0), Cell 1 = "cell one" (host line 2)
       // Diagnostic at cell-relative (0,0)-(0,8) in cell 1
       // Bug: forEachDocumentInFile interprets cell-relative line 0 as host line 0 → cell 0
-      val content = "cell zero\n---\ncell <caret>one"
-      val virtualFile = codeInsightFixture.configureByText("test.test-notebook", content).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      // The bootstrap file starts the server before the notebook exists. The expectations below must be
+      // registered before the notebook opens, because the client pulls as soon as the file is opened.
+      val content = "cell zero\n---\ncell one"
+      val bootstrapFile = codeInsightFixture.configureByText("bootstrap.txt", "bootstrap").virtualFile
+      val serverSession = configureServerSession(project, bootstrapFile)
+      val virtualFile = codeInsightFixture.addFileToProject("test.test-notebook", content).virtualFile
       val fileUri = serverSession.fileUri(virtualFile)
 
       // Pull diagnostics: cell 0 empty, cell 1 has error
@@ -638,6 +659,10 @@ internal class LspNotebookDocumentProtocolTest {
         params.context.only?.contains(CodeActionKind.QuickFix) == true
       }) { emptyList() }
 
+      withContext(Dispatchers.EDT) {
+        codeInsightFixture.openFileInEditor(virtualFile)
+        codeInsightFixture.editor.caretModel.moveToOffset(codeInsightFixture.editor.document.text.indexOf("one"))
+      }
       codeInsightFixture.doHighlighting()
       codeInsightFixture.getAvailableIntentions()
       serverSession.awaitExpected()
@@ -745,9 +770,12 @@ internal class LspNotebookDocumentProtocolTest {
 
       // Cell 0 = "hello" (host line 0), Cell 1 = "world" (host line 2)
       // Pull diagnostic at cell-relative (0,0)-(0,5) in cell 1 → host line 2 offset range
+      // The bootstrap file starts the server before the notebook exists. The expectations below must be
+      // registered before the notebook opens, because the client pulls as soon as the file is opened.
       val content = "hello\n---\nworld"
-      val virtualFile = codeInsightFixture.configureByText("test.test-notebook", content).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val bootstrapFile = codeInsightFixture.configureByText("bootstrap.txt", "bootstrap").virtualFile
+      val serverSession = configureServerSession(project, bootstrapFile)
+      val virtualFile = codeInsightFixture.addFileToProject("test.test-notebook", content).virtualFile
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.DIAGNOSTIC, { params ->
@@ -762,6 +790,9 @@ internal class LspNotebookDocumentProtocolTest {
         )))
       }
 
+      withContext(Dispatchers.EDT) {
+        codeInsightFixture.openFileInEditor(virtualFile)
+      }
       // First doHighlighting triggers pull diagnostic requests handled by expectRequest above
       codeInsightFixture.doHighlighting()
       serverSession.awaitExpected()
