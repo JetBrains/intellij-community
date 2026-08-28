@@ -48,7 +48,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -87,36 +86,66 @@ private val UNINITIALIZED_GRACE_PERIOD = 30.seconds
  * and a client may never open one.
  */
 private class StreamableSession(val transport: StreamableHttpServerTransport) {
-  private data class Usage(val inFlight: Int = 0, val everStarted: Long = 0)
+  private sealed interface State {
+    /** [requestsStarted] is what tells an idle moment apart from a later one that looks just like it. */
+    data class Serving(val inFlight: Int, val requestsStarted: Long) : State
 
-  private val usage = MutableStateFlow(Usage())
+    data object Closed : State
+  }
+
+  private val state = MutableStateFlow<State>(State.Serving(inFlight = 0, requestsStarted = 0))
 
   private val idleTimeout: Duration
     get() =
       if (transport.sessionId == null) STREAMABLE_SESSION_IDLE_TIMEOUT.coerceAtMost(UNINITIALIZED_GRACE_PERIOD)
       else STREAMABLE_SESSION_IDLE_TIMEOUT
 
-  suspend fun <T> whileInUse(operation: suspend () -> T): T {
-    usage.update { Usage(inFlight = it.inFlight + 1, everStarted = it.everStarted + 1) }
+  init {
+    transport.onClose { state.value = State.Closed }
+  }
+
+  /** Runs [request] on a session that is still open, or returns `null` because it is not. */
+  suspend fun <T> ifOpen(request: suspend () -> T): T? {
+    if (!startRequest()) return null
     try {
-      return operation()
+      return request()
     }
     finally {
-      usage.update { it.copy(inFlight = it.inFlight - 1) }
+      finishRequest()
     }
   }
 
-  suspend fun awaitUnused() {
+  /**
+   * Suspends until the session has been idle long enough to be considered abandoned and claims it, or returns `false`
+   * because it was closed for another reason.
+   */
+  suspend fun awaitAbandoned(): Boolean {
     while (true) {
-      val idleSince = awaitNothingInFlight()
-      if (!usedWithin(idleTimeout, since = idleSince)) return
+      val idle = awaitNothingInFlight() ?: return false
+      if (!usedWithin(idleTimeout, since = idle) && state.compareAndSet(idle, State.Closed)) return true
     }
   }
 
-  private suspend fun awaitNothingInFlight(): Usage = usage.first { it.inFlight == 0 }
+  private fun startRequest(): Boolean {
+    while (true) {
+      val serving = state.value as? State.Serving ?: return false
+      val started = serving.copy(inFlight = serving.inFlight + 1, requestsStarted = serving.requestsStarted + 1)
+      if (state.compareAndSet(serving, started)) return true
+    }
+  }
 
-  private suspend fun usedWithin(timeout: Duration, since: Usage): Boolean =
-    withTimeoutOrNull(timeout) { usage.first { it != since } } != null
+  private fun finishRequest() {
+    while (true) {
+      val serving = state.value as? State.Serving ?: return
+      if (state.compareAndSet(serving, serving.copy(inFlight = serving.inFlight - 1))) return
+    }
+  }
+
+  private suspend fun awaitNothingInFlight(): State.Serving? =
+    state.first { it !is State.Serving || it.inFlight == 0 } as? State.Serving
+
+  private suspend fun usedWithin(timeout: Duration, since: State): Boolean =
+    withTimeoutOrNull(timeout) { state.first { it != since } } != null
 }
 
 @KtorDsl
@@ -155,18 +184,18 @@ fun Application.mcpPatched(
 
     route("/stream") {
       sse {
-        val session = call.streamableSession(streamableSessions) ?: return@sse
-        session.whileInUse { serveNotificationStream(session.transport) }
+        val session = call.streamableSessionOrNull(streamableSessions) ?: return@sse
+        session.ifOpen { serveNotificationStream(session.transport) }
       }
 
       post {
         val session = obtainOrCreateStreamableSession(call, streamableSessions, this@mcpPatched, block) ?: return@post
-        session.whileInUse { session.transport.handleRequest(null, call) }
+        session.ifOpen { session.transport.handleRequest(null, call) } ?: call.respondSessionNotFound()
       }
 
       delete {
         val session = call.streamableSession(streamableSessions) ?: return@delete
-        session.transport.handleRequest(null, call)
+        session.ifOpen { session.transport.handleRequest(null, call) } ?: call.respondSessionNotFound()
       }
     }
   }
@@ -241,10 +270,27 @@ private suspend fun ApplicationCall.streamableSession(
   }
   val session = sessions[sessionId]
   if (session == null) {
-    respond(HttpStatusCode.NotFound, "Streamable HTTP session not found")
+    respondSessionNotFound()
     return null
   }
   return session
+}
+
+/**
+ * The response of a notification stream is already committed by the time its handler runs, so the only way to refuse
+ * one is to end it.
+ */
+private fun ApplicationCall.streamableSessionOrNull(
+  sessions: ConcurrentMap<String, StreamableSession>,
+): StreamableSession? {
+  val sessionId = request.headers[MCP_SESSION_ID_HEADER]
+  val session = sessionId?.let(sessions::get)
+  if (session == null) logger.trace { "No StreamableHttp session to serve a notification stream for: $sessionId" }
+  return session
+}
+
+private suspend fun ApplicationCall.respondSessionNotFound() {
+  respond(HttpStatusCode.NotFound, "Streamable HTTP session not found")
 }
 
 private suspend fun obtainOrCreateStreamableSession(
@@ -319,8 +365,9 @@ class ClientDisconnectTolerantTransport(private val delegate: Transport) : Trans
 private fun CoroutineScope.closeWhenAbandoned(sessionId: String, session: StreamableSession) {
   launch(CoroutineName("streamable-session-$sessionId")) {
     try {
-      session.awaitUnused()
-      logger.warn("Closing abandoned StreamableHttp session: $sessionId")
+      if (session.awaitAbandoned()) {
+        logger.warn("Closing abandoned StreamableHttp session $sessionId, initialized: ${session.transport.sessionId != null}")
+      }
     }
     finally {
       withContext(NonCancellable) { session.transport.close() }
