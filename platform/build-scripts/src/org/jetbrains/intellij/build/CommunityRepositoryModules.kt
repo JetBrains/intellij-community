@@ -66,9 +66,6 @@ object CommunityRepositoryModules {
         }
       }
     },
-    pluginAuto("intellij.platform.ui.webview") { spec ->
-      spec.withResource("lib/webview-native/win", "lib/webview-native/win")
-    },
     plugin("intellij.laf.win10") { spec ->
       spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.WINDOWS)
     },
