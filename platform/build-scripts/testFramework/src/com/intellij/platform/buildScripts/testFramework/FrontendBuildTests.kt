@@ -46,5 +46,5 @@ private fun verifyBuiltInModules(file: Path) {
   val modules = data.layout.asSequence().filter { it.kind == ProductInfoLayoutItemKind.pluginAlias }.map { it.name }.toHashSet()
   assertThat(modules)
     .contains("com.intellij.jetbrains.client", "com.intellij.modules.platform")
-    .doesNotContain("com.intellij.modules.externalSystem")
+    .doesNotContain("com.intellij.modules.remoteServers")
 }
