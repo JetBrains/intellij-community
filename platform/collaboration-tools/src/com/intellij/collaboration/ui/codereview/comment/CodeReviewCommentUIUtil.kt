@@ -131,22 +131,23 @@ object CodeReviewCommentUIUtil {
     }
 
   fun createDeleteCommentIconButton(actionListener: (ActionEvent) -> Unit): JComponent {
-    val icon = CollaborationToolsIcons.Delete
-    val hoverIcon = CollaborationToolsIcons.DeleteHovered
-    val button = InlineIconButton(icon, hoverIcon, tooltip = CommonBundle.message("button.delete"))
-    button.actionListener = ActionListener {
-      if (MessageDialogBuilder.yesNo(CollaborationToolsBundle.message("review.comments.delete.confirmation.title"),
-                                     CollaborationToolsBundle.message("review.comments.delete.confirmation")).ask(button)) {
-        actionListener(it)
+    val icon = AllIcons.Actions.GC
+    return InlineIconButton(icon, icon, tooltip = CommonBundle.message("button.delete")).apply {
+      val button = this
+      withBackgroundHover = true
+      button.actionListener = ActionListener {
+        if (MessageDialogBuilder.yesNo(CollaborationToolsBundle.message("review.comments.delete.confirmation.title"),
+                                       CollaborationToolsBundle.message("review.comments.delete.confirmation")).ask(button)) {
+          actionListener(it)
+        }
       }
     }
-    return button
   }
 
   fun createEditButton(actionListener: (ActionEvent) -> Unit): InlineIconButton {
-    val icon = AllIcons.General.Inline_edit
-    val hoverIcon = AllIcons.General.Inline_edit_hovered
-    return InlineIconButton(icon, hoverIcon, tooltip = CommonBundle.message("button.edit")).apply {
+    val icon = AllIcons.Actions.Edit
+    return InlineIconButton(icon, icon, tooltip = CommonBundle.message("button.edit")).apply {
+      withBackgroundHover = true
       this.actionListener = ActionListener {
         actionListener(it)
       }
@@ -155,13 +156,12 @@ object CodeReviewCommentUIUtil {
 
   fun createAddReactionButton(actionListener: (ActionEvent) -> Unit): InlineIconButton {
     val icon = CollaborationToolsIcons.AddEmoji
-    val hoverIcon = CollaborationToolsIcons.AddEmojiHovered
-    val button = InlineIconButton(icon, hoverIcon, tooltip = CollaborationToolsBundle.message("review.comments.reaction.add.tooltip"))
-    button.actionListener = ActionListener {
-      actionListener(it)
+    return InlineIconButton(icon, icon, tooltip = CollaborationToolsBundle.message("review.comments.reaction.add.tooltip")).apply {
+      withBackgroundHover = true
+      this.actionListener = ActionListener {
+        actionListener(it)
+      }
     }
-
-    return button
   }
 
   fun createFoldedThreadControlsIn(
@@ -239,6 +239,6 @@ object CodeReviewCommentUIUtil {
   }
 
   object Actions {
-    const val HORIZONTAL_GAP = 8
+    const val HORIZONTAL_GAP = 10
   }
 }
