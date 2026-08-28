@@ -140,7 +140,8 @@ internal class EditorAnimationCache private constructor(private val editor: Edit
   }
 
   private fun renderToImage(rectangle: Rectangle2D): BufferedImage {
-    val image = createEditorImage(editor, rectangle.width, rectangle.height, BufferedImage.TYPE_INT_ARGB)
+    // No ARGB, it breaks the subpixel AA, see `sun.java2d.SurfaceData.canRenderLCDText`.
+    val image = createEditorImage(editor, rectangle.width, rectangle.height, BufferedImage.TYPE_INT_RGB)
     editor.isCurrentlyBuildingCache = true
     try {
       createImageGraphics(editor, image, rectangle).use { graphics ->
