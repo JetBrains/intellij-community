@@ -4,10 +4,9 @@ package com.intellij.openapi.vfs.encoding;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
-public final class FileEncodingConfigurableProvider extends ConfigurableProvider {
+final class FileEncodingConfigurableProvider extends ConfigurableProvider {
   private final Project myProject;
 
   public FileEncodingConfigurableProvider(Project project) {
@@ -17,5 +16,10 @@ public final class FileEncodingConfigurableProvider extends ConfigurableProvider
   @Override
   public Configurable createConfigurable() {
     return new FileEncodingConfigurable(myProject);
+  }
+
+  @Override
+  public @NotNull Class<?> getConfigurableType() {
+    return FileEncodingConfigurable.class;
   }
 }

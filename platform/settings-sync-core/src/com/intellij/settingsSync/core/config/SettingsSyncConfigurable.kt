@@ -1205,6 +1205,10 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   }
 }
 
-class SettingsSyncConfigurableProvider(private val coroutineScope: CoroutineScope) : ConfigurableProvider() {
+internal class SettingsSyncConfigurableProvider(private val coroutineScope: CoroutineScope) : ConfigurableProvider() {
   override fun createConfigurable(): Configurable = SettingsSyncConfigurable(coroutineScope)
+
+  override fun getConfigurableType(): Class<*> {
+    return SettingsSyncConfigurable::class.java
+  }
 }

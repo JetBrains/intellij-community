@@ -12,5 +12,9 @@ internal class ReaderModeConfigurableProvider(private val project: Project) : Co
     return ReaderModeConfigurable(project)
   }
 
+  override fun getConfigurableType(): Class<*> {
+    return ReaderModeConfigurable::class.java
+  }
+
   override fun canCreateConfigurable() = Experiments.getInstance().isFeatureEnabled("editor.reader.mode") && !PlatformUtils.isRider() // Rider has its own reader mode
 }

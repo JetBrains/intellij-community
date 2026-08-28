@@ -3,10 +3,9 @@ package com.intellij.notification.impl;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
-public final class NotificationsConfigurableProvider extends ConfigurableProvider {
+final class NotificationsConfigurableProvider extends ConfigurableProvider {
   @Override
   public boolean canCreateConfigurable() {
     return NotificationsConfigurationImpl.getInstanceImpl().getAllSettings().length > 0;
@@ -15,5 +14,10 @@ public final class NotificationsConfigurableProvider extends ConfigurableProvide
   @Override
   public Configurable createConfigurable() {
     return new NotificationsConfigurable();
+  }
+
+  @Override
+  public @NotNull Class<?> getConfigurableType() {
+    return NotificationsConfigurable.class;
   }
 }

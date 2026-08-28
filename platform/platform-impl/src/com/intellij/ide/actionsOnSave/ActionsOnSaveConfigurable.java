@@ -43,7 +43,12 @@ public final class ActionsOnSaveConfigurable implements SearchableConfigurable, 
     }
 
     @Override
-    public @Nullable Configurable createConfigurable() {
+    public @NotNull Class<?> getConfigurableType() {
+      return ActionsOnSaveConfigurable.class;
+    }
+
+    @Override
+    public @NotNull Configurable createConfigurable() {
       return new ActionsOnSaveConfigurable(myProject);
     }
   }
