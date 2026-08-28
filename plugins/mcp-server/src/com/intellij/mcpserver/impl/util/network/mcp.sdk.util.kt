@@ -201,31 +201,35 @@ fun Application.mcpPatched(
   }
 }
 
+/** The stream is the session here: an SSE client has no way to reach a session whose stream has ended. */
 private suspend fun ServerSSESession.mcpSseEndpoint(
   postEndpoint: String,
   transports: ConcurrentMap<String, SseServerTransport>,
   block: suspend (ApplicationCall, Transport) -> ServerSession,
 ) {
   val transport = mcpSseTransport(postEndpoint, transports)
-
-  val serverSession = block(call, ClientDisconnectTolerantTransport(transport))
-
-  serverSession.onClose {
-    logger.trace { "Server connection closed for sessionId: ${transport.sessionId}" }
-    transports.remove(transport.sessionId)
+  try {
+    block(call, ClientDisconnectTolerantTransport(transport))
+    logger.trace { "Server connected to transport for sessionId: ${transport.sessionId}" }
+    awaitCancellation()
   }
-
-  logger.trace { "Server connected to transport for sessionId: ${transport.sessionId}" }
-  awaitCancellation()
+  finally {
+    withContext(NonCancellable) { transport.close() }
+  }
 }
 
-internal fun ServerSSESession.mcpSseTransport(
+private fun ServerSSESession.mcpSseTransport(
   postEndpoint: String,
   transports: ConcurrentMap<String, SseServerTransport>,
 ): SseServerTransport {
   val transport = SseServerTransport(postEndpoint, this)
   transport.onError {
-    logger.error("Error in SSE connection", it)
+    if (it is IOException) logger.debug("The SSE connection was lost", it)
+    else logger.error("Error in SSE connection", it)
+  }
+  transport.onClose {
+    transports.remove(transport.sessionId)
+    logger.trace { "SSE session unregistered: ${transport.sessionId}" }
   }
   transports[transport.sessionId] = transport
 
