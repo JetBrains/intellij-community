@@ -8,8 +8,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 
 class IjentCallerContext(
   val isRead: Boolean,
@@ -21,6 +19,7 @@ class IjentCallerContext(
     suspend fun getSaved(): IjentCallerContext? {
       return getSavedElement()?.callerContext
     }
+
     suspend fun getSavedElement(): IjentCallerContextElement? {
       return currentCoroutineContext()[IjentCallerContextElement.Key]
     }
@@ -32,18 +31,6 @@ fun IjentCallerContext.allowCancellableNio(): Boolean {
     isRead && !isWrite -> IjentRegistry.getInstance().isEnabled("ijent.nio.cancellable.read", true)
     else -> false
   }
-}
-
-fun IjentCallerContext.unavailableDialogTimeout(): Duration {
-  return if (IjentRegistry.getInstance().isEnabled("ijent.unavailable.dialog.enabled", true)) {
-    if (isDispatchThread || isWrite) {
-      500.milliseconds
-    }
-    else {
-      5000.milliseconds
-    }
-  }
-  else Duration.INFINITE
 }
 
 class IjentCallerContextElement(val callerContext: IjentCallerContext) : AbstractCoroutineContextElement(Key) {

@@ -8,9 +8,10 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.ijent.IjentCallerContext
+import com.intellij.platform.ijent.IjentRegistry
 import com.intellij.platform.ijent.ReconnectUiDialog
 import com.intellij.platform.ijent.ReconnectUiHandle
-import com.intellij.platform.ijent.unavailableDialogTimeout
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +26,8 @@ import kotlinx.coroutines.withTimeoutOrNull
 import java.awt.Component
 import java.io.IOException
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class IjentTimeoutException(message: String) : IOException(message)
@@ -38,7 +41,7 @@ sealed class IjentUnavailableHandlerResult {
   }
   class UnrelatedIjent(val eelDescriptor: EelDescriptor) : IjentUnavailableHandlerResult() {
     override fun throwException(): Nothing {
-      throw IjentTimeoutException("Target $eelDescriptor is not related to any of open projects. Not waiting for it.")
+      throw IjentTimeoutException("User decided to close the target $eelDescriptor which is not related to any of open projects.")
     }
   }
 }
@@ -71,9 +74,6 @@ class ReconnectUiHandleImpl : ReconnectUiHandle {
   fun setDialogSession(dialogSession: Deferred<ReconnectUiDialogImpl>) {
     dialogStateFlowInternal.value = dialogSession
   }
-  companion object {
-    private val LOG = Logger.getInstance(ReconnectUiHandleImpl::class.java)
-  }
 }
 
 class ReconnectUiDialogImpl(val modalityState: ModalityState, override val component: Component) : ReconnectUiDialog {
@@ -87,29 +87,51 @@ internal suspend fun <T> showModalDialogOnTimeout(eelDescriptor: EelDescriptor, 
   //  for EDT - basic events could be dispatched even before showing dialog.
   // TODO Now showing the dialog works only when EDT is free. In fact it's not free e.g. for DiskQueryRelay.
 
-  val timeout = callerContext.unavailableDialogTimeout()
-  val uiHandle = callerContext.reconnectUi as ReconnectUiHandleImpl
   return coroutineScope {
-    val dialogJob = launch {
-      // skip waiting for timeout if dialog is requested explicitly
-      withTimeoutOrNull(timeout) {
-        uiHandle.awaitRequested()
-      } ?: uiHandle.requestDialog()
-      val ijentUnavailableHandler = IjentUnavailableHandler.EP_NAME.extensionList.singleOrNull()
-      try {
-        ijentUnavailableHandler?.showModalDialog(eelDescriptor, uiHandle)?.throwException()
+    val dialogJob = if (IjentRegistry.getInstance().isEnabled("ijent.unavailable.dialog.enabled", true)) {
+      launch {
+        val timeout = callerContext.unavailableDialogTimeout()
+        val uiHandle = callerContext.reconnectUi as ReconnectUiHandleImpl
+        // skip waiting for timeout if dialog is requested explicitly
+        withTimeoutOrNull(timeout) {
+          uiHandle.awaitRequested()
+        } ?: uiHandle.requestDialog()
+        val ijentUnavailableHandler = IjentUnavailableHandler.EP_NAME.extensionList.singleOrNull()
+        if (ijentUnavailableHandler == null) {
+          uiHandle.setDialogSession(CompletableDeferred<ReconnectUiDialogImpl>().apply { completeExceptionally(RuntimeException("No IjentUnavailableHandler found")) })
+        }
+        else {
+          try {
+            ijentUnavailableHandler.showModalDialog(eelDescriptor, uiHandle).throwException()
+          }
+          catch (e: Throwable) {
+            uiHandle.setDialogSession(CompletableDeferred<ReconnectUiDialogImpl>().apply { completeExceptionally(e) })
+            if (e !is CancellationException) {
+              LOG.warn(e)
+            }
+            throw e
+          }
+        }
       }
-      catch (e: Throwable) {
-        uiHandle.setDialogSession(CompletableDeferred<ReconnectUiDialogImpl>().apply { completeExceptionally(e) })
-        throw e
-      }
-      uiHandle.setDialogSession(CompletableDeferred<ReconnectUiDialogImpl>().apply { completeExceptionally(RuntimeException("No IjentUnavailableHandler found")) })
     }
+    else null
     try {
       body()
     }
     finally {
-      dialogJob.cancel()
+      dialogJob?.cancel()
     }
   }
 }
+
+private fun IjentCallerContext.unavailableDialogTimeout(): Duration {
+  // The numbers here make no real sense. It's just some assumptions how long outage a user can tolerate.
+  // It depends on which resources are locked by the requests that happen to freeze.
+  return when {
+    isDispatchThread || isWrite -> 500.milliseconds
+    isRead -> 1.seconds
+    else -> 10.seconds
+  }
+}
+
+private val LOG = Logger.getInstance(IjentUnavailableHandler::class.java)
