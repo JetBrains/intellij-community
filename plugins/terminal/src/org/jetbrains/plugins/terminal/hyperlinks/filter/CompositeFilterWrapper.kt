@@ -51,11 +51,16 @@ class CompositeFilterWrapper(
   init {
     ConsoleFilterProvider.FILTER_PROVIDERS.addChangeListener(coroutineScope, ::rescheduleFilterComputation)
     coroutineScope.launch(CoroutineName("CompositeFilterWrapper computing filters")) {
-      filterComputationRequests.collectLatest { 
-        filterFlow.value = null // tell the clients the value is being computed
-        val newValue = ComputedFilter(computeFilter(), false)
+      filterComputationRequests.collectLatest {
+        val newFilters = readAction {
+          ConsoleViewUtil.computeConsoleFilters(project, null, TerminalFilterScope(project, filterContext))
+        }
+        // Do not fire update if filters haven't changed
+        if (filterFlow.value?.filter?.filters == newFilters) return@collectLatest
+
+        val newValue = ComputedFilter(buildCompositeFilter(newFilters), false)
         filterFlow.value = newValue
-        // Using UiWithModelAccess because the listeners interact with the editor and its document,
+        // Using Dispatchers.EDT because the listeners interact with the editor and its document,
         // so they need to take locks, and therefore the strict dispatcher won't do.
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           fireFiltersUpdated()
@@ -65,10 +70,7 @@ class CompositeFilterWrapper(
     }
   }
 
-  private suspend fun computeFilter(): CompositeFilter {
-    val filters = readAction {
-      ConsoleViewUtil.computeConsoleFilters(project, null, TerminalFilterScope(project, filterContext))
-    }
+  private fun buildCompositeFilter(filters: List<Filter>): CompositeFilter {
     return CompositeFilter(project, filters).also {
       it.setForceUseAllFilters(true)
     }
