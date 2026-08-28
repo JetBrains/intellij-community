@@ -72,7 +72,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -122,7 +121,6 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -149,7 +147,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
   private final MyRoot myRoot;
   private final FilteringTreeModel myModel;
-  private final Map<String, Integer> myNewBadgeShownAtOpenCache = new HashMap<>();
+  private final SettingsNewBadgeState myNewBadgeState = new SettingsNewBadgeState();
 
   private Configurable myQueuedConfigurable;
   private MyControl myControl;
@@ -535,9 +533,11 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   }
 
   private @NotNull Promise<?> fireSelected(Configurable configurable) {
-    if (configurable != null && hasNewOptions(configurable)) {
-      SettingsNewBadgeRecorder.recordOpened(configurable);
-      myNewBadgeShownAtOpenCache.put(ConfigurableVisitor.getId(configurable), SettingsNewBadgeRecorder.MAX_SHOWS);
+    if (configurable != null && myNewBadgeState.markOpened(configurable)) {
+      MyNode node = findNode(configurable);
+      if (node != null) {
+        node.invalidateNewOptionsCache();
+      }
       myTree.repaint();
     }
     return myFilter.context.fireSelected(configurable, this);
@@ -673,9 +673,18 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
     private boolean hasNewOptions() {
       if (myHasNewOptions == null) {
-        myHasNewOptions = SettingsTreeView.hasNewOptions(myConfigurable);
+        myHasNewOptions = myNewBadgeState.hasNewOptions(myConfigurable);
       }
       return myHasNewOptions;
+    }
+
+    private void invalidateNewOptionsCache() {
+      MyNode node = this;
+      while (node != null) {
+        node.myHasNewOptions = null;
+        SimpleNode parent = node.getParent();
+        node = parent instanceof MyNode ? (MyNode)parent : null;
+      }
     }
   }
 
@@ -780,10 +789,8 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       }
 
       if (node != null && node.hasNewOptions() && (leaf || !expanded)) {
-        if (shouldShowNewBadge(configurable)) {
-          setRightIcon(NEW_BADGE_DOT);
-          myAccessibleBadgeText = IdeBundle.message("badge.text.new");
-        }
+        setRightIcon(NEW_BADGE_DOT);
+        myAccessibleBadgeText = IdeBundle.message("badge.text.new");
       }
 
       if (node != null && UISettings.getInstance().getShowInplaceCommentsInternal()) {
@@ -958,26 +965,6 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     public int getIconHeight() {
       return JBUIScale.scale(ICON_HEIGHT);
     }
-  }
-
-  @VisibleForTesting
-  public static boolean hasNewOptions(@NotNull Configurable configurable) {
-    if (isNewOptions(configurable)) {
-      return true;
-    }
-    if (configurable instanceof Configurable.Composite composite) {
-      for (Configurable child : composite.getConfigurables()) {
-        if (hasNewOptions(child)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  private static boolean isNewOptions(Configurable configurable) {
-    return configurable instanceof Configurable.NewOptions ||
-           ConfigurableWrapper.cast(Configurable.NewOptions.class, configurable) != null;
   }
 
   @SuppressWarnings("unused")
@@ -1209,14 +1196,6 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       LOG.error("Failed to load configurable " + configurable.getClass().getName(), e);
       return null;
     }
-  }
-
-  private boolean shouldShowNewBadge(@Nullable Configurable configurable) {
-    if (configurable == null) return false;
-    String id = ConfigurableVisitor.getId(configurable);
-    int shownAtOpen = myNewBadgeShownAtOpenCache.computeIfAbsent(
-      id, _ -> SettingsNewBadgeRecorder.shownCount(configurable));
-    return shownAtOpen < SettingsNewBadgeRecorder.MAX_SHOWS;
   }
 
 }

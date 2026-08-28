@@ -4,7 +4,7 @@ package com.intellij.openapi.options
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.ex.ConfigurableWrapper
-import com.intellij.openapi.options.newEditor.SettingsTreeView
+import com.intellij.openapi.options.newEditor.SettingsNewBadgeState
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -13,7 +13,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JComponent
 
 /**
- * The Settings tree calls [SettingsTreeView.hasNewOptions] on the EDT for every node it paints.
+ * The settings tree checks [SettingsNewBadgeState.hasNewOptions] on the EDT for every node it paints.
  * The method must read the [Configurable.NewOptions] marker from the extension point, and it must
  * keep every configurable without that marker uninitialized.
  *
@@ -22,6 +22,8 @@ import javax.swing.JComponent
  */
 @TestApplication
 internal class ConfigurableWrapperLazyInitTest {
+
+  private val newBadgeState = SettingsNewBadgeState()
 
   private val pluginDescriptor = DefaultPluginDescriptor(
     PluginId.getId("com.intellij.openapi.options.configurableWrapperLazyInitTest"),
@@ -42,7 +44,7 @@ internal class ConfigurableWrapperLazyInitTest {
       instanceEp("sibling", PlainConfigurable::class.java),
     )))
 
-    assertThat(SettingsTreeView.hasNewOptions(root)).isFalse()
+    assertThat(newBadgeState.hasNewOptions(root)).isFalse()
     assertThat(InitLog.initialized()).isEmpty()
   }
 
@@ -57,7 +59,7 @@ internal class ConfigurableWrapperLazyInitTest {
       )),
     )))
 
-    assertThat(SettingsTreeView.hasNewOptions(root)).isTrue()
+    assertThat(newBadgeState.hasNewOptions(root)).isTrue()
     // only the marked leaf is initialized, and only because the current implementation casts it
     assertThat(InitLog.initialized()).containsExactly(NewOptionsConfigurable::class.java)
   }
@@ -68,7 +70,7 @@ internal class ConfigurableWrapperLazyInitTest {
       providerEp("provided leaf", TypedProvider::class.java),
     )))
 
-    assertThat(SettingsTreeView.hasNewOptions(root)).isFalse()
+    assertThat(newBadgeState.hasNewOptions(root)).isFalse()
     assertThat(InitLog.initialized()).isEmpty()
   }
 
@@ -79,7 +81,7 @@ internal class ConfigurableWrapperLazyInitTest {
     )))
 
     // without the type hint the wrapper must create the configurable to answer the cast
-    assertThat(SettingsTreeView.hasNewOptions(root)).isFalse()
+    assertThat(newBadgeState.hasNewOptions(root)).isFalse()
     assertThat(InitLog.initialized()).containsExactly(PlainConfigurable::class.java)
   }
 

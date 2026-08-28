@@ -199,9 +199,12 @@ public interface Configurable extends UnnamedConfigurable {
   /**
    * This marker interface tells the Settings dialog to show a New icon for the configurable.
    * Parent sections inherit this marker from child configurables.
+   * <p>
+   * Only named configurables (aka {@link Configurable}) can be marked as {@link NewOptions} since the unnamed
+   * configurables have no stable identity and therefore can't be marked as visited
    */
   @ApiStatus.Experimental
-  interface NewOptions {
+  interface NewOptions extends Configurable {
 
   }
 

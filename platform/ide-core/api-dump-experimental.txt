@@ -44,6 +44,7 @@ a:com.intellij.openapi.fileEditor.UniqueVFilePathBuilder
 *:com.intellij.openapi.options.Configurable$InnerWithModifiableParent
 - a:getModifiableParents():java.util.List
 *:com.intellij.openapi.options.Configurable$NewOptions
+- com.intellij.openapi.options.Configurable
 c:com.intellij.openapi.options.ConfigurableEP
 - com.intellij.openapi.extensions.PluginAware
 - *:searchableInActions:Z
