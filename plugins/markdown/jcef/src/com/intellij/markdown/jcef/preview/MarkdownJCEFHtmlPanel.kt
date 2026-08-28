@@ -103,11 +103,12 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
 
   private val updateHandler = MarkdownUpdateHandler.Debounced()
 
-  private fun buildIndexContent(): String {
+  /** The one served resource meant to be a document: it declares its own policy in a `<meta>`. */
+  private fun buildIndexResource(): ResourceProvider.Resource {
     val scripts = (baseScripts + currentExtensions.flatMap { it.scripts }).map { PreviewStaticServer.getStaticUrl(resourceProvider, it) }
     val styles = currentExtensions.flatMap { it.styles }.map { PreviewStaticServer.getStaticUrl(resourceProvider, it) }
     // language=HTML
-    return """
+    val content = """
       <!DOCTYPE html>
       <html>
         <head>
@@ -119,6 +120,7 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
         </head>
       </html>
     """
+    return ResourceProvider.Resource(content.toByteArray(), "text/html", isDocument = true)
   }
 
   private suspend fun loadIndexContent() {
@@ -405,7 +407,7 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
       currentExtensions.any { it.resourceProvider.canProvide(resourceName) }
 
     override fun loadResource(resourceName: String): ResourceProvider.Resource? = when (resourceName) {
-      pageBaseName -> ResourceProvider.Resource(buildIndexContent().toByteArray(), "text/html")
+      pageBaseName -> buildIndexResource()
       in internalResources -> ResourceProvider.loadInternalResource<MarkdownJCEFHtmlPanel>(resourceName)
       else -> currentExtensions.map { it.resourceProvider }.firstOrNull { it.canProvide(resourceName) }?.loadResource(resourceName)
     }
