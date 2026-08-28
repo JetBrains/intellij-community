@@ -3,6 +3,7 @@ package com.intellij.psi.formatter.java
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiConditionalExpression
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiLocalVariable
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiPolyadicExpression
@@ -17,12 +18,17 @@ internal object JavaFormatterConditionalExpressionUtil {
    */
   @JvmStatic
   fun isInsideConditionalExpression(node: ASTNode): Boolean {
-    val psi = SourceTreeToPsiMap.treeElementToPsi(node)
+    val psi = SourceTreeToPsiMap.treeElementToPsi(node) ?: return false
     val child = PsiTreeUtil.findFirstParent(psi) {
-      it.parent is PsiConditionalExpression ||
-      it.parent is PsiMethod ||
-      it.parent is PsiLocalVariable
+      // imitating stopAt
+      val parent = it.parent
+
+      parent is PsiFile ||
+      parent is PsiConditionalExpression ||
+      parent is PsiMethod ||
+      parent is PsiLocalVariable
     }
+
     if (child == null) return false
     val parent = child.parent
     if (parent !is PsiConditionalExpression) return false
