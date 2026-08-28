@@ -55,8 +55,8 @@ internal class IntelliJPlatformGradleModelProviderTest : LightJavaCodeInsightFix
     try {
       Files.writeString(releasesFile, "IU\t2026.1\tRELEASE\n")
       val model = object : IntelliJPlatformGradleModel {
-        override val dependencyHelperProductCodes = mapOf("intellijIdea" to "IU")
-        override val productReleasesFile = releasesFile.toString()
+        override fun getDependencyHelperProductCodes() = mapOf("intellijIdea" to "IU")
+        override fun getProductReleasesFile() = releasesFile.toString()
       }
 
       assertEquals(1, provider.importProjectModels(projectPath, mapOf(projectPath to model)))
