@@ -81,10 +81,6 @@ class EvoTreeItem(
   val opensProcessOutput: Boolean
     get() = showOutput != null && (element.state == State.ERROR || element.state == State.NOT_AVAILABLE)
 
-  /** The finer choices this row stands for, or null when it stands only for itself — see [EvoAlternatives]. */
-  val alternatives: EvoAlternatives?
-    get() = ((element as? EvoTreeLeafElement)?.action as? EvoAlternatives)?.takeIf { it.alternatives.size > 1 }
-
   /** True when this row reveals more of the list rather than selecting an environment — see [EvoLinkRow]. */
   val isLinkRow: Boolean
     get() = (element as? EvoTreeLeafElement)?.action is EvoLinkRow

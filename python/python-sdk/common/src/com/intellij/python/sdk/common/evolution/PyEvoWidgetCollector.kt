@@ -39,9 +39,6 @@ object PyEvoWidgetCollector : CounterUsagesCollector() {
     /** A "Shortcuts" autoconfigure suggestion, shown when no interpreter is set. */
     SHORTCUTS,
 
-    /** A specific base interpreter chosen behind a row's inline "…" menu. */
-    ALTERNATIVES,
-
     /** A base interpreter picked from the expanded per-version listing. */
     EXPANDED_VERSION,
 
@@ -87,9 +84,6 @@ object PyEvoWidgetCollector : CounterUsagesCollector() {
 
     /** A tool node's inline reload icon (force re-scan, bypassing the backend cache). */
     RELOAD,
-
-    /** A row's inline "…" menu of alternative base interpreters was opened. */
-    ALTERNATIVES,
 
     /** The gear on the "Select Environment" header, opening Settings | Python | Tools | Package Manager. */
     GEAR_SETTINGS,

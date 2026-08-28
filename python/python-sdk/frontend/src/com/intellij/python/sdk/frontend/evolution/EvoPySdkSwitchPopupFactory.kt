@@ -44,7 +44,6 @@ import com.intellij.python.sdk.common.evolution.evoRpc
 import com.intellij.python.sdk.common.evolution.evoRpcOrNull
 import com.intellij.python.sdk.common.evolution.requestEvoNode
 import com.intellij.python.sdk.frontend.PySdkFrontendBundle
-import com.intellij.python.sdk.frontend.evolution.components.EvoAlternatives
 import com.intellij.python.sdk.frontend.evolution.components.EvoEditableName
 import com.intellij.python.sdk.frontend.evolution.components.EvoErrorException
 import com.intellij.python.sdk.frontend.evolution.components.EvoLoadedNode
@@ -398,9 +397,8 @@ internal class EvoPySdkSwitchPopupFactory(
    * A single Python-version row in the "add new environment" submenu: on click creates that version's env with the
    * (possibly user-edited) name — from [editableName] when present, else [defaultName] — in the base location [path].
    *
-   * When the machine has several installs of that version, the row also offers them behind its inline "…" ([EvoAlternatives]).
-   * The row itself keeps creating from [EvoAddNewOptionDto.token], the IDE's pick among them, so the choice is there for
-   * whoever wants it and invisible to everyone else.
+   * The row creates from [EvoAddNewOptionDto.token], the IDE's pick among the installs of that version. Whoever wants
+   * one of the others expands the list, which turns every version into its own installs.
    */
   private fun addVersionAction(
     nodeId: String,
@@ -409,7 +407,7 @@ internal class EvoPySdkSwitchPopupFactory(
     editableName: EvoEditableName? = null,
     defaultName: String? = null,
   ): AnAction =
-    object : AnAction({ addVersionText(option) }, { "" }, versionIcon(option)), DumbAware, EvoAlternatives {
+    object : AnAction({ addVersionText(option) }, { "" }, versionIcon(option)), DumbAware {
       init {
         // Says what picking this row will do before it does it, the way the v2 dialog labels its download entries.
         if (option.needsDownload()) {
@@ -421,19 +419,6 @@ internal class EvoPySdkSwitchPopupFactory(
       override fun actionPerformed(e: AnActionEvent) =
         createEnv(nodeId, option.token, path, editableName, defaultName,
                   source = PyEvoWidgetCollector.Source.ADD_NEW_VERSION, installVersion = option.installVersion())
-
-      override val alternativesTitle: String
-        get() = PySdkFrontendBundle.message("evo.sdk.status.bar.popup.add.new.base.title")
-
-      // Built once: the renderer asks whether this row has alternatives on every repaint, and the hit-test on every
-      // mouse move. Each lambda still reads the edited name when it runs, not now.
-      override val alternatives: List<EvoTreeLeafElement> by lazy {
-        option.bases.map { base ->
-          baseInterpreterRow(base) {
-            createEnv(nodeId, base.token, path, editableName, defaultName, source = PyEvoWidgetCollector.Source.ALTERNATIVES)
-          }
-        }
-      }
     }
 
   /** Creates the environment a version or base-interpreter row stands for, unless the typed name rules it out. */
