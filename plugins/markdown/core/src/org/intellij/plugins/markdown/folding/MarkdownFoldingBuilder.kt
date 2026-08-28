@@ -40,6 +40,7 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
 
   override fun buildLanguageFoldRegions(descriptors: MutableList<FoldingDescriptor>, root: PsiElement, document: Document, quick: Boolean) {
     if (root.language !== root.containingFile.viewProvider.baseLanguage) {
+      processInjectedBase64DataUris(root, descriptors)
       return
     }
     root.accept(object: MarkdownElementVisitor(), PsiRecursiveVisitor {
@@ -53,21 +54,23 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
 
       override fun visitList(list: MarkdownList) {
         val parent = list.parent
-        addDescriptors(if (parent is MarkdownListItem) parent else list)
+        addDescriptors(parent as? MarkdownListItem ?: list)
         super.visitList(list)
       }
 
       override fun visitLinkDestination(linkDestination: MarkdownLinkDestination) {
         val node = linkDestination.node
-        val descriptor = FoldingDescriptor(
-          node,
-          node.textRange,
-          null,
-          "...",
-          settings.state.collapseLinks && !MarkdownSettings.getInstance(root.project).enableLivePreview && node.textLength > 10,
-          emptySet()
-        )
-        descriptors.add(descriptor)
+        if (!addBase64DataUriDescriptor(linkDestination, descriptors)) {
+          val descriptor = FoldingDescriptor(
+            node,
+            node.textRange,
+            null,
+            "...",
+            settings.state.collapseLinks && !MarkdownSettings.getInstance(root.project).enableLivePreview && node.textLength > 10,
+            emptySet()
+          )
+          descriptors.add(descriptor)
+        }
         super.visitLinkDestination(linkDestination)
       }
 
@@ -105,6 +108,20 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
     if (root is MarkdownFile) {
       processTableOfContents(root, document, descriptors)
     }
+  }
+
+  private fun processInjectedBase64DataUris(root: PsiElement, descriptors: MutableList<FoldingDescriptor>) {
+    root.accept(object: MarkdownElementVisitor(), PsiRecursiveVisitor {
+      override fun visitElement(element: PsiElement) {
+        super.visitElement(element)
+        element.acceptChildren(this)
+      }
+
+      override fun visitLinkDestination(linkDestination: MarkdownLinkDestination) {
+        addBase64DataUriDescriptor(linkDestination, descriptors)
+        super.visitLinkDestination(linkDestination)
+      }
+    })
   }
 
   private fun processTableOfContents(file: MarkdownFile, document: Document, descriptors: MutableList<FoldingDescriptor>) {
@@ -194,6 +211,47 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
   }
 }
 
+private fun getBase64DataRange(linkDestination: MarkdownLinkDestination): TextRange? {
+  val destination = linkDestination.text
+  val uriRange = destination.getUriRangeInLinkDestination()
+  val dataStart = destination.getBase64PayloadStartOffset(uriRange) ?: return null
+  return TextRange.create(dataStart, uriRange.endOffset).shiftRight(linkDestination.textRange.startOffset)
+}
+
+private fun String.getUriRangeInLinkDestination(): TextRange {
+  if (startsWith('<') && endsWith('>')) {
+    return TextRange.create(1, length - 1)
+  }
+  return TextRange.create(0, length)
+}
+
+private fun String.getBase64PayloadStartOffset(uriRange: TextRange): Int? {
+  if (!regionMatches(uriRange.startOffset, DATA_IMAGE_PREFIX, 0, DATA_IMAGE_PREFIX.length, ignoreCase = true)) {
+    return null
+  }
+  val markerStart = indexOf(BASE64_MARKER, startIndex = uriRange.startOffset + DATA_IMAGE_PREFIX.length, ignoreCase = true)
+  if (markerStart < 0 || markerStart >= uriRange.endOffset) {
+    return null
+  }
+  val payloadStart = markerStart + BASE64_MARKER.length
+  return payloadStart.takeIf { it < uriRange.endOffset }
+}
+
+private fun addBase64DataUriDescriptor(linkDestination: MarkdownLinkDestination, descriptors: MutableList<in FoldingDescriptor>): Boolean {
+  val base64DataRange = getBase64DataRange(linkDestination) ?: return false
+  descriptors.add(
+    FoldingDescriptor(
+      linkDestination.node,
+      base64DataRange,
+      null,
+      MarkdownBundle.message("markdown.folding.base64.data.uri.placeholder"),
+      true,
+      emptySet()
+    )
+  )
+  return true
+}
+
 private val foldedElementsPresentations = hashMapOf(
   MarkdownElementTypes.ATX_1 to MarkdownBundle.message("markdown.folding.atx.1.name"),
   MarkdownElementTypes.ATX_2 to MarkdownBundle.message("markdown.folding.atx.2.name"),
@@ -217,3 +275,6 @@ private fun addDescriptors(element: PsiElement, range: TextRange, descriptors: M
 private fun skipNewLinesBackward(element: PsiElement?): PsiElement? {
   return element?.siblings(forward = false, withSelf = false)?.firstOrNull { !isNewLine(it) }
 }
+
+private const val DATA_IMAGE_PREFIX = "data:image/"
+private const val BASE64_MARKER = ";base64,"
