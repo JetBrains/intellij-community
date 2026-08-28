@@ -11,6 +11,7 @@ One row per skill in this directory. `SKILL.md` holds the full instructions.
 | [code-style](code-style/SKILL.md) | Apply IntelliJ Kotlin and Java code style when writing or reviewing. |
 | [commits](commits/SKILL.md) | Create, amend, or rename IntelliJ commits and write commit messages. |
 | [compare-python-typecheckers](compare-python-typecheckers/SKILL.md) | Compare Python type inference with ty, pyrefly, and basedpyright. |
+| [conda-env-tests](conda-env-tests/SKILL.md) | Bump the pinned Miniconda version for the Python conda env tests. |
 | [debugging](debugging/SKILL.md) | Debug IntelliJ IDE failures with repository-specific techniques. |
 | [driver-ui-tests](driver-ui-tests/SKILL.md) | Write IntelliJ UI tests with IDE Starter or UI Driver. |
 | [eel](eel/SKILL.md) | Use IntelliJ EEL APIs for process execution, paths, WSL, or Docker. |

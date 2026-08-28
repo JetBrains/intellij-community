@@ -196,29 +196,31 @@ enum class PredefinedPyEnvironments(val spec: PyEnvironmentSpec<*>) {
   }),
 
   /**
-   * Conda environment with pinned Miniconda version
+   * Conda environment with the newest Miniconda build.
+   * All conda tests use this environment.
+   * The `conda-env-tests` skill tells you how to move the pin.
    * Tags: conda
    */
-  CONDA(condaEnvironment("py312_24.9.2-0") {
+  CONDA(condaEnvironment("py312_26.7.1-1") {
     pythonVersion = pythonVersion("3.12")
   }),
 
   /**
-   * Conda 25.x environment used by helper-script tests that need to cover the
-   * `conda.core.subdir_data.SubdirData` branch (conda removed `get_index` from `conda.core.index`
-   * starting with 25.x).
+   * Conda 24.x environment used by helper-script tests.
+   * It covers the `conda.core.index.get_index` branch.
+   * Conda 25 removed that function.
+   * Tags: conda, conda24
+   */
+  CONDA_24(condaEnvironment("py312_24.9.2-0") {
+    pythonVersion = pythonVersion("3.12")
+  }),
+
+  /**
+   * Conda 25.x environment used by helper-script tests.
+   * It covers the `conda.core.subdir_data.SubdirData` branch.
    * Tags: conda, conda25
    */
   CONDA_25(condaEnvironment("py312_25.11.1-1") {
-    pythonVersion = pythonVersion("3.12")
-  }),
-
-  /**
-   * Conda 26.x environment used by helper-script tests to verify that the index-loading
-   * code path continues to work on the latest major conda release.
-   * Tags: conda, conda26
-   */
-  CONDA_26(condaEnvironment("py312_26.5.3-1") {
     pythonVersion = pythonVersion("3.12")
   });
 
@@ -250,8 +252,8 @@ enum class PredefinedPyEnvironments(val spec: PyEnvironmentSpec<*>) {
       VENV_3_14 to setOf("python3", "python3.14", "ruff"),
       VANILLA_3_14 to setOf("vanilla"),
       CONDA to setOf("conda"),
-      CONDA_25 to setOf("conda", "conda25"),
-      CONDA_26 to setOf("conda", "conda26")
+      CONDA_24 to setOf("conda", "conda24"),
+      CONDA_25 to setOf("conda", "conda25")
     )
   }
 }
