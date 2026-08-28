@@ -67,6 +67,12 @@ jvm_library(
         "//platform/eel-impl",
         "//plugins/jcef/plugin",
         "//platform/platform-impl/jcef",
+        "//platform/structuralsearch/plugin",
+        "//platform/structuralsearch:structuralSearch",
+        "//plugins/maven/plugin",
+        "//plugins/maven",
+        "//plugins/gradle/plugin",
+        "//plugins/gradle",
     ],
 )
 
@@ -117,6 +123,12 @@ jvm_library(
         "//platform/platform-impl/update-checker:update-checker_test_lib",
         "//platform/platform-impl/eel:ide-impl-wsl_test_lib",
         "//platform/progress/shared:ide-progress_test_lib",
+        "//platform/structuralsearch/plugin:plugin_test_lib",
+        "//platform/structuralsearch:structuralSearch_test_lib",
+        "//plugins/maven/plugin:plugin_test_lib",
+        "//plugins/maven:maven_test_lib",
+        "//plugins/gradle/plugin:plugin_test_lib",
+        "//plugins/gradle:gradle_test_lib",
     ],
     deps = [
         # do not sort,
