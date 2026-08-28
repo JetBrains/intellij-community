@@ -8,7 +8,6 @@ import com.intellij.python.hatch.HatchPyTool
 import com.intellij.python.hatch.HatchService
 import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.pyproject.PY_PROJECT_TOML
-import com.intellij.util.cancelOnDispose
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.hatch.sdk.createHatchServiceAsync
@@ -33,7 +32,7 @@ internal class HatchPackageManager(
   )
 
   private lateinit var hatchService: PyResult<HatchService<*>>
-  private val hatchServiceDeferred = hatchServiceDeferred.also { it.cancelOnDispose(this) }
+  private val hatchServiceDeferred = hatchServiceDeferred.cancelWithManager()
 
   private suspend fun <T> withHatch(action: suspend (HatchService<*>) -> PyResult<T>): PyResult<T> {
     if (!this::hatchService.isInitialized) {

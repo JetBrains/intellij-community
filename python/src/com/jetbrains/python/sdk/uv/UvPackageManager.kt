@@ -18,7 +18,6 @@ import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.uv.backend.UvPyTool
 import com.intellij.python.uv.common.UV_TOOL_ID
-import com.intellij.util.cancelOnDispose
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
@@ -78,7 +77,7 @@ internal class UvPackageManager internal constructor(
     )
 
   private lateinit var uvLowLevel: PyResult<UvLowLevel<*>>
-  private val uvExecutionContextDeferred = uvExecutionContextDeferred.also { it.cancelOnDispose(this) }
+  private val uvExecutionContextDeferred = uvExecutionContextDeferred.cancelWithManager()
 
   private suspend fun <T> withUv(action: suspend (UvLowLevel<*>) -> PyResult<T>): PyResult<T> {
     if (!this::uvLowLevel.isInitialized) {

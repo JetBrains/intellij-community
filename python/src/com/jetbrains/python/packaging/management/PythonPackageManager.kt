@@ -17,11 +17,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiFile
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.serviceContainer.AlreadyDisposedException
-import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
@@ -52,13 +52,18 @@ import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.readOnlyErrorMessage
 import com.jetbrains.python.sdk.refreshPaths
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -79,7 +84,7 @@ import kotlin.coroutines.cancellation.CancellationException
 abstract class PythonPackageManager @ApiStatus.Internal constructor(
   val project: Project,
   val sdk: Sdk,
-) : Disposable.Default {
+) : Disposable {
   /**
    * Whether this manager has an explicit list of top-level dependencies (e.g. from pyproject.toml).
    * When true, only packages from [listDeclaredPackagesCached] are treated as "declared" in the UI,
@@ -92,17 +97,38 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   @get:ApiStatus.Internal
   protected abstract val dependenciesFilesRelativePaths: List<Path>
 
+  /**
+   * Lifetime of every coroutine this manager starts. A child of the packaging scope of the project.
+   */
+  @ApiStatus.Internal
+  protected val managerScope: CoroutineScope =
+    PyPackageCoroutine.getScope(project).childScope("PythonPackageManager for ${sdk.name}")
+
   private val isInited = AtomicBoolean(false)
   private val packageReloadMutex = Mutex()
 
   private val dependencyCache = DependencyCache()
 
-  private val initializationJob = PyPackageCoroutine.launch(project,
-                                                            NON_INTERACTIVE_ROOT_TRACE_CONTEXT + ModalityState.any().asContextElement(),
-                                                            start = CoroutineStart.LAZY) {
+  private val initializationJob = managerScope.launch(
+    NON_INTERACTIVE_ROOT_TRACE_CONTEXT + ModalityState.any().asContextElement(),
+    start = CoroutineStart.LAZY,
+  ) {
     initInstalledPackages()
-  }.also {
-    it.cancelOnDispose(this)
+  }
+
+  /**
+   * Cancels [this] together with [managerScope]. Use it for a job that this manager did not start itself.
+   */
+  @ApiStatus.Internal
+  protected fun <T : Job> T.cancelWithManager(): T = also { job ->
+    managerScope.coroutineContext.job.invokeOnCompletion { job.cancel() }
+  }
+
+  @ApiStatus.Internal
+  override fun dispose() {
+    // Not inherited from Disposable.Default: the scope's parent is the project, so without this it would outlive
+    // the manager and keep running work for an SDK that is already gone.
+    managerScope.cancel()
   }
 
 
@@ -136,7 +162,6 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     return reloadPackages()
   }
 
-  @ApiStatus.Internal
   internal suspend fun installPackage(
     installRequest: PythonPackageInstallRequest,
     options: List<String> = emptyList(),
@@ -202,12 +227,12 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
         syncPublisher(PyPackageManager.PACKAGE_MANAGER_TOPIC).packagesRefreshed(sdk)
       }
 
-      PyPackageCoroutine.launch(project, NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
+      managerScope.launch(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
         reloadOutdatedPackages()
-      }.cancelOnDispose(this@PythonPackageManager)
-      PyPackageCoroutine.launch(project, NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
+      }
+      managerScope.launch(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
         reloadInstalledPackagesMetadata()
-      }.cancelOnDispose(this@PythonPackageManager)
+      }
 
       if (!isInit) {
         refreshPaths(project, sdk)
@@ -499,13 +524,13 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
       // runs synchronously on the thread that completed the underlying deferred. `drop(1)`
       // skips the StateFlow's initial replay so manager construction doesn't trigger a
       // spurious restart for the still-empty snapshot.
-      PyPackageCoroutine.launch(project, NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
+      managerScope.launch(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
         snapshot.drop(1).collect {
           if (!project.isDisposed) {
             DaemonCodeAnalyzer.getInstance(project).restart("PythonPackageManager.declaredPackagesChanged")
           }
         }
-      }.cancelOnDispose(this@PythonPackageManager)
+      }
     }
 
     /**
@@ -528,7 +553,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
         CompletableDeferred(value = null)
       }
       else {
-        PyPackageCoroutine.getScope(project).async(NON_INTERACTIVE_ROOT_TRACE_CONTEXT, start = CoroutineStart.LAZY) {
+        managerScope.async(NON_INTERACTIVE_ROOT_TRACE_CONTEXT, start = CoroutineStart.LAZY) {
           listDeclaredPackages()
         }
       }
@@ -559,7 +584,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     /**
      * [files] is the `(file -> modification stamp)` cache key; [deferred] is the
      * `listDeclaredPackages` result (pre-completed `CompletableDeferred(null)` when there
-     * are no files, otherwise a `LAZY` async on [PyPackageCoroutine.getScope]).
+     * are no files, otherwise a `LAZY` async on [managerScope]).
      */
     private inner class Entry(
       val files: SequencedMap<PyDependenciesFile, Long>,
