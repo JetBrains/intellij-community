@@ -64,13 +64,7 @@ internal class HatchPackageManager(
     val pyProject = PyProjectToml.parseCached(project, pyProjectFile.virtualFile)
                     ?: return PyResult.success(emptyList())
 
-    val dependencyLines = buildList {
-      addAll(pyProject.project.dependencies.project)
-      pyProject.project.dependencies.optional.values.forEach { addAll(it) }
-      addAll(pyProject.allDepsFromGroups)
-    }.distinct()
-
-    val packages = dependencyLines
+    val packages = pyProject.allDeclaredDeps
       .mapNotNull { PyRequirementParser.fromLine(it, project) }
       .map { it.toPythonPackage() }
     return PyResult.success(packages)
