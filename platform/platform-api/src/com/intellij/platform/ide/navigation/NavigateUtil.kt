@@ -75,6 +75,50 @@ fun requestNavigate(
 }
 
 /**
+ * Submits navigation to [navigatables] without waiting for it to finish.
+ *
+ * When `ide.navigation.requests` is enabled, the navigation is launched asynchronously in [coroutineScope]
+ * or, when none is given, in the project navigation service scope.
+ * Otherwise, a blocking modal navigation is scheduled on a later EDT event.
+ * In both modes the function returns before the navigation completes.
+ * UI context is captured immediately for EDT callers and asynchronously for callers on other threads.
+ * Whenever possible, prefer [CoroutineScope.requestNavigate].
+ *
+ * Tests which depend on navigation started outside those fixtures (e.g., via `EditorTestUtil.executeAction`)
+ * must explicitly await the pending-navigation barrier (see `NavigationTestUtil.awaitPendingNavigation`)
+ * outside a write action.
+ * NB: prefer passing a lifecycle-bound [coroutineScope] when possible.
+ *
+ * @see [CoroutineScope.requestNavigate]
+ *
+ * @return [Job] which completes when the navigation task settles: finishes, is canceled
+ * by a newer navigation request, or fails. This is an observation handle only
+ */
+@ApiStatus.Internal
+@JvmOverloads
+fun requestNavigate(
+  project: Project,
+  navigatables: List<Navigatable>,
+  options: NavigationOptions = NavigationOptions.defaultOptions(),
+  dataContext: DataContext? = null,
+  coroutineScope: CoroutineScope? = null,
+): Job {
+  return dispatchNavigateRequest(
+    project,
+    dataContext,
+    coroutineScope,
+    options,
+    navigateAsync = { ctx ->
+      project.serviceAsync<NavigationService>().navigate(navigatables, ctx.navigationOptions)
+    }
+  ) { ctx ->
+    for (navigatable in navigatables) {
+      navigateBlocking(project, navigatable, ctx.navigationOptions)
+    }
+  }
+}
+
+/**
  * Submits navigation to [request] without waiting for it to finish.
  * @see [requestNavigate] for the dispatch and completion semantics.
  */
