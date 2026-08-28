@@ -2,10 +2,12 @@ package com.intellij.terminal.frontend.view.impl
 
 import com.intellij.execution.impl.EditorTextDecorationApplier
 import com.intellij.execution.impl.createEditorTextDecorationApplier
+import com.intellij.ide.dnd.DnDSupport
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -38,6 +40,7 @@ import com.intellij.terminal.frontend.view.completion.TerminalCommandCompletionT
 import com.intellij.terminal.frontend.view.hyperlinks.FrontendTerminalHyperlinkFacade
 import com.intellij.terminal.frontend.view.hyperlinks.installHyperlinksProcessing
 import com.intellij.terminal.frontend.view.hyperlinks.installOsc8HyperlinksProcessing
+import com.intellij.terminal.frontend.view.impl.dnd.TerminalViewDropHandler
 import com.intellij.terminal.frontend.view.inlineCompletion.TerminalInlineCompletionController
 import com.intellij.terminal.frontend.view.typeahead.TerminalTypeAhead
 import com.intellij.terminal.frontend.view.typeahead.TerminalTypeAheadOutputModelController
@@ -456,6 +459,8 @@ class TerminalViewImpl(
         coroutineScope.childScope("TerminalCommandCompletion")
       )
     }
+
+    installDropHandler()
   }
 
   fun connectToSession(session: TerminalSession) {
@@ -708,6 +713,25 @@ class TerminalViewImpl(
       coroutineScope = inlineCompletionScope
     )
     inlineCompletionController.install()
+  }
+
+  private fun installDropHandler() {
+    // Drag-and-drop and docking rely on the tool window decorator (real UI), which is absent in a headless environment.
+    // Skip them there so the tool window can still be initialized in tests.
+    if (ApplicationManager.getApplication().isHeadlessEnvironment) return
+
+    DnDSupport.createBuilder(component)
+      .setDropHandler(
+        TerminalViewDropHandler(
+          project = project,
+          terminalView = this,
+          scrollingModel = scrollingModel,
+        )
+      )
+      .setDisposableParent(coroutineScope.asDisposable())
+      .enableAsNativeTarget()
+      .disableAsSource()
+      .install()
   }
 
   override fun toString(): String {
