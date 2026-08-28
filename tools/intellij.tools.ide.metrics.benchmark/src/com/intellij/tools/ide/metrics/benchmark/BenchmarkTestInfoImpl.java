@@ -141,7 +141,7 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
   private static void cleanupMetersDir(Path logDir) throws IOException {
     try (Stream<Path> logDirChildren = Files.list(logDir)) {
       logDirChildren.filter(child -> {
-          String name = child.toString();
+          String name = child.getFileName().toString();
           return name.contains("-metrics")
                  || name.contains("-meters")
                  || name.endsWith(".jfr");

@@ -58,10 +58,6 @@ class BatchSpanProcessor(
               try {
                 drainQueueInto(batch)
                 exportCurrentBatch(batch)
-                // Flush exporters even when the batch is empty: a max-size batch export (see `queue.onReceive`
-                // below) hands spans to the exporters without flushing them, so JaegerJsonSpanExporter can be
-                // left with buffered bytes and a json file that ends mid-span. If the empty batch skipped this,
-                // no number of explicit flush() calls would ever finalize that file (AT-1875).
                 if (!request.exportOnly) {
                   flushExporters()
                 }
@@ -108,18 +104,6 @@ class BatchSpanProcessor(
     }
   }
 
-  /**
-   * Moves every span already queued into [batch], so that the export about to happen covers it.
-   *
-   * [onEnd] only queues; a span reaches [batch] when this processor's own coroutine gets round to receiving it. So a
-   * span that ended just before an export - a *root* span in particular, which by construction ends last - is
-   * routinely still in the channel, and exporting [batch] alone leaves it out of the file.
-   *
-   * On the shutdown path there is no later export to pick it up. Cancelling the scope is the documented way to shut
-   * this processor down ([forceShutdown]), and the handler for it used to export [batch] and nothing else, so every
-   * span still queued was dropped - silently, since a dropped span leaves no trace anywhere. Measured on a dev
-   * distribution build writing one trace file per packaging action, that lost the root span of 5 of 8 files.
-   */
   private suspend fun drainQueueInto(batch: MutableList<SpanData>) {
     while (true) {
       val span = queue.tryReceive().getOrNull() ?: break
