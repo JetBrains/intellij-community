@@ -342,12 +342,14 @@ private fun typedDictAncestors(cls: PyClass, context: TypeEvalContext): List<PyC
 }
 
 /**
- * The ancestor of `class Child(Base[int])` is `Base`: a superclass expression is unfolded to its operand, and over a stub the
- * ancestors are built from the superclass names. The arguments are read back from the superclass expressions, which a stub keeps
- * as text, because a TypedDict does not receive them through the substitutions map.
+ * [PyClass.getAncestorTypes] reports a bare `Base` for `class Child(Base[int])`. This function reads each subscripted
+ * superclass expression as a type hint, and puts the parameterized ancestor back.
  *
- * Applied to the finished ancestor list on purpose: evaluating `Base[T]` has to anchor `T` in the scope declaring it, which asks
- * for the type parameters of [cls] and through them for its ancestors, so it cannot run while they are being computed.
+ * A TypedDict takes its items from the ancestor itself, so it specializes an inherited item as soon as the ancestors are
+ * known. A generic class instead waits until somebody asks for the attribute.
+ *
+ * This runs on the finished ancestor list. Evaluation of `Base[T]` anchors `T` in the scope that declares it. That asks
+ * for the type parameters of [cls], and through them for the ancestors that are still being computed.
  */
 private fun specializeTypedDictAncestors(
   cls: PyClass,
