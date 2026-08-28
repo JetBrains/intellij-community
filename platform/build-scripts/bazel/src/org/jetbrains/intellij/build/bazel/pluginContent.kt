@@ -186,7 +186,7 @@ internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleLi
   val crossRepositoryPrepackedModules = ArrayList<String>()
   val members = ArrayList<ModuleDescriptor>()
   members.add(module)
-  val prepackedMemberPaths = prepackedMemberPaths(moduleName = moduleName, entries = entries)
+  val prepackedMemberPaths = prepackedMemberPaths(entries)
   // The members this plugin really handed over, whichever repository packs them. What is inside their jars is what this
   // target must stop declaring; see [recordedLibraries].
   val handedOver = HashSet<String>()
@@ -208,16 +208,15 @@ internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleLi
       // Only at the conventional path. A completion carries a name, and `dev_dist_content_set` derives the destination
       // from it, so a plugin that puts the jar elsewhere has nowhere to say so. No report needs that today, which is
       // why this is a veto rather than a second attribute on the set.
+      //
+      // Both drops are silent, because both are the intended outcome. A member at another destination stays with
+      // `JarPackager`, which packs its jar as it always did. A member that is not prepack-eligible stays a raw input.
+      // `collectPluginContentCompletions` derives that same set from `bazel-targets.json`, and writes it into
+      // `dev_dist_content_sets.bzl`. So a report of either one said only that the repository is split. A member that
+      // neither half declares fails the assembly by name.
       if (relativeOutputFile != null && isConventionalPrepackedPath(moduleName = memberName, relativeOutputFile = relativeOutputFile)) {
         crossRepositoryPrepackedModules.add(memberName)
         handedOver.add(memberName)
-      }
-      else if (relativeOutputFile != null) {
-        println("WARN: $moduleName content target: ultimate module $memberName keeps being packed by JarPackager," +
-                " because a cross-repository hand-off cannot state its `lib/$relativeOutputFile` destination")
-      }
-      else {
-        println("WARN: $moduleName content target: community plugin packs ultimate module $memberName")
       }
       continue
     }
@@ -273,8 +272,11 @@ internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleLi
  * is this report naming one module at two destinations: one packed jar cannot satisfy both, and a relation is keyed by
  * *(plugin, module)*, so there is no second relation to carry the second path. Both are fail-open - the module stays a
  * raw member and `JarPackager` keeps packing every jar it is in.
+ *
+ * Neither veto is reported. A vetoed module keeps the packing it had before the hand-off, so the veto takes nothing
+ * away, and the report that states the two destinations is checked in beside the plugin.
  */
-private fun prepackedMemberPaths(moduleName: String, entries: List<RecipeEntry>): Map<String, String> {
+private fun prepackedMemberPaths(entries: List<RecipeEntry>): Map<String, String> {
   val coPacked = coPackedElsewhere(entries)
   val paths = HashMap<String, String>()
   val conflicting = HashSet<String>()
@@ -285,8 +287,6 @@ private fun prepackedMemberPaths(moduleName: String, entries: List<RecipeEntry>)
     }
     val previous = paths.put(simple.moduleName, simple.relativeOutputFile)
     if (previous != null && previous != simple.relativeOutputFile) {
-      println("WARN: $moduleName content target: ${simple.moduleName} keeps being packed by JarPackager, because this" +
-              " report puts its jar at both `lib/$previous` and `lib/${simple.relativeOutputFile}`")
       conflicting.add(simple.moduleName)
     }
   }
@@ -383,8 +383,8 @@ private fun computeLibraryContainerLabels(
     )
     if (nameableRepositories != null && labelRepository(label) !in nameableRepositories) {
       // Same edge as the ultimate content module above, and the same resolution: the ultimate side of the distribution
-      // declares this library, so dropping it here is what keeps the community target analyzable.
-      println("WARN: ${module.module.name} content target: library $label is outside the community repository")
+      // declares this library, so dropping it here is what keeps the community target analyzable. Silent for the same
+      // reason: the split is the whole cause, and a jar that neither side declares fails the assembly by name.
       continue
     }
     if (label == KOTLIN_STDLIB_LABEL) {
