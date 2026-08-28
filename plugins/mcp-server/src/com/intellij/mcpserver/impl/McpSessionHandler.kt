@@ -26,7 +26,9 @@ import com.intellij.mcpserver.toolsets.general.ROUTER_TOOL_NAME
 import com.intellij.mcpserver.toolwindow.McpDiagnosticService
 import com.intellij.mcpserver.toolwindow.TransportType
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.diagnostic.traceThrowable
 import com.intellij.openapi.project.Project
@@ -56,8 +58,8 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.StatusCode
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.collectLatest
@@ -65,17 +67,23 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
 private val logger = logger<McpSessionHandler>()
 
 private val structuredToolOutputEnabled get() = Registry.`is`("mcp.server.structured.tool.output")
 private val MCP_SERVER_TRACER_SCOPE = Scope("mcpServer")
+private val ROOTS_REQUEST_TIMEOUT = 30.seconds
+
+/** The SDK demands a [Deferred] from every notification handler and never awaits it. */
+private val NOTIFICATION_HANDLED: Deferred<Unit> = CompletableDeferred(Unit)
 private fun getTracer(): IJTracer =
   if (Registry.`is`("mcp.server.ot.trace"))
     TelemetryManager.getInstance().getTracer(MCP_SERVER_TRACER_SCOPE)
@@ -258,21 +266,11 @@ internal class McpSessionHandler(
           sessionRoots.set(null)
         }
         session.setNotificationHandler<RootsListChangedNotification>(Method.Defined.NotificationsRootsListChanged) {
-          sessionScope.async {
-            val roots = session.roots()
-            logger.trace {
-              "Received roots list changed notification for session ${session.sessionId}: $roots roots"
-            }
-            setSessionRoots(roots)
-          }
+          logger.trace { "Roots list changed for session ${session.sessionId}" }
+          refreshRoots(session)
+          NOTIFICATION_HANDLED
         }
-        sessionScope.launch {
-          val roots = session.roots()
-          logger.trace {
-            "Initialized roots for session ${session.sessionId}: $roots roots"
-          }
-          setSessionRoots(roots)
-        }
+        refreshRoots(session)
       }
 
       // Log available tools via OpenTelemetry
@@ -291,6 +289,14 @@ internal class McpSessionHandler(
     }
 
     return session
+  }
+
+  private fun refreshRoots(session: ServerSession) {
+    sessionScope.launch {
+      val roots = session.rootsOrNull() ?: return@launch
+      logger.trace { "Roots of session ${session.sessionId}: $roots" }
+      setSessionRoots(roots)
+    }
   }
 
   private suspend fun setSessionRoots(roots: Set<String>) {
@@ -519,9 +525,25 @@ internal class McpSessionHandler(
   }
 }
 
-private suspend fun ServerSession.roots(): Set<String> {
-  return listRoots().roots.map { it.uri }.toSet()
-}
+/**
+ * Returns `null` when no roots arrived. The client never answered within [ROOTS_REQUEST_TIMEOUT], or the session
+ * closed first. The SDK keeps an unanswered request pending until the session closes, and then fails it. Such a
+ * failure outlives every scope that could have handled it.
+ */
+private suspend fun ServerSession.rootsOrNull(): Set<String>? =
+  try {
+    withTimeoutOrNull(ROOTS_REQUEST_TIMEOUT) { listRoots().roots.mapTo(mutableSetOf()) { it.uri } }
+  }
+  catch (e: Exception) {
+    rethrowControlFlowException(e)
+    if (!isClosed) throw e
+    logger.debug(e) { "Session $sessionId closed before it reported its roots" }
+    null
+  }
+
+/** The SDK sets a session's transport to null when the session closes, and gives no other way to ask. */
+private val ServerSession.isClosed: Boolean
+  get() = transport == null
 
 private fun McpToolCallResult.deepCopy(): McpToolCallResult {
   val copiedContent: Array<McpToolCallResultContent> = content.map { content ->
