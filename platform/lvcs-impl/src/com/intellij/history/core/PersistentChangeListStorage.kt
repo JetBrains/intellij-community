@@ -31,7 +31,7 @@ internal class PersistentChangeListStorage(
   private val unitTestMode: Boolean = ApplicationManager.getApplication().isUnitTestMode(),
 ) : ChangeListStorage {
   //TODO RC: use mmapped storage instead of old-school? Less freezes, and also more reliability
-  private val storage: LocalHistoryStorage
+  private var storage: LocalHistoryStorage
 
   /**
    * Write cache for the storage
@@ -121,7 +121,7 @@ internal class PersistentChangeListStorage(
     Disposer.dispose(storage)
     try {
       dropStorage()
-      initStorage()
+      storage = initStorage()
     }
     catch (ex: Throwable) {
       LocalHistoryLog.LOG.error("cannot recreate storage", ex)
