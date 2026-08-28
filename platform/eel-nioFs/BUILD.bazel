@@ -24,6 +24,7 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//libraries/jetbrains/annotations",
         "//platform/util/base",
+        "//platform/util/base/multiplatform",
         "//platform/util/annotations",
     ],
 )
@@ -52,6 +53,7 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/util/base:base_test_lib",
+        "//platform/util/base/multiplatform:multiplatform_test_lib",
         "//platform/util/annotations:annotations_test_lib",
     ],
 )

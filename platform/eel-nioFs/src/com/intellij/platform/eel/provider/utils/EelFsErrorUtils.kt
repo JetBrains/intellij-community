@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider.utils
 
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.util.io.FileTooBigException
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.OwnedBuilder
@@ -16,6 +17,7 @@ import java.nio.file.FileSystemException
 import java.nio.file.NoSuchFileException
 import java.nio.file.NotDirectoryException
 import java.nio.file.ReadOnlyFileSystemException
+import kotlin.coroutines.cancellation.CancellationException
 
 @Throws(FileSystemException::class)
 @ApiStatus.Internal
@@ -35,10 +37,15 @@ suspend fun <T, E : EelFsError, O : OwnedBuilder<EelResult<T, E>>> O.getOrThrowF
       is EelResult.Error -> v.error.throwFileSystemException()
     }
   }
+  catch (ce: CancellationException) {
+    throw ce
+  }
   catch (ioe: IOException) {
     throw ioe
   }
-  catch(t: Throwable) {
+  catch (t: Throwable) {
+    @Suppress("RethrowControlFlowExceptionWithUtil")
+    if (t is ControlFlowException) throw t
     throw IOException(t.message.orEmpty(), t)
   }
 }
