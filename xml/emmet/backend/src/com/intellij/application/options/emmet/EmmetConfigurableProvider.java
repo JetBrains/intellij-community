@@ -8,17 +8,21 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class EmmetConfigurableProvider extends ConfigurableProvider {
+final class EmmetConfigurableProvider extends ConfigurableProvider {
   @Override
-  public @Nullable Configurable createConfigurable() {
+  public @NotNull Configurable createConfigurable() {
     final List<Configurable> availableConfigurables = getAvailableConfigurables();
     return availableConfigurables.size() == 1
            ? new EmmetCompositeConfigurable(ContainerUtil.getFirstItem(availableConfigurables))
            : new EmmetCompositeConfigurable(availableConfigurables);
+  }
+
+  @Override
+  public @NotNull Class<?> getConfigurableType() {
+    return EmmetCompositeConfigurable.class;
   }
 
   @Override

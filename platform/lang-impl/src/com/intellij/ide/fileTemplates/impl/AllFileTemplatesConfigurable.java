@@ -98,6 +98,11 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
     public @NotNull Configurable createConfigurable() {
       return new AllFileTemplatesConfigurable(myProject);
     }
+
+    @Override
+    public @NotNull Class<?> getConfigurableType() {
+      return AllFileTemplatesConfigurable.class;
+    }
   }
 
   private final Project myProject;

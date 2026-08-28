@@ -4,12 +4,14 @@ package com.intellij.execution.target
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-class TargetEnvironmentsConfigurableProvider(private val project: Project) : ConfigurableProvider() {
+internal class TargetEnvironmentsConfigurableProvider(private val project: Project) : ConfigurableProvider() {
   override fun createConfigurable(): Configurable {
     return TargetEnvironmentsConfigurable(project)
+  }
+
+  override fun getConfigurableType(): Class<*> {
+    return TargetEnvironmentsConfigurableProvider::class.java
   }
 
   override fun canCreateConfigurable(): Boolean = RunTargetsEnabled.get()

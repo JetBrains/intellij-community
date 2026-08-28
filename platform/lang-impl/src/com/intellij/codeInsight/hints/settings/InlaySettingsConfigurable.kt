@@ -8,9 +8,9 @@ import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Predicate
 import javax.swing.JComponent
-import org.jetbrains.annotations.ApiStatus
 
 const val INLAY_ID: String = "inlay.hints"
 
@@ -59,6 +59,10 @@ class InlaySettingsConfigurable(val project: Project) : Configurable, Searchable
 class InlaySettingsConfigurableProvider(val project: Project): ConfigurableProvider() {
   override fun createConfigurable(): Configurable {
     return InlaySettingsConfigurable(project)
+  }
+
+  override fun getConfigurableType(): Class<*> {
+    return InlaySettingsConfigurable::class.java
   }
 }
 

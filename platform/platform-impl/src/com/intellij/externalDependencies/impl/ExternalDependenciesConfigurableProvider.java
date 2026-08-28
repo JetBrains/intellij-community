@@ -4,11 +4,9 @@ package com.intellij.externalDependencies.impl;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
-public final class ExternalDependenciesConfigurableProvider extends ConfigurableProvider {
+final class ExternalDependenciesConfigurableProvider extends ConfigurableProvider {
   private final Project myProject;
 
   public ExternalDependenciesConfigurableProvider(Project project) {
@@ -16,7 +14,12 @@ public final class ExternalDependenciesConfigurableProvider extends Configurable
   }
 
   @Override
-  public @Nullable Configurable createConfigurable() {
+  public @NotNull Configurable createConfigurable() {
     return new ExternalDependenciesConfigurable(myProject);
+  }
+
+  @Override
+  public @NotNull Class<?> getConfigurableType() {
+    return ExternalDependenciesConfigurable.class;
   }
 }

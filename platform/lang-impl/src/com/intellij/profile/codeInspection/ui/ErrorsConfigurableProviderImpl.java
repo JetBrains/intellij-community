@@ -4,6 +4,7 @@ package com.intellij.profile.codeInspection.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
 public final class ErrorsConfigurableProviderImpl extends ErrorsConfigurableProvider {
@@ -16,5 +17,10 @@ public final class ErrorsConfigurableProviderImpl extends ErrorsConfigurableProv
   @Override
   public ErrorsConfigurable createConfigurable() {
     return new ProjectInspectionToolsConfigurable(ProjectInspectionProfileManager.getInstance(project));
+  }
+
+  @Override
+  public @NotNull Class<?> getConfigurableType() {
+    return ProjectInspectionToolsConfigurable.class;
   }
 }
