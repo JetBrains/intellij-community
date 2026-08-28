@@ -229,7 +229,7 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
       {
         // tail position
         runBlockingCancellable {
-          val roots = readAction { when {
+          val roots = readActionUndispatched { when {
             searchInLibraries -> workspaceFileIndex.nonIndexableRootsAsCacheAvoiding()
             else ->
               if (Registry.`is`("lookup.non.indexable.content.in.project.scope"))
