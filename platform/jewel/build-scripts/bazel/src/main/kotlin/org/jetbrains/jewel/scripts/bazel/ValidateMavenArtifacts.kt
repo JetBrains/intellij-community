@@ -1,4 +1,4 @@
-@file:Suppress("RAW_RUN_BLOCKING", "SSBasedInspection")
+@file:Suppress("RAW_RUN_BLOCKING", "IO_FILE_USAGE")
 
 package org.jetbrains.jewel.scripts.bazel
 
@@ -41,17 +41,16 @@ internal class ValidateMavenArtifactsCommand(
 
     private val verbose: Boolean by option("--verbose", "-v", help = "Enable verbose output.").flag(default = false)
 
-    private val artifactsDir: File? by
+    private val artifactsDir: String? by
         option(
-                "--artifacts-dir",
-                "-a",
-                "--out-dir",
-                "-o",
-                help =
-                    "Directory to store the built artifacts. " +
-                        "If not specified, it will create a temp dir in the system temp dir.",
-            )
-            .file(mustExist = false, canBeFile = false)
+            "--artifacts-dir",
+            "-a",
+            "--out-dir",
+            "-o",
+            help =
+                "Directory to store the built artifacts. " +
+                    "If not specified, it will create a temp dir in the system temp dir.",
+        )
 
     private val preserveTemp: Boolean by
         option(
@@ -112,7 +111,14 @@ internal class ValidateMavenArtifactsCommand(
             if (verbose) println("  Original branch: $originalBranch")
 
             val mavenArtifactsDir = communityRoot.resolve("out/idea-ce/artifacts/$mavenArtifactsOutputDirName")
-            val artifactsDirectory = artifactsDir ?: Files.createTempDirectory("jewel-artifacts").toFile()
+            val artifactsDirectory =
+                artifactsDir?.let(::resolvePath) ?: Files.createTempDirectory("jewel-artifacts").toFile()
+
+            if (artifactsDirectory.exists() && !isDirectory(artifactsDirectory)) {
+                exitWithError(
+                    "--artifacts-dir must point to a directory, not a file: ${artifactsDirectory.canonicalPath}"
+                )
+            }
 
             if (noBuild) {
                 if (artifactsDirectory == null || !isDirectory(artifactsDirectory)) {
