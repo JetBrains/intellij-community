@@ -13,10 +13,14 @@ interface ResourceProvider {
    * Resource description, containing resource content and it's type.
    * In case type is null, [PreviewStaticServer] will try to guess it based
    * on resource name.
+   *
+   * Set [isDocument] only for a resource meant to be loaded as a page, and only if it carries its own
+   * `Content-Security-Policy`. Everything else is served with a policy that makes it unusable as one.
    */
-  class Resource(
+  class Resource @JvmOverloads constructor(
     val content: ByteArray,
-    val type: String? = null
+    val type: String? = null,
+    val isDocument: Boolean = false,
   )
 
   /**

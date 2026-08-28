@@ -24,6 +24,20 @@ class MarkdownPreviewStaticServerTest: LightPlatformTestCase() {
     }
   }
 
+  private class PageResourceProvider: ResourceProvider {
+    override fun canProvide(resourceName: String): Boolean {
+      return resourceName == RESOURCE_NAME
+    }
+
+    override fun loadResource(resourceName: String): ResourceProvider.Resource {
+      return ResourceProvider.Resource("<html></html>".toByteArray(), "text/html", isDocument = true)
+    }
+
+    companion object {
+      const val RESOURCE_NAME = "test-page.html"
+    }
+  }
+
   fun `test preview server returns some path without exceptions`() {
     val provider = TestResourceProvider()
     val path = PreviewStaticServer.getStaticUrl(provider, TestResourceProvider.resourceName)
@@ -31,14 +45,40 @@ class MarkdownPreviewStaticServerTest: LightPlatformTestCase() {
   }
 
   fun `test preview server serves resource without exceptions`() {
-    BuiltInServerManager.getInstance().waitForStart()
     val provider = TestResourceProvider()
+    withServedResource(provider, TestResourceProvider.resourceName) { url ->
+      val content = HttpRequests.request(url).readString()
+      assertEquals(TestResourceProvider.resourceContent, content)
+    }
+  }
+
+  /** An SVG from a document is served here; opening its URL used to run its scripts (IJPL-247809). */
+  fun `test served resource is not usable as a document and leaks no referrer`() {
+    val provider = TestResourceProvider()
+    withServedResource(provider, TestResourceProvider.resourceName) { url ->
+      assertEquals("default-src 'none'; sandbox", headerOf(url, "Content-Security-Policy"))
+    }
+  }
+
+  /** A document declares its own policy in markup; a second one in a header would be enforced separately. */
+  fun `test document resource is served without a policy header`() {
+    val provider = PageResourceProvider()
+    withServedResource(provider, PageResourceProvider.RESOURCE_NAME) { url ->
+      assertNull(headerOf(url, "Content-Security-Policy"))
+    }
+  }
+
+  private fun headerOf(url: String, name: String): String? {
+    return HttpRequests.request(url).connect { it.connection.getHeaderField(name) }
+  }
+
+  private fun withServedResource(provider: ResourceProvider, resourceName: String, action: (String) -> Unit) {
+    BuiltInServerManager.getInstance().waitForStart()
     val disposable = PreviewStaticServer.instance.registerResourceProvider(provider)
     try {
-      val path = PreviewStaticServer.getStaticUrl(provider, TestResourceProvider.resourceName)
-      val content = HttpRequests.request(path).readString()
-      assertEquals(TestResourceProvider.resourceContent, content)
-    } finally {
+      action(PreviewStaticServer.getStaticUrl(provider, resourceName))
+    }
+    finally {
       Disposer.dispose(disposable)
     }
   }
