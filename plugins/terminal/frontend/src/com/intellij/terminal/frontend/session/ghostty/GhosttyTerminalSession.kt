@@ -4,6 +4,7 @@ package com.intellij.terminal.frontend.session.ghostty
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.emulator.ScreenChange
@@ -205,14 +206,35 @@ class GhosttyTerminalSession internal constructor(
   @Volatile
   private var disposed: Boolean = false
 
-  private val localTtyConnector: LocalTerminalTtyConnector
-    get() = ttyConnector.original as LocalTerminalTtyConnector
+  private val localTtyConnector: LocalTerminalTtyConnector?
+    get() = ttyConnector.original as? LocalTerminalTtyConnector
 
   override val eelDescriptor: EelDescriptor
-    get() = localTtyConnector.eelDescriptor
+    /**
+     * Falls back to [LocalEelDescriptor] when [ttyConnector] isn't a [LocalTerminalTtyConnector].
+     * In production, [ttyConnector] is always a [LocalTerminalTtyConnector].
+     * The fallback is test-only, exercised by tests driving the session through a fake connector.
+     */
+    get() = localTtyConnector?.eelDescriptor ?: LocalEelDescriptor
+
+  private var missingLocalTtyConnectorLogged = false
 
   override val processId: Long
-    get() = localTtyConnector.shellEelProcess.eelProcess.pid.value
+    /**
+     * In production, [ttyConnector] is always a [LocalTerminalTtyConnector].
+     * Miss can happen only in tests where a fake connector is used, so `LOG.error` to fail the test.
+     */
+    get() {
+      val connector = localTtyConnector
+      if (connector == null) {
+        if (!missingLocalTtyConnectorLogged) {
+          missingLocalTtyConnectorLogged = true
+          LOG.error("Unable to find LocalTerminalTtyConnector in $ttyConnector")
+        }
+        return -1
+      }
+      return connector.shellEelProcess.eelProcess.pid.value
+    }
 
   /**
    * Invoked by the working-directory tracker; the new value is reported by the next
