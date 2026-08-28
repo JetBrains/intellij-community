@@ -12,7 +12,6 @@ import com.intellij.python.sdk.common.evolution.PyEvoWidgetCollector
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.NlsActions.ActionDescription
-import com.intellij.openapi.util.NlsContexts.PopupTitle
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.sdk.common.evolution.EvoRpcFailedException
@@ -191,25 +190,6 @@ class EvoEditableName(@Volatile @NlsSafe var value: String, val takenNames: Set<
 
   /** The current name can back a new environment. */
   val isValid: Boolean get() = problem == null
-}
-
-/**
- * Implemented by a leaf [AnAction] that stands for more than one concrete choice: an "add new environment" Python
- * version on a machine carrying several installs of it.
- *
- * The row keeps doing its own thing when clicked — it acts on the default choice — and offers the rest behind an inline
- * "…" that [EvoTreePopup] paints on it while it is hovered, so the finer choice costs nothing to a user who does not
- * want it. An implementation with fewer than two [alternatives] is offering no choice at all, and the "…" is not painted.
- */
-interface EvoAlternatives {
-  val alternativesTitle: @PopupTitle String
-
-  /**
-   * The rows the menu shows. Built by whoever built the row they hang off, so they are the very same rows the expanded
-   * list would show — same titles, same lazily-resolved version column — rather than a second rendering of the same
-   * data that could drift from it.
-   */
-  val alternatives: List<EvoTreeLeafElement>
 }
 
 /**

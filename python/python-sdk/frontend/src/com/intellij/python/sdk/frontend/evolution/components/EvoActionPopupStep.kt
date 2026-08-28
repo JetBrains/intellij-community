@@ -88,23 +88,10 @@ open class EvoActionPopupStep(
   val versionRows: EvoVersionRows? get() = node.versionRows
 
   /**
-   * A child step listing [alternatives] as its rows — the "…" menu of a row that stands for several choices.
-   *
-   * Built here rather than in the popup so it inherits this step's data context and scope: the rows it produces run the
-   * same creation the parent row would have run, only with a different interpreter, and that closure was captured when
-   * the parent row was built.
-   */
-  fun alternativesStep(alternatives: EvoAlternatives): EvoActionPopupStep {
-    val node = EvoTreeStaticNodeElement(alternatives.alternativesTitle, AllIcons.Language.Python,
-                                        listOf(EvoTreeSection(elements = alternatives.alternatives)))
-    return EvoActionPopupStep(alternatives.alternativesTitle, node, dataContext, scope)
-  }
-
-  /**
    * The panel shown while [node] reloads: one "Loading…" row, over a node of its own.
    *
-   * Built here for the same reason [alternativesStep] is — it inherits this step's data context and scope. It is a
-   * separate node so the reloading one keeps its rows and its controls; see [loadingNodeElement].
+   * Built here rather than in the popup so it inherits this step's data context and scope. It is a separate node so the
+   * reloading one keeps its rows and its controls; see [loadingNodeElement].
    */
   fun loadingStep(): EvoActionPopupStep = EvoActionPopupStep(null, loadingNodeElement(node), dataContext, scope)
 

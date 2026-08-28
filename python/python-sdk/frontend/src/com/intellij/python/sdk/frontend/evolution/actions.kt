@@ -29,7 +29,6 @@ import com.intellij.python.sdk.common.evolution.requestEvoPerformNodeAction
 import com.intellij.python.sdk.common.evolution.requestEvoResolveVersion
 import com.intellij.python.sdk.common.evolution.requestEvoSelectInterpreter
 import com.intellij.python.sdk.frontend.PySdkFrontendBundle
-import com.intellij.python.sdk.frontend.evolution.components.EvoAlternatives
 import com.intellij.python.sdk.frontend.evolution.components.EvoLazyDetail
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeLeafElement
 import kotlinx.coroutines.CoroutineScope
@@ -135,18 +134,12 @@ internal class SelectEnvAction(
   private val nodeStats: EvoNodeStats,
   /** Trace root of the popup tree this row belongs to; groups its version probe under that tree's root. */
   private val traceId: String,
-  /**
-   * When [ref] creates an environment *from* a base interpreter (poetry's per-version rows), the other installs of that
-   * same version — offered behind the row's inline "…". Empty when there is nothing to choose: an existing env already has
-   * its interpreter, and a token that is not an interpreter path has no alternatives to speak of.
-   */
-  private val bases: List<EvoBasePythonDto>,
   title: @org.jetbrains.annotations.Nls String,
   description: @org.jetbrains.annotations.Nls String,
   secondaryText: @org.jetbrains.annotations.Nls String?,
   icon: IconId,
   private val scope: CoroutineScope,
-) : AnAction({ title }, { description }, icon.icon()), EvoLazyDetail, EvoAlternatives, DumbAware {
+) : AnAction({ title }, { description }, icon.icon()), EvoLazyDetail, DumbAware {
   @Volatile
   private var versionRequested = false
 
@@ -155,25 +148,8 @@ internal class SelectEnvAction(
     secondaryText?.let { templatePresentation.putClientProperty(ActionUtil.SECONDARY_TEXT, it) }
   }
 
-  override fun actionPerformed(e: AnActionEvent) = select(ref, evoSourceForNode(nodeId))
-
-  override val alternativesTitle: String
-    get() = PySdkFrontendBundle.message("evo.sdk.status.bar.popup.add.new.base.title")
-
-  // Built once: the renderer asks whether this row has alternatives on every repaint, and the hit-test on every mouse move.
-  override val alternatives: List<EvoTreeLeafElement> by lazy {
-    // Only a not-yet-created environment has a base interpreter left to choose; an existing one already has its own.
-    when (val create = ref) {
-      is PyInterpreterRef.CreateEnv -> bases.map { base ->
-        baseInterpreterRow(base) { select(create.copy(token = base.token), PyEvoWidgetCollector.Source.ALTERNATIVES) }
-      }
-      else -> emptyList()
-    }
-  }
-
-  /** Applies [ref], which for an alternative is this row's own ref with the chosen interpreter substituted in. */
-  private fun select(ref: PyInterpreterRef, source: PyEvoWidgetCollector.Source) =
-    selectInterpreter(project, pyProjectKey, ref, nodeId, nodeStats, source, scope)
+  override fun actionPerformed(e: AnActionEvent) =
+    selectInterpreter(project, pyProjectKey, ref, nodeId, nodeStats, evoSourceForNode(nodeId), scope)
 
   /** Resolves the interpreter version once, on first focus, for a detected env that has no version yet. */
   override fun resolveOnFocus(onResolved: () -> Unit) {
@@ -293,8 +269,6 @@ internal fun showMoreRow(onChosen: () -> Unit): EvoTreeLeafElement {
  * The icon is what says where the interpreter came from — uv, Homebrew, pyenv — the way the v2 "Add Interpreter" dialog
  * does it, so a list of same-version installs is told apart at a glance instead of by reading a word off each row. The
  * plain Python logo stands in when the tool is unknown.
- *
- * Shared by the expanded version list and the "…" menu, so the same interpreter can never be rendered two ways.
  */
 internal fun baseInterpreterRow(base: EvoBasePythonDto, onChosen: () -> Unit): EvoTreeLeafElement {
   val icon = base.icon?.icon() ?: AllIcons.Language.Python
@@ -319,7 +293,6 @@ internal fun selectEnvAction(project: Project, pyProjectKey: String, leaf: EvoLe
     nodeId = nodeId,
     nodeStats = nodeStats,
     traceId = traceId,
-    bases = leaf.bases,
     title = leaf.title,
     description = leaf.description ?: "",
     secondaryText = leaf.secondaryText,
@@ -335,8 +308,6 @@ internal fun selectEnvAction(project: Project, pyProjectKey: String, interpreter
     nodeId = nodeId,
     nodeStats = nodeStats,
     traceId = traceId,
-    // An interpreter that already exists was built from whatever it was built from; there is nothing left to choose.
-    bases = emptyList(),
     title = interpreter.title,
     description = interpreter.description,
     secondaryText = null,
