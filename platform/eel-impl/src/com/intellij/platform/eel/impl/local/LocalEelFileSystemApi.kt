@@ -139,8 +139,9 @@ abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) :
       }
     }
 
+  @Deprecated("Use the method with the builder")
   override suspend fun listDirectoryWithAttrs(path: EelPath, symlinkPolicy: EelFileSystemApi.SymlinkPolicy): EelResult<
-    out Collection<Pair<String, EelFileInfo>>,
+    Collection<Pair<String, EelFileInfo>>,
     EelFileSystemApi.ListDirectoryError> =
     wrapIntoEelResult {
       Files.list(path.toNioPath()).use { stream ->
@@ -163,10 +164,11 @@ abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) :
       EelPath.parse(realPath.toString(), LocalEelDescriptor)
     }
 
+  @Deprecated("Use the method with the builder")
   override suspend fun stat(
     path: EelPath,
     symlinkPolicy: EelFileSystemApi.SymlinkPolicy,
-  ): EelResult<out EelFileInfo, EelFileSystemApi.StatError> =
+  ): EelResult<EelFileInfo, EelFileSystemApi.StatError> =
     wrapIntoEelResult {
       // TODO symlinkPolicy
       getFileAttributes(path.toNioPath(), symlinkPolicy)
@@ -298,6 +300,7 @@ abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) :
       )
     }
 
+  @Deprecated("Use the method with the builder")
   override suspend fun move(
     source: EelPath,
     target: EelPath,
@@ -474,7 +477,7 @@ private fun doTell(
   isClosed: AtomicReference<Boolean?>,
 ): EelResult<Long, EelOpenedFile.TellError> =
   eelFs.wrapIntoEelResult(isClosed) {
-    byteChannel.position().toLong()
+    byteChannel.position()
   }
 
 private fun doClose(
@@ -499,16 +502,21 @@ abstract class PosixNioBasedEelFileSystemApi(
       Files.createDirectory(path.toNioPath())
     }
 
+  @Suppress("UNCHECKED_CAST")
+  @Deprecated("Use the method with the builder")
   override suspend fun listDirectoryWithAttrs(path: EelPath, symlinkPolicy: EelFileSystemApi.SymlinkPolicy): EelResult<
     Collection<Pair<String, EelPosixFileInfo>>,
     EelFileSystemApi.ListDirectoryError> =
     super<NioBasedEelFileSystemApi>.listDirectoryWithAttrs(path, symlinkPolicy) as EelResult<Collection<Pair<String, EelPosixFileInfo>>, EelFileSystemApi.ListDirectoryError>
 
+  @Suppress("UNCHECKED_CAST")
+  @Deprecated("Use the method with the builder")
   override suspend fun stat(path: EelPath, symlinkPolicy: EelFileSystemApi.SymlinkPolicy): EelResult<
     EelPosixFileInfo,
     EelFileSystemApi.StatError> =
     super<NioBasedEelFileSystemApi>.stat(path, symlinkPolicy) as EelResult<EelPosixFileInfo, EelFileSystemApi.StatError>
 
+  @Deprecated("Use the method with the builder")
   override suspend fun changeAttributes(
     path: EelPath,
     options: EelFileSystemApi.ChangeAttributesOptions,
@@ -566,16 +574,21 @@ abstract class WindowsNioBasedEelFileSystemApi(
       Files.createDirectory(path.toNioPath())
     }
 
+  @Suppress("UNCHECKED_CAST")
+  @Deprecated("Use the method with the builder")
   override suspend fun listDirectoryWithAttrs(path: EelPath, symlinkPolicy: EelFileSystemApi.SymlinkPolicy): EelResult<
     Collection<Pair<String, EelWindowsFileInfo>>,
     EelFileSystemApi.ListDirectoryError> =
     super<NioBasedEelFileSystemApi>.listDirectoryWithAttrs(path, symlinkPolicy) as EelResult<Collection<Pair<String, EelWindowsFileInfo>>, EelFileSystemApi.ListDirectoryError>
 
+  @Suppress("UNCHECKED_CAST")
+  @Deprecated("Use the method with the builder")
   override suspend fun stat(path: EelPath, symlinkPolicy: EelFileSystemApi.SymlinkPolicy): EelResult<
     EelWindowsFileInfo,
     EelFileSystemApi.StatError> =
     super<NioBasedEelFileSystemApi>.stat(path, symlinkPolicy) as EelResult<EelWindowsFileInfo, EelFileSystemApi.StatError>
 
+  @Deprecated("Use the method with the builder")
   override suspend fun changeAttributes(
     path: EelPath,
     options: EelFileSystemApi.ChangeAttributesOptions,

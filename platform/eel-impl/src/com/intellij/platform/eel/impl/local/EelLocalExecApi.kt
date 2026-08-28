@@ -38,6 +38,7 @@ import com.intellij.platform.eel.spawnProcess
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.ShellEnvironmentReader
 import com.intellij.util.fastutil.skip
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.pty4j.PtyProcess
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -140,6 +141,7 @@ class EelLocalExecPosixApi(
       try {
         val shell = getUserShell()
         // Timeout is chosen at random.
+        @OptIn(LowLevelLocalMachineAccess::class)
         val envs = ShellEnvironmentReader.readEnvironment(ShellEnvironmentReader.shellCommand(shell, null, interactive, null), 30_000).first
         reporter?.finished(descriptor, mode, (System.nanoTime() - startNs).nanoseconds, Result.success(envs))
         envs

@@ -8,6 +8,7 @@ import externalApp.ExternalAppEntry
 import externalApp.ExternalCli
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
@@ -33,6 +34,7 @@ private fun EelExecApi.ExternalCliProcess.toExternalAppEntry(): ExternalAppEntry
 @ApiStatus.Internal
 suspend fun EelExecApi.serveExternalCli(coroutineScope: CoroutineScope, scriptBody: ExternalCli, options: EelExecApi.ExternalCliOptions): EelPath {
   val script = createExternalCli(options)
+  @OptIn(DelicateCoroutinesApi::class)
   coroutineScope.launch(start = CoroutineStart.ATOMIC) {
     script.consumeInvocations { process ->
       scriptBody.entryPoint(process.toExternalAppEntry())

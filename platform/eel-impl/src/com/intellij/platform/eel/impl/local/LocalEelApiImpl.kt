@@ -32,6 +32,7 @@ import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPathOrNull
 import com.intellij.platform.eel.provider.utils.toEelArch
 import com.intellij.util.system.CpuArch
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.text.nullize
 import com.sun.security.auth.module.UnixSystem
 import org.jetbrains.annotations.VisibleForTesting
@@ -46,6 +47,7 @@ internal class LocalWindowsEelApiImpl(nioFs: FileSystem = FileSystems.getDefault
     check(SystemInfo.isWindows)
   }
 
+  @OptIn(LowLevelLocalMachineAccess::class)
   override val platform: EelPlatform.Windows = EelPlatform.Windows(CpuArch.CURRENT.toEelArch())
 
   override val tunnels: EelTunnelsWindowsApi get() = EelLocalWindowsTunnelsApiImpl
@@ -74,6 +76,7 @@ class LocalPosixEelApiImpl(private val nioFs: FileSystem = FileSystems.getDefaul
     check(SystemInfo.isUnix)
   }
 
+  @OptIn(LowLevelLocalMachineAccess::class)
   override val platform: EelPlatform.Posix = when {
     SystemInfo.isMac -> EelPlatform.Darwin(CpuArch.CURRENT.toEelArch())
     SystemInfo.isFreeBSD -> EelPlatform.FreeBSD(CpuArch.CURRENT.toEelArch())

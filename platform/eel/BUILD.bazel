@@ -72,6 +72,12 @@ exports_files(
 ### auto-generated section `iml intellij.platform.eel` end
 
 ### auto-generated section `build intellij.platform.eel.codegen` start
+create_kotlinc_options(
+    name = "custom_eel-codegen",
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
 jvm_library(
     name = "eel-codegen",
     srcs = glob(
@@ -108,6 +114,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_eel-codegen",
     module_name = "intellij.platform.eel.codegen",
     visibility = ["//visibility:public"],
     runtime_deps = [
@@ -191,6 +198,12 @@ jps_test(
 ### auto-generated section `test intellij.platform.eel.codegen` end
 
 ### auto-generated section `build intellij.platform.eel.tests` start
+create_kotlinc_options(
+    name = "custom_eel-tests",
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
 jvm_library(
     name = "eel-tests",
     srcs = glob(
@@ -217,6 +230,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_eel-tests",
     module_name = "intellij.platform.eel.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [":eel-tests"],

@@ -86,6 +86,7 @@ class PeekableEelReceiveChannelTest {
   @Test
   fun `test readUntil`() = runBlocking {
     val pipe = EelPipe(prefersDirectBuffers = false)
+    @OptIn(EelSendApi::class)
     launch {
       pipe.sink.send(ByteBuffer.wrap(byteArrayOf(1, 2)))
       delay(50.milliseconds)

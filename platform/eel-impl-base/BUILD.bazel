@@ -1,6 +1,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.platform.eel.impl.base` start
+create_kotlinc_options(
+    name = "custom_eel-impl-base",
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
 jvm_library(
     name = "eel-impl-base",
     srcs = glob(
@@ -11,6 +18,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_eel-impl-base",
     module_name = "intellij.platform.eel.impl.base",
     visibility = ["//visibility:public"],
     deps = [
@@ -30,6 +38,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
+    kotlinc_opts = ":custom_eel-impl-base",
     module_name = "intellij.platform.eel.impl.base",
     visibility = ["//visibility:public"],
     runtime_deps = [
