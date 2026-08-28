@@ -18,7 +18,9 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
+import java.util.Queue
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -27,7 +29,9 @@ import kotlin.random.Random
 private val logger by lazy { logger<InlineCompletionLogsContainer>()}
 
 @ApiStatus.Internal
-class InlineCompletionLogsContainer() {
+class InlineCompletionLogsContainer private constructor(
+  private val asyncAdds: Queue<Job>,
+) {
 
   /**
    * used to determine if all features would be sent or only basic
@@ -70,14 +74,16 @@ class InlineCompletionLogsContainer() {
     ConcurrentCollectionFactory.createConcurrentMap()
   }
 
-  private val asyncAdds = ConcurrentLinkedQueue<Job>()
   private val asyncAddsClosed = AtomicBoolean(false)
 
   private suspend fun awaitAllAlreadyRunningAsyncAdds() {
     // A snapshot on purpose: wait only for the adds that are already running, and never remove a job here.
     // If this coroutine is canceled inside `join`, the job must stay visible to [cancelAsyncAdds], otherwise it keeps running
     // on the application-level scope and retains everything its block captured (LLM-17026).
-    for (job in asyncAdds.toList()) {
+    // The copy goes through `Collection.toArray`, which tolerates a concurrent removal.
+    // `Iterable.toList` does not work here. For one element it reads `size` and then calls `iterator().next()`.
+    // `invokeOnCompletion` in [addAsync] can empty the queue in between. See LLM-30822.
+    for (job in ArrayList(asyncAdds)) {
       if (!currentCoroutineContext().isActive) return
       job.join()
     }
@@ -198,7 +204,7 @@ class InlineCompletionLogsContainer() {
      * Create, store in editor and get log container
      */
     fun create(editor: Editor): InlineCompletionLogsContainer {
-      val container = InlineCompletionLogsContainer()
+      val container = InlineCompletionLogsContainer(ConcurrentLinkedQueue())
       editor.putUserData(KEY, container)
       return container
     }
@@ -213,6 +219,12 @@ class InlineCompletionLogsContainer() {
      */
     fun remove(editor: Editor): InlineCompletionLogsContainer? {
       return editor.removeUserData(KEY)
+    }
+
+    @TestOnly
+    @ApiStatus.Internal
+    fun createUnregistered(asyncAddsContainer: Queue<Job> = ConcurrentLinkedQueue()): InlineCompletionLogsContainer {
+      return InlineCompletionLogsContainer(asyncAddsContainer)
     }
   }
 }

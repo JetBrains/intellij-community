@@ -12,12 +12,14 @@ import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.util.concurrent.ConcurrentLinkedQueue
 
 /**
  * Tests for [InlineCompletionLogsContainer.logCurrent] logic
@@ -40,7 +42,7 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
   @Test
   fun testEapLogs() {
     withEap(true) {
-      val logsContainer = InlineCompletionLogsContainer()
+      val logsContainer = InlineCompletionLogsContainer.createUnregistered()
       logsContainer.mockRandom(1f)
       logsContainer.add(TestPhasedLogs.basicTestField with 42)
       logsContainer.add(TestPhasedLogs.fullTestField with 1337)
@@ -68,7 +70,7 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
   @Test
   fun testFullLogsForRelease() {
     withEap(false) {
-      val logsContainer = InlineCompletionLogsContainer()
+      val logsContainer = InlineCompletionLogsContainer.createUnregistered()
       logsContainer.mockRandom(0f)
       logsContainer.add(TestPhasedLogs.basicTestField with 42)
       logsContainer.add(TestPhasedLogs.fullTestField with 1337)
@@ -96,7 +98,7 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
   @Test
   fun testFullLogsForReleaseRandomPass() {
     withEap(false) {
-      val logsContainer = InlineCompletionLogsContainer()
+      val logsContainer = InlineCompletionLogsContainer.createUnregistered()
       logsContainer.mockRandom(1f)
       logsContainer.forceFullLogs()
       logsContainer.add(TestPhasedLogs.basicTestField with 42)
@@ -123,7 +125,7 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
    */
   @Test
   fun testPhaseNotFoundForField() {
-    val logsContainer = InlineCompletionLogsContainer()
+    val logsContainer = InlineCompletionLogsContainer.createUnregistered()
     logsContainer.mockRandom(1f)
     assertThrows(IllegalArgumentException::class.java) {
       logsContainer.add(EventFields.Boolean("incorrect_field").with(false))
@@ -137,7 +139,7 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
    */
   @Test
   fun testDuplicateFieldKeepsOnlyLatest(): Unit = timeoutRunBlocking {
-    val logsContainer = InlineCompletionLogsContainer()
+    val logsContainer = InlineCompletionLogsContainer.createUnregistered()
     logsContainer.mockRandom(1f)
     logsContainer.add(TestPhasedLogs.basicTestField with 42)
     logsContainer.add(TestPhasedLogs.basicTestField with 99)
@@ -158,7 +160,7 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
    */
   @Test
   fun testDuplicateFieldLogsLatestValue() {
-      val logsContainer = InlineCompletionLogsContainer()
+      val logsContainer = InlineCompletionLogsContainer.createUnregistered()
       logsContainer.mockRandom(1f)
       logsContainer.add(TestPhasedLogs.basicTestField with 42)
       logsContainer.add(TestPhasedLogs.basicTestField with 99)
@@ -184,7 +186,7 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
    */
   @Test
   fun testContainerDoesNotRetainProject() {
-    val logsContainer = InlineCompletionLogsContainer()
+    val logsContainer = InlineCompletionLogsContainer.createUnregistered()
     logsContainer.mockRandom(1f)
     // Only a primitive field and no `addAsync` on purpose: `DebugReflectionUtil.isTrivial` treats only primitives, strings and
     // arrays as trivial, so an `EventFields.Class` value would make LeakHunter walk the statics of the logged class, and a job
@@ -206,7 +208,7 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
    */
   @Test
   fun testCanceledAwaitDoesNotStrandAsyncAdd(): Unit = timeoutRunBlocking {
-    val logsContainer = InlineCompletionLogsContainer()
+    val logsContainer = InlineCompletionLogsContainer.createUnregistered()
     logsContainer.mockRandom(1f)
     val started = CompletableDeferred<Unit>()
     val blockCanceled = CompletableDeferred<Unit>()
@@ -239,7 +241,7 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
    */
   @Test
   fun testAsyncAddAfterLogCurrentDoesNotStart(): Unit = timeoutRunBlocking {
-    val logsContainer = InlineCompletionLogsContainer()
+    val logsContainer = InlineCompletionLogsContainer.createUnregistered()
     logsContainer.mockRandom(1f)
     logsContainer.logCurrent(project = null)
     val started = CompletableDeferred<Unit>()
@@ -253,6 +255,28 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
     assertFalse("An async add submitted after logCurrent must not start", started.isCompleted)
   }
 
+  /**
+   * The snapshot of the pending async adds must tolerate a job that removes itself while the snapshot is taken.
+   * `Iterable.toList` does not: for one element it reads `size` and then calls `iterator().next()`. See LLM-30822.
+   */
+  @Test
+  fun testAwaitToleratesAsyncAddRemovedDuringSnapshot(): Unit = timeoutRunBlocking {
+    val logsContainer = InlineCompletionLogsContainer.createUnregistered(asyncAddsContainer = VanishedAsyncAdds())
+    logsContainer.mockRandom(1f)
+    logsContainer.add(TestPhasedLogs.basicTestField with 42)
+
+    val logs = logsContainer.awaitAndGetCurrentLogs().filter { it.field.name == "basic_test_field" }
+    assertEquals("The await must return the logs", 42, logs.single().data)
+  }
+
+  /**
+   * Models the race: `size` still counts a job, and the queue is already empty.
+   */
+  private class VanishedAsyncAdds : ConcurrentLinkedQueue<Job>() {
+    override val size: Int
+      get() = 1
+  }
+
   private fun withEap(isEAP: Boolean, action: () -> Unit) {
     try {
       InlineCompletionEapSupport.getInstance().setMockEap(isEAP)
@@ -264,10 +288,11 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
 
   private fun assertDeepEquals(expected: Any, actual: Any) {
     if (expected is Map<*,*> && actual is Map<*,*>) {
-      assertMaps(expected as Map<String, *>, actual as Map<String, *>);
+      @Suppress("UNCHECKED_CAST")
+      assertMaps(expected as Map<String, *>, actual as Map<String, *>)
     } else {
       // we expect only primitive types otherwise
-      assertEquals(expected.toString(), actual.toString());
+      assertEquals(expected.toString(), actual.toString())
     }
   }
 
