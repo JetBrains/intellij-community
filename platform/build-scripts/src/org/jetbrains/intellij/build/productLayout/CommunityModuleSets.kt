@@ -324,6 +324,7 @@ object CommunityModuleSets {
    */
   fun platformTestFrameworksCore(): ModuleSet = moduleSet("platform.testFrameworks.core") {
     module("intellij.libraries.jetcheck")
+    module("intellij.libraries.kaml")
     module("intellij.libraries.memoryfilesystem")
     module("intellij.platform.testExtensions", allowedMissingPluginIds = listOf("org.jetbrains.ls.plugin.java"))
     module("intellij.platform.testFramework", allowedMissingPluginIds = listOf("com.intellij.java", "com.intellij.platform.images"))

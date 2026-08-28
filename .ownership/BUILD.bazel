@@ -20,7 +20,7 @@ jvm_library(
         "@lib//:codeowners-jetbrains-patronus-codeowners-lib-ownership",
         "//libraries/kotlinx/serialization/core",
         "@lib//:slf4j-api",
-        "@lib//:kaml",
+        "//libraries/kaml",
         "@lib//:squareup-okio-jvm",
         "@lib//:slf4j-jdk14",
     ],
@@ -40,6 +40,7 @@ jvm_library(
         # do not sort,
         ":codeowners",
         "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kaml:kaml_test_lib",
     ],
 )
 ### auto-generated section `build intellij.codeowners` end

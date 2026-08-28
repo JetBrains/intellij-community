@@ -125,7 +125,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "jetbrains.intellij.deps.eclipse.jgit",
   "jetbrains.patronus.config",
   "jps-javac-extension",
-  "kaml",
   "kotlin-metadata",
   "layoutlib",
   "libthrift",

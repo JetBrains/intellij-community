@@ -5,6 +5,7 @@
 <idea-plugin>
   <content namespace="jetbrains">
     <module name="intellij.libraries.jetcheck"/>
+    <module name="intellij.libraries.kaml"/>
     <module name="intellij.libraries.memoryfilesystem"/>
     <module name="intellij.platform.testExtensions"/>
     <module name="intellij.platform.testFramework"/>

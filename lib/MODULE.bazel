@@ -5482,48 +5482,6 @@ http_file(
 )
 
 http_file(
-    name = "com_charleskorn_kaml-kaml-jvm-0_99_0_http",
-    downloaded_file_path = "kaml-jvm-0.99.0.jar",
-    sha256 = "bbb3901429952d8b0c5a11776262509142006d3e7e19001946c0393991dd7e10",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/charleskorn/kaml/kaml-jvm/0.99.0/kaml-jvm-0.99.0.jar",
-)
-
-http_file(
-    name = "it_krzeminski-snakeyaml-engine-kmp-jvm-3_2_1_http",
-    downloaded_file_path = "snakeyaml-engine-kmp-jvm-3.2.1.jar",
-    sha256 = "e85b667e909e0b9eaee7ad0f0b36f47ba3a3a8824f1782718ec2f73d5f3ed741",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/it/krzeminski/snakeyaml-engine-kmp-jvm/3.2.1/snakeyaml-engine-kmp-jvm-3.2.1.jar",
-)
-
-http_file(
-    name = "net_thauvin_erik_urlencoder-urlencoder-lib-jvm-1_6_0_http",
-    downloaded_file_path = "urlencoder-lib-jvm-1.6.0.jar",
-    sha256 = "8d0fd2aeb48d19dc49c563ebc00f274947e45f716c107535c12ead63decd688d",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/thauvin/erik/urlencoder/urlencoder-lib-jvm/1.6.0/urlencoder-lib-jvm-1.6.0.jar",
-)
-
-http_file(
-    name = "com_charleskorn_kaml-kaml-jvm-0_99_0-sources_http",
-    downloaded_file_path = "kaml-jvm-0.99.0-sources.jar",
-    sha256 = "584a2625cfa0cdf8af0847efa8f22191f939350ea1c3909695cf89088f37bbf8",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/charleskorn/kaml/kaml-jvm/0.99.0/kaml-jvm-0.99.0-sources.jar",
-)
-
-http_file(
-    name = "it_krzeminski-snakeyaml-engine-kmp-jvm-3_2_1-sources_http",
-    downloaded_file_path = "snakeyaml-engine-kmp-jvm-3.2.1-sources.jar",
-    sha256 = "7ba356923fecbce3756549d94022d6cad7bdae65f6c7ccafd6c600f144aaca12",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/it/krzeminski/snakeyaml-engine-kmp-jvm/3.2.1/snakeyaml-engine-kmp-jvm-3.2.1-sources.jar",
-)
-
-http_file(
-    name = "net_thauvin_erik_urlencoder-urlencoder-lib-jvm-1_6_0-sources_http",
-    downloaded_file_path = "urlencoder-lib-jvm-1.6.0-sources.jar",
-    sha256 = "ec107ce47aa4db7ffb9b892cee846dc88ee1cac745b6ecabd7d89de12253edd0",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/thauvin/erik/urlencoder/urlencoder-lib-jvm/1.6.0/urlencoder-lib-jvm-1.6.0-sources.jar",
-)
-
-http_file(
     name = "org_ehcache-sizeof-0_4_0_http",
     downloaded_file_path = "sizeof-0.4.0.jar",
     sha256 = "0429cb1f5cda94180007874ea926a88149fca2028e92b4556d35f0cfce310c53",
@@ -10239,6 +10197,48 @@ http_file(
     downloaded_file_path = "jzlib-1.1.3-sources.jar",
     sha256 = "35ebd67941ce7024e6e7d80b60a4252a9687fa0f909a7079ac904bef6c1658cf",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jcraft/jzlib/1.1.3/jzlib-1.1.3-sources.jar",
+)
+
+http_file(
+    name = "com_charleskorn_kaml-kaml-jvm-0_99_0_http",
+    downloaded_file_path = "kaml-jvm-0.99.0.jar",
+    sha256 = "bbb3901429952d8b0c5a11776262509142006d3e7e19001946c0393991dd7e10",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/charleskorn/kaml/kaml-jvm/0.99.0/kaml-jvm-0.99.0.jar",
+)
+
+http_file(
+    name = "it_krzeminski-snakeyaml-engine-kmp-jvm-3_2_1_http",
+    downloaded_file_path = "snakeyaml-engine-kmp-jvm-3.2.1.jar",
+    sha256 = "e85b667e909e0b9eaee7ad0f0b36f47ba3a3a8824f1782718ec2f73d5f3ed741",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/it/krzeminski/snakeyaml-engine-kmp-jvm/3.2.1/snakeyaml-engine-kmp-jvm-3.2.1.jar",
+)
+
+http_file(
+    name = "net_thauvin_erik_urlencoder-urlencoder-lib-jvm-1_6_0_http",
+    downloaded_file_path = "urlencoder-lib-jvm-1.6.0.jar",
+    sha256 = "8d0fd2aeb48d19dc49c563ebc00f274947e45f716c107535c12ead63decd688d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/thauvin/erik/urlencoder/urlencoder-lib-jvm/1.6.0/urlencoder-lib-jvm-1.6.0.jar",
+)
+
+http_file(
+    name = "com_charleskorn_kaml-kaml-jvm-0_99_0-sources_http",
+    downloaded_file_path = "kaml-jvm-0.99.0-sources.jar",
+    sha256 = "584a2625cfa0cdf8af0847efa8f22191f939350ea1c3909695cf89088f37bbf8",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/charleskorn/kaml/kaml-jvm/0.99.0/kaml-jvm-0.99.0-sources.jar",
+)
+
+http_file(
+    name = "it_krzeminski-snakeyaml-engine-kmp-jvm-3_2_1-sources_http",
+    downloaded_file_path = "snakeyaml-engine-kmp-jvm-3.2.1-sources.jar",
+    sha256 = "7ba356923fecbce3756549d94022d6cad7bdae65f6c7ccafd6c600f144aaca12",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/it/krzeminski/snakeyaml-engine-kmp-jvm/3.2.1/snakeyaml-engine-kmp-jvm-3.2.1-sources.jar",
+)
+
+http_file(
+    name = "net_thauvin_erik_urlencoder-urlencoder-lib-jvm-1_6_0-sources_http",
+    downloaded_file_path = "urlencoder-lib-jvm-1.6.0-sources.jar",
+    sha256 = "ec107ce47aa4db7ffb9b892cee846dc88ee1cac745b6ecabd7d89de12253edd0",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/thauvin/erik/urlencoder/urlencoder-lib-jvm/1.6.0/urlencoder-lib-jvm-1.6.0-sources.jar",
 )
 
 http_file(

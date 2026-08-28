@@ -1,0 +1,8 @@
+- name: dist.all/lib/intellij.libraries.kaml.jar
+  modules:
+  - name: intellij.libraries.kaml
+    libraries:
+      kaml:
+      - name: $MAVEN_REPOSITORY$/com/charleskorn/kaml/kaml-jvm/0/kaml-jvm-0.jar
+      - name: $MAVEN_REPOSITORY$/it/krzeminski/snakeyaml-engine-kmp-jvm/3/snakeyaml-engine-kmp-jvm-3.jar
+      - name: $MAVEN_REPOSITORY$/net/thauvin/erik/urlencoder/urlencoder-lib-jvm/1/urlencoder-lib-jvm-1.jar

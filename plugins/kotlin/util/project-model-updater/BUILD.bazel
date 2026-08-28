@@ -26,7 +26,7 @@ jvm_library(
         "//libraries/kotlin/reflect",
         "//platform/util/jdom",
         "//libraries/kotlinx/serialization/core",
-        "@lib//:kaml",
+        "//libraries/kaml",
     ],
 )
 
@@ -46,6 +46,7 @@ jvm_library(
         "//libraries/kotlin/reflect:reflect_test_lib",
         "//platform/util/jdom:jdom_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kaml:kaml_test_lib",
     ],
 )
 ### auto-generated section `build kotlin.util.project-model-updater` end

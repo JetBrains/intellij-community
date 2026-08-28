@@ -6892,59 +6892,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "com.charleskorn.kaml/kaml-jvm-0.99.0.jar_copy",
-    src = "@com_charleskorn_kaml-kaml-jvm-0_99_0_http//file",
-    out = "com.charleskorn.kaml/kaml-jvm-0.99.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "it.krzeminski/snakeyaml-engine-kmp-jvm-3.2.1.jar_copy",
-    src = "@it_krzeminski-snakeyaml-engine-kmp-jvm-3_2_1_http//file",
-    out = "it.krzeminski/snakeyaml-engine-kmp-jvm-3.2.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "net.thauvin.erik.urlencoder/urlencoder-lib-jvm-1.6.0.jar_copy",
-    src = "@net_thauvin_erik_urlencoder-urlencoder-lib-jvm-1_6_0_http//file",
-    out = "net.thauvin.erik.urlencoder/urlencoder-lib-jvm-1.6.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "kaml",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":com_charleskorn_kaml-kaml-jvm-0_99_0_http_import",
-        ":it_krzeminski-snakeyaml-engine-kmp-jvm-3_2_1_http_import",
-        ":net_thauvin_erik_urlencoder-urlencoder-lib-jvm-1_6_0_http_import",
-    ],
-)
-
-jvm_import(
-    name = "com_charleskorn_kaml-kaml-jvm-0_99_0_http_import",
-    jar = "@com_charleskorn_kaml-kaml-jvm-0_99_0_http//file",
-    source_jar = "@com_charleskorn_kaml-kaml-jvm-0_99_0-sources_http//file",
-)
-
-jvm_import(
-    name = "it_krzeminski-snakeyaml-engine-kmp-jvm-3_2_1_http_import",
-    jar = "@it_krzeminski-snakeyaml-engine-kmp-jvm-3_2_1_http//file",
-    source_jar = "@it_krzeminski-snakeyaml-engine-kmp-jvm-3_2_1-sources_http//file",
-)
-
-jvm_import(
-    name = "net_thauvin_erik_urlencoder-urlencoder-lib-jvm-1_6_0_http_import",
-    jar = "@net_thauvin_erik_urlencoder-urlencoder-lib-jvm-1_6_0_http//file",
-    source_jar = "@net_thauvin_erik_urlencoder-urlencoder-lib-jvm-1_6_0-sources_http//file",
-)
-
-copy_file(
     name = "org.ehcache/sizeof-0.4.0.jar_copy",
     src = "@org_ehcache-sizeof-0_4_0_http//file",
     out = "org.ehcache/sizeof-0.4.0.jar",
@@ -12862,6 +12809,59 @@ jvm_import(
     jar = "@com_jcraft-jzlib-1_1_3_http//file",
     source_jar = "@com_jcraft-jzlib-1_1_3-sources_http//file",
     visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.charleskorn.kaml/kaml-jvm-0.99.0.jar_copy",
+    src = "@com_charleskorn_kaml-kaml-jvm-0_99_0_http//file",
+    out = "com.charleskorn.kaml/kaml-jvm-0.99.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "it.krzeminski/snakeyaml-engine-kmp-jvm-3.2.1.jar_copy",
+    src = "@it_krzeminski-snakeyaml-engine-kmp-jvm-3_2_1_http//file",
+    out = "it.krzeminski/snakeyaml-engine-kmp-jvm-3.2.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "net.thauvin.erik.urlencoder/urlencoder-lib-jvm-1.6.0.jar_copy",
+    src = "@net_thauvin_erik_urlencoder-urlencoder-lib-jvm-1_6_0_http//file",
+    out = "net.thauvin.erik.urlencoder/urlencoder-lib-jvm-1.6.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-kaml-kaml",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":com_charleskorn_kaml-kaml-jvm-0_99_0_http_import",
+        ":it_krzeminski-snakeyaml-engine-kmp-jvm-3_2_1_http_import",
+        ":net_thauvin_erik_urlencoder-urlencoder-lib-jvm-1_6_0_http_import",
+    ],
+)
+
+jvm_import(
+    name = "com_charleskorn_kaml-kaml-jvm-0_99_0_http_import",
+    jar = "@com_charleskorn_kaml-kaml-jvm-0_99_0_http//file",
+    source_jar = "@com_charleskorn_kaml-kaml-jvm-0_99_0-sources_http//file",
+)
+
+jvm_import(
+    name = "it_krzeminski-snakeyaml-engine-kmp-jvm-3_2_1_http_import",
+    jar = "@it_krzeminski-snakeyaml-engine-kmp-jvm-3_2_1_http//file",
+    source_jar = "@it_krzeminski-snakeyaml-engine-kmp-jvm-3_2_1-sources_http//file",
+)
+
+jvm_import(
+    name = "net_thauvin_erik_urlencoder-urlencoder-lib-jvm-1_6_0_http_import",
+    jar = "@net_thauvin_erik_urlencoder-urlencoder-lib-jvm-1_6_0_http//file",
+    source_jar = "@net_thauvin_erik_urlencoder-urlencoder-lib-jvm-1_6_0-sources_http//file",
 )
 
 copy_file(

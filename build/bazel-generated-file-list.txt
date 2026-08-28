@@ -520,6 +520,7 @@ libraries/junit6-launcher
 libraries/junit6-params
 libraries/jvm-native-trusted-roots
 libraries/jzlib
+libraries/kaml
 libraries/keychain
 libraries/kodein-di-jvm
 libraries/kotlin/gradle-plugin-idea

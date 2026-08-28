@@ -49,7 +49,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
-    <orderEntry type="library" name="kaml" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kaml" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
     <orderEntry type="module" module-name="intellij.tools.reproducibleBuilds.diff" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" />
