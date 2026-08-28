@@ -59,7 +59,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
   }
 
   private MultipleBuildsView createMultipleBuildsView() {
-    return Registry.is("build.toolwindow.split") ? new BackendMultipleBuildsView(myProject, myBuildContentManager, this)
+    return Registry.is("build.toolwindow.split") ? new BackendMultipleBuildsView(myProject, this)
                                                  : new MultipleBuildsViewImpl(myProject, myBuildContentManager, this);
   }
 
