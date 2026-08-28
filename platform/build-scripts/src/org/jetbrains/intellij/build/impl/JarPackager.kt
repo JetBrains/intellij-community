@@ -131,7 +131,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "jps-javac-extension",
   "jruby-parser-0.5.4",
   "kaml",
-  "kmp-wizard-shared",
   "kotlin-metadata",
   "layoutlib",
   "libthrift",
