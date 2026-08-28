@@ -28,6 +28,30 @@ class MarkdownIncrementalDOMTest : BasePlatformTestCase() {
 
   fun testHtmlAttributes() = doTest()
 
+  fun testReferrerPolicyAttributeIsStripped() {
+    val html = """<body><p>a</p><img src="image.png" referrerpolicy="unsafe-url"><a href="page.html" referrerpolicy="unsafe-url">link</a></body>"""
+    val js = IncrementalDOMBuilder(html, null, null).generateDomBuildCalls()
+    assertGeneratedDoesNotContain(js, "referrerpolicy")
+    assertGeneratedContains(js, "o('img','src','image.png')")
+    assertGeneratedContains(js, "o('a','href'")
+  }
+
+  /** The `other` meta is the control: it proves traversal sees meta at all, so the filter did the work. */
+  fun testReferrerMetaIsDropped() {
+    val html = """<body><p>a</p><meta name="referrer" content="unsafe-url"><meta name="other" content="value"></body>"""
+    val js = IncrementalDOMBuilder(html, null, null).generateDomBuildCalls()
+    assertGeneratedDoesNotContain(js, "referrer")
+    assertGeneratedContains(js, "o('meta','name','other'")
+  }
+
+  private fun assertGeneratedContains(js: String, expected: String) {
+    assertTrue("expected to contain <$expected> but was <$js>", js.contains(expected))
+  }
+
+  private fun assertGeneratedDoesNotContain(js: String, unexpected: String) {
+    assertFalse("expected not to contain <$unexpected> but was <$js>", js.contains(unexpected))
+  }
+
   fun doTest() {
     val name = getTestName(true)
 

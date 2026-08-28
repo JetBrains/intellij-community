@@ -104,6 +104,7 @@ class IncrementalDOMBuilder(
   }
 
   private fun preprocessNode(node: Node): Node {
+    stripReferrerPolicy(node)
     if (baseFile != null && projectRoot != null && shouldPreprocessImageNode(node)) {
       try {
         actuallyProcessImageNode(node, baseFile, projectRoot)
@@ -143,6 +144,21 @@ class IncrementalDOMBuilder(
     return node.nodeName() == "img" && !node.hasAttr(IntelliJImageGeneratingProvider.ignorePathProcessingAttributeName)
   }
 
+  /**
+   * An element-level `referrerpolicy` overrides the page's `no-referrer`, which a document can use to send
+   * the page URL - and with it this preview's resource paths - to any host (IJPL-247809).
+   */
+  private fun stripReferrerPolicy(node: Node) {
+    if (node.hasAttr(REFERRER_POLICY_ATTRIBUTE)) {
+      node.removeAttr(REFERRER_POLICY_ATTRIBUTE)
+    }
+  }
+
+  /** A document's `<meta name="referrer">` would replace the page's policy, and renders nothing anyway. */
+  private fun shouldSkipNode(node: Node): Boolean {
+    return node.nodeName() == "meta" && node.attr("name").equals("referrer", ignoreCase = true)
+  }
+
   private fun traverse(node: Node) {
     ProgressManager.checkCanceled()
     when (node) {
@@ -150,6 +166,9 @@ class IncrementalDOMBuilder(
       is DataNode -> textElement { node.wholeData }
       is Comment -> Unit
       else -> {
+        if (shouldSkipNode(node)) {
+          return
+        }
         val preprocessed = preprocessNode(node)
         openTag(preprocessed)
         for (child in preprocessed.childNodes()) {
@@ -160,6 +179,8 @@ class IncrementalDOMBuilder(
     }
   }
 }
+
+private const val REFERRER_POLICY_ATTRIBUTE = "referrerpolicy"
 
 // https://jsoup.org/news/release-1.20.1
 private fun createSelfClosingSpanAwareParser(): Parser {

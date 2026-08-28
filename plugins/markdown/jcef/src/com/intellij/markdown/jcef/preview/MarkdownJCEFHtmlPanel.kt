@@ -114,6 +114,7 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
         <head>
           <title>IntelliJ Markdown Preview</title>
           <meta http-equiv="Content-Security-Policy" content="${PreviewStaticServer.createCSP(scripts, styles)}"/>
+          <meta name="referrer" content="no-referrer"/>
           <meta name="markdown-position-attribute-name" content="${HtmlGenerator.SRC_ATTRIBUTE_NAME}"/>
           ${scripts.joinToString("\n") { "<script src=\"${it}\"></script>" }}
           ${styles.joinToString("\n") { "<link rel=\"stylesheet\" href=\"${it}\"/>" }}
