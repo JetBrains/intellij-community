@@ -21,8 +21,10 @@ private class NumberedRunnable (private val myNumber: Int, private val myConsume
 
 @SkipInHeadlessEnvironment
 class RunnableActionsTest : HeavyPlatformTestCase() {
-  private val myPerProjectModalDialog = Dialog(null, "Per-project modal dialog", Dialog.ModalityType.DOCUMENT_MODAL)
-  private val myApplicationModalDialog = Dialog(null, "Owned dialog", Dialog.ModalityType.DOCUMENT_MODAL)
+  // a real java.awt.Window cannot be instantiated in a headless environment, and doing that in a field initializer
+  // breaks the very discovery of this class (before @SkipInHeadlessEnvironment has a chance to skip it), so the dialogs are created lazily
+  private val myPerProjectModalDialog by lazy { Dialog(null, "Per-project modal dialog", Dialog.ModalityType.DOCUMENT_MODAL) }
+  private val myApplicationModalDialog by lazy { Dialog(null, "Owned dialog", Dialog.ModalityType.DOCUMENT_MODAL) }
 
   fun testModalityStateChangedListener() {
     LaterInvocator.addModalityStateListener(createModalityStateListener(), testRootDisposable)
