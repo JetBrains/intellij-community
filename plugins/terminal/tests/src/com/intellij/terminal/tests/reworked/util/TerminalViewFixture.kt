@@ -6,14 +6,14 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.view.activeOutputModel
 import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
+import com.intellij.testFramework.EditorTestUtil
+import com.intellij.testFramework.dispatchAllEventsInIdeEventQueue
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.TerminalEmulatorType
-import org.jetbrains.plugins.terminal.session.TerminalGridSize
-import org.jetbrains.plugins.terminal.session.impl.TerminalResizeEvent
-import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalCursorOffsetChangeEvent
@@ -21,6 +21,7 @@ import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
 import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
 import kotlin.coroutines.resume
+import kotlin.math.ceil
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -33,23 +34,38 @@ import kotlin.time.Duration.Companion.seconds
  */
 internal class TerminalViewFixture(project: Project, emulatorType: TerminalEmulatorType) : AutoCloseable {
   private val scope = terminalProjectScope(project).childScope("TerminalViewFixture")
-  private val session: TerminalSession
 
   val connector: LoopbackTtyConnector
   val view: TerminalViewImpl
 
   init {
     val (session, connector) = TerminalSessionTestUtil.createLoopbackTerminalSession(project, scope, emulatorType)
-    this.session = session
     this.connector = connector
 
     view = TerminalViewImpl(project, JBTerminalSystemSettingsProvider(), null, scope)
     view.connectToSession(session)
   }
 
-  /** Sends a raw resize to the session, as a real terminal-widget resize would. */
-  suspend fun resize(columns: Int, rows: Int) {
-    session.getInputChannel().send(TerminalResizeEvent(TerminalGridSize(columns, rows)))
+  /**
+   * Resizes the terminal to fit exactly [columns] by [rows] characters, the way a real window resize would:
+   * [TerminalViewImpl] itself notices the new size and reports it to the session instead of a test constructing a resize event by hand.
+   */
+  @RequiresEdt
+  fun resize(columns: Int, rows: Int) {
+    val editor = if (view.isAlternateScreenBuffer) view.alternateBufferEditor else view.outputEditor
+    val characterGrid = checkNotNull(editor.characterGrid) { "Character grid is not initialized" }
+    EditorTestUtil.setEditorVisibleSizeInPixels(
+      editor,
+      ceil(columns * characterGrid.charWidth).toInt(),
+      rows * editor.lineHeight
+    )
+
+    // The viewport change above isn't a resize of the top component TerminalViewImpl listens on, so nudge that
+    // separately; its listener re-reads the (already correct) grid size from the editor and reports it, exactly
+    // as it would for a real window resize.
+    val panel = view.component
+    panel.setSize(panel.width + 1, panel.height + 1)
+    dispatchAllEventsInIdeEventQueue()
   }
 
   /**

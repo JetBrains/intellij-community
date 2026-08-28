@@ -193,9 +193,13 @@ internal class TerminalTextBufferEventsTest(emulatorType: TerminalEmulatorType) 
         updateFired.complete(Unit)
       }
     })
-    fixture.resize(columns = 80, rows = 5)
-    withTimeout(10.seconds) { updateFired.await() }
-    Disposer.dispose(listenerDisposable)
+    try {
+      fixture.resize(columns = 80, rows = 5)
+      withTimeout(10.seconds) { updateFired.await() }
+    }
+    finally {
+      Disposer.dispose(listenerDisposable)
+    }
 
     assertThat(model.text.split("\n")).isEqualTo((0 until 15).map { "R%02d".format(it) })
   }

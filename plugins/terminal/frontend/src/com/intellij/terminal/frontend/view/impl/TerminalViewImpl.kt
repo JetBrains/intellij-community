@@ -140,13 +140,16 @@ class TerminalViewImpl(
 
   @VisibleForTesting
   val outputEditor: EditorImpl
-  private val alternateBufferEditor: EditorEx
+  @VisibleForTesting
+  val alternateBufferEditor: EditorImpl
 
   @VisibleForTesting
   val outputEditorDecorationApplier: EditorTextDecorationApplier
 
   private val scrollingModel: TerminalOutputScrollingModel
-  private var isAlternateScreenBuffer = false
+
+  @VisibleForTesting
+  var isAlternateScreenBuffer: Boolean = false
 
   private val terminalPanel: TerminalPanel
 
