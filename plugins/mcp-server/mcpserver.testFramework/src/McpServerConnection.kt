@@ -4,6 +4,8 @@ package com.intellij.mcpserver.testFramework
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
+import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.project.Project
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpTimeout
@@ -15,6 +17,8 @@ import io.modelcontextprotocol.kotlin.sdk.types.Implementation
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
+private val logger = fileLogger()
+
 /**
  * Runs the provided MCP client [action] inside an authorized MCP session bound to [project].
  *
@@ -24,6 +28,7 @@ import kotlin.time.Duration.Companion.minutes
  * [StreamableHttpClientTransport] that carries the project-path and auth headers.
  *
  * Pass a customized [client] to override the default plain client (e.g. to declare additional capabilities).
+ * The session is ended on the way out, so a test never leaves the IDE holding one.
  */
 suspend fun <T> withMcpServerConnection(
   project: Project,
@@ -63,10 +68,22 @@ suspend fun <T> withMcpServerConnection(
     }
     finally {
       httpClient.use {
+        transport.endSession()
         transport.close()
       }
     }
   }
 
   return result?.getOrThrow() ?: error("Authorized MCP session finished without producing a client result")
+}
+
+/** Closing the transport only hangs up the HTTP connection. The session on the other side needs a DELETE. */
+private suspend fun StreamableHttpClientTransport.endSession() {
+  try {
+    terminateSession()
+  }
+  catch (e: Exception) {
+    rethrowControlFlowException(e)
+    logger.debug("The MCP session was already gone when the test tried to end it", e)
+  }
 }

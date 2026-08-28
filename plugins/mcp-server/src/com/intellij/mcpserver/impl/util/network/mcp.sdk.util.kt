@@ -78,8 +78,9 @@ private const val ABANDONED_SESSION_CLOSED = "Closing an abandoned Streamable HT
 internal const val UNINITIALIZED_SESSION_CLOSED: String = "$ABANDONED_SESSION_CLOSED that never initialized"
 
 /**
- * Inactivity is the only signal an abandoned session gives: the Kotlin MCP client never sends DELETE, and a client may
- * work without a notification stream at all, so nothing else distinguishes it from an idle one.
+ * Inactivity is the only signal an abandoned session gives: a client is not obliged to send DELETE and the SDK ones do
+ * not do it on their own, and a client may work without a notification stream at all, so nothing else distinguishes an
+ * abandoned session from an idle one.
  */
 private val streamableSessionIdleTimeout: Duration
   get() = Registry.intValue(STREAMABLE_SESSION_IDLE_TIMEOUT_REGISTRY_KEY, 300_000).coerceAtLeast(1).milliseconds
