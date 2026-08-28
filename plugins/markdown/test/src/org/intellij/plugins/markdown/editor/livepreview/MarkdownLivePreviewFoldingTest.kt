@@ -237,6 +237,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertEmpty(concealed())
     assertEmpty(thematicBreakHighlighters())
     assertEquals(content, myFixture.editor.document.text)
+    assertEmpty(imageRegions())
 
     moveCaretTo(content.length)
     assertEquals(listOf("---"), concealed())
@@ -302,6 +303,22 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
 
     moveCaretTo(content.length)
     waitForImageRenderer()
+  }
+
+  @Test
+  fun testMovingCaretBetweenImagesDoesNotUseDisposedFoldRegion() {
+    addPng(120, 60)
+    val first = "![first](image.png)"
+    val second = "![second](image.png)"
+    val content = "$first\n\n$second\n\ntail"
+    configureProjectFile(content)
+    waitForImageRegions(2)
+
+    moveCaretTo(first.length)
+    assertEquals(1, imageRegions().size)
+
+    moveCaretTo(content.indexOf(second) + second.length)
+    assertEquals(1, imageRegions().size)
   }
 
   @Test
@@ -494,6 +511,56 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
   }
 
   @Test
+  fun testBackspaceAfterAutolinkDeletesOneCharacter() {
+    assertBackspaceAfterElement("<https://example.org>")
+  }
+
+  @Test
+  fun testBackspaceAfterEmphasisDeletesOneCharacter() {
+    assertBackspaceAfterElement("*italic*")
+  }
+
+  @Test
+  fun testBackspaceAfterStrongEmphasisDeletesOneCharacter() {
+    assertBackspaceAfterElement("**bold**")
+  }
+
+  @Test
+  fun testBackspaceAfterCodeSpanDeletesOneCharacter() {
+    assertBackspaceAfterElement("`code`")
+  }
+
+  @Test
+  fun testBackspaceAfterInlineLinkDeletesOneCharacter() {
+    assertBackspaceAfterElement("[link](https://example.org)")
+  }
+
+  @Test
+  fun testBackspaceAfterStrikethroughDeletesOneCharacter() {
+    assertBackspaceAfterElement("~~deleted~~")
+  }
+
+  @Test
+  fun testBackspaceAfterThematicBreakDeletesOneCharacter() {
+    assertBackspaceAfterElement("---")
+  }
+
+  @Test
+  fun testBackspaceAfterImageDoesNotDeleteTheImage() {
+    addPng(120, 60)
+    val image = "![logo](image.png)"
+    val content = "`KotlinClass`\n\n$image\n"
+    configureProjectFile("$content<caret>")
+    waitForImageRenderer()
+
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE)
+
+    assertEquals(content.dropLast(1), myFixture.editor.document.text)
+    assertEquals(content.length - 1, myFixture.editor.caretModel.offset)
+    assertEmpty(imageRegions())
+  }
+
+  @Test
   fun testDeleteAfterAnElementDeletesOneCharacter() {
     val content = "**bold** x"
     configure(content)
@@ -560,6 +627,16 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
 
     reconciler.publishSpecs(MarkdownLivePreviewSpecSet(editor.document.modificationStamp, elements))
     assertEquals(listOf("**", "**"), concealed())
+  }
+
+  private fun assertBackspaceAfterElement(element: String) {
+    val content = "$element\n"
+    configure("$content<caret>")
+
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE)
+
+    assertEquals(element, myFixture.editor.document.text)
+    assertEquals(element.length, myFixture.editor.caretModel.offset)
   }
 
   /** Opens the file and lets the highlighting pass compute and publish the specs, as it does in an editor. */

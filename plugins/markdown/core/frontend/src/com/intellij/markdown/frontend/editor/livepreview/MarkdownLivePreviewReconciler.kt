@@ -6,8 +6,10 @@ import com.intellij.codeInsight.documentation.render.DocRenderer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.CustomFoldRegion
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.FoldRegion
@@ -186,15 +188,21 @@ class MarkdownLivePreviewReconciler private constructor(
     val next = HashMap(existing)
     if (toRemove.isNotEmpty() || toAdd.isNotEmpty()) {
       toRemove.forEach { next.remove(it.currentRange()) }
-      runFoldBatch {
-        toRemove.forEach { editor.foldingModel.removeFoldRegion(it) }
-        for ((range, wanted) in toAdd) {
-          val region = when (wanted) {
-            is OwnedRegion.Text -> concealRange(range, wanted.placeholderText)
-            is OwnedRegion.HorizontalRule -> concealRange(range, null)
-            is OwnedRegion.Image -> createImageRegion(range, wanted.source)
+      if (toRemove.isNotEmpty()) {
+        runFoldBatch {
+          toRemove.forEach { editor.foldingModel.removeFoldRegion(it) }
+        }
+      }
+      if (toAdd.isNotEmpty()) {
+        runFoldBatch {
+          for ((range, wanted) in toAdd) {
+            val region = when (wanted) {
+              is OwnedRegion.Text -> concealRange(range, wanted.placeholderText)
+              is OwnedRegion.HorizontalRule -> concealRange(range, null)
+              is OwnedRegion.Image -> createImageRegion(range, wanted.source)
+            }
+            if (region != null) next[range] = region
           }
-          if (region != null) next[range] = region
         }
       }
     }
@@ -361,6 +369,34 @@ class MarkdownLivePreviewReconciler private constructor(
     item.foldRegion = region
     DocRenderItemUpdater.updateRenderers(listOf(item), false)
     return region
+  }
+
+  @RequiresEdt
+  fun handleBackspace(): Boolean {
+    ThreadingAssertions.assertEventDispatchThread()
+    if (disposed || editor.isDisposed || editor.selectionModel.hasSelection()) return false
+    val caretOffset = editor.caretModel.offset
+    val document = editor.document
+    val foldRegion = findImageFoldRegion(caretOffset, document) ?: return false
+    revealOwnedRegions(setOf(foldRegion.currentRange()))
+    val deleteStart = if (foldRegion.endOffset == caretOffset) caretOffset else caretOffset - 1
+    runWriteAction { document.deleteString(deleteStart, deleteStart + 1) }
+    return true
+  }
+
+  private fun findImageFoldRegion(caretOffset: Int, document: Document): CustomFoldRegion? {
+    val imageEndOffset = when {
+      caretOffset > 0 && document.charsSequence[caretOffset - 1] == '\n' -> caretOffset - 1
+      caretOffset < document.textLength && document.charsSequence[caretOffset] == '\n' -> caretOffset
+      else -> return null
+    }
+    val foldRegion = ownedRegions.values.asSequence()
+      .filterIsInstance<CustomFoldRegion>()
+      .filter { it.isValid }
+      .filter { it.endOffset == imageEndOffset }
+      .firstOrNull() ?: return null
+    val renderer = foldRegion.renderer as? DocRenderer ?: return null
+    return foldRegion.takeIf { renderer.item is MarkdownImageRenderItem }
   }
 
   private fun reconcileImageRegions() {
