@@ -50,7 +50,7 @@ internal class LspClientServiceViewDescriptor(
     val baseIcon = AllIcons.Webreferences.Server
     presentationData.setIcon(when (state) {
       LspServerState.Initializing -> baseIcon
-      LspServerState.Running -> ExecutionUtil.getLiveIndicator(baseIcon)
+      LspServerState.Running -> ExecutionUtil.withLiveIndicator(baseIcon)
       LspServerState.ShutdownNormally -> IconLoader.getDisabledIcon(baseIcon)
       LspServerState.ShutdownUnexpectedly -> LayeredIcon.layeredIcon(arrayOf(baseIcon, AllIcons.Nodes.ErrorMark))
     })
