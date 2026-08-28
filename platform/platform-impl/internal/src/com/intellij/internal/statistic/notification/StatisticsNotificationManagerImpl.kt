@@ -11,6 +11,8 @@ import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ex.WindowManagerEx
@@ -24,7 +26,7 @@ import kotlinx.coroutines.withContext
 import java.awt.Window
 
 internal class StatisticsNotificationManagerImpl(private val coroutineScope: CoroutineScope) : StatisticsNotificationManager {
-  override fun showNotificationIfNeeded() {
+  override suspend fun showNotificationIfNeeded() {
     if (!shouldShowNotification()) {
       return
     }
@@ -47,8 +49,8 @@ internal class StatisticsNotificationManagerImpl(private val coroutineScope: Cor
   }
 }
 
-private fun shouldShowNotification(): Boolean {
-  return UsageStatisticsPersistenceComponent.getInstance().isShowNotification &&
+private suspend fun shouldShowNotification(): Boolean {
+  return serviceAsync<UsageStatisticsPersistenceComponent>().isShowNotification &&
          System.currentTimeMillis() - Time.WEEK > (FeatureUsageTracker.getInstance() as FeatureUsageTrackerImpl).firstRunTime
 }
 
@@ -57,7 +59,10 @@ private suspend fun showNotification() {
     return
   }
 
-  UsageStatisticsPersistenceComponent.getInstance().isShowNotification = false
+  writeAction {
+    UsageStatisticsPersistenceComponent.getInstance().isShowNotification = false
+  }
+
   withContext(Dispatchers.IO) {
     StatisticsUploadAssistant.getEventLogStatisticsService("FUS").send()
   }

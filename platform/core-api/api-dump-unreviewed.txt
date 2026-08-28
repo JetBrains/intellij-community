@@ -118,8 +118,6 @@ a:com.intellij.ide.IconProvider
 f:com.intellij.ide.PowerSaveMode
 - sf:TOPIC:com.intellij.util.messages.Topic
 - <init>():V
-com.intellij.ide.StatisticsNotificationManager
-- a:showNotificationIfNeeded():V
 a:com.intellij.ide.TypePresentationService
 - <init>():V
 - a:getTypeIcon(java.lang.Class):javax.swing.Icon
