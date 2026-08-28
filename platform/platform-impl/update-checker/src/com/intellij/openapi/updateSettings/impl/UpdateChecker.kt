@@ -591,23 +591,10 @@ object UpdateChecker {
 
     val currentBuild = ApplicationInfo.getInstance().build
     val productCode = currentBuild.productCode
-    val checkForUpdateResult = if (forceUpdate) {
-      val node = JDOMUtil.load(updateDataText)
-                   .getChild("product")
-                   ?.getChild("channel")
-                 ?: throw IllegalArgumentException("//channel missing")
-      val channel = UpdateChannel(node, productCode)
-      val newBuild = channel.builds.firstOrNull()
-                     ?: throw IllegalArgumentException("//build missing")
-      val patches = newBuild.patches.firstOrNull()
-        ?.let { UpdateChain(listOf(it.fromBuild, newBuild.number), it.size) }
-
-      PlatformUpdates.Loaded(newBuild, channel, patches)
-    }
-    else {
+    val checkForUpdateResult = if (forceUpdate) testLoadFromXml(updateDataText)
+    else
       UpdateStrategy(currentBuild, product = parseUpdateData(updateDataText, productCode), UpdateSettings.getInstance())
         .checkForUpdates()
-    }
 
     val dialog = when (checkForUpdateResult) {
       is PlatformUpdates.Loaded -> PlatformUpdateDialog.createTestDialog(project, checkForUpdateResult, patchFile)
@@ -615,6 +602,24 @@ object UpdateChecker {
     }
 
     dialog.show()
+  }
+
+  @ApiStatus.Internal
+  fun testLoadFromXml(updatesXml: String): PlatformUpdates.Loaded {
+    require(ApplicationManager.getApplication().isInternal)
+
+    val productCode = ApplicationInfo.getInstance().build.productCode
+    val node = JDOMUtil.load(updatesXml)
+                 .getChild("product")
+                 ?.getChild("channel")
+               ?: throw IllegalArgumentException("//channel missing")
+    val channel = UpdateChannel(node, productCode)
+    val newBuild = channel.builds.firstOrNull()
+                   ?: throw IllegalArgumentException("//build missing")
+    val patches = newBuild.patches.firstOrNull()
+      ?.let { UpdateChain(listOf(it.fromBuild, newBuild.number), it.size) }
+
+    return PlatformUpdates.Loaded(newBuild, channel, patches)
   }
 
   //<editor-fold desc="Deprecated stuff.">
