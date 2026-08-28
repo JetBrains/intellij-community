@@ -4,7 +4,6 @@ package com.intellij.platform.problemsView.frontend
 import com.intellij.analysis.problemsView.toolWindow.HighlightingProblem
 import com.intellij.analysis.problemsView.toolWindow.splitApi.actions.QuickFixModelDto
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
-import com.intellij.ide.ActivityTracker
 import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -92,8 +91,6 @@ internal class FrontendProblemsViewQuickFixService(
     val currentProblemModel = selectedProblemModel.value ?: return
     if (currentProblemModel.problem != problem) return
     if (!selectedProblemModel.compareAndSet(currentProblemModel, currentProblemModel.copy(quickFixModel = quickFixModel))) return
-
-    requestActionUpdate()
   }
 
   private suspend fun discardBackendQuickFixes() {
@@ -109,7 +106,5 @@ internal class FrontendProblemsViewQuickFixService(
 
   companion object {
     fun getInstance(project: Project): FrontendProblemsViewQuickFixService = project.service()
-
-    private fun requestActionUpdate() { ActivityTracker.getInstance().inc() }
   }
 }

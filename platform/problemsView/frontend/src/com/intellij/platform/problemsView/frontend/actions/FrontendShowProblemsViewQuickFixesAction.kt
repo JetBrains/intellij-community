@@ -35,19 +35,11 @@ internal class FrontendShowProblemsViewQuickFixesAction : AnAction(), ActionRemo
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(event: AnActionEvent) {
-    val problem = (event.getData(SELECTED_ITEM) as? ProblemNode)?.problem
-    val panel = event.getData(ProblemsViewPanel.DATA_KEY)
-    with(event.presentation) {
-      val project = event.project
-      isVisible = getApplication().isInternal || project != null && panel is FrontendHighlightingPanel
-      isEnabled = isVisible && when (problem) {
-        is HighlightingProblem -> project != null &&
-                                  panel is FrontendHighlightingPanel &&
-                                  FrontendProblemsViewQuickFixService.getInstance(project)
-                                    .getQuickFixModel(problem) != null // todo: check if we can use `com.intellij.codeInsight.daemon.impl.HighlightInfo.hasQuickFixes` somehow
-        else -> false
-      }
-    }
+    val isFrontendPanel = event.project != null && event.getData(ProblemsViewPanel.DATA_KEY) is FrontendHighlightingPanel
+    val problem = (event.getData(SELECTED_ITEM) as? ProblemNode)?.problem as? HighlightingProblem
+
+    event.presentation.isVisible = getApplication().isInternal || isFrontendPanel
+    event.presentation.isEnabled = isFrontendPanel && problem?.hasQuickFixes() == true
   }
 
   override fun actionPerformed(event: AnActionEvent) {
@@ -72,6 +64,10 @@ internal class FrontendShowProblemsViewQuickFixesAction : AnAction(), ActionRemo
     positionCaret(quickFixModel.offset, editor)
     val popup = createPopup(project, psiFile, editor, cachedIntentions)
     show(event, popup)
+  }
+
+  private fun HighlightingProblem.hasQuickFixes(): Boolean {
+    return HighlightInfo.fromRangeHighlighter(highlighter)?.hasQuickFixes() == true
   }
 
   private fun createCachedIntentions(
