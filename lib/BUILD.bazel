@@ -12445,6 +12445,51 @@ jvm_import(
 )
 
 copy_file(
+    name = "com.esotericsoftware.kryo/kryo-2.24.0.jar_copy",
+    src = "@com_esotericsoftware_kryo-kryo-2_24_0_http//file",
+    out = "com.esotericsoftware.kryo/kryo-2.24.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.esotericsoftware.minlog/minlog-1.2.jar_copy",
+    src = "@com_esotericsoftware_minlog-minlog-1_2_http//file",
+    out = "com.esotericsoftware.minlog/minlog-1.2.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-kryo2-_kryo",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":com_esotericsoftware_kryo-kryo-2_24_0_http_import",
+        ":com_esotericsoftware_minlog-minlog-1_2_http_import",
+    ],
+)
+
+jvm_import(
+    name = "com_esotericsoftware_kryo-kryo-2_24_0_http_import",
+    jar = "@com_esotericsoftware_kryo-kryo-2_24_0_http//file",
+    source_jar = "@com_esotericsoftware_kryo-kryo-2_24_0-sources_http//file",
+)
+
+jvm_import(
+    name = "com_esotericsoftware_minlog-minlog-1_2_http_import",
+    jar = "@com_esotericsoftware_minlog-minlog-1_2_http//file",
+    source_jar = "@com_esotericsoftware_minlog-minlog-1_2-sources_http//file",
+)
+
+jvm_import(
+    name = "libraries-kryo2-_objenesis",
+    jar = "@org_objenesis-objenesis-3_4_http//file",
+    source_jar = "@org_objenesis-objenesis-3_4-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "com.esotericsoftware/kryo5-5.6.0.jar_copy",
     src = "@com_esotericsoftware-kryo5-5_6_0_http//file",
     out = "com.esotericsoftware/kryo5-5.6.0.jar",
