@@ -9,6 +9,7 @@ import {fileURLToPath} from 'node:url'
 import {
   applyClaudePermissions,
   applyEditionBlocks,
+  assertReferencesResolve,
   applyPartials,
   buildCodexRules,
   loadToolPermissions,
@@ -108,6 +109,40 @@ describe('render-guides skills', () => {
         `${output} should reference ${expectedProductDsl}`,
       )
     }
+  })
+
+  it('accepts a guide whose paths the edition has', async () => {
+    await assertReferencesResolve('see `community/.ai/guide.md` and `//:format.check`', 'probe', 'ULTIMATE')
+    await assertReferencesResolve('see `.ai/guide.md` and `//:format.check`', 'probe', 'COMMUNITY')
+  })
+
+  it('rejects an ultimate-only path in a community guide', async () => {
+    await assertReferencesResolve('read `plugins/air/AGENTS.md`', 'probe', 'ULTIMATE')
+    await rejects(
+      () => assertReferencesResolve('read `plugins/air/AGENTS.md`', 'probe', 'COMMUNITY'),
+      /probe names 1 path\(s\) the COMMUNITY checkout does not have: plugins\/air\/AGENTS\.md/,
+    )
+  })
+
+  it('rejects a Bazel label whose package the edition has no BUILD file for', async () => {
+    await assertReferencesResolve('run `//platform/buildScripts:plugin-model-tool`', 'probe', 'ULTIMATE')
+    await rejects(
+      () => assertReferencesResolve('run `//platform/buildScripts:plugin-model-tool`', 'probe', 'COMMUNITY'),
+      /platform\/buildScripts:plugin-model-tool/,
+    )
+  })
+
+  it('skips a URL, a glob, a placeholder and a per-developer file', async () => {
+    const text = [
+      '`https://example.com/nope`',
+      '`@community//nope:nope`',
+      '`build/eap/*.py`',
+      '`<path-to-iml>/nope`',
+      '`.ai/local.md`',
+      '`.claude/CLAUDE.md`',
+    ].join(' ')
+
+    await assertReferencesResolve(text, 'probe', 'ULTIMATE')
   })
 
   it('drops a line that holds one edition block for another edition', () => {

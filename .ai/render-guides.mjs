@@ -259,6 +259,86 @@ export function applyEditionBlocks(text, edition) {
   );
 }
 
+const editionRootByEdition = new Map([
+  ["ULTIMATE", repoRoot],
+  ["COMMUNITY", join(repoRoot, "community")],
+]);
+
+/**
+ * Paths that `.gitignore` covers. A checkout has one only after the developer writes it, so the
+ * reference check must not ask for it.
+ */
+const perDeveloperReferencePaths = new Set([".ai/local.md", ".claude/local.md", ".claude/CLAUDE.md"]);
+
+const backtickedTokenPattern = /`([^`\n]+)`/g;
+
+/**
+ * Tells whether a backticked word names something the checkout must hold. A word qualifies when it
+ * has a slash, which separates a path and a Bazel label from a class name, a flag, and prose.
+ */
+function isReferenceCandidate(word) {
+  if (!word.includes("/")) {
+    return false;
+  }
+  // A URL, an external Bazel repository, a glob, and a placeholder all name nothing in this checkout.
+  return !/^(?:https?:|@)/.test(word) && !word.includes("*") && !word.includes("<") && !word.includes(">");
+}
+
+/**
+ * Maps a backticked word to the checkout path it must resolve to, relative to the edition root.
+ * A Bazel label maps to the `BUILD.bazel` file of its package. Returns undefined for a word that
+ * names nothing, such as `//:format.check` in the root package.
+ */
+function referencePathOf(word) {
+  if (word.startsWith("//")) {
+    const packagePath = word.slice(2).split(":")[0].replace(/\/\.\.\.$/, "").replace(/\/$/, "");
+    return packagePath === "" ? "BUILD.bazel" : `${packagePath}/BUILD.bazel`;
+  }
+  const path = word.replace(/^\.\//, "").replace(/^\//, "").replace(/\/$/, "");
+  return path === "" ? undefined : path;
+}
+
+/**
+ * Fails when a rendered guide names a path the edition that ships it does not have. The community
+ * guide is the usual victim: it drops `plugins/` trees the monorepo has, so an ultimate-only path
+ * copied into a shared source reads as a live instruction and points at nothing.
+ */
+export async function assertReferencesResolve(text, targetName, edition) {
+  const editionRoot = editionRootByEdition.get(normalizeEdition(edition));
+  if (editionRoot === undefined) {
+    throw new Error(`No edition root configured for edition "${edition}".`);
+  }
+
+  const candidates = new Set();
+  for (const [, token] of text.matchAll(backtickedTokenPattern)) {
+    for (const word of token.split(/\s+/)) {
+      if (isReferenceCandidate(word)) {
+        candidates.add(word);
+      }
+    }
+  }
+
+  const missing = [];
+  for (const word of candidates) {
+    const path = referencePathOf(word);
+    if (path === undefined || perDeveloperReferencePaths.has(path)) {
+      continue;
+    }
+    try {
+      await access(join(editionRoot, path));
+    } catch {
+      missing.push(word);
+    }
+  }
+
+  if (missing.length !== 0) {
+    throw new Error(
+      `${targetName} names ${missing.length} path(s) the ${normalizeEdition(edition)} checkout does not have: ` +
+      `${missing.sort().join(", ")}. Guard the line with IF_EDITION, or write the prefix as {{COMMUNITY_DIR}}.`,
+    );
+  }
+}
+
 function assertNoUnresolvedTemplateDirectives(text, targetName) {
   if (unresolvedToolDirectivePattern.test(text)) {
     throw new Error(`${targetName} rendered output still has unresolved IF_TOOL directives.`);
@@ -1075,6 +1155,8 @@ async function renderGuideOutputsWithContext({basePartials, defaultEdition}) {
         finalText = target.generatedHeader + finalText;
       }
     }
+
+    await assertReferencesResolve(finalText, target.name, edition);
 
     renderedOutputs.set(target.output, normalize(finalText));
   }
