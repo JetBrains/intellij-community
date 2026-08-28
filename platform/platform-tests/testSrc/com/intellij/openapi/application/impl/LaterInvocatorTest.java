@@ -37,6 +37,7 @@ import javax.swing.SwingUtilities;
 import java.awt.Container;
 import java.awt.Dialog;
 import java.awt.Frame;
+import java.awt.GraphicsEnvironment;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -693,9 +694,21 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     }).start();
   }
 
-  private final JDialog myModalDialog = new JDialog((Dialog)null, true);
+  private JDialog myModalDialog;
+
+  /**
+   * A real {@link java.awt.Window} cannot be instantiated in a headless environment, and doing that in a field initializer
+   * breaks the very discovery of this class (before {@link SkipInHeadlessEnvironment} has a chance to skip it),
+   * so the dialog is created lazily.
+   */
+  private void initModalDialog() {
+    if (myModalDialog == null) {
+      myModalDialog = new JDialog((Dialog)null, true);
+    }
+  }
 
   public void testModalityStateForNonDisplayedDialogGetsActualizedWhenItIsDisplayed() {
+    initModalDialog();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
       ModalityState state = ModalityState.stateForComponent(myModalDialog);
@@ -715,6 +728,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   }
 
   public void testModalityStateWorksImmediately() {
+    initModalDialog();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
       ModalityState state = ModalityState.stateForComponent(myModalDialog);
@@ -743,6 +757,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   }
 
   public void testInvokeLaterGoesIntoModalityDeclaredTransparentBeforeEntering() {
+    initModalDialog();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
       AtomicBoolean invoked = new AtomicBoolean();
