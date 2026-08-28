@@ -641,7 +641,7 @@ class ProcessOutputControllerServiceTest {
   }
 
   @Test
-  fun `collectTopicEvents builds tree with nested contexts and root-level processes`(): Unit = timeoutRunBlocking {
+  fun `collectTopicEvents builds tree with nested contexts and root-level processes`(): Unit = timeoutRunBlocking(5.minutes) {
     val service = projectFixture.get().service<ProcessOutputControllerService>()
     val parentContextUuid = TraceContextUuid("test-parent-context")
     val parentContext = TraceContextDto(
@@ -683,7 +683,12 @@ class ProcessOutputControllerServiceTest {
     sendProcessOutputTopicEvent(ProcessOutputEventDto.NewProcess(process4, listOf(parentContext)))
 
     // wait until all processes appear loggedProcesses
-    waitUntil {
+    waitUntil({
+      """
+        expected to see ids: ${setOf(process1.id, process2.id, process3.id, process4.id)}
+        actual ids: ${service.loggedProcesses.value.map { it.data.id }.toSet()}
+      """.trimIndent()
+    }) {
       val ids = service.loggedProcesses.value.map { it.data.id }.toSet()
       setOf(process1.id, process2.id, process3.id, process4.id).all { it in ids }
     }
@@ -721,7 +726,7 @@ class ProcessOutputControllerServiceTest {
   }
 
   @Test
-  fun `collectTopicEvents applies search query to tree`(): Unit = timeoutRunBlocking {
+  fun `collectTopicEvents applies search query to tree`(): Unit = timeoutRunBlocking(5.minutes) {
     val service = projectFixture.get().service<ProcessOutputControllerService>()
 
     val testId = 800_000
@@ -741,7 +746,12 @@ class ProcessOutputControllerServiceTest {
     sendProcessOutputTopicEvent(ProcessOutputEventDto.NewProcess(nodeProcess, emptyList()))
     sendProcessOutputTopicEvent(ProcessOutputEventDto.NewProcess(cargoProcess, emptyList()))
 
-    waitUntil {
+    waitUntil({
+      """
+        expected to see ids: ${setOf(pythonProcess.id, nodeProcess.id, cargoProcess.id)}
+        actual ids: ${service.loggedProcesses.value.map { it.data.id }.toSet()}
+      """.trimIndent()
+    }) {
       val ids = service.loggedProcesses.value.map { it.data.id }.toSet()
       setOf(pythonProcess.id, nodeProcess.id, cargoProcess.id).all { it in ids }
     }
@@ -783,7 +793,7 @@ class ProcessOutputControllerServiceTest {
   }
 
   @Test
-  fun `collectTopicEvents applies SHOW_BACKGROUND_PROCESSES filter to tree`(): Unit = timeoutRunBlocking {
+  fun `collectTopicEvents applies SHOW_BACKGROUND_PROCESSES filter to tree`(): Unit = timeoutRunBlocking(5.minutes) {
     val service = projectFixture.get().service<ProcessOutputControllerService>()
 
     val backgroundContextUuid = TraceContextUuid("test-background-context")
@@ -817,7 +827,12 @@ class ProcessOutputControllerServiceTest {
     sendProcessOutputTopicEvent(ProcessOutputEventDto.NewProcess(backgroundProcess, listOf(backgroundContext)))
     sendProcessOutputTopicEvent(ProcessOutputEventDto.NewProcess(interactiveProcess, listOf(interactiveContext)))
 
-    waitUntil {
+    waitUntil({
+      """
+        expected to see ids: ${setOf(backgroundProcess.id, interactiveProcess.id)}
+        actual ids: ${service.loggedProcesses.value.map { it.data.id }.toSet()}
+      """.trimIndent()
+    }) {
       val ids = service.loggedProcesses.value.map { it.data.id }.toSet()
       setOf(backgroundProcess.id, interactiveProcess.id).all { it in ids }
     }

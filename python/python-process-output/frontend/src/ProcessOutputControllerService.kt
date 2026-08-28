@@ -51,7 +51,8 @@ import kotlin.time.Duration.Companion.seconds
 
 @ApiStatus.Internal
 object CoroutineNames {
-  const val EXIT_INFO_COLLECTOR: String = "ProcessOutput.ExitInfoCollector"
+  const val EXIT_INFO_COLLECTOR: String = "Python.ProcessOutput.ExitInfoCollector"
+  const val EVENT_PROCESSOR: String = "Python.ProcessOutput.EventProcessor"
 }
 
 internal object ProcessOutputControllerServiceLimits {
@@ -456,7 +457,7 @@ internal class ProcessOutputControllerService(
     )
     var processList = listOf<LoggedProcess>()
 
-    coroutineScope.launch {
+    coroutineScope.launch(CoroutineName(CoroutineNames.EVENT_PROCESSOR)) {
       val service = ApplicationManager.getApplication().service<FrontendTopicService>()
       service.events.collect { event ->
         when (event) {
