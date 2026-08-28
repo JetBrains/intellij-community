@@ -77,6 +77,12 @@ private val SSE_HEARTBEAT_EVENT = ServerSentEvent(comments = "heartbeat")
 private val STREAMABLE_SESSION_IDLE_TIMEOUT = 5.minutes
 
 /**
+ * A session that never initialized holds a global IDE override installed for it (document conflict resolution), so it
+ * is given only enough time to follow its own POST with an `initialize`.
+ */
+private val UNINITIALIZED_GRACE_PERIOD = 30.seconds
+
+/**
  * A Streamable HTTP session, which lives independently of the requests that use it: notification streams come and go,
  * and a client may never open one.
  */
@@ -84,6 +90,11 @@ private class StreamableSession(val transport: StreamableHttpServerTransport) {
   private data class Usage(val inFlight: Int = 0, val everStarted: Long = 0)
 
   private val usage = MutableStateFlow(Usage())
+
+  private val idleTimeout: Duration
+    get() =
+      if (transport.sessionId == null) STREAMABLE_SESSION_IDLE_TIMEOUT.coerceAtMost(UNINITIALIZED_GRACE_PERIOD)
+      else STREAMABLE_SESSION_IDLE_TIMEOUT
 
   suspend fun <T> whileInUse(operation: suspend () -> T): T {
     usage.update { Usage(inFlight = it.inFlight + 1, everStarted = it.everStarted + 1) }
@@ -95,7 +106,7 @@ private class StreamableSession(val transport: StreamableHttpServerTransport) {
     }
   }
 
-  suspend fun awaitUnused(idleTimeout: Duration) {
+  suspend fun awaitUnused() {
     while (true) {
       val idleSince = awaitNothingInFlight()
       if (!usedWithin(idleTimeout, since = idleSince)) return
@@ -249,22 +260,23 @@ private suspend fun obtainOrCreateStreamableSession(
   )
   val session = StreamableSession(transport)
 
-  transport.setOnSessionInitialized { initializedId ->
-    sessions[initializedId] = session
-    scope.closeWhenAbandoned(initializedId, session)
-    logger.trace { "New StreamableHttp session initialized with sessionId: $initializedId" }
+  val serverSession = try {
+    block(call, ClientDisconnectTolerantTransport(transport))
   }
-  fun unregister(sessionId: String) {
+  catch (e: Throwable) {
+    withContext(NonCancellable) { transport.close() }
+    throw e
+  }
+
+  val sessionId = serverSession.sessionId
+  transport.setSessionIdGenerator { sessionId }
+  transport.onClose {
     sessions.remove(sessionId)
     logger.trace { "StreamableHttp session unregistered: $sessionId" }
   }
-  transport.setOnSessionClosed(::unregister)
-
-  val serverSession = block(call, ClientDisconnectTolerantTransport(transport))
-  transport.setSessionIdGenerator {
-    serverSession.sessionId
-  }
-  serverSession.onClose { transport.sessionId?.let(::unregister) }
+  sessions[sessionId] = session
+  scope.closeWhenAbandoned(sessionId, session)
+  logger.trace { "New StreamableHttp session created with sessionId: $sessionId" }
 
   return session
 }
@@ -307,7 +319,7 @@ class ClientDisconnectTolerantTransport(private val delegate: Transport) : Trans
 private fun CoroutineScope.closeWhenAbandoned(sessionId: String, session: StreamableSession) {
   launch(CoroutineName("streamable-session-$sessionId")) {
     try {
-      session.awaitUnused(STREAMABLE_SESSION_IDLE_TIMEOUT)
+      session.awaitUnused()
       logger.warn("Closing abandoned StreamableHttp session: $sessionId")
     }
     finally {
