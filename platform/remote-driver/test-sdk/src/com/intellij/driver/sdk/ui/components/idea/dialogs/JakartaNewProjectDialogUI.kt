@@ -6,6 +6,7 @@ import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.dialogs.NewProjectDialogUI
 import com.intellij.driver.sdk.ui.components.elements.JComboBoxUiComponent
+import com.intellij.driver.sdk.ui.components.elements.checkBoxTree
 import com.intellij.driver.sdk.ui.components.elements.comboBox
 import com.intellij.driver.sdk.ui.shouldBe
 import com.intellij.driver.sdk.ui.ui
@@ -44,6 +45,25 @@ class JakartaNewProjectDialogUI(data: ComponentData) : NewProjectDialogUI(data) 
     }
   }
 
+  /**
+   * Checks a specification in the "Specifications" category of the dependencies tree.
+   *
+   * @param profileTitle the library title, for example "Full Platform", "Web Profile" or "Core Profile"
+   */
+  fun pickSpecificationProfile(profileTitle: String) {
+    step("Pick the '$profileTitle' specification") {
+      checkBoxTree().apply {
+        expandPath(SPECIFICATIONS_CATEGORY)
+        // The renderer appends the version to the title, so the node reads "Full Platform (11.0.0)".
+        val nodePath = collectCheckboxes()
+          .map { it.path }
+          .firstOrNull { it.size == 2 && it[0] == SPECIFICATIONS_CATEGORY && it[1].startsWith(profileTitle) }
+          ?: error("No '$profileTitle' node under '$SPECIFICATIONS_CATEGORY' in the dependencies tree")
+        switchCheckBoxByPath(nodePath, true)
+      }
+    }
+  }
+
   fun getActualAddedDependencies(): List<String> {
     val list: List<UiComponent> = xx("//div[@accessiblename='Added dependencies:']/following-sibling::div[@class='SelectedLibrariesPanel']//div[@class='ScrollablePanel']").list()
     if (list.isEmpty()) {
@@ -55,5 +75,9 @@ class JakartaNewProjectDialogUI(data: ComponentData) : NewProjectDialogUI(data) 
         .map { it.text }
         .toList()
     }
+  }
+
+  private companion object {
+    const val SPECIFICATIONS_CATEGORY = "Specifications"
   }
 }
