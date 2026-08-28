@@ -2,6 +2,7 @@
 
 package com.intellij.python.sdk.frontend.evolution.components
 
+import com.intellij.icons.AllIcons
 import com.intellij.python.sdk.common.evolution.EvoNodeStats
 import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -81,9 +82,24 @@ class EvoTreeItem(
   val opensProcessOutput: Boolean
     get() = showOutput != null && (element.state == State.ERROR || element.state == State.NOT_AVAILABLE)
 
-  /** The panel that rebuilds this row's environment, or null when the row offers no rebuild — see [EvoRecreatable]. */
-  val recreatePanel: EvoTreeNodeElement?
-    get() = ((element as? EvoTreeLeafElement)?.action as? EvoRecreatable)?.recreatePanel
+  /** The panel that rebuilds this row's environment, or null when the row offers no rebuild — see [EvoBasePythonPanel]. */
+  val basePythonPanel: EvoTreeNodeElement?
+    get() = ((element as? EvoTreeLeafElement)?.action as? EvoBasePythonPanel)?.basePythonPanel
+
+  /**
+   * The sign a row that did not work carries, or null for one that did.
+   *
+   * Drawn in the row's trailing column rather than beside its text, so every sign in a list lines up with the submenu
+   * arrows instead of trailing each label at whatever width it happens to have.
+   */
+  val statusIcon: Icon?
+    get() = when (element.state) {
+      State.ERROR -> AllIcons.General.Error
+      // A tool that is simply unavailable, or answered with nothing, is not a failure — but it did not work either, so
+      // it gets a sign of its own rather than looking like an ordinary disabled row with nothing to say.
+      State.NOT_AVAILABLE -> AllIcons.General.Warning
+      State.CREATED, State.LOADING, State.DONE -> null
+    }
 
   /** True when this row reveals more of the list rather than selecting an environment — see [EvoLinkRow]. */
   val isLinkRow: Boolean

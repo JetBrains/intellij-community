@@ -151,13 +151,12 @@ class PyEvoWidgetCollectorTest {
   }
 
   @Test
-  fun `control used carries a name problem only when a name was rejected`(@TestDisposable disposable: Disposable) {
+  fun `a control that belongs to no node names no tool`(@TestDisposable disposable: Disposable) {
     val events = FUCollectorTestCase.collectLogEvents(disposable) {
       PyEvoWidgetCollector.controlUsed(
         project = null,
-        control = PyEvoWidgetCollector.Control.NAME_REJECTED,
+        control = PyEvoWidgetCollector.Control.BASE_PYTHON_PANEL,
         node = EvoNodeStats(EvoNodeKind.TOOL, "uv"),
-        nameProblem = PyEvoWidgetCollector.NameProblem.TAKEN,
       )
       PyEvoWidgetCollector.controlUsed(project = null, control = PyEvoWidgetCollector.Control.GEAR_SETTINGS)
     }
@@ -165,14 +164,12 @@ class PyEvoWidgetCollectorTest {
     val used = events.filter { it.group.id == GROUP_ID && it.event.id == "control.used" }
     assertEquals(2, used.size)
 
-    val rejected = used.single { it.event.data["control"] == "NAME_REJECTED" }.event.data
-    assertEquals("uv", rejected["tool_name"])
-    assertEquals("TAKEN", rejected["name_problem"])
+    val rebuild = used.single { it.event.data["control"] == "BASE_PYTHON_PANEL" }.event.data
+    assertEquals("uv", rebuild["tool_name"])
 
     // A header-level control belongs to no node, so it defaults to OTHER and names no tool.
     val gear = used.single { it.event.data["control"] == "GEAR_SETTINGS" }.event.data
     assertEquals("OTHER", gear["node_kind"])
-    assertNull(gear["name_problem"])
     assertNull(gear["tool_name"])
   }
 

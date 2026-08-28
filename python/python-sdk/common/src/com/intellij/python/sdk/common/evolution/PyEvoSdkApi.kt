@@ -421,6 +421,14 @@ data class EvoNodeDto(
    * validated against the same dictionary of package names the rest of the Python tooling reports through.
    */
   val fusId: @NonNls String? = null,
+  /**
+   * One line saying what picking a row in this node's submenu does, shown along that panel's bottom.
+   *
+   * Written by the tool, because only the tool knows: pip and uv list what they found, Poetry adds its cache
+   * environments by Python version, and Hatch creates a declared environment the moment it is chosen. `null` falls back
+   * to the frontend's general wording.
+   */
+  val stepDescription: @Nls String? = null,
 )
 
 /**

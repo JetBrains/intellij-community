@@ -48,6 +48,8 @@ internal class HatchEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
   /** An interpreter of this node's environments carries this flavor, which is what names this node as the active one. */
   override val sdkFlavor: Class<out PythonSdkFlavor<*>> get() = HatchSdkFlavor::class.java
 
+  override val stepDescription: String get() = PySdkBundle.message("evolution.node.step.hatch")
+
   override suspend fun loadSections(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto {
     val hatchService = pyProject.module.getHatchService(fileSystem).getOrNull()
                        ?: return evoWarning(PyHatchBundle.message("evolution.hatch.executable.is.not.found"))
@@ -189,6 +191,7 @@ internal class HatchEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
     if (options.isEmpty()) {
       return copy(unavailable = PySdkBundle.message("evolution.error.no.base.python"), secondaryText = secondaryText ?: NO_VERSION)
     }
-    return copy(createVersions = options, secondaryText = secondaryText ?: NO_VERSION)
+    // No placeholder: the row now names the Python it would be built on, and "n/a" would hide it.
+    return copy(createVersions = options)
   }
 }

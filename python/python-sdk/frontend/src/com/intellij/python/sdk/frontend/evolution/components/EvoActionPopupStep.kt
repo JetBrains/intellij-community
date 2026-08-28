@@ -2,7 +2,6 @@
 
 package com.intellij.python.sdk.frontend.evolution.components
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -30,17 +29,10 @@ import javax.swing.Icon
 
 open class EvoActionPopupStep(
   private val myTitle: @PopupTitle String?,
-  private val node: EvoTreeNodeElement,
+  /** The node whose rows this step shows. Read by [EvoTreePopup] to reopen a panel over the node it was built from. */
+  val node: EvoTreeNodeElement,
   private val dataContext: DataContext,
   private val scope: CoroutineScope,
-  /**
-   * Shows a fresh step in place of this one, for a panel that no row of the parent opens.
-   *
-   * A panel opened from a row's inline icon cannot be reopened by choosing the row under it. That row is a leaf, so
-   * [onChosen] queues its action and closes the popup, which performs the very thing the panel was opened instead of.
-   * Null for an ordinary submenu, which reopens the way it opened — see `EvoTreePopup.toggleExpandedAndReopen`.
-   */
-  val reopenWith: ((EvoActionPopupStep) -> Unit)? = null,
 ) : ListPopupStepEx<EvoTreeItem> {
   private val listeners: MutableList<ListPopupStep.ListPopupModelListener> = arrayListOf()
 
@@ -83,7 +75,7 @@ open class EvoActionPopupStep(
 
   /**
    * Loads every element not loaded yet. A leaf's load only marks it [State.DONE] — but that is what [isSelectable]
-   * requires, so rows swapped in later (see [toggleExpanded]) are inert until this has run over them.
+   * requires, so a row swapped in later is inert until this has run over it.
    */
   private fun loadNewElements() {
     val project = CommonDataKeys.PROJECT.getData(dataContext) ?: return
@@ -91,9 +83,6 @@ open class EvoActionPopupStep(
       section.elements.filter { it.state == State.CREATED }.forEach { it.load(project, scope, listeners) }
     }
   }
-
-  /** The collapsed/expanded views of this step's version list, or null when it is not an add-new step. */
-  val versionRows: EvoVersionRows? get() = node.versionRows
 
   /**
    * The panel shown while [node] reloads: one "Loading…" row, over a node of its own.
@@ -104,29 +93,11 @@ open class EvoActionPopupStep(
   fun loadingStep(): EvoActionPopupStep = EvoActionPopupStep(null, loadingNodeElement(node), dataContext, scope)
 
   /**
-   * A child step over [node], which reopens itself through [reopenWith] rather than through the row below it.
+   * A child step over [node] — the picker a row's inline icon opens.
    *
    * Built here for the same reason [loadingStep] is: it inherits this step's data context and scope.
    */
-  fun childStep(node: EvoTreeNodeElement, reopenWith: (EvoActionPopupStep) -> Unit): EvoActionPopupStep =
-    EvoActionPopupStep(null, node, dataContext, scope, reopenWith)
-
-  /** This step again, over the same node, whose sections [toggleExpanded] may just have rewritten. */
-  fun respawn(): EvoActionPopupStep = EvoActionPopupStep(myTitle, node, dataContext, scope, reopenWith)
-
-  /**
-   * Expands the version list into its individual interpreters, or collapses it back.
-   *
-   * Only the node's sections are updated — no listener is notified and nothing is loaded — because the caller rebuilds
-   * the popup around this node rather than refreshing the open one, and the step built for the new popup loads its own
-   * elements. See `EvoTreePopup.toggleExpandedAndReopen`.
-   */
-  fun toggleExpanded() {
-    val versionRows = node.versionRows ?: return
-    versionRows.toggle()
-    node.sections.clear()
-    node.sections.addAll(versionRows.sections())
-  }
+  fun childStep(node: EvoTreeNodeElement): EvoActionPopupStep = EvoActionPopupStep(null, node, dataContext, scope)
 
   override fun addListener(listener: ListPopupStep.ListPopupModelListener) {
     listeners.add(listener)
@@ -135,14 +106,11 @@ open class EvoActionPopupStep(
   /** The chosen leaf's action, queued to run once the popup has closed (see [getFinalRunnable]); null for a node. */
   private var finalRunnable: Runnable? = null
 
-  /** The editable env-name holder for an add-new submenu, or null when the name is fixed — see [EvoTreeNodeElement]. */
-  val editableName: EvoEditableName? get() = node.editableName
-
-  /** The name to show in this submenu's header when it cannot be edited (hatch's declared env) — see [EvoTreeNodeElement]. */
-  val fixedName: String? get() = node.fixedName
-
   /** The caption above this submenu's header, or null for the "add new" wording — see [EvoTreeNodeElement]. */
   val headerCaption: @Nls String? get() = node.headerCaption
+
+  /** What this submenu says its rows do, shown along its bottom — see [EvoTreeNodeElement]. */
+  val stepDescription: @Nls String? get() = node.stepDescription
 
 
   override fun onChosen(
@@ -173,10 +141,14 @@ open class EvoActionPopupStep(
         }
         else null
       is EvoTreeLeafElement -> {
-        // In an add-new submenu with an invalid name (blank/taken) the version rows are inert: don't select or close —
-        // keep the popup open so the user can fix the name (the field is red with an explaining tooltip).
-        if (editableName?.isValid == false) return null
-        // Run the action only after the whole popup closes (via getFinalRunnable), so a tool window or dialog
+        // A picker's row changes what the row behind it says and touches nothing else, so it runs here and now and the
+        // popup stays open — see [EvoTreeNodeElement.picksWithoutClosing]. Returning no step leaves this popup showing;
+        // the action itself asks the popup to drop back to the list.
+        if (node.picksWithoutClosing) {
+          performActionItem(element, null)
+          return null
+        }
+        // Otherwise run the action only after the whole popup closes (via getFinalRunnable), so a tool window or dialog
         // it opens never appears behind a still-visible popup. FINAL_CHOICE is null; see EvoTreePopup.handleNextStep.
         finalRunnable = Runnable { performActionItem(element, null) }
         PopupStep.FINAL_CHOICE
@@ -198,10 +170,20 @@ open class EvoActionPopupStep(
   }
 
   /**
+   * Set while the pointer is over a control painted *inside* a row's cell — the section header's gear.
+   *
+   * Such a control has its own tooltip, which the popup puts on the list, and the row would otherwise answer over it:
+   * see [getTooltipTextFor]. Read live, since the tooltip is asked for on each hover rather than cached.
+   */
+  @Volatile
+  var rowTooltipSuppressed: Boolean = false
+
+  /**
    * The row's tooltip. This is the one the user sees: [javax.swing.JList.getToolTipText] asks the renderer first and
    * only falls back to the list's own, so anything the popup sets on the list is ignored wherever a row answers here.
    */
   override fun getTooltipTextFor(value: EvoTreeItem?): @NlsContexts.Tooltip String? {
+    if (rowTooltipSuppressed) return null
     val tooltip = value?.tooltip ?: return null
     // A row that can open its process output says so, since nothing else about it suggests it is a control.
     val text = if (value.opensProcessOutput) PySdkFrontendBundle.message("evo.sdk.status.bar.popup.failure.tooltip", tooltip)
@@ -224,8 +206,7 @@ open class EvoActionPopupStep(
 
   // set to true if we need actions '...' on disabled items too
   override fun isSelectable(value: EvoTreeItem?): Boolean =
-    // An invalid add-new name makes its version rows non-selectable (not just no-op) so nav/hover/click can't pick them.
-    editableName?.isValid != false && value != null &&
+    value != null &&
     // A row reporting a failure is selectable so its output can be reached — and it has to be, since the platform
     // delivers a click only to the row that is already selected (`ListPopupImpl.MyList.processMouseEvent`), leaving an
     // unselectable row unclickable however precisely it is hit. It still reads as disabled: its presentation stays so,
@@ -235,7 +216,7 @@ open class EvoActionPopupStep(
     // hit-tested there, so a row nothing can select can carry no icon. An environment another tool owns is such a row —
     // disabled here because adopting it would type its SDK to the wrong tool, and still rebuildable by its owner. See
     // [onChosen], which keeps choosing a disabled row inert.
-    (value.opensProcessOutput || value.recreatePanel != null || (value.isReady && value.isEnabled))
+    (value.opensProcessOutput || value.basePythonPanel != null || (value.isReady && value.isEnabled))
 
   override fun getIconFor(value: EvoTreeItem?): Icon? = value?.icon
 
@@ -243,16 +224,14 @@ open class EvoActionPopupStep(
 
   override fun getSecondaryTextFor(value: EvoTreeItem?): @Nls String? = value?.secondaryText
 
-  override fun getSecondaryIconFor(t: EvoTreeItem?): @Nls Icon? = when {
-    t == null -> null
+  /**
+   * The spinner, and only the spinner: the platform draws this straight after the row's text, which is where a row that
+   * is working belongs. A row that *failed* says so in the trailing column instead, lined up with the submenu arrows —
+   * see [EvoTreeItem.statusIcon].
+   */
+  override fun getSecondaryIconFor(t: EvoTreeItem?): @Nls Icon? =
     // Not every loading row carries the spinner: a tool node reports its load inside its submenu — see [showsLoader].
-    t.showsLoader -> AnimatedIcon.Default.INSTANCE
-    t.element.state == State.ERROR -> AllIcons.General.Error
-    // A tool that is simply unavailable, or answered with nothing, is not a failure — but it did not work either, so it
-    // gets a sign of its own rather than looking like an ordinary disabled row with nothing to say.
-    t.element.state == State.NOT_AVAILABLE -> AllIcons.General.Warning
-    else -> null
-  }
+    if (t?.showsLoader == true) AnimatedIcon.Default.INSTANCE else null
 
   override fun getSeparatorAbove(value: EvoTreeItem?): ListSeparator? = value?.separatorAbove
 
@@ -263,6 +242,8 @@ open class EvoActionPopupStep(
   // The platform passes a null value during layout measurement, so the param must be nullable.
   override fun isFinal(value: EvoTreeItem?): Boolean {
     value ?: return true
+    // A picker's rows leave the popup open, so none of them ends the walk through it.
+    if (node.picksWithoutClosing) return false
     // to make ... actions menu even for non-disabled items all steps have to be final
     return value.element is EvoTreeLeafElement || !value.isReady
   }
@@ -280,8 +261,7 @@ open class EvoActionPopupStep(
 
   override fun getMnemonicNavigationFilter(): MnemonicNavigationFilter<EvoTreeItem?>? = null
 
-  // Off for an editable add-new submenu, so typed characters reach its name field instead of the list's speed search.
-  override fun isSpeedSearchEnabled(): Boolean = editableName == null
+  override fun isSpeedSearchEnabled(): Boolean = true
 
   // Filter the list as you type — match the row title and (once resolved) its secondary text.
   override fun getSpeedSearchFilter(): SpeedSearchFilter<EvoTreeItem?> = SpeedSearchFilter { value ->
