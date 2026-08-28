@@ -139,7 +139,10 @@ internal class FakeLspServer(configureServerCapabilities: (ServerCapabilities.()
     override fun request(method: String, parameter: Any?): CompletableFuture<*> {
       val waiter = expectations.matchRequest(method, parameter)
       if (waiter != null) {
-        return CompletableFuture.completedFuture(waiter.resultProvider(parameter))
+        // A CompletableFuture result is passed through as is. It lets a test hold a request pending
+        // and observe its cancellation when the client sends $/cancelRequest.
+        val result = waiter.resultProvider(parameter)
+        return result as? CompletableFuture<*> ?: CompletableFuture.completedFuture(result)
       }
 
       val result = when (method) {
