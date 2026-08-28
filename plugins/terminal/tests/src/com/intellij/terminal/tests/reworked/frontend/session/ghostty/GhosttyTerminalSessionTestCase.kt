@@ -42,15 +42,25 @@ internal abstract class GhosttyTerminalSessionTestCase {
    * The session scope deliberately runs on [Dispatchers.Default] rather than the dispatcher inherited from
    * [timeoutRunBlocking]: a test that parks the test thread (on a latch, say) would otherwise starve the
    * session's own coroutines, including its synchronized-output watchdog.
+   *
+   * [isLowLevelSession] is `true` by default because a test using this method asserts the order or content of
+   * specific output events, and the low-level session reports them in their natural order (see
+   * `TerminalSessionTestUtil.createLoopbackTerminalSession`'s parameter of the same name); pass `false` only
+   * when the test's own point is the production, `StateAwareTerminalSession`-wrapped session's behavior.
    */
   protected fun runSessionTest(
+    isLowLevelSession: Boolean = true,
     test: suspend (session: TerminalSession, connector: LoopbackTtyConnector, collector: TerminalOutputEventCollector) -> Unit,
   ) {
     TerminalEmulatorType.Ghostty.setDefault(disposableRule.disposable)
     timeoutRunBlocking(30.seconds) {
       val sessionScope = childScope("TerminalSession", Dispatchers.Default)
       try {
-        val (session, connector) = TerminalSessionTestUtil.createLoopbackTerminalSession(projectRule.project, sessionScope)
+        val (session, connector) = TerminalSessionTestUtil.createLoopbackTerminalSession(
+          project = projectRule.project,
+          coroutineScope = sessionScope,
+          isLowLevelSession = isLowLevelSession
+        )
         val collector = TerminalOutputEventCollector(session, sessionScope)
         test(session, connector, collector)
       }

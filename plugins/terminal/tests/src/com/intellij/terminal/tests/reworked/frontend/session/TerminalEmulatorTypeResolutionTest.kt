@@ -21,11 +21,11 @@ import kotlin.time.Duration.Companion.seconds
  * [org.jetbrains.plugins.terminal.ShellStartupOptions.emulatorType] always wins, and only an unspecified
  * (null) emulator falls back to [TerminalEmulatorType.default], i.e. the registry key behind it.
  *
- * The chosen implementation is asserted by its runtime class name — the session classes are internal to the
- * frontend module, so they cannot be referenced statically from here, and the emulators are deliberately
- * indistinguishable through the session API itself (even 256-color SGR, where the emulators differ, is
- * normalized to RGB by both session implementations). Each emulator's actual pipeline behavior is covered by
- * the parameterized suites (see [TerminalSessionTestCase]); this test only pins which pipeline gets chosen.
+ * Uses the low-level session (see `TerminalSessionTestUtil.createLoopbackTerminalSession`'s
+ * `isLowLevelSession`): the engine choice is made entirely inside `createTerminalSession`, before the result
+ * would get wrapped in `StateAwareTerminalSession`, and that wrapper's own runtime class would otherwise hide
+ * which engine was actually picked. Each emulator's actual pipeline behavior is covered by the parameterized
+ * suites (see [TerminalSessionTestCase]); this test only pins which pipeline gets chosen.
  */
 internal class TerminalEmulatorTypeResolutionTest {
   private val projectRule = ProjectRule()
@@ -64,8 +64,12 @@ internal class TerminalEmulatorTypeResolutionTest {
     timeoutRunBlocking(20.seconds) {
       val sessionScope = childScope("TerminalSession")
       try {
-        val (session, _) =
-          TerminalSessionTestUtil.createLoopbackTerminalSession(projectRule.project, sessionScope, emulatorType = requested)
+        val (session, _) = TerminalSessionTestUtil.createLoopbackTerminalSession(
+          project = projectRule.project,
+          coroutineScope = sessionScope,
+          emulatorType = requested,
+          isLowLevelSession = true,
+        )
         val expectedClass = when (expected) {
           TerminalEmulatorType.JediTerm -> JediTerminalSession::class
           TerminalEmulatorType.Ghostty -> GhosttyTerminalSession::class

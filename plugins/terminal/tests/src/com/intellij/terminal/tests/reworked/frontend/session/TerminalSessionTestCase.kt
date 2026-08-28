@@ -47,10 +47,16 @@ internal abstract class TerminalSessionTestCase(protected val emulatorType: Term
    * The collector subscribes once for the whole test, so [test] can await events without losing earlier ones.
    * Unlike `GhosttyTerminalSessionTestCase`, the session scope inherits [timeoutRunBlocking]'s dispatcher: no
    * case here parks the test thread, so there is nothing to starve.
+   *
+   * [isLowLevelSession] is `true` by default because a test using this method asserts the order or content of
+   * specific output events, and the low-level session reports them in their natural order (see
+   * `TerminalSessionTestUtil.createLoopbackTerminalSession`'s parameter of the same name); pass `false` only
+   * when the test's own point is the production, `StateAwareTerminalSession`-wrapped session's behavior.
    */
   protected fun runSessionTest(
+    isLowLevelSession: Boolean = true,
     test: suspend (session: TerminalSession, connector: LoopbackTtyConnector, collector: TerminalOutputEventCollector) -> Unit,
-  ) = runSessionTestWithoutCollector { session, connector, sessionScope ->
+  ) = runSessionTestWithoutCollector(isLowLevelSession) { session, connector, sessionScope ->
     test(session, connector, TerminalOutputEventCollector(session, sessionScope))
   }
 
@@ -59,13 +65,18 @@ internal abstract class TerminalSessionTestCase(protected val emulatorType: Term
    * output, so a case can assert what becomes of output produced before anyone is listening.
    */
   protected fun runSessionTestWithoutCollector(
+    isLowLevelSession: Boolean = true,
     test: suspend (session: TerminalSession, connector: LoopbackTtyConnector, sessionScope: CoroutineScope) -> Unit,
   ) {
     emulatorType.setDefault(disposableRule.disposable)
     timeoutRunBlocking(20.seconds) {
       val sessionScope = childScope("TerminalSession")
       try {
-        val (session, connector) = TerminalSessionTestUtil.createLoopbackTerminalSession(projectRule.project, sessionScope)
+        val (session, connector) = TerminalSessionTestUtil.createLoopbackTerminalSession(
+          project = projectRule.project,
+          coroutineScope = sessionScope,
+          isLowLevelSession = isLowLevelSession
+        )
         test(session, connector, sessionScope)
       }
       finally {

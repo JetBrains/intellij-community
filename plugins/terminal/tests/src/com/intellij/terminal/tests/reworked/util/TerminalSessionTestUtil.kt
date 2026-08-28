@@ -6,8 +6,11 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.session.TerminalSessionsManager
+import com.intellij.terminal.frontend.session.createStandardStateAwareTerminalSession
 import com.intellij.terminal.frontend.session.createTerminalSession
+import com.intellij.terminal.frontend.session.startStandardTerminalSession
 import com.intellij.terminal.frontend.session.startTerminalProcess
 import com.intellij.util.PathUtil
 import com.intellij.util.asDisposable
@@ -37,6 +40,7 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalCursorPositionChanged
 import org.jetbrains.plugins.terminal.session.impl.TerminalInitialStateEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
+import org.jetbrains.plugins.terminal.session.impl.TerminalStartupOptionsImpl
 import org.jetbrains.plugins.terminal.session.impl.TerminalStateChangedEvent
 import org.jetbrains.plugins.terminal.session.impl.dto.toState
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
@@ -110,32 +114,51 @@ object TerminalSessionTestUtil {
   }
 
   /**
-   * Creates the production [TerminalSession] via [createTerminalSession], but backed by an in-memory
-   * [LoopbackTtyConnector] instead of a real shell process.
+   * Creates the production [TerminalSession] the same way [startStandardTerminalSession] does
+   * but backed by an in-memory [LoopbackTtyConnector] instead of a real shell process.
    *
    * The returned connector is the injection point: pass raw ANSI/VT sequences to
    * [LoopbackTtyConnector.feed] and observe the resulting events in
-   * [TerminalSession.getOutputFlow]. [TerminalProcessType.NON_SHELL] is used to keep the pipeline minimal
-   * (no shell-integration / working-directory tracking).
+   * [TerminalSession.getOutputFlow].
    *
    * The session lifecycle is bound to [coroutineScope]; cancel it to stop the emulation.
    *
    * [emulatorType] is the emulator explicitly requested for the session; null (the default) leaves the
    * choice to [TerminalEmulatorType.default], matching production behavior.
+   *
+   * [isLowLevelSession] mirrors [startTestTerminalSession]'s own parameter of the same name: the low-level
+   * session outputs events in their natural order, while the production one (the default) replaces some
+   * initial events with [TerminalInitialStateEvent]. Prefer the low-level session only when a test needs to
+   * assert the exact order or content of specific output events; use the production session in all other
+   * cases, and always when driving a real view (see `TerminalViewFixture`).
    */
   fun createLoopbackTerminalSession(
     project: Project,
     coroutineScope: CoroutineScope,
     emulatorType: TerminalEmulatorType? = null,
+    isLowLevelSession: Boolean = false,
   ): Pair<TerminalSession, LoopbackTtyConnector> {
     val connector = LoopbackTtyConnector()
+    val workingDirectory = System.getProperty("user.home")
     val options = ShellStartupOptions.Builder()
       .initialTermSize(TermSize(80, 24))
-      .processType(TerminalProcessType.NON_SHELL)
-      .workingDirectory(System.getProperty("user.home"))
+      .processType(TerminalProcessType.SHELL)
+      .workingDirectory(workingDirectory)
       .emulatorType(emulatorType)
       .build()
-    val session = createTerminalSession(project, connector, options, JBTerminalSystemSettingsProvider(), coroutineScope)
+    val delegateScope = coroutineScope.childScope("original session")
+    val delegate = createTerminalSession(project, connector, options, JBTerminalSystemSettingsProvider(), delegateScope)
+    if (isLowLevelSession) {
+      return delegate to connector
+    }
+    val startupOptions = TerminalStartupOptionsImpl(
+      shellCommand = listOf("/bin/bash"),
+      workingDirectory = workingDirectory,
+      envVariables = emptyMap(),
+      processType = TerminalProcessType.SHELL,
+      pid = null,
+    )
+    val session = createStandardStateAwareTerminalSession(delegate, startupOptions, coroutineScope)
     return session to connector
   }
 
@@ -227,6 +250,11 @@ class TestTerminalSessionResult(
  * Besides the raw events, every event is applied to real output models the way `StateAwareTerminalSession`
  * applies them in production, so a test can assert the document the whole event stream produces — see
  * [documentText] and [alternateBufferText].
+ *
+ * Pass a low-level `session` (see `TerminalSessionTestUtil.createLoopbackTerminalSession`'s
+ * `isLowLevelSession`) when the test asserts the exact order or content of specific output events: a
+ * production, `StateAwareTerminalSession`-wrapped session replaces some initial events with a snapshot,
+ * so the discrete event a test awaits right after subscribing may never arrive.
  */
 internal class TerminalOutputEventCollector(
   session: TerminalSession,

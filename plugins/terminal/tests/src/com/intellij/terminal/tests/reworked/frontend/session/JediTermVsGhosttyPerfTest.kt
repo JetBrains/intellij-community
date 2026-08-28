@@ -114,7 +114,11 @@ internal class JediTermVsGhosttyPerfTest {
     // everything else.
     val sessionScope = childScope("JediTermVsGhosttyPerfTest-$emulatorType", Dispatchers.Default)
     try {
-      val (session, connector) = TerminalSessionTestUtil.createLoopbackTerminalSession(projectRule.project, sessionScope)
+      val (session, connector) = TerminalSessionTestUtil.createLoopbackTerminalSession(
+        project = projectRule.project,
+        coroutineScope = sessionScope,
+        isLowLevelSession = true
+      )
       val collector = TerminalOutputEventCollector(session, sessionScope)
 
       var markerSeq = 0
