@@ -18,6 +18,7 @@ import org.jetbrains.intellij.build.impl.PluginVersionEvaluatorResult
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
 import org.jetbrains.intellij.build.impl.SupportedDistribution
+import org.jetbrains.intellij.build.impl.osArchPluginVersion
 import org.jetbrains.intellij.build.impl.patchOsSpecificPluginXml
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
@@ -360,11 +361,8 @@ object CommunityRepositoryModules {
 
       patchOsSpecificPluginXml(spec, os, arch)
 
-      spec.withCustomVersion { _, ideBuildNumber, _ ->
-        // be careful, Marketplace expects linux/macos/windows for os and x86_64/x86/arm64/arm32 for arch
-        val pluginVersion = "$ideBuildNumber-${os.osId}-${arch.marketplaceName}"
-        PluginVersionEvaluatorResult(pluginVersion)
-      }
+      // be careful, Marketplace expects linux/macos/windows for os and x86_64/x86/arm64/arm32 for arch
+      spec.withCustomVersion(osArchPluginVersion(os = os, arch = arch))
 
       spec.withGeneratedResources { targetDir, context ->
         val communityRoot = context.paths.communityHomeDirRoot

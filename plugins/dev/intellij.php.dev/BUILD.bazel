@@ -7,6 +7,17 @@ resourcegroup(
     visibility = ["//visibility:public"],  # used by @ultimate//:php-dev
 )
 
+# The content-module descriptor of `intellij.php.dev`, which the descriptor action of `intellij.dev` reads.
+#
+# Hand-written, and this package is the only one that can hold it. `intellij.php.dev` is an ultimate module, so
+# `exportDescriptorFiles` writes its `exports_files` into the ultimate root package, and a `//:community/...` label
+# never materializes: `community` is a `.bazelignore` entry of that root, so Bazel leaves it out of the main
+# repository's execroot symlink farm. The label a Bazel action can read is this one.
+exports_files(
+    ["resources/intellij.php.dev.xml"],
+    visibility = ["//visibility:public"],  # used by //build/dev-dist-descriptors, through build/dev_dist_plugin_descriptors.bzl
+)
+
 filegroup(
     name = "php-dev_sources",
     srcs = glob(

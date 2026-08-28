@@ -79,9 +79,33 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
   val hasPluginXmlPatcher: Boolean
     get() = pluginXmlPatcher !== IDENTITY_DESCRIPTOR_PATCHER
 
+  /**
+   * The raw text patch as data, or `null` when the layout states it as code - see [DescriptorMarkerPatcher].
+   *
+   * The dev-distribution descriptor plan states a marker list and holds a plugin out when this answer is `null`.
+   *
+   * The empty list for a layout that patches nothing, because that is the table such a layout states.
+   */
+  val descriptorMarkers: List<DescriptorMarker>?
+    get() = when {
+      !hasRawPluginXmlPatcher -> emptyList()
+      else -> (rawPluginXmlPatcher as? DescriptorMarkerPatcher)?.markers
+    }
+
   /** Whether the layout stamps a version of its own instead of the IDE build version - see [versionEvaluator]. */
   val hasCustomVersion: Boolean
     get() = versionEvaluator !== PLUGIN_VERSION_AS_IDE
+
+  /**
+   * The custom version as data, or `null` when the layout states it as code - see [DataPluginVersionEvaluator].
+   *
+   * The empty string for a layout that takes the IDE build version, because that is the suffix such a layout appends.
+   */
+  val versionSuffix: String?
+    get() = when {
+      !hasCustomVersion -> ""
+      else -> (versionEvaluator as? DataPluginVersionEvaluator)?.versionSuffix
+    }
 
   var directoryNameSetExplicitly: Boolean = false
   var bundlingRestrictions: PluginBundlingRestrictions = PluginBundlingRestrictions.NONE
@@ -765,22 +789,60 @@ private val IDENTITY_DESCRIPTOR_PATCHER: (String, BuildContext) -> String = { s,
 
 private const val OS_SPECIFIC_DEPENDENCIES_PLUGIN_XML_PLACEHOLDER: String = "<!-- OS/ARCH-DEPENDENCY-PLACEHOLDER -->"
 
+/**
+ * One replacement of the raw descriptor text: the text that must be there, and what takes its place.
+ *
+ * A pair of strings and not a lambda, so that the dev-distribution descriptor plan can state the replacement as data.
+ * Both producers of a patched descriptor then apply the same pair, and neither runs the layout's Kotlin.
+ */
+class DescriptorMarker(@JvmField val literal: String, @JvmField val replacement: String)
+
+/**
+ * A [PluginLayout.rawPluginXmlPatcher] that states its replacements as [DescriptorMarker] pairs.
+ *
+ * A class and not a lambda, because [PluginLayout.descriptorMarkers] reads the pairs off the layout. A layout whose raw
+ * patch is not a list of replacements keeps a lambda, and the descriptor plan holds that plugin out by name.
+ */
+class DescriptorMarkerPatcher(@JvmField val markers: List<DescriptorMarker>) : (String, BuildContext) -> String {
+  override fun invoke(text: String, context: BuildContext): String {
+    var result = text
+    for (marker in markers) {
+      result = checkedReplace(oldText = result, regex = marker.literal, newText = marker.replacement)
+    }
+    return result
+  }
+}
+
+/**
+ * The `<!-- OS/ARCH-DEPENDENCY-PLACEHOLDER -->` replacement of one (os, arch) plugin variant.
+ *
+ * The one owner of the replacement text. The descriptor plan states `os-arch:<osId>:<marketplaceName>` and both
+ * producers rebuild the text from this function's shape, so a change here reaches every producer at once.
+ */
+fun osArchDescriptorMarker(os: OsFamily, arch: JvmArchitecture): DescriptorMarker = DescriptorMarker(
+  literal = OS_SPECIFIC_DEPENDENCIES_PLUGIN_XML_PLACEHOLDER,
+  replacement = """
+        |<plugin id="com.intellij.modules.os.${os.osId}"/>
+        |<plugin id="com.intellij.modules.arch.${arch.marketplaceName}"/>
+      """.trimMargin(),
+)
+
 fun patchOsSpecificPluginXml(
   spec: PluginLayout.PluginLayoutSpec,
   os: OsFamily,
   arch: JvmArchitecture,
 ) {
-  spec.withRawPluginXmlPatcher { text, _ ->
-    checkedReplace(
-      oldText = text,
-      regex = OS_SPECIFIC_DEPENDENCIES_PLUGIN_XML_PLACEHOLDER,
-      newText = """
-            |<plugin id="com.intellij.modules.os.${os.osId}"/>
-            |<plugin id="com.intellij.modules.arch.${arch.marketplaceName}"/>
-          """.trimMargin(),
-    )
-  }
+  spec.withRawPluginXmlPatcher(DescriptorMarkerPatcher(listOf(osArchDescriptorMarker(os, arch))))
 }
+
+/**
+ * The version of one (os, arch) plugin variant: the IDE build number, then the marketplace os and arch names.
+ *
+ * The one owner of that suffix. Marketplace expects linux/macos/windows for the os and x86_64/x86/arm64/arm32 for the
+ * architecture, which is what [OsFamily.osId] and [JvmArchitecture.marketplaceName] answer.
+ */
+fun osArchPluginVersion(os: OsFamily, arch: JvmArchitecture): DataPluginVersionEvaluator =
+  SuffixedPluginVersion("-${os.osId}-${arch.marketplaceName}")
 
 data class PluginVersionEvaluatorResult(@JvmField val pluginVersion: String, @JvmField val sinceUntil: Pair<String, String>? = null)
 
@@ -789,6 +851,26 @@ data class PluginVersionEvaluatorResult(@JvmField val pluginVersion: String, @Jv
  */
 fun interface PluginVersionEvaluator {
   suspend fun evaluate(pluginXmlSupplier: suspend () -> String, ideBuildVersion: String, context: BuildContext): PluginVersionEvaluatorResult
+}
+
+/**
+ * A [PluginVersionEvaluator] whose answer is the IDE build version plus a fixed suffix.
+ *
+ * The dev-distribution descriptor plan holds no build context and cannot run an evaluator. It reads [versionSuffix]
+ * instead, and both producers of the patched descriptor append that string to the build number they compute.
+ */
+interface DataPluginVersionEvaluator : PluginVersionEvaluator {
+  /** What this evaluator appends to the IDE build version. */
+  val versionSuffix: String
+}
+
+/** [DataPluginVersionEvaluator] with nothing beyond the suffix. */
+class SuffixedPluginVersion(override val versionSuffix: String) : DataPluginVersionEvaluator {
+  override suspend fun evaluate(
+    pluginXmlSupplier: suspend () -> String,
+    ideBuildVersion: String,
+    context: BuildContext,
+  ): PluginVersionEvaluatorResult = PluginVersionEvaluatorResult(pluginVersion = ideBuildVersion + versionSuffix)
 }
 
 private fun convertModuleNameToFileName(moduleName: String): String = moduleName.removePrefix("intellij.").replace('.', '-')

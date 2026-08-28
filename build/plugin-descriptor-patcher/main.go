@@ -27,13 +27,16 @@
 package main
 
 import (
+	"archive/zip"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 
 	"jetbrains.com/plugin-descriptor-patcher/internal/descriptorxml"
+	"jetbrains.com/plugin-descriptor-patcher/internal/markers"
 	"jetbrains.com/plugin-descriptor-patcher/internal/stamps"
 	"jetbrains.com/plugin-descriptor-patcher/internal/structural"
 )
@@ -67,8 +70,15 @@ type request struct {
 	// pluginDescriptors and platformDescriptors are the descriptors the patch can reach, keyed by load path.
 	pluginDescriptors   map[string]string
 	platformDescriptors map[string]string
-	pluginModules       []string
-	platformModules     []string
+	// pluginDescriptorsInJar are the descriptors no production source root holds, keyed by load path and valued by the
+	// jar that holds them. The load path is also the zip entry: `toLoadPath` strips the leading `/`.
+	pluginDescriptorsInJar map[string]string
+	pluginModules          []string
+	platformModules        []string
+	// markers is the layout's raw text patch as marker-table rows, in the order it applies them.
+	markers []string
+	// versionSuffix is what the layout appends to the IDE build version, empty for a layout that stamps it unchanged.
+	versionSuffix string
 }
 
 func run(arguments []string) int {
@@ -110,6 +120,7 @@ func patch(parsed request) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	pluginVersion += parsed.versionSuffix
 	compatibleBuildRange := stamps.RangeNewerWithSameBaseline
 	switch {
 	case parsed.exactVersion:
@@ -123,8 +134,15 @@ func patch(parsed request) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	patched, err := markers.Apply(string(source), parsed.markers)
+	if err != nil {
+		return "", err
+	}
 	pluginCache, err := readSeed(parsed.pluginDescriptors)
 	if err != nil {
+		return "", err
+	}
+	if err := seedFromJars(pluginCache, parsed.pluginDescriptorsInJar); err != nil {
 		return "", err
 	}
 	platformCache, err := readSeed(parsed.platformDescriptors)
@@ -136,7 +154,7 @@ func patch(parsed request) (string, error) {
 		{Modules: parsed.platformModules, Cache: platformCache},
 	})
 
-	element, err := descriptorxml.Read(string(source))
+	element, err := descriptorxml.Read(patched)
 	if err != nil {
 		return "", err
 	}
@@ -180,6 +198,45 @@ func readSeed(files map[string]string) (*structural.Cache, error) {
 	return structural.NewCache(seed), nil
 }
 
+// seedFromJars puts a descriptor that lives inside a declared jar into the cache.
+//
+// It is `readSeedFromJars` (`DevDistPluginDescriptorMain.kt:203`). The assembly reaches such a file through
+// `findFileInModuleLibraryDependencies` (`moduleContentUtil.kt:148`), which asks each declared library jar for the load
+// path; the plan names the one jar that answers, so the entry is read directly.
+func seedFromJars(cache *structural.Cache, jars map[string]string) error {
+	for loadPath, jar := range jars {
+		reader, err := zip.OpenReader(jar)
+		if err != nil {
+			return err
+		}
+		data, err := readZipEntry(reader, jar, loadPath)
+		closeErr := reader.Close()
+		if err != nil {
+			return err
+		}
+		if closeErr != nil {
+			return closeErr
+		}
+		cache.PutIfAbsent(loadPath, data)
+	}
+	return nil
+}
+
+func readZipEntry(reader *zip.ReadCloser, jar string, name string) ([]byte, error) {
+	for _, entry := range reader.File {
+		if entry.Name != name {
+			continue
+		}
+		opened, err := entry.Open()
+		if err != nil {
+			return nil, err
+		}
+		defer opened.Close()
+		return io.ReadAll(opened)
+	}
+	return nil, fmt.Errorf("'%s' has no entry '%s'", jar, name)
+}
+
 // readArgumentLines is `readArgumentLines` (`DevDistPluginDescriptorMain.kt:283-288`).
 //
 // The rule passes one `--flagfile=<path>` of a multiline parameter file, the way `content_module_jar` and `ij_plugin`
@@ -201,10 +258,11 @@ func readArgumentLines(arguments []string) ([]string, error) {
 // producers on one spelling: a rule that grows an option reaches both binaries or neither.
 func parseRequest(lines []string) (request, error) {
 	parsed := request{
-		embedsContent:       true,
-		separateJar:         map[string]bool{},
-		pluginDescriptors:   map[string]string{},
-		platformDescriptors: map[string]string{},
+		embedsContent:          true,
+		separateJar:            map[string]bool{},
+		pluginDescriptors:      map[string]string{},
+		platformDescriptors:    map[string]string{},
+		pluginDescriptorsInJar: map[string]string{},
 	}
 	for _, line := range lines {
 		if line == "" {
@@ -246,6 +304,12 @@ func parseRequest(lines []string) (request, error) {
 			parsed.separateJar[value] = true
 		case "--plugin-descriptor":
 			err = putDescriptor(parsed.pluginDescriptors, value)
+		case "--plugin-descriptor-in-jar":
+			err = putDescriptor(parsed.pluginDescriptorsInJar, value)
+		case "--marker":
+			parsed.markers = append(parsed.markers, value)
+		case "--version-suffix":
+			parsed.versionSuffix = value
 		case "--platform-descriptor":
 			err = putDescriptor(parsed.platformDescriptors, value)
 		case "--plugin-module":

@@ -1,0 +1,18 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+# Hand-maintained: no gazelle target is wired up in this repository, so adding a `.go` file means editing `srcs` here.
+
+go_library(
+    name = "markers",
+    srcs = ["markers.go"],
+    importpath = "jetbrains.com/plugin-descriptor-patcher/internal/markers",
+    visibility = ["//visibility:public"],
+)
+
+# The curated cases: both row shapes, the replacement text of every (os, arch) pair, and a negative control per refusal.
+go_test(
+    name = "markers_test",
+    srcs = ["markers_test.go"],
+    pure = "on",
+    deps = [":markers"],
+)

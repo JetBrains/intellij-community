@@ -1831,9 +1831,17 @@ private fun exportDescriptorFiles(module: ModuleDescriptor, buildFile: BuildFile
       }
 
       val relative = file.relativeTo(module.bazelBuildFileDir).invariantSeparatorsPathString
-      // A resource root outside the module's own Bazel package - the `dotenv-ultimate` shape, where an ultimate
-      // module keeps its resources in the community tree. Another package owns the file and `../` is not a label,
-      // so those descriptors stay on the module-output read they use today.
+      // A resource root above the module's own Bazel package. `getModuleDescriptor` walks the package up until every
+      // content root is under it, so a `customModules` override is the one way to reach this: it names a package of
+      // its own, and `@community//build` is no ancestor of `community/jps/dependency-graph`. `../` is not a label, so
+      // such a descriptor stays on the module-output read it uses today.
+      //
+      // An ultimate module whose resources live in the community tree is not this case, and the entry this writes for
+      // it is inert. The walk drags the package up to the ultimate root, `community` is a `.bazelignore` entry of that
+      // root, and Bazel therefore leaves the subtree out of the main repository's execroot symlink farm:
+      // `//:community/<path>` analyses, and an action that declares it gets a symlink to nothing. The label an action
+      // can read is `@community//<package>:<path>`, which only the community package can export - see
+      // `containingBazelPackageLabel` in `devDistPluginDescriptorPlan.kt`.
       if (relative.startsWith("../")) {
         continue
       }

@@ -39,10 +39,14 @@ import (
 //
 // | arm | what it compares | population |
 // |---|---|---|
-// | `rawTextPatcher` -> `reserialized` | `descriptorxml.Read` and `Write` against the recorded round trip | every plugin |
-// | `reserialized` -> `stamps` | `stamps.Apply` against the recorded stamps text | every plugin |
+// | `rawTextPatcher` -> `reserialized` | `descriptorxml.Read` and `Write` against the recorded round trip | every computed plugin |
+// | `reserialized` -> `stamps` | `stamps.Apply` against the recorded stamps text | every computed plugin |
 // | `stamps` against `patched` | the stamps text a real assembly put in the plugin's main jar | class (a) only |
 // | the two structural stages are inert | `structural` over a descriptor the platform's own stages did not change | where both reported no change |
+//
+// "Every computed plugin" is one record of `//build:idea_air_dist` today, `intellij.devkit`, because every fragment
+// reads its produced descriptor. Empty `fragment_reads` of the product entry to build the arm that computes all 163 -
+// see the README.
 //
 // The round trip starts at `rawTextPatcher` and not at `source`, because that is the text the platform hands to
 // `JDOMUtil.load`. The two are the same text for every plugin whose layout states no raw lambda.
@@ -250,8 +254,8 @@ func TestThePopulationRoundTripsAndStampsByteForByte(t *testing.T) {
 			if it.plugin.Origin == originProduced {
 				skipped++
 				t.Skip("the fragment read this descriptor from a produced file, so the artifact holds no stage of " +
-					"the patch. Empty the product entry of build/dev_dist_plugin_descriptors.bzl and rebuild to " +
-					"cover it here")
+					"the patch. Empty `fragment_reads` of the product entry in build/dev_dist_plugin_descriptors.bzl " +
+					"and rebuild to cover it here; emptying `plugins` instead would remove the producer as well")
 			}
 			source, states := it.plugin.stageText(stageRawTextPatcher)
 			if !states {

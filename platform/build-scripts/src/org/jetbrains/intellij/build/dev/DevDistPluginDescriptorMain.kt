@@ -6,18 +6,23 @@ package org.jetbrains.intellij.build.dev
 import kotlinx.coroutines.runBlocking
 import org.jdom.Element
 import org.jetbrains.intellij.build.CompatibleBuildRange
+import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.classPath.DescriptorSearchScope
 import org.jetbrains.intellij.build.classPath.DescriptorResolveContext
 import org.jetbrains.intellij.build.classPath.XIncludeElementResolverImpl
 import org.jetbrains.intellij.build.classPath.resolveAndEmbedContentModuleDescriptor
 import org.jetbrains.intellij.build.impl.DescriptorCacheWriter
+import org.jetbrains.intellij.build.impl.DescriptorMarker
 import org.jetbrains.intellij.build.impl.PluginDescriptorPatchRequest
 import org.jetbrains.intellij.build.impl.ScopedCachedDescriptorContainer
 import org.jetbrains.intellij.build.impl.applyPluginDescriptorPatch
 import org.jetbrains.intellij.build.impl.computePluginBuildNumber
 import org.jetbrains.intellij.build.impl.getCompatiblePlatformVersionRange
+import org.jetbrains.intellij.build.impl.osArchDescriptorMarker
 import org.jetbrains.jps.model.module.JpsModule
+import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
@@ -76,18 +81,30 @@ internal class DevDistPluginDescriptorRequest(
   @JvmField val separateJarModules: Set<String>,
   /** The descriptors this plugin's patch can reach, keyed by the load path a resolver asks for. */
   @JvmField val pluginDescriptors: Map<String, Path>,
+  /**
+   * A descriptor no production source root holds, keyed by load path and valued by the jar that holds it.
+   *
+   * The load path is also the zip entry: `toLoadPath` strips the leading `/`, and that is the path the assembly's
+   * `findFileInModuleLibraryDependencies` asks a library jar for.
+   */
+  @JvmField val pluginDescriptorsInJar: Map<String, Path> = emptyMap(),
   /** The same, for the platform's search scope. */
   @JvmField val platformDescriptors: Map<String, Path>,
   /** The plugin's own search-scope modules. */
   @JvmField val pluginModules: List<String>,
   /** The platform's search-scope modules. */
   @JvmField val platformModules: List<String>,
+  /** The layout's raw text patch as marker-table rows, in the order it applies them - see [applyDescriptorMarkers]. */
+  @JvmField val markers: List<String> = emptyList(),
+  /** What the layout appends to the IDE build version. Empty for a layout that stamps it unchanged. */
+  @JvmField val versionSuffix: String = "",
 )
 
 /** Runs the shared patch body over [request] and returns the text the plugin's main jar receives. */
 internal suspend fun patchPluginDescriptorFromPlan(request: DevDistPluginDescriptorRequest): String {
   val buildNumber = Files.readString(request.buildNumberFile).trim()
-  val pluginVersion = computePluginBuildNumber(buildNumber = buildNumber, buildDateInSeconds = request.buildDateInSeconds)
+  val pluginVersion = computePluginBuildNumber(buildNumber = buildNumber, buildDateInSeconds = request.buildDateInSeconds) +
+                      request.versionSuffix
   val compatibleBuildRange = when {
     request.exactVersion -> CompatibleBuildRange.EXACT
     request.isEap -> CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE
@@ -95,7 +112,10 @@ internal suspend fun patchPluginDescriptorFromPlan(request: DevDistPluginDescrip
   }
 
   val sourceContent = Files.readAllBytes(request.source).decodeToString()
-  val pluginCache = SeededDescriptorContainer(readSeed(request.pluginDescriptors), isModuleSetOwner = false)
+  val pluginCache = SeededDescriptorContainer(
+    readSeed(request.pluginDescriptors) + readSeedFromJars(request.pluginDescriptorsInJar),
+    isModuleSetOwner = false,
+  )
   val platformCache = SeededDescriptorContainer(readSeed(request.platformDescriptors), isModuleSetOwner = true)
   val xIncludeResolver = XIncludeElementResolverImpl(
     searchPath = listOf(
@@ -111,9 +131,9 @@ internal suspend fun patchPluginDescriptorFromPlan(request: DevDistPluginDescrip
       directoryName = request.directoryName,
       mainJarName = request.mainJarName,
       sourceContent = sourceContent,
-      // The raw text patch is a per-layout lambda. No plugin this rule serves declares one, and the rule refuses a
-      // plugin that does, so the stage is the identity here.
-      rawPatchedContent = sourceContent,
+      // The raw text patch, from the plan's marker table. A layout that states the patch as code is held out of the
+      // population, so a plugin that gets here either states no patch or states one this table can express.
+      rawPatchedContent = applyDescriptorMarkers(text = sourceContent, markers = request.markers),
       pluginVersion = pluginVersion,
       compatibleSinceUntil = getCompatiblePlatformVersionRange(compatibleBuildRange, buildNumber),
       releaseDate = request.releaseDate,
@@ -206,6 +226,82 @@ private fun readSeed(files: Map<String, Path>): Map<String, ByteArray> {
     result[loadPath] = Files.readAllBytes(file)
   }
   return result
+}
+
+/**
+ * The same, for a descriptor that lives inside a declared jar.
+ *
+ * The assembly reaches such a file through `findFileInModuleLibraryDependencies`, which asks each declared library jar
+ * for the load path. Here the plan names the one jar that answers, so the entry is read directly.
+ */
+private fun readSeedFromJars(jars: Map<String, Path>): Map<String, ByteArray> {
+  val result = HashMap<String, ByteArray>(jars.size)
+  for ((loadPath, jar) in jars) {
+    // A zip file system and not `ImmutableZipFile`: that reader needs `sun.nio.ch` opened to the unnamed module, and
+    // this tool is a plain `java_binary` with no JVM argument of its own. Six entries of one plugin are read this way.
+    result[loadPath] = FileSystems.newFileSystem(jar).use { zip ->
+      val entry = zip.getPath(loadPath)
+      require(Files.exists(entry)) { "'$jar' has no entry '$loadPath'" }
+      Files.readAllBytes(entry)
+    }
+  }
+  return result
+}
+
+/**
+ * The raw text patch of one plan entry: the first occurrence of each literal replaced, in the table's order.
+ *
+ * ### Why a plain replacement and not `checkedReplace`
+ *
+ * `checkedReplace` compiles the literal as a regular expression and reads `$` and `\` in the replacement. The Go
+ * executor's `regexp` is RE2 and Java's `Pattern` is not, so a row that reached either engine would be a row the two
+ * producers could read differently. The generator therefore refuses a row whose literal states a regular-expression
+ * metacharacter and one whose replacement states `$` or `\`, and both producers replace a plain string here.
+ *
+ * A literal the descriptor does not state fails the action. `checkedReplace` tolerates that case outside TeamCity, for
+ * an `Update IDE from Sources` run that re-patches a text it already patched; this action reads a declared source file
+ * and can never be in that state.
+ */
+internal fun applyDescriptorMarkers(text: String, markers: List<String>): String {
+  var result = text
+  for (row in markers) {
+    val marker = parseDescriptorMarkerRow(row)
+    val at = result.indexOf(marker.literal)
+    require(at >= 0) { "The descriptor does not state '${marker.literal}', which the marker table replaces" }
+    result = result.substring(0, at) + marker.replacement + result.substring(at + marker.literal.length)
+  }
+  return result
+}
+
+/**
+ * One marker-table row as a literal and its replacement.
+ *
+ * `os-arch:<osId>:<marketplaceName>` names the operating system and the architecture, and `osArchDescriptorMarker`
+ * builds the replacement - it is the one owner of that text, and the text holds a newline the request's parameter file
+ * could not carry. `marker:<literal>:<replacement>` states a plain replacement, and the literal ends at the first `:`.
+ * An unknown shape fails the action, so no run can emit an unpatched text.
+ */
+internal fun parseDescriptorMarkerRow(row: String): DescriptorMarker {
+  val separator = row.indexOf(':')
+  require(separator > 0) { "A marker row is '<shape>:...', and '$row' is not" }
+  val rest = row.substring(separator + 1)
+  when (row.substring(0, separator)) {
+    "os-arch" -> {
+      val osId = rest.substringBefore(':')
+      val architecture = rest.substringAfter(':', missingDelimiterValue = "")
+      val os = requireNotNull(OsFamily.entries.firstOrNull { it.osId == osId }) { "'$osId' is no OsFamily.osId" }
+      val arch = requireNotNull(JvmArchitecture.entries.firstOrNull { it.marketplaceName == architecture }) {
+        "'$architecture' is no JvmArchitecture.marketplaceName"
+      }
+      return osArchDescriptorMarker(os = os, arch = arch)
+    }
+    "marker" -> {
+      val literal = rest.substringBefore(':')
+      require(literal.isNotEmpty() && rest.length > literal.length) { "A marker row is 'marker:<literal>:<replacement>', and '$row' is not" }
+      return DescriptorMarker(literal = literal, replacement = rest.substring(literal.length + 1))
+    }
+  }
+  error("'$row' states a marker shape this tool does not know, so the descriptor would be emitted unpatched")
 }
 
 /** A descriptor cache seeded from declared files, with no layout to key it by. */
@@ -321,9 +417,12 @@ internal fun parseDevDistPluginDescriptorRequest(lines: List<String>): DevDistPl
   val contentModules = ArrayList<String>()
   val separateJarModules = LinkedHashSet<String>()
   val pluginDescriptors = LinkedHashMap<String, Path>()
+  val pluginDescriptorsInJar = LinkedHashMap<String, Path>()
   val platformDescriptors = LinkedHashMap<String, Path>()
   val pluginModules = ArrayList<String>()
   val platformModules = ArrayList<String>()
+  val markers = ArrayList<String>()
+  var versionSuffix = ""
 
   for (line in lines) {
     if (line.isEmpty()) {
@@ -350,6 +449,9 @@ internal fun parseDevDistPluginDescriptorRequest(lines: List<String>): DevDistPl
       "--content-module" -> contentModules.add(value)
       "--separate-jar" -> separateJarModules.add(value)
       "--plugin-descriptor" -> putDescriptor(pluginDescriptors, value)
+      "--plugin-descriptor-in-jar" -> putDescriptor(pluginDescriptorsInJar, value)
+      "--marker" -> markers.add(value)
+      "--version-suffix" -> versionSuffix = value
       "--platform-descriptor" -> putDescriptor(platformDescriptors, value)
       "--plugin-module" -> pluginModules.add(value)
       "--platform-module" -> platformModules.add(value)
@@ -375,9 +477,12 @@ internal fun parseDevDistPluginDescriptorRequest(lines: List<String>): DevDistPl
     contentModules = contentModules,
     separateJarModules = separateJarModules,
     pluginDescriptors = pluginDescriptors,
+    pluginDescriptorsInJar = pluginDescriptorsInJar,
     platformDescriptors = platformDescriptors,
     pluginModules = pluginModules,
     platformModules = platformModules,
+    markers = markers,
+    versionSuffix = versionSuffix,
   )
 }
 
