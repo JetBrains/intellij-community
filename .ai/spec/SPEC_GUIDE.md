@@ -79,7 +79,7 @@ Never delete a sentence without moving it. A spec that quietly loses a constrain
 
 The repository guide (`AGENTS.md`, section **Writing**) defines the ASD-STE100 rules for every artifact, and a spec follows them. These four rules are specific to a spec:
 
-- **A requirement sentence stays at or under 20 words.** Other prose stays at or under 25. 25 is the number `AirSpecReferencesTest` enforces on a tagged spec.
+- **A requirement sentence stays at or under 20 words.** Other prose stays at or under 25.
 - **Take every term from the plugin's concept glossary.** AIR's glossary is `plugins/air/docs/model/concepts.md`.
 - **Name a class in prose only when the sentence is about that class.** Otherwise name the behavior.
 - **Open with context.** The `## Summary` first sentence says what the feature is, in words a reader who has never opened the code can follow.

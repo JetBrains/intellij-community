@@ -21,7 +21,7 @@ repository: monorepo
 
 Write every user-visible artifact in [ASD-STE100 Simplified Technical English](https://www.asd-ste100.org/), and keep it short. This covers a comment, KDoc, a commit message, documentation, a spec, and a report to the user. Use the active voice and a simple tense, state one topic per sentence, write positively, and use no noun cluster longer than three words. The five that catch most of the damage here:
 
-- Keep a sentence at or under 25 words. `AirSpecReferencesTest` enforces that number on a tagged spec.
+- Keep a sentence at or under 25 words.
 - Make an aside its own sentence. Do not put it between dashes.
 - Keep the articles. Write "the session", not "session".
 - One term per concept. Never introduce a synonym for a term the area already defines.
