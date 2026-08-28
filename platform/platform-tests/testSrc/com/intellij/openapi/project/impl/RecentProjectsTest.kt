@@ -55,6 +55,7 @@ import kotlin.test.assertEquals
 @TestApplication
 class RecentProjectsTest {
   private var connection: SimpleMessageBusConnection? = null
+  private var wasDarkTheme = false
 
   @JvmField
   @RegisterExtension
@@ -62,6 +63,9 @@ class RecentProjectsTest {
 
   @BeforeEach
   fun setUp() {
+    // JBColor.setDark affects the whole JVM, so the original value must be restored in tearDown,
+    // otherwise other tests running later in the same JVM would resolve colors for a wrong theme
+    wasDarkTheme = !JBColor.isBright()
     connection = ApplicationManager.getApplication().messageBus.simpleConnect()
     connection!!.subscribe(ProjectCloseListener.TOPIC, RecentProjectsManagerBase.MyProjectListener())
     connection!!.subscribe(AppLifecycleListener.TOPIC, RecentProjectsManagerBase.MyAppLifecycleListener())
@@ -69,6 +73,7 @@ class RecentProjectsTest {
 
   @AfterEach
   fun tearDown() {
+    JBColor.setDark(wasDarkTheme)
     connection?.disconnect()
     connection = null
   }
