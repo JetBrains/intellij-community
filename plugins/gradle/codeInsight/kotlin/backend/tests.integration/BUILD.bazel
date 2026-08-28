@@ -40,6 +40,7 @@ jvm_library(
         "//plugins/gradle/codeInsight/backend",
         "//plugins/gradle/codeInsight/kotlin",
         "//plugins/gradle/codeInsight/kotlin/backend",
+        "//plugins/gradle/codeInsight/kotlin/testFramework",
         "//libraries/assertj-core",
         "//libraries/junit6",
         "//libraries/junit6-params",
@@ -48,6 +49,7 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/analysis-api:analysis",
         "//platform/testFramework",
+        "//platform/testFramework/junit5",
         "//java/testFramework",
         "//plugins/gradle/java",
         "//plugins/gradle/testFramework",
@@ -56,6 +58,7 @@ jvm_library(
         "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
         "//plugins/kotlin/base/scripting/scripting",
         "//platform/scratch/plugin",
+        "//plugins/kotlin/base/facet",
     ],
 )
 ### auto-generated section `build intellij.gradle.codeInsight.kotlin.backend.tests.integration` end

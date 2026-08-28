@@ -2,33 +2,45 @@
 package com.intellij.gradle.codeInsight.kotlin.backend.tests.integration.inspections
 
 import com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleAvoidDuplicateRepositoriesInspection
+import com.intellij.gradle.codeInsight.kotlin.testFramework.checkGradleScriptHighlighting
+import com.intellij.gradle.codeInsight.kotlin.testFramework.fixtures.simpleGradleCodeInsightFixture
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
 import com.intellij.gradle.testFramework.annotations.TargetVersions
+import com.intellij.gradle.testFramework.fixtures.application.GradleImmutableProjectTestApplication
 import com.intellij.gradle.testFramework.util.DEPENDENCY_RESOLUTION_MANAGEMENT_SUPPORTED_VERSIONS
-import com.intellij.gradle.testFramework.util.assertThatKotlinDslScriptsModelImportIsSupported
+import com.intellij.gradle.testFramework.util.KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.gradle.K2GradleCodeInsightTestCase
-import org.junit.jupiter.params.ParameterizedTest
+import org.jetbrains.kotlin.idea.framework.KotlinSdkType
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
 
-class KotlinAvoidDuplicateRepositoriesInspectionTest : K2GradleCodeInsightTestCase() {
+@GradleImmutableProjectTestApplication
+class KotlinAvoidDuplicateRepositoriesInspectionTest {
 
-  private fun runTest(
-    gradleVersion: GradleVersion,
-    test: () -> Unit,
-  ) {
-    assertThatKotlinDslScriptsModelImportIsSupported(gradleVersion)
-    testKotlinDslEmptyProject(gradleVersion) {
-      codeInsightFixture.enableInspections(GradleAvoidDuplicateRepositoriesInspection::class.java)
-      test()
-    }
+  @AfterEach
+  fun tearDown() {
+    KotlinSdkType.removeKotlinSdkInTests()
   }
 
-  @ParameterizedTest
+  @Nested
+  @ParameterizedClass
   @AllGradleVersionsSource
-  @TargetVersions("6.0+")
-  fun `test single repository`(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+  inner class AllGradleVersions(gradleVersion: GradleVersion) {
+
+    private val codeInsightFixture by simpleGradleCodeInsightFixture(gradleVersion)
+
+    @BeforeEach
+    fun enableInspection() {
+      codeInsightFixture.enableInspections(GradleAvoidDuplicateRepositoriesInspection::class.java)
+    }
+
+    @Test
+    fun `test single repository`() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         repositories {
             mavenCentral()
@@ -36,14 +48,10 @@ class KotlinAvoidDuplicateRepositoriesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions("6.0+")
-  fun `test different repositories`(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun `test different repositories`() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         repositories {
             mavenCentral()
@@ -52,14 +60,10 @@ class KotlinAvoidDuplicateRepositoriesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions("6.0+")
-  fun `test different repository configurations`(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun `test different repository configurations`() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         repositories {
             maven { url = uri("https://repo1.maven.org/maven2/") }
@@ -68,14 +72,10 @@ class KotlinAvoidDuplicateRepositoriesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions("6.0+")
-  fun `test simple same repository`(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun `test simple same repository`() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         repositories {
             <weak_warning descr="Repository 'mavenCentral()' is declared multiple times">mavenCentral</weak_warning>()
@@ -84,14 +84,10 @@ class KotlinAvoidDuplicateRepositoriesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions("6.0+")
-  fun `test long same repository`(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun `test long same repository`() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         repositories {
             <weak_warning descr="Repository 'maven{url=uri(\"https...' is declared multiple times">maven</weak_warning> { url = uri("https://repo1.maven.org/maven2/") }
@@ -100,14 +96,10 @@ class KotlinAvoidDuplicateRepositoriesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions("6.0+")
-  fun `test same repository different white space`(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun `test same repository different white space`() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         repositories {
             <weak_warning>maven</weak_warning> { url = uri("https://repo1.maven.org/maven2/") }
@@ -118,14 +110,10 @@ class KotlinAvoidDuplicateRepositoriesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions("6.0+")
-  fun `test same repository different comments`(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun `test same repository different comments`() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         repositories {
             <weak_warning>ivy</weak_warning> {
@@ -140,14 +128,10 @@ class KotlinAvoidDuplicateRepositoriesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions("6.0+")
-  fun `test ignore non repositories`(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun `test ignore non repositories`() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         repositories {
             println("Hello world!")
@@ -156,14 +140,10 @@ class KotlinAvoidDuplicateRepositoriesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions("6.0+")
-  fun `test plugin repositories`(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun `test plugin repositories`() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         buildscript {
             repositories {
@@ -174,34 +154,10 @@ class KotlinAvoidDuplicateRepositoriesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(DEPENDENCY_RESOLUTION_MANAGEMENT_SUPPORTED_VERSIONS)
-  fun `test dependency resolution management repositories`(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
-        relativePath = "settings.gradle.kts",
-        """
-        dependencyResolutionManagement {
-            repositories {
-                <weak_warning>google</weak_warning>()
-                <weak_warning>google</weak_warning>()
-            }
-        }
-        """.trimIndent()
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions("6.0+")
-  fun `test plugin management repositories`(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
-        relativePath = "settings.gradle.kts",
+    @Test
+    fun `test plugin management repositories`() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         pluginManagement {
             repositories {
@@ -209,7 +165,37 @@ class KotlinAvoidDuplicateRepositoriesInspectionTest : K2GradleCodeInsightTestCa
                 <weak_warning>gradlePluginPortal</weak_warning>()
             }
         }
-        """.trimIndent()
+        """.trimIndent(),
+        relativePath = "settings.gradle.kts",
+      )
+    }
+  }
+
+  @Nested
+  @ParameterizedClass
+  @AllGradleVersionsSource
+  @TargetVersions(DEPENDENCY_RESOLUTION_MANAGEMENT_SUPPORTED_VERSIONS)
+  inner class DependencyResolutionManagementRepositories(gradleVersion: GradleVersion) {
+
+    private val codeInsightFixture by simpleGradleCodeInsightFixture(gradleVersion)
+
+    @BeforeEach
+    fun enableInspection() {
+      codeInsightFixture.enableInspections(GradleAvoidDuplicateRepositoriesInspection::class.java)
+    }
+
+    @Test
+    fun `test dependency resolution management repositories`() {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        """
+        dependencyResolutionManagement {
+            repositories {
+                <weak_warning>google</weak_warning>()
+                <weak_warning>google</weak_warning>()
+            }
+        }
+        """.trimIndent(),
+        relativePath = "settings.gradle.kts",
       )
     }
   }

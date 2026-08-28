@@ -2,56 +2,61 @@
 package com.intellij.gradle.codeInsight.kotlin.backend.tests.integration.inspections
 
 import com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleAvoidApplyPluginMethodInspection
-import com.intellij.gradle.testFramework.GradleTestVersions.BASE_GRADLE_VERSION
+import com.intellij.gradle.codeInsight.kotlin.testFramework.checkGradleScriptHighlighting
+import com.intellij.gradle.codeInsight.kotlin.testFramework.checkGradleScriptIntention
+import com.intellij.gradle.codeInsight.kotlin.testFramework.checkNoGradleScriptIntentions
+import com.intellij.gradle.codeInsight.kotlin.testFramework.fixtures.simpleGradleCodeInsightFixture
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
 import com.intellij.gradle.testFramework.annotations.TargetVersions
+import com.intellij.gradle.testFramework.fixtures.application.GradleImmutableProjectTestApplication
 import com.intellij.gradle.testFramework.util.KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS
-import com.intellij.gradle.testFramework.util.assertThatKotlinDslScriptsModelImportIsSupported
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.gradle.K2GradleCodeInsightTestCase
-import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_CORE_PLUGIN_SHORT_NAMES
+import org.jetbrains.kotlin.idea.framework.KotlinSdkType
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.ParameterizedTest
-import org.junitpioneer.jupiter.cartesian.ArgumentSets
-import org.junitpioneer.jupiter.cartesian.CartesianTest
+import org.junit.jupiter.params.provider.FieldSource
+import org.junit.jupiter.params.provider.ValueSource
 
-class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase() {
+@GradleImmutableProjectTestApplication
+class KotlinAvoidApplyPluginMethodInspectionTest {
 
-  private fun runTest(
-    gradleVersion: GradleVersion,
-    test: () -> Unit,
-  ) {
-    assertThatKotlinDslScriptsModelImportIsSupported(gradleVersion)
-    testKotlinDslEmptyProject(gradleVersion) {
+  @AfterEach
+  fun tearDown() {
+    KotlinSdkType.removeKotlinSdkInTests()
+  }
+
+  @Nested
+  @ParameterizedClass
+  @AllGradleVersionsSource
+  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
+  inner class AllGradleVersions(gradleVersion: GradleVersion) {
+
+    private val codeInsightFixture by simpleGradleCodeInsightFixture(gradleVersion)
+
+    @BeforeEach
+    fun enableInspection() {
       codeInsightFixture.enableInspections(GradleAvoidApplyPluginMethodInspection::class.java)
-      test()
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testSimple(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting("<weak_warning>apply(plugin = \"org.hi.mark\")</weak_warning>")
+    @Test
+    fun testSimple() {
+      codeInsightFixture.checkGradleScriptHighlighting("<weak_warning>apply(plugin = \"org.hi.mark\")</weak_warning>")
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testNoQuickFix(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testNoIntentions("apply(plugin = \"org.hi.mark\")<caret>", "Use the ‘plugins’ block")
+    @Test
+    fun testNoQuickFix() {
+      codeInsightFixture.checkNoGradleScriptIntentions("apply(plugin = \"org.hi.mark\")<caret>", "Use the ‘plugins’ block")
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testCorePlugin(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting("<weak_warning>apply(plugin = \"java\")</weak_warning>")
-      testIntention(
+    @Test
+    fun testCorePlugin() {
+      codeInsightFixture.checkGradleScriptHighlighting("<weak_warning>apply(plugin = \"java\")</weak_warning>")
+      codeInsightFixture.checkGradleScriptIntention(
         """
         apply(plugin = "java")<caret>
         """.trimIndent(),
@@ -65,14 +70,10 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         "Use the ‘plugins’ block"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testCorePluginWithExistingPluginsBlock(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testCorePluginWithExistingPluginsBlock() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         plugins {
             id("org.some.other.plugin") version "1.0"
@@ -81,7 +82,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         <weak_warning>apply(plugin = "java")</weak_warning>
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         plugins {
             id("org.some.other.plugin") version "1.0"
@@ -100,35 +101,10 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         "Use the ‘plugins’ block"
       )
     }
-  }
 
-  @CartesianTest
-  @CartesianTest.MethodFactory("corePluginNamesFactory")
-  fun testAllCorePlugins(gradleVersion: GradleVersion, pluginName: String) {
-    runTest(gradleVersion) {
-      testHighlighting("<weak_warning>apply(plugin = \"$pluginName\")</weak_warning>")
-      testIntention(
-        """
-        apply(plugin = "$pluginName")<caret>
-        """.trimIndent(),
-        """
-        plugins {
-            id("$pluginName")
-        }
-        
-        
-        """.trimIndent(),
-        "Use the ‘plugins’ block"
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testExternalPluginNoPluginsBlock(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testExternalPluginNoPluginsBlock() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         buildscript {
             repositories {
@@ -142,7 +118,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         <weak_warning>apply(plugin = "org.real.plugin")</weak_warning>
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         buildscript {
             repositories {
@@ -165,14 +141,10 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         "Use the ‘plugins’ block"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testExternalPluginPluginsBlockExists(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testExternalPluginPluginsBlockExists() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         plugins {
             id("org.some.other.plugin") version "1.0"
@@ -190,7 +162,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         <weak_warning>apply(plugin = "org.real.plugin")</weak_warning>
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         plugins {
             id("org.some.other.plugin") version "1.0"
@@ -218,14 +190,10 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         "Use the ‘plugins’ block"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testExternalPluginOnlyDependenciesBlockRemoved(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testExternalPluginOnlyDependenciesBlockRemoved() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         buildscript {
             repositories {
@@ -241,7 +209,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         <weak_warning>apply(plugin = "org.real.plugin")</weak_warning>
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         buildscript {
             repositories {
@@ -272,14 +240,10 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         "Use the ‘plugins’ block"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testExternalPluginMultipleDependencies(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testExternalPluginMultipleDependencies() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         buildscript {
             repositories {
@@ -294,7 +258,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         <weak_warning>apply(plugin = "org.real.plugin")</weak_warning>
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         buildscript {
             repositories {
@@ -327,14 +291,10 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         "Use the ‘plugins’ block"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testNoIntentionWithMultipleRepositories(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testNoIntentionWithMultipleRepositories() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         buildscript {
             repositories {
@@ -349,7 +309,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         <weak_warning>apply(plugin = "org.real.plugin")</weak_warning>
         """.trimIndent()
       )
-      testNoIntentions(
+      codeInsightFixture.checkNoGradleScriptIntentions(
         """
         buildscript {
             repositories {
@@ -366,24 +326,16 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         "Use the ‘plugins’ block"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testNoIntentionWithoutBuildscript(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting("<weak_warning>apply(plugin = \"org.real.plugin\")</weak_warning>")
-      testNoIntentions("apply(plugin = \"org.real.plugin\")<caret>", "Use the ‘plugins’ block")
+    @Test
+    fun testNoIntentionWithoutBuildscript() {
+      codeInsightFixture.checkGradleScriptHighlighting("<weak_warning>apply(plugin = \"org.real.plugin\")</weak_warning>")
+      codeInsightFixture.checkNoGradleScriptIntentions("apply(plugin = \"org.real.plugin\")<caret>", "Use the ‘plugins’ block")
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testNoIntentionWithoutMatchingClasspath(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testNoIntentionWithoutMatchingClasspath() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         buildscript {
             repositories {
@@ -397,7 +349,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         <weak_warning>apply(plugin = "org.real.plugin")</weak_warning>
         """.trimIndent()
       )
-      testNoIntentions(
+      codeInsightFixture.checkNoGradleScriptIntentions(
         """
         buildscript {
             repositories {
@@ -413,14 +365,10 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         "Use the ‘plugins’ block"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testNoIntentionWithoutRepositoriesBlock(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testNoIntentionWithoutRepositoriesBlock() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         buildscript {
             dependencies {
@@ -430,7 +378,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         <weak_warning>apply(plugin = "org.real.plugin")</weak_warning>
         """.trimIndent()
       )
-      testNoIntentions(
+      codeInsightFixture.checkNoGradleScriptIntentions(
         """
         buildscript {
             dependencies {
@@ -442,14 +390,10 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         "Use the ‘plugins’ block"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testNoIntentionWithWrongRepository(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testNoIntentionWithWrongRepository() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         buildscript {
             repositories {
@@ -463,7 +407,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         <weak_warning>apply(plugin = "org.real.plugin")</weak_warning>
         """.trimIndent()
       )
-      testNoIntentions(
+      codeInsightFixture.checkNoGradleScriptIntentions(
         """
         buildscript {
             repositories {
@@ -479,14 +423,10 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         "Use the ‘plugins’ block"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testValPluginName(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testValPluginName() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         buildscript {
             repositories {
@@ -501,7 +441,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         <weak_warning>apply(plugin = pluginName)</weak_warning>
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         buildscript {
             repositories {
@@ -526,14 +466,10 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         "Use the ‘plugins’ block"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testValClasspath(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testValClasspath() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         buildscript {
             repositories {
@@ -548,7 +484,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         <weak_warning>apply(plugin = "org.real.plugin")</weak_warning>
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         buildscript {
             repositories {
@@ -579,14 +515,10 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         "Use the ‘plugins’ block"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testValClasspathGroup(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testValClasspathGroup() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         $$"""
         buildscript {
             repositories {
@@ -601,7 +533,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         <weak_warning>apply(plugin = "org.real.plugin")</weak_warning>
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         $$"""
         buildscript {
             repositories {
@@ -632,14 +564,10 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         "Use the ‘plugins’ block"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testValClasspathVersion(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testValClasspathVersion() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         $$"""
         buildscript {
             repositories {
@@ -654,7 +582,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         <weak_warning>apply(plugin = "org.real.plugin")</weak_warning>
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         $$"""
         buildscript {
             repositories {
@@ -685,48 +613,16 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         "Use the ‘plugins’ block"
       )
     }
-  }
 
-
-  @ParameterizedTest
-  @AllGradleVersionsSource("allprojects,subprojects")
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testApplyInsideBlock(gradleVersion: GradleVersion, blockName: String) {
-    runTest(gradleVersion) {
-      testHighlighting(
-        """
-        $blockName {
-            <weak_warning>apply(plugin = "java")</weak_warning>
-        }
-        """.trimIndent()
-      )
-      testNoIntentions(
-        """
-        $blockName {
-            apply(plugin = "java")<caret>
-        }
-        """.trimIndent(),
-        "Use the ‘plugins’ block"
-      )
+    @Test
+    fun testApplyNotOnTopLevel() {
+      codeInsightFixture.checkGradleScriptHighlighting("if (true) <weak_warning>apply(plugin = \"java\")</weak_warning>")
+      codeInsightFixture.checkNoGradleScriptIntentions("if (true) apply(plugin = \"java\")<caret>", "Use the ‘plugins’ block")
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testApplyNotOnTopLevel(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting("if (true) <weak_warning>apply(plugin = \"java\")</weak_warning>")
-      testNoIntentions("if (true) apply(plugin = \"java\")<caret>", "Use the ‘plugins’ block")
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testCoreDuplicateIdInPlugins(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testCoreDuplicateIdInPlugins() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         plugins {
             id("java")
@@ -735,7 +631,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         <weak_warning>apply(plugin = "java")</weak_warning>
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         plugins {
             id("java")
@@ -753,14 +649,10 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         "Use the ‘plugins’ block"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testCoreDuplicateBareInPlugins(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testCoreDuplicateBareInPlugins() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         plugins {
             java
@@ -769,7 +661,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         <weak_warning>apply(plugin = "java")</weak_warning>
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         plugins {
             java
@@ -787,14 +679,10 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         "Use the ‘plugins’ block"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testCoreDuplicateBackTicksInPlugins(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testCoreDuplicateBackTicksInPlugins() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         plugins {
             `java`
@@ -803,7 +691,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         <weak_warning>apply(plugin = "java")</weak_warning>
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         plugins {
             `java`
@@ -821,14 +709,10 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         "Use the ‘plugins’ block"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testDuplicateKotlinInPlugins(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testDuplicateKotlinInPlugins() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         plugins {
             kotlin("jvm") version "2.3.0"
@@ -846,7 +730,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         <weak_warning>apply(plugin = "org.jetbrains.kotlin.jvm")</weak_warning>
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         plugins {
             kotlin("jvm") version "2.3.0"
@@ -873,14 +757,10 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         "Use the ‘plugins’ block"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testCoreDuplicateIdInPluginsVals(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testCoreDuplicateIdInPluginsVals() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         val java1 = "java"
         plugins {
@@ -891,7 +771,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         <weak_warning>apply(plugin = java2)</weak_warning>
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         val java1 = "java"
         plugins {
@@ -913,14 +793,10 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         "Use the ‘plugins’ block"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testCoreDifferentIdInPluginsVals(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testCoreDifferentIdInPluginsVals() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         val java1 = "java-library"
         plugins {
@@ -931,7 +807,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         <weak_warning>apply(plugin = java2)</weak_warning>
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         val java1 = "java-library"
         plugins {
@@ -954,14 +830,57 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         "Use the ‘plugins’ block"
       )
     }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["allprojects", "subprojects"])
+    fun testApplyInsideBlock(blockName: String) {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        """
+        $blockName {
+            <weak_warning>apply(plugin = "java")</weak_warning>
+        }
+        """.trimIndent()
+      )
+      codeInsightFixture.checkNoGradleScriptIntentions(
+        """
+        $blockName {
+            apply(plugin = "java")<caret>
+        }
+        """.trimIndent(),
+        "Use the ‘plugins’ block"
+      )
+    }
   }
 
+  @Nested
+  @ParameterizedClass
+  @BaseGradleVersionSource
+  inner class BaseGradleVersion(gradleVersion: GradleVersion) {
 
-  companion object {
-    @JvmStatic
-    @Suppress("unused") // used by testAllCorePlugins test
-    private fun corePluginNamesFactory(): ArgumentSets =
-      ArgumentSets.argumentsForFirstParameter(GradleVersion.version(BASE_GRADLE_VERSION))
-        .argumentsForNextParameter(GRADLE_CORE_PLUGIN_SHORT_NAMES)
+    private val codeInsightFixture by simpleGradleCodeInsightFixture(gradleVersion)
+
+    @BeforeEach
+    fun enableInspection() {
+      codeInsightFixture.enableInspections(GradleAvoidApplyPluginMethodInspection::class.java)
+    }
+
+    @ParameterizedTest
+    @FieldSource("org.jetbrains.plugins.gradle.util.GradleConstants#GRADLE_CORE_PLUGIN_SHORT_NAMES")
+    fun testAllCorePlugins(pluginName: String) {
+      codeInsightFixture.checkGradleScriptHighlighting("<weak_warning>apply(plugin = \"$pluginName\")</weak_warning>")
+      codeInsightFixture.checkGradleScriptIntention(
+        """
+        apply(plugin = "$pluginName")<caret>
+        """.trimIndent(),
+        """
+        plugins {
+            id("$pluginName")
+        }
+        
+        
+        """.trimIndent(),
+        "Use the ‘plugins’ block"
+      )
+    }
   }
 }

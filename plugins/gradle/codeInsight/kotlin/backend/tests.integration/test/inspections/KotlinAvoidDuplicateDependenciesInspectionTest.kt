@@ -2,52 +2,56 @@
 package com.intellij.gradle.codeInsight.kotlin.backend.tests.integration.inspections
 
 import com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleAvoidDuplicateDependenciesInspection
-import com.intellij.gradle.testFramework.GradleTestFixtureBuilder
+import com.intellij.gradle.codeInsight.kotlin.testFramework.checkGradleScriptHighlighting
+import com.intellij.gradle.codeInsight.kotlin.testFramework.checkGradleScriptIntention
+import com.intellij.gradle.codeInsight.kotlin.testFramework.checkNoGradleScriptIntentions
+import com.intellij.gradle.codeInsight.kotlin.testFramework.disableBuiltInKotlinHighlighters
+import com.intellij.gradle.codeInsight.kotlin.testFramework.fixtures.customConfigurationsAndVersionCatalogsGradleCodeInsightFixture
+import com.intellij.gradle.codeInsight.kotlin.testFramework.fixtures.customConfigurationsGradleCodeInsightFixture
+import com.intellij.gradle.codeInsight.kotlin.testFramework.isMissingDeprecationAnnotationAddedToKotlinDsl
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
 import com.intellij.gradle.testFramework.annotations.TargetVersions
+import com.intellij.gradle.testFramework.fixtures.application.GradleImmutableProjectTestApplication
+import com.intellij.gradle.testFramework.fixtures.gradleCodeInsightFixture
+import com.intellij.gradle.testFramework.projectInfo.buildFile
+import com.intellij.gradle.testFramework.projectInfo.simpleSettingsFile
 import com.intellij.gradle.testFramework.util.KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS
 import com.intellij.gradle.testFramework.util.VERSION_CATALOGS_SUPPORTED_VERSIONS
-import com.intellij.gradle.testFramework.util.assertThatKotlinDslScriptsModelImportIsSupported
-import com.intellij.gradle.testFramework.util.withBuildFile
-import com.intellij.gradle.testFramework.util.withSettingsFile
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.gradle.K2GradleCodeInsightTestCase
-import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
-import org.junit.jupiter.params.ParameterizedTest
+import org.jetbrains.kotlin.idea.framework.KotlinSdkType
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
 
-class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCase() {
+@GradleImmutableProjectTestApplication
+class KotlinAvoidDuplicateDependenciesInspectionTest {
 
-  override fun setUp() {
-    super.setUp()
-    if (isMissingDeprecationAnnotationAddedToKotlinDsl(gradleVersion)) {
-      disableBuiltInKotlinHighlighters()
-    }
+  @AfterEach
+  fun tearDown() {
+    KotlinSdkType.removeKotlinSdkInTests()
   }
 
-  private fun runTest(
-    gradleVersion: GradleVersion,
-    withVersionCatalogs: Boolean,
-    test: () -> Unit,
-  ) {
-    assertThatKotlinDslScriptsModelImportIsSupported(gradleVersion)
-    val fixture = if (withVersionCatalogs) {
-      WITH_CUSTOM_CONFIGURATIONS_AND_VERSION_CATALOGS_FIXTURE
-    }
-    else {
-      WITH_CUSTOM_CONFIGURATIONS_FIXTURE
-    }
-    test(gradleVersion, fixture) {
-      codeInsightFixture.enableInspections(GradleAvoidDuplicateDependenciesInspection::class.java)
-      test()
-    }
-  }
-
-  @ParameterizedTest
+  @Nested
+  @ParameterizedClass
   @AllGradleVersionsSource
   @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testSingleDependency(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+  inner class CustomConfigurations(private val gradleVersion: GradleVersion) {
+
+    private val codeInsightFixture by customConfigurationsGradleCodeInsightFixture(gradleVersion)
+
+    @BeforeEach
+    fun setUp() {
+      codeInsightFixture.enableInspections(GradleAvoidDuplicateDependenciesInspection::class.java)
+      if (isMissingDeprecationAnnotationAddedToKotlinDsl(gradleVersion)) {
+        codeInsightFixture.disableBuiltInKotlinHighlighters()
+      }
+    }
+
+    @Test
+    fun testSingleDependency() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
@@ -55,14 +59,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testDifferentDependencies(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testDifferentDependencies() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
@@ -72,14 +72,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testSimpleSameDependency(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testSimpleSameDependency() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             <weak_warning>api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
@@ -88,14 +84,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testSameDependencyDifferentConfigurations(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testSameDependencyDifferentConfigurations() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
@@ -104,14 +96,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testSameDependencyInDifferentBlocks(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testSameDependencyInDifferentBlocks() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             <weak_warning>api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
@@ -123,14 +111,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testSameDependencyConfigurationBlock(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testSameDependencyConfigurationBlock() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             <weak_warning>api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
@@ -139,14 +123,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testSameDependencyNamedArguments(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testSameDependencyNamedArguments() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             <weak_warning>api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
@@ -155,14 +135,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testSameDependencyNoVersion(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testSameDependencyNoVersion() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             <weak_warning>api("org.jetbrains.kotlin:kotlin-stdlib")</weak_warning>
@@ -171,14 +147,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testDifferentVersions(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testDifferentVersions() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             api("org.jetbrains.kotlin:kotlin-stdlib")
@@ -188,110 +160,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(VERSION_CATALOGS_SUPPORTED_VERSIONS)
-  fun testSimpleVersionCatalogsResolve(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = true) {
-      testHighlighting(
-        """
-        dependencies {
-            <weak_warning>api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
-            <weak_warning>api(libs.kotlin.std.lib.simple)</weak_warning>
-        }
-        """.trimIndent()
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(VERSION_CATALOGS_SUPPORTED_VERSIONS)
-  fun testSimpleVersionCatalogsResolveNoVersion(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = true) {
-      testHighlighting(
-        """
-        dependencies {
-            <weak_warning>api("org.jetbrains.kotlin:kotlin-stdlib")</weak_warning>
-            <weak_warning>api(libs.kotlin.std.lib.noVersion)</weak_warning>
-        }
-        """.trimIndent()
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(VERSION_CATALOGS_SUPPORTED_VERSIONS)
-  fun testVersionCatalogsResolve(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = true) {
-      testHighlighting(
-        """
-        dependencies {
-            <weak_warning>api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
-            <weak_warning>api(libs.kotlin.std.lib.moduleVersion)</weak_warning>
-        }
-        """.trimIndent()
-      )
-      testHighlighting(
-        """
-        dependencies {
-            <weak_warning>api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
-            <weak_warning>api(libs.kotlin.std.lib.groupNameVersion)</weak_warning>
-        }
-        """.trimIndent()
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(VERSION_CATALOGS_SUPPORTED_VERSIONS)
-  fun testVersionCatalogsResolveVersionRef(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = true) {
-      testHighlighting(
-        """
-        dependencies {
-            <weak_warning>api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
-            <weak_warning>api(libs.kotlin.std.lib.moduleVersionRef)</weak_warning>
-        }
-        """.trimIndent()
-      )
-      testHighlighting(
-        """
-        dependencies {
-            <weak_warning>api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
-            <weak_warning>api(libs.kotlin.std.lib.groupNameVersionRef)</weak_warning>
-        }
-        """.trimIndent()
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(VERSION_CATALOGS_SUPPORTED_VERSIONS)
-  fun testVersionCatalogsResolveMultiline(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = true) {
-      testHighlighting(
-        """
-        dependencies {
-            <weak_warning>api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
-            <weak_warning>api(libs.kotlin.std.lib.multiline)</weak_warning>
-        }
-        """.trimIndent()
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testSameVersionVal(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testSameVersionVal() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             val versionRef = "2.2.0"
@@ -301,14 +173,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testStringInterpolation(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testStringInterpolation() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         $$"""
         dependencies {
             val groupRef = "org.jetbrains.kotlin"
@@ -320,14 +188,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testNamedArgumentsVals(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testNamedArgumentsVals() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             val groupRef = "org.jetbrains.kotlin"
@@ -339,15 +203,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testCoordinateVal(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testCoordinateVal() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             val coordRef = "org.jetbrains.kotlin:kotlin-stdlib:2.2.0"
@@ -357,14 +216,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testDifferentVersionSameNameVal(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testDifferentVersionSameNameVal() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         $$"""
         dependencies {
             val versionRef = "2.1.0"
@@ -377,14 +232,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testDifferentVersionSameNameValNamedArguments(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testDifferentVersionSameNameValNamedArguments() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             val versionRef = "2.1.0"
@@ -397,14 +248,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testCustomConfigurationDoesNotExtendApi(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testCustomConfigurationDoesNotExtendApi() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         val customConf = configurations.named("customConf").get()
         dependencies {
@@ -414,14 +261,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testCustomConfigurationSimple(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testCustomConfigurationSimple() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         val customConf = configurations.named("customConf").get()
         dependencies {
@@ -431,31 +274,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(VERSION_CATALOGS_SUPPORTED_VERSIONS)
-  fun testCustomConfigurationVersionCatalog(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = true) {
-      testHighlighting(
-        """
-        val customConf = configurations.named("customConf").get()
-        dependencies {
-            <weak_warning>customConf("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
-            <weak_warning>customConf(libs.kotlin.std.lib.simple)</weak_warning>
-        }
-        """.trimIndent()
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testSameKotlinArg(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testSameKotlinArg() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             <weak_warning>api(kotlin("stdlib"))</weak_warning>
@@ -464,14 +286,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testDifferentKotlinArg(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testDifferentKotlinArg() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             api(kotlin("stdlib-jdk8"))
@@ -480,14 +298,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testKotlinArgVar(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testKotlinArgVar() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             var kotlinArg = "stdlib"
@@ -497,14 +311,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testSameKotlinArgDifferentVals(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testSameKotlinArgDifferentVals() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             val kotlinRef = "stdlib"
@@ -515,14 +325,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testSameKotlinArgWithSameVersion(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testSameKotlinArgWithSameVersion() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             <weak_warning>api(kotlin("stdlib", "2.2.0"))</weak_warning>
@@ -531,14 +337,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testSameKotlinArgWithDifferentVersion(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testSameKotlinArgWithDifferentVersion() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             api(kotlin("stdlib", "2.1.0"))
@@ -547,14 +349,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testSameKotlinArgWithSameVersionVals(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testSameKotlinArgWithSameVersionVals() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             val versionRef1 = "2.2.0"
@@ -565,14 +363,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testSameKotlinArgWithDifferentVersionVals(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testSameKotlinArgWithDifferentVersionVals() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             val versionRef1 = "2.1.0"
@@ -583,14 +377,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testEquivalentKotlinArgWithSingleString(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testEquivalentKotlinArgWithSingleString() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             <weak_warning>api(kotlin("stdlib"))</weak_warning>
@@ -599,14 +389,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testEquivalentKotlinArgWithVersionInFirstArg(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testEquivalentKotlinArgWithVersionInFirstArg() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             <weak_warning>api(kotlin("stdlib", "2.2.0"))</weak_warning>
@@ -615,14 +401,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testEquivalentKotlinArgWithNamedArguments(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testEquivalentKotlinArgWithNamedArguments() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             <weak_warning>api(kotlin("stdlib"))</weak_warning>
@@ -631,14 +413,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testEquivalentKotlinArgWithSingleStringAndVersions(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testEquivalentKotlinArgWithSingleStringAndVersions() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             <weak_warning>api(kotlin("stdlib", "2.2.0"))</weak_warning>
@@ -647,14 +425,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testEquivalentKotlinArgWithNamedArgumentsAndVersions(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testEquivalentKotlinArgWithNamedArgumentsAndVersions() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             <weak_warning>api(kotlin("stdlib", "2.2.0"))</weak_warning>
@@ -663,14 +437,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testNotEquivalentKotlinArg(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testNotEquivalentKotlinArg() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             api(kotlin("stdlib", "2.2.0"))
@@ -683,14 +453,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testIgnoreOtherDependencyBlocks(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testIgnoreOtherDependencyBlocks() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         buildscript {
             dependencies {
@@ -703,14 +469,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testRemoveSimple(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testIntention(
+    @Test
+    fun testRemoveSimple() {
+      codeInsightFixture.checkGradleScriptIntention(
         """
         dependencies {
             api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")<caret>
@@ -725,14 +487,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         "Remove exact duplicates"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testRemoveSimpleMultiple(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testIntention(
+    @Test
+    fun testRemoveSimpleMultiple() {
+      codeInsightFixture.checkGradleScriptIntention(
         """
         dependencies {
             api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")<caret>
@@ -748,14 +506,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         "Remove exact duplicates"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testRemoveSimpleUnselected(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testIntention(
+    @Test
+    fun testRemoveSimpleUnselected() {
+      codeInsightFixture.checkGradleScriptIntention(
         """
         dependencies {
             api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
@@ -775,14 +529,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         "Remove exact duplicates"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testRemoveNamedArguments(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testIntention(
+    @Test
+    fun testRemoveNamedArguments() {
+      codeInsightFixture.checkGradleScriptIntention(
         """
         dependencies {
             api(group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version = "2.2.0")<caret>
@@ -797,14 +547,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         "Remove exact duplicates"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testNoRemoveNamedArgumentsAndSimpleMix(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testNoIntentions(
+    @Test
+    fun testNoRemoveNamedArgumentsAndSimpleMix() {
+      codeInsightFixture.checkNoGradleScriptIntentions(
         """
         dependencies {
             api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")<caret>
@@ -813,7 +559,7 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent(),
         "Remove exact duplicates"
       )
-      testNoIntentions(
+      codeInsightFixture.checkNoGradleScriptIntentions(
         """
         dependencies {
             api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
@@ -823,14 +569,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         "Remove exact duplicates"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testRemoveVals(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testIntention(
+    @Test
+    fun testRemoveVals() {
+      codeInsightFixture.checkGradleScriptIntention(
         """
         dependencies {
             val versionRef = "2.2.0"
@@ -848,14 +590,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         "Remove exact duplicates"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testNoRemoveDifferentConfiguration(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testNoIntentions(
+    @Test
+    fun testNoRemoveDifferentConfiguration() {
+      codeInsightFixture.checkNoGradleScriptIntentions(
         """
         dependencies {
             api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")<caret>
@@ -864,7 +602,7 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent(),
         "Remove exact duplicates"
       )
-      testNoIntentions(
+      codeInsightFixture.checkNoGradleScriptIntentions(
         """
         dependencies {
             api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
@@ -874,14 +612,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         "Remove exact duplicates"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testNoRemoveWithConfigurationBlock(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testNoIntentions(
+    @Test
+    fun testNoRemoveWithConfigurationBlock() {
+      codeInsightFixture.checkNoGradleScriptIntentions(
         """
         dependencies {
             api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")<caret>
@@ -890,7 +624,7 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent(),
         "Remove exact duplicates"
       )
-      testNoIntentions(
+      codeInsightFixture.checkNoGradleScriptIntentions(
         """
         dependencies {
             api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
@@ -900,14 +634,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         "Remove exact duplicates"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testNoRemoveDifferentExtraArguments(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testNoIntentions(
+    @Test
+    fun testNoRemoveDifferentExtraArguments() {
+      codeInsightFixture.checkNoGradleScriptIntentions(
         """
         dependencies {
             api(group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version = "2.2.0")<caret>
@@ -916,7 +646,7 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent(),
         "Remove exact duplicates"
       )
-      testNoIntentions(
+      codeInsightFixture.checkNoGradleScriptIntentions(
         """
         dependencies {
             api(group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version = "2.2.0")
@@ -926,14 +656,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         "Remove exact duplicates"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testAnnotationProcessorSeparation(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testAnnotationProcessorSeparation() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             implementation("org.projectlombok:lombok:1.18.20")
@@ -942,14 +668,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testAnnotationProcessorGrouping(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testAnnotationProcessorGrouping() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             implementation("org.projectlombok:lombok:1.18.20")
@@ -959,14 +681,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testAnnotationProcessorDifferentGrouping(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testAnnotationProcessorDifferentGrouping() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             implementation("org.projectlombok:lombok:1.18.20")
@@ -976,14 +694,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testExtendingConfigurationsHierarchy(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testExtendingConfigurationsHierarchy() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
@@ -993,14 +707,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testNotExtendingConfigurations(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      testHighlighting(
+    @Test
+    fun testNotExtendingConfigurations() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             implementation("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
@@ -1011,50 +721,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions("7.0+", reason = "Gradle 7.0+ supports type-safe project dependencies")
-  fun `test different unresolvable accessors are not duplicates`(gradleVersion: GradleVersion) {
-    test(gradleVersion, WITH_TYPE_SAFE_PROJECT_DEPENDENCIES) {
-      codeInsightFixture.enableInspections(GradleAvoidDuplicateDependenciesInspection::class.java)
-      testHighlighting(
-        """
-        dependencies {
-            api(projects.subproject1)
-            api(projects.subproject2)
-        }
-        """.trimIndent()
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions("7.0+", reason = "Gradle 7.0+ supports type-safe project dependencies")
-  fun `test identical unresolvable accessors are duplicates`(gradleVersion: GradleVersion) {
-    test(gradleVersion, WITH_TYPE_SAFE_PROJECT_DEPENDENCIES) {
-      codeInsightFixture.enableInspections(GradleAvoidDuplicateDependenciesInspection::class.java)
-      testHighlighting(
-        """
-        dependencies {
-            api(projects.subproject1)
-            <weak_warning>api(projects.subproject1.sub)</weak_warning>
-            <weak_warning>api(projects.subproject1.sub)</weak_warning>
-        }
-        """.trimIndent()
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun `test custom configuration directly extending implementation`(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      codeInsightFixture.enableInspections(GradleAvoidDuplicateDependenciesInspection::class.java)
-      testHighlighting(
+    @Test
+    fun `test custom configuration directly extending implementation`() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         val customExtendingImplementation = configurations.named("customExtendingImplementation").get()
         dependencies {
@@ -1064,15 +734,10 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun `test custom configuration indirectly extending api`(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, withVersionCatalogs = false) {
-      codeInsightFixture.enableInspections(GradleAvoidDuplicateDependenciesInspection::class.java)
-      testHighlighting(
+    @Test
+    fun `test custom configuration indirectly extending api`() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         val customExtendingImplementation = configurations.named("customExtendingImplementation").get()
         dependencies {
@@ -1084,20 +749,167 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
     }
   }
 
+  @Nested
+  @ParameterizedClass
+  @AllGradleVersionsSource
+  @TargetVersions(VERSION_CATALOGS_SUPPORTED_VERSIONS)
+  inner class VersionCatalogs(private val gradleVersion: GradleVersion) {
+
+    private val codeInsightFixture by customConfigurationsAndVersionCatalogsGradleCodeInsightFixture(gradleVersion)
+
+    @BeforeEach
+    fun setUp() {
+      codeInsightFixture.enableInspections(GradleAvoidDuplicateDependenciesInspection::class.java)
+      if (isMissingDeprecationAnnotationAddedToKotlinDsl(gradleVersion)) {
+        codeInsightFixture.disableBuiltInKotlinHighlighters()
+      }
+    }
+
+    @Test
+    fun testSimpleVersionCatalogsResolve() {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        """
+        dependencies {
+            <weak_warning>api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
+            <weak_warning>api(libs.kotlin.std.lib.simple)</weak_warning>
+        }
+        """.trimIndent()
+      )
+    }
+
+    @Test
+    fun testSimpleVersionCatalogsResolveNoVersion() {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        """
+        dependencies {
+            <weak_warning>api("org.jetbrains.kotlin:kotlin-stdlib")</weak_warning>
+            <weak_warning>api(libs.kotlin.std.lib.noVersion)</weak_warning>
+        }
+        """.trimIndent()
+      )
+    }
+
+    @Test
+    fun testVersionCatalogsResolve() {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        """
+        dependencies {
+            <weak_warning>api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
+            <weak_warning>api(libs.kotlin.std.lib.moduleVersion)</weak_warning>
+        }
+        """.trimIndent()
+      )
+      codeInsightFixture.checkGradleScriptHighlighting(
+        """
+        dependencies {
+            <weak_warning>api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
+            <weak_warning>api(libs.kotlin.std.lib.groupNameVersion)</weak_warning>
+        }
+        """.trimIndent()
+      )
+    }
+
+    @Test
+    fun testVersionCatalogsResolveVersionRef() {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        """
+        dependencies {
+            <weak_warning>api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
+            <weak_warning>api(libs.kotlin.std.lib.moduleVersionRef)</weak_warning>
+        }
+        """.trimIndent()
+      )
+      codeInsightFixture.checkGradleScriptHighlighting(
+        """
+        dependencies {
+            <weak_warning>api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
+            <weak_warning>api(libs.kotlin.std.lib.groupNameVersionRef)</weak_warning>
+        }
+        """.trimIndent()
+      )
+    }
+
+    @Test
+    fun testVersionCatalogsResolveMultiline() {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        """
+        dependencies {
+            <weak_warning>api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
+            <weak_warning>api(libs.kotlin.std.lib.multiline)</weak_warning>
+        }
+        """.trimIndent()
+      )
+    }
+
+    @Test
+    fun testCustomConfigurationVersionCatalog() {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        """
+        val customConf = configurations.named("customConf").get()
+        dependencies {
+            <weak_warning>customConf("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
+            <weak_warning>customConf(libs.kotlin.std.lib.simple)</weak_warning>
+        }
+        """.trimIndent()
+      )
+    }
+  }
+
+  @Nested
+  @ParameterizedClass
+  @AllGradleVersionsSource
+  @TargetVersions("7.0+", reason = "Gradle 7.0+ supports type-safe project dependencies")
+  inner class TypeSafeProjectDependencies(private val gradleVersion: GradleVersion) {
+
+    private val codeInsightFixture by typeSafeProjectDependenciesCodeInsightFixture(gradleVersion)
+
+    @BeforeEach
+    fun setUp() {
+      codeInsightFixture.enableInspections(GradleAvoidDuplicateDependenciesInspection::class.java)
+      if (isMissingDeprecationAnnotationAddedToKotlinDsl(gradleVersion)) {
+        codeInsightFixture.disableBuiltInKotlinHighlighters()
+      }
+    }
+
+    @Test
+    fun `test different unresolvable accessors are not duplicates`() {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        """
+        dependencies {
+            api(projects.subproject1)
+            api(projects.subproject2)
+        }
+        """.trimIndent()
+      )
+    }
+
+    @Test
+    fun `test identical unresolvable accessors are duplicates`() {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        """
+        dependencies {
+            api(projects.subproject1)
+            <weak_warning>api(projects.subproject1.sub)</weak_warning>
+            <weak_warning>api(projects.subproject1.sub)</weak_warning>
+        }
+        """.trimIndent()
+      )
+    }
+  }
+
   companion object {
-    private val WITH_TYPE_SAFE_PROJECT_DEPENDENCIES =
-      GradleTestFixtureBuilder.create("with-type-safe-project-dependencies") { gradleVersion ->
-        withSettingsFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
-          setProjectName("with-type-safe-project-dependencies")
+    private fun typeSafeProjectDependenciesCodeInsightFixture(gradleVersion: GradleVersion) =
+      gradleCodeInsightFixture(gradleVersion, "with-type-safe-project-dependencies") {
+        simpleSettingsFile {
           addCode("enableFeaturePreview(\"TYPESAFE_PROJECT_ACCESSORS\")")
           include("subproject1", "subproject1:sub", "subproject2")
         }
-        withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
+        buildFile {
           withKotlinJvmPlugin()
         }
-        withBuildFile(gradleVersion, "subproject1", gradleDsl = GradleDsl.KOTLIN)
-        withBuildFile(gradleVersion, "subproject1/sub", gradleDsl = GradleDsl.KOTLIN)
-        withBuildFile(gradleVersion, "subproject2", gradleDsl = GradleDsl.KOTLIN)
+        moduleInfo("$projectName.subproject1", "subproject1") { buildFile { } }
+        moduleInfo("$projectName.subproject1.sub", "subproject1/sub") { buildFile { } }
+        moduleInfo("$projectName.subproject2", "subproject2") { buildFile { } }
       }
   }
 }

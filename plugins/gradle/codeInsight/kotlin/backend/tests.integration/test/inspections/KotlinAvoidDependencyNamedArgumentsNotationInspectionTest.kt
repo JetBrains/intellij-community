@@ -2,40 +2,51 @@
 package com.intellij.gradle.codeInsight.kotlin.backend.tests.integration.inspections
 
 import com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleAvoidDependencyNamedArgumentsNotationInspection
+import com.intellij.gradle.codeInsight.kotlin.testFramework.checkGradleScriptHighlighting
+import com.intellij.gradle.codeInsight.kotlin.testFramework.checkGradleScriptIntention
+import com.intellij.gradle.codeInsight.kotlin.testFramework.checkNoGradleScriptIntentions
+import com.intellij.gradle.codeInsight.kotlin.testFramework.disableBuiltInKotlinHighlighters
+import com.intellij.gradle.codeInsight.kotlin.testFramework.fixtures.customConfigurationsGradleCodeInsightFixture
+import com.intellij.gradle.codeInsight.kotlin.testFramework.isMissingDeprecationAnnotationAddedToKotlinDsl
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
 import com.intellij.gradle.testFramework.annotations.TargetVersions
+import com.intellij.gradle.testFramework.fixtures.application.GradleImmutableProjectTestApplication
 import com.intellij.gradle.testFramework.util.KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS
-import com.intellij.gradle.testFramework.util.assertThatKotlinDslScriptsModelImportIsSupported
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.gradle.K2GradleCodeInsightTestCase
-import org.junit.jupiter.params.ParameterizedTest
+import org.jetbrains.kotlin.idea.framework.KotlinSdkType
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
 
-class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeInsightTestCase() {
+@GradleImmutableProjectTestApplication
+class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest {
 
-  override fun setUp() {
-    super.setUp()
-    if (isMissingDeprecationAnnotationAddedToKotlinDsl(gradleVersion)) {
-      disableBuiltInKotlinHighlighters()
-    }
+  @AfterEach
+  fun tearDown() {
+    KotlinSdkType.removeKotlinSdkInTests()
   }
 
-  private fun runTest(
-    gradleVersion: GradleVersion,
-    test: () -> Unit,
-  ) {
-    assertThatKotlinDslScriptsModelImportIsSupported(gradleVersion)
-    test(gradleVersion, WITH_CUSTOM_CONFIGURATIONS_FIXTURE) {
-      codeInsightFixture.enableInspections(GradleAvoidDependencyNamedArgumentsNotationInspection::class.java)
-      test()
-    }
-  }
-
-  @ParameterizedTest
+  @Nested
+  @ParameterizedClass
   @AllGradleVersionsSource
   @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testSingleString(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+  inner class AllGradleVersions(private val gradleVersion: GradleVersion) {
+
+    private val codeInsightFixture by customConfigurationsGradleCodeInsightFixture(gradleVersion)
+
+    @BeforeEach
+    fun setUp() {
+      codeInsightFixture.enableInspections(GradleAvoidDependencyNamedArgumentsNotationInspection::class.java)
+      if (isMissingDeprecationAnnotationAddedToKotlinDsl(gradleVersion)) {
+        codeInsightFixture.disableBuiltInKotlinHighlighters()
+      }
+    }
+
+    @Test
+    fun testSingleString() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies { 
             implementation("org.gradle:gradle-core:1.0")
@@ -43,21 +54,17 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testRegular(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testRegular() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies { 
             implementation$WARNING_START(group = "org.gradle", name = "gradle-core", version = "1.0")$WARNING_END
         }
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         dependencies { 
             implementation(group = "org.gradle",<caret> name = "gradle-core", version = "1.0")
@@ -71,14 +78,10 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         "Simplify"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testNonLiteralArgument(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testNonLiteralArgument() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         val verRef = "1.0"
         dependencies { 
@@ -86,7 +89,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         }
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         val verRef = "1.0"
         dependencies { 
@@ -102,14 +105,10 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         "Simplify"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testNonLiteralArguments(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testNonLiteralArguments() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         val groupRef = "org.gradle"
         val groupRefRef = groupRef
@@ -120,7 +119,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         }
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         val groupRef = "org.gradle"
         val groupRefRef = groupRef
@@ -142,14 +141,10 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         "Simplify"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testNonLiteralArgumentsRequiringBraces(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testNonLiteralArgumentsRequiringBraces() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         fun getVer() = "1.0"
         dependencies { 
@@ -158,7 +153,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         }
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         fun getVer() = "1.0"
         dependencies { 
@@ -176,116 +171,10 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         "Simplify"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(
-    KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, "<9.1.0",
-    reason = "IDEA-381769: highlighting fails on deprecations from Gradle"
-  )
-  fun testCustomConfiguration(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
-        """
-        val customConf by configurations.creating {}
-        dependencies { 
-            customConf$WARNING_START(group = "org.gradle", name = "gradle-core", version = "1.0")$WARNING_END
-        }
-        """.trimIndent()
-      )
-      testIntention(
-        """
-        val customConf by configurations.creating {}
-        dependencies { 
-            customConf(group = "org.gradle",<caret> name = "gradle-core", version = "1.0")
-        }
-        """.trimIndent(),
-        """
-        val customConf by configurations.creating {}
-        dependencies { 
-            customConf("org.gradle:gradle-core:1.0")
-        }
-        """.trimIndent(),
-        "Simplify"
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(
-    KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, "<9.1.0",
-    reason = "IDEA-381769: highlighting fails on deprecations from Gradle"
-  )
-  fun testCustomConfigurationString(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
-        """
-        val customConf by configurations.creating {}
-        dependencies { 
-            "customConf"$WARNING_START(group = "org.gradle", name = "gradle-core", version = "1.0")$WARNING_END
-        }
-        """.trimIndent()
-      )
-      testIntention(
-        """
-        val customConf by configurations.creating {}
-        dependencies { 
-            "customConf"(group = "org.gradle",<caret> name = "gradle-core", version = "1.0")
-        }
-        """.trimIndent(),
-        """
-        val customConf by configurations.creating {}
-        dependencies { 
-            "customConf"("org.gradle:gradle-core:1.0")
-        }
-        """.trimIndent(),
-        "Simplify"
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(
-    KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, "<9.1.0",
-    reason = "IDEA-381769: highlighting fails on deprecations from Gradle"
-  )
-  fun testCustomSourceSet(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
-        """
-        val customSourceSet by sourceSets.creating {}
-        dependencies { 
-            "customSourceSetImplementation"$WARNING_START(group = "org.gradle", name = "gradle-core", version = "1.0")$WARNING_END
-        }
-        """.trimIndent()
-      )
-      testIntention(
-        """
-        val customSourceSet by sourceSets.creating {}
-        dependencies { 
-            "customSourceSetImplementation"(group = "org.gradle",<caret> name = "gradle-core", version = "1.0")
-        }
-        """.trimIndent(),
-        """
-        val customSourceSet by sourceSets.creating {}
-        dependencies { 
-            "customSourceSetImplementation"("org.gradle:gradle-core:1.0")
-        }
-        """.trimIndent(),
-        "Simplify"
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testArgumentWithDollarInterpolation(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testArgumentWithDollarInterpolation() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         $$"""
         val verRef = "1.0"
         dependencies { 
@@ -293,7 +182,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         }
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         $$"""
         val verRef = "1.0"
         dependencies { 
@@ -309,21 +198,17 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         "Simplify"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testNoVersionArgument(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testNoVersionArgument() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies { 
             implementation$WARNING_START(group = "org.gradle", name = "gradle-core")$WARNING_END
         }
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         dependencies { 
             implementation(group = "org.gradle",<caret> name = "gradle-core")
@@ -337,14 +222,10 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         "Simplify"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testWithBlock(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testWithBlock() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies { 
             implementation$WARNING_START(group = "org.gradle", name = "gradle-core", version = "1.0")$WARNING_END {
@@ -353,7 +234,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         }
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         dependencies { 
             implementation(group = "org.gradle",<caret> name = "gradle-core", version = "1.0") {
@@ -371,21 +252,17 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         "Simplify"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testUnusualArgumentOrder(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testUnusualArgumentOrder() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies { 
             implementation$WARNING_START(version = "1.0", group = "org.gradle", name = "gradle-core")$WARNING_END
         }
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         dependencies { 
             implementation(version = "1.0",<caret> group = "org.gradle", name = "gradle-core")
@@ -399,21 +276,17 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         "Simplify"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testRawStringArguments(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testRawStringArguments() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies { 
             implementation$WARNING_START(group = ${'"'}""org.gradle""${'"'}, name = ${'"'}""gradle-core""${'"'}, version = ${'"'}""1.0""${'"'})$WARNING_END
         }
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         dependencies { 
             implementation(group = ${'"'}""org.gradle""${'"'},<caret> name = ${'"'}""gradle-core""${'"'}, version = ${'"'}""1.0""${'"'})
@@ -427,52 +300,17 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         "Simplify"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions("9.0.0+", reason = "\"multi dollar interpolation\" is only available since language version 2.2")
-  fun testMultiDollarInterpolation(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
-        $$$"""
-        val gradle = "org.gradle"
-        dependencies { 
-            implementation$$$WARNING_START(group = $$${'"'}""$gradle""$$${'"'}, name = $$$$${'"'}""gr$dle-core""$$${'"'}, version = "1.0")$$$WARNING_END
-        }
-        """.trimIndent()
-      )
-      testIntention(
-        $$$"""
-        val gradle = "org.gradle"
-        dependencies { 
-            implementation(group = $$${'"'}""$gradle""$$${'"'},<caret> name = $$$$${'"'}""gr$dle-core""$$${'"'}, version = "1.0")
-        }
-        """.trimIndent(),
-        $$$"""
-        val gradle = "org.gradle"
-        dependencies { 
-            implementation("$gradle:gr${'$'}dle-core:1.0")
-        }
-        """.trimIndent(),
-        "Simplify"
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testPositionalArguments(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testPositionalArguments() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies { 
             implementation$WARNING_START("org.gradle", "gradle-core", "1.0")$WARNING_END
         }
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         dependencies { 
             implementation(<caret>"org.gradle", "gradle-core", "1.0")
@@ -486,21 +324,17 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         "Simplify"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testMixPositionalAndNamedArguments(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testMixPositionalAndNamedArguments() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies { 
             implementation$WARNING_START("org.gradle", "gradle-core", version = "1.0")$WARNING_END
         }
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         dependencies { 
             implementation(<caret>"org.gradle", "gradle-core", version = "1.0")
@@ -514,14 +348,10 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         "Simplify"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testMultipleDependenciesBlocks(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testMultipleDependenciesBlocks() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies { 
             implementation$WARNING_START(group = "org.gradle", name = "gradle-core", version = "1.0")$WARNING_END
@@ -531,7 +361,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         }
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         dependencies { 
             implementation(group = "org.gradle", name = "gradle-core", version = "1.0")<caret>
@@ -551,15 +381,11 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         "Simplify"
       )
     }
-  }
 
-  // conversion to a single string does not look nice, so don't offer a QF
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testMultilineRawStringArguments(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    // conversion to a single string does not look nice, so don't offer a QF
+    @Test
+    fun testMultilineRawStringArguments() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies { 
             implementation$WARNING_START(group = ${'"'}""
@@ -568,7 +394,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         }
         """.trimIndent()
       )
-      testNoIntentions(
+      codeInsightFixture.checkNoGradleScriptIntentions(
         """
         dependencies { 
             implementation(group = ${'"'}""
@@ -579,21 +405,17 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         "Simplify"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testWithClassifier(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testWithClassifier() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             implementation$WARNING_START(group = "org.gradle", name = "gradle-core", version = "1.0", classifier = "resources")$WARNING_END
         }
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         dependencies {
             implementation(group = "org.gradle", name = "gradle-core", version = "1.0", classifier = "resources")<caret>
@@ -607,21 +429,17 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         "Simplify"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testWithClassifierNoVersion(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testWithClassifierNoVersion() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             implementation$WARNING_START(group = "org.gradle", name = "gradle-core", classifier = "resources")$WARNING_END
         }
         """.trimIndent()
       )
-      testNoIntentions(
+      codeInsightFixture.checkNoGradleScriptIntentions(
         """
         dependencies {
             implementation(group = "org.gradle", name = "gradle-core", classifier = "resources")<caret>
@@ -630,21 +448,17 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         "Simplify"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testWithExtension(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testWithExtension() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             implementation$WARNING_START(group = "org.gradle", name = "gradle-core", version = "1.0", ext = "zip")$WARNING_END
         }
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         dependencies {
             implementation(group = "org.gradle", name = "gradle-core", version = "1.0", ext = "zip")<caret>
@@ -658,21 +472,17 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         "Simplify"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testWithExtensionNoVersion(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testWithExtensionNoVersion() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             implementation$WARNING_START(group = "org.gradle", name = "gradle-core", ext = "zip")$WARNING_END
         }
         """.trimIndent()
       )
-      testNoIntentions(
+      codeInsightFixture.checkNoGradleScriptIntentions(
         """
         dependencies {
             implementation(group = "org.gradle", name = "gradle-core", ext = "zip")<caret>
@@ -681,21 +491,17 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         "Simplify"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testWithClassifierAndExtension(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testWithClassifierAndExtension() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             implementation$WARNING_START(group = "org.gradle", name = "gradle-core", version = "1.0", classifier = "resources", ext = "zip")$WARNING_END
         }
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         dependencies {
             implementation(group = "org.gradle", name = "gradle-core", version = "1.0", classifier = "resources", ext = "zip")<caret>
@@ -709,21 +515,17 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         "Simplify"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testWithClassifierAndExtensionNoVersion(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testWithClassifierAndExtensionNoVersion() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             implementation$WARNING_START(group = "org.gradle", name = "gradle-core", classifier = "resources", ext = "zip")$WARNING_END
         }
         """.trimIndent()
       )
-      testNoIntentions(
+      codeInsightFixture.checkNoGradleScriptIntentions(
         """
         dependencies {
             implementation(group = "org.gradle", name = "gradle-core", classifier = "resources", ext = "zip")<caret>
@@ -732,21 +534,17 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         "Simplify"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testWithTargetConfiguration(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testWithTargetConfiguration() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             implementation$WARNING_START(group = "org.gradle", name = "gradle-core", version = "1.0", configuration = "configTarget")$WARNING_END
         }
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         dependencies {
             implementation(group = "org.gradle", name = "gradle-core", version = "1.0", configuration = "configTarget")<caret>
@@ -760,14 +558,10 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         "Simplify"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testWithTargetConfigurationExistingBlock(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testWithTargetConfigurationExistingBlock() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             implementation$WARNING_START(group = "org.gradle", name = "gradle-core", version = "1.0", configuration = "configTarget")$WARNING_END {
@@ -776,7 +570,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         }
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         dependencies {
             implementation(group = "org.gradle", name = "gradle-core", version = "1.0", configuration = "configTarget")<caret> {
@@ -795,21 +589,17 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         "Simplify"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testWithTargetConfigurationExistingEmptyBlock(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testWithTargetConfigurationExistingEmptyBlock() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             implementation$WARNING_START(group = "org.gradle", name = "gradle-core", version = "1.0", configuration = "configTarget")$WARNING_END {}
         }
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         dependencies {
             implementation(group = "org.gradle", name = "gradle-core", version = "1.0", configuration = "configTarget")<caret> {}
@@ -825,21 +615,17 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         "Simplify"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testWithAllArguments(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testWithAllArguments() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             implementation$WARNING_START(group = "org.gradle", name = "gradle-core", version = "1.0", configuration = "configTarget", classifier = "resources", ext = "zip")$WARNING_END
         }
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         dependencies {
             implementation(group = "org.gradle", name = "gradle-core", version = "1.0", configuration = "configTarget", classifier = "resources", ext = "zip")<caret>
@@ -853,21 +639,17 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         "Simplify"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testWithTargetConfigurationNoVersion(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testWithTargetConfigurationNoVersion() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         dependencies {
             implementation$WARNING_START(group = "org.gradle", name = "gradle-core", configuration = "configTarget")$WARNING_END
         }
         """.trimIndent()
       )
-      testIntention(
+      codeInsightFixture.checkGradleScriptIntention(
         """
         dependencies {
             implementation(group = "org.gradle", name = "gradle-core", configuration = "configTarget")<caret>
@@ -876,6 +658,151 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         """
         dependencies {
             implementation("org.gradle:gradle-core") { targetConfiguration = "configTarget" }
+        }
+        """.trimIndent(),
+        "Simplify"
+      )
+    }
+  }
+
+  @Nested
+  @ParameterizedClass
+  @AllGradleVersionsSource
+  @TargetVersions(
+    KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, "<9.1.0",
+    reason = "IDEA-381769: highlighting fails on deprecations from Gradle"
+  )
+  inner class BeforeGradle91(private val gradleVersion: GradleVersion) {
+
+    private val codeInsightFixture by customConfigurationsGradleCodeInsightFixture(gradleVersion)
+
+    @BeforeEach
+    fun setUp() {
+      codeInsightFixture.enableInspections(GradleAvoidDependencyNamedArgumentsNotationInspection::class.java)
+      if (isMissingDeprecationAnnotationAddedToKotlinDsl(gradleVersion)) {
+        codeInsightFixture.disableBuiltInKotlinHighlighters()
+      }
+    }
+
+    @Test
+    fun testCustomConfiguration() {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        """
+        val customConf by configurations.creating {}
+        dependencies { 
+            customConf$WARNING_START(group = "org.gradle", name = "gradle-core", version = "1.0")$WARNING_END
+        }
+        """.trimIndent()
+      )
+      codeInsightFixture.checkGradleScriptIntention(
+        """
+        val customConf by configurations.creating {}
+        dependencies { 
+            customConf(group = "org.gradle",<caret> name = "gradle-core", version = "1.0")
+        }
+        """.trimIndent(),
+        """
+        val customConf by configurations.creating {}
+        dependencies { 
+            customConf("org.gradle:gradle-core:1.0")
+        }
+        """.trimIndent(),
+        "Simplify"
+      )
+    }
+
+    @Test
+    fun testCustomConfigurationString() {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        """
+        val customConf by configurations.creating {}
+        dependencies { 
+            "customConf"$WARNING_START(group = "org.gradle", name = "gradle-core", version = "1.0")$WARNING_END
+        }
+        """.trimIndent()
+      )
+      codeInsightFixture.checkGradleScriptIntention(
+        """
+        val customConf by configurations.creating {}
+        dependencies { 
+            "customConf"(group = "org.gradle",<caret> name = "gradle-core", version = "1.0")
+        }
+        """.trimIndent(),
+        """
+        val customConf by configurations.creating {}
+        dependencies { 
+            "customConf"("org.gradle:gradle-core:1.0")
+        }
+        """.trimIndent(),
+        "Simplify"
+      )
+    }
+
+    @Test
+    fun testCustomSourceSet() {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        """
+        val customSourceSet by sourceSets.creating {}
+        dependencies { 
+            "customSourceSetImplementation"$WARNING_START(group = "org.gradle", name = "gradle-core", version = "1.0")$WARNING_END
+        }
+        """.trimIndent()
+      )
+      codeInsightFixture.checkGradleScriptIntention(
+        """
+        val customSourceSet by sourceSets.creating {}
+        dependencies { 
+            "customSourceSetImplementation"(group = "org.gradle",<caret> name = "gradle-core", version = "1.0")
+        }
+        """.trimIndent(),
+        """
+        val customSourceSet by sourceSets.creating {}
+        dependencies { 
+            "customSourceSetImplementation"("org.gradle:gradle-core:1.0")
+        }
+        """.trimIndent(),
+        "Simplify"
+      )
+    }
+  }
+
+  @Nested
+  @ParameterizedClass
+  @AllGradleVersionsSource
+  @TargetVersions("9.0.0+", reason = "\"multi dollar interpolation\" is only available since language version 2.2")
+  inner class MultiDollarInterpolationSupported(private val gradleVersion: GradleVersion) {
+
+    private val codeInsightFixture by customConfigurationsGradleCodeInsightFixture(gradleVersion)
+
+    @BeforeEach
+    fun setUp() {
+      codeInsightFixture.enableInspections(GradleAvoidDependencyNamedArgumentsNotationInspection::class.java)
+      if (isMissingDeprecationAnnotationAddedToKotlinDsl(gradleVersion)) {
+        codeInsightFixture.disableBuiltInKotlinHighlighters()
+      }
+    }
+
+    @Test
+    fun testMultiDollarInterpolation() {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        $$$"""
+        val gradle = "org.gradle"
+        dependencies { 
+            implementation$$$WARNING_START(group = $$${'"'}""$gradle""$$${'"'}, name = $$$$${'"'}""gr$dle-core""$$${'"'}, version = "1.0")$$$WARNING_END
+        }
+        """.trimIndent()
+      )
+      codeInsightFixture.checkGradleScriptIntention(
+        $$$"""
+        val gradle = "org.gradle"
+        dependencies { 
+            implementation(group = $$${'"'}""$gradle""$$${'"'},<caret> name = $$$$${'"'}""gr$dle-core""$$${'"'}, version = "1.0")
+        }
+        """.trimIndent(),
+        $$$"""
+        val gradle = "org.gradle"
+        dependencies { 
+            implementation("$gradle:gr${'$'}dle-core:1.0")
         }
         """.trimIndent(),
         "Simplify"

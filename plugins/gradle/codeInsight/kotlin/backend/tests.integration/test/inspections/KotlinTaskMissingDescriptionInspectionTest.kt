@@ -2,78 +2,60 @@
 package com.intellij.gradle.codeInsight.kotlin.backend.tests.integration.inspections
 
 import com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleTaskMissingDescriptionInspection
+import com.intellij.gradle.codeInsight.kotlin.testFramework.checkGradleScriptHighlighting
+import com.intellij.gradle.codeInsight.kotlin.testFramework.checkGradleScriptIntention
+import com.intellij.gradle.codeInsight.kotlin.testFramework.fixtures.simpleGradleCodeInsightFixture
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
 import com.intellij.gradle.testFramework.annotations.TargetVersions
+import com.intellij.gradle.testFramework.fixtures.application.GradleImmutableProjectTestApplication
 import com.intellij.gradle.testFramework.util.KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS
 import com.intellij.gradle.testFramework.util.KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS
-import com.intellij.gradle.testFramework.util.assertThatKotlinDslScriptsModelImportIsSupported
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.gradle.K2GradleCodeInsightTestCase
-import org.junit.jupiter.params.ParameterizedTest
+import org.jetbrains.kotlin.idea.framework.KotlinSdkType
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
 
-class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase() {
+@GradleImmutableProjectTestApplication
+class KotlinTaskMissingDescriptionInspectionTest {
 
-  private fun runTest(
-    gradleVersion: GradleVersion,
-    test: () -> Unit,
-  ) {
-    assertThatKotlinDslScriptsModelImportIsSupported(gradleVersion)
-    testKotlinDslEmptyProject(gradleVersion) {
-      codeInsightFixture.enableInspections(GradleTaskMissingDescriptionInspection::class.java)
-      test()
-    }
+  @AfterEach
+  fun tearDown() {
+    KotlinSdkType.removeKotlinSdkInTests()
   }
 
-  @ParameterizedTest
+  @Nested
+  @ParameterizedClass
   @AllGradleVersionsSource
   @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testMissing(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+  inner class AllGradleVersions(gradleVersion: GradleVersion) {
+
+    private val codeInsightFixture by simpleGradleCodeInsightFixture(gradleVersion)
+
+    @BeforeEach
+    fun enableInspection() {
+      codeInsightFixture.enableInspections(GradleTaskMissingDescriptionInspection::class.java)
+    }
+
+    @Test
+    fun testMissing() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         "tasks.<weak_warning descr=\"Task is missing a description\">register</weak_warning>(\"someTask\") {}"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testMissingNoConfigBlock(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testMissingNoConfigBlock() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         "tasks.<weak_warning descr=\"Task is missing a description\">register</weak_warning>(\"someTask\")"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
-  fun testMissingDelegation(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
-        "val task by tasks.<weak_warning descr=\"Task is missing a description\">registering</weak_warning> {}"
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
-  fun testMissingDelegationNoConfigBlock(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
-        "val task by tasks.<weak_warning descr=\"Task is missing a description\">registering</weak_warning>"
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testNotMissing(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testNotMissing() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         tasks.register("someTask") {
             description = "some description"
@@ -81,29 +63,10 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
-  fun testNotMissingDelegation(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
-        """
-        val task by tasks.registering {
-            description = "some description"
-        }
-        """.trimIndent()
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testNotMissingSetter(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testNotMissingSetter() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         tasks.register("someTask") {
             setDescription("some description")
@@ -111,29 +74,10 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
-  fun testNotMissingSetterDelegation(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
-        """
-        val task by tasks.registering {
-            setDescription("some description")
-        }
-        """.trimIndent()
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testNestedDescriptionAssignment(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testNestedDescriptionAssignment() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         var cond = true
         tasks.register("someTask") {
@@ -146,34 +90,10 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
-  fun testNestedDescriptionAssignmentDelegation(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
-        """
-        var cond = true
-        val task by tasks.registering {
-            if (cond) {
-                description = "some description"
-            } else {
-                description = "some other description"
-            }
-        }
-        """.trimIndent()
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testNestedDescriptionSetters(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testNestedDescriptionSetters() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         var cond = true
         tasks.register("someTask") {
@@ -186,34 +106,10 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
-  fun testNestedDescriptionSettersDelegation(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
-        """
-        var cond = true
-        val task by tasks.registering {
-            if (cond) {
-                setDescription("some description")
-            } else {
-                setDescription("some other description")
-            }
-        }
-        """.trimIndent()
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testInsideTasksBlock(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testInsideTasksBlock() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         tasks {
             <weak_warning>register</weak_warning>("someTask")
@@ -221,44 +117,10 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
-  fun testInsideTasksBlockDelegation(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
-        """
-        tasks {
-            val someTask by <weak_warning>registering</weak_warning> {}
-        }
-        """.trimIndent()
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
-  fun testInsideTasksBlockDelegationNoConfigBlock(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
-        """
-        tasks {
-            val someTask by <weak_warning>registering</weak_warning>
-        }
-        """.trimIndent()
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testInsideTasksBlockNotMissing(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testInsideTasksBlockNotMissing() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         tasks {
             register("someTask") {
@@ -268,31 +130,10 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
-  fun testInsideTasksBlockDelegationNotMissing(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
-        """
-        tasks {
-            val someTask by registering {
-                description = "some description"
-            }
-        }
-        """.trimIndent()
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testNotMissingWithType(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testNotMissingWithType() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         tasks.register<Copy>("someTask") {
             description = "some description"
@@ -300,29 +141,10 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
-  fun testNotMissingDelegationWithType(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
-        """
-        val task by tasks.registering(Copy::class) {
-            description = "some description"
-        }
-        """.trimIndent()
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testNotMissingSetterWithType(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testNotMissingSetterWithType() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         tasks.register<Copy>("someTask") {
             setDescription("some description")
@@ -330,29 +152,10 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
-  fun testNotMissingSetterDelegationWithType(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
-        """
-        val task by tasks.registering(Copy::class) {
-            setDescription("some description")
-        }
-        """.trimIndent()
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testInsideTasksBlockNotMissingWithType(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testInsideTasksBlockNotMissingWithType() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         tasks {
             register<Copy>("someTask") {
@@ -362,75 +165,24 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
-  fun testInsideTasksBlockDelegationNotMissingWithType(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
-        """
-        tasks {
-            val someTask by registering(Copy::class) {
-                description = "some description"
-            }
-        }
-        """.trimIndent()
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testMissingWithType(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testMissingWithType() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         "tasks.<weak_warning>register</weak_warning><Copy>(\"someTask\") {}"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testMissingNoConfigBlockWithType(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testMissingNoConfigBlockWithType() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         "tasks.<weak_warning>register</weak_warning><Copy>(\"someTask\")"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
-  fun testMissingDelegationWithType(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
-        "val task by tasks.<weak_warning>registering</weak_warning>(Copy::class) {}"
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
-  fun testMissingDelegationNoConfigBlockWithType(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
-        "val task by tasks.<weak_warning>registering</weak_warning>(Copy::class)"
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testInsideTasksBlockWithType(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
+    @Test
+    fun testInsideTasksBlockWithType() {
+      codeInsightFixture.checkGradleScriptHighlighting(
         """
         tasks {
             <weak_warning>register</weak_warning><Copy>("someTask")
@@ -438,44 +190,10 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
         """.trimIndent()
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
-  fun testInsideTasksBlockDelegationWithType(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
-        """
-        tasks {
-            val someTask by <weak_warning>registering</weak_warning>(Copy::class) {}
-        }
-        """.trimIndent()
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
-  fun testInsideTasksBlockDelegationNoConfigBlockWithType(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
-        """
-        tasks {
-            val someTask by <weak_warning>registering</weak_warning>(Copy::class)
-        }
-        """.trimIndent()
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testAdding(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testIntention(
+    @Test
+    fun testAdding() {
+      codeInsightFixture.checkGradleScriptIntention(
         """
         tasks.register<caret>("someTask") {}
         """.trimIndent(),
@@ -487,33 +205,10 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
         "Add a description"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
-  fun testAddingDelegation(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testIntention(
-        """
-        val task by tasks.registering<caret> {}
-        """.trimIndent(),
-        """
-        val task by tasks.registering {
-            description = "<caret>"
-        }
-        """.trimIndent(),
-        "Add a description"
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testAddingBeforeAnyElement(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testIntention(
+    @Test
+    fun testAddingBeforeAnyElement() {
+      codeInsightFixture.checkGradleScriptIntention(
         """
         tasks.register<caret>("someTask") {
             group = "existing group"
@@ -528,36 +223,10 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
         "Add a description"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
-  fun testAddingBeforeAnyElementOnlyDelegation(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testIntention(
-        """
-        val task by tasks.registering<caret> {
-            group = "existing group"
-        }
-        """.trimIndent(),
-        """
-        val task by tasks.registering {
-            description = "<caret>"
-            group = "existing group"
-        }
-        """.trimIndent(),
-        "Add a description"
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testAddingConfigBlock(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testIntention(
+    @Test
+    fun testAddingConfigBlock() {
+      codeInsightFixture.checkGradleScriptIntention(
         """
         tasks.register<caret>("someTask")
         """.trimIndent(),
@@ -569,33 +238,10 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
         "Add a description"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
-  fun testAddingConfigBlockDelegation(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testIntention(
-        """
-        val task by tasks.registering<caret>
-        """.trimIndent(),
-        """
-        val task by tasks.registering {
-            description = "<caret>"
-        }
-        """.trimIndent(),
-        "Add a description"
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS)
-  fun testAddingInsideTasksBlock(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testIntention(
+    @Test
+    fun testAddingInsideTasksBlock() {
+      codeInsightFixture.checkGradleScriptIntention(
         """
         tasks {
             register<caret>("someTask")
@@ -613,12 +259,244 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
     }
   }
 
-  @ParameterizedTest
+  @Nested
+  @ParameterizedClass
   @AllGradleVersionsSource
   @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
-  fun testAddingInsideTasksBlockDelegation(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testIntention(
+  inner class DelegatingPropertySupported(gradleVersion: GradleVersion) {
+
+    private val codeInsightFixture by simpleGradleCodeInsightFixture(gradleVersion)
+
+    @BeforeEach
+    fun enableInspection() {
+      codeInsightFixture.enableInspections(GradleTaskMissingDescriptionInspection::class.java)
+    }
+
+    @Test
+    fun testMissingDelegation() {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        "val task by tasks.<weak_warning descr=\"Task is missing a description\">registering</weak_warning> {}"
+      )
+    }
+
+    @Test
+    fun testMissingDelegationNoConfigBlock() {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        "val task by tasks.<weak_warning descr=\"Task is missing a description\">registering</weak_warning>"
+      )
+    }
+
+    @Test
+    fun testNotMissingDelegation() {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        """
+        val task by tasks.registering {
+            description = "some description"
+        }
+        """.trimIndent()
+      )
+    }
+
+    @Test
+    fun testNotMissingSetterDelegation() {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        """
+        val task by tasks.registering {
+            setDescription("some description")
+        }
+        """.trimIndent()
+      )
+    }
+
+    @Test
+    fun testNestedDescriptionAssignmentDelegation() {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        """
+        var cond = true
+        val task by tasks.registering {
+            if (cond) {
+                description = "some description"
+            } else {
+                description = "some other description"
+            }
+        }
+        """.trimIndent()
+      )
+    }
+
+    @Test
+    fun testNestedDescriptionSettersDelegation() {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        """
+        var cond = true
+        val task by tasks.registering {
+            if (cond) {
+                setDescription("some description")
+            } else {
+                setDescription("some other description")
+            }
+        }
+        """.trimIndent()
+      )
+    }
+
+    @Test
+    fun testInsideTasksBlockDelegation() {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        """
+        tasks {
+            val someTask by <weak_warning>registering</weak_warning> {}
+        }
+        """.trimIndent()
+      )
+    }
+
+    @Test
+    fun testInsideTasksBlockDelegationNoConfigBlock() {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        """
+        tasks {
+            val someTask by <weak_warning>registering</weak_warning>
+        }
+        """.trimIndent()
+      )
+    }
+
+    @Test
+    fun testInsideTasksBlockDelegationNotMissing() {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        """
+        tasks {
+            val someTask by registering {
+                description = "some description"
+            }
+        }
+        """.trimIndent()
+      )
+    }
+
+    @Test
+    fun testNotMissingDelegationWithType() {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        """
+        val task by tasks.registering(Copy::class) {
+            description = "some description"
+        }
+        """.trimIndent()
+      )
+    }
+
+    @Test
+    fun testNotMissingSetterDelegationWithType() {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        """
+        val task by tasks.registering(Copy::class) {
+            setDescription("some description")
+        }
+        """.trimIndent()
+      )
+    }
+
+    @Test
+    fun testInsideTasksBlockDelegationNotMissingWithType() {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        """
+        tasks {
+            val someTask by registering(Copy::class) {
+                description = "some description"
+            }
+        }
+        """.trimIndent()
+      )
+    }
+
+    @Test
+    fun testMissingDelegationWithType() {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        "val task by tasks.<weak_warning>registering</weak_warning>(Copy::class) {}"
+      )
+    }
+
+    @Test
+    fun testMissingDelegationNoConfigBlockWithType() {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        "val task by tasks.<weak_warning>registering</weak_warning>(Copy::class)"
+      )
+    }
+
+    @Test
+    fun testInsideTasksBlockDelegationWithType() {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        """
+        tasks {
+            val someTask by <weak_warning>registering</weak_warning>(Copy::class) {}
+        }
+        """.trimIndent()
+      )
+    }
+
+    @Test
+    fun testInsideTasksBlockDelegationNoConfigBlockWithType() {
+      codeInsightFixture.checkGradleScriptHighlighting(
+        """
+        tasks {
+            val someTask by <weak_warning>registering</weak_warning>(Copy::class)
+        }
+        """.trimIndent()
+      )
+    }
+
+    @Test
+    fun testAddingDelegation() {
+      codeInsightFixture.checkGradleScriptIntention(
+        """
+        val task by tasks.registering<caret> {}
+        """.trimIndent(),
+        """
+        val task by tasks.registering {
+            description = "<caret>"
+        }
+        """.trimIndent(),
+        "Add a description"
+      )
+    }
+
+    @Test
+    fun testAddingBeforeAnyElementOnlyDelegation() {
+      codeInsightFixture.checkGradleScriptIntention(
+        """
+        val task by tasks.registering<caret> {
+            group = "existing group"
+        }
+        """.trimIndent(),
+        """
+        val task by tasks.registering {
+            description = "<caret>"
+            group = "existing group"
+        }
+        """.trimIndent(),
+        "Add a description"
+      )
+    }
+
+    @Test
+    fun testAddingConfigBlockDelegation() {
+      codeInsightFixture.checkGradleScriptIntention(
+        """
+        val task by tasks.registering<caret>
+        """.trimIndent(),
+        """
+        val task by tasks.registering {
+            description = "<caret>"
+        }
+        """.trimIndent(),
+        "Add a description"
+      )
+    }
+
+    @Test
+    fun testAddingInsideTasksBlockDelegation() {
+      codeInsightFixture.checkGradleScriptIntention(
         """
         tasks {
             val someTask by registering<caret> {}
@@ -634,14 +512,10 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
         "Add a description"
       )
     }
-  }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  @TargetVersions(KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS, KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS)
-  fun testAddingConfigBlockInsideTasksBlockDelegation(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testIntention(
+    @Test
+    fun testAddingConfigBlockInsideTasksBlockDelegation() {
+      codeInsightFixture.checkGradleScriptIntention(
         """
         tasks {
             val someTask by registering<caret>
