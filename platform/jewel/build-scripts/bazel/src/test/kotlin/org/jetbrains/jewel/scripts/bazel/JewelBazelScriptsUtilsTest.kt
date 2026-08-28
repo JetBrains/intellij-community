@@ -2,6 +2,7 @@ package org.jetbrains.jewel.scripts.bazel
 
 import java.io.File
 import kotlin.system.measureTimeMillis
+import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -64,5 +65,92 @@ class JewelBazelScriptsUtilsTest {
         val fakeRunner = FakeCommandRunner { CmdResult.Failure("fatal: not a git repository") }
 
         assertFailsWith<IllegalStateException> { getCurrentBranchName(File("."), fakeRunner) }
+    }
+
+    @Test
+    fun `tokenizeCommand splits a plain space-separated command like the old naive split`() {
+        val tokens = tokenizeCommand("git status --porcelain")
+
+        assertEquals(listOf("git", "status", "--porcelain"), tokens)
+    }
+
+    @Test
+    fun `tokenizeCommand collapses repeated spaces and tabs and ignores leading and trailing whitespace`() {
+        val tokens = tokenizeCommand("  git\t\tstatus   --porcelain  ")
+
+        assertEquals(listOf("git", "status", "--porcelain"), tokens)
+    }
+
+    @Test
+    fun `tokenizeCommand returns an empty list for a blank command`() {
+        val tokens = tokenizeCommand("   ")
+
+        assertEquals(emptyList(), tokens)
+    }
+
+    @Test
+    fun `tokenizeCommand keeps a single-quoted section as one token including its spaces`() {
+        val tokens = tokenizeCommand("echo 'hello world'")
+
+        assertEquals(listOf("echo", "hello world"), tokens)
+    }
+
+    @Test
+    fun `tokenizeCommand does not process backslash escapes inside single quotes`() {
+        val tokens = tokenizeCommand("echo 'a\\b'")
+
+        assertEquals(listOf("echo", "a\\b"), tokens)
+    }
+
+    @Test
+    fun `tokenizeCommand keeps a double-quoted section as one token including its spaces`() {
+        val tokens = tokenizeCommand("echo \"hello world\"")
+
+        assertEquals(listOf("echo", "hello world"), tokens)
+    }
+
+    @Test
+    fun `tokenizeCommand resolves backslash escapes for quote, backslash, dollar sign, and backtick inside double quotes`() {
+        val tokens = tokenizeCommand("echo \"a\\\"b\\\\c\\\$d\\`e\"")
+
+        assertEquals(listOf("echo", "a\"b\\c\$d`e"), tokens)
+    }
+
+    @Test
+    fun `tokenizeCommand leaves a backslash untouched when it is not followed by an escapable character`() {
+        val tokens = tokenizeCommand("echo \"a\\nb\"")
+
+        assertEquals(listOf("echo", "a\\nb"), tokens)
+    }
+
+    @Test
+    fun `tokenizeCommand joins a quoted section in the middle of a word into the same token`() {
+        val tokens = tokenizeCommand("--flag=\"some value\"")
+
+        assertEquals(listOf("--flag=some value"), tokens)
+    }
+
+    @Test
+    fun `tokenizeCommand concatenates adjacent quoted and unquoted segments into a single token`() {
+        val tokens = tokenizeCommand("a'b c'd")
+
+        assertEquals(listOf("ab cd"), tokens)
+    }
+
+    @Test
+    fun `tokenizeCommand handles a git pretty-format single-quoted argument`() {
+        val tokens = tokenizeCommand("git log --pretty=format:'%H %s'")
+
+        assertEquals(listOf("git", "log", "--pretty=format:%H %s"), tokens)
+    }
+
+    @Test
+    fun `tokenizeCommand throws on an unterminated single quote`() {
+        assertFailsWith<IllegalStateException> { tokenizeCommand("echo 'unterminated") }
+    }
+
+    @Test
+    fun `tokenizeCommand throws on an unterminated double quote`() {
+        assertFailsWith<IllegalStateException> { tokenizeCommand("echo \"unterminated") }
     }
 }

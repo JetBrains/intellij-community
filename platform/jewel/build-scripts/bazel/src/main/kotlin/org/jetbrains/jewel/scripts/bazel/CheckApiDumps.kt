@@ -1,4 +1,4 @@
-@file:Suppress("RAW_RUN_BLOCKING", "SSBasedInspection")
+@file:Suppress("RAW_RUN_BLOCKING", "IO_FILE_USAGE")
 
 package org.jetbrains.jewel.scripts.bazel
 
@@ -17,6 +17,7 @@ import kotlinx.coroutines.withContext
 private const val TEST_MODULE = "intellij.platform.testFramework.monorepo.tests"
 private const val TEST_CLASS = "com.intellij.platform.testFramework.monorepo.api.ApiCheckTest"
 
+// Run it like: bazel run //platform/jewel/build-scripts/bazel:checkApiDumps
 fun main(args: Array<String>) {
     runBlocking { CheckUpdatedCommand().main(args) }
 }
@@ -59,8 +60,8 @@ internal class CheckUpdatedCommand(private val commandRunner: CommandRunner = De
             val command = buildApiCheckCommand()
             if (verbose) println("Running: $command")
 
-            val outputFile = File.createTempFile("api-check-output", ".log")
-            val scriptFile = File.createTempFile("api-check-script", ".sh")
+            @Suppress("SSBasedInspection") val outputFile = File.createTempFile("api-check-output", ".log")
+            @Suppress("SSBasedInspection") val scriptFile = File.createTempFile("api-check-script", ".sh")
 
             try {
                 println("Output will be streamed in real-time and saved to: ${outputFile.absolutePath}")
