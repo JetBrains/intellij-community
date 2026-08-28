@@ -6,9 +6,12 @@ import com.intellij.codeInsight.hints.InlayParameterHintsProvider
 import com.intellij.lang.Language
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.psi.PsiElement
-import junit.framework.TestCase
+import com.intellij.testFramework.junit5.TestApplication
 import org.jdom.Element
 import org.jdom.input.SAXBuilder
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.io.StringReader
 
 
@@ -19,12 +22,14 @@ class MockInlayProvider(private val defaultBlackList: Set<String>): InlayParamet
 }
 
 
-class ParameterNameSettingsTest : TestCase() {
+@TestApplication
+class ParameterNameSettingsTest {
 
   lateinit var settings: ParameterNameHintsSettings
   lateinit var inlayProvider: InlayParameterHintsProvider
   
-  override fun setUp() {
+  @BeforeEach
+  fun setUp() {
     settings = ParameterNameHintsSettings()
     inlayProvider = MockInlayProvider(setOf())
   }
@@ -49,6 +54,7 @@ class ParameterNameSettingsTest : TestCase() {
     return diff.applyOn(inlayProvider.defaultBlackList)
   }
 
+  @Test
   fun `test ignore pattern is added`() {
     defaultSettingsUpdated("xxx")
     
@@ -63,6 +69,7 @@ class ParameterNameSettingsTest : TestCase() {
     assert(ignoreSet.contains("xxx"))
   }
 
+  @Test
   fun `test if empty element is passed settings are dropped`() {
     addIgnorePattern("new_ignore_pattern")
 
@@ -75,6 +82,7 @@ class ParameterNameSettingsTest : TestCase() {
     assert(ignoreSet.isEmpty())
   }
 
+  @Test
   fun `test removed pattern is removed when defaults are updated`() {
     defaultSettingsUpdated("aaa", "bbb")
 
@@ -92,6 +100,7 @@ class ParameterNameSettingsTest : TestCase() {
     assert(ignoreSet.contains("ccc"))
   }
 
+  @Test
   fun `test added items remain added on defaults update`() {
     defaultSettingsUpdated("aaa")
     var ignoreSet = getIgnoreSet()
@@ -109,6 +118,7 @@ class ParameterNameSettingsTest : TestCase() {
     assert(ignoreSet.contains("xxx"))
   }
 
+  @Test
   fun `test state is preserved between restarts`() {
     val added = setOf("added")
     val removed = setOf("removed")
@@ -126,6 +136,7 @@ class ParameterNameSettingsTest : TestCase() {
     assert(diff.removed.size == 1)
   }
 
+  @Test
   fun `test disabled languages preserved between restarts`() {
     val settings = ParameterNameHintsSettings()
     val language = object : Language("testLanguage") {}
@@ -137,6 +148,7 @@ class ParameterNameSettingsTest : TestCase() {
     assertFalse(newSettings.isEnabledForLanguage(language))
   }
 
+  @Test
   fun `test state is correctly loaded from incorrect model`() {
     val text = """
 <settings>
