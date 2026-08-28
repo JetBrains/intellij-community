@@ -29,7 +29,6 @@ private val agentLibrariesNotForcedInSeparateJars = listOf(
 fun isSeparateLibraryJar(fileName: String): Boolean {
   return fileName.endsWith("-rt.jar") ||
          fileName.startsWith("byte-buddy-") ||
-         fileName.startsWith("objenesis-") ||
          (fileName.contains("-agent") && agentLibrariesNotForcedInSeparateJars.none { fileName.contains(it) }) ||
          fileName.startsWith("maven-")
 }
