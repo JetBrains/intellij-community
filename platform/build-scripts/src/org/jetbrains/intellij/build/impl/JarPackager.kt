@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build.impl
 
@@ -125,7 +125,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "io.qameta.allure.java.commons",
   "jerolba.carpet.record",
   "jetbrains.intellij.deps.eclipse.jgit",
-  "jetbrains.intellij.deps.searchEverywhere.model.context.ranker.test",
   "jetbrains.patronus.config",
   "jgrapht.core",
   "jooq.joox",
