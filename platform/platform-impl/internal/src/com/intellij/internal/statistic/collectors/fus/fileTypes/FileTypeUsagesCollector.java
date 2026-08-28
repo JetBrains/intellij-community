@@ -21,8 +21,9 @@ import com.intellij.openapi.fileTypes.impl.FileTypeValidationRule;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.project.ProjectKt;
-import com.intellij.util.containers.ObjectIntHashMap;
-import com.intellij.util.containers.ObjectIntMap;
+import com.intellij.util.ArrayUtil;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -81,23 +82,27 @@ public final class FileTypeUsagesCollector extends ProjectUsagesCollector {
   protected @NotNull Set<MetricEvent> getMetrics(@NotNull Project project) {
     if (project.isDisposed()) return emptySet();
 
-    final ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
-    final IProjectStore stateStore = ProjectKt.getStateStore(project);
-    final ObjectIntMap<FileType> filesByTypeCount = new ObjectIntHashMap<>();
-    final var fileTypeMappingsCounter = new OriginalFileTypeCounter();
-    final var fileExtensionCounter = new FileExtensionCounter();
+    ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
+    IProjectStore stateStore = ProjectKt.getStateStore(project);
+    Object2IntMap<FileType> filesByTypeCount = new Object2IntOpenHashMap<>();
+    var fileTypeMappingsCounter = new OriginalFileTypeCounter();
+    var fileExtensionCounter = new FileExtensionCounter();
+
+    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+
     projectFileIndex.iterateContent(
       file -> {
-        final FileType type = file.getFileType();
+        // do not trigger DetectedByContentFileType handling, do not read files
+        FileType type = fileTypeManager.getFileTypeByFile(file, ArrayUtil.EMPTY_BYTE_ARRAY);
         filesByTypeCount.put(type, filesByTypeCount.getOrDefault(type, 0) + 1);
-        final String fileExtension = file.getExtension();
+        String fileExtension = file.getExtension();
 
         if (fileExtension == null) {
           fileTypeMappingsCounter.recordOriginalFileType(type, null);
           return true;
         }
 
-        final var fileTypeByExtension = FileTypeManager.getInstance().getFileTypeByExtension(fileExtension);
+        var fileTypeByExtension = FileTypeManager.getInstance().getFileTypeByExtension(fileExtension);
         fileTypeMappingsCounter.recordOriginalFileType(type, fileTypeByExtension);
         fileExtensionCounter.recordOriginalFileType(fileExtension);
         return true;
@@ -111,7 +116,7 @@ public final class FileTypeUsagesCollector extends ProjectUsagesCollector {
       List<EventPair<?>> eventPairs = new ArrayList<>(4);
       eventPairs.add(EventFields.PluginInfoFromInstance.with(fileType));
       eventPairs.add(EventFields.FileType.with(fileType));
-      eventPairs.add(COUNT.with(filesByTypeCount.get(fileType)));
+      eventPairs.add(COUNT.with(filesByTypeCount.getInt(fileType)));
       eventPairs.add(FILE_TYPE_BY_EXTENSION_PERCENT.with(fileTypeMappingsCounter.getFileTypeSchemaUsagePercentage(fileType)));
       events.add(FILE_TYPE_IN_PROJECT.metric(eventPairs));
     }
