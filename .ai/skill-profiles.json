@@ -45,7 +45,7 @@
       "teamcity-batch-verify",
       "teamcity-flaky-probe"
     ],
-    "toolbox": ["tbx-update-jetbrainsd", "toolbox-agent-ssh-deploy"],
+    "toolbox": ["tbx-update-jetbrainsd", "toolbox-agent-ssh-deploy", "update-toolbox-agent-api"],
     "ui": [
       "compose",
       "icon-resources",
