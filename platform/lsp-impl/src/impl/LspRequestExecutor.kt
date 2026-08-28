@@ -75,8 +75,28 @@ class LspRequestExecutor(
     val completionContext = createCompletionContext(lspClient, host.hostDocument, host.hostOffset, isAutoPopup)
     return documentMapping.withDocumentAtOffset(host.hostFile, host.hostDocument, host.hostOffset) { lspDocument, position ->
       val params = CompletionParams(lspDocument.id, position, completionContext)
-      val future = doSendRequestAsync { it.textDocumentService.completion(params) } ?: CompletableFuture.completedFuture(null)
-      future.thenApply { lsp4jResponse -> lsp4jResponse?.toCompletionList() }
+      val source = doSendRequestAsync { it.textDocumentService.completion(params) }
+                   ?: return@withDocumentAtOffset CompletableFuture.completedFuture(null)
+
+      val result = CompletableFuture<CompletionList?>()
+      source.whenComplete { lsp4jResponse, throwable ->
+        if (throwable != null) {
+          result.completeExceptionally(throwable)
+        }
+        else {
+          try {
+            result.complete(lsp4jResponse?.toCompletionList())
+          }
+          catch (t: Throwable) {
+            result.completeExceptionally(t)
+          }
+        }
+      }
+      // CompletableFuture cancellation does not propagate upstream through derived stages.
+      // Wire it explicitly: a cancellation of `result` (the caller typed on, or the coroutine got cancelled)
+      // cancels `source`, and doSendRequestAsync then sends $/cancelRequest to the server.
+      result.whenComplete { _, _ -> if (result.isCancelled) source.cancel(true) }
+      result
     } ?: CompletableFuture.completedFuture(null)
   }
 

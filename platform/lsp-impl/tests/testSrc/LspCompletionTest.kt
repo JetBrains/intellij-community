@@ -6,18 +6,27 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupElementRenderer
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.platform.lsp.common.FakeLspServerSupportProvider
 import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
+import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntilAssertSucceeds
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTester
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.eclipse.lsp4j.CompletionItem
+import org.eclipse.lsp4j.CompletionList
 import org.eclipse.lsp4j.CompletionItemKind
 import org.eclipse.lsp4j.CompletionItemLabelDetails
 import org.eclipse.lsp4j.CompletionItemTag
@@ -35,6 +44,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.util.concurrent.CompletableFuture
 
 
 @TestApplication
@@ -552,6 +562,45 @@ internal class LspCompletionTest {
     @Test
     fun `commitCharacters from completion item trigger completion`() = timeoutRunBlocking {
       codeInsightFixture.type('|')
+    }
+  }
+
+  @Nested
+  inner class Cancellation {
+    @Test
+    fun `cancelled completion sends cancelRequest to the server`(): Unit = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", "hello").virtualFile
+      val serverSession = configureServerSession(project, virtualFile)
+
+      val pendingResponse = CompletableFuture<Either<List<CompletionItem>, CompletionList>>()
+      val requestArrived = serverSession.expectRequestAsync(
+        serverSession.COMPLETION,
+        { it.textDocument.uri == serverSession.fileUri(virtualFile) },
+      ) { pendingResponse }
+
+      val requestExecutor = LspClientManagerImpl.getInstanceImpl(project)
+        .getClients(FakeLspServerSupportProvider::class.java).first().requestExecutor
+
+      val indicator = EmptyProgressIndicator()
+      val caller = launch(Dispatchers.IO) {
+        try {
+          ProgressManager.getInstance().runProcess(
+            { runReadActionBlocking { requestExecutor.getCompletionList(virtualFile, 0, false) } },
+            indicator,
+          )
+        }
+        catch (_: ProcessCanceledException) {
+          // expected: the caller got cancelled while the server response was pending
+        }
+      }
+
+      requestArrived.await()
+      indicator.cancel()
+
+      waitUntilAssertSucceeds(message = "the client must cancel the abandoned completion via $/cancelRequest") {
+        assertTrue(pendingResponse.isCancelled)
+      }
+      caller.join()
     }
   }
 }
