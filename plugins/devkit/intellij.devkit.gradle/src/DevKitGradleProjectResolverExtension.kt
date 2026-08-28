@@ -5,6 +5,9 @@ import com.intellij.devkit.gradle.tooling.IntelliJPlatformAuxiliaryArtifactProvi
 import com.intellij.devkit.gradle.tooling.IntelliJPlatformGradleModel
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassProjectModelProvider
+import com.intellij.openapi.externalSystem.model.DataNode
+import com.intellij.openapi.externalSystem.model.project.ModuleData
+import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 
 /**
@@ -20,4 +23,14 @@ internal class DevKitGradleProjectResolverExtension : AbstractProjectResolverExt
       GradleModelFetchPhase.PROJECT_LOADED_PHASE,
     )
   )
+
+  override fun populateModuleExtraModels(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {
+    super.populateModuleExtraModels(gradleModule, ideModule)
+    val data = resolverCtx.getProjectModel(gradleModule, IntelliJPlatformGradleModel::class.java)
+      ?.toIntelliJPlatformGradleData()
+      ?.takeIf { it.productReleases.isNotEmpty() }
+      ?: return
+
+    ideModule.createChild(IntelliJPlatformGradleData.KEY, data)
+  }
 }

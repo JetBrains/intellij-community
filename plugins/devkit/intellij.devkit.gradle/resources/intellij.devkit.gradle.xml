@@ -39,6 +39,7 @@
     <consoleFilterProvider implementation="org.jetbrains.idea.devkit.gradle.GradlePluginConsoleFilterProvider"/>
     <completion.contributor language="kotlin"
                             implementationClass="org.jetbrains.idea.devkit.gradle.IntelliJPlatformVersionsCompletionContributor"/>
+    <externalProjectDataService implementation="org.jetbrains.idea.devkit.gradle.IntelliJPlatformGradleDataService"/>
     <projectService serviceInterface="org.jetbrains.idea.devkit.gradle.IntelliJPlatformGradleModelProvider"
                     serviceImplementation="org.jetbrains.idea.devkit.gradle.IntelliJPlatformGradleModelProviderImpl"/>
   </extensions>

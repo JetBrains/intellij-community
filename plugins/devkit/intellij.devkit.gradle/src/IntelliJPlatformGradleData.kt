@@ -2,20 +2,29 @@
 package org.jetbrains.idea.devkit.gradle
 
 import com.intellij.devkit.gradle.tooling.IntelliJPlatformGradleModel
+import com.intellij.openapi.externalSystem.model.Key
+import com.intellij.openapi.externalSystem.model.ProjectKeys
+import java.io.Serializable
 import java.nio.file.Path
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.readLines
 
 /** IDE-side completion metadata imported from [IntelliJPlatformGradleModel]. */
 internal data class IntelliJPlatformGradleData(
-  val dependencyHelperProductCodes: Map<String, String>,
-  val productReleases: Map<String, List<IntelliJPlatformProductRelease>>,
-)
+  val dependencyHelperProductCodes: Map<String, String> = emptyMap(),
+  val productReleases: Map<String, List<IntelliJPlatformProductRelease>> = emptyMap(),
+) : Serializable {
+  companion object {
+    @JvmField
+    val KEY: Key<IntelliJPlatformGradleData> =
+      Key.create(IntelliJPlatformGradleData::class.java, ProjectKeys.MODULE.processingWeight + 1)
+  }
+}
 
 internal data class IntelliJPlatformProductRelease(
-  val version: String,
-  val channel: String,
-)
+  val version: String = "",
+  val channel: String = "",
+) : Serializable
 
 internal fun IntelliJPlatformGradleModel.toIntelliJPlatformGradleData() = IntelliJPlatformGradleData(
   dependencyHelperProductCodes = dependencyHelperProductCodes,

@@ -2,9 +2,13 @@
 package org.jetbrains.idea.devkit.gradle
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.externalSystem.model.project.ModuleData
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiFile
+import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.util.concurrent.atomic.AtomicReference
 
 /** Resolves imported metadata for the closest Gradle module containing a physical PSI file. */
@@ -32,14 +36,14 @@ internal class IntelliJPlatformGradleModelProviderImpl : IntelliJPlatformGradleM
     val match = dataByLinkedProjectPath.get()
       .values
       .asSequence()
-      .flatMap { it.asSequence() }
-      .filter { (modulePath) -> FileUtil.isAncestor(modulePath, filePath, false) }
-      .maxByOrNull { (modulePath) -> modulePath.length }
+      .flatMap { dataByModulePath -> dataByModulePath.asSequence().map { it.toPair() } }
+      .closestModel(filePath)
+      ?: findCachedModel(file.project, filePath)
 
     if (LOG.isDebugEnabled) {
-      LOG.debug("IntelliJ Platform Gradle model lookup for '$filePath': ${match?.key ?: "no matching Gradle module"}")
+      LOG.debug("IntelliJ Platform Gradle model lookup for '$filePath': ${match?.first ?: "no matching Gradle module"}")
     }
-    return match?.value
+    return match?.second
   }
 
   internal fun replaceProjectData(
@@ -56,3 +60,22 @@ internal class IntelliJPlatformGradleModelProviderImpl : IntelliJPlatformGradleM
     private val LOG = Logger.getInstance(IntelliJPlatformGradleModelProviderImpl::class.java)
   }
 }
+
+private fun findCachedModel(project: Project, filePath: String): Pair<String, IntelliJPlatformGradleData>? {
+  return ProjectDataManager.getInstance()
+    .getExternalProjectsData(project, GradleConstants.SYSTEM_ID)
+    .asSequence()
+    .mapNotNull { it.externalProjectStructure }
+    .flatMap { ExternalSystemApiUtil.findAllRecursively(it, IntelliJPlatformGradleData.KEY) }
+    .mapNotNull { node ->
+      val modulePath = (node.parent?.data as? ModuleData)?.linkedExternalProjectPath ?: return@mapNotNull null
+      modulePath to node.data
+    }
+    .closestModel(filePath)
+}
+
+private fun Sequence<Pair<String, IntelliJPlatformGradleData>>.closestModel(
+  filePath: String,
+): Pair<String, IntelliJPlatformGradleData>? =
+  filter { (modulePath) -> FileUtil.isAncestor(modulePath, filePath, false) }
+    .maxByOrNull { (modulePath) -> modulePath.length }
