@@ -186,7 +186,7 @@ public final class KeyHashLog<Key> implements Closeable {
           if (!idFilter.containsFileId(absInputId)) return true;
           int keyHash = key[0];
           if (inputId > 0) {
-            if (!hash2inputIds.computeIfAbsent(keyHash, __ -> new IntOpenHashSet()).add(inputId)) {
+            if (!hash2inputIds.computeIfAbsent(keyHash, __ -> new IntOpenHashSet(4)).add(inputId)) {
               uselessRecords.incrementAndGet();
             }
           }

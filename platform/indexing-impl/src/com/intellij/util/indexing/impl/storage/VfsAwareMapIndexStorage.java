@@ -24,6 +24,14 @@ import java.nio.file.Path;
 
 @Internal
 public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
+  /**
+   * Enables {@link #processKeys(Processor, GlobalSearchScope, IdFilter)} optimization in multi-project environment:
+   * {@link KeyHashLog} persists (key.hash, fileId) pairs, and caches `Set(keyHash : fileId in project)` in memory,
+   * so keys that do not belong to the project -- could be filtered early, before submitting them to {@link Processor}.
+   * An optimization works well for >1 _significantly different_ projects -- it doesn't work so well for N +/- copies
+   * of the same project, i.e. different branches of the same project, since in this case almost all the keys belong to
+   * all the projects => pre-filter does nothing, while still costs something.
+   */
   private final boolean myBuildKeyHashToVirtualFileMapping;
   private @Nullable KeyHashLog<Key> myKeyHashToVirtualFileMapping;
 
@@ -133,9 +141,9 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
 
         Project project = scope.getProject();
         if (myKeyHashToVirtualFileMapping != null && project != null && idFilter != null) {
-          IntSet hashMaskSet = myKeyHashToVirtualFileMapping.getSuitableKeyHashes(idFilter, project);
+          IntSet keyHashesBelongingToProject = myKeyHashToVirtualFileMapping.getSuitableKeyHashes(idFilter, project);
           return doProcessKeys(key -> {
-            if (!hashMaskSet.contains(myKeyDescriptor.getHashCode(key))) return true;
+            if (!keyHashesBelongingToProject.contains(myKeyDescriptor.getHashCode(key))) return true;
             return processor.process(key);
           });
         }
