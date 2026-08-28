@@ -126,7 +126,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "jerolba.carpet.record",
   "jetbrains.intellij.deps.eclipse.jgit",
   "jetbrains.patronus.config",
-  "jgrapht.core",
   "jooq.joox",
   "jps-javac-extension",
   "jruby-parser-0.5.4",
