@@ -2568,8 +2568,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myStickyLinesManager != null) {
       myStickyLinesManager.startDumb();
     }
-    // The LCD text loop is enabled only for opaque images
-    BufferedImage image = EditorImageUtil.createEditorImage(this, rect.width, rect.height, BufferedImage.TYPE_INT_RGB);
+    BufferedImage image = EditorImageUtil.createEditorImage(this, rect.width, rect.height);
     Graphics2D graphics = EditorImageUtil.createImageGraphics(this, image, rect);
     myPaintingDumbBuffer = true;
     try {

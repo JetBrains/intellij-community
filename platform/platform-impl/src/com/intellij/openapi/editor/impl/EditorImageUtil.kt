@@ -12,16 +12,17 @@ import java.awt.image.BufferedImage
 
 internal object EditorImageUtil {
   @JvmStatic
-  fun createEditorImage(editor: EditorImpl, width: Int, height: Int, imageType: Int): BufferedImage =
-    createEditorImage(editor, width.toDouble(), height.toDouble(), imageType)
+  fun createEditorImage(editor: EditorImpl, width: Int, height: Int): BufferedImage =
+    createEditorImage(editor, width.toDouble(), height.toDouble())
 
   @JvmStatic
-  fun createEditorImage(editor: EditorImpl, width: Double, height: Double, imageType: Int): BufferedImage =
+  fun createEditorImage(editor: EditorImpl, width: Double, height: Double): BufferedImage =
     ImageUtil.createImage(
       ScaleContext.create(editor.contentComponent),
       width.coerceAtLeast(1.0),
       height.coerceAtLeast(1.0),
-      imageType,
+      // No ARGB, see sun.java2d.SurfaceData.canRenderLCDText, it requires no transparency for subpixel AA!
+      BufferedImage.TYPE_INT_RGB,
       PaintUtil.RoundingMode.CEIL,
     )
 
