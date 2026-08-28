@@ -228,18 +228,35 @@ function applyToolBlocks(text, tool) {
 }
 
 const editionBlockPattern = /<!--\s*IF_EDITION:([A-Z0-9_-]+)\s*-->([\s\S]*?)<!--\s*\/IF_EDITION:\1\s*-->/gi;
+const wholeLineEditionBlockPattern =
+  /^[ \t]*<!--\s*IF_EDITION:([A-Z0-9_-]+)\s*-->([^\n]*?)<!--\s*\/IF_EDITION:\1\s*-->[ \t]*\n/gim;
 const unresolvedToolDirectivePattern = /<!--\s*\/?IF_TOOL:[^>]+-->/i;
 const unresolvedEditionDirectivePattern = /<!--\s*\/?IF_EDITION:[^>]+-->/i;
 const unresolvedTemplateCommentPattern = /<!--\s*\/?TEMPLATE:COMMENT\s*-->/i;
 
-function applyEditionBlocks(text, edition) {
-  const normalizedEdition = (edition ?? "").toUpperCase();
-  return text.replace(editionBlockPattern, (match, blockEdition, content) => {
-    if (blockEdition.toUpperCase() === normalizedEdition) {
-      return content;
-    }
-    return "";
+/**
+ * Removes a line that holds one edition block for another edition, the newline included. The block
+ * replacement alone leaves an empty line there, and an empty line ends the Markdown list the bullet
+ * was in. Two lines never match: a line that pairs two editions, because the pair keeps one of the
+ * two, and a block that spans lines, which the caller must write in an edition-only partial.
+ */
+function dropWholeLineEditionBlocks(text, normalizedEdition) {
+  return text.replace(wholeLineEditionBlockPattern, (match, blockEdition) => {
+    return blockEdition.toUpperCase() === normalizedEdition ? match : "";
   });
+}
+
+export function applyEditionBlocks(text, edition) {
+  const normalizedEdition = (edition ?? "").toUpperCase();
+  return dropWholeLineEditionBlocks(text, normalizedEdition).replace(
+    editionBlockPattern,
+    (match, blockEdition, content) => {
+      if (blockEdition.toUpperCase() === normalizedEdition) {
+        return content;
+      }
+      return "";
+    },
+  );
 }
 
 function assertNoUnresolvedTemplateDirectives(text, targetName) {
@@ -278,6 +295,25 @@ export function resolveToolsDir(edition) {
     throw new Error(`No tools directory configured for edition "${edition}".`);
   }
   return toolsDir;
+}
+
+const communityDirByEdition = new Map([
+  ["ULTIMATE", "community/"],
+  ["COMMUNITY", ""],
+]);
+
+/**
+ * Resolves the `{{COMMUNITY_DIR}}` placeholder: the prefix that reaches the community sources from
+ * the workspace root the rendered guide lives in. It is `community/` in the monorepo and empty in
+ * the community repository. A path written once with this prefix cannot drift between the editions,
+ * which paired IF_EDITION blocks let it do.
+ */
+export function resolveCommunityDir(edition) {
+  const communityDir = communityDirByEdition.get(normalizeEdition(edition));
+  if (communityDir === undefined) {
+    throw new Error(`No community directory configured for edition "${edition}".`);
+  }
+  return communityDir;
 }
 
 async function detectEdition() {
@@ -1013,7 +1049,12 @@ async function renderGuideOutputsWithContext({basePartials, defaultEdition}) {
       throw new Error(`${target.name} rendered output still has {{TOOLS_DIR}} placeholder.`);
     }
 
-    const withToolBlocks = applyToolBlocks(withToolsDir, target.tool);
+    const withCommunityDir = replaceAll(withToolsDir, "{{COMMUNITY_DIR}}", resolveCommunityDir(edition));
+    if (withCommunityDir.includes("{{COMMUNITY_DIR}}")) {
+      throw new Error(`${target.name} rendered output still has {{COMMUNITY_DIR}} placeholder.`);
+    }
+
+    const withToolBlocks = applyToolBlocks(withCommunityDir, target.tool);
     const withEditionBlocks = applyEditionBlocks(withToolBlocks, edition);
     const withoutTemplateBlocks = stripTemplateBlocks(withEditionBlocks);
     assertNoUnresolvedTemplateDirectives(withoutTemplateBlocks, target.name);
