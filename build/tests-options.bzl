@@ -3,6 +3,7 @@ load("@rules_java//java:defs.bzl", "java_test")
 PKGS = [
     "java.base/java.io",
     "java.base/java.lang",
+    "java.base/java.lang.ref",
     "java.base/java.lang.reflect",
     "java.base/java.net",
     "java.base/java.nio",
