@@ -61,18 +61,11 @@ import org.jetbrains.jps.model.module.JpsModule
 import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
-import java.time.Instant
-import java.time.ZoneOffset
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.inputStream
 import kotlin.io.path.pathString
 import kotlin.time.Duration
-
-@Suppress("SpellCheckingInspection")
-private val PLUGIN_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd")
 
 @OptIn(DelicateCoroutinesApi::class)
 suspend fun createBuildContext(
@@ -195,8 +188,8 @@ class BuildContextImpl internal constructor(
   override val pluginBuildNumber: String by lazy {
     var value = buildNumber
     if (value.endsWith(SnapshotBuildNumber.SNAPSHOT_SUFFIX)) {
-      val buildDate = ZonedDateTime.ofInstant(Instant.ofEpochSecond(options.buildDateInSeconds), ZoneOffset.UTC)
-      value = value.replace(SnapshotBuildNumber.SNAPSHOT_SUFFIX, "." + PLUGIN_DATE_FORMAT.format(buildDate))
+      //replace `SNAPSHOT` word with a big number to make the version match Semantic Versioning format
+      value = value.replace(SnapshotBuildNumber.SNAPSHOT_SUFFIX, ".99999999")
     }
     if (isNightly(value)) {
       value = "$value.0"
