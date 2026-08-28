@@ -13,10 +13,8 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
-import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleOrMultiCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbols
@@ -310,7 +308,7 @@ private fun isUsageOfSymbol(symbol: KaDeclarationSymbol, element: KtElement): Bo
 
     val receiverType = (symbol as? KaCallableSymbol)?.receiverType
     fun isUsageOfSymbolInResolvedCall(resolvedCall: KaSimpleOrMultiCall): Boolean = when (resolvedCall) {
-        is KaFunctionCall<*>, is KaVariableAccessCall -> {
+        is KaSimpleCall<*,*> -> {
 
             resolvedCall.dispatchReceiver?.getThisReceiverOwner() == symbol ||
                     resolvedCall.extensionReceiver?.getThisReceiverOwner() == symbol ||

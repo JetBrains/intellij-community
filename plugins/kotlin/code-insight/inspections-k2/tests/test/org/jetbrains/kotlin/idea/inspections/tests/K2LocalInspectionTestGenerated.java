@@ -25437,6 +25437,61 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedReceiverParameter/anonymousFunctionWithExpectedTypeContextParameters.kt");
         }
 
+        @TestMetadata("callableReferenceBoundToThis.kt")
+        public void testCallableReferenceBoundToThis() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedReceiverParameter/callableReferenceBoundToThis.kt");
+        }
+
+        @TestMetadata("callableReferenceBoundToUnrelatedVariable.kt")
+        public void testCallableReferenceBoundToUnrelatedVariable() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedReceiverParameter/callableReferenceBoundToUnrelatedVariable.kt");
+        }
+
+        @TestMetadata("callableReferenceToCompanionMember.kt")
+        public void testCallableReferenceToCompanionMember() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedReceiverParameter/callableReferenceToCompanionMember.kt");
+        }
+
+        @TestMetadata("callableReferenceToExtensionOnReceiver.kt")
+        public void testCallableReferenceToExtensionOnReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedReceiverParameter/callableReferenceToExtensionOnReceiver.kt");
+        }
+
+        @TestMetadata("callableReferenceToMemberInExtension.kt")
+        public void testCallableReferenceToMemberInExtension() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedReceiverParameter/callableReferenceToMemberInExtension.kt");
+        }
+
+        @TestMetadata("callableReferenceToMemberInSupertypeExtension.kt")
+        public void testCallableReferenceToMemberInSupertypeExtension() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedReceiverParameter/callableReferenceToMemberInSupertypeExtension.kt");
+        }
+
+        @TestMetadata("callableReferenceToOverloadedMemberInExtension.kt")
+        public void testCallableReferenceToOverloadedMemberInExtension() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedReceiverParameter/callableReferenceToOverloadedMemberInExtension.kt");
+        }
+
+        @TestMetadata("callableReferenceToPropertyInExtension.kt")
+        public void testCallableReferenceToPropertyInExtension() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedReceiverParameter/callableReferenceToPropertyInExtension.kt");
+        }
+
+        @TestMetadata("callableReferenceTopLevelFunction.kt")
+        public void testCallableReferenceTopLevelFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedReceiverParameter/callableReferenceTopLevelFunction.kt");
+        }
+
+        @TestMetadata("callableReferenceTypeQualifiedByReceiverType.kt")
+        public void testCallableReferenceTypeQualifiedByReceiverType() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedReceiverParameter/callableReferenceTypeQualifiedByReceiverType.kt");
+        }
+
+        @TestMetadata("callableReferenceTypeQualifiedByUnrelatedType.kt")
+        public void testCallableReferenceTypeQualifiedByUnrelatedType() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedReceiverParameter/callableReferenceTypeQualifiedByUnrelatedType.kt");
+        }
+
         @TestMetadata("companion.kt")
         public void testCompanion() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedReceiverParameter/companion.kt");

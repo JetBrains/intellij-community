@@ -1,0 +1,11 @@
+class C {
+    companion object {
+        fun f() {}
+    }
+}
+
+fun getF() = C.Companion::f
+
+fun main() {
+    getF()()
+}

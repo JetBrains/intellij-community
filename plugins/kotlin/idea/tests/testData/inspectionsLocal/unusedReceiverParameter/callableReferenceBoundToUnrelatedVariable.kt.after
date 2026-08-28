@@ -1,0 +1,11 @@
+class Other {
+    fun f() {}
+}
+
+class C
+
+fun getF(other: Other) = other::f
+
+fun main() {
+    getF(Other())()
+}
