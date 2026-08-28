@@ -3,6 +3,10 @@ package com.intellij.platform.lsp.unit
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.impl.cache.LspPerFileCache
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
@@ -13,10 +17,16 @@ import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.milliseconds
 
 @TestApplication
 internal class LspPerFileCacheTest {
@@ -140,5 +150,161 @@ internal class LspPerFileCacheTest {
     assertNull(cache.getOrCompute(file, 0, compute))
     assertNull(cache.getOrCompute(file, 0, compute))
     assertEquals(2, calls)
+  }
+
+  @Test
+  fun `document-stamp cache survives a change in another file`() = timeoutRunBlocking {
+    val cache = LspPerFileCache<Int, String>(project, invalidateOnlyOnDocumentChange = true)
+    val otherFile = codeInsightFixture.addFileToProject("other.txt", "other").virtualFile
+    val file = createFile("a.txt", "A")
+    var calls = 0
+    val compute = { calls++; "value-$calls" }
+
+    assertEquals("value-1", cache.getOrCompute(file, 0, compute))
+
+    // A change in another file bumps the global PSI count but not this document's stamp.
+    withContext(Dispatchers.EDT) {
+      WriteCommandAction.runWriteCommandAction(project) {
+        FileDocumentManager.getInstance().getDocument(otherFile)!!.insertString(0, "x")
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+      }
+    }
+    assertEquals("value-1", cache.getOrCompute(file, 0, compute))
+    assertEquals(1, calls)
+
+    // A change in this document invalidates the slot.
+    withContext(Dispatchers.EDT) {
+      WriteCommandAction.runWriteCommandAction(project) {
+        codeInsightFixture.editor.document.insertString(0, "X")
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+      }
+    }
+    assertEquals("value-2", cache.getOrCompute(file, 0, compute))
+    assertEquals(2, calls)
+  }
+
+  @Test
+  fun `concurrent same-key callers coalesce into one compute`() = timeoutRunBlocking {
+    val cache = LspPerFileCache<Int, String>(project)
+    val file = createFile("a.txt", "hello")
+    val calls = AtomicInteger()
+    val computeEntered = CountDownLatch(1)
+    val releaseCompute = CountDownLatch(1)
+
+    val first = async(Dispatchers.IO) {
+      cache.getOrCompute(file, 0) {
+        calls.incrementAndGet()
+        computeEntered.countDown()
+        releaseCompute.await()
+        "shared"
+      }
+    }
+    val second = async(Dispatchers.IO) {
+      computeEntered.await() // the first compute is in flight now
+      cache.getOrCompute(file, 0) { calls.incrementAndGet(); "second" }
+    }
+
+    delay(100.milliseconds) // give the second caller time to join the in-flight future
+    releaseCompute.countDown()
+
+    assertEquals("shared", first.await())
+    assertEquals("shared", second.await())
+    assertEquals(1, calls.get())
+  }
+
+  @Test
+  fun `concurrent different-key caller reuses a containment match from the in-flight compute`() = timeoutRunBlocking {
+    data class Span(val start: Int, val end: Int) { fun contains(i: Int) = i in start until end }
+    val cache = LspPerFileCache<Int, Span>(
+      project,
+      matches = { _, storedValue, queriedKey -> storedValue.contains(queriedKey) },
+    )
+    val file = createFile("a.txt", "hello")
+    val calls = AtomicInteger()
+    val computeEntered = CountDownLatch(1)
+    val releaseCompute = CountDownLatch(1)
+    val span = Span(10, 20)
+
+    val first = async(Dispatchers.IO) {
+      cache.getOrCompute(file, 12) {
+        calls.incrementAndGet()
+        computeEntered.countDown()
+        releaseCompute.await()
+        span
+      }
+    }
+    val second = async(Dispatchers.IO) {
+      computeEntered.await() // the first compute is in flight now
+      cache.getOrCompute(file, 15) { calls.incrementAndGet(); Span(100, 200) }
+    }
+
+    delay(100.milliseconds) // give the second caller time to join the in-flight future
+    releaseCompute.countDown()
+
+    assertEquals(span, first.await())
+    assertEquals(span, second.await()) // waited for the in-flight result and got a containment hit
+    assertEquals(1, calls.get())
+  }
+
+  @Test
+  fun `waiter cancellation does not cancel the shared compute`() = timeoutRunBlocking {
+    val cache = LspPerFileCache<Int, String>(project)
+    val file = createFile("a.txt", "hello")
+    val calls = AtomicInteger()
+    val computeEntered = CountDownLatch(1)
+    val releaseCompute = CountDownLatch(1)
+
+    val owner = async(Dispatchers.IO) {
+      cache.getOrCompute(file, 0) {
+        calls.incrementAndGet()
+        computeEntered.countDown()
+        releaseCompute.await()
+        "shared"
+      }
+    }
+
+    val waiterIndicator = EmptyProgressIndicator()
+    val waiterGotPce = async(Dispatchers.IO) {
+      computeEntered.await()
+      try {
+        ProgressManager.getInstance().runProcess(
+          { cache.getOrCompute(file, 0) { calls.incrementAndGet(); "waiter" } },
+          waiterIndicator,
+        )
+        false
+      }
+      catch (_: ProcessCanceledException) {
+        true
+      }
+    }
+
+    delay(100.milliseconds) // let the waiter join the in-flight future
+    waiterIndicator.cancel()
+    assertTrue(waiterGotPce.await(), "the waiter must be cancellable while the owner's request is in flight")
+
+    releaseCompute.countDown()
+    assertEquals("shared", owner.await())
+    assertEquals(1, calls.get())
+
+    // The owner's result must be cached despite the waiter's cancellation.
+    assertEquals("shared", cache.getOrCompute(file, 0) { calls.incrementAndGet(); "recomputed" })
+    assertEquals(1, calls.get())
+  }
+
+  @Test
+  fun `owner exception clears the slot`() = timeoutRunBlocking {
+    val cache = LspPerFileCache<Int, String>(project)
+    val file = createFile("a.txt", "hello")
+    val calls = AtomicInteger()
+
+    try {
+      cache.getOrCompute(file, 0) { calls.incrementAndGet(); throw IllegalStateException("simulated failure") }
+    }
+    catch (e: IllegalStateException) {
+      assertEquals("simulated failure", e.message)
+    }
+
+    assertEquals("recovered", cache.getOrCompute(file, 0) { calls.incrementAndGet(); "recovered" })
+    assertEquals(2, calls.get())
   }
 }

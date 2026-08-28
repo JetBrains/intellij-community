@@ -49,9 +49,11 @@ class LspRequestExecutor(
 
   private val hoverResultCache = register(HoverResultCache(lspClient.project))
   private val workspaceSymbolCache = register(LspSingleSlotCache<String, List<WorkspaceSymbol>>(lspClient.project))
-  private val documentSymbolCache = register(LspPerFileCache<Unit, List<DocumentSymbol>>(lspClient.project))
+  // documentSymbol and selectionRange results depend only on the requested document,
+  // so a change in another file must not evict them.
+  private val documentSymbolCache = register(LspPerFileCache<Unit, List<DocumentSymbol>>(lspClient.project, invalidateOnlyOnDocumentChange = true))
   private val documentHighlightCache = register(LspDocumentHighlightCache(lspClient.project))
-  private val selectionRangeCache = register(LspPerFileCache<Int, SelectionRange>(lspClient.project))
+  private val selectionRangeCache = register(LspPerFileCache<Int, SelectionRange>(lspClient.project, invalidateOnlyOnDocumentChange = true))
 
   private fun <T : LspCache> register(cache: T): T {
     allCaches.add(cache)
