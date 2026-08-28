@@ -1,11 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.backgroundWriteAction
-import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ui.EDT
@@ -36,7 +35,7 @@ class NonBlockingFlushQueueTest {
 
   @BeforeEach
   fun setUpFlushQueue() {
-    flushQueue = NonBlockingFlushQueue(getGlobalThreadingSupport())
+    flushQueue = NonBlockingFlushQueue(com.intellij.util.application.threadingSupport)
     counter = AtomicInteger(0)
   }
 

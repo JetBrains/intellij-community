@@ -38,7 +38,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.intellij.platform.locking.impl.IntelliJLockingUtil.getGlobalThreadingSupport;
 
 public class IdeEventQueueTest extends LightPlatformTestCase {
   @PerformanceUnitTest
@@ -235,7 +234,7 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
     TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
       assertFalse(ApplicationManager.getApplication().isWriteIntentLockAcquired());
       var ideEventQueue = IdeEventQueue.getInstance();
-      var threadingSupport = getGlobalThreadingSupport();
+      var threadingSupport = ApplicationManager.getApplication().getThreadingSupport();
       var hasWriteIntentAccess = new AtomicBoolean(false);
       var dispatcherCalled = new AtomicBoolean(false);
 
@@ -264,7 +263,7 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
       assertFalse(ApplicationManager.getApplication().isWriteIntentLockAcquired());
 
       var ideEventQueue = IdeEventQueue.getInstance();
-      var threadingSupport = getGlobalThreadingSupport();
+      var threadingSupport = ApplicationManager.getApplication().getThreadingSupport();
       var hasWriteIntentAccess = new AtomicBoolean(false);
       var dispatcherCalled = new AtomicBoolean(false);
 

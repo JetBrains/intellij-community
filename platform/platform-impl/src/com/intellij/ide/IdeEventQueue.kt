@@ -57,7 +57,6 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.FocusManagerImpl
 import com.intellij.platform.ide.bootstrap.StartupErrorReporter
 import com.intellij.platform.ide.menu.WinAltKeyProcessor
-import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.speedSearch.SpeedSearchSupply
@@ -130,7 +129,7 @@ class IdeEventQueue private constructor() : EventQueue() {
   private val activityListeners = ContainerUtil.createLockFreeCopyOnWriteList<Runnable>()
 
   @Internal
-  val threadingSupport: ThreadingSupport = getGlobalThreadingSupport()
+  val threadingSupport: ThreadingSupport = ThreadingSupportHolder.threadingSupport
   val keyEventDispatcher: IdeKeyEventDispatcher = IdeKeyEventDispatcher(this)
   val mouseEventDispatcher: IdeMouseEventDispatcher = IdeMouseEventDispatcher()
   val popupManager: IdePopupManager = IdePopupManager()
@@ -193,7 +192,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     LaterInvocator.initializeNonBlockingFlushQueue(threadingSupport)
     systemEventQueue.push(this)
     EDT.updateEdt()
-    replaceDefaultKeyboardFocusManager()
+    replaceDefaultKeyboardFocusManager(threadingSupport)
     addDispatcher(WindowsAltSuppressor(), null)
     if (SystemInfoRt.isWindows && java.lang.Boolean.parseBoolean(System.getProperty("keymap.windows.up.to.maximize.dialogs", "true"))) {
       // 'Windows+Up' shortcut would maximize the active dialog under Win 7+

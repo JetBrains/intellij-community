@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.rw
 
 import com.intellij.concurrency.ContextAwareRunnable
@@ -7,7 +7,7 @@ import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.platform.locking.impl.getGlobalThreadingSupport
+import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.Dispatchers
@@ -140,7 +140,7 @@ private sealed class ReadResult<out T> {
 private suspend fun yieldToPendingWriteActions() {
   // the runnable is executed on the Write thread _after_ the current or pending write action
   yieldUntilRun { runnable ->
-    getGlobalThreadingSupport().runWhenWriteActionIsCompleted {
+    application.threadingSupport.runWhenWriteActionIsCompleted {
       runnable.run()
     }
   }

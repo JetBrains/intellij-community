@@ -15,7 +15,6 @@ import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.statistics.logLintFilesFinished
 import com.intellij.mcpserver.util.awaitExternalChangesAndIndexing
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.WriteActionListener
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.readAction
@@ -527,10 +526,6 @@ private fun isRetriableProcessCanceledException(e: ProcessCanceledException): Bo
 
 private suspend fun waitForWriteActionCompletion() {
   val threadingSupport = ApplicationManager.getApplication().threadingSupport
-  if (threadingSupport == null) {
-    WriteAction.runAndWait<RuntimeException> { }
-    return
-  }
 
   suspendCancellableCoroutine { continuation ->
     val resumeContinuation = ResumeContinuationAction(continuation)

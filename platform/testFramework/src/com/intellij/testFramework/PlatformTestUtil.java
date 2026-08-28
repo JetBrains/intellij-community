@@ -104,7 +104,6 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.concurrency.ThreadingAssertions;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -170,7 +169,6 @@ import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.text.StringUtil.splitByLines;
 import static com.intellij.testFramework.UsefulTestCase.assertSameLines;
-import static com.intellij.util.containers.ContainerUtil.all;
 import static com.intellij.util.containers.ContainerUtil.sorted;
 import static java.util.Objects.requireNonNull;
 import static org.junit.Assert.assertArrayEquals;
@@ -669,28 +667,20 @@ public final class PlatformTestUtil {
     }
     Runnable launcher = () -> application.invokeLater(() -> canary.set(true), ModalityState.any());
     ThreadingSupport lock = application.getThreadingSupport();
-    if (lock != null) {
-      lock.runWhenWriteActionIsCompleted(() -> {
-        launcher.run();
-        return Unit.INSTANCE;
-      });
-    } else {
+    lock.runWhenWriteActionIsCompleted(() -> {
       launcher.run();
-    }
+      return Unit.INSTANCE;
+    });
   }
 
   private static String getLockDump() {
     ThreadingSupport lock = ApplicationManager.getApplication().getThreadingSupport();
-    if (lock != null) {
-      return "Threading support dump: " +
-      "raAllowed=" + lock.isReadAccessAllowed() +
-      ", waAllowed=" + lock.isWriteAccessAllowed() +
-      ", waPending=" + lock.isWriteActionPending() +
-      ", waInProgress=" + lock.isWriteActionInProgress() +
-      ", writeActionFollowups=" + lock.writeActionFollowupsSize();
-    } else {
-      return "Threading support not found";
-    }
+    return "Threading support dump: " +
+           "raAllowed=" + lock.isReadAccessAllowed() +
+           ", waAllowed=" + lock.isWriteAccessAllowed() +
+           ", waPending=" + lock.isWriteActionPending() +
+           ", waInProgress=" + lock.isWriteActionInProgress() +
+           ", writeActionFollowups=" + lock.writeActionFollowupsSize();
   }
 
   @TestOnly

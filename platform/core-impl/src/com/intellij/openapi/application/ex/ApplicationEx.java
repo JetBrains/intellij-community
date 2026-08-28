@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ThreadingSupport;
 import com.intellij.openapi.application.WriteActionListener;
 import com.intellij.openapi.application.WriteIntentReadActionListener;
 import com.intellij.openapi.application.WriteLockReacquisitionListener;
-import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -230,28 +229,22 @@ public interface ApplicationEx extends Application {
   @ApiStatus.Internal
   default void addReadActionListener(@NotNull ReadActionListener listener, @NotNull Disposable parentDisposable) {
     ThreadingSupport threadingSupport = getThreadingSupport();
-    if (threadingSupport != null) {
-      threadingSupport.addReadActionListener(listener);
-      Disposer.register(parentDisposable, () -> threadingSupport.removeReadActionListener(listener));
-    }
+    threadingSupport.addReadActionListener(listener);
+    Disposer.register(parentDisposable, () -> threadingSupport.removeReadActionListener(listener));
   }
 
   @ApiStatus.Experimental
   default void addWriteActionListener(@NotNull WriteActionListener listener, @NotNull Disposable parentDisposable) {
     ThreadingSupport threadingSupport = getThreadingSupport();
-    if (threadingSupport != null) {
-      threadingSupport.addWriteActionListener(listener);
-      Disposer.register(parentDisposable, () -> threadingSupport.removeWriteActionListener(listener));
-    }
+    threadingSupport.addWriteActionListener(listener);
+    Disposer.register(parentDisposable, () -> threadingSupport.removeWriteActionListener(listener));
   }
 
   @ApiStatus.Internal
   default void addWriteIntentReadActionListener(@NotNull WriteIntentReadActionListener listener, @NotNull Disposable parentDisposable) {
     ThreadingSupport threadingSupport = getThreadingSupport();
-    if (threadingSupport != null) {
-      threadingSupport.addWriteIntentReadActionListener(listener);
-      Disposer.register(parentDisposable, () -> threadingSupport.removeWriteIntentReadActionListener(listener));
-    }
+    threadingSupport.addWriteIntentReadActionListener(listener);
+    Disposer.register(parentDisposable, () -> threadingSupport.removeWriteIntentReadActionListener(listener));
   }
 
   @ApiStatus.Internal

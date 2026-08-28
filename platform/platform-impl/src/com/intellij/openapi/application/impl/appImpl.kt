@@ -14,10 +14,10 @@ import com.intellij.openapi.application.useBackgroundWriteAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.util.SuvorovProgress
 import com.intellij.openapi.util.Ref
-import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning
 import com.intellij.util.SlowOperations
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.application
 import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
@@ -147,7 +147,7 @@ object TestOnlyThreading {
       return action.run()
     }
     if (application.isWriteIntentLockAcquired && !application.isWriteAccessAllowed) {
-      return getGlobalThreadingSupport().releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(action::run)
+      return application.threadingSupport.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(action::run)
     } else {
       return action.run()
     }
@@ -194,7 +194,7 @@ object InternalThreading {
   @Throws(Throwable::class)
   @JvmStatic
   fun invokeAndWaitWithTransferredWriteAction(runnable: Runnable) {
-    val lock = getGlobalThreadingSupport()
+    val lock = application.threadingSupport
     assert(lock.isWriteAccessAllowed()) { "Transferring of write action to EDT is permitted only if write lock is acquired" }
     if (!useBackgroundWriteAction) {
       runnable.run()
@@ -261,7 +261,7 @@ object InternalThreading {
   @Throws(Throwable::class)
   @JvmStatic
   fun executeOnPooledThreadWithTransferredWriteAction(runnable: Runnable) {
-    val lock = getGlobalThreadingSupport()
+    val lock = application.threadingSupport
     assert(lock.isWriteAccessAllowed()) { "Transferring of write action to BG thread is permitted only if write lock is acquired" }
     if (!useBackgroundWriteAction) {
       runnable.run()

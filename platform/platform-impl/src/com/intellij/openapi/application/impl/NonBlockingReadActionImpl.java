@@ -92,7 +92,6 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.EDT;
-import static com.intellij.platform.locking.impl.IntelliJLockingUtil.getGlobalThreadingSupport;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -203,7 +202,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
   private static void invokeLater(@NotNull Runnable runnable) {
     Application app = ApplicationManager.getApplication();
-    getGlobalThreadingSupport().runWhenWriteActionIsCompleted(() -> {
+    app.getThreadingSupport().runWhenWriteActionIsCompleted(() -> {
       SideEffectGuard.computeWithAllowedSideEffectsBlocking(EnumSet.of(SideEffectGuard.EffectType.INVOKE_LATER), () -> {
         app.invokeLaterOnWriteThread(runnable, ModalityState.any(), app.getDisposed());
         return Unit.INSTANCE;

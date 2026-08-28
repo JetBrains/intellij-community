@@ -28,7 +28,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.StatusBarEx
-import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.serviceContainer.AlreadyDisposedException
@@ -370,7 +369,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
   private suspend fun incrementDumbCounterSuspending(trace: Throwable, onCounterIncremented: () -> Unit = {}) {
     withContext(dispatcher) {
       // `runWriteActionWithCheckInWriteIntent` is a glorified 'if' statement that provides atomic transition to background write action if the condition is true
-      getGlobalThreadingSupport().runWriteActionWithCheckInWriteIntent({
+      application.threadingSupport.runWriteActionWithCheckInWriteIntent({
         val enterDumbMode = tryIncrementStateCounter()
         if (!enterDumbMode) {
           onCounterIncremented()
@@ -454,7 +453,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     LOG.assertTrue(state.value.isDumb, "Should be dumb")
     withContext(dispatcher) {
       // `runWriteActionWithCheckInWriteIntent` is a glorified 'if' statement that provides atomic transition to background write action if the condition is true
-      getGlobalThreadingSupport().runWriteActionWithCheckInWriteIntent(::tryDecrementDumbCounter) {
+      application.threadingSupport.runWriteActionWithCheckInWriteIntent(::tryDecrementDumbCounter) {
         val isNowSmart = doDecrementDumbCounter()
         if (isNowSmart) {
           application.invokeLater {

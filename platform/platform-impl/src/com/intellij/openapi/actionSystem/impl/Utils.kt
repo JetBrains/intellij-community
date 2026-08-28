@@ -80,7 +80,6 @@ import com.intellij.platform.ide.menu.FrameMenuUiKind
 import com.intellij.platform.ide.menu.IdeJMenuBar
 import com.intellij.platform.ide.menu.MacNativeActionMenuItem
 import com.intellij.platform.ide.menu.createMacNativeActionMenu
-import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ExperimentalUI
@@ -1441,11 +1440,11 @@ internal inline fun <R> runBlockingForActionExpand(
     // sometimes this code runs under write action. It does not call read actions inside, so it makes no sense parallelizing lock; moreover, having write access
     // could prevent deadlocks caused by background write actions
     val (lockContextElement, cleanup) = if (application.isWriteAccessAllowed) {
-      getGlobalThreadingSupport().getLockContextElement() to {}
+      application.threadingSupport.getLockContextElement() to {}
     }
     else {
       installThreadContext(ctx, true) {
-        getGlobalThreadingSupport().parallelizeLock(true)
+        application.threadingSupport.parallelizeLock(true)
       }
     }
     try {

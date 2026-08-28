@@ -6,12 +6,12 @@ import com.intellij.ide.ui.ShowingContainer
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ThreadingSupport
 import com.intellij.openapi.application.wrapHighLevelFunctionsInWriteIntent
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import java.awt.AWTEvent
 import java.awt.Component
 import java.awt.EventQueue
@@ -40,7 +40,7 @@ private val logger = logger<IdeKeyboardFocusManager>()
  * [javax.swing.FocusManager] for the reasons described in [javax.swing.DelegatingDefaultFocusManager]'s javadoc -
  * just in case some legacy code expects it.
  */
-internal class IdeKeyboardFocusManager(internal val original: KeyboardFocusManager) : DefaultFocusManager() /* see javadoc above */ {
+internal class IdeKeyboardFocusManager(internal val original: KeyboardFocusManager, val threadingSupport: ThreadingSupport) : DefaultFocusManager() /* see javadoc above */ {
   // Don't inline this field, it's here to prevent policy override by parent's constructor. Don't make it final either.
   private val parentConstructorExecuted = true
 
@@ -69,7 +69,7 @@ internal class IdeKeyboardFocusManager(internal val original: KeyboardFocusManag
       }
       else {
         //todo IJPL-199557 fix all clients and remove WIRA here, but for now it is like keyboard or mouse event
-        performActivity(e) { getGlobalThreadingSupport().runWriteIntentReadAction { result = dispatch() } }
+        performActivity(e) { threadingSupport.runWriteIntentReadAction { result = dispatch() } }
       }
       return result
     }
@@ -130,9 +130,9 @@ internal class IdeKeyboardFocusManager(internal val original: KeyboardFocusManag
 }
 
 @Suppress("IdentifierGrammar", "UNCHECKED_CAST")
-internal fun replaceDefaultKeyboardFocusManager() {
+internal fun replaceDefaultKeyboardFocusManager(threadingSupport: ThreadingSupport) {
   val manager = DefaultFocusManager.getCurrentKeyboardFocusManager()
-  val newManager = IdeKeyboardFocusManager(manager)
+  val newManager = IdeKeyboardFocusManager(manager, threadingSupport)
   for (l in manager.propertyChangeListeners) {
     newManager.addPropertyChangeListener(l)
   }

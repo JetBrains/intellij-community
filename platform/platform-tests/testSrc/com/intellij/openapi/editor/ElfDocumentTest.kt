@@ -21,18 +21,18 @@ import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.ElfCandidate
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 import com.intellij.openapi.editor.impl.DocumentImpl
-import com.intellij.openapi.editor.impl.ElfDocumentSyncScheduler
 import com.intellij.openapi.editor.impl.DocumentWriteAccessGuard
+import com.intellij.openapi.editor.impl.ElfDocumentSyncScheduler
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.util.DocumentEventUtil
 import com.intellij.util.DocumentUtil
 import com.intellij.util.IncorrectOperationException
+import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.Dispatchers
@@ -282,7 +282,7 @@ class ElfDocumentTest {
     val document = DocumentImpl("abc")
     val elfDocument = getElfDocument(document)
     val update = runOnBgt {
-      getGlobalThreadingSupport().runWriteIntentReadAction {
+      application.threadingSupport.runWriteIntentReadAction {
         assertFalse(EDT.isCurrentThreadEdt())
         DocumentUtil.executeInBulk(document, true) {
           assertTrue(document.isInBulkUpdate)

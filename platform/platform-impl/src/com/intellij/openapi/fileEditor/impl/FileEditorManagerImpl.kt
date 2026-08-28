@@ -113,7 +113,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.fileEditor.FileEntry
-import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.flow.zipWithNext
@@ -125,6 +124,7 @@ import com.intellij.ui.tabs.TabInfo
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.IconUtil
 import com.intellij.util.ObjectUtils
+import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.SmartHashSet
@@ -2723,7 +2723,7 @@ fun blockingWaitForCompositeFileOpen(composite: EditorComposite) {
 @Suppress("RAW_RUN_BLOCKING")
 @RequiresEdt
 private fun Job.waitBlockingAndPumpEdt() {
-  val (parallelizedLockContext, cleanup) = getGlobalThreadingSupport().parallelizeLock(true)
+  val (parallelizedLockContext, cleanup) = application.threadingSupport.parallelizeLock(true)
   try {
     runBlocking(parallelizedLockContext) {
       invokeOnCompletion {

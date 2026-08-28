@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("OVERRIDE_DEPRECATION")
 
 package com.intellij.mock
@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ThreadingSupport
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.AnyModalityState
 import com.intellij.openapi.components.Service
@@ -58,6 +59,7 @@ open class MockApplication(parentDisposable: Disposable) : MockComponentManager(
 
   @Suppress("RAW_SCOPE_CREATION")
   private val appCoroutineScope = CoroutineScope(SupervisorJob())
+  private val threadingSupport = MockThreadingSupport
 
   init {
     INSTANCES_CREATED++
@@ -177,6 +179,10 @@ open class MockApplication(parentDisposable: Disposable) : MockComponentManager(
   }
 
   override fun removeApplicationListener(listener: ApplicationListener) {
+  }
+
+  override fun getThreadingSupport(): ThreadingSupport {
+    return threadingSupport
   }
 
   override fun getStartTime(): Long = 0

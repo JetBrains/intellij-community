@@ -1,10 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.backgroundWriteAction
-import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.application
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.job
@@ -21,7 +21,7 @@ class WriteIntentReadActionTest {
   @Test
   fun `fail-fast write intent read action can proceed if no actions are running`() = timeoutRunBlocking {
     val marker = AtomicBoolean(false)
-    assertTrue(getGlobalThreadingSupport().tryRunWriteIntentReadAction {
+    assertTrue(application.threadingSupport.tryRunWriteIntentReadAction {
       marker.set(true)
     })
     assertTrue(marker.get())
@@ -38,7 +38,7 @@ class WriteIntentReadActionTest {
       }
     }
     job.join()
-    assertFalse(getGlobalThreadingSupport().tryRunWriteIntentReadAction {
+    assertFalse(application.threadingSupport.tryRunWriteIntentReadAction {
       fail()
     })
     canFinish.complete()

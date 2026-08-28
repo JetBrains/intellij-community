@@ -16,6 +16,7 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.SaveAndSyncHandler;
+import com.intellij.ide.ThreadingSupportHolder;
 import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.welcomeScreen.WelcomeUtils;
@@ -76,7 +77,6 @@ import com.intellij.platform.diagnostic.telemetry.PlatformScopesKt;
 import com.intellij.platform.diagnostic.telemetry.Scope;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
-import com.intellij.platform.locking.impl.IntelliJLockingUtil;
 import com.intellij.platform.locking.impl.NestedLocksThreadingSupport;
 import com.intellij.platform.locking.impl.listeners.ErrorHandler;
 import com.intellij.platform.locking.impl.listeners.LegacyProgressIndicatorProvider;
@@ -194,7 +194,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   // contents modified in write action, read in read action
   private final TransactionGuardImpl myTransactionGuard = new TransactionGuardImpl();
 
-  private final NestedLocksThreadingSupport lock = IntelliJLockingUtil.getGlobalNestedLockingThreadingSupport();
+  private final NestedLocksThreadingSupport lock = ThreadingSupportHolder.getThreadingSupport();
 
   private final ReadActionCacheImpl myReadActionCacheImpl = new ReadActionCacheImpl();
 

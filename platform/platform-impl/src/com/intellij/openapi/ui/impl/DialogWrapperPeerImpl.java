@@ -51,7 +51,6 @@ import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader;
 import com.intellij.platform.ide.bootstrap.SplashManagerKt;
-import com.intellij.platform.locking.impl.IntelliJLockingUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ComponentUtil;
@@ -527,7 +526,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
       var pair = ApplicationManager.getApplication().isWriteAccessAllowed()
                  ? new Pair<>(EmptyCoroutineContext.INSTANCE, emptyFunction)
-                 : IntelliJLockingUtil.getGlobalThreadingSupport().parallelizeLock(false);
+                 : ApplicationManager.getApplication().getThreadingSupport().parallelizeLock(false);
       lockContextWrapper = (r) -> {
         ThreadContext.installThreadContext(pair.getFirst(), true, () -> {
           r.run();

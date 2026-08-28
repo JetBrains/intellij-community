@@ -28,7 +28,6 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.application
@@ -509,7 +508,7 @@ class BackgroundWriteActionTest {
   @Test
   fun `prevention of WA is thread-local`(): Unit = concurrencyTest {
     launch {
-      val cleanup = getGlobalThreadingSupport().prohibitWriteActionsInside()
+      val cleanup = application.threadingSupport.prohibitWriteActionsInside()
       try {
         checkpoint(1)
         checkpoint(4)
@@ -584,7 +583,7 @@ class BackgroundWriteActionTest {
       val readCanceled = AtomicBoolean(false)
       edtWriteAction {
         // downgrades the outer (EDT) write action to a write-intent lock and advances the write-stack base past it
-        getGlobalThreadingSupport().executeSuspendingWriteAction {
+        application.threadingSupport.executeSuspendingWriteAction {
           launch(Dispatchers.Default) {
             ProgressIndicatorUtils.runInReadActionWithWriteActionPriority({
               readStarted.complete()
@@ -696,7 +695,7 @@ class BackgroundWriteActionTest {
   fun `runWhenWriteActionIsCompleted executes immediately when no write action`() {
     val executed = AtomicBoolean(false)
 
-    getGlobalThreadingSupport().runWhenWriteActionIsCompleted {
+    application.threadingSupport.runWhenWriteActionIsCompleted {
       executed.set(true)
     }
 
@@ -716,7 +715,7 @@ class BackgroundWriteActionTest {
       }
     }
     delay(100)
-    getGlobalThreadingSupport().runWhenWriteActionIsCompleted {
+    application.threadingSupport.runWhenWriteActionIsCompleted {
       executed.set(true)
     }
     assertThat(executed.get()).isFalse
@@ -741,7 +740,7 @@ class BackgroundWriteActionTest {
       }
     }
     delay(50)
-    getGlobalThreadingSupport().runWhenWriteActionIsCompleted {
+    application.threadingSupport.runWhenWriteActionIsCompleted {
       executed.set(true)
     }
     assertThat(executed.get()).isFalse
@@ -783,11 +782,11 @@ class BackgroundWriteActionTest {
       }
     }
     Thread.sleep(50)
-    getGlobalThreadingSupport().runWhenWriteActionIsCompleted {
+    application.threadingSupport.runWhenWriteActionIsCompleted {
       executed.set(true)
     }
     assertThat(executed.get()).isFalse
-    val clenanup = getGlobalThreadingSupport().parallelizeLock(true).second
+    val clenanup = application.threadingSupport.parallelizeLock(true).second
     try {
       assertThat(executed.get()).isTrue
     } finally {
@@ -822,7 +821,7 @@ class BackgroundWriteActionTest {
 
   @Test
   fun `invokeAndWait works in post-write-action listener`() = timeoutRunBlocking {
-    val threadingSupport = getGlobalThreadingSupport()
+    val threadingSupport = application.threadingSupport
     val listener = object : WriteActionListener {
       override fun afterWriteActionFinished(action: Class<*>) {
         application.invokeAndWait { }
