@@ -1,9 +1,22 @@
+@file:Suppress("IO_FILE_USAGE")
+
 package org.jetbrains.jewel.scripts.bazel
 
 import com.facebook.ktfmt.format.Formatter
 import com.facebook.ktfmt.format.FormattingOptions
 import java.io.File
 import kotlin.system.exitProcess
+
+private val formattingOptions =
+    FormattingOptions(
+        maxWidth = 120,
+        blockIndent = 4,
+        continuationIndent = 4,
+        manageTrailingCommas = true,
+        removeUnusedImports = true,
+    )
+
+fun formatKotlinSource(content: String): String = Formatter.format(formattingOptions, content)
 
 // Run it like: bazel run //platform/jewel/build-scripts/bazel:ktfmtCheck or ktfmtFormat
 fun main(args: Array<String>) {
@@ -13,25 +26,12 @@ fun main(args: Array<String>) {
 
     val filesWithWrongFormat: MutableList<String> = mutableListOf()
 
-    val formattingOptions =
-        FormattingOptions(
-            maxWidth = 120,
-            blockIndent = 4,
-            continuationIndent = 4,
-            manageTrailingCommas = true,
-            removeUnusedImports = true,
-        )
-
     when (parameter) {
         "format" -> {
             jewelRoot
                 ?.walkTopDownValidDirectories()
                 ?.filter { it.isKotlinFile() }
-                ?.forEach { file ->
-                    val formattedFile = Formatter.format(formattingOptions, file.readText())
-
-                    file.writeText(formattedFile)
-                }
+                ?.forEach { file -> file.writeText(formatKotlinSource(file.readText())) }
 
             println("\n${"SUCCESS:".asSuccess()} Files were formatted.")
         }
@@ -41,7 +41,7 @@ fun main(args: Array<String>) {
                 ?.filter { it.isKotlinFile() }
                 ?.forEach { file ->
                     val fileText = file.readText()
-                    val formattedFile = Formatter.format(formattingOptions, fileText)
+                    val formattedFile = formatKotlinSource(fileText)
 
                     if (formattedFile != fileText) {
                         filesWithWrongFormat.add(file.path)
