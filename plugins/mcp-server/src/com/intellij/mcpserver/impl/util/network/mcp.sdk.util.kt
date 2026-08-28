@@ -3,6 +3,7 @@ package com.intellij.mcpserver.impl.util.network
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.util.registry.Registry
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
@@ -55,7 +56,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 private val logger = logger<RoutingContext>()
@@ -69,11 +70,19 @@ internal val SSE_HEARTBEAT_PERIOD = 5.seconds
 
 private val SSE_HEARTBEAT_EVENT = ServerSentEvent(comments = "heartbeat")
 
+internal const val STREAMABLE_SESSION_IDLE_TIMEOUT_REGISTRY_KEY: String = "mcp.server.streamable.session.idle.timeout.ms"
+
+private const val ABANDONED_SESSION_CLOSED = "Closing an abandoned Streamable HTTP session"
+
+/** A test asserts on this text, so a reword changes an observable. */
+internal const val UNINITIALIZED_SESSION_CLOSED: String = "$ABANDONED_SESSION_CLOSED that never initialized"
+
 /**
  * Inactivity is the only signal an abandoned session gives: the Kotlin MCP client never sends DELETE, and a client may
  * work without a notification stream at all, so nothing else distinguishes it from an idle one.
  */
-private val STREAMABLE_SESSION_IDLE_TIMEOUT = 5.minutes
+private val streamableSessionIdleTimeout: Duration
+  get() = Registry.intValue(STREAMABLE_SESSION_IDLE_TIMEOUT_REGISTRY_KEY, 300_000).coerceAtLeast(1).milliseconds
 
 /**
  * A session that never initialized holds a global IDE override installed for it (document conflict resolution), so it
@@ -97,8 +106,8 @@ private class StreamableSession(val transport: StreamableHttpServerTransport) {
 
   private val idleTimeout: Duration
     get() =
-      if (transport.sessionId == null) STREAMABLE_SESSION_IDLE_TIMEOUT.coerceAtMost(UNINITIALIZED_GRACE_PERIOD)
-      else STREAMABLE_SESSION_IDLE_TIMEOUT
+      if (transport.sessionId == null) streamableSessionIdleTimeout.coerceAtMost(UNINITIALIZED_GRACE_PERIOD)
+      else streamableSessionIdleTimeout
 
   init {
     transport.onClose { state.value = State.Closed }
@@ -370,7 +379,8 @@ private fun CoroutineScope.closeWhenAbandoned(sessionId: String, session: Stream
   launch(CoroutineName("streamable-session-$sessionId")) {
     try {
       if (session.awaitAbandoned()) {
-        logger.warn("Closing abandoned StreamableHttp session $sessionId, initialized: ${session.transport.sessionId != null}")
+        if (session.transport.sessionId != null) logger.info("$ABANDONED_SESSION_CLOSED. Id: $sessionId")
+        else logger.warn("$UNINITIALIZED_SESSION_CLOSED. Id: $sessionId")
       }
     }
     finally {

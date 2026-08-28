@@ -102,6 +102,9 @@
     <registryKey defaultValue="1000"
                  description="Throttle interval in milliseconds for MCP progress notifications and keep-alives"
                  key="mcp.server.progress.notification.interval.ms"/>
+    <registryKey defaultValue="300000"
+                 description="Idle time in milliseconds after which an abandoned MCP Streamable HTTP session is closed"
+                 key="mcp.server.streamable.session.idle.timeout.ms"/>
     <registryKey defaultValue="true"
                  description="Forward the IDE MCP SSE and built-in HTTP loopback ports into each WSL distro that hosts an open project. Windows only."
                  key="ide.mcp.wsl.forward.enabled"
