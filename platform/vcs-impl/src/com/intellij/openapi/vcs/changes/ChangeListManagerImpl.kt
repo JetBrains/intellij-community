@@ -80,12 +80,11 @@ import com.intellij.vcs.commit.SingleChangeListCommitter.Companion.create
 import com.intellij.vcsUtil.VcsUtil
 import com.intellij.xml.util.XmlStringUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.Promise
 import java.io.File
 import java.util.concurrent.CountDownLatch
 
@@ -342,10 +341,12 @@ class ChangeListManagerImpl(
     ProgressIndicatorUtils.awaitWithCheckCanceled(waiter)
   }
 
-  override fun promiseWaitForUpdate(): Promise<*> {
-    val promise = AsyncPromise<Boolean?>()
-    invokeAfterUpdate(false, Runnable { promise.setResult(true) })
-    return promise
+  override suspend fun awaitUpdate() {
+    suspendCancellableCoroutine {
+      invokeAfterUpdate(false, Runnable {
+        it.resume(Unit) { _, _, _ -> }
+      })
+    }
   }
 
   override fun isFreezed(): String? = stateProvider.state.value.asSafely<ChangeListManagerState.Frozen>()?.reason

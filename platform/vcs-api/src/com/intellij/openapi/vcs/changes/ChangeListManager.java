@@ -22,18 +22,27 @@ import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
+@SuppressWarnings("deprecation")
 @ApiStatus.NonExtendable
-public abstract class ChangeListManager implements ChangeListModification {
+public abstract class ChangeListManager implements ChangeListModification, ChangeListManagerKotlinExtension {
   public static @NotNull ChangeListManager getInstance(@NotNull Project project) {
     if (project.isDefault()) throw new IllegalArgumentException("Can't create ChangeListManager for default project");
     return project.getService(ChangeListManager.class);
   }
 
   /**
+   * @return whether state update is in progress
+   * @see awaitUpdate
+   */
+  public abstract boolean isInUpdate();
+
+  /**
    * Invoke callback when current CLM refresh is completed, without any visible progress.
    * <p/>
    * WARNING: This callback WILL NOT wait for async unchanged files update if VCS is using a custom {@link VcsManagedFilesHolder}.
    * These can be listened via {@link ChangeListListener#unchangedFileStatusChanged(boolean)} or on a per-VCS basis.
+   *
+   * @see #awaitUpdate
    */
   public void invokeAfterUpdate(boolean callbackOnAwt, @NotNull Runnable afterUpdate) {
     InvokeAfterUpdateMode mode = callbackOnAwt ? InvokeAfterUpdateMode.SILENT : InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED;
@@ -46,6 +55,8 @@ public abstract class ChangeListManager implements ChangeListModification {
    * @param cancellable Whether the progress can be cancelled. If progress is cancelled, callback will not be called.
    * @param title       Operation name to use as prefix for progress text
    * @param afterUpdate Callback that will be called in {@link com.intellij.openapi.progress.Task#onFinished()}
+   *
+   * @see #awaitUpdate
    */
   public void invokeAfterUpdateWithProgress(boolean cancellable,
                                             @Nullable @NlsContexts.ProgressTitle String title,
@@ -61,6 +72,8 @@ public abstract class ChangeListManager implements ChangeListModification {
    * @param cancellable Whether the progress can be cancelled. If progress is cancelled, callback will be called without waiting for the current CLM refresh to finish.
    * @param title       Operation name to use as prefix for progress dialog title
    * @param afterUpdate Callback that will be called in {@link com.intellij.openapi.progress.Task#onFinished()}
+   *
+   * @see #awaitUpdate
    */
   public void invokeAfterUpdateWithModal(boolean cancellable,
                                          @Nullable @NlsContexts.DialogTitle String title,
@@ -74,6 +87,7 @@ public abstract class ChangeListManager implements ChangeListModification {
    * @see #invokeAfterUpdate(boolean, Runnable)
    * @see #invokeAfterUpdateWithProgress
    * @see #invokeAfterUpdateWithModal
+   * @see #awaitUpdate
    */
   public abstract void invokeAfterUpdate(@NotNull Runnable afterUpdate,
                                          @NotNull InvokeAfterUpdateMode mode,

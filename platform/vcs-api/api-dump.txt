@@ -803,6 +803,7 @@ com.intellij.openapi.vcs.changes.ChangeListListener
 - unchangedFileStatusChanged():V
 - unchangedFileStatusChanged(Z):V
 Fa:com.intellij.openapi.vcs.changes.ChangeListManager
+- com.intellij.openapi.vcs.changes.ChangeListManagerKotlinExtension
 - com.intellij.openapi.vcs.changes.ChangeListModification
 - <init>():V
 - a:addChangeListListener(com.intellij.openapi.vcs.changes.ChangeListListener):V
@@ -846,6 +847,7 @@ Fa:com.intellij.openapi.vcs.changes.ChangeListManager
 - a:isFreezedWithNotification(java.lang.String):Z
 - a:isIgnoredFile(com.intellij.openapi.vcs.FilePath):Z
 - a:isIgnoredFile(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isInUpdate():Z
 - a:isResolvedConflict(com.intellij.openapi.vcs.FilePath):Z
 - a:isUnversioned(com.intellij.openapi.vfs.VirtualFile):Z
 - a:removeChangeListListener(com.intellij.openapi.vcs.changes.ChangeListListener):V
@@ -863,6 +865,8 @@ com.intellij.openapi.vcs.changes.ChangeListManagerGate
 - a:getStatus(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.FileStatus
 - a:setDefaultChangeList(java.lang.String):V
 - a:setListsToDisappear(java.util.Collection):V
+com.intellij.openapi.vcs.changes.ChangeListManagerKotlinExtension
+- a:awaitUpdate(kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.openapi.vcs.changes.ChangeListModification
 - a:addChangeList(java.lang.String,java.lang.String):com.intellij.openapi.vcs.changes.LocalChangeList
 - a:editComment(java.lang.String,java.lang.String):java.lang.String

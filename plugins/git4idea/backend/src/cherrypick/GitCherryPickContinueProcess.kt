@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsNotifier
-import com.intellij.openapi.vcs.changes.ChangeListManagerEx
+import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously
 import com.intellij.openapi.vfs.VirtualFile
@@ -65,10 +65,10 @@ internal object GitCherryPickContinueProcess {
           }
 
           repository.update()
-          val changeListManager = ChangeListManagerEx.getInstanceEx(project)
+          val changeListManager = ChangeListManager.getInstance(project)
           RefreshVFsSynchronously.refresh(getStagedChanges(project, repository.root))
           VcsDirtyScopeManager.getInstance(project).rootDirty(repository.root)
-          changeListManager.waitForUpdate()
+          changeListManager.awaitUpdate()
         }
       }
     }

@@ -18,8 +18,6 @@
 - a:getAffectedLists(java.util.Collection):java.util.Collection
 - *sf:getInstanceEx(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangeListManagerEx
 - a:getUpdateException():com.intellij.openapi.vcs.VcsException
-- a:isInUpdate():Z
-- a:promiseWaitForUpdate():org.jetbrains.concurrency.Promise
 - a:setDefaultChangeList(com.intellij.openapi.vcs.changes.LocalChangeList,Z):V
 - a:unblockModalNotifications():V
 - a:unfreeze():V

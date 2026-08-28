@@ -1,414 +1,319 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.testFramework.vcs;
+package com.intellij.testFramework.vcs
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListData;
-import com.intellij.openapi.vcs.changes.ChangeListListener;
-import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
-import com.intellij.openapi.vcs.changes.CommitExecutor;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.IgnoredFileBean;
-import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ThreeState;
-import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListData
+import com.intellij.openapi.vcs.changes.ChangeListListener
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx
+import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode
+import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.ThreeState
+import com.intellij.vcsUtil.VcsUtil
+import java.io.File
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+open class MockChangeListManager : ChangeListManagerEx() {
+  private val changeLists = HashMap<String, MockChangeList>()
+  private var activeChangeList: LocalChangeList
+  private val _defaultChangeList = MockChangeList(LocalChangeList.getDefaultName())
 
-public class MockChangeListManager extends ChangeListManagerEx {
-
-  private final Map<String, MockChangeList> myChangeLists = new HashMap<>();
-  private LocalChangeList myActiveChangeList;
-  private final MockChangeList myDefaultChangeList;
-
-  public MockChangeListManager() {
-    myDefaultChangeList = new MockChangeList(LocalChangeList.getDefaultName());
-    myChangeLists.put(LocalChangeList.getDefaultName(), myDefaultChangeList);
-    myActiveChangeList = myDefaultChangeList;
+  init {
+    changeLists[LocalChangeList.getDefaultName()] = _defaultChangeList
+    activeChangeList = _defaultChangeList
   }
 
-  public void addChanges(Change... changes) {
-    MockChangeList changeList = myChangeLists.get(LocalChangeList.getDefaultName());
-    for (Change change : changes) {
-      changeList.add(change);
+  fun addChanges(vararg changes: Change?) {
+    val changeList = changeLists[LocalChangeList.getDefaultName()]!!
+    for (change in changes) {
+      changeList.add(change)
     }
   }
 
-  @Override
-  public void invokeAfterUpdate(@NotNull Runnable afterUpdate,
-                                @NotNull InvokeAfterUpdateMode mode,
-                                String title,
-                                ModalityState state) {
-    throw new UnsupportedOperationException();
+  override fun areChangeListsEnabled(): Boolean = true
+
+  override fun getChangeListsNumber(): Int = changeLists.size
+
+  override fun getChangeLists(): List<LocalChangeList?> {
+    return ArrayList<LocalChangeList?>(changeLists.values)
   }
 
-  @Override
-  public boolean areChangeListsEnabled() {
-    return true;
+  override fun getAffectedPaths(): List<File?> {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public int getChangeListsNumber() {
-    return getChangeLists().size();
+  override fun getAffectedFiles(): List<VirtualFile?> {
+    throw UnsupportedOperationException()
   }
 
-  @NotNull
-  @Override
-  public List<LocalChangeList> getChangeLists() {
-    return new ArrayList<>(myChangeLists.values());
+  override fun isFileAffected(file: VirtualFile): Boolean {
+    throw UnsupportedOperationException()
   }
 
-  @NotNull
-  @Override
-  public List<File> getAffectedPaths() {
-    throw new UnsupportedOperationException();
-  }
-
-  @NotNull
-  @Override
-  public List<VirtualFile> getAffectedFiles() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public boolean isFileAffected(@NotNull VirtualFile file) {
-    throw new UnsupportedOperationException();
-  }
-
-  @NotNull
-  @Override
-  public Collection<Change> getAllChanges() {
-    Collection<Change> changes = new ArrayList<>();
-    for (MockChangeList list : myChangeLists.values()) {
-      changes.addAll(list.getChanges());
+  override fun getAllChanges(): Collection<Change> {
+    val changes = ArrayList<Change>()
+    for (list in changeLists.values) {
+      changes.addAll(list.changes)
     }
-    return changes;
+    return changes
   }
 
-  @Override
-  public LocalChangeList findChangeList(String name) {
-    throw new UnsupportedOperationException();
+  override fun findChangeList(name: String?): LocalChangeList? {
+    throw UnsupportedOperationException()
   }
 
-  @Nullable
-  @Override
-  public LocalChangeList getChangeList(@Nullable String id) {
-    throw new UnsupportedOperationException();
+  override fun getChangeList(id: String?): LocalChangeList? {
+    throw UnsupportedOperationException()
   }
 
-  @NotNull
-  @Override
-  public LocalChangeList getDefaultChangeList() {
-    return myActiveChangeList;
+  override fun getDefaultChangeList(): LocalChangeList {
+    return activeChangeList
   }
 
-  @Override
-  public LocalChangeList getChangeList(@NotNull Change change) {
-    throw new UnsupportedOperationException();
+  override fun getChangeList(change: Change): LocalChangeList? {
+    throw UnsupportedOperationException()
   }
 
-  @NotNull
-  @Override
-  public List<LocalChangeList> getChangeLists(@NotNull Change change) {
-    throw new UnsupportedOperationException();
+  override fun getChangeLists(change: Change): List<LocalChangeList?> {
+    throw UnsupportedOperationException()
   }
 
-  @NotNull
-  @Override
-  public List<LocalChangeList> getChangeLists(@NotNull VirtualFile file) {
-    throw new UnsupportedOperationException();
+  override fun getChangeLists(file: VirtualFile): List<LocalChangeList?> {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public String getChangeListNameIfOnlyOne(Change[] changes) {
-    throw new UnsupportedOperationException();
+  override fun getChangeListNameIfOnlyOne(changes: Array<Change?>?): String? {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList list) {
-    scheduleAutomaticEmptyChangeListDeletion(list, false);
+  override fun scheduleAutomaticEmptyChangeListDeletion(list: LocalChangeList) {
+    scheduleAutomaticEmptyChangeListDeletion(list, false)
   }
 
-  @Override
-  public void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList list, boolean silently) {
-    throw new UnsupportedOperationException();
+  override fun scheduleAutomaticEmptyChangeListDeletion(list: LocalChangeList, silently: Boolean) {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public Change getChange(@NotNull VirtualFile file) {
-    return getChange(VcsUtil.getFilePath(file));
+  override fun getChange(file: VirtualFile): Change? {
+    return getChange(VcsUtil.getFilePath(file))
   }
 
-  @Override
-  public LocalChangeList getChangeList(@NotNull VirtualFile file) {
-    throw new UnsupportedOperationException();
+  override fun getChangeList(file: VirtualFile): LocalChangeList? {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public Change getChange(FilePath file) {
-    for (Change change : getAllChanges()) {
-      ContentRevision before = change.getBeforeRevision();
-      ContentRevision after = change.getAfterRevision();
-      if (after != null && after.getFile().equals(file) || before != null && before.getFile().equals(file)) {
-        return change;
+  override fun getChange(file: FilePath?): Change? {
+    for (change in getAllChanges()) {
+      val before = change.beforeRevision
+      val after = change.afterRevision
+      if (after != null && after.getFile() == file || before != null && before.getFile() == file) {
+        return change
       }
     }
-    return null;
+    return null
   }
 
-  @Override
-  public boolean isUnversioned(@NotNull VirtualFile file) {
-    throw new UnsupportedOperationException();
+  override fun isUnversioned(file: VirtualFile): Boolean {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public @NotNull List<FilePath> getUnversionedFilesPaths() {
-    throw new UnsupportedOperationException();
+  override fun getUnversionedFilesPaths(): List<FilePath?> {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public boolean isResolvedConflict(@NotNull FilePath file) {
-    throw new UnsupportedOperationException();
+  override fun isResolvedConflict(file: FilePath): Boolean {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public @NotNull List<FilePath> getResolvedConflictPaths() {
-    throw new UnsupportedOperationException();
+  override fun getResolvedConflictPaths(): List<FilePath?> {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public @NotNull FileStatus getStatus(@NotNull FilePath file) {
-    throw new UnsupportedOperationException();
+  override fun getStatus(file: FilePath): FileStatus {
+    throw UnsupportedOperationException()
   }
 
-  @NotNull
-  @Override
-  public FileStatus getStatus(@NotNull VirtualFile file) {
-    throw new UnsupportedOperationException();
+  override fun getStatus(file: VirtualFile): FileStatus {
+    throw UnsupportedOperationException()
   }
 
-  @NotNull
-  @Override
-  public Collection<Change> getChangesIn(@NotNull VirtualFile dir) {
-    return getChangesIn(VcsUtil.getFilePath(dir));
+  override fun getChangesIn(dir: VirtualFile): Collection<Change?> {
+    return getChangesIn(VcsUtil.getFilePath(dir))
   }
 
-  @NotNull
-  @Override
-  public Collection<Change> getChangesIn(@NotNull FilePath path) {
-    List<Change> changes = new ArrayList<>();
-    for (Change change : getAllChanges()) {
-      ContentRevision before = change.getBeforeRevision();
-      ContentRevision after = change.getAfterRevision();
+  override fun getChangesIn(path: FilePath): Collection<Change?> {
+    val changes = ArrayList<Change>()
+    for (change in getAllChanges()) {
+      val before = change.beforeRevision
+      val after = change.afterRevision
       if (before != null && before.getFile().isUnder(path, false) || after != null && after.getFile().isUnder(path, false)) {
-        changes.add(change);
+        changes.add(change)
       }
     }
-    return changes;
+    return changes
   }
 
-  @NotNull
-  @Override
-  public ThreeState haveChangesUnder(@NotNull VirtualFile vf) {
-    throw new UnsupportedOperationException();
+  override fun haveChangesUnder(vf: VirtualFile): ThreeState {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public void addChangeListListener(@NotNull ChangeListListener listener, @NotNull Disposable disposable) {
-    throw new UnsupportedOperationException();
+  override fun addChangeListListener(listener: ChangeListListener, disposable: Disposable) {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public void addChangeListListener(@NotNull ChangeListListener listener) {
-    throw new UnsupportedOperationException();
+  override fun addChangeListListener(listener: ChangeListListener) {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public void removeChangeListListener(@NotNull ChangeListListener listener) {
-    throw new UnsupportedOperationException();
+  override fun removeChangeListListener(listener: ChangeListListener) {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public void commitChanges(@NotNull LocalChangeList changeList, @NotNull List<? extends Change> changes) {
-    throw new UnsupportedOperationException();
+  override fun commitChanges(changeList: LocalChangeList, changes: List<Change?>) {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public void reopenFiles(@NotNull List<? extends FilePath> paths) {
-    throw new UnsupportedOperationException();
+  @Deprecated("Deprecated in Java")
+  @Suppress("removal")
+  override fun reopenFiles(paths: List<FilePath>) {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public void addUnversionedFiles(@NotNull LocalChangeList list, @NotNull List<? extends VirtualFile> unversionedFiles) {
-    throw new UnsupportedOperationException();
+  override fun addUnversionedFiles(list: LocalChangeList?, files: List<VirtualFile>) {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public boolean isIgnoredFile(@NotNull VirtualFile file) {
-    throw new UnsupportedOperationException();
+  override fun isIgnoredFile(file: VirtualFile): Boolean {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public boolean isIgnoredFile(@NotNull FilePath file) {
-    throw new UnsupportedOperationException();
+  override fun isIgnoredFile(file: FilePath): Boolean {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public @NotNull List<FilePath> getIgnoredFilePaths() {
-    throw new UnsupportedOperationException();
+  override fun getIgnoredFilePaths(): List<FilePath?> {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public String getSwitchedBranch(@NotNull VirtualFile file) {
-    throw new UnsupportedOperationException();
+  override fun getSwitchedBranch(file: VirtualFile): String? {
+    throw UnsupportedOperationException()
   }
 
-  @NotNull
-  @Override
-  public String getDefaultListName() {
-    throw new UnsupportedOperationException();
+  override fun getDefaultListName(): String {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public void freeze(@NotNull String reason) {
+  override fun freeze(reason: String) {
   }
 
-  @Override
-  public void unfreeze() {
+  override fun unfreeze() {
   }
 
-  @Override
-  public void waitForUpdate() {
-    throw new UnsupportedOperationException();
+  override fun waitForUpdate() {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public @NotNull Promise<?> promiseWaitForUpdate() {
-    throw new UnsupportedOperationException();
+  override fun isFreezed(): String? {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public String isFreezed() {
-    throw new UnsupportedOperationException();
+  override fun isFreezedWithNotification(modalTitle: String?): Boolean {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public boolean isFreezedWithNotification(@Nullable String modalTitle) {
-    throw new UnsupportedOperationException();
+  override fun getModifiedWithoutEditing(): List<VirtualFile?> {
+    throw UnsupportedOperationException("Not implemented")
   }
 
-  @NotNull
-  @Override
-  public List<VirtualFile> getModifiedWithoutEditing() {
-    throw new UnsupportedOperationException("Not implemented");
+  override fun addChangeList(name: String, comment: String?): LocalChangeList {
+    val changeList = MockChangeList(name)
+    changeLists[name] = changeList
+    return changeList
   }
 
-  @Override
-  public @NotNull LocalChangeList addChangeList(@NotNull String name, @Nullable String comment) {
-    MockChangeList changeList = new MockChangeList(name);
-    myChangeLists.put(name, changeList);
-    return changeList;
+  override fun setDefaultChangeList(name: String) {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public void setDefaultChangeList(@NotNull String name) {
-    throw new UnsupportedOperationException();
+  override fun setDefaultChangeList(list: LocalChangeList) {
+    activeChangeList = list
   }
 
-  @Override
-  public void setDefaultChangeList(@NotNull LocalChangeList list) {
-    myActiveChangeList = list;
+  override fun setDefaultChangeList(list: LocalChangeList, automatic: Boolean) {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public void setDefaultChangeList(@NotNull LocalChangeList list, boolean automatic) {
-    throw new UnsupportedOperationException();
+  override fun removeChangeList(name: String) {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public void removeChangeList(@NotNull String name) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void removeChangeList(@NotNull LocalChangeList list) {
-    myChangeLists.remove(list.getName());
-    if (myActiveChangeList.equals(list)) {
-      myActiveChangeList = myDefaultChangeList;
+  override fun removeChangeList(list: LocalChangeList) {
+    changeLists.remove(list.getName())
+    if (activeChangeList == list) {
+      activeChangeList = _defaultChangeList
     }
   }
 
-  @Override
-  public void moveChangesTo(@NotNull LocalChangeList list, Change @NotNull ... changes) {
+  override fun moveChangesTo(list: LocalChangeList, vararg changes: Change?) {
   }
 
-  @Override
-  public void moveChangesTo(@NotNull LocalChangeList list, @NotNull List<? extends @NotNull Change> changes) {
+  override fun moveChangesTo(list: LocalChangeList, changes: List<Change>) {
   }
 
-  @Override
-  public boolean setReadOnly(@NotNull String name, boolean value) {
-    throw new UnsupportedOperationException();
+  override fun setReadOnly(name: String, value: Boolean): Boolean {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public boolean editName(@NotNull String fromName, @NotNull String toName) {
-    throw new UnsupportedOperationException();
+  override fun editName(fromName: String, toName: String): Boolean {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public String editComment(@NotNull String fromName, String newComment) {
-    throw new UnsupportedOperationException();
+  override fun editComment(fromName: String, newComment: String?): String? {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public boolean editChangeListData(@NotNull String name, @Nullable ChangeListData newData) {
-    throw new UnsupportedOperationException();
+  override fun editChangeListData(name: String, newData: ChangeListData?): Boolean {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public boolean isInUpdate() {
-    throw new UnsupportedOperationException();
+  override fun isInUpdate(): Boolean {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public @Nullable VcsException getUpdateException() {
-    return null;
+  override fun getUpdateException(): VcsException? {
+    return null
   }
 
-  @NotNull
-  @Override
-  public Collection<LocalChangeList> getAffectedLists(@NotNull Collection<? extends Change> changes) {
-    throw new UnsupportedOperationException();
+  override fun getAffectedLists(changes: Collection<Change>): Collection<LocalChangeList> {
+    throw UnsupportedOperationException()
   }
 
-  @NotNull
-  @Override
-  public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable ChangeListData data) {
-    return addChangeList(name, comment);
+  override fun addChangeList(name: String, comment: String?, data: ChangeListData?): LocalChangeList {
+    return addChangeList(name, comment)
   }
 
-  @Override
-  public void blockModalNotifications() {
-    throw new UnsupportedOperationException();
+  override fun blockModalNotifications() {
+    throw UnsupportedOperationException()
   }
 
-  @Override
-  public void unblockModalNotifications() {
-    throw new UnsupportedOperationException();
+  override fun unblockModalNotifications() {
+    throw UnsupportedOperationException()
+  }
+
+  override fun invokeAfterUpdate(
+    afterUpdate: Runnable,
+    mode: InvokeAfterUpdateMode,
+    title: String?,
+    state: ModalityState?,
+  ) {
+    throw UnsupportedOperationException()
+  }
+
+  override suspend fun awaitUpdate() {
+    throw UnsupportedOperationException()
   }
 }

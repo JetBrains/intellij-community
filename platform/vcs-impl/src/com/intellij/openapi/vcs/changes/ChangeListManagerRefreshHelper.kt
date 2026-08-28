@@ -49,7 +49,7 @@ object ChangeListManagerRefreshHelper {
   private inline fun doRefreshAndReportMetrics(project: Project, refreshAction: () -> Unit) {
     LOG.debug("Performing changes refresh")
 
-    val changeListManager = ChangeListManagerEx.getInstanceEx(project)
+    val changeListManager = ChangeListManager.getInstance(project)
     val changesBeforeUpdate = changeListManager.getAllChanges()
     val unversionedBefore = changeListManager.getUnversionedFilesPaths()
     val wasUpdatingBefore = changeListManager.isInUpdate()

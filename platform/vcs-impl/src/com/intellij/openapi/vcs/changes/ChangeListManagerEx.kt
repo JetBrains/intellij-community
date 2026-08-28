@@ -5,16 +5,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.concurrency.Promise
 
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
 abstract class ChangeListManagerEx protected constructor() : ChangeListManager() {
-  abstract fun isInUpdate(): Boolean
 
   abstract fun getUpdateException(): VcsException?
 
@@ -68,15 +67,9 @@ abstract class ChangeListManagerEx protected constructor() : ChangeListManager()
    *
    * @see ChangeListManager.invokeAfterUpdate
    */
+  @RequiresBlockingContext(replaceWith = ReplaceWith("awaitUpdate()"))
   @RequiresBackgroundThread
   abstract fun waitForUpdate()
-
-  /**
-   * Wait until all current pending tasks are finished.
-   *
-   * @see waitForUpdate
-   */
-  abstract fun promiseWaitForUpdate(): Promise<*>
 
   companion object {
     @JvmStatic

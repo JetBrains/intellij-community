@@ -26,7 +26,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -830,7 +829,7 @@ public final class GitUtil {
    */
   public static @NotNull List<Change> findLocalChangesForPaths(@NotNull Project project, @NotNull VirtualFile root,
                                                                @NotNull Collection<@NonNls String> affectedPaths, boolean relativePaths) {
-    ChangeListManagerEx changeListManager = ChangeListManagerEx.getInstanceEx(project);
+    ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     List<Change> affectedChanges = new ArrayList<>();
     for (String path : affectedPaths) {
       String absolutePath = relativePaths ? toAbsolute(root, path) : path;
