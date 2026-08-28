@@ -16,7 +16,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.sdk.common.evolution.EvoRpcFailedException
 import com.intellij.python.sdk.frontend.PySdkFrontendBundle
-import com.intellij.util.PathUtil
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.Icon
 import kotlinx.coroutines.CoroutineScope
@@ -165,40 +164,6 @@ private fun loadingSection(): EvoTreeSection =
 class EvoTreeActionLeafElement(action: AnAction) : EvoTreeLeafElement(action, action.templatePresentation.clone())
 
 /**
- * Mutable holder for the edited env name, shared between the add-new submenu's name field and its version actions.
- * [takenNames] are the names already in use in this tool node (existing envs). While the name has a [problem] the field
- * shows it in red with an explaining tooltip and the version rows refuse to create anything.
- */
-class EvoEditableName(@Volatile @NlsSafe var value: String, val takenNames: Set<String> = emptySet()) {
-  /** Why a name cannot back a new environment. One enum, so the field's hint and [isValid] can never disagree. */
-  enum class Problem { BLANK, ILLEGAL, TAKEN }
-
-  /** True while the name field is in edit mode, so the popup treats Enter as "finish editing" instead of "create env". */
-  @Volatile
-  var editing: Boolean = false
-
-  /** Set by the name field: switches it back to read-only text (invoked by the popup when Enter is pressed while editing). */
-  var finishEditing: (() -> Unit)? = null
-
-  /**
-   * What disqualifies the current name, or null when it is usable. [Problem.ILLEGAL] defers to the platform's own rule set
-   * (`PathUtilRt`): no path separators, no `.`/`..` traversal, no control or Windows-invalid characters, no reserved device
-   * name. That is what keeps the name a single path segment, so the environment always lands directly inside the parent
-   * folder the tool picked and the name can never steer it elsewhere.
-   */
-  val problem: Problem?
-    get() = when {
-      value.isBlank() -> Problem.BLANK
-      !PathUtil.isValidFileName(value) -> Problem.ILLEGAL
-      value in takenNames -> Problem.TAKEN
-      else -> null
-    }
-
-  /** The current name can back a new environment. */
-  val isValid: Boolean get() = problem == null
-}
-
-/**
  * A row that reveals more of the list rather than selecting an environment, drawn in the platform's link colour.
  *
  * The colour is the whole of it: such a row is an ordinary leaf, laid out like any other, and its own icon says which
@@ -207,79 +172,52 @@ class EvoEditableName(@Volatile @NlsSafe var value: String, val takenNames: Set<
 interface EvoLinkRow
 
 /**
- * The two views of an "add new environment" version list, and which of them is showing.
- *
- * *Collapsed* is one row per Python version — the version is the choice, and the interpreter backing it is the IDE's
- * pick. *Expanded* turns each version into a section header and lists that version's actual installs beneath it, so the
- * interpreter becomes the choice. Both are built up front from the same options, because the toggle has to be instant:
- * it is a way of looking at a list the user is already reading, not a new request.
- *
- * Which one is showing lives here, in the object itself, which is built once per popup tree and held by the node. So the
- * choice survives a close-and-reopen for as long as that tree is reused, and a rebuilt tree — a expired cache, a
- * reloaded tool — starts collapsed again. That is the intended lifetime: it is a way of looking at one list of
- * environments, not a setting about the IDE.
- *
- * [canExpand] is false when no version has a second install, and then the toggle is not offered at all, since expanding
- * would only put a header above each row already shown.
- */
-class EvoVersionRows(
-  private val collapsed: List<EvoTreeSection>,
-  private val expanded: List<EvoTreeSection>,
-) {
-  val canExpand: Boolean get() = expanded.isNotEmpty()
-
-  var isExpanded: Boolean = false
-    private set
-
-  fun sections(): List<EvoTreeSection> = if (isExpanded && canExpand) expanded else collapsed
-
-  fun toggle() {
-    isExpanded = !isExpanded
-  }
-}
-
-/**
- * The "add new environment" node: a normal expandable node whose submenu lists the Python versions of [versionRows] — so
- * the platform handles mouse and keyboard natively. It is marked so [EvoTreePopup] can reposition its submenu to the
- * *left* of the parent (the platform opens submenus to the right). The row shows the pre-filled env name. When
- * [editableName] is set, the submenu also shows a name field on top (and turns off speed search) so the user can rename
- * before creating. [secondaryText] fills the row's version column (an env that doesn't exist yet has no version, so
- * "n/a"), keeping it aligned with the sibling rows that do show one.
+ * A node whose submenu is a list of Pythons — so the platform handles mouse and keyboard natively. It is marked so
+ * [EvoTreePopup] can reposition its submenu to the *left* of the parent (the platform opens submenus to the right).
+ * [secondaryText] fills the row's own version column, keeping it aligned with the sibling rows that show one.
  */
 class EvoTreeAddNewNode(
   text: @Nls String,
   icon: Icon,
-  versionRows: EvoVersionRows,
-  editableName: EvoEditableName? = null,
-  fixedName: @NlsSafe String? = null,
+  sections: List<EvoTreeSection>,
   secondaryText: @Nls String? = null,
   headerCaption: @Nls String? = null,
+  stepDescription: @Nls String? = null,
 ) : EvoTreeNodeElement(text, icon) {
   init {
-    sections.addAll(versionRows.sections())
-    this.versionRows = versionRows
-    this.editableName = editableName
-    this.fixedName = fixedName
+    this.sections.addAll(sections)
     this.headerCaption = headerCaption
+    this.stepDescription = stepDescription
     secondaryText?.let { presentation.putClientProperty(ActionUtil.SECONDARY_TEXT, it) }
   }
 }
 
 /**
- * Implemented by a leaf [AnAction] whose environment can be destroyed and built again on another Python.
+ * Implemented by a leaf [AnAction] whose environment has a base Python the user may choose.
  *
- * The row keeps doing its own thing when clicked — it selects that environment — and offers the rebuild behind an
- * inline icon [EvoTreePopup] paints while the row is hovered. A destructive operation is then never one stray click
- * away from an ordinary switch.
+ * Two rows have one. An environment that does not exist yet is built on whichever Python the row already names, and the
+ * panel offers the others. An environment that does exist is destroyed and built again on the one picked there.
+ *
+ * Either way the row keeps doing its own thing when clicked, and the choice sits behind an inline icon [EvoTreePopup]
+ * paints while the row is hovered — so the finer decision costs nothing to whoever does not want it, and the
+ * destructive one is never a stray click away from an ordinary switch.
  */
-interface EvoRecreatable {
+interface EvoBasePythonPanel {
   /**
-   * The panel the icon opens, or null when this row offers no rebuild and so carries no icon.
+   * The panel the icon opens, or null when this row offers no choice and so carries no icon.
    *
-   * Built by whoever built the row, so its rows close over the same rebuild call. Nullable because one action class
-   * serves both an environment the project may rebuild and one it may not.
+   * Built by whoever built the row, so its rows close over the same call that row would make. Nullable because one
+   * action class serves both a row with a choice behind it and one without.
    */
-  val recreatePanel: EvoTreeNodeElement?
+  val basePythonPanel: EvoTreeNodeElement?
+
+  /**
+   * Run when a row of [basePythonPanel] was picked and only changed what this row says.
+   *
+   * Set by the popup, which is the only thing that can close the panel and repaint the row underneath it. Left null by
+   * a panel whose rows act on the project, since such a panel closes with the whole popup anyway.
+   */
+  var onBasePythonChosen: (() -> Unit)?
 }
 
 /**
@@ -298,30 +236,27 @@ sealed class EvoTreeNodeElement(
   val sections = mutableListOf<EvoTreeSection>()
 
   /**
-   * The env-name field this node's submenu shows above its rows, or null when it has none. Set by [EvoTreeAddNewNode],
-   * and inherited by a tool node that absorbed a lone "add new" child (see [EvoLoadedNode]) — the popup renders the
-   * field from whichever node it is showing, so the holder has to travel with the sections.
-   */
-  var editableName: EvoEditableName? = null
-
-  /**
-   * The name this node's submenu shows in its header when there is nothing to edit — hatch's declared environment, named
-   * in `pyproject.toml` and not ours to rename. Null when the node has an [editableName] instead, or no header at all.
-   */
-  var fixedName: @NlsSafe String? = null
-
-  /**
-   * The collapsed/expanded views of this node's version list, or null when it has none. Set by [EvoTreeAddNewNode] and,
-   * like [editableName], inherited by a tool node that absorbed a lone "add new" child — the toggle is rendered from
-   * whichever node the popup is showing, so it has to travel with the sections.
-   */
-  var versionRows: EvoVersionRows? = null
-
-  /**
    * The caption above this node's submenu header, or null for the "add new" wording every such header used to carry.
-   * Travels with the sections for the same reason [fixedName] does.
+   * Travels with the sections, so a node that absorbed a child keeps that child's heading.
    */
   var headerCaption: @Nls String? = null
+
+  /**
+   * True when picking a row here only changes what the row behind it says, instead of acting on the project.
+   *
+   * The base-Python panel of an environment that does not exist yet is such a node: choosing a Python sets the one its
+   * row will build on, and the row itself still has to be chosen. So the popup must stay open and drop back to the list
+   * — see `EvoActionPopupStep.onChosen`, which runs the row at once instead of queuing it for after the close.
+   */
+  var picksWithoutClosing: Boolean = false
+
+  /**
+   * One line under this node's submenu saying what picking a row there does, or null for a panel that says nothing.
+   *
+   * Every inner panel carries one: a row's own label says which environment or which Python, never what choosing it
+   * will do to the project. Travels with the sections for the same reason [headerCaption] does.
+   */
+  var stepDescription: @Nls String? = null
 
   init {
     presentation.icon = icon
@@ -356,12 +291,10 @@ class EvoTreeStaticNodeElement(
 class EvoLoadedNode(
   val sections: List<EvoTreeSection>,
   val refreshable: Boolean,
-  val editableName: EvoEditableName? = null,
-  /** See [EvoTreeNodeElement.fixedName] — carried for the same reason [editableName] is. */
-  val fixedName: @NlsSafe String? = null,
-  val versionRows: EvoVersionRows? = null,
-  /** See [EvoTreeNodeElement.headerCaption] — carried for the same reason [fixedName] is. */
+  /** See [EvoTreeNodeElement.headerCaption] — carried so a node that absorbed a child keeps that child's heading. */
   val headerCaption: @Nls String? = null,
+  /** See [EvoTreeNodeElement.stepDescription] — carried for the same reason [headerCaption] is. */
+  val stepDescription: @Nls String? = null,
 )
 
 class EvoTreeLazyNodeElement(
@@ -420,7 +353,7 @@ class EvoTreeLazyNodeElement(
   /**
    * Reloads bypassing any backend cache (the tool's reload icon), so a long-cached tool (conda) re-scans.
    *
-   * Leaves this node's own rows, and the [versionRows]/[editableName]/[fixedName] that describe them, exactly as they
+   * Leaves this node's own rows exactly as they
    * are. [EvoTreePopup] shows a panel of its own while the load runs ([loadingNodeElement]) and opens the real submenu
    * once it ends, so the state here is never half-replaced: emptying it cost poetry its expand/collapse control, which
    * the submenu builds once when it opens and cannot add later.
@@ -463,10 +396,10 @@ class EvoTreeLazyNodeElement(
           }
           withContext(Dispatchers.EDT) {
             refreshable = loaded.refreshable
-            editableName = loaded.editableName
-            fixedName = loaded.fixedName
-            versionRows = loaded.versionRows
-            headerCaption = loaded.headerCaption
+            // Kept unless the loader brought its own, which happens when it absorbed a lone "add new" row and with it
+            // that row's header. A tool node is otherwise titled at construction, before any of this ran.
+            headerCaption = loaded.headerCaption ?: headerCaption
+            stepDescription = loaded.stepDescription ?: stepDescription
             // Swap in the new data only once it's ready, so an open submenu goes straight from "Loading…" to the
             // rows and never flashes empty.
             sections.clear()

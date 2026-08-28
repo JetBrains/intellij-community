@@ -152,10 +152,22 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
     return WidgetState.HIDDEN
   }
 
+  /**
+   * Set by [showAllTools] so that the next popup is built holding every tool, and cleared as soon as it is read.
+   *
+   * One-shot, because the choice belongs to the list the user is looking at rather than to the widget. Held as a
+   * standing flag it outlived the tree it was made for: [dropPopupTree] was the only thing that cleared it, a plain
+   * reopen never calls that, and so one click on "Show more" left every later popup expanded for as long as the widget
+   * lived. Now it lasts exactly as long as the built tree — reopen within the reuse window and the expanded tree is
+   * reused, come back after it and the list is folded again.
+   */
+  private var expandToolsOnce: Boolean = false
+
   /** Forgets the built tree, so the next open rebuilds it against current data. */
   private fun dropPopupTree() {
     popupTree = null
     popupTreeKey = null
+    expandToolsOnce = false
   }
 
   /**
@@ -400,11 +412,30 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
     // warm cache makes it near-instant; it only does real work after an install invalidated that cache.
     if (reusable == null) refreshNodes(target.key)
     PyEvoWidgetCollector.popupOpened(project, hasInterpreter = cached.current != null, toolCount = cached.nodes.size)
+    // Read and cleared here rather than where the tree is built, so a reused tree consumes it too — otherwise the flag
+    // would survive the popup it was set for and expand the next rebuild as well.
+    val expandTools = expandToolsOnce
+    expandToolsOnce = false
     val factory = EvoPySdkSwitchPopupFactory(project, target.key, target.name, structure.workspaceRootName(target),
                                              cached.current, cached.nodes, cached.associated, cached.shortcuts, scope,
-                                             reopenPopup = ::reopenPopup)
+                                             toolsExpanded = expandTools,
+                                             showAllTools = ::showAllTools)
     val tree = reusable ?: factory.buildTree(context).also { popupTree = it; popupTreeKey = target.key }
     return factory.createPopup(tree, context) { popupClosedAt = System.currentTimeMillis() }
+  }
+
+  /**
+   * Shows every tool, and opens the popup again over a list that holds them.
+   *
+   * The tree is dropped rather than reused: it is the folded one, built around the very row that asked for this. The
+   * rebuild is what reads [expandToolsOnce], and it costs no environment scan — each tool node loads its own rows only
+   * when it is opened.
+   */
+  private fun showAllTools() {
+    expandToolsOnce = true
+    popupTree = null
+    popupTreeKey = null
+    reopenPopup()
   }
 
   /**
@@ -414,8 +445,8 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
    * user. Repeats what `EditorBasedStatusBarPopup.showPopup` does, because that method is private and takes the
    * `MouseEvent` of a real click: the popup's own preferred height, anchored so its bottom sits on the widget.
    *
-   * [createPopup] reuses the tree the closing popup was built from — the reuse window is measured from that close, which
-   * has just happened — so this costs no rescan and each tool node keeps whatever it had already loaded.
+   * Repeats what `EditorBasedStatusBarPopup.showPopup` does, because that method is private and takes the `MouseEvent`
+   * of a real click: the popup's own preferred height, anchored so its bottom sits on the widget.
    */
   private fun reopenPopup() {
     val popup = createPopup(context) ?: return

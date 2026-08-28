@@ -11,11 +11,14 @@ import com.intellij.python.sdk.backend.evolution.EvoPyProject
 import com.intellij.python.sdk.backend.evolution.EvoRecreateSpec
 import com.intellij.python.sdk.backend.evolution.EvoToolContext
 import com.intellij.python.sdk.backend.evolution.PyToolEvoEnvironmentProvider
+import com.intellij.python.sdk.backend.evolution.defaultVenvDir
+import com.intellij.python.sdk.backend.evolution.evoCreateEnvLeaf
 import com.intellij.python.sdk.backend.evolution.envExistsError
 import com.intellij.python.sdk.backend.evolution.firstFreeVenvDir
 import com.intellij.python.sdk.backend.evolution.listEntryNames
 import com.intellij.python.sdk.backend.evolution.resolveNewVenvDir
 import com.intellij.python.sdk.backend.evolution.toSectionsGroupedByParent
+import com.intellij.python.sdk.backend.evolution.toLeaf
 import com.intellij.python.sdk.backend.evolution.toolMissing
 import com.intellij.python.sdk.common.evolution.EvoAddNewDto
 import com.intellij.python.sdk.common.evolution.EvoAddNewOptionDto
@@ -42,6 +45,7 @@ import io.github.z4kn4fein.semver.Version
 import io.github.z4kn4fein.semver.VersionFormatException
 import java.nio.file.Path
 import kotlin.io.path.exists
+import kotlin.io.path.name
 import kotlin.io.path.pathString
 import com.jetbrains.python.sdk.uv.UvSdkFlavor
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -61,9 +65,30 @@ internal class UvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
    */
   override val pyvenvMarker: String get() = "uv"
 
-  // uv works with any virtualenv, so it shows all discovered environments.
-  override suspend fun loadSections(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto =
-    EvoLoadResultDto.Ok(discovered.toSectionsGroupedByParent(this, addNew = true, baseDir = pyProject.baseDir))
+  override val stepDescription: String get() = PySdkBundle.message("evolution.node.step.uv")
+
+  /**
+   * Every virtualenv the discovery found, and the project's own `.venv` whether or not it exists yet.
+   *
+   * No separate "add new" row: `.venv` is where uv puts an environment, so the row naming it is also the one place to
+   * make it — offered as a Python picker by [decorate] when there is nothing there yet. A row for the environment the
+   * project is going to have reads better than a row for the act of adding one, and it is the same row afterwards.
+   */
+  override suspend fun loadSections(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto {
+    val inProject = defaultVenvDir(pyProject.baseDir)
+    val existing = discovered.firstOrNull { it.venvRoot == inProject }
+    // The project's own `.venv` leads the list under its own heading, whether it is there yet or not — the same shape
+    // Poetry's node has. Headed by what the environment *is* to the project rather than by the folder holding it, which
+    // for this one row is the project directory and says nothing the row does not.
+    val inProjectSection = EvoSectionDto(
+      label = PySdkBundle.message("evolution.section.in.project"),
+      leaves = listOf(existing?.toLeaf(this)
+                      ?: evoCreateEnvLeaf(title = inProject.name, token = inProject.name, icon = icon)),
+    )
+    val elsewhere = discovered.filter { it.venvRoot != inProject }
+      .toSectionsGroupedByParent(this, addNew = false, baseDir = pyProject.baseDir)
+    return EvoLoadResultDto.Ok(listOf(inProjectSection) + elsewhere)
+  }
 
   /**
    * Adopts an existing virtualenv as a uv env — `usePip = false`, so the SDK is wired to uv rather than to pip even
@@ -209,16 +234,26 @@ internal class UvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
    * (`3.16`, which does not exist yet) and for one it cannot parse (a Poetry-style `^3.13`, which also fails `uv sync`),
    * and the two are indistinguishable from here: uv reports both as success with no rows.
    *
-   * Runs off the same per-request cache [addNewEnvSpec] fills, so this costs no extra uv call.
+   * Where uv did name some, the not-yet-created `.venv` row becomes a picker over them, the way hatch offers the
+   * interpreters a declared environment admits — the row is then both the environment and the way to make it.
+   *
+   * Runs off one per-request cache, so this costs no extra uv call however many rows it touches.
    */
   override suspend fun decorate(context: EvoToolContext, result: EvoLoadResultDto): EvoLoadResultDto {
     if (result !is EvoLoadResultDto.Ok) return result
-    if (context.cached(VERSIONS_KEY) { supportedPythonVersions(context) }.isNotEmpty()) return result
-    val requiresPython = requiresPython(context.pyProject.baseDir)
-    return EvoLoadResultDto.Warning(
-      if (requiresPython == null) PyUvBundle.message("evolution.uv.no.pythons")
-      else PyUvBundle.message("evolution.uv.no.pythons.for.requires", requiresPython)
-    )
+    val versions = context.cached(VERSIONS_KEY) { supportedPythonVersions(context) }
+    if (versions.isEmpty()) {
+      val requiresPython = requiresPython(context.pyProject.baseDir)
+      return EvoLoadResultDto.Warning(
+        if (requiresPython == null) PyUvBundle.message("evolution.uv.no.pythons")
+        else PyUvBundle.message("evolution.uv.no.pythons.for.requires", requiresPython)
+      )
+    }
+    return result.copy(sections = result.sections.map { section ->
+      section.copy(leaves = section.leaves.map { leaf ->
+        if (leaf.ref is PyInterpreterRef.CreateEnv) leaf.copy(createVersions = versions) else leaf
+      })
+    })
   }
 }
 

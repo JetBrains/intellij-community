@@ -36,7 +36,7 @@ import com.intellij.python.sdk.common.evolution.requestEvoResolveVersion
 import com.intellij.python.sdk.common.evolution.requestEvoSelectInterpreter
 import com.intellij.python.sdk.frontend.PySdkFrontendBundle
 import com.intellij.python.sdk.frontend.evolution.components.EvoLazyDetail
-import com.intellij.python.sdk.frontend.evolution.components.EvoRecreatable
+import com.intellij.python.sdk.frontend.evolution.components.EvoBasePythonPanel
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeNodeElement
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeLeafElement
 import kotlinx.coroutines.CoroutineScope
@@ -144,19 +144,43 @@ internal class SelectEnvAction(
   /** Trace root of the popup tree this row belongs to; groups its version probe under that tree's root. */
   private val traceId: String,
   /**
-   * The panel that rebuilds this environment on another Python, or null when it offers no rebuild.
+   * Builds the picker of Pythons this environment could be rebuilt on, or null when it offers no rebuild.
    *
-   * Built by the caller, which holds the leaf the options came on. Held here rather than derived, because the panel's
-   * rows close over the rebuild call and this row is the only thing that outlives each popup.
+   * A builder rather than a built panel, because the two need each other: the panel's rows report the pick to this row,
+   * and this row runs the rebuild the pick stands for. The caller holds the leaf the options came on, so it builds the
+   * rows; it is handed the callback to report a pick to.
    */
-  private val recreatePanelOrNull: EvoTreeNodeElement?,
+  private val basePythonPicker: ((onPicked: (text: @org.jetbrains.annotations.Nls String, rebuild: () -> Unit) -> Unit) -> EvoTreeNodeElement)?,
   title: @org.jetbrains.annotations.Nls String,
   description: @org.jetbrains.annotations.Nls String,
   secondaryText: @org.jetbrains.annotations.Nls String?,
   icon: IconId,
   private val scope: CoroutineScope,
-) : AnAction({ title }, { description }, icon.icon()), EvoLazyDetail, EvoRecreatable, DumbAware {
-  override val recreatePanel: EvoTreeNodeElement? get() = recreatePanelOrNull
+) : AnAction({ title }, { description }, icon.icon()), EvoLazyDetail, EvoBasePythonPanel, DumbAware {
+  /**
+   * Built once, on first use, and kept: the pick it reports has to outlive the picker that reported it.
+   *
+   * [EvoTreeNodeElement.picksWithoutClosing] is what makes it a picker — a row of it only says which Python this
+   * environment should be rebuilt on, and the rebuild waits for this row to be chosen.
+   */
+  override val basePythonPanel: EvoTreeNodeElement? by lazy {
+    basePythonPicker?.invoke { text, rebuild ->
+      pendingRebuild = rebuild
+      templatePresentation.putClientProperty(ActionUtil.SECONDARY_TEXT, text)
+      onBasePythonChosen?.invoke()
+    }?.apply { picksWithoutClosing = true }
+  }
+
+  override var onBasePythonChosen: (() -> Unit)? = null
+
+  /**
+   * The rebuild a picked Python stands for, held until this row is chosen; null while no Python was picked.
+   *
+   * Nothing is destroyed at the moment of the pick. The user picks a Python the way they pick one for an environment
+   * that does not exist yet, sees it in this row, and the row is still the thing they choose — which is where the
+   * confirmation is, and where a change of mind costs nothing.
+   */
+  private var pendingRebuild: (() -> Unit)? = null
 
   @Volatile
   private var versionRequested = false
@@ -166,8 +190,12 @@ internal class SelectEnvAction(
     secondaryText?.let { templatePresentation.putClientProperty(ActionUtil.SECONDARY_TEXT, it) }
   }
 
-  override fun actionPerformed(e: AnActionEvent) =
+  override fun actionPerformed(e: AnActionEvent) {
+    // A Python was picked for this environment, so choosing the row rebuilds it on that one instead of selecting what
+    // is there now. Selecting it unchanged is what the row does when nothing was picked.
+    pendingRebuild?.let { return it() }
     selectInterpreter(project, pyProjectKey, ref, nodeId, nodeStats, evoSourceForNode(nodeId), scope)
+  }
 
   /** Resolves the interpreter version once, on first focus, for a detected env that has no version yet. */
   override fun resolveOnFocus(onResolved: () -> Unit) {
@@ -322,49 +350,6 @@ internal fun selectInterpreter(
   }
 }
 
-/**
- * The rows [leaf] expands into: one per interpreter it could be created from, each applying [leaf]'s own ref with that
- * interpreter substituted in. Empty unless the leaf creates an environment *from* an interpreter — an existing
- * environment already has one.
- */
-internal fun baseInterpreterRows(
-  project: Project,
-  pyProjectKey: String,
-  leaf: EvoLeafDto,
-  nodeId: String,
-  nodeStats: EvoNodeStats,
-  scope: CoroutineScope,
-): List<EvoTreeLeafElement> {
-  val create = leaf.ref as? PyInterpreterRef.CreateEnv ?: return emptyList()
-  return leaf.bases.map { base ->
-    baseInterpreterRow(base) {
-      selectInterpreter(project, pyProjectKey, create.copy(token = base.token), nodeId, nodeStats,
-                        PyEvoWidgetCollector.Source.EXPANDED_VERSION, scope)
-    }
-  }
-}
-
-/**
- * The single row an installable version expands into, or null when [leaf] is not one.
- *
- * Titled by the action rather than by the version, because in the expanded list the version is already the header above
- * it — see `EvoPySdkSwitchPopupFactory.toExpandedSections`.
- */
-internal fun installInterpreterRow(
-  project: Project,
-  pyProjectKey: String,
-  leaf: EvoLeafDto,
-  nodeId: String,
-  nodeStats: EvoNodeStats,
-  scope: CoroutineScope,
-): EvoTreeLeafElement? {
-  val create = leaf.ref as? PyInterpreterRef.CreateEnv ?: return null
-  if (create.installPythonVersion == null) return null
-  return installActionRow {
-    selectInterpreter(project, pyProjectKey, create, nodeId, nodeStats, PyEvoWidgetCollector.Source.INSTALL_ROW, scope)
-  }
-}
-
 /** The "download and install" row itself: the download icon and the action, with [onChosen] run when picked. */
 internal fun installActionRow(onChosen: () -> Unit): EvoTreeLeafElement {
   val action = object : AnAction({ PySdkFrontendBundle.message("evo.sdk.status.bar.popup.add.new.install.action") },
@@ -420,8 +405,8 @@ internal fun selectEnvAction(
   nodeStats: EvoNodeStats,
   traceId: String,
   scope: CoroutineScope,
-  /** The rebuild panel for this row, when the backend said it has one — see [EvoLeafDto.recreate]. */
-  recreatePanel: EvoTreeNodeElement? = null,
+  /** Builds this row's rebuild picker, when the backend said it has one — see [EvoLeafDto.recreate]. */
+  basePythonPicker: ((onPicked: (text: @org.jetbrains.annotations.Nls String, rebuild: () -> Unit) -> Unit) -> EvoTreeNodeElement)? = null,
 ): SelectEnvAction =
   SelectEnvAction(
     project = project,
@@ -430,7 +415,7 @@ internal fun selectEnvAction(
     nodeId = nodeId,
     nodeStats = nodeStats,
     traceId = traceId,
-    recreatePanelOrNull = recreatePanel,
+    basePythonPicker = basePythonPicker,
     title = leaf.title,
     description = leaf.description ?: "",
     secondaryText = leaf.secondaryText,
@@ -448,7 +433,7 @@ internal fun selectEnvAction(project: Project, pyProjectKey: String, interpreter
     traceId = traceId,
     // An "Associated" or "Shortcuts" row is not listed under the tool that owns its environment, so there is no tool
     // here to rebuild it with.
-    recreatePanelOrNull = null,
+    basePythonPicker = null,
     title = interpreter.title,
     description = interpreter.description,
     secondaryText = null,

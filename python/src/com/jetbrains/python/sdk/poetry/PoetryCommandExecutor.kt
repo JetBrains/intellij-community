@@ -206,6 +206,26 @@ internal suspend fun <P : PathHolder> setupPoetry(
     ).getOr { return it }
   }
 
+  // In-project only: drop the environment poetry has activated for this project, or the next command does nothing.
+  //
+  // With `virtualenvs.in-project` on and a cache environment activated, `poetry env use <python>` keeps that
+  // environment and reports "Using virtualenv: <the old one>", whatever Python it was given, and builds no `.venv`
+  // (checked against poetry 2.4.1). So a project moved to an environment from poetry's caches could never move back to
+  // an in-project one. Without in-project the same command switches correctly, which is why this is not run there.
+  //
+  // `env use system` is poetry's own way to deactivate. It removes the activation record and nothing else: it deletes
+  // no environment, it succeeds when nothing is activated, and the environment it deactivated is reused as it stands
+  // if the Python below asks for that same one again.
+  if (inProjectEnv) {
+    runPoetry(
+      fileSystem = fileSystem,
+      projectPath = projectPath,
+      "env", "use", "system",
+      poetryExecutable = poetryExecutable,
+      inProjectEnv = true,
+    ).getOr { return it }
+  }
+
   runPoetry(
     fileSystem = fileSystem,
     projectPath = projectPath,

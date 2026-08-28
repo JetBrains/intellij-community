@@ -227,7 +227,16 @@ interface PyEvoEnvironmentProvider {
    */
   val sdkFlavor: Class<out PythonSdkFlavor<*>>? get() = null
 
-  fun getNode(): EvoNodeDto = EvoNodeDto(id = toolId.id, label = label, icon = icon.rpcId(), kind = nodeKind, fusId = fusId)
+  /**
+   * One line saying what picking a row in this node's submenu does — see [EvoNodeDto.stepDescription].
+   *
+   * Declared by the tool because only the tool knows what its list means. `null` leaves the frontend's general wording.
+   */
+  val stepDescription: @Nls String? get() = null
+
+  fun getNode(): EvoNodeDto =
+    EvoNodeDto(id = toolId.id, label = label, icon = icon.rpcId(), kind = nodeKind, fusId = fusId,
+               stepDescription = stepDescription)
 
   /**
    * Whether this provider's tool is available on the project's Eel machine. Unavailable providers are dropped

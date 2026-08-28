@@ -52,6 +52,8 @@ internal class CondaEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
   /** An interpreter of this node's environments carries this flavor, which is what names this node as the active one. */
   override val sdkFlavor: Class<out PythonSdkFlavor<*>> get() = CondaEnvSdkFlavor::class.java
 
+  override val stepDescription: String get() = PySdkBundle.message("evolution.node.step.conda")
+
   override suspend fun loadSections(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto {
     // Presence check only: the rows are grouped by where each env lives, not by where conda itself is installed.
     executableOrNull(fileSystem) ?: return evoWarning(PyCondaBundle.message("evolution.conda.executable.is.not.found"))
@@ -71,9 +73,24 @@ internal class CondaEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
     // Conda envs are named (not folder-based): propose a free env name derived from the project so the widget's
     // in-place "add new" can offer name + Python version (PyEvoSdkApiProvider fills the version options), instead of
     // the modal dialog. addNewFolderPath carries the proposed name here.
-    val proposedName = firstFreeCondaEnvName(pyProject.baseDir.fileName?.toString() ?: DEFAULT_ENV_NAME, envs.mapTo(mutableSetOf()) { it.name })
-    val addNewSection = EvoSectionDto(label = null, leaves = emptyList(), addNew = true, addNewFolderPath = proposedName)
-    return EvoLoadResultDto.Ok(envSections + addNewSection)
+    // Named after the project, and offered only while nothing carries that name: the row stands for the environment
+    // this project would get, so where that one already exists it is in the list above and there is nothing to add.
+    val proposedName = pyProject.baseDir.fileName?.toString() ?: DEFAULT_ENV_NAME
+    val addNewSection = proposedName
+      .takeIf { name -> envs.none { it.name == name } }
+      ?.let {
+        EvoSectionDto(
+          // Under a heading of its own, so a row that creates something is never read as one of the environments listed.
+          label = PySdkBundle.message("evolution.section.new.environment"),
+          leaves = emptyList(),
+          addNew = true,
+          addNewFolderPath = it,
+        )
+      }
+    // First, not last: conda lists every environment on the machine, not only the project's, so the list is long and
+    // grows, and a row placed after it would sit further from the pointer the more environments the user has. The other
+    // tools list a handful of environments from the project itself, where such a row keeps its place under them.
+    return EvoLoadResultDto.Ok(listOfNotNull(addNewSection) + envSections)
   }
 
   /** Adopts an existing conda env (named or `-p`-created) as a conda-typed SDK, matched by the env directory. */
@@ -124,15 +141,9 @@ internal class CondaEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
     val options = condaSupportedLanguages.map { EvoAddNewOptionDto(title = it.toPythonVersion(), token = it.toPythonVersion()) }
     if (options.isEmpty()) return null
     val envName = section.addNewFolderPath ?: context.pyProject.baseDir.fileName?.toString() ?: DEFAULT_ENV_NAME
-    return EvoAddNewDto(name = envName, path = "", options = options, nameEditable = true)
-  }
-
-  /** First conda env name not already taken: `base`, then `base-1`, `base-2`, … */
-  private fun firstFreeCondaEnvName(base: String, existing: Set<String>): String {
-    if (base !in existing) return base
-    var i = 1
-    while ("$base-$i" in existing) i++
-    return "$base-$i"
+    // The name is proposed and shown, never typed: every tool now names its own environment, so the widget offers one
+    // choice per step — which Python — instead of a form.
+    return EvoAddNewDto(name = envName, path = "", options = options)
   }
 
   /**

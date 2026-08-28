@@ -12,11 +12,14 @@ import com.intellij.python.sdk.backend.evolution.EvoPyProject
 import com.intellij.python.sdk.backend.evolution.EvoRecreateSpec
 import com.intellij.python.sdk.backend.evolution.EvoToolContext
 import com.intellij.python.sdk.backend.evolution.PyEvoEnvironmentProvider
+import com.intellij.python.sdk.backend.evolution.defaultVenvDir
+import com.intellij.python.sdk.backend.evolution.evoCreateEnvLeaf
 import com.intellij.python.sdk.backend.evolution.envExistsError
 import com.intellij.python.sdk.backend.evolution.firstFreeVenvDir
 import com.intellij.python.sdk.backend.evolution.listEntryNames
 import com.intellij.python.sdk.backend.evolution.ownedEnvBinaryIn
 import com.intellij.python.sdk.backend.evolution.resolveNewVenvDir
+import com.intellij.python.sdk.backend.evolution.toLeaf
 import com.intellij.python.sdk.backend.evolution.toSectionsGroupedByParent
 import com.intellij.python.sdk.common.evolution.EvoAddNewDto
 import com.intellij.python.sdk.common.evolution.EvoLeafDto
@@ -38,6 +41,7 @@ import com.jetbrains.python.sdk.impl.resolvePythonHome
 import java.nio.file.Path
 import javax.swing.Icon
 import kotlin.io.path.exists
+import kotlin.io.path.name
 import kotlin.io.path.pathString
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -78,8 +82,34 @@ internal class VenvEvoEnvironmentProvider : PyEvoEnvironmentProvider {
    * The node claims no mark of its own: it creates its environments with the standard library's `venv`, which writes
    * nothing into `pyvenv.cfg` to say so. An environment naming no tool therefore reads as this node's own.
    */
-  override suspend fun loadSections(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto =
-    EvoLoadResultDto.Ok(discovered.toSectionsGroupedByParent(this, addNew = true, baseDir = pyProject.baseDir))
+  override suspend fun loadSections(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto {
+    val inProject = defaultVenvDir(pyProject.baseDir)
+    val existing = discovered.firstOrNull { it.venvRoot == inProject }
+    // The project's own `.venv` leads the list under its own heading, whether it is there yet or not — the same shape
+    // Poetry's and uv's nodes have. Headed by what the environment *is* to the project rather than by the folder that
+    // holds it, which for this one row is the project directory and says nothing the row does not.
+    val inProjectSection = EvoSectionDto(
+      label = PySdkBundle.message("evolution.section.in.project"),
+      leaves = listOf(existing?.toLeaf(this)
+                      ?: evoCreateEnvLeaf(title = inProject.name, token = inProject.name, icon = icon)),
+    )
+    val elsewhere = discovered.filter { it.venvRoot != inProject }
+      .toSectionsGroupedByParent(this, addNew = false, baseDir = pyProject.baseDir)
+    return EvoLoadResultDto.Ok(listOf(inProjectSection) + elsewhere)
+  }
+
+  override val stepDescription: String get() = PySdkBundle.message("evolution.node.step.pip")
+
+  /** The system Pythons a not-yet-created environment could be built on — see `UvEvoEnvironmentProvider.decorate`. */
+  override suspend fun decorate(context: EvoToolContext, result: EvoLoadResultDto): EvoLoadResultDto {
+    if (result !is EvoLoadResultDto.Ok) return result
+    val options = context.systemPythonOptions().takeIf { it.isNotEmpty() } ?: return result
+    return result.copy(sections = result.sections.map { section ->
+      section.copy(leaves = section.leaves.map { leaf ->
+        if (leaf.ref is PyInterpreterRef.CreateEnv) leaf.copy(createVersions = options) else leaf
+      })
+    })
+  }
 
   /**
    * A plain virtualenv has no tool-specific SDK, so its type is guessed from the path — the generic route the core used
