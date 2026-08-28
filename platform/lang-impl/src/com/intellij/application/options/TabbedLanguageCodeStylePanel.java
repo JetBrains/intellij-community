@@ -532,11 +532,11 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
       return null;
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     protected @NotNull FileType getFileType() {
       Language language = getDefaultLanguage();
-      return language != null ? language.getAssociatedFileType() : FileTypes.PLAIN_TEXT;
+      if (language == null) return FileTypes.PLAIN_TEXT;
+      return ObjectUtils.notNull(language.getAssociatedFileType(), FileTypes.PLAIN_TEXT);
     }
 
     @Override
@@ -635,11 +635,11 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
       return EditorHighlighterFactory.getInstance().createEditorHighlighter(getFileType(), scheme, null);
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     protected @NotNull FileType getFileType() {
       Language language = TabbedLanguageCodeStylePanel.this.getDefaultLanguage();
-      return language != null ? language.getAssociatedFileType() : FileTypes.PLAIN_TEXT;
+      if (language == null) return FileTypes.PLAIN_TEXT;
+      return ObjectUtils.notNull(language.getAssociatedFileType(), FileTypes.PLAIN_TEXT);
     }
 
     @Override
