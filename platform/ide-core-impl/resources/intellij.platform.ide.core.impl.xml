@@ -499,7 +499,7 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     <registryKey
       key="build.toolwindow.split"
       description="Use split implementation (frontend/backend) of Build tool window"
-      defaultValue="false"
+      defaultValue="true"
     />
     <registryKey
       key="editor.skeleton.enabled"

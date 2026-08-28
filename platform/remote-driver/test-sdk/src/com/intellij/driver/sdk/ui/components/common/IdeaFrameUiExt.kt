@@ -15,7 +15,13 @@ import java.nio.file.Path
 private const val TOOL_WINDOW_ROOT_COMPONENT_CLASS = "com.intellij.toolWindow.InternalDecoratorImpl"
 
 fun IdeaFrameUI.buildToolWindow(action: ToolWindowUiComponent.() -> Unit = {}): ToolWindowUiComponent =
-  x(ToolWindowUiComponent::class.java) { componentWithChild(byType(TOOL_WINDOW_ROOT_COMPONENT_CLASS), byType("com.intellij.build.BuildView")) }.apply(action)
+  x(ToolWindowUiComponent::class.java) {
+    componentWithChild(byType(TOOL_WINDOW_ROOT_COMPONENT_CLASS),
+                       or(
+                         byType("com.intellij.build.BuildView"), // old impl (build.toolwindow.split=false in registry)
+                         byType("com.intellij.platform.buildView.frontend.FrontendBuildView") // new impl (default)
+                       ))
+  }.apply(action)
 
 fun IdeaFrameUI.runToolWindow(action: ToolWindowUiComponent.() -> Unit = {}): ToolWindowUiComponent =
   x(ToolWindowUiComponent::class.java) { componentWithChild(byType(TOOL_WINDOW_ROOT_COMPONENT_CLASS), byType("com.intellij.execution.impl.ConsoleViewImpl")) }.apply(action)
