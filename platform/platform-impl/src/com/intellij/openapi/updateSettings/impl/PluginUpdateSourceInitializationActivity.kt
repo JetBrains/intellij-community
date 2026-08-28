@@ -2,14 +2,25 @@
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.plugins.PluginUtils
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.PluginManagerConfigurable
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.RepositoryHelper
+import com.intellij.ide.plugins.newui.SearchWords
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ResourceUtil
 import org.jetbrains.annotations.ApiStatus
@@ -21,6 +32,59 @@ class PluginUpdateSourceInitializationActivity : ProjectActivity {
 
   override suspend fun execute(project: Project) {
     PluginUpdateSourceInitializer.initialize()
+    notifyAboutPluginsMissingUpdateSource(project)
+  }
+
+  private fun notifyAboutPluginsMissingUpdateSource(project: Project) {
+    if (!PluginUpdateSourceService.isMissingUpdateSourceWarningEnabled()) return
+    val service = PluginUpdateSourceService.getInstance()
+    val problemPlugins = PluginManagerCore.loadedPlugins.filter { plugin ->
+      PluginUtils.isUpdateable(plugin) && service.getPluginUpdateSourceId(plugin.pluginId) == null
+    }.sortedBy { it.name }
+
+    val title: @NlsContexts.NotificationTitle String
+    val message: @NlsContexts.NotificationContent String
+    when (problemPlugins.size) {
+      0 -> return
+      1 -> {
+        title = IdeBundle.message("notification.missing.plugin.update.source.title")
+        message = IdeBundle.message("notification.missing.plugin.update.source.message", problemPlugins[0].name)
+      }
+      2 -> {
+        title = IdeBundle.message("notification.missing.plugin.update.sources.title")
+        message =
+          IdeBundle.message("notification.missing.two.plugin.update.sources.message", problemPlugins[0].name, problemPlugins[1].name)
+      }
+      else -> {
+        title = IdeBundle.message("notification.missing.plugin.update.sources.title")
+        message = IdeBundle.message("notification.missing.plugin.update.sources.message", problemPlugins[0].name, problemPlugins.size - 1)
+      }
+    }
+
+    @Suppress("DialogTitleCapitalization") // should be @NotificationContent, see com.intellij.notification.NotificationAction
+    val listener = object : AnAction(IdeBundle.message("notification.missing.plugin.update.action")) {
+      override fun actionPerformed(e: AnActionEvent) {
+        val configurable = PluginManagerConfigurable()
+        ShowSettingsUtil.getInstance().editConfigurable(
+          project,
+          configurable,
+          Runnable {
+            configurable.openInstalledTab("")
+            val search = configurable.enableSearch(SearchWords.PLUGIN_UPDATE_SOURCE.value + null.getPresentableName())
+            if (search != null) {
+              ApplicationManager.getApplication().invokeLater(search)
+            }
+          }
+        )
+      }
+    }
+
+    val notification = NotificationGroupManager.getInstance()
+      .getNotificationGroup("Missing Plugin Update Source")
+      .createNotification(title, message, NotificationType.WARNING)
+    notification.addAction(listener)
+    notification.setImportant(true)
+    notification.notify(project)
   }
 }
 

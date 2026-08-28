@@ -1634,6 +1634,8 @@
                         serviceImplementation="com.intellij.openapi.updateSettings.impl.PluginUpdateSourcePluginsProviderImpl"/>
     <notificationGroup id="Plugin Update Sources Reset" displayType="BALLOON" bundle="messages.IdeBundle"
                        key="notification.plugin.update.sources.reset.action"/>
+    <notificationGroup id="Missing Plugin Update Source" displayType="STICKY_BALLOON" bundle="messages.IdeBundle"
+                       key="notification.missing.plugin.update.source.title"/>
     <backgroundPostStartupActivity implementation="com.intellij.openapi.updateSettings.impl.PluginUpdateSourceInitializationActivity"/>
     <registryKey key="update.source.initialization.enabled" defaultValue="false"
                  description="Enable initialization of update plugin update sources once for an IDE" />
