@@ -11,6 +11,15 @@ java_library(
     ],
 )
 
+kt_jvm_library(
+    name = "kotlinx-serialization-dependencies",
+    visibility = ["//visibility:public"],
+    exports = [
+        "@lib//:kotlinx-serialization-core",
+        "@lib//:kotlinx-serialization-json",
+    ],
+)
+
 kt_jvm_import(
     name = "kotlinpoet",
     jar = "@jewel_deps_kotlinpoet//file",
@@ -77,10 +86,85 @@ kt_jvm_library(
 )
 
 kt_jvm_library(
+    name = "theme-generator-utils",
+    srcs = ["src/main/kotlin/org/jetbrains/jewel/scripts/bazel/ThemeGeneratorUtils.kt"],
+)
+
+kt_jvm_library(
+    name = "android-studio-releases-generator",
+    srcs = ["src/main/kotlin/org/jetbrains/jewel/scripts/bazel/AndroidStudioReleasesGenerator.kt"],
+    deps = [
+        ":clikt-dependencies",
+        ":jewel-bazel-scripts-utils",
+        ":kotlinpoet",
+        ":kotlinx-serialization-dependencies",
+        ":ktfmt-runner-lib",
+    ],
+)
+
+kt_jvm_library(
     name = "compare-branches",
     srcs = ["src/main/kotlin/org/jetbrains/jewel/scripts/bazel/CompareBranches.kt"],
     deps = [
         ":clikt-dependencies",
+        ":jewel-bazel-scripts-utils",
+    ],
+)
+
+kt_jvm_library(
+    name = "compare-performance",
+    srcs = ["src/main/kotlin/org/jetbrains/jewel/scripts/bazel/ComparePerformance.kt"],
+    deps = [
+        ":clikt-dependencies",
+        ":clikt-utils",
+        ":jewel-bazel-scripts-utils",
+        ":kotlinx-serialization-dependencies",
+    ],
+)
+
+kt_jvm_library(
+    name = "default-color-palette-generator",
+    srcs = ["src/main/kotlin/org/jetbrains/jewel/scripts/bazel/DefaultColorPaletteGenerator.kt"],
+    deps = [
+        ":clikt-dependencies",
+        ":jewel-bazel-scripts-utils",
+        ":kotlinpoet",
+        ":kotlinx-serialization-dependencies",
+        ":ktfmt-runner-lib",
+        ":theme-generator-utils",
+    ],
+)
+
+kt_jvm_library(
+    name = "extract-release-notes",
+    srcs = ["src/main/kotlin/org/jetbrains/jewel/scripts/bazel/ExtractReleaseNotes.kt"],
+    deps = [
+        ":clikt-dependencies",
+        ":clikt-utils",
+        ":jewel-bazel-scripts-utils",
+        ":kotlinx-serialization-dependencies",
+    ],
+)
+
+kt_jvm_library(
+    name = "intellij-theme-generator",
+    srcs = ["src/main/kotlin/org/jetbrains/jewel/scripts/bazel/IntelliJThemeGenerator.kt"],
+    deps = [
+        ":clikt-dependencies",
+        ":jewel-bazel-scripts-utils",
+        ":kotlinpoet",
+        ":kotlinx-serialization-dependencies",
+        ":ktfmt-runner-lib",
+        ":theme-generator-utils",
+    ],
+)
+
+kt_jvm_library(
+    name = "run-performance-tests",
+    srcs = ["src/main/kotlin/org/jetbrains/jewel/scripts/bazel/RunPerformanceTests.kt"],
+    deps = [
+        ":clikt-dependencies",
+        ":clikt-utils",
         ":jewel-bazel-scripts-utils",
     ],
 )
@@ -95,6 +179,7 @@ kt_jvm_library(
     ],
 )
 
+# Run this on CLI like: bazel run //platform/jewel/build-scripts/bazel:ktfmtFormat
 java_binary(
     name = "ktfmtFormat",
     args = ["format"],
@@ -102,6 +187,7 @@ java_binary(
     runtime_deps = [":ktfmt-runner-lib"],
 )
 
+# Run this on CLI like: bazel run //platform/jewel/build-scripts/bazel:ktfmtCheck
 java_binary(
     name = "ktfmtCheck",
     args = ["check"],
@@ -109,22 +195,32 @@ java_binary(
     runtime_deps = [":ktfmt-runner-lib"],
 )
 
+# Run this on CLI like: bazel run //platform/jewel/build-scripts/bazel:jewelVersionUpdater
 java_binary(
     name = "jewelVersionUpdater",
     main_class = "org.jetbrains.jewel.scripts.bazel.JewelVersionUpdaterKt",
     runtime_deps = [":jewel-version-updater"],
 )
 
+# Run this on CLI like: bazel run //platform/jewel/build-scripts/bazel:annotateApiDumpChanges
 java_binary(
     name = "annotateApiDumpChanges",
     main_class = "org.jetbrains.jewel.scripts.bazel.AnnotateApiDumpChangesKt",
     runtime_deps = [":annotate-api-dumps"],
 )
 
+# Run this on CLI like: bazel run //platform/jewel/build-scripts/bazel:checkApiDumps
 java_binary(
     name = "checkApiDumps",
     main_class = "org.jetbrains.jewel.scripts.bazel.CheckApiDumpsKt",
     runtime_deps = [":check-api-dumps"],
+)
+
+# Run this on CLI like: bazel run //platform/jewel/build-scripts/bazel:generateAndroidStudioReleasesList
+java_binary(
+    name = "generateAndroidStudioReleasesList",
+    main_class = "org.jetbrains.jewel.scripts.bazel.AndroidStudioReleasesGeneratorKt",
+    runtime_deps = [":android-studio-releases-generator"],
 )
 
 # Run this on CLI like: bazel run //platform/jewel/build-scripts/bazel:compareBranches -- branch1 branch2
@@ -132,6 +228,41 @@ java_binary(
     name = "compareBranches",
     main_class = "org.jetbrains.jewel.scripts.bazel.CompareBranchesKt",
     runtime_deps = [":compare-branches"],
+)
+
+# Run this on CLI like: bazel run //platform/jewel/build-scripts/bazel:comparePerformance -- baseline current
+java_binary(
+    name = "comparePerformance",
+    main_class = "org.jetbrains.jewel.scripts.bazel.ComparePerformanceKt",
+    runtime_deps = [":compare-performance"],
+)
+
+# Run this on CLI like: bazel run //platform/jewel/build-scripts/bazel:runPerformanceTests -- --jfr --runs 10
+java_binary(
+    name = "runPerformanceTests",
+    main_class = "org.jetbrains.jewel.scripts.bazel.RunPerformanceTestsKt",
+    runtime_deps = [":run-performance-tests"],
+)
+
+# Run this on CLI like: bazel run //platform/jewel/build-scripts/bazel:generateDefaultColorPalette
+java_binary(
+    name = "generateDefaultColorPalette",
+    main_class = "org.jetbrains.jewel.scripts.bazel.DefaultColorPaletteGeneratorKt",
+    runtime_deps = [":default-color-palette-generator"],
+)
+
+# Run this on CLI like: bazel run //platform/jewel/build-scripts/bazel:extractReleaseNotes
+java_binary(
+    name = "extractReleaseNotes",
+    main_class = "org.jetbrains.jewel.scripts.bazel.ExtractReleaseNotesKt",
+    runtime_deps = [":extract-release-notes"],
+)
+
+# Run this on CLI like: bazel run //platform/jewel/build-scripts/bazel:generateIntelliJTheme
+java_binary(
+    name = "generateIntelliJTheme",
+    main_class = "org.jetbrains.jewel.scripts.bazel.IntelliJThemeGeneratorKt",
+    runtime_deps = [":intellij-theme-generator"],
 )
 
 # Run this on CLI like: bazel run //platform/jewel/build-scripts/bazel:validateMavenArtifacts -- branch1 branch2
@@ -142,7 +273,7 @@ java_binary(
 )
 
 # Tests
-kt_jvm_test(
+kt_jvm_library(
     name = "bazel-test-utils",
     srcs = ["src/test/kotlin/org/jetbrains/jewel/scripts/bazel/BazelTestUtils.kt"],
 )
@@ -156,6 +287,23 @@ kt_jvm_test(
     associates = [":jewel-bazel-scripts-utils"],
     test_class = "org.jetbrains.jewel.scripts.bazel.JewelBazelScriptsUtilsTest",
     deps = [
+        "@lib//:junit4",
+        "@lib//:kotlinx-coroutines-test",
+        "@rules_kotlin//kotlin/compiler:kotlin-test",
+    ],
+)
+
+kt_jvm_test(
+    name = "cliktUtilsTest",
+    srcs = [
+        "src/test/kotlin/org/jetbrains/jewel/scripts/bazel/CliktUtilsTest.kt",
+        "src/test/kotlin/org/jetbrains/jewel/scripts/bazel/FakeCommandRunner.kt",
+    ],
+    associates = [":clikt-utils"],
+    test_class = "org.jetbrains.jewel.scripts.bazel.CliktUtilsTest",
+    deps = [
+        ":clikt-dependencies",
+        ":jewel-bazel-scripts-utils",
         "@lib//:junit4",
         "@lib//:kotlinx-coroutines-test",
         "@rules_kotlin//kotlin/compiler:kotlin-test",
@@ -212,6 +360,113 @@ kt_jvm_test(
         ":jewel-bazel-scripts-utils",
         "@lib//:junit4",
         "@lib//:kotlinx-coroutines-test",
+        "@rules_kotlin//kotlin/compiler:kotlin-test",
+    ],
+)
+
+kt_jvm_test(
+    name = "androidStudioReleasesGeneratorTest",
+    srcs = ["src/test/kotlin/org/jetbrains/jewel/scripts/bazel/AndroidStudioReleasesGeneratorTest.kt"],
+    associates = [":android-studio-releases-generator"],
+    test_class = "org.jetbrains.jewel.scripts.bazel.AndroidStudioReleasesGeneratorTest",
+    deps = [
+        ":bazel-test-utils",
+        ":clikt-dependencies",
+        ":jewel-bazel-scripts-utils",
+        ":kotlinpoet",
+        ":kotlinx-serialization-dependencies",
+        "@lib//:junit4",
+        "@rules_kotlin//kotlin/compiler:kotlin-test",
+    ],
+)
+
+kt_jvm_test(
+    name = "themeGeneratorUtilsTest",
+    srcs = ["src/test/kotlin/org/jetbrains/jewel/scripts/bazel/ThemeGeneratorUtilsTest.kt"],
+    associates = [":theme-generator-utils"],
+    test_class = "org.jetbrains.jewel.scripts.bazel.ThemeGeneratorUtilsTest",
+    deps = [
+        "@lib//:junit4",
+        "@rules_kotlin//kotlin/compiler:kotlin-test",
+    ],
+)
+
+kt_jvm_test(
+    name = "defaultColorPaletteGeneratorTest",
+    srcs = ["src/test/kotlin/org/jetbrains/jewel/scripts/bazel/DefaultColorPaletteGeneratorTest.kt"],
+    associates = [":default-color-palette-generator"],
+    test_class = "org.jetbrains.jewel.scripts.bazel.DefaultColorPaletteGeneratorTest",
+    deps = [
+        ":clikt-dependencies",
+        ":jewel-bazel-scripts-utils",
+        ":kotlinpoet",
+        ":kotlinx-serialization-dependencies",
+        ":theme-generator-utils",
+        "@lib//:junit4",
+        "@rules_kotlin//kotlin/compiler:kotlin-test",
+    ],
+)
+
+kt_jvm_test(
+    name = "comparePerformanceTest",
+    srcs = [
+        "src/test/kotlin/org/jetbrains/jewel/scripts/bazel/ComparePerformanceTest.kt",
+        "src/test/kotlin/org/jetbrains/jewel/scripts/bazel/FakeCommandRunner.kt",
+    ],
+    associates = [":compare-performance"],
+    test_class = "org.jetbrains.jewel.scripts.bazel.ComparePerformanceTest",
+    deps = [
+        ":bazel-test-utils",
+        ":clikt-dependencies",
+        ":jewel-bazel-scripts-utils",
+        ":kotlinx-serialization-dependencies",
+        "@lib//:junit4",
+        "@lib//:kotlinx-coroutines-test",
+        "@rules_kotlin//kotlin/compiler:kotlin-test",
+    ],
+)
+
+kt_jvm_test(
+    name = "runPerformanceTestsTest",
+    srcs = ["src/test/kotlin/org/jetbrains/jewel/scripts/bazel/RunPerformanceTestsTest.kt"],
+    associates = [":run-performance-tests"],
+    test_class = "org.jetbrains.jewel.scripts.bazel.RunPerformanceTestsTest",
+    deps = [
+        "@lib//:junit4",
+        "@rules_kotlin//kotlin/compiler:kotlin-test",
+    ],
+)
+
+kt_jvm_test(
+    name = "extractReleaseNotesTest",
+    srcs = [
+        "src/test/kotlin/org/jetbrains/jewel/scripts/bazel/ExtractReleaseNotesTest.kt",
+        "src/test/kotlin/org/jetbrains/jewel/scripts/bazel/FakeCommandRunner.kt",
+    ],
+    associates = [":extract-release-notes"],
+    test_class = "org.jetbrains.jewel.scripts.bazel.ExtractReleaseNotesTest",
+    deps = [
+        ":clikt-dependencies",
+        ":jewel-bazel-scripts-utils",
+        ":kotlinx-serialization-dependencies",
+        "@lib//:junit4",
+        "@lib//:kotlinx-coroutines-test",
+        "@rules_kotlin//kotlin/compiler:kotlin-test",
+    ],
+)
+
+kt_jvm_test(
+    name = "intelliJThemeGeneratorTest",
+    srcs = ["src/test/kotlin/org/jetbrains/jewel/scripts/bazel/IntelliJThemeGeneratorTest.kt"],
+    associates = [":intellij-theme-generator"],
+    test_class = "org.jetbrains.jewel.scripts.bazel.IntelliJThemeGeneratorTest",
+    deps = [
+        ":clikt-dependencies",
+        ":jewel-bazel-scripts-utils",
+        ":kotlinpoet",
+        ":kotlinx-serialization-dependencies",
+        ":theme-generator-utils",
+        "@lib//:junit4",
         "@rules_kotlin//kotlin/compiler:kotlin-test",
     ],
 )

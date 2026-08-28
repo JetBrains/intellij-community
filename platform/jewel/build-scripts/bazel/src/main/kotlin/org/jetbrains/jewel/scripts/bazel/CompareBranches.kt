@@ -1,4 +1,4 @@
-@file:Suppress("RAW_RUN_BLOCKING", "SSBasedInspection")
+@file:Suppress("RAW_RUN_BLOCKING", "IO_FILE_USAGE")
 
 package org.jetbrains.jewel.scripts.bazel
 
