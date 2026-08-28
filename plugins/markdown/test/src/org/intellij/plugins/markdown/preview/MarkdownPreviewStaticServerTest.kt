@@ -57,6 +57,7 @@ class MarkdownPreviewStaticServerTest: LightPlatformTestCase() {
     val provider = TestResourceProvider()
     withServedResource(provider, TestResourceProvider.resourceName) { url ->
       assertEquals("default-src 'none'; sandbox", headerOf(url, "Content-Security-Policy"))
+      assertEquals("no-referrer", headerOf(url, "Referrer-Policy"))
     }
   }
 

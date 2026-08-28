@@ -76,6 +76,7 @@ class PreviewStaticServer : HttpRequestHandler() {
     private const val ENDPOINT_PREFIX_PATH = "/${ENDPOINT_PREFIX}"
 
     private const val CONTENT_SECURITY_POLICY_HEADER = "Content-Security-Policy"
+    private const val REFERRER_POLICY_HEADER = "Referrer-Policy"
 
     /**
      * Policy for everything except the preview page. A browser ignores it while loading the resource as a
@@ -143,6 +144,8 @@ class PreviewStaticServer : HttpRequestHandler() {
         if (!resource.isDocument) {
           headers()[CONTENT_SECURITY_POLICY_HEADER] = NON_DOCUMENT_CSP
         }
+        // The page URL carries this preview's resource paths (IJPL-247809).
+        headers()[REFERRER_POLICY_HEADER] = "no-referrer"
         headers()[HttpHeaderNames.CACHE_CONTROL] = "no-cache"
         headers()[HttpHeaderNames.LAST_MODIFIED] = Date(lastModified)
         send(channel, request)
