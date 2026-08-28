@@ -82,14 +82,6 @@ a:com.intellij.psi.AbstractFileViewProvider
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.psi.FileViewProvider
 - *p:cacheContentInVersionedEnvironment():Z
-*f:com.intellij.psi.DummyBlockType
-- sf:DUMMY_BLOCK:com.intellij.psi.tree.IElementType
-- <init>():V
-*c:com.intellij.psi.DummyBlockType$DummyBlock
-- com.intellij.psi.impl.source.tree.CompositePsiElement
-- <init>():V
-- getLanguage():com.intellij.lang.Language
-- getReferences():com.intellij.psi.PsiReference[]
 c:com.intellij.psi.impl.GeneratedMarkerVisitor
 - com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor
 - *:<init>(com.intellij.lang.ASTNode):V
