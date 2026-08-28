@@ -17,7 +17,6 @@ import kotlin.io.path.absolute
 
 private val LOG = logger<WelcomeScreenProjectProvider>()
 private val EP_NAME: ExtensionPointName<WelcomeScreenProjectProvider> = ExtensionPointName("com.intellij.welcomeScreenProjectProvider")
-private const val PROJECTS_DIR = "projects"
 private const val PROPERTY_PROJECT_PATH = "%s.project.path"
 
 @Volatile
@@ -41,7 +40,7 @@ fun getWelcomeScreenProjectProvider(): WelcomeScreenProjectProvider? {
 interface WelcomeScreenProjectSupport {
   suspend fun createOrOpenWelcomeScreenProject(extension: WelcomeScreenProjectProvider, projectToClose: Project? = null): Project
 
-  suspend fun openProject(path: Path): Project
+  suspend fun openProject(path: Path, name: String): Project
 }
 
 /**
@@ -99,6 +98,10 @@ abstract class WelcomeScreenProjectProvider {
       return getWelcomeScreenProjectProvider()?.doGetStartupToolWindowIdToActivate()
     }
 
+    fun getToolWindowIdsToExclusiveShowing(): Set<String> {
+      return getWelcomeScreenProjectProvider()?.getToolWindowIdsToExclusiveShowing() ?: emptySet()
+    }
+
     suspend fun createOrOpenWelcomeScreenProject(extension: WelcomeScreenProjectProvider, projectToClose: Project? = null): Project {
       return serviceAsync<WelcomeScreenProjectSupport>().createOrOpenWelcomeScreenProject(extension, projectToClose)
     }
@@ -117,7 +120,7 @@ abstract class WelcomeScreenProjectProvider {
   open fun shouldOpenInWelcomeScreenIfFileBelongsToProject(filePath: Path): Boolean = true
 
   protected open fun getWelcomeScreenProjectPath(): Path {
-    return Path.of(getProjectsBasePath(), getWelcomeScreenProjectName()).absolute()
+    return Path.of(getProjectsBasePath(), getWelcomeScreenProjectDirName()).absolute()
   }
 
   @Internal
@@ -125,9 +128,24 @@ abstract class WelcomeScreenProjectProvider {
     return getWelcomeScreenProjectPath()
   }
 
-  protected abstract fun getWelcomeScreenProjectName(): String
+  protected open fun getWelcomeScreenProjectDirName(): String {
+    val productName = if (PlatformUtils.isIntelliJ() || PlatformUtils.isMPS()) {
+      ApplicationNamesInfo.getInstance().lowercaseProductName
+    }
+    else {
+      ApplicationNamesInfo.getInstance().productName
+    }
+    return "${productName}Home"
+  }
 
-  protected abstract fun doIsWelcomeScreenProject(project: Project): Boolean
+  open fun getWelcomeScreenProjectName(): String {
+    return "${ApplicationNamesInfo.getInstance().fullProductName} Home"
+  }
+
+  protected open fun doIsWelcomeScreenProject(project: Project): Boolean {
+    val name = project.name
+    return name == getWelcomeScreenProjectName() || name == getWelcomeScreenProjectDirName()
+  }
 
   /**
    * Return true if your project is not only a welcome screen, but also a real project where the user can create, store and edit files.
@@ -153,7 +171,7 @@ abstract class WelcomeScreenProjectProvider {
   }
 
   protected open suspend fun doCreateOrOpenWelcomeScreenProject(path: Path, projectToClose: Project?): Project {
-    return serviceAsync<WelcomeScreenProjectSupport>().openProject(path)
+    return serviceAsync<WelcomeScreenProjectSupport>().openProject(path, getWelcomeScreenProjectName())
   }
 
   @Internal
@@ -171,6 +189,10 @@ abstract class WelcomeScreenProjectProvider {
   protected open fun doGetProjectPaneToActivateId(): String? = null
 
   protected open fun doGetStartupToolWindowIdToActivate(): String? = null
+
+  protected open fun getToolWindowIdsToExclusiveShowing(): Set<String> = emptySet()
+
+  open fun addWelcomeProjectNewAction(): Boolean = true
 
   @Internal
   fun isHiddenInRecentProjectsForInternalUsage(): Boolean = doIsHiddenInRecentProjects()
@@ -192,14 +214,11 @@ private fun getProjectsBasePath(): String {
       PathManager.getAbsolutePath(StringUtil.unquoteString(propertyValue, '"'))
     }
     else {
-      projectsDirDefault
+      getUserHomeProjectDir()
     }
   }
   return cachedProjectsBasePath!!
 }
-
-private val projectsDirDefault: String
-  get() = if (PlatformUtils.isDataGrip()) getUserHomeProjectDir() else Path.of(PathManager.getConfigPath(), PROJECTS_DIR).toString()
 
 private fun getUserHomeProjectDir(): String {
   val appNamesInfo = ApplicationNamesInfo.getInstance()

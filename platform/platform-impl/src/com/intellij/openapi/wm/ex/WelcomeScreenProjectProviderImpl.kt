@@ -4,13 +4,14 @@ package com.intellij.openapi.wm.ex
 import com.intellij.diagnostic.WindowsDefenderChecker
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.util.TipAndTrickManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.PlatformProjectOpenProcessor
-import com.intellij.platform.PlatformProjectOpenProcessor.Companion.createOptionsToOpenDotIdeaOrCreateNewIfNotExists
+import com.intellij.platform.PlatformProjectOpenProcessor.Companion.configureToOpenDotIdeaOrCreateNewIfNotExists
 import java.nio.file.LinkOption
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
@@ -39,8 +40,12 @@ internal class WelcomeScreenProjectSupportImpl : WelcomeScreenProjectSupport {
     return project
   }
 
-  override suspend fun openProject(path: Path): Project {
-    return PlatformProjectOpenProcessor.openProjectAsync(path, createOptionsToOpenDotIdeaOrCreateNewIfNotExists(path, null))
+  override suspend fun openProject(path: Path, name: String): Project {
+    val options = OpenProjectTask {
+      configureToOpenDotIdeaOrCreateNewIfNotExists(path, null)
+      projectName = name
+    }
+    return PlatformProjectOpenProcessor.openProjectAsync(path, options)
            ?: throw IllegalStateException("Cannot open project at $path (not expected that user can cancel welcome-project loading)")
   }
 }

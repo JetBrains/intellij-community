@@ -70,7 +70,7 @@
   </extensions>
 
   <actions resource-bundle="messages.NonModalWelcomeScreenBundle">
-    <group id="NonModalWelcomeScreen.LeftTabActions.New">
+    <group id="NonModalWelcomeScreen.LeftTabActions.New" icon="AllIcons.General.Add" popup="true">
       <reference ref="NewProjectOrModuleGroup"/>
       <separator/>
     </group>

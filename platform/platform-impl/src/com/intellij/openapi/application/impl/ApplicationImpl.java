@@ -18,6 +18,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.welcomeScreen.WelcomeUtils;
 import com.intellij.idea.AppExitCodes;
 import com.intellij.idea.AppMode;
 import com.intellij.idea.IdeaLogger;
@@ -1008,6 +1009,10 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   private static boolean confirmExitIfNeeded(boolean exitConfirmed) {
     var hasUnsafeBgTasks = ProgressManager.getInstance().hasUnsafeProgressIndicator();
     if (exitConfirmed && !hasUnsafeBgTasks) {
+      return true;
+    }
+
+    if (!hasUnsafeBgTasks && WelcomeUtils.isSingleWelcomeProjectWithoutConfirmation()) {
       return true;
     }
 

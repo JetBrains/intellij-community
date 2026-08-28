@@ -8,6 +8,7 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.ide.welcomeScreen.WelcomeUtils
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -101,6 +102,10 @@ private class ProjectWindowCustomizerIconCache(private val project: Project, cor
   }
 
   private fun getIconRaw(): Icon {
+    val icon = WelcomeUtils.getWelcomeProjectIcon(project)
+    if (icon != null) {
+      return icon
+    }
     val path = ProjectWindowCustomizerService.projectPath(project)?.invariantSeparatorsPathString ?: ""
     val size = JBUI.CurrentTheme.Toolbar.recentProjectAvatarIconSize()
     return RecentProjectsManagerBase.getInstanceEx().getProjectIcon(path = path, isProjectValid = true, unscaledIconSize = size, name = project.name)

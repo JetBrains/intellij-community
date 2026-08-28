@@ -14,6 +14,7 @@ import com.intellij.ide.UpdatesInfoProviderManager
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.ide.userScaledProjectIconSize
+import com.intellij.ide.welcomeScreen.WelcomeUtils
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -250,6 +251,13 @@ open class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     if (!hideProjectSwitching(initEvent)) {
       val group = ActionManager.getInstance().getAction("ProjectWidget.Actions") as ActionGroup
       result.addAll(group.getChildren(initEvent).asList())
+
+      WelcomeUtils.addWelcomeProjectNewAction(initEvent, initEvent.project, result)
+
+      WelcomeUtils.getGotoWelcomeProjectAction(initEvent.project)?.let {
+        result.addSeparator()
+        result.add(it)
+      }
 
       val openProjectsPredicate = OpenProjectSelectionPredicateSupplier.getInstance().getPredicate()
       val actionsMap = RecentProjectListActionProvider.getInstance().getActions(initEvent.project)

@@ -4,6 +4,7 @@ package com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
@@ -28,6 +29,12 @@ internal class WelcomeScreenLeftTabActionNew : DumbAwareAction() {
      * See [com.intellij.ide.startup.importSettings.chooser.ui.UiUtils.DEFAULT_BUTTON_WIDTH]
      */
     private const val DEFAULT_BUTTON_WIDTH = 280
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.putClientProperty("ChevronDown", true)
   }
 
   override fun actionPerformed(e: AnActionEvent) {

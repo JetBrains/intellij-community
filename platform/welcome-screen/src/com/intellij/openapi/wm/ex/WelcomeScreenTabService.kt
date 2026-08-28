@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.ex
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
@@ -18,6 +19,7 @@ interface WelcomeScreenTabService {
   suspend fun openTab()
 
   companion object {
+    val WELCOME_TAB_FILE_MARKER: Key<Boolean> = Key("WELCOME_SCREEN_TAB_FILE")
     /**
      * Returns the project-level implementation.
      */

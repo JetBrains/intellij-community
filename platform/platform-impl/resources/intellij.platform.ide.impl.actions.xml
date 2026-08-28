@@ -858,6 +858,8 @@
       <reference ref="RemoveBom"/>
       <reference ref="AddBom"/>
     </group>
+
+    <action id="WelcomeReopenProjectAction" class="com.intellij.ide.welcomeScreen.WelcomeReopenProjectAction" icon="AllIcons.Nodes.HomeFolder"/>
   </actions>
   <actions resource-bundle="messages.WorkspaceModelIdeBundle">
     <action id="WorkspaceEntitiesJsonClipboard" internal="true"

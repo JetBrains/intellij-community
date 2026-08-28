@@ -8,6 +8,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NotNullLazyKey
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -79,6 +80,9 @@ data class ProjectFrameUiPolicy(
 
   /** Toolwindow ids to hide after startup activation. */
   val toolWindowIdsToHideOnStartup: Set<String> = emptySet(),
+
+  /** Toolwindow ids to hide after startup activation. */
+  val toolWindowIdsToExclusiveShowing: Set<String> = emptySet(),
 ) {
   fun isEmpty(): Boolean {
     return projectPaneToActivateId == null &&
@@ -122,6 +126,8 @@ class ProjectFrameCapabilitiesService {
 
     @Deprecated("Use getInstance instead", ReplaceWith("getInstance()"))
     fun getInstanceSync(): ProjectFrameCapabilitiesService = service()
+
+    val TOOL_WINDOW_INIT: Key<Boolean> = Key("PROJECT_TOOL_WINDOW_INIT")
   }
 
   private val capabilitiesByProject = NotNullLazyKey.createLazyKey<Set<ProjectFrameCapability>, Project>(
@@ -175,6 +181,16 @@ class ProjectFrameCapabilitiesService {
     }
 
     return uiPolicy
+  }
+
+  fun getUiPolicyForToolWindows(project: Project): ProjectFrameUiPolicy? {
+    return try {
+      project.putUserData(TOOL_WINDOW_INIT, true)
+      getUiPolicy(project)
+    }
+    finally {
+      project.putUserData(TOOL_WINDOW_INIT, null)
+    }
   }
 
   private fun getOrComputeCapabilities(project: Project): Set<ProjectFrameCapability> {

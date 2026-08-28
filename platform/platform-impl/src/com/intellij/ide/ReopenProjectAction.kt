@@ -18,13 +18,14 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetPresentable
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem.Companion.openProjectAndLogRecent
-import com.intellij.platform.eel.provider.EelInitialization
 import com.intellij.platform.eel.EelUnavailableException
+import com.intellij.platform.eel.provider.EelInitialization
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.BitUtil
 import com.intellij.util.PathUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.event.ActionEvent
@@ -126,6 +127,11 @@ open class ReopenProjectAction @JvmOverloads constructor(
                             LightEdit.owns(project)
       runConfigurators = true
     }
+    openProject(file, options)
+  }
+
+  @ApiStatus.Internal
+  protected open fun openProject(file: Path, options: OpenProjectTask) {
     openProjectAndLogRecent(file = file, options = options, projectGroup = projectGroup)
   }
 
@@ -143,7 +149,7 @@ open class ReopenProjectAction @JvmOverloads constructor(
 
   override val nameToDisplayAsText: @NlsSafe String get() = projectDisplayName
 
-  override val projectPathToDisplay: @NlsSafe String
+  override val projectPathToDisplay: @NlsSafe String?
     get() = FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(projectPath), false)
 
   override val projectIcon: Icon get() = RecentProjectsManagerBase.getInstanceEx().getProjectIcon(projectPath, true, 20)

@@ -250,7 +250,7 @@ internal class IdeProjectFrameAllocator(
                   projectFrameTypeId = projectFrameTypeId,
                 )
               }
-              serviceAsync<ProjectFrameCapabilitiesService>().getUiPolicy(project)?.let { projectFrameUiPolicy ->
+              serviceAsync<ProjectFrameCapabilitiesService>().getUiPolicyForToolWindows(project)?.let { projectFrameUiPolicy ->
                 applyProjectFrameUiPolicy(toolWindowManager, project, projectFrameUiPolicy)
               }
             }
@@ -485,6 +485,17 @@ private fun applyProjectFrameUiPolicy(
   project: Project,
   projectFrameUiPolicy: ProjectFrameUiPolicy,
 ) {
+  val exclusiveShowing = projectFrameUiPolicy.toolWindowIdsToExclusiveShowing
+  if (exclusiveShowing.isNotEmpty()) {
+    val impl = toolWindowManager as ToolWindowManagerImpl
+
+    for (id in toolWindowManager.toolWindowIds) {
+      if (!exclusiveShowing.contains(id)) {
+        impl.hideToolWindow(id, removeFromStripe = true)
+      }
+    }
+  }
+
   val startupToolWindowId = projectFrameUiPolicy.startupToolWindowIdToActivate
   val toolWindowIdsToHideOnStartup = projectFrameUiPolicy.toolWindowIdsToHideOnStartup
   val pendingToolWindowIds = ConcurrentHashMap.newKeySet<String>().apply {

@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.ex.FakeFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ex.WelcomeScreenTabService
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.annotations.ApiStatus
@@ -17,6 +18,7 @@ class WelcomeScreenRightTabVirtualFile(val window: WelcomeScreenRightTab, val pr
   LightVirtualFile(window.contentProvider.title.get(), WelcomeScreenFileType(window.contentProvider), "") {
 
   init {
+    putUserData(WelcomeScreenTabService.WELCOME_TAB_FILE_MARKER, true)
     putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
   }
 

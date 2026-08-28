@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionGroupWrapper
@@ -188,6 +189,9 @@ private class WelcomeScreenDisclosureButtonAction(
     val button = DisclosureButton()
     if (!presentation.isPopupGroup && getInlineActions(presentation).isEmpty()) {
       button.arrowIcon = null
+    }
+    if (presentation.getClientProperty("ChevronDown") != null) {
+      button.arrowIcon = AllIcons.General.ChevronDown
     }
     button.isOpaque = false
 
