@@ -151,6 +151,9 @@ internal class EvoPySdkSwitchPopupFactory(
    */
   val reopenPopup: () -> Unit,
 ) {
+  /** The tool's own name for [nodeId], as the popup writes it, falling back to the id when no node claims it. */
+  private fun nodeLabel(nodeId: String): @NlsSafe String = nodes.firstOrNull { it.id == nodeId }?.label ?: nodeId
+
   /**
    * The statistics identity of [nodeId] among the nodes this popup was built from.
    *
@@ -187,7 +190,12 @@ internal class EvoPySdkSwitchPopupFactory(
   private fun EvoLeafDto.toRowElement(nodeId: String, traceId: String): EvoTreeElement {
     // Checked first: a row that cannot be acted on has no version picker to offer either.
     unavailable?.let { reason ->
-      return EvoTreeUnavailableLeafElement(selectEnvAction(project, pyProjectKey, this, nodeId, nodeStats(nodeId), traceId, scope), reason)
+      // Disabled for selection, and still rebuildable: the environment belongs to another tool, so adopting it here
+      // would type its SDK to the wrong one — but that tool rebuilds it from whichever node the user found it on.
+      return EvoTreeUnavailableLeafElement(
+        selectEnvAction(project, pyProjectKey, this, nodeId, nodeStats(nodeId), traceId, scope, recreatePanel(nodeId)),
+        reason,
+      )
     }
     // A version-picker row (hatch not-yet-created env): a node whose submenu is the versions; choosing one creates the
     // env with that Python. The row's ref (CreateEnv) carries the per-row create token (hatch: the env name) → folder.
@@ -221,7 +229,9 @@ internal class EvoPySdkSwitchPopupFactory(
       )
     }
     return when (kind) {
-      EvoLeafKind.SELECT_ENV -> EvoTreeLeafElement(selectEnvAction(project, pyProjectKey, this, nodeId, nodeStats(nodeId), traceId, scope))
+      EvoLeafKind.SELECT_ENV -> EvoTreeLeafElement(
+        selectEnvAction(project, pyProjectKey, this, nodeId, nodeStats(nodeId), traceId, scope, recreatePanel(nodeId))
+      )
       // A runnable backend action (advanced add-interpreter) carries an actionId; a display-only row stays a no-op stub.
       EvoLeafKind.ACTION -> EvoTreeLeafElement(
         if (actionId != null) evoBackendActionLeaf(project, pyProjectKey, nodeId, this, scope) else toStubAction()
@@ -365,6 +375,39 @@ internal class EvoPySdkSwitchPopupFactory(
   }
 
   /**
+   * The panel this row's inline rebuild icon opens, or null when the backend offered no rebuild for it.
+   *
+   * It is the "add new" submenu in every respect but two: the name is shown rather than offered for editing, since a
+   * rebuild keeps the environment where it is, and the caption says what picking a row will do. Built from the same
+   * [versionRows] the add-new panel uses, so the two cannot drift apart.
+   */
+  private fun EvoLeafDto.recreatePanel(nodeId: String): EvoTreeNodeElement? {
+    val spec = recreate ?: return null
+    val envHomePath = (ref as? PyInterpreterRef.DetectedPath)?.homePath ?: return null
+    val stats = nodeStats(nodeId)
+    // This node's tool does the rebuilding, so an environment another tool made changes hands. Named for the
+    // confirmation, which is the only place the user can learn that before it happens.
+    val toolChange = ownerNodeId
+      ?.let { owner -> nodeLabel(owner) to nodeLabel(nodeId) }
+      ?.let { (from, to) -> EvoToolChange(from, to) }
+    fun rebuild(baseToken: String, baseTitle: @NlsSafe String, installVersion: String?) =
+      recreateEvoEnv(project, pyProjectKey, nodeId, stats, envHomePath, title, baseToken, baseTitle, installVersion,
+                     spec.canSyncPackages, toolChange, scope)
+    return EvoTreeAddNewNode(
+      text = title,
+      icon = icon.icon(),
+      versionRows = versionRows(
+        spec.options,
+        { option -> versionAction(option) { rebuild(option.token, addVersionText(option), option.installVersion()) } },
+        { base -> baseInterpreterRow(base) { rebuild(base.token, base.title, null) } },
+        { option -> installActionRow { rebuild(option.token, addVersionText(option), option.installVersion()) } },
+      ),
+      fixedName = title,
+      headerCaption = PySdkFrontendBundle.message("evo.sdk.status.bar.popup.recreate.caption"),
+    )
+  }
+
+  /**
    * The two views of the version list: collapsed, one row per Python version, and expanded, each version a header over
    * its actual installs. Both are built here from the same options so the toggle between them is instant.
    *
@@ -406,7 +449,18 @@ internal class EvoPySdkSwitchPopupFactory(
     path: String,
     editableName: EvoEditableName? = null,
     defaultName: String? = null,
-  ): AnAction =
+  ): AnAction = versionAction(option) {
+    createEnv(nodeId, option.token, path, editableName, defaultName,
+              source = PyEvoWidgetCollector.Source.ADD_NEW_VERSION, installVersion = option.installVersion())
+  }
+
+  /**
+   * One Python-version row of a version list: its label, its icon, and [onChosen] when it is picked.
+   *
+   * Shared by the add-new panel and the rebuild one, so a version reads the same in both — including the note saying
+   * the machine does not have that version yet.
+   */
+  private fun versionAction(option: EvoAddNewOptionDto, onChosen: () -> Unit): AnAction =
     object : AnAction({ addVersionText(option) }, { "" }, versionIcon(option)), DumbAware {
       init {
         // Says what picking this row will do before it does it, the way the v2 dialog labels its download entries.
@@ -416,9 +470,7 @@ internal class EvoPySdkSwitchPopupFactory(
         }
       }
 
-      override fun actionPerformed(e: AnActionEvent) =
-        createEnv(nodeId, option.token, path, editableName, defaultName,
-                  source = PyEvoWidgetCollector.Source.ADD_NEW_VERSION, installVersion = option.installVersion())
+      override fun actionPerformed(e: AnActionEvent) = onChosen()
     }
 
   /** Creates the environment a version or base-interpreter row stands for, unless the typed name rules it out. */

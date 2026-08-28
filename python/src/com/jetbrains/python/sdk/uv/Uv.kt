@@ -58,7 +58,14 @@ internal interface UvLowLevel<P : PathHolder> {
   suspend fun isProjectSynced(inexact: Boolean): PyResult<Boolean>
   suspend fun isScriptSynced(inexact: Boolean, scriptPath: Path): PyResult<ScriptSyncCheckResult>
 
-  suspend fun sync(): PyResult<String>
+  /**
+   * Brings the environment in line with the project's lock file.
+   *
+   * [python] pins the interpreter to sync with. Left null, uv picks one itself from `.python-version` and
+   * `requires-python` — and where that disagrees with the environment already there, uv deletes it and builds another.
+   * So a caller that has just built an environment on a chosen Python must name it here, or sync undoes that choice.
+   */
+  suspend fun sync(python: Version? = null): PyResult<String>
   suspend fun lock(): PyResult<String>
 
   /**

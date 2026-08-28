@@ -7,27 +7,33 @@ import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.sdk.backend.evolution.DiscoveredVenv
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
+import com.intellij.python.sdk.backend.evolution.EvoRecreateSpec
 import com.intellij.python.sdk.backend.evolution.EvoToolContext
 import com.intellij.python.sdk.backend.evolution.PyToolEvoEnvironmentProvider
 import com.intellij.python.sdk.backend.evolution.defaultVenvDir
 import com.intellij.python.sdk.backend.evolution.evoCreateEnvLeaf
 import com.intellij.python.sdk.backend.evolution.evoInstallPythonLeaf
+import com.intellij.python.sdk.backend.evolution.ownedEnvBinaryIn
 import com.intellij.python.sdk.backend.evolution.evoEnvLeaf
 import com.intellij.python.sdk.backend.evolution.toDisplayPath
 import com.intellij.python.sdk.backend.evolution.toLeaf
 import com.intellij.python.sdk.backend.evolution.toSectionLabel
 import com.intellij.python.sdk.backend.evolution.toolMissing
 import com.intellij.python.sdk.common.evolution.EvoAddNewDto
+import com.intellij.python.sdk.common.evolution.EvoLeafDto
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
+import com.intellij.python.sdk.common.evolution.EvoRecreateDto
 import com.intellij.python.sdk.common.evolution.EvoSectionDto
 import com.intellij.python.sdk.common.evolution.PyInterpreterRef
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.evolution.deleteEnvDir
 import com.jetbrains.python.sdk.evolution.systemPythonOptions
 import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
+import com.jetbrains.python.sdk.impl.resolvePythonHome
 import com.jetbrains.python.sdk.poetry.createNewPoetrySdk
 import com.jetbrains.python.sdk.poetry.createPoetrySdk
 import com.jetbrains.python.sdk.poetry.runPoetry
@@ -124,6 +130,46 @@ internal class PoetryEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
       installPackages = false,
       errorSink = context.errorSink,
       inProjectEnv = ref.folder != null,
+      targetPanelExtension = null,
+    )
+  }
+
+  /**
+   * A poetry environment may be rebuilt on any base Python the project's `requires-python` admits.
+   *
+   * The list is the one [addNewEnvSpec] memoized for this request, so the affordance costs no further probe. Poetry can
+   * fill the rebuilt environment from `poetry.lock`, so the packages choice is offered — a full `poetry install`, which
+   * can run for minutes.
+   *
+   * Offered for the in-project `.venv` alone ([ownedEnvBinaryIn]), which is what [recreateEnv] can actually do: it
+   * rebuilds in place with `virtualenvs.in-project`, and pointing that at a cache environment would build the new one
+   * somewhere else than the old one stood.
+   */
+  override suspend fun recreateSpecFor(context: EvoToolContext, leaf: EvoLeafDto): EvoRecreateDto? {
+    leaf.ref.ownedEnvBinaryIn(context.pyProject.baseDir) ?: return null
+    val options = context.cached(VERSIONS_KEY) { systemPythonOptions(context.pyProject.baseDir, context.fileSystem) }
+      .takeIf { it.isNotEmpty() } ?: return null
+    return EvoRecreateDto(options = options, canSyncPackages = true)
+  }
+
+  /**
+   * Deletes the environment and lets poetry build another in its place.
+   *
+   * Only the in-project `.venv` reaches this: a cache environment lives under poetry's `virtualenvs.path`, outside the
+   * project, and the core withholds the rebuild for anything it does not own. So the directory is poetry's own `.venv`
+   * and removing it is enough — there is no registry entry elsewhere to keep in step.
+   */
+  override suspend fun recreateEnv(context: EvoToolContext, homePath: Path, spec: EvoRecreateSpec): PyResult<Sdk> {
+    val poetryExecutable = executableOrNull(context.fileSystem) ?: return toolMissing()
+    deleteEnvDir(homePath.resolvePythonHome()).getOr { return it }
+    return createNewPoetrySdk(
+      moduleBasePath = context.pyProject.baseDir,
+      basePythonBinaryPath = PathHolder.Eel(Path.of(spec.baseToken)),
+      fileSystem = context.fileSystem,
+      poetryExecutable = poetryExecutable,
+      installPackages = spec.syncPackages,
+      errorSink = context.errorSink,
+      inProjectEnv = true,
       targetPanelExtension = null,
     )
   }

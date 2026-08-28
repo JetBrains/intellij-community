@@ -19,6 +19,7 @@ import com.intellij.python.hatch.PythonVirtualEnvironment
 import com.intellij.python.hatch.cli.ENV_TYPE_VIRTUAL
 import com.intellij.python.hatch.cli.HatchCli
 import com.intellij.python.hatch.cli.HatchDetailedEnvironments
+import com.intellij.python.hatch.cli.HatchEnv
 import com.intellij.python.hatch.cli.HatchEnvironment
 import com.intellij.python.hatch.cli.new
 import com.intellij.python.hatch.runtime.HatchConstants
@@ -102,6 +103,12 @@ internal class CliBasedHatchService<P : PathHolder> private constructor(
   override suspend fun syncDependencies(envName: String?): PyResult<String> {
     return withContext(Dispatchers.IO) {
       hatchCli().run(envName, "python", "--version")
+    }
+  }
+
+  override suspend fun removeVirtualEnvironment(envName: String?): PyResult<HatchEnv.RemoveResult> {
+    return withContext(Dispatchers.IO) {
+      hatchCli().env().remove(envName)
     }
   }
 

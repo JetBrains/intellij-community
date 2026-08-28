@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.community.execService.UploadConfig
+import com.intellij.python.hatch.cli.HatchEnv
 import com.intellij.python.hatch.cli.HatchEnvironment
 import com.intellij.python.hatch.service.CliBasedHatchService
 import com.jetbrains.python.PythonInfo
@@ -94,6 +95,14 @@ interface HatchService<P : PathHolder> {
     basePythonBinaryPath: P? = null,
     envName: String? = null,
   ): PyResult<PythonVirtualEnvironment.Existing<P>>
+
+  /**
+   * Removes the environment [envName] names, or the default one when it is null.
+   *
+   * The four outcomes are hatch's own — see [HatchEnv.RemoveResult]. Only [HatchEnv.RemoveResult.Removed] says an
+   * environment went away; the caller decides what the other three mean for it.
+   */
+  suspend fun removeVirtualEnvironment(envName: String? = null): PyResult<HatchEnv.RemoveResult>
 
   suspend fun findVirtualEnvironments(): PyResult<List<HatchVirtualEnvironment<P>>>
 

@@ -95,7 +95,13 @@ open class EvoTreeLeafElement(
  * only place the failure can be reported; here the row is one environment among the many the node listed, and a column
  * of warning signs beside a list of environments reads as a problem with the list.
  */
-class EvoTreeUnavailableLeafElement(action: AnAction, reason: @Nls String) : EvoTreeLeafElement(action) {
+class EvoTreeUnavailableLeafElement(action: AnAction, reason: @Nls String) : EvoTreeLeafElement(
+  action = action,
+  // A copy, not the action's own template. The platform refuses a write to a template presentation, which is shared by
+  // every place the action is shown, and disabling one row must not disable the action everywhere else it appears. The
+  // copy already carries what the action set up for itself, since that runs before this.
+  presentation = action.templatePresentation.clone(),
+) {
   init {
     presentation.isEnabled = false
     presentation.putClientProperty(ActionUtil.TOOLTIP_TEXT, reason)
@@ -247,14 +253,33 @@ class EvoTreeAddNewNode(
   editableName: EvoEditableName? = null,
   fixedName: @NlsSafe String? = null,
   secondaryText: @Nls String? = null,
+  headerCaption: @Nls String? = null,
 ) : EvoTreeNodeElement(text, icon) {
   init {
     sections.addAll(versionRows.sections())
     this.versionRows = versionRows
     this.editableName = editableName
     this.fixedName = fixedName
+    this.headerCaption = headerCaption
     secondaryText?.let { presentation.putClientProperty(ActionUtil.SECONDARY_TEXT, it) }
   }
+}
+
+/**
+ * Implemented by a leaf [AnAction] whose environment can be destroyed and built again on another Python.
+ *
+ * The row keeps doing its own thing when clicked — it selects that environment — and offers the rebuild behind an
+ * inline icon [EvoTreePopup] paints while the row is hovered. A destructive operation is then never one stray click
+ * away from an ordinary switch.
+ */
+interface EvoRecreatable {
+  /**
+   * The panel the icon opens, or null when this row offers no rebuild and so carries no icon.
+   *
+   * Built by whoever built the row, so its rows close over the same rebuild call. Nullable because one action class
+   * serves both an environment the project may rebuild and one it may not.
+   */
+  val recreatePanel: EvoTreeNodeElement?
 }
 
 /**
@@ -291,6 +316,12 @@ sealed class EvoTreeNodeElement(
    * whichever node the popup is showing, so it has to travel with the sections.
    */
   var versionRows: EvoVersionRows? = null
+
+  /**
+   * The caption above this node's submenu header, or null for the "add new" wording every such header used to carry.
+   * Travels with the sections for the same reason [fixedName] does.
+   */
+  var headerCaption: @Nls String? = null
 
   init {
     presentation.icon = icon
@@ -329,6 +360,8 @@ class EvoLoadedNode(
   /** See [EvoTreeNodeElement.fixedName] — carried for the same reason [editableName] is. */
   val fixedName: @NlsSafe String? = null,
   val versionRows: EvoVersionRows? = null,
+  /** See [EvoTreeNodeElement.headerCaption] — carried for the same reason [fixedName] is. */
+  val headerCaption: @Nls String? = null,
 )
 
 class EvoTreeLazyNodeElement(
@@ -433,6 +466,7 @@ class EvoTreeLazyNodeElement(
             editableName = loaded.editableName
             fixedName = loaded.fixedName
             versionRows = loaded.versionRows
+            headerCaption = loaded.headerCaption
             // Swap in the new data only once it's ready, so an open submenu goes straight from "Loading…" to the
             // rows and never flashes empty.
             sections.clear()

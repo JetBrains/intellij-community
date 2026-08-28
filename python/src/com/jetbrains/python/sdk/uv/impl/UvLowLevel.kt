@@ -331,8 +331,10 @@ private class UvLowLevelImpl<P : PathHolder>(
     return result
   }
 
-  override suspend fun sync(): PyResult<String> {
-    return uvCli.runUv(cwd, venvPath, true, "sync", "--all-packages")
+  override suspend fun sync(python: Version?): PyResult<String> {
+    val args = mutableListOf("sync", "--all-packages")
+    python?.let { args.addAll(listOf("--python", "${it.major}.${it.minor}")) }
+    return uvCli.runUv(cwd, venvPath, true, *args.toTypedArray())
   }
 
   override suspend fun lock(): PyResult<String> {
