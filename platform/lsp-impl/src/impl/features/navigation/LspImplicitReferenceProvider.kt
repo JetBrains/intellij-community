@@ -169,6 +169,6 @@ private class CurrentActionListener : AnActionListener {
 
 
 @Service(Service.Level.APP)
-private class CurrentActionHolder {
-  var currentActionClass: Class<AnAction>? = null
+internal class CurrentActionHolder {
+  var currentActionClass: Class<out AnAction>? = null
 }

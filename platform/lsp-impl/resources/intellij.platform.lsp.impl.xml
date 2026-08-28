@@ -89,6 +89,8 @@
     <psi.implicitReferenceProvider id="LspDocumentLinkReferenceProvider"
                                    implementation="com.intellij.platform.lsp.impl.features.navigation.LspDocumentLinkReferenceProvider"/>
     <lang.symbolTypeProvider id="LspSymbolTypeProvider" implementation="com.intellij.platform.lsp.impl.features.navigation.LspSymbolTypeProvider"/>
+    <pom.declarationSearcher implementation="com.intellij.platform.lsp.impl.features.navigation.LspImplementationDeclarationSearcher"/>
+    <definitionsScopedSearch implementation="com.intellij.platform.lsp.impl.features.navigation.LspDefinitionsScopedSearcher"/>
     <uiDataRule implementation="com.intellij.platform.lsp.impl.features.usages.LspSearchTargetsRule"/>
     <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
               implementationClass="com.intellij.platform.lsp.impl.features.usages.LspUsageSearcher"/>

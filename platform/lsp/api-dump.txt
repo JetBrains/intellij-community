@@ -265,6 +265,7 @@ c:com.intellij.platform.lsp.api.customization.LspCustomization
 - getFoldingRangeCustomizer():com.intellij.platform.lsp.api.customization.LspFoldingRangeCustomizer
 - getFormattingCustomizer():com.intellij.platform.lsp.api.customization.LspFormattingCustomizer
 - getGoToDefinitionCustomizer():com.intellij.platform.lsp.api.customization.LspGoToDefinitionCustomizer
+- getGoToImplementationCustomizer():com.intellij.platform.lsp.api.customization.LspGoToImplementationCustomizer
 - getGoToTypeDefinitionCustomizer():com.intellij.platform.lsp.api.customization.LspGoToTypeDefinitionCustomizer
 - getHoverCustomizer():com.intellij.platform.lsp.api.customization.LspHoverCustomizer
 - getInlayHintCustomizer():com.intellij.platform.lsp.api.customization.LspInlayHintCustomizer
@@ -353,6 +354,13 @@ f:com.intellij.platform.lsp.api.customization.LspGoToDefinitionDisabled
 - sf:INSTANCE:com.intellij.platform.lsp.api.customization.LspGoToDefinitionDisabled
 c:com.intellij.platform.lsp.api.customization.LspGoToDefinitionSupport
 - com.intellij.platform.lsp.api.customization.LspGoToDefinitionCustomizer
+- <init>():V
+a:com.intellij.platform.lsp.api.customization.LspGoToImplementationCustomizer
+f:com.intellij.platform.lsp.api.customization.LspGoToImplementationDisabled
+- com.intellij.platform.lsp.api.customization.LspGoToImplementationCustomizer
+- sf:INSTANCE:com.intellij.platform.lsp.api.customization.LspGoToImplementationDisabled
+c:com.intellij.platform.lsp.api.customization.LspGoToImplementationSupport
+- com.intellij.platform.lsp.api.customization.LspGoToImplementationCustomizer
 - <init>():V
 a:com.intellij.platform.lsp.api.customization.LspGoToTypeDefinitionCustomizer
 f:com.intellij.platform.lsp.api.customization.LspGoToTypeDefinitionDisabled

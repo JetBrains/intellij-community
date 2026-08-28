@@ -33,6 +33,17 @@ open class LspCustomization {
   open val goToTypeDefinitionCustomizer: LspGoToTypeDefinitionCustomizer = LspGoToTypeDefinitionSupport()
 
   /**
+   * Customizes the LSP go to implementation feature behavior. By default, uses standard [LspGoToImplementationSupport] implementation.
+   * Implementations may override this property to:
+   * - return their specific subclass of [LspGoToImplementationSupport] that fine-tunes the behavior
+   * - return [LspGoToImplementationDisabled] to disable the LSP feature
+   *
+   * When enabled, the IDE will ask the LSP server for `Navigate -> Implementation(s)` targets by sending the
+   * [textDocument/implementation](https://microsoft.github.io/language-server-protocol/specification/#textDocument_implementation) request.
+   */
+  open val goToImplementationCustomizer: LspGoToImplementationCustomizer = LspGoToImplementationSupport()
+
+  /**
    * Customizes the LSP hover feature behavior. By default, uses standard [LspHoverSupport] implementation.
    * Implementations may override this property to:
    * - return their specific subclass of [LspHoverSupport] that fine-tunes the behavior

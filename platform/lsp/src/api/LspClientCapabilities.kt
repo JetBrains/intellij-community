@@ -37,6 +37,7 @@ import org.eclipse.lsp4j.FoldingRangeSupportCapabilities
 import org.eclipse.lsp4j.FormattingCapabilities
 import org.eclipse.lsp4j.GeneralClientCapabilities
 import org.eclipse.lsp4j.HoverCapabilities
+import org.eclipse.lsp4j.ImplementationCapabilities
 import org.eclipse.lsp4j.InlayHintCapabilities
 import org.eclipse.lsp4j.InlayHintWorkspaceCapabilities
 import org.eclipse.lsp4j.MarkupKind
@@ -117,6 +118,9 @@ internal fun createClientCapabilities(lspCustomization: LspCustomization): Clien
       linkSupport = true
     }
     typeDefinition = TypeDefinitionCapabilities().apply {
+      linkSupport = true
+    }
+    implementation = ImplementationCapabilities().apply {
       linkSupport = true
     }
     completion = CompletionCapabilities().apply {

@@ -368,6 +368,10 @@ class LspClientImpl internal constructor(
 
   internal fun supportsGotoTypeDefinition(): Boolean = serverCapabilities?.typeDefinitionProvider?.let { it.left ?: true } == true
 
+  internal fun supportsGotoImplementation(file: VirtualFile): Boolean =
+    serverCapabilities?.implementationProvider?.let { it.left ?: true }
+    ?: hasDynamicCapabilityToHandleThisFile(file, LspDynamicCapabilities.implementation)
+
   internal fun supportsHover(): Boolean = serverCapabilities?.hoverProvider?.let { it.left ?: true } == true
 
   internal fun supportsCommand(command: String): Boolean =

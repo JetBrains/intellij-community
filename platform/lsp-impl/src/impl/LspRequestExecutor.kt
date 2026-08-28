@@ -27,6 +27,7 @@ import org.eclipse.lsp4j.DocumentSymbol
 import org.eclipse.lsp4j.DocumentSymbolParams
 import org.eclipse.lsp4j.Hover
 import org.eclipse.lsp4j.HoverParams
+import org.eclipse.lsp4j.ImplementationParams
 import org.eclipse.lsp4j.LocationLink
 import org.eclipse.lsp4j.SelectionRange
 import org.eclipse.lsp4j.SelectionRangeParams
@@ -106,6 +107,18 @@ class LspRequestExecutor(
     return documentMapping.withDocumentAtFileOffset(file, offset) { lspDocument, position ->
       val params = TypeDefinitionParams(lspDocument.id, position)
       val lsp4jResponse = sendRequestSync { it.textDocumentService.typeDefinition(params) }
+                          ?: return@withDocumentAtFileOffset emptyList()
+      val locationLinks = lsp4jResponse.map({ items -> items.map { it.toLocationLink() } }, { it })
+      locationLinks.map { documentMapping.findDocumentByUrl(it.targetUri)?.mapLocationLink(it) ?: it }.distinct()
+    } ?: emptyList()
+  }
+
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  internal fun getImplementations(file: VirtualFile, offset: Int): List<LocationLink> {
+    return documentMapping.withDocumentAtFileOffset(file, offset) { lspDocument, position ->
+      val params = ImplementationParams(lspDocument.id, position)
+      val lsp4jResponse = sendRequestSync { it.textDocumentService.implementation(params) }
                           ?: return@withDocumentAtFileOffset emptyList()
       val locationLinks = lsp4jResponse.map({ items -> items.map { it.toLocationLink() } }, { it })
       locationLinks.map { documentMapping.findDocumentByUrl(it.targetUri)?.mapLocationLink(it) ?: it }.distinct()
