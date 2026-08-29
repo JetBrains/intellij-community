@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build
 
 import com.intellij.platform.buildScripts.concurrency.taskScope
 import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.trace.Span
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -67,38 +68,55 @@ internal fun buildSearchableOptions(
   systemProperties: VmProperties = VmProperties(emptyMap()),
 ): SearchableOptionSetDescriptor? {
   return context.executeStep(spanBuilder("building searchable options index"), BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP) { span ->
-    val targetDirectory = context.paths.searchableOptionDir
-    // Resolve bundled Maven inputs before traverseUI starts an external process. Under Bazel these are
-    // read directly from declared runfiles; other builds retain their normal download-cache behavior.
-    // The nested group ends before the product starts.
-    taskScope {
-      fork("resolve maven4 libs") {
-        BundledMavenDownloader.resolveMaven4Libs(context.paths.communityHomeDirRoot, context.httpSession)
-      }
-      fork("resolve maven3 libs") {
-        BundledMavenDownloader.resolveMaven3Libs(context.paths.communityHomeDirRoot, context.httpSession)
-      }
-      fork("download maven distribution") {
-        BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot, context.httpSession)
-      }
-      fork("resolve maven telemetry dependencies") {
-        BundledMavenDownloader.resolveMavenTelemetryDependencies(context.paths.communityHomeDirRoot, context.httpSession)
-      }
-      join()
-    }
-
-    // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
-    // It'll process all UI elements in the `Settings` dialog and build an index for them.
-    productRunner.runProduct(
-      args = listOf("traverseUI", targetDirectory.toString(), "true"),
-      additionalVmProperties = systemProperties + VmProperties(mapOf("idea.l10n.keys" to "only")) + additionalProperties(),
-      timeout = DEFAULT_TIMEOUT,
-    )
-
-    val index = readSearchableOptionIndex(targetDirectory)
-    span.setAttribute(AttributeKey.longKey("moduleCountWithSearchableOptions"), index.index.size)
-    span.setAttribute(AttributeKey.stringArrayKey("modulesWithSearchableOptions"), index.index.keys.toList())
-
+    prepareTraverseUiInput(context)
+    val index = runTraverseUi(productRunner = productRunner, outDir = context.paths.searchableOptionDir, systemProperties = systemProperties)
+    reportIndex(span, index)
     index
   }
+}
+
+private fun reportIndex(span: Span, index: SearchableOptionSetDescriptor) {
+  span.setAttribute(AttributeKey.longKey("moduleCountWithSearchableOptions"), index.index.size.toLong())
+  span.setAttribute(AttributeKey.stringArrayKey("modulesWithSearchableOptions"), index.index.keys.toList())
+}
+
+/**
+ * Resolve the bundled Maven inputs before `traverseUI` starts an external process.
+ *
+ * Under Bazel these are read directly from declared runfiles.
+ * Another build keeps its normal download-cache behavior.
+ */
+private fun prepareTraverseUiInput(context: BuildContext) {
+  taskScope {
+    fork("resolve maven4 libs") {
+      BundledMavenDownloader.resolveMaven4Libs(context.paths.communityHomeDirRoot, context.httpSession)
+    }
+    fork("resolve maven3 libs") {
+      BundledMavenDownloader.resolveMaven3Libs(context.paths.communityHomeDirRoot, context.httpSession)
+    }
+    fork("download maven distribution") {
+      BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot, context.httpSession)
+    }
+    fork("resolve maven telemetry dependencies") {
+      BundledMavenDownloader.resolveMavenTelemetryDependencies(context.paths.communityHomeDirRoot, context.httpSession)
+    }
+    join()
+  }
+}
+
+/**
+ * Start the product in headless mode with `com.intellij.ide.ui.search.TraverseUIStarter`.
+ * It processes every UI element in the `Settings` dialog and writes an index for them.
+ */
+private fun runTraverseUi(
+  productRunner: IntellijProductRunner,
+  outDir: Path,
+  systemProperties: VmProperties,
+): SearchableOptionSetDescriptor {
+  productRunner.runProduct(
+    args = listOf("traverseUI", outDir.toString(), "true"),
+    additionalVmProperties = systemProperties + VmProperties(mapOf("idea.l10n.keys" to "only")) + additionalProperties(),
+    timeout = DEFAULT_TIMEOUT,
+  )
+  return readSearchableOptionIndex(outDir)
 }
