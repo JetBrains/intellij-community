@@ -1,6 +1,0 @@
-- name: lib/minimap-plugin.jar
-  modules:
-  - name: intellij.minimap.plugin
-- name: lib/modules/intellij.minimap.core.jar
-  contentModules:
-  - name: intellij.minimap.core

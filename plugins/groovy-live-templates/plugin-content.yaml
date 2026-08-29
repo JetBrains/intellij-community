@@ -1,3 +1,0 @@
-- name: lib/groovy-live-templates.jar
-  modules:
-  - name: intellij.groovy.live.templates

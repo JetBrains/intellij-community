@@ -1,3 +1,0 @@
-- name: lib/keymap-visualAssist.jar
-  modules:
-  - name: intellij.keymap.visualAssist

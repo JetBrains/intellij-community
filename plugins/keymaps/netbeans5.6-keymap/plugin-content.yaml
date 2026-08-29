@@ -1,3 +1,0 @@
-- name: lib/keymap-netbeans.jar
-  modules:
-  - name: intellij.keymap.netbeans

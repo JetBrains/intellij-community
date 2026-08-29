@@ -1,3 +1,0 @@
-- name: lib/findUsagesMl.jar
-  modules:
-  - name: intellij.findUsagesMl

@@ -1,3 +1,0 @@
-- name: lib/java-byteCodeViewer.jar
-  modules:
-  - name: intellij.java.byteCodeViewer

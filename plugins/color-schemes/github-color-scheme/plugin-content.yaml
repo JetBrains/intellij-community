@@ -1,3 +1,0 @@
-- name: lib/color-scheme-github.jar
-  modules:
-  - name: intellij.color.scheme.github

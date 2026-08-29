@@ -1,3 +1,0 @@
-- name: lib/keymap-qtcreator.jar
-  modules:
-  - name: intellij.keymap.qtcreator

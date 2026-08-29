@@ -1,3 +1,0 @@
-- name: lib/laf-win10.jar
-  modules:
-  - name: intellij.laf.win10

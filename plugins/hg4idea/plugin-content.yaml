@@ -1,3 +1,0 @@
-- name: lib/vcs-hg.jar
-  modules:
-  - name: intellij.vcs.hg

@@ -1,6 +1,0 @@
-- name: lib/jps/java-guiForms-jps.jar
-  modules:
-  - name: intellij.java.guiForms.jps
-- name: lib/uiDesigner.jar
-  modules:
-  - name: intellij.java.guiForms.designer

@@ -1,3 +1,0 @@
-- name: lib/libraries-misc-plugin.jar
-  modules:
-  - name: intellij.libraries.misc.plugin

@@ -228,7 +228,7 @@ internal fun computePluginContent(
  * Turns one plugin's membership facts into the labels [PluginContent] holds, whichever producer stated the facts.
  *
  * The half of [computePluginContent] that reads no report. [computePluginContent] takes [memberNames] and
- * [reportedPrepackedMemberPaths] out of the checked-in `plugin-content.yaml`; [derivePluginContent] takes the same two out of
+ * [reportedPrepackedMemberPaths] out of a distribution build's report; [derivePluginContent] takes the same two out of
  * the project model and the prepack convention. Everything after that point - the community/ultimate label rules, the
  * cross-repository hand-off, the library union and the empty-content verdict - is one body, so a comparison of the two
  * producers measures the facts and never the resolution.

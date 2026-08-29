@@ -1,3 +1,0 @@
-- name: lib/platform-tracing-ide.jar
-  modules:
-  - name: intellij.platform.tracing.ide

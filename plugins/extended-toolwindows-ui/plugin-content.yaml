@@ -1,6 +1,0 @@
-- name: lib/extendedToolWindowsUi.jar
-  modules:
-  - name: intellij.extendedToolWindowsUi
-- name: lib/modules/intellij.extendedToolWindowsUi.frontend.jar
-  contentModules:
-  - name: intellij.extendedToolWindowsUi.frontend

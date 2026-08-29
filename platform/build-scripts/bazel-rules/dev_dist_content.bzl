@@ -347,8 +347,8 @@ _KOTLIN_STDLIB_ATTR = attr.label(
 def _collect_library_jars(ctx, library_jars):
     """The per-jar half, for labels a *repository rule* produced rather than a generator writing a BUILD file.
 
-    Only test plugins use this. They have no `plugin-content.yaml`, so the dynamic JPS-to-Bazel bridge resolves their
-    library *names* into labels while loading (`DEV_DIST_ON_DEMAND_PLUGIN_LIBRARY_TARGETS`), and what it can derive from
+    Only test plugins use this. They are outside the content population, so the dynamic JPS-to-Bazel bridge resolves
+    their library *names* into labels while loading (`DEV_DIST_ON_DEMAND_PLUGIN_LIBRARY_TARGETS`), and what it derives from
     a library XML is the jar file labels - `jps_library_derivation.bzl` mirrors `makeJarTarget`, not
     `libraryTargetLabel`, and a container's target name comes from the library's *name* rather than from its jars.
 
@@ -475,10 +475,10 @@ def _dev_dist_plugin_content_impl(ctx):
 _dev_dist_plugin_content = rule(
     doc = """Which jars a dev distribution must have on hand to assemble one plugin.
 
-    One target per plugin, in the plugin's own package, generated from the `plugin-content.yaml` checked in beside the
-    plugin's main module - the fully resolved content report, so `xi:include` is already followed and the libraries need
-    no descriptor archaeology. The fragment that owns the plugin deps on it, directly or through a
-    `dev_dist_content_set`, and gets its declared inputs from the provider.
+    One target per plugin, in the plugin's own package, generated from the project model: the plugin's own `<content>`
+    with every `xi:include` followed, plus the `dev-dist.yaml` residue beside the plugin for what the model cannot
+    reach. The fragment that owns the plugin deps on it, directly or through a `dev_dist_content_set`, and gets its
+    declared inputs from the provider.
 
     The main module is a member alongside the content modules: it is `descriptor_module` only so that the plugin it
     describes is identified by the same target that carries its descriptor, and the distribution needs its jar as much

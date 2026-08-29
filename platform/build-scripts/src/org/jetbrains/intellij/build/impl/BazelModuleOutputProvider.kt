@@ -428,8 +428,8 @@ internal class BazelModuleOutputProvider(
    *
    * Every declaration a *generator* writes keys a library by its container target
    * (`computeLibraryContainerLabels`, `addMemberLibraries`), because that label carries no artifact version and so
-   * stays out of a Maven bump's diff. Test plugins are the exception, as they are for content generally: they have no
-   * `plugin-content.yaml`, so the dynamic JPS-to-Bazel bridge derives their payload from library XML while loading, and
+   * stays out of a Maven bump's diff. Test plugins are the exception, as they are for content generally: they are
+   * outside the content population, so the bridge derives their payload from library XML while loading, and
    * what a library XML yields is jar file labels - a container's target name comes from the library's *name* through the
    * branchy derivation in `dependency.kt:130-290`, which is not worth mirroring in Starlark for a payload that is
    * checked into nothing and therefore causes no churn either way.

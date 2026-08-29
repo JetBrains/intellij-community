@@ -1,3 +1,0 @@
-- name: lib/keymap-resharper.jar
-  modules:
-  - name: intellij.keymap.resharper

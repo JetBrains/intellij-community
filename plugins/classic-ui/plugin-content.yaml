@@ -1,3 +1,0 @@
-- name: lib/classic-ui.jar
-  modules:
-  - name: intellij.classic.ui

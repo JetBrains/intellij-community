@@ -1,3 +1,0 @@
-- name: lib/keymap-eclipse.jar
-  modules:
-  - name: intellij.keymap.eclipse

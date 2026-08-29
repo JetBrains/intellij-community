@@ -1,6 +1,0 @@
-- name: lib/rt/xslt-rt.jar
-  modules:
-  - name: intellij.xpath.rt
-- name: lib/xpath.jar
-  modules:
-  - name: intellij.xpath

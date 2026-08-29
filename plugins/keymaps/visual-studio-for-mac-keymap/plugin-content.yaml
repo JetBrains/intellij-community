@@ -1,3 +1,0 @@
-- name: lib/keymap-visualStudioForMac.jar
-  modules:
-  - name: intellij.keymap.visualStudioForMac

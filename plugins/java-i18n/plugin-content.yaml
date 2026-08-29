@@ -1,3 +1,0 @@
-- name: lib/java-i18n.jar
-  modules:
-  - name: intellij.java.i18n

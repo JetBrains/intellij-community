@@ -216,8 +216,8 @@ private val LAYOUT_PACKED_MODULE_LIBRARIES = mapOf(
 internal const val LIB_MODULE_PREFIX = "intellij.libraries."
 
 /**
- * One jar of a checked-in content report - `module-content.yaml` here, `plugin-content.yaml` in [computePluginContent] -
- * narrowed to what packing and membership need.
+ * One jar of a content report - a checked-in `module-content.yaml` here, an entry of a distribution build's report zip
+ * in [computePluginContent] - narrowed to what packing and membership need.
  *
  * A narrow schema rather than `com.intellij.platform.distributionContent.FileEntry`: that class lives in
  * the platform, and this generator is a standalone Bazel module that gets the platform as published Maven artifacts,
@@ -713,10 +713,10 @@ internal fun foldPluginContentCandidacy(reports: List<List<RecipeEntry>>, overri
 /**
  * The file the answers this generator cannot fold for itself are recorded in.
  *
- * [foldPluginContentCandidacy] is an AND over every checked-in `plugin-content.yaml`, and a community checkout does not
- * contain the ultimate ones. So a community-only run folds a different answer for a community module the ultimate half
- * has an opinion about, in both directions - a module whose only report is in ultimate is not a candidate at all, and a
- * module whose *ultimate* report disagrees is not vetoed. Either way that run generates `content_module_jar` and
+ * The candidacy fold is an AND over every plugin of the project, and a community checkout does not contain the ultimate
+ * ones. So a community-only run folds a different answer for a community module the ultimate half has an opinion about,
+ * in both directions - a module only an ultimate plugin offers is not a candidate at all, and a module an *ultimate*
+ * plugin vetoes is not vetoed. Either way that run generates `content_module_jar` and
  * `prepacked_content_modules` attributes differing from the checked-in ones, which is what
  * `Assert Bazel Files Are In Sync With JPS Model (Community Only)` fails on.
  *
@@ -740,9 +740,9 @@ internal const val PLUGIN_CONTENT_CANDIDATE_OVERRIDES_FILE_NAME: String = "dev_d
  * Reads what `plugin-model-tool` recorded, or nothing when no run has recorded it. A `null` value is "not a candidate".
  *
  * Nothing rather than a failure, because a project the tool has never run over is a real case and not a mistake: the
- * generator's own integration tests each build a throwaway community project. Those hold no `plugin-content.yaml` at
- * all, so the fold is empty there with or without this file. What an absent file costs a real checkout is only the
- * modules it would have corrected, which the sync assertion then reports.
+ * generator's own integration tests each build a throwaway community project. Such a project has one plugin and no
+ * ultimate half, so the fold reaches the same verdict with or without this file. What an absent file costs a real
+ * checkout is only the modules it would have corrected, which the sync assertion then reports.
  *
  * A line without a sign is a hard error, unlike a missing file: it would silently change how a module is packed, and a
  * jar that differs from the distribution's is not noticed until class-load time. A `-` line with a library is the same

@@ -321,9 +321,9 @@ internal class JpsModuleToBazel {
      * What Bazel offers for one plugin, by its main module name.
      *
      * Every field is optional because the two halves are independent: `target`/`distributionDirectory` exist for a
-     * plugin whose descriptor opted into `ij_plugin`, `contentTarget` for every plugin with a checked-in
-     * `plugin-content.yaml`, and today those are almost disjoint sets. The mirror of this class the platform reads it
-     * with is `BazelTargetsInfo.PluginDistributionTargetDescription`.
+     * plugin whose descriptor opted into `ij_plugin`, `contentTarget` for a plugin of the content population whose
+     * content resolves beyond its own main module, and today those are almost disjoint sets. The mirror of this class
+     * the platform reads it with is `BazelTargetsInfo.PluginDistributionTargetDescription`.
      */
     @Serializable
     data class PluginDistributionTargetDescription(

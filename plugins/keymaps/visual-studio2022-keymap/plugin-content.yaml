@@ -1,3 +1,0 @@
-- name: lib/keymap-visualStudio2022.jar
-  modules:
-  - name: intellij.keymap.visualStudio2022

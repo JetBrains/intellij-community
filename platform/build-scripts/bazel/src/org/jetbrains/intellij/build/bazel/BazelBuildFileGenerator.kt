@@ -245,9 +245,9 @@ internal class BazelBuildFileGenerator(
   /**
    * The modules a `dev_dist_plugin` states content for; see [readPluginContentPopulation].
    *
-   * The counterpart of [pluginDescriptorPopulation] for the content leaf, and the answer that used to be the presence of
-   * a `plugin-content.yaml` beside the module. Fail-open: an empty file makes the probe below the whole population, which
-   * is what keeps a checkout whose plan generator has never run converting.
+   * The counterpart of [pluginDescriptorPopulation] for the content leaf, and the one signal for whether a plugin gets
+   * one. An absent file states no plugin at all, so a hermetic run has to be handed it -
+   * `@community//build:dev_dist_plugin_content_tables` is what names it.
    */
   val pluginContentPopulation: Set<String> by lazy {
     readPluginContentPopulation(

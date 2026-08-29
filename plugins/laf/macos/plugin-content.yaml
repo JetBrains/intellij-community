@@ -1,3 +1,0 @@
-- name: lib/laf-macos.jar
-  modules:
-  - name: intellij.laf.macos

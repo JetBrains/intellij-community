@@ -1,6 +1,0 @@
-- name: lib/ant-jps.jar
-  modules:
-  - name: intellij.ant.jps
-- name: lib/antIntegration.jar
-  modules:
-  - name: intellij.ant

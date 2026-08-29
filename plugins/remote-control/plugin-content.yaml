@@ -1,3 +1,0 @@
-- name: lib/remoteControl.jar
-  modules:
-  - name: intellij.remoteControl

@@ -1,3 +1,0 @@
-- name: lib/lsp-client-playground.jar
-  modules:
-  - name: intellij.lsp.client.playground

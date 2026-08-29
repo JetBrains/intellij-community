@@ -1,9 +1,0 @@
-- name: lib/eclipse-common.jar
-  modules:
-  - name: intellij.eclipse.common
-- name: lib/eclipse-jps.jar
-  modules:
-  - name: intellij.eclipse.jps
-- name: lib/eclipse.jar
-  modules:
-  - name: intellij.eclipse

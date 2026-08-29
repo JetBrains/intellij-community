@@ -1,5 +1,0 @@
-- name: lib/copyright.jar
-  modules:
-  - name: intellij.copyright
-  contentModules:
-  - name: intellij.copyright.vcs

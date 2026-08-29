@@ -1,3 +1,0 @@
-- name: lib/configurationScript.jar
-  modules:
-  - name: intellij.configurationScript

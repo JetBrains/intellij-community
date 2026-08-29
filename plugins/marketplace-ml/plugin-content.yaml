@@ -1,3 +1,0 @@
-- name: lib/marketplaceMl.jar
-  modules:
-  - name: intellij.marketplaceMl
