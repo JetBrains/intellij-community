@@ -2,6 +2,7 @@ package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 /**
@@ -25,4 +26,12 @@ abstract class WelcomeScreenFeatureUI {
   abstract val featureKey: String
 
   abstract val icon: Icon
+
+  /**
+   * The button label.
+   *
+   * A plugin overrides this to keep the label in its own message bundle. It stays `null` when the product's
+   * [WelcomeRightTabContentProvider] supplies the label.
+   */
+  open val text: @Nls String? get() = null
 }
