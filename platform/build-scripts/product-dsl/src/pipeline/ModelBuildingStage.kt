@@ -191,6 +191,7 @@ internal object ModelBuildingStage {
         outputProvider = outputProvider,
         testFrameworkContentModules = config.testFrameworkContentModules,
         dslOwnedPluginXmlPaths = dslOwnedPluginXmlPaths,
+        contentPluginPopulation = readDevDistContentPluginPopulation(projectRoot),
       )
     }
     else {
@@ -1042,10 +1043,17 @@ internal object ModelBuildingStage {
     val pluginModules: Set<TargetName>,
   )
 
+  /**
+   * The plugin main modules to seed into the graph, read off the module sources.
+   *
+   * @param contentPluginPopulation the plugin main modules the dev distribution states content for.
+   * [readDevDistContentPluginPopulation] reads it. A name this project does not hold is a name nothing matches.
+   */
   internal fun discoverPluginDescriptorsFromSources(
     outputProvider: ModuleOutputProvider,
     testFrameworkContentModules: Set<ContentModuleName> = emptySet(),
     dslOwnedPluginXmlPaths: Set<Path> = emptySet(),
+    contentPluginPopulation: Set<String> = emptySet(),
   ): DiscoveredPluginDescriptors {
     val modules = outputProvider.getAllModules()
     if (modules.isEmpty()) {
@@ -1076,7 +1084,7 @@ internal object ModelBuildingStage {
         // validation and a content module conversion breaks them silently (IJPL-252475).
         testPluginModules.add(TargetName(module.name))
       }
-      if (hasPluginContentYaml(module)) {
+      if (module.name in contentPluginPopulation) {
         pluginModules.add(TargetName(module.name))
       }
     }
@@ -1100,16 +1108,6 @@ internal object ModelBuildingStage {
       return false
     }
     return testFrameworkContentModules.any { content.contains("\"${it.value}\"") }
-  }
-
-  private fun hasPluginContentYaml(module: JpsModule): Boolean {
-    for (url in module.contentRootsList.urls) {
-      val rootPath = JpsPathUtil.urlToNioPath(url)
-      if (Files.exists(rootPath.resolve("plugin-content.yaml"))) {
-        return true
-      }
-    }
-    return false
   }
 
   private fun collectDeclaredContentModules(spec: ProductModulesContentSpec): Set<ContentModuleName> {
@@ -1283,4 +1281,44 @@ internal object ModelBuildingStage {
 
     return allAliases
   }
+}
+
+/**
+ * The population file, relative to the project root.
+ *
+ * Under `community/build/`, so a community-only checkout reads the same file. A line naming a plugin that checkout does
+ * not have is a line it never matches.
+ */
+const val DEV_DIST_CONTENT_PLUGIN_POPULATION_PATH: String = "community/build/dev_dist_plugin_content_population.txt"
+
+/**
+ * The plugin main modules the dev distribution states content for, one name per line.
+ *
+ * This answers "is this module a shipped plugin's main module", which the graph needs to seed a plugin the product specs
+ * do not name. The earlier signal was a `plugin-content.yaml` beside the module, and that file goes away: it enumerated
+ * what a distribution build really packed, and the dev distribution now derives that from the project model. The
+ * population is the one part of it the derivation cannot answer, so it stays as a plain checked-in list. Read
+ * `build/decisions/0007-the-descriptor-leaf-follows-the-content-leaf.md` for why the hand-off is a text file.
+ *
+ * A `#` line is a comment. An empty result on an absent file, the same fail-open the converter's reader takes: a
+ * throwaway project holds no such file, and this enrichment runs in the analysis-only flow alone.
+ *
+ * Public, because the dev-distribution plan generator reads the same file to decide whether a plugin has a content
+ * target to point at. That generator is in the main repository and it depends on this module, so the two share one
+ * spelling of the path and one parse. The JPS-to-Bazel converter is the third reader and it cannot share: it is a
+ * standalone Bazel module that takes the platform as published artifacts.
+ */
+fun readDevDistContentPluginPopulation(projectRoot: Path): Set<String> {
+  val file = projectRoot.resolve(DEV_DIST_CONTENT_PLUGIN_POPULATION_PATH)
+  if (Files.notExists(file)) {
+    return emptySet()
+  }
+  val result = LinkedHashSet<String>()
+  for (raw in Files.readAllLines(file)) {
+    val line = raw.trim()
+    if (line.isNotEmpty() && !line.startsWith('#')) {
+      result.add(line)
+    }
+  }
+  return result
 }

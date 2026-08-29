@@ -58,7 +58,7 @@ data class ModuleSetGenerationConfig(
   @JvmField val testPluginsByProduct: Map<String, Set<TargetName>> = emptyMap(),
 
   /**
-   * When true, scan module sources for test plugin descriptors and plugin-content.yaml
+   * When true, scan module sources for test plugin descriptors, and read the dev-distribution content population,
    * to enrich the PluginGraph in analysis-only flows.
    */
   @JvmField val includeTestPluginDescriptorsFromSources: Boolean = false,
