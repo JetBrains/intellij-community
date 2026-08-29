@@ -333,6 +333,8 @@ jvm_library(
         "//spellchecker/xml:xml_test_lib",
         "//platform/vcs/plugin",
         "//platform/vcs/plugin:plugin_test_lib",
+        "//plugins/maven/jps",
+        "//plugins/maven/jps:jps_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.ui.tests` end
