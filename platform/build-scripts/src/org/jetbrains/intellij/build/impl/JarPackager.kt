@@ -126,7 +126,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "org.apache.ivy",
   "org.scilab.forge:jlatexmath",
   "package-search-api-client",
-  "software.amazon.awssdk.glue",
   "squareup.okio.jvm",
 )
 
