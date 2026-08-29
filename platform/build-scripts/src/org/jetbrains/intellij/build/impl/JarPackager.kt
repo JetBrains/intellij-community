@@ -119,7 +119,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "io.modelcontextprotocol.kotlin.sdk",
   "io.qameta.allure.java.commons",
   "jetbrains.intellij.deps.eclipse.jgit",
-  "jetbrains.patronus.config",
   "jps-javac-extension",
   "kotlin-metadata",
   "layoutlib",
