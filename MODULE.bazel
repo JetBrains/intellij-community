@@ -239,6 +239,129 @@ go_sdk.download(version = "1.27.0")
 # both versions come from the packer's `go.mod`, which is also what the IDE and a plain `go build` read.
 go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
 go_deps.from_file(go_mod = "//build/content-module-packer:go.mod")
-use_repo(go_deps, "com_github_zeebo_xxh3")
+
+# The pins below mirror //build/treehouse:go.mod, the Go module of the treehouse wrapper. They are explicit because
+# gazelle accepts one `go_deps.from_file` tag per Bazel module, and content-module-packer above already holds it.
+# Keep this list in step with //build/treehouse:go.mod, which is what the IDE and a plain `go build` read.
+# If the list becomes a burden, add a `go.work` file and change to `from_file(go_work = ...)`. We do not do that now,
+# because it would rewrite the working dependency wiring of content-module-packer, and the packer is a Bazel worker on
+# the critical path of every `content_module_jar`.
+# `golang.org/x/sys` is in both modules, and gazelle resolves it to the higher version.
+# The pin below and the `golang.org/x/sys` line in //build/treehouse:go.mod must always move together.
+# If they differ, Bazel and a plain `go build` compile treehouse against different sources.
+# v0.46.0 is also the version that `intellix/go.mod` asks for. So a community-only checkout and the ultimate checkout
+# resolve the same version. The packer compiles against v0.46.0 too.
+# The version of `github.com/kunchenguid/treehouse` is a pseudo-version, because the upstream module path has no /v2
+# suffix. It points to the exact commit of the v2.3.0 tag.
+# A tag carries `indirect = True` when //build/treehouse:go.mod marks that line `// indirect`. Gazelle counts every
+# other `go_deps.module` tag of the root module as a direct dependency, so without the mark `bazel mod tidy` demands
+# all 17 names in the `use_repo` call below. `github.com/kunchenguid/treehouse` is the one direct requirement, and
+# //build/treehouse/cli names it in `deps`.
+go_deps.module(
+    indirect = True,
+    path = "github.com/BurntSushi/toml",
+    sum = "h1:dRaEfpa2VI55EwlIW72hMRHdWouJeRF7TPYhI+AUQjk=",
+    version = "v1.6.0",
+)
+go_deps.module(
+    indirect = True,
+    path = "github.com/ebitengine/purego",
+    sum = "h1:QIw4xfpWT6GWTzaW5XEKy3HXoqrJGx1ijYHzTF0/ISU=",
+    version = "v0.10.0",
+)
+go_deps.module(
+    indirect = True,
+    path = "github.com/fatih/color",
+    sum = "h1:S8gINlzdQ840/4pfAwic/ZE0djQEH3wM94VfqLTZcOM=",
+    version = "v1.18.0",
+)
+go_deps.module(
+    indirect = True,
+    path = "github.com/go-ole/go-ole",
+    sum = "h1:/Fpf6oFPoeFik9ty7siob0G6Ke8QvQEuVcuChpwXzpY=",
+    version = "v1.2.6",
+)
+go_deps.module(
+    indirect = True,
+    path = "github.com/inconshreveable/mousetrap",
+    sum = "h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8=",
+    version = "v1.1.0",
+)
+go_deps.module(
+    path = "github.com/kunchenguid/treehouse",
+    sum = "h1:Dh/Wbr6Ge6gqe6yh201KQtR5Kh7rVV20omIZsNOzvUY=",
+    version = "v0.0.0-20260822132253-35b8a41d8b0f",
+)
+go_deps.module(
+    indirect = True,
+    path = "github.com/lufia/plan9stats",
+    sum = "h1:6E+4a0GO5zZEnZ81pIr0yLvtUWk2if982qA3F3QD6H4=",
+    version = "v0.0.0-20211012122336-39d0f177ccd0",
+)
+go_deps.module(
+    indirect = True,
+    path = "github.com/mattn/go-colorable",
+    sum = "h1:fFA4WZxdEF4tXPZVKMLwD8oUnCTTo08duU7wxecdEvA=",
+    version = "v0.1.13",
+)
+go_deps.module(
+    indirect = True,
+    path = "github.com/mattn/go-isatty",
+    sum = "h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWEY=",
+    version = "v0.0.20",
+)
+go_deps.module(
+    indirect = True,
+    path = "github.com/power-devops/perfstat",
+    sum = "h1:o4JXh1EVt9k/+g42oCprj/FisM4qX9L3sZB3upGN2ZU=",
+    version = "v0.0.0-20240221224432-82ca36839d55",
+)
+go_deps.module(
+    indirect = True,
+    path = "github.com/shirou/gopsutil/v4",
+    sum = "h1:X8i6sicvUFih4BmYIGT1m2wwgw2VG9YgrDTi7cIRGUI=",
+    version = "v4.26.2",
+)
+go_deps.module(
+    indirect = True,
+    path = "github.com/spf13/cobra",
+    sum = "h1:DMTTonx5m65Ic0GOoRY2c16WCbHxOOw6xxezuLaBpcU=",
+    version = "v1.10.2",
+)
+go_deps.module(
+    indirect = True,
+    path = "github.com/spf13/pflag",
+    sum = "h1:9exaQaMOCwffKiiiYk6/BndUBv+iRViNW+4lEMi0PvY=",
+    version = "v1.0.9",
+)
+go_deps.module(
+    indirect = True,
+    path = "github.com/tklauser/go-sysconf",
+    sum = "h1:frioLaCQSsF5Cy1jgRBrzr6t502KIIwQ0MArYICU0nA=",
+    version = "v0.3.16",
+)
+go_deps.module(
+    indirect = True,
+    path = "github.com/tklauser/numcpus",
+    sum = "h1:nSTwhKH5e1dMNsCdVBukSZrURJRoHbSEQjdEbY+9RXw=",
+    version = "v0.11.0",
+)
+go_deps.module(
+    indirect = True,
+    path = "github.com/yusufpapurcu/wmi",
+    sum = "h1:zFUKzehAFReQwLys1b/iSMl+JQGSCSjtVqQn9bBrPo0=",
+    version = "v1.2.4",
+)
+go_deps.module(
+    indirect = True,
+    path = "golang.org/x/sys",
+    sum = "h1:noSf2Fq6F8DBgS+LysIkx7rIExoNHJsxOAtPp4rthXw=",
+    version = "v0.46.0",
+)
+use_repo(
+    go_deps,
+    "com_github_kunchenguid_treehouse",
+    "com_github_zeebo_xxh3",
+)
 
 include("//:fleet/kmp.MODULE.bazel")

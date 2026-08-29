@@ -4,7 +4,7 @@ This repository is too large for agents to create ad hoc Git worktrees or additi
 
 - Do not run `git worktree add`, clone this repository for workspace isolation, or implement another custom workspace-isolation mechanism on your own initiative. See the explicit-request exception below.
 - Never install, initialize, configure, or update Treehouse or another workspace manager automatically.
-- When an isolated workspace is required, use the `treehouse` skill. Its Bun CLI checks whether Treehouse is installed and usable for this repository; never bypass it with raw lifecycle commands.
+- When an isolated workspace is required, use the `treehouse` skill. Bazel builds its CLI from a pinned source, and that CLI checks whether Treehouse is usable for this repository; never bypass it with raw lifecycle commands.
 - If Treehouse is available, acquire a durable workspace with the skill's `write acquire` command. Use the current development or agent session ID as the holder when one is available. Acquisition prepares a clean detached workspace at the caller checkout's exact `HEAD`; it does not transfer index, working-tree, or untracked changes.
 - An available workspace shown by Treehouse status may have a stale detached `HEAD`; this is expected. Never use, enter, or synchronize a status path directly. Work only from the path returned by `write acquire`.
 - The skill records the returned workspace path, lease ID, lease holder, and captured source `HEAD` in an ignored receipt inside the acquired workspace. Work from the returned workspace path and preserve that receipt for the entire session.
