@@ -96,9 +96,11 @@ import java.util.Map;
 @ApiStatus.Internal
 public abstract class HierarchyTree extends JTree implements TreeSelectionListener {
   private static final int MAX_DEEPNESS_TO_DISCOVER_FIELD_NAME = 8;
+  private final @NotNull ElementOverlay elementOverlay;
 
-  HierarchyTree(Component c) {
-    setCellRenderer(new ComponentTreeCellRenderer(c));
+  HierarchyTree(Component c, @NotNull ElementOverlay elementOverlay) {
+    this.elementOverlay = elementOverlay;
+    setCellRenderer(new ComponentTreeCellRenderer(c, elementOverlay));
     setModel(buildModel(c));
     getSelectionModel().addTreeSelectionListener(this);
     TreeUIHelper.getInstance().installTreeSpeedSearch(this);
@@ -268,6 +270,46 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
     onComponentsChanged(components);
   }
 
+  @Override
+  protected void paintComponent(Graphics g) {
+    super.paintComponent(g);
+    var visible = getVisibleRect();
+    GraphicsUtil.setupAntialiasing(g);
+    for (int row = 0; row < getRowCount(); row++) {
+      var bounds = getRowBounds(row);
+      if (bounds == null || bounds.y + bounds.height <= visible.y || bounds.y >= visible.y + visible.height) continue;
+      var component = getComponentForRow(row);
+      if (component != null) elementOverlay.paint(this, g, component, row, bounds);
+    }
+  }
+
+  @Override
+  public String getToolTipText(MouseEvent event) {
+    var row = getClosestRowForLocation(event.getX(), event.getY());
+    var bounds = row < 0 ? null : getRowBounds(row);
+    var component = row < 0 ? null : getComponentForRow(row);
+    var text = bounds == null || component == null ? null : elementOverlay.getToolTipText(this, event, component, bounds);
+    return text == null ? super.getToolTipText(event) : text;
+  }
+
+  private @Nullable Component getComponentForRow(int row) {
+    var path = getPathForRow(row);
+    if (path == null || !(path.getLastPathComponent() instanceof ComponentNode node)) return null;
+    return node.getComponent();
+  }
+
+  @Override
+  public void addNotify() {
+    super.addNotify();
+    elementOverlay.install(this::repaint);
+  }
+
+  @Override
+  public void removeNotify() {
+    elementOverlay.uninstall();
+    super.removeNotify();
+  }
+
   public abstract void onClickInfoChanged(List<? extends PropertyBean> info);
 
   public abstract void onComponentsChanged(List<? extends Component> components);
@@ -433,11 +475,13 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
 
   private static final class ComponentTreeCellRenderer extends ColoredTreeCellRenderer {
     private final Component myInitialSelection;
+    private final @NotNull ElementOverlay myElementOverlay;
     private final List<IconWithErrorCount> myAccessibilityAuditIcons = new ArrayList<>();
     private String myToolTipText = "";
 
-    ComponentTreeCellRenderer(Component initialSelection) {
+    ComponentTreeCellRenderer(Component initialSelection, @NotNull ElementOverlay elementOverlay) {
       myInitialSelection = initialSelection;
+      myElementOverlay = elementOverlay;
       setFont(JBUI.Fonts.label(11));
       setBorder(JBUI.Borders.empty(0, 3));
     }
@@ -529,7 +573,8 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
           }
 
           componentNode.setText(toString());
-          setIcon(Icons.findIconFor(component));
+          var overlayIcon = myElementOverlay.getIcon(component);
+          setIcon(overlayIcon == null ? Icons.findIconFor(component) : overlayIcon);
         }
         else {
           append(componentNode.myName);
@@ -696,6 +741,25 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
       }
       return icon;
     }
+  }
+
+  interface ElementOverlay {
+    @Nullable Icon getIcon(@NotNull Component component);
+
+    void paint(@NotNull HierarchyTree tree,
+               @NotNull Graphics graphics,
+               @NotNull Component component,
+               int row,
+               @NotNull Rectangle bounds);
+
+    @Nullable String getToolTipText(@NotNull HierarchyTree tree,
+                                    @NotNull MouseEvent event,
+                                    @NotNull Component component,
+                                    @NotNull Rectangle bounds);
+
+    void install(@NotNull Runnable repaint);
+
+    void uninstall();
   }
 
   private static @Nullable Pair<Class<?>, String> getClassAndFieldName(Component component) {

@@ -70,7 +70,7 @@ public abstract class ComposeSwingSearchableConfigurable : SearchableConfigurabl
     // The Settings dialog margins a page by the runtime type and the layout of the component it is handed,
     // which a panel hosting a composition cannot be, so the page states its own margins and opts out of the
     // dialog's with NoMargin.
-    val panel = JPanel(BorderLayout()).apply { addContainerListener(PageMargins) }
+    val panel = ComposeSwingPanel().apply { addContainerListener(PageMargins) }
     // A runtime of the page's own, named as the parent of the mount, is what composes the content on this
     // call: a mount left to resolve its parent from the Swing tree waits for a window, and Settings search
     // builds a page and walks it without ever showing it. Content that is only ever shown stays on the

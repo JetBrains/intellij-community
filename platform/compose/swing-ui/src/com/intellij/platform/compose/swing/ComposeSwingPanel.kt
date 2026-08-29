@@ -2,13 +2,18 @@
 package com.intellij.platform.compose.swing
 
 import androidx.compose.runtime.Composable
+import com.intellij.internal.inspector.UiInspectorUtil
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.ui.ClientProperty
+import com.intellij.util.ui.components.BorderLayoutPanel
+import kotlinx.coroutines.DisposableHandle
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.compose.swing.setContent
 import java.awt.BorderLayout
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 /**
  * Creates a Swing [JComponent] hosting the given Compose [content].
@@ -41,8 +46,27 @@ public fun composeSwingPanel(
   parentDisposable: Disposable,
   content: @Composable () -> Unit,
 ): JComponent {
-  val panel = JPanel(BorderLayout())
+  val panel = ComposeSwingPanel()
   val handle = panel.setContent(content = content)
   Disposer.register(parentDisposable, Disposable { handle.dispose() })
   return panel
+}
+
+@ApiStatus.Internal
+public class ComposeSwingPanel : BorderLayoutPanel() {
+  init {
+    registerCreationStacktrace()
+  }
+
+  private fun registerCreationStacktrace() {
+    if (ApplicationManager.getApplication()?.isInternal == true && UiInspectorUtil.isSaveStacktraces()) {
+      ClientProperty.put(this, CREATION_STACKTRACE, Throwable())
+    }
+  }
+
+  @ApiStatus.Internal
+  public companion object {
+    @JvmStatic
+    public val CREATION_STACKTRACE: Key<Throwable> = Key.create("compose.swing.panel.creation.stacktrace")
+  }
 }

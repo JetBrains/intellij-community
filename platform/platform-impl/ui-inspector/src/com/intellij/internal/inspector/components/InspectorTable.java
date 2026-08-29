@@ -10,6 +10,7 @@ import com.intellij.ide.CopyProvider;
 import com.intellij.ide.ui.RegistryBooleanOptionDescriptor;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.internal.inspector.ComponentPropertiesCollector;
+import com.intellij.internal.inspector.ComposeUiInspector;
 import com.intellij.internal.inspector.IdeUiInspectorBundle;
 import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorCustomComponentChildProvider;
@@ -201,6 +202,10 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
         int row = myTable.rowAtPoint(event.getPoint());
         int column = 1;
         if (row >= 0 && row < myTable.getRowCount() && column < myTable.getColumnCount()) {
+          if (myModel.getValueAt(row, column) instanceof ComposeUiInspector.ComposeStackTrace trace) {
+            ComposeUiInspector.INSTANCE.navigateToSource(trace, myProject, InspectorTable.this);
+            return true;
+          }
           Component renderer = myTable.getCellRenderer(row, column)
             .getTableCellRendererComponent(myTable, myModel.getValueAt(row, column), false, false, row, column);
           if (renderer instanceof JLabel) {
@@ -274,6 +279,13 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
 
   public TableModel getModel() {
     return myModel;
+  }
+
+  @Nullable ComposeUiInspector.ComposeStackTrace getComposeStackTrace() {
+    for (PropertyBean property : myModel.myProperties) {
+      if (property.getPropertyValue() instanceof ComposeUiInspector.ComposeStackTrace stackTrace) return stackTrace;
+    }
+    return null;
   }
 
   @Override
@@ -544,7 +556,23 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
 
     private void fillPreviewComponent(String property, Object value, String renderedValue) {
       String strValue = String.valueOf(value);
-      if (property.equals("added-at")) {
+      if (property.equals(ComposeUiInspector.ADDED_AT_ROW)) {
+        if (value == null) {
+          printToPreview("""
+                             Compose recording started after this content was built.
+                               A composition records only from its mount, so reopen this UI.
+                             """, NORMAL_OUTPUT);
+        }
+        else {
+          if (value instanceof ComposeUiInspector.ComposeStackTrace trace) {
+            printComposeStackTrace(trace);
+          }
+          else {
+            printToPreview(strValue, ERROR_OUTPUT);
+          }
+        }
+      }
+      else if (property.equals("added-at")) {
         if (value == null) {
           printToPreview("Stacktrace is not available. There are two options:\n1. ", NORMAL_OUTPUT);
           printHyperlinkToPreview("Click", project -> {
@@ -613,6 +641,27 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
       else {
         printClassName(renderedValue);
       }
+    }
+
+    private void printComposeStackTrace(@NotNull ComposeUiInspector.ComposeStackTrace trace) {
+      List<ComposeUiInspector.ComposeStackTraceLine> lines = trace.resolvedLines().join();
+      for (int i = 0; i < lines.size(); i++) {
+        printComposeStackTraceLine(lines.get(i));
+        if (i < lines.size() - 1) printToPreview("\n", ERROR_OUTPUT);
+      }
+    }
+
+    private void printComposeStackTraceLine(@NotNull ComposeUiInspector.ComposeStackTraceLine line) {
+      HyperlinkInfo hyperlink = line.hyperlink();
+      if (hyperlink == null) {
+        printToPreview(line.text(), ERROR_OUTPUT);
+        return;
+      }
+
+      String text = line.text();
+      printToPreview(text.substring(0, line.linkStartOffset()), ERROR_OUTPUT);
+      printHyperlinkToPreview(text.substring(line.linkStartOffset(), line.linkEndOffset()), hyperlink);
+      printToPreview(text.substring(line.linkEndOffset()), ERROR_OUTPUT);
     }
 
     private void printClassNamesToConsole(String[] classNames, boolean withIndent) {
