@@ -11,7 +11,7 @@ Use this workflow when a group of platform modules that currently live inside an
 
 ## Before Editing
 
-- Look at `community/platform/navbar/plugin/` as the reference: a sibling `plugin/` directory of the feature modules with its own `.iml`, `resources/META-INF/plugin.xml`, and `plugin-content.yaml`.
+- Look at `community/platform/navbar/plugin/` as the reference: a sibling `plugin/` directory of the feature modules with its own `.iml` and `resources/META-INF/plugin.xml`.
 - Decide whether the modules should still be inlined inside a parent module set in any product. Pluginized wrappers usually stop being emitted through the aggregate `intellij.moduleSets.<name>.xml` and become a bundled plugin instead.
 - For library modules with only a small closed consumer set, do **not** create or keep a shared wrapper just to make the library available. Prefer `visibility="private"` on the library descriptor and register the module as unnamed `<content>` in each consuming plugin, so each copy lives in that plugin's implicit private namespace.
 
@@ -64,25 +64,9 @@ Create a new JPS module at `<feature-root>/plugin/`, e.g. `community/platform/<f
 
   Mark **only the shared/anchor module** (the one that loads in every product mode) as `loading="required"` — `intellij.platform.FEATURE` in the example. Plugin-XML inspection requires at least one required/embedded/required-if-available content module per wrapper, so the anchor satisfies that. Do **not** add `loading="required"` to backend / frontend / monolith modules: in frontend product mode (JetBrains Client) the platform's backend module is unavailable, so a required `FEATURE.backend` excludes itself and takes the whole wrapper plugin down — producing a confusing cascade like "Plugin 'FEATURE' depends on plugin 'IDEA CORE' which failed to load".
 
-- `plugin-content.yaml` — list the JAR layout. Mirror the navbar example:
+- **No JAR-layout file.** The dev distribution derives each member's jar from the plugin's own `<content>`: the loading rule of the element, the `pack-content-into-plugin-jar` marker, and the member's own `package` attribute. So a conventional wrapper states nothing about packaging, and the navbar example holds no such file. Run `./build/jpsModelToBazel.cmd` after you register the module.
 
-  ```yaml
-  - name: lib/modules/intellij.platform.<feature>.backend.jar
-    contentModules:
-    - name: intellij.platform.<feature>.backend
-  - name: lib/modules/intellij.platform.<feature>.frontend.jar
-    contentModules:
-    - name: intellij.platform.<feature>.frontend
-  - name: lib/modules/intellij.platform.<feature>.jar
-    contentModules:
-    - name: intellij.platform.<feature>
-  - name: lib/modules/intellij.platform.<feature>.monolith.jar
-    contentModules:
-    - name: intellij.platform.<feature>.monolith
-  - name: lib/platform-<feature>-plugin.jar
-    modules:
-    - name: intellij.platform.<feature>.plugin
-  ```
+  Two generated files carry what the conventions cannot answer, and you edit neither. A `dev-dist.yaml` beside the plugin holds a layout deviation, and `community/build/dev_dist_plugin_content_population.txt` holds the plugin main modules. `./build/jpsModelToBazel.cmd --verify-dev-dist-residue` fails on a stale residue and names the rows that changed.
 
 - Suppress `SplitModeMixedDependencies` and `PluginXmlPluginLogo` in `plugin.xml` only if the inspection actually flags the wrapper.
 

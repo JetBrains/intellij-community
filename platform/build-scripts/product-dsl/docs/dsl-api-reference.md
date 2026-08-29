@@ -430,7 +430,8 @@ fun ideCommon() = moduleSet("ide.common") {
 Module-set wrapper plugins are not created by the Product DSL. Existing wrappers under
 `community/module-set-plugins/generated/` and `module-set-plugins/generated/` are static checked-in plugin modules pending migration.
 
-Create new wrappers as normal plugin modules with `plugin.xml` and `plugin-content.yaml`, and bundle those modules through product layout configuration.
+Create new wrappers as normal plugin modules with a `plugin.xml`, and bundle those modules through product layout configuration.
+A wrapper needs no packaging file of its own. The dev distribution derives the jar layout from the plugin's own `<content>`, so run `./build/jpsModelToBazel.cmd` after you register the module.
 
 ---
 

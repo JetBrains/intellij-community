@@ -205,9 +205,9 @@ internal class MyLifecycleHelperImpl : MyLifecycleHelper {
 
 ### 6. Register the new module in the plugin
 
-**`plugin/resources/META-INF/plugin.xml`** — add a `<module>` content entry.
-
-**`plugin/plugin-content.yaml`** — add a jar entry.
+**`plugin/resources/META-INF/plugin.xml`** — add a `<module>` content entry. That entry is the whole packaging
+statement: the dev distribution derives the member's jar from its loading rule and its own descriptor, so no
+packaging file needs a new line. Run `./build/jpsModelToBazel.cmd` and never hand-edit a `dev-dist.yaml`.
 
 **Project module files** — register the new module with the helper; it updates `.idea/modules.xml`, updates `community/.idea/modules.xml` for community modules, preserves canonical entry order, and removes the `.iml` trailing newline:
 
