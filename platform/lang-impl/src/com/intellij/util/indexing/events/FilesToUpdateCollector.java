@@ -29,6 +29,10 @@ public class FilesToUpdateCollector {
   // files per project?
   private final IntObjectMap<FileIndexingRequest> myFilesToUpdate = createConcurrentIntObjectMap();
 
+  /// This [DirtyFiles] container tracks the ([FileIndexingRequest] -> indexing) phase of the pipeline: `fileId` is
+  /// tracked here from the moment [FileIndexingRequest] is created for it, until the moment [FileIndexingRequest] is
+  ///  processed by the indexing pipeline, and the indexes are updated accordingly.
+  /// The project(s) owner(s) for a `fileId` is typically transferred from the previous phase ([ChangedFilesCollector])
   private final DirtyFiles myDirtyFiles = new DirtyFiles();
 
   /** Increments on each change in myFilesToUpdate content -- i.e., it is 'version' of myFilesToUpdate content */

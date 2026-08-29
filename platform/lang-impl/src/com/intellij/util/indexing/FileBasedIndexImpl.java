@@ -212,7 +212,13 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private final AtomicInteger myLocalModCount = new AtomicInteger();
   private final IntSet myStaleIds = new IntOpenHashSet();
-  private final DirtyFiles myDirtyFiles = new DirtyFiles(); // project dirty files from last session and new orphan files not in collectors
+  /// This [DirtyFiles] container tracks 'leftover' dirty `fileId`:
+  /// - the project dirty files left unprocessed from the last session (temporary: until they're scanned and re-inserted
+  ///   into the indexing pipeline)
+  /// - orphan (no owning project among opened projects)
+  /// - rejected by the indexing (e.g., because of errors)
+  /// I.e., those are the `fileId` that are not (yet) in any specific phase of the indexing pipeline.
+  private final DirtyFiles myDirtyFiles = new DirtyFiles();
   private final ConcurrentMap<Project, Ref<Long>> myLastSeenIndexesInOrphanQueue = new ConcurrentHashMap<>();
 
 
