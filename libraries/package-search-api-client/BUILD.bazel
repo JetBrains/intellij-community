@@ -1,0 +1,49 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.libraries.package.search.api.client` start
+jvm_library(
+    name = "package-search-api-client",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.package.search.api.client",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-package-search-api-client-package-search-api-client"],
+    runtime_deps = ["@lib//:libraries-package-search-api-client-package-search-api-client"],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-package-search-api-client-package-search-api-client"],
+    module = ":package-search-api-client",
+)
+
+jvm_library(
+    name = "package-search-api-client_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.package.search.api.client",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-package-search-api-client-package-search-api-client"],
+    runtime_deps = [":package-search-api-client"],
+)
+### auto-generated section `build intellij.libraries.package.search.api.client` end
+
+### auto-generated section `iml intellij.libraries.package.search.api.client` start
+exports_files(
+    [
+        "intellij.libraries.package.search.api.client.iml",
+        "resources/intellij.libraries.package.search.api.client.xml",
+        "module-content.yaml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.package.search.api.client` end

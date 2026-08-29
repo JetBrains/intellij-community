@@ -52,7 +52,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.io" />
     <orderEntry type="module" module-name="intellij.libraries.ktor.client" />
-    <orderEntry type="library" exported="" name="package-search-api-client" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.package.search.api.client" exported="" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.document.store.mvstore" />
     <orderEntry type="module" module-name="intellij.libraries.mvstore" />
     <orderEntry type="module" module-name="intellij.platform.eel" />

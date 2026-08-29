@@ -21,5 +21,6 @@
 
   <content>
     <module name="intellij.libraries.kotlinx.document.store.mvstore"/>
+    <module name="intellij.libraries.package.search.api.client"/>
   </content>
 </idea-plugin>

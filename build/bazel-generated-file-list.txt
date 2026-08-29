@@ -616,6 +616,7 @@ libraries/opentelemetry-semconv
 libraries/opentest4j
 libraries/oro-matcher
 libraries/oshi-core
+libraries/package-search-api-client
 libraries/plexus-utils
 libraries/protobuf
 libraries/protobuf-kotlin

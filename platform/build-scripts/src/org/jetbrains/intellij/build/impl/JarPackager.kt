@@ -125,7 +125,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "openai.java",
   "org.apache.ivy",
   "org.scilab.forge:jlatexmath",
-  "package-search-api-client",
   "squareup.okio.jvm",
 )
 

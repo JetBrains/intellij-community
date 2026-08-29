@@ -14749,6 +14749,89 @@ jvm_import(
 )
 
 copy_file(
+    name = "org.jetbrains.packagesearch/packagesearch-api-client-jvm-3.4.0.jar_copy",
+    src = "@org_jetbrains_packagesearch-packagesearch-api-client-jvm-3_4_0_http//file",
+    out = "org.jetbrains.packagesearch/packagesearch-api-client-jvm-3.4.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.jetbrains.packagesearch/packagesearch-http-models-jvm-3.4.0.jar_copy",
+    src = "@org_jetbrains_packagesearch-packagesearch-http-models-jvm-3_4_0_http//file",
+    out = "org.jetbrains.packagesearch/packagesearch-http-models-jvm-3.4.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.jetbrains.packagesearch/packagesearch-api-models-jvm-3.4.0.jar_copy",
+    src = "@org_jetbrains_packagesearch-packagesearch-api-models-jvm-3_4_0_http//file",
+    out = "org.jetbrains.packagesearch/packagesearch-api-models-jvm-3.4.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.jetbrains.packagesearch/packagesearch-version-utils-jvm-3.4.0.jar_copy",
+    src = "@org_jetbrains_packagesearch-packagesearch-version-utils-jvm-3_4_0_http//file",
+    out = "org.jetbrains.packagesearch/packagesearch-version-utils-jvm-3.4.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.soywiz.korlibs.krypto/krypto-jvm-4.0.10.jar_copy",
+    src = "@com_soywiz_korlibs_krypto-krypto-jvm-4_0_10_http//file",
+    out = "com.soywiz.korlibs.krypto/krypto-jvm-4.0.10.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-package-search-api-client-package-search-api-client",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":org_jetbrains_packagesearch-packagesearch-api-client-jvm-3_4_0_http_import",
+        ":org_jetbrains_packagesearch-packagesearch-http-models-jvm-3_4_0_http_import",
+        ":org_jetbrains_packagesearch-packagesearch-api-models-jvm-3_4_0_http_import",
+        ":org_jetbrains_packagesearch-packagesearch-version-utils-jvm-3_4_0_http_import",
+        ":com_soywiz_korlibs_krypto-krypto-jvm-4_0_10_http_import",
+    ],
+)
+
+jvm_import(
+    name = "org_jetbrains_packagesearch-packagesearch-api-client-jvm-3_4_0_http_import",
+    jar = "@org_jetbrains_packagesearch-packagesearch-api-client-jvm-3_4_0_http//file",
+    source_jar = "@org_jetbrains_packagesearch-packagesearch-api-client-jvm-3_4_0-sources_http//file",
+)
+
+jvm_import(
+    name = "org_jetbrains_packagesearch-packagesearch-http-models-jvm-3_4_0_http_import",
+    jar = "@org_jetbrains_packagesearch-packagesearch-http-models-jvm-3_4_0_http//file",
+    source_jar = "@org_jetbrains_packagesearch-packagesearch-http-models-jvm-3_4_0-sources_http//file",
+)
+
+jvm_import(
+    name = "org_jetbrains_packagesearch-packagesearch-api-models-jvm-3_4_0_http_import",
+    jar = "@org_jetbrains_packagesearch-packagesearch-api-models-jvm-3_4_0_http//file",
+    source_jar = "@org_jetbrains_packagesearch-packagesearch-api-models-jvm-3_4_0-sources_http//file",
+)
+
+jvm_import(
+    name = "org_jetbrains_packagesearch-packagesearch-version-utils-jvm-3_4_0_http_import",
+    jar = "@org_jetbrains_packagesearch-packagesearch-version-utils-jvm-3_4_0_http//file",
+    source_jar = "@org_jetbrains_packagesearch-packagesearch-version-utils-jvm-3_4_0-sources_http//file",
+)
+
+jvm_import(
+    name = "com_soywiz_korlibs_krypto-krypto-jvm-4_0_10_http_import",
+    jar = "@com_soywiz_korlibs_krypto-krypto-jvm-4_0_10_http//file",
+    source_jar = "@com_soywiz_korlibs_krypto-krypto-jvm-4_0_10-sources_http//file",
+)
+
+copy_file(
     name = "org.codehaus.plexus/plexus-utils-3.6.1.jar_copy",
     src = "@org_codehaus_plexus-plexus-utils-3_6_1_http//file",
     out = "org.codehaus.plexus/plexus-utils-3.6.1.jar",
@@ -19937,89 +20020,6 @@ jvm_import(
     name = "com_squareup_okio-okio-jvm-3_9_0_http_import",
     jar = "@com_squareup_okio-okio-jvm-3_9_0_http//file",
     source_jar = "@com_squareup_okio-okio-jvm-3_9_0-sources_http//file",
-)
-
-copy_file(
-    name = "org.jetbrains.packagesearch/packagesearch-api-client-jvm-3.4.0.jar_copy",
-    src = "@org_jetbrains_packagesearch-packagesearch-api-client-jvm-3_4_0_http//file",
-    out = "org.jetbrains.packagesearch/packagesearch-api-client-jvm-3.4.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.jetbrains.packagesearch/packagesearch-http-models-jvm-3.4.0.jar_copy",
-    src = "@org_jetbrains_packagesearch-packagesearch-http-models-jvm-3_4_0_http//file",
-    out = "org.jetbrains.packagesearch/packagesearch-http-models-jvm-3.4.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.jetbrains.packagesearch/packagesearch-api-models-jvm-3.4.0.jar_copy",
-    src = "@org_jetbrains_packagesearch-packagesearch-api-models-jvm-3_4_0_http//file",
-    out = "org.jetbrains.packagesearch/packagesearch-api-models-jvm-3.4.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.jetbrains.packagesearch/packagesearch-version-utils-jvm-3.4.0.jar_copy",
-    src = "@org_jetbrains_packagesearch-packagesearch-version-utils-jvm-3_4_0_http//file",
-    out = "org.jetbrains.packagesearch/packagesearch-version-utils-jvm-3.4.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.soywiz.korlibs.krypto/krypto-jvm-4.0.10.jar_copy",
-    src = "@com_soywiz_korlibs_krypto-krypto-jvm-4_0_10_http//file",
-    out = "com.soywiz.korlibs.krypto/krypto-jvm-4.0.10.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "package-search-api-client",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":org_jetbrains_packagesearch-packagesearch-api-client-jvm-3_4_0_http_import",
-        ":org_jetbrains_packagesearch-packagesearch-http-models-jvm-3_4_0_http_import",
-        ":org_jetbrains_packagesearch-packagesearch-api-models-jvm-3_4_0_http_import",
-        ":org_jetbrains_packagesearch-packagesearch-version-utils-jvm-3_4_0_http_import",
-        ":com_soywiz_korlibs_krypto-krypto-jvm-4_0_10_http_import",
-    ],
-)
-
-jvm_import(
-    name = "org_jetbrains_packagesearch-packagesearch-api-client-jvm-3_4_0_http_import",
-    jar = "@org_jetbrains_packagesearch-packagesearch-api-client-jvm-3_4_0_http//file",
-    source_jar = "@org_jetbrains_packagesearch-packagesearch-api-client-jvm-3_4_0-sources_http//file",
-)
-
-jvm_import(
-    name = "org_jetbrains_packagesearch-packagesearch-http-models-jvm-3_4_0_http_import",
-    jar = "@org_jetbrains_packagesearch-packagesearch-http-models-jvm-3_4_0_http//file",
-    source_jar = "@org_jetbrains_packagesearch-packagesearch-http-models-jvm-3_4_0-sources_http//file",
-)
-
-jvm_import(
-    name = "org_jetbrains_packagesearch-packagesearch-api-models-jvm-3_4_0_http_import",
-    jar = "@org_jetbrains_packagesearch-packagesearch-api-models-jvm-3_4_0_http//file",
-    source_jar = "@org_jetbrains_packagesearch-packagesearch-api-models-jvm-3_4_0-sources_http//file",
-)
-
-jvm_import(
-    name = "org_jetbrains_packagesearch-packagesearch-version-utils-jvm-3_4_0_http_import",
-    jar = "@org_jetbrains_packagesearch-packagesearch-version-utils-jvm-3_4_0_http//file",
-    source_jar = "@org_jetbrains_packagesearch-packagesearch-version-utils-jvm-3_4_0-sources_http//file",
-)
-
-jvm_import(
-    name = "com_soywiz_korlibs_krypto-krypto-jvm-4_0_10_http_import",
-    jar = "@com_soywiz_korlibs_krypto-krypto-jvm-4_0_10_http//file",
-    source_jar = "@com_soywiz_korlibs_krypto-krypto-jvm-4_0_10-sources_http//file",
 )
 
 copy_file(

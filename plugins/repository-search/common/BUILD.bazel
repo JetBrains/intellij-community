@@ -1,5 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.repository.search.common` start
 create_kotlinc_options(
@@ -37,7 +38,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:package-search-api-client"],
+    exports = ["//libraries/package-search-api-client"],
     deps = [
         # do not sort,
         "//platform/core-api:core",
@@ -58,7 +59,7 @@ jvm_library(
         "//libraries/kotlinx/coroutines/slf4j",
         "//libraries/io",
         "//libraries/ktor/client",
-        "@lib//:package-search-api-client",
+        "//libraries/package-search-api-client",
         "//libraries/kotlinx/document-store-mvstore:libraries-kotlinx-document-store-mvstore",
         "//libraries/mvstore",
         "//platform/eel",
@@ -67,6 +68,8 @@ jvm_library(
         "//platform/lang-impl",
     ],
 )
+
+content_module_jar(module = ":common")
 
 jvm_library(
     name = "common_test_lib",
@@ -78,7 +81,11 @@ jvm_library(
     kotlinc_opts = ":custom_common",
     module_name = "intellij.repository.search.common",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:package-search-api-client"],
+    exports = [
+        # do not sort,
+        "//libraries/package-search-api-client",
+        "//libraries/package-search-api-client:package-search-api-client_test_lib",
+    ],
     runtime_deps = [
         # do not sort,
         ":common",
@@ -106,6 +113,7 @@ jvm_library(
         "//libraries/kotlinx/coroutines/test:test_test_lib",
         "//libraries/io:io_test_lib",
         "//libraries/ktor/client:client_test_lib",
+        "//libraries/package-search-api-client:package-search-api-client_test_lib",
         "//libraries/kotlinx/document-store-mvstore:libraries-kotlinx-document-store-mvstore_test_lib",
         "//libraries/mvstore:mvstore_test_lib",
         "//platform/eel:eel_test_lib",

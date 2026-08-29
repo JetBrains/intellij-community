@@ -11782,6 +11782,76 @@ http_file(
 )
 
 http_file(
+    name = "org_jetbrains_packagesearch-packagesearch-api-client-jvm-3_4_0_http",
+    downloaded_file_path = "packagesearch-api-client-jvm-3.4.0.jar",
+    sha256 = "9d0f4c74e96787499fcc2462c32afeb7f4db97db30042e2578f205f61e5898fb",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-api-client-jvm/3.4.0/packagesearch-api-client-jvm-3.4.0.jar",
+)
+
+http_file(
+    name = "org_jetbrains_packagesearch-packagesearch-http-models-jvm-3_4_0_http",
+    downloaded_file_path = "packagesearch-http-models-jvm-3.4.0.jar",
+    sha256 = "0318b967115de0c7c8fbd93bc6e3d279c82de2954f90794146962921de45972d",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-http-models-jvm/3.4.0/packagesearch-http-models-jvm-3.4.0.jar",
+)
+
+http_file(
+    name = "org_jetbrains_packagesearch-packagesearch-api-models-jvm-3_4_0_http",
+    downloaded_file_path = "packagesearch-api-models-jvm-3.4.0.jar",
+    sha256 = "22022fe954980d8e183b252889719fc6ca71a13e91b8e869d92532da308e3da1",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-api-models-jvm/3.4.0/packagesearch-api-models-jvm-3.4.0.jar",
+)
+
+http_file(
+    name = "org_jetbrains_packagesearch-packagesearch-version-utils-jvm-3_4_0_http",
+    downloaded_file_path = "packagesearch-version-utils-jvm-3.4.0.jar",
+    sha256 = "4c86546693efaeb889e02d043521cda15da5f10853b0471095b7db80dc0540e7",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-version-utils-jvm/3.4.0/packagesearch-version-utils-jvm-3.4.0.jar",
+)
+
+http_file(
+    name = "com_soywiz_korlibs_krypto-krypto-jvm-4_0_10_http",
+    downloaded_file_path = "krypto-jvm-4.0.10.jar",
+    sha256 = "0fe8dcdf54b13b5ec56fdb5f63c057364264bb2f51b7f7bc3c271d5b1ba68dcb",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/soywiz/korlibs/krypto/krypto-jvm/4.0.10/krypto-jvm-4.0.10.jar",
+)
+
+http_file(
+    name = "org_jetbrains_packagesearch-packagesearch-api-client-jvm-3_4_0-sources_http",
+    downloaded_file_path = "packagesearch-api-client-jvm-3.4.0-sources.jar",
+    sha256 = "fa07b8152bc23d6c0fb5bac147bf1a45aa7c7d00ed3d7c3df680671dc2bf3d69",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-api-client-jvm/3.4.0/packagesearch-api-client-jvm-3.4.0-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_packagesearch-packagesearch-http-models-jvm-3_4_0-sources_http",
+    downloaded_file_path = "packagesearch-http-models-jvm-3.4.0-sources.jar",
+    sha256 = "7802c87c2360d29b791d7c048ed481504f39d2d43b7dc6dd489fc2150b7d40a0",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-http-models-jvm/3.4.0/packagesearch-http-models-jvm-3.4.0-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_packagesearch-packagesearch-api-models-jvm-3_4_0-sources_http",
+    downloaded_file_path = "packagesearch-api-models-jvm-3.4.0-sources.jar",
+    sha256 = "72ff50a4cc9631242b26a7e7b240cc5761af68b348288676908557d850e9f777",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-api-models-jvm/3.4.0/packagesearch-api-models-jvm-3.4.0-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_packagesearch-packagesearch-version-utils-jvm-3_4_0-sources_http",
+    downloaded_file_path = "packagesearch-version-utils-jvm-3.4.0-sources.jar",
+    sha256 = "36e3f24ea7197dc4223e4bec9e42475f7445fdc80e9ae642deb9a2b00c92cd43",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-version-utils-jvm/3.4.0/packagesearch-version-utils-jvm-3.4.0-sources.jar",
+)
+
+http_file(
+    name = "com_soywiz_korlibs_krypto-krypto-jvm-4_0_10-sources_http",
+    downloaded_file_path = "krypto-jvm-4.0.10-sources.jar",
+    sha256 = "470645a178210f3a300ddeea884762b2d8abfca01efef1e8ce2c6c00f00b60c7",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/soywiz/korlibs/krypto/krypto-jvm/4.0.10/krypto-jvm-4.0.10-sources.jar",
+)
+
+http_file(
     name = "org_codehaus_plexus-plexus-utils-3_6_1_http",
     downloaded_file_path = "plexus-utils-3.6.1.jar",
     sha256 = "05a63effd67e2d6b9d610cc82e2bd7473289d34802e57a529b28110f28af5679",
@@ -15818,76 +15888,6 @@ http_file(
     downloaded_file_path = "okio-jvm-3.9.0-sources.jar",
     sha256 = "b8ab886c9ed94b6d22fe177efab23f66b2fe0cbcfbf9902d226667038410e0b1",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okio/okio-jvm/3.9.0/okio-jvm-3.9.0-sources.jar",
-)
-
-http_file(
-    name = "org_jetbrains_packagesearch-packagesearch-api-client-jvm-3_4_0_http",
-    downloaded_file_path = "packagesearch-api-client-jvm-3.4.0.jar",
-    sha256 = "9d0f4c74e96787499fcc2462c32afeb7f4db97db30042e2578f205f61e5898fb",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-api-client-jvm/3.4.0/packagesearch-api-client-jvm-3.4.0.jar",
-)
-
-http_file(
-    name = "org_jetbrains_packagesearch-packagesearch-http-models-jvm-3_4_0_http",
-    downloaded_file_path = "packagesearch-http-models-jvm-3.4.0.jar",
-    sha256 = "0318b967115de0c7c8fbd93bc6e3d279c82de2954f90794146962921de45972d",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-http-models-jvm/3.4.0/packagesearch-http-models-jvm-3.4.0.jar",
-)
-
-http_file(
-    name = "org_jetbrains_packagesearch-packagesearch-api-models-jvm-3_4_0_http",
-    downloaded_file_path = "packagesearch-api-models-jvm-3.4.0.jar",
-    sha256 = "22022fe954980d8e183b252889719fc6ca71a13e91b8e869d92532da308e3da1",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-api-models-jvm/3.4.0/packagesearch-api-models-jvm-3.4.0.jar",
-)
-
-http_file(
-    name = "org_jetbrains_packagesearch-packagesearch-version-utils-jvm-3_4_0_http",
-    downloaded_file_path = "packagesearch-version-utils-jvm-3.4.0.jar",
-    sha256 = "4c86546693efaeb889e02d043521cda15da5f10853b0471095b7db80dc0540e7",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-version-utils-jvm/3.4.0/packagesearch-version-utils-jvm-3.4.0.jar",
-)
-
-http_file(
-    name = "com_soywiz_korlibs_krypto-krypto-jvm-4_0_10_http",
-    downloaded_file_path = "krypto-jvm-4.0.10.jar",
-    sha256 = "0fe8dcdf54b13b5ec56fdb5f63c057364264bb2f51b7f7bc3c271d5b1ba68dcb",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/soywiz/korlibs/krypto/krypto-jvm/4.0.10/krypto-jvm-4.0.10.jar",
-)
-
-http_file(
-    name = "org_jetbrains_packagesearch-packagesearch-api-client-jvm-3_4_0-sources_http",
-    downloaded_file_path = "packagesearch-api-client-jvm-3.4.0-sources.jar",
-    sha256 = "fa07b8152bc23d6c0fb5bac147bf1a45aa7c7d00ed3d7c3df680671dc2bf3d69",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-api-client-jvm/3.4.0/packagesearch-api-client-jvm-3.4.0-sources.jar",
-)
-
-http_file(
-    name = "org_jetbrains_packagesearch-packagesearch-http-models-jvm-3_4_0-sources_http",
-    downloaded_file_path = "packagesearch-http-models-jvm-3.4.0-sources.jar",
-    sha256 = "7802c87c2360d29b791d7c048ed481504f39d2d43b7dc6dd489fc2150b7d40a0",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-http-models-jvm/3.4.0/packagesearch-http-models-jvm-3.4.0-sources.jar",
-)
-
-http_file(
-    name = "org_jetbrains_packagesearch-packagesearch-api-models-jvm-3_4_0-sources_http",
-    downloaded_file_path = "packagesearch-api-models-jvm-3.4.0-sources.jar",
-    sha256 = "72ff50a4cc9631242b26a7e7b240cc5761af68b348288676908557d850e9f777",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-api-models-jvm/3.4.0/packagesearch-api-models-jvm-3.4.0-sources.jar",
-)
-
-http_file(
-    name = "org_jetbrains_packagesearch-packagesearch-version-utils-jvm-3_4_0-sources_http",
-    downloaded_file_path = "packagesearch-version-utils-jvm-3.4.0-sources.jar",
-    sha256 = "36e3f24ea7197dc4223e4bec9e42475f7445fdc80e9ae642deb9a2b00c92cd43",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-version-utils-jvm/3.4.0/packagesearch-version-utils-jvm-3.4.0-sources.jar",
-)
-
-http_file(
-    name = "com_soywiz_korlibs_krypto-krypto-jvm-4_0_10-sources_http",
-    downloaded_file_path = "krypto-jvm-4.0.10-sources.jar",
-    sha256 = "470645a178210f3a300ddeea884762b2d8abfca01efef1e8ce2c6c00f00b60c7",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/soywiz/korlibs/krypto/krypto-jvm/4.0.10/krypto-jvm-4.0.10-sources.jar",
 )
 
 http_file(
