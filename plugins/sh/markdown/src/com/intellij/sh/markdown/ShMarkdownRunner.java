@@ -13,6 +13,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.sh.ShBundle;
 import com.intellij.sh.ShLanguage;
 import com.intellij.sh.run.ShConfigurationType;
@@ -37,7 +38,7 @@ final class ShMarkdownRunner implements MarkdownRunner {
     if (shRunner == null || !shRunner.isAvailable(project)) {
       return false;
     }
-    shRunner.run(project, command, workingDirectory, "RunMarkdown", true);
+    shRunner.run(project, command, workingDirectory, getTerminalTitle(command), true);
     /*try {
       runInTerminal(command, workingDirectory, project);
     }
@@ -46,6 +47,33 @@ final class ShMarkdownRunner implements MarkdownRunner {
     }*/
     return true;
   }
+
+  private static @NlsSafe String getTerminalTitle(@NotNull String command) {
+    String[] lines = command.split("\\R");
+    for (String line : lines) {
+      String trimmedLine = line.trim();
+      if (!trimmedLine.isEmpty()) {
+        String[] words = trimmedLine.split("\\s+");
+        StringBuilder title = new StringBuilder();
+        boolean truncated = false;
+        for (String word : words) {
+          int separatorLength = title.isEmpty() ? 0 : 1;
+          if (title.length() + separatorLength + word.length() > MAX_TITLE_LENGTH) {
+            if (title.isEmpty()) {
+              title.append(word, 0, MAX_TITLE_LENGTH);
+            }
+            truncated = true;
+            break;
+          }
+          title.append(title.isEmpty() ? "" : " ").append(word);
+        }
+        return truncated ? title.append("…").toString() : title.toString();
+      }
+    }
+    return "RunMarkdown";
+  }
+
+  private static final int MAX_TITLE_LENGTH = 20;
 
   @Override
   public @NotNull String title() {
