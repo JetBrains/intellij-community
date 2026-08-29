@@ -141,14 +141,7 @@ open class EvoActionPopupStep(
         }
         else null
       is EvoTreeLeafElement -> {
-        // A picker's row changes what the row behind it says and touches nothing else, so it runs here and now and the
-        // popup stays open — see [EvoTreeNodeElement.picksWithoutClosing]. Returning no step leaves this popup showing;
-        // the action itself asks the popup to drop back to the list.
-        if (node.picksWithoutClosing) {
-          performActionItem(element, null)
-          return null
-        }
-        // Otherwise run the action only after the whole popup closes (via getFinalRunnable), so a tool window or dialog
+        // Run the action only after the whole popup closes (via getFinalRunnable), so a tool window or dialog
         // it opens never appears behind a still-visible popup. FINAL_CHOICE is null; see EvoTreePopup.handleNextStep.
         finalRunnable = Runnable { performActionItem(element, null) }
         PopupStep.FINAL_CHOICE
@@ -242,8 +235,6 @@ open class EvoActionPopupStep(
   // The platform passes a null value during layout measurement, so the param must be nullable.
   override fun isFinal(value: EvoTreeItem?): Boolean {
     value ?: return true
-    // A picker's rows leave the popup open, so none of them ends the walk through it.
-    if (node.picksWithoutClosing) return false
     // to make ... actions menu even for non-disabled items all steps have to be final
     return value.element is EvoTreeLeafElement || !value.isReady
   }

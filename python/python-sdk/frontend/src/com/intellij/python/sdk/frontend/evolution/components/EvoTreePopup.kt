@@ -32,7 +32,6 @@ import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.IconUtil
-import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -136,15 +135,6 @@ private const val NEXT_STEP_INSET = 20
 
 /** The same gap, tightened for a row that shows an inline reload icon of its own right before the arrow. */
 private const val NEXT_STEP_TIGHT_INSET = 4
-
-/**
- * Same footprint as the inline base-Python icon, for a row that can show it but is not hovered — see `customizeComponent`.
- *
- * The width is held on every row that can show the icon, and the icon is painted only on the hovered one. Adding the
- * label on hover instead would take that width from the row's own label, clipping the version text as the pointer
- * crossed the row.
- */
-private val BASE_PYTHON_ICON_PLACEHOLDER: Icon = EmptyIcon.create(AllIcons.Actions.Edit)
 
 /**
  * The same gap for a row whose version column stands between its text and the arrow.
@@ -327,7 +317,6 @@ private class GearGroupHeaderSeparator(
 
 class EvoPopupListElementRenderer(private val popup: EvoTreePopup) : PopupListElementRenderer<EvoTreeItem>(popup) {
   private val reloadLabel = JLabel()
-  private val basePythonLabel = JLabel()
   private val signLabel = JLabel()
 
   // Replace the plain group header with one that paints a settings gear on the "Select Environment" section.
@@ -413,23 +402,13 @@ class EvoPopupListElementRenderer(private val popup: EvoTreePopup) : PopupListEl
         signLabel.icon = statusIcon
         buttonPane.add(signLabel, gb.next().weightx(0.0))
       }
-      // A pencil: on a row for an environment that is not there yet this edits which Python it would build on, and
-      // leaves the building to the row itself. On one whose environment exists it opens the rebuild — the same edit,
-      // carried through.
-      !arrow.isVisible && value?.basePythonPanel != null -> {
-        basePythonLabel.icon = if (isSelected) AllIcons.Actions.Edit else BASE_PYTHON_ICON_PLACEHOLDER
-        buttonPane.add(basePythonLabel, gb.next().weightx(0.0))
-      }
-      // A row that shows a version and neither of those, in a list where something carries one: it holds the same width
+      // A row that shows a version and no sign, in a list where something carries an arrow: it holds the same width
       // open so every version column in the list ends at the same place. Without this, a row nothing can be done with —
       // a hatch environment with no interpreter to build it — sat with its "n/a" further right than the rest.
-      !arrow.isVisible && value?.reservesVersionColumn == true && (popup.hasExpandableRow() || popup.hasBasePythonRow()) ->
-        buttonPane.add(Box.createHorizontalStrut(inlineIconReserve(arrow)), gb.next().weightx(0.0))
+      !arrow.isVisible && value?.reservesVersionColumn == true && popup.hasExpandableRow() ->
+        buttonPane.add(Box.createHorizontalStrut(nextStepReserve(arrow)), gb.next().weightx(0.0))
     }
   }
-
-  /** The wider of the two things a row's trailing slot can hold, so every version column in a list ends together. */
-  private fun inlineIconReserve(arrow: JLabel): Int = max(nextStepReserve(arrow), AllIcons.Actions.Edit.iconWidth)
 
   /**
    * Width to hold open where a row has no `>` arrow, so its version column ends where an expandable row's does.
@@ -781,8 +760,6 @@ open class EvoTreePopup private constructor(
   /** Tooltip shown while hovering the settings gear. */
   private val gearTooltip: @NlsContexts.Tooltip String = PySdkFrontendBundle.message("evo.sdk.status.bar.popup.settings.gear.tooltip")
 
-  /** Tooltip shown while hovering a row's inline base-Python icon. */
-  private val basePythonTooltip: @NlsContexts.Tooltip String = PySdkFrontendBundle.message("evo.sdk.status.bar.popup.base.python.tooltip")
 
   init {
     setMaxRowCount(maxRowCount)
@@ -823,8 +800,10 @@ open class EvoTreePopup private constructor(
       override fun mouseExited(e: MouseEvent) = setGearHovered(false)
 
       override fun mouseReleased(e: MouseEvent) {
-        basePythonIconItemAt(e.point)?.let { item ->
-          openBasePythonPanel(item)
+        // The right button is what offers a row's base Pythons. No icon stands for it: an icon on every such row cost
+        // the width of the whole trailing column, and the rows it appeared on are most of a tool's list.
+        if (SwingUtilities.isRightMouseButton(e)) {
+          openBasePythonPanel(e.point)
           return
         }
         reloadIconItemAt(e.point)?.let { item ->
@@ -853,10 +832,8 @@ open class EvoTreePopup private constructor(
         // not stay open behind it. Done on every move rather than only on entry: the platform's hover timer can still
         // be pending from the row itself and would otherwise reopen the submenu under the pointer.
         if (overGear) disposeChildren()
-        val overBasePython = !overGear && basePythonIconItemAt(e.point) != null
         val tooltip = when {
           overGear -> gearTooltip
-          overBasePython -> basePythonTooltip
           // The header strip is painted inside the top cell of its section, so it is checked before the row under it.
           else -> separatorTooltipAt(e.point)
         }
@@ -944,85 +921,56 @@ open class EvoTreePopup private constructor(
     return (0 until model.size).any { step.hasSubstep(model.getElementAt(it) as? EvoTreeItem) }
   }
 
-  /** True when some row of this list carries the base-Python icon — read off the model, as [hasExpandableRow] is. */
-  fun hasBasePythonRow(): Boolean {
-    val model = list.model
-    return (0 until model.size).any { (model.getElementAt(it) as? EvoTreeItem)?.basePythonPanel != null }
-  }
-
   // Don't let a click on one of the inline icons or the settings gear select/expand a row — the mouse listener handles
   // all three.
   override fun isActionClick(e: MouseEvent): Boolean =
-    reloadIconItemAt(e.point) == null && basePythonIconItemAt(e.point) == null &&
-    !settingsGearAt(e.point) && super.isActionClick(e)
+    reloadIconItemAt(e.point) == null && !settingsGearAt(e.point) && super.isActionClick(e)
 
   /**
-   * Opens [item]'s base-Python picker beside this list — its inline icon was clicked.
+   * Opens the base-Python picker of the row at [point] — the right button was released over it.
    *
    * A popup of its own rather than a swap of these rows: the list the user came for stays on screen behind it, and the
-   * picker is plainly a short question about one row instead of somewhere they have travelled to.
+   * picker is plainly a short question about one row instead of somewhere they have travelled to. It opens at the
+   * pointer, the way a context menu does.
    *
-   * The picker was built by the row itself, which is where the closures that act on it were captured; this only shows
-   * it. Nothing is skipped when a child is already open: [openChildStep] disposes whatever is showing first, and
-   * guarding on `myChild` left the icon dead after its first use, since a child closed on its own does not always
-   * clear that field.
+   * The row is selected first: the picker is a child step, and a child step is anchored on the row the list has
+   * selected. Nothing is skipped when a child is already open — [openChildStep] disposes whatever is showing first.
    */
-  private fun openBasePythonPanel(item: EvoTreeItem) {
+  private fun openBasePythonPanel(point: Point) {
     val step = evoStep ?: return
-    val action = (item.element as? EvoTreeLeafElement)?.action as? EvoBasePythonPanel ?: return
-    val panel = action.basePythonPanel ?: return
-    // A panel that only *chooses* leaves the list showing, so something has to put the original rows back with the row
-    // now saying what it would build on. Only the popup can: the row cannot reach a list it knows nothing about.
-    action.onBasePythonChosen = {
-      disposeChildren()
-      list.repaint()
-    }
+    val row = list.locationToIndex(point).takeIf { it >= 0 } ?: return
+    val item = list.model.getElementAt(row) as? EvoTreeItem ?: return
+    val panel = item.basePythonPanel ?: return
+    list.selectedIndex = row
     CommonDataKeys.PROJECT.getData(dataContext)?.let { project ->
       PyEvoWidgetCollector.controlUsed(project, PyEvoWidgetCollector.Control.BASE_PYTHON_PANEL,
                                        item.evoNodeStats() ?: EvoNodeStats(EvoNodeKind.OTHER))
     }
-    openChildStep(step.childStep(panel), item.element, basePythonIconBounds(item))
+    openChildStep(step.childStep(panel), item.element, Rectangle(point.x, point.y, 0, 0))
   }
 
   /**
-   * Bounds of [item]'s inline base-Python icon, in list coordinates — where the picker it opens is placed.
+   * The tool row whose inline reload icon is under [point], or null.
    *
-   * Read off the selected row, which is [item]'s: the icon is painted on no other row, and [inlineIconItemAt] answers
-   * only for the selected one. Finding the row again by identity would add a way for this to come back null, and a null
-   * here is invisible — the picker would quietly fall back to opening beside the parent.
+   * Only the selected row answers, since the icon is painted only there. That also means the cell can be laid out as
+   * selected, which is how it is actually painted — an icon located in an unselected cell would land elsewhere. Whether
+   * the row can be reloaded at all is checked before that layout, which is the expensive part.
    */
-  private fun basePythonIconBounds(item: EvoTreeItem): Rectangle? =
-    inlineIconBounds(list.selectedIndex, item, AllIcons.Actions.Edit)
-
-  /** The tool [EvoTreeItem] whose inline reload icon contains [point], or null. */
-  private fun reloadIconItemAt(point: Point): EvoTreeItem? =
-    inlineIconItemAt(point, AllIcons.Actions.Refresh) { evoStep?.isReloadable(it) == true }
-
-  /** The [EvoTreeItem] whose inline base-Python icon contains [point], or null. */
-  private fun basePythonIconItemAt(point: Point): EvoTreeItem? =
-    inlineIconItemAt(point, AllIcons.Actions.Edit) { it.basePythonPanel != null }
-
-  /**
-   * The item at [point] whose row carries [icon] under the pointer, or null. [applies] is the row's own precondition for
-   * carrying that icon at all, checked before the cell is laid out, which is the expensive part.
-   *
-   * Only the hovered row answers, since both icons are painted only there. That also means the cell can be laid out as
-   * selected, which is how it is actually painted — an icon located in an unselected cell would land elsewhere.
-   */
-  private fun inlineIconItemAt(point: Point, icon: Icon, applies: (EvoTreeItem) -> Boolean): EvoTreeItem? {
+  private fun reloadIconItemAt(point: Point): EvoTreeItem? {
     val row = list.locationToIndex(point)
     if (row < 0 || row != list.selectedIndex) return null
     val item = list.model.getElementAt(row) as? EvoTreeItem ?: return null
-    if (!applies(item)) return null
-    val bounds = inlineIconBounds(row, item, icon) ?: return null
+    if (evoStep?.isReloadable(item) != true) return null
+    val bounds = inlineIconBounds(row, item) ?: return null
     return if (bounds.contains(point)) item else null
   }
 
   /**
-   * Bounds (in list coordinates) of [icon] in [row], found by laying out the row's rendered cell as selected — which is
-   * the only state these icons are painted in, and so the only layout their position can be read from.
+   * Bounds (in list coordinates) of the reload icon in [row], found by laying out the row's rendered cell as selected —
+   * the only state the icon is painted in, and so the only layout its position can be read from.
    */
-  private fun inlineIconBounds(row: Int, item: EvoTreeItem, icon: Icon): Rectangle? {
+  private fun inlineIconBounds(row: Int, item: EvoTreeItem): Rectangle? {
+    val icon = AllIcons.Actions.Refresh
     val cell = list.getCellBounds(row, row) ?: return null
     @Suppress("UNCHECKED_CAST")
     val jList = list as JList<Any?>

@@ -115,6 +115,18 @@ interface PyEvoSdkApi : RemoteApi<Unit> {
   suspend fun recreateEnvironment(projectId: ProjectId, pyProjectKey: String, nodeId: String, request: EvoRecreateRequestDto): EvoSelectResultDto
 
   /**
+   * What it would take to rebuild the environment the project uses now, or `null` when nothing can.
+   *
+   * The widget offers this from the "Current Environment" section, where there is no row and so no leaf to read a
+   * rebuild off. So the environment in use is resolved here, the node whose tool owns it is named, and that tool is
+   * asked what it could rebuild it on — the same question a row asks through [EvoLeafDto.recreate].
+   *
+   * Asked when the user opens the action, never while the widget renders: naming the Pythons a machine has means
+   * running processes, and the status bar must not wait for that.
+   */
+  suspend fun currentEnvironmentRecreate(projectId: ProjectId, pyProjectKey: String): EvoCurrentRecreateDto?
+
+  /**
    * Resolves the interpreter version (`python --version`) for the environment at [homePath], on demand — the
    * frontend calls this lazily as a row scrolls into view, so we never spawn a process per environment up front.
    * The probe runs in the [nodeId] tool's [com.jetbrains.python.TraceContext] (the same context the tool's env
@@ -236,6 +248,10 @@ suspend fun requestEvoSelectInterpreter(projectId: ProjectId, pyProjectKey: Stri
 @ApiStatus.Internal
 suspend fun requestEvoRecreateEnvironment(projectId: ProjectId, pyProjectKey: String, nodeId: String, request: EvoRecreateRequestDto): EvoSelectResultDto =
   PyEvoSdkApi().recreateEnvironment(projectId, pyProjectKey, nodeId, request)
+
+@ApiStatus.Internal
+suspend fun requestEvoCurrentRecreate(projectId: ProjectId, pyProjectKey: String): EvoCurrentRecreateDto? =
+  PyEvoSdkApi().currentEnvironmentRecreate(projectId, pyProjectKey)
 
 @ApiStatus.Internal
 suspend fun requestEvoResolveVersion(projectId: ProjectId, pyProjectKey: String, nodeId: String, homePath: String, traceId: String): String? =
@@ -689,6 +705,24 @@ data class EvoRecreateDto(
    * choice. `false` leaves the choice out rather than showing one that would do nothing — pip has no lock to read.
    */
   val canSyncPackages: Boolean = false,
+)
+
+/**
+ * The environment the project uses now, named well enough to rebuild it — see [PyEvoSdkApi.currentEnvironmentRecreate].
+ *
+ * It carries what a row would have carried: which node's tool does the rebuilding, which environment to destroy, what
+ * to call it in the confirmation, and what it may be rebuilt on.
+ */
+@ApiStatus.Internal
+@Serializable
+data class EvoCurrentRecreateDto(
+  /** The node whose tool owns this environment, and so the node that rebuilds it. */
+  val nodeId: @NonNls String,
+  /** The interpreter binary of the environment to destroy — what [EvoRecreateRequestDto.envHomePath] wants. */
+  val envHomePath: @NonNls String,
+  /** What to call the environment in the confirmation the user sees. */
+  val title: @NlsSafe String,
+  val recreate: EvoRecreateDto,
 )
 
 /** What [PyEvoSdkApi.recreateEnvironment] is asked to do. */
