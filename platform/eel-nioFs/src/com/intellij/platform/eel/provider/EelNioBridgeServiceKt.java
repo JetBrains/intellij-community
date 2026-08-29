@@ -7,7 +7,6 @@ import com.intellij.platform.eel.path.EelPath;
 import com.intellij.platform.eel.path.EelPathException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 
@@ -21,11 +20,6 @@ public final class EelNioBridgeServiceKt {
 
   public static @NotNull Path asNioPath(@NotNull EelPath eelPath) {
     return EelPathConversionsKt.asNioPath(eelPath);
-  }
-
-  @Deprecated
-  public static @Nullable Path asNioPathOrNull(@NotNull EelPath eelPath) {
-    return EelPathConversionsKt.asNioPathOrNull(eelPath);
   }
 
   public static @NotNull EelPath asEelPath(@NotNull Path nioPath) throws EelPathException {

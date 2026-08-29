@@ -12,11 +12,9 @@
 *f:com.intellij.platform.eel.provider.EelNioBridgeServiceKt
 - s:asEelPath(java.nio.file.Path):com.intellij.platform.eel.path.EelPath
 - s:asNioPath(com.intellij.platform.eel.path.EelPath):java.nio.file.Path
-- s:asNioPathOrNull(com.intellij.platform.eel.path.EelPath):java.nio.file.Path
 *f:com.intellij.platform.eel.provider.EelPathConversionsKt
 - *sf:asEelPath(java.nio.file.Path):com.intellij.platform.eel.path.EelPath
 - *sf:asNioPath(com.intellij.platform.eel.path.EelPath):java.nio.file.Path
-- *sf:asNioPathOrNull(com.intellij.platform.eel.path.EelPath):java.nio.file.Path
 f:com.intellij.platform.eel.provider.EelPathDescriptorKt
 - *sf:getEelDescriptor(java.nio.file.Path):com.intellij.platform.eel.EelDescriptor
 - *sf:getOsFamily(java.nio.file.Path):com.intellij.platform.eel.EelOsFamily

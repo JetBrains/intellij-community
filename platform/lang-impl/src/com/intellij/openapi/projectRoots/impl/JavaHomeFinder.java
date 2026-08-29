@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.project.Project;
@@ -191,7 +191,7 @@ public abstract class JavaHomeFinder {
     }
     if (eelPath != null) {
       var absoluteLocation = EelPath.parse(eelPath, eel.getDescriptor());
-      return EelNioBridgeServiceKt.asNioPathOrNull(absoluteLocation);
+      return EelNioBridgeServiceKt.asNioPath(absoluteLocation);
     }
     return null;
   }

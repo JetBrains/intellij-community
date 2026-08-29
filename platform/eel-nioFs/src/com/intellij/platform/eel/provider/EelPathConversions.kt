@@ -36,21 +36,14 @@ private val LOG = Logger.getLogger("com.intellij.platform.eel.provider.EelNioBri
 @Throws(IllegalArgumentException::class)
 @ApiStatus.Experimental
 fun EelPath.asNioPath(): @MultiRoutingFileSystemPath Path {
-  return asNioPathOrNull()
-         ?: throw IllegalArgumentException("Could not convert $this to NIO path, descriptor is $descriptor")
-}
-
-/** See docs for [asNioPath] */
-@Deprecated("It never returns null anymore")
-@ApiStatus.Experimental
-fun EelPath.asNioPathOrNull(): @MultiRoutingFileSystemPath Path? {
   if (descriptor === LocalEelDescriptor) {
     return Paths.get(toString())
   }
 
   // Comparing strings because `Path.of("\\wsl.localhost\distro\").equals(Path.of("\\wsl$\distro\")) == true`
   // If the project works with `wsl$` paths, this function must return `wsl$` paths, and the same for `wsl.localhost`.
-  val root = (descriptor as? EelPathBoundDescriptor)?.rootPath ?: return null
+  val root = (descriptor as? EelPathBoundDescriptor)?.rootPath
+             ?: throw IllegalArgumentException("Could not convert $this to NIO path, descriptor is $descriptor")
 
   if (LOG.isLoggable(java.util.logging.Level.FINEST)) {
     LOG.finest("asNioPathOrNull(): path=$this descriptor=$descriptor rootPath=$root")
