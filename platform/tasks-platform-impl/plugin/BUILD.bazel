@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.tasks.plugin` start
@@ -51,3 +52,17 @@ dev_dist_plugin_content(
     ],
 )
 ### auto-generated section `dev content intellij.platform.tasks.plugin` end
+
+### auto-generated section `dev descriptor intellij.platform.tasks.plugin` start
+dev_dist_plugin_descriptor(
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_module = ":plugin",
+    descriptors = {
+        "@community//platform/tasks-platform-api:resources/intellij.platform.tasks.xml": "intellij.platform.tasks.xml",
+        "@community//platform/tasks-platform-impl/tasks.impl.bookmarks:resources/intellij.platform.tasks.impl.bookmarks.xml": "intellij.platform.tasks.impl.bookmarks.xml",
+        "@community//platform/tasks-platform-impl/tasks.impl.debugger:resources/intellij.platform.tasks.impl.debugger.xml": "intellij.platform.tasks.impl.debugger.xml",
+        "@community//platform/tasks-platform-impl:resources/intellij.platform.tasks.impl.xml": "intellij.platform.tasks.impl.xml",
+    },
+    main_module = "intellij.platform.tasks.plugin",
+)
+### auto-generated section `dev descriptor intellij.platform.tasks.plugin` end

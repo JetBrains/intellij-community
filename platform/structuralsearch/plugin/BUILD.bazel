@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.structuralSearch.plugin` start
@@ -46,3 +47,14 @@ dev_dist_plugin_content(
     prepacked_content_modules = ["//platform/structuralsearch:structuralSearch_content_module_jar"],
 )
 ### auto-generated section `dev content intellij.platform.structuralSearch.plugin` end
+
+### auto-generated section `dev descriptor intellij.platform.structuralSearch.plugin` start
+dev_dist_plugin_descriptor(
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_module = ":plugin",
+    descriptors = {
+        "@community//platform/structuralsearch:resources/intellij.platform.structuralSearch.xml": "intellij.platform.structuralSearch.xml",
+    },
+    main_module = "intellij.platform.structuralSearch.plugin",
+)
+### auto-generated section `dev descriptor intellij.platform.structuralSearch.plugin` end

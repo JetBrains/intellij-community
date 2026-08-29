@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.keymap.visualStudio` start
@@ -40,3 +41,11 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.keymap.visualStudio` end
+
+### auto-generated section `dev descriptor intellij.keymap.visualStudio` start
+dev_dist_plugin_descriptor(
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_module = ":keymap-visualStudio",
+    main_module = "intellij.keymap.visualStudio",
+)
+### auto-generated section `dev descriptor intellij.keymap.visualStudio` end

@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.grazie` start
@@ -61,6 +62,7 @@ exports_files(
         "intellij.grazie.iml",
         "resources/META-INF/plugin.xml",
         "plugin-content.yaml",
+        "dev-dist-descriptor.yaml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -129,3 +131,23 @@ dev_dist_plugin_content(
     ],
 )
 ### auto-generated section `dev content intellij.grazie` end
+
+### auto-generated section `dev descriptor intellij.grazie` start
+dev_dist_plugin_descriptor(
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_module = ":grazie",
+    descriptors = {
+        "@community//libraries/ai.grazie.spell.gec.engine.local:resources/intellij.libraries.ai.grazie.spell.gec.engine.local.xml": "intellij.libraries.ai.grazie.spell.gec.engine.local.xml",
+        "@community//libraries/kotlin/logging:resources/intellij.libraries.kotlin.logging.xml": "intellij.libraries.kotlin.logging.xml",
+        "@community//plugins/grazie/java:src/main/resources/intellij.grazie.java.xml": "intellij.grazie.java.xml",
+        "@community//plugins/grazie/json:src/main/resources/intellij.grazie.json.xml": "intellij.grazie.json.xml",
+        "@community//plugins/grazie/markdown:src/main/resources/intellij.grazie.markdown.xml": "intellij.grazie.markdown.xml",
+        "@community//plugins/grazie/properties:src/main/resources/intellij.grazie.properties.xml": "intellij.grazie.properties.xml",
+        "@community//plugins/grazie/src:main/resources/intellij.grazie.core.xml": "intellij.grazie.core.xml",
+        "@community//plugins/grazie/xml:main/resources/intellij.grazie.xml.xml": "intellij.grazie.xml.xml",
+        "@community//plugins/grazie/yaml:main/resources/intellij.grazie.yaml.xml": "intellij.grazie.yaml.xml",
+    },
+    main_module = "intellij.grazie",
+    separate_jar = ["intellij.grazie.markdown"],
+)
+### auto-generated section `dev descriptor intellij.grazie` end

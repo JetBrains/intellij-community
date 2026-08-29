@@ -19,7 +19,8 @@
 // `XIncludeElementResolverImpl.resolveElement` (`contentModuleEmbedding.kt:405-488`) searches a cache, then a module
 // output, then module dependencies, then every module of the project. Every step but the first needs a JPS project
 // model. `DevDistPluginDescriptorMain` hands the resolver a `RefusingModuleOutputProvider` whose every method throws
-// (`DevDistPluginDescriptorMain.kt:243-277`), so a run that reaches one of those steps fails rather than loading a
+// (`RefusingDescriptorResolveContext` of `DevDistPluginDescriptorMain.kt`), so a run that reaches one of those
+// steps fails rather than loading a
 // model.
 //
 // This port therefore searches the cache and nothing else, and it fails with the same message shape where the JVM tool
@@ -44,7 +45,7 @@ const xmlNamespace = "http://www.w3.org/XML/1998/namespace"
 
 // Cache is a descriptor cache seeded from declared files, keyed by the load path a resolver asks for.
 //
-// It is `SeededDescriptorContainer` (`DevDistPluginDescriptorMain.kt:196-231`), which is the seam that lets the patch
+// It is `SeededDescriptorContainer` (`DevDistPluginDescriptorMain.kt`), which is the seam that lets the patch
 // run with no project model. `PutIfAbsent` exists because the platform's resolver writes what it found back into the
 // cache; here every hit is already seeded, so the write is the identity. It is kept so that a reader can put this file
 // beside `resolveElement` and find every line of it.
@@ -114,7 +115,7 @@ func NewResolver(searchPath []Scope) *Resolver {
 // The `require` that guards a container mismatch is not ported. It runs only when the product-properties class is
 // `org.jetbrains.intellij.build.IdeaUltimateProperties` (`contentModuleEmbedding.kt:388`), and this action has no
 // product properties: `DevDistPluginDescriptorMain.NO_PRODUCT_PROPERTIES` is the string it answers with
-// (`DevDistPluginDescriptorMain.kt:233`). So the branch is unreachable from here.
+// (`DevDistPluginDescriptorMain.kt`). So the branch is unreachable from here.
 func (r *Resolver) CopyWithExtraSearchPath(moduleName string, cache *Cache) *Resolver {
 	for _, scope := range r.searchPath {
 		for _, module := range scope.Modules {
@@ -170,15 +171,17 @@ func (r *Resolver) declaredLoadPaths() []string {
 	return result
 }
 
-// ToLoadPath is `toLoadPath`
-// (`community/platform/build-scripts/src/org/jetbrains/intellij/build/impl/PlatformModules.kt:548-555`) over
-// `isModuleNameLikeFilename`
-// (`community/platform/build-scripts/api/src/moduleContentUtil.kt:124`).
+// ToLoadPath is `LoadPathUtil.toLoadPath`
+// (`community/platform/pluginSystem/parser/impl/src/com/intellij/platform/pluginSystem/parser/impl/LoadPathUtil.kt`),
+// which the plugin loader and the plan generator both call. The three prefixes are its whole rule. `kotlin.` is the
+// third one, and KTIJ-29799 owns it. `TestTheLoadPathOfAnHref` pins every shape.
 func ToLoadPath(relativePath string) string {
 	switch {
 	case strings.HasPrefix(relativePath, "/"):
 		return relativePath[1:]
-	case strings.HasPrefix(relativePath, "intellij."), strings.HasPrefix(relativePath, "fleet."):
+	case strings.HasPrefix(relativePath, "intellij."),
+		strings.HasPrefix(relativePath, "fleet."),
+		strings.HasPrefix(relativePath, "kotlin."):
 		return relativePath
 	default:
 		return "META-INF/" + relativePath

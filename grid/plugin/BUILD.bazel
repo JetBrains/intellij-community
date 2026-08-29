@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.grid.core.plugin` start
@@ -53,3 +54,19 @@ dev_dist_plugin_content(
     ],
 )
 ### auto-generated section `dev content intellij.grid.core.plugin` end
+
+### auto-generated section `dev descriptor intellij.grid.core.plugin` start
+dev_dist_plugin_descriptor(
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_module = ":plugin",
+    descriptors = {
+        "@community//grid/api:resources/intellij.grid.xml": "intellij.grid.xml",
+        "@community//grid/core-impl:resources/intellij.grid.core.impl.xml": "intellij.grid.core.impl.xml",
+        "@community//grid/csv:resources/intellij.grid.csv.core.impl.xml": "intellij.grid.csv.core.impl.xml",
+        "@community//grid/impl-ide:resources/intellij.grid.impl.ide.xml": "intellij.grid.impl.ide.xml",
+        "@community//grid/impl:resources/intellij.grid.impl.xml": "intellij.grid.impl.xml",
+        "@community//grid/types:resources/intellij.grid.types.xml": "intellij.grid.types.xml",
+    },
+    main_module = "intellij.grid.core.plugin",
+)
+### auto-generated section `dev descriptor intellij.grid.core.plugin` end

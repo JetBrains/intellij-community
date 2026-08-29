@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -185,6 +186,20 @@ dev_dist_plugin_content(
     },
 )
 ### auto-generated section `dev content intellij.java.coverage` end
+
+### auto-generated section `dev descriptor intellij.java.coverage` start
+dev_dist_plugin_descriptor(
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_module = ":coverage",
+    descriptors = {
+        "@community//libraries/test-discovery:resources/intellij.libraries.test.discovery.xml": "intellij.libraries.test.discovery.xml",
+        "@community//plugins/coverage/coverage_rt:resources/intellij.java.coverage.rt.xml": "intellij.java.coverage.rt.xml",
+        "@community//plugins/coverage/junit:resources/intellij.java.coverage.rt.junit.xml": "intellij.java.coverage.rt.junit.xml",
+        "@community//plugins/coverage/testng:resources/intellij.java.coverage.rt.testng.xml": "intellij.java.coverage.rt.testng.xml",
+    },
+    main_module = "intellij.java.coverage",
+)
+### auto-generated section `dev descriptor intellij.java.coverage` end
 
 ### auto-generated section `build intellij.java.coverage.tests` start
 jvm_library(

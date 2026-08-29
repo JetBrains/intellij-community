@@ -137,9 +137,16 @@ internal class JpsModuleToBazel {
       )
 
       if (ultimateRoot != null) {
+        // The cross-half descriptor packages join the main repository's list. `plugin-model-tool` writes them and this
+        // run does not, so they are named here rather than saved - see `crossHalfDescriptorPackageDirectories`.
+        val crossHalfDescriptorPackages = crossHalfDescriptorPackageDirectories(
+          ultimateRoot = ultimateRoot,
+          population = generator.pluginDescriptorPopulation,
+          moduleTargets = communityResult.moduleTargets + ultimateResult.moduleTargets,
+        )
         deleteOldFiles(
           projectDir = ultimateRoot,
-          generatedFiles = ultimateResult.moduleBuildFiles.keys
+          generatedFiles = (ultimateResult.moduleBuildFiles.keys + crossHalfDescriptorPackages)
             .filter { it != ultimateRoot }
             .sortedBy { ultimateRoot.relativize(it).invariantSeparatorsPathString }
             .toSet(),
@@ -266,6 +273,15 @@ internal class JpsModuleToBazel {
       @JvmField val target: String = "",
       @JvmField val distributionDirectory: String = "",
       @JvmField val contentTarget: String = "",
+      /**
+       * The label of this plugin's `dev_dist_plugin_descriptor` target, keyed by layout variant.
+       *
+       * A map and not one label, because a plugin whose descriptor differs by operating system or architecture declares
+       * one target per layout variant and the empty key is the variant-less one. The dev-distribution plan resolves a
+       * plugin entry to its descriptor target through this map, so a silently missing entry is a plugin whose patched
+       * descriptor no fragment reads.
+       */
+      @JvmField val descriptorTargets: Map<String, String> = emptyMap(),
       /**
        * Prepack-eligible content modules of this plugin that its own `contentTarget` could not name.
        *
@@ -438,9 +454,10 @@ internal class JpsModuleToBazel {
               val pluginTarget = moduleTarget.pluginDistributionTarget
               val contentTarget = moduleTarget.pluginContentTarget
               val crossRepositoryPrepacked = moduleTarget.crossRepositoryPrepackedModules
-              // The third half is independent of the other two: a plugin can have no `ij_plugin` target and no content
-              // target of its own and still have cross-repository members to complete.
-              if (pluginTarget == null && contentTarget == null && crossRepositoryPrepacked.isEmpty()) {
+              val descriptorTargets = moduleTarget.pluginDescriptorTargets
+              // Every half is independent of the others: a plugin can have no `ij_plugin` target and no content target
+              // of its own and still have cross-repository members to complete, or a descriptor target alone.
+              if (pluginTarget == null && contentTarget == null && crossRepositoryPrepacked.isEmpty() && descriptorTargets.isEmpty()) {
                 return@mapNotNull null
               }
 
@@ -448,6 +465,7 @@ internal class JpsModuleToBazel {
                 target = pluginTarget?.target ?: "",
                 distributionDirectory = pluginTarget?.let { adjustOutputPath(it.distributionDirectory) } ?: "",
                 contentTarget = contentTarget ?: "",
+                descriptorTargets = TreeMap(descriptorTargets),
                 crossRepositoryPrepackedContentModules = crossRepositoryPrepacked,
               )
             }
@@ -499,7 +517,7 @@ internal class JpsModuleToBazel {
 }
 
 private fun deleteOldFiles(projectDir: Path, generatedFiles: Set<Path>) {
-  val fileListFile = projectDir.resolve("build/bazel-generated-file-list.txt")
+  val fileListFile = projectDir.resolve(BAZEL_GENERATED_FILE_LIST_RELATIVE_PATH)
   val oldFiles = if (Files.exists(fileListFile)) Files.readAllLines(fileListFile).map { projectDir.resolve(it.trim()) } else emptySet()
 
   val filesToDelete = HashSet(oldFiles)
@@ -515,6 +533,9 @@ private fun deleteOldFiles(projectDir: Path, generatedFiles: Set<Path>) {
   fileListFile.parent.createDirectories()
   Files.writeString(fileListFile, generatedFiles.joinToString("\n") { projectDir.relativize(it).invariantSeparatorsPathString })
 }
+
+/** Which directories one repository half's last conversion generated, one project-relative directory per line. */
+internal const val BAZEL_GENERATED_FILE_LIST_RELATIVE_PATH: String = "build/bazel-generated-file-list.txt"
 
 /**
  * The Bazel package a module's generated targets and exported files live in, as a label prefix.

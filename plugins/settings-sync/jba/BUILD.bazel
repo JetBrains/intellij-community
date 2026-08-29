@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -104,6 +105,18 @@ dev_dist_plugin_content(
     prepacked_content_modules = ["//plugins/settings-sync/settingsSync.performanceTesting:settingsSync.performanceTesting_content_module_jar"],
 )
 ### auto-generated section `dev content intellij.settingsSync` end
+
+### auto-generated section `dev descriptor intellij.settingsSync` start
+dev_dist_plugin_descriptor(
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_module = ":settingsSync",
+    descriptors = {
+        "@community//libraries/cloud-config-client:resources/intellij.libraries.cloud.config.client.xml": "intellij.libraries.cloud.config.client.xml",
+        "@community//plugins/settings-sync/settingsSync.performanceTesting:resources/intellij.settingsSync.performanceTesting.xml": "intellij.settingsSync.performanceTesting.xml",
+    },
+    main_module = "intellij.settingsSync",
+)
+### auto-generated section `dev descriptor intellij.settingsSync` end
 
 ### auto-generated section `build intellij.settingsSync.tests` start
 jvm_library(

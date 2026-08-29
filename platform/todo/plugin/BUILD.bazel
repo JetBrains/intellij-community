@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.todo.plugin` start
@@ -50,3 +51,16 @@ dev_dist_plugin_content(
     ],
 )
 ### auto-generated section `dev content intellij.platform.todo.plugin` end
+
+### auto-generated section `dev descriptor intellij.platform.todo.plugin` start
+dev_dist_plugin_descriptor(
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_module = ":plugin",
+    descriptors = {
+        "@community//platform/todo/backend:resources/intellij.platform.todo.backend.xml": "intellij.platform.todo.backend.xml",
+        "@community//platform/todo:resources/intellij.platform.todo.xml": "intellij.platform.todo.xml",
+        "@community//platform/vcs-impl/lang/todo:resources/intellij.platform.vcs.impl.lang.todo.xml": "intellij.platform.vcs.impl.lang.todo.xml",
+    },
+    main_module = "intellij.platform.todo.plugin",
+)
+### auto-generated section `dev descriptor intellij.platform.todo.plugin` end

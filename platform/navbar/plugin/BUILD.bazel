@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.navbar.plugin` start
@@ -51,3 +52,17 @@ dev_dist_plugin_content(
     ],
 )
 ### auto-generated section `dev content intellij.platform.navbar.plugin` end
+
+### auto-generated section `dev descriptor intellij.platform.navbar.plugin` start
+dev_dist_plugin_descriptor(
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_module = ":plugin",
+    descriptors = {
+        "@community//platform/navbar/backend:resources/intellij.platform.navbar.backend.xml": "intellij.platform.navbar.backend.xml",
+        "@community//platform/navbar/frontend:resources/intellij.platform.navbar.frontend.xml": "intellij.platform.navbar.frontend.xml",
+        "@community//platform/navbar/monolith:resources/intellij.platform.navbar.monolith.xml": "intellij.platform.navbar.monolith.xml",
+        "@community//platform/navbar/shared:resources/intellij.platform.navbar.xml": "intellij.platform.navbar.xml",
+    },
+    main_module = "intellij.platform.navbar.plugin",
+)
+### auto-generated section `dev descriptor intellij.platform.navbar.plugin` end

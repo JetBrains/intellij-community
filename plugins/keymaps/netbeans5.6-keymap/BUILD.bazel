@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.keymap.netbeans` start
@@ -39,3 +40,11 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.keymap.netbeans` end
+
+### auto-generated section `dev descriptor intellij.keymap.netbeans` start
+dev_dist_plugin_descriptor(
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_module = ":keymap-netbeans",
+    main_module = "intellij.keymap.netbeans",
+)
+### auto-generated section `dev descriptor intellij.keymap.netbeans` end

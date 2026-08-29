@@ -193,6 +193,7 @@ exports_files(
         "resources/META-INF/plugin.xml",
         "resources/META-INF/terminal.xml",
         "plugin-content.yaml",
+        "dev-dist-descriptor.yaml",
     ],
     visibility = ["//visibility:public"],
 )

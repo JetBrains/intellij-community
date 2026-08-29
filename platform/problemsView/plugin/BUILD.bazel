@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.problemView.plugin` start
@@ -55,3 +56,19 @@ dev_dist_plugin_content(
     ],
 )
 ### auto-generated section `dev content intellij.platform.problemView.plugin` end
+
+### auto-generated section `dev descriptor intellij.platform.problemView.plugin` start
+dev_dist_plugin_descriptor(
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_module = ":plugin",
+    descriptors = {
+        "@community//platform/problemsView/backend:resources/intellij.platform.problemView.backend.xml": "intellij.platform.problemView.backend.xml",
+        "@community//platform/problemsView/collector:resources/intellij.platform.problemView.collector.xml": "intellij.platform.problemView.collector.xml",
+        "@community//platform/problemsView/core:resources/intellij.platform.problemView.core.xml": "intellij.platform.problemView.core.xml",
+        "@community//platform/problemsView/frontend:resources/intellij.platform.problemView.frontend.xml": "intellij.platform.problemView.frontend.xml",
+        "@community//platform/problemsView/shared:resources/intellij.platform.problemView.shared.xml": "intellij.platform.problemView.shared.xml",
+        "@community//platform/problemsView/ui:resources/intellij.platform.problemView.ui.xml": "intellij.platform.problemView.ui.xml",
+    },
+    main_module = "intellij.platform.problemView.plugin",
+)
+### auto-generated section `dev descriptor intellij.platform.problemView.plugin` end

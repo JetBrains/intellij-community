@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.execution.serviceView.plugin` start
@@ -54,3 +55,20 @@ dev_dist_plugin_content(
     ],
 )
 ### auto-generated section `dev content intellij.platform.execution.serviceView.plugin` end
+
+### auto-generated section `dev descriptor intellij.platform.execution.serviceView.plugin` start
+dev_dist_plugin_descriptor(
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_module = ":plugin",
+    descriptors = {
+        "@community//platform/execution.dashboard/backend:resources/intellij.platform.execution.dashboard.backend.xml": "intellij.platform.execution.dashboard.backend.xml",
+        "@community//platform/execution.dashboard/frontend:resources/intellij.platform.execution.dashboard.frontend.xml": "intellij.platform.execution.dashboard.frontend.xml",
+        "@community//platform/execution.dashboard:resources/intellij.platform.execution.dashboard.xml": "intellij.platform.execution.dashboard.xml",
+        "@community//platform/execution.serviceView/backend:resources/intellij.platform.execution.serviceView.backend.xml": "intellij.platform.execution.serviceView.backend.xml",
+        "@community//platform/execution.serviceView/frontend:resources/intellij.platform.execution.serviceView.frontend.xml": "intellij.platform.execution.serviceView.frontend.xml",
+        "@community//platform/execution.serviceView:resources/intellij.platform.execution.serviceView.xml": "intellij.platform.execution.serviceView.xml",
+        "@community//platform/remote-servers/clouds:resources/intellij.platform.clouds.xml": "intellij.platform.clouds.xml",
+    },
+    main_module = "intellij.platform.execution.serviceView.plugin",
+)
+### auto-generated section `dev descriptor intellij.platform.execution.serviceView.plugin` end

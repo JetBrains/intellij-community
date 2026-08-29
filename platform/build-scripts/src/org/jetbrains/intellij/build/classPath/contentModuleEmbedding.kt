@@ -21,6 +21,7 @@
 package org.jetbrains.intellij.build.classPath
 
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.platform.pluginSystem.parser.impl.LoadPathUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jdom.CDATA
@@ -40,7 +41,6 @@ import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.ScopedCachedDescriptorContainer
 import org.jetbrains.intellij.build.impl.contentModuleNameToDescriptorFileName
-import org.jetbrains.intellij.build.impl.toLoadPath
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
 import org.jetbrains.intellij.build.productLayout.buildProductContentXml
 import org.jetbrains.intellij.build.readDescriptor
@@ -410,7 +410,7 @@ internal class XIncludeElementResolverImpl(
       return null
     }
 
-    val loadPath = toLoadPath(relativePath)
+    val loadPath = LoadPathUtil.toLoadPath(relativePath)
 
     // The whole search runs in the checkout first and only then in module output. A scope here can name every module
     // of the platform layout, and in `MODULE_OUTPUT` a *miss* still resolves that module's Bazel output - which is

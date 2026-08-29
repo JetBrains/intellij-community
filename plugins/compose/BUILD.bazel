@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.compose.ide.plugin` start
@@ -60,3 +61,19 @@ dev_dist_plugin_content(
     ],
 )
 ### auto-generated section `dev content intellij.compose.ide.plugin` end
+
+### auto-generated section `dev descriptor intellij.compose.ide.plugin` start
+dev_dist_plugin_descriptor(
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_module = ":compose-ide-plugin",
+    descriptors = {
+        "@community//plugins/compose/intellij.compose.ide.plugin.gradleTooling:resources/intellij.compose.ide.plugin.gradleTooling.rt.xml": "intellij.compose.ide.plugin.gradleTooling.rt.xml",
+        "@community//plugins/compose/intellij.compose.ide.plugin.k2:resources/intellij.compose.ide.plugin.k2.xml": "intellij.compose.ide.plugin.k2.xml",
+        "@community//plugins/compose/intellij.compose.ide.plugin.resources.android:resources/intellij.compose.ide.plugin.resources.android.xml": "intellij.compose.ide.plugin.resources.android.xml",
+        "@community//plugins/compose/intellij.compose.ide.plugin.resources:resources/intellij.compose.ide.plugin.resources.xml": "intellij.compose.ide.plugin.resources.xml",
+        "@community//plugins/compose/intellij.compose.ide.plugin.shared.android:resources/intellij.compose.ide.plugin.shared.android.xml": "intellij.compose.ide.plugin.shared.android.xml",
+        "@community//plugins/compose/intellij.compose.ide.plugin.shared:resources/intellij.compose.ide.plugin.shared.xml": "intellij.compose.ide.plugin.shared.xml",
+    },
+    main_module = "intellij.compose.ide.plugin",
+)
+### auto-generated section `dev descriptor intellij.compose.ide.plugin` end

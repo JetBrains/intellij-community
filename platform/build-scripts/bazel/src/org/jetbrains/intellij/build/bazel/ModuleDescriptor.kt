@@ -80,6 +80,23 @@ internal data class ModuleDescriptor(
 
   /** [pluginContentReportFile], parsed at most once per module. */
   val pluginContentReport: List<RecipeEntry>? by lazy(LazyThreadSafetyMode.NONE) { parsePluginContentReport(pluginContentReportFile) }
+
+  /**
+   * The descriptor report of the plugin whose main module this is, if it has one; beside the first content root, the
+   * same rule [pluginContentReportFile] follows.
+   *
+   * Existence only, for the reason [pluginContentReportFile] gives. `_find_plugin_descriptor_report_rel_path` in
+   * `@community//build:jps_model.bzl` probes for exactly this file so that the hermetic `bazel-targets.json` run is
+   * handed the same reports the full-checkout run reads, and it cannot parse YAML.
+   */
+  val pluginDescriptorReportFile: Path? by lazy(LazyThreadSafetyMode.NONE) {
+    contentRoots.firstOrNull()?.resolve(PLUGIN_DESCRIPTOR_REPORT_FILE_NAME)?.takeIf { it.isRegularFile() }
+  }
+
+  /** [pluginDescriptorReportFile], parsed at most once per module. */
+  val pluginDescriptorReport: Map<String, PluginDescriptorReportSection?>? by lazy(LazyThreadSafetyMode.NONE) {
+    parsePluginDescriptorReport(pluginDescriptorReportFile)
+  }
 }
 
 internal data class ResourceDescriptor(

@@ -75,7 +75,7 @@ func TestTheDescriptorFileNameOfAContentModule(t *testing.T) {
 }
 
 // A `<module/>` the plan refuses is removed, wherever it stands. The assembly's own filter reads the JPS project model,
-// and the plan states its refusals instead (`DevDistPluginDescriptorMain.kt:152-170`).
+// and the plan states its refusals instead (`embedContentModulesFromPlan` of `DevDistPluginDescriptorMain.kt`).
 func TestAModuleThePlanRefusesIsRemoved(t *testing.T) {
 	got := embedOrFail(t,
 		`<idea-plugin><content><module name="a"/><module name="dropped"/><module name="b"/></content></idea-plugin>`,
@@ -91,7 +91,7 @@ func TestAModuleThePlanRefusesIsRemoved(t *testing.T) {
 }
 
 // The filter runs over **every** `<content>` block, which is what an include contributes more of
-// (`DevDistPluginDescriptorMain.kt:158`).
+// (`embedContentModulesFromPlan` of `DevDistPluginDescriptorMain.kt`).
 func TestTheFilterRunsOverEveryContentBlock(t *testing.T) {
 	got := embedOrFail(t,
 		`<idea-plugin><content><module name="a"/><module name="x"/></content>`+
@@ -110,7 +110,7 @@ func TestTheFilterRunsOverEveryContentBlock(t *testing.T) {
 }
 
 // The invariant of the refusal list: every refusal must reach a `<module/>`. A refusal that reaches none is a plan the
-// descriptor has moved away from (`DevDistPluginDescriptorMain.kt:172-175`).
+// descriptor has moved away from (`embedContentModulesFromPlan` of `DevDistPluginDescriptorMain.kt`).
 func TestAnUnmatchedRefusalIsRefused(t *testing.T) {
 	_, err := embed(t,
 		`<idea-plugin><content><module name="a"/></content></idea-plugin>`,
@@ -152,8 +152,8 @@ func TestAnEmptyRefusalListKeepsEveryModule(t *testing.T) {
 	}
 }
 
-// The three `separate-jar` gates, in the platform's order (`DevDistPluginDescriptorMain.kt:184-194`,
-// `contentModuleEmbedding.kt:284-299`). Every row states one gate's verdict, and the attribute appears in exactly one.
+// The three `separate-jar` gates, in the platform's order (`embedContentModulesFromPlan` of
+// `DevDistPluginDescriptorMain.kt`, `contentModuleEmbedding.kt:284-299`). Every row states one gate's verdict, and the attribute appears in exactly one.
 func TestTheThreeSeparateJarGates(t *testing.T) {
 	for name, it := range map[string]struct {
 		module      string
@@ -215,7 +215,7 @@ func TestSeparateJarIsAppendedAfterThePackage(t *testing.T) {
 }
 
 // A layout that embeds nothing still filters. Such a descriptor keeps its `<module/>` elements empty, and the assembly
-// agrees (`DevDistPluginDescriptorMain.kt:177-179`).
+// agrees (`embedContentModulesFromPlan` of `DevDistPluginDescriptorMain.kt`).
 func TestALayoutThatEmbedsNothingStillFilters(t *testing.T) {
 	got := embedOrFail(t,
 		`<idea-plugin><content><module name="a"/><module name="dropped"/></content></idea-plugin>`,
@@ -275,7 +275,7 @@ func TestAnUndeclaredContentModuleDescriptorFails(t *testing.T) {
 	}
 }
 
-// A `<module/>` with no name is refused (`DevDistPluginDescriptorMain.kt:161-163`).
+// A `<module/>` with no name is refused (`embedContentModulesFromPlan` of `DevDistPluginDescriptorMain.kt`).
 func TestAModuleWithNoNameIsRefused(t *testing.T) {
 	_, err := embed(t,
 		`<idea-plugin><content><module/></content></idea-plugin>`,

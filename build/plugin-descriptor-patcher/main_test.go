@@ -67,7 +67,8 @@ func TestTheWholeRequestIsPatched(t *testing.T) {
 	}
 
 	// `263.SNAPSHOT` with the pinned build date gives the version. The range is computed from the **build number** and
-	// not from that version (`DevDistPluginDescriptorMain.kt:117`), and `263.SNAPSHOT` matches no numeric shape, so
+	// not from that version (`patchPluginDescriptorFromPlan` of `DevDistPluginDescriptorMain.kt`), and `263.SNAPSHOT`
+	// matches no numeric shape, so
 	// both ends are the build number itself. That is what `//build:idea_air_dist` stamps today.
 	want := `<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <id>a</id>
@@ -85,7 +86,7 @@ func TestTheWholeRequestIsPatched(t *testing.T) {
 }
 
 // Plain arguments are accepted too, so the binary is runnable by hand
-// (`DevDistPluginDescriptorMain.kt:283-288`).
+// (`readArgumentLines` of `DevDistPluginDescriptorMain.kt`).
 func TestPlainArgumentsAreAccepted(t *testing.T) {
 	dir := t.TempDir()
 	source := filepath.Join(dir, "plugin.xml")
@@ -112,7 +113,7 @@ func TestPlainArgumentsAreAccepted(t *testing.T) {
 	}
 }
 
-// `--exact-version` pins both ends to the build number (`PluginXmlPatcher.kt:28-30`).
+// `--exact-version` pins both ends to the build number (`CompatibleBuildRange.EXACT` of `PluginXmlPatcher.kt`).
 func TestAnExactVersionPinsBothEnds(t *testing.T) {
 	dir := t.TempDir()
 	source := filepath.Join(dir, "plugin.xml")
@@ -134,7 +135,8 @@ func TestAnExactVersionPinsBothEnds(t *testing.T) {
 }
 
 // An option the parser does not know fails the run, which is what keeps the two producers on one spelling: a rule that
-// grows an option reaches both binaries or neither (`DevDistPluginDescriptorMain.kt:375`).
+// grows an option reaches both binaries or neither (`parseDevDistPluginDescriptorRequest` of
+// `DevDistPluginDescriptorMain.kt`).
 func TestAnUnknownOptionIsRefused(t *testing.T) {
 	if code := run([]string{"--not-an-option=1"}); code != 2 {
 		t.Errorf("exit %d, want 2", code)
@@ -166,7 +168,7 @@ func TestAMissingRequiredOptionIsRefused(t *testing.T) {
 	}
 }
 
-// A descriptor pair that is not `<load path>=<file>` is refused (`DevDistPluginDescriptorMain.kt:380-384`).
+// A descriptor pair that is not `<load path>=<file>` is refused (`putDescriptor` of `DevDistPluginDescriptorMain.kt`).
 func TestAMalformedDescriptorPairIsRefused(t *testing.T) {
 	if code := run([]string{"--plugin-descriptor=no-separator"}); code != 2 {
 		t.Errorf("exit %d, want 2", code)
@@ -210,7 +212,7 @@ func TestAFailedStageWritesNoOutput(t *testing.T) {
 }
 
 // A build number the platform's semantic-version check refuses must fail here too, rather than reaching a jar
-// (`SnapshotBuildNumber.kt:59-61`).
+// (`computePluginBuildNumber` of `SnapshotBuildNumber.kt`).
 func TestABuildNumberThatIsNotSemanticIsRefused(t *testing.T) {
 	dir := t.TempDir()
 	source := filepath.Join(dir, "plugin.xml")

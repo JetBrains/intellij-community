@@ -3,7 +3,7 @@
 // Package markers applies the raw descriptor text patch a plan entry states as data.
 //
 // It is `applyDescriptorMarkers` and `parseDescriptorMarkerRow`
-// (`community/platform/build-scripts/src/org/jetbrains/intellij/build/dev/DevDistPluginDescriptorMain.kt:240-300`),
+// (`community/platform/build-scripts/src/org/jetbrains/intellij/build/dev/DevDistPluginDescriptorMain.kt`),
 // rule for rule. `PluginLayout.rawPluginXmlPatcher` is a Kotlin lambda, and a plan cannot state one; a layout that
 // states its patch as a `DescriptorMarkerPatcher` states replacements instead, and this package is what a producer
 // does with them.

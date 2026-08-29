@@ -5,7 +5,8 @@
 // It is the executor of the `dev_dist_plugin_descriptor` rule
 // (`community/platform/build-scripts/bazel-rules/dev_dist_plugin_descriptor.bzl`), and the Go counterpart of
 // `applyPluginDescriptorPatch`
-// (`community/platform/build-scripts/src/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt:89`).
+// (`applyPluginDescriptorPatch` of
+// `community/platform/build-scripts/src/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt`).
 // `build/decisions/0006-content-module-in-jar-out-composer-places-it.md` puts the executors in Go, and a descriptor
 // feeds every plugin main jar, so a JVM action for it sits on the build's critical path.
 //
@@ -49,7 +50,7 @@ func main() {
 
 // request is one plugin's request, as the rule states it.
 //
-// It is `DevDistPluginDescriptorRequest` (`DevDistPluginDescriptorMain.kt:56-82`), field for field and option for
+// It is `DevDistPluginDescriptorRequest` (`DevDistPluginDescriptorMain.kt`), field for field and option for
 // option. The two binaries take one request spelling, so the rule's executable is the only thing the swap changed.
 type request struct {
 	output          string
@@ -72,8 +73,9 @@ type request struct {
 	pluginDescriptors   map[string]string
 	platformDescriptors map[string]string
 	// pluginDescriptorsInJar are the descriptors no production source root holds, keyed by load path and valued by the
-	// jar that holds them. The load path is also the zip entry: `toLoadPath` strips the leading `/`.
-	pluginDescriptorsInJar map[string]string
+	// jars of the library container that answers it. The load path is also the zip entry: `toLoadPath` strips the
+	// leading `/`. The rule declares a container rather than a jar, so the jar that holds the entry is found here.
+	pluginDescriptorsInJar map[string][]string
 	pluginModules          []string
 	platformModules        []string
 	// markers is the layout's raw text patch as marker-table rows, in the order it applies them.
@@ -110,7 +112,7 @@ func run(arguments []string) int {
 }
 
 // patch is `patchPluginDescriptorFromPlan` and the body it calls
-// (`DevDistPluginDescriptorMain.kt:85-143`, `PluginXmlPatcher.kt:89-140`).
+// (`DevDistPluginDescriptorMain.kt`, `applyPluginDescriptorPatch` of `PluginXmlPatcher.kt`).
 func patch(parsed request) (string, error) {
 	buildNumberContent, err := os.ReadFile(parsed.buildNumberFile)
 	if err != nil {
@@ -166,7 +168,7 @@ func patch(parsed request) (string, error) {
 		ReleaseDate:    parsed.releaseDate,
 		ReleaseVersion: parsed.releaseVersion,
 		// A dev distribution publishes no plugin: `PluginBuilder` passes an empty set on this path
-		// (`DevDistPluginDescriptorMain.kt:120`).
+		// (`patchPluginDescriptorFromPlan` of `DevDistPluginDescriptorMain.kt`).
 		ToPublish:                               false,
 		RetainProductDescriptorForBundledPlugin: parsed.retainProduct,
 		IsEap:                                   parsed.isEap,
@@ -199,46 +201,61 @@ func readSeed(files map[string]string) (*structural.Cache, error) {
 	return structural.NewCache(seed), nil
 }
 
-// seedFromJars puts a descriptor that lives inside a declared jar into the cache.
+// seedFromJars puts a descriptor that lives inside a declared library container into the cache.
 //
-// It is `readSeedFromJars` (`DevDistPluginDescriptorMain.kt:203`). The assembly reaches such a file through
-// `findFileInModuleLibraryDependencies` (`moduleContentUtil.kt:148`), which asks each declared library jar for the load
-// path; the plan names the one jar that answers, so the entry is read directly.
-func seedFromJars(cache *structural.Cache, jars map[string]string) error {
-	for loadPath, jar := range jars {
-		reader, err := zip.OpenReader(jar)
+// It is `readSeedFromJars` (`DevDistPluginDescriptorMain.kt`). The assembly reaches such a file through
+// `findFileInModuleLibraryDependencies` (`moduleContentUtil.kt`), which asks each declared library jar for the load
+// path. The rule declares the container, so the candidates are its jars in its own order and the first jar that answers
+// wins. A container whose jars all miss fails the run, and the failure names every jar it asked.
+func seedFromJars(cache *structural.Cache, candidates map[string][]string) error {
+	for loadPath, jars := range candidates {
+		data, err := readFirstZipEntry(jars, loadPath)
 		if err != nil {
 			return err
-		}
-		data, err := readZipEntry(reader, jar, loadPath)
-		closeErr := reader.Close()
-		if err != nil {
-			return err
-		}
-		if closeErr != nil {
-			return closeErr
 		}
 		cache.PutIfAbsent(loadPath, data)
 	}
 	return nil
 }
 
-func readZipEntry(reader *zip.ReadCloser, jar string, name string) ([]byte, error) {
+func readFirstZipEntry(jars []string, name string) ([]byte, error) {
+	for _, jar := range jars {
+		reader, err := zip.OpenReader(jar)
+		if err != nil {
+			return nil, err
+		}
+		data, found, err := readZipEntry(reader, name)
+		closeErr := reader.Close()
+		if err != nil {
+			return nil, err
+		}
+		if closeErr != nil {
+			return nil, closeErr
+		}
+		if found {
+			return data, nil
+		}
+	}
+	return nil, fmt.Errorf("no declared jar has the entry '%s': %s", name, strings.Join(jars, ", "))
+}
+
+func readZipEntry(reader *zip.ReadCloser, name string) ([]byte, bool, error) {
 	for _, entry := range reader.File {
 		if entry.Name != name {
 			continue
 		}
 		opened, err := entry.Open()
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 		defer opened.Close()
-		return io.ReadAll(opened)
+		data, err := io.ReadAll(opened)
+		return data, err == nil, err
 	}
-	return nil, fmt.Errorf("'%s' has no entry '%s'", jar, name)
+	return nil, false, nil
 }
 
-// readArgumentLines is `readArgumentLines` (`DevDistPluginDescriptorMain.kt:283-288`).
+// readArgumentLines is `readArgumentLines` (`DevDistPluginDescriptorMain.kt`).
 //
 // The rule passes one `--flagfile=<path>` of a multiline parameter file, the way `content_module_jar` and `ij_plugin`
 // do. Plain arguments are accepted too, so the binary is runnable by hand.
@@ -253,7 +270,7 @@ func readArgumentLines(arguments []string) ([]string, error) {
 	return arguments, nil
 }
 
-// parseRequest is `parseDevDistPluginDescriptorRequest` (`DevDistPluginDescriptorMain.kt:290-378`).
+// parseRequest is `parseDevDistPluginDescriptorRequest` (`DevDistPluginDescriptorMain.kt`).
 //
 // An option the parser does not know fails the run. That is the platform's rule too, and it is what keeps the two
 // producers on one spelling: a rule that grows an option reaches both binaries or neither.
@@ -263,7 +280,7 @@ func parseRequest(lines []string) (request, error) {
 		separateJar:            map[string]bool{},
 		pluginDescriptors:      map[string]string{},
 		platformDescriptors:    map[string]string{},
-		pluginDescriptorsInJar: map[string]string{},
+		pluginDescriptorsInJar: map[string][]string{},
 	}
 	for _, line := range lines {
 		if line == "" {
@@ -306,7 +323,7 @@ func parseRequest(lines []string) (request, error) {
 		case "--plugin-descriptor":
 			err = putDescriptor(parsed.pluginDescriptors, value)
 		case "--plugin-descriptor-in-jar":
-			err = putDescriptor(parsed.pluginDescriptorsInJar, value)
+			err = appendDescriptorJar(parsed.pluginDescriptorsInJar, value)
 		case "--marker":
 			parsed.markers = append(parsed.markers, value)
 		case "--version-suffix":
@@ -353,12 +370,25 @@ func parseBooleanStrict(value string) (bool, error) {
 	return false, fmt.Errorf("'%s' is neither 'true' nor 'false'", value)
 }
 
-// putDescriptor is `putDescriptor` (`DevDistPluginDescriptorMain.kt:380-384`).
+// putDescriptor is `putDescriptor` (`DevDistPluginDescriptorMain.kt`).
 func putDescriptor(into map[string]string, value string) error {
 	loadPath, file, found := strings.Cut(value, "=")
 	if !found || loadPath == "" {
 		return fmt.Errorf("a descriptor is '<load path>=<file>', and '%s' is not", value)
 	}
 	into[loadPath] = file
+	return nil
+}
+
+// appendDescriptorJar is `appendDescriptorJar` (`DevDistPluginDescriptorMain.kt`).
+//
+// One option per (load path, jar), because the rule declares a library container and states every jar of it. The order
+// is the container's own, and the first jar that has the entry answers.
+func appendDescriptorJar(into map[string][]string, value string) error {
+	loadPath, jar, found := strings.Cut(value, "=")
+	if !found || loadPath == "" {
+		return fmt.Errorf("a descriptor is '<load path>=<file>', and '%s' is not", value)
+	}
+	into[loadPath] = append(into[loadPath], jar)
 	return nil
 }

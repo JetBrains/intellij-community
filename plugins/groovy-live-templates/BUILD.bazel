@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.groovy.live.templates` start
@@ -68,3 +69,11 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.groovy.live.templates` end
+
+### auto-generated section `dev descriptor intellij.groovy.live.templates` start
+dev_dist_plugin_descriptor(
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_module = ":groovy-live-templates",
+    main_module = "intellij.groovy.live.templates",
+)
+### auto-generated section `dev descriptor intellij.groovy.live.templates` end

@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -104,6 +105,26 @@ dev_dist_plugin_content(
     ],
 )
 ### auto-generated section `dev content intellij.searchEverywhereMl` end
+
+### auto-generated section `dev descriptor intellij.searchEverywhereMl` start
+dev_dist_plugin_descriptor(
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_module = ":search-everywhere-ml",
+    descriptors = {
+        "@community//libraries/mlapi/core:resources/intellij.libraries.mlapi.core.xml": "intellij.libraries.mlapi.core.xml",
+        "@community//libraries/search-everywhere-find-all-model:resources/intellij.libraries.search.everywhere.find.all.model.xml": "intellij.libraries.search.everywhere.find.all.model.xml",
+        "@community//libraries/search-everywhere-find-ec-model:resources/intellij.libraries.search.everywhere.find.ec.model.xml": "intellij.libraries.search.everywhere.find.ec.model.xml",
+        "@community//platform/ml-logs:resources/intellij.platform.ml.logs.xml": "intellij.platform.ml.logs.xml",
+        "@community//plugins/search-everywhere-ml/ranking/core:resources/intellij.searchEverywhereMl.ranking.core.xml": "intellij.searchEverywhereMl.ranking.core.xml",
+        "@community//plugins/search-everywhere-ml/ranking/ext:resources/intellij.searchEverywhereMl.ranking.ext.xml": "intellij.searchEverywhereMl.ranking.ext.xml",
+        "@community//plugins/search-everywhere-ml/ranking/java:resources/intellij.searchEverywhereMl.ranking.java.xml": "intellij.searchEverywhereMl.ranking.java.xml",
+        "@community//plugins/search-everywhere-ml/ranking/vcs:resources/intellij.searchEverywhereMl.ranking.vcs.xml": "intellij.searchEverywhereMl.ranking.vcs.xml",
+        "@community//plugins/search-everywhere-ml/ranking/yaml:resources/intellij.searchEverywhereMl.ranking.yaml.xml": "intellij.searchEverywhereMl.ranking.yaml.xml",
+        "@community//plugins/search-everywhere-ml/typos:resources/intellij.searchEverywhereMl.typos.xml": "intellij.searchEverywhereMl.typos.xml",
+    },
+    main_module = "intellij.searchEverywhereMl",
+)
+### auto-generated section `dev descriptor intellij.searchEverywhereMl` end
 
 ### auto-generated section `build intellij.searchEverywhereMl.tests` start
 jvm_library(

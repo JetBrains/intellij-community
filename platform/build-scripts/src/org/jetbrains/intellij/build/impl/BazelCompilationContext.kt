@@ -190,6 +190,16 @@ class BazelTargetsInfo {
      */
     @JvmField val contentTarget: String = "",
     /**
+     * The `dev_dist_plugin_descriptor` target the plugin's own Bazel package declares, keyed by layout variant.
+     *
+     * A map and not one label, because a plugin whose descriptor differs by operating system or architecture declares
+     * one target per layout variant. The empty key is the variant of a plugin whose one layout serves every platform.
+     *
+     * A variant absent here is a variant no package beside the plugin can declare, and the dev-distribution plan
+     * generator writes a package of its own for it - see `collectCrossHalfDescriptorPackages`.
+     */
+    @JvmField val descriptorTargets: Map<String, String> = emptyMap(),
+    /**
      * Prepack-eligible content modules of this plugin that its own [contentTarget] could not name.
      *
      * Non-empty only for a community plugin that packs ultimate modules: the community repository cannot name an

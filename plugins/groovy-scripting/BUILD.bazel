@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.groovy.scripting` start
@@ -67,3 +68,16 @@ dev_dist_plugin_content(
     ],
 )
 ### auto-generated section `dev content intellij.groovy.scripting` end
+
+### auto-generated section `dev descriptor intellij.groovy.scripting` start
+dev_dist_plugin_descriptor(
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_module = ":groovy-scripting",
+    descriptors = {
+        "@community//libraries/groovy/jsr223:resources/intellij.libraries.groovy.jsr223.xml": "intellij.libraries.groovy.jsr223.xml",
+        "@community//libraries/groovy:resources/intellij.libraries.groovy.xml": "intellij.libraries.groovy.xml",
+        "@community//libraries/ivy:resources/intellij.libraries.ivy.xml": "intellij.libraries.ivy.xml",
+    },
+    main_module = "intellij.groovy.scripting",
+)
+### auto-generated section `dev descriptor intellij.groovy.scripting` end

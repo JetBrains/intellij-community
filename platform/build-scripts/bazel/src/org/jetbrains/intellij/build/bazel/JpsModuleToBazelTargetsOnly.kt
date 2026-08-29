@@ -36,6 +36,7 @@ internal class JpsModuleToBazelTargetsOnly {
       val starlarkIml = mutableListOf<String>()
       val starlarkPluginDistribution = mutableListOf<String>()
       val starlarkPluginContent = mutableListOf<String>()
+      val starlarkPluginDescriptor = mutableListOf<String>()
       val starlarkContentModuleRecipe = mutableListOf<String>()
 
       for (arg in expandedArgs) {
@@ -60,6 +61,8 @@ internal class JpsModuleToBazelTargetsOnly {
             starlarkPluginDistribution.add(arg.substringAfter("="))
           arg.startsWith("--starlark-plugin-content=") ->
             starlarkPluginContent.add(arg.substringAfter("="))
+          arg.startsWith("--starlark-plugin-descriptor=") ->
+            starlarkPluginDescriptor.add(arg.substringAfter("="))
           arg.startsWith("--starlark-content-module-recipe=") ->
             starlarkContentModuleRecipe.add(arg.substringAfter("="))
           else -> error("Unknown argument: $arg")
@@ -71,7 +74,7 @@ internal class JpsModuleToBazelTargetsOnly {
       check(manifest != null) { "Missing required --manifest=<path> argument" }
       val hasStarlarkTargets = starlarkProduction.isNotEmpty() || starlarkTest.isNotEmpty() || starlarkLibrary.isNotEmpty() ||
                                starlarkIml.isNotEmpty() || starlarkPluginDistribution.isNotEmpty() || starlarkPluginContent.isNotEmpty() ||
-                               starlarkContentModuleRecipe.isNotEmpty()
+                               starlarkPluginDescriptor.isNotEmpty() || starlarkContentModuleRecipe.isNotEmpty()
       check(hasStarlarkTargets || noStarlarkTargets) {
         "Either --starlark-* targets or --no-starlark-targets must be provided"
       }
@@ -186,7 +189,7 @@ internal class JpsModuleToBazelTargetsOnly {
         if (hasStarlarkTargets) {
           assertStarlarkParity(
             targets, starlarkProduction, starlarkTest, starlarkLibrary, starlarkIml,
-            starlarkPluginDistribution, starlarkPluginContent, starlarkContentModuleRecipe,
+            starlarkPluginDistribution, starlarkPluginContent, starlarkPluginDescriptor, starlarkContentModuleRecipe,
             moduleList = moduleList,
             communityRoot = communityRoot,
             ultimateRoot = ultimateRoot,
@@ -224,6 +227,7 @@ internal class JpsModuleToBazelTargetsOnly {
       starlarkIml: List<String>,
       starlarkPluginDistribution: List<String>,
       starlarkPluginContent: List<String>,
+      starlarkPluginDescriptor: List<String>,
       starlarkContentModuleRecipe: List<String>,
       moduleList: ModuleList,
       communityRoot: Path,
@@ -262,6 +266,23 @@ internal class JpsModuleToBazelTargetsOnly {
         starlarkPluginContent.sorted(),
         moduleList.allModules.mapNotNull { module ->
           pluginContentReportPackagePath(module)?.let { reportPath ->
+            "${bazelPackagePrefix(module = module, communityRoot = communityRoot, ultimateRoot = ultimateRoot)}:$reportPath"
+          }
+        }.distinct().sorted(),
+        allowDuplicates = false,
+      )
+      // The `descriptorTargets` half, asserted on its input the way `pluginContentReports` is.
+      //
+      // `descriptorTargets` has to be identical in both producers: the dev-distribution plan resolves a plugin entry to
+      // its descriptor target through this map, and a silently missing entry is a plugin whose patched descriptor no
+      // fragment reads. What decides a section beyond the convention is the checked-in descriptor report, so this
+      // compares the reports the two sides pick out. Not the labels themselves - the convention gives most of a section
+      // and no report at all is the normal case, so the label set is far larger than the report set.
+      assertTargetsEqual(
+        "pluginDescriptorReports",
+        starlarkPluginDescriptor.sorted(),
+        moduleList.allModules.mapNotNull { module ->
+          pluginDescriptorReportPackagePath(module)?.let { reportPath ->
             "${bazelPackagePrefix(module = module, communityRoot = communityRoot, ultimateRoot = ultimateRoot)}:$reportPath"
           }
         }.distinct().sorted(),

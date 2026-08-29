@@ -14,6 +14,19 @@ load("//build:dev_launch_dependencies.bzl", "platform_parts")
 load(":dev_dist_content.bzl", "DevDistContentInfo", "DevDistPlatformPayloadInfo")
 load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_DESCRIPTOR_KEY_PREFIX", "DevDistPluginDescriptorSetInfo")
 
+# Pinned so the fragments of one distribution agree and an assembly does not carry the wall clock into its outputs. It
+# dates archive entries and the `.SNAPSHOT` plugin version suffix, and both would otherwise differ between fragments
+# assembled minutes apart.
+#
+# Deliberately *not* the product build date. A dev distribution stamps none, so the IDE resolves its build time at
+# startup and no EAP expiration period can run out on a cached distribution. See `computeAppInfoXml`. A far-future date
+# chosen to outrun that period makes every dev IDE start expired, because a build date over a day ahead of the wall
+# clock is expired too.
+#
+# `dev_dist_plugin_descriptor` stamps the same date, and it reads the product's own value out of the generated plan.
+# `dev_dist_plugin_descriptor_helpers_test` compares the plan's value against this constant.
+DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS = "1767225600"  # 2026-01-01T00:00:00Z
+
 IntellijDevBuildInputsInfo = provider(
     doc = "The exact Bazel inputs and label-to-path manifest made available to one dev-build fragment.",
     fields = {
@@ -633,14 +646,7 @@ intellij_dev_fragment = rule(
     implementation = _fragment_impl,
     attrs = {
         "assembler": attr.label(executable = True, cfg = "exec", mandatory = True),
-        # Pinned so the fragments of one distribution agree and an assembly does not carry the wall clock into its
-        # outputs: it dates archive entries and the `.SNAPSHOT` plugin version suffix, both of which would otherwise
-        # differ between fragments assembled minutes apart. It is deliberately *not* the product build date - a dev
-        # distribution stamps none, so that the IDE resolves its build time at startup and no EAP expiration period can
-        # run out on a cached distribution (see `computeAppInfoXml`). It used to be a far-future date chosen to outrun
-        # that period, which is what made every dev IDE start expired: a build date over a day ahead of the wall clock
-        # is expired too.
-        "build_date_seconds": attr.string(default = "1767225600"),  # 2026-01-01T00:00:00Z
+        "build_date_seconds": attr.string(default = DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS),
         "platform_prefix": attr.string(mandatory = True),
         "target_platform": attr.string(default = ""),
         "fragment_name": attr.string(mandatory = True, doc = "Identifies this fragment in its manifest, its mnemonic and the composer's completeness check."),

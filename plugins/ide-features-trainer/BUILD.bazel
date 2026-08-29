@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -170,6 +171,21 @@ dev_dist_plugin_content(
     ],
 )
 ### auto-generated section `dev content intellij.featuresTrainer` end
+
+### auto-generated section `dev descriptor intellij.featuresTrainer` start
+dev_dist_plugin_descriptor(
+    descriptor = "res/META-INF/plugin.xml",
+    descriptor_module = ":featuresTrainer",
+    descriptors = {
+        "@community//libraries/assertj-core:resources/intellij.libraries.assertj.core.xml": "intellij.libraries.assertj.core.xml",
+        "@community//plugins/git-features-trainer:resources/intellij.vcs.git.featuresTrainer.xml": "intellij.vcs.git.featuresTrainer.xml",
+        "@community//plugins/ide-features-trainer/onboarding:resources/intellij.featuresTrainer.onboarding.xml": "intellij.featuresTrainer.onboarding.xml",
+        "@community//plugins/ide-features-trainer/tips:resources/intellij.featuresTrainer.tips.xml": "intellij.featuresTrainer.tips.xml",
+        "@community//plugins/kotlin/onboarding-promoter:resources/intellij.kotlin.onboarding.promoter.xml": "intellij.kotlin.onboarding.promoter.xml",
+    },
+    main_module = "intellij.featuresTrainer",
+)
+### auto-generated section `dev descriptor intellij.featuresTrainer` end
 
 ### auto-generated section `build intellij.featuresTrainer.tests` start
 jvm_library(

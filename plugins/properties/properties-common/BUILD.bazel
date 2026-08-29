@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -106,3 +107,18 @@ dev_dist_plugin_content(
     },
 )
 ### auto-generated section `dev content intellij.properties` end
+
+### auto-generated section `dev descriptor intellij.properties` start
+dev_dist_plugin_descriptor(
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_module = ":properties",
+    descriptors = {
+        "@community//plugins/properties/copyright:resources/intellij.properties.copyright.xml": "intellij.properties.copyright.xml",
+        "@community//plugins/properties/properties-common:resources/intellij.properties.xml": "intellij.properties.xml",
+        "@community//plugins/properties/properties-psi-api:resources/intellij.properties.psi.xml": "intellij.properties.psi.xml",
+        "@community//plugins/properties/properties-psi-impl:resources/intellij.properties.backend.psi.xml": "intellij.properties.backend.psi.xml",
+        "@community//plugins/properties:resources/intellij.properties.backend.xml": "intellij.properties.backend.xml",
+    },
+    main_module = "intellij.properties",
+)
+### auto-generated section `dev descriptor intellij.properties` end

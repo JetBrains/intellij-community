@@ -212,14 +212,17 @@ func TestARemoteRootWithAnotherNameContributesNothing(t *testing.T) {
 </idea-plugin>`)
 }
 
-// The three shapes of `toLoadPath`
-// (`community/platform/build-scripts/src/org/jetbrains/intellij/build/impl/PlatformModules.kt:548-555`).
+// Every shape of `LoadPathUtil.toLoadPath`
+// (`community/platform/pluginSystem/parser/impl/src/com/intellij/platform/pluginSystem/parser/impl/LoadPathUtil.kt`),
+// the rule three producers of a descriptor request state. `PluginDescriptorLoadPathTest` pins the same shapes for the
+// converter, which composes the load path a report row is looked up by.
 func TestTheLoadPathOfAnHref(t *testing.T) {
 	for href, want := range map[string]string{
 		"plugin.xml":                     "META-INF/plugin.xml",
 		"/META-INF/plugin.xml":           "META-INF/plugin.xml",
 		"intellij.example.module.xml":    "intellij.example.module.xml",
 		"fleet.example.module.xml":       "fleet.example.module.xml",
+		"kotlin.example.module.xml":      "kotlin.example.module.xml",
 		"a/relative/path.xml":            "META-INF/a/relative/path.xml",
 		"/intellij.at.the.root.only.xml": "intellij.at.the.root.only.xml",
 	} {
@@ -231,7 +234,7 @@ func TestTheLoadPathOfAnHref(t *testing.T) {
 
 // A load path no declared file answers fails, and the failure names the path and every declared one. Every other step
 // of the platform's search reads a JPS project model, which the action refuses to load
-// (`DevDistPluginDescriptorMain.kt:243-277`).
+// (`RefusingDescriptorResolveContext` of `DevDistPluginDescriptorMain.kt`).
 func TestAnUnresolvableIncludeFails(t *testing.T) {
 	element := read(t, `<idea-plugin`+xi+`><xi:include href="absent.xml"/></idea-plugin>`)
 	err := structural.ResolveIncludes(element, resolverOver(map[string]string{

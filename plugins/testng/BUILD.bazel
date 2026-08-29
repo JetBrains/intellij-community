@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 jps_test(
@@ -161,6 +162,7 @@ exports_files(
         "intellij.testng.iml",
         "resources/META-INF/plugin.xml",
         "plugin-content.yaml",
+        "dev-dist-descriptor.yaml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -177,6 +179,19 @@ dev_dist_plugin_content(
     },
 )
 ### auto-generated section `dev content intellij.testng` end
+
+### auto-generated section `dev descriptor intellij.testng` start
+dev_dist_plugin_descriptor(
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_module = ":testng",
+    descriptors = {
+        "@community//libraries/testng:resources/intellij.libraries.testng.xml": "intellij.libraries.testng.xml",
+        "@community//plugins/testng/langInjection:resources/intellij.testng.langInjection.xml": "intellij.testng.langInjection.xml",
+    },
+    main_jar_name = "testng-plugin.jar",
+    main_module = "intellij.testng",
+)
+### auto-generated section `dev descriptor intellij.testng` end
 
 ### auto-generated section `build intellij.testng.tests` start
 jvm_library(

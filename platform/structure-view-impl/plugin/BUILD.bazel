@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.structureView.plugin` start
@@ -51,3 +52,17 @@ dev_dist_plugin_content(
     ],
 )
 ### auto-generated section `dev content intellij.platform.structureView.plugin` end
+
+### auto-generated section `dev descriptor intellij.platform.structureView.plugin` start
+dev_dist_plugin_descriptor(
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_module = ":plugin",
+    descriptors = {
+        "@community//platform/structure-view-impl/backend:resources/intellij.platform.structureView.backend.xml": "intellij.platform.structureView.backend.xml",
+        "@community//platform/structure-view-impl/frontend:resources/intellij.platform.structureView.frontend.xml": "intellij.platform.structureView.frontend.xml",
+        "@community//platform/structure-view-impl/intellij.platform.structureView.impl:resources/intellij.platform.structureView.impl.xml": "intellij.platform.structureView.impl.xml",
+        "@community//platform/structure-view-impl:resources/intellij.platform.structureView.xml": "intellij.platform.structureView.xml",
+    },
+    main_module = "intellij.platform.structureView.plugin",
+)
+### auto-generated section `dev descriptor intellij.platform.structureView.plugin` end

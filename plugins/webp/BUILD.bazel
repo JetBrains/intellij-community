@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.webp` start
@@ -67,3 +68,11 @@ dev_dist_plugin_content(
     libraries = ["//plugins/webp/lib:webp-libwebp"],
 )
 ### auto-generated section `dev content intellij.webp` end
+
+### auto-generated section `dev descriptor intellij.webp` start
+dev_dist_plugin_descriptor(
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_module = ":webp",
+    main_module = "intellij.webp",
+)
+### auto-generated section `dev descriptor intellij.webp` end

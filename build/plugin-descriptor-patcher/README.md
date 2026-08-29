@@ -39,9 +39,11 @@ nothing else. Every other step of the platform's search needs a JPS project mode
 names the load path and every declared one, because the fix is always a missing entry in the generated plan.
 
 One plugin reads a descriptor no production source root holds: the Kotlin compiler ships
-`META-INF/analysis-api/analysis-api-fir.xml` and five more inside library jars. The plan declares those jars and states
-the entry, and `--plugin-descriptor-in-jar` seeds the cache from it. The load path is also the entry, because
-`toLoadPath` strips the leading `/`.
+`META-INF/analysis-api/analysis-api-fir.xml` and five more inside library jars. The plan names the library container
+that groups those jars, and it states the entry. The container's jars are the declared inputs, and the request holds one
+`--plugin-descriptor-in-jar` row for each entry and jar, in the container's own jar order. Both producers seed the cache
+from those rows and take the first jar that answers. A container whose jars all miss fails the action, and the failure
+names every jar it asked. The load path is also the entry, because `toLoadPath` strips the leading `/`.
 
 The stage that would silently lose bytes is the content-module filter, and the plan drives it. The plan states the
 survivors in order. The action refuses a descriptor that lists them in another order: the two are joined by position,
@@ -115,7 +117,7 @@ descriptor got a label - see `containingBazelPackageLabel` in `platform/buildScr
 To cover all 163, build the fixture from the arm that computes every descriptor. Set `fragment_reads` of the product
 entry in `build/dev_dist_plugin_descriptors.bzl` to `"none"`, build, copy the files out, and restore the file. That one
 key is the switch: it keeps every producer and takes only the declaration away, so the fragments run every stage of every
-descriptor and the artifact holds every stage text. Emptying `plugins` instead removes the producer, and the two-producer
+descriptor and the artifact holds every stage text. Emptying `descriptor_targets` instead removes the producer, and the two-producer
 gate below then has nothing to compare. Measured on 2026-08-27 over one artifact of that shape, the gate reports 163 of
 163 for `rawTextPatcher` to `reserialized`, 163 of 163 for `reserialized` to `stamps`, and 43 of 43 for the class (a)
 stamps text against `patched`. That last text is what the assembly put in the plugin's main jar. Keep the artifact you

@@ -35,6 +35,7 @@ exports_files(
         "intellij.platform.vcs.plugin.iml",
         "resources/META-INF/plugin.xml",
         "plugin-content.yaml",
+        "dev-dist-descriptor.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -12,7 +12,7 @@ import (
 // ContentRequest is the plan's statement about one plugin's content modules.
 //
 // It is the subset of `DevDistPluginDescriptorRequest` the content stage reads
-// (`DevDistPluginDescriptorMain.kt:56-82`). The plan states the refusals, because the assembly's own filter reads the
+// (`DevDistPluginDescriptorMain.kt`). The plan states the refusals, because the assembly's own filter reads the
 // JPS project model and no action may. The survivors are the descriptor's own `<content>`, which this action already
 // declares as an input.
 type ContentRequest struct {
@@ -28,7 +28,7 @@ type ContentRequest struct {
 	Embeds bool
 }
 
-// EmbedContentModules is `embedContentModulesFromPlan` (`DevDistPluginDescriptorMain.kt:146-198`).
+// EmbedContentModules is `embedContentModulesFromPlan` (`DevDistPluginDescriptorMain.kt`).
 //
 // Two things happen, in this order. Every `<module/>` the plan refuses is removed, wherever it stands. Then each
 // survivor receives its own module's descriptor as a CDATA body, unless the layout embeds none.
@@ -93,7 +93,7 @@ func EmbedContentModules(
 
 // resolveAndEmbedContentModuleDescriptor is `resolveAndEmbedContentModuleDescriptor`
 // (`contentModuleEmbedding.kt:332-353`) with the descriptor modifier of the plan-driven stage
-// (`DevDistPluginDescriptorMain.kt:184-194`).
+// (`embedContentModulesFromPlan` of `DevDistPluginDescriptorMain.kt`).
 func resolveAndEmbedContentModuleDescriptor(
 	moduleElement *descriptorxml.Element,
 	moduleName string,
@@ -122,7 +122,7 @@ func resolveAndEmbedContentModuleDescriptor(
 }
 
 // applySeparateJar is the descriptor modifier of the plan-driven content stage
-// (`DevDistPluginDescriptorMain.kt:184-194`), which is `embedContentModule`'s modifier
+// (`embedContentModulesFromPlan` of `DevDistPluginDescriptorMain.kt`), which is `embedContentModule`'s modifier
 // (`contentModuleEmbedding.kt:284-299`) with the plan answering the third gate.
 //
 // Three gates, in the platform's order:

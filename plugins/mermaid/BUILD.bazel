@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -146,6 +147,20 @@ dev_dist_plugin_content(
     ],
 )
 ### auto-generated section `dev content intellij.mermaid` end
+
+### auto-generated section `dev descriptor intellij.mermaid` start
+dev_dist_plugin_descriptor(
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_module = ":mermaid",
+    descriptors = {
+        "@community//plugins/mermaid/frontend:resources/intellij.mermaid.frontend.xml": "intellij.mermaid.frontend.xml",
+        "@community//plugins/mermaid/json:resources/intellij.mermaid.json.xml": "intellij.mermaid.json.xml",
+        "@community//plugins/mermaid/markdown:resources/intellij.mermaid.markdown.xml": "intellij.mermaid.markdown.xml",
+        "@community//plugins/mermaid/spellchecker:resources/intellij.mermaid.spellchecker.xml": "intellij.mermaid.spellchecker.xml",
+    },
+    main_module = "intellij.mermaid",
+)
+### auto-generated section `dev descriptor intellij.mermaid` end
 
 ### auto-generated section `build intellij.mermaid.tests` start
 jvm_library(

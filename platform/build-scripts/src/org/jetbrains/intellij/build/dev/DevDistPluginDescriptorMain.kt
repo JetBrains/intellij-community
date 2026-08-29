@@ -87,12 +87,13 @@ internal class DevDistPluginDescriptorRequest(
   /** The descriptors this plugin's patch can reach, keyed by the load path a resolver asks for. */
   @JvmField val pluginDescriptors: Map<String, Path>,
   /**
-   * A descriptor no production source root holds, keyed by load path and valued by the jar that holds it.
+   * A descriptor no production source root holds, keyed by load path and valued by the jars that may hold it.
    *
    * The load path is also the zip entry: `toLoadPath` strips the leading `/`, and that is the path the assembly's
-   * `findFileInModuleLibraryDependencies` asks a library jar for.
+   * `findFileInModuleLibraryDependencies` asks a library jar for. The rule declares a library container rather than one
+   * jar, so the value is every jar of that container and the first one with the entry answers.
    */
-  @JvmField val pluginDescriptorsInJar: Map<String, Path> = emptyMap(),
+  @JvmField val pluginDescriptorsInJar: Map<String, List<Path>> = emptyMap(),
   /** The same, for the platform's search scope. */
   @JvmField val platformDescriptors: Map<String, Path>,
   /** The plugin's own search-scope modules. */
@@ -240,21 +241,28 @@ private fun readSeed(files: Map<String, Path>): Map<String, ByteArray> {
 }
 
 /**
- * The same, for a descriptor that lives inside a declared jar.
+ * The same, for a descriptor that lives inside a declared library container.
  *
  * The assembly reaches such a file through `findFileInModuleLibraryDependencies`, which asks each declared library jar
- * for the load path. Here the plan names the one jar that answers, so the entry is read directly.
+ * for the load path. This asks the container's jars in the container's own order, and the first jar with the entry
+ * answers. A container whose jars all miss fails the run, and the failure names every jar it asked.
  */
-private fun readSeedFromJars(jars: Map<String, Path>): Map<String, ByteArray> {
-  val result = HashMap<String, ByteArray>(jars.size)
-  for ((loadPath, jar) in jars) {
-    // A zip file system and not `ImmutableZipFile`: that reader needs `sun.nio.ch` opened to the unnamed module, and
-    // this tool is a plain `java_binary` with no JVM argument of its own. Six entries of one plugin are read this way.
-    result[loadPath] = FileSystems.newFileSystem(jar).use { zip ->
-      val entry = zip.getPath(loadPath)
-      require(Files.exists(entry)) { "'$jar' has no entry '$loadPath'" }
-      Files.readAllBytes(entry)
+private fun readSeedFromJars(candidates: Map<String, List<Path>>): Map<String, ByteArray> {
+  val result = HashMap<String, ByteArray>(candidates.size)
+  for ((loadPath, jars) in candidates) {
+    var data: ByteArray? = null
+    for (jar in jars) {
+      // A zip file system and not `ImmutableZipFile`: that reader needs `sun.nio.ch` opened to the unnamed module, and
+      // this tool is a plain `java_binary` with no JVM argument of its own. Six entries of one plugin are read this way.
+      data = FileSystems.newFileSystem(jar).use { zip ->
+        val entry = zip.getPath(loadPath)
+        if (Files.exists(entry)) Files.readAllBytes(entry) else null
+      }
+      if (data != null) {
+        break
+      }
     }
+    result[loadPath] = requireNotNull(data) { "No declared jar has the entry '$loadPath': ${jars.joinToString()}" }
   }
   return result
 }
@@ -428,7 +436,7 @@ internal fun parseDevDistPluginDescriptorRequest(lines: List<String>): DevDistPl
   val refusedContentModules = ArrayList<String>()
   val separateJarModules = LinkedHashSet<String>()
   val pluginDescriptors = LinkedHashMap<String, Path>()
-  val pluginDescriptorsInJar = LinkedHashMap<String, Path>()
+  val pluginDescriptorsInJar = LinkedHashMap<String, MutableList<Path>>()
   val platformDescriptors = LinkedHashMap<String, Path>()
   val pluginModules = ArrayList<String>()
   val platformModules = ArrayList<String>()
@@ -460,7 +468,7 @@ internal fun parseDevDistPluginDescriptorRequest(lines: List<String>): DevDistPl
       "--refused-content-module" -> refusedContentModules.add(value)
       "--separate-jar" -> separateJarModules.add(value)
       "--plugin-descriptor" -> putDescriptor(pluginDescriptors, value)
-      "--plugin-descriptor-in-jar" -> putDescriptor(pluginDescriptorsInJar, value)
+      "--plugin-descriptor-in-jar" -> appendDescriptorJar(pluginDescriptorsInJar, value)
       "--marker" -> markers.add(value)
       "--version-suffix" -> versionSuffix = value
       "--platform-descriptor" -> putDescriptor(platformDescriptors, value)
@@ -501,6 +509,18 @@ private fun putDescriptor(into: MutableMap<String, Path>, value: String) {
   val separator = value.indexOf('=')
   require(separator > 0) { "A descriptor is '<load path>=<file>', and '$value' is not" }
   into[value.substring(0, separator)] = Path.of(value.substring(separator + 1))
+}
+
+/**
+ * The same, for a jar of a library container.
+ *
+ * One option per (load path, jar), because the rule declares a container and states every jar of it. The order is the
+ * container's own, and the first jar with the entry answers - see [readSeedFromJars].
+ */
+private fun appendDescriptorJar(into: MutableMap<String, MutableList<Path>>, value: String) {
+  val separator = value.indexOf('=')
+  require(separator > 0) { "A descriptor is '<load path>=<file>', and '$value' is not" }
+  into.computeIfAbsent(value.substring(0, separator)) { ArrayList() }.add(Path.of(value.substring(separator + 1)))
 }
 
 /** The plugin's directory under `plugins/`, as `PluginLayout` derives it. */

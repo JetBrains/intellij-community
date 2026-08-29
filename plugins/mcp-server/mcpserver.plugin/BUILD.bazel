@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.mcpserver.plugin` start
@@ -92,3 +93,25 @@ dev_dist_plugin_content(
     ],
 )
 ### auto-generated section `dev content intellij.mcpserver.plugin` end
+
+### auto-generated section `dev descriptor intellij.mcpserver.plugin` start
+dev_dist_plugin_descriptor(
+    descriptor = "resources/META-INF/plugin.xml",
+    descriptor_module = ":mcpserver.plugin",
+    descriptors = {
+        "@community//libraries/kotlin/logging:resources/intellij.libraries.kotlin.logging.xml": "intellij.libraries.kotlin.logging.xml",
+        "@community//libraries/ktor/server-content-negotiation:resources/intellij.libraries.ktor.server.content.negotiation.xml": "intellij.libraries.ktor.server.content.negotiation.xml",
+        "@community//libraries/ktor/server-sse:resources/intellij.libraries.ktor.server.sse.xml": "intellij.libraries.ktor.server.sse.xml",
+        "@community//libraries/night-config-toml:resources/intellij.libraries.night.config.toml.xml": "intellij.libraries.night.config.toml.xml",
+        "@community//libraries/schema-kenerator:resources/intellij.libraries.schema.kenerator.xml": "intellij.libraries.schema.kenerator.xml",
+        "@community//plugins/mcp-server/mcpserver.frontend:resources/intellij.mcpserver.frontend.xml": "intellij.mcpserver.frontend.xml",
+        "@community//plugins/mcp-server/mcpserver.stdio:resources/intellij.mcpserver.stdio.xml": "intellij.mcpserver.stdio.xml",
+        "@community//plugins/mcp-server/mcpserver.terminal.frontend:resources/intellij.mcpserver.terminal.frontend.xml": "intellij.mcpserver.terminal.frontend.xml",
+        "@community//plugins/mcp-server/mcpserver.terminal:resources/intellij.mcpserver.terminal.xml": "intellij.mcpserver.terminal.xml",
+        "@community//plugins/mcp-server/mcpserver.toolsets:resources/intellij.mcpserver.toolsets.xml": "intellij.mcpserver.toolsets.xml",
+        "@community//plugins/mcp-server/mcpserver.vcs:resources/intellij.mcpserver.vcs.xml": "intellij.mcpserver.vcs.xml",
+        "@community//plugins/mcp-server:resources/intellij.mcpserver.xml": "intellij.mcpserver.xml",
+    },
+    main_module = "intellij.mcpserver.plugin",
+)
+### auto-generated section `dev descriptor intellij.mcpserver.plugin` end
