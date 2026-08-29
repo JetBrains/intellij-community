@@ -95,17 +95,26 @@ internal class ModuleList(
    * them out would make the fold depend on which modules this generator converts.
    */
   val pluginContentModuleJarCandidates: Map<String, Set<String>> by lazy {
-    foldDerivedPluginContentCandidacy(
-      plugins = allModules.mapNotNull { module ->
-        if (isDevDistContentPlugin(module = module, context = context)) {
-          derivePluginContentCandidacy(module = module, moduleList = this, context = context)
-        }
-        else {
-          null
-        }
-      },
-      overrides = pluginContentCandidateOverrides,
-    )
+    foldDerivedPluginContentCandidacy(plugins = derivedPluginCandidacies.map { it.second }, overrides = pluginContentCandidateOverrides)
+  }
+
+  /**
+   * What every plugin's own model states about its members' jars, by plugin, derived once.
+   *
+   * Shared on purpose. The repo-global fold reads it, and so does the community-only fold that
+   * [communityOnlyCandidacyOverrideRows] needs, which is the same question asked over the community half alone. Deriving
+   * it twice would double the ~2 500 member descriptor reads and the ~515 closure walks the derivation costs, and the
+   * converter's wall clock is a gate.
+   */
+  val derivedPluginCandidacies: List<Pair<ModuleDescriptor, DerivedPluginCandidacy>> by lazy {
+    allModules.mapNotNull { module ->
+      if (isDevDistContentPlugin(module = module, context = context)) {
+        module to derivePluginContentCandidacy(module = module, moduleList = this, context = context)
+      }
+      else {
+        null
+      }
+    }
   }
 }
 

@@ -318,16 +318,9 @@ internal fun comparePluginContentCandidacy(
     reports = moduleList.allModules.mapNotNull { it.pluginContentReport },
     overrides = emptyMap(),
   )
-  val candidacies = ArrayList<DerivedPluginCandidacy>()
-  var plugins = 0
-  for (module in moduleList.allModules) {
-    if (module.pluginContentReport == null) {
-      continue
-    }
-    plugins++
-    candidacies.add(derivePluginContentCandidacy(module = module, moduleList = moduleList, context = context))
-  }
-  val derivedFold = foldDerivedPluginContentCandidacy(plugins = candidacies, overrides = emptyMap())
+  val candidacies = moduleList.derivedPluginCandidacies
+  val plugins = candidacies.size
+  val derivedFold = foldDerivedPluginContentCandidacy(plugins = candidacies.map { it.second }, overrides = emptyMap())
 
   val onlyInDerived = (derivedFold.keys - reportFold.keys).sorted()
   val onlyInReport = (reportFold.keys - derivedFold.keys).sorted()
@@ -349,40 +342,39 @@ internal fun comparePluginContentCandidacy(
   for (name in differingLibraries) {
     out("  LIBRARIES $name report=${reportFold.get(name)?.sorted()} derived=${derivedFold.get(name)?.sorted()}")
   }
-  reportCommunityOnlyCandidacyDelta(moduleList = moduleList, context = context, global = derivedFold, out = out)
+  reportCommunityOnlyCandidacyDelta(moduleList = moduleList, context = context, out = out)
 }
 
 /**
- * What a community-only run of the derived fold cannot decide for itself, and what the checked-in override says.
+ * What a community-only run of the derived fold cannot decide for itself, one checked-in row per line.
  *
  * ADR 0007 rule 4. The fold is a repo-global AND, so a checkout holding only the community half reaches a different
- * verdict for a community module the ultimate half has an opinion about - and the converter writes the same attributes in
- * both, which is what `Assert Bazel Files Are In Sync With JPS Model (Community Only)` fails on.
- * `dev_dist_plugin_content_candidate_overrides.txt` is the correction, and the plan generator computes it from the
- * **report** fold. This measures whether the derived fold needs the same corrections.
+ * verdict for a community module the ultimate half has an opinion about - and the converter writes the same attributes
+ * in both, which is what `Assert Bazel Files Are In Sync With JPS Model (Community Only)` fails on.
+ * `dev_dist_plugin_content_candidate_overrides.txt` is the correction, and this is the answer that file has to state.
+ *
+ * The row is the answer of the **ultimate** run, which is also the global answer: `-M` means some plugin outside
+ * `community/` vetoes M, and `+M` plus a sorted library list means the plugins that offer M are all outside `community/`
+ * and all agree. So the converter applies these unconditionally, with no notion of which half it is running over.
+ *
+ * Both arms fold with no override in play, so the rows are a function of the project model alone. That is what keeps the
+ * file out of its own input: a run cannot confirm a stale row by reading it.
  *
  * The community half is the plugins whose main module is a community module. That is the set a community-only checkout
  * converts, and its `<content>`, its residue and its members' descriptors are all files that checkout has.
+ *
+ * A community-only run answers an empty list, and it must: `global` is then the community fold itself, so the two arms
+ * agree everywhere and there is nothing such a run could say about the half it does not have.
  */
-private fun reportCommunityOnlyCandidacyDelta(
-  moduleList: ModuleList,
-  context: BazelBuildFileGenerator,
-  global: Map<String, Set<String>>,
-  out: (String) -> Unit,
-) {
+internal fun communityOnlyCandidacyOverrideRows(moduleList: ModuleList): List<String> {
+  val candidacies = moduleList.derivedPluginCandidacies
+  val global = foldDerivedPluginContentCandidacy(plugins = candidacies.map { it.second }, overrides = emptyMap())
   val communityOnly = foldDerivedPluginContentCandidacy(
-    plugins = moduleList.community.mapNotNull { module ->
-      if (isDevDistContentPlugin(module = module, context = context)) {
-        derivePluginContentCandidacy(module = module, moduleList = moduleList, context = context)
-      }
-      else {
-        null
-      }
-    },
+    plugins = candidacies.mapNotNull { (module, candidacy) -> candidacy.takeIf { module.isCommunity } },
     overrides = emptyMap(),
   )
   val communityModules = moduleList.community.mapTo(HashSet()) { it.module.name }
-  val needed = ArrayList<String>()
+  val result = ArrayList<String>()
   for (name in (global.keys + communityOnly.keys).sorted()) {
     if (name !in communityModules) {
       // A module no community-only conversion emits a target for needs no correction, whatever either fold says.
@@ -392,8 +384,31 @@ private fun reportCommunityOnlyCandidacyDelta(
     if (globalAnswer == communityOnly.get(name)) {
       continue
     }
-    needed.add(if (globalAnswer == null) "-$name" else (sequenceOf("+$name") + globalAnswer.sorted()).joinToString(" "))
+    if (globalAnswer == null) {
+      result.add("-$name")
+      continue
+    }
+    for (library in globalAnswer) {
+      // One line per module, with the libraries as the rest of the line. A name holding the separator would read back as
+      // two libraries, so the writer refuses it rather than the reader mis-splitting it. No library name in the
+      // repository holds a space today.
+      check(library.isNotEmpty() && !library.any(Char::isWhitespace)) {
+        "A library name with whitespace cannot be recorded in $PLUGIN_CONTENT_CANDIDATE_OVERRIDES_FILE_NAME:" +
+        " `$library` of $name"
+      }
+    }
+    result.add((sequenceOf("+$name") + globalAnswer.sorted()).joinToString(" "))
   }
+  return result
+}
+
+/** [communityOnlyCandidacyOverrideRows] against the checked-in file, for the measurement switch. */
+private fun reportCommunityOnlyCandidacyDelta(
+  moduleList: ModuleList,
+  context: BazelBuildFileGenerator,
+  out: (String) -> Unit,
+) {
+  val needed = communityOnlyCandidacyOverrideRows(moduleList)
   val checkedIn = readPluginContentCandidateOverrides(
     (context.ultimateRoot?.resolve("community") ?: context.communityRoot)
       .resolve("build/$PLUGIN_CONTENT_CANDIDATE_OVERRIDES_FILE_NAME")

@@ -215,6 +215,19 @@ class BazelTargetsInfo {
     @JvmField val imlTargets: List<String> = emptyList(),
     @JvmField val projectLibraries: Map<String, LibraryDescription>,
     @JvmField val pluginDistributionTargets: Map<String, PluginDistributionTargetDescription>,
+    /**
+     * The rows `dev_dist_plugin_content_candidate_overrides.txt` has to state, as the converter derives them.
+     *
+     * The prepacked-candidate fold is repo-global, and the converter is its one implementation: a community-only
+     * conversion cannot see the ultimate half's verdict, so the file tells it. The dev-distribution plan generator
+     * writes the file out of this list rather than folding the checked-in content reports a second time, because the
+     * converter's Kotlin is unreachable from here - it is the standalone Bazel module `jps_to_bazel`, built from
+     * published platform artifacts.
+     *
+     * Empty from a `bazel-targets.json` a community-only run wrote, and empty from one written before the converter
+     * recorded these.
+     */
+    @JvmField val devDistPluginContentCandidateOverrides: List<String> = emptyList(),
   )
 }
 

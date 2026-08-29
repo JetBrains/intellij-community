@@ -4,9 +4,6 @@ package org.jetbrains.intellij.build.bazel
 import com.intellij.openapi.util.JDOMUtil
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.MapSerializer
-import kotlinx.serialization.builtins.nullable
-import kotlinx.serialization.builtins.serializer
 import org.jdom.Element
 import java.nio.file.Path
 import java.util.TreeMap
@@ -230,7 +227,7 @@ internal fun computePluginDescriptor(
   for (variant in variants) {
     val key = if (variant.isEmpty()) moduleName else "$moduleName/$variant"
     val section = residue.get(key) ?: DescriptorResidueSection()
-    val rowLabels = reportDescriptorLabels(module = module, section = section, context = context) ?: return emptyList()
+    val rowLabels = residueDescriptorLabels(module = module, section = section, context = context) ?: return emptyList()
     val contentLabels = when {
       section.noEmbedding -> emptyMap()
       else -> contentDescriptorLabels(module = module, section = section, moduleList = moduleList, context = context)
@@ -291,12 +288,12 @@ private fun descriptorPackagePath(module: ModuleDescriptor, loadPath: String): S
 }
 
 /**
- * The report's own rows as `label` to `load path`, or `null` when this target may not exist.
+ * The residue's own rows as `label` to `load path`, or `null` when this target may not exist.
  *
  * `null` for a community plugin one of whose rows names a path outside `community/`. That is the whole local rule: the
- * community half cannot name a main-repository label, and it reaches this verdict from the report's text alone.
+ * community half cannot name a main-repository label, and it reaches this verdict from the residue's text alone.
  */
-private fun reportDescriptorLabels(
+private fun residueDescriptorLabels(
   module: ModuleDescriptor,
   section: DescriptorResidueSection,
   context: BazelBuildFileGenerator,
@@ -362,11 +359,11 @@ private fun contentDescriptorLabels(
 }
 
 /**
- * [walkContentModules] over this plugin's own descriptor, with the report answering every `xi:include`.
+ * [walkContentModules] over this plugin's own descriptor, with the residue answering every `xi:include`.
  *
- * The report is what makes an include resolvable here. It states the project-relative path of every descriptor an
- * `xi:include` reaches, so this walk needs no module output and no search scope. A row the report does not state leaves
- * the include unfollowed, which this caller accepts: a descriptor target with no report is pure convention, and the
+ * The residue is what makes an include resolvable here. It states the project-relative path of every descriptor an
+ * `xi:include` reaches, so this walk needs no module output and no search scope. A row the residue does not state leaves
+ * the include unfollowed, which this caller accepts: a descriptor target with no residue is pure convention, and the
  * population holds out the plugins whose closure needs one.
  */
 private fun resolveContentModules(
@@ -375,18 +372,18 @@ private fun resolveContentModules(
   context: BazelBuildFileGenerator,
 ): List<String> {
   val descriptor = descriptorFiles(module = module, loadPath = PLUGIN_XML_LOAD_PATH).firstOrNull() ?: return emptyList()
-  val fileByLoadPath = section.descriptors.associate { it.loadPath to reportFile(row = it.path, context = context) }
+  val fileByLoadPath = section.descriptors.associate { it.loadPath to residueRowFile(row = it.path, context = context) }
   return walkContentModules(descriptor = descriptor) { fileByLoadPath.get(it) }.moduleNames
 }
 
 /**
- * One project-relative report path as a file of this checkout.
+ * The project-relative path a [DescriptorRow] states, as a file of this checkout.
  *
  * A path under `community/` is resolved against the community root, and every other path against the ultimate root. So
  * a community-only checkout, whose own root **is** the community root, reads the same row as the community half of an
  * ultimate checkout. `null` is a path this checkout does not have.
  */
-internal fun reportFile(row: String, context: BazelBuildFileGenerator): Path? {
+internal fun residueRowFile(row: String, context: BazelBuildFileGenerator): Path? {
   if (row.startsWith(COMMUNITY_PATH_PREFIX)) {
     return context.communityRoot.resolve(row.removePrefix(COMMUNITY_PATH_PREFIX))
   }
@@ -396,10 +393,9 @@ internal fun reportFile(row: String, context: BazelBuildFileGenerator): Path? {
 /**
  * What one walk of a plugin's descriptor closure found, and what it could not follow.
  *
- * The two refusal lists exist because a caller that only measures has to tell an empty closure from a closure it failed
- * to read. [unresolvedIncludes] is the second case: the walk knows the load path and has no file for it, so the content
- * modules behind that include are missing and the caller must hold the plugin out rather than state a short list.
- * [selectiveIncludes] is a pointer that selects a subtree, which the walk declines by design.
+ * [unresolvedIncludes] tells an empty closure from a closure the walk failed to read. The walk knows the load path and
+ * has no file for it, so the content modules behind that include are missing. [walkPluginContentClosure] reads it to
+ * decide whether a second round would learn anything.
  */
 internal class WalkedContentModules(
   @JvmField val moduleNames: List<String>,
@@ -412,7 +408,6 @@ internal class WalkedContentModules(
    */
   @JvmField val loadingRules: Map<String, String>,
   @JvmField val unresolvedIncludes: List<String>,
-  @JvmField val selectiveIncludes: List<String>,
 )
 
 /**
@@ -431,7 +426,6 @@ internal fun walkContentModules(descriptor: Path, resolveInclude: (String) -> Pa
   val result = ArrayList<String>()
   val loadingRules = HashMap<String, String>()
   val unresolved = ArrayList<String>()
-  val selective = ArrayList<String>()
   appendContentModules(
     root = JDOMUtil.load(descriptor),
     resolveInclude = resolveInclude,
@@ -439,13 +433,11 @@ internal fun walkContentModules(descriptor: Path, resolveInclude: (String) -> Pa
     out = result,
     loadingRules = loadingRules,
     unresolved = unresolved,
-    selective = selective,
   )
   return WalkedContentModules(
     moduleNames = result,
     loadingRules = loadingRules,
     unresolvedIncludes = unresolved,
-    selectiveIncludes = selective,
   )
 }
 
@@ -456,7 +448,6 @@ private fun appendContentModules(
   out: MutableList<String>,
   loadingRules: MutableMap<String, String>,
   unresolved: MutableList<String>,
-  selective: MutableList<String>,
 ) {
   for (child in root.children) {
     if (child.name == "content") {
@@ -480,7 +471,6 @@ private fun appendContentModules(
     // Any other pointer selects a subtree instead of the included root's children, and the position a `<content>` block
     // lands at is then not the include's. The plan holds such a plugin out by name, so no such plugin is here.
     if (child.getAttributeValue("xpointer").let { it != null && it != DEFAULT_XPOINTER }) {
-      selective.add(href)
       continue
     }
     val loadPath = toLoadPath(href)
@@ -505,7 +495,6 @@ private fun appendContentModules(
       out = out,
       loadingRules = loadingRules,
       unresolved = unresolved,
-      selective = selective,
     )
   }
 }
@@ -515,7 +504,6 @@ internal val EMPTY_WALKED_CONTENT_MODULES: WalkedContentModules = WalkedContentM
   moduleNames = emptyList(),
   loadingRules = emptyMap(),
   unresolvedIncludes = emptyList(),
-  selectiveIncludes = emptyList(),
 )
 
 /** The `xpointer` `extractNeededChildrenFor` assumes when an `xi:include` states none. It selects every child. */

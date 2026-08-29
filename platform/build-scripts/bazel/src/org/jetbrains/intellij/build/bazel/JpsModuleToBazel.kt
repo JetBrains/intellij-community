@@ -324,6 +324,30 @@ internal class JpsModuleToBazel {
       val imlTargets: List<String>,
       val projectLibraries: Map<String, LibraryDescription>,
       val pluginDistributionTargets: Map<String, PluginDistributionTargetDescription>,
+      /**
+       * The rows `dev_dist_plugin_content_candidate_overrides.txt` has to state, as
+       * [communityOnlyCandidacyOverrideRows] derives them.
+       *
+       * Recorded rather than recomputed by the plan generator. The prepacked-candidate fold is repo-global and it reads
+       * the project model, the residues and every member's own descriptor, and the plan generator cannot call the
+       * derivation: the converter is the standalone Bazel module `jps_to_bazel`, built from published platform
+       * artifacts, so its Kotlin is unreachable from the monorepo's targets. A second implementation of the fold on that
+       * side is exactly the two-reader hazard this arc removes, so the one implementation states the answer here and the
+       * plan generator writes it out.
+       *
+       * Empty from a community-only run, which is what such a run can honestly say: both arms of the delta are then the
+       * same fold. The plan generator runs over the whole monorepo.
+       *
+       * The hermetic run states the same rows as the full-checkout run, because the delta reads the project model and
+       * no other input. The plan generator is what keeps that true. It writes
+       * `dev_dist_plugin_content_candidate_overrides.txt` from this field, and a validating run reads the hermetic file
+       * and reports every difference against the checked-in one. A thinner field is then a failed validation with a
+       * patch to apply, and not a quietly smaller distribution.
+       *
+       * Do not compare these rows against the checked-in file here. The plan generator needs this run to succeed
+       * before it can correct that file, so such a check would block its own repair.
+       */
+      @JvmField val devDistPluginContentCandidateOverrides: List<String> = emptyList(),
     )
 
     fun saveTargets(
@@ -495,7 +519,8 @@ internal class JpsModuleToBazel {
               )
             }
             .sortedBy { it.first }
-            .toMap()
+            .toMap(),
+        devDistPluginContentCandidateOverrides = communityOnlyCandidacyOverrideRows(moduleList),
       )
 
       val fileContent = jsonSerializer.encodeToString(
