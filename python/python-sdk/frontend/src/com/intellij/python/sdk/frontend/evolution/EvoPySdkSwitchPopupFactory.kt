@@ -305,7 +305,8 @@ internal class EvoPySdkSwitchPopupFactory(
         templatePresentation.setPlainText(name)
         // Where the version column of a real environment shows what it has, this shows what it would get: the version
         // the backend already named for the row, or the Python this would be built on when it named none.
-        templatePresentation.putClientProperty(ActionUtil.SECONDARY_TEXT, secondaryText ?: addVersionText(best))
+        templatePresentation.putClientProperty(ActionUtil.SECONDARY_TEXT,
+                                              secondaryText ?: best.defaultBaseVersion() ?: addVersionText(best))
       }
 
       /** A plain click builds on the Python the row names, which is the best one the backend offered. */
@@ -446,6 +447,15 @@ internal class EvoPySdkSwitchPopupFactory(
 
   /** The version to install before creating, or null when the interpreter is already here. */
   private fun EvoAddNewOptionDto.installVersion(): String? = token.takeIf { installable }
+
+  /**
+   * The exact version of the build this option would be created from — the one its [EvoAddNewOptionDto.token] names.
+   *
+   * Null where the option offers no build to read it off: a tool that provides the interpreter itself (uv, conda) names
+   * a version rather than an install, and the row then says which version it asked for.
+   */
+  private fun EvoAddNewOptionDto.defaultBaseVersion(): @NlsSafe String? =
+    bases.firstOrNull { it.token == token }?.version ?: bases.firstOrNull()?.version
 
   /** Version row text: "Default" for uv's default (blank token), otherwise "Python <version>". */
   private fun addVersionText(option: EvoAddNewOptionDto): @NlsActions.ActionText String =
