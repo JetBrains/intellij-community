@@ -1266,6 +1266,7 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/tuweni/toml/intellij.libraries.tuweni.toml.iml" filepath="$PROJECT_DIR$/libraries/tuweni/toml/intellij.libraries.tuweni.toml.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/velocity/intellij.libraries.velocity.iml" filepath="$PROJECT_DIR$/libraries/velocity/intellij.libraries.velocity.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/winp/intellij.libraries.winp.iml" filepath="$PROJECT_DIR$/libraries/winp/intellij.libraries.winp.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/workspace-model-codegen/intellij.libraries.workspace.model.codegen.iml" filepath="$PROJECT_DIR$/libraries/workspace-model-codegen/intellij.libraries.workspace.model.codegen.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/xerces/intellij.libraries.xerces.iml" filepath="$PROJECT_DIR$/libraries/xerces/intellij.libraries.xerces.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/xerial-snappy-java/intellij.libraries.xerial.snappy.java.iml" filepath="$PROJECT_DIR$/libraries/xerial-snappy-java/intellij.libraries.xerial.snappy.java.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/xml-rpc/intellij.libraries.xml.rpc.iml" filepath="$PROJECT_DIR$/libraries/xml-rpc/intellij.libraries.xml.rpc.iml" />

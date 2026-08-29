@@ -56,6 +56,13 @@
     <module name="intellij.platform.jewel.samples.showcase"/>
   </content>
 
+  <!-- Not embedded: intellij.devkit.workspaceModel is a regular content module, and CodegenJarLoader gives the
+       downloaded codegen-impl jar that module's own classloader as a parent, which has the wrapper as a parent.
+       No 'namespace' attribute, so this is a private copy for this plugin only. -->
+  <content>
+    <module name="intellij.libraries.workspace.model.codegen"/>
+  </content>
+
   <extensions defaultExtensionNs="com.intellij">
     <!-- Dependencies created with IntelliJ Platform Gradle Plugin 2.x -->
     <dependencySupport coordinate="com.jetbrains.intellij.idea:ideaIC" kind="java" displayName="IntelliJ IDEA Community"/>

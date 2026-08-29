@@ -70,10 +70,6 @@
 - name: lib/modules/intellij.devkit.workspaceModel.jar
   contentModules:
   - name: intellij.devkit.workspaceModel
-  library: workspace-model-codegen
-  files:
-  - name: $MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/workspace-model-codegen/0/workspace-model-codegen-0.jar
-  reason: <- intellij.devkit.workspaceModel
 - name: lib/modules/intellij.devkit.workspaceModel.k2.jar
   contentModules:
   - name: intellij.devkit.workspaceModel.k2
@@ -83,6 +79,12 @@
 - name: lib/modules/intellij.kotlin.devkit.k2.jar
   contentModules:
   - name: intellij.kotlin.devkit.k2
+- name: lib/modules/intellij.libraries.workspace.model.codegen.jar
+  contentModules:
+  - name: intellij.libraries.workspace.model.codegen
+    libraries:
+      workspace-model-codegen:
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/workspace-model-codegen/0/workspace-model-codegen-0.jar
 - name: lib/modules/intellij.platform.jewel.samples.showcase.jar
   contentModules:
   - name: intellij.platform.jewel.samples.showcase

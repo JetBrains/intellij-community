@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.workspace.model.codegen.jar
+  modules:
+  - name: intellij.libraries.workspace.model.codegen
+    libraries:
+      workspace-model-codegen:
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/workspace-model-codegen/0/workspace-model-codegen-0.jar

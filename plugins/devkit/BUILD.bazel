@@ -42,13 +42,10 @@ exports_files(
 
 ### auto-generated section `dev content intellij.devkit` start
 dev_dist_plugin_content(
-    content_modules = [
-        "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
-        "//plugins/devkit/jps-plugin:jps",
-    ],
+    content_modules = ["//plugins/devkit/jps-plugin:jps"],
     descriptor_module = ":devkit",
-    libraries = ["@lib//:workspace-model-codegen"],
     prepacked_content_modules = [
+        "//libraries/workspace-model-codegen:workspace-model-codegen_content_module_jar",
         "//platform/jewel/samples/showcase:showcase_content_module_jar",
         "//plugins/devkit/api-dump-lang:apiDump-lang_content_module_jar",
         "//plugins/devkit/api-dump:api-dump_content_module_jar",
@@ -71,6 +68,7 @@ dev_dist_plugin_content(
         "//plugins/devkit/intellij.devkit.uiDesigner:uiDesigner_content_module_jar",
         "//plugins/devkit/intellij.devkit.uiDsl:uiDsl_content_module_jar",
         "//plugins/devkit/intellij.devkit.workspaceModel/k2:k2_content_module_jar",
+        "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel_content_module_jar",
         "//plugins/devkit/intellij.kotlin.devkit/k2:k2_content_module_jar",
         "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit_content_module_jar",
     ],

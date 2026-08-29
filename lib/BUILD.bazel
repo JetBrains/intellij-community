@@ -15485,6 +15485,20 @@ jvm_import(
 )
 
 copy_file(
+    name = "com.jetbrains.intellij.platform/workspace-model-codegen-0.0.9.jar_copy",
+    src = "@com_jetbrains_intellij_platform-workspace-model-codegen-0_0_9_http//file",
+    out = "com.jetbrains.intellij.platform/workspace-model-codegen-0.0.9.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-workspace-model-codegen-workspace-model-codegen",
+    jar = "@com_jetbrains_intellij_platform-workspace-model-codegen-0_0_9_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "xerces/xercesImpl-2.12.2.jar_copy",
     src = "@xerces-xercesImpl-2_12_2_http//file",
     out = "xerces/xercesImpl-2.12.2.jar",
@@ -21875,20 +21889,6 @@ java_library(
         ":com_squareup_okio-okio-jvm-3_9_0_http_import",
         ":com_apollographql_apollo-apollo-annotations-jvm-4_0_0_http_import",
     ],
-)
-
-copy_file(
-    name = "com.jetbrains.intellij.platform/workspace-model-codegen-0.0.9.jar_copy",
-    src = "@com_jetbrains_intellij_platform-workspace-model-codegen-0_0_9_http//file",
-    out = "com.jetbrains.intellij.platform/workspace-model-codegen-0.0.9.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "workspace-model-codegen",
-    jar = "@com_jetbrains_intellij_platform-workspace-model-codegen-0_0_9_http//file",
-    visibility = ["//visibility:public"],
 )
 
 copy_file(

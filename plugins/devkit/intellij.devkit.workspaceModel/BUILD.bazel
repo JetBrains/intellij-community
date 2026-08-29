@@ -1,5 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.devkit.workspaceModel` start
 create_kotlinc_options(
@@ -42,7 +43,7 @@ jvm_library(
         "//plugins/kotlin/references",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-        "@lib//:workspace-model-codegen",
+        "//libraries/workspace-model-codegen",
         "//platform/code-style-api:codeStyle",
         "//platform/util/concurrency",
         "//platform/ide-core",
@@ -89,6 +90,8 @@ jvm_library(
     ],
 )
 
+content_module_jar(module = ":workspaceModel")
+
 jvm_library(
     name = "workspaceModel_test_lib",
     testonly = True,
@@ -109,6 +112,7 @@ jvm_library(
         "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
         "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//libraries/workspace-model-codegen:workspace-model-codegen_test_lib",
         "//platform/code-style-api:codeStyle_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
         "//platform/ide-core:ide-core_test_lib",

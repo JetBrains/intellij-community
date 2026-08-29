@@ -645,6 +645,7 @@ libraries/testng
 libraries/tuweni/toml
 libraries/velocity
 libraries/winp
+libraries/workspace-model-codegen
 libraries/xerces
 libraries/xerial-snappy-java
 libraries/xml-rpc

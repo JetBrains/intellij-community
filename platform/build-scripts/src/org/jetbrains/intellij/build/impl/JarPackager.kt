@@ -137,7 +137,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "squareup.okio.jvm",
   // declared by the android plugin layout, so the Rider android plugin needs its own copy
   "studio-platform",
-  "workspace-model-codegen",
 )
 
 class JarPackager private constructor(

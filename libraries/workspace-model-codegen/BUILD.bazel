@@ -1,0 +1,49 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.libraries.workspace.model.codegen` start
+jvm_library(
+    name = "workspace-model-codegen",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.workspace.model.codegen",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-workspace-model-codegen-workspace-model-codegen"],
+    runtime_deps = ["@lib//:libraries-workspace-model-codegen-workspace-model-codegen"],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-workspace-model-codegen-workspace-model-codegen"],
+    module = ":workspace-model-codegen",
+)
+
+jvm_library(
+    name = "workspace-model-codegen_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.workspace.model.codegen",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-workspace-model-codegen-workspace-model-codegen"],
+    runtime_deps = [":workspace-model-codegen"],
+)
+### auto-generated section `build intellij.libraries.workspace.model.codegen` end
+
+### auto-generated section `iml intellij.libraries.workspace.model.codegen` start
+exports_files(
+    [
+        "intellij.libraries.workspace.model.codegen.iml",
+        "resources/intellij.libraries.workspace.model.codegen.xml",
+        "module-content.yaml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.workspace.model.codegen` end
