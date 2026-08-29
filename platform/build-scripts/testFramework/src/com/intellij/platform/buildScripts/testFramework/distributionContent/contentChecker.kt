@@ -82,6 +82,18 @@ data class PackagingCheckFailure(
   @JvmField val error: Throwable,
 )
 
+/**
+ * The checks over the plugins and the product modules a build reported.
+ *
+ * A product module is compared against the `module-content.yaml` checked in beside it.
+ *
+ * A plugin has no checked-in snapshot, so a plugin gets one check. The content the build reports for a bundled plugin
+ * must equal the content it reports for the non-bundled build of the same plugin. This still finds a layout that
+ * differs between the two builds. It no longer finds a change of one plugin's own content, and it asks no reviewer to
+ * approve such a change.
+ *
+ * A plugin the build reports only as non-bundled therefore gets no check, and no test name is stated for one.
+ */
 @Internal
 fun collectPluginContentFailures(
   content: ParsedContentReport,
@@ -93,13 +105,11 @@ fun collectPluginContentFailures(
 ): List<PackagingCheckFailure> {
   return buildList {
     addAll(
-      collectPluginContentCategoryFailures(
-        fileEntries = toPluginContentMap(content.productModules).values.asSequence(),
+      collectProductModuleContentFailures(
+        reports = toPluginContentMap(content.productModules).values,
         project = project,
         projectHome = projectHome,
-        nonBundled = null,
         suggestedReviewer = suggestedReviewer,
-        contentFileName = "module-content.yaml",
         testName = { key -> testName("product-module", key) },
       )
     )
@@ -108,67 +118,62 @@ fun collectPluginContentFailures(
       return@buildList
     }
 
-    val bundled = toPluginContentMap(content.bundled)
-    val nonBundled = toPluginContentMap(content.nonBundled)
     addAll(
-      collectPluginContentCategoryFailures(
-        fileEntries = bundled.values.asSequence(),
-        project = project,
-        projectHome = projectHome,
-        nonBundled = nonBundled,
-        suggestedReviewer = suggestedReviewer,
-        contentFileName = "plugin-content.yaml",
+      collectBundledPluginContentFailures(
+        bundled = toPluginContentMap(content.bundled).values,
+        nonBundled = toPluginContentMap(content.nonBundled),
         testName = { key -> testName("bundled-plugin", key) },
-      )
-    )
-    addAll(
-      collectPluginContentCategoryFailures(
-        fileEntries = nonBundled.values.asSequence().filter { !bundled.containsKey(getPluginContentKey(it)) },
-        project = project,
-        projectHome = projectHome,
-        nonBundled = null,
-        suggestedReviewer = suggestedReviewer,
-        contentFileName = "plugin-content.yaml",
-        testName = { key -> testName("non-bundled-plugin", key) },
       )
     )
   }
 }
 
-private fun collectPluginContentCategoryFailures(
-  fileEntries: Sequence<PluginContentReport>,
+/** Compares each product module against the `module-content.yaml` beside its own module. */
+private fun collectProductModuleContentFailures(
+  reports: Collection<PluginContentReport>,
   project: JpsProject,
   projectHome: Path,
-  nonBundled: Map<String, PluginContentReport>?,
   suggestedReviewer: String?,
-  contentFileName: String,
   testName: (key: String) -> String,
 ): List<PackagingCheckFailure> {
   val failures = ArrayList<PackagingCheckFailure>()
-  val groupedAllOs = fileEntries.groupBy { it.mainModule }
-
-  for ((mainModule, items) in groupedAllOs) {
+  for ((mainModule, items) in reports.groupBy { it.mainModule }) {
     val module = project.findModuleByName(mainModule) ?: continue
-    val contentRoot = Path.of(JpsPathUtil.urlToPath(module.contentRootsList.urls.first()))
-    val expectedFile = contentRoot.resolve(contentFileName)
     val key = getPluginContentKey(items.first())
     try {
-      val itemFileEntries = mergePerOsPluginContent(items)
-
+      val contentRoot = Path.of(JpsPathUtil.urlToPath(module.contentRootsList.urls.first()))
       checkThatContentIsNotChanged(
-        actualFileEntries = itemFileEntries,
-        expectedFile = expectedFile,
+        actualFileEntries = mergePerOsPluginContent(items),
+        expectedFile = contentRoot.resolve("module-content.yaml"),
         projectHome = projectHome,
-        isBundled = nonBundled != null,
+        isBundled = false,
         suggestedReviewer = suggestedReviewer,
       )
+    }
+    catch (t: Throwable) {
+      failures.add(PackagingCheckFailure(name = testName(key), error = t))
+    }
+  }
+  return failures
+}
 
-      if (nonBundled == null) {
-        continue
-      }
-
-      val nonBundledVersion = nonBundled[key] ?: continue
-      val bundledContent = normalizeContentReport(fileEntries = itemFileEntries, short = true)
+/**
+ * Compares the content of each bundled plugin against the content of the non-bundled build of the same plugin.
+ *
+ * The two builds pack one plugin, so one layout answers for both. A plugin the non-bundled build does not report is
+ * skipped, because there is no second answer to compare with.
+ */
+private fun collectBundledPluginContentFailures(
+  bundled: Collection<PluginContentReport>,
+  nonBundled: Map<String, PluginContentReport>,
+  testName: (key: String) -> String,
+): List<PackagingCheckFailure> {
+  val failures = ArrayList<PackagingCheckFailure>()
+  for ((_, items) in bundled.groupBy { it.mainModule }) {
+    val key = getPluginContentKey(items.first())
+    val nonBundledVersion = nonBundled.get(key) ?: continue
+    try {
+      val bundledContent = normalizeContentReport(fileEntries = mergePerOsPluginContent(items), short = true)
       val nonBundledContent = normalizeContentReport(fileEntries = nonBundledVersion.content, short = true)
       if (bundledContent != nonBundledContent) {
         throw AssertionError(
@@ -188,23 +193,20 @@ private fun collectPluginContentCategoryFailures(
 /**
  * One plugin's content over every target platform the build reported it for, as one list.
  *
- * A plugin gets a report per operating system and architecture where its layout differs by one - the android plugin
- * excludes some module libraries that way - and one `plugin-content.yaml` is checked in for all of them. So the variants
- * are unioned rather than compared.
+ * A plugin gets a report per operating system and architecture where its layout differs by one. The android plugin
+ * excludes some module libraries that way. Each caller compares one plugin against one other answer, so it needs one
+ * list per plugin, and the variants are unioned rather than compared with each other.
  *
- * **The union deduplicates on the same values the comparison uses.** [checkThatContentIsNotChanged] compares
- * `short = true` entries, which is what makes a change of `ProjectLibraryEntry.dependentModules` alone not a change. A
- * union that deduplicated `short = false` entries kept two variants that differ in that field only, and the comparison
- * then saw one jar twice where the checked-in file names it once - a failure about a field the comparison had already
- * declined to look at.
+ * **The union deduplicates on the same values the comparison uses.** Every caller compares `short = true` entries, which
+ * is what makes a change of `ProjectLibraryEntry.dependentModules` alone not a change. A union that deduplicated
+ * `short = false` entries kept two variants that differ in that field only, and the comparison then saw one jar twice
+ * where the other side names it once. That is a failure about a field the comparison had already declined to look at.
  *
- * A single variant is returned unnormalized, because [checkThatContentIsNotChanged] normalizes what it is given and
- * doing it twice says nothing.
+ * A single variant is returned unnormalized, because the caller normalizes what it is given and doing it twice says
+ * nothing.
  *
- * What this still does not do is state a superset of two entries that really differ. Two variants whose `lib/x.jar` holds
- * different module libraries stay two entries with one name, and the comparison fails naming that jar. Merging them per
- * jar name is a product-layout decision, and this arc removes the need for it instead: a residue row is a module name or
- * a library name, so a union over the variants is a union of names and cannot hold two rows that contradict each other.
+ * What this still does not do is state a superset of two entries that really differ. Two variants whose `lib/x.jar`
+ * holds different module libraries stay two entries with one name, and the comparison fails naming that jar.
  */
 @Internal
 fun mergePerOsPluginContent(items: List<PluginContentReport>): List<FileEntry> {
@@ -262,6 +264,14 @@ $patchText"""
   }
 }
 
+/**
+ * Compares the content a build produced against a checked-in snapshot, and fails with a patch when the two differ.
+ *
+ * Two production callers remain. One is the per-product platform snapshot, and it passes `isBundled = true`, so the
+ * review path that [suggestedReviewer] drives still runs for it. The other is the `module-content.yaml` of a product
+ * module, and it passes `isBundled = false`. No caller compares one plugin against a snapshot any more, so a change of
+ * one plugin's own content needs no approval.
+ */
 @Internal
 fun checkThatContentIsNotChanged(
   actualFileEntries: List<FileEntry>,

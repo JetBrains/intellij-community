@@ -927,7 +927,7 @@
     <registryKey key="devkit.inlay.threading" defaultValue="false"
                  description="Experimental inlays for Threading Annotations"/>
 
-    <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.contentReport.ContentReportGeneratedSourcesFilter"/>
+    <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.devDist.DevDistResidueGeneratedSourcesFilter"/>
 
     <!-- INTERNAL -->
     <consoleFilterProvider implementation="org.jetbrains.idea.devkit.run.ModulePathFilterProvider"/>
