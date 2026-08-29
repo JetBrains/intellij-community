@@ -45,7 +45,12 @@ class PluginModuleDependencyValidationConfig(
       corePluginDescriptorPath = corePluginDescriptorPath,
     )
   },
-  @JvmField val pluginExclusionSubsets: () -> Sequence<Set<String>> = { sequenceOf(emptySet()) },
+  /**
+   * Returns the plugins that each validation variant leaves out.
+   *
+   * Some plugins conflict with each other, so one variant cannot validate them all.
+   */
+  @JvmField val pluginExclusionSubsets: (PackagingTargetValidationContext) -> PluginExclusionSubsets = { singleValidationVariant },
 )
 
 private data class ValidationVariant(
@@ -111,9 +116,9 @@ private fun validatePluginModuleDependencies(
   config: PluginModuleDependencyValidationConfig,
 ): List<PackagingCheckFailure> {
   val pluginLayoutProvider = config.createPluginLayoutProvider(context)
-  val variants = config.pluginExclusionSubsets()
+  val exclusionSubsets = config.pluginExclusionSubsets(context)
+  val variants = exclusionSubsets.subsets
     .mapIndexed { index, pluginExclusionSubset -> ValidationVariant(index = index, pluginExclusionSubset = pluginExclusionSubset) }
-    .toList()
   val errors: List<PluginModuleConfigurationError> = when (variants.size) {
     0 -> emptyList()
     1 -> {
@@ -137,7 +142,23 @@ private fun validatePluginModuleDependencies(
       }.flatten()
     }
   }
-  return errors.distinctBy { it.toString() }.toPackagingCheckFailures()
+  return (errors + exclusionSubsets.toUncoveredPluginErrors()).distinctBy { it.toString() }.toPackagingCheckFailures()
+}
+
+/**
+ * A plugin that no variant validates is a gap in the validation, so it becomes a failure.
+ */
+private fun PluginExclusionSubsets.toUncoveredPluginErrors(): List<PluginModuleConfigurationError> {
+  return uncoveredPlugins.map { (mainModule, reason) ->
+    PluginModuleConfigurationError(
+      pluginModelModuleName = mainModule,
+      errorMessage = """
+        |No validation variant loads the plugin of '$mainModule', because $reason.
+        |So nothing validates the module dependencies of that plugin.
+        |Either resolve the conflict that keeps the plugin out, or raise the variant cap of this validation.
+      """.trimMargin(),
+    )
+  }
 }
 
 private fun validatePluginModuleDependencyVariant(
