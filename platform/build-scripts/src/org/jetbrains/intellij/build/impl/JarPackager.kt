@@ -112,7 +112,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "ai.grazie.rule.engine",
   "ai.grazie.semantic.engine",
   "antlr4-runtime",
-  "apache.avro",
   "assertj-swing",
   "com.jetbrains.fus.reporting.ap.validation.all",
   "cucumber-core-1",
