@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.bazel
 
-import kotlinx.serialization.builtins.ListSerializer
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
@@ -9,9 +8,7 @@ import java.nio.file.Path
 import java.util.TreeMap
 import java.util.TreeSet
 import kotlin.io.path.exists
-import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.readText
-import kotlin.io.path.relativeTo
 
 /**
  * What a plugin contributes to a distribution, as Bazel labels: its member modules and the library jars they need.
@@ -97,7 +94,7 @@ internal class PluginContentResult(
   @JvmField val crossRepositoryLibraryContainers: List<String> = emptyList(),
 )
 
-/** The population the plan generator states; see [readPluginContentPopulation]. */
+/** The population the residue writer states; see [readPluginContentPopulation]. */
 internal const val PLUGIN_CONTENT_POPULATION_FILE_NAME: String = "dev_dist_plugin_content_population.txt"
 
 /**
@@ -105,7 +102,7 @@ internal const val PLUGIN_CONTENT_POPULATION_FILE_NAME: String = "dev_dist_plugi
  *
  * A `#` line is a comment. Flat names, no variant: a plugin's membership does not depend on the layout variant, which is
  * the one thing that separates this file from `dev_dist_plugin_descriptor_population.txt`. Two files rather than two
- * meanings per line, because the two populations differ - 515 plugins state content and 173 state a descriptor.
+ * meanings per line, because the two populations differ - 516 plugins state content and 173 state a descriptor.
  *
  * The converter needs the population and cannot fold it for itself. Whether a module is a plugin main module is a
  * **product** question. A plain text file for the reason [PLUGIN_CONTENT_CANDIDATE_OVERRIDES_FILE_NAME] gives: it keeps
@@ -115,9 +112,13 @@ internal const val PLUGIN_CONTENT_POPULATION_FILE_NAME: String = "dev_dist_plugi
  * An absent file gives an empty population, and then this run states content for no plugin at all. The generator's own
  * integration tests each build a throwaway project and check in a population file of their own.
  *
- * `--write-dev-dist-residue --content-report=<zip>` writes this file, off the main modules a real distribution build
- * reports. Nothing else derives it, so a plugin missing from it gets no content leaf, and the dev-distribution assembly
+ * `--write-dev-dist-residue --content-report=<zip>` writes this file, off the main modules the real distribution builds
+ * report. Nothing else derives it, so a plugin missing from it gets no content leaf, and the dev-distribution assembly
  * then fails naming the jar its fragment did not declare.
+ *
+ * The population is the union over the products, so that command takes one report per product. A run given fewer keeps
+ * the lines it cannot speak for, and it says so. `foldPluginContentPopulation` of `devDistResidueWriter.kt` holds the
+ * rule.
  */
 internal fun readPluginContentPopulation(file: Path): Set<String> {
   if (!file.exists()) {
@@ -167,8 +168,8 @@ internal fun pluginContentTargetName(module: ModuleDescriptor): String = "${modu
 /**
  * Resolves one plugin of a distribution build's content report into Bazel labels.
  *
- * [entries] is the plugin's own entries, as [readPluginContentReportZip] unions them over the build's target platforms.
- * Only the residue writer and the comparison switches take this route; generation takes [derivePluginContent].
+ * [entries] is the plugin's own entries, as [readPluginContentReportZips] unions them over the build's target platforms.
+ * Only the residue writer takes this route; generation takes [derivePluginContent].
  *
  * [PluginContentResult.content] is `null` when the report holds nothing for [module], or when it resolves to nothing
  * beyond the main module itself; the cross-repository lists are filled either way.
@@ -368,7 +369,7 @@ internal class PluginLibraryLabels(
  * raw member and `JarPackager` keeps packing every jar it is in.
  *
  * Neither veto is reported. A vetoed module keeps the packing it had before the hand-off, so the veto takes nothing
- * away, and the report that states the two destinations is checked in beside the plugin.
+ * away.
  */
 internal fun reportedPrepackedMemberPaths(entries: List<RecipeEntry>): Map<String, String> {
   val coPacked = coPackedElsewhere(entries)

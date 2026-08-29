@@ -360,12 +360,60 @@ internal suspend fun <T> doRunTestBuild(
     Logger.setFactory(defaultLogFactory)
 
     try {
+      keepContentReport(context)
       outDir?.also(NioFiles::deleteRecursively)
     }
     catch (e: Throwable) {
       System.err.println("cannot cleanup $outDir:")
       e.printStackTrace(System.err)
     }
+  }
+}
+
+/**
+ * Where a run keeps its `content-report.zip`, so that a residue check can read one.
+ *
+ * A test build deletes its whole output directory, the artifacts with it, and the report is the only record of what the
+ * build packed. `--verify-dev-dist-residue` of the JPS-to-Bazel converter needs it, and one report per product, so a
+ * suite run has to keep every one of them.
+ *
+ * Set the property to a directory. The default is unset, and an unset property changes nothing.
+ */
+const val KEEP_CONTENT_REPORT_PROPERTY: String = "intellij.build.test.keep.content.report"
+
+/**
+ * Copies this build's content report out of the output directory before the caller deletes it.
+ *
+ * Named by the product code and the base file name together, because a suite builds several products and neither key is
+ * unique on its own. Five products of `AllProductsPackagingTest` share the base file name `intellij-server`. A remaining
+ * collision gets a counter, so no report overwrites another whatever the products are.
+ *
+ * A product that wrote no report is skipped in silence: a build step may be off, and this is not the place to state that.
+ * A failure to copy is printed and swallowed, because this runs in the caller's cleanup and must not replace the test's
+ * own verdict.
+ */
+private fun keepContentReport(context: BuildContext) {
+  val target = System.getProperty(KEEP_CONTENT_REPORT_PROPERTY)?.takeIf { it.isNotBlank() } ?: return
+  val report = context.paths.artifactDir.resolve("content-report.zip")
+  if (!Files.isRegularFile(report)) {
+    return
+  }
+  try {
+    val dir = Path.of(target)
+    Files.createDirectories(dir)
+    val name = "${context.applicationInfo.productCode}-${context.productProperties.baseFileName}"
+    var kept = dir.resolve("$name-content-report.zip")
+    var index = 2
+    while (Files.exists(kept)) {
+      kept = dir.resolve("$name-$index-content-report.zip")
+      index++
+    }
+    Files.copy(report, kept)
+    println("content report kept: $kept")
+  }
+  catch (e: Throwable) {
+    System.err.println("cannot keep the content report of ${context.productProperties.baseFileName}:")
+    e.printStackTrace(System.err)
   }
 }
 

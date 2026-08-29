@@ -12,7 +12,7 @@ import java.util.zip.ZipFile
  *
  * The narrow mirror of `com.intellij.platform.distributionContent.PluginContentReport`, for the reason [RecipeEntry]
  * gives: that class lives in the platform, and this generator is a standalone Bazel module that gets the platform as
- * published Maven artifacts.
+ * published Maven artifacts. `ContentReportSchemaTest` fails on a rename of any field here.
  *
  * [os] and [arch] are the report's own selectors, and they are separate from [RecipeEntry.os]. A build writes one plugin
  * per target platform where the plugin's layout differs by one, so a plugin can appear several times under one
@@ -30,28 +30,77 @@ internal data class ReportedPlugin(
 private val PLUGIN_REPORT_ENTRIES = listOf("bundled-plugins.yaml", "non-bundled-plugins.yaml")
 
 /**
- * Every plugin of a distribution build's content report, by main module name.
+ * Every plugin of one or more distribution builds' content reports, by main module name.
  *
  * The report zip is the verification record of what a real distribution build packs, and it is the authority both residue
  * modes read. `DistributionJARsBuilder` writes it to `<artifacts>/content-report.zip`, and `readContentReportZip` of
  * `contentChecker.kt` is the platform-side reader of the same four entries.
  *
- * This reader refuses a damaged report rather than reading fewer plugins from it. `recipeYaml` runs with
- * `strictMode = false`, so a renamed field of the platform's `PluginContentReport` would decode as the default instead of
- * failing, and every plugin would arrive with no main module. The population file and the residues are written from this
- * map, so a quiet shrink here would empty the population and take 356 content leaves with it.
+ * ### Why this takes several files
  *
- * A plugin's target-platform variants are **unioned**, not compared. That is the same rule `mergePerOsPluginContent` of
- * `contentChecker.kt` applies, and this reaches it without a second implementation of the union: every read the
- * converter does over a plugin's entries is a set fold, so concatenating the variants and dropping the duplicates is the
- * whole operation. [RecipeEntry] declares no size and no file list, so its structural equality already ignores the
- * fields that normalization drops.
+ * One build reports one product, and no product packs the whole population. The largest, IDEA Ultimate, reported 472
+ * plugins of a 516-line population, and 'All Packaging Tests' produces one zip per product. So the authority for the
+ * residue and the population is the **union over the products**, and a run given one product's zip can state only part of
+ * it. [readPluginContentReportZips] takes the whole set, and `--content-report=` may be repeated or name a directory.
  *
- * A plugin with several variants is reported. No plugin of the current build has one, so the branch that unions two
- * genuinely differing variants is untested, and the first build that exercises it says so rather than deciding in
- * silence.
+ * ### Why a union, and not a comparison
+ *
+ * A plugin's entries are **unioned**, whether they come from two target-platform variants of one product or from two
+ * products. That is the same rule `mergePerOsPluginContent` of `contentChecker.kt` applies, and this reaches it without a
+ * second implementation of the union: every read the converter does over a plugin's entries is a set fold, so
+ * concatenating the entries and dropping the duplicates is the whole operation. [RecipeEntry] declares no size and no file
+ * list, so its structural equality already ignores the fields that normalization drops.
+ *
+ * The union is what makes several products safe to combine. A member one product packs beside another content module and a
+ * second product packs alone yields both entries, and the candidacy fold then vetoes the member for every plugin. The
+ * veto is the conservative answer, so adding a product can only take a packing target away, never invent one.
+ *
+ * A plugin whose entries genuinely disagree is reported. A plugin that simply appears in several products with the same
+ * layout is not, because the duplicates collapse and there is nothing to decide.
+ *
+ * ### Why this refuses rather than reads less
+ *
+ * `recipeYaml` runs with `strictMode = false`, so a renamed field of the platform's `PluginContentReport` would decode as
+ * the default instead of failing, and every plugin would arrive with no main module. The population file and the residues
+ * are written from this map, so a quiet shrink here would empty the population and take 356 content leaves with it.
  */
-internal fun readPluginContentReportZip(file: Path): Map<String, List<RecipeEntry>> {
+internal fun readPluginContentReportZips(files: List<Path>): Map<String, List<RecipeEntry>> {
+  check(files.isNotEmpty()) { "No content report named. Pass --content-report=<zip or directory> at least once" }
+  val plugins = ArrayList<Pair<Path, ReportedPlugin>>()
+  for (file in files) {
+    val read = readOneReportZip(file)
+    check(read.isNotEmpty()) {
+      "$file names no plugin. A distribution build packs plugins, so the zip is not one of its reports"
+    }
+    for (plugin in read) {
+      plugins.add(file to plugin)
+    }
+  }
+
+  val result = LinkedHashMap<String, MutableList<RecipeEntry>>()
+  val layouts = LinkedHashMap<String, MutableList<List<RecipeEntry>>>()
+  for ((file, plugin) in plugins) {
+    check(plugin.mainModule.isNotEmpty()) {
+      "$file reports a plugin with no main module. The platform declares `PluginContentReport.mainModule` without a" +
+      " default, so a report cannot omit it, and `ReportedPlugin` no longer matches the shape the build writes"
+    }
+    layouts.getOrPut(plugin.mainModule) { ArrayList() }.add(plugin.content)
+    result.getOrPut(plugin.mainModule) { ArrayList() }.addAll(plugin.content)
+  }
+  for ((mainModule, reported) in layouts) {
+    val distinct = reported.distinct()
+    if (distinct.size > 1) {
+      println(
+        "WARN: $mainModule is reported with ${distinct.size} differing layouts across ${files.size} report(s)." +
+        " The layouts are unioned, and a jar they disagree about vetoes its member instead of being interpreted"
+      )
+    }
+  }
+  return result.mapValues { it.value.distinct() }
+}
+
+/** Every plugin one report zip names, in the order the two entries hold them. */
+private fun readOneReportZip(file: Path): List<ReportedPlugin> {
   val plugins = ArrayList<ReportedPlugin>()
   ZipFile(file.toFile()).use { zip ->
     for (name in PLUGIN_REPORT_ENTRIES) {
@@ -63,25 +112,5 @@ internal fun readPluginContentReportZip(file: Path): Map<String, List<RecipeEntr
       plugins.addAll(recipeYaml.decodeFromString(ListSerializer(ReportedPlugin.serializer()), text))
     }
   }
-
-  val result = LinkedHashMap<String, MutableList<RecipeEntry>>()
-  val variants = LinkedHashMap<String, Int>()
-  for (plugin in plugins) {
-    check(plugin.mainModule.isNotEmpty()) {
-      "$file reports a plugin with no main module. The platform declares `PluginContentReport.mainModule` without a" +
-      " default, so a report cannot omit it, and `ReportedPlugin` no longer matches the shape the build writes"
-    }
-    variants.merge(plugin.mainModule, 1, Int::plus)
-    result.getOrPut(plugin.mainModule) { ArrayList() }.addAll(plugin.content)
-  }
-  check(result.isNotEmpty()) { "$file names no plugin. A distribution build packs plugins, so the zip is not one of its reports" }
-  for ((mainModule, count) in variants) {
-    if (count > 1) {
-      println(
-        "WARN: $mainModule has $count target-platform variants in $file. The variants are unioned, and a jar the" +
-        " variants disagree about vetoes its member instead of being interpreted"
-      )
-    }
-  }
-  return result.mapValues { it.value.distinct() }
+  return plugins
 }

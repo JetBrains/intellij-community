@@ -32,13 +32,13 @@ import org.junit.jupiter.api.assertAll
  * narrow schema stop agreeing. A *rename* also fails here. A canonical reader survives a rename, because the same code
  * writes and reads the report, while the narrow schema's now-dead field reads nothing.
  *
- * It compares field-name sets, and it scans no report. A rename fails on the first run whatever the corpus holds. The 764
+ * It compares field-name sets, and it scans no report. A rename fails on the first run whatever the corpus holds. The 784
  * checked-in `module-content.yaml` reports also carry no `productModules` and no `productEmbeddedModules`, so a scan would
  * enforce nothing about those two.
  *
  * The plugin envelope has no checked-in corpus to scan at all. IJAI-955 retired `plugin-content.yaml`, and a per-plugin
  * report now reaches the converter only in `content-report.zip`, which a distribution build writes. So a field-name
- * comparison is the only enforcement a test can give that envelope. `readPluginContentReportZip` adds a second layer at
+ * comparison is the only enforcement a test can give that envelope. `readPluginContentReportZips` adds a second layer at
  * run time. It refuses a zip that names no plugin, and a plugin that carries no main module.
  *
  * ### Why a narrow schema is mirrored here rather than compared descriptor-to-descriptor
@@ -114,7 +114,7 @@ private val FILE_ENTRY = NarrowSchema(
   narrowName = "RecipeEntry",
   narrowFile = "contentModuleJar.kt",
   // `os`/`arch`/`libc` are modeled rather than ignored although no report the converter reads carries one on an entry: a
-  // report is an OS superset (`collectPluginContentCategoryFailures` and `readPluginContentReportZip` both union the
+  // report is an OS superset (`collectPluginContentCategoryFailures` and `readPluginContentReportZips` both union the
   // per-OS variants of one main module), so an entry that did carry one would be read as unconditional, and
   // `simplePluginContentEntry` hands only unconditional jars off to a Bazel target. Declaring them turns that from a
   // silent misread into a veto.
@@ -124,7 +124,7 @@ private val FILE_ENTRY = NarrowSchema(
     // (`writeProductModules`), where they list the product layout's own modules and its `intellij.moduleSets.*`
     // references. The plan generator reads them from that baseline into the platform fragment's payload
     // (`devDistPlanGenerator.kt`, the `entry.name == "plugins"` branch), not into any plugin's content. They are
-    // product-level membership, not plugin membership, so a plugin's content target must not claim them; 0 of the 764
+    // product-level membership, not plugin membership, so a plugin's content target must not claim them; 0 of the 784
     // checked-in `module-content.yaml` reports carry either field.
     "productModules" to "product-level modules and module-set references of a platform report, not plugin content",
     "productEmbeddedModules" to "product-level embedded modules of a platform report, not plugin content",
@@ -175,7 +175,7 @@ private val PROJECT_LIBRARY_ENTRY = NarrowSchema(
 
 // The envelope of one per-plugin report, and the only one of the four with no checked-in corpus behind it: the converter
 // reads it from `content-report.zip`, which a distribution build writes. `ReportedPlugin` declares every field, so the
-// `ignored` map is empty. A rename on this side is the expensive one. `readPluginContentReportZip` writes
+// `ignored` map is empty. A rename on this side is the expensive one. `readPluginContentReportZips` writes
 // `dev_dist_plugin_content_population.txt` from `mainModule`, so a `mainModule` that read as absent would empty that file
 // and drop every content leaf with it. That reader now refuses an empty main module at run time, and this row is the check
 // that fails first, before any build reaches the reader.

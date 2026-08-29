@@ -79,6 +79,10 @@ kt_jvm_library(
     associates = [":jps_to_bazel-lib"],
     kotlinc_opts = ":jps_to_bazel_kotlinc_options",
     deps = [
+        # A report fixture is serialized through `recipeYaml` rather than hand-written, so a test cannot drift from the
+        # reader's own schema. That needs the same two libraries the reader uses.
+        ":kotlin_serialization",
+        "@j2b_maven//:com_charleskorn_kaml_kaml_jvm",
         "@j2b_maven//:junit_junit",
         "@j2b_maven//:net_bytebuddy_byte_buddy",
         "@j2b_maven//:org_assertj_assertj_core",
@@ -130,6 +134,20 @@ java_test(
     name = "plugin-descriptor-load-path-tests",
     size = "small",
     test_class = "org.jetbrains.intellij.build.bazel.PluginDescriptorLoadPathTest",
+    runtime_deps = [":bazel-generator-integration-tests-lib"],
+)
+
+java_test(
+    name = "plugin-content-report-zip-tests",
+    size = "small",
+    test_class = "org.jetbrains.intellij.build.bazel.PluginContentReportZipTest",
+    runtime_deps = [":bazel-generator-integration-tests-lib"],
+)
+
+java_test(
+    name = "dev-dist-residue-direction-tests",
+    size = "small",
+    test_class = "org.jetbrains.intellij.build.bazel.DevDistResidueDirectionTest",
     runtime_deps = [":bazel-generator-integration-tests-lib"],
 )
 

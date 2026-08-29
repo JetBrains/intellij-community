@@ -18,6 +18,7 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.exists
 import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.moveTo
 import kotlin.io.path.readLines
@@ -25,6 +26,26 @@ import kotlin.io.path.readText
 import kotlin.io.path.relativeTo
 import kotlin.io.path.writeText
 import kotlin.system.exitProcess
+
+/**
+ * What `--content-report=` takes, and how to get the file it names.
+ *
+ * The two steps are separate because the only producer of a report is a distribution build, and a packaging test deletes
+ * its own build output. `KEEP_CONTENT_REPORT_PROPERTY` of `buildScriptTestUtils.kt` is what keeps the zips.
+ */
+private const val CONTENT_REPORT_USAGE: String =
+  "--write-dev-dist-residue and --verify-dev-dist-residue read the distribution builds' content reports.\n" +
+  "Name them with --content-report=<zip>, repeated once per product, or with --content-report=<directory of zips>.\n" +
+  "One product's report covers only that product's plugins, and the authority is the union over the products.\n" +
+  "\n" +
+  "Two steps produce them:\n" +
+  "  1. ./tests.cmd --module intellij.idea.ultimate.build.tests \\\n" +
+  "       --test com.intellij.idea.ultimate.build.smokeTests.AllProductsPackagingTest \\\n" +
+  "       -Dpass.intellij.build.test.keep.content.report=<directory>\n" +
+  "  2. ./build/jpsModelToBazel.cmd --verify-dev-dist-residue --content-report=<directory>\n" +
+  "\n" +
+  "Step 1 writes one '<product>-content-report.zip' per product into the directory. Without the property the suite\n" +
+  "deletes its build output, the report with it."
 
 /**
  To enable debug logging in Bazel: --sandbox_debug --verbose_failures --define=kt_trace=1
@@ -45,15 +66,14 @@ internal class JpsModuleToBazel {
       var m2Repo = JpsMavenSettings.getMavenRepositoryPath()
       var writeDevDistResidue = false
       var verifyDevDistResidue = false
-      var contentReport: Path? = null
+      val contentReports = ArrayList<Path>()
 
       for (arg in args) {
         when {
           arg == "--write-dev-dist-residue" -> writeDevDistResidue = true
           arg == "--verify-dev-dist-residue" -> verifyDevDistResidue = true
           arg.startsWith("--content-report=") -> {
-            contentReport = Path.of(arg.substringAfter("="))
-            check(contentReport.isRegularFile()) { "Content report $contentReport must be an existing file" }
+            contentReports.addAll(resolveContentReports(Path.of(arg.substringAfter("="))))
           }
           arg.startsWith("--run_without_ultimate_root=") ->
             runWithoutUltimateRoot = arg.substringAfter("=")
@@ -200,49 +220,140 @@ internal class JpsModuleToBazel {
 
       // Last, and after generation has written everything: a check must not change what the run generates.
       if (writeDevDistResidue || verifyDevDistResidue) {
-        val reportFile = requireNotNull(contentReport) {
-          "--write-dev-dist-residue and --verify-dev-dist-residue read a distribution build's content report." +
-          " Name it with --content-report=<path to content-report.zip>. A distribution build writes the zip to its" +
-          " artifact directory, and 'All Packaging Tests' is what produces one locally."
+        check(contentReports.isNotEmpty()) { CONTENT_REPORT_USAGE }
+        val reports = readPluginContentReportZips(contentReports)
+        println("content report: ${contentReports.size} zip(s), ${reports.size} plugins")
+        for (file in contentReports) {
+          println("  $file")
         }
-        val reports = readPluginContentReportZip(reportFile)
-        println("content report: $reportFile, ${reports.size} plugins")
         val result = writeDevDistResidues(
           moduleList = moduleList,
           context = generator,
           reports = reports,
           verify = verifyDevDistResidue,
         )
-        println("dev-dist residue: written=${result.written} deleted=${result.deleted} unchanged=${result.unchanged}")
+        reportPopulationCoverage(result)
+        println("dev-dist residue: written=${result.written} deleted=${result.deleted} unchanged=${result.unchanged}" +
+                if (result.skippedPartialRemovals.isEmpty()) "" else " skipped=${result.skippedPartialRemovals.size}")
         for ((field, plugins) in result.pluginsPerField.entries.sortedByDescending { it.value }) {
           println("  $plugins plugins, ${result.rowsPerField.get(field)} rows  $field")
         }
-        if (verifyDevDistResidue && result.divergent.isNotEmpty()) {
-          reportStaleDevDistResidues(divergent = result.divergent, contentReport = reportFile)
+        // A verify run writes nothing, so it holds no change back and reports every one of them. Only a write reaches
+        // the direction rule, and only a write can say that it applied everything else.
+        if (verifyDevDistResidue) {
+          if (result.divergent.isNotEmpty() || result.populationDivergent) {
+            reportStaleDevDistResidues(result = result, contentReports = contentReports)
+          }
+        }
+        else if (result.skippedPartialRemovals.isNotEmpty()) {
+          reportSkippedPartialRemovals(result)
         }
       }
     }
 
     /**
+     * The report zips one `--content-report=` value names.
+     *
+     * A file is itself. A directory is every `*.zip` it holds, sorted by name, which is what the documented two-step
+     * recipe produces: one run of the packaging suite with the keep property writes one zip per product into one
+     * directory, and the second step points at that directory.
+     */
+    private fun resolveContentReports(path: Path): List<Path> {
+      if (path.isDirectory()) {
+        val zips = Files.newDirectoryStream(path, "*.zip").use { stream -> stream.sorted() }
+        check(zips.isNotEmpty()) { "Content report directory $path holds no *.zip. $CONTENT_REPORT_USAGE" }
+        return zips
+      }
+      check(path.isRegularFile()) { "Content report $path must be an existing file or a directory of zips. $CONTENT_REPORT_USAGE" }
+      return listOf(path)
+    }
+
+    /**
+     * States how much of the population the supplied reports speak for, on every run of either mode.
+     *
+     * A green run of this gate certifies the products it read, and never the whole population. The zips come from the
+     * packaging suites this host can run, and those suites build no CLion, no RustRover and no Gateway - so a full
+     * population read is unreachable here, and a reader has to be told which plugins the run said nothing about.
+     */
+    private fun reportPopulationCoverage(result: DevDistResidueWriteResult) {
+      val total = result.coveredPopulationCount + result.unreadPopulationNames.size
+      println("coverage: ${result.coveredPopulationCount} of $total plugins the population names," +
+              " ${result.unreadPopulationNames.size} covered by no supplied report")
+      if (result.unreadPopulationNames.isEmpty()) {
+        return
+      }
+      println("  not covered, so this run left every one of their residues and population lines as they are:")
+      for (name in result.unreadPopulationNames) {
+        println("    $name")
+      }
+    }
+
+    /**
+     * Names the plugins whose residue a partial read may not change, and how to change them.
+     *
+     * Only a removal is held back. `residueChangeAddsOnly` gives the reason: a row that enters rests on an entry a real
+     * build packed, and a row that leaves is a claim about every product. Measured on this tree, IDEA Ultimate's report
+     * alone asks to drop 8 plugins' rows that the union of seven products keeps, and every one of those rows is right.
+     *
+     * The gate that would catch the damage afterwards is this same gate, so nothing downstream would object. That is why
+     * the write holds the removal back rather than applying it and warning.
+     */
+    private fun reportSkippedPartialRemovals(result: DevDistResidueWriteResult) {
+      println()
+      println("${result.skippedPartialRemovals.size} plugins keep their residue, because a row would leave and these")
+      println("reports cover ${result.coveredPopulationCount} of" +
+              " ${result.coveredPopulationCount + result.unreadPopulationNames.size} plugins:")
+      for (divergence in result.skippedPartialRemovals) {
+        print(devDistResidueDivergenceReport(divergence))
+      }
+      println()
+      println("Every other change of this run is written. To let these rows leave, either add the reports of the")
+      println("products that are missing above, or delete the row from that plugin's 'dev-dist.yaml' by hand and let")
+      println("--verify-dev-dist-residue confirm it.")
+      println()
+      println(CONTENT_REPORT_USAGE)
+      exitProcess(1)
+    }
+
+    /**
      * Fails the run naming every plugin whose checked-in residue is stale, and the one command that fixes them.
      *
-     * The check reads a distribution build's own content report. So a divergence here says the derivation and the
-     * residue together no longer reproduce what that build packs, and it never compares the derivation against itself.
+     * The check reads the distribution builds' own content reports. So a divergence here says the derivation and the
+     * residue together no longer reproduce what those builds pack, and it never compares the derivation against itself.
      *
      * The run still regenerates the tree, because the synthesis needs the whole module list. `verify` withholds the
      * residue writes alone, so this mode is a check on `dev-dist.yaml` and not a read-only run of the converter.
      *
+     * The repair command names every zip this run read. A repair against fewer products than the check would fit the
+     * residue to those products, which is the corruption this gate exists to prevent.
+     *
      * Exits rather than throwing, because the reader needs the rows and not a stack trace.
      */
-    private fun reportStaleDevDistResidues(divergent: List<DevDistResidueDivergence>, contentReport: Path) {
+    private fun reportStaleDevDistResidues(result: DevDistResidueWriteResult, contentReports: List<Path>) {
       println()
-      println("${divergent.size} plugins have a stale 'dev-dist.yaml':")
-      for (divergence in divergent) {
-        print(devDistResidueDivergenceReport(divergence))
+      if (result.divergent.isNotEmpty()) {
+        println("${result.divergent.size} plugins have a stale 'dev-dist.yaml':")
+        for (divergence in result.divergent) {
+          print(devDistResidueDivergenceReport(divergence))
+        }
+      }
+      if (result.populationDivergent) {
+        println()
+        println("'$PLUGIN_CONTENT_POPULATION_FILE_NAME' is stale. These reports cover every plugin it names, so the")
+        println("difference is a real change of the population and not a partial read.")
       }
       println()
-      println("Run './build/jpsModelToBazel.cmd --write-dev-dist-residue --content-report=$contentReport'" +
-              " to write them, then commit the result.")
+      if (result.partialReports) {
+        println("These reports cover ${result.coveredPopulationCount} of the" +
+                " ${result.coveredPopulationCount + result.unreadPopulationNames.size} plugins the population names.")
+        println("So a row that leaves above may be one a product this check did not read still needs, and the write")
+        println("holds that row back. A row that enters rests on an entry a build packed, and the write applies it.")
+        println()
+      }
+      val flags = contentReports.joinToString(separator = " ") { "--content-report=$it" }
+      println("Run './build/jpsModelToBazel.cmd --write-dev-dist-residue $flags'")
+      println("to write them, then commit the result. Name every report this check read, or the repair fits the")
+      println("residue to fewer products than the check.")
       exitProcess(1)
     }
 
