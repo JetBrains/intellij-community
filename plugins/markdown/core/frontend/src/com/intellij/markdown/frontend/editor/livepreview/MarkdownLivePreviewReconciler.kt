@@ -137,6 +137,10 @@ class MarkdownLivePreviewReconciler private constructor(
     }
     val specSet = this.specSet ?: return
     if (specSet.documentStamp != editor.document.modificationStamp) return
+    val imageDestinations = specSet.elements
+      .filterIsInstance<MarkdownLivePreviewSpec.Image>()
+      .mapTo(HashSet()) { it.destination }
+    imageManager.retainSources(imageDestinations)
 
     val revealed = revealedElementIndices(specSet)
     val (regions, lines) = buildOwnedState(specSet, revealed)

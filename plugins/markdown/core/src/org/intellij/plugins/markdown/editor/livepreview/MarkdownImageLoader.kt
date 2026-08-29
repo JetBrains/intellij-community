@@ -54,7 +54,7 @@ object MarkdownImageLoader {
     } else {
       readRasterPixelCount(content)
     }
-    return pixels == null || pixels <= maxPixels
+    return pixels != null && pixels <= maxPixels
   }
 
   private fun readSvgPixelCount(content: ByteArray): Double? {

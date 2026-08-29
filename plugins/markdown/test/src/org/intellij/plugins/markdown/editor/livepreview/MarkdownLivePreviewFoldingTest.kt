@@ -398,13 +398,11 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun testBrokenImageUsesPlatformPlaceholderAndMissingImageStaysRaw() {
+  fun testBrokenImageAndMissingImageStayRaw() {
     addBinaryFile("docs/broken.png", "not an image".toByteArray())
     configureProjectFile("![broken](broken.png)\n\n![missing](missing.png)\n\ntail")
 
-    val region = waitForImageRenderer()
-    assertTrue(region.renderer is DocRenderer)
-    assertEquals(1, imageRegions().size)
+    waitForNoImageRegion()
 
     assertEquals("![broken](broken.png)\n\n![missing](missing.png)\n\ntail", myFixture.editor.document.text)
   }

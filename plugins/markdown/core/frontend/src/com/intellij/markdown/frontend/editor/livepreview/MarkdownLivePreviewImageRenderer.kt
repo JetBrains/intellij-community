@@ -61,7 +61,16 @@ internal class MarkdownLivePreviewImageManager(
     val geometry = geometry()
     if (geometry == imageGeometry) return
     imageGeometry = geometry
-    DocRenderItemUpdater.updateRenderers(items, false)
+    DocRenderItemUpdater.updateRenderers(items, true)
+  }
+
+  @RequiresEdt
+  fun retainSources(destinations: Set<String>) {
+    ThreadingAssertions.assertEventDispatchThread()
+    val file = FileDocumentManager.getInstance().getFile(editor.document) ?: return
+    val keys = destinations.mapTo(HashSet()) { ImageKey(file, it) }
+    loadedSources.keys.retainAll(keys)
+    rejectedSources.retainAll(keys)
   }
 
   @RequiresEdt
