@@ -1,5 +1,6 @@
 package com.intellij.python.hatch.service
 
+import com.intellij.python.hatch.cli.DEFAULT_ENV_NAME
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFileUtils
@@ -32,11 +33,6 @@ import com.jetbrains.python.isSuccess
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.nio.file.Path
@@ -83,16 +79,6 @@ internal class CliBasedHatchService<P : PathHolder> private constructor(
       ).getOr { return it }
       return Result.success(CliBasedHatchProjectStructureService(hatchService))
     }
-
-    private val concurrencyLimit = Semaphore(permits = 5)
-
-    private suspend fun <A, B> Iterable<A>.concurrentMap(f: suspend (A) -> B): List<B> = coroutineScope {
-      map {
-        async {
-          concurrencyLimit.withPermit { f(it) }
-        }
-      }.awaitAll()
-    }
   }
 
   override fun getWorkingDirectoryPath(): Path = workingDirectoryPath
@@ -125,20 +111,46 @@ internal class CliBasedHatchService<P : PathHolder> private constructor(
     return isHatchManaged
   }
 
+  /**
+   * Every environment the project declares, with where each one lives.
+   *
+   * hatch is asked twice, whatever the project declares: once for the environments and once for a path. It used to be
+   * asked once *per environment* — `hatch env find <name>` for each — which a matrix turns into a process per generated
+   * combination, and a modest `[[tool.hatch.envs.test.matrix]]` generates dozens.
+   *
+   * The one path is enough because hatch keeps them together: `hatch env find` with no argument answers for the default
+   * environment, and every other declared environment is its sibling, named by the environment. The default is the one
+   * exception to that naming — its own directory carries the *project's* name — and asking for it by omission is what
+   * settles it without a second call.
+   *
+   * Environments hatch keeps for itself live elsewhere, under `.internal`, and would not be found this way. They never
+   * reach here: [HatchEnv.showWithDetails] drops them.
+   *
+   * Where the computed directory holds no interpreter the environment is simply not created yet, which is what the
+   * caller wants to know — and it is what [HatchEnv.find] would have reported too, since it computes a location rather
+   * than looking for one.
+   */
   override suspend fun findVirtualEnvironments(): PyResult<List<HatchVirtualEnvironment<P>>> {
     val hatchEnv = hatchCli().env()
     val environments: HatchDetailedEnvironments = hatchEnv.showWithDetails().getOr { return it }
     val virtualEnvironments = environments.toVirtualHatchEnvironments()
+    if (virtualEnvironments.isEmpty()) return Result.success(emptyList())
 
-    val available = virtualEnvironments.concurrentMap { env ->
-      val pythonHomePathOnTarget = hatchEnv.find(env.name).getOr { return@concurrentMap null } ?: return@concurrentMap null
-      val pythonHomePath = fileSystem.parsePath(pythonHomePathOnTarget).getOr { return@concurrentMap null }
-      val pythonVirtualEnvironment = resolvePythonVirtualEnvironment(fileSystem, pythonHomePath).getOr { return@concurrentMap null }
-      HatchVirtualEnvironment(
-        hatchEnvironment = env,
-        pythonVirtualEnvironment = pythonVirtualEnvironment
-      )
-    }.filterNotNull()
+    val defaultEnvPath = hatchEnv.find().getOr { return it }
+                         ?: return Result.success(emptyList())
+    // Kept as the target's own path string until the last moment: the environments live on whichever machine hatch ran
+    // on, and its separator is the one in the answer it gave.
+    val separatorAt = defaultEnvPath.lastIndexOfAny(charArrayOf('/', '\\'))
+    if (separatorAt <= 0) return Result.success(emptyList())
+    val envsRoot = defaultEnvPath.substring(0, separatorAt)
+    val separator = defaultEnvPath[separatorAt]
+
+    val available = virtualEnvironments.map { env ->
+      val homeOnTarget = if (env.name == DEFAULT_ENV_NAME) defaultEnvPath else "$envsRoot$separator${env.name}"
+      val pythonHomePath = fileSystem.parsePath(homeOnTarget).getOr { return it }
+      val pythonVirtualEnvironment = resolvePythonVirtualEnvironment(fileSystem, pythonHomePath).getOr { return it }
+      HatchVirtualEnvironment(hatchEnvironment = env, pythonVirtualEnvironment = pythonVirtualEnvironment)
+    }
 
     return Result.success(available)
   }
