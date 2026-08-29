@@ -2,10 +2,8 @@
 package com.jetbrains.python.sdk.impl
 
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
@@ -35,18 +33,18 @@ import kotlin.io.path.listDirectoryEntries
 @RequiresBackgroundThread
 internal fun PythonBinary.detectPythonEnvironmentImpl(): PyResult<PythonEnvironment> {
   if (!isExecutable()) return PyResult.localizedError(message("python.sdk.detect.binary.not.executable", this))
-  val validationInfo = runBlockingMaybeCancellable { validatePythonAndGetInfo() }
 
   val home = resolvePythonHome()
   val pyvenvCfg = home.resolve("pyvenv.cfg")
   if (pyvenvCfg.exists()) {
     val venvLibRoot = resolveVenvLibRoot(home)
                       ?: return PyResult.localizedError(message("python.sdk.detect.venv.lib.root.failed", home))
+    val config = parsePyvenvCfg(pyvenvCfg)
     return PythonEnvironment.Venv(
-      validationInfo = validationInfo,
+      version = config.recordedVersion(),
       pythonBinaryPath = this,
       pythonHomePath = home,
-      config = parsePyvenvCfg(pyvenvCfg),
+      config = config,
       libRoot = venvLibRoot,
     ).let { PyResult.success(it) }
   }
@@ -57,7 +55,8 @@ internal fun PythonBinary.detectPythonEnvironmentImpl(): PyResult<PythonEnvironm
     val venvLibRoot = resolveVenvLibRoot(home)
                       ?: return PyResult.localizedError(message("python.sdk.detect.venv.lib.root.failed", home))
     return PythonEnvironment.Venv(
-      validationInfo = validationInfo,
+      // A Python 2.7-era `virtualenv` has no `pyvenv.cfg` and so records no version.
+      version = null,
       pythonBinaryPath = this,
       pythonHomePath = home,
       config = emptyMap(),
@@ -69,7 +68,7 @@ internal fun PythonBinary.detectPythonEnvironmentImpl(): PyResult<PythonEnvironm
   if (condaMeta.isDirectory()) {
     val isBase = home.resolve("condabin").isDirectory() || home.resolve("envs").isDirectory()
     return PythonEnvironment.Conda(
-      validationInfo = validationInfo,
+      version = condaPythonVersion(condaMeta),
       pythonBinaryPath = this,
       pythonHomePath = home,
       condaMetaPath = condaMeta,
@@ -81,8 +80,34 @@ internal fun PythonBinary.detectPythonEnvironmentImpl(): PyResult<PythonEnvironm
     ).let { PyResult.success(it) }
   }
 
-  return PythonEnvironment.SystemPython(validationInfo, this).let { PyResult.success(it) }
+  return PythonEnvironment.SystemPython(pythonBinaryPath = this).let { PyResult.success(it) }
 }
+
+/**
+ * The interpreter version a `pyvenv.cfg` states, or null when it states none.
+ *
+ * `version` is what the standard library's `venv` writes; `version_info` is the fuller form other tools write, whose
+ * `.final.0` tail is not part of a version anyone shows.
+ */
+private fun Map<String, String>.recordedVersion(): String? =
+  this["version"]?.takeIf { it.isNotBlank() }
+  ?: this["version_info"]?.substringBefore(".final")?.takeIf { it.isNotBlank() }
+
+/**
+ * The version of the `python` package conda recorded in [condaMeta], read from the name of its entry.
+ *
+ * conda writes one JSON file per installed package, named `<package>-<version>-<build>.json`. The name carries the
+ * version, so the directory listing is the whole of the work and the file is never opened.
+ */
+private fun condaPythonVersion(condaMeta: Path): String? =
+  try {
+    condaMeta.listDirectoryEntries("python-*.json")
+      .firstNotNullOfOrNull { it.fileName.toString().removePrefix("python-").substringBefore('-').takeIf(String::isNotBlank) }
+  }
+  catch (e: IOException) {
+    fileLogger().warn("Failed to list $condaMeta", e)
+    null
+  }
 
 private fun parsePyvenvCfg(path: Path): Map<String, String> {
   val result = mutableMapOf<String, String>()

@@ -76,13 +76,15 @@ internal fun createEvoEnv(
   installPythonVersion: String?,
   /** Which popup section the row that triggered this belongs to — reported, never acted on. */
   source: PyEvoWidgetCollector.Source,
+  /** Trace root of the popup tree this row belongs to, so the tool's commands are reported under that tool. */
+  traceId: String,
   scope: CoroutineScope,
 ) {
   project.service<EvoConfiguringTracker>().nodeId = nodeId   // so the widget fades this tool's logo while configuring
   scope.launch {
     val ref = PyInterpreterRef.CreateEnv(token, folder, name, installPythonVersion)
     PyEvoWidgetCollector.interpreterSelected(project, nodeStats, ref.evoRefKind(), source)
-    when (val result = requestEvoSelectInterpreter(project.projectId(), pyProjectKey, ref, nodeId)) {
+    when (val result = requestEvoSelectInterpreter(project.projectId(), pyProjectKey, ref, nodeId, traceId)) {
       is EvoSelectResultDto.Ok -> Unit
       is EvoSelectResultDto.Error -> LOG.warn("Evo: failed to create '$nodeId' environment for '$pyProjectKey': ${result.message}")
     }
@@ -167,7 +169,7 @@ internal class SelectEnvAction(
   }
 
   override fun actionPerformed(e: AnActionEvent) =
-    selectInterpreter(project, pyProjectKey, ref, nodeId, nodeStats, evoSourceForNode(nodeId), scope)
+    selectInterpreter(project, pyProjectKey, ref, nodeId, nodeStats, evoSourceForNode(nodeId), traceId, scope)
 
   /** Resolves the interpreter version once, on first focus, for a detected env that has no version yet. */
   override fun resolveOnFocus(onResolved: () -> Unit) {
@@ -215,6 +217,8 @@ internal fun recreateEvoEnv(
    * differ, so the confirmation can say the manager changes. Null when the tool stays the same.
    */
   toolChange: EvoToolChange?,
+  /** Trace root of the popup tree this row belongs to, so the tool's commands are reported under that tool. */
+  traceId: String,
   scope: CoroutineScope,
 ) {
   scope.launch {
@@ -225,7 +229,7 @@ internal fun recreateEvoEnv(
     PyEvoWidgetCollector.interpreterSelected(project, nodeStats, PyEvoWidgetCollector.RefKind.CREATE_ENV,
                                              PyEvoWidgetCollector.Source.RECREATE)
     val request = EvoRecreateRequestDto(envHomePath, baseToken, installPythonVersion, answer)
-    when (val result = requestEvoRecreateEnvironment(project.projectId(), pyProjectKey, nodeId, request)) {
+    when (val result = requestEvoRecreateEnvironment(project.projectId(), pyProjectKey, nodeId, request, traceId)) {
       is EvoSelectResultDto.Ok -> Unit
       is EvoSelectResultDto.Error -> LOG.warn("Evo: failed to rebuild '$envHomePath' for '$pyProjectKey': ${result.message}")
     }
@@ -310,12 +314,14 @@ internal fun selectInterpreter(
   nodeStats: EvoNodeStats,
   /** Which popup section the row that triggered this belongs to — reported, never acted on. */
   source: PyEvoWidgetCollector.Source,
+  /** Trace root of the popup tree this row belongs to, so the tool's commands are reported under that tool. */
+  traceId: String,
   scope: CoroutineScope,
 ) {
   project.service<EvoConfiguringTracker>().nodeId = nodeId   // so the widget fades this tool's logo while configuring
   scope.launch {
     PyEvoWidgetCollector.interpreterSelected(project, nodeStats, ref.evoRefKind(), source)
-    when (val result = requestEvoSelectInterpreter(project.projectId(), pyProjectKey, ref, nodeId)) {
+    when (val result = requestEvoSelectInterpreter(project.projectId(), pyProjectKey, ref, nodeId, traceId)) {
       is EvoSelectResultDto.Ok -> Unit
       is EvoSelectResultDto.Error -> LOG.warn("Evo: failed to select interpreter for '$pyProjectKey': ${result.message}")
     }
@@ -378,6 +384,14 @@ internal fun baseInterpreterRow(base: EvoBasePythonDto, onChosen: () -> Unit): E
 
 /** The row's right-hand column: the interpreter's version, then whatever qualifies it beyond the version. */
 private fun EvoBasePythonDto.detail(): @NlsSafe String = listOfNotNull(version, qualifier).joinToString(", ")
+
+/**
+ * What the row that picked this base then says it will build on.
+ *
+ * The version where the backend stated one, and otherwise the title — which for a uv build is uv's own identifier, and
+ * so already carries the version.
+ */
+internal fun EvoBasePythonDto.baseText(): @NlsSafe String = version ?: title
 
 internal fun selectEnvAction(
   project: Project,

@@ -1,11 +1,11 @@
 package com.jetbrains.python.uv.sdk.evolution
 
+import com.jetbrains.python.packaging.PyVersionSpecifiers
+import com.intellij.python.uv.backend.UvSystemPythonService
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.common.tools.ToolId
-import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pyproject.PY_PROJECT_TOML
-import com.intellij.python.pytools.runtime.PyToolRuntime
 import com.intellij.python.sdk.backend.evolution.DiscoveredVenv
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
 import com.intellij.python.sdk.backend.evolution.EvoRecreateSpec
@@ -30,10 +30,8 @@ import com.intellij.python.sdk.common.evolution.PyInterpreterRef
 import com.intellij.python.uv.backend.PyUvBundle
 import com.intellij.python.uv.backend.UvPyTool
 import com.intellij.python.uv.backend.cli.uv.UvPythonEntry
-import com.intellij.python.uv.backend.runtime.uvCli
 import com.intellij.python.uv.common.UV_TOOL_ID
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.getOrNull
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.evolution.requiresPython
@@ -207,18 +205,17 @@ internal class UvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
    * uv's to make, not the user's.
    */
   private suspend fun supportedPythonVersions(context: EvoToolContext): List<EvoAddNewOptionDto> {
-    val uvExecutable = executableOrNull(context.fileSystem) ?: return emptyList()
     val baseDir = context.pyProject.baseDir
-    // Run in the project dir, as the rest of this provider's uv calls do: uv reads `.python-version` and the project's
-    // own `pyproject.toml` from its working directory, so listing from anywhere else can name a different set.
-    val runtime = PyToolRuntime(
-      binary = context.fileSystem.getBinaryToExec(uvExecutable, baseDir),
-      execOptions = ExecOptions(),
-    )
-    // Handed over exactly as `pyproject.toml` wrote it: uv parses the constraint itself, so what it makes of one is its
-    // answer to give. An empty answer is what [decorate] turns into the node's warning.
-    val entries = runtime.uvCli().python().list(requiresPython(baseDir)).getOrNull().orEmpty()
+    // The listing every node shares, taken once per project — see [UvSystemPythonService]. This node used to ask uv
+    // again with the project's `requires-python` as uv's own positional request, which cost a second scan of the
+    // machine for a list the first one already held.
+    val entries = UvSystemPythonService.listEntries(context.fileSystem, baseDir)
+    // So the constraint is applied here instead. `PyVersionSpecifiers` is what the widget filters with everywhere else,
+    // and it reads a Poetry-style caret that uv rejects outright — so a `requires-python = "^3.13"` now lists the
+    // versions it means rather than nothing. uv still refuses that constraint itself when it comes to `uv sync`.
+    val accepts = PyVersionSpecifiers(requiresPython(baseDir) ?: "")
     return entries
+      .filter { accepts.isValid(it.versionParts.languageLevel) }
       .groupBy { it.versionParts.major to it.versionParts.minor }
       .entries
       .sortedWith(compareByDescending<Map.Entry<Pair<Int, Int>, List<UvPythonEntry>>> { it.key.first }

@@ -98,7 +98,7 @@ interface PyEvoSdkApi : RemoteApi<Unit> {
    * ([PyInterpreterRef.DetectedPath]) or a not-yet-created env ([PyInterpreterRef.CreateEnv]) is created via that
    * tool's own "select existing"/"create" logic (the same the v2 Add dialog runs) and then assigned.
    */
-  suspend fun selectInterpreter(projectId: ProjectId, pyProjectKey: String, ref: PyInterpreterRef, nodeId: String): EvoSelectResultDto
+  suspend fun selectInterpreter(projectId: ProjectId, pyProjectKey: String, ref: PyInterpreterRef, nodeId: String, traceId: String): EvoSelectResultDto
 
   /**
    * Destroys the environment [EvoRecreateRequestDto.envHomePath] names, builds it again in the same place on a
@@ -112,7 +112,7 @@ interface PyEvoSdkApi : RemoteApi<Unit> {
    * Nothing is kept back to roll forward to: the old environment is gone before the new one is attempted, so a failure
    * leaves the project without one and says so. The frontend confirms with the user before it calls this.
    */
-  suspend fun recreateEnvironment(projectId: ProjectId, pyProjectKey: String, nodeId: String, request: EvoRecreateRequestDto): EvoSelectResultDto
+  suspend fun recreateEnvironment(projectId: ProjectId, pyProjectKey: String, nodeId: String, request: EvoRecreateRequestDto, traceId: String): EvoSelectResultDto
 
   /**
    * What it would take to rebuild the environment the project uses now, or `null` when nothing can.
@@ -122,9 +122,11 @@ interface PyEvoSdkApi : RemoteApi<Unit> {
    * asked what it could rebuild it on — the same question a row asks through [EvoLeafDto.recreate].
    *
    * Asked when the user opens the action, never while the widget renders: naming the Pythons a machine has means
-   * running processes, and the status bar must not wait for that.
+   * running processes, and the status bar must not wait for that. Those run in the owning tool's
+   * [com.jetbrains.python.TraceContext] under the widget root for [traceId], so they are reported under that tool like
+   * every other command the widget runs.
    */
-  suspend fun currentEnvironmentRecreate(projectId: ProjectId, pyProjectKey: String): EvoCurrentRecreateDto?
+  suspend fun currentEnvironmentRecreate(projectId: ProjectId, pyProjectKey: String, traceId: String): EvoCurrentRecreateDto?
 
   /**
    * Resolves the interpreter version (`python --version`) for the environment at [homePath], on demand — the
@@ -242,16 +244,16 @@ suspend fun requestEvoAssociatedInterpreters(projectId: ProjectId, pyProjectKey:
   PyEvoSdkApi().listAssociatedInterpreters(projectId, pyProjectKey)
 
 @ApiStatus.Internal
-suspend fun requestEvoSelectInterpreter(projectId: ProjectId, pyProjectKey: String, ref: PyInterpreterRef, nodeId: String): EvoSelectResultDto =
-  PyEvoSdkApi().selectInterpreter(projectId, pyProjectKey, ref, nodeId)
+suspend fun requestEvoSelectInterpreter(projectId: ProjectId, pyProjectKey: String, ref: PyInterpreterRef, nodeId: String, traceId: String): EvoSelectResultDto =
+  PyEvoSdkApi().selectInterpreter(projectId, pyProjectKey, ref, nodeId, traceId)
 
 @ApiStatus.Internal
-suspend fun requestEvoRecreateEnvironment(projectId: ProjectId, pyProjectKey: String, nodeId: String, request: EvoRecreateRequestDto): EvoSelectResultDto =
-  PyEvoSdkApi().recreateEnvironment(projectId, pyProjectKey, nodeId, request)
+suspend fun requestEvoRecreateEnvironment(projectId: ProjectId, pyProjectKey: String, nodeId: String, request: EvoRecreateRequestDto, traceId: String): EvoSelectResultDto =
+  PyEvoSdkApi().recreateEnvironment(projectId, pyProjectKey, nodeId, request, traceId)
 
 @ApiStatus.Internal
-suspend fun requestEvoCurrentRecreate(projectId: ProjectId, pyProjectKey: String): EvoCurrentRecreateDto? =
-  PyEvoSdkApi().currentEnvironmentRecreate(projectId, pyProjectKey)
+suspend fun requestEvoCurrentRecreate(projectId: ProjectId, pyProjectKey: String, traceId: String): EvoCurrentRecreateDto? =
+  PyEvoSdkApi().currentEnvironmentRecreate(projectId, pyProjectKey, traceId)
 
 @ApiStatus.Internal
 suspend fun requestEvoResolveVersion(projectId: ProjectId, pyProjectKey: String, nodeId: String, homePath: String, traceId: String): String? =
@@ -670,10 +672,11 @@ data class EvoBasePythonDto(
   /** The un-elided form of [title], shown as the row's tooltip. `null` when [title] is already the whole path. */
   val titleTooltip: @NlsSafe String? = null,
   /**
-   * The interpreter's version, patch included (`3.15.0`) — taken from the `--version` output the backend's scan already
-   * ran, so it costs nothing here. Falls back to major.minor for an interpreter whose version was never captured.
+   * The interpreter's version, patch included (`3.15.0`), or null where [title] already states it — a uv row is titled
+   * by uv's own identifier (`cpython-3.8.20-macos-aarch64-none`), which carries the version, and repeating it in the
+   * right-hand column would say the same thing twice.
    */
-  val version: @NlsSafe String,
+  val version: @NlsSafe String? = null,
   /**
    * The icon of the tool this interpreter came from (uv, Homebrew, pyenv, …), which is how the v2 "Add Interpreter"
    * dialog distinguishes them — one glance instead of a word per row. `null` when the tool is unknown, and the frontend
@@ -688,6 +691,15 @@ data class EvoBasePythonDto(
   val qualifier: @NlsSafe String? = null,
   /** Creation token: this interpreter's binary path, passed back as [PyInterpreterRef.CreateEnv.token]. */
   val token: @NonNls String,
+  /**
+   * What to install before this interpreter exists, or null for one already on the machine.
+   *
+   * A tool that fetches interpreters can offer a build nobody has yet — uv lists every one it could download beside the
+   * ones it found — and such a row names the exact build to fetch rather than a version to resolve. The core installs
+   * it and builds the environment on what landed; see [EvoRecreateRequestDto.installPythonVersion], which carries the
+   * same value for a rebuild.
+   */
+  val installVersion: @NonNls String? = null,
 )
 
 /**

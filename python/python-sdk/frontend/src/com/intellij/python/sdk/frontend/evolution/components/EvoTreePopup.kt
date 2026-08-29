@@ -639,16 +639,30 @@ open class EvoTreePopup private constructor(
    */
   override fun createContent(): JComponent {
     val content = super.createContent()
+    trimBodyInsetsCoveredBy(evoStep?.headerCaption != null, footer() != null)
+    return content
+  }
+
+  /**
+   * Adds this panel's own bands around the scrolled rows: the title line above, the step's description below.
+   *
+   * Added *here* rather than in [createContent], which is what [WizardPopup] hands to the scroll pane — bands returned
+   * from there scroll away with the rows, so a long list carried its own description off the bottom of the popup. The
+   * rows scroll; what says which panel this is stays put.
+   *
+   * Called from the [WizardPopup] constructor, right after [createContent], so it relies only on the step.
+   */
+  override fun createPopupComponent(content: JComponent): JComponent {
+    val scrolled = super.createPopupComponent(content)
     val header = evoStep?.headerCaption?.let { headerRow(it) }
     val footer = footer()
-    if (header == null && footer == null) return content
-    trimBodyInsetsCoveredBy(header, footer)
+    if (header == null && footer == null) return scrolled
     return JPanel(BorderLayout()).apply {
       // This wrapper is what shows through behind the header and the footer (both non-opaque), so it has to carry the
       // popup's own background — a default JPanel one paints those bands a different shade than the rows.
       background = JBUI.CurrentTheme.Popup.BACKGROUND
       header?.let { add(it, BorderLayout.NORTH) }
-      add(content, BorderLayout.CENTER)
+      add(scrolled, BorderLayout.CENTER)
       footer?.let { add(it, BorderLayout.SOUTH) }
     }
   }
@@ -665,12 +679,12 @@ open class EvoTreePopup private constructor(
    * The insets are read back off the list rather than recomputed: the platform picks them from the theme (and differs
    * between the old and new UI), and only the sides actually covered are zeroed, leaving the rest as the theme set them.
    */
-  private fun trimBodyInsetsCoveredBy(header: JComponent?, footer: JComponent?) {
+  private fun trimBodyInsetsCoveredBy(hasHeader: Boolean, hasFooter: Boolean) {
     val insets = (list.border as? EmptyBorder)?.borderInsets ?: return
     list.border = JBUI.Borders.empty(
-      if (header != null) 0 else insets.top,
+      if (hasHeader) 0 else insets.top,
       insets.left,
-      if (footer != null) 0 else insets.bottom,
+      if (hasFooter) 0 else insets.bottom,
       insets.right,
     )
   }

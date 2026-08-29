@@ -1,12 +1,12 @@
 package com.intellij.python.hatch.sdk.evolution
 
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.Mutex
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.toNioPathOrNull
-import com.intellij.platform.eel.provider.localEel
-import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.python.community.common.tools.ToolId
-import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.hatch.HatchPyTool
+import com.intellij.python.hatch.HatchService
 import com.intellij.python.hatch.HatchVirtualEnvironment
 import com.intellij.python.hatch.PyHatchBundle
 import com.intellij.python.hatch.cli.HatchEnv
@@ -39,7 +39,9 @@ import java.nio.file.Path
 import com.intellij.python.hatch.impl.sdk.HatchSdkFlavor
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 
-private const val ENVS_KEY: String = "hatch.virtualEnvironments"
+
+/** How long hatch's environment listing stands before hatch is asked again — see `listEnvironments`. */
+private const val ENVS_TTL_MS: Long = 30_000
 
 internal class HatchEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
   override val tool: PyTool get() = HatchPyTool.getInstance()
@@ -53,7 +55,7 @@ internal class HatchEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
   override suspend fun loadSections(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto {
     val hatchService = pyProject.module.getHatchService(fileSystem).getOrNull()
                        ?: return evoWarning(PyHatchBundle.message("evolution.hatch.executable.is.not.found"))
-    val environments = hatchService.findVirtualEnvironments().getOrNull() ?: return EvoLoadResultDto.Ok(emptyList())
+    val environments = hatchService.listEnvironments().takeIf { it.isNotEmpty() } ?: return EvoLoadResultDto.Ok(emptyList())
     val leaves = environments.map { env ->
       val binary = env.pythonVirtualEnvironment?.pythonHomePath?.path?.resolvePythonBinary()
       // Materialized env → select it; a declared-but-not-created env → create it on click (token = env name).
@@ -90,17 +92,21 @@ internal class HatchEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
     val hatchEnv = hatchService.findVirtualEnvironments().getOr { return it }
                      .firstOrNull { it.hatchEnvironment.name == envName }?.hatchEnvironment
                    ?: return PyResult.localizedError(PySdkBundle.message("evolution.error.env.not.found", envName))
-    val eelApi = context.fileSystem.eelDescriptor?.toEelApi() ?: localEel
     val basePython = if (ref.folder != null) {
       // The picker put a base interpreter path in the token; an unparseable one is a broken round-trip, not user input.
       ref.token.toNioPathOrNull()
       ?: return PyResult.localizedError(PySdkBundle.message("evolution.error.base.python.not.found", ref.token))
     }
     else {
-      SystemPythonService().findSystemPythons(eelApi).firstOrNull()?.pythonBinary
+      // No base was picked for this row, so the best of the ones the widget itself offers stands in. Asked through the
+      // context rather than of the interpreter scan directly: the core decides where that list comes from, and where uv
+      // is installed it is uv's — so the fallback is one of the interpreters the user was being shown.
+      context.systemPythonOptions().firstOrNull { !it.installable }?.token?.toNioPathOrNull()
       ?: return PyResult.localizedError(PySdkBundle.message("evolution.error.base.python.not.found", ""))
     }
     val venv = hatchService.createVirtualEnvironment(PathHolder.Eel(basePython), envName).getOr { return it }
+    // The listing predates this environment.
+    forgetEnvironments()
     return HatchVirtualEnvironment(hatchEnv, venv).createSdk(hatchService.getWorkingDirectoryPath(), context.fileSystem, null)
   }
 
@@ -143,6 +149,7 @@ internal class HatchEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
     val basePython = spec.baseToken.toNioPathOrNull()
                      ?: return PyResult.localizedError(PySdkBundle.message("evolution.error.base.python.not.found", spec.baseToken))
     val venv = hatchService.createVirtualEnvironment(PathHolder.Eel(basePython), envName).getOr { return it }
+    forgetEnvironments()
     if (spec.syncPackages) hatchService.syncDependencies(envName).getOr { return it }
     return HatchVirtualEnvironment(env.hatchEnvironment, venv)
       .createSdk(hatchService.getWorkingDirectoryPath(), context.fileSystem, null)
@@ -151,9 +158,41 @@ internal class HatchEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
   /** The declared env whose interpreter is [homePath], or null when none is — the lookup [createSdkForExistingEnv] does. */
   private suspend fun envFor(context: EvoToolContext, homePath: String): HatchVirtualEnvironment<PathHolder.Eel>? {
     val hatchService = context.pyProject.module.getHatchService(context.fileSystem).getOrNull() ?: return null
-    return context.cached(ENVS_KEY) { hatchService.findVirtualEnvironments().getOrNull().orEmpty() }
+    return hatchService.listEnvironments()
       .firstOrNull { it.pythonVirtualEnvironment?.pythonHomePath?.path?.resolvePythonBinary()?.toString() == homePath }
   }
+
+  /**
+   * What hatch last reported for this working directory, asking it again only when nothing recent is held.
+   *
+   * Asking is expensive out of proportion to the answer: `hatch env show --json` names the environments, and hatch is
+   * then run once more *per environment* to find where each one lives. A project declaring ten environments is eleven
+   * processes for one listing.
+   *
+   * A single node load asked twice over — [loadSections] builds the rows from one listing while [envFor] takes another
+   * for the same environments — and the "Recreate Environment" action asks again through a context of its own. All of
+   * them now share one answer.
+   *
+   * [ENVS_TTL_MS] is short: an environment created outside the IDE should appear on the next opening of the widget,
+   * not minutes later. Creating one through this provider clears it outright.
+   */
+  private suspend fun HatchService<PathHolder.Eel>.listEnvironments(): List<HatchVirtualEnvironment<PathHolder.Eel>> =
+    envsLock.withLock {
+      val key = getWorkingDirectoryPath()
+      envsCache[key]?.takeIf { System.currentTimeMillis() - it.takenAt < ENVS_TTL_MS }?.let { return it.envs }
+      val envs = findVirtualEnvironments().getOrNull().orEmpty()
+      envs.also { envsCache[key] = CachedEnvs(it, System.currentTimeMillis()) }
+    }
+
+  /** Drops what hatch reported, so the next listing asks it again. */
+  private suspend fun forgetEnvironments() {
+    envsLock.withLock { envsCache.clear() }
+  }
+
+  private val envsLock = Mutex()
+  private val envsCache = mutableMapOf<Path, CachedEnvs>()
+
+  private class CachedEnvs(val envs: List<HatchVirtualEnvironment<PathHolder.Eel>>, val takenAt: Long)
 
   /**
    * Turns each declared-but-not-created env into a Python-version picker, so the user chooses the base Python instead of

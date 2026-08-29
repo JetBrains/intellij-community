@@ -32,6 +32,15 @@ object PyEvoRegistry {
   val scanMaxDepth: Int
     get() = Registry.intValue("python.evolution.widget.scan.depth")
 
+  /**
+   * Where uv is installed, take the base Python list from uv rather than from the IDE's own interpreter scan.
+   *
+   * Off restores that scan, which is the way back for a machine whose interpreters uv does not report — a version
+   * manager's own directory, which uv reaches only through shims.
+   */
+  val useUvSystemPythons: Boolean
+    get() = Registry.`is`("python.evolution.widget.uv.pythons")
+
   /** Upper bound on directories examined per env discovery, so a huge project tree can't turn a node expansion into a long walk. */
   val scanMaxDirs: Int
     get() = Registry.intValue("python.evolution.widget.scan.max.dirs")

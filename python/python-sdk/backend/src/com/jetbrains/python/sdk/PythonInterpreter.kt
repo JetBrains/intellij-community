@@ -68,14 +68,16 @@ class PythonInterpreter internal constructor(
  * Python version.
  * SDK is either invalid (`python --version` returned an error) or has a [LanguageLevel].
  * Use `when` to check it.
+ *
+ * An environment that records its own version answers from that — see [PythonEnvironment.version] — so a virtualenv or
+ * a conda environment costs nothing here. The interpreter is only run for one that records none: a system interpreter,
+ * a Python 2.7-era `virtualenv`, or a remote machine, where environment detection does not reach yet. That answer is
+ * cached until the user next activates the IDE.
  */
 @ApiStatus.Internal
 suspend fun PythonInterpreter.getVersion(): PyResult<LanguageLevel> =
-  pythonEnvironment?.validationInfo?.version
-  ?:
-  // We should have used `pythonEnvironment`, but it doesn't work for remote machines (yet) and we still want to cache version
-  // So we cache it until the user activates IDE
-  sdk.getOrComputeOnFrameActivation(PY_SDK_LANG_LEVEL_CACHE_KEY) {
+  pythonEnvironment?.version?.let { LanguageLevel.fromPythonVersionSafe(it) }?.let { PyResult.success(it) }
+  ?: sdk.getOrComputeOnFrameActivation(PY_SDK_LANG_LEVEL_CACHE_KEY) {
     sdk.validatePythonAndGetInfo().version
   }
 

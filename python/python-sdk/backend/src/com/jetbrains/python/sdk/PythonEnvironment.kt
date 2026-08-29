@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.components.service
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.pathSeparator
@@ -9,9 +10,7 @@ import com.intellij.python.sdk.backend.service.ActivatableEnvironmentService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
-import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.impl.detectPythonEnvironmentImpl
 import com.jetbrains.python.sdk.terminal.Shell
 import org.jetbrains.annotations.ApiStatus
@@ -51,17 +50,24 @@ interface Activatable {
 @ApiStatus.Internal
 sealed interface PythonEnvironment {
   /**
-   * The result of SDK validation: it might be broken, or valid (at least at the moment this class was created).
-   * Use `when` to check it, and get [PythonInfo.languageLevel] for Python version.
+   * The interpreter version this environment records about itself, or null when it records none.
+   *
+   * Read off the layout, never asked of the interpreter: a virtualenv states it in `pyvenv.cfg` and a conda environment
+   * in the name of its `conda-meta` entry, so detecting an environment costs no process. A system interpreter and a
+   * Python 2.7-era `virtualenv` write nothing down and answer null; whoever needs a version for one of those runs it —
+   * see [PythonInterpreter.getVersion].
+   *
+   * This replaced a `validationInfo` that ran `python --version` on every detection, which is done for every
+   * environment a list shows and on every `isValidSdkPath` check.
    */
-  val validationInfo: PyResult<PythonInfo>
+  val version: @NlsSafe String?
 
   /** Absolute path to the Python interpreter executable backing this environment. */
   val pythonBinaryPath: PythonBinary
 
   /** Virtual environment with parsed `pyvenv.cfg` contents. */
   data class Venv(
-    override val validationInfo: PyResult<PythonInfo>,
+    override val version: @NlsSafe String?,
     override val pythonBinaryPath: PythonBinary,
     override val pythonHomePath: PythonHomePath,
     /**
@@ -94,7 +100,7 @@ sealed interface PythonEnvironment {
 
   /** Conda environment (has `conda-meta` directory). */
   data class Conda(
-    override val validationInfo: PyResult<PythonInfo>,
+    override val version: @NlsSafe String?,
     override val pythonBinaryPath: PythonBinary,
     override val pythonHomePath: PythonHomePath,
     /** Path to the environment's `conda-meta/` directory — the marker that identified it as a conda env. */
@@ -147,7 +153,8 @@ sealed interface PythonEnvironment {
 
   /** System/global Python installation. */
   data class SystemPython(
-    override val validationInfo: PyResult<PythonInfo>,
+    /** Always null: a system interpreter records nothing about itself, so its version is only known by running it. */
+    override val version: @NlsSafe String? = null,
     override val pythonBinaryPath: PythonBinary,
   ) : PythonEnvironment
 }
@@ -166,12 +173,6 @@ sealed interface PythonEnvironment {
 @ApiStatus.Internal
 @RequiresBackgroundThread
 fun PythonBinary.detectPythonEnvironment(): PyResult<PythonEnvironment> = detectPythonEnvironmentImpl()
-
-/**
- * See [PythonEnvironment.validationInfo]
- */
-@get:ApiStatus.Internal
-val PythonEnvironment.version: PyResult<LanguageLevel> get() = validationInfo.mapSuccess { it.languageLevel }
 
 /** The activation environment for [this] Python environment. */
 @ApiStatus.Internal

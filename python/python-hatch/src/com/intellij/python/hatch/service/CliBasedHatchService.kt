@@ -8,7 +8,6 @@ import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.python.community.execService.UploadConfig
-import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.python.hatch.EnvironmentCreationHatchError
 import com.intellij.python.hatch.FileSystemOperationHatchError
 import com.intellij.python.hatch.HatchProjectStructureService
@@ -218,18 +217,21 @@ private fun HatchDetailedEnvironments.toVirtualHatchEnvironments(): List<HatchEn
       HatchEnvironment(name = name, type = details.type, python = details.python, description = details.description ?: "")
     }
 
+/**
+ * Whether the environment at [pythonHomePath] is there, decided by looking rather than by running.
+ *
+ * An interpreter that exists and can be executed is an existing environment. It used to be started as well, to read a
+ * version nobody at this point had asked for — once per declared environment, on every listing. What the version is
+ * belongs to whoever wants it; [PythonVirtualEnvironment.Existing.pythonInfo] is left unset here.
+ */
 private suspend fun <P : PathHolder> resolvePythonVirtualEnvironment(
   fileSystem: FileSystem<P>,
   pythonHomePath: P,
 ): PyResult<PythonVirtualEnvironment<P>> {
-  val pythonInfo =
-    fileSystem.resolvePythonBinary(pythonHomePath)?.takeIf { fileSystem.validateExecutable(it).isSuccess }?.let { pythonBinaryPath ->
-      fileSystem.getBinaryToExec(pythonBinaryPath).validatePythonAndGetInfo().getOr { return it }
-    }
-
-  val pythonVirtualEnvironment = when {
-    pythonInfo == null -> PythonVirtualEnvironment.NotExisting(pythonHomePath)
-    else -> PythonVirtualEnvironment.Existing(pythonHomePath, pythonInfo)
+  val binary = fileSystem.resolvePythonBinary(pythonHomePath)?.takeIf { fileSystem.validateExecutable(it).isSuccess }
+  val pythonVirtualEnvironment = when (binary) {
+    null -> PythonVirtualEnvironment.NotExisting(pythonHomePath)
+    else -> PythonVirtualEnvironment.Existing(pythonHomePath)
   }
   return Result.success(pythonVirtualEnvironment)
 }

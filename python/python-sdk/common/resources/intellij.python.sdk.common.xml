@@ -28,6 +28,8 @@
                  description="Evo interpreter widget: how long (seconds) a slow tool's environment list is cached"/>
     <registryKey key="python.evolution.widget.scan.depth" defaultValue="1"
                  description="Evo interpreter widget: how many directory levels below a base dir env discovery descends to find nested virtualenvs (a direct child is level 1)"/>
+    <registryKey key="python.evolution.widget.uv.pythons" defaultValue="true"
+                 description="Evo interpreter widget: where uv is installed, take the base Python list (and install missing versions) from uv instead of the IDE's own interpreter scan"/>
     <registryKey key="python.evolution.widget.scan.max.dirs" defaultValue="2000"
                  description="Evo interpreter widget: upper bound on directories examined per env discovery, so a huge project tree can't turn a node expansion into a long walk"/>
 

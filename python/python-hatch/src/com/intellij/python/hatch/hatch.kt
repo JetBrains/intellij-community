@@ -63,10 +63,16 @@ sealed interface PythonVirtualEnvironment<P : PathHolder> {
   val pythonHomePath: P
 
   /**
-   * Represents an existing Python virtual environment.
-   * The environment was verified and the Python version was already discovered.
+   * Represents an existing Python virtual environment: its interpreter is there and can be run.
+   *
+   * [pythonInfo] is null unless somebody asked the interpreter what it is. Listing the environments does not: that
+   * would start every interpreter hatch declares, once per listing, to learn a version the environment writes into its
+   * own `pyvenv.cfg`. A caller that needs the version asks for the one environment it cares about.
    */
-  data class Existing<P : PathHolder>(override val pythonHomePath: P, val pythonInfo: PythonInfo) : PythonVirtualEnvironment<P>
+  data class Existing<P : PathHolder>(
+    override val pythonHomePath: P,
+    val pythonInfo: PythonInfo? = null,
+  ) : PythonVirtualEnvironment<P>
 
   /**
    * Represents a non-existing Python virtual environment.
