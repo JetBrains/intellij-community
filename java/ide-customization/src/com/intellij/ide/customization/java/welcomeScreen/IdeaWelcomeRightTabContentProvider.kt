@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.impl.DialogBackgroundImageProviderBase
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenFeatureApi
+import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenFeatureUI
 import com.intellij.platform.project.projectId
 import com.intellij.util.IconUtil
 import kotlinx.coroutines.CoroutineScope
@@ -34,6 +35,7 @@ internal class IdeaWelcomeRightTabContentProvider(override val coroutineScope: C
 
   override fun getFeatureButtonModels(project: Project): List<WelcomeRightTabContentProvider.FeatureButtonModel> {
     return listOfNotNull(
+      pluginProvidedFeatureButtonModel(IdeaFeatureKeys.AIR_SESSIONS),
       WelcomeRightTabContentProvider.FeatureButtonModel(
         text = IdeBundle.message("configurable.TerminalOptionsConfigurable.display.name"),
         icon = scale(AllIcons.Debugger.Console, true),
@@ -48,6 +50,23 @@ internal class IdeaWelcomeRightTabContentProvider(override val coroutineScope: C
           featureButtonOnClick(project, IdeaFeatureKeys.PLUGINS)
         }
       )
+    )
+  }
+
+  /**
+   * Builds a button for a feature a plugin owns, or returns `null` when the plugin ships no button.
+   *
+   * The plugin supplies the icon and the label, so its own message bundle keeps the wording. The backend half gates
+   * the button too: the welcome right tab drops a [WelcomeRightTabContentProvider.FeatureButtonModelWithBackend]
+   * whose `welcomeScreenFeatureBackend` no loaded plugin registers.
+   */
+  private fun pluginProvidedFeatureButtonModel(featureKey: String): WelcomeRightTabContentProvider.FeatureButtonModel? {
+    val feature = WelcomeScreenFeatureUI.getForFeatureKey(featureKey) ?: return null
+    val text = feature.text ?: return null
+    return WelcomeRightTabContentProvider.FeatureButtonModelWithBackend(
+      featureKey = feature.featureKey,
+      text = text,
+      icon = scale(feature.icon, true),
     )
   }
 
