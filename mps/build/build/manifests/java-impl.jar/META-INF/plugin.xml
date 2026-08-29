@@ -1,3 +1,4 @@
+<!--suppress PluginXmlReferencesModuleReachability -->
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="false">
   <id>com.intellij.java</id>
   <version>261.23567.999-mps</version>
