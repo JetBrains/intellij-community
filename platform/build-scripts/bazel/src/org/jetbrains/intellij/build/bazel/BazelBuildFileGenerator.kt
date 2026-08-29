@@ -83,15 +83,16 @@ internal class ModuleList(
   }
 
   /**
-   * Modules whose checked-in plugin content reports agree that they are a plain `lib/modules/<module>.jar` holding that
-   * module's production output and one agreed set of module libraries. The value is that library set.
+   * Modules that every plugin holding them derives as a plain `lib/modules/<module>.jar`, holding that module's
+   * production output and one agreed set of module libraries. The value is that library set.
    *
-   * Folded once for the whole run over every report the model reaches, then corrected by what a community-only run
-   * cannot see; see [foldPluginContentCandidacy]. The per-module recipe still gets the final veto in
+   * Folded once for the whole run over every plugin the model reaches, then corrected by what a community-only run
+   * cannot see; see [foldDerivedPluginContentCandidacy]. `foldPluginContentCandidacy` is the report-side twin of the
+   * same fold, and only the residue writer reads it. The per-module recipe still gets the final veto in
    * [isPrepackedPluginContentModule]: a conflicting platform recipe, an excluded module, a descriptor that exists only
    * in generated output, or a library set the JPS model does not derive keeps the module on the JarPackager path.
    *
-   * [skipped] modules count like any other: a report is a report wherever its plugin's own target ends up, and leaving
+   * [skipped] modules count like any other: a plugin states its content wherever its own target ends up, and leaving
    * them out would make the fold depend on which modules this generator converts.
    */
   val pluginContentModuleJarCandidates: Map<String, Set<String>> by lazy {

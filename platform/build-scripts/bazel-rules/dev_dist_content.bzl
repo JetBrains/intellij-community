@@ -332,8 +332,9 @@ def _collect_libraries(ctx, library_jars):
 
     # Every plugin needs it, and no plugin says anything by naming it. The Bazel converter puts `@lib//:kotlin-stdlib`
     # into a module's `runtime_deps` implicitly and JPS declares it for nobody, so whether it reached a plugin's
-    # `libraries` was decided by whether some member's JPS model or the layout report happened to mention it - true for
-    # 250 of 408 content targets and false for the rest, describing nothing about either group. It is a fact of the
+    # `libraries` was decided by whether some member's JPS model or the plugin's own content statement happened to
+    # mention it - true for 250 of the 408 content targets the tree then had, and false for the rest, describing nothing
+    # about either group. The count is from before the derivation replaced the report. It is a fact of the
     # toolchain, so it lives on the rule. Costs no manifest entry either: the key is the container label, so a fragment
     # that already had it gains nothing to resolve.
     library_jars.append(depset([_library_entry(ctx.attr._kotlin_stdlib, ctx.label)]))
@@ -367,7 +368,7 @@ def _collect_library_jars(ctx, library_jars):
         library_jars.append(depset([struct(label = str(target.label), jars = (files[0],))]))
 
 def _conventional_prepacked_path(content_module):
-    """Where a plugin puts a handed-off content module's jar unless its report says otherwise.
+    """Where a plugin puts a handed-off content module's jar unless a `prepacked_jars` entry says otherwise.
 
     `simplePluginContentEntry` in `contentModuleJar.kt` accepts a plugin entry at `lib/modules/<module>.jar` or at
     `lib/<module>.jar`. The second destination belongs to an `embedded` content module that gets a jar of its own. The
@@ -511,8 +512,8 @@ def dev_dist_plugin_content(descriptor_module, name = None, visibility = ["//vis
     """`_dev_dist_plugin_content` with the two attributes that are the same for every plugin filled in.
 
     A content target is named after the module that carries the plugin descriptor, and every one of them is public
-    because the fragment that packs the plugin is in another package. Both were generated into 408 checked-in
-    `BUILD.bazel` files, 816 lines that said the same thing every time.
+    because the fragment that packs the plugin is in another package. Otherwise both would be spelled at each of the 356
+    call sites, 712 lines that say the same thing every time.
     """
     _dev_dist_plugin_content(
         name = name if name else descriptor_module.lstrip(":") + "_dev_content",
@@ -543,8 +544,8 @@ def _dev_dist_content_set_impl(ctx):
         fail("%s: `prepacked_plugin_main_module` and `prepacked_content_modules` must be set together" % ctx.label)
     if ctx.attr.prepacked_content_modules:
         # No `prepacked_jars` here. A completion carries a member of the *other* repository, and the converter records
-        # such a member only when its plugin places the jar at the conventional path - `computePluginContent` in
-        # `pluginContent.kt` keeps the rest raw, with a warning. No report in this repository needs the other case
+        # such a member only when its plugin places the jar at the conventional path - `resolvePluginContent` in
+        # `pluginContent.kt` keeps the rest raw, with a warning. No plugin of this repository needs the other case
         # today, so the attribute would be one nothing writes.
         _collect_prepacked(
             label = ctx.label,

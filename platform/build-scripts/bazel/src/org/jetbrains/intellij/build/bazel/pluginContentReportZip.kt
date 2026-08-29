@@ -32,10 +32,14 @@ private val PLUGIN_REPORT_ENTRIES = listOf("bundled-plugins.yaml", "non-bundled-
 /**
  * Every plugin of a distribution build's content report, by main module name.
  *
- * The report zip is the verification record of what a real distribution build packs, and it is the authority the residue
- * writer and the two comparison switches read. `DistributionJARsBuilder` writes it to
- * `<artifacts>/content-report.zip`, and `readContentReportZip` of `contentChecker.kt` is the platform-side reader of the
- * same four entries.
+ * The report zip is the verification record of what a real distribution build packs, and it is the authority both residue
+ * modes read. `DistributionJARsBuilder` writes it to `<artifacts>/content-report.zip`, and `readContentReportZip` of
+ * `contentChecker.kt` is the platform-side reader of the same four entries.
+ *
+ * This reader refuses a damaged report rather than reading fewer plugins from it. `recipeYaml` runs with
+ * `strictMode = false`, so a renamed field of the platform's `PluginContentReport` would decode as the default instead of
+ * failing, and every plugin would arrive with no main module. The population file and the residues are written from this
+ * map, so a quiet shrink here would empty the population and take 356 content leaves with it.
  *
  * A plugin's target-platform variants are **unioned**, not compared. That is the same rule `mergePerOsPluginContent` of
  * `contentChecker.kt` applies, and this reaches it without a second implementation of the union: every read the
@@ -63,12 +67,14 @@ internal fun readPluginContentReportZip(file: Path): Map<String, List<RecipeEntr
   val result = LinkedHashMap<String, MutableList<RecipeEntry>>()
   val variants = LinkedHashMap<String, Int>()
   for (plugin in plugins) {
-    if (plugin.mainModule.isEmpty()) {
-      continue
+    check(plugin.mainModule.isNotEmpty()) {
+      "$file reports a plugin with no main module. The platform declares `PluginContentReport.mainModule` without a" +
+      " default, so a report cannot omit it, and `ReportedPlugin` no longer matches the shape the build writes"
     }
     variants.merge(plugin.mainModule, 1, Int::plus)
     result.getOrPut(plugin.mainModule) { ArrayList() }.addAll(plugin.content)
   }
+  check(result.isNotEmpty()) { "$file names no plugin. A distribution build packs plugins, so the zip is not one of its reports" }
   for ((mainModule, count) in variants) {
     if (count > 1) {
       println(
