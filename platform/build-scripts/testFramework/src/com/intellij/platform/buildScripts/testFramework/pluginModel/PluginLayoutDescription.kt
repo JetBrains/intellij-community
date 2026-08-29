@@ -19,6 +19,12 @@ import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 
+/** The descriptor of a plugin, relative to a resource root of its main module. */
+private const val PLUGIN_DESCRIPTOR_PATH: String = "META-INF/plugin.xml"
+
+/** The per-plugin layout snapshot the packaging test writes beside a plugin's main module. */
+private const val PLUGIN_LAYOUT_FILE_NAME: String = "plugin-content.yaml"
+
 /**
  * Provides information about layout of plugins for [PluginDependenciesValidator].
  */
@@ -94,7 +100,7 @@ private suspend fun collectMainModulesWithPluginDescriptor(
     val module = outputProvider.findModule(mainModule) ?: return@mapConcurrent null
     val descriptorContent = outputProvider.readFileContentFromModuleOutput(
       module = module,
-      relativePath = "META-INF/plugin.xml",
+      relativePath = PLUGIN_DESCRIPTOR_PATH,
       forTests = false,
     )
     mainModule.takeIf { descriptorContent != null }
@@ -150,14 +156,13 @@ private class ContentReportBasedPluginLayoutProvider(
 
   override fun loadPluginLayout(mainModule: JpsModule): PluginLayoutDescription? {
     val pluginContent = mainModuleToPluginContent[mainModule.name] ?: return null
-    val pluginDescriptorPath = "META-INF/plugin.xml"
     if (mainModule.name !in mainModulesWithPluginDescriptor) {
       throw PluginModuleConfigurationError(
         pluginModelModuleName = mainModule.name,
         errorMessage = """
-                '$pluginDescriptorPath' file is not found in production output of module '${mainModule.name}'.
+                '$PLUGIN_DESCRIPTOR_PATH' file is not found in production output of module '${mainModule.name}'.
                 The module is present in the content report; if it is not the main module of a plugin anymore,
-                update the product layout to avoid confusion. 
+                update the product layout to avoid confusion.
               """.trimIndent(),
       )
     }
@@ -165,7 +170,7 @@ private class ContentReportBasedPluginLayoutProvider(
     return toPluginLayoutDescription(
       entries = pluginContent.content,
       mainModuleName = mainModule.name,
-      pluginDescriptorPath = pluginDescriptorPath,
+      pluginDescriptorPath = PLUGIN_DESCRIPTOR_PATH,
       mainLibDir = "lib",
       jarsToIgnore = emptySet(),
       libraryRootResolver = outputProvider::findLibraryRoots,
@@ -274,30 +279,42 @@ private class YamlFileBasedPluginLayoutProvider(
     return mainModulesOfBundledPlugins.toList()
   }
 
+  /**
+   * The layout of one plugin, or `null` when this product does not state the plugin or checks in no layout for it.
+   *
+   * The product content report decides whether [mainModule] is a plugin main module, and the descriptor check follows
+   * from that alone. A module the report names as a plugin, with no `META-INF/plugin.xml`, is a stale product layout.
+   * So the error keeps its meaning even when the per-plugin layout file is absent.
+   *
+   * An absent layout file is a skip and not an error, because a product whose packaging test passes
+   * `checkPlugins = false` writes no per-plugin layout at all.
+   */
   override fun loadPluginLayout(mainModule: JpsModule): PluginLayoutDescription? {
     if (mainModule.name !in mainModulesOfBundledPlugins && mainModule.name !in mainModulesOfNonBundledPlugins) {
       return null
     }
-    val contentRootUrl = mainModule.contentRootsList.urls.firstOrNull() ?: return null
-    val pluginContentPath = "plugin-content.yaml"
-    val contentDataPath = JpsPathUtil.urlToNioPath(contentRootUrl).resolve(pluginContentPath)
-    if (!contentDataPath.exists()) return null
-    val pluginDescriptorPath = "META-INF/plugin.xml"
-    if (JpsJavaExtensionService.getInstance().findSourceFileInProductionRoots(mainModule, pluginDescriptorPath) == null) {
+    if (JpsJavaExtensionService.getInstance().findSourceFileInProductionRoots(mainModule, PLUGIN_DESCRIPTOR_PATH) == null) {
       throw PluginModuleConfigurationError(
         pluginModelModuleName = mainModule.name,
         errorMessage = """
-                '$pluginDescriptorPath' file is not found in source and resource roots of module '"${mainModule.name}', but '$pluginContentPath' is present in it.
-                If '${mainModule.name}' is not the main module of a plugin anymore, delete '$pluginContentPath' to avoid confusion. 
+                '$PLUGIN_DESCRIPTOR_PATH' file is not found in source and resource roots of module '${mainModule.name}'.
+                '${contentYamlPath.fileName}' names the module as the main module of a plugin; if it is not one anymore,
+                update the product layout to avoid confusion.
               """.trimIndent(),
       )
+    }
+
+    val contentRootUrl = mainModule.contentRootsList.urls.firstOrNull() ?: return null
+    val contentDataPath = JpsPathUtil.urlToNioPath(contentRootUrl).resolve(PLUGIN_LAYOUT_FILE_NAME)
+    if (!contentDataPath.exists()) {
+      return null
     }
 
     val contentData = deserializeContentData(contentDataPath.readText())
     return toPluginLayoutDescription(
       entries = contentData,
       mainModuleName = mainModule.name,
-      pluginDescriptorPath = pluginDescriptorPath,
+      pluginDescriptorPath = PLUGIN_DESCRIPTOR_PATH,
       mainLibDir = "lib",
       jarsToIgnore = emptySet()
     )
