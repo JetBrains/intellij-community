@@ -297,18 +297,20 @@ private const val CPYTHON_IMPLEMENTATION: String = "cpython"
  * Where the machine has none of this version, the option itself becomes one to install.
  */
 private fun List<UvPythonEntry>.toOption(level: @NlsSafe String, uvPythonDir: Path?): EvoAddNewOptionDto {
-  val (installed, downloadable) = partition { it.path != null }
   // Newest build first, whether it is here or only offered — the list is read as versions, so an interpreter's patch
-  // level is what orders it, not whether it happens to be installed. `sortedByDescending` is stable, so builds sharing
-  // a patch keep the order uv listed them in.
-  val bases = sortedByDescending { it.versionParts.patch }.map { it.toBaseDto(uvPythonDir) }
-  val firstInstalled = installed.firstOrNull()?.path
+  // level is what orders it, not whether it happens to be installed. uv already answers in that order within a version;
+  // sorting states it rather than relying on it, and being stable it leaves builds sharing a patch as uv named them.
+  val newestFirst = sortedByDescending { it.versionParts.patch }
+  // What the row builds on when it is simply clicked: the newest build already on the machine. uv lists a build it
+  // would have to fetch beside the ones it found, and the newest of a version is often the former — so taking the
+  // newest outright would download an interpreter to stand in for one already here. A version with nothing installed
+  // falls back to fetching, and then it is the newest of those.
+  val default = newestFirst.firstOrNull { it.path != null } ?: newestFirst.firstOrNull()
   return EvoAddNewOptionDto(
     title = level,
-    // With nothing of this version on the machine, the row installs the newest build uv offers for it.
-    token = firstInstalled ?: downloadable.firstOrNull()?.key ?: level,
-    bases = bases,
-    installable = firstInstalled == null,
+    token = default?.let { it.path ?: it.key } ?: level,
+    bases = newestFirst.map { it.toBaseDto(uvPythonDir) },
+    installable = default?.path == null,
   )
 }
 

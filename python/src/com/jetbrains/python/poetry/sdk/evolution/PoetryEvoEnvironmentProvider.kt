@@ -1,5 +1,6 @@
 package com.jetbrains.python.poetry.sdk.evolution
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.common.tools.ToolId
@@ -18,6 +19,7 @@ import com.intellij.python.sdk.backend.evolution.ownedEnvBinaryIn
 import com.intellij.python.sdk.backend.evolution.evoEnvLeaf
 import com.intellij.python.sdk.backend.evolution.toLeaf
 import com.intellij.python.sdk.backend.evolution.toolMissing
+import com.intellij.python.sdk.common.evolution.EvoAddNewOptionDto
 import com.intellij.python.sdk.common.evolution.EvoAddNewDto
 import com.intellij.python.sdk.common.evolution.EvoLeafDto
 import com.intellij.python.sdk.common.evolution.EvoLoadResultDto
@@ -108,7 +110,10 @@ internal class PoetryEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
         // Built from the best interpreter of that version, with the others behind the row's own pencil rather than
         // behind a view of the whole node — see [recreateSpecFor].
         else -> evoCreateEnvLeaf(title = title, token = option.token, icon = icon)
-          .copy(createVersions = listOf(option), secondaryText = option.bases.firstOrNull()?.version)
+          // The build this row would actually use, which is the one [EvoAddNewOptionDto.token] names — the newest that
+          // is installed. Showing the first of the list instead named the newest uv *knows*, so a row that was about to
+          // build on 3.14.5 from this machine announced the 3.14.6 uv would have had to download.
+          .copy(createVersions = listOf(option), secondaryText = option.defaultBaseVersion())
       }
       leaf.copy(versionGroup = title)
     }
@@ -216,3 +221,10 @@ internal class PoetryEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
     return EvoAddNewDto(name = dir.fileName.toString(), path = dir.pathString, options = options, nameEditable = false)
   }
 }
+
+/**
+ * The version of the build an option would be created from: the one its token names, or the first offered when none
+ * matches — a token that is a version to install rather than an interpreter path.
+ */
+private fun EvoAddNewOptionDto.defaultBaseVersion(): @NlsSafe String? =
+  bases.firstOrNull { it.token == token }?.version ?: bases.firstOrNull()?.version
