@@ -2,6 +2,9 @@
 
 package com.intellij.python.sdk.frontend.evolution.components
 
+import java.awt.Font
+import com.intellij.util.ui.NamedColorUtil
+import com.intellij.util.ui.JBFont
 import com.intellij.ui.ComponentUtil
 import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.icons.AllIcons
@@ -89,6 +92,15 @@ private const val GEAR_CAPTION_GAP = 6
 
 /** Gap (unscaled px) between a submenu and the left edge of the parent popup it is placed next to. */
 private const val SUBMENU_LEFT_GAP = 2
+
+/**
+ * How long after a base-Python picker closes a click on the list is still treated as the one that closed it.
+ *
+ * A window rather than a flag, because the picker is dismissed on the press and the row would be acted on by the
+ * release of that same gesture, by which time there is nothing left to test. The platform swallows a click after a
+ * popup the same way, with the same order of magnitude — see `AbstractPopup.myCancelOnWindow`.
+ */
+private const val PICKER_CLICK_SWALLOW_MS = 200L
 
 /**
  * Sample string whose rendered width is reserved for the version column, so a resolved version fits without resize.
@@ -316,6 +328,9 @@ private class GearGroupHeaderSeparator(
 }
 
 class EvoPopupListElementRenderer(private val popup: EvoTreePopup) : PopupListElementRenderer<EvoTreeItem>(popup) {
+  /** The font the platform gave the row label, kept so a row drawn smaller can be undone on the next row. */
+  private val baseTextFont: Font by lazy { myTextLabel.font }
+
   private val reloadLabel = JLabel()
   private val signLabel = JLabel()
 
@@ -359,10 +374,12 @@ class EvoPopupListElementRenderer(private val popup: EvoTreePopup) : PopupListEl
       myTextLabel.isEnabled = value.isEnabled
       reserveVersionColumn(value)
     }
-    // A row that reveals more of the list is drawn in the platform's link colour, so it reads as a control rather than
-    // as an environment. Only when unselected: the selection foreground is what stays legible on the highlight, and the
-    // superclass sets that on every row, so nothing has to be undone here.
-    if (value?.isLinkRow == true && !isSelected) myTextLabel.foreground = JBUI.CurrentTheme.Link.Foreground.ENABLED
+    // A row that folds the list is drawn smaller and, unless it is selected, in the quiet text colour: it controls the
+    // rows above it rather than standing among them. Both are written on every row, since the renderer reuses one label
+    // for the whole list and what is set here would otherwise follow it down.
+    val disclosure = value?.isDisclosureRow == true
+    myTextLabel.font = if (disclosure) JBFont.medium() else baseTextFont
+    if (disclosure && !isSelected) myTextLabel.foreground = NamedColorUtil.getInactiveTextColor()
 
     // Put a reload icon right next to the submenu arrow for the hovered refreshable tool row (click handled in EvoTreePopup).
     val arrow = myNextStepLabel ?: return
@@ -481,6 +498,12 @@ open class EvoTreePopup private constructor(
   /** [anchorOnScreen] for the child this popup is about to open, set by [openBasePythonPanel] and read by [createPopup]. */
   private var nextChildAnchor: Point? = null
 
+  /** True while a base-Python picker this popup opened is on screen. */
+  private var pickerShowing: Boolean = false
+
+  /** When such a picker last closed — see [PICKER_CLICK_SWALLOW_MS]. */
+  private var pickerClosedAt: Long = 0
+
 
   override fun getListElementRenderer(): ListCellRenderer<*>? {
     return EvoPopupListElementRenderer(this)
@@ -505,7 +528,15 @@ open class EvoTreePopup private constructor(
         ?.let { node -> node.whenLoadFinished { if (node.state == State.DONE) openSubmenuOf(node) } }
       // Read before the child exists: inside `apply` the name would bind to the child's own field, which is null.
       val anchor = nextChildAnchor
-      return EvoTreePopup(parent, step, null, dataContext, maxRowCount).apply {
+      // A picker says when it goes, so the click that dismissed it does not also act on the row it landed on.
+      val onClose = anchor?.let {
+        pickerShowing = true
+        Runnable {
+          pickerShowing = false
+          pickerClosedAt = System.currentTimeMillis()
+        }
+      }
+      return EvoTreePopup(parent, step, onClose, dataContext, maxRowCount).apply {
         anchorOnScreen = anchor
         // [WizardPopup.show] moves any child that overlaps its parent clear of it, to the left. An anchored popup is
         // meant to overlap — it opens on the row it belongs to — so it opts out of that alignment and is placed where
@@ -924,7 +955,17 @@ open class EvoTreePopup private constructor(
   // Don't let a click on one of the inline icons or the settings gear select/expand a row — the mouse listener handles
   // all three.
   override fun isActionClick(e: MouseEvent): Boolean =
-    reloadIconItemAt(e.point) == null && !settingsGearAt(e.point) && super.isActionClick(e)
+    !dismissesPicker() && reloadIconItemAt(e.point) == null && !settingsGearAt(e.point) && super.isActionClick(e)
+
+  /**
+   * True when this click is the one that closed a base-Python picker, and so must do nothing else.
+   *
+   * Clicking away from an open picker is how a user takes it back, and the list underneath is the nearest place to
+   * click. Left alone, that click also chose whatever row it landed on — which for this list means building an
+   * environment nobody asked for.
+   */
+  private fun dismissesPicker(): Boolean =
+    pickerShowing || System.currentTimeMillis() - pickerClosedAt < PICKER_CLICK_SWALLOW_MS
 
   /**
    * Opens the base-Python picker of the row at [point] — the right button was released over it.

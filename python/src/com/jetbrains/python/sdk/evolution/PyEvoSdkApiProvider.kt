@@ -854,12 +854,17 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
   override suspend fun currentEnvironmentRecreate(projectId: ProjectId, pyProjectKey: String): EvoCurrentRecreateDto? {
     val pyProject = resolvePyProject(projectId, pyProjectKey) ?: return null
     val sdk = pyProject.module.findPythonSdk() ?: return null
-    val binary = sdk.homePath?.toNioPathOrNull() ?: return null
-    val nodeId = providers.nodeIdForSdk(sdk) ?: return null
+    // Each "no" below is logged, because the user is shown one line saying the environment cannot be rebuilt and the
+    // reasons are not alike: an interpreter no node owns, a remote one, and a tool that declined all read the same.
+    val binary = sdk.homePath?.toNioPathOrNull()
+                 ?: return null.also { LOG.info("Evo: no rebuild for '${sdk.name}', which has no interpreter path") }
+    val nodeId = providers.nodeIdForSdk(sdk)
+                 ?: return null.also { LOG.info("Evo: no rebuild for '${sdk.name}', whose flavor no node claims") }
     val toolId = providers.firstOrNull { it.toolId.id == nodeId }?.toolId ?: return null
     val (provider, context) = toolContextFor(toolId, pyProject, eelFileSystem(pyProject)) ?: return null
     val title = sdk.pyInterpreterPresentation().shortName
-    val spec = provider.recreateSpecFor(context, evoEnvLeaf(title = title, pythonBinary = binary, icon = provider.icon)) ?: return null
+    val spec = provider.recreateSpecFor(context, evoEnvLeaf(title = title, pythonBinary = binary, icon = provider.icon))
+               ?: return null.also { LOG.info("Evo: $nodeId offered no rebuild for the environment at $binary") }
     return EvoCurrentRecreateDto(nodeId = nodeId, envHomePath = binary.pathString, title = title, recreate = spec)
   }
 

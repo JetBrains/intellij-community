@@ -164,12 +164,12 @@ private fun loadingSection(): EvoTreeSection =
 class EvoTreeActionLeafElement(action: AnAction) : EvoTreeLeafElement(action, action.templatePresentation.clone())
 
 /**
- * A row that reveals more of the list rather than selecting an environment, drawn in the platform's link colour.
+ * A row that folds part of the list away or unfolds it, rather than naming an environment.
  *
- * The colour is the whole of it: such a row is an ordinary leaf, laid out like any other, and its own icon says which
- * way the list is about to grow. It keeps the hover highlight and the keyboard, which a painted strip would not.
+ * Drawn quieter and smaller than the rows it controls, so a list is read as environments with a control under them
+ * instead of as environments one of which is worded oddly.
  */
-interface EvoLinkRow
+interface EvoDisclosureRow
 
 /**
  * A node whose submenu is a list of Pythons — so the platform handles mouse and keyboard natively. It is marked so
@@ -284,6 +284,12 @@ class EvoTreeLazyNodeElement(
    * process behind it at all.
    */
   val showOutput: (() -> Unit)? = null,
+  /**
+   * Whether a node that answered with nothing carries the warning sign — see [EvoTreeItem.statusIcon].
+   *
+   * False for a node whose "nothing" is an ordinary answer rather than a problem to report.
+   */
+  val signsUnavailable: Boolean = true,
   val loader: suspend (forceRefresh: Boolean) -> EvoLoadedNode,
 ) : EvoTreeNodeElement(text, icon) {
   /** Set from the last load: true once the backend measured this tool as slow, so it shows an inline reload icon. */
