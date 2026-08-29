@@ -129,8 +129,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "software.amazon.awssdk.glue",
   "sqlite-native",
   "squareup.okio.jvm",
-  // declared by the android plugin layout, so the Rider android plugin needs its own copy
-  "studio-platform",
 )
 
 class JarPackager private constructor(
