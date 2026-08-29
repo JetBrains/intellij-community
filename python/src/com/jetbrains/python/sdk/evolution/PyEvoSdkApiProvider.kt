@@ -3,6 +3,8 @@
 
 package com.jetbrains.python.sdk.evolution
 
+import com.intellij.python.sdk.backend.evolution.evoEnvLeaf
+import com.intellij.python.sdk.common.evolution.EvoCurrentRecreateDto
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.Expiry
@@ -839,6 +841,26 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
         else leaf.copy(recreate = provider.recreateSpecFor(context, leaf))
       })
     })
+  }
+
+  /**
+   * The environment in use, and what its own tool could rebuild it on.
+   *
+   * The leaf is built here rather than found: the "Current Environment" section shows no environment row, so there is
+   * none to read a rebuild off. What a provider is asked is still the question a row asks — an existing environment at
+   * a known path — so the same [PyEvoEnvironmentProvider.recreateSpecFor] answers it, ownership gate included. A
+   * provider that will not rebuild this environment returns null, and the widget reports the action as unavailable.
+   */
+  override suspend fun currentEnvironmentRecreate(projectId: ProjectId, pyProjectKey: String): EvoCurrentRecreateDto? {
+    val pyProject = resolvePyProject(projectId, pyProjectKey) ?: return null
+    val sdk = pyProject.module.findPythonSdk() ?: return null
+    val binary = sdk.homePath?.toNioPathOrNull() ?: return null
+    val nodeId = providers.nodeIdForSdk(sdk) ?: return null
+    val toolId = providers.firstOrNull { it.toolId.id == nodeId }?.toolId ?: return null
+    val (provider, context) = toolContextFor(toolId, pyProject, eelFileSystem(pyProject)) ?: return null
+    val title = sdk.pyInterpreterPresentation().shortName
+    val spec = provider.recreateSpecFor(context, evoEnvLeaf(title = title, pythonBinary = binary, icon = provider.icon)) ?: return null
+    return EvoCurrentRecreateDto(nodeId = nodeId, envHomePath = binary.pathString, title = title, recreate = spec)
   }
 
   override suspend fun resolveInterpreterVersion(

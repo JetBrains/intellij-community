@@ -144,43 +144,19 @@ internal class SelectEnvAction(
   /** Trace root of the popup tree this row belongs to; groups its version probe under that tree's root. */
   private val traceId: String,
   /**
-   * Builds the picker of Pythons this environment could be rebuilt on, or null when it offers no rebuild.
+   * The Pythons this environment can be rebuilt on, offered by the right button, or null when it offers no rebuild.
    *
-   * A builder rather than a built panel, because the two need each other: the panel's rows report the pick to this row,
-   * and this row runs the rebuild the pick stands for. The caller holds the leaf the options came on, so it builds the
-   * rows; it is handed the callback to report a pick to.
+   * Built by the caller, which holds the leaf the options came on: the panel's rows close over the rebuild call, and
+   * this row is the only thing that outlives each popup.
    */
-  private val basePythonPicker: ((onPicked: (text: @org.jetbrains.annotations.Nls String, rebuild: () -> Unit) -> Unit) -> EvoTreeNodeElement)?,
+  private val basePythonPanelOrNull: EvoTreeNodeElement?,
   title: @org.jetbrains.annotations.Nls String,
   description: @org.jetbrains.annotations.Nls String,
   secondaryText: @org.jetbrains.annotations.Nls String?,
   icon: IconId,
   private val scope: CoroutineScope,
 ) : AnAction({ title }, { description }, icon.icon()), EvoLazyDetail, EvoBasePythonPanel, DumbAware {
-  /**
-   * Built once, on first use, and kept: the pick it reports has to outlive the picker that reported it.
-   *
-   * [EvoTreeNodeElement.picksWithoutClosing] is what makes it a picker — a row of it only says which Python this
-   * environment should be rebuilt on, and the rebuild waits for this row to be chosen.
-   */
-  override val basePythonPanel: EvoTreeNodeElement? by lazy {
-    basePythonPicker?.invoke { text, rebuild ->
-      pendingRebuild = rebuild
-      templatePresentation.putClientProperty(ActionUtil.SECONDARY_TEXT, text)
-      onBasePythonChosen?.invoke()
-    }?.apply { picksWithoutClosing = true }
-  }
-
-  override var onBasePythonChosen: (() -> Unit)? = null
-
-  /**
-   * The rebuild a picked Python stands for, held until this row is chosen; null while no Python was picked.
-   *
-   * Nothing is destroyed at the moment of the pick. The user picks a Python the way they pick one for an environment
-   * that does not exist yet, sees it in this row, and the row is still the thing they choose — which is where the
-   * confirmation is, and where a change of mind costs nothing.
-   */
-  private var pendingRebuild: (() -> Unit)? = null
+  override val basePythonPanel: EvoTreeNodeElement? get() = basePythonPanelOrNull
 
   @Volatile
   private var versionRequested = false
@@ -190,12 +166,8 @@ internal class SelectEnvAction(
     secondaryText?.let { templatePresentation.putClientProperty(ActionUtil.SECONDARY_TEXT, it) }
   }
 
-  override fun actionPerformed(e: AnActionEvent) {
-    // A Python was picked for this environment, so choosing the row rebuilds it on that one instead of selecting what
-    // is there now. Selecting it unchanged is what the row does when nothing was picked.
-    pendingRebuild?.let { return it() }
+  override fun actionPerformed(e: AnActionEvent) =
     selectInterpreter(project, pyProjectKey, ref, nodeId, nodeStats, evoSourceForNode(nodeId), scope)
-  }
 
   /** Resolves the interpreter version once, on first focus, for a detected env that has no version yet. */
   override fun resolveOnFocus(onResolved: () -> Unit) {
@@ -405,8 +377,8 @@ internal fun selectEnvAction(
   nodeStats: EvoNodeStats,
   traceId: String,
   scope: CoroutineScope,
-  /** Builds this row's rebuild picker, when the backend said it has one — see [EvoLeafDto.recreate]. */
-  basePythonPicker: ((onPicked: (text: @org.jetbrains.annotations.Nls String, rebuild: () -> Unit) -> Unit) -> EvoTreeNodeElement)? = null,
+  /** This row's rebuild picker, when the backend said it has one — see [EvoLeafDto.recreate]. */
+  basePythonPanel: EvoTreeNodeElement? = null,
 ): SelectEnvAction =
   SelectEnvAction(
     project = project,
@@ -415,7 +387,7 @@ internal fun selectEnvAction(
     nodeId = nodeId,
     nodeStats = nodeStats,
     traceId = traceId,
-    basePythonPicker = basePythonPicker,
+    basePythonPanelOrNull = basePythonPanel,
     title = leaf.title,
     description = leaf.description ?: "",
     secondaryText = leaf.secondaryText,
@@ -433,7 +405,7 @@ internal fun selectEnvAction(project: Project, pyProjectKey: String, interpreter
     traceId = traceId,
     // An "Associated" or "Shortcuts" row is not listed under the tool that owns its environment, so there is no tool
     // here to rebuild it with.
-    basePythonPicker = null,
+    basePythonPanelOrNull = null,
     title = interpreter.title,
     description = interpreter.description,
     secondaryText = null,

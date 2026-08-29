@@ -43,6 +43,7 @@ import com.intellij.python.sdk.common.evolution.EvoNodeStats
 import com.intellij.python.sdk.common.evolution.PyEvoWidgetCollector
 import com.intellij.python.sdk.common.evolution.evoRpc
 import com.intellij.python.sdk.common.evolution.evoRpcOrNull
+import com.intellij.python.sdk.common.evolution.requestEvoCurrentRecreate
 import com.intellij.python.sdk.common.evolution.requestEvoNode
 import com.intellij.python.sdk.frontend.PySdkFrontendBundle
 import com.intellij.python.sdk.frontend.evolution.components.EvoBasePythonPanel
@@ -286,25 +287,11 @@ internal class EvoPySdkSwitchPopupFactory(
     fun create(token: String, source: PyEvoWidgetCollector.Source, installVersion: String? = null) =
       createEnv(nodeId, token, path, defaultName, source, installVersion)
     val action = object : AnAction({ name }, { "" }, fadedIcon), DumbAware, EvoBasePythonPanel {
-      /** The Python this row would build on — the best one until its panel is asked for another. */
-      private var chosenToken: String = best.token
-      private var chosenInstallVersion: String? = best.installVersion()
-
-      override var onBasePythonChosen: (() -> Unit)? = null
-
-      /**
-       * Lazily, because the panel's rows write back into this action: building it in the constructor would need the
-       * action before the action exists.
-       */
+      /** The Pythons this row can be built on, offered by the right button. Picking one builds the environment. */
       override val basePythonPanel: EvoTreeNodeElement by lazy {
-        basePythonPanel(name, fadedIcon, options) { token, text, installVersion ->
-          // Chosen, not created: the row goes on saying what it would do, now with this Python, and creating is still
-          // the row's own click. Nothing is built until the user asks for it.
-          chosenToken = token
-          chosenInstallVersion = installVersion
-          templatePresentation.putClientProperty(ActionUtil.SECONDARY_TEXT, text)
-          onBasePythonChosen?.invoke()
-        }.apply { picksWithoutClosing = true }
+        basePythonPanel(name, fadedIcon, options) { token, _, installVersion ->
+          create(token, PyEvoWidgetCollector.Source.ADD_NEW_VERSION, installVersion)
+        }
       }
 
       init {
@@ -315,8 +302,9 @@ internal class EvoPySdkSwitchPopupFactory(
         templatePresentation.putClientProperty(ActionUtil.SECONDARY_TEXT, secondaryText ?: addVersionText(best))
       }
 
+      /** A plain click builds on the Python the row names, which is the best one the backend offered. */
       override fun actionPerformed(e: AnActionEvent) =
-        create(chosenToken, PyEvoWidgetCollector.Source.ADD_NEW_VERSION, chosenInstallVersion)
+        create(best.token, PyEvoWidgetCollector.Source.ADD_NEW_VERSION, best.installVersion())
     }
     return EvoTreeLeafElement(action)
   }
@@ -360,13 +348,13 @@ internal class EvoPySdkSwitchPopupFactory(
   }
 
   /**
-   * Builds the picker this row's inline icon opens, or null when the backend offered no rebuild for it.
+   * The picker the right button opens on this row, or null when the backend offered no rebuild for it.
    *
-   * The same picker an environment that does not exist yet opens, and a pick does the same thing: it says which Python
-   * this environment should stand on, and no more. Nothing is destroyed until the row itself is chosen, which is where
-   * the confirmation is. Built from the same [versionRows] the create row uses, so the two cannot drift apart.
+   * The same picker an environment that does not exist yet opens, and a pick acts the same way: it rebuilds this
+   * environment on the Python chosen, after the confirmation. Built from the same [versionRows] the create row uses, so
+   * the two cannot drift apart.
    */
-  private fun EvoLeafDto.basePythonPicker(nodeId: String): ((onPicked: (@NlsSafe String, () -> Unit) -> Unit) -> EvoTreeNodeElement)? {
+  private fun EvoLeafDto.basePythonPicker(nodeId: String): EvoTreeNodeElement? {
     val spec = recreate ?: return null
     val envHomePath = (ref as? PyInterpreterRef.DetectedPath)?.homePath ?: return null
     val stats = nodeStats(nodeId)
@@ -375,13 +363,9 @@ internal class EvoPySdkSwitchPopupFactory(
     val toolChange = ownerNodeId
       ?.let { owner -> nodeLabel(owner) to nodeLabel(nodeId) }
       ?.let { (from, to) -> EvoToolChange(from, to) }
-    return { onPicked ->
-      basePythonPanel(title, icon.icon(), spec.options) { token, text, installVersion ->
-        onPicked(text) {
-          recreateEvoEnv(project, pyProjectKey, nodeId, stats, envHomePath, title, token, text, installVersion,
-                         spec.canSyncPackages, toolChange, scope)
-        }
-      }
+    return basePythonPanel(title, icon.icon(), spec.options) { token, text, installVersion ->
+      recreateEvoEnv(project, pyProjectKey, nodeId, stats, envHomePath, title, token, text, installVersion,
+                     spec.canSyncPackages, toolChange, scope)
     }
   }
 
@@ -495,7 +479,14 @@ internal class EvoPySdkSwitchPopupFactory(
     }
     else -> EvoTreeSection(
       label = ListSeparator(PySdkFrontendBundle.message("evo.sdk.status.bar.popup.current.environment")),
-      elements = packageManagerActions(context) + EvoTreeLeafElement(managePackagesAction),
+      // The rebuild leads, because it acts on the environment itself while the rows under it act on its packages. It
+      // opens a list of Pythons rather than doing anything, and the confirmation is behind that, so leading costs a
+      // mis-click nothing.
+      elements = buildList {
+        add(recreateCurrentEnvNode())
+        addAll(packageManagerActions(context))
+        add(EvoTreeLeafElement(managePackagesAction))
+      },
       // Which environment, on hover — the identity the caption no longer spells out.
       labelTooltip = currentInterpreter.description,
     )
@@ -516,6 +507,39 @@ internal class EvoPySdkSwitchPopupFactory(
       onOpened = { PyEvoWidgetCollector.staticNodeOpened(project, EvoNodeStats(EvoNodeKind.ASSOCIATED)) },
     ).apply {
       stepDescription = PySdkFrontendBundle.message("evo.sdk.status.bar.popup.panel.associated.step")
+    }
+
+  /**
+   * "Recreate Environment": the Pythons the environment in use could be rebuilt on, and the rebuild when one is picked.
+   *
+   * A lazy node, because naming those Pythons means running processes and the answer is worth nothing until the user
+   * asks. Until then the row is one line in the "Current Environment" section; opening it is what asks the backend.
+   *
+   * A tool that will not rebuild this environment — a system interpreter, an environment belonging to another project —
+   * answers with nothing, and the row then reports itself unavailable, exactly as a tool node that offered nothing does.
+   */
+  private fun recreateCurrentEnvNode(): EvoTreeElement =
+    EvoTreeLazyNodeElement(
+      text = PySdkFrontendBundle.message("evo.sdk.status.bar.popup.recreate.current"),
+      icon = AllIcons.Actions.Restart,
+      nodeStats = EvoNodeStats(EvoNodeKind.OTHER),
+    ) { _ ->
+      val dto = evoRpc { requestEvoCurrentRecreate(project.projectId(), pyProjectKey) }
+                ?: throw EvoWarningException(PySdkFrontendBundle.message("evo.sdk.status.bar.popup.recreate.current.unavailable"))
+      val stats = nodeStats(dto.nodeId)
+      fun rebuild(token: String, title: @NlsSafe String, installVersion: String?) =
+        recreateEvoEnv(project, pyProjectKey, dto.nodeId, stats, dto.envHomePath, dto.title, token, title, installVersion,
+                       dto.recreate.canSyncPackages, null, scope)
+      EvoLoadedNode(
+        sections = versionRows(
+          dto.recreate.options,
+          { option -> versionAction(option) { rebuild(option.token, addVersionText(option), option.installVersion()) } },
+          { base -> baseInterpreterRow(base) { rebuild(base.token, base.version, null) } },
+          { option -> installActionRow { rebuild(option.token, addVersionText(option), option.installVersion()) } },
+        ),
+        refreshable = false,
+        stepDescription = PySdkFrontendBundle.message("evo.sdk.status.bar.popup.panel.recreate.current.step"),
+      )
     }
 
   /**
