@@ -209,6 +209,7 @@ exports_files(
         "resources/com/intellij/uiDesigner/NewForm.xml",
         "resources/gui-designer-properties.xml",
         "plugin-content.yaml",
+        "dev-dist.yaml",
     ],
     visibility = ["//visibility:public"],
 )

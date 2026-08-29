@@ -988,7 +988,7 @@ private fun declaresLibrary(module: ModuleDescriptor, jpsLibraryName: String, co
  * module, merged or not, so an unnamed library with two jars anywhere in the project would stop the whole run. A jar
  * this generator cannot name is a jar it refuses to pack, which is the file's policy everywhere else.
  */
-private fun distributionLibraryName(library: JpsLibrary): String? {
+internal fun distributionLibraryName(library: JpsLibrary): String? {
   val name = library.name
   if (name.isNotEmpty() && !name.startsWith('#')) {
     return name

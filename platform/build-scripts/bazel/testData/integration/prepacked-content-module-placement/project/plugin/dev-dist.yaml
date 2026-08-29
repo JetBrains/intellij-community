@@ -1,0 +1,4 @@
+content:
+  # Two entries of the report put this member's jar at two paths, so one packed jar cannot satisfy both.
+  raw_members:
+  - "intellij.libraries.conflicting"

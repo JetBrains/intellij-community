@@ -252,6 +252,23 @@ def _find_plugin_descriptor_report_rel_path(project_root, first_content_root):
     rel_path = _join_project_relative_path(first_content_root, _PLUGIN_DESCRIPTOR_REPORT_FILE_NAME)
     return rel_path if project_root.get_child(rel_path).exists else None
 
+_DEV_DIST_RESIDUE_FILE_NAME = "dev-dist.yaml"
+
+def _find_dev_dist_residue_rel_path(project_root, first_content_root):
+    """The `dev-dist.yaml` of the plugin this module is the main module of, or `None`.
+
+    The residue is what a plugin's dev-distribution leaves state beyond the derivation, and only the converter reads it -
+    but for the reason [_find_plugin_content_report_rel_path] gives, a residue nobody names is a residue the hermetic
+    `bazel-targets.json` run cannot see, and its `contentTarget` would then silently differ from the full-checkout run's.
+
+    Existence only, deliberately, exactly as for the two reports: this side cannot parse YAML and does not have to.
+    `JpsModuleToBazelTargetsOnly` asserts that the two sides pick out the same set of files.
+    """
+    if first_content_root == None:
+        return None
+    rel_path = _join_project_relative_path(first_content_root, _DEV_DIST_RESIDUE_FILE_NAME)
+    return rel_path if project_root.get_child(rel_path).exists else None
+
 _CONTENT_MODULE_RECIPE_FILE_NAME = "module-content.yaml"
 
 def _find_content_module_recipe_rel_path(project_root, first_content_root):
@@ -310,7 +327,7 @@ def read_project_model(ctx, project_root, extra_descriptor_rel_paths_by_module =
     Returns struct with:
       - modules: list of structs (module_name, iml_dir_rel, iml_content, iml_rel_path, plugin_xml_rel_path,
         descriptor_rel_paths, plugin_content_report_rel_path, plugin_descriptor_report_rel_path,
-        content_module_recipe_rel_path, test_plugin_modules)
+        dev_dist_residue_rel_path, content_module_recipe_rel_path, test_plugin_modules)
       - library_xmls: list of structs (xml_content, xml_rel_path) from .idea/libraries/
     """
     idea_dir = project_root.get_child(".idea")
@@ -368,6 +385,10 @@ def read_project_model(ctx, project_root, extra_descriptor_rel_paths_by_module =
                 first_content_root = iml_roots.first_content_root,
             ),
             plugin_descriptor_report_rel_path = _find_plugin_descriptor_report_rel_path(
+                project_root = project_root,
+                first_content_root = iml_roots.first_content_root,
+            ),
+            dev_dist_residue_rel_path = _find_dev_dist_residue_rel_path(
                 project_root = project_root,
                 first_content_root = iml_roots.first_content_root,
             ),

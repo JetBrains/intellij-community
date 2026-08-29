@@ -145,6 +145,7 @@ exports_files(
         "xpath-lang/resources/liveTemplates/xsl.xml",
         "xpath-lang/resources/org/intellij/lang/xpath/xslt/resources/documentation.xml",
         "plugin-content.yaml",
+        "dev-dist.yaml",
     ],
     visibility = ["//visibility:public"],
 )

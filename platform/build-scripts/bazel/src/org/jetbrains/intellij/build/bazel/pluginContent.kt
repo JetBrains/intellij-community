@@ -8,6 +8,7 @@ import org.jetbrains.jps.model.module.JpsModuleReference
 import java.nio.file.Path
 import java.util.TreeMap
 import java.util.TreeSet
+import kotlin.io.path.exists
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.readText
 import kotlin.io.path.relativeTo
@@ -83,6 +84,79 @@ internal class PluginContentResult(
 
 internal const val PLUGIN_CONTENT_REPORT_FILE_NAME: String = "plugin-content.yaml"
 
+/** The population the plan generator states; see [readPluginContentPopulation]. */
+internal const val PLUGIN_CONTENT_POPULATION_FILE_NAME: String = "dev_dist_plugin_content_population.txt"
+
+/**
+ * Which modules are a plugin main module the dev distribution states content for, one name per line.
+ *
+ * A `#` line is a comment. Flat names, no variant: a plugin's membership does not depend on the layout variant, which is
+ * the one thing that separates this file from `dev_dist_plugin_descriptor_population.txt`. Two files rather than two
+ * meanings per line, because the two populations differ - 515 plugins state content and 173 state a descriptor.
+ *
+ * The converter needs the population and cannot fold it for itself. Whether a module is a plugin main module is a
+ * **product** question, and the answer used to be "a `plugin-content.yaml` sits beside it" - a probe that dies with the
+ * report. A plain text file for the reason [PLUGIN_CONTENT_CANDIDATE_OVERRIDES_FILE_NAME] gives: it keeps this reader
+ * independent of Starlark. Under `community/build/`, so a community-only checkout reads the same file; a line naming a
+ * plugin that checkout does not have is a line it never matches.
+ *
+ * Fail-open on an absent file, exactly as [readPluginDescriptorPopulation] is. A checkout whose plan generator has never
+ * run - the generator's own integration tests each build a throwaway community project - has to convert.
+ */
+internal fun readPluginContentPopulation(file: Path): Set<String> {
+  if (!file.exists()) {
+    return emptySet()
+  }
+  val result = LinkedHashSet<String>()
+  for (raw in file.readText().lineSequence()) {
+    val line = raw.trim()
+    if (line.isNotEmpty() && !line.startsWith('#')) {
+      result.add(line)
+    }
+  }
+  return result
+}
+
+/**
+ * Whether a `dev_dist_plugin` states dev-distribution content for [module].
+ *
+ * The population file when the plan generator has written one, and the presence of a `plugin-content.yaml` otherwise.
+ * The fall-back is what keeps the generator's own integration tests converting - each builds a throwaway community
+ * project, which holds neither file - and it dies with the report in the last phase of this arc.
+ *
+ * [checkPluginContentPopulation] is what keeps the two answers equal while both exist.
+ */
+internal fun isDevDistContentPlugin(module: ModuleDescriptor, context: BazelBuildFileGenerator): Boolean {
+  val population = context.pluginContentPopulation
+  return if (population.isEmpty()) module.pluginContentReportFile != null else module.module.name in population
+}
+
+/**
+ * Fails when the checked-in population and the checked-in reports disagree about which modules are plugin main modules.
+ *
+ * The population file has no producer of its own yet - `plugin-model-tool` gets one in a later phase of this arc - so
+ * this is what stops it from rotting in the meantime. It fails rather than warns, because a plugin missing from the
+ * population silently loses its content leaf, and a fragment then declares one input less than its assembly reads.
+ *
+ * Silent while the population is empty, which is the fail-open case [readPluginContentPopulation] documents.
+ */
+internal fun checkPluginContentPopulation(moduleList: ModuleList, context: BazelBuildFileGenerator) {
+  val population = context.pluginContentPopulation
+  if (population.isEmpty()) {
+    return
+  }
+  val converted = (moduleList.community + moduleList.ultimate).mapTo(LinkedHashSet()) { it.module.name }
+  val withReport = (moduleList.community + moduleList.ultimate)
+    .filter { it.pluginContentReportFile != null }
+    .mapTo(LinkedHashSet()) { it.module.name }
+  val onlyInPopulation = (population.filterTo(LinkedHashSet()) { it in converted } - withReport).sorted()
+  val onlyInReports = (withReport - population).sorted()
+  check(onlyInPopulation.isEmpty() && onlyInReports.isEmpty()) {
+    "$PLUGIN_CONTENT_POPULATION_FILE_NAME disagrees with the checked-in reports about which modules are plugin main" +
+    " modules. Only in the population: $onlyInPopulation. Only beside a report: $onlyInReports"
+  }
+}
+
 /**
  * The one library `dev_dist_plugin_content` declares implicitly, so a content target never names it.
  *
@@ -93,7 +167,7 @@ internal const val PLUGIN_CONTENT_REPORT_FILE_NAME: String = "plugin-content.yam
  */
 private const val KOTLIN_STDLIB_LABEL = "@lib//:kotlin-stdlib"
 
-private val EMPTY_PLUGIN_CONTENT_RESULT = PluginContentResult(content = null, crossRepositoryPrepackedModules = emptyList())
+internal val EMPTY_PLUGIN_CONTENT_RESULT = PluginContentResult(content = null, crossRepositoryPrepackedModules = emptyList())
 
 /**
  * The name of the target that declares [module]'s dev-distribution content, in the plugin's own package.

@@ -128,6 +128,7 @@ exports_files(
         "resources/com/intellij/tasks/generic/connectors/assembla.xml",
         "resources/com/intellij/tasks/generic/connectors/sprintly.xml",
         "plugin-content.yaml",
+        "dev-dist.yaml",
     ],
     visibility = ["//visibility:public"],
 )

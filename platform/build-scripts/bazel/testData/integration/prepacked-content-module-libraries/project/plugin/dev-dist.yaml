@@ -1,0 +1,6 @@
+content:
+  # The layout merges a library this module declares in TEST scope only, so the derived set is empty and the jar the
+  # distribution ships is not the jar a packing target would produce. The stated set is what makes the refusal fire.
+  merged_libraries:
+    "intellij.libraries.refused":
+    - "testonly"

@@ -81,6 +81,7 @@ exports_files(
         "src/main/resources/META-INF/js.xml",
         "src/main/resources/META-INF/plugin.xml",
         "plugin-content.yaml",
+        "dev-dist.yaml",
     ],
     visibility = ["//visibility:public"],
 )

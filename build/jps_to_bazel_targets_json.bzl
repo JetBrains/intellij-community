@@ -14,6 +14,7 @@ def _jps_to_bazel_targets_json_impl(ctx):
     args.add_all(ctx.attr.starlark_plugin_distribution_targets, format_each = "--starlark-plugin-distribution=%s")
     args.add_all(ctx.attr.starlark_plugin_content_report_files, format_each = "--starlark-plugin-content=%s")
     args.add_all(ctx.attr.starlark_plugin_descriptor_report_files, format_each = "--starlark-plugin-descriptor=%s")
+    args.add_all(ctx.attr.starlark_dev_dist_residue_files, format_each = "--starlark-dev-dist-residue=%s")
     args.add_all(ctx.attr.starlark_content_module_recipe_files, format_each = "--starlark-content-module-recipe=%s")
     args.use_param_file("@%s", use_always = True)
 
@@ -83,6 +84,15 @@ jps_to_bazel_targets_json = rule(
 The inputs of the `contentTarget` half of `pluginDistributionTargets`, not the targets: whether a report yields a
 content target depends on what the report says, which only the converter reads. Asserting the file set is what proves
 the converter saw every report the checkout has, which is the property a missing manifest entry would break.""",
+        ),
+        "starlark_dev_dist_residue_files": attr.string_list(
+            default = [],
+            doc = """Starlark-derived `dev-dist.yaml` file labels for parity assertion.
+
+The residue of both dev-distribution leaves, on the same terms as `starlark_plugin_content_report_files`: whether a
+residue changes a leaf depends on what the residue says, which only the converter reads, so this asserts the file set.
+A residue the manifest is missing takes a plugin's stated members away, and the derivation then states fewer members
+than the distribution packs.""",
         ),
         "starlark_content_module_recipe_files": attr.string_list(
             default = [],

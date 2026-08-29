@@ -43,10 +43,14 @@ internal class JpsModuleToBazel {
       var assertAllModuleOutputsExist = false
       var m2Repo = JpsMavenSettings.getMavenRepositoryPath()
       var comparePluginContent = false
+      var comparePluginCandidacy = false
+      var writeDevDistResidue = false
 
       for (arg in args) {
         when {
           arg == "--compare-plugin-content" -> comparePluginContent = true
+          arg == "--compare-plugin-candidacy" -> comparePluginCandidacy = true
+          arg == "--write-dev-dist-residue" -> writeDevDistResidue = true
           arg.startsWith("--run_without_ultimate_root=") ->
             runWithoutUltimateRoot = arg.substringAfter("=")
           arg.startsWith("--workspace_directory=") ->
@@ -112,6 +116,7 @@ internal class JpsModuleToBazel {
         kotlincDefaults = kotlincDefaults,
       )
       val moduleList = generator.computeModuleList(m2RepoPath)
+      checkPluginContentPopulation(moduleList = moduleList, context = generator)
       // first, generate community to collect libs that used by community (to separate community and ultimate libs)
       val communityResult = generator.generateModuleBuildFiles(moduleList, isCommunity = true, skipGenerationOfPluginTargets)
       val ultimateResult = generator.generateModuleBuildFiles(moduleList, isCommunity = false, skipGenerationOfPluginTargets)
@@ -196,6 +201,16 @@ internal class JpsModuleToBazel {
       // rule 6).
       if (comparePluginContent) {
         comparePluginContentProducers(moduleList = moduleList, context = generator, out = ::println)
+      }
+      if (comparePluginCandidacy) {
+        comparePluginContentCandidacy(moduleList = moduleList, context = generator, out = ::println)
+      }
+      if (writeDevDistResidue) {
+        val result = writeDevDistResidues(moduleList = moduleList, context = generator)
+        println("dev-dist residue: written=${result.written} deleted=${result.deleted} unchanged=${result.unchanged}")
+        for ((field, plugins) in result.pluginsPerField.entries.sortedByDescending { it.value }) {
+          println("  $plugins plugins, ${result.rowsPerField.get(field)} rows  $field")
+        }
       }
     }
 

@@ -100,6 +100,7 @@ exports_files(
         "intellij.java.decompiler.iml",
         "resources/META-INF/plugin.xml",
         "plugin-content.yaml",
+        "dev-dist.yaml",
     ],
     visibility = ["//visibility:public"],
 )

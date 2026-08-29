@@ -35,13 +35,19 @@ internal class DerivedPluginContent(
  * product layout is the work this generator exists to keep out of a fragment action.
  */
 internal class PluginContentResidue(
-  /** Members the layout packs that the plugin's own `<content>` does not name - a `withModule` call, `.rt` or `.jps`. */
+  /** See [ContentResidueSection.extraMembers]. */
   @JvmField val extraMembers: Set<String> = emptySet(),
-  /** Members whose jar this plugin puts at `lib/<module>.jar` instead of the conventional `lib/modules/<module>.jar`. */
+  /** See [ContentResidueSection.libRootJars]. */
   @JvmField val libRootJars: Set<String> = emptySet(),
-  /** Members this plugin does not hand over, although the module is prepack-eligible for the repository. */
+  /** See [ContentResidueSection.rawMembers]. */
   @JvmField val rawMembers: Set<String> = emptySet(),
-  /** Libraries the layout packs from somewhere no member declares them. */
+  /** See [ContentResidueSection.vetoedMembers]. */
+  @JvmField val vetoedMembers: Set<String> = emptySet(),
+  /** See [ContentResidueSection.separateJars]. */
+  @JvmField val separateJars: Set<String> = emptySet(),
+  /** See [ContentResidueSection.mergedLibraries]. */
+  @JvmField val mergedLibraries: Map<String, Set<String>> = emptyMap(),
+  /** See [ContentResidueSection.libraries]. */
   @JvmField val libraries: Set<RecordedLibrary> = emptySet(),
 ) {
   companion object {
@@ -50,40 +56,70 @@ internal class PluginContentResidue(
 }
 
 /**
+ * [derivePluginContent] as the generator asks it: the result only, and nothing for a module outside the population.
+ *
+ * The replacement of [computePluginContent] at the emit site. It answers an empty result for a module the dev
+ * distribution states no content for, which is the verdict [computePluginContent] reaches by finding no report beside
+ * the module.
+ *
+ * The two plugins Phase 0 of this arc held out need no branch here, and both are worth naming. `intellij.lombok` keeps
+ * its `META-INF/plugin.xml` in `community/plugins/lombok/plugin/resources/`, which belongs to another module, so the
+ * derivation reads no closure for it and its whole membership is a stated one. `intellij.platform.ui.webview.jcef` is a
+ * content module with a residue beside it, and its descriptor is `intellij.platform.ui.webview.jcef.xml` rather than a
+ * `plugin.xml`; it states nothing, which is what both producers said about it before. So a hold-out is a residue row and
+ * not a name on a list, which is what keeps every plugin on one code path.
+ */
+internal fun computeDerivedPluginContent(
+  module: ModuleDescriptor,
+  moduleList: ModuleList,
+  context: BazelBuildFileGenerator,
+): PluginContentResult {
+  if (!isDevDistContentPlugin(module = module, context = context)) {
+    return EMPTY_PLUGIN_CONTENT_RESULT
+  }
+  val derived = derivePluginContent(module = module, moduleList = moduleList, context = context)
+  for (warning in derived.warnings) {
+    println(warning)
+  }
+  return derived.result
+}
+
+/**
  * The second producer of a plugin's dev-distribution content: the project model instead of `plugin-content.yaml`.
  *
  * [computePluginContent] projects the checked-in report. This derives the same facts from what the model already states,
  * the way `pluginDescriptor.kt` derives a descriptor plan: the members come from the plugin's own resolved `<content>`
- * plus [residue], the prepack relation comes from the convention, and the libraries come from the member walk. Both
- * producers end in [resolvePluginContent], so a comparison of the two measures the facts and never the label resolution.
+ * plus [residue], the jar of each member comes from [derivePluginContentCandidacy], and the libraries come from the
+ * member walk. Both producers end in [resolvePluginContent], so a comparison of the two measures the facts and never the
+ * label resolution.
  *
- * Nothing calls this during generation. `--compare-plugin-content` is the one caller, and
- * [comparePluginContentProducers] states what the comparison is for.
+ * One derivation of the jar path, not two. [derivePluginContentCandidacy] reproduces `computeOutputJarPath`, and the
+ * repo-global fold it feeds is what [resolvePluginContent] then gates every relation on. Offering a member a path this
+ * function invented instead would let the two disagree, and the disagreement would read as a plugin's deviation.
  */
 internal fun derivePluginContent(
   module: ModuleDescriptor,
   moduleList: ModuleList,
   context: BazelBuildFileGenerator,
-  residue: PluginContentResidue = PluginContentResidue.NONE,
+  residue: PluginContentResidue = contentResidueOf(module),
 ): DerivedPluginContent {
   val moduleName = module.module.name
-  val descriptor = descriptorFiles(module = module, loadPath = PLUGIN_XML_LOAD_PATH).firstOrNull()
-  val walked = when (descriptor) {
-    null -> WalkedContentModules(moduleNames = emptyList(), unresolvedIncludes = emptyList(), selectiveIncludes = emptyList())
-    else -> walkPluginContentClosure(module = module, descriptor = descriptor, moduleList = moduleList, context = context)
-  }
+  val closure = derivePluginContentClosure(module = module, moduleList = moduleList, context = context)
+  val walked = closure ?: EMPTY_WALKED_CONTENT_MODULES
   // The same key the report's `contentModules:` reader takes, so a module shipped under another descriptor names one
   // member on both sides; see [RecipeModule.moduleName].
   val memberNames = walked.moduleNames.mapTo(LinkedHashSet()) { it.substringBeforeLast('/') }
   memberNames.addAll(residue.extraMembers)
   memberNames.remove(moduleName)
 
-  // The convention, and the whole point of this producer: a member the plugin hands over goes to the path
-  // `dev_dist_content.bzl` derives. `resolvePluginContent` applies the eligibility gate, so an ineligible member falls
-  // back to a raw content module here exactly as it does on the report path.
-  val prepackedPaths = memberNames.asSequence()
-    .filterNot { it in residue.rawMembers }
-    .associateWith { if (it in residue.libRootJars) "$it.jar" else "modules/$it.jar" }
+  // Where this plugin puts each member's jar, from the one derivation of that question. A member with no offer is packed
+  // into a jar of the plugin's that this generator does not pack, so it stays a raw member - which is also what the
+  // report path does with it. `resolvePluginContent` applies the eligibility gate to what is left.
+  val candidacy = derivePluginContentCandidacy(module = module, moduleList = moduleList, context = context, residue = residue)
+  val prepackedPaths = candidacy.offers.asSequence()
+    .filterNot { it.moduleName in residue.rawMembers }
+    .filter { it.moduleName in memberNames }
+    .associate { it.moduleName to it.relativeOutputFile }
   val warnings = ArrayList<String>()
   val result = resolvePluginContent(
     module = module,
@@ -102,11 +138,27 @@ internal fun derivePluginContent(
     result = result,
     memberNames = memberNames.toList(),
     prepackedPaths = prepackedPaths,
-    hasOwnDescriptor = descriptor != null,
+    hasOwnDescriptor = closure != null,
     unresolvedIncludes = walked.unresolvedIncludes,
     selectiveIncludes = walked.selectiveIncludes,
     warnings = warnings,
   )
+}
+
+/**
+ * The plugin's own resolved `<content>`, or `null` when no production resource root of [module] holds `META-INF/plugin.xml`.
+ *
+ * The one entry point for both readers of a plugin's closure: [derivePluginContent] takes the members from it, and
+ * [derivePluginContentCandidacy] takes the members and their loading rules. A plugin with no descriptor of its own is a
+ * hold-out for both, and `null` says so rather than an empty closure.
+ */
+internal fun derivePluginContentClosure(
+  module: ModuleDescriptor,
+  moduleList: ModuleList,
+  context: BazelBuildFileGenerator,
+): WalkedContentModules? {
+  val descriptor = descriptorFiles(module = module, loadPath = PLUGIN_XML_LOAD_PATH).firstOrNull() ?: return null
+  return walkPluginContentClosure(module = module, descriptor = descriptor, moduleList = moduleList, context = context)
 }
 
 /**
@@ -602,7 +654,7 @@ private fun addRelationDeviations(
 ) {
   val entries = module.pluginContentReport.orEmpty()
   val reportPaths = reportedPrepackedMemberPaths(entries)
-  val coPacked = coPackedElsewhere(entries)
+  val vetoedMembers = coPackedElsewhere(entries)
   val deviationsByKind = LinkedHashMap<String, MutableList<String>>()
   for (memberName in derived.memberNames) {
     if (memberName !in reportMembers.all) {
@@ -618,7 +670,7 @@ private fun addRelationDeviations(
     when {
       reportPath == modelPath -> continue
       reportPath == null -> {
-        val reason = explainReportRelation(entries = entries, memberName = memberName, coPacked = coPacked)
+        val reason = explainReportRelation(entries = entries, memberName = memberName, vetoedMembers = vetoedMembers)
         deviationsByKind.computeIfAbsent("relation/report-keeps-it-raw/$reason") { ArrayList() }.add(memberName)
       }
       modelPath == null -> deviationsByKind.computeIfAbsent("relation/model-keeps-it-raw") { ArrayList() }.add(memberName)
@@ -637,8 +689,8 @@ private fun addRelationDeviations(
  * One reason per member, and the first that applies. The order is the order [reportedPrepackedMemberPaths] and
  * [simplePluginContentEntry] apply their refusals in, so the reason named here is the one that really decided.
  */
-private fun explainReportRelation(entries: List<RecipeEntry>, memberName: String, coPacked: Set<String>): String {
-  if (memberName in coPacked) {
+private fun explainReportRelation(entries: List<RecipeEntry>, memberName: String, vetoedMembers: Set<String>): String {
+  if (memberName in vetoedMembers) {
     return "co-packed-in-another-jar"
   }
   val naming = entries.filter { entry -> entry.contentModules.any { it.moduleName == memberName } }

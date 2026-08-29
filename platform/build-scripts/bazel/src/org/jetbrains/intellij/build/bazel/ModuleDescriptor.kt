@@ -97,6 +97,21 @@ internal data class ModuleDescriptor(
   val pluginDescriptorReport: Map<String, PluginDescriptorReportSection?>? by lazy(LazyThreadSafetyMode.NONE) {
     parsePluginDescriptorReport(pluginDescriptorReportFile)
   }
+
+  /**
+   * The dev-distribution residue of the plugin whose main module this is, if it has one; beside the first content root,
+   * the same rule [pluginContentReportFile] follows.
+   *
+   * Existence only, for the reason [pluginContentReportFile] gives. `_find_dev_dist_residue_rel_path` in
+   * `@community//build:jps_model.bzl` probes for exactly this file, so both sides agree on which file is a plugin's
+   * residue without either of them parsing YAML.
+   */
+  val devDistResidueFile: Path? by lazy(LazyThreadSafetyMode.NONE) {
+    contentRoots.firstOrNull()?.resolve(DEV_DIST_RESIDUE_FILE_NAME)?.takeIf { it.isRegularFile() }
+  }
+
+  /** [devDistResidueFile], parsed at most once per module. */
+  val devDistResidue: DevDistResidueFile? by lazy(LazyThreadSafetyMode.NONE) { parseDevDistResidue(devDistResidueFile) }
 }
 
 internal data class ResourceDescriptor(

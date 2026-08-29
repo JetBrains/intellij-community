@@ -436,6 +436,14 @@ internal fun reportFile(row: String, context: BazelBuildFileGenerator): Path? {
  */
 internal class WalkedContentModules(
   @JvmField val moduleNames: List<String>,
+  /**
+   * The `loading` attribute of every `<module>` that states one, by the name the element states.
+   *
+   * `computeOutputJarPath` of `autoLayout.kt` branches on this attribute first, so it decides where a member's jar goes.
+   * Kept beside [moduleNames] rather than replacing them, because the descriptor arc asks only which modules the closure
+   * reaches.
+   */
+  @JvmField val loadingRules: Map<String, String>,
   @JvmField val unresolvedIncludes: List<String>,
   @JvmField val selectiveIncludes: List<String>,
 )
@@ -454,6 +462,7 @@ internal class WalkedContentModules(
  */
 internal fun walkContentModules(descriptor: Path, resolveInclude: (String) -> Path?): WalkedContentModules {
   val result = ArrayList<String>()
+  val loadingRules = HashMap<String, String>()
   val unresolved = ArrayList<String>()
   val selective = ArrayList<String>()
   appendContentModules(
@@ -461,10 +470,16 @@ internal fun walkContentModules(descriptor: Path, resolveInclude: (String) -> Pa
     resolveInclude = resolveInclude,
     visited = HashSet(),
     out = result,
+    loadingRules = loadingRules,
     unresolved = unresolved,
     selective = selective,
   )
-  return WalkedContentModules(moduleNames = result, unresolvedIncludes = unresolved, selectiveIncludes = selective)
+  return WalkedContentModules(
+    moduleNames = result,
+    loadingRules = loadingRules,
+    unresolvedIncludes = unresolved,
+    selectiveIncludes = selective,
+  )
 }
 
 private fun appendContentModules(
@@ -472,13 +487,16 @@ private fun appendContentModules(
   resolveInclude: (String) -> Path?,
   visited: MutableSet<String>,
   out: MutableList<String>,
+  loadingRules: MutableMap<String, String>,
   unresolved: MutableList<String>,
   selective: MutableList<String>,
 ) {
   for (child in root.children) {
     if (child.name == "content") {
       for (moduleElement in child.getChildren("module")) {
-        moduleElement.getAttributeValue("name")?.let(out::add)
+        val name = moduleElement.getAttributeValue("name") ?: continue
+        out.add(name)
+        moduleElement.getAttributeValue("loading")?.let { loadingRules.putIfAbsent(name, it) }
       }
       continue
     }
@@ -518,11 +536,20 @@ private fun appendContentModules(
       resolveInclude = resolveInclude,
       visited = visited,
       out = out,
+      loadingRules = loadingRules,
       unresolved = unresolved,
       selective = selective,
     )
   }
 }
+
+/** What a walk of a plugin that has no descriptor at all found. */
+internal val EMPTY_WALKED_CONTENT_MODULES: WalkedContentModules = WalkedContentModules(
+  moduleNames = emptyList(),
+  loadingRules = emptyMap(),
+  unresolvedIncludes = emptyList(),
+  selectiveIncludes = emptyList(),
+)
 
 /** The `xpointer` `extractNeededChildrenFor` assumes when an `xi:include` states none. It selects every child. */
 private const val DEFAULT_XPOINTER: String = "xpointer(/idea-plugin/*)"

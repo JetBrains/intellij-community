@@ -49,6 +49,14 @@ internal class ModuleList(
   @JvmField val ultimate: List<ModuleDescriptor>,
   @JvmField val skipped: List<ModuleDescriptor>,
   private val pluginContentCandidateOverrides: Map<String, Set<String>?>,
+  /**
+   * The generator that built this list, which the candidacy fold needs.
+   *
+   * Set at construction and used by a lazy only, so nothing reads it before the generator is whole. The fold used to
+   * take its facts out of the checked-in reports and needed nothing from here; it now derives them, which needs the
+   * dependency scopes and the library index this class holds - see [derivePluginContentCandidacy].
+   */
+  private val context: BazelBuildFileGenerator,
 ) {
   @JvmField val allModules = community + ultimate + skipped
   val skippedModules = skipped.map { it.module.name }
@@ -87,7 +95,17 @@ internal class ModuleList(
    * them out would make the fold depend on which modules this generator converts.
    */
   val pluginContentModuleJarCandidates: Map<String, Set<String>> by lazy {
-    foldPluginContentCandidacy(reports = allModules.mapNotNull { it.pluginContentReport }, overrides = pluginContentCandidateOverrides)
+    foldDerivedPluginContentCandidacy(
+      plugins = allModules.mapNotNull { module ->
+        if (isDevDistContentPlugin(module = module, context = context)) {
+          derivePluginContentCandidacy(module = module, moduleList = this, context = context)
+        }
+        else {
+          null
+        }
+      },
+      overrides = pluginContentCandidateOverrides,
+    )
   }
 }
 
@@ -212,6 +230,19 @@ internal class BazelBuildFileGenerator(
   val pluginDescriptorPopulation: Map<String, List<String>> by lazy {
     readPluginDescriptorPopulation(
       (ultimateRoot?.resolve("community") ?: communityRoot).resolve("build/$PLUGIN_DESCRIPTOR_POPULATION_FILE_NAME")
+    )
+  }
+
+  /**
+   * The modules a `dev_dist_plugin` states content for; see [readPluginContentPopulation].
+   *
+   * The counterpart of [pluginDescriptorPopulation] for the content leaf, and the answer that used to be the presence of
+   * a `plugin-content.yaml` beside the module. Fail-open: an empty file makes the probe below the whole population, which
+   * is what keeps a checkout whose plan generator has never run converting.
+   */
+  val pluginContentPopulation: Set<String> by lazy {
+    readPluginContentPopulation(
+      (ultimateRoot?.resolve("community") ?: communityRoot).resolve("build/$PLUGIN_CONTENT_POPULATION_FILE_NAME")
     )
   }
 
@@ -575,6 +606,7 @@ internal class BazelBuildFileGenerator(
       ultimate = ultimate,
       skipped = skippedModules,
       pluginContentCandidateOverrides = pluginContentCandidateOverrides,
+      context = this,
     )
     for (module in (community + ultimate)) {
       val hasSources = module.sources.isNotEmpty()
@@ -676,6 +708,13 @@ internal class BazelBuildFileGenerator(
         pluginDescriptorReportPackagePath(module)?.let { reportPath ->
           if (!fileUpdater.handWrittenExportedFiles().contains(reportPath)) {
             imlTargetsBazel.exportFile(reportPath)
+          }
+        }
+        // The residue both leaves read, exported for the same reason: it states the members the derivation cannot reach,
+        // so a residue the hermetic run cannot see is a `contentTarget` naming fewer members than the checked-in one.
+        devDistResiduePackagePath(module)?.let { residuePath ->
+          if (!fileUpdater.handWrittenExportedFiles().contains(residuePath)) {
+            imlTargetsBazel.exportFile(residuePath)
           }
         }
 
@@ -1117,9 +1156,9 @@ internal class BazelBuildFileGenerator(
       )
     }
 
-    // What this plugin contributes to a dev distribution: computed for every plugin with a checked-in
-    // `plugin-content.yaml` and gated on nothing else, unlike `ij_plugin`, whose opt-in marker is about packaging.
-    val pluginContentResult = computePluginContent(module = moduleDescriptor, moduleList = moduleList, context = this@BazelBuildFileGenerator)
+    // What this plugin contributes to a dev distribution: derived from the project model for every plugin the
+    // population names, and gated on nothing else, unlike `ij_plugin`, whose opt-in marker is about packaging.
+    val pluginContentResult = computeDerivedPluginContent(module = moduleDescriptor, moduleList = moduleList, context = this@BazelBuildFileGenerator)
     val pluginContent = pluginContentResult.content
 
     // What this plugin's descriptor patch declares. Gated on the same thing the content target is - the module is a
