@@ -3,7 +3,6 @@ package com.intellij.ide.lightProducts
 
 import com.intellij.codeInsight.daemon.impl.GutterIntentionMenuContributor
 import com.intellij.codeInsight.daemon.impl.IntentionMenuContributor
-import com.intellij.find.impl.TextSearchContributor
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributorFactory
@@ -53,7 +52,6 @@ fun unregisterExtensionsForLightProduct() {
       ClassSearchEverywhereContributor.Factory::class,
       SymbolSearchEverywhereContributor.Factory::class,
       FileSearchEverywhereContributorFactory::class,
-      TextSearchContributor.Companion.Factory::class,
     )
 
   ChooseByNameContributor.FILE_EP_NAME.appPoint.unregisterEverything()
