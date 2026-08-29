@@ -470,27 +470,6 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_intellij_deps_cucumber-cucumber-core-1_2_6-amn-patched_http",
-    downloaded_file_path = "cucumber-core-1.2.6-amn-patched.jar",
-    sha256 = "7ea83d3d0debdf9e966172419b6aa90ac0cc76ee7e25857a1087c275854edcde",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/cucumber/cucumber-core/1.2.6-amn-patched/cucumber-core-1.2.6-amn-patched.jar",
-)
-
-http_file(
-    name = "info_cukes-gherkin-2_12_2_http",
-    downloaded_file_path = "gherkin-2.12.2.jar",
-    sha256 = "0a5ebc0506ab1e4a08af1ca150f797304ff53b953c5b1f6fcf1f81551d964aad",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/info/cukes/gherkin/2.12.2/gherkin-2.12.2.jar",
-)
-
-http_file(
-    name = "info_cukes-gherkin-2_12_2-sources_http",
-    downloaded_file_path = "gherkin-2.12.2-sources.jar",
-    sha256 = "a60731e4a2c1c87e99fc4c15cbc6b36df52887dcb33039d7a0d0922e1582ef39",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/info/cukes/gherkin/2.12.2/gherkin-2.12.2-sources.jar",
-)
-
-http_file(
     name = "io_cucumber-cucumber-core-2_4_0_http",
     downloaded_file_path = "cucumber-core-2.4.0.jar",
     sha256 = "ac0f343d6fc0dca4c93f8b6a6266b3bf4cb4d61913b8a4cd2b3abf50025268cf",
@@ -7922,6 +7901,27 @@ http_file(
     downloaded_file_path = "kotlinx-coroutines-test-jvm-1.9.0-sources.jar",
     sha256 = "0a0e99d246d333fd250086cd401a45c903872558ac00b9ebc62cd2ae6206bfd2",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-test-jvm/1.9.0/kotlinx-coroutines-test-jvm-1.9.0-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps_cucumber-cucumber-core-1_2_6-amn-patched_http",
+    downloaded_file_path = "cucumber-core-1.2.6-amn-patched.jar",
+    sha256 = "7ea83d3d0debdf9e966172419b6aa90ac0cc76ee7e25857a1087c275854edcde",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/cucumber/cucumber-core/1.2.6-amn-patched/cucumber-core-1.2.6-amn-patched.jar",
+)
+
+http_file(
+    name = "info_cukes-gherkin-2_12_2_http",
+    downloaded_file_path = "gherkin-2.12.2.jar",
+    sha256 = "0a5ebc0506ab1e4a08af1ca150f797304ff53b953c5b1f6fcf1f81551d964aad",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/info/cukes/gherkin/2.12.2/gherkin-2.12.2.jar",
+)
+
+http_file(
+    name = "info_cukes-gherkin-2_12_2-sources_http",
+    downloaded_file_path = "gherkin-2.12.2-sources.jar",
+    sha256 = "a60731e4a2c1c87e99fc4c15cbc6b36df52887dcb33039d7a0d0922e1582ef39",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/info/cukes/gherkin/2.12.2/gherkin-2.12.2-sources.jar",
 )
 
 http_file(

@@ -783,50 +783,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.deps.cucumber/cucumber-core-1.2.6-amn-patched.jar_copy",
-    src = "@org_jetbrains_intellij_deps_cucumber-cucumber-core-1_2_6-amn-patched_http//file",
-    out = "org.jetbrains.intellij.deps.cucumber/cucumber-core-1.2.6-amn-patched.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "info.cukes/gherkin-2.12.2.jar_copy",
-    src = "@info_cukes-gherkin-2_12_2_http//file",
-    out = "info.cukes/gherkin-2.12.2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "cucumber-core-1",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":org_jetbrains_intellij_deps_cucumber-cucumber-core-1_2_6-amn-patched_http_import",
-        ":info_cukes-gherkin-2_12_2_http_import",
-    ],
-)
-
-jvm_import(
-    name = "org_jetbrains_intellij_deps_cucumber-cucumber-core-1_2_6-amn-patched_http_import",
-    jar = "@org_jetbrains_intellij_deps_cucumber-cucumber-core-1_2_6-amn-patched_http//file",
-)
-
-jvm_import(
-    name = "info_cukes-gherkin-2_12_2_http_import",
-    jar = "@info_cukes-gherkin-2_12_2_http//file",
-    source_jar = "@info_cukes-gherkin-2_12_2-sources_http//file",
-)
-
-java_library(
-    name = "cucumber-core-1-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":cucumber-core-1"],
-)
-
-copy_file(
     name = "io.cucumber/cucumber-core-2.4.0.jar_copy",
     src = "@io_cucumber-cucumber-core-2_4_0_http//file",
     out = "io.cucumber/cucumber-core-2.4.0.jar",
@@ -10118,6 +10074,43 @@ jvm_import(
     name = "org_jetbrains_kotlinx-kotlinx-coroutines-test-jvm-1_9_0_http_import",
     jar = "@org_jetbrains_kotlinx-kotlinx-coroutines-test-jvm-1_9_0_http//file",
     source_jar = "@org_jetbrains_kotlinx-kotlinx-coroutines-test-jvm-1_9_0-sources_http//file",
+)
+
+copy_file(
+    name = "org.jetbrains.intellij.deps.cucumber/cucumber-core-1.2.6-amn-patched.jar_copy",
+    src = "@org_jetbrains_intellij_deps_cucumber-cucumber-core-1_2_6-amn-patched_http//file",
+    out = "org.jetbrains.intellij.deps.cucumber/cucumber-core-1.2.6-amn-patched.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "info.cukes/gherkin-2.12.2.jar_copy",
+    src = "@info_cukes-gherkin-2_12_2_http//file",
+    out = "info.cukes/gherkin-2.12.2.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-cucumber-core1-cucumber-core-1",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":org_jetbrains_intellij_deps_cucumber-cucumber-core-1_2_6-amn-patched_http_import",
+        ":info_cukes-gherkin-2_12_2_http_import",
+    ],
+)
+
+jvm_import(
+    name = "org_jetbrains_intellij_deps_cucumber-cucumber-core-1_2_6-amn-patched_http_import",
+    jar = "@org_jetbrains_intellij_deps_cucumber-cucumber-core-1_2_6-amn-patched_http//file",
+)
+
+jvm_import(
+    name = "info_cukes-gherkin-2_12_2_http_import",
+    jar = "@info_cukes-gherkin-2_12_2_http//file",
+    source_jar = "@info_cukes-gherkin-2_12_2-sources_http//file",
 )
 
 copy_file(

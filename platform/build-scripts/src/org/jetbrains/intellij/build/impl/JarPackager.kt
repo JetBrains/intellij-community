@@ -112,7 +112,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "antlr4-runtime",
   "assertj-swing",
   "com.jetbrains.fus.reporting.ap.validation.all",
-  "cucumber-core-1",
   "google.protobuf.java.util",
   // used by `intellij.rider.test.cases.rdct`, whose plugin is built by an auto layout
   "intellij-plugin-structure",

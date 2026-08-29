@@ -137,6 +137,8 @@ dev_dist_plugin_descriptor(
     descriptor = "resources/META-INF/plugin.xml",
     descriptor_module = ":grazie",
     descriptors = {
+        "@community//libraries/ai-grazie-rule-engine:resources/intellij.libraries.ai.grazie.rule.engine.xml": "intellij.libraries.ai.grazie.rule.engine.xml",
+        "@community//libraries/ai-grazie-semantic-engine:resources/intellij.libraries.ai.grazie.semantic.engine.xml": "intellij.libraries.ai.grazie.semantic.engine.xml",
         "@community//libraries/ai.grazie.spell.gec.engine.local:resources/intellij.libraries.ai.grazie.spell.gec.engine.local.xml": "intellij.libraries.ai.grazie.spell.gec.engine.local.xml",
         "@community//libraries/kotlin/logging:resources/intellij.libraries.kotlin.logging.xml": "intellij.libraries.kotlin.logging.xml",
         "@community//plugins/grazie/java:src/main/resources/intellij.grazie.java.xml": "intellij.grazie.java.xml",

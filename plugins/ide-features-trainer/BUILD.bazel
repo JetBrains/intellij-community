@@ -178,6 +178,7 @@ dev_dist_plugin_descriptor(
     descriptor_module = ":featuresTrainer",
     descriptors = {
         "@community//libraries/assertj-core:resources/intellij.libraries.assertj.core.xml": "intellij.libraries.assertj.core.xml",
+        "@community//libraries/git-learning-project:resources/intellij.libraries.git.learning.project.xml": "intellij.libraries.git.learning.project.xml",
         "@community//plugins/git-features-trainer:resources/intellij.vcs.git.featuresTrainer.xml": "intellij.vcs.git.featuresTrainer.xml",
         "@community//plugins/ide-features-trainer/onboarding:resources/intellij.featuresTrainer.onboarding.xml": "intellij.featuresTrainer.onboarding.xml",
         "@community//plugins/ide-features-trainer/tips:resources/intellij.featuresTrainer.tips.xml": "intellij.featuresTrainer.tips.xml",

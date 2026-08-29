@@ -1,0 +1,7 @@
+- name: dist.all/lib/intellij.libraries.cucumber.core1.jar
+  modules:
+  - name: intellij.libraries.cucumber.core1
+    libraries:
+      cucumber-core-1:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/cucumber/cucumber-core/1/cucumber-core-1.jar
+      - name: $MAVEN_REPOSITORY$/info/cukes/gherkin/2/gherkin-2.jar
