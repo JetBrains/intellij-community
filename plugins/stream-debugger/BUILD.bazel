@@ -1,6 +1,7 @@
 load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -65,8 +66,8 @@ exports_files(
 )
 ### auto-generated section `iml intellij.debugger.streams.plugin` end
 
-### auto-generated section `dev content intellij.debugger.streams.plugin` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.debugger.streams.plugin` start
+dev_dist_plugin(
     descriptor_module = ":debugger-streams-plugin",
     prepacked_content_modules = [
         "//plugins/stream-debugger/backend:backend_content_module_jar",
@@ -80,7 +81,7 @@ dev_dist_plugin_content(
         "//plugins/stream-debugger/rt:rt_content_module_jar": "intellij.debugger.streams.java.rt.jar",
     },
 )
-### auto-generated section `dev content intellij.debugger.streams.plugin` end
+### auto-generated section `dev intellij.debugger.streams.plugin` end
 
 ### auto-generated section `build intellij.java.debugger.streams.tests` start
 jvm_library(

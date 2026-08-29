@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.tasks.core` start
@@ -132,8 +133,8 @@ exports_files(
 )
 ### auto-generated section `iml intellij.tasks.core` end
 
-### auto-generated section `dev content intellij.tasks.core` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.tasks.core` start
+dev_dist_plugin(
     content_modules = [
         "//plugins/tasks/tasks-api:tasks",
         "//plugins/tasks/tasks-compatibility:compatibility",
@@ -153,4 +154,4 @@ dev_dist_plugin_content(
         "//plugins/tasks/tasks-java:java_content_module_jar",
     ],
 )
-### auto-generated section `dev content intellij.tasks.core` end
+### auto-generated section `dev intellij.tasks.core` end

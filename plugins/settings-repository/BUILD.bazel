@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.settingsRepository` start
@@ -124,8 +125,8 @@ exports_files(
 )
 ### auto-generated section `iml intellij.settingsRepository` end
 
-### auto-generated section `dev content intellij.settingsRepository` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.settingsRepository` start
+dev_dist_plugin(
     content_modules = [
         "//libraries/jgit-ssh",
         "//libraries/sshd-osgi",
@@ -140,7 +141,7 @@ dev_dist_plugin_content(
         "@lib//:slf4j-jdk14",
     ],
 )
-### auto-generated section `dev content intellij.settingsRepository` end
+### auto-generated section `dev intellij.settingsRepository` end
 
 ### auto-generated section `build intellij.settingsRepository.tests` start
 jvm_library(

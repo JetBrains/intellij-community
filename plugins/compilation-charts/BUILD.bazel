@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.compilation.charts` start
@@ -109,9 +110,9 @@ exports_files(
 )
 ### auto-generated section `iml intellij.compilation.charts` end
 
-### auto-generated section `dev content intellij.compilation.charts` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.compilation.charts` start
+dev_dist_plugin(
     content_modules = ["//plugins/compilation-charts/jps-plugin:compilation-charts-jps"],
     descriptor_module = ":compilation-charts",
 )
-### auto-generated section `dev content intellij.compilation.charts` end
+### auto-generated section `dev intellij.compilation.charts` end

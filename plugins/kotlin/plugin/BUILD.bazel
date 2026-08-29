@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.plugin` start
@@ -63,8 +64,8 @@ exports_files(
 )
 ### auto-generated section `iml intellij.kotlin.plugin` end
 
-### auto-generated section `dev content intellij.kotlin.plugin` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.kotlin.plugin` start
+dev_dist_plugin(
     content_modules = [
         "//libraries/completion-ranking-kotlin",
         "//libraries/kotlin/gradle-plugin-idea-proto:libraries-kotlin-gradle-plugin-idea-proto",
@@ -271,4 +272,4 @@ dev_dist_plugin_content(
         "//plugins/kotlin/scripting:scripting_content_module_jar": "kotlin.scripting.jar",
     },
 )
-### auto-generated section `dev content intellij.kotlin.plugin` end
+### auto-generated section `dev intellij.kotlin.plugin` end

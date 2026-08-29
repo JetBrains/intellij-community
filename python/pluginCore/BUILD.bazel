@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
@@ -58,8 +59,8 @@ exports_files(
 )
 ### auto-generated section `iml intellij.python.community.plugin` end
 
-### auto-generated section `dev content intellij.python.community.plugin` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.python.community.plugin` start
+dev_dist_plugin(
     content_modules = [
         "//commandInterface",
         "//libraries/jsr305",
@@ -150,4 +151,4 @@ dev_dist_plugin_content(
         "//python:python-pydev_content_module_jar",
     ],
 )
-### auto-generated section `dev content intellij.python.community.plugin` end
+### auto-generated section `dev intellij.python.community.plugin` end

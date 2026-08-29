@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.maven.plugin` start
@@ -40,8 +41,8 @@ exports_files(
 )
 ### auto-generated section `iml intellij.maven.plugin` end
 
-### auto-generated section `dev content intellij.maven.plugin` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.maven.plugin` start
+dev_dist_plugin(
     content_modules = [
         "//build/deps:dependencies",
         "//plugins/maven",
@@ -110,4 +111,4 @@ dev_dist_plugin_content(
         "//plugins/maven/model:model_content_module_jar": "intellij.maven.model.jar",
     },
 )
-### auto-generated section `dev content intellij.maven.plugin` end
+### auto-generated section `dev intellij.maven.plugin` end

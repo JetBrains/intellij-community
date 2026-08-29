@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -176,13 +177,13 @@ exports_files(
 )
 ### auto-generated section `iml intellij.ant` end
 
-### auto-generated section `dev content intellij.ant` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.ant` start
+dev_dist_plugin(
     content_modules = ["//plugins/ant/jps-plugin:jps"],
     descriptor_module = ":ant",
     libraries = ["@lib//ant/lib:ant"],
 )
-### auto-generated section `dev content intellij.ant` end
+### auto-generated section `dev intellij.ant` end
 
 ### auto-generated section `build intellij.ant.tests` start
 jvm_library(

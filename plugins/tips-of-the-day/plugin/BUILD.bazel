@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.tipsOfTheDay.plugin` start
@@ -40,9 +41,9 @@ exports_files(
 )
 ### auto-generated section `iml intellij.tipsOfTheDay.plugin` end
 
-### auto-generated section `dev content intellij.tipsOfTheDay.plugin` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.tipsOfTheDay.plugin` start
+dev_dist_plugin(
     descriptor_module = ":plugin",
     prepacked_content_modules = ["//plugins/tips-of-the-day:tips_content_module_jar"],
 )
-### auto-generated section `dev content intellij.tipsOfTheDay.plugin` end
+### auto-generated section `dev intellij.tipsOfTheDay.plugin` end

@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.dotenv` start
@@ -85,8 +86,8 @@ exports_files(
 )
 ### auto-generated section `iml intellij.dotenv` end
 
-### auto-generated section `dev content intellij.dotenv` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.dotenv` start
+dev_dist_plugin(
     content_modules = [
         "//plugins/env-files-support/java",
         "//plugins/env-files-support/kotlin",
@@ -94,4 +95,4 @@ dev_dist_plugin_content(
     ],
     descriptor_module = ":dotenv",
 )
-### auto-generated section `dev content intellij.dotenv` end
+### auto-generated section `dev intellij.dotenv` end

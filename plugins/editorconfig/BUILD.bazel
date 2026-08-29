@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.editorconfig.plugin` start
@@ -40,8 +41,8 @@ exports_files(
 )
 ### auto-generated section `iml intellij.editorconfig.plugin` end
 
-### auto-generated section `dev content intellij.editorconfig.plugin` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.editorconfig.plugin` start
+dev_dist_plugin(
     content_modules = ["//libraries/ec4j/core"],
     descriptor_module = ":editorconfig-plugin",
     libraries = ["@lib//:libraries-ec4j-core-ec4j-core"],
@@ -52,7 +53,7 @@ dev_dist_plugin_content(
         "//plugins/editorconfig/frontend:frontend_content_module_jar",
     ],
 )
-### auto-generated section `dev content intellij.editorconfig.plugin` end
+### auto-generated section `dev intellij.editorconfig.plugin` end
 
 ### auto-generated section `build intellij.editorconfig.plugin.main` start
 jvm_library(

@@ -1,4 +1,4 @@
-load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -53,8 +53,8 @@ exports_files(
 )
 ### auto-generated section `iml intellij.example.plugin` end
 
-### auto-generated section `dev content intellij.example.plugin` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.example.plugin` start
+dev_dist_plugin(
     content_modules = ["//conflicting"],
     descriptor_module = ":plugin",
     prepacked_content_modules = ["//conventional:conventional_content_module_jar"],
@@ -62,4 +62,4 @@ dev_dist_plugin_content(
         "//embedded:embedded_content_module_jar": "intellij.libraries.embedded.jar",
     },
 )
-### auto-generated section `dev content intellij.example.plugin` end
+### auto-generated section `dev intellij.example.plugin` end

@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -41,23 +42,8 @@ exports_files(
 )
 ### auto-generated section `iml intellij.platform.execution.serviceView.plugin` end
 
-### auto-generated section `dev content intellij.platform.execution.serviceView.plugin` start
-dev_dist_plugin_content(
-    descriptor_module = ":plugin",
-    prepacked_content_modules = [
-        "//platform/execution.dashboard/backend:backend_content_module_jar",
-        "//platform/execution.dashboard/frontend:frontend_content_module_jar",
-        "//platform/execution.dashboard:execution.dashboard_content_module_jar",
-        "//platform/execution.serviceView/backend:backend_content_module_jar",
-        "//platform/execution.serviceView/frontend:frontend_content_module_jar",
-        "//platform/execution.serviceView:execution.serviceView_content_module_jar",
-        "//platform/remote-servers/clouds:clouds_content_module_jar",
-    ],
-)
-### auto-generated section `dev content intellij.platform.execution.serviceView.plugin` end
-
-### auto-generated section `dev descriptor intellij.platform.execution.serviceView.plugin` start
-dev_dist_plugin_descriptor(
+### auto-generated section `dev intellij.platform.execution.serviceView.plugin` start
+dev_dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     descriptor_module = ":plugin",
     descriptors = {
@@ -70,5 +56,14 @@ dev_dist_plugin_descriptor(
         "@community//platform/remote-servers/clouds:resources/intellij.platform.clouds.xml": "intellij.platform.clouds.xml",
     },
     main_module = "intellij.platform.execution.serviceView.plugin",
+    prepacked_content_modules = [
+        "//platform/execution.dashboard/backend:backend_content_module_jar",
+        "//platform/execution.dashboard/frontend:frontend_content_module_jar",
+        "//platform/execution.dashboard:execution.dashboard_content_module_jar",
+        "//platform/execution.serviceView/backend:backend_content_module_jar",
+        "//platform/execution.serviceView/frontend:frontend_content_module_jar",
+        "//platform/execution.serviceView:execution.serviceView_content_module_jar",
+        "//platform/remote-servers/clouds:clouds_content_module_jar",
+    ],
 )
-### auto-generated section `dev descriptor intellij.platform.execution.serviceView.plugin` end
+### auto-generated section `dev intellij.platform.execution.serviceView.plugin` end

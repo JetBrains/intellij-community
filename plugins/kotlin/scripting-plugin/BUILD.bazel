@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.kotlin.jsr223.plugin` start
@@ -63,8 +64,8 @@ exports_files(
 )
 ### auto-generated section `iml intellij.kotlin.jsr223.plugin` end
 
-### auto-generated section `dev content intellij.kotlin.jsr223.plugin` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.kotlin.jsr223.plugin` start
+dev_dist_plugin(
     content_modules = [
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/kotlin-script-runtime:libraries-kotlinc-kotlin-script-runtime",
@@ -81,4 +82,4 @@ dev_dist_plugin_content(
         "//plugins/kotlin/jsr223:jsr223_content_module_jar": "intellij.kotlin.jsr223.jar",
     },
 )
-### auto-generated section `dev content intellij.kotlin.jsr223.plugin` end
+### auto-generated section `dev intellij.kotlin.jsr223.plugin` end

@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -85,18 +86,8 @@ exports_files(
 )
 ### auto-generated section `iml intellij.java.ide.customization` end
 
-### auto-generated section `dev content intellij.java.ide.customization` start
-dev_dist_plugin_content(
-    descriptor_module = ":ide-customization",
-    prepacked_content_modules = [
-        "//java/ide-customization/backend:backend_content_module_jar",
-        "//java/ide-customization/training:training_content_module_jar",
-    ],
-)
-### auto-generated section `dev content intellij.java.ide.customization` end
-
-### auto-generated section `dev descriptor intellij.java.ide.customization` start
-dev_dist_plugin_descriptor(
+### auto-generated section `dev intellij.java.ide.customization` start
+dev_dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     descriptor_module = ":ide-customization",
     descriptors = {
@@ -104,8 +95,12 @@ dev_dist_plugin_descriptor(
         "@community//java/ide-customization/training:resources/intellij.java.ide.customization.training.xml": "intellij.java.ide.customization.training.xml",
     },
     main_module = "intellij.java.ide.customization",
+    prepacked_content_modules = [
+        "//java/ide-customization/backend:backend_content_module_jar",
+        "//java/ide-customization/training:training_content_module_jar",
+    ],
 )
-### auto-generated section `dev descriptor intellij.java.ide.customization` end
+### auto-generated section `dev intellij.java.ide.customization` end
 
 ### auto-generated section `build intellij.java.ide.customization.tests` start
 jvm_library(

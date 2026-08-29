@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -154,23 +155,17 @@ exports_files(
 )
 ### auto-generated section `iml intellij.eclipse` end
 
-### auto-generated section `dev content intellij.eclipse` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.eclipse` start
+dev_dist_plugin(
     content_modules = [
         "//plugins/eclipse/common-eclipse-util:common",
         "//plugins/eclipse/jps-plugin:jps",
     ],
-    descriptor_module = ":eclipse",
-)
-### auto-generated section `dev content intellij.eclipse` end
-
-### auto-generated section `dev descriptor intellij.eclipse` start
-dev_dist_plugin_descriptor(
     descriptor = "resources/META-INF/plugin.xml",
     descriptor_module = ":eclipse",
     main_module = "intellij.eclipse",
 )
-### auto-generated section `dev descriptor intellij.eclipse` end
+### auto-generated section `dev intellij.eclipse` end
 
 ### auto-generated section `build intellij.eclipse.tests` start
 jvm_library(

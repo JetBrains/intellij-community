@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.restructuredtext` start
@@ -126,12 +127,12 @@ exports_files(
 )
 ### auto-generated section `iml intellij.restructuredtext` end
 
-### auto-generated section `dev content intellij.restructuredtext` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.restructuredtext` start
+dev_dist_plugin(
     descriptor_module = ":restructuredtext",
     prepacked_content_modules = ["//python/python-restructuredtext:restructuredtext-python_content_module_jar"],
 )
-### auto-generated section `dev content intellij.restructuredtext` end
+### auto-generated section `dev intellij.restructuredtext` end
 
 ### auto-generated section `build intellij.restructuredtext.tests` start
 jvm_library(

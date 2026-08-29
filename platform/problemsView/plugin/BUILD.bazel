@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -41,24 +42,13 @@ exports_files(
 )
 ### auto-generated section `iml intellij.platform.problemView.plugin` end
 
-### auto-generated section `dev content intellij.platform.problemView.plugin` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.platform.problemView.plugin` start
+dev_dist_plugin(
     content_modules = [
         "//platform/problemsView/collector",
         "//platform/problemsView/core",
         "//platform/problemsView/ui",
     ],
-    descriptor_module = ":plugin",
-    prepacked_content_modules = [
-        "//platform/problemsView/backend:backend_content_module_jar",
-        "//platform/problemsView/frontend:frontend_content_module_jar",
-        "//platform/problemsView/shared:shared_content_module_jar",
-    ],
-)
-### auto-generated section `dev content intellij.platform.problemView.plugin` end
-
-### auto-generated section `dev descriptor intellij.platform.problemView.plugin` start
-dev_dist_plugin_descriptor(
     descriptor = "resources/META-INF/plugin.xml",
     descriptor_module = ":plugin",
     descriptors = {
@@ -70,5 +60,10 @@ dev_dist_plugin_descriptor(
         "@community//platform/problemsView/ui:resources/intellij.platform.problemView.ui.xml": "intellij.platform.problemView.ui.xml",
     },
     main_module = "intellij.platform.problemView.plugin",
+    prepacked_content_modules = [
+        "//platform/problemsView/backend:backend_content_module_jar",
+        "//platform/problemsView/frontend:frontend_content_module_jar",
+        "//platform/problemsView/shared:shared_content_module_jar",
+    ],
 )
-### auto-generated section `dev descriptor intellij.platform.problemView.plugin` end
+### auto-generated section `dev intellij.platform.problemView.plugin` end

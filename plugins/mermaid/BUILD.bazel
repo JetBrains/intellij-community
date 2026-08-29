@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -136,20 +137,8 @@ exports_files(
 )
 ### auto-generated section `iml intellij.mermaid` end
 
-### auto-generated section `dev content intellij.mermaid` start
-dev_dist_plugin_content(
-    descriptor_module = ":mermaid",
-    prepacked_content_modules = [
-        "//plugins/mermaid/frontend:frontend_content_module_jar",
-        "//plugins/mermaid/json:json_content_module_jar",
-        "//plugins/mermaid/markdown:markdown_content_module_jar",
-        "//plugins/mermaid/spellchecker:spellchecker_content_module_jar",
-    ],
-)
-### auto-generated section `dev content intellij.mermaid` end
-
-### auto-generated section `dev descriptor intellij.mermaid` start
-dev_dist_plugin_descriptor(
+### auto-generated section `dev intellij.mermaid` start
+dev_dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     descriptor_module = ":mermaid",
     descriptors = {
@@ -159,8 +148,14 @@ dev_dist_plugin_descriptor(
         "@community//plugins/mermaid/spellchecker:resources/intellij.mermaid.spellchecker.xml": "intellij.mermaid.spellchecker.xml",
     },
     main_module = "intellij.mermaid",
+    prepacked_content_modules = [
+        "//plugins/mermaid/frontend:frontend_content_module_jar",
+        "//plugins/mermaid/json:json_content_module_jar",
+        "//plugins/mermaid/markdown:markdown_content_module_jar",
+        "//plugins/mermaid/spellchecker:spellchecker_content_module_jar",
+    ],
 )
-### auto-generated section `dev descriptor intellij.mermaid` end
+### auto-generated section `dev intellij.mermaid` end
 
 ### auto-generated section `build intellij.mermaid.tests` start
 jvm_library(

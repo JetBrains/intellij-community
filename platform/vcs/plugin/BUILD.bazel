@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.vcs.plugin` start
@@ -41,14 +42,11 @@ exports_files(
 )
 ### auto-generated section `iml intellij.platform.vcs.plugin` end
 
-### auto-generated section `dev content intellij.platform.vcs.plugin` start
-dev_dist_plugin_content(
-    content_modules = [
-        "//libraries/sqlite-native",
-        "//platform/sqlite",
-    ],
+### auto-generated section `dev intellij.platform.vcs.plugin` start
+dev_dist_plugin(
+    content_modules = ["//platform/sqlite"],
     descriptor_module = ":plugin",
-    libraries = ["@lib//:libraries-sqlite-native-sqlite-native"],
+    libraries = ["@lib//:sqlite-native"],
     prepacked_content_modules = [
         "//platform/dvcs-api:vcs-dvcs_content_module_jar",
         "//platform/dvcs-impl:vcs-dvcs-impl_content_module_jar",
@@ -64,4 +62,4 @@ dev_dist_plugin_content(
         "//platform/vcs-log/impl:impl_content_module_jar",
     ],
 )
-### auto-generated section `dev content intellij.platform.vcs.plugin` end
+### auto-generated section `dev intellij.platform.vcs.plugin` end

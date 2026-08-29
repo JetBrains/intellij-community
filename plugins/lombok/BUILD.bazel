@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -142,12 +143,12 @@ exports_files(
 )
 ### auto-generated section `iml intellij.lombok` end
 
-### auto-generated section `dev content intellij.lombok` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.lombok` start
+dev_dist_plugin(
     content_modules = ["//plugins/lombok/generated"],
     descriptor_module = ":lombok",
 )
-### auto-generated section `dev content intellij.lombok` end
+### auto-generated section `dev intellij.lombok` end
 
 ### auto-generated section `build intellij.lombok.tests` start
 resourcegroup(

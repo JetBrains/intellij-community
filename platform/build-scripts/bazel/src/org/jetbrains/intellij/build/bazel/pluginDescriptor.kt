@@ -133,69 +133,9 @@ internal fun pluginDescriptorTargetName(mainModule: String, variant: String): St
 private const val DEV_DESCRIPTOR_TARGET_SUFFIX: String = "_dev_descriptor"
 
 /**
- * Writes [descriptors] into the plugin's own `BUILD.bazel`.
- *
- * One target per layout variant. A plugin whose descriptor differs by operating system or architecture has one target
- * per variant, and the variant names the target as well as the output's directory.
- *
- * `manual` is not written here: the `dev_dist_plugin_descriptor` macro adds it, for the reason `content_module_jar` has
- * one. These are per-plugin targets of a measurement, and `bazel build //...` must run none of their actions.
- */
-internal fun BuildFile.emitPluginDescriptor(module: ModuleDescriptor, descriptors: List<PluginDescriptor>) {
-  load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
-  for (descriptor in descriptors) {
-    target("dev_dist_plugin_descriptor") {
-      // Emitted in the order the Starlark formatter sorts them - alphabetical - so that a regeneration needs no
-      // reformat. `name` is absent: the macro derives it from `main_module` and `variant`.
-      if (descriptor.descriptor.isNotEmpty()) {
-        option("descriptor", descriptor.descriptor)
-      }
-      option("descriptor_module", ":${module.targetName}")
-      if (descriptor.descriptors.isNotEmpty()) {
-        option("descriptors", LinkedHashMap(descriptor.descriptors))
-      }
-      if (descriptor.directoryName.isNotEmpty()) {
-        option("directory_name", descriptor.directoryName)
-      }
-      if (!descriptor.embedContentModules) {
-        option("embed_content_modules", false)
-      }
-      if (descriptor.exactVersion) {
-        option("exact_version", true)
-      }
-      if (descriptor.libraryDescriptors.isNotEmpty()) {
-        option("library_descriptors", LinkedHashMap(descriptor.libraryDescriptors))
-      }
-      if (descriptor.mainJarName.isNotEmpty()) {
-        option("main_jar_name", descriptor.mainJarName)
-      }
-      option("main_module", descriptor.mainModule)
-      if (descriptor.markers.isNotEmpty()) {
-        option("markers", descriptor.markers)
-      }
-      if (descriptor.refusedContentModules.isNotEmpty()) {
-        option("refused_content_modules", descriptor.refusedContentModules)
-      }
-      if (descriptor.retainProductDescriptor) {
-        option("retain_product_descriptor", true)
-      }
-      if (descriptor.separateJar.isNotEmpty()) {
-        option("separate_jar", descriptor.separateJar)
-      }
-      if (descriptor.variant.isNotEmpty()) {
-        option("variant", descriptor.variant)
-      }
-      if (descriptor.versionSuffix.isNotEmpty()) {
-        option("version_suffix", descriptor.versionSuffix)
-      }
-    }
-  }
-}
-
-/**
  * The directory of every cross-half descriptor package, so the ultimate half's sweep covers it.
  *
- * A plugin no `dev descriptor` section names needs its leaf somewhere, and `plugin-model-tool` writes one Bazel package
+ * A plugin no `dev` section names needs its leaf somewhere, and `plugin-model-tool` writes one Bazel package
  * per such plugin under `build/dev-dist-descriptors/`. Those packages are generated files of the main repository, so
  * `deleteOldFiles` has to know them: without this, a package a plugin stopped needing would stay in the tree.
  *

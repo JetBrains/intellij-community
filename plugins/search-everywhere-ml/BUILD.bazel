@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -81,33 +82,12 @@ exports_files(
 )
 ### auto-generated section `iml intellij.searchEverywhereMl` end
 
-### auto-generated section `dev content intellij.searchEverywhereMl` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.searchEverywhereMl` start
+dev_dist_plugin(
     content_modules = [
         "//libraries/mlapi/core",
         "//platform/ml-logs",
     ],
-    descriptor_module = ":search-everywhere-ml",
-    libraries = [
-        "@lib//:libraries-mlapi-core-jetbrains-mlapi-core",
-        "@lib//:search_everywhere_ml-ai-grazie-emb",
-        "@lib//:search_everywhere_ml-ai-grazie-model-swagger-annotations-jvm",
-    ],
-    prepacked_content_modules = [
-        "//libraries/search-everywhere-find-all-model:search-everywhere-find-all-model_content_module_jar",
-        "//libraries/search-everywhere-find-ec-model:search-everywhere-find-ec-model_content_module_jar",
-        "//plugins/search-everywhere-ml/ranking/core:core_content_module_jar",
-        "//plugins/search-everywhere-ml/ranking/ext:ext_content_module_jar",
-        "//plugins/search-everywhere-ml/ranking/java:java_content_module_jar",
-        "//plugins/search-everywhere-ml/ranking/vcs:vcs_content_module_jar",
-        "//plugins/search-everywhere-ml/ranking/yaml:yaml_content_module_jar",
-        "//plugins/search-everywhere-ml/typos:typos_content_module_jar",
-    ],
-)
-### auto-generated section `dev content intellij.searchEverywhereMl` end
-
-### auto-generated section `dev descriptor intellij.searchEverywhereMl` start
-dev_dist_plugin_descriptor(
     descriptor = "resources/META-INF/plugin.xml",
     descriptor_module = ":search-everywhere-ml",
     descriptors = {
@@ -122,9 +102,24 @@ dev_dist_plugin_descriptor(
         "@community//plugins/search-everywhere-ml/ranking/yaml:resources/intellij.searchEverywhereMl.ranking.yaml.xml": "intellij.searchEverywhereMl.ranking.yaml.xml",
         "@community//plugins/search-everywhere-ml/typos:resources/intellij.searchEverywhereMl.typos.xml": "intellij.searchEverywhereMl.typos.xml",
     },
+    libraries = [
+        "@lib//:libraries-mlapi-core-jetbrains-mlapi-core",
+        "@lib//:search_everywhere_ml-ai-grazie-emb",
+        "@lib//:search_everywhere_ml-ai-grazie-model-swagger-annotations-jvm",
+    ],
     main_module = "intellij.searchEverywhereMl",
+    prepacked_content_modules = [
+        "//libraries/search-everywhere-find-all-model:search-everywhere-find-all-model_content_module_jar",
+        "//libraries/search-everywhere-find-ec-model:search-everywhere-find-ec-model_content_module_jar",
+        "//plugins/search-everywhere-ml/ranking/core:core_content_module_jar",
+        "//plugins/search-everywhere-ml/ranking/ext:ext_content_module_jar",
+        "//plugins/search-everywhere-ml/ranking/java:java_content_module_jar",
+        "//plugins/search-everywhere-ml/ranking/vcs:vcs_content_module_jar",
+        "//plugins/search-everywhere-ml/ranking/yaml:yaml_content_module_jar",
+        "//plugins/search-everywhere-ml/typos:typos_content_module_jar",
+    ],
 )
-### auto-generated section `dev descriptor intellij.searchEverywhereMl` end
+### auto-generated section `dev intellij.searchEverywhereMl` end
 
 ### auto-generated section `build intellij.searchEverywhereMl.tests` start
 jvm_library(

@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
 jps_test(
@@ -182,8 +183,8 @@ exports_files(
 )
 ### auto-generated section `iml intellij.performanceTesting` end
 
-### auto-generated section `dev content intellij.performanceTesting` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.performanceTesting` start
+dev_dist_plugin(
     content_modules = [
         "//libraries/assertj-core",
         "//plugins/performanceTesting/remote-driver",
@@ -212,7 +213,7 @@ dev_dist_plugin_content(
         "//plugins/performanceTesting/event-bus:tools-ide-starter-bus_content_module_jar": "intellij.tools.ide.starter.bus.jar",
     },
 )
-### auto-generated section `dev content intellij.performanceTesting` end
+### auto-generated section `dev intellij.performanceTesting` end
 
 ### auto-generated section `build intellij.performanceTesting.tests` start
 jvm_library(

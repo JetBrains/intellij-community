@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -116,19 +117,8 @@ exports_files(
 )
 ### auto-generated section `iml intellij.platform.images` end
 
-### auto-generated section `dev content intellij.platform.images` start
-dev_dist_plugin_content(
-    descriptor_module = ":images",
-    prepacked_content_modules = [
-        "//images/intellij.platform.images.copyright:copyright_content_module_jar",
-        "//images/intellij.platform.images.xdebugger:xdebugger_content_module_jar",
-        "//images/jcef:jcef_content_module_jar",
-    ],
-)
-### auto-generated section `dev content intellij.platform.images` end
-
-### auto-generated section `dev descriptor intellij.platform.images` start
-dev_dist_plugin_descriptor(
+### auto-generated section `dev intellij.platform.images` start
+dev_dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     descriptor_module = ":images",
     descriptors = {
@@ -137,8 +127,13 @@ dev_dist_plugin_descriptor(
         "@community//images/jcef:resources/intellij.platform.images.jcef.xml": "intellij.platform.images.jcef.xml",
     },
     main_module = "intellij.platform.images",
+    prepacked_content_modules = [
+        "//images/intellij.platform.images.copyright:copyright_content_module_jar",
+        "//images/intellij.platform.images.xdebugger:xdebugger_content_module_jar",
+        "//images/jcef:jcef_content_module_jar",
+    ],
 )
-### auto-generated section `dev descriptor intellij.platform.images` end
+### auto-generated section `dev intellij.platform.images` end
 
 ### auto-generated section `build intellij.platform.images.tests` start
 jvm_library(

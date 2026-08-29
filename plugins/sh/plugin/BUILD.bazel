@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.sh.plugin` start
@@ -40,8 +41,8 @@ exports_files(
 )
 ### auto-generated section `iml intellij.sh.plugin` end
 
-### auto-generated section `dev content intellij.sh.plugin` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.sh.plugin` start
+dev_dist_plugin(
     descriptor_module = ":plugin",
     prepacked_content_modules = [
         "//plugins/sh/backend:backend_content_module_jar",
@@ -54,7 +55,7 @@ dev_dist_plugin_content(
         "//plugins/sh/core:core_content_module_jar": "intellij.sh.core.jar",
     },
 )
-### auto-generated section `dev content intellij.sh.plugin` end
+### auto-generated section `dev intellij.sh.plugin` end
 
 ### auto-generated section `build intellij.sh.plugin.main` start
 jvm_library(

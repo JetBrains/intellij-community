@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -42,9 +43,19 @@ exports_files(
 )
 ### auto-generated section `iml intellij.jcef.plugin` end
 
-### auto-generated section `dev content intellij.jcef.plugin` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.jcef.plugin` start
+dev_dist_plugin(
+    descriptor = "resources/META-INF/plugin.xml",
     descriptor_module = ":plugin",
+    descriptors = {
+        "@community//libraries/jcef:resources/intellij.libraries.jcef.xml": "intellij.libraries.jcef.xml",
+        "@community//platform/new-ui-onboarding/jcef:resources/intellij.platform.ide.newUiOnboarding.jcef.xml": "intellij.platform.ide.newUiOnboarding.jcef.xml",
+        "@community//platform/platform-impl/internal/jcef:resources/intellij.internal.jcef.xml": "intellij.internal.jcef.xml",
+        "@community//platform/platform-impl/jcef:resources/intellij.platform.ide.impl.jcef.xml": "intellij.platform.ide.impl.jcef.xml",
+        "@community//platform/ui.jcef:resources/intellij.platform.ui.jcef.xml": "intellij.platform.ui.jcef.xml",
+        "@community//plugins/jcef/frontend:resources/intellij.jcef.frontend.xml": "intellij.jcef.frontend.xml",
+    },
+    main_module = "intellij.jcef.plugin",
     prepacked_content_modules = [
         "//libraries/jcef:jcef_content_module_jar",
         "//platform/new-ui-onboarding/jcef:jcef_content_module_jar",
@@ -53,97 +64,13 @@ dev_dist_plugin_content(
         "//platform/ui.jcef:ui.jcef_content_module_jar",
         "//plugins/jcef/frontend:frontend_content_module_jar",
     ],
+    variants = [
+        "darwin_aarch64",
+        "darwin_x64",
+        "linux_aarch64",
+        "linux_x64",
+        "windows_aarch64",
+        "windows_x64",
+    ],
 )
-### auto-generated section `dev content intellij.jcef.plugin` end
-
-### auto-generated section `dev descriptor intellij.jcef.plugin` start
-dev_dist_plugin_descriptor(
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = ":plugin",
-    descriptors = {
-        "@community//libraries/jcef:resources/intellij.libraries.jcef.xml": "intellij.libraries.jcef.xml",
-        "@community//platform/new-ui-onboarding/jcef:resources/intellij.platform.ide.newUiOnboarding.jcef.xml": "intellij.platform.ide.newUiOnboarding.jcef.xml",
-        "@community//platform/platform-impl/internal/jcef:resources/intellij.internal.jcef.xml": "intellij.internal.jcef.xml",
-        "@community//platform/platform-impl/jcef:resources/intellij.platform.ide.impl.jcef.xml": "intellij.platform.ide.impl.jcef.xml",
-        "@community//platform/ui.jcef:resources/intellij.platform.ui.jcef.xml": "intellij.platform.ui.jcef.xml",
-        "@community//plugins/jcef/frontend:resources/intellij.jcef.frontend.xml": "intellij.jcef.frontend.xml",
-    },
-    main_module = "intellij.jcef.plugin",
-    variant = "darwin_aarch64",
-)
-
-dev_dist_plugin_descriptor(
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = ":plugin",
-    descriptors = {
-        "@community//libraries/jcef:resources/intellij.libraries.jcef.xml": "intellij.libraries.jcef.xml",
-        "@community//platform/new-ui-onboarding/jcef:resources/intellij.platform.ide.newUiOnboarding.jcef.xml": "intellij.platform.ide.newUiOnboarding.jcef.xml",
-        "@community//platform/platform-impl/internal/jcef:resources/intellij.internal.jcef.xml": "intellij.internal.jcef.xml",
-        "@community//platform/platform-impl/jcef:resources/intellij.platform.ide.impl.jcef.xml": "intellij.platform.ide.impl.jcef.xml",
-        "@community//platform/ui.jcef:resources/intellij.platform.ui.jcef.xml": "intellij.platform.ui.jcef.xml",
-        "@community//plugins/jcef/frontend:resources/intellij.jcef.frontend.xml": "intellij.jcef.frontend.xml",
-    },
-    main_module = "intellij.jcef.plugin",
-    variant = "darwin_x64",
-)
-
-dev_dist_plugin_descriptor(
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = ":plugin",
-    descriptors = {
-        "@community//libraries/jcef:resources/intellij.libraries.jcef.xml": "intellij.libraries.jcef.xml",
-        "@community//platform/new-ui-onboarding/jcef:resources/intellij.platform.ide.newUiOnboarding.jcef.xml": "intellij.platform.ide.newUiOnboarding.jcef.xml",
-        "@community//platform/platform-impl/internal/jcef:resources/intellij.internal.jcef.xml": "intellij.internal.jcef.xml",
-        "@community//platform/platform-impl/jcef:resources/intellij.platform.ide.impl.jcef.xml": "intellij.platform.ide.impl.jcef.xml",
-        "@community//platform/ui.jcef:resources/intellij.platform.ui.jcef.xml": "intellij.platform.ui.jcef.xml",
-        "@community//plugins/jcef/frontend:resources/intellij.jcef.frontend.xml": "intellij.jcef.frontend.xml",
-    },
-    main_module = "intellij.jcef.plugin",
-    variant = "linux_aarch64",
-)
-
-dev_dist_plugin_descriptor(
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = ":plugin",
-    descriptors = {
-        "@community//libraries/jcef:resources/intellij.libraries.jcef.xml": "intellij.libraries.jcef.xml",
-        "@community//platform/new-ui-onboarding/jcef:resources/intellij.platform.ide.newUiOnboarding.jcef.xml": "intellij.platform.ide.newUiOnboarding.jcef.xml",
-        "@community//platform/platform-impl/internal/jcef:resources/intellij.internal.jcef.xml": "intellij.internal.jcef.xml",
-        "@community//platform/platform-impl/jcef:resources/intellij.platform.ide.impl.jcef.xml": "intellij.platform.ide.impl.jcef.xml",
-        "@community//platform/ui.jcef:resources/intellij.platform.ui.jcef.xml": "intellij.platform.ui.jcef.xml",
-        "@community//plugins/jcef/frontend:resources/intellij.jcef.frontend.xml": "intellij.jcef.frontend.xml",
-    },
-    main_module = "intellij.jcef.plugin",
-    variant = "linux_x64",
-)
-
-dev_dist_plugin_descriptor(
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = ":plugin",
-    descriptors = {
-        "@community//libraries/jcef:resources/intellij.libraries.jcef.xml": "intellij.libraries.jcef.xml",
-        "@community//platform/new-ui-onboarding/jcef:resources/intellij.platform.ide.newUiOnboarding.jcef.xml": "intellij.platform.ide.newUiOnboarding.jcef.xml",
-        "@community//platform/platform-impl/internal/jcef:resources/intellij.internal.jcef.xml": "intellij.internal.jcef.xml",
-        "@community//platform/platform-impl/jcef:resources/intellij.platform.ide.impl.jcef.xml": "intellij.platform.ide.impl.jcef.xml",
-        "@community//platform/ui.jcef:resources/intellij.platform.ui.jcef.xml": "intellij.platform.ui.jcef.xml",
-        "@community//plugins/jcef/frontend:resources/intellij.jcef.frontend.xml": "intellij.jcef.frontend.xml",
-    },
-    main_module = "intellij.jcef.plugin",
-    variant = "windows_aarch64",
-)
-
-dev_dist_plugin_descriptor(
-    descriptor = "resources/META-INF/plugin.xml",
-    descriptor_module = ":plugin",
-    descriptors = {
-        "@community//libraries/jcef:resources/intellij.libraries.jcef.xml": "intellij.libraries.jcef.xml",
-        "@community//platform/new-ui-onboarding/jcef:resources/intellij.platform.ide.newUiOnboarding.jcef.xml": "intellij.platform.ide.newUiOnboarding.jcef.xml",
-        "@community//platform/platform-impl/internal/jcef:resources/intellij.internal.jcef.xml": "intellij.internal.jcef.xml",
-        "@community//platform/platform-impl/jcef:resources/intellij.platform.ide.impl.jcef.xml": "intellij.platform.ide.impl.jcef.xml",
-        "@community//platform/ui.jcef:resources/intellij.platform.ui.jcef.xml": "intellij.platform.ui.jcef.xml",
-        "@community//plugins/jcef/frontend:resources/intellij.jcef.frontend.xml": "intellij.jcef.frontend.xml",
-    },
-    main_module = "intellij.jcef.plugin",
-    variant = "windows_x64",
-)
-### auto-generated section `dev descriptor intellij.jcef.plugin` end
+### auto-generated section `dev intellij.jcef.plugin` end

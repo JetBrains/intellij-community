@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -47,10 +48,10 @@ exports_files(
 )
 ### auto-generated section `iml intellij.keymap.eclipse` end
 
-### auto-generated section `dev descriptor intellij.keymap.eclipse` start
-dev_dist_plugin_descriptor(
+### auto-generated section `dev intellij.keymap.eclipse` start
+dev_dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     descriptor_module = ":keymap-eclipse",
     main_module = "intellij.keymap.eclipse",
 )
-### auto-generated section `dev descriptor intellij.keymap.eclipse` end
+### auto-generated section `dev intellij.keymap.eclipse` end

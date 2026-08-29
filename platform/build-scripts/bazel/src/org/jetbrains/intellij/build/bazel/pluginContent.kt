@@ -104,43 +104,6 @@ private val EMPTY_PLUGIN_CONTENT_RESULT = PluginContentResult(content = null, cr
 internal fun pluginContentTargetName(module: ModuleDescriptor): String = "${module.targetName}_dev_content"
 
 /**
- * Writes [module]'s content declaration into the plugin's own `BUILD.bazel`.
- *
- * A target of its own, next to the main module's `jvm_library` rather than attributes on it, because membership is a
- * property of the *(plugin, module)* pair and not of a module: 275 of 2647 content modules are content of more than one
- * plugin (`intellij.platform.commercial.verifier` of 45), which an attribute on the module could not express, and 126
- * plugins have a content module that depends back on the plugin's main module in the JPS model - naming those modules in
- * an attribute of the main module's own target would make a quarter of the repo's plugins a target-graph cycle.
- *
- * Public visibility, unlike `ij_plugin`: a dev-distribution content set lives in `//build/dev-dist-content` and every
- * product's set depends on the plugins it bundles by label.
- */
-internal fun BuildFile.emitPluginContent(module: ModuleDescriptor, content: PluginContent) {
-  load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
-  target("dev_dist_plugin_content") {
-    // Neither `name` nor `visibility`: `dev_dist_plugin_content` is a macro that derives the first from
-    // `descriptor_module` - the same `${module.targetName}_dev_content` that `pluginContentTargetName` writes into
-    // `bazel-targets.json` - and defaults the second to public, which all 408 of these targets were.
-    //
-    // Emitted in the order the Starlark formatter sorts them - alphabetical - so that a regeneration needs no reformat.
-    if (content.contentModuleLabels.isNotEmpty()) {
-      option("content_modules", content.contentModuleLabels)
-    }
-    // The rule puts the descriptor module into the content itself, so it is deliberately not in `content_modules`.
-    option("descriptor_module", ":${module.targetName}")
-    if (content.libraryContainerLabels.isNotEmpty()) {
-      option("libraries", content.libraryContainerLabels)
-    }
-    if (content.prepackedContentModuleLabels.isNotEmpty()) {
-      option("prepacked_content_modules", content.prepackedContentModuleLabels)
-    }
-    if (content.prepackedJarDestinations.isNotEmpty()) {
-      option("prepacked_jars", LinkedHashMap(content.prepackedJarDestinations))
-    }
-  }
-}
-
-/**
  * Reads the content report beside [module] and resolves it into Bazel labels.
  *
  * [PluginContentResult.content] is `null` when [module] is not a plugin main module with a report, or when the report

@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.vcs.svn` start
@@ -128,8 +129,8 @@ exports_files(
 )
 ### auto-generated section `iml intellij.vcs.svn` end
 
-### auto-generated section `dev content intellij.vcs.svn` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.vcs.svn` start
+dev_dist_plugin(
     content_modules = ["//libraries/sqlite"],
     descriptor_module = ":vcs-svn",
     libraries = [
@@ -138,7 +139,7 @@ dev_dist_plugin_content(
         "@lib//:libraries-sqlite-sqlite",
     ],
 )
-### auto-generated section `dev content intellij.vcs.svn` end
+### auto-generated section `dev intellij.vcs.svn` end
 
 ### auto-generated section `build intellij.vcs.svn.tests` start
 jvm_library(

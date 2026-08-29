@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.java.jshell` start
@@ -40,8 +41,8 @@ exports_files(
 )
 ### auto-generated section `iml intellij.java.jshell` end
 
-### auto-generated section `dev content intellij.java.jshell` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.java.jshell` start
+dev_dist_plugin(
     content_modules = [
         "//plugins/jshell/execution",
         "//plugins/jshell/protocol",
@@ -50,4 +51,4 @@ dev_dist_plugin_content(
     libraries = ["//plugins/jshell/execution:java-jshell-execution-jshell-frontend"],
     prepacked_content_modules = ["//plugins/jshell/console:console_content_module_jar"],
 )
-### auto-generated section `dev content intellij.java.jshell` end
+### auto-generated section `dev intellij.java.jshell` end

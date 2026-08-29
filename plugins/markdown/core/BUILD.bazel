@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -173,8 +174,8 @@ exports_files(
 )
 ### auto-generated section `iml intellij.markdown` end
 
-### auto-generated section `dev content intellij.markdown` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.markdown` start
+dev_dist_plugin(
     descriptor_module = ":markdown",
     prepacked_content_modules = [
         "//plugins/markdown/compose:compose-preview_content_module_jar",
@@ -194,4 +195,4 @@ dev_dist_plugin_content(
         "//plugins/markdown/xml:xml_content_module_jar",
     ],
 )
-### auto-generated section `dev content intellij.markdown` end
+### auto-generated section `dev intellij.markdown` end

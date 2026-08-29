@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -150,8 +151,8 @@ exports_files(
 )
 ### auto-generated section `iml intellij.junit` end
 
-### auto-generated section `dev content intellij.junit` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.junit` start
+dev_dist_plugin(
     content_modules = [
         "//libraries/hamcrest",
         "//libraries/junit4",
@@ -159,17 +160,6 @@ dev_dist_plugin_content(
         "//plugins/junit6_rt:junit-v6-rt",
         "//plugins/junit_rt:junit-rt",
     ],
-    descriptor_module = ":junit",
-    libraries = [
-        "@lib//:libraries-hamcrest-hamcrest",
-        "@lib//:libraries-junit4-_j_unit4",
-    ],
-    prepacked_content_modules = ["//plugins/junit/properties:properties_content_module_jar"],
-)
-### auto-generated section `dev content intellij.junit` end
-
-### auto-generated section `dev descriptor intellij.junit` start
-dev_dist_plugin_descriptor(
     descriptor = "resources/META-INF/plugin.xml",
     descriptor_module = ":junit",
     descriptors = {
@@ -177,6 +167,11 @@ dev_dist_plugin_descriptor(
         "@community//libraries/junit4:resources/intellij.libraries.junit4.xml": "intellij.libraries.junit4.xml",
         "@community//plugins/junit/properties:resources/intellij.junit.properties.xml": "intellij.junit.properties.xml",
     },
+    libraries = [
+        "@lib//:libraries-hamcrest-hamcrest",
+        "@lib//:libraries-junit4-_j_unit4",
+    ],
     main_module = "intellij.junit",
+    prepacked_content_modules = ["//plugins/junit/properties:properties_content_module_jar"],
 )
-### auto-generated section `dev descriptor intellij.junit` end
+### auto-generated section `dev intellij.junit` end

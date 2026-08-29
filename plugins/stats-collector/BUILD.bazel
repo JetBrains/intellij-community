@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -91,12 +92,12 @@ exports_files(
 )
 ### auto-generated section `iml intellij.statsCollector` end
 
-### auto-generated section `dev content intellij.statsCollector` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.statsCollector` start
+dev_dist_plugin(
     descriptor_module = ":stats-collector",
     libraries = ["@lib//:stats_collector-completion-log-events"],
 )
-### auto-generated section `dev content intellij.statsCollector` end
+### auto-generated section `dev intellij.statsCollector` end
 
 ### auto-generated section `build intellij.statsCollector.tests` start
 jvm_library(

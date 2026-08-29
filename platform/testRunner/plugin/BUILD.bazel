@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.testRunner.plugin` start
@@ -40,8 +41,8 @@ exports_files(
 )
 ### auto-generated section `iml intellij.platform.testRunner.plugin` end
 
-### auto-generated section `dev content intellij.platform.testRunner.plugin` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.platform.testRunner.plugin` start
+dev_dist_plugin(
     content_modules = ["//platform/smRunner/vcs"],
     descriptor_module = ":plugin",
     prepacked_content_modules = [
@@ -49,4 +50,4 @@ dev_dist_plugin_content(
         "//platform/testRunner:testRunner_content_module_jar",
     ],
 )
-### auto-generated section `dev content intellij.platform.testRunner.plugin` end
+### auto-generated section `dev intellij.platform.testRunner.plugin` end

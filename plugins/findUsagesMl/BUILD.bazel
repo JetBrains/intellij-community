@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -85,13 +86,13 @@ exports_files(
 )
 ### auto-generated section `iml intellij.findUsagesMl` end
 
-### auto-generated section `dev descriptor intellij.findUsagesMl` start
-dev_dist_plugin_descriptor(
+### auto-generated section `dev intellij.findUsagesMl` start
+dev_dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     descriptor_module = ":findUsagesMl",
     main_module = "intellij.findUsagesMl",
 )
-### auto-generated section `dev descriptor intellij.findUsagesMl` end
+### auto-generated section `dev intellij.findUsagesMl` end
 
 ### auto-generated section `build intellij.findUsagesMl.tests` start
 jvm_library(

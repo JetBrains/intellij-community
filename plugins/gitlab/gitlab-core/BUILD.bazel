@@ -1,6 +1,7 @@
 load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -205,15 +206,15 @@ exports_files(
 )
 ### auto-generated section `iml intellij.vcs.gitlab` end
 
-### auto-generated section `dev content intellij.vcs.gitlab` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.vcs.gitlab` start
+dev_dist_plugin(
     descriptor_module = ":vcs-gitlab",
     prepacked_content_modules = [
         "//plugins/gitlab/gitlab-git:vcs-gitlab-git_content_module_jar",
         "//plugins/gitlab/gitlab-yaml:vcs-gitlab-yaml_content_module_jar",
     ],
 )
-### auto-generated section `dev content intellij.vcs.gitlab` end
+### auto-generated section `dev intellij.vcs.gitlab` end
 
 ### auto-generated section `build intellij.vcs.gitlab.tests` start
 jvm_library(

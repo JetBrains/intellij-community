@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
@@ -170,30 +171,24 @@ exports_files(
 )
 ### auto-generated section `iml intellij.testng` end
 
-### auto-generated section `dev content intellij.testng` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.testng` start
+dev_dist_plugin(
     content_modules = ["//plugins/testng_rt:testng-rt"],
-    descriptor_module = ":testng",
-    libraries = ["@lib//:test_n_g"],
-    prepacked_content_modules = ["//plugins/testng/langInjection:langInjection_content_module_jar"],
-    prepacked_jars = {
-        "//libraries/testng:testng_content_module_jar": "intellij.libraries.testng.jar",
-    },
-)
-### auto-generated section `dev content intellij.testng` end
-
-### auto-generated section `dev descriptor intellij.testng` start
-dev_dist_plugin_descriptor(
     descriptor = "resources/META-INF/plugin.xml",
     descriptor_module = ":testng",
     descriptors = {
         "@community//libraries/testng:resources/intellij.libraries.testng.xml": "intellij.libraries.testng.xml",
         "@community//plugins/testng/langInjection:resources/intellij.testng.langInjection.xml": "intellij.testng.langInjection.xml",
     },
+    libraries = ["@lib//:test_n_g"],
     main_jar_name = "testng-plugin.jar",
     main_module = "intellij.testng",
+    prepacked_content_modules = ["//plugins/testng/langInjection:langInjection_content_module_jar"],
+    prepacked_jars = {
+        "//libraries/testng:testng_content_module_jar": "intellij.libraries.testng.jar",
+    },
 )
-### auto-generated section `dev descriptor intellij.testng` end
+### auto-generated section `dev intellij.testng` end
 
 ### auto-generated section `build intellij.testng.tests` start
 jvm_library(

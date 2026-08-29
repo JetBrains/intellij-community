@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -61,8 +62,8 @@ exports_files(
 )
 ### auto-generated section `iml intellij.mcpserver.plugin` end
 
-### auto-generated section `dev content intellij.mcpserver.plugin` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.mcpserver.plugin` start
+dev_dist_plugin(
     content_modules = [
         "//libraries/kotlin/logging",
         "//libraries/ktor/server-content-negotiation:libraries-ktor-server-content-negotiation",
@@ -71,31 +72,6 @@ dev_dist_plugin_content(
         "//plugins/mcp-server/mcpserver.stdio",
         "//plugins/mcp-server:mcpserver",
     ],
-    descriptor_module = ":mcpserver.plugin",
-    libraries = [
-        "@lib//:io-modelcontextprotocol-kotlin-sdk",
-        "@lib//:libraries-kotlin-logging-io-github-oshai-kotlin-logging-jvm",
-        "@lib//:libraries-ktor-server-content-negotiation-ktor-server-content-negotiation",
-        "@lib//:libraries-ktor-server-sse-ktor-server-sse-jvm",
-        "@lib//:libraries-schema-kenerator-io-github-smiley4-schema-kenerator-core",
-        "@lib//:libraries-schema-kenerator-io-github-smiley4-schema-kenerator-jsonschema",
-        "@lib//:libraries-schema-kenerator-io-github-smiley4-schema-kenerator-serialization",
-        "@lib//:slf4j-api",
-        "@lib//:slf4j-jdk14",
-    ],
-    prepacked_content_modules = [
-        "//libraries/night-config-toml:night-config-toml_content_module_jar",
-        "//plugins/mcp-server/mcpserver.frontend:mcpserver.frontend_content_module_jar",
-        "//plugins/mcp-server/mcpserver.terminal.frontend:mcpserver.terminal.frontend_content_module_jar",
-        "//plugins/mcp-server/mcpserver.terminal:mcpserver.terminal_content_module_jar",
-        "//plugins/mcp-server/mcpserver.toolsets:mcpserver.toolsets_content_module_jar",
-        "//plugins/mcp-server/mcpserver.vcs:mcpserver.vcs_content_module_jar",
-    ],
-)
-### auto-generated section `dev content intellij.mcpserver.plugin` end
-
-### auto-generated section `dev descriptor intellij.mcpserver.plugin` start
-dev_dist_plugin_descriptor(
     descriptor = "resources/META-INF/plugin.xml",
     descriptor_module = ":mcpserver.plugin",
     descriptors = {
@@ -112,6 +88,25 @@ dev_dist_plugin_descriptor(
         "@community//plugins/mcp-server/mcpserver.vcs:resources/intellij.mcpserver.vcs.xml": "intellij.mcpserver.vcs.xml",
         "@community//plugins/mcp-server:resources/intellij.mcpserver.xml": "intellij.mcpserver.xml",
     },
+    libraries = [
+        "@lib//:io-modelcontextprotocol-kotlin-sdk",
+        "@lib//:libraries-kotlin-logging-io-github-oshai-kotlin-logging-jvm",
+        "@lib//:libraries-ktor-server-content-negotiation-ktor-server-content-negotiation",
+        "@lib//:libraries-ktor-server-sse-ktor-server-sse-jvm",
+        "@lib//:libraries-schema-kenerator-io-github-smiley4-schema-kenerator-core",
+        "@lib//:libraries-schema-kenerator-io-github-smiley4-schema-kenerator-jsonschema",
+        "@lib//:libraries-schema-kenerator-io-github-smiley4-schema-kenerator-serialization",
+        "@lib//:slf4j-api",
+        "@lib//:slf4j-jdk14",
+    ],
     main_module = "intellij.mcpserver.plugin",
+    prepacked_content_modules = [
+        "//libraries/night-config-toml:night-config-toml_content_module_jar",
+        "//plugins/mcp-server/mcpserver.frontend:mcpserver.frontend_content_module_jar",
+        "//plugins/mcp-server/mcpserver.terminal.frontend:mcpserver.terminal.frontend_content_module_jar",
+        "//plugins/mcp-server/mcpserver.terminal:mcpserver.terminal_content_module_jar",
+        "//plugins/mcp-server/mcpserver.toolsets:mcpserver.toolsets_content_module_jar",
+        "//plugins/mcp-server/mcpserver.vcs:mcpserver.vcs_content_module_jar",
+    ],
 )
-### auto-generated section `dev descriptor intellij.mcpserver.plugin` end
+### auto-generated section `dev intellij.mcpserver.plugin` end

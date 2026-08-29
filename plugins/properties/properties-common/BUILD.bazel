@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -94,22 +95,8 @@ exports_files(
 )
 ### auto-generated section `iml intellij.properties` end
 
-### auto-generated section `dev content intellij.properties` start
-dev_dist_plugin_content(
-    descriptor_module = ":properties",
-    prepacked_content_modules = [
-        "//plugins/properties/copyright:copyright_content_module_jar",
-        "//plugins/properties/properties-psi-impl:backend-psi_content_module_jar",
-        "//plugins/properties:properties-backend_content_module_jar",
-    ],
-    prepacked_jars = {
-        "//plugins/properties/properties-psi-api:psi_content_module_jar": "intellij.properties.psi.jar",
-    },
-)
-### auto-generated section `dev content intellij.properties` end
-
-### auto-generated section `dev descriptor intellij.properties` start
-dev_dist_plugin_descriptor(
+### auto-generated section `dev intellij.properties` start
+dev_dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     descriptor_module = ":properties",
     descriptors = {
@@ -120,5 +107,13 @@ dev_dist_plugin_descriptor(
         "@community//plugins/properties:resources/intellij.properties.backend.xml": "intellij.properties.backend.xml",
     },
     main_module = "intellij.properties",
+    prepacked_content_modules = [
+        "//plugins/properties/copyright:copyright_content_module_jar",
+        "//plugins/properties/properties-psi-impl:backend-psi_content_module_jar",
+        "//plugins/properties:properties-backend_content_module_jar",
+    ],
+    prepacked_jars = {
+        "//plugins/properties/properties-psi-api:psi_content_module_jar": "intellij.properties.psi.jar",
+    },
 )
-### auto-generated section `dev descriptor intellij.properties` end
+### auto-generated section `dev intellij.properties` end

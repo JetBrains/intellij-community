@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -99,8 +100,8 @@ exports_files(
 )
 ### auto-generated section `iml intellij.json` end
 
-### auto-generated section `dev content intellij.json` start
-dev_dist_plugin_content(
+### auto-generated section `dev intellij.json` start
+dev_dist_plugin(
     content_modules = [
         "//libraries/joni",
         "//libraries/json-schema-validator",
@@ -120,4 +121,4 @@ dev_dist_plugin_content(
         "//json/syntax:syntax_content_module_jar": "intellij.json.syntax.jar",
     },
 )
-### auto-generated section `dev content intellij.json` end
+### auto-generated section `dev intellij.json` end

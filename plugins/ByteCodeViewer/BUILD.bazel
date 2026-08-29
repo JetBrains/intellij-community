@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
@@ -108,13 +109,13 @@ exports_files(
 )
 ### auto-generated section `iml intellij.java.byteCodeViewer` end
 
-### auto-generated section `dev descriptor intellij.java.byteCodeViewer` start
-dev_dist_plugin_descriptor(
+### auto-generated section `dev intellij.java.byteCodeViewer` start
+dev_dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     descriptor_module = ":java-byteCodeViewer",
     main_module = "intellij.java.byteCodeViewer",
 )
-### auto-generated section `dev descriptor intellij.java.byteCodeViewer` end
+### auto-generated section `dev intellij.java.byteCodeViewer` end
 
 ### auto-generated section `build intellij.java.byteCodeViewer.tests` start
 create_kotlinc_options(

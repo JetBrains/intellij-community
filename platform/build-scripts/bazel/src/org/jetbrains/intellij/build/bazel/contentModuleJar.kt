@@ -395,7 +395,7 @@ internal fun computeContentModuleJar(module: ModuleDescriptor, moduleList: Modul
  * target. A relation naming a target nobody wrote does not build, so both answers come from one function.
  *
  * One case the pair does not cover, and it is older than this function. `generateModuleBuildFiles` drops the packing
- * target of a module whose `build` section a person took over, while the `dev content` section is written whatever
+ * target of a module whose `build` section a person took over, while the `dev` section is written whatever
  * happens - so a hand-written module that is also a plugin candidate would leave a label with no target behind it.
  * `intellij.php.dev` is the one module with a hand-written section, and it is not a candidate. A dangling label fails
  * at analysis rather than silently, so the build says so at once. Closing this needs the skipped sections read before

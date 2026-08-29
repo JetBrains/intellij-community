@@ -1,4 +1,5 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_content")
+load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -41,10 +42,10 @@ exports_files(
 )
 ### auto-generated section `iml intellij.libraries.misc.plugin` end
 
-### auto-generated section `dev descriptor intellij.libraries.misc.plugin` start
-dev_dist_plugin_descriptor(
+### auto-generated section `dev intellij.libraries.misc.plugin` start
+dev_dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     descriptor_module = ":plugin",
     main_module = "intellij.libraries.misc.plugin",
 )
-### auto-generated section `dev descriptor intellij.libraries.misc.plugin` end
+### auto-generated section `dev intellij.libraries.misc.plugin` end
