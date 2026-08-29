@@ -770,22 +770,16 @@
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.debugger.statistics.PyDataViewerCollector"/>
 
     <!-- Code-insight IDE bridge -->
-    <!--suppress PluginXmlRegistrationCheck -->
     <applicationService serviceInterface="com.jetbrains.python.PythonRuntimeService"
                         serviceImplementation="com.jetbrains.python.PythonRuntimeServiceImpl"/>
-    <!--suppress PluginXmlRegistrationCheck -->
     <applicationService serviceInterface="com.jetbrains.python.PythonUiService"
                         serviceImplementation="com.jetbrains.python.PythonUiServiceImpl"/>
-    <!--suppress PluginXmlRegistrationCheck -->
     <applicationService serviceInterface="com.jetbrains.python.codeInsight.imports.PyImportCollectorFactory"
                         serviceImplementation="com.jetbrains.python.codeInsight.imports.CodeStylePyImportCollectorFactory"/>
-    <!--suppress PluginXmlRegistrationCheck -->
     <applicationService serviceInterface="com.jetbrains.python.codeInsight.imports.ImportChooser" open="true"
                         serviceImplementation="com.jetbrains.python.codeInsight.imports.PyImportChooser"/>
-    <!--suppress PluginXmlRegistrationCheck -->
     <applicationService serviceInterface="com.jetbrains.python.refactoring.PyRefactoringUiService"
                         serviceImplementation="com.jetbrains.python.refactoring.PyRefactoringUiServiceImpl"/>
-    <!--suppress PluginXmlRegistrationCheck -->
     <applicationService serviceInterface="com.jetbrains.python.PythonDocumentationHighlightingService"
                         serviceImplementation="com.jetbrains.python.PythonDocumentationHighlightingServiceImpl"/>
 

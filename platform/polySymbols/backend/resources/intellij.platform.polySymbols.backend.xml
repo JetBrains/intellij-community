@@ -52,7 +52,6 @@
                implementationClass="com.intellij.polySymbols.highlighting.impl.PolySymbolHighlightingAnnotator"/>
     <psi.declarationProvider implementation="com.intellij.polySymbols.declarations.impl.PolySymbolDeclarationProviderDelegate"/>
 
-    <!--suppress PluginXmlRegistrationCheck -->
     <psi.symbolReferenceProvider hostElementClass="com.intellij.model.psi.PsiExternalReferenceHost"
                                  hostLanguage="PolySymbolEnabledLanguage"
                                  implementationClass="com.intellij.polySymbols.references.impl.PsiPolySymbolReferenceProviderImpl"

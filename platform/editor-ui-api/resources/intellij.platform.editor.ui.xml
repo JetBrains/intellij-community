@@ -68,7 +68,6 @@
     <applicationService serviceImplementation="com.intellij.ide.ui.UISettingsStateDefaultsProviderImpl"
                         serviceInterface="com.intellij.ide.ui.UISettingsStateDefaultsProvider" />
     <applicationService serviceImplementation="com.intellij.ide.ui.UISettings"/>
-    <!--suppress PluginXmlRegistrationCheck -->
     <applicationSettings service="com.intellij.ide.ui.UISettings"/>
 
     <projectService
@@ -79,7 +78,6 @@
       serviceImplementation="com.intellij.openapi.vcs.DefaultElementStatusTracker" />
     <applicationService serviceImplementation="com.intellij.ide.ui.NotRoamableUiSettings" />
     <applicationService serviceImplementation="com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorCustomizer" open="true"/>
-    <!--suppress PluginXmlRegistrationCheck -->
     <applicationSettings service="com.intellij.ide.ui.NotRoamableUiSettings"/>
   </extensions>
   <applicationListeners>

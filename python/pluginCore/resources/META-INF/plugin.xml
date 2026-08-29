@@ -1,4 +1,3 @@
-<!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin url="https://www.jetbrains.com/pycharm/" allow-bundled-update="true">
   <!--Python community support for Pycharm, DS and IC.-->
   <!--Include core Python functionality-->

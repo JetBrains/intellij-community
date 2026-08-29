@@ -1,4 +1,4 @@
-<!--suppress PluginXmlRegistrationCheck -->
+<!--suppress PluginXmlRegistrationCheck (product customization opts into platform impl classes by design) -->
 <!-- Used by IDEs built on top of IntelliJ Platform to customize the IDE;
      By using this customization, IDEs also get most of the behaviors of IntelliJ IDEA by default.
      Used only by IntelliJ IDEA and Android Studio.

@@ -14,8 +14,6 @@
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
-    <!-- IJPL-149684 -->
-    <!--suppress PluginXmlRegistrationCheck -->
     <applicationService serviceInterface="com.intellij.platform.project.ProjectEntitiesStorage"
                         serviceImplementation="com.intellij.platform.project.backend.BackendProjectEntitiesStorage"/>
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.project.backend.module.ModuleStateApiProvider"/>

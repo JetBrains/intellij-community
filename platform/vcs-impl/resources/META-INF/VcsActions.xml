@@ -1,4 +1,4 @@
-<!--suppress PluginXmlRegistrationCheck -->
+<!--suppress PluginXmlRegistrationCheck (xi-included shared actions file; the actions span diff.impl and ide.impl) -->
 <idea-plugin>
   <actions resource-bundle="messages.ActionsBundle">
     <action id="Vcs.ShowTabbedFileHistory" class="com.intellij.openapi.vcs.actions.TabbedShowHistoryAction"

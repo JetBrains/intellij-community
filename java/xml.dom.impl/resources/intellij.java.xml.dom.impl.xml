@@ -1,4 +1,4 @@
-<!--suppress PluginXmlRegistrationCheck -->
+<!--suppress PluginXmlRegistrationCheck (dom.converter interfaceClass attributes reference API types that other modules own) -->
 <idea-plugin visibility="public">
   <resource-bundle>messages.ActionsBundle</resource-bundle>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->

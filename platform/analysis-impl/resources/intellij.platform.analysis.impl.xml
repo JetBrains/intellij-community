@@ -152,7 +152,6 @@
                         serviceImplementation="com.intellij.psi.stubs.SerializationManagerImpl" preload="true"/>
 
     <applicationService serviceImplementation="com.intellij.codeInsight.CodeInsightSettings" client="all"/>
-    <!--suppress PluginXmlRegistrationCheck -->
     <applicationSettings service="com.intellij.codeInsight.CodeInsightSettings"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionService" open="true"
@@ -208,13 +207,9 @@
                                          converter="com.intellij.codeInsight.completion.CharTailTypeConverter"
                                          descriptor="com.intellij.codeInsight.completion.FrontendFriendlyCharTailType"/>
 
-    <!--suppress PluginXmlRegistrationCheck -->
     <applicationSettings service="com.intellij.find.impl.FindSettingsImpl$FindRecents"/>
-    <!--suppress PluginXmlRegistrationCheck -->
     <applicationSettings service="com.intellij.find.impl.FindUsagesSettingsImpl"/>
-    <!--suppress PluginXmlRegistrationCheck -->
     <projectSettings service="com.intellij.packageDependencies.DependencyValidationManagerImpl"/>
-    <!--suppress PluginXmlRegistrationCheck -->
     <projectSettings service="com.intellij.profile.codeInspection.ProjectInspectionProfileManager"/>
   </extensions>
   <applicationListeners>

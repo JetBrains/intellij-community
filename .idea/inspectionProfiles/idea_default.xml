@@ -1193,6 +1193,7 @@
             <module name="intellij.platform.vcs.dvcs.impl" />
             <module name="intellij.platform.editor.ex" />
             <module name="intellij.platform.execution.impl" />
+            <module name="intellij.platform.execution.impl.backend" />
             <module name="intellij.platform.images" />
             <module name="intellij.platform.indexing.impl" />
             <module name="intellij.json" />
@@ -1258,10 +1259,12 @@
             <module name="intellij.platform.lang.core" />
             <module name="intellij.platform.editor.ui" />
             <module name="intellij.platform.codeStyle.impl" />
+            <module name="intellij.platform.codeStyle" />
             <module name="intellij.platform.kernel.impl" />
             <module name="intellij.platform.settings.local" />
             <module name="intellij.platform.statistics" />
             <module name="intellij.platform.polySymbols" />
+            <module name="intellij.platform.polySymbols.backend" />
             <module name="intellij.platform.workspace.jps" />
             <module name="intellij.platform.ijent.impl" />
             <module name="intellij.platform.ijent.community.ui" />
@@ -1273,6 +1276,7 @@
           </modules-set>
           <modules-set>
             <module name="intellij.idea.community.customization" />
+            <module name="intellij.idea.customization.base" />
             <module name="intellij.java" />
             <module name="intellij.java.aetherDependencyResolver" />
             <module name="intellij.java.analysis" />
@@ -1472,6 +1476,7 @@
           <module name="intellij.platform.vcs.dvcs.impl" />
           <module name="intellij.platform.editor.ex" />
           <module name="intellij.platform.execution.impl" />
+          <module name="intellij.platform.execution.impl.backend" />
           <module name="intellij.platform.images" />
           <module name="intellij.platform.indexing.impl" />
           <module name="intellij.json" />
@@ -1487,6 +1492,7 @@
           <module name="intellij.database.dialects.cassandra" />
           <module name="intellij.database.dialects.hivebase" />
           <module name="intellij.database.dialects.redis" />
+          <module name="intellij.idea.customization.base"/>
           <module name="intellij.platform.ide.initialConfigImport" />
           <module name="intellij.platform.projectModel.impl" />
           <module name="intellij.platform.scriptDebugger.protocolReaderRuntime" />
@@ -1537,10 +1543,12 @@
           <module name="intellij.platform.lang.core" />
           <module name="intellij.platform.editor.ui" />
           <module name="intellij.platform.codeStyle.impl" />
+          <module name="intellij.platform.codeStyle" />
           <module name="intellij.platform.kernel.impl" />
           <module name="intellij.platform.settings.local" />
           <module name="intellij.platform.statistics" />
           <module name="intellij.platform.polySymbols" />
+          <module name="intellij.platform.polySymbols.backend" />
           <module name="intellij.platform.workspace.jps" />
           <module name="intellij.platform.ijent.impl" />
           <module name="intellij.platform.ijent.community.ui" />

@@ -80,11 +80,8 @@
     <projectService serviceInterface="com.intellij.pom.PomModel"
                     serviceImplementation="com.intellij.psi.impl.source.PostprocessReformattingAspectImpl$LangPomModel" overrides="true"
                     preload="await"/>
-    <!--suppress PluginXmlRegistrationCheck -->
     <projectSettings service="com.intellij.psi.codeStyle.LegacyCodeStyleSettingsManager"/>
-    <!--suppress PluginXmlRegistrationCheck -->
     <applicationSettings service="com.intellij.psi.codeStyle.AppCodeStyleSettingsManager"/>
-    <!--suppress PluginXmlRegistrationCheck -->
     <projectSettings service="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"/>
     <formattingService implementation="com.intellij.formatting.service.ExternalFormatProcessorAdapter" order="first"/>
     <postFormatProcessor implementation="com.intellij.formatting.LineCommentAddSpacePostFormatProcessor"/>

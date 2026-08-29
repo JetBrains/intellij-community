@@ -21,7 +21,6 @@
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
-    <!--suppress PluginXmlRegistrationCheck -->
     <projectService serviceInterface="com.intellij.ide.util.scopeChooser.ScopeModelService"
                     serviceImplementation="com.intellij.platform.scopes.service.ScopeModelServiceImpl"/>
 
