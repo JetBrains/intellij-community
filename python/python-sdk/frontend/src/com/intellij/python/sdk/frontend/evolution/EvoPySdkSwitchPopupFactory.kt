@@ -553,6 +553,17 @@ internal class EvoPySdkSwitchPopupFactory(
     }
 
   /**
+   * The "Interpreter Settings…" row for [nodeId]'s submenu, under a rule, or nothing for a node that does not carry it.
+   *
+   * It belongs to "Advanced", which is where the widget keeps what it does not offer itself: the other nodes list this
+   * project's environments, while that one is already the way out to the fuller machinery. Behind a rule, since it
+   * leaves the popup rather than adding to the list above it.
+   */
+  private fun settingsSection(nodeId: String): List<EvoTreeSection> =
+    if (nodeId != ADVANCED_NODE_ID) emptyList()
+    else listOf(EvoTreeSection(label = ListSeparator(""), elements = listOf(EvoTreeLeafElement(interpreterSettingsAction()))))
+
+  /**
    * "Interpreter Settings…" — the row the classic widget ended with, opening the project's Python interpreter page.
    *
    * Opened by the configurable's own id, as the settings gear opens the package-manager page: the frontend has no
@@ -595,13 +606,14 @@ internal class EvoPySdkSwitchPopupFactory(
         val refreshable = (result as? EvoLoadResultDto.Ok)?.refreshable == true
         // A node holding one row keeps that row and its panel: the step was dropped as friction, but it is the step that
         // says which tool the list belongs to and what choosing a row there does, so losing it cost more than it saved.
-        val loaded = EvoLoadedNode(result.toSections(node.id, traceId), refreshable)
+        val sections = result.toSections(node.id, traceId)
         // A tool that answered, but with nothing to offer, is not an error — and not something to leave as a row that
         // opens an empty submenu either. Report it the way a backend warning is reported: disabled, with a sign.
-        if (loaded.sections.none { it.elements.isNotEmpty() }) {
+        // Asked of what the backend named, so a node carrying only the settings row still counts as empty.
+        if (sections.none { it.elements.isNotEmpty() }) {
           throw EvoWarningException(PySdkFrontendBundle.message("evo.sdk.status.bar.popup.node.empty"))
         }
-        loaded
+        EvoLoadedNode(sections + settingsSection(node.id), refreshable)
       }
       // No heading of its own: the row the user opened already names the tool, and the line along the bottom says what
       // its list is for.
@@ -618,9 +630,6 @@ internal class EvoPySdkSwitchPopupFactory(
     }
     // Above "Advanced", where it has always sat.
     if (associated.isNotEmpty()) nonToolNodes.add(0, associatedInterpretersNode(traceId))
-    // Last of them, as it was in the classic widget: the way out of the popup and into the full interpreter settings,
-    // for everything this list deliberately does not offer.
-    nonToolNodes += EvoTreeLeafElement(interpreterSettingsAction())
 
     val toolsCaption = ListSeparator(PySdkFrontendBundle.message(
       // "Change" once there is something to change: the section switches the interpreter rather than setting a first one.
