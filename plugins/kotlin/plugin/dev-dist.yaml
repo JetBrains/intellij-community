@@ -1,0 +1,60 @@
+# Generated - do not edit.
+#
+# What this plugin's dev-distribution leaves need that the convention does not give.
+#
+# `dev_dist_plugin` in this plugin's own `BUILD.bazel` states the plugin's content and its patched descriptor.
+# The JPS-to-Bazel converter derives both from the project model: the members come from the plugin's own
+# `<content>`, the jar of each member from the loading rule and the member's own descriptor, the libraries from
+# what the members declare, and the descriptor of every content module from its module's resource roots.
+#
+# This file is the remainder, so a plugin with no such file is pure convention. Every row states one
+# `PluginLayout` decision, and evaluating a product layout is the work the converter exists to keep out of a
+# fragment action.
+#
+# Two parts, two producers. `content:` is one section for the plugin, because membership does not depend on the
+# layout variant. `descriptor:` is keyed by `<main module>` or `<main module>/<variant>`, because a descriptor
+# deviation is a fact about one variant. Each producer rewrites only its own part.
+#
+# No row is a Bazel label, and no row is a path. A label carries the artifact version of a library, and a path
+# restates a rule the rule already derives.
+content:
+  # Modules the layout packs that this plugin's `<content>` does not name - a `PluginLayout.withModule` call.
+  extra_members:
+  - "kotlin.frontend.split"
+  # Members that get a jar of their own where the derivation packs them into the plugin's main jar.
+  separate_jars:
+  - "intellij.kotlin.duplicate.scope"
+  # Members this plugin does not hand over, because a second jar of this plugin holds the module too.
+  raw_members:
+  - "intellij.kotlin.base.codeInsight.minimal"
+  - "intellij.kotlin.highlighting.minimal"
+  # Members this plugin packs beside another content module, which takes the packing target away from every
+  # plugin that ships the module.
+  vetoed_members:
+  - "intellij.libraries.completion.ranking.kotlin"
+  - "intellij.libraries.kotlin.gradle.plugin.idea"
+  - "intellij.libraries.kotlin.gradle.plugin.idea.proto"
+  - "intellij.libraries.kotlin.tooling.core"
+  # Libraries the layout packs that no member declares. A row with no `module` is a project library.
+  libraries:
+  - name: "javax-inject"
+  - name: "kotlin-metadata"
+  - name: "kotlinc.allopen-compiler-plugin"
+  - name: "kotlinc.assignment-compiler-plugin"
+  - name: "kotlinc.compose-compiler-plugin"
+  - name: "kotlinc.js-plain-objects-compiler-plugin"
+  - name: "kotlinc.kotlin-build-tools-api"
+  - name: "kotlinc.kotlin-build-tools-cri-impl"
+  - name: "kotlinc.kotlin-build-tools-impl"
+  - name: "kotlinc.kotlin-compiler-fe10"
+  - name: "kotlinc.kotlin-compiler-ir"
+  - name: "kotlinc.kotlin-dataframe-compiler-plugin"
+  - name: "kotlinc.kotlin-gradle-statistics"
+  - name: "kotlinc.kotlin-jps-plugin-classpath"
+  - name: "kotlinc.kotlin-scripting-dependencies"
+  - name: "kotlinc.lombok-compiler-plugin"
+  - name: "kotlinc.noarg-compiler-plugin"
+  - name: "kotlinc.parcelize-compiler-plugin"
+  - name: "kotlinc.sam-with-receiver-compiler-plugin"
+  - name: "kotlinc.scripting-compiler-plugin"
+  - name: "vavr"

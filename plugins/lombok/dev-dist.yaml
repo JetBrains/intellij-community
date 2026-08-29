@@ -1,0 +1,23 @@
+# Generated - do not edit.
+#
+# What this plugin's dev-distribution leaves need that the convention does not give.
+#
+# `dev_dist_plugin` in this plugin's own `BUILD.bazel` states the plugin's content and its patched descriptor.
+# The JPS-to-Bazel converter derives both from the project model: the members come from the plugin's own
+# `<content>`, the jar of each member from the loading rule and the member's own descriptor, the libraries from
+# what the members declare, and the descriptor of every content module from its module's resource roots.
+#
+# This file is the remainder, so a plugin with no such file is pure convention. Every row states one
+# `PluginLayout` decision, and evaluating a product layout is the work the converter exists to keep out of a
+# fragment action.
+#
+# Two parts, two producers. `content:` is one section for the plugin, because membership does not depend on the
+# layout variant. `descriptor:` is keyed by `<main module>` or `<main module>/<variant>`, because a descriptor
+# deviation is a fact about one variant. Each producer rewrites only its own part.
+#
+# No row is a Bazel label, and no row is a path. A label carries the artifact version of a library, and a path
+# restates a rule the rule already derives.
+content:
+  # Modules the layout packs that this plugin's `<content>` does not name - a `PluginLayout.withModule` call.
+  extra_members:
+  - "intellij.lombok.generated"
