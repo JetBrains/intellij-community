@@ -68,6 +68,24 @@ class ProductModulesLayout {
   var pluginModulesToPublish: PersistentSet<String> = persistentSetOf()
 
   /**
+   * The plugin ids that each variant of the plugin set leaves out.
+   *
+   * It is used only if [buildAllCompatiblePlugins] is set to `true`.
+   *
+   * Some plugins do not load next to each other. One IDE cannot hold them all, so a consumer that loads the plugin set
+   * runs once per variant. The searchable options step starts one `traverseUI` run per variant, and the plugin
+   * dependency validation checks one plugin set per variant.
+   *
+   * A variant must name each dependent of a plugin that it leaves out, because a plugin does not load without a
+   * required dependency. A variant that keeps such a dependent makes the consumer fail.
+   *
+   * An empty list means one variant that excludes nothing.
+   * A plugin that every variant excludes gets no searchable options and no validation.
+   * State the conflict next to each entry, because only a full product build reveals it.
+   */
+  var pluginExclusionVariants: List<Set<String>> = emptyList()
+
+  /**
    * Describes the layout of non-trivial plugins which may be included in the product.
    * [bundledPluginModules] specifies the plugins to bundle, and [pluginModulesToPublish] specifies the plugins to publish.
    * The producer runs on the first read of its [Lazy.value]. Assigned producers check for duplicate layouts before they cache their lists.
