@@ -7,7 +7,6 @@ import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorSettings
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -24,6 +23,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.EditorTextField
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
@@ -69,7 +69,7 @@ internal class MarkdownSettingsConfigurable(private val project: Project) : Boun
   private val settings
     get() = MarkdownSettings.getInstance(project)
 
-  private var customStylesheetEditor: Editor? = null
+  private var customStylesheetEditor: EditorTextField? = null
 
   private fun isPreviewAvailable(): Boolean {
     return MarkdownHtmlPanelProvider.hasAvailableProviders()
@@ -287,7 +287,7 @@ internal class MarkdownSettingsConfigurable(private val project: Project) : Boun
   private fun setEditorReadonlyState(isReadonly: Boolean) {
     customStylesheetEditor?.let {
       it.document.setReadOnly(isReadonly)
-      it.contentComponent.isEnabled = !isReadonly
+      it.isEnabled = !isReadonly
     }
   }
 
@@ -315,7 +315,6 @@ internal class MarkdownSettingsConfigurable(private val project: Project) : Boun
   }
 
   override fun disposeUIResources() {
-    customStylesheetEditor?.let(EditorFactory.getInstance()::releaseEditor)
     customStylesheetEditor = null
     super.disposeUIResources()
   }
@@ -360,13 +359,18 @@ internal class MarkdownSettingsConfigurable(private val project: Project) : Boun
     }
   }
 
-  private fun createCustomStylesheetEditor(): EditorEx {
+  private fun createCustomStylesheetEditor(): EditorTextField {
     val editorFactory = EditorFactory.getInstance()
     val editorDocument = editorFactory.createDocument(settings.customStylesheetText ?: "")
-    val editor = editorFactory.createEditor(editorDocument) as EditorEx
-    fillEditorSettings(editor.settings)
-    setEditorHighlighting(editor)
-    return editor
+    val cssFileType = FileTypeManager.getInstance().getFileTypeByExtension("css")
+    return object : EditorTextField(editorDocument, null, cssFileType, false, false) {
+      override fun createEditor(): EditorEx {
+        return super.createEditor().also {
+          fillEditorSettings(it.settings)
+          setEditorHighlighting(it)
+        }
+      }
+    }
   }
 
   private fun setEditorHighlighting(editor: EditorEx) {
@@ -384,13 +388,11 @@ internal class MarkdownSettingsConfigurable(private val project: Project) : Boun
 
   private fun resetEditorText(cssText: String) {
     customStylesheetEditor?.let { editor ->
-      if (!editor.isDisposed) {
-        runWriteAction {
-          val writable = editor.document.isWritable
-          editor.document.setReadOnly(false)
-          editor.document.setText(cssText)
-          editor.document.setReadOnly(!writable)
-        }
+      runWriteAction {
+        val writable = editor.document.isWritable
+        editor.document.setReadOnly(false)
+        editor.document.setText(cssText)
+        editor.document.setReadOnly(!writable)
       }
     }
   }
