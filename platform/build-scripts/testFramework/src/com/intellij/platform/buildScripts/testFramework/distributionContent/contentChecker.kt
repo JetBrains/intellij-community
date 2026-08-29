@@ -153,15 +153,7 @@ private fun collectPluginContentCategoryFailures(
     val expectedFile = contentRoot.resolve(contentFileName)
     val key = getPluginContentKey(items.first())
     try {
-      val itemFileEntries = if (items.size == 1) {
-        items.first().content
-      }
-      else { // superset for report, android plugin excludes module libraries depending on OS/arch
-        items
-          .flatMap { item -> normalizeContentReport(item.content, short = false) }
-          .distinct()
-          .toList()
-      }
+      val itemFileEntries = mergePerOsPluginContent(items)
 
       checkThatContentIsNotChanged(
         actualFileEntries = itemFileEntries,
@@ -191,6 +183,35 @@ private fun collectPluginContentCategoryFailures(
     }
   }
   return failures
+}
+
+/**
+ * One plugin's content over every target platform the build reported it for, as one list.
+ *
+ * A plugin gets a report per operating system and architecture where its layout differs by one - the android plugin
+ * excludes some module libraries that way - and one `plugin-content.yaml` is checked in for all of them. So the variants
+ * are unioned rather than compared.
+ *
+ * **The union deduplicates on the same values the comparison uses.** [checkThatContentIsNotChanged] compares
+ * `short = true` entries, which is what makes a change of `ProjectLibraryEntry.dependentModules` alone not a change. A
+ * union that deduplicated `short = false` entries kept two variants that differ in that field only, and the comparison
+ * then saw one jar twice where the checked-in file names it once - a failure about a field the comparison had already
+ * declined to look at.
+ *
+ * A single variant is returned unnormalized, because [checkThatContentIsNotChanged] normalizes what it is given and
+ * doing it twice says nothing.
+ *
+ * What this still does not do is state a superset of two entries that really differ. Two variants whose `lib/x.jar` holds
+ * different module libraries stay two entries with one name, and the comparison fails naming that jar. Merging them per
+ * jar name is a product-layout decision, and this arc removes the need for it instead: a residue row is a module name or
+ * a library name, so a union over the variants is a union of names and cannot hold two rows that contradict each other.
+ */
+@Internal
+fun mergePerOsPluginContent(items: List<PluginContentReport>): List<FileEntry> {
+  if (items.size == 1) {
+    return items.first().content
+  }
+  return items.flatMap { normalizeContentReport(fileEntries = it.content, short = true) }.distinct()
 }
 
 private fun toPluginContentMap(contentList: List<PluginContentReport>): Map<String, PluginContentReport> {
