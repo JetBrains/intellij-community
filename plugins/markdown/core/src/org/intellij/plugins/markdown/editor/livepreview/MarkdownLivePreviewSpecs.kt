@@ -89,16 +89,27 @@ private fun PsiElement.toImageSpec(): MarkdownLivePreviewSpec.Image? {
   val linkDestination = image.linkDestination ?: return null
   val destination = linkDestination.text.markdownDestination()
   if (!destination.isLocalDestination()) return null
-  val imageRange = textRange
-  val paragraphRange = paragraph.textRange
-  val imageStart = imageRange.startOffset - paragraphRange.startOffset
-  val imageEnd = imageRange.endOffset - paragraphRange.startOffset
   val paragraphText = paragraph.text
-  if (!paragraphText.isBlank(0, imageStart) || !paragraphText.isBlank(imageEnd, paragraphText.length)) {
+  val imageChildren = paragraph.childList().filterIsInstance<MarkdownImage>()
+  val imageIndex = imageChildren.indexOf(image)
+  val paragraphStart = paragraph.textRange.startOffset
+  if (imageIndex < 0 || !paragraphText.isBlank(0, imageChildren.first().textRange.startOffset - paragraphStart)) {
+    return null
+  }
+  if (imageChildren.hasNonBlankTextBetween(paragraphText, paragraphStart)) {
+    return null
+  }
+  if (!paragraphText.isBlank(imageChildren.last().textRange.endOffset - paragraphStart, paragraphText.length)) {
     return null
   }
   val lineRange = image.wholeLineRange() ?: return null
   return MarkdownLivePreviewSpec.Image(lineRange, destination)
+}
+
+private fun List<MarkdownImage>.hasNonBlankTextBetween(paragraphText: String, paragraphStart: Int): Boolean {
+  return zipWithNext().any { (first, second) ->
+    !paragraphText.isBlank(first.textRange.endOffset - paragraphStart, second.textRange.startOffset - paragraphStart)
+  }
 }
 
 private fun PsiElement.toSetextCodeSpanUnderlineSpec(): MarkdownLivePreviewSpec? {

@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.CustomFoldRegion;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -71,7 +72,7 @@ public final class DocRenderItemUpdater implements Runnable {
 
   private void processChunk(@Nullable Runnable onAfterDone) {
     long deadline = System.currentTimeMillis() + MAX_UPDATE_DURATION_MS;
-    Map<Editor, EditorScrollingPositionKeeper> keepers = new HashMap<>();
+    Map<Editor, DocRenderer.PositionKeeper> keepers = new HashMap<>();
     // This is a heuristic to lessen visual 'jumping' on editor opening. We'd like regions visible at target opening location to be updated
     // first, and all the rest - later. We're not specifically optimizing for the case when multiple editors are opened simultaneously now,
     // opening several editors in succession should work fine with this logic though (by the time a new editor is opened, 'high-priority'
@@ -79,17 +80,21 @@ public final class DocRenderItemUpdater implements Runnable {
     List<CustomFoldRegion> toProcess = new ArrayList<>(myQueue.keySet());
     Object2IntMap<Editor> memoMap = new Object2IntOpenHashMap<>();
     toProcess.sort(Comparator.comparingInt(i -> -Math.abs(i.getStartOffset() - getVisibleOffset(i.getEditor(), memoMap))));
+    Map<Editor, DocRenderer> customRenderers = new HashMap<>();
+    for (CustomFoldRegion region : toProcess) {
+      if (!region.isValid()) continue;
+      DocRenderer renderer = (DocRenderer)region.getRenderer();
+      if (renderer.hasPositionKeeperFactory()) {
+        customRenderers.putIfAbsent(region.getEditor(), renderer);
+      }
+    }
     Map<Editor, List<Runnable>> editorTasks = new HashMap<>();
     do {
       CustomFoldRegion region = toProcess.remove(toProcess.size() - 1);
       boolean updateContent = myQueue.remove(region);
       if (region.isValid()) {
         Editor editor = region.getEditor();
-        keepers.computeIfAbsent(editor, e -> {
-          EditorScrollingPositionKeeper keeper = new EditorScrollingPositionKeeper(editor);
-          keeper.savePosition();
-          return keeper;
-        });
+        keepPosition(keepers, customRenderers, editor);
         var tasks = editorTasks.computeIfAbsent(editor, e -> new ArrayList<>());
         ((DocRenderer)region.getRenderer()).update(true, updateContent, tasks);
         if (tasks.size() > 20) {
@@ -99,14 +104,62 @@ public final class DocRenderItemUpdater implements Runnable {
     }
     while (!toProcess.isEmpty() && System.currentTimeMillis() < deadline);
     editorTasks.entrySet().forEach((entry -> runFoldingTasks(entry.getKey(), entry.getValue())));
-    keepers.values().forEach(k -> k.restorePosition(false));
+    restorePosition(keepers);
     if (!myQueue.isEmpty()) ApplicationManager.getApplication().invokeLater(() -> processChunk(onAfterDone));
     if (myQueue.isEmpty() && onAfterDone != null) onAfterDone.run();
+  }
+
+  private static void keepPosition(@NotNull Map<Editor, DocRenderer.PositionKeeper> keepers,
+                                   @NotNull Map<Editor, DocRenderer> customRenderers,
+                                   @NotNull Editor editor) {
+    keepers.computeIfAbsent(editor, e -> {
+      DocRenderer renderer = customRenderers.get(e);
+      DocRenderer.PositionKeeper keeper = renderer == null ? null : renderer.createPositionKeeper();
+      if (keeper == null) {
+        keeper = new DefaultPositionKeeper(e);
+      }
+      keeper.save();
+      return keeper;
+    });
+  }
+
+  private static void restorePosition(@NotNull Map<Editor, DocRenderer.PositionKeeper> keepers) {
+    keepers.values().forEach(k -> {
+      try {
+        k.restore();
+      }
+      finally {
+        Disposer.dispose(k);
+      }
+    });
   }
 
   private static void runFoldingTasks(@NotNull Editor editor, @NotNull List<Runnable> tasks) {
     editor.getFoldingModel().runBatchFoldingOperation(() -> tasks.forEach(Runnable::run), true, false);
     tasks.clear();
+  }
+
+  private static final class DefaultPositionKeeper implements DocRenderer.PositionKeeper {
+    private final EditorScrollingPositionKeeper delegate;
+
+    private DefaultPositionKeeper(@NotNull Editor editor) {
+      delegate = new EditorScrollingPositionKeeper(editor);
+    }
+
+    @Override
+    public void save() {
+      delegate.savePosition();
+    }
+
+    @Override
+    public void restore() {
+      delegate.restorePosition(false);
+    }
+
+    @Override
+    public void dispose() {
+      Disposer.dispose(delegate);
+    }
   }
 
   private static int getVisibleOffset(Editor editor, Object2IntMap<Editor> memoMap) {

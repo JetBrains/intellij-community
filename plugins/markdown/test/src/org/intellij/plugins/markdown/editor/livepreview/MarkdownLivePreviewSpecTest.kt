@@ -48,6 +48,16 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals("images/img.png", image.destination)
   }
 
+  fun testImagesBetweenHeadersAreBothSpecs() {
+    val content = "# Markdown WYSIWYG Demo\n\n![logo](image.png)\n\n![logo](image.png)\n\n# Markdown WYSIWYG Demo"
+
+    assertEquals(2, images(content).size)
+  }
+
+  fun testAdjacentImagesAreBothSpecs() {
+    assertEquals(2, images("![logo](test.png)\n![logo](test.png)").size)
+  }
+
   fun testInlineAndNestedImagesAreNotConcealed() {
     assertEmpty(images("Text ![alt](image.png) here"))
     assertEmpty(images("before\n![alt](image.png)\nafter"))

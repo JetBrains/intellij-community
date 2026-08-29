@@ -26,13 +26,14 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownImageLoader
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec
+import java.util.LinkedHashMap
 
 internal class MarkdownLivePreviewImageManager(
   private val project: Project,
   private val editor: Editor
 ) : Disposable {
   private val items = HashSet<MarkdownImageRenderItem>()
-  private val loadedSources = HashMap<ImageKey, VirtualFile>()
+  private val loadedSources = LinkedHashMap<ImageKey, VirtualFile>()
   private val loadingSources = HashSet<ImageKey>()
   private val rejectedSources = HashSet<ImageKey>()
   private var imageGeometry = geometry()
@@ -46,8 +47,7 @@ internal class MarkdownLivePreviewImageManager(
       foldingModel.addListener(object : FoldingListener {
         override fun beforeFoldRegionDisposed(region: FoldRegion) {
           val customRegion = region as? CustomFoldRegion ?: return
-          val renderer = customRegion.renderer as? DocRenderer ?: return
-          val item = renderer.item as? MarkdownImageRenderItem ?: return
+          val item = customRegion.markdownImageRenderItem() ?: return
           if (item !in items) return
           item.dispose()
         }
@@ -193,7 +193,7 @@ internal class MarkdownImageRenderItem(
   val source: VirtualFile,
   private val onDispose: (MarkdownImageRenderItem) -> Unit,
 ) : DocRenderItem {
-  val renderer = DocRenderer(this, true)
+  val renderer = DocRenderer(this, true) { MarkdownLivePreviewPositionKeeper(editor) }
   private var disposed = false
 
   override val textToRender: String = HtmlChunk.tag("img").attr("src", source.url).toString()

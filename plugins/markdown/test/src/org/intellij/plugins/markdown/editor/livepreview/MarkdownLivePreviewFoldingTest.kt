@@ -306,6 +306,24 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
   }
 
   @Test
+  fun testImagesBetweenHeadersBothRender() {
+    addPng(120, 60)
+    val content = "# Markdown WYSIWYG Demo\n\n![logo](image.png)\n\n![logo](image.png)\n\n# Markdown WYSIWYG Demo"
+    configureProjectFile(content)
+
+    assertEquals(2, computeLivePreviewSpecs(myFixture.file).filterIsInstance<MarkdownLivePreviewSpec.Image>().size)
+    waitForImageRegions(2)
+  }
+
+  @Test
+  fun testAdjacentImagesBothRender() {
+    addPng(120, 60)
+    configureProjectFile("![logo](image.png)\n![logo](image.png)\n\ntail")
+
+    waitForImageRegions(2)
+  }
+
+  @Test
   fun testMovingCaretBetweenImagesDoesNotUseDisposedFoldRegion() {
     addPng(120, 60)
     val first = "![first](image.png)"
@@ -478,6 +496,55 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
 
     assertEquals(verticalOffset, editor.scrollingModel.verticalScrollOffset)
+  }
+
+  @Test
+  fun testMovingCaretAcrossSmallImageDoesNotJumpViewport() {
+    addPng(40, 20)
+    val image = "![logo](image.png)"
+    val content = (1..8).joinToString("\n") { "before$it" } + "\n\n$image\n\n" +
+                  (1..8).joinToString("\n") { "after$it" }
+    configureProjectFile(content)
+    val editor = myFixture.editor
+    waitForImageRenderer()
+    EditorTestUtil.setEditorVisibleSize(editor, 400, editor.lineHeight * 8)
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+
+    val imageLine = editor.document.getLineNumber(content.indexOf(image))
+    editor.scrollingModel.scrollVertically(editor.visualLineToY(imageLine - 3))
+    moveCaretTo(editor.document.getLineStartOffset(imageLine - 1))
+    val verticalOffset = editor.scrollingModel.verticalScrollOffset
+
+    moveCaretDown()
+    moveCaretDown()
+
+    assertEquals(verticalOffset, editor.scrollingModel.verticalScrollOffset)
+  }
+
+  @Test
+  fun testMovingPastLargeImageUsesMinimumScroll() {
+    addPng(100, 1_000)
+    val image = "![logo](image.png)"
+    val content = (1..6).joinToString("\n") { "before$it" } + "\n\n$image\n\n" +
+                  (1..12).joinToString("\n") { "after$it" }
+    configureProjectFile(content)
+    val editor = myFixture.editor
+    waitForImageRenderer()
+    EditorTestUtil.setEditorVisibleSizeInPixels(editor, 300, editor.lineHeight * 5)
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+
+    val imageLine = editor.document.getLineNumber(content.indexOf(image))
+    moveCaretTo(editor.document.getLineStartOffset(imageLine))
+    assertEmpty(imageRegions())
+    editor.scrollingModel.scrollVertically((editor.visualLineToY(imageLine) - editor.lineHeight * 2).coerceAtLeast(0))
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    val visibleArea = editor.scrollingModel.visibleArea
+
+    moveCaretDown()
+
+    val expected = expectedRelativeScroll(editor, visibleArea.y, visibleArea.height)
+    assertEquals(expected, editor.scrollingModel.verticalScrollOffset)
+    assertTrue(imageRegions().isNotEmpty())
   }
 
   @Test
@@ -694,6 +761,24 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
   private fun moveCaretTo(offset: Int) {
     myFixture.editor.caretModel.moveToOffset(offset)
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+  }
+
+  private fun moveCaretDown() {
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+  }
+
+  private fun expectedRelativeScroll(editor: Editor, viewportY: Int, viewportHeight: Int): Int {
+    val caretY = editor.visualLineToY(editor.caretModel.visualPosition.line)
+    val lineHeight = editor.lineHeight
+    val scrollOffset = editor.settings.verticalScrollOffset * lineHeight
+    val topBound = caretY - scrollOffset
+    val bottomBound = caretY + scrollOffset + lineHeight
+    return when {
+      viewportY > topBound -> topBound
+      viewportY + viewportHeight < bottomBound -> bottomBound - viewportHeight
+      else -> viewportY
+    }.coerceAtLeast(0)
   }
 
   private fun select(start: Int, end: Int) {

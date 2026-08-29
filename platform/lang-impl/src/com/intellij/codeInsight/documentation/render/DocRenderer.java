@@ -11,6 +11,7 @@ import com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.documentation.QuickDocHighlightingHelper;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -83,6 +84,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.intellij.lang.documentation.DocumentationMarkup.CLASS_CONTENT;
 import static com.intellij.lang.documentation.DocumentationMarkup.CLASS_SECTION;
@@ -112,25 +114,40 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
   private int myCachedHeight = -1;
   private final @NotNull DocRenderLinkActivationHandler myLinkActivationHandler;
   private final boolean myHighQualityImages;
+  private final @Nullable Supplier<? extends PositionKeeper> myPositionKeeperFactory;
 
   public DocRenderer(@NotNull DocRenderItem item) {
-    this(item, DocRenderDefaultLinkActivationHandler.INSTANCE, false);
+    this(item, DocRenderDefaultLinkActivationHandler.INSTANCE, false, null);
   }
 
   public DocRenderer(@NotNull DocRenderItem item, boolean highQualityImages) {
-    this(item, DocRenderDefaultLinkActivationHandler.INSTANCE, highQualityImages);
+    this(item, DocRenderDefaultLinkActivationHandler.INSTANCE, highQualityImages, null);
+  }
+
+  public DocRenderer(@NotNull DocRenderItem item,
+                     boolean highQualityImages,
+                     @Nullable Supplier<? extends PositionKeeper> positionKeeperFactory) {
+    this(item, DocRenderDefaultLinkActivationHandler.INSTANCE, highQualityImages, positionKeeperFactory);
   }
 
   public DocRenderer(@NotNull DocRenderItem item, @NotNull DocRenderLinkActivationHandler linkActivationHandler) {
-    this(item, linkActivationHandler, false);
+    this(item, linkActivationHandler, false, null);
   }
 
   public DocRenderer(@NotNull DocRenderItem item,
                      @NotNull DocRenderLinkActivationHandler linkActivationHandler,
                      boolean highQualityImages) {
+    this(item, linkActivationHandler, highQualityImages, null);
+  }
+
+  public DocRenderer(@NotNull DocRenderItem item,
+                     @NotNull DocRenderLinkActivationHandler linkActivationHandler,
+                     boolean highQualityImages,
+                     @Nullable Supplier<? extends PositionKeeper> positionKeeperFactory) {
     myItem = item;
     myLinkActivationHandler = linkActivationHandler;
     myHighQualityImages = highQualityImages;
+    myPositionKeeperFactory = positionKeeperFactory;
   }
 
   void update(boolean updateSize, boolean updateContent, List<Runnable> foldingTasks) {
@@ -265,6 +282,14 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
 
   public DocRenderItem getItem() {
     return myItem;
+  }
+
+  boolean hasPositionKeeperFactory() {
+    return myPositionKeeperFactory != null;
+  }
+
+  @Nullable PositionKeeper createPositionKeeper() {
+    return myPositionKeeperFactory == null ? null : myPositionKeeperFactory.get();
   }
 
   private @Nullable PsiDocCommentBase getComment() {
@@ -698,5 +723,12 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     public void actionPerformed(@NotNull AnActionEvent e) {
       item.toggle();
     }
+  }
+
+  @ApiStatus.Internal
+  public interface PositionKeeper extends Disposable {
+    void save();
+
+    void restore();
   }
 }
