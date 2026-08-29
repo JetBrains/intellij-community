@@ -54,7 +54,7 @@ interface BuildContext : CompilationContext {
    * Build number used for all plugins being built.
    *
    * The value is [buildNumber] having:
-   * * `SNAPSHOT` suffix replaced with `${DATE}` to match [com.intellij.util.text.SemVer];
+   * * `SNAPSHOT` suffix replaced with a fixed number to match [com.intellij.util.text.SemVer];
    * * `.0` appended if [BuildContext.isNightlyBuild] to match [com.intellij.util.text.SemVer].
    *
    * See also [org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec.withCustomVersion].

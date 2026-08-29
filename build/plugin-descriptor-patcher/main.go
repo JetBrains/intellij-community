@@ -33,7 +33,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"jetbrains.com/plugin-descriptor-patcher/internal/descriptorxml"
@@ -59,7 +58,6 @@ type request struct {
 	mainJarName     string
 	source          string
 	buildNumberFile string
-	buildDateSecond int64
 	releaseDate     string
 	releaseVersion  string
 	isEap           bool
@@ -119,7 +117,7 @@ func patch(parsed request) (string, error) {
 		return "", err
 	}
 	buildNumber := strings.TrimSpace(string(buildNumberContent))
-	pluginVersion, err := stamps.PluginBuildNumber(buildNumber, parsed.buildDateSecond)
+	pluginVersion, err := stamps.PluginBuildNumber(buildNumber)
 	if err != nil {
 		return "", err
 	}
@@ -302,8 +300,6 @@ func parseRequest(lines []string) (request, error) {
 			parsed.source = value
 		case "--build-number-file":
 			parsed.buildNumberFile = value
-		case "--build-date-seconds":
-			parsed.buildDateSecond, err = strconv.ParseInt(value, 10, 64)
 		case "--release-date":
 			parsed.releaseDate = value
 		case "--release-version":

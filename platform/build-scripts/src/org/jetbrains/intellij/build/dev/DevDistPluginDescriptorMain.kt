@@ -68,7 +68,6 @@ internal class DevDistPluginDescriptorRequest(
   @JvmField val mainJarName: String,
   @JvmField val source: Path,
   @JvmField val buildNumberFile: Path,
-  @JvmField val buildDateInSeconds: Long,
   @JvmField val releaseDate: String,
   @JvmField val releaseVersion: String,
   @JvmField val isEap: Boolean,
@@ -109,7 +108,7 @@ internal class DevDistPluginDescriptorRequest(
 /** Runs the shared patch body over [request] and returns the text the plugin's main jar receives. */
 internal suspend fun patchPluginDescriptorFromPlan(request: DevDistPluginDescriptorRequest): String {
   val buildNumber = Files.readString(request.buildNumberFile).trim()
-  val pluginVersion = computePluginBuildNumber(buildNumber = buildNumber, buildDateInSeconds = request.buildDateInSeconds) +
+  val pluginVersion = computePluginBuildNumber(buildNumber = buildNumber) +
                       request.versionSuffix
   val compatibleBuildRange = when {
     request.exactVersion -> CompatibleBuildRange.EXACT
@@ -426,7 +425,6 @@ internal fun parseDevDistPluginDescriptorRequest(lines: List<String>): DevDistPl
   var mainJarName: String? = null
   var source: Path? = null
   var buildNumberFile: Path? = null
-  var buildDateInSeconds = 0L
   var releaseDate: String? = null
   var releaseVersion: String? = null
   var isEap = false
@@ -458,7 +456,6 @@ internal fun parseDevDistPluginDescriptorRequest(lines: List<String>): DevDistPl
       "--main-jar-name" -> mainJarName = value
       "--source" -> source = Path.of(value)
       "--build-number-file" -> buildNumberFile = Path.of(value)
-      "--build-date-seconds" -> buildDateInSeconds = value.toLong()
       "--release-date" -> releaseDate = value
       "--release-version" -> releaseVersion = value
       "--eap" -> isEap = value.toBooleanStrict()
@@ -486,7 +483,6 @@ internal fun parseDevDistPluginDescriptorRequest(lines: List<String>): DevDistPl
     mainJarName = mainJarName ?: "${devDistPluginDirectoryName(module)}.jar",
     source = requireNotNull(source) { "--source is required" },
     buildNumberFile = requireNotNull(buildNumberFile) { "--build-number-file is required" },
-    buildDateInSeconds = buildDateInSeconds,
     releaseDate = requireNotNull(releaseDate) { "--release-date is required" },
     releaseVersion = requireNotNull(releaseVersion) { "--release-version is required" },
     isEap = isEap,

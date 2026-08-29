@@ -48,7 +48,6 @@ func TestTheWholeRequestIsPatched(t *testing.T) {
 		"--main-jar-name=example.jar",
 		"--source="+source,
 		"--build-number-file="+buildNumberFile(t, dir, "263.SNAPSHOT"),
-		"--build-date-seconds=1767225600",
 		"--release-date=20260101",
 		"--release-version=2026300",
 		"--eap=true",
@@ -72,7 +71,7 @@ func TestTheWholeRequestIsPatched(t *testing.T) {
 	// both ends are the build number itself. That is what `//build:idea_air_dist` stamps today.
 	want := `<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <id>a</id>
-  <version>263.20260101.0</version>
+  <version>263.99999999.0</version>
   <idea-version since-build="263.SNAPSHOT" until-build="263.SNAPSHOT" />
   <description><![CDATA[<b>x</b>]]></description>
   <extensions />

@@ -185,7 +185,7 @@ class BuildContextImpl internal constructor(
   }
 
   override val pluginBuildNumber: String by lazy {
-    computePluginBuildNumber(buildNumber = buildNumber, buildDateInSeconds = options.buildDateInSeconds)
+    computePluginBuildNumber(buildNumber = buildNumber)
   }
 
   override fun reportDistributionBuildNumber() {

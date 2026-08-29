@@ -107,7 +107,7 @@ class DevDistPluginDescriptorTest {
   @Test
   fun `the stamps are derived from the build number file`(@TempDir dir: Path) {
     assertThat(patch(fixture(dir))).contains(
-      "<version>263.20260101.0</version>",
+      "<version>263.99999999.0</version>",
       """<idea-version since-build="263.SNAPSHOT" until-build="263.SNAPSHOT" />""",
     )
   }
@@ -120,7 +120,6 @@ class DevDistPluginDescriptorTest {
       "--main-module=intellij.cwm",
       "--source=${dir.resolve("plugin.xml")}",
       "--build-number-file=${dir.resolve("build.txt")}",
-      "--build-date-seconds=1767225600",
       "--release-date=20260101",
       "--release-version=2026300",
       "--eap=true",
@@ -172,7 +171,7 @@ class DevDistPluginDescriptorTest {
     checkProducedPluginDescriptor(
       mainModule = MAIN_MODULE,
       content = REFERENCE,
-      pluginVersion = "263.20260101.0",
+      pluginVersion = "263.99999999.0",
       compatibleSinceUntil = "263.SNAPSHOT" to "263.SNAPSHOT",
     )
   }
@@ -183,13 +182,13 @@ class DevDistPluginDescriptorTest {
       checkProducedPluginDescriptor(
         mainModule = MAIN_MODULE,
         content = REFERENCE,
-        pluginVersion = "263.20260102.0",
+        pluginVersion = "263.99999998.0",
         compatibleSinceUntil = "263.SNAPSHOT" to "263.SNAPSHOT",
       )
     }
       .isInstanceOf(IllegalStateException::class.java)
       .hasMessageContaining(MAIN_MODULE)
-      .hasMessageContaining("263.20260102.0")
+      .hasMessageContaining("263.99999998.0")
   }
 
   @Test
@@ -198,7 +197,7 @@ class DevDistPluginDescriptorTest {
       checkProducedPluginDescriptor(
         mainModule = MAIN_MODULE,
         content = REFERENCE,
-        pluginVersion = "263.20260101.0",
+        pluginVersion = "263.99999999.0",
         compatibleSinceUntil = "263.1" to "263.*",
       )
     }
@@ -238,7 +237,6 @@ class DevDistPluginDescriptorTest {
       mainJarName = "example.jar",
       source = dir.resolve("plugin.xml"),
       buildNumberFile = dir.resolve("build.txt"),
-      buildDateInSeconds = 1767225600,
       releaseDate = "20260101",
       releaseVersion = "2026300",
       isEap = true,
@@ -276,7 +274,6 @@ class DevDistPluginDescriptorTest {
         mainJarName = base.mainJarName,
         source = dir.resolve("slash-plugin.xml"),
         buildNumberFile = base.buildNumberFile,
-        buildDateInSeconds = base.buildDateInSeconds,
         releaseDate = base.releaseDate,
         releaseVersion = base.releaseVersion,
         isEap = base.isEap,
@@ -328,7 +325,7 @@ private val SOURCE = """
 private val REFERENCE = """
   <idea-plugin>
     <id>com.example</id>
-    <version>263.20260101.0</version>
+    <version>263.99999999.0</version>
     <idea-version since-build="263.SNAPSHOT" until-build="263.SNAPSHOT" />
     <content>
       <module name="$BACKEND"><![CDATA[<idea-plugin package="$BACKEND" />]]></module>

@@ -53,7 +53,6 @@ DevDistProductInfo = provider(
         "release_date": "`ApplicationInfoProperties.majorReleaseDate`.",
         "release_version": "`ApplicationInfoProperties.releaseVersionForLicensing`.",
         "marketplace_names": "`OsFamily.osId` and `JvmArchitecture.marketplaceName`, keyed by the token `HOST_PLATFORMS` spells.",
-        "build_date_seconds": "The build date the `.SNAPSHOT` plugin version suffix becomes.",
     },
 )
 
@@ -63,7 +62,6 @@ def _dev_dist_product_info_impl(ctx):
         release_date = ctx.attr.release_date,
         release_version = ctx.attr.release_version,
         marketplace_names = ctx.attr.marketplace_names,
-        build_date_seconds = ctx.attr.build_date_seconds,
     )]
 
 dev_dist_product_info = rule(
@@ -81,14 +79,6 @@ dev_dist_product_info = rule(
 
 Generated, because no rule can read an enum. Here and not on the leaf, so a leaf beside a plugin derives the stamps of
 a one-platform layout variant without stating the table - see `dev_dist_plugin_descriptor_os_arch_stamps`.""",
-        ),
-        "build_date_seconds": attr.string(
-            doc = """The build date the `.SNAPSHOT` plugin version suffix becomes. Empty in the flag's default.
-
-Here and not on the leaf, so one value reaches every plugin of one product. `intellij_dev_fragment` pins the same
-date through `DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS`, and it has to stay the same value: a fragment and this action
-stamp one plugin's version, and a byte comparison of the two is the gate.
-`dev_dist_plugin_descriptor_helpers_test` compares the plan's value against that constant.""",
         ),
     },
 )
@@ -284,7 +274,6 @@ def _descriptor_request(ctx, module_name, output):
     args.add(module_name, format = "--main-module=%s")
     args.add(ctx.file.descriptor, format = "--source=%s")
     args.add(ctx.file._build_number_file, format = "--build-number-file=%s")
-    args.add(product.build_date_seconds, format = "--build-date-seconds=%s")
     args.add(product.release_date, format = "--release-date=%s")
     args.add(product.release_version, format = "--release-version=%s")
     args.add("--eap=" + str(product.eap).lower())
@@ -845,7 +834,6 @@ def dev_dist_plugin_descriptors(name, product, platform_prefix, plugin_fragments
     product_info = platform_prefix + "_product_info"
     dev_dist_product_info(
         name = product_info,
-        build_date_seconds = product.build_date_seconds,
         eap = product.eap,
         marketplace_names = product.marketplace_names,
         release_date = product.release_date,

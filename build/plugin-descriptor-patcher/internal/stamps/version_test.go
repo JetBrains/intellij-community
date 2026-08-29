@@ -12,21 +12,18 @@ import (
 // so a disagreement here moves the `<version>` and the `<idea-version>` of every plugin - which is what the byte gate
 // of `./build/dev-dist.cmd descriptors` would report as 0 identical.
 
-// 2026-01-01T00:00:00Z, the date `dev_dist_plugin_descriptor.build_date_seconds` pins by default.
-const pinnedBuildDate = int64(1767225600)
-
 func TestThePluginBuildNumber(t *testing.T) {
 	for name, it := range map[string]struct {
 		buildNumber string
 		want        string
 	}{
-		"a snapshot takes the build date and a nightly zero": {"263.SNAPSHOT", "263.20260101.0"},
-		"a three-segment snapshot needs no zero":             {"263.100.SNAPSHOT", "263.100.20260101"},
-		"a released number is unchanged":                     {"263.100.5", "263.100.5"},
-		"a two-segment number takes a zero":                  {"263.100", "263.100.0"},
+		"a snapshot takes the fixed number and a nightly zero": {"263.SNAPSHOT", "263.99999999.0"},
+		"a three-segment snapshot needs no zero":               {"263.100.SNAPSHOT", "263.100.99999999"},
+		"a released number is unchanged":                       {"263.100.5", "263.100.5"},
+		"a two-segment number takes a zero":                    {"263.100", "263.100.0"},
 	} {
 		t.Run(name, func(t *testing.T) {
-			got, err := stamps.PluginBuildNumber(it.buildNumber, pinnedBuildDate)
+			got, err := stamps.PluginBuildNumber(it.buildNumber)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -38,10 +35,10 @@ func TestThePluginBuildNumber(t *testing.T) {
 }
 
 // The platform checks the result against Semantic Versioning and fails when it does not match
-// (`SnapshotBuildNumber.kt:59-61`). A build number that reaches a jar unchecked is the failure this prevents.
+// (`SnapshotBuildNumber.kt`). A build number that reaches a jar unchecked is the failure this prevents.
 func TestABuildNumberThatIsNotSemanticFails(t *testing.T) {
 	for _, buildNumber := range []string{"263.x.1", "abc", "263..1"} {
-		if _, err := stamps.PluginBuildNumber(buildNumber, pinnedBuildDate); err == nil {
+		if _, err := stamps.PluginBuildNumber(buildNumber); err == nil {
 			t.Errorf("%s must be refused", buildNumber)
 		}
 	}

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 )
 
 // snapshotSuffix is `SnapshotBuildNumber.SNAPSHOT_SUFFIX`
@@ -29,17 +28,20 @@ const (
 	RangeNewerWithSameBaseline
 )
 
+// snapshotVersionSegment is `SNAPSHOT_VERSION_SEGMENT` of the same file: what a `.SNAPSHOT` suffix becomes. A fixed
+// number and not the build date, so that two builds of one commit state one version.
+const snapshotVersionSegment = "99999999"
+
 // PluginBuildNumber is `computePluginBuildNumber`
-// (`community/platform/build-scripts/src/org/jetbrains/intellij/build/impl/SnapshotBuildNumber.kt:50-63`).
+// (`community/platform/build-scripts/src/org/jetbrains/intellij/build/impl/SnapshotBuildNumber.kt`).
 //
-// It replaces the `.SNAPSHOT` suffix by the build date and appends `.0` when the result has one dot or none. The
+// It replaces the `.SNAPSHOT` suffix by a fixed number and appends `.0` when the result has one dot or none. The
 // semantic-version check is the platform's, and it is kept: a build number the platform would refuse must not reach a
 // jar through this binary instead.
-func PluginBuildNumber(buildNumber string, buildDateInSeconds int64) (string, error) {
+func PluginBuildNumber(buildNumber string) (string, error) {
 	value := buildNumber
 	if strings.HasSuffix(value, snapshotSuffix) {
-		buildDate := time.Unix(buildDateInSeconds, 0).UTC()
-		value = strings.ReplaceAll(value, snapshotSuffix, "."+buildDate.Format("20060102"))
+		value = strings.ReplaceAll(value, snapshotSuffix, "."+snapshotVersionSegment)
 	}
 	if strings.Count(value, ".") <= 1 {
 		value += ".0"
