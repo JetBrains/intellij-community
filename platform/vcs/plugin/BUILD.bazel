@@ -43,9 +43,12 @@ exports_files(
 
 ### auto-generated section `dev intellij.platform.vcs.plugin` start
 dev_dist_plugin(
-    content_modules = ["//platform/sqlite"],
+    content_modules = [
+        "//libraries/sqlite-native",
+        "//platform/sqlite",
+    ],
     descriptor_module = ":plugin",
-    libraries = ["@lib//:sqlite-native"],
+    libraries = ["@lib//:libraries-sqlite-native-sqlite-native"],
     prepacked_content_modules = [
         "//platform/dvcs-api:vcs-dvcs_content_module_jar",
         "//platform/dvcs-impl:vcs-dvcs-impl_content_module_jar",

@@ -71,10 +71,10 @@ exports_files(
 ### auto-generated section `dev intellij.grazie` start
 dev_dist_plugin(
     content_modules = [
+        "//libraries/ai-grazie-rule-engine",
         "//libraries/ai.grazie.spell.gec.engine.local",
         "//libraries/kotlin/logging",
         "//plugins/grazie/json",
-        "//plugins/grazie/markdown",
         "//plugins/grazie/src:core",
         "//plugins/grazie/xml",
         "//plugins/grazie/yaml",
@@ -82,6 +82,8 @@ dev_dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     descriptor_module = ":grazie",
     descriptors = {
+        "@community//libraries/ai-grazie-rule-engine:resources/intellij.libraries.ai.grazie.rule.engine.xml": "intellij.libraries.ai.grazie.rule.engine.xml",
+        "@community//libraries/ai-grazie-semantic-engine:resources/intellij.libraries.ai.grazie.semantic.engine.xml": "intellij.libraries.ai.grazie.semantic.engine.xml",
         "@community//libraries/ai.grazie.spell.gec.engine.local:resources/intellij.libraries.ai.grazie.spell.gec.engine.local.xml": "intellij.libraries.ai.grazie.spell.gec.engine.local.xml",
         "@community//libraries/kotlin/logging:resources/intellij.libraries.kotlin.logging.xml": "intellij.libraries.kotlin.logging.xml",
         "@community//plugins/grazie/java:src/main/resources/intellij.grazie.java.xml": "intellij.grazie.java.xml",
@@ -93,8 +95,6 @@ dev_dist_plugin(
         "@community//plugins/grazie/yaml:main/resources/intellij.grazie.yaml.xml": "intellij.grazie.yaml.xml",
     },
     libraries = [
-        "@lib//:ai-grazie-rule-engine",
-        "@lib//:ai-grazie-semantic-engine",
         "@lib//:grazie-core-ai-grazie-api-gateway-client-jvm",
         "@lib//:grazie-core-ai-grazie-client-ktor-jvm",
         "@lib//:grazie-core-ai-grazie-gec-util",
@@ -118,9 +118,9 @@ dev_dist_plugin(
         "@lib//:grazie-core-org-json-json",
         "@lib//:grazie-core-tech-units-indriya-1-3",
         "@lib//:grazie-core-tech-uom-lib-uom-lib-common-1-1",
-        "@lib//:grazie-markdown-ai-grazie-tasks-library-model-jvm",
         "@lib//:jaxb-api",
         "@lib//:jaxb-runtime",
+        "@lib//:libraries-ai-grazie-rule-engine-ai-grazie-rule-engine",
         "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-model-common-jvm",
         "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-model-gec-jvm",
         "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-model-swagger-annotations-jvm",
@@ -139,7 +139,9 @@ dev_dist_plugin(
     ],
     main_module = "intellij.grazie",
     prepacked_content_modules = [
+        "//libraries/ai-grazie-semantic-engine:ai-grazie-semantic-engine_content_module_jar",
         "//plugins/grazie/java:java_content_module_jar",
+        "//plugins/grazie/markdown:markdown_content_module_jar",
         "//plugins/grazie/properties:properties_content_module_jar",
     ],
     separate_jar = ["intellij.grazie.markdown"],

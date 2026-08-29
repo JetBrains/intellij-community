@@ -21,7 +21,3 @@ content:
   # Modules the layout packs that this plugin's `<content>` does not name - a `PluginLayout.withModule` call.
   extra_members:
   - "intellij.devkit.jps"
-  # Members this plugin packs beside another content module, which takes the packing target away from every
-  # plugin that ships the module.
-  vetoed_members:
-  - "intellij.devkit.workspaceModel"

@@ -69,8 +69,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(module = ":common")
-
 jvm_library(
     name = "common_test_lib",
     testonly = True,

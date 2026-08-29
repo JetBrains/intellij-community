@@ -163,6 +163,7 @@ dev_dist_plugin(
     descriptor_module = ":featuresTrainer",
     descriptors = {
         "@community//libraries/assertj-core:resources/intellij.libraries.assertj.core.xml": "intellij.libraries.assertj.core.xml",
+        "@community//libraries/git-learning-project:resources/intellij.libraries.git.learning.project.xml": "intellij.libraries.git.learning.project.xml",
         "@community//plugins/git-features-trainer:resources/intellij.vcs.git.featuresTrainer.xml": "intellij.vcs.git.featuresTrainer.xml",
         "@community//plugins/ide-features-trainer/onboarding:resources/intellij.featuresTrainer.onboarding.xml": "intellij.featuresTrainer.onboarding.xml",
         "@community//plugins/ide-features-trainer/tips:resources/intellij.featuresTrainer.tips.xml": "intellij.featuresTrainer.tips.xml",
@@ -170,11 +171,11 @@ dev_dist_plugin(
     },
     libraries = [
         "@lib//:assertj-swing",
-        "@lib//:git-learning-project",
         "@lib//:libraries-assertj-core-assert_j",
     ],
     main_module = "intellij.featuresTrainer",
     prepacked_content_modules = [
+        "//libraries/git-learning-project:git-learning-project_content_module_jar",
         "//plugins/ide-features-trainer/tips:tips_content_module_jar",
         "//plugins/kotlin/onboarding-promoter:onboarding-promoter_content_module_jar",
     ],

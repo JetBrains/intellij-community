@@ -17,11 +17,6 @@
 #
 # No row is a Bazel label, and no row is a path. A label carries the artifact version of a library, and a path
 # restates a rule the rule already derives.
-content:
-  # Members this plugin packs beside another content module, which takes the packing target away from every
-  # plugin that ships the module.
-  vetoed_members:
-  - "intellij.grazie.markdown"
 descriptor:
   # What this plugin's patched dev-distribution descriptor needs that the convention does not give.
   #
