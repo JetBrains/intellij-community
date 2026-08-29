@@ -8,9 +8,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
@@ -34,6 +36,7 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.messages.MessageBusConnection
+import com.intellij.util.runSuppressing
 import com.intellij.util.ui.AbstractLayoutManager
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
@@ -41,9 +44,10 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import java.awt.Color
@@ -107,6 +111,9 @@ internal class WelcomeScreenRightTabImpl(
   private val backButton =
     HoveredButton(NonModalWelcomeScreenBundle.message("welcome.screen.right.tab.back.to.default"), AllIcons.Actions.Back)
 
+  private var featureContents: List<WelcomeScreenFeatureUI.Content> = emptyList()
+  private var disposed: Boolean = false
+
   init {
     val headerPanel = BorderLayoutPanel()
     headerPanel.isOpaque = false
@@ -143,8 +150,10 @@ internal class WelcomeScreenRightTabImpl(
       override fun mousePressed(e: MouseEvent) {
         val focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
         if (focusOwner == null || !UIUtil.isAncestor(component, focusOwner)) {
-          val newFocus = IdeFocusTraversalPolicy.getPreferredFocusedComponent(component)
-          if (newFocus != null) {
+          // The tab's own focus target, so a click reaches a section that states one. The traversal policy alone
+          // would take the first focusable child instead, which is a footer control.
+          val newFocus = getPreferredFocusedComponent()
+          if (newFocus !== component) {
             ApplicationManager.getApplication().invokeLater {
               newFocus.requestFocusInWindow()
             }
@@ -184,6 +193,8 @@ internal class WelcomeScreenRightTabImpl(
               topY -= iconHeight
             }
           }
+          // A column taller than the tab reads from its top. Centring it would take the title off the top edge.
+          topY = max(topY, 0)
           centeredChild.bounds = Rectangle((fullSize.width - centeredSize.width) / 2,
                                            topY, centeredSize.width, centeredSize.height)
 
@@ -224,9 +235,35 @@ internal class WelcomeScreenRightTabImpl(
 
   override fun getPreferredFocusedComponent(): JComponent {
     if (contentFocusSuppressed) {
+      // The tab component itself takes no focus. This keeps the startup focus on the left project view (IJPL-248588).
       return component
     }
-    return IdeFocusTraversalPolicy.getPreferredFocusedComponent(component) ?: component
+    return sectionFocusTarget()
+           ?: IdeFocusTraversalPolicy.getPreferredFocusedComponent(component)
+           ?: component
+  }
+
+  /**
+   * Asks each section for its focus target, and takes the first one. A section that fails does not stop the others.
+   */
+  private fun sectionFocusTarget(): JComponent? {
+    return featureContents.firstNotNullOfOrNull { content ->
+      try {
+        content.preferredFocusedComponent?.invoke()
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        thisLogger().error("Cannot read the focus target of a welcome right tab section", e)
+        null
+      }
+    }
+  }
+
+  override fun dispose() {
+    disposed = true
+    disposeFeatureContents()
   }
 
   override fun switchToDefaultContent() {
@@ -239,6 +276,7 @@ internal class WelcomeScreenRightTabImpl(
 
   private fun createContent(builder: (() -> Unit) -> Unit) {
     backButton.parent?.remove(backButton)
+    disposeFeatureContents()
     contentPanel.removeAll()
 
     builder {
@@ -248,14 +286,68 @@ internal class WelcomeScreenRightTabImpl(
     }
   }
 
-  private fun createDefaultContent(finish: () -> Unit) {
-    contentProvider.coroutineScope.async {
-      val backendFeatureIds = WelcomeScreenFeatureApi.getInstance().getAvailableFeatureIds().toSet()
+  /**
+   * Disposes the sections the tab holds now, and forgets them. A second call does nothing.
+   */
+  private fun disposeFeatureContents() {
+    val contents = featureContents
+    featureContents = emptyList()
+    disposeContents(contents)
+  }
 
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        createDefaultContent(backendFeatureIds, finish)
+  /** Disposes each section that states a disposable. A section that fails does not stop the others. */
+  private fun disposeContents(contents: List<WelcomeScreenFeatureUI.Content>) {
+    val disposeCalls = contents.mapNotNull { content ->
+      val disposable = content.disposable ?: return@mapNotNull null
+      { Disposer.dispose(disposable) }
+    }
+    runSuppressing(*disposeCalls.toTypedArray())
+  }
+
+  private fun createDefaultContent(finish: () -> Unit) {
+    contentProvider.coroutineScope.launch {
+      try {
+        val backendFeatureIds = WelcomeScreenFeatureApi.getInstance().getAvailableFeatureIds().toSet()
+        val contents = createFeatureContents(backendFeatureIds)
+
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          // The tab can go while the sections build. A section holds an editor and a scope, so the tab that no longer
+          // takes it must release it here. Both the check and the disposal run on the EDT, and so does [dispose].
+          if (disposed) {
+            disposeContents(contents)
+            return@withContext
+          }
+          createDefaultContent(backendFeatureIds, contents, finish)
+        }
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        thisLogger().error("Cannot fill the default content of the welcome right tab", e)
       }
     }
+  }
+
+  /**
+   * Asks each available feature for its section. A feature that fails does not stop the other features.
+   */
+  private suspend fun createFeatureContents(backendFeatureIds: Set<String>): List<WelcomeScreenFeatureUI.Content> {
+    return WelcomeScreenFeatureUI.features()
+      .filter { it.featureKey in backendFeatureIds }
+      .sortedBy { it.contentOrder }
+      .mapNotNull { feature ->
+        try {
+          feature.createContent(project)
+        }
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          thisLogger().error("Cannot create the welcome right tab section of the feature ${feature.featureKey}", e)
+          null
+        }
+      }
   }
 
   private fun createCustomContent(provider: WelcomeRightCustomTabProvider) {
@@ -265,7 +357,11 @@ internal class WelcomeScreenRightTabImpl(
     contentPanel.addToCenter(provider.createTabContent(project))
   }
 
-  private fun createDefaultContent(backendFeatureIds: Set<String>, finish: () -> Unit) {
+  private fun createDefaultContent(
+    backendFeatureIds: Set<String>,
+    contents: List<WelcomeScreenFeatureUI.Content>,
+    finish: () -> Unit,
+  ) {
     secondaryTitleLabel.text = contentProvider.secondaryTitle.get()
 
     createFeatureGrid(backendFeatureIds)
@@ -274,6 +370,7 @@ internal class WelcomeScreenRightTabImpl(
     additionalPanel.isOpaque = false
 
     createAdditionalComponents(additionalPanel)
+    createFeatureSections(additionalPanel, contents)
     //createSingleBanner(additionalPanel) // TODO: enable after sync design
 
     if (additionalPanel.componentCount > 0) {
@@ -281,6 +378,13 @@ internal class WelcomeScreenRightTabImpl(
     }
 
     finish()
+  }
+
+  private fun createFeatureSections(parentPanel: JPanel, contents: List<WelcomeScreenFeatureUI.Content>) {
+    featureContents = contents
+    for (content in contents) {
+      parentPanel.add(content.component, VerticalLayout.CENTER)
+    }
   }
 
   private fun createFeatureGrid(backendFeatureIds: Set<String>) {

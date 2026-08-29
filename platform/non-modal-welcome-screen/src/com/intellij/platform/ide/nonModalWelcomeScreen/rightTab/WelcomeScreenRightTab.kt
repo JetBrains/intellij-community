@@ -2,6 +2,7 @@ package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
@@ -24,7 +25,7 @@ abstract class WelcomeScreenRightTab(
   val project: Project,
   val contentProvider: WelcomeRightTabContentProvider,
   suppressInitialContentFocus: Boolean = false,
-) {
+) : Disposable {
   /**
    * While `true`, activating the tab does not pull input focus into its content, so that the left project view's
    * recent-projects search field keeps focus during the passive startup open (accessibility: up/down navigation,
@@ -95,7 +96,11 @@ abstract class WelcomeScreenRightTab(
       Disposer.register(project) {
         projectToTabMap.remove(projectId)
       }
-      projectToTabMap[projectId] = tab
+      // A repeated show() replaces the tab of the project. The replaced tab holds the sections of the features.
+      val replacedTab = projectToTabMap.put(projectId, tab)
+      if (replacedTab != null) {
+        Disposer.dispose(replacedTab)
+      }
     }
 
     @JvmStatic

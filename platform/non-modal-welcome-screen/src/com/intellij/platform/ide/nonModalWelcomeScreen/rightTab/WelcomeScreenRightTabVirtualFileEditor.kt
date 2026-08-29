@@ -3,6 +3,7 @@ package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorState
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
@@ -41,7 +42,7 @@ internal class WelcomeScreenRightTabVirtualFileEditor(private val newProjectFile
   override fun removePropertyChangeListener(listener: PropertyChangeListener) = Unit
 
   override fun dispose() {
-    // TODO
+    Disposer.dispose(newProjectFile.window)
   }
 
   override fun <T : Any?> getUserData(key: Key<T?>): T? {
