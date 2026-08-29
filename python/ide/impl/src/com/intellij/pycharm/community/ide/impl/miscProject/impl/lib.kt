@@ -46,11 +46,8 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
 import kotlin.time.Duration.Companion.milliseconds
 
-internal const val MISC_PROJECT_WITH_WELCOME_NAME: String = "Welcome"
-internal const val MISC_PROJECT_NAME: String = "WelcomeScreen"
-
 internal val miscProjectDefaultPath: Path
-  get() = Path.of(ProjectUtil.getBaseDir()).resolve(MISC_PROJECT_NAME)
+  get() = Path.of(ProjectUtil.getBaseDir()).resolve("PyCharmHome")
 
 /**
  * Creates a project in [projectPath] in a modal window.
