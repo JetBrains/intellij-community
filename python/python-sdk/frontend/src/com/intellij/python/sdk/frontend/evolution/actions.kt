@@ -35,6 +35,7 @@ import com.intellij.python.sdk.common.evolution.requestEvoRecreateEnvironment
 import com.intellij.python.sdk.common.evolution.requestEvoResolveVersion
 import com.intellij.python.sdk.common.evolution.requestEvoSelectInterpreter
 import com.intellij.python.sdk.frontend.PySdkFrontendBundle
+import com.intellij.python.sdk.frontend.evolution.components.EvoDisclosureRow
 import com.intellij.python.sdk.frontend.evolution.components.EvoLazyDetail
 import com.intellij.python.sdk.frontend.evolution.components.EvoBasePythonPanel
 import com.intellij.python.sdk.frontend.evolution.components.EvoTreeNodeElement
@@ -44,7 +45,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.function.BiFunction
-import com.intellij.python.sdk.frontend.evolution.components.EvoLinkRow
 
 /**
  * Remembers the tool node whose interpreter configuration is currently in progress, so the status-bar widget shows that
@@ -332,15 +332,25 @@ internal fun installActionRow(onChosen: () -> Unit): EvoTreeLeafElement {
 }
 
 /**
- * The row that reveals the tools a collapsed widget list leaves out, running [onChosen] when picked.
+ * The row that folds the widget's tool list away and unfolds it again, running [onChosen] when picked.
+ *
+ * It reads as a disclosure rather than as a link: the text is the colour of the rows around it, and the chevron in its
+ * own icon column points down while the list is folded and up while it is open — the way it will move when clicked. A
+ * link colour said "this goes somewhere else", which is the one thing this row does not do.
  *
  * An ordinary leaf, so choosing it closes the popup and runs [onChosen] afterwards — which is what a list that has to be
- * rebuilt from the top wants anyway. The chevron sits in the row's own icon column and points the way the list is about
- * to grow; [EvoLinkRow] is what colours the text.
+ * rebuilt from the top wants anyway.
  */
-internal fun showMoreRow(onChosen: () -> Unit): EvoTreeLeafElement {
-  val action = object : AnAction({ PySdkFrontendBundle.message("evo.sdk.status.bar.popup.show.more") }, { "" },
-                                AllIcons.General.ChevronRight), DumbAware, EvoLinkRow {
+internal fun showMoreRow(expanded: Boolean, anyToolShown: Boolean, onChosen: () -> Unit): EvoTreeLeafElement {
+  val key = when {
+    expanded -> "evo.sdk.status.bar.popup.show.less"
+    // "Show More" needs something above it to be more than. With no tool row shown — an interpreter no node owns, so
+    // none of them is the one in use — the row names what it opens instead.
+    anyToolShown -> "evo.sdk.status.bar.popup.show.more"
+    else -> "evo.sdk.status.bar.popup.show.all.tools"
+  }
+  val icon = if (expanded) AllIcons.General.ChevronUp else AllIcons.General.ChevronDown
+  val action = object : AnAction({ PySdkFrontendBundle.message(key) }, { "" }, icon), DumbAware, EvoDisclosureRow {
     override fun actionPerformed(e: AnActionEvent) = onChosen()
   }
   return EvoTreeLeafElement(action)

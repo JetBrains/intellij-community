@@ -159,7 +159,8 @@ internal class EvoPySdkSwitchPopupFactory(
    * The widget records the choice and shows the popup again over it. A popup is laid out and placed once, so a list this
    * much bigger has to be reopened rather than grown in place, and the widget owns the anchoring.
    */
-  val showAllTools: () -> Unit,
+  /** Folds the tool list away or unfolds it, and opens the popup again over the list that results. */
+  val setToolsExpanded: (Boolean) -> Unit,
 ) {
   /** The tool's own name for [nodeId], as the popup writes it, falling back to the id when no node claims it. */
   private fun nodeLabel(nodeId: String): @NlsSafe String = nodes.firstOrNull { it.id == nodeId }?.label ?: nodeId
@@ -291,7 +292,7 @@ internal class EvoPySdkSwitchPopupFactory(
       override val basePythonPanel: EvoTreeNodeElement by lazy {
         basePythonPanel(name, fadedIcon, options) { token, _, installVersion ->
           create(token, PyEvoWidgetCollector.Source.ADD_NEW_VERSION, installVersion)
-        }
+        }.apply { stepDescription = PySdkFrontendBundle.message("evo.sdk.status.bar.popup.panel.build.step") }
       }
 
       init {
@@ -323,8 +324,8 @@ internal class EvoPySdkSwitchPopupFactory(
     /** The picked Python: its token, what to write in the row's version column, and the version to install first. */
     onChosen: (token: String, text: @NlsSafe String, installVersion: String?) -> Unit,
   ): EvoTreeNodeElement {
-    // No heading and no line along the bottom: this is a picker, and its rows are Pythons under their own version
-    // headers. The row it belongs to is still on screen behind it, saying what the choice is for.
+    // No heading: the row this opened over is still on screen behind it, saying which environment the choice is for.
+    // The line along the bottom is set by the caller, since only it knows whether the pick builds or rebuilds.
     val single = options.singleOrNull()
     if (single != null && single.bases.size > 1) {
       return EvoTreeStaticNodeElement(
@@ -366,7 +367,7 @@ internal class EvoPySdkSwitchPopupFactory(
     return basePythonPanel(title, icon.icon(), spec.options) { token, text, installVersion ->
       recreateEvoEnv(project, pyProjectKey, nodeId, stats, envHomePath, title, token, text, installVersion,
                      spec.canSyncPackages, toolChange, scope)
-    }
+    }.apply { stepDescription = PySdkFrontendBundle.message("evo.sdk.status.bar.popup.panel.rebuild.step") }
   }
 
   /**
@@ -496,7 +497,8 @@ internal class EvoPySdkSwitchPopupFactory(
   private fun associatedInterpretersNode(traceId: String): EvoTreeStaticNodeElement =
     EvoTreeStaticNodeElement(
       text = PySdkFrontendBundle.message("evo.sdk.status.bar.popup.associated.interpreters"),
-      icon = PythonSdkFrontendIcons.Associated,
+      // The chain link, as "Related Symbol" uses it: these interpreters are tied to the module the widget speaks for.
+      icon = AllIcons.Nodes.Related,
       sections = listOf(
         EvoTreeSection(
           label = null,
@@ -523,6 +525,8 @@ internal class EvoPySdkSwitchPopupFactory(
       text = PySdkFrontendBundle.message("evo.sdk.status.bar.popup.recreate.current"),
       icon = AllIcons.Actions.Restart,
       nodeStats = EvoNodeStats(EvoNodeKind.OTHER),
+      // An environment no tool here can rebuild — a remote interpreter, one no node owns — is not a fault to report.
+      signsUnavailable = false,
     ) { _ ->
       val dto = evoRpc { requestEvoCurrentRecreate(project.projectId(), pyProjectKey) }
                 ?: throw EvoWarningException(PySdkFrontendBundle.message("evo.sdk.status.bar.popup.recreate.current.unavailable"))
@@ -538,7 +542,7 @@ internal class EvoPySdkSwitchPopupFactory(
           { option -> installActionRow { rebuild(option.token, addVersionText(option), option.installVersion()) } },
         ),
         refreshable = false,
-        stepDescription = PySdkFrontendBundle.message("evo.sdk.status.bar.popup.panel.recreate.current.step"),
+        stepDescription = PySdkFrontendBundle.message("evo.sdk.status.bar.popup.panel.rebuild.step"),
       )
     }
 
@@ -625,9 +629,9 @@ internal class EvoPySdkSwitchPopupFactory(
       )
     }
 
-    // The list as it stands before anything is folded away: every tool in its registered order, the active one among
-    // them rather than lifted out of it.
-    val expandedSections = toolSections(allTools)
+    // The list as it stands unfolded: every tool in its registered order, the active one among them rather than lifted
+    // out of it, and the row that folds them away again below.
+    val expandedSections = toolSections(allTools + showMoreRow(expanded = true, anyToolShown = true) { setToolsExpanded(false) })
 
     // Collapsed: the tool in use, then the "Show more" row standing in for the tools it hides. The rule below them is
     // the same one the expanded list has, so folding the tools away does not change the shape of the list.
@@ -635,9 +639,15 @@ internal class EvoPySdkSwitchPopupFactory(
     // The row records the choice with the widget rather than swapping these sections in place. Editing the tree and
     // reopening over it only worked while the widget still had that very tree: any rebuild — a cache that expired while
     // the popup was open, a refresh — produced a fresh collapsed one, and the click appeared to do nothing.
-    val collapsedSections = activeTool
-      ?.takeIf { allTools.size > 1 && !toolsExpanded }
-      ?.let { active -> toolSections(listOf(active, showMoreRow { showAllTools() })) }
+    fun disclosure(anyToolShown: Boolean) = showMoreRow(expanded = false, anyToolShown = anyToolShown) { setToolsExpanded(true) }
+    val collapsedSections = when {
+      toolsExpanded || allTools.isEmpty() -> null
+      // The tool in use leads, and the rest fold behind the row under it.
+      activeTool != null -> if (allTools.size > 1) toolSections(listOf(activeTool, disclosure(anyToolShown = true))) else null
+      // No tool is in use — a remote interpreter, or one no node claims — so none of them is worth singling out and the
+      // whole list folds away. Leaving them all on screen made the widget of such a project the longest of any.
+      else -> toolSections(listOf(disclosure(anyToolShown = false)))
+    }
 
     // Collapsed when there is a tool in use, others to fold away, and the user has not asked for all of them.
     return EvoTreeStaticNodeElement(

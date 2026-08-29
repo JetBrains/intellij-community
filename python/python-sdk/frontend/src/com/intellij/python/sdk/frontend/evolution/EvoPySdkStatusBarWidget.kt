@@ -153,7 +153,7 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
   }
 
   /**
-   * Set by [showAllTools] so that the next popup is built holding every tool, and cleared as soon as it is read.
+   * Set by [setToolsExpanded] so that the next popup is built holding every tool, and cleared as soon as it is read.
    *
    * One-shot, because the choice belongs to the list the user is looking at rather than to the widget. Held as a
    * standing flag it outlived the tree it was made for: [dropPopupTree] was the only thing that cleared it, a plain
@@ -419,20 +419,20 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
     val factory = EvoPySdkSwitchPopupFactory(project, target.key, target.name, structure.workspaceRootName(target),
                                              cached.current, cached.nodes, cached.associated, cached.shortcuts, scope,
                                              toolsExpanded = expandTools,
-                                             showAllTools = ::showAllTools)
+                                             setToolsExpanded = ::setToolsExpanded)
     val tree = reusable ?: factory.buildTree(context).also { popupTree = it; popupTreeKey = target.key }
     return factory.createPopup(tree, context) { popupClosedAt = System.currentTimeMillis() }
   }
 
   /**
-   * Shows every tool, and opens the popup again over a list that holds them.
+   * Folds the tool list away or unfolds it, and opens the popup again over the list that results.
    *
-   * The tree is dropped rather than reused: it is the folded one, built around the very row that asked for this. The
-   * rebuild is what reads [expandToolsOnce], and it costs no environment scan — each tool node loads its own rows only
-   * when it is opened.
+   * The tree is dropped rather than reused: it is the list the very row that asked for this was built into. The rebuild
+   * is what reads [expandToolsOnce], and it costs no environment scan — each tool node loads its own rows only when it
+   * is opened.
    */
-  private fun showAllTools() {
-    expandToolsOnce = true
+  private fun setToolsExpanded(expanded: Boolean) {
+    expandToolsOnce = expanded
     popupTree = null
     popupTreeKey = null
     reopenPopup()

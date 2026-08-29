@@ -43,6 +43,10 @@ class EvoTreeItem(
   val isEnabled: Boolean
     get() = element.isEnabled
 
+  /** True when this row folds the list rather than naming an environment — see [EvoDisclosureRow]. */
+  val isDisclosureRow: Boolean
+    get() = (element as? EvoTreeLeafElement)?.action is EvoDisclosureRow
+
   /**
    * True once this row can be acted on: a loaded row, or a tool node whose submenu can already be opened.
    *
@@ -97,13 +101,13 @@ class EvoTreeItem(
       State.ERROR -> AllIcons.General.Error
       // A tool that is simply unavailable, or answered with nothing, is not a failure — but it did not work either, so
       // it gets a sign of its own rather than looking like an ordinary disabled row with nothing to say.
-      State.NOT_AVAILABLE -> AllIcons.General.Warning
+      // A node that says so itself carries no sign: the "Recreate Environment" row answers "not for this environment" for
+    // a whole class of interpreters — a remote one, one no tool owns — and that is a fact about the environment rather
+    // than something wrong. Disabled, with the reason on hover, says it without an alarm.
+    State.NOT_AVAILABLE -> AllIcons.General.Warning.takeIf { (element as? EvoTreeLazyNodeElement)?.signsUnavailable != false }
       State.CREATED, State.LOADING, State.DONE -> null
     }
 
-  /** True when this row reveals more of the list rather than selecting an environment — see [EvoLinkRow]. */
-  val isLinkRow: Boolean
-    get() = (element as? EvoTreeLeafElement)?.action is EvoLinkRow
 }
 
 /**
