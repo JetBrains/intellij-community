@@ -104,7 +104,6 @@ exports_files(
     [
         "intellij.compilation.charts.iml",
         "resources/META-INF/plugin.xml",
-        "plugin-content.yaml",
         "dev-dist.yaml",
     ],
     visibility = ["//visibility:public"],

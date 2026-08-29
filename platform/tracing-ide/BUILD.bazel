@@ -61,7 +61,6 @@ exports_files(
     [
         "intellij.platform.tracing.ide.iml",
         "resources/META-INF/plugin.xml",
-        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

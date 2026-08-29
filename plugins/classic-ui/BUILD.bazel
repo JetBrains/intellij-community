@@ -38,7 +38,6 @@ exports_files(
     [
         "intellij.classic.ui.iml",
         "resources/META-INF/plugin.xml",
-        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

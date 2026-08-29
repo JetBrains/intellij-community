@@ -40,7 +40,6 @@ exports_files(
         "resources/META-INF/plugin.xml",
         "resources/keymaps/QtCreator (Mac OS X).xml",
         "resources/keymaps/QtCreator.xml",
-        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

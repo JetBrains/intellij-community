@@ -39,7 +39,6 @@ exports_files(
         "intellij.color.scheme.warmNeon.iml",
         "resources/META-INF/plugin.xml",
         "resources/colorSchemes/WarmNeon.xml",
-        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

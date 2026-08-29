@@ -39,7 +39,6 @@ exports_files(
         "intellij.color.scheme.monokai.iml",
         "resources/META-INF/plugin.xml",
         "resources/colorSchemes/monokai.xml",
-        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

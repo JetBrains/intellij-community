@@ -43,17 +43,18 @@ internal class JpsModuleToBazel {
       var bazelOutputBase: Path? = null
       var assertAllModuleOutputsExist = false
       var m2Repo = JpsMavenSettings.getMavenRepositoryPath()
-      var comparePluginContent = false
-      var comparePluginCandidacy = false
       var writeDevDistResidue = false
       var verifyDevDistResidue = false
+      var contentReport: Path? = null
 
       for (arg in args) {
         when {
-          arg == "--compare-plugin-content" -> comparePluginContent = true
-          arg == "--compare-plugin-candidacy" -> comparePluginCandidacy = true
           arg == "--write-dev-dist-residue" -> writeDevDistResidue = true
           arg == "--verify-dev-dist-residue" -> verifyDevDistResidue = true
+          arg.startsWith("--content-report=") -> {
+            contentReport = Path.of(arg.substringAfter("="))
+            check(contentReport.isRegularFile()) { "Content report $contentReport must be an existing file" }
+          }
           arg.startsWith("--run_without_ultimate_root=") ->
             runWithoutUltimateRoot = arg.substringAfter("=")
           arg.startsWith("--workspace_directory=") ->
@@ -119,7 +120,6 @@ internal class JpsModuleToBazel {
         kotlincDefaults = kotlincDefaults,
       )
       val moduleList = generator.computeModuleList(m2RepoPath)
-      checkPluginContentPopulation(moduleList = moduleList, context = generator)
       // first, generate community to collect libs that used by community (to separate community and ultimate libs)
       val communityResult = generator.generateModuleBuildFiles(moduleList, isCommunity = true, skipGenerationOfPluginTargets)
       val ultimateResult = generator.generateModuleBuildFiles(moduleList, isCommunity = false, skipGenerationOfPluginTargets)
@@ -198,24 +198,27 @@ internal class JpsModuleToBazel {
         )
       }
 
-      // Last, and after generation has written everything: a measurement must not change what the run generates. The
-      // switch lives inside this one binary because two separately built binaries cannot time each other - the wall
-      // clock of one binary over one tree spanned 6.6 s to 205 s while a concurrent Bazel load came and went (ADR 0007
-      // rule 6).
-      if (comparePluginContent) {
-        comparePluginContentProducers(moduleList = moduleList, context = generator, out = ::println)
-      }
-      if (comparePluginCandidacy) {
-        comparePluginContentCandidacy(moduleList = moduleList, context = generator, out = ::println)
-      }
+      // Last, and after generation has written everything: a check must not change what the run generates.
       if (writeDevDistResidue || verifyDevDistResidue) {
-        val result = writeDevDistResidues(moduleList = moduleList, context = generator, verify = verifyDevDistResidue)
+        val reportFile = requireNotNull(contentReport) {
+          "--write-dev-dist-residue and --verify-dev-dist-residue read a distribution build's content report." +
+          " Name it with --content-report=<path to content-report.zip>. A distribution build writes the zip to its" +
+          " artifact directory, and 'All Packaging Tests' is what produces one locally."
+        }
+        val reports = readPluginContentReportZip(reportFile)
+        println("content report: $reportFile, ${reports.size} plugins")
+        val result = writeDevDistResidues(
+          moduleList = moduleList,
+          context = generator,
+          reports = reports,
+          verify = verifyDevDistResidue,
+        )
         println("dev-dist residue: written=${result.written} deleted=${result.deleted} unchanged=${result.unchanged}")
         for ((field, plugins) in result.pluginsPerField.entries.sortedByDescending { it.value }) {
           println("  $plugins plugins, ${result.rowsPerField.get(field)} rows  $field")
         }
         if (verifyDevDistResidue && result.divergent.isNotEmpty()) {
-          reportStaleDevDistResidues(result.divergent)
+          reportStaleDevDistResidues(divergent = result.divergent, contentReport = reportFile)
         }
       }
     }
@@ -223,23 +226,23 @@ internal class JpsModuleToBazel {
     /**
      * Fails the run naming every plugin whose checked-in residue is stale, and the one command that fixes them.
      *
-     * The check reads the checked-in reports, which the packaging test holds equal to what the real distribution build
-     * packs. So a divergence here says the derivation and the residue together no longer reproduce the real
-     * distribution, and it never compares the derivation against itself.
+     * The check reads a distribution build's own content report. So a divergence here says the derivation and the
+     * residue together no longer reproduce what that build packs, and it never compares the derivation against itself.
      *
      * The run still regenerates the tree, because the synthesis needs the whole module list. `verify` withholds the
      * residue writes alone, so this mode is a check on `dev-dist.yaml` and not a read-only run of the converter.
      *
      * Exits rather than throwing, because the reader needs the rows and not a stack trace.
      */
-    private fun reportStaleDevDistResidues(divergent: List<DevDistResidueDivergence>) {
+    private fun reportStaleDevDistResidues(divergent: List<DevDistResidueDivergence>, contentReport: Path) {
       println()
       println("${divergent.size} plugins have a stale 'dev-dist.yaml':")
       for (divergence in divergent) {
         print(devDistResidueDivergenceReport(divergence))
       }
       println()
-      println("Run './build/jpsModelToBazel.cmd --write-dev-dist-residue' to write them, then commit the result.")
+      println("Run './build/jpsModelToBazel.cmd --write-dev-dist-residue --content-report=$contentReport'" +
+              " to write them, then commit the result.")
       exitProcess(1)
     }
 
@@ -345,6 +348,21 @@ internal class JpsModuleToBazel {
        * member silently fell back to `JarPackager`, which was 70 of the 79 relations the vetoes cost.
        */
       @JvmField val crossRepositoryPrepackedContentModules: List<String> = emptyList(),
+      /**
+       * Members of this plugin that its own `contentTarget` could not name and that no packing target serves.
+       *
+       * The other half of [crossRepositoryPrepackedContentModules] over the same drop, and the split is whether a
+       * packed jar exists. The completion set in `//build/dev-dist-content` names these in its `modules` attribute,
+       * because that package is the one that sees both repositories.
+       */
+      @JvmField val crossRepositoryRawContentModules: List<String> = emptyList(),
+      /**
+       * Library container targets this plugin packs that its own `contentTarget` could not name.
+       *
+       * A community package cannot name an ultimate library, so the converter drops these from the content target and
+       * records them here for the completion set to declare. Container labels, which carry no artifact version.
+       */
+      @JvmField val crossRepositoryLibraryContainers: List<String> = emptyList(),
     )
 
     @Serializable
@@ -532,10 +550,13 @@ internal class JpsModuleToBazel {
               val pluginTarget = moduleTarget.pluginDistributionTarget
               val contentTarget = moduleTarget.pluginContentTarget
               val crossRepositoryPrepacked = moduleTarget.crossRepositoryPrepackedModules
+              val crossRepositoryRaw = moduleTarget.crossRepositoryRawModules
+              val crossRepositoryLibraries = moduleTarget.crossRepositoryLibraryContainers
               val descriptorTargets = moduleTarget.pluginDescriptorTargets
               // Every half is independent of the others: a plugin can have no `ij_plugin` target and no content target
               // of its own and still have cross-repository members to complete, or a descriptor target alone.
-              if (pluginTarget == null && contentTarget == null && crossRepositoryPrepacked.isEmpty() && descriptorTargets.isEmpty()) {
+              if (pluginTarget == null && contentTarget == null && descriptorTargets.isEmpty() &&
+                  crossRepositoryPrepacked.isEmpty() && crossRepositoryRaw.isEmpty() && crossRepositoryLibraries.isEmpty()) {
                 return@mapNotNull null
               }
 
@@ -545,6 +566,8 @@ internal class JpsModuleToBazel {
                 contentTarget = contentTarget ?: "",
                 descriptorTargets = TreeMap(descriptorTargets),
                 crossRepositoryPrepackedContentModules = crossRepositoryPrepacked,
+                crossRepositoryRawContentModules = crossRepositoryRaw,
+                crossRepositoryLibraryContainers = crossRepositoryLibraries,
               )
             }
             .sortedBy { it.first }

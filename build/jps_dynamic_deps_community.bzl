@@ -21,7 +21,7 @@ def _format_target_list(name, targets):
     lines.append("]\n")
     return "\n".join(lines)
 
-def _generate_targets_bzl(production_targets, test_targets, library_targets, iml_targets, plugin_distribution_targets, descriptor_targets, plugin_content_report_targets, dev_dist_residue_targets, content_module_recipe_targets):
+def _generate_targets_bzl(production_targets, test_targets, library_targets, iml_targets, plugin_distribution_targets, descriptor_targets, dev_dist_residue_targets, content_module_recipe_targets):
     """Generate the content for targets.bzl file."""
     content = []
     content.append(_format_target_list("ALL_PRODUCTION_COMMUNITY_TARGETS", production_targets))
@@ -30,7 +30,6 @@ def _generate_targets_bzl(production_targets, test_targets, library_targets, iml
     content.append(_format_target_list("ALL_COMMUNITY_IML_TARGETS", iml_targets))
     content.append(_format_target_list("ALL_COMMUNITY_PLUGIN_DISTRIBUTION_TARGETS", plugin_distribution_targets))
     content.append(_format_target_list("ALL_COMMUNITY_MODULE_DESCRIPTOR_TARGETS", descriptor_targets))
-    content.append(_format_target_list("ALL_COMMUNITY_PLUGIN_CONTENT_REPORT_FILES", plugin_content_report_targets))
     content.append(_format_target_list("ALL_COMMUNITY_DEV_DIST_RESIDUE_FILES", dev_dist_residue_targets))
     content.append(_format_target_list("ALL_COMMUNITY_CONTENT_MODULE_RECIPE_FILES", content_module_recipe_targets))
     content.append("BAZEL_TARGETS_JSON_COMMUNITY = \"@community//build:community_bazel_targets_json\"")
@@ -53,7 +52,6 @@ def _derive_targets_from_model(ctx, model):
     all_iml = []
     all_descriptors = []
     all_plugin_distribution = []
-    all_plugin_content_reports = []
     all_dev_dist_residues = []
     all_content_module_recipes = []
 
@@ -86,17 +84,6 @@ def _derive_targets_from_model(ctx, model):
             )
             if descriptor_target not in all_descriptors:
                 all_descriptors.append(descriptor_target)
-
-        if mod.plugin_content_report_rel_path != None:
-            report_target = compute_project_file_target(
-                module_name = mod.module_name,
-                build_dir_parts = build_dir_parts,
-                file_rel_path = mod.plugin_content_report_rel_path,
-                is_community = True,
-                community_root_parts = community_root_parts,
-            )
-            if report_target not in all_plugin_content_reports:
-                all_plugin_content_reports.append(report_target)
 
         if mod.dev_dist_residue_rel_path != None:
             residue_target = compute_project_file_target(
@@ -179,7 +166,6 @@ def _derive_targets_from_model(ctx, model):
         iml = all_iml,
         plugin_distribution = all_plugin_distribution,
         descriptors = all_descriptors,
-        plugin_content_reports = all_plugin_content_reports,
         dev_dist_residues = all_dev_dist_residues,
         content_module_recipes = all_content_module_recipes,
     )
@@ -196,7 +182,6 @@ def _targets_repo_impl(ctx):
         sorted(starlark.iml),
         sorted(starlark.plugin_distribution),
         sorted(starlark.descriptors),
-        sorted(starlark.plugin_content_reports),
         sorted(starlark.dev_dist_residues),
         sorted(starlark.content_module_recipes),
     )

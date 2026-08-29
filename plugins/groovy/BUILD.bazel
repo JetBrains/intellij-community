@@ -214,7 +214,6 @@ exports_files(
         "resources/META-INF/groovy-templates.xml",
         "resources/META-INF/plugin.xml",
         "resources/org/jetbrains/plugins/groovy/config/groovy.sdk.xml",
-        "plugin-content.yaml",
         "dev-dist.yaml",
     ],
     visibility = ["//visibility:public"],

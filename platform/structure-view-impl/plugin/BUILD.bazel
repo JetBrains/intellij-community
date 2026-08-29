@@ -36,7 +36,6 @@ exports_files(
     [
         "intellij.platform.structureView.plugin.iml",
         "resources/META-INF/plugin.xml",
-        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -42,7 +42,6 @@ exports_files(
         "resources/META-INF/plugin.xml",
         "resources/keymaps/Eclipse (Mac OS X).xml",
         "resources/keymaps/Eclipse.xml",
-        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

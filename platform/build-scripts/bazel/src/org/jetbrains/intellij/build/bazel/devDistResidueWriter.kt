@@ -8,12 +8,16 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 /**
- * Writes the content half of every plugin's `dev-dist.yaml`, read off the checked-in `plugin-content.yaml`.
+ * Writes the content half of every plugin's `dev-dist.yaml`, read off a distribution build's content report.
  *
- * The migration writer of this arc. `derivePluginContentCandidacy` and `derivePluginContent` state a plugin's content
- * from the project model, and this states what is left - the `PluginLayout` decisions the model cannot reach. The
- * checked-in report is the authority it reads them from, because that report is the verification record of what the real
- * distribution build packs.
+ * `derivePluginContentCandidacy` and `derivePluginContent` state a plugin's content from the project model, and this
+ * states what is left - the `PluginLayout` decisions the model cannot reach. The report zip is the authority it reads
+ * them from, because that report is what a real distribution build packs. [readPluginContentReportZip] is the reader,
+ * and `--content-report=<zip>` names the file.
+ *
+ * The report is never compared against the derivation this generator uses for generation. It is compared against a
+ * derivation the residue is then written to correct, so a divergence says the derivation and the residue together no
+ * longer reproduce the real distribution.
  *
  * Idempotent, and it has to be run to a fixed point. Some rows the second pass writes need the repo-global candidacy
  * fold, which is folded over the residues the first pass wrote - so a first run over a tree with no residue writes the
@@ -21,10 +25,14 @@ import kotlin.io.path.writeText
  *
  * A plugin whose residue would be empty gets no file, and an existing empty one is deleted. So an absent file always
  * means pure convention.
+ *
+ * A plugin the report does not hold is left alone, file and all. A build reports the products it built, so a plugin
+ * outside them says nothing about its own residue, and deleting that residue would silently change the plugin's leaves.
  */
 internal fun writeDevDistResidues(
   moduleList: ModuleList,
   context: BazelBuildFileGenerator,
+  reports: Map<String, List<RecipeEntry>>,
   verify: Boolean = false,
 ): DevDistResidueWriteResult {
   var written = 0
@@ -33,23 +41,17 @@ internal fun writeDevDistResidues(
   val rowsPerField = LinkedHashMap<String, Int>()
   val pluginsPerField = LinkedHashMap<String, Int>()
   val divergent = ArrayList<DevDistResidueDivergence>()
-  // The fold over the checked-in reports, with no override in play. It is the authority for every row this writes: the
-  // reports are the verification record of what the real distribution build packs, and the checked-in `BUILD.bazel` was
-  // written with this fold.
-  val reportCandidates = foldPluginContentCandidacy(
-    reports = moduleList.allModules.mapNotNull { it.pluginContentReport },
-    overrides = emptyMap(),
-  )
+  // The fold over the report, with no override in play. It is the authority for every row this writes.
+  val reportCandidates = foldPluginContentCandidacy(reports = reports.values.toList(), overrides = emptyMap())
   for (module in moduleList.community + moduleList.ultimate) {
-    if (module.pluginContentReport == null) {
-      continue
-    }
+    val entries = reports.get(module.module.name) ?: continue
     val file = module.contentRoots.firstOrNull()?.resolve(DEV_DIST_RESIDUE_FILE_NAME) ?: continue
     val section = synthesizeContentResidue(
       module = module,
       moduleList = moduleList,
       context = context,
       reportCandidates = reportCandidates,
+      entries = entries,
     )
     for ((field, rows) in contentResidueFieldRows(section)) {
       rowsPerField.merge(field, rows, Int::plus)
@@ -78,7 +80,7 @@ internal fun writeDevDistResidues(
     }
   }
   if (!verify) {
-    writePluginContentPopulation(moduleList = moduleList, context = context)
+    writePluginContentPopulation(moduleList = moduleList, context = context, reports = reports)
   }
   return DevDistResidueWriteResult(
     written = written,
@@ -91,15 +93,21 @@ internal fun writeDevDistResidues(
 }
 
 /**
- * Writes the content population off the checked-in reports, so the converter can stop probing for them.
+ * Writes the content population off a distribution build's content report.
  *
- * The migration writer of `PLUGIN_CONTENT_POPULATION_FILE_NAME`, and the same transitional role
- * [writeDevDistResidues] has. The population is a product question, so `plugin-model-tool` owns this file once it states
- * the answer; [checkPluginContentPopulation] fails the run while the two disagree.
+ * The one producer of `PLUGIN_CONTENT_POPULATION_FILE_NAME`. The population is a product question, and a build's report
+ * is the product's own answer: it names every plugin that build packed, bundled and non-bundled.
+ *
+ * Only the modules this run converts. A report names the plugins of one product family, so a name this project holds no
+ * module for is a name no reader could match.
  */
-private fun writePluginContentPopulation(moduleList: ModuleList, context: BazelBuildFileGenerator) {
+private fun writePluginContentPopulation(
+  moduleList: ModuleList,
+  context: BazelBuildFileGenerator,
+  reports: Map<String, List<RecipeEntry>>,
+) {
   val names = (moduleList.community + moduleList.ultimate)
-    .filter { it.pluginContentReportFile != null }
+    .filter { it.module.name in reports }
     .map { it.module.name }
     .sorted()
   val text = buildString {
@@ -191,8 +199,8 @@ private fun synthesizeContentResidue(
   moduleList: ModuleList,
   context: BazelBuildFileGenerator,
   reportCandidates: Map<String, Set<String>>,
+  entries: List<RecipeEntry>,
 ): ContentResidueSection? {
-  val entries = module.pluginContentReport.orEmpty()
   val reportPaths = reportedPrepackedMemberPaths(entries)
   val libRootJars = ArrayList<String>()
   val separateJars = ArrayList<String>()
@@ -260,7 +268,7 @@ private fun synthesizeContentResidue(
   // The membership rows, with the candidacy rows above already in play, so that the members and the libraries are read
   // off a derivation that puts every jar where this plugin really puts it.
   val derived = derivePluginContent(module = module, moduleList = moduleList, context = context, residue = residueOf(section))
-  val reportMembers = reportMemberNames(module)
+  val reportMembers = reportMemberNames(module = module, entries = entries)
   val extraMembers = (reportMembers - derived.memberNames.toSet()).sorted()
   val withExtras = residueOf(section.copy(extraMembers = extraMembers))
   val withMembers = derivePluginContent(module = module, moduleList = moduleList, context = context, residue = withExtras)
@@ -280,6 +288,7 @@ private fun synthesizeContentResidue(
     moduleList = moduleList,
     context = context,
     residue = residueOf(section.copy(extraMembers = extraMembers, rawMembers = rawMembers.sorted())),
+    entries = entries,
   )
 
   val result = section.copy(
@@ -318,8 +327,9 @@ private fun missingLibraries(
   moduleList: ModuleList,
   context: BazelBuildFileGenerator,
   residue: PluginContentResidue,
+  entries: List<RecipeEntry>,
 ): List<ResidueLibraryRow> {
-  val projected = computePluginContent(module = module, moduleList = moduleList, context = context)
+  val projected = computePluginContent(module = module, moduleList = moduleList, context = context, entries = entries)
   val projectedLabels = projected.content?.libraryContainerLabels.orEmpty().toSet()
   if (projectedLabels.isEmpty()) {
     return emptyList()
@@ -334,7 +344,7 @@ private fun missingLibraries(
   // version instead - see [computeLibraryContainerLabels].
   val rows = ArrayList<ResidueLibraryRow>()
   var current = residue
-  for (recorded in recordedLibraries(entries = module.pluginContentReport.orEmpty(), handedOver = emptySet()).sortedWith(
+  for (recorded in recordedLibraries(entries = entries, handedOver = emptySet()).sortedWith(
     compareBy({ it.ownerModule ?: "" }, { it.name })
   )) {
     val candidate = PluginContentResidue(
@@ -360,9 +370,9 @@ private fun missingLibraries(
 }
 
 /** Every member the report names, by any of its three keys, without the plugin's own main module. */
-private fun reportMemberNames(module: ModuleDescriptor): Set<String> {
+private fun reportMemberNames(module: ModuleDescriptor, entries: List<RecipeEntry>): Set<String> {
   val result = LinkedHashSet<String>()
-  for (entry in module.pluginContentReport.orEmpty()) {
+  for (entry in entries) {
     entry.modules.mapTo(result) { it.name }
     entry.contentModules.mapTo(result) { it.moduleName }
     entry.module?.let(result::add)

@@ -80,7 +80,6 @@ exports_files(
     [
         "intellij.java.ide.customization.iml",
         "resources/META-INF/plugin.xml",
-        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

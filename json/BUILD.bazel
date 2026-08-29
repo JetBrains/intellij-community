@@ -94,7 +94,6 @@ exports_files(
         "intellij.json.iml",
         "resources/META-INF/plugin.xml",
         "resources/intellij.json.xml",
-        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

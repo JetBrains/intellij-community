@@ -37,7 +37,6 @@ exports_files(
     [
         "intellij.jcef.plugin.iml",
         "resources/META-INF/plugin.xml",
-        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

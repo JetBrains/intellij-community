@@ -40,7 +40,6 @@ exports_files(
         "resources/META-INF/plugin.xml",
         "resources/keymaps/VSCode OSX.xml",
         "resources/keymaps/VSCode.xml",
-        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -40,7 +40,6 @@ exports_files(
         "resources/META-INF/plugin.xml",
         "resources/keymaps/Visual Assist OSX.xml",
         "resources/keymaps/Visual Assist.xml",
-        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

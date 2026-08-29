@@ -103,7 +103,6 @@ exports_files(
     [
         "intellij.java.byteCodeViewer.iml",
         "resources/META-INF/plugin.xml",
-        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

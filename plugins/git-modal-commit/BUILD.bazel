@@ -63,7 +63,6 @@ exports_files(
     [
         "intellij.vcs.git.commit.modal.iml",
         "resources/META-INF/plugin.xml",
-        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

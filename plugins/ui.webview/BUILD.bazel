@@ -106,7 +106,6 @@ exports_files(
     [
         "intellij.platform.ui.webview.iml",
         "resources/META-INF/plugin.xml",
-        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

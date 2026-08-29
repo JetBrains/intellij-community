@@ -87,7 +87,6 @@ exports_files(
     [
         "intellij.filePrediction.iml",
         "resources/META-INF/plugin.xml",
-        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

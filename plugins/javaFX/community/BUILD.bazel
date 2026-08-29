@@ -105,7 +105,6 @@ exports_files(
     [
         "intellij.javaFX.community.iml",
         "resources/META-INF/plugin.xml",
-        "plugin-content.yaml",
         "dev-dist.yaml",
     ],
     visibility = ["//visibility:public"],

@@ -11,9 +11,9 @@ import kotlin.io.path.readText
 /**
  * One hand-off a plugin offers the candidacy fold: the member, where the plugin puts its jar, and what the jar merges.
  *
- * The derived counterpart of [SimplePluginContentEntry], which reads the same three facts off one `plugin-content.yaml`
- * entry. [libraries] is a function of the member alone here, so two plugins can never offer one module two library sets -
- * a property the report side does not have, and the reason a derived fold reports no library disagreement.
+ * The derived counterpart of [SimplePluginContentEntry], which reads the same three facts off one report entry.
+ * [libraries] is a function of the member alone here, so two plugins can never offer one module two library sets - a
+ * property the report side does not have, and the reason a derived fold reports no library disagreement.
  */
 internal class DerivedCandidacyOffer(
   @JvmField val moduleName: String,
@@ -45,9 +45,7 @@ internal class DerivedPluginCandidacy(
  * Where each of [module]'s members' jars goes, reproducing `computeOutputJarPath` of `autoLayout.kt` from the model.
  *
  * The candidacy fold asks one question - is this module's jar a plain, product-independent, self-named jar, and which
- * libraries does it merge - and until now the answer came from every checked-in `plugin-content.yaml`. That is the one
- * input Phase 0 of this arc held constant, so every prepack figure it measured rests on it. This states the same answer
- * from what the model already holds:
+ * libraries does it merge. This states the answer from what the model already holds:
  *
  * - the loading rule comes from the plugin's own `<content>`;
  * - the `pack-content-into-plugin-jar` marker and the `package` attribute come from the member's own descriptor, which
@@ -62,14 +60,17 @@ internal class DerivedPluginCandidacy(
  * Fail closed. A member whose descriptor this cannot read is vetoed rather than offered, because an offered jar that the
  * distribution does not pack goes missing and is noticed at class-load time. A plugin with no `META-INF/plugin.xml` of
  * its own has no closure at all, and then only [PluginContentResidue.extraMembers] states its members.
+ *
+ * [closure] is a parameter so that a caller which already walked it hands it over. [derivePluginContent] is that caller,
+ * and it needs the same walk for the member set.
  */
 internal fun derivePluginContentCandidacy(
   module: ModuleDescriptor,
   moduleList: ModuleList,
   context: BazelBuildFileGenerator,
   residue: PluginContentResidue = contentResidueOf(module),
+  closure: WalkedContentModules? = derivePluginContentClosure(module = module, moduleList = moduleList, context = context),
 ): DerivedPluginCandidacy {
-  val closure = derivePluginContentClosure(module = module, moduleList = moduleList, context = context)
   val offers = ArrayList<DerivedCandidacyOffer>()
   val vetoes = ArrayList<String>(residue.vetoedMembers)
   val seen = HashSet<String>()
@@ -276,7 +277,8 @@ internal fun foldDerivedPluginContentCandidacy(
       }
     }
   }
-  agreed.keys.removeAll(vetoed)
+  // After the merge, not before it. A derived disagreement vetoes a module without taking it out of `stated`, so only a
+  // removal that follows the merge refuses every vetoed module.
   agreed.putAll(stated)
   agreed.keys.removeAll(vetoed)
 
@@ -297,52 +299,6 @@ private fun reportCandidacyLibraryDisagreement(moduleName: String, first: Set<St
     "WARN: $moduleName keeps being packed by JarPackager: its plugins disagree about the libraries" +
     " merged into its jar (${first.sorted()} against ${second.sorted()})"
   )
-}
-
-/**
- * Compares the two candidacy folds and reports what a residue would have to state.
- *
- * ADR 0007 rule 5, applied to the one input the content comparison held constant. The report fold is the authority here,
- * because the checked-in `BUILD.bazel` was written with it: a module the derived fold adds would hand a jar over that no
- * distribution packs, and one it drops would leave a `prepacked_content_modules` relation behind.
- *
- * Both sides are folded with an empty override map, so the difference this prints is the whole residue and not the part
- * the checked-in file does not already cover.
- */
-internal fun comparePluginContentCandidacy(
-  moduleList: ModuleList,
-  context: BazelBuildFileGenerator,
-  out: (String) -> Unit,
-) {
-  val reportFold = foldPluginContentCandidacy(
-    reports = moduleList.allModules.mapNotNull { it.pluginContentReport },
-    overrides = emptyMap(),
-  )
-  val candidacies = moduleList.derivedPluginCandidacies
-  val plugins = candidacies.size
-  val derivedFold = foldDerivedPluginContentCandidacy(plugins = candidacies.map { it.second }, overrides = emptyMap())
-
-  val onlyInDerived = (derivedFold.keys - reportFold.keys).sorted()
-  val onlyInReport = (reportFold.keys - derivedFold.keys).sorted()
-  val differingLibraries = derivedFold.keys.intersect(reportFold.keys)
-    .filter { derivedFold.get(it) != reportFold.get(it) }
-    .sorted()
-
-  out("")
-  out("candidacy fold: plugins=$plugins reportCandidates=${reportFold.size} derivedCandidates=${derivedFold.size}")
-  out("  only the derived fold offers (a `-` residue row): ${onlyInDerived.size}")
-  out("  only the report fold offers (a `+` residue row): ${onlyInReport.size}")
-  out("  both offer, library sets differ (a `+` residue row): ${differingLibraries.size}")
-  for (name in onlyInDerived) {
-    out("  DERIVED-ONLY $name libraries=${derivedFold.get(name)?.sorted()}")
-  }
-  for (name in onlyInReport) {
-    out("  REPORT-ONLY $name libraries=${reportFold.get(name)?.sorted()}")
-  }
-  for (name in differingLibraries) {
-    out("  LIBRARIES $name report=${reportFold.get(name)?.sorted()} derived=${derivedFold.get(name)?.sorted()}")
-  }
-  reportCommunityOnlyCandidacyDelta(moduleList = moduleList, context = context, out = out)
 }
 
 /**
@@ -400,31 +356,4 @@ internal fun communityOnlyCandidacyOverrideRows(moduleList: ModuleList): List<St
     result.add((sequenceOf("+$name") + globalAnswer.sorted()).joinToString(" "))
   }
   return result
-}
-
-/** [communityOnlyCandidacyOverrideRows] against the checked-in file, for the measurement switch. */
-private fun reportCommunityOnlyCandidacyDelta(
-  moduleList: ModuleList,
-  context: BazelBuildFileGenerator,
-  out: (String) -> Unit,
-) {
-  val needed = communityOnlyCandidacyOverrideRows(moduleList)
-  val checkedIn = readPluginContentCandidateOverrides(
-    (context.ultimateRoot?.resolve("community") ?: context.communityRoot)
-      .resolve("build/$PLUGIN_CONTENT_CANDIDATE_OVERRIDES_FILE_NAME")
-  )
-  val checkedInLines = checkedIn.entries.asSequence()
-    .map { (name, libraries) ->
-      if (libraries == null) "-$name" else (sequenceOf("+$name") + libraries.sorted()).joinToString(" ")
-    }
-    .sorted()
-    .toList()
-  out("")
-  out("community-only locality of the derived fold: rows needed=${needed.size} rows checked in=${checkedInLines.size}")
-  for (row in needed - checkedInLines.toSet()) {
-    out("  MISSING $row")
-  }
-  for (row in checkedInLines - needed.toSet()) {
-    out("  STALE $row")
-  }
 }

@@ -20,9 +20,8 @@ import kotlin.io.path.relativeTo
  * declares the plugin as one dep instead of restating the plugin's module and library *names* in a generated per-product
  * table; how those jars are laid out inside the plugin directory stays with `PluginLayout` and `JarPackager`.
  *
- * The modules come from the checked-in `plugin-content.yaml` rather than from the plugin descriptor, which settles the
- * two things a descriptor cannot answer: `xi:include`, which [parsePluginXmlContent] deliberately does not follow, is
- * already resolved in the report, and a report entry is a jar that some product really ships.
+ * The modules come from the project model: the plugin's own `<content>` with every `xi:include` followed, plus the
+ * residue rows that state what the model cannot reach. [derivePluginContent] is the producer.
  */
 internal class PluginContent(
   /** Raw member modules except the main module, which `dev_dist_plugin_content` takes as `descriptor_module`. */
@@ -61,12 +60,15 @@ internal class PluginContent(
 )
 
 /**
- * What reading a plugin's content report produced: the target to emit, and what only the other repository can name.
+ * What resolving a plugin's content produced: the target to emit, and what only the other repository can name.
  *
- * Two fields rather than one because they have different lifetimes. [content] is `null` when the report resolves to
- * nothing this package can declare, and such a plugin deliberately gets no target - see [computePluginContent]. The
- * cross-repository half has to outlive that decision: a community plugin whose *only* extra content is a
- * prepack-eligible ultimate member earns no target here and still needs its jar packed.
+ * Four fields rather than one because they have different lifetimes. [content] is `null` when the plugin resolves to
+ * nothing this package can declare, and such a plugin deliberately gets no target - see [resolvePluginContent]. The
+ * three cross-repository lists have to outlive that decision: a community plugin whose *only* extra content is an
+ * ultimate member earns no target here and still needs its jars declared.
+ *
+ * The three together are the whole gap between a community content target and the plugin. `collectPluginContentCompletions`
+ * in the plan generator reads them out of `bazel-targets.json` and declares exactly that gap.
  */
 internal class PluginContentResult(
   @JvmField val content: PluginContent?,
@@ -75,14 +77,25 @@ internal class PluginContentResult(
    *
    * Module *names*, not labels, and deliberately: the labels are unreachable from here - that is the whole reason these
    * are dropped - and the completion set in `//build/dev-dist-content` that names them already resolves a name to a
-   * label through `bazel-targets.json`, for the raw members it has always completed. Recording them is what keeps a
-   * cross-repository member on the packed path instead of silently demoting a plugin's whole ultimate half to
-   * `JarPackager`.
+   * label through `bazel-targets.json`. Recording them is what keeps a cross-repository member on the packed path
+   * instead of silently demoting a plugin's whole ultimate half to `JarPackager`.
    */
   @JvmField val crossRepositoryPrepackedModules: List<String>,
+  /**
+   * The members dropped for the same reason that no packing target serves, so their raw jar is what has to be declared.
+   *
+   * The complement of [crossRepositoryPrepackedModules] over the same drop. The completion set names these in its
+   * `modules` attribute.
+   */
+  @JvmField val crossRepositoryRawModules: List<String> = emptyList(),
+  /**
+   * The library container labels dropped because a community package cannot name them.
+   *
+   * Container labels and not per-jar ones, for the reason [PluginContent.libraryContainerLabels] gives: a container
+   * label carries no artifact version, so a Maven bump leaves this record alone.
+   */
+  @JvmField val crossRepositoryLibraryContainers: List<String> = emptyList(),
 )
-
-internal const val PLUGIN_CONTENT_REPORT_FILE_NAME: String = "plugin-content.yaml"
 
 /** The population the plan generator states; see [readPluginContentPopulation]. */
 internal const val PLUGIN_CONTENT_POPULATION_FILE_NAME: String = "dev_dist_plugin_content_population.txt"
@@ -95,13 +108,16 @@ internal const val PLUGIN_CONTENT_POPULATION_FILE_NAME: String = "dev_dist_plugi
  * meanings per line, because the two populations differ - 515 plugins state content and 173 state a descriptor.
  *
  * The converter needs the population and cannot fold it for itself. Whether a module is a plugin main module is a
- * **product** question, and the answer used to be "a `plugin-content.yaml` sits beside it" - a probe that dies with the
- * report. A plain text file for the reason [PLUGIN_CONTENT_CANDIDATE_OVERRIDES_FILE_NAME] gives: it keeps this reader
- * independent of Starlark. Under `community/build/`, so a community-only checkout reads the same file; a line naming a
- * plugin that checkout does not have is a line it never matches.
+ * **product** question. A plain text file for the reason [PLUGIN_CONTENT_CANDIDATE_OVERRIDES_FILE_NAME] gives: it keeps
+ * this reader independent of Starlark. Under `community/build/`, so a community-only checkout reads the same file; a line
+ * naming a plugin that checkout does not have is a line it never matches.
  *
- * Fail-open on an absent file, exactly as [readPluginDescriptorPopulation] is. A checkout whose plan generator has never
- * run - the generator's own integration tests each build a throwaway community project - has to convert.
+ * An absent file gives an empty population, and then this run states content for no plugin at all. The generator's own
+ * integration tests each build a throwaway project and check in a population file of their own.
+ *
+ * `--write-dev-dist-residue --content-report=<zip>` writes this file, off the main modules a real distribution build
+ * reports. Nothing else derives it, so a plugin missing from it gets no content leaf, and the dev-distribution assembly
+ * then fails naming the jar its fragment did not declare.
  */
 internal fun readPluginContentPopulation(file: Path): Set<String> {
   if (!file.exists()) {
@@ -120,41 +136,11 @@ internal fun readPluginContentPopulation(file: Path): Set<String> {
 /**
  * Whether a `dev_dist_plugin` states dev-distribution content for [module].
  *
- * The population file when the plan generator has written one, and the presence of a `plugin-content.yaml` otherwise.
- * The fall-back is what keeps the generator's own integration tests converting - each builds a throwaway community
- * project, which holds neither file - and it dies with the report in the last phase of this arc.
- *
- * [checkPluginContentPopulation] is what keeps the two answers equal while both exist.
+ * The population file is the one signal; see [readPluginContentPopulation] for what states it and what an absent file
+ * costs.
  */
 internal fun isDevDistContentPlugin(module: ModuleDescriptor, context: BazelBuildFileGenerator): Boolean {
-  val population = context.pluginContentPopulation
-  return if (population.isEmpty()) module.pluginContentReportFile != null else module.module.name in population
-}
-
-/**
- * Fails when the checked-in population and the checked-in reports disagree about which modules are plugin main modules.
- *
- * The population file has no producer of its own yet - `plugin-model-tool` gets one in a later phase of this arc - so
- * this is what stops it from rotting in the meantime. It fails rather than warns, because a plugin missing from the
- * population silently loses its content leaf, and a fragment then declares one input less than its assembly reads.
- *
- * Silent while the population is empty, which is the fail-open case [readPluginContentPopulation] documents.
- */
-internal fun checkPluginContentPopulation(moduleList: ModuleList, context: BazelBuildFileGenerator) {
-  val population = context.pluginContentPopulation
-  if (population.isEmpty()) {
-    return
-  }
-  val converted = (moduleList.community + moduleList.ultimate).mapTo(LinkedHashSet()) { it.module.name }
-  val withReport = (moduleList.community + moduleList.ultimate)
-    .filter { it.pluginContentReportFile != null }
-    .mapTo(LinkedHashSet()) { it.module.name }
-  val onlyInPopulation = (population.filterTo(LinkedHashSet()) { it in converted } - withReport).sorted()
-  val onlyInReports = (withReport - population).sorted()
-  check(onlyInPopulation.isEmpty() && onlyInReports.isEmpty()) {
-    "$PLUGIN_CONTENT_POPULATION_FILE_NAME disagrees with the checked-in reports about which modules are plugin main" +
-    " modules. Only in the population: $onlyInPopulation. Only beside a report: $onlyInReports"
-  }
+  return module.module.name in context.pluginContentPopulation
 }
 
 /**
@@ -167,7 +153,8 @@ internal fun checkPluginContentPopulation(moduleList: ModuleList, context: Bazel
  */
 private const val KOTLIN_STDLIB_LABEL = "@lib//:kotlin-stdlib"
 
-internal val EMPTY_PLUGIN_CONTENT_RESULT = PluginContentResult(content = null, crossRepositoryPrepackedModules = emptyList())
+internal val EMPTY_PLUGIN_CONTENT_RESULT: PluginContentResult =
+  PluginContentResult(content = null, crossRepositoryPrepackedModules = emptyList())
 
 /**
  * The name of the target that declares [module]'s dev-distribution content, in the plugin's own package.
@@ -178,11 +165,13 @@ internal val EMPTY_PLUGIN_CONTENT_RESULT = PluginContentResult(content = null, c
 internal fun pluginContentTargetName(module: ModuleDescriptor): String = "${module.targetName}_dev_content"
 
 /**
- * Reads the content report beside [module] and resolves it into Bazel labels.
+ * Resolves one plugin of a distribution build's content report into Bazel labels.
  *
- * [PluginContentResult.content] is `null` when [module] is not a plugin main module with a report, or when the report
- * resolves to nothing beyond the main module itself; [PluginContentResult.crossRepositoryPrepackedModules] is filled
- * either way.
+ * [entries] is the plugin's own entries, as [readPluginContentReportZip] unions them over the build's target platforms.
+ * Only the residue writer and the comparison switches take this route; generation takes [derivePluginContent].
+ *
+ * [PluginContentResult.content] is `null` when the report holds nothing for [module], or when it resolves to nothing
+ * beyond the main module itself; the cross-repository lists are filled either way.
  *
  * The empty case earns no target: `dev_dist_plugin_content` collects `descriptor_module` exactly the way it collects a
  * `content_modules` entry, so a target with neither content modules nor libraries contributes precisely what naming the
@@ -195,8 +184,15 @@ internal fun pluginContentTargetName(module: ModuleDescriptor): String = "${modu
  * declared in the explicit input manifest", naming the jar, whereas no target at all would silently take the plugin out
  * of every fragment that depends on it.
  */
-internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleList, context: BazelBuildFileGenerator): PluginContentResult {
-  val entries = module.pluginContentReport ?: return EMPTY_PLUGIN_CONTENT_RESULT
+internal fun computePluginContent(
+  module: ModuleDescriptor,
+  moduleList: ModuleList,
+  context: BazelBuildFileGenerator,
+  entries: List<RecipeEntry>?,
+): PluginContentResult {
+  if (entries.isNullOrEmpty()) {
+    return EMPTY_PLUGIN_CONTENT_RESULT
+  }
   val moduleName = module.module.name
 
   // The report does not record its own main module - only its location does, and a directory is the first content root
@@ -255,6 +251,7 @@ internal fun resolvePluginContent(
   val prepackedContentModuleLabels = ArrayList<String>()
   val prepackedJarDestinations = TreeMap<String, String>()
   val crossRepositoryPrepackedModules = ArrayList<String>()
+  val crossRepositoryRawModules = ArrayList<String>()
   val members = ArrayList<ModuleDescriptor>()
   members.add(module)
   // The members this plugin really handed over, whichever repository packs them. What is inside their jars is what this
@@ -288,6 +285,12 @@ internal fun resolvePluginContent(
         crossRepositoryPrepackedModules.add(memberName)
         handedOver.add(memberName)
       }
+      else {
+        // No packing target serves this member, so its raw jar is what the completion has to declare. Recorded rather
+        // than dropped: the completion set is the one package that sees both repositories, and a member neither half
+        // declares fails the assembly by name.
+        crossRepositoryRawModules.add(memberName)
+      }
       continue
     }
 
@@ -309,7 +312,7 @@ internal fun resolvePluginContent(
     }
   }
 
-  val libraryContainerLabels = computeLibraryContainerLabels(
+  val libraries = computeLibraryContainerLabels(
     module = module,
     members = members,
     recordedLibraries = recordedLibrariesOf(handedOver),
@@ -318,11 +321,18 @@ internal fun resolvePluginContent(
   )
   // Sorted: these are sets of inputs, not merge orders, so a stable order keeps a regeneration free of diff noise.
   val crossRepository = crossRepositoryPrepackedModules.distinct().sorted()
+  val crossRepositoryRaw = crossRepositoryRawModules.distinct().sorted()
+  val crossRepositoryLibraries = libraries.dropped.distinct().sorted()
   if (contentModuleLabels.isEmpty() &&
       prepackedContentModuleLabels.isEmpty() &&
       prepackedJarDestinations.isEmpty() &&
-      libraryContainerLabels.isEmpty()) {
-    return PluginContentResult(content = null, crossRepositoryPrepackedModules = crossRepository)
+      libraries.declared.isEmpty()) {
+    return PluginContentResult(
+      content = null,
+      crossRepositoryPrepackedModules = crossRepository,
+      crossRepositoryRawModules = crossRepositoryRaw,
+      crossRepositoryLibraryContainers = crossRepositoryLibraries,
+    )
   }
 
   return PluginContentResult(
@@ -330,11 +340,24 @@ internal fun resolvePluginContent(
       contentModuleLabels = contentModuleLabels.distinct().sorted(),
       prepackedContentModuleLabels = prepackedContentModuleLabels.distinct().sorted(),
       prepackedJarDestinations = prepackedJarDestinations,
-      libraryContainerLabels = libraryContainerLabels,
+      libraryContainerLabels = libraries.declared,
     ),
     crossRepositoryPrepackedModules = crossRepository,
+    crossRepositoryRawModules = crossRepositoryRaw,
+    crossRepositoryLibraryContainers = crossRepositoryLibraries,
   )
 }
+
+/**
+ * The libraries one plugin needs, split by whether this package may name them.
+ *
+ * [declared] goes into the content target's `libraries` attribute. [dropped] is the ultimate half a community package
+ * cannot name, and the completion set in `//build/dev-dist-content` declares it instead.
+ */
+internal class PluginLibraryLabels(
+  @JvmField val declared: List<String>,
+  @JvmField val dropped: List<String>,
+)
 
 /**
  * Where this report puts the jar of each member it hands over, by module name, relative to the plugin's `lib/`.
@@ -401,7 +424,7 @@ private fun computeLibraryContainerLabels(
   recordedLibraries: Set<RecordedLibrary>,
   context: BazelBuildFileGenerator,
   warn: (String) -> Unit,
-): List<String> {
+): PluginLibraryLabels {
   val libraries = LinkedHashSet<Library>()
   // The modules whose *whole* declared library set is in `libraries`, which is what lets an unnamed recorded library be
   // recognised as already covered - see below.
@@ -444,6 +467,7 @@ private fun computeLibraryContainerLabels(
 
   val nameableRepositories = nameableRepositories(module = module, context = context)
   val labels = TreeSet<String>()
+  val dropped = TreeSet<String>()
   for (library in libraries) {
     val label = libraryTargetLabel(
       library = library,
@@ -454,9 +478,10 @@ private fun computeLibraryContainerLabels(
       isCommunityDependent = module.isCommunity,
     )
     if (nameableRepositories != null && labelRepository(label) !in nameableRepositories) {
-      // Same edge as the ultimate content module above, and the same resolution: the ultimate side of the distribution
-      // declares this library, so dropping it here is what keeps the community target analyzable. Silent for the same
-      // reason: the split is the whole cause, and a jar that neither side declares fails the assembly by name.
+      // Same edge as the ultimate content module above, and the same resolution: this package cannot name the label, so
+      // the completion set declares it. Recorded rather than silent, because a jar that neither side declares fails the
+      // assembly by name.
+      dropped.add(label)
       continue
     }
     if (label == KOTLIN_STDLIB_LABEL) {
@@ -465,7 +490,7 @@ private fun computeLibraryContainerLabels(
     }
     labels.add(label)
   }
-  return labels.toList()
+  return PluginLibraryLabels(declared = labels.toList(), dropped = dropped.toList())
 }
 
 /**
@@ -599,31 +624,3 @@ internal fun recordedLibraries(entries: List<RecipeEntry>, handedOver: Set<Strin
   return result
 }
 
-/**
- * [ModuleDescriptor.pluginContentReportFile] as a path inside the module's own Bazel package, so that it can be
- * exported and named by a label. `null` when the module has no report, or when the report is outside the package -
- * `../` is not a label.
- */
-internal fun pluginContentReportPackagePath(module: ModuleDescriptor): String? {
-  val file = module.pluginContentReportFile ?: return null
-  return file.relativeTo(module.bazelBuildFileDir).invariantSeparatorsPathString.takeIf { !it.startsWith("../") }
-}
-
-/**
- * Parses [ModuleDescriptor.pluginContentReportFile]; reached only through [ModuleDescriptor.pluginContentReport].
- *
- * Unlike a `module-content.yaml`, a plugin's report has one entry per jar or file of the plugin, and most plugins have
- * several - so every entry is read, not just a single one.
- */
-internal fun parsePluginContentReport(file: Path?): List<RecipeEntry>? {
-  if (file == null) {
-    return null
-  }
-
-  val text = file.readText()
-  if (text.isBlank()) {
-    return null
-  }
-
-  return recipeYaml.decodeFromString(ListSerializer(RecipeEntry.serializer()), text).takeIf { it.isNotEmpty() }
-}

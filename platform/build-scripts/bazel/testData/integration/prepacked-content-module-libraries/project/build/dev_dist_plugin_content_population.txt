@@ -1,0 +1,6 @@
+# Which modules a `dev_dist_plugin` states dev-distribution content for, one plugin main module per line.
+#
+# Fixture input. A real checkout gets this file from a distribution build's content report, through
+# `jpsModelToBazel --write-dev-dist-residue --content-report=<zip>`. A throwaway project has no such build, so
+# the population is stated here and the converter reads it exactly as it reads the real one.
+intellij.example.plugin

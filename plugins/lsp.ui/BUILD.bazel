@@ -79,7 +79,6 @@ exports_files(
     [
         "intellij.lsp.ui.iml",
         "resources/META-INF/plugin.xml",
-        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

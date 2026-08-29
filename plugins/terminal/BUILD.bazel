@@ -193,7 +193,6 @@ exports_files(
         "intellij.terminal.iml",
         "resources/META-INF/plugin.xml",
         "resources/META-INF/terminal.xml",
-        "plugin-content.yaml",
         "dev-dist.yaml",
     ],
     visibility = ["//visibility:public"],

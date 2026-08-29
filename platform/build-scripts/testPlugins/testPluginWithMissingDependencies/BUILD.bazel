@@ -36,7 +36,6 @@ exports_files(
         "intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies.iml",
         "resources/META-INF/plugin.xml",
         "resources/intellij.platform.buildScripts.tests.testPluginWithMissingDependencies.xml",
-        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

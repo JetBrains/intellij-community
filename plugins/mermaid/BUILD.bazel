@@ -131,7 +131,6 @@ exports_files(
         "resources/colorSchemes/MermaidDarcula.xml",
         "resources/colorSchemes/MermaidDefault.xml",
         "resources/liveTemplates/MermaidHidden.xml",
-        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

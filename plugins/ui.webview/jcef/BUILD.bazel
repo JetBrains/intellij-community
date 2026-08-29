@@ -68,7 +68,6 @@ exports_files(
     [
         "intellij.platform.ui.webview.jcef.iml",
         "resources/intellij.platform.ui.webview.jcef.xml",
-        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

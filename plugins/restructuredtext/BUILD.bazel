@@ -121,7 +121,6 @@ exports_files(
         "resources/META-INF/plugin.xml",
         "resources/colorSchemes/RestDarcula.xml",
         "resources/colorSchemes/RestDefault.xml",
-        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

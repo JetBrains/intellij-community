@@ -697,23 +697,16 @@ internal class BazelBuildFileGenerator(
         val imlTargetsBazel = BuildFile()
         imlTargetsBazel.exportFile(module.imlFile.relativeTo(module.bazelBuildFileDir).invariantSeparatorsPathString)
         exportDescriptorFiles(module = module, buildFile = imlTargetsBazel, alreadyExported = fileUpdater.handWrittenExportedFiles())
-        // The report the plugin's content target is generated from. Exported so that the hermetic `bazel-targets.json`
-        // run can be handed the very same file: it loads the JPS model from a tree materialized out of declared labels,
-        // and a report it cannot see is a `contentTarget` the two producers would silently disagree on.
-        pluginContentReportPackagePath(module)?.let { reportPath ->
-          if (!fileUpdater.handWrittenExportedFiles().contains(reportPath)) {
-            imlTargetsBazel.exportFile(reportPath)
-          }
-        }
-        // The recipe the module's `content_module_jar` is generated from, exported for the same reason and with the same
-        // consequence if it is not: a recipe the hermetic run cannot see is a `contentModuleJarTarget` the two producers
-        // silently disagree on, in both directions.
+        // The recipe the module's `content_module_jar` is generated from. Exported so that the hermetic
+        // `bazel-targets.json` run can be handed the very same file: it loads the JPS model from a tree materialized out
+        // of declared labels, and a recipe it cannot see is a `contentModuleJarTarget` the two producers silently
+        // disagree on, in both directions.
         contentModuleRecipePackagePath(module)?.let { recipePath ->
           if (!fileUpdater.handWrittenExportedFiles().contains(recipePath)) {
             imlTargetsBazel.exportFile(recipePath)
           }
         }
-        // The residue both leaves read, exported for the reason the report is: it states the members the derivation
+        // The residue both leaves read, exported for the reason the recipe is: it states the members the derivation
         // cannot reach and the descriptor rows the convention does not give, so a residue the hermetic run cannot see is
         // a `contentTarget` naming fewer members than the checked-in one and a `descriptorTargets` entry it cannot form.
         devDistResiduePackagePath(module)?.let { residuePath ->
@@ -880,6 +873,10 @@ internal class BazelBuildFileGenerator(
      * member gets no content target and still has to have that member packed.
      */
     val crossRepositoryPrepackedModules: List<String>,
+    /** Members only the other repository can name that no packing target serves - see [PluginContentResult]. */
+    val crossRepositoryRawModules: List<String>,
+    /** Library containers only the other repository can name - see [PluginContentResult]. */
+    val crossRepositoryLibraryContainers: List<String>,
     /**
      * The label of this module's packing target, or `null` when it packs no `lib/` jar.
      *
@@ -1183,6 +1180,8 @@ internal class BazelBuildFileGenerator(
         )
       },
       crossRepositoryPrepackedModules = pluginContentResult.crossRepositoryPrepackedModules,
+      crossRepositoryRawModules = pluginContentResult.crossRepositoryRawModules,
+      crossRepositoryLibraryContainers = pluginContentResult.crossRepositoryLibraryContainers,
       pluginContentTarget = pluginContent?.let { addPackagePrefix(BazelLabel(pluginContentTargetName(moduleDescriptor), moduleDescriptor)) },
       contentModuleJarTarget = contentModuleJar?.let { addPackagePrefix(BazelLabel(contentModuleJarTargetName(moduleDescriptor), moduleDescriptor)) },
       productionTargets = productionCompileTargets.map { addPackagePrefix(it) } + customModule?.additionalProductionTargets.orEmpty(),

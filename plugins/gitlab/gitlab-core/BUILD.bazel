@@ -200,7 +200,6 @@ exports_files(
         "intellij.vcs.gitlab.iml",
         "resources/META-INF/plugin.xml",
         "resources/intellij.vcs.gitlab.xml",
-        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

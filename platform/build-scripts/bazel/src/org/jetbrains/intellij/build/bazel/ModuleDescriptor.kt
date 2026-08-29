@@ -65,29 +65,13 @@ internal data class ModuleDescriptor(
   val contentModuleRecipe: RecipeEntry? by lazy(LazyThreadSafetyMode.NONE) { parseContentModuleRecipe(contentModuleRecipeFile) }
 
   /**
-   * The content report of the plugin whose main module this is, if it has one; beside the first content root, the same
-   * rule [contentModuleRecipeFile] follows.
-   *
-   * Existence only, deliberately. The Bazel side probes for exactly these files
-   * (`_find_plugin_content_report_rel_path` in `@community//build:jps_model.bzl`) so that the hermetic
-   * `bazel-targets.json` run is handed the same reports the full-checkout run reads, and it cannot parse YAML. Both
-   * sides therefore have to agree only on *which file is a plugin's report*, which [JpsModuleToBazelTargetsOnly]
-   * asserts; whether that report then yields a content target is [pluginContentReport]'s business alone.
-   */
-  val pluginContentReportFile: Path? by lazy(LazyThreadSafetyMode.NONE) {
-    contentRoots.firstOrNull()?.resolve(PLUGIN_CONTENT_REPORT_FILE_NAME)?.takeIf { it.isRegularFile() }
-  }
-
-  /** [pluginContentReportFile], parsed at most once per module. */
-  val pluginContentReport: List<RecipeEntry>? by lazy(LazyThreadSafetyMode.NONE) { parsePluginContentReport(pluginContentReportFile) }
-
-  /**
    * The dev-distribution residue of the plugin whose main module this is, if it has one; beside the first content root,
-   * the same rule [pluginContentReportFile] follows.
+   * the same rule [contentModuleRecipeFile] follows.
    *
-   * Existence only, for the reason [pluginContentReportFile] gives. `_find_dev_dist_residue_rel_path` in
-   * `@community//build:jps_model.bzl` probes for exactly this file, so both sides agree on which file is a plugin's
-   * residue without either of them parsing YAML.
+   * Existence only, deliberately. `_find_dev_dist_residue_rel_path` in `@community//build:jps_model.bzl` probes for
+   * exactly this file, so that the hermetic `bazel-targets.json` run is handed the same residues the full-checkout run
+   * reads. That side cannot parse YAML and does not have to: both sides agree only on *which file is a plugin's
+   * residue*, which [JpsModuleToBazelTargetsOnly] asserts, and the one converter decides the rest.
    */
   val devDistResidueFile: Path? by lazy(LazyThreadSafetyMode.NONE) {
     contentRoots.firstOrNull()?.resolve(DEV_DIST_RESIDUE_FILE_NAME)?.takeIf { it.isRegularFile() }

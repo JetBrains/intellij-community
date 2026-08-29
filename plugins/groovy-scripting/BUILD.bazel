@@ -48,7 +48,6 @@ exports_files(
     [
         "intellij.groovy.scripting.iml",
         "resources/META-INF/plugin.xml",
-        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

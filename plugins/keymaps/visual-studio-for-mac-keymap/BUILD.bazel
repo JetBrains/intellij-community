@@ -39,7 +39,6 @@ exports_files(
         "intellij.keymap.visualStudioForMac.iml",
         "resources/META-INF/plugin.xml",
         "resources/keymaps/Visual Studio for Mac.xml",
-        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

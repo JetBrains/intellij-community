@@ -79,7 +79,6 @@ exports_files(
     [
         "intellij.smart.update.iml",
         "resources/META-INF/plugin.xml",
-        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

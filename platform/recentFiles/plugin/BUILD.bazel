@@ -36,7 +36,6 @@ exports_files(
     [
         "intellij.platform.recentFiles.plugin.iml",
         "resources/META-INF/plugin.xml",
-        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -168,7 +168,6 @@ exports_files(
         "resources/colorSchemes/MarkdownDarcula.xml",
         "resources/colorSchemes/MarkdownDefault.xml",
         "resources/intellij.markdown.xml",
-        "plugin-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )
