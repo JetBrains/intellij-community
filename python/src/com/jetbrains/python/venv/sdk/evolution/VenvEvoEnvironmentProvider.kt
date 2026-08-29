@@ -1,10 +1,9 @@
 package com.jetbrains.python.venv.sdk.evolution
 
+import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.python.venv.createVenv
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.platform.eel.provider.localEel
-import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.python.community.common.tools.ToolId
-import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.community.services.systemPython.createVenvFromSystemPython
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.sdk.backend.evolution.DiscoveredVenv
@@ -160,12 +159,18 @@ internal class VenvEvoEnvironmentProvider : PyEvoEnvironmentProvider {
     return createVenvIn(context, venvDir, spec.baseToken)
   }
 
-  /** Creates a virtualenv in [venvDir] from the system Python whose binary is [baseToken], then types its SDK by path. */
+  /**
+   * Creates a virtualenv in [venvDir] from the interpreter at [baseToken], then types its SDK by path.
+   *
+   * The interpreter is used as the path it is. It used to be looked up in the machine-wide interpreter scan first, only
+   * for that scan's answer to be unwrapped back to the same path — `createVenvFromSystemPython` reads nothing else off
+   * it — and an interpreter the scan did not list could then not build an environment at all, however the user had come
+   * by it. `createVenv` validates the interpreter itself, so nothing was checked there either.
+   */
   private suspend fun createVenvIn(context: EvoToolContext, venvDir: Path, baseToken: String): PyResult<Sdk> {
-    val eelApi = context.fileSystem.eelDescriptor?.toEelApi() ?: localEel
-    val systemPython = SystemPythonService().findSystemPythons(eelApi).firstOrNull { it.pythonBinary.pathString == baseToken }
-                       ?: return PyResult.localizedError(PySdkBundle.message("evolution.error.base.python.not.found", baseToken))
-    val venvPython = createVenvFromSystemPython(systemPython, venvDir).getOr { return it }
+    val basePython = baseToken.toNioPathOrNull()
+                     ?: return PyResult.localizedError(PySdkBundle.message("evolution.error.base.python.not.found", baseToken))
+    val venvPython = createVenv(basePython, venvDir).getOr { return it }
     return createSdkGuessingTypeByPath(
       PathHolder.Eel(venvPython),
       context.fileSystem,

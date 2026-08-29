@@ -1,5 +1,6 @@
 package com.intellij.python.sdk.frontend.evolution
 
+import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -132,6 +133,9 @@ private const val PACKAGE_MANAGER_ACTIONS_GROUP: String = "PythonPackageManagerA
 private fun <T : Any> SimpleDataContext.Builder.addOrNull(key: DataKey<T>, value: T?): SimpleDataContext.Builder =
   if (value == null) addNull(key) else add(key, value)
 
+/** The project's Python interpreter settings page, matched by id the way `ShowSettingsUtil` matches one. */
+private const val PY_INTERPRETER_CONFIGURABLE_ID: String = "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+
 internal class EvoPySdkSwitchPopupFactory(
   val project: Project,
   /** Wire identity of the `PyProject` every backend call below is addressed to — see [EvoPyProjectDto.key]. */
@@ -207,7 +211,7 @@ internal class EvoPySdkSwitchPopupFactory(
       // Disabled for selection, and still rebuildable: the environment belongs to another tool, so adopting it here
       // would type its SDK to the wrong one — but that tool rebuilds it from whichever node the user found it on.
       return EvoTreeUnavailableLeafElement(
-        selectEnvAction(project, pyProjectKey, this, nodeId, nodeStats(nodeId), traceId, scope, basePythonPicker(nodeId)),
+        selectEnvAction(project, pyProjectKey, this, nodeId, nodeStats(nodeId), traceId, scope, basePythonPicker(nodeId, traceId)),
         reason,
       )
     }
@@ -218,11 +222,11 @@ internal class EvoPySdkSwitchPopupFactory(
       // The row's own token is where the environment goes — a hatch env name, uv's and pip's `.venv` folder — and the
       // Python comes from whichever option is chosen.
       val createToken = (ref as? PyInterpreterRef.CreateEnv)?.token.orEmpty()
-      return createEnvRow(nodeId, title, icon.icon(), createToken, versions, null, secondaryText)
+      return createEnvRow(nodeId, traceId, title, icon.icon(), createToken, versions, null, secondaryText)
     }
     return when (kind) {
       EvoLeafKind.SELECT_ENV -> EvoTreeLeafElement(
-        selectEnvAction(project, pyProjectKey, this, nodeId, nodeStats(nodeId), traceId, scope, basePythonPicker(nodeId))
+        selectEnvAction(project, pyProjectKey, this, nodeId, nodeStats(nodeId), traceId, scope, basePythonPicker(nodeId, traceId))
       )
       // A runnable backend action (advanced add-interpreter) carries an actionId; a display-only row stays a no-op stub.
       EvoLeafKind.ACTION -> EvoTreeLeafElement(
@@ -237,7 +241,7 @@ internal class EvoPySdkSwitchPopupFactory(
         val leaves = section.leaves.map { it.toElement(nodeId, traceId) }
         EvoTreeSection(
           label = section.label?.let { ListSeparator(it) },
-          elements = leaves + listOfNotNull(addNewElement(section, nodeId)),
+          elements = leaves + listOfNotNull(addNewElement(section, nodeId, traceId)),
           // Only worth a tooltip when the header was actually shortened — otherwise it would just repeat what is on screen.
           labelTooltip = section.labelTooltip?.takeIf { it != section.label },
         )
@@ -251,10 +255,10 @@ internal class EvoPySdkSwitchPopupFactory(
    * The section's trailing row for the environment it does not have yet, or null when the tool offers no in-widget
    * creation at all.
    */
-  private fun addNewElement(section: EvoSectionDto, nodeId: String): EvoTreeElement? {
+  private fun addNewElement(section: EvoSectionDto, nodeId: String, traceId: String): EvoTreeElement? {
     val addNewEnv = section.addNewEnv ?: return null
     if (addNewEnv.options.isEmpty()) return null
-    return createEnvRow(nodeId, addNewEnv.name, nodeIcon(nodeId), addNewEnv.path, addNewEnv.options, addNewEnv.name)
+    return createEnvRow(nodeId, traceId, addNewEnv.name, nodeIcon(nodeId), addNewEnv.path, addNewEnv.options, addNewEnv.name)
   }
 
   /**
@@ -272,6 +276,7 @@ internal class EvoPySdkSwitchPopupFactory(
    */
   private fun createEnvRow(
     nodeId: String,
+    traceId: String,
     name: @NlsSafe String,
     icon: Icon,
     path: String,
@@ -286,7 +291,7 @@ internal class EvoPySdkSwitchPopupFactory(
     val fadedIcon = IconLoader.getTransparentIcon(icon, CREATE_ROW_ICON_ALPHA)
     val best = options.first()
     fun create(token: String, source: PyEvoWidgetCollector.Source, installVersion: String? = null) =
-      createEnv(nodeId, token, path, defaultName, source, installVersion)
+      createEnv(nodeId, traceId, token, path, defaultName, source, installVersion)
     val action = object : AnAction({ name }, { "" }, fadedIcon), DumbAware, EvoBasePythonPanel {
       /** The Pythons this row can be built on, offered by the right button. Picking one builds the environment. */
       override val basePythonPanel: EvoTreeNodeElement by lazy {
@@ -332,7 +337,7 @@ internal class EvoPySdkSwitchPopupFactory(
         text = name,
         icon = icon,
         sections = listOf(EvoTreeSection(elements = single.bases.map { base ->
-          baseInterpreterRow(base) { onChosen(base.token, base.version, null) }
+          baseInterpreterRow(base) { onChosen(base.token, base.baseText(), base.installVersion) }
         })),
       )
     }
@@ -342,7 +347,7 @@ internal class EvoPySdkSwitchPopupFactory(
       sections = versionRows(
         options,
         { option -> versionAction(option) { onChosen(option.token, addVersionText(option), option.installVersion()) } },
-        { base -> baseInterpreterRow(base) { onChosen(base.token, base.version, null) } },
+        { base -> baseInterpreterRow(base) { onChosen(base.token, base.baseText(), base.installVersion) } },
         { option -> installActionRow { onChosen(option.token, addVersionText(option), option.installVersion()) } },
       ),
     )
@@ -355,7 +360,7 @@ internal class EvoPySdkSwitchPopupFactory(
    * environment on the Python chosen, after the confirmation. Built from the same [versionRows] the create row uses, so
    * the two cannot drift apart.
    */
-  private fun EvoLeafDto.basePythonPicker(nodeId: String): EvoTreeNodeElement? {
+  private fun EvoLeafDto.basePythonPicker(nodeId: String, traceId: String): EvoTreeNodeElement? {
     val spec = recreate ?: return null
     val envHomePath = (ref as? PyInterpreterRef.DetectedPath)?.homePath ?: return null
     val stats = nodeStats(nodeId)
@@ -366,7 +371,7 @@ internal class EvoPySdkSwitchPopupFactory(
       ?.let { (from, to) -> EvoToolChange(from, to) }
     return basePythonPanel(title, icon.icon(), spec.options) { token, text, installVersion ->
       recreateEvoEnv(project, pyProjectKey, nodeId, stats, envHomePath, title, token, text, installVersion,
-                     spec.canSyncPackages, toolChange, scope)
+                     spec.canSyncPackages, toolChange, traceId, scope)
     }.apply { stepDescription = PySdkFrontendBundle.message("evo.sdk.status.bar.popup.panel.rebuild.step") }
   }
 
@@ -421,12 +426,13 @@ internal class EvoPySdkSwitchPopupFactory(
   /** Creates the environment a version or base-interpreter row stands for, named by the tool that makes it. */
   private fun createEnv(
     nodeId: String,
+    traceId: String,
     token: String,
     path: String,
     defaultName: String?,
     source: PyEvoWidgetCollector.Source,
     installVersion: String? = null,
-  ) = createEvoEnv(project, pyProjectKey, nodeId, nodeStats(nodeId), token, path, defaultName, installVersion, source, scope)
+  ) = createEvoEnv(project, pyProjectKey, nodeId, nodeStats(nodeId), token, path, defaultName, installVersion, source, traceId, scope)
 
   /**
    * A version the machine has gets the Python logo; one that would have to be fetched gets the download icon —
@@ -484,7 +490,7 @@ internal class EvoPySdkSwitchPopupFactory(
       // opens a list of Pythons rather than doing anything, and the confirmation is behind that, so leading costs a
       // mis-click nothing.
       elements = buildList {
-        add(recreateCurrentEnvNode())
+        add(recreateCurrentEnvNode(traceId))
         addAll(packageManagerActions(context))
         add(EvoTreeLeafElement(managePackagesAction))
       },
@@ -520,7 +526,7 @@ internal class EvoPySdkSwitchPopupFactory(
    * A tool that will not rebuild this environment — a system interpreter, an environment belonging to another project —
    * answers with nothing, and the row then reports itself unavailable, exactly as a tool node that offered nothing does.
    */
-  private fun recreateCurrentEnvNode(): EvoTreeElement =
+  private fun recreateCurrentEnvNode(traceId: String): EvoTreeElement =
     EvoTreeLazyNodeElement(
       text = PySdkFrontendBundle.message("evo.sdk.status.bar.popup.recreate.current"),
       icon = AllIcons.Actions.Restart,
@@ -528,22 +534,36 @@ internal class EvoPySdkSwitchPopupFactory(
       // An environment no tool here can rebuild — a remote interpreter, one no node owns — is not a fault to report.
       signsUnavailable = false,
     ) { _ ->
-      val dto = evoRpc { requestEvoCurrentRecreate(project.projectId(), pyProjectKey) }
+      val dto = evoRpc { requestEvoCurrentRecreate(project.projectId(), pyProjectKey, traceId) }
                 ?: throw EvoWarningException(PySdkFrontendBundle.message("evo.sdk.status.bar.popup.recreate.current.unavailable"))
       val stats = nodeStats(dto.nodeId)
       fun rebuild(token: String, title: @NlsSafe String, installVersion: String?) =
         recreateEvoEnv(project, pyProjectKey, dto.nodeId, stats, dto.envHomePath, dto.title, token, title, installVersion,
-                       dto.recreate.canSyncPackages, null, scope)
+                       dto.recreate.canSyncPackages, null, traceId, scope)
       EvoLoadedNode(
         sections = versionRows(
           dto.recreate.options,
           { option -> versionAction(option) { rebuild(option.token, addVersionText(option), option.installVersion()) } },
-          { base -> baseInterpreterRow(base) { rebuild(base.token, base.version, null) } },
+          { base -> baseInterpreterRow(base) { rebuild(base.token, base.baseText(), base.installVersion) } },
           { option -> installActionRow { rebuild(option.token, addVersionText(option), option.installVersion()) } },
         ),
         refreshable = false,
         stepDescription = PySdkFrontendBundle.message("evo.sdk.status.bar.popup.panel.rebuild.step"),
       )
+    }
+
+  /**
+   * "Interpreter Settings…" — the row the classic widget ended with, opening the project's Python interpreter page.
+   *
+   * Opened by the configurable's own id, as the settings gear opens the package-manager page: the frontend has no
+   * handle on the backend's configurable classes, and an id is what `ShowSettingsUtil` matches on anyway.
+   */
+  private fun interpreterSettingsAction(): AnAction =
+    object : AnAction({ PySdkFrontendBundle.message("evo.sdk.status.bar.popup.interpreter.settings") },
+                      { "" }, AllIcons.General.Settings), DumbAware {
+      override fun actionPerformed(e: AnActionEvent) {
+        ShowSettingsUtilImpl.showSettingsDialog(project, PY_INTERPRETER_CONFIGURABLE_ID, null)
+      }
     }
 
   /**
@@ -598,6 +618,9 @@ internal class EvoPySdkSwitchPopupFactory(
     }
     // Above "Advanced", where it has always sat.
     if (associated.isNotEmpty()) nonToolNodes.add(0, associatedInterpretersNode(traceId))
+    // Last of them, as it was in the classic widget: the way out of the popup and into the full interpreter settings,
+    // for everything this list deliberately does not offer.
+    nonToolNodes += EvoTreeLeafElement(interpreterSettingsAction())
 
     val toolsCaption = ListSeparator(PySdkFrontendBundle.message(
       // "Change" once there is something to change: the section switches the interpreter rather than setting a first one.

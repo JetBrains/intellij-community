@@ -109,9 +109,20 @@ class UvPython(runtime: PyToolRuntime) : UvCommand("python", runtime) {
   }
 
   /**
-   * Download and install Python versions
+   * Download and install Python versions.
+   *
+   * @param targets uv's own version requests (`3.12`, `pypy@3.11`, `cpython-3.13.1-macos-aarch64-none`). uv installs
+   *   the versions the project asks for when none is named.
+   * @param reinstall install the version again even where uv already has it.
    */
-  suspend fun install(): PyResult<Unit> = TODO()
+  suspend fun install(vararg targets: String, reinstall: Boolean? = null): PyResult<Unit> {
+    val arguments = buildList {
+      addAll(targets)
+      addAll(listOf(reinstall to "--reinstall").makeOptions())
+    }
+    executeAndHandleErrors("install", *arguments.toTypedArray(), transformer = ZeroCodeStdoutTransformer).getOr { return it }
+    return PyResult.success(Unit)
+  }
 
   /**
    * Upgrade installed Python versions

@@ -1,6 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.hatch.sdk.configuration
 
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import com.intellij.python.community.execService.python.validatePythonAndGetInfo
+import com.jetbrains.python.sdk.detectPythonEnvironment
+import com.jetbrains.python.sdk.impl.resolvePythonBinary
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.PythonInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
@@ -67,7 +74,13 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
     if (canManage) {
       val defaultEnv = hatchService.findDefaultVirtualEnvironmentOrNull().orLogException(LOGGER)?.pythonVirtualEnvironment
       when (defaultEnv) {
-        is PythonVirtualEnvironment.Existing -> EnvCheckerResult.EnvFound(defaultEnv.pythonInfo, intentionName)
+        // Asked of the one environment this is about. Listing them no longer runs every interpreter to learn a version
+        // nobody had asked for, so the version for this one is read here — from what it records, and only otherwise by
+        // running it.
+        is PythonVirtualEnvironment.Existing -> {
+          val info = defaultEnv.pythonInfo ?: defaultEnv.pythonHomePath.path.pythonInfoOrNull()
+          if (info == null) envNotFound else EnvCheckerResult.EnvFound(info, intentionName)
+        }
         is PythonVirtualEnvironment.NotExisting, null -> envNotFound
       }
     }
@@ -114,4 +127,18 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
     sdk
   }
 
+}
+
+/**
+ * What the environment at this home path is, without starting it where it says so itself.
+ *
+ * A hatch environment is a virtualenv, so its `pyvenv.cfg` states the version, which environment detection reads. The
+ * interpreter is only run for one that records nothing.
+ */
+private suspend fun java.nio.file.Path.pythonInfoOrNull(): PythonInfo? {
+  val binary = resolvePythonBinary() ?: return null
+  val recorded = withContext(Dispatchers.IO) { binary.detectPythonEnvironment().successOrNull?.version }
+  val level = recorded?.let { LanguageLevel.fromPythonVersionSafe(it) }
+  if (level != null) return PythonInfo(languageLevel = level, version = recorded)
+  return binary.validatePythonAndGetInfo().successOrNull
 }
