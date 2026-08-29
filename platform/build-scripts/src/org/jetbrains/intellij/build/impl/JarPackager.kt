@@ -117,7 +117,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "intellij-plugin-structure",
   // also used by `intellij.ml.llm.libraries.grazie`, which is a library module by intention, but not by name
   "io.modelcontextprotocol.kotlin.sdk",
-  "io.qameta.allure.java.commons",
   "jetbrains.intellij.deps.eclipse.jgit",
   "jps-javac-extension",
   "kotlin-metadata",
