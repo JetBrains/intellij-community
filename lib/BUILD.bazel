@@ -15102,6 +15102,20 @@ jvm_import(
 )
 
 copy_file(
+    name = "org.sqlite/native-3.42.0-jb.1.jar_copy",
+    src = "@org_sqlite-native-3_42_0-jb_1_http//file",
+    out = "org.sqlite/native-3.42.0-jb.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-sqlite-native-sqlite-native",
+    jar = "@org_sqlite-native-3_42_0-jb_1_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "org.xerial/sqlite-jdbc-3.53.2.1.jar_copy",
     src = "@org_xerial-sqlite-jdbc-3_53_2_1_http//file",
     out = "org.xerial/sqlite-jdbc-3.53.2.1.jar",
@@ -21359,20 +21373,6 @@ jvm_import(
     name = "slf4j-jdk14",
     jar = "@org_slf4j-slf4j-jdk14-2_0_13_http//file",
     source_jar = "@org_slf4j-slf4j-jdk14-2_0_13-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.sqlite/native-3.42.0-jb.1.jar_copy",
-    src = "@org_sqlite-native-3_42_0-jb_1_http//file",
-    out = "org.sqlite/native-3.42.0-jb.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "sqlite-native",
-    jar = "@org_sqlite-native-3_42_0-jb_1_http//file",
     visibility = ["//visibility:public"],
 )
 

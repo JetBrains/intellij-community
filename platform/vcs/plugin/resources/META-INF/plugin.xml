@@ -34,4 +34,10 @@
     <module name="intellij.platform.vcs.frontend.split"/>
     <module name="intellij.platform.vcs.protocol.split.generated"/>
   </content>
+  <!-- sqlite-native is a private library of this plugin. An unnamed content tag registers it in the implicit
+       per-plugin namespace, embedded, so `intellij.platform.sqlite` reads the native binaries from its own
+       classloader, and a copy in another plugin cannot clash with it -->
+  <content>
+    <module name="intellij.libraries.sqlite.native" loading="embedded"/>
+  </content>
 </idea-plugin>

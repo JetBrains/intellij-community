@@ -127,7 +127,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "org.scilab.forge:jlatexmath",
   "package-search-api-client",
   "software.amazon.awssdk.glue",
-  "sqlite-native",
   "squareup.okio.jvm",
 )
 

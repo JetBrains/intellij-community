@@ -1,10 +1,12 @@
+- name: lib/intellij.libraries.sqlite.native.jar
+  contentModules:
+  - name: intellij.libraries.sqlite.native
+    libraries:
+      sqlite-native:
+      - name: $MAVEN_REPOSITORY$/org/sqlite/native/3/native-3.jar
 - name: lib/modules/intellij.platform.sqlite.jar
   contentModules:
   - name: intellij.platform.sqlite
-  library: sqlite-native
-  files:
-  - name: $MAVEN_REPOSITORY$/org/sqlite/native/3/native-3.jar
-  reason: <- intellij.platform.sqlite
 - name: lib/modules/intellij.platform.vcs.backend.split.jar
   contentModules:
   - name: intellij.platform.vcs.backend.split

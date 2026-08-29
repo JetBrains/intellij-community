@@ -1,0 +1,50 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.libraries.sqlite.native` start
+jvm_library(
+    name = "sqlite-native",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.sqlite.native",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-sqlite-native-sqlite-native"],
+    runtime_deps = ["@lib//:libraries-sqlite-native-sqlite-native"],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-sqlite-native-sqlite-native"],
+    module = ":sqlite-native",
+)
+
+jvm_library(
+    name = "sqlite-native_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.sqlite.native",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-sqlite-native-sqlite-native"],
+    runtime_deps = [":sqlite-native"],
+)
+### auto-generated section `build intellij.libraries.sqlite.native` end
+
+### auto-generated section `iml intellij.libraries.sqlite.native` start
+exports_files(
+    [
+        "intellij.libraries.sqlite.native.iml",
+        "resources/intellij.libraries.sqlite.native.xml",
+        "module-content.yaml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.sqlite.native` end

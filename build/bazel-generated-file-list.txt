@@ -636,6 +636,7 @@ libraries/skiko
 libraries/snakeyaml
 libraries/snakeyaml-engine
 libraries/sqlite
+libraries/sqlite-native
 libraries/sshd-osgi
 libraries/sshj
 libraries/stream

@@ -12104,6 +12104,13 @@ http_file(
 )
 
 http_file(
+    name = "org_sqlite-native-3_42_0-jb_1_http",
+    downloaded_file_path = "native-3.42.0-jb.1.jar",
+    sha256 = "491c4ae84a1bad34c85624682a80def4f3a3a0fb9d517121d05c2dfeb94966f8",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/sqlite/native/3.42.0-jb.1/native-3.42.0-jb.1.jar",
+)
+
+http_file(
     name = "org_xerial-sqlite-jdbc-3_53_2_1_http",
     downloaded_file_path = "sqlite-jdbc-3.53.2.1.jar",
     sha256 = "f55e405ed96d5ffe629e05b7b51b059e1c7d64527c0cc90a972fbac06730ccc1",
@@ -16812,13 +16819,6 @@ http_file(
     downloaded_file_path = "slf4j-jdk14-2.0.13-sources.jar",
     sha256 = "8bd6a94a7f610ea9f0180f8b6832bd8b4398f123bea8ad8febe00c36c49e1d1e",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/slf4j/slf4j-jdk14/2.0.13/slf4j-jdk14-2.0.13-sources.jar",
-)
-
-http_file(
-    name = "org_sqlite-native-3_42_0-jb_1_http",
-    downloaded_file_path = "native-3.42.0-jb.1.jar",
-    sha256 = "491c4ae84a1bad34c85624682a80def4f3a3a0fb9d517121d05c2dfeb94966f8",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/sqlite/native/3.42.0-jb.1/native-3.42.0-jb.1.jar",
 )
 
 http_file(
