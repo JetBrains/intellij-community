@@ -66,7 +66,7 @@ Create a new JPS module at `<feature-root>/plugin/`, e.g. `community/platform/<f
 
 - **No JAR-layout file.** The dev distribution derives each member's jar from the plugin's own `<content>`: the loading rule of the element, the `pack-content-into-plugin-jar` marker, and the member's own `package` attribute. So a conventional wrapper states nothing about packaging, and the navbar example holds no such file. Run `./build/jpsModelToBazel.cmd` after you register the module.
 
-  Two generated files carry what the conventions cannot answer, and you edit neither. A `dev-dist.yaml` beside the plugin holds a layout deviation, and `community/build/dev_dist_plugin_content_population.txt` holds the plugin main modules. `./build/jpsModelToBazel.cmd --verify-dev-dist-residue` fails on a stale residue and names the rows that changed.
+  Two generated files carry what the conventions cannot answer, and you edit neither. A `dev-dist.yaml` beside the plugin holds a layout deviation, and `community/build/dev_dist_plugin_content_population.txt` holds the plugin main modules. `./build/jpsModelToBazel.cmd --verify-dev-dist-residue --content-report=<content-report.zip>` fails on a stale residue and names the rows that changed. The zip comes from a packaging build, so read the rows a packaging test prints when you have no zip.
 
 - Suppress `SplitModeMixedDependencies` and `PluginXmlPluginLogo` in `plugin.xml` only if the inspection actually flags the wrapper.
 
