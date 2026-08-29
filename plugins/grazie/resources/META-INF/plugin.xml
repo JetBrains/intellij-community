@@ -35,9 +35,11 @@
     <module name="intellij.grazie.properties"/>
     <module name="intellij.grazie.xml"/>
     <module name="intellij.grazie.yaml"/>
+    <module name="intellij.libraries.ai.grazie.rule.engine" loading="embedded"/>
     <module name="intellij.libraries.ai.grazie.spell.gec.engine.local" loading="embedded"/>
   </content>
   <content>
+    <module name="intellij.libraries.ai.grazie.semantic.engine"/>
     <module name="intellij.libraries.kotlin.logging" loading="embedded"/>
   </content>
 

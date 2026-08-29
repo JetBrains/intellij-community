@@ -109,8 +109,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "Servlets",
   "agentclientprotocol.acp.jvm",
   "agentclientprotocol.acp.ktor",
-  "ai.grazie.rule.engine",
-  "ai.grazie.semantic.engine",
   "antlr4-runtime",
   "assertj-swing",
   "com.jetbrains.fus.reporting.ap.validation.all",

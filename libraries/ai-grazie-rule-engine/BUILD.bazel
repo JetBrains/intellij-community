@@ -1,0 +1,49 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.libraries.ai.grazie.rule.engine` start
+jvm_library(
+    name = "ai-grazie-rule-engine",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.ai.grazie.rule.engine",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-ai-grazie-rule-engine-ai-grazie-rule-engine"],
+    runtime_deps = ["@lib//:libraries-ai-grazie-rule-engine-ai-grazie-rule-engine"],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-ai-grazie-rule-engine-ai-grazie-rule-engine"],
+    module = ":ai-grazie-rule-engine",
+)
+
+jvm_library(
+    name = "ai-grazie-rule-engine_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.ai.grazie.rule.engine",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-ai-grazie-rule-engine-ai-grazie-rule-engine"],
+    runtime_deps = [":ai-grazie-rule-engine"],
+)
+### auto-generated section `build intellij.libraries.ai.grazie.rule.engine` end
+
+### auto-generated section `iml intellij.libraries.ai.grazie.rule.engine` start
+exports_files(
+    [
+        "intellij.libraries.ai.grazie.rule.engine.iml",
+        "resources/intellij.libraries.ai.grazie.rule.engine.xml",
+        "module-content.yaml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.ai.grazie.rule.engine` end

@@ -93,11 +93,13 @@
       - name: $MAVEN_REPOSITORY$/cloud/jetbrains/sdk/ml/jbai-tree-api/2/jbai-tree-api-2.jar
       cloud.jetbrains.sdk.ml.jbai.ner.api:
       - name: $MAVEN_REPOSITORY$/cloud/jetbrains/sdk/ml/jbai-ner-api/0/jbai-ner-api-0.jar
-  library: ai.grazie.rule.engine
-  files:
-  - name: $MAVEN_REPOSITORY$/ai/grazie/grazie-rule-engine/0/grazie-rule-engine-0.jar
-  - name: $MAVEN_REPOSITORY$/net/fellbaum/jemoji/1/jemoji-1.jar
-  reason: <- intellij.grazie.core
+- name: lib/intellij.libraries.ai.grazie.rule.engine.jar
+  contentModules:
+  - name: intellij.libraries.ai.grazie.rule.engine
+    libraries:
+      ai.grazie.rule.engine:
+      - name: $MAVEN_REPOSITORY$/ai/grazie/grazie-rule-engine/0/grazie-rule-engine-0.jar
+      - name: $MAVEN_REPOSITORY$/net/fellbaum/jemoji/1/jemoji-1.jar
 - name: lib/intellij.libraries.ai.grazie.spell.gec.engine.local.jar
   contentModules:
   - name: intellij.libraries.ai.grazie.spell.gec.engine.local
@@ -143,10 +145,12 @@
     libraries:
       ai.grazie.tasks.library.model.jvm:
       - name: $MAVEN_REPOSITORY$/ai/grazie/tasks-library/tasks-library-model-jvm/0/tasks-library-model-jvm-0.jar
-  library: ai.grazie.semantic.engine
-  files:
-  - name: $MAVEN_REPOSITORY$/ai/grazie/grazie-rules-llm/0/grazie-rules-llm-0.jar
-  reason: <- intellij.grazie.markdown
 - name: lib/modules/intellij.grazie.properties.jar
   contentModules:
   - name: intellij.grazie.properties
+- name: lib/modules/intellij.libraries.ai.grazie.semantic.engine.jar
+  contentModules:
+  - name: intellij.libraries.ai.grazie.semantic.engine
+    libraries:
+      ai.grazie.semantic.engine:
+      - name: $MAVEN_REPOSITORY$/ai/grazie/grazie-rules-llm/0/grazie-rules-llm-0.jar

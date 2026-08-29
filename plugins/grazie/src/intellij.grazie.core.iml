@@ -684,7 +684,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="module" module-name="intellij.libraries.lucene.common" />
     <orderEntry type="module" module-name="intellij.libraries.ai.grazie.spell.gec.engine.local" />
-    <orderEntry type="library" exported="" name="ai.grazie.rule.engine" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.ai.grazie.rule.engine" exported="" />
     <orderEntry type="module-library" exported="">
       <library name="ai.grazie.model.ner.jvm" type="repository">
         <properties include-transitive-deps="false" maven-id="ai.grazie.model:model-ner-jvm:0.8.256">

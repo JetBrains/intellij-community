@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.ai.grazie.semantic.engine.jar
+  modules:
+  - name: intellij.libraries.ai.grazie.semantic.engine
+    libraries:
+      ai.grazie.semantic.engine:
+      - name: $MAVEN_REPOSITORY$/ai/grazie/grazie-rules-llm/0/grazie-rules-llm-0.jar

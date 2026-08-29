@@ -1,0 +1,7 @@
+- name: dist.all/lib/intellij.libraries.ai.grazie.rule.engine.jar
+  modules:
+  - name: intellij.libraries.ai.grazie.rule.engine
+    libraries:
+      ai.grazie.rule.engine:
+      - name: $MAVEN_REPOSITORY$/ai/grazie/grazie-rule-engine/0/grazie-rule-engine-0.jar
+      - name: $MAVEN_REPOSITORY$/net/fellbaum/jemoji/1/jemoji-1.jar

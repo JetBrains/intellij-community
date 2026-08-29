@@ -29,48 +29,6 @@ http_file(
 )
 
 http_file(
-    name = "ai_grazie-grazie-rule-engine-0_4_8_http",
-    downloaded_file_path = "grazie-rule-engine-0.4.8.jar",
-    sha256 = "4424b866ca4f4e4185fa49f8d01c86bfeec0e4f67424cd43ae89dbe42209d5a1",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.4.8/grazie-rule-engine-0.4.8.jar",
-)
-
-http_file(
-    name = "net_fellbaum-jemoji-1_3_1_http",
-    downloaded_file_path = "jemoji-1.3.1.jar",
-    sha256 = "80a2f8918240a07d3a6fc7cdcc543d278013f6943c080835e43a22fc90462a9f",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/fellbaum/jemoji/1.3.1/jemoji-1.3.1.jar",
-)
-
-http_file(
-    name = "ai_grazie-grazie-rule-engine-0_4_8-sources_http",
-    downloaded_file_path = "grazie-rule-engine-0.4.8-sources.jar",
-    sha256 = "ca74e4092844e911811028d6f814708388e13d50f81515e63005aeeb4aa8f744",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.4.8/grazie-rule-engine-0.4.8-sources.jar",
-)
-
-http_file(
-    name = "net_fellbaum-jemoji-1_3_1-sources_http",
-    downloaded_file_path = "jemoji-1.3.1-sources.jar",
-    sha256 = "d8c00dd2d5edff50888cd222aa30cba9a96a4743b9d1f2ca725e9d576abad31a",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/fellbaum/jemoji/1.3.1/jemoji-1.3.1-sources.jar",
-)
-
-http_file(
-    name = "ai_grazie-grazie-rules-llm-0_4_8_http",
-    downloaded_file_path = "grazie-rules-llm-0.4.8.jar",
-    sha256 = "d015676f20eed34ed02d455bccd8059c78102c4e5e13ec500e9f4b067f3d3f17",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rules-llm/0.4.8/grazie-rules-llm-0.4.8.jar",
-)
-
-http_file(
-    name = "ai_grazie-grazie-rules-llm-0_4_8-sources_http",
-    downloaded_file_path = "grazie-rules-llm-0.4.8-sources.jar",
-    sha256 = "1b15a2c1647263b14d8c081d6ad18af0e36b8ad94c3f89e5099a24af76c887d8",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rules-llm/0.4.8/grazie-rules-llm-0.4.8-sources.jar",
-)
-
-http_file(
     name = "com_ibm_db2-jcc-11_5_7_0_http",
     downloaded_file_path = "jcc-11.5.7.0.jar",
     sha256 = "1dbc8dc93441890f242be66983f1d1363fe6a80f8d1f0b7ca0e1063f42054bb0",
@@ -6284,6 +6242,48 @@ http_file(
     downloaded_file_path = "stax2-api-4.2.2-sources.jar",
     sha256 = "d20d4c7af14adf8025f719f8e6255659495e4836256b5b1b816be30b5e76f1b7",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/woodstox/stax2-api/4.2.2/stax2-api-4.2.2-sources.jar",
+)
+
+http_file(
+    name = "ai_grazie-grazie-rule-engine-0_4_8_http",
+    downloaded_file_path = "grazie-rule-engine-0.4.8.jar",
+    sha256 = "4424b866ca4f4e4185fa49f8d01c86bfeec0e4f67424cd43ae89dbe42209d5a1",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.4.8/grazie-rule-engine-0.4.8.jar",
+)
+
+http_file(
+    name = "net_fellbaum-jemoji-1_3_1_http",
+    downloaded_file_path = "jemoji-1.3.1.jar",
+    sha256 = "80a2f8918240a07d3a6fc7cdcc543d278013f6943c080835e43a22fc90462a9f",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/fellbaum/jemoji/1.3.1/jemoji-1.3.1.jar",
+)
+
+http_file(
+    name = "ai_grazie-grazie-rule-engine-0_4_8-sources_http",
+    downloaded_file_path = "grazie-rule-engine-0.4.8-sources.jar",
+    sha256 = "ca74e4092844e911811028d6f814708388e13d50f81515e63005aeeb4aa8f744",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.4.8/grazie-rule-engine-0.4.8-sources.jar",
+)
+
+http_file(
+    name = "net_fellbaum-jemoji-1_3_1-sources_http",
+    downloaded_file_path = "jemoji-1.3.1-sources.jar",
+    sha256 = "d8c00dd2d5edff50888cd222aa30cba9a96a4743b9d1f2ca725e9d576abad31a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/fellbaum/jemoji/1.3.1/jemoji-1.3.1-sources.jar",
+)
+
+http_file(
+    name = "ai_grazie-grazie-rules-llm-0_4_8_http",
+    downloaded_file_path = "grazie-rules-llm-0.4.8.jar",
+    sha256 = "d015676f20eed34ed02d455bccd8059c78102c4e5e13ec500e9f4b067f3d3f17",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rules-llm/0.4.8/grazie-rules-llm-0.4.8.jar",
+)
+
+http_file(
+    name = "ai_grazie-grazie-rules-llm-0_4_8-sources_http",
+    downloaded_file_path = "grazie-rules-llm-0.4.8-sources.jar",
+    sha256 = "1b15a2c1647263b14d8c081d6ad18af0e36b8ad94c3f89e5099a24af76c887d8",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rules-llm/0.4.8/grazie-rules-llm-0.4.8-sources.jar",
 )
 
 http_file(

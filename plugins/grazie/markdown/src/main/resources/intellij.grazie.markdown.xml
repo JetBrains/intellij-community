@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.grazie.core"/>
+    <module name="intellij.libraries.ai.grazie.semantic.engine"/>
     <module name="intellij.libraries.ai.grazie.spell.gec.engine.local"/>
     <module name="intellij.markdown"/>
     <module name="intellij.markdown.backend"/>

@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.ai.grazie.spell.gec.engine.local"/>
+    <module name="intellij.libraries.ai.grazie.rule.engine"/>
     <module name="intellij.libraries.caffeine"/>
     <module name="intellij.libraries.commons.lang3"/>
     <module name="intellij.libraries.commons.logging"/>

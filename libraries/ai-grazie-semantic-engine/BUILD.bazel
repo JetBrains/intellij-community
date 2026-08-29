@@ -1,0 +1,49 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.libraries.ai.grazie.semantic.engine` start
+jvm_library(
+    name = "ai-grazie-semantic-engine",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.ai.grazie.semantic.engine",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-ai-grazie-semantic-engine-ai-grazie-semantic-engine"],
+    runtime_deps = ["@lib//:libraries-ai-grazie-semantic-engine-ai-grazie-semantic-engine"],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-ai-grazie-semantic-engine-ai-grazie-semantic-engine"],
+    module = ":ai-grazie-semantic-engine",
+)
+
+jvm_library(
+    name = "ai-grazie-semantic-engine_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.ai.grazie.semantic.engine",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-ai-grazie-semantic-engine-ai-grazie-semantic-engine"],
+    runtime_deps = [":ai-grazie-semantic-engine"],
+)
+### auto-generated section `build intellij.libraries.ai.grazie.semantic.engine` end
+
+### auto-generated section `iml intellij.libraries.ai.grazie.semantic.engine` start
+exports_files(
+    [
+        "intellij.libraries.ai.grazie.semantic.engine.iml",
+        "resources/intellij.libraries.ai.grazie.semantic.engine.xml",
+        "module-content.yaml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.ai.grazie.semantic.engine` end

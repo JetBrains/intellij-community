@@ -36,7 +36,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" name="ai.grazie.semantic.engine" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.ai.grazie.semantic.engine" />
     <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="module" module-name="intellij.java.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.collaborationTools" scope="TEST" />
