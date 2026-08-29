@@ -22,12 +22,17 @@ import kotlin.io.path.writeText
  * A plugin whose residue would be empty gets no file, and an existing empty one is deleted. So an absent file always
  * means pure convention.
  */
-internal fun writeDevDistResidues(moduleList: ModuleList, context: BazelBuildFileGenerator): DevDistResidueWriteResult {
+internal fun writeDevDistResidues(
+  moduleList: ModuleList,
+  context: BazelBuildFileGenerator,
+  verify: Boolean = false,
+): DevDistResidueWriteResult {
   var written = 0
   var deleted = 0
   var unchanged = 0
   val rowsPerField = LinkedHashMap<String, Int>()
   val pluginsPerField = LinkedHashMap<String, Int>()
+  val divergent = ArrayList<DevDistResidueDivergence>()
   // The fold over the checked-in reports, with no override in play. It is the authority for every row this writes: the
   // reports are the verification record of what the real distribution build packs, and the checked-in `BUILD.bazel` was
   // written with this fold.
@@ -55,24 +60,33 @@ internal fun writeDevDistResidues(moduleList: ModuleList, context: BazelBuildFil
     when {
       text == null && before == null -> Unit
       text == null -> {
-        file.deleteIfExists()
+        if (!verify) {
+          file.deleteIfExists()
+        }
         deleted++
+        divergent.add(DevDistResidueDivergence(mainModule = module.module.name, file = file, before = before, after = null))
       }
       text == before -> unchanged++
       else -> {
-        Files.createDirectories(file.parent)
-        file.writeText(text)
+        if (!verify) {
+          Files.createDirectories(file.parent)
+          file.writeText(text)
+        }
         written++
+        divergent.add(DevDistResidueDivergence(mainModule = module.module.name, file = file, before = before, after = text))
       }
     }
   }
-  writePluginContentPopulation(moduleList = moduleList, context = context)
+  if (!verify) {
+    writePluginContentPopulation(moduleList = moduleList, context = context)
+  }
   return DevDistResidueWriteResult(
     written = written,
     deleted = deleted,
     unchanged = unchanged,
     rowsPerField = rowsPerField,
     pluginsPerField = pluginsPerField,
+    divergent = divergent,
   )
 }
 
@@ -121,7 +135,48 @@ internal class DevDistResidueWriteResult(
   @JvmField val unchanged: Int,
   @JvmField val rowsPerField: Map<String, Int>,
   @JvmField val pluginsPerField: Map<String, Int>,
+  /** Every plugin whose file this pass changed, in the order the pass reached them. */
+  @JvmField val divergent: List<DevDistResidueDivergence> = emptyList(),
 )
+
+/**
+ * One plugin whose checked-in residue does not state what the derivation needs.
+ *
+ * [before] is `null` when the plugin has no file yet, and [after] is `null` when the derivation reproduces the report on
+ * its own and the file has to go.
+ */
+internal class DevDistResidueDivergence(
+  @JvmField val mainModule: String,
+  @JvmField val file: Path,
+  @JvmField val before: String?,
+  @JvmField val after: String?,
+)
+
+/**
+ * What a reader has to change in one plugin's residue, as the rows that enter and leave.
+ *
+ * Rows and not a unified diff. Every row of the file is one `PluginLayout` decision, the fields are sorted, and the
+ * header is the same text in every file - so the set difference states the whole change, and it states it in the terms
+ * the file's own comments use.
+ */
+internal fun devDistResidueDivergenceReport(divergence: DevDistResidueDivergence): String {
+  val before = divergence.before?.lineSequence()?.filterNot { it.startsWith("#") }?.toSet() ?: emptySet()
+  val after = divergence.after?.lineSequence()?.filterNot { it.startsWith("#") }?.toSet() ?: emptySet()
+  val builder = StringBuilder()
+  builder.append(divergence.mainModule)
+  when {
+    divergence.before == null -> builder.append("  (no residue file yet)")
+    divergence.after == null -> builder.append("  (the file has to go - the derivation needs no residue)")
+  }
+  builder.append('\n')
+  for (line in after - before) {
+    builder.append("    + ").append(residueRowText(line)).append('\n')
+  }
+  for (line in before - after) {
+    builder.append("    - ").append(residueRowText(line)).append('\n')
+  }
+  return builder.toString()
+}
 
 /**
  * The residue one plugin needs, or `null` when the derivation reproduces the report on its own.
@@ -234,6 +289,9 @@ private fun synthesizeContentResidue(
   )
   return result.takeIf { contentResidueFieldRows(it).isNotEmpty() }
 }
+
+/** One row of a residue file, without the indent and without the list dash the report supplies itself. */
+private fun residueRowText(line: String): String = line.trim().removePrefix("- ")
 
 /** [contentResidueOf] for a section this run composed rather than read from a file. */
 private fun residueOf(section: ContentResidueSection): PluginContentResidue {

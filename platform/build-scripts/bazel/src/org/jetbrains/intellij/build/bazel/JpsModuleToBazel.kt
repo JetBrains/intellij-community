@@ -24,6 +24,7 @@ import kotlin.io.path.readLines
 import kotlin.io.path.readText
 import kotlin.io.path.relativeTo
 import kotlin.io.path.writeText
+import kotlin.system.exitProcess
 
 /**
  To enable debug logging in Bazel: --sandbox_debug --verbose_failures --define=kt_trace=1
@@ -45,12 +46,14 @@ internal class JpsModuleToBazel {
       var comparePluginContent = false
       var comparePluginCandidacy = false
       var writeDevDistResidue = false
+      var verifyDevDistResidue = false
 
       for (arg in args) {
         when {
           arg == "--compare-plugin-content" -> comparePluginContent = true
           arg == "--compare-plugin-candidacy" -> comparePluginCandidacy = true
           arg == "--write-dev-dist-residue" -> writeDevDistResidue = true
+          arg == "--verify-dev-dist-residue" -> verifyDevDistResidue = true
           arg.startsWith("--run_without_ultimate_root=") ->
             runWithoutUltimateRoot = arg.substringAfter("=")
           arg.startsWith("--workspace_directory=") ->
@@ -205,13 +208,39 @@ internal class JpsModuleToBazel {
       if (comparePluginCandidacy) {
         comparePluginContentCandidacy(moduleList = moduleList, context = generator, out = ::println)
       }
-      if (writeDevDistResidue) {
-        val result = writeDevDistResidues(moduleList = moduleList, context = generator)
+      if (writeDevDistResidue || verifyDevDistResidue) {
+        val result = writeDevDistResidues(moduleList = moduleList, context = generator, verify = verifyDevDistResidue)
         println("dev-dist residue: written=${result.written} deleted=${result.deleted} unchanged=${result.unchanged}")
         for ((field, plugins) in result.pluginsPerField.entries.sortedByDescending { it.value }) {
           println("  $plugins plugins, ${result.rowsPerField.get(field)} rows  $field")
         }
+        if (verifyDevDistResidue && result.divergent.isNotEmpty()) {
+          reportStaleDevDistResidues(result.divergent)
+        }
       }
+    }
+
+    /**
+     * Fails the run naming every plugin whose checked-in residue is stale, and the one command that fixes them.
+     *
+     * The check reads the checked-in reports, which the packaging test holds equal to what the real distribution build
+     * packs. So a divergence here says the derivation and the residue together no longer reproduce the real
+     * distribution, and it never compares the derivation against itself.
+     *
+     * The run still regenerates the tree, because the synthesis needs the whole module list. `verify` withholds the
+     * residue writes alone, so this mode is a check on `dev-dist.yaml` and not a read-only run of the converter.
+     *
+     * Exits rather than throwing, because the reader needs the rows and not a stack trace.
+     */
+    private fun reportStaleDevDistResidues(divergent: List<DevDistResidueDivergence>) {
+      println()
+      println("${divergent.size} plugins have a stale 'dev-dist.yaml':")
+      for (divergence in divergent) {
+        print(devDistResidueDivergenceReport(divergence))
+      }
+      println()
+      println("Run './build/jpsModelToBazel.cmd --write-dev-dist-residue' to write them, then commit the result.")
+      exitProcess(1)
     }
 
     private fun verifyHttpFileTargetsGeneration(
