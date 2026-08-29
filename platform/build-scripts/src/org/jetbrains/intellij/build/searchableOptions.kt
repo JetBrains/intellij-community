@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.buildScripts.concurrency.taskScope
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
@@ -10,12 +11,17 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.impl.BundledMavenDownloader
+import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.PluginVariants.Companion.resolvePluginVariants
 import org.jetbrains.intellij.build.impl.additionalProperties
 import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
+import org.jetbrains.intellij.build.productLayout.ProductModulesLayout
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 
 @Internal
 @Serializable
@@ -75,6 +81,72 @@ internal fun buildSearchableOptions(
   }
 }
 
+/**
+ * Build the index over the bundled plugins and over [pluginsToPublish].
+ *
+ * The plugins to publish do not load as one set, because some of them conflict.
+ * [ProductModulesLayout.pluginExclusionVariants] states which plugin each variant of the set leaves out.
+ * The step runs the IDE once per variant, then merges the indices.
+ */
+internal fun buildSearchableOptionsForAllPlugins(
+  context: BuildContext,
+  pluginsToPublish: Collection<PluginLayout>,
+  extraModules: List<String> = emptyList(),
+  systemProperties: VmProperties = VmProperties(emptyMap()),
+): SearchableOptionSetDescriptor? {
+  return context.executeStep(spanBuilder("building searchable options index"), BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP) { span ->
+    prepareTraverseUiInput(context)
+
+    val targetDir = context.paths.searchableOptionDir
+    val excludedModules = context.productProperties.productLayout.pluginModulesWithoutSearchableOptions
+    val pluginVariants = resolvePluginVariants(pluginsToPublish = pluginsToPublish, context = context, excludedMainModules = excludedModules)
+    for ((mainModule, id) in pluginVariants.excludedEverywhere) {
+      val reason = if (excludedModules.contains(mainModule)) {
+        "ProductModulesLayout.pluginModulesWithoutSearchableOptions names it"
+      }
+      else {
+        "no variant of the plugin set loads it"
+      }
+      span.addEvent("'$mainModule' ('$id') gets no searchable options, because $reason")
+    }
+    span.setAttribute(AttributeKey.longKey("pluginVariantCount"), pluginVariants.variants.size.toLong())
+    span.setAttribute(AttributeKey.longKey("excludedPluginCount"), pluginVariants.excludedEverywhere.size.toLong())
+
+    val runs = pluginVariants.variants.map { (it + extraModules).distinct().sorted() }
+    if (runs.size == 1) {
+      val index = runTraverseUi(
+        productRunner = context.createProductRunner(runs.single()),
+        outDir = targetDir,
+        systemProperties = systemProperties,
+      )
+      reportIndex(span, index)
+      return@executeStep index
+    }
+
+    // Each run assembles its own dev distribution, so the runs are sequential to keep the peak disk use down.
+    val passDirs = ArrayList<Path>(runs.size)
+    for ((i, variant) in runs.withIndex()) {
+      val passDir = targetDir.resolve("pass-$i")
+      spanBuilder("traverseUI pass")
+        .setAttribute(AttributeKey.longKey("pass"), i.toLong())
+        .setAttribute(AttributeKey.longKey("additionalPluginModuleCount"), variant.size.toLong())
+        .setAttribute(AttributeKey.stringArrayKey("additionalPluginModules"), variant)
+        .use {
+          runTraverseUi(
+            productRunner = context.createProductRunner(variant),
+            outDir = passDir,
+            systemProperties = systemProperties,
+          )
+        }
+      passDirs.add(passDir)
+    }
+
+    val index = mergeSearchableOptionIndices(passDirs = passDirs, targetDir = targetDir)
+    reportIndex(span, index)
+    index
+  }
+}
+
 private fun reportIndex(span: Span, index: SearchableOptionSetDescriptor) {
   span.setAttribute(AttributeKey.longKey("moduleCountWithSearchableOptions"), index.index.size.toLong())
   span.setAttribute(AttributeKey.stringArrayKey("modulesWithSearchableOptions"), index.index.keys.toList())
@@ -119,4 +191,31 @@ private fun runTraverseUi(
     timeout = DEFAULT_TIMEOUT,
   )
   return readSearchableOptionIndex(outDir)
+}
+
+/**
+ * Move the files of every pass into [targetDir] and write one `content.json` over them.
+ *
+ * `TraverseUIStarter` names a file after the module or the plugin it describes,
+ * so two passes collide only on the same module, where either file is correct.
+ * The first pass wins such a collision.
+ */
+private fun mergeSearchableOptionIndices(passDirs: List<Path>, targetDir: Path): SearchableOptionSetDescriptor {
+  val merged = LinkedHashMap<String, List<SearchableOptionSetIndexItem>>()
+  for (passDir in passDirs) {
+    for ((module, items) in readSearchableOptionIndex(passDir).index) {
+      if (merged.containsKey(module)) {
+        continue
+      }
+      for ((file) in items) {
+        Files.move(passDir.resolve(file), targetDir.resolve(file), StandardCopyOption.REPLACE_EXISTING)
+      }
+      merged[module] = items
+    }
+  }
+  for (passDir in passDirs) {
+    NioFiles.deleteRecursively(passDir)
+  }
+  Files.writeString(targetDir.resolve("content.json"), Json.encodeToString(merged))
+  return SearchableOptionSetDescriptor(index = merged, baseDir = targetDir)
 }

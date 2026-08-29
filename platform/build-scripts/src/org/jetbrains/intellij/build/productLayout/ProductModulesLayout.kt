@@ -40,6 +40,48 @@ val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
   "intellij.platform.images",
 )
 
+/**
+ * The main modules of the plugins that only a development run uses.
+ *
+ * A user must never install one of them, so no product publishes one.
+ * A development run still loads such a plugin, because `-Dadditional.modules` names the module.
+ *
+ * The build leaves such a plugin out of the pipeline, so no check runs on it.
+ *
+ * A community product reads this list too, so `community/.idea/modules.xml` must register each entry.
+ * A module of the ultimate project belongs in `ULTIMATE_COMPATIBLE_PLUGINS_TO_IGNORE` instead.
+ *
+ * @see ProductModulesLayout.compatiblePluginsToIgnore
+ */
+val COMPATIBLE_PLUGINS_TO_IGNORE: PersistentList<String> = persistentListOf()
+
+/**
+ * The main modules of the plugins that get no searchable options in any product.
+ *
+ * A community product reads this set too, so `community/.idea/modules.xml` must register each entry.
+ * A module of the ultimate project belongs in `ULTIMATE_PLUGINS_WITHOUT_SEARCHABLE_OPTIONS` instead.
+ *
+ * @see ProductModulesLayout.pluginModulesWithoutSearchableOptions
+ */
+val PLUGINS_WITHOUT_SEARCHABLE_OPTIONS: PersistentSet<String> = persistentSetOf()
+
+/**
+ * Add the default entries to [ProductModulesLayout.compatiblePluginsToIgnore] and to
+ * [ProductModulesLayout.pluginModulesWithoutSearchableOptions].
+ *
+ * A product calls this function, so each product switches its own behavior. A default value of the property
+ * would switch every product at once.
+ *
+ * A commercial product calls `addCommercialProductDefaults` instead, and that function calls this one.
+ *
+ * @see COMPATIBLE_PLUGINS_TO_IGNORE
+ * @see PLUGINS_WITHOUT_SEARCHABLE_OPTIONS
+ */
+fun ProductModulesLayout.addProductDefaults() {
+  compatiblePluginsToIgnore += COMPATIBLE_PLUGINS_TO_IGNORE
+  pluginModulesWithoutSearchableOptions += PLUGINS_WITHOUT_SEARCHABLE_OPTIONS
+}
+
 class ProductModulesLayout {
   /**
    * Names of the additional product-specific modules that need to be included in the product's 'lib' directory
@@ -69,6 +111,21 @@ class ProductModulesLayout {
   var pluginModulesToPublish: PersistentSet<String> = persistentSetOf()
 
   /**
+   * Whether the searchable options step also indexes the plugins that the product publishes and does not bundle.
+   *
+   * The step starts the IDE with those plugins, so each of them must load in the product.
+   * A product whose publish set still holds a plugin that cannot load keeps this off. The step then indexes the
+   * bundled plugins only, and a published plugin gets no searchable options.
+   *
+   * The `buildNonBundledPlugins` task ignores this flag, because it builds the published plugins and nothing else.
+   * That task always indexes them.
+   *
+   * @see pluginExclusionVariants
+   * @see compatiblePluginsToIgnore
+   */
+  var buildSearchableOptionsForPluginsToPublish: Boolean = false
+
+  /**
    * The plugin ids that each variant of the plugin set leaves out.
    *
    * It is used only if [buildAllCompatiblePlugins] is set to `true`.
@@ -85,6 +142,18 @@ class ProductModulesLayout {
    * State the conflict next to each entry, because only a full product build reveals it.
    */
   var pluginExclusionVariants: List<Set<String>> = emptyList()
+
+  /**
+   * The main modules of the plugins that get no searchable options.
+   *
+   * The searchable options step starts the IDE in headless mode. A plugin that needs a runtime which that mode does
+   * not give makes the step fail. A backend process is such a runtime.
+   * A plugin that requires an entry gets no searchable options either.
+   *
+   * Add to this set, and do not replace it, because [addProductDefaults] adds the default entries.
+   * State the reason next to each entry, because only a full product build reveals it.
+   */
+  var pluginModulesWithoutSearchableOptions: PersistentSet<String> = persistentSetOf()
 
   /**
    * Describes the layout of non-trivial plugins which may be included in the product.
@@ -161,7 +230,7 @@ class ProductModulesLayout {
    * The main modules of the plugins that the build must not build, even when the plugin is compatible
    * and [buildAllCompatiblePlugins] is `true`.
    *
-   * Add to this list, and do not replace it, because the default value holds [DEV_ONLY_PLUGINS].
+   * Add to this list, and do not replace it, because [addProductDefaults] adds the default entries.
    */
   var compatiblePluginsToIgnore: PersistentList<String> = persistentListOf()
 

@@ -25,12 +25,11 @@ import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.PluginDistribution
 import org.jetbrains.intellij.build.ScrambleTool
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
-import org.jetbrains.intellij.build.buildSearchableOptions
+import org.jetbrains.intellij.build.buildSearchableOptionsForAllPlugins
 import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.classPath.generateClassPathByLayoutReport
 import org.jetbrains.intellij.build.classPath.generateCoreClasspathFromPlugins
 import org.jetbrains.intellij.build.dev.collectLayoutsOfPluginsToScramble
-import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
 import org.jetbrains.intellij.build.impl.moduleRepository.generateRuntimeModuleRepositoryForDistribution
 import org.jetbrains.intellij.build.impl.plugins.BundledPluginsBuildResult
@@ -69,6 +68,7 @@ internal fun buildDistribution(
   context.productProperties.validateLayout(platformLayout, context)
   createBuildBrokenPluginListJob(context)
 
+  // The authoring assets must describe the distribution, so their runner loads the bundled plugins only.
   val productRunner = sharedLazy(context.lifetime, "distribution product runner") {
     context.createProductRunner()
   }
@@ -80,9 +80,16 @@ internal fun buildDistribution(
 
   val contentReport = taskScope {
     // must be completed before plugin building
-    val searchableOptionSet = context.executeStep(spanBuilder("build searchable options index"), BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP) {
-      buildSearchableOptions(productRunner.get(), context)
+    // the index also covers the plugins to publish, so it takes one run per conflict-free subset of them
+    // the build makes no archive for a skipped step, so the index of those plugins has no consumer
+    val pluginsToIndex = if (context.isStepSkipped(BuildOptions.NON_BUNDLED_PLUGINS_STEP) ||
+                             !context.productProperties.productLayout.buildSearchableOptionsForPluginsToPublish) {
+      emptyList()
     }
+    else {
+      state.pluginsToPublish
+    }
+    val searchableOptionSet = buildSearchableOptionsForAllPlugins(context = context, pluginsToPublish = pluginsToIndex)
 
     val pluginLayouts = getPluginLayoutsByJpsModuleNames(modules = context.getBundledPluginModules(), productLayout = context.productProperties.productLayout)
     val moduleOutputPatcher = ModuleOutputPatcher()

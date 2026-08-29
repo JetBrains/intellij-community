@@ -91,7 +91,7 @@ fun configurePropertiesForAllEditionsOfIntelliJIdea(properties: JetBrainsProduct
     layout.withModule("intellij.java.rt", "idea_rt.jar")
   }
 
-  properties.productLayout.compatiblePluginsToIgnore = persistentListOf(
+  properties.productLayout.compatiblePluginsToIgnore += persistentListOf(
     JavaPluginLayout.MAIN_MODULE_NAME,
   )
   properties.modulesToCompileTests += persistentListOf("intellij.platform.jps.build.tests")

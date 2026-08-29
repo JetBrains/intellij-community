@@ -37,7 +37,7 @@ import org.jetbrains.intellij.build.PluginDistribution
 import org.jetbrains.intellij.build.VmProperties
 import org.jetbrains.intellij.build.WindowsLibcImpl
 import org.jetbrains.intellij.build.add64IfNeeded
-import org.jetbrains.intellij.build.buildSearchableOptions
+import org.jetbrains.intellij.build.buildSearchableOptionsForAllPlugins
 import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.findFileInModuleSources
@@ -105,7 +105,11 @@ fun buildNonBundledPlugins(mainPluginModules: List<String>, context: BuildContex
     null
   }
   else {
-    buildSearchableOptions(context.createProductRunner(mainPluginModules + dependencyModules), context)
+    buildSearchableOptionsForAllPlugins(
+      context = context,
+      pluginsToPublish = pluginsToPublishEffective,
+      extraModules = dependencyModules
+    )
   }
 
   buildNonBundledPlugins(
@@ -479,12 +483,26 @@ fun buildDistributions(context: BuildContext): ProjectedContentReport? = block("
         productLayout = context.productProperties.productLayout,
         toPublish = true,
       )
+      val searchableOptionSet = if (context.isStepSkipped(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
+        null
+      }
+      else {
+        buildSearchableOptionsForAllPlugins(
+          context = context,
+          pluginsToPublish = if (context.productProperties.productLayout.buildSearchableOptionsForPluginsToPublish) {
+            pluginsToPublish
+          }
+          else {
+            emptyList()
+          },
+        )
+      }
       buildNonBundledPlugins(
         pluginsToPublish = pluginsToPublish,
         compressPluginArchive = context.options.compressZipFiles,
         platformEntriesProvider = null,
         state = distributionState,
-        searchableOptionSet = buildSearchableOptions(context),
+        searchableOptionSet = searchableOptionSet,
         isUpdateFromSources = false,
         descriptorCacheContainer = distributionState.platformLayout.descriptorCacheContainer,
         context = context,
@@ -626,6 +644,7 @@ private fun checkProductLayout(context: BuildContext) {
   checkPluginModules(context.getBundledPluginModules(), "effective bundled plugin modules", context)
   checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish", context)
   checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore", context)
+  checkPluginModules(layout.pluginModulesWithoutSearchableOptions, "productProperties.productLayout.pluginModulesWithoutSearchableOptions", context)
   if (!layout.buildAllCompatiblePlugins && !layout.compatiblePluginsToIgnore.isEmpty()) {
     messages.warning(
       "layout.buildAllCompatiblePlugins option isn't enabled. Value of " +
