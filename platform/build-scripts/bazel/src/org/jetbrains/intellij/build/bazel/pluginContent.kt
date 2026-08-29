@@ -180,13 +180,46 @@ internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleLi
     return EMPTY_PLUGIN_CONTENT_RESULT
   }
 
+  return resolvePluginContent(
+    module = module,
+    memberNames = memberNames,
+    prepackedMemberPaths = reportedPrepackedMemberPaths(entries),
+    recordedLibrariesOf = { handedOver -> recordedLibraries(entries = entries, handedOver = handedOver) },
+    moduleList = moduleList,
+    context = context,
+    warn = ::println,
+  )
+}
+
+/**
+ * Turns one plugin's membership facts into the labels [PluginContent] holds, whichever producer stated the facts.
+ *
+ * The half of [computePluginContent] that reads no report. [computePluginContent] takes [memberNames] and
+ * [reportedPrepackedMemberPaths] out of the checked-in `plugin-content.yaml`; [derivePluginContent] takes the same two out of
+ * the project model and the prepack convention. Everything after that point - the community/ultimate label rules, the
+ * cross-repository hand-off, the library union and the empty-content verdict - is one body, so a comparison of the two
+ * producers measures the facts and never the resolution.
+ *
+ * [recordedLibrariesOf] is a function rather than a set because it needs the members this plugin really handed over,
+ * which this body decides. [warn] takes the messages [computePluginContent] prints, so that a producer that only
+ * measures can collect them instead.
+ */
+internal fun resolvePluginContent(
+  module: ModuleDescriptor,
+  memberNames: Collection<String>,
+  prepackedMemberPaths: Map<String, String>,
+  recordedLibrariesOf: (Set<String>) -> Set<RecordedLibrary>,
+  moduleList: ModuleList,
+  context: BazelBuildFileGenerator,
+  warn: (String) -> Unit,
+): PluginContentResult {
+  val moduleName = module.module.name
   val contentModuleLabels = ArrayList<String>()
   val prepackedContentModuleLabels = ArrayList<String>()
   val prepackedJarDestinations = TreeMap<String, String>()
   val crossRepositoryPrepackedModules = ArrayList<String>()
   val members = ArrayList<ModuleDescriptor>()
   members.add(module)
-  val prepackedMemberPaths = prepackedMemberPaths(entries)
   // The members this plugin really handed over, whichever repository packs them. What is inside their jars is what this
   // target must stop declaring; see [recordedLibraries].
   val handedOver = HashSet<String>()
@@ -194,7 +227,7 @@ internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleLi
     val member = moduleList.getModuleDescriptorOrNull(memberName)
     if (member == null || moduleList.skippedModules.contains(memberName)) {
       // A module this generator does not convert - a standalone Bazel project, or one the report outlived - has no label.
-      println("WARN: $moduleName content target: no Bazel target for member module $memberName")
+      warn("WARN: $moduleName content target: no Bazel target for member module $memberName")
       continue
     }
     val relativeOutputFile = prepackedMemberPaths.get(memberName)
@@ -242,8 +275,9 @@ internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleLi
   val libraryContainerLabels = computeLibraryContainerLabels(
     module = module,
     members = members,
-    recordedLibraries = recordedLibraries(entries = entries, handedOver = handedOver),
+    recordedLibraries = recordedLibrariesOf(handedOver),
     context = context,
+    warn = warn,
   )
   // Sorted: these are sets of inputs, not merge orders, so a stable order keeps a regeneration free of diff noise.
   val crossRepository = crossRepositoryPrepackedModules.distinct().sorted()
@@ -276,7 +310,7 @@ internal fun computePluginContent(module: ModuleDescriptor, moduleList: ModuleLi
  * Neither veto is reported. A vetoed module keeps the packing it had before the hand-off, so the veto takes nothing
  * away, and the report that states the two destinations is checked in beside the plugin.
  */
-private fun prepackedMemberPaths(entries: List<RecipeEntry>): Map<String, String> {
+internal fun reportedPrepackedMemberPaths(entries: List<RecipeEntry>): Map<String, String> {
   val coPacked = coPackedElsewhere(entries)
   val paths = HashMap<String, String>()
   val conflicting = HashSet<String>()
@@ -329,6 +363,7 @@ private fun computeLibraryContainerLabels(
   members: List<ModuleDescriptor>,
   recordedLibraries: Set<RecordedLibrary>,
   context: BazelBuildFileGenerator,
+  warn: (String) -> Unit,
 ): List<String> {
   val libraries = LinkedHashSet<Library>()
   // The modules whose *whole* declared library set is in `libraries`, which is what lets an unnamed recorded library be
@@ -336,7 +371,7 @@ private fun computeLibraryContainerLabels(
   val collected = HashSet<String>()
   for (member in members) {
     if (collected.add(member.module.name)) {
-      collectDeclaredLibraries(module = member, libraries = libraries, context = context)
+      collectDeclaredLibraries(module = member, libraries = libraries, context = context, warn = warn)
     }
   }
 
@@ -362,8 +397,8 @@ private fun computeLibraryContainerLabels(
       // none is needed: the walk took every library its owning module declares, this one included. Anything else is a
       // library no module declares, which is a real gap and says so.
       if (recorded.ownerModule == null || recorded.ownerModule !in collected) {
-        println("WARN: ${module.module.name} content target: no Bazel target for library `${recorded.name}`" +
-                (recorded.ownerModule?.let { " of module $it" } ?: ""))
+        warn("WARN: ${module.module.name} content target: no Bazel target for library `${recorded.name}`" +
+             (recorded.ownerModule?.let { " of module $it" } ?: ""))
       }
       continue
     }
@@ -411,7 +446,7 @@ private fun computeLibraryContainerLabels(
  * Fail-open like every other veto: the relation stays raw and `JarPackager` keeps both jars. Declaring the module in
  * both halves instead would buy nothing, since the raw jar it would have to re-declare is what re-keys the fragment.
  */
-private fun coPackedElsewhere(entries: List<RecipeEntry>): Set<String> {
+internal fun coPackedElsewhere(entries: List<RecipeEntry>): Set<String> {
   val result = HashSet<String>()
   for (entry in entries) {
     if (simplePluginContentEntry(entry) != null) {
@@ -457,6 +492,7 @@ private fun collectDeclaredLibraries(
   module: ModuleDescriptor,
   libraries: MutableCollection<Library>,
   context: BazelBuildFileGenerator,
+  warn: (String) -> Unit,
 ) {
   for (element in module.module.dependenciesList.dependencies) {
     if (element !is JpsLibraryDependency) {
@@ -475,7 +511,7 @@ private fun collectDeclaredLibraries(
     // see and the converter did not - which would make the label unresolvable.
     val library = context.getLibraryByJpsIdentity(jpsName = jpsLibrary.name, moduleLibraryModuleName = owner)
     if (library == null) {
-      println("WARN: ${module.module.name} declares library `${jpsLibrary.name}`, which has no Bazel target")
+      warn("WARN: ${module.module.name} declares library `${jpsLibrary.name}`, which has no Bazel target")
       continue
     }
     libraries.add(library)
@@ -494,7 +530,7 @@ private fun collectDeclaredLibraries(
  * That is defensive rather than a second shape: the converter keys an *unnamed* module library by declaration index and
  * the report keys it by jar file name, so neither index holds it, and the warning below is the honest outcome.
  */
-private data class RecordedLibrary(@JvmField val name: String, @JvmField val ownerModule: String?)
+internal data class RecordedLibrary(@JvmField val name: String, @JvmField val ownerModule: String?)
 
 /**
  * Every library the report records, however it records it: per member module, hoisted to the jar, or as a jar of its own.
@@ -505,7 +541,7 @@ private data class RecordedLibrary(@JvmField val name: String, @JvmField val own
  * record is dropped: a library another member declares is still reached by the member walk in
  * [computeLibraryContainerLabels].
  */
-private fun recordedLibraries(entries: List<RecipeEntry>, handedOver: Set<String>): Set<RecordedLibrary> {
+internal fun recordedLibraries(entries: List<RecipeEntry>, handedOver: Set<String>): Set<RecordedLibrary> {
   val result = LinkedHashSet<RecordedLibrary>()
   for (entry in entries) {
     for (reportModule in entry.modules) {

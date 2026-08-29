@@ -42,9 +42,11 @@ internal class JpsModuleToBazel {
       var bazelOutputBase: Path? = null
       var assertAllModuleOutputsExist = false
       var m2Repo = JpsMavenSettings.getMavenRepositoryPath()
+      var comparePluginContent = false
 
       for (arg in args) {
         when {
+          arg == "--compare-plugin-content" -> comparePluginContent = true
           arg.startsWith("--run_without_ultimate_root=") ->
             runWithoutUltimateRoot = arg.substringAfter("=")
           arg.startsWith("--workspace_directory=") ->
@@ -186,6 +188,14 @@ internal class JpsModuleToBazel {
           assertAllModuleOutputsExist = assertAllModuleOutputsExist,
           bazelOutputBase = if (bazelWorkspaceRoot == communityRoot) bazelOutputBase else null,
         )
+      }
+
+      // Last, and after generation has written everything: a measurement must not change what the run generates. The
+      // switch lives inside this one binary because two separately built binaries cannot time each other - the wall
+      // clock of one binary over one tree spanned 6.6 s to 205 s while a concurrent Bazel load came and went (ADR 0007
+      // rule 6).
+      if (comparePluginContent) {
+        comparePluginContentProducers(moduleList = moduleList, context = generator, out = ::println)
       }
     }
 

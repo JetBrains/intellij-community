@@ -356,33 +356,31 @@ private fun ownDescriptorPackagePath(module: ModuleDescriptor): String? {
 }
 
 /** The plugin's own descriptor, at the load path every plugin uses. */
-private const val PLUGIN_XML_LOAD_PATH: String = "META-INF/plugin.xml"
+internal const val PLUGIN_XML_LOAD_PATH: String = "META-INF/plugin.xml"
 
 /**
- * [loadPath] inside [module]'s own Bazel package, or `null` when no production resource root of it holds the file.
+ * Every file a production resource root of [module] holds at [loadPath], in resource-root order.
  *
  * Only a resource root the jar takes at its own root is asked, because a load path is jar-relative. A root the layout
  * maps into a subdirectory answers another path, and no descriptor of this project needs that.
+ */
+internal fun descriptorFiles(module: ModuleDescriptor, loadPath: String): Sequence<Path> {
+  return module.resources.asSequence()
+    .filter { it.relativeOutputPath.isEmpty() }
+    .map { it.root.resolve(loadPath) }
+    .filter { it.isRegularFile() }
+}
+
+/**
+ * [loadPath] inside [module]'s own Bazel package, or `null` when no production resource root of it holds the file.
  *
  * The path is composed exactly as `exportDescriptorFiles` composes the `exports_files` entry - relative to the module's
  * Bazel package - so the label this yields is one that package really exports.
  */
 private fun descriptorPackagePath(module: ModuleDescriptor, loadPath: String): String? {
-  for (resource in module.resources) {
-    if (resource.relativeOutputPath.isNotEmpty()) {
-      continue
-    }
-    val file = resource.root.resolve(loadPath)
-    if (!file.isRegularFile()) {
-      continue
-    }
-    val relative = file.relativeTo(module.bazelBuildFileDir).invariantSeparatorsPathString
-    if (relative.startsWith("../")) {
-      continue
-    }
-    return relative
-  }
-  return null
+  return descriptorFiles(module = module, loadPath = loadPath)
+    .map { it.relativeTo(module.bazelBuildFileDir).invariantSeparatorsPathString }
+    .firstOrNull { !it.startsWith("../") }
 }
 
 /**
@@ -457,33 +455,21 @@ private fun contentDescriptorLabels(
 }
 
 /**
- * Every `<module/>` of this plugin's resolved `<content>`, in descriptor order.
+ * [walkContentModules] over this plugin's own descriptor, with the report answering every `xi:include`.
  *
- * `resolveXIncludeElement` replaces a root-level `xi:include` with the included root's children **at the include's own
- * position**, so a `<content>` block an included file states belongs where the include sat. Reading the plugin's own
- * `<content>` blocks alone is therefore both short and out of order, and `intellij.database.plugin` is the case: four
- * top-level includes splice in 63 `<module>` elements.
- *
- * The report is what makes the include resolvable here. It states the project-relative path of every descriptor an
- * `xi:include` reaches, so this walk needs no module output and no search scope.
- *
- * `appendContentModulesOf` of `devDistPlanGenerator.kt` is the authority this mirrors, and it is the walk the checked-in
- * plan was built with.
+ * The report is what makes an include resolvable here. It states the project-relative path of every descriptor an
+ * `xi:include` reaches, so this walk needs no module output and no search scope. A row the report does not state leaves
+ * the include unfollowed, which this caller accepts: a descriptor target with no report is pure convention, and the
+ * population holds out the plugins whose closure needs one.
  */
 private fun resolveContentModules(
   module: ModuleDescriptor,
   section: PluginDescriptorReportSection,
   context: BazelBuildFileGenerator,
 ): List<String> {
-  val descriptor = module.resources.asSequence()
-    .filter { it.relativeOutputPath.isEmpty() }
-    .map { it.root.resolve(PLUGIN_XML_LOAD_PATH) }
-    .firstOrNull { it.isRegularFile() } ?: return emptyList()
+  val descriptor = descriptorFiles(module = module, loadPath = PLUGIN_XML_LOAD_PATH).firstOrNull() ?: return emptyList()
   val fileByLoadPath = section.descriptors.associate { it.loadPath to reportFile(row = it.path, context = context) }
-  val result = ArrayList<String>()
-  val visited = HashSet<String>()
-  appendContentModules(root = JDOMUtil.load(descriptor), fileByLoadPath = fileByLoadPath, visited = visited, out = result)
-  return result
+  return walkContentModules(descriptor = descriptor) { fileByLoadPath.get(it) }.moduleNames
 }
 
 /**
@@ -493,18 +479,61 @@ private fun resolveContentModules(
  * a community-only checkout, whose own root **is** the community root, reads the same row as the community half of an
  * ultimate checkout. `null` is a path this checkout does not have.
  */
-private fun reportFile(row: String, context: BazelBuildFileGenerator): Path? {
+internal fun reportFile(row: String, context: BazelBuildFileGenerator): Path? {
   if (row.startsWith(COMMUNITY_PATH_PREFIX)) {
     return context.communityRoot.resolve(row.removePrefix(COMMUNITY_PATH_PREFIX))
   }
   return context.ultimateRoot?.resolve(row)
 }
 
+/**
+ * What one walk of a plugin's descriptor closure found, and what it could not follow.
+ *
+ * The two refusal lists exist because a caller that only measures has to tell an empty closure from a closure it failed
+ * to read. [unresolvedIncludes] is the second case: the walk knows the load path and has no file for it, so the content
+ * modules behind that include are missing and the caller must hold the plugin out rather than state a short list.
+ * [selectiveIncludes] is a pointer that selects a subtree, which the walk declines by design.
+ */
+internal class WalkedContentModules(
+  @JvmField val moduleNames: List<String>,
+  @JvmField val unresolvedIncludes: List<String>,
+  @JvmField val selectiveIncludes: List<String>,
+)
+
+/**
+ * Every `<module/>` of the resolved `<content>` of [descriptor], in descriptor order, with [resolveInclude] answering
+ * the file behind each `xi:include` load path.
+ *
+ * `resolveXIncludeElement` replaces a root-level `xi:include` with the included root's children **at the include's own
+ * position**, so a `<content>` block an included file states belongs where the include sat. Reading the plugin's own
+ * `<content>` blocks alone is therefore both short and out of order, and `intellij.database.plugin` is the case: four
+ * top-level includes splice in 63 `<module>` elements.
+ *
+ * `appendContentModulesOf` of `devDistPlanGenerator.kt` is the authority this mirrors, and it is the walk the checked-in
+ * plan was built with.
+ */
+internal fun walkContentModules(descriptor: Path, resolveInclude: (String) -> Path?): WalkedContentModules {
+  val result = ArrayList<String>()
+  val unresolved = ArrayList<String>()
+  val selective = ArrayList<String>()
+  appendContentModules(
+    root = JDOMUtil.load(descriptor),
+    resolveInclude = resolveInclude,
+    visited = HashSet(),
+    out = result,
+    unresolved = unresolved,
+    selective = selective,
+  )
+  return WalkedContentModules(moduleNames = result, unresolvedIncludes = unresolved, selectiveIncludes = selective)
+}
+
 private fun appendContentModules(
   root: Element,
-  fileByLoadPath: Map<String, Path?>,
+  resolveInclude: (String) -> Path?,
   visited: MutableSet<String>,
   out: MutableList<String>,
+  unresolved: MutableList<String>,
+  selective: MutableList<String>,
 ) {
   for (child in root.children) {
     if (child.name == "content") {
@@ -526,20 +555,32 @@ private fun appendContentModules(
     // Any other pointer selects a subtree instead of the included root's children, and the position a `<content>` block
     // lands at is then not the include's. The plan holds such a plugin out by name, so no such plugin is here.
     if (child.getAttributeValue("xpointer").let { it != null && it != DEFAULT_XPOINTER }) {
+      selective.add(href)
       continue
     }
     val loadPath = toLoadPath(href)
     if (!visited.add(loadPath)) {
       continue
     }
-    val file = fileByLoadPath.get(loadPath)?.takeIf { it.isRegularFile() } ?: continue
+    val file = resolveInclude(loadPath)?.takeIf { it.isRegularFile() }
+    if (file == null) {
+      unresolved.add(loadPath)
+      continue
+    }
     val included = JDOMUtil.load(file)
     // `extractNeededChildrenFor` returns nothing when the included root is not the pointer's root tag, so such an
     // include splices no child and contributes no content module.
     if (included.name != "idea-plugin") {
       continue
     }
-    appendContentModules(root = included, fileByLoadPath = fileByLoadPath, visited = visited, out = out)
+    appendContentModules(
+      root = included,
+      resolveInclude = resolveInclude,
+      visited = visited,
+      out = out,
+      unresolved = unresolved,
+      selective = selective,
+    )
   }
 }
 
