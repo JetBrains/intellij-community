@@ -165,7 +165,6 @@ exports_files(
         "intellij.testng.iml",
         "resources/META-INF/plugin.xml",
         "plugin-content.yaml",
-        "dev-dist-descriptor.yaml",
         "dev-dist.yaml",
     ],
     visibility = ["//visibility:public"],

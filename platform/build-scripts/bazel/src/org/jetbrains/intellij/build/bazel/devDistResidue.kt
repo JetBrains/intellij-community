@@ -25,7 +25,7 @@ import kotlin.io.path.relativeTo
 @Serializable
 internal data class DevDistResidueFile(
   @JvmField val content: ContentResidueSection? = null,
-  @JvmField val descriptor: Map<String, PluginDescriptorReportSection?> = emptyMap(),
+  @JvmField val descriptor: Map<String, DescriptorResidueSection?> = emptyMap(),
 )
 
 /**
@@ -37,7 +37,15 @@ internal data class DevDistResidueFile(
  */
 @Serializable
 internal data class ContentResidueSection(
-  /** Module names the layout packs that the plugin's own `<content>` does not name - a `PluginLayout.withModule` call. */
+  /**
+   * Module names the layout packs that the plugin's own `<content>` does not name - a `PluginLayout.withModule` call.
+   *
+   * The one field a reader outside this generator declares too. `readDevDistExtraMembers` in
+   * `community/platform/distribution-content/src/DevDistResidue.kt` reads it with `strictMode = false`, so a rename of
+   * the serial name leaves that reader answering an empty list for every plugin. Rename both, and let
+   * `PatronusConfigYamlConsistencyTest` confirm it: the Patronus seeds come from this field, and it compares the
+   * generated rules byte for byte.
+   */
   @JvmField @SerialName("extra_members") val extraMembers: List<String> = emptyList(),
   /**
    * Members whose jar this plugin puts at `lib/<module>.jar` although the derivation says `lib/modules/<module>.jar`.
@@ -120,23 +128,43 @@ internal fun parseDevDistResidue(file: Path?): DevDistResidueFile? {
  * [ModuleDescriptor.devDistResidueFile] as a path inside the module's own Bazel package, so a label can name it.
  *
  * `null` when the module has no residue, or when the residue is outside the package - `../` is not a label. The twin of
- * [pluginContentReportPackagePath].
+ * [contentModuleRecipePackagePath].
  */
 internal fun devDistResiduePackagePath(module: ModuleDescriptor): String? {
   val file = module.devDistResidueFile ?: return null
   return file.relativeTo(module.bazelBuildFileDir).invariantSeparatorsPathString.takeIf { !it.startsWith("../") }
 }
 
+/**
+ * The descriptor half of [module]'s residue, by `<main module>` or `<main module>/<variant>`.
+ *
+ * A keyed map and not a list, unlike the content half: the key is one (plugin, layout variant), and a descriptor
+ * deviation is a fact about one variant rather than about the plugin. A section may be `null`, which is how a plugin
+ * whose only deviation is having a variant at all is expressed.
+ */
+internal fun descriptorResidueOf(module: ModuleDescriptor): Map<String, DescriptorResidueSection?> {
+  return module.devDistResidue?.descriptor ?: emptyMap()
+}
+
 /** The content half of [module]'s residue, in the shape the two derivations take, or [PluginContentResidue.NONE]. */
 internal fun contentResidueOf(module: ModuleDescriptor): PluginContentResidue {
-  val section = module.devDistResidue?.content ?: return PluginContentResidue.NONE
+  return module.devDistResidue?.content?.toResidue() ?: PluginContentResidue.NONE
+}
+
+/**
+ * This section in the shape the two derivations take.
+ *
+ * The one place the seven fields cross from the file's shape into the derivation's. The residue writer composes a
+ * section rather than reading one, and it takes the same route, so a new field reaches both readers together.
+ */
+internal fun ContentResidueSection.toResidue(): PluginContentResidue {
   return PluginContentResidue(
-    extraMembers = section.extraMembers.toSet(),
-    libRootJars = section.libRootJars.toSet(),
-    rawMembers = section.rawMembers.toSet(),
-    vetoedMembers = section.vetoedMembers.toSet(),
-    separateJars = section.separateJars.toSet(),
-    mergedLibraries = section.mergedLibraries.mapValues { it.value.toSet() },
-    libraries = section.libraries.mapTo(LinkedHashSet()) { RecordedLibrary(name = it.name, ownerModule = it.module) },
+    extraMembers = extraMembers.toSet(),
+    libRootJars = libRootJars.toSet(),
+    rawMembers = rawMembers.toSet(),
+    vetoedMembers = vetoedMembers.toSet(),
+    separateJars = separateJars.toSet(),
+    mergedLibraries = mergedLibraries.mapValues { it.value.toSet() },
+    libraries = libraries.mapTo(LinkedHashSet()) { RecordedLibrary(name = it.name, ownerModule = it.module) },
   )
 }

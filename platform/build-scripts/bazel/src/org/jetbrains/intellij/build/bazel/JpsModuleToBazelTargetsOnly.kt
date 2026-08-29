@@ -36,7 +36,6 @@ internal class JpsModuleToBazelTargetsOnly {
       val starlarkIml = mutableListOf<String>()
       val starlarkPluginDistribution = mutableListOf<String>()
       val starlarkPluginContent = mutableListOf<String>()
-      val starlarkPluginDescriptor = mutableListOf<String>()
       val starlarkDevDistResidue = mutableListOf<String>()
       val starlarkContentModuleRecipe = mutableListOf<String>()
 
@@ -62,8 +61,6 @@ internal class JpsModuleToBazelTargetsOnly {
             starlarkPluginDistribution.add(arg.substringAfter("="))
           arg.startsWith("--starlark-plugin-content=") ->
             starlarkPluginContent.add(arg.substringAfter("="))
-          arg.startsWith("--starlark-plugin-descriptor=") ->
-            starlarkPluginDescriptor.add(arg.substringAfter("="))
           arg.startsWith("--starlark-dev-dist-residue=") ->
             starlarkDevDistResidue.add(arg.substringAfter("="))
           arg.startsWith("--starlark-content-module-recipe=") ->
@@ -77,8 +74,7 @@ internal class JpsModuleToBazelTargetsOnly {
       check(manifest != null) { "Missing required --manifest=<path> argument" }
       val hasStarlarkTargets = starlarkProduction.isNotEmpty() || starlarkTest.isNotEmpty() || starlarkLibrary.isNotEmpty() ||
                                starlarkIml.isNotEmpty() || starlarkPluginDistribution.isNotEmpty() || starlarkPluginContent.isNotEmpty() ||
-                               starlarkPluginDescriptor.isNotEmpty() || starlarkDevDistResidue.isNotEmpty() ||
-                               starlarkContentModuleRecipe.isNotEmpty()
+                               starlarkDevDistResidue.isNotEmpty() || starlarkContentModuleRecipe.isNotEmpty()
       check(hasStarlarkTargets || noStarlarkTargets) {
         "Either --starlark-* targets or --no-starlark-targets must be provided"
       }
@@ -193,7 +189,7 @@ internal class JpsModuleToBazelTargetsOnly {
         if (hasStarlarkTargets) {
           assertStarlarkParity(
             targets, starlarkProduction, starlarkTest, starlarkLibrary, starlarkIml,
-            starlarkPluginDistribution, starlarkPluginContent, starlarkPluginDescriptor, starlarkDevDistResidue,
+            starlarkPluginDistribution, starlarkPluginContent, starlarkDevDistResidue,
             starlarkContentModuleRecipe,
             moduleList = moduleList,
             communityRoot = communityRoot,
@@ -232,7 +228,6 @@ internal class JpsModuleToBazelTargetsOnly {
       starlarkIml: List<String>,
       starlarkPluginDistribution: List<String>,
       starlarkPluginContent: List<String>,
-      starlarkPluginDescriptor: List<String>,
       starlarkDevDistResidue: List<String>,
       starlarkContentModuleRecipe: List<String>,
       moduleList: ModuleList,
@@ -277,29 +272,15 @@ internal class JpsModuleToBazelTargetsOnly {
         }.distinct().sorted(),
         allowDuplicates = false,
       )
-      // The `descriptorTargets` half, asserted on its input the way `pluginContentReports` is.
+      // The residue of both leaves, asserted on its input the way the content report is.
       //
-      // `descriptorTargets` has to be identical in both producers: the dev-distribution plan resolves a plugin entry to
-      // its descriptor target through this map, and a silently missing entry is a plugin whose patched descriptor no
-      // fragment reads. What decides a section beyond the convention is the checked-in descriptor report, so this
-      // compares the reports the two sides pick out. Not the labels themselves - the convention gives most of a section
-      // and no report at all is the normal case, so the label set is far larger than the report set.
-      assertTargetsEqual(
-        "pluginDescriptorReports",
-        starlarkPluginDescriptor.sorted(),
-        moduleList.allModules.mapNotNull { module ->
-          pluginDescriptorReportPackagePath(module)?.let { reportPath ->
-            "${bazelPackagePrefix(module = module, communityRoot = communityRoot, ultimateRoot = ultimateRoot)}:$reportPath"
-          }
-        }.distinct().sorted(),
-        allowDuplicates = false,
-      )
-      // The residue of both leaves, asserted on its input the way the two reports are.
-      //
-      // The derivation states a plugin's members from the project model and the residue states what it cannot reach, so a
-      // residue this run cannot see makes `contentTarget` name fewer members than the full-checkout run's does. The
-      // labels are not compared, for the reason the two reports give: whether a residue changes a leaf depends on what
-      // the residue says, and this side cannot parse YAML.
+      // It carries both halves of what the two leaves need beyond the derivation, so it is the one assertion for both.
+      // The derivation states a plugin's members from the project model and the `content:` part states what it cannot
+      // reach, so a residue this run cannot see makes `contentTarget` name fewer members than the full-checkout run's
+      // does. The `descriptor:` part is what decides a `descriptorTargets` section beyond the convention, and a silently
+      // missing entry is a plugin whose patched descriptor no fragment reads. The labels are not compared, for the
+      // reason the content report gives: whether a residue changes a leaf depends on what the residue says, and this
+      // side cannot parse YAML.
       assertTargetsEqual(
         "devDistResidues",
         starlarkDevDistResidue.sorted(),

@@ -2,7 +2,7 @@
 # Which (plugin, layout variant) a `dev_dist_plugin_descriptor` target exists for, one `<main module>` or
 # `<main module>/<variant>` per line. The JPS-to-Bazel converter emits one target per line, beside the
 # plugin. One line per plan entry keeps that reader independent of Starlark, and it states no deviation:
-# a deviation is a fact about one plugin, and it sits beside that plugin in `dev-dist-descriptor.yaml`.
+# a deviation is a fact about one plugin, and it sits beside that plugin in `dev-dist.yaml`.
 intellij.aiagentextensions
 intellij.air.plugin
 intellij.android.gradle.declarative.lang.ide

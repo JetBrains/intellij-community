@@ -704,14 +704,9 @@ internal class BazelBuildFileGenerator(
             imlTargetsBazel.exportFile(recipePath)
           }
         }
-        // The report the plugin's descriptor target is generated from, exported for the reason its content sibling is.
-        pluginDescriptorReportPackagePath(module)?.let { reportPath ->
-          if (!fileUpdater.handWrittenExportedFiles().contains(reportPath)) {
-            imlTargetsBazel.exportFile(reportPath)
-          }
-        }
-        // The residue both leaves read, exported for the same reason: it states the members the derivation cannot reach,
-        // so a residue the hermetic run cannot see is a `contentTarget` naming fewer members than the checked-in one.
+        // The residue both leaves read, exported for the reason the report is: it states the members the derivation
+        // cannot reach and the descriptor rows the convention does not give, so a residue the hermetic run cannot see is
+        // a `contentTarget` naming fewer members than the checked-in one and a `descriptorTargets` entry it cannot form.
         devDistResiduePackagePath(module)?.let { residuePath ->
           if (!fileUpdater.handWrittenExportedFiles().contains(residuePath)) {
             imlTargetsBazel.exportFile(residuePath)

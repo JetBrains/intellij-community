@@ -17,15 +17,6 @@
 #
 # No row is a Bazel label, and no row is a path. A label carries the artifact version of a library, and a path
 # restates a rule the rule already derives.
-content:
-  # Modules the layout packs that this plugin's `<content>` does not name - a `PluginLayout.withModule` call.
-  extra_members:
-  - "intellij.groovy.constants.rt"
-  - "intellij.groovy.jps"
-  - "intellij.groovy.psi"
-  - "intellij.groovy.rt"
-  - "intellij.groovy.rt.classLoader"
-  - "intellij.groovy.spock.rt"
 descriptor:
   # What this plugin's patched dev-distribution descriptor needs that the convention does not give.
   #
@@ -38,27 +29,6 @@ descriptor:
   # resolves a path to a label itself, which is what lets the community half decide alone: a path outside
   # `community/` is a path a community package cannot name, and the community half then emits no section for
   # this plugin.
-  "intellij.groovy":
-    # Every descriptor an `xi:include` of this plugin's closure reaches, as the load path a resolver asks
-    # for and the file that answers it.
-    descriptors:
-    - load_path: "META-INF/gant-support.xml"
-      path: "community/plugins/groovy/resources/META-INF/gant-support.xml"
-    - load_path: "META-INF/geb-support.xml"
-      path: "community/plugins/groovy/resources/META-INF/geb-support.xml"
-    - load_path: "META-INF/groovy-console.xml"
-      path: "community/plugins/groovy/resources/META-INF/groovy-console.xml"
-    - load_path: "META-INF/groovy-dynamic-members.xml"
-      path: "community/plugins/groovy/resources/META-INF/groovy-dynamic-members.xml"
-    - load_path: "META-INF/groovy-indexed-property-support.xml"
-      path: "community/plugins/groovy/resources/META-INF/groovy-indexed-property-support.xml"
-    - load_path: "META-INF/groovy-intentions.xml"
-      path: "community/plugins/groovy/resources/META-INF/groovy-intentions.xml"
-    - load_path: "META-INF/groovy-logback-support.xml"
-      path: "community/plugins/groovy/resources/META-INF/groovy-logback-support.xml"
-    - load_path: "META-INF/groovy-templates.xml"
-      path: "community/plugins/groovy/resources/META-INF/groovy-templates.xml"
+  "intellij.lombok.plugin":
     # `PluginLayout.directoryName`, which the derived name does not give.
-    directory_name: "Groovy"
-    # `PluginLayout.getMainJarName()`, which the derived name does not give.
-    main_jar_name: "Groovy.jar"
+    directory_name: "lombok"

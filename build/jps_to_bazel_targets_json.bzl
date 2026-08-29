@@ -13,7 +13,6 @@ def _jps_to_bazel_targets_json_impl(ctx):
     args.add_all(ctx.attr.starlark_iml_targets, format_each = "--starlark-iml=%s")
     args.add_all(ctx.attr.starlark_plugin_distribution_targets, format_each = "--starlark-plugin-distribution=%s")
     args.add_all(ctx.attr.starlark_plugin_content_report_files, format_each = "--starlark-plugin-content=%s")
-    args.add_all(ctx.attr.starlark_plugin_descriptor_report_files, format_each = "--starlark-plugin-descriptor=%s")
     args.add_all(ctx.attr.starlark_dev_dist_residue_files, format_each = "--starlark-dev-dist-residue=%s")
     args.add_all(ctx.attr.starlark_content_module_recipe_files, format_each = "--starlark-content-module-recipe=%s")
     args.use_param_file("@%s", use_always = True)
@@ -53,10 +52,6 @@ jps_to_bazel_targets_json = rule(
             mandatory = True,
             doc = "Hermetic bazel-targets.json generator executable.",
         ),
-        "starlark_plugin_descriptor_report_files": attr.string_list(
-            default = [],
-            doc = "Starlark-probed `dev-dist-descriptor.yaml` labels for parity assertion.",
-        ),
         "starlark_production_targets": attr.string_list(
             default = [],
             doc = "Starlark-derived production targets for parity assertion.",
@@ -92,7 +87,8 @@ the converter saw every report the checkout has, which is the property a missing
 The residue of both dev-distribution leaves, on the same terms as `starlark_plugin_content_report_files`: whether a
 residue changes a leaf depends on what the residue says, which only the converter reads, so this asserts the file set.
 A residue the manifest is missing takes a plugin's stated members away, and the derivation then states fewer members
-than the distribution packs.""",
+than the distribution packs; it also takes the plugin's descriptor deviations away, and `descriptorTargets` then
+declares a patch the checked-in one does not.""",
         ),
         "starlark_content_module_recipe_files": attr.string_list(
             default = [],

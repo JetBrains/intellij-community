@@ -25,8 +25,8 @@ import kotlin.io.path.relativeTo
  *
  * Almost everything is derived. The plugin's own descriptor comes from its production resource roots, the descriptor of
  * every content module comes from the plugin's own `<content>`, and the plugin directory and the main jar name come from
- * the main module's name. `dev-dist-descriptor.yaml` is the remainder, and it sits beside the plugin only where the
- * convention fails - see [parsePluginDescriptorReport].
+ * the main module's name. The `descriptor:` part of `dev-dist.yaml` is the remainder, and it sits beside the plugin only
+ * where the convention fails - see [DevDistResidueFile].
  */
 internal class PluginDescriptor(
   @JvmField val mainModule: String,
@@ -49,8 +49,6 @@ internal class PluginDescriptor(
   @JvmField val exactVersion: Boolean,
   @JvmField val retainProductDescriptor: Boolean,
 )
-
-internal const val PLUGIN_DESCRIPTOR_REPORT_FILE_NAME: String = "dev-dist-descriptor.yaml"
 
 /** The population the plan generator states; see [readPluginDescriptorPopulation]. */
 internal const val PLUGIN_DESCRIPTOR_POPULATION_FILE_NAME: String = "dev_dist_plugin_descriptor_population.txt"
@@ -80,16 +78,16 @@ internal fun readPluginDescriptorPopulation(file: Path): Map<String, List<String
 }
 
 /**
- * One section of a plugin's descriptor report - what the convention does not give about one (plugin, layout variant).
+ * One section of a plugin's descriptor residue - what the convention does not give about one (plugin, layout variant).
  *
- * Every field defaults, and an absent section means every default. So a plugin with no report at all is pure
- * convention, which is what keeps this file beside about 30 plugins instead of beside every one.
+ * Every field defaults, and an absent section means every default. So a plugin with no `descriptor:` part at all is pure
+ * convention, which is what keeps this part beside about 24 plugins instead of beside every one.
  */
 @Serializable
-internal data class PluginDescriptorReportSection(
+internal data class DescriptorResidueSection(
   /** Every descriptor an `xi:include` of this plugin's closure reaches. */
-  @JvmField val descriptors: List<ReportDescriptorRow> = emptyList(),
-  @JvmField @SerialName("library_descriptors") val libraryDescriptors: List<ReportLibraryDescriptorRow> = emptyList(),
+  @JvmField val descriptors: List<DescriptorRow> = emptyList(),
+  @JvmField @SerialName("library_descriptors") val libraryDescriptors: List<DescriptorLibraryRow> = emptyList(),
   /** The content modules the product's `ContentModuleFilter` refuses, in descriptor order. */
   @JvmField @SerialName("refused_content_modules") val refusedContentModules: List<String> = emptyList(),
   @JvmField @SerialName("separate_jar") val separateJar: List<String> = emptyList(),
@@ -102,16 +100,16 @@ internal data class PluginDescriptorReportSection(
   @JvmField @SerialName("retain_product_descriptor") val retainProductDescriptor: Boolean = false,
 )
 
-/** One descriptor of a report: the load path a resolver asks for, and the project-relative path of the file. */
+/** One descriptor of a residue: the load path a resolver asks for, and the project-relative path of the file. */
 @Serializable
-internal data class ReportDescriptorRow(
+internal data class DescriptorRow(
   @JvmField @SerialName("load_path") val loadPath: String,
   @JvmField val path: String,
 )
 
-/** One library descriptor of a report, by name. A jar file name carries the artifact version, so no report states one. */
+/** One library descriptor of a residue, by name. A jar file name carries the artifact version, so no row states one. */
 @Serializable
-internal data class ReportLibraryDescriptorRow(
+internal data class DescriptorLibraryRow(
   @JvmField @SerialName("load_path") val loadPath: String,
   @JvmField val module: String,
   @JvmField val library: String,
@@ -195,51 +193,20 @@ private fun registeredCrossHalfDescriptorPackageDirectories(ultimateRoot: Path):
 private const val CROSS_HALF_DESCRIPTOR_PACKAGE_ROOT: String = "build/dev-dist-descriptors"
 
 /**
- * [ModuleDescriptor.pluginDescriptorReportFile] as a path inside the module's own Bazel package, so that it can be
- * exported and named by a label. `null` when the module has no report, or when the report is outside the package -
- * `../` is not a label.
- */
-internal fun pluginDescriptorReportPackagePath(module: ModuleDescriptor): String? {
-  val file = module.pluginDescriptorReportFile ?: return null
-  return file.relativeTo(module.bazelBuildFileDir).invariantSeparatorsPathString.takeIf { !it.startsWith("../") }
-}
-
-/**
- * Parses [ModuleDescriptor.pluginDescriptorReportFile]; reached only through [ModuleDescriptor.pluginDescriptorReport].
- *
- * A keyed map and not a list, unlike `plugin-content.yaml`: the key is one (plugin, layout variant), and a deviation is
- * a fact about one variant rather than about the plugin. A section may state nothing, which is how a plugin whose only
- * deviation is having a variant at all is expressed.
- */
-internal fun parsePluginDescriptorReport(file: Path?): Map<String, PluginDescriptorReportSection?>? {
-  if (file == null) {
-    return null
-  }
-  val text = file.readText()
-  if (text.isBlank()) {
-    return null
-  }
-  return recipeYaml.decodeFromString(
-    MapSerializer(String.serializer(), PluginDescriptorReportSection.serializer().nullable),
-    text,
-  ).takeIf { it.isNotEmpty() }
-}
-
-/**
- * Reads the descriptor report beside [module] and resolves it into Bazel labels, or answers an empty list.
+ * Reads the descriptor residue beside [module] and resolves it into Bazel labels, or answers an empty list.
  *
  * An empty list means this package declares no descriptor target. Three cases reach it. No product's plan names
  * [module], which is the common one - see [readPluginDescriptorPopulation]. Or its own Bazel package holds no
  * `META-INF/plugin.xml`, so no label names the file this target has to patch. Or this would be a community target that
  * has to name something only the main repository can name.
  *
- * That third case is silent and it is the local decision rule the report exists for. `JpsModuleToBazel` generates and
+ * That third case is silent and it is the local decision rule the residue exists for. `JpsModuleToBazel` generates and
  * sweeps BUILD files one repository half at a time, so a community-only checkout has to reach the same verdict as the
- * community half of an ultimate checkout. Every input of the verdict is therefore either a path in the report - a path
+ * community half of an ultimate checkout. Every input of the verdict is therefore either a path in the residue - a path
  * outside `community/` is a path a community package cannot name - or a member module the community half does not
  * have. A checkout that has the module and one that does not both answer no.
  *
- * Anything the report names and this generator cannot label is dropped with a warning rather than failing the run, for
+ * Anything the residue names and this generator cannot label is dropped with a warning rather than failing the run, for
  * the reason `computePluginContent` gives: an under-declared target fails its own action by name, and no target at all
  * would be silent.
  */
@@ -252,17 +219,17 @@ internal fun computePluginDescriptor(
   val variants = context.pluginDescriptorPopulation.get(moduleName) ?: return emptyList()
   val descriptorPath = ownDescriptorPackagePath(module) ?: return emptyList()
 
-  val report = module.pluginDescriptorReport.orEmpty()
-  for (key in report.keys) {
+  val residue = descriptorResidueOf(module)
+  for (key in residue.keys) {
     if (key.substringBefore('/') != moduleName) {
-      println("WARN: $moduleName descriptor target: $PLUGIN_DESCRIPTOR_REPORT_FILE_NAME states the section '$key'," +
+      println("WARN: $moduleName descriptor target: $DEV_DIST_RESIDUE_FILE_NAME states the section '$key'," +
               " which names another plugin")
     }
   }
   val result = ArrayList<PluginDescriptor>(variants.size)
   for (variant in variants) {
     val key = if (variant.isEmpty()) moduleName else "$moduleName/$variant"
-    val section = report.get(key) ?: PluginDescriptorReportSection()
+    val section = residue.get(key) ?: DescriptorResidueSection()
     val rowLabels = reportDescriptorLabels(module = module, section = section, context = context) ?: return emptyList()
     val contentLabels = when {
       section.noEmbedding -> emptyMap()
@@ -331,7 +298,7 @@ private fun descriptorPackagePath(module: ModuleDescriptor, loadPath: String): S
  */
 private fun reportDescriptorLabels(
   module: ModuleDescriptor,
-  section: PluginDescriptorReportSection,
+  section: DescriptorResidueSection,
   context: BazelBuildFileGenerator,
 ): Map<String, String>? {
   val result = LinkedHashMap<String, String>()
@@ -364,7 +331,7 @@ private const val COMMUNITY_PATH_PREFIX: String = "community/"
  */
 private fun contentDescriptorLabels(
   module: ModuleDescriptor,
-  section: PluginDescriptorReportSection,
+  section: DescriptorResidueSection,
   moduleList: ModuleList,
   context: BazelBuildFileGenerator,
 ): Map<String, String>? {
@@ -404,7 +371,7 @@ private fun contentDescriptorLabels(
  */
 private fun resolveContentModules(
   module: ModuleDescriptor,
-  section: PluginDescriptorReportSection,
+  section: DescriptorResidueSection,
   context: BazelBuildFileGenerator,
 ): List<String> {
   val descriptor = descriptorFiles(module = module, loadPath = PLUGIN_XML_LOAD_PATH).firstOrNull() ?: return emptyList()
@@ -581,7 +548,7 @@ internal fun toLoadPath(href: String): String {
  */
 private fun libraryDescriptorLabels(
   module: ModuleDescriptor,
-  section: PluginDescriptorReportSection,
+  section: DescriptorResidueSection,
   context: BazelBuildFileGenerator,
 ): Map<String, String>? {
   if (section.libraryDescriptors.isEmpty()) {

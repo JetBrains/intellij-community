@@ -164,7 +164,7 @@ internal fun derivePluginContentClosure(
 /**
  * [walkContentModules] over [descriptor], with every `xi:include` resolved from the project model.
  *
- * The descriptor arc reads the include's target out of `dev-dist-descriptor.yaml`, and that report exists beside 24
+ * The descriptor arc reads the include's target out of the residue's `descriptor:` part, which exists beside 24
  * plugins. This population is 20 times larger, so the residue answers few of its includes and a convention has to
  * answer the rest. Two probes do it, and neither scans a directory:
  *
@@ -209,15 +209,14 @@ private fun walkPluginContentClosure(
 private const val MAX_INCLUDE_ROUNDS: Int = 3
 
 /**
- * The `xi:include` targets `dev-dist-descriptor.yaml` states, by load path, for the plugin that has one.
+ * The `xi:include` targets the `descriptor:` part of `dev-dist.yaml` states, by load path, for the plugin that has one.
  *
  * Every section is unioned. A section is one layout variant, and an include is a fact about the plugin's descriptor
  * rather than about a variant, so a row of any section answers the same load path.
  */
 private fun descriptorResidueFiles(module: ModuleDescriptor, context: BazelBuildFileGenerator): Map<String, Path> {
-  val report = module.pluginDescriptorReport ?: return emptyMap()
   val result = HashMap<String, Path>()
-  for (section in report.values) {
+  for (section in descriptorResidueOf(module).values) {
     for (row in section?.descriptors.orEmpty()) {
       reportFile(row = row.path, context = context)?.let { result.putIfAbsent(row.loadPath, it) }
     }

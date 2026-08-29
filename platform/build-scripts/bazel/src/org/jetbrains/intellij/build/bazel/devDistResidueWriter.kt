@@ -340,6 +340,11 @@ internal fun contentResidueFieldRows(section: ContentResidueSection?): Map<Strin
  * The `descriptor:` part of [existing] is kept verbatim. The two parts have two producers - `plugin-model-tool` writes
  * the descriptor deviations and this writes the content ones - so each has to leave the other's key alone. A file that
  * holds only a `descriptor:` part therefore survives a run of this writer untouched.
+ *
+ * The split is the line `descriptor:`, and neither producer may put a comment on the other's side of it.
+ * `renderDescriptorPart` of `devDistDescriptorResidue.kt` states the same rule from its end, and
+ * [DEV_DIST_RESIDUE_HEADER] is the one text both producers write - byte for byte, or the regeneration reaches no fixed
+ * point, because each tool would rewrite what the other just wrote.
  */
 private fun composeDevDistResidueText(mainModule: String, content: ContentResidueSection?, existing: Path): String? {
   val descriptorPart = existingDescriptorPart(existing)
