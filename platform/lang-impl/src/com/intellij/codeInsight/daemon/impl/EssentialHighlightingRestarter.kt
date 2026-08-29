@@ -66,6 +66,7 @@ private suspend fun requestRestartToCompleteEssentialHighlighting(project: Proje
   val hasFilesWithEssentialHighlightingConfigured = openFiles
     .any { file ->
       readAction {
+        if (!file.isValid) return@readAction false
         val psiFile = psiFileManager.findFile(file) ?: return@readAction false
         highlightingSettingsPerFile.getHighlightingSettingForRoot(psiFile) == FileHighlightingSetting.ESSENTIAL
       }
