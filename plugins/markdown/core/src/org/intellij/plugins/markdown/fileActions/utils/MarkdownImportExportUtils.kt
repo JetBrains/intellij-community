@@ -26,6 +26,7 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.fileActions.export.MarkdownDocxExportProvider
 import org.intellij.plugins.markdown.fileActions.export.MarkdownExportProvider
 import org.intellij.plugins.markdown.lang.MarkdownFileType
+import org.intellij.plugins.markdown.settings.pandoc.PandocExecutableDetector
 import org.intellij.plugins.markdown.settings.pandoc.PandocSettings
 import org.intellij.plugins.markdown.ui.MarkdownNotifications
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
@@ -146,7 +147,7 @@ object MarkdownImportExportUtils {
    * returns a platform-independent cmd to perform the converting of docx to markdown using pandoc.
    */
   private fun getConvertDocxToMdCommandLine(file: VirtualFile, mediaSrc: String, targetFile: String, project: Project): GeneralCommandLine {
-    val pandoc = PandocSettings.getInstance(project).pathToPandoc ?: "pandoc"
+    val pandoc = PandocSettings.getInstance(project).pathToPandoc ?: PandocExecutableDetector.detect(project) ?: "pandoc"
     return GeneralCommandLine(
       pandoc,
       "--extract-media=$mediaSrc",
