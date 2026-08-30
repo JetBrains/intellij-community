@@ -108,7 +108,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   "LicenseServerAPI",
   "agentclientprotocol.acp.jvm",
   "agentclientprotocol.acp.ktor",
-  "antlr4-runtime",
   "google.protobuf.java.util",
   // used by `intellij.rider.test.cases.rdct`, whose plugin is built by an auto layout
   "intellij-plugin-structure",

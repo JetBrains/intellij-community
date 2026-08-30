@@ -65,6 +65,7 @@ dev_dist_plugin(
         "//libraries/jsr305",
         "//libraries/mlapi/catboost",
         "//libraries/tuweni/toml",
+        "//python:python-community-impl",
     ],
     descriptor_module = ":community-plugin",
     libraries = [
@@ -72,6 +73,11 @@ dev_dist_plugin(
         "@lib//:libraries-mlapi-catboost-jetbrains-mlapi-catboost",
         "@lib//:libraries-mlapi-catboost-jetbrains-mlapi-catboost-shadow-need-slf4j",
         "@lib//:libraries-tuweni-toml-tuweni-toml",
+        "@lib//:python-community-impl-completion-ranking-python-with-full-line",
+        "@lib//:python-community-impl-ml-completion-prev-exprs-models",
+        "@lib//:slf4j-api",
+        "@lib//:slf4j-jdk14",
+        "@lib//ant/lib:ant",
     ],
     prepacked_content_modules = [
         "//libraries/libthrift:libthrift_content_module_jar",
@@ -140,7 +146,6 @@ dev_dist_plugin(
         "//python/terminal/backend:backend_content_module_jar",
         "//python/terminal/frontend:frontend_content_module_jar",
         "//python/terminal/shared:shared_content_module_jar",
-        "//python:python-community-impl_content_module_jar",
         "//python:python-pydev_content_module_jar",
     ],
 )

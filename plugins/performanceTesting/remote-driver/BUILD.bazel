@@ -1,5 +1,4 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.performanceTesting.remoteDriver` start
 jvm_library(
@@ -46,8 +45,6 @@ jvm_library(
         "//platform/util:util-ui",
     ],
 )
-
-content_module_jar(module = ":remote-driver")
 
 jvm_library(
     name = "remote-driver_test_lib",

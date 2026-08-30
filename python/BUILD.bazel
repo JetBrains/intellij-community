@@ -528,15 +528,6 @@ jvm_library(
     ],
 )
 
-content_module_jar(
-    libraries = [
-        # do not sort,
-        "@lib//:python-community-impl-ml-completion-prev-exprs-models",
-        "@lib//:python-community-impl-completion-ranking-python-with-full-line",
-    ],
-    module = ":python-community-impl",
-)
-
 jvm_library(
     name = "python-community-impl_test_lib",
     testonly = True,
