@@ -12,12 +12,6 @@
   - name: io.github.smiley4.schema.kenerator.serialization
     files:
     - name: $MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-serialization/2/schema-kenerator-serialization-2.jar
-  - name: io.modelcontextprotocol.kotlin.sdk
-    files:
-    - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-jvm/0/kotlin-sdk-jvm-0.jar
-    - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-client-jvm/0/kotlin-sdk-client-jvm-0.jar
-    - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-server-jvm/0/kotlin-sdk-server-jvm-0.jar
-    - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-core-jvm/0/kotlin-sdk-core-jvm-0.jar
   - name: ktor-server-content-negotiation
     files:
     - name: $MAVEN_REPOSITORY$/io/ktor/ktor-server-content-negotiation-jvm/3/ktor-server-content-negotiation-jvm-3.jar

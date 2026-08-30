@@ -18,6 +18,7 @@
     <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.libraries.ktor.server.content.negotiation"/>
     <module name="intellij.libraries.ktor.server.sse"/>
+    <module name="intellij.libraries.mcp.kotlin.sdk"/>
     <module name="intellij.libraries.night.config.toml"/>
     <module name="intellij.libraries.opentelemetry"/>
     <module name="intellij.libraries.schema.kenerator"/>

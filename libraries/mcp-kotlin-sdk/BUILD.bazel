@@ -1,0 +1,49 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.libraries.mcp.kotlin.sdk` start
+jvm_library(
+    name = "mcp-kotlin-sdk",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.mcp.kotlin.sdk",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-mcp-kotlin-sdk-io-modelcontextprotocol-kotlin-sdk"],
+    runtime_deps = ["@lib//:libraries-mcp-kotlin-sdk-io-modelcontextprotocol-kotlin-sdk"],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-mcp-kotlin-sdk-io-modelcontextprotocol-kotlin-sdk"],
+    module = ":mcp-kotlin-sdk",
+)
+
+jvm_library(
+    name = "mcp-kotlin-sdk_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.mcp.kotlin.sdk",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-mcp-kotlin-sdk-io-modelcontextprotocol-kotlin-sdk"],
+    runtime_deps = [":mcp-kotlin-sdk"],
+)
+### auto-generated section `build intellij.libraries.mcp.kotlin.sdk` end
+
+### auto-generated section `iml intellij.libraries.mcp.kotlin.sdk` start
+exports_files(
+    [
+        "intellij.libraries.mcp.kotlin.sdk.iml",
+        "resources/intellij.libraries.mcp.kotlin.sdk.xml",
+        "module-content.yaml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.mcp.kotlin.sdk` end

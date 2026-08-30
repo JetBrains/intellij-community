@@ -29,6 +29,7 @@
 
   <content>
     <module name="intellij.libraries.kotlin.logging" loading="embedded"/>
+    <module name="intellij.libraries.mcp.kotlin.sdk" loading="embedded"/>
     <module name="intellij.libraries.night.config.toml" loading="required"/>
     <module name="intellij.libraries.ktor.server.content.negotiation" loading="embedded"/>
     <module name="intellij.libraries.ktor.server.sse" loading="embedded"/>

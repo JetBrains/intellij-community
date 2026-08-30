@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="io.modelcontextprotocol.kotlin.sdk" type="repository">
+        <properties maven-id="io.modelcontextprotocol:kotlin-sdk-jvm:0.12.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-jvm/0.12.0/kotlin-sdk-jvm-0.12.0.jar">
+              <sha256sum>88c25c0136e9be9539a906c2dc25d1ba7b2bedae0c8c3f7421ca3fb8090192dc</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-client-jvm/0.12.0/kotlin-sdk-client-jvm-0.12.0.jar">
+              <sha256sum>455f06a612d433479c542f65824d397d1b5f7ba7e26c644098fb231abc0cbc27</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-server-jvm/0.12.0/kotlin-sdk-server-jvm-0.12.0.jar">
+              <sha256sum>bff9a09a6804ff0165a92310bea379056eaeef0a721bded277fa97a74a11d83e</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-core-jvm/0.12.0/kotlin-sdk-core-jvm-0.12.0.jar">
+              <sha256sum>dfe26fbe3e06dc82b2f9551f4fa86e2e54455cfcb0e995a6c81bdd2752299e9b</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-json-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-json-io-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-io-core-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="io.ktor:ktor-server-websockets-jvm" />
+            <dependency maven-id="io.ktor:ktor-server-content-negotiation-jvm" />
+            <dependency maven-id="io.ktor:ktor-serialization-kotlinx-json-jvm" />
+            <dependency maven-id="io.ktor:ktor-serialization-kotlinx-jvm" />
+            <dependency maven-id="io.ktor:ktor-serialization-jvm" />
+            <dependency maven-id="io.github.oshai:kotlin-logging-jvm" />
+            <dependency maven-id="org.slf4j:slf4j-api" />
+            <dependency maven-id="io.ktor:ktor-client-core-jvm" />
+            <dependency maven-id="io.ktor:ktor-server-core-jvm" />
+            <dependency maven-id="io.ktor:ktor-server-sse-jvm" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-jvm/0.12.0/kotlin-sdk-jvm-0.12.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-client-jvm/0.12.0/kotlin-sdk-client-jvm-0.12.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-server-jvm/0.12.0/kotlin-sdk-server-jvm-0.12.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-core-jvm/0.12.0/kotlin-sdk-core-jvm-0.12.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-jvm/0.12.0/kotlin-sdk-jvm-0.12.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-client-jvm/0.12.0/kotlin-sdk-client-jvm-0.12.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-server-jvm/0.12.0/kotlin-sdk-server-jvm-0.12.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-core-jvm/0.12.0/kotlin-sdk-core-jvm-0.12.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

@@ -2,6 +2,11 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.mcpserver.testFramework` start
 jvm_provided_library(
+    name = "libraries_mcp-kotlin-sdk_provided",
+    lib = "//libraries/mcp-kotlin-sdk",
+)
+
+jvm_provided_library(
     name = "plugins_mcp-server_mcpserver-plugin_provided",
     lib = "//plugins/mcp-server/mcpserver.plugin",
 )
@@ -22,12 +27,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:io-modelcontextprotocol-kotlin-sdk-provided"],
+    exports = ["//libraries/mcp-kotlin-sdk"],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
-        "@lib//:io-modelcontextprotocol-kotlin-sdk-provided",
         "//libraries/junit5",
         "//libraries/kotlin/reflect",
         "//libraries/kotlinx/coroutines/core",
@@ -44,6 +48,7 @@ jvm_library(
         "//platform/testFramework/junit5",
         "//platform/util",
         "//platform/util-ex",
+        ":libraries_mcp-kotlin-sdk_provided",
         ":plugins_mcp-server_mcpserver-plugin_provided",
     ],
 )
@@ -57,12 +62,17 @@ jvm_library(
     ),
     module_name = "intellij.mcpserver.testFramework",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:io-modelcontextprotocol-kotlin-sdk-provided"],
+    exports = [
+        # do not sort,
+        "//libraries/mcp-kotlin-sdk",
+        "//libraries/mcp-kotlin-sdk:mcp-kotlin-sdk_test_lib",
+    ],
     runtime_deps = [
         # do not sort,
         ":mcpserver.testFramework",
         "//libraries/jetbrains/annotations:annotations_test_lib",
-        "@lib//:io-modelcontextprotocol-kotlin-sdk-provided",
+        "//libraries/mcp-kotlin-sdk",
+        "//libraries/mcp-kotlin-sdk:mcp-kotlin-sdk_test_lib",
         "//libraries/junit5:junit5_test_lib",
         "//libraries/kotlin/reflect:reflect_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",

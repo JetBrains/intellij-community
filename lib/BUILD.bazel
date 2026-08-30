@@ -5674,81 +5674,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "io.modelcontextprotocol/kotlin-sdk-jvm-0.12.0.jar_copy",
-    src = "@io_modelcontextprotocol-kotlin-sdk-jvm-0_12_0_http//file",
-    out = "io.modelcontextprotocol/kotlin-sdk-jvm-0.12.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.modelcontextprotocol/kotlin-sdk-client-jvm-0.12.0.jar_copy",
-    src = "@io_modelcontextprotocol-kotlin-sdk-client-jvm-0_12_0_http//file",
-    out = "io.modelcontextprotocol/kotlin-sdk-client-jvm-0.12.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.modelcontextprotocol/kotlin-sdk-server-jvm-0.12.0.jar_copy",
-    src = "@io_modelcontextprotocol-kotlin-sdk-server-jvm-0_12_0_http//file",
-    out = "io.modelcontextprotocol/kotlin-sdk-server-jvm-0.12.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.modelcontextprotocol/kotlin-sdk-core-jvm-0.12.0.jar_copy",
-    src = "@io_modelcontextprotocol-kotlin-sdk-core-jvm-0_12_0_http//file",
-    out = "io.modelcontextprotocol/kotlin-sdk-core-jvm-0.12.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "io-modelcontextprotocol-kotlin-sdk",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":io_modelcontextprotocol-kotlin-sdk-jvm-0_12_0_http_import",
-        ":io_modelcontextprotocol-kotlin-sdk-client-jvm-0_12_0_http_import",
-        ":io_modelcontextprotocol-kotlin-sdk-server-jvm-0_12_0_http_import",
-        ":io_modelcontextprotocol-kotlin-sdk-core-jvm-0_12_0_http_import",
-    ],
-)
-
-jvm_import(
-    name = "io_modelcontextprotocol-kotlin-sdk-jvm-0_12_0_http_import",
-    jar = "@io_modelcontextprotocol-kotlin-sdk-jvm-0_12_0_http//file",
-    source_jar = "@io_modelcontextprotocol-kotlin-sdk-jvm-0_12_0-sources_http//file",
-)
-
-jvm_import(
-    name = "io_modelcontextprotocol-kotlin-sdk-client-jvm-0_12_0_http_import",
-    jar = "@io_modelcontextprotocol-kotlin-sdk-client-jvm-0_12_0_http//file",
-    source_jar = "@io_modelcontextprotocol-kotlin-sdk-client-jvm-0_12_0-sources_http//file",
-)
-
-jvm_import(
-    name = "io_modelcontextprotocol-kotlin-sdk-server-jvm-0_12_0_http_import",
-    jar = "@io_modelcontextprotocol-kotlin-sdk-server-jvm-0_12_0_http//file",
-    source_jar = "@io_modelcontextprotocol-kotlin-sdk-server-jvm-0_12_0-sources_http//file",
-)
-
-jvm_import(
-    name = "io_modelcontextprotocol-kotlin-sdk-core-jvm-0_12_0_http_import",
-    jar = "@io_modelcontextprotocol-kotlin-sdk-core-jvm-0_12_0_http//file",
-    source_jar = "@io_modelcontextprotocol-kotlin-sdk-core-jvm-0_12_0-sources_http//file",
-)
-
-java_library(
-    name = "io-modelcontextprotocol-kotlin-sdk-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":io-modelcontextprotocol-kotlin-sdk"],
-)
-
-copy_file(
     name = "org.jacoco/org.jacoco.ant-0.8.15.jar_copy",
     src = "@org_jacoco-org_jacoco_ant-0_8_15_http//file",
     out = "org.jacoco/org.jacoco.ant-0.8.15.jar",
@@ -13723,6 +13648,74 @@ jvm_import(
     jar = "@org_apache_maven_resolver-maven-resolver-transport-http-1_9_22_http//file",
     source_jar = "@org_apache_maven_resolver-maven-resolver-transport-http-1_9_22-sources_http//file",
     visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.modelcontextprotocol/kotlin-sdk-jvm-0.12.0.jar_copy",
+    src = "@io_modelcontextprotocol-kotlin-sdk-jvm-0_12_0_http//file",
+    out = "io.modelcontextprotocol/kotlin-sdk-jvm-0.12.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.modelcontextprotocol/kotlin-sdk-client-jvm-0.12.0.jar_copy",
+    src = "@io_modelcontextprotocol-kotlin-sdk-client-jvm-0_12_0_http//file",
+    out = "io.modelcontextprotocol/kotlin-sdk-client-jvm-0.12.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.modelcontextprotocol/kotlin-sdk-server-jvm-0.12.0.jar_copy",
+    src = "@io_modelcontextprotocol-kotlin-sdk-server-jvm-0_12_0_http//file",
+    out = "io.modelcontextprotocol/kotlin-sdk-server-jvm-0.12.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.modelcontextprotocol/kotlin-sdk-core-jvm-0.12.0.jar_copy",
+    src = "@io_modelcontextprotocol-kotlin-sdk-core-jvm-0_12_0_http//file",
+    out = "io.modelcontextprotocol/kotlin-sdk-core-jvm-0.12.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-mcp-kotlin-sdk-io-modelcontextprotocol-kotlin-sdk",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":io_modelcontextprotocol-kotlin-sdk-jvm-0_12_0_http_import",
+        ":io_modelcontextprotocol-kotlin-sdk-client-jvm-0_12_0_http_import",
+        ":io_modelcontextprotocol-kotlin-sdk-server-jvm-0_12_0_http_import",
+        ":io_modelcontextprotocol-kotlin-sdk-core-jvm-0_12_0_http_import",
+    ],
+)
+
+jvm_import(
+    name = "io_modelcontextprotocol-kotlin-sdk-jvm-0_12_0_http_import",
+    jar = "@io_modelcontextprotocol-kotlin-sdk-jvm-0_12_0_http//file",
+    source_jar = "@io_modelcontextprotocol-kotlin-sdk-jvm-0_12_0-sources_http//file",
+)
+
+jvm_import(
+    name = "io_modelcontextprotocol-kotlin-sdk-client-jvm-0_12_0_http_import",
+    jar = "@io_modelcontextprotocol-kotlin-sdk-client-jvm-0_12_0_http//file",
+    source_jar = "@io_modelcontextprotocol-kotlin-sdk-client-jvm-0_12_0-sources_http//file",
+)
+
+jvm_import(
+    name = "io_modelcontextprotocol-kotlin-sdk-server-jvm-0_12_0_http_import",
+    jar = "@io_modelcontextprotocol-kotlin-sdk-server-jvm-0_12_0_http//file",
+    source_jar = "@io_modelcontextprotocol-kotlin-sdk-server-jvm-0_12_0-sources_http//file",
+)
+
+jvm_import(
+    name = "io_modelcontextprotocol-kotlin-sdk-core-jvm-0_12_0_http_import",
+    jar = "@io_modelcontextprotocol-kotlin-sdk-core-jvm-0_12_0_http//file",
+    source_jar = "@io_modelcontextprotocol-kotlin-sdk-core-jvm-0_12_0-sources_http//file",
 )
 
 copy_file(

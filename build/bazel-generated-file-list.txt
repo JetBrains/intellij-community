@@ -592,6 +592,7 @@ libraries/lz4
 libraries/markdown
 libraries/maven-resolver-provider
 libraries/maven-resolver-transport
+libraries/mcp-kotlin-sdk
 libraries/memoryfilesystem
 libraries/microba
 libraries/miglayout-swing

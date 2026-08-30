@@ -4551,62 +4551,6 @@ http_file(
 )
 
 http_file(
-    name = "io_modelcontextprotocol-kotlin-sdk-jvm-0_12_0_http",
-    downloaded_file_path = "kotlin-sdk-jvm-0.12.0.jar",
-    sha256 = "88c25c0136e9be9539a906c2dc25d1ba7b2bedae0c8c3f7421ca3fb8090192dc",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/modelcontextprotocol/kotlin-sdk-jvm/0.12.0/kotlin-sdk-jvm-0.12.0.jar",
-)
-
-http_file(
-    name = "io_modelcontextprotocol-kotlin-sdk-client-jvm-0_12_0_http",
-    downloaded_file_path = "kotlin-sdk-client-jvm-0.12.0.jar",
-    sha256 = "455f06a612d433479c542f65824d397d1b5f7ba7e26c644098fb231abc0cbc27",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/modelcontextprotocol/kotlin-sdk-client-jvm/0.12.0/kotlin-sdk-client-jvm-0.12.0.jar",
-)
-
-http_file(
-    name = "io_modelcontextprotocol-kotlin-sdk-server-jvm-0_12_0_http",
-    downloaded_file_path = "kotlin-sdk-server-jvm-0.12.0.jar",
-    sha256 = "bff9a09a6804ff0165a92310bea379056eaeef0a721bded277fa97a74a11d83e",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/modelcontextprotocol/kotlin-sdk-server-jvm/0.12.0/kotlin-sdk-server-jvm-0.12.0.jar",
-)
-
-http_file(
-    name = "io_modelcontextprotocol-kotlin-sdk-core-jvm-0_12_0_http",
-    downloaded_file_path = "kotlin-sdk-core-jvm-0.12.0.jar",
-    sha256 = "dfe26fbe3e06dc82b2f9551f4fa86e2e54455cfcb0e995a6c81bdd2752299e9b",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/modelcontextprotocol/kotlin-sdk-core-jvm/0.12.0/kotlin-sdk-core-jvm-0.12.0.jar",
-)
-
-http_file(
-    name = "io_modelcontextprotocol-kotlin-sdk-jvm-0_12_0-sources_http",
-    downloaded_file_path = "kotlin-sdk-jvm-0.12.0-sources.jar",
-    sha256 = "633b8375298e78b43d5324737dc65efaab9641cfc27debe42026bbaa7f613015",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/modelcontextprotocol/kotlin-sdk-jvm/0.12.0/kotlin-sdk-jvm-0.12.0-sources.jar",
-)
-
-http_file(
-    name = "io_modelcontextprotocol-kotlin-sdk-client-jvm-0_12_0-sources_http",
-    downloaded_file_path = "kotlin-sdk-client-jvm-0.12.0-sources.jar",
-    sha256 = "f55abfdd23d2e1bf544c0d4a630adab200f17e94800b71ff613fc54ce762e368",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/modelcontextprotocol/kotlin-sdk-client-jvm/0.12.0/kotlin-sdk-client-jvm-0.12.0-sources.jar",
-)
-
-http_file(
-    name = "io_modelcontextprotocol-kotlin-sdk-server-jvm-0_12_0-sources_http",
-    downloaded_file_path = "kotlin-sdk-server-jvm-0.12.0-sources.jar",
-    sha256 = "9cfa387c7951ec09790bacc7cab056fb0b5aa8babfe5bd07a64ccc13103e994a",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/modelcontextprotocol/kotlin-sdk-server-jvm/0.12.0/kotlin-sdk-server-jvm-0.12.0-sources.jar",
-)
-
-http_file(
-    name = "io_modelcontextprotocol-kotlin-sdk-core-jvm-0_12_0-sources_http",
-    downloaded_file_path = "kotlin-sdk-core-jvm-0.12.0-sources.jar",
-    sha256 = "7c4d45bc881005fea8b6ebb94c8adc441cf33e31559340f40eb49b05a36e0015",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/modelcontextprotocol/kotlin-sdk-core-jvm/0.12.0/kotlin-sdk-core-jvm-0.12.0-sources.jar",
-)
-
-http_file(
     name = "org_jacoco-org_jacoco_ant-0_8_15_http",
     downloaded_file_path = "org.jacoco.ant-0.8.15.jar",
     sha256 = "54fb6af97c95352d7deeb49113d7ad63f190eaa8cc9ae8e068fdb2f2a6de009e",
@@ -10981,6 +10925,62 @@ http_file(
     downloaded_file_path = "maven-resolver-transport-http-1.9.22-sources.jar",
     sha256 = "ae823fcbec14f1ba9082e81007d652f9ec695f5cf929d9a32bcd2b1ce1f9f928",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-transport-http/1.9.22/maven-resolver-transport-http-1.9.22-sources.jar",
+)
+
+http_file(
+    name = "io_modelcontextprotocol-kotlin-sdk-jvm-0_12_0_http",
+    downloaded_file_path = "kotlin-sdk-jvm-0.12.0.jar",
+    sha256 = "88c25c0136e9be9539a906c2dc25d1ba7b2bedae0c8c3f7421ca3fb8090192dc",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/modelcontextprotocol/kotlin-sdk-jvm/0.12.0/kotlin-sdk-jvm-0.12.0.jar",
+)
+
+http_file(
+    name = "io_modelcontextprotocol-kotlin-sdk-client-jvm-0_12_0_http",
+    downloaded_file_path = "kotlin-sdk-client-jvm-0.12.0.jar",
+    sha256 = "455f06a612d433479c542f65824d397d1b5f7ba7e26c644098fb231abc0cbc27",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/modelcontextprotocol/kotlin-sdk-client-jvm/0.12.0/kotlin-sdk-client-jvm-0.12.0.jar",
+)
+
+http_file(
+    name = "io_modelcontextprotocol-kotlin-sdk-server-jvm-0_12_0_http",
+    downloaded_file_path = "kotlin-sdk-server-jvm-0.12.0.jar",
+    sha256 = "bff9a09a6804ff0165a92310bea379056eaeef0a721bded277fa97a74a11d83e",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/modelcontextprotocol/kotlin-sdk-server-jvm/0.12.0/kotlin-sdk-server-jvm-0.12.0.jar",
+)
+
+http_file(
+    name = "io_modelcontextprotocol-kotlin-sdk-core-jvm-0_12_0_http",
+    downloaded_file_path = "kotlin-sdk-core-jvm-0.12.0.jar",
+    sha256 = "dfe26fbe3e06dc82b2f9551f4fa86e2e54455cfcb0e995a6c81bdd2752299e9b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/modelcontextprotocol/kotlin-sdk-core-jvm/0.12.0/kotlin-sdk-core-jvm-0.12.0.jar",
+)
+
+http_file(
+    name = "io_modelcontextprotocol-kotlin-sdk-jvm-0_12_0-sources_http",
+    downloaded_file_path = "kotlin-sdk-jvm-0.12.0-sources.jar",
+    sha256 = "633b8375298e78b43d5324737dc65efaab9641cfc27debe42026bbaa7f613015",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/modelcontextprotocol/kotlin-sdk-jvm/0.12.0/kotlin-sdk-jvm-0.12.0-sources.jar",
+)
+
+http_file(
+    name = "io_modelcontextprotocol-kotlin-sdk-client-jvm-0_12_0-sources_http",
+    downloaded_file_path = "kotlin-sdk-client-jvm-0.12.0-sources.jar",
+    sha256 = "f55abfdd23d2e1bf544c0d4a630adab200f17e94800b71ff613fc54ce762e368",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/modelcontextprotocol/kotlin-sdk-client-jvm/0.12.0/kotlin-sdk-client-jvm-0.12.0-sources.jar",
+)
+
+http_file(
+    name = "io_modelcontextprotocol-kotlin-sdk-server-jvm-0_12_0-sources_http",
+    downloaded_file_path = "kotlin-sdk-server-jvm-0.12.0-sources.jar",
+    sha256 = "9cfa387c7951ec09790bacc7cab056fb0b5aa8babfe5bd07a64ccc13103e994a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/modelcontextprotocol/kotlin-sdk-server-jvm/0.12.0/kotlin-sdk-server-jvm-0.12.0-sources.jar",
+)
+
+http_file(
+    name = "io_modelcontextprotocol-kotlin-sdk-core-jvm-0_12_0-sources_http",
+    downloaded_file_path = "kotlin-sdk-core-jvm-0.12.0-sources.jar",
+    sha256 = "7c4d45bc881005fea8b6ebb94c8adc441cf33e31559340f40eb49b05a36e0015",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/modelcontextprotocol/kotlin-sdk-core-jvm/0.12.0/kotlin-sdk-core-jvm-0.12.0-sources.jar",
 )
 
 http_file(

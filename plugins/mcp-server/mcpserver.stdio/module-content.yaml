@@ -3,12 +3,6 @@
   - name: io.github.oshai.kotlin.logging.jvm
     files:
     - name: $MAVEN_REPOSITORY$/io/github/oshai/kotlin-logging-jvm/7/kotlin-logging-jvm-7.jar
-  - name: io.modelcontextprotocol.kotlin.sdk
-    files:
-    - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-jvm/0/kotlin-sdk-jvm-0.jar
-    - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-client-jvm/0/kotlin-sdk-client-jvm-0.jar
-    - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-server-jvm/0/kotlin-sdk-server-jvm-0.jar
-    - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-core-jvm/0/kotlin-sdk-core-jvm-0.jar
   - name: ktor-server-sse-jvm
     files:
     - name: $MAVEN_REPOSITORY$/io/ktor/ktor-server-sse-jvm/3/ktor-server-sse-jvm-3.jar

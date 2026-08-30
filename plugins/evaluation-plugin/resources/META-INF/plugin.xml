@@ -49,6 +49,7 @@
        copy for this plugin only. -->
   <content>
     <module name="intellij.libraries.jerolba.carpet.record"/>
+    <module name="intellij.libraries.mcp.kotlin.sdk" loading="required"/>
   </content>
 
   <dependencies>

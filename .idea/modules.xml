@@ -1213,6 +1213,7 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/markdown/intellij.libraries.markdown.iml" filepath="$PROJECT_DIR$/libraries/markdown/intellij.libraries.markdown.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/maven-resolver-provider/intellij.libraries.maven.resolver.provider.iml" filepath="$PROJECT_DIR$/libraries/maven-resolver-provider/intellij.libraries.maven.resolver.provider.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/maven-resolver-transport/intellij.libraries.maven.resolver.transport.iml" filepath="$PROJECT_DIR$/libraries/maven-resolver-transport/intellij.libraries.maven.resolver.transport.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/mcp-kotlin-sdk/intellij.libraries.mcp.kotlin.sdk.iml" filepath="$PROJECT_DIR$/libraries/mcp-kotlin-sdk/intellij.libraries.mcp.kotlin.sdk.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/memoryfilesystem/intellij.libraries.memoryfilesystem.iml" filepath="$PROJECT_DIR$/libraries/memoryfilesystem/intellij.libraries.memoryfilesystem.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/microba/intellij.libraries.microba.iml" filepath="$PROJECT_DIR$/libraries/microba/intellij.libraries.microba.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/miglayout-swing/intellij.libraries.miglayout.swing.iml" filepath="$PROJECT_DIR$/libraries/miglayout-swing/intellij.libraries.miglayout.swing.iml" />
