@@ -26,6 +26,25 @@ internal class BazelLoadStatementManager {
     }
   }
 
+  /**
+   * Removes each symbol that [isUsed] rejects, and removes an extension that keeps no symbol.
+   *
+   * [isUsed] receives the name the load statement binds. For `alias = "original"` that name is `alias`.
+   */
+  fun retainUsedSymbols(isUsed: (String) -> Boolean) {
+    val iterator = loadStatements.entries.iterator()
+    while (iterator.hasNext()) {
+      val entry = iterator.next()
+      val kept = entry.value.filter { isUsed(boundName(it)) }
+      if (kept.isEmpty()) {
+        iterator.remove()
+      }
+      else if (kept.size != entry.value.size) {
+        entry.setValue(kept)
+      }
+    }
+  }
+
   fun getResult(): String {
     return loadStatements.entries
       .sortedWith { a, b -> comparator.compare(a.key, b.key) }
@@ -33,4 +52,14 @@ internal class BazelLoadStatementManager {
         """load("${entry.key}", ${entry.value.joinToString { it }})"""
       }
   }
+}
+
+/**
+ * The name a load statement entry binds in the BUILD file.
+ *
+ * An entry is either `"symbol"` or `alias = "symbol"`.
+ */
+private fun boundName(entry: String): String {
+  val alias = entry.substringBefore(delimiter = '=', missingDelimiterValue = "").trim()
+  return alias.ifEmpty { entry.trim().removeSurrounding("\"") }
 }

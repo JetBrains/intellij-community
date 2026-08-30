@@ -1,4 +1,3 @@
-load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### skip generation section `test intellij.java.frontback.tests`

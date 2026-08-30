@@ -145,6 +145,20 @@ java_test(
 )
 
 java_test(
+    name = "bazel-file-updater-load-symbols-tests",
+    size = "small",
+    test_class = "org.jetbrains.intellij.build.bazel.BazelFileUpdaterLoadSymbolsTest",
+    runtime_deps = [":bazel-generator-integration-tests-lib"],
+)
+
+java_test(
+    name = "bazel-load-statement-manager-tests",
+    size = "small",
+    test_class = "org.jetbrains.intellij.build.bazel.BazelLoadStatementManagerTest",
+    runtime_deps = [":bazel-generator-integration-tests-lib"],
+)
+
+java_test(
     name = "dev-dist-residue-direction-tests",
     size = "small",
     test_class = "org.jetbrains.intellij.build.bazel.DevDistResidueDirectionTest",

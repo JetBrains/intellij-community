@@ -117,6 +117,12 @@ internal class BazelFileUpdater(private val file: Path) {
       .joinToString(separator = "\n")
       .trim()
 
+    // A load line can also serve a hand-written rule call, so the test covers the generated content and the
+    // hand-written content together. A symbol that no line outside the load statements names is dead, and a
+    // regeneration drops it.
+    val identifiers = identifiersOf(stripedContent)
+    manager.retainUsedSymbols { identifiers.contains(it) }
+
     val result = manager.getResult()
 
     fileContent = if (result.isEmpty()) {
@@ -134,6 +140,32 @@ internal class BazelFileUpdater(private val file: Path) {
     // Referenced in build/BUILD.bazel
     "load(\"//build:dev_server_run_configurations.bzl\", \"dev_server_run_configurations\")"
   )
+}
+
+/**
+ * Every identifier the content names.
+ *
+ * A regex for each symbol costs too much over about 4000 modules, so the content is scanned one time.
+ */
+private fun identifiersOf(content: String): Set<String> {
+  val result = HashSet<String>()
+  var start = -1
+  for (index in content.indices) {
+    val c = content[index]
+    if (c == '_' || (c in 'a'..'z') || (c in 'A'..'Z') || (c in '0'..'9')) {
+      if (start == -1) {
+        start = index
+      }
+    }
+    else if (start != -1) {
+      result.add(content.substring(start, index))
+      start = -1
+    }
+  }
+  if (start != -1) {
+    result.add(content.substring(start))
+  }
+  return result
 }
 
 private val EXPORTS_FILES_PATTERN = Regex("""exports_files\(\s*\[([^]]*)]""")

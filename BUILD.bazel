@@ -1,6 +1,5 @@
 load("@aspect_rules_lint//format:defs.bzl", "format_multirun")
 load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
