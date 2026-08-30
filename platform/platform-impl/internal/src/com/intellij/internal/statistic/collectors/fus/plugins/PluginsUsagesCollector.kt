@@ -85,7 +85,7 @@ internal class PluginsUsagesCollector : ApplicationUsagesCollector() {
 
   private fun getPluginUpdateSourcesMetric(): MetricEvent {
     val service = PluginUpdateSourceService.getInstance()
-    val pluginNumber = PluginManagerCore.plugins.asSequence().count {
+    val pluginNumber = PluginManagerCore.loadedPlugins.asSequence().count {
       service.isMissingPluginUpdateSource(it)
     }
     val initializationHappened = PluginUpdateSourceInitializer.hasInitializationHappened()
