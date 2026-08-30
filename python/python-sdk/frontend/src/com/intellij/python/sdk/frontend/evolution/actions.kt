@@ -340,9 +340,9 @@ internal fun installActionRow(onChosen: () -> Unit): EvoTreeLeafElement {
 /**
  * The row that folds the widget's tool list away and unfolds it again, running [onChosen] when picked.
  *
- * It reads as a disclosure rather than as a link: the text is the colour of the rows around it, and the chevron in its
- * own icon column points down while the list is folded and up while it is open — the way it will move when clicked. A
- * link colour said "this goes somewhere else", which is the one thing this row does not do.
+ * It reads as a disclosure rather than as a link: the text is the colour of the rows around it, and its icon is the
+ * platform's own expand/collapse pair, which is what the rest of the IDE marks a foldable list with. A link colour said
+ * "this goes somewhere else", which is the one thing this row does not do.
  *
  * An ordinary leaf, so choosing it closes the popup and runs [onChosen] afterwards — which is what a list that has to be
  * rebuilt from the top wants anyway.
@@ -355,7 +355,7 @@ internal fun showMoreRow(expanded: Boolean, anyToolShown: Boolean, onChosen: () 
     anyToolShown -> "evo.sdk.status.bar.popup.show.more"
     else -> "evo.sdk.status.bar.popup.show.all.tools"
   }
-  val icon = if (expanded) AllIcons.General.ChevronUp else AllIcons.General.ChevronDown
+  val icon = if (expanded) AllIcons.Actions.Collapseall else AllIcons.Actions.Expandall
   val action = object : AnAction({ PySdkFrontendBundle.message(key) }, { "" }, icon), DumbAware, EvoDisclosureRow {
     override fun actionPerformed(e: AnActionEvent) = onChosen()
   }
