@@ -75,6 +75,11 @@
     ["git", "restore"],
     ["git", "stash"],
     ["git", "checkout"],
+    ["git", "read-tree"],
+    ["git", "write-tree"],
+    ["git", "hash-object"],
+    ["git", "update-index"],
+    ["git", "commit-tree"],
 
     ["awk"],
     ["basename"],
