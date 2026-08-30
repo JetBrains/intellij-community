@@ -14,6 +14,7 @@ import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.Disposer
@@ -30,6 +31,10 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.testFixture
 import com.intellij.testFramework.registerExtension
 import com.intellij.util.application
+import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
+import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper.Companion.readJsonIndexingActivityDiagnostic
+import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils
+import com.intellij.util.indexing.diagnostic.dto.JsonProjectScanningHistoryTimes
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.KeyDescriptor
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
@@ -73,6 +78,7 @@ import kotlin.time.Duration.Companion.seconds
 internal class MultiProjectIndexingContractTest {
   companion object {
     private const val FILES_TO_CHANGE: Int = 500
+    private const val ORPHAN_FILES_TO_CHANGE: Int = 1000  
     private const val TURNS = 16
 
     private const val MODULE_NAME: String = "indexing-contract"
@@ -343,6 +349,51 @@ internal class MultiProjectIndexingContractTest {
     }
   }
 
+  /** Verifies that another project cannot discard many changes which must be recovered without a full scan. */
+  @Test
+  @Timeout(120)
+  fun `many changes while project is closed are visible after reopen without full scan`(): Unit =
+    timeoutRunBlocking(timeout = 115.seconds) {
+      val indexToTest = indexFixture.get()
+      val scenarioModel = ScenarioModel()
+      var projectA = openProject("A")
+      val projectB = openProject("B")
+      val filesInProjectA = (0 until ORPHAN_FILES_TO_CHANGE).map { fileNo ->
+        createFile(projectA, scenarioModel, "tree-${fileNo % 3}/file-$fileNo", generation = 1)
+      }
+      val filesInProjectB = (0 until ORPHAN_FILES_TO_CHANGE).map { fileNo ->
+        createFile(projectB, scenarioModel, "tree-${fileNo % 3}/file-$fileNo", generation = 1)
+      }
+      awaitIndexesReady(projectA, projectB)
+      assertIndexMatchesModel(indexToTest, scenarioModel, projectA, projectB)
+
+      closeProject(projectA)
+      edtWriteAction {
+        (filesInProjectA + filesInProjectB).forEach { file ->
+          file.updateContentWithGeneration(scenarioModel, scenarioModel.nextGeneration(file))
+        }
+      }
+      assertIndexMatchesModel(indexToTest, scenarioModel, projectB)
+      drainPendingRequests(indexToTest, scenarioModel, projectB to filesInProjectB.first())
+      assertEquals(
+        0,
+        PendingRequestsProbe.pendingCount(),
+        "The open project must retire all global requests before the closed project reopens",
+      )
+
+      val previousDiagnosticMode = IndexDiagnosticDumper.shouldDumpInUnitTestMode
+      IndexDiagnosticDumper.shouldDumpInUnitTestMode = true
+      try {
+        projectA = openProject("A")
+        awaitIndexesReady(projectA, projectB)
+        assertIndexMatchesModel(indexToTest, scenarioModel, projectA, projectB)
+        assertReopenedWithoutFullScan(projectA)
+      }
+      finally {
+        IndexDiagnosticDumper.shouldDumpInUnitTestMode = previousDiagnosticMode
+      }
+    }
+
   /** Verifies that a newer write into a same file wins after an older mapper was already in progress. */
   @Test
   @Timeout(60)
@@ -454,6 +505,22 @@ internal class MultiProjectIndexingContractTest {
   private suspend fun closeProject(handle: TestProject, save: Boolean = true) {
     handle.project.closeProjectAsync(save)
     openProjects.remove(handle)
+  }
+
+  /** Checks the project-open diagnostic without requiring a specific source for the recovered files. */
+  private fun assertReopenedWithoutFullScan(project: TestProject) {
+    IndexDiagnosticDumper.getInstance().waitAllActivitiesAreDumped()
+    val diagnosticDir = project.project.getProjectCachePath(IndexDiagnosticDumperUtils.indexingDiagnosticDir)
+    val diagnostics = Files.newDirectoryStream(diagnosticDir, "*.json").use { files ->
+      files.mapNotNull { readJsonIndexingActivityDiagnostic(it) }
+        .filter { diagnostic ->
+          val times = diagnostic.projectIndexingActivityHistory.times
+          times is JsonProjectScanningHistoryTimes && times.scanningReason?.contains("On project open") == true
+        }
+    }
+    assertEquals(1, diagnostics.size, "The reopened project must have one project-open diagnostic")
+    val times = diagnostics.single().projectIndexingActivityHistory.times as JsonProjectScanningHistoryTimes
+    assertEquals(false, times.scanningType.isFull, "The reopened project must not use a full scan")
   }
 
   /** Creates the minimal module needed to make a project root indexable. */

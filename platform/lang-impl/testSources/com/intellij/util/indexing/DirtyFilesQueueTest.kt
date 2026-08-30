@@ -251,6 +251,133 @@ class DirtyFilesQueueTest {
     }
   }
 
+  /** Verifies that a transient request survives its project close and cleanup by another project cursor. */
+  @Test
+  fun `transient dirty request survives owner project close and foreign cursor cleanup`() {
+    assumeProjectRequestCursorFeaturesEnabled()
+    val filetype = FakeFileType()
+    val extensionText = "<fileBasedIndex implementation=\"${TransientStateIndexExtension::class.java.name}\"/>"
+
+    runBlocking {
+      runInEdt {
+        val child = loadExtensionWithText(extensionText)
+        Disposer.register(testRootDisposable, child)
+        ScalarIndexExtension.EXTENSION_POINT_NAME.findExtensionOrFail(TransientStateIndexExtension::class.java)
+      }
+      registerFiletype(filetype)
+      TransientStateIndexExtension.generation = 1
+
+      openProject("${testNameRule.methodName}-B") { projectB, moduleB ->
+        val srcB = tempDir.createVirtualDir("src-transient-B")
+        moduleB.createContentRoot(projectB, srcB)
+        IndexingTestUtil.waitUntilIndexesAreReady(projectB)
+        val cursorTrigger = edtWriteAction { srcB.createFile("cursor-trigger.txt") }
+        val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
+        waitForVfsEvents(fileBasedIndex)
+        forceUpdate(fileBasedIndex, projectB)
+
+        val file = openProject("${testNameRule.methodName}-A", waitForIndexesAfterAction = false) { projectA, moduleA ->
+          val srcA = tempDir.createVirtualDir("src-transient-A")
+          moduleA.createContentRoot(projectA, srcA)
+          IndexingTestUtil.waitUntilIndexesAreReady(projectA)
+          val file = edtWriteAction {
+            srcA.createFile("transient.${filetype.defaultExtension}")
+          }
+          waitForVfsEvents(fileBasedIndex)
+          // Drain push tasks before the test publishes its controlled transient request.
+          IndexingTestUtil.suspendUntilIndexesAreReady(projectA)
+          IndexingTestUtil.suspendUntilIndexesAreReady(projectB)
+          waitForVfsEvents(fileBasedIndex)
+
+          smartReadAction(projectA) {
+            assertThat(transientStateIndexValues(projectA, file))
+              .describedAs { "The initial index value must use the first transient state generation" }
+              .containsExactly("1")
+          }
+
+          TransientStateIndexExtension.generation = 2
+          fileBasedIndex.changedFilesCollector.eventMerger.recordTransientStateChangeEvent(file)
+          fileBasedIndex.changedFilesCollector.ensureUpToDate()
+          assertThat(fileBasedIndex.filesToUpdateCollector.containsFileId((file as VirtualFileWithId).id))
+            .describedAs { "The transient request must remain pending before its project closes" }
+            .isTrue()
+          file
+        }
+
+        val collector = fileBasedIndex.filesToUpdateCollector
+        val fileId = (file as VirtualFileWithId).id
+        IndexingTestUtil.suspendUntilIndexesAreReady(projectB)
+        waitForVfsEvents(fileBasedIndex)
+        forceUpdate(fileBasedIndex, projectB)
+        collector.scheduleForUpdate(FileIndexingRequest.updateRequest(cursorTrigger), setOf(projectB), emptyList())
+        collector.requestsFor(projectB, true)
+        collector.removeScheduledFileFromUpdate(cursorTrigger)
+        assertThat(collector.containsFileId(fileId))
+          .describedAs { "The foreign project cursor must clean the pending transient request" }
+          .isFalse()
+
+        openProject("${testNameRule.methodName}-A") { reopenedProjectA, _ ->
+          smartReadAction(reopenedProjectA) {
+            assertThat(transientStateIndexValues(reopenedProjectA, file))
+              .describedAs { "The reopened project must recover the transient update after foreign cursor cleanup" }
+              .containsExactly("2")
+          }
+
+          writeIntentReadAction {
+            IndexDiagnosticDumper.getInstance().waitAllActivitiesAreDumped()
+            val scanning = findScanningTriggeredBy(reopenedProjectA, ReopeningType.PROJECT_REOPEN)
+            assertIsFullScanning(scanning, false)
+          }
+        }
+      }
+    }
+  }
+
+  /** Verifies that a restricted update does not advance the project cursor. */
+  @Test
+  fun `restricted update leaves cursor for unrestricted pass`() {
+    runBlocking {
+      val filetype = FakeFileType()
+      registerFiletype(filetype)
+      openProject(testNameRule.methodName) { project, module ->
+        val src = tempDir.createVirtualDir("src-restricted-update")
+        module.createContentRoot(project, src)
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
+        val restrictedFile = edtWriteAction { src.createFile("restricted.${filetype.defaultExtension}") }
+        val pendingFile = edtWriteAction { src.createFile("pending.${filetype.defaultExtension}") }
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
+
+        val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
+        waitForVfsEvents(fileBasedIndex)
+        forceUpdate(fileBasedIndex, project)
+        val collector = fileBasedIndex.filesToUpdateCollector
+        val request = FileIndexingRequest.updateRequest(pendingFile)
+        val visits = AtomicInteger()
+        fileBasedIndex.installForceUpdateTestHook(testRootDisposable) { observedProject, requests ->
+          if (observedProject == project && requests.any { it === request }) {
+            visits.incrementAndGet()
+          }
+        }
+        collector.scheduleForUpdate(request, setOf(project), emptyList())
+
+        smartReadAction(project) {
+          fileBasedIndex.ensureUpToDate(IdIndex.NAME, project, GlobalSearchScope.everythingScope(project), restrictedFile)
+        }
+        assertThat(collector.isCurrent(request))
+          .describedAs { "The restricted update must leave the other request pending" }
+          .isTrue()
+
+        forceUpdate(fileBasedIndex, project)
+        assertThat(visits.get())
+          .describedAs { "The unrestricted pass must revisit a request seen by the restricted pass" }
+          .isEqualTo(2)
+        assertThat(collector.isCurrent(request))
+          .describedAs { "The unrestricted pass must complete the pending request" }
+          .isFalse()
+      }
+    }
+  }
+
   /** Verifies that a newly registered project starts before requests published prior to its first cursor advancement. */
   @Test
   fun `new project observes request published before its registration`() {
@@ -581,6 +708,32 @@ class DirtyFilesQueueTest {
     override fun getVersion(): Int = 0
   }
 
+  /** Maps a file to the current test generation to model a transient PSI-dependent index value. */
+  internal class TransientStateIndexExtension : FileBasedIndexExtension<String, String>() {
+    companion object {
+      private val INDEX_ID: ID<String, String> = ID.create("transientStateIndex")
+
+      @Volatile
+      internal var generation: Int = 1
+    }
+
+    override fun getName(): ID<String, String> = INDEX_ID
+
+    override fun getInputFilter(): FileBasedIndex.InputFilter =
+      FileBasedIndex.InputFilter { file -> file.extension == FakeFileType().extension }
+
+    override fun dependsOnFileContent(): Boolean = true
+
+    override fun getIndexer(): DataIndexer<String?, String?, FileContent?> = DataIndexer {
+      mapOf("key" to generation.toString())
+    }
+
+    override fun getKeyDescriptor(): KeyDescriptor<String> = EnumeratorStringDescriptor.INSTANCE
+    override fun getValueExternalizer(): DataExternalizer<String> = EnumeratorStringDescriptor.INSTANCE
+
+    override fun getVersion(): Int = 0
+  }
+
   @Test
   fun `test file is failed to index at startup but indexed after restart`() = LoggedErrorProcessor.executeWith<Throwable>(DoNoRethrowBrokenIndexingErrors()) {
     val filetype = FakeFileType()
@@ -619,51 +772,6 @@ class DirtyFilesQueueTest {
           fileBasedIndex.getAllKeys(BadFileBasedIndexExtension().name, project)
         }
         assertThat(allKeys).isNotEmpty()
-      }
-    }
-  }
-
-  /** Verifies that a restricted update does not advance the project cursor. */
-  @Test
-  fun `restricted update leaves cursor for unrestricted pass`() {
-    runBlocking {
-      val filetype = FakeFileType()
-      registerFiletype(filetype)
-      openProject(testNameRule.methodName) { project, module ->
-        val src = tempDir.createVirtualDir("src-restricted-update")
-        module.createContentRoot(project, src)
-        IndexingTestUtil.waitUntilIndexesAreReady(project)
-        val restrictedFile = edtWriteAction { src.createFile("restricted.${filetype.defaultExtension}") }
-        val pendingFile = edtWriteAction { src.createFile("pending.${filetype.defaultExtension}") }
-        IndexingTestUtil.waitUntilIndexesAreReady(project)
-
-        val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
-        waitForVfsEvents(fileBasedIndex)
-        forceUpdate(fileBasedIndex, project)
-        val collector = fileBasedIndex.filesToUpdateCollector
-        val request = FileIndexingRequest.updateRequest(pendingFile)
-        val visits = AtomicInteger()
-        fileBasedIndex.installForceUpdateTestHook(testRootDisposable) { observedProject, requests ->
-          if (observedProject == project && requests.any { it === request }) {
-            visits.incrementAndGet()
-          }
-        }
-        collector.scheduleForUpdate(request, setOf(project), emptyList())
-
-        smartReadAction(project) {
-          fileBasedIndex.ensureUpToDate(IdIndex.NAME, project, GlobalSearchScope.everythingScope(project), restrictedFile)
-        }
-        assertThat(collector.isCurrent(request))
-          .describedAs { "The restricted update must leave the other request pending" }
-          .isTrue()
-
-        forceUpdate(fileBasedIndex, project)
-        assertThat(visits.get())
-          .describedAs { "The unrestricted pass must revisit a request seen by the restricted pass" }
-          .isEqualTo(2)
-        assertThat(collector.isCurrent(request))
-          .describedAs { "The unrestricted pass must complete the pending request" }
-          .isFalse()
       }
     }
   }
@@ -726,6 +834,15 @@ class DirtyFilesQueueTest {
     val processor = CommonProcessors.CollectProcessor<VirtualFile>()
     service.processFilesWithText(text, processor, GlobalSearchScope.allScope(project))
     return processor.results
+  }
+
+  /** Returns the transient-state index value for one file. */
+  private fun transientStateIndexValues(project: Project, file: VirtualFile): Collection<String> {
+    return FileBasedIndex.getInstance().getValues(
+      TransientStateIndexExtension().name,
+      "key",
+      GlobalSearchScope.fileScope(project, file),
+    )
   }
 
   private fun assertCameFromOrphanQueue(scanning: JsonIndexingActivityDiagnostic, fileNames: List<String>) {
@@ -805,7 +922,11 @@ class DirtyFilesQueueTest {
     }
   }
 
-  private suspend fun <T> openProject(name: String, action: suspend (Project, ModuleEntity) -> T): T {
+  private suspend fun <T> openProject(
+    name: String,
+    waitForIndexesAfterAction: Boolean = true,
+    action: suspend (Project, ModuleEntity) -> T,
+  ): T {
     val projectFile = nameToPathMap.computeIfAbsent(name) { n -> TemporaryDirectory.generateTemporaryPath("project_$n") }
     val reopenProject = ProjectUtil.isValidProjectPath(projectFile)
     projectFile.createDirectories()
@@ -821,7 +942,9 @@ class DirtyFilesQueueTest {
     return project.useProjectAsync(save = true) {
       IndexingTestUtil.waitUntilIndexesAreReady(project)
       val res = action(project, module)
-      IndexingTestUtil.suspendUntilIndexesAreReady(project)
+      if (waitForIndexesAfterAction) {
+        IndexingTestUtil.suspendUntilIndexesAreReady(project)
+      }
       IndexDiagnosticDumper.getInstance().waitAllActivitiesAreDumped()
       IndexDiagnosticDumper.shouldDumpInUnitTestMode = false
       FileUtil.deleteRecursively(project.getProjectCachePath(IndexDiagnosticDumperUtils.indexingDiagnosticDir))
@@ -883,5 +1006,4 @@ class DirtyFilesQueueTest {
       fileTypeManager.registerFileType(filetype, listOf(ExtensionFileNameMatcher(filetype.defaultExtension)), testRootDisposable, corePlugin)
     }
   }
-
 }
