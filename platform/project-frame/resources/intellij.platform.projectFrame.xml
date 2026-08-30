@@ -1,4 +1,3 @@
-<!--suppress PluginXmlDynamicPlugin -->
 <idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
@@ -11,7 +10,7 @@
   <!-- endregion -->
 
   <extensionPoints>
-    <extensionPoint name="projectFrameCapabilitiesProvider" interface="com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesProvider"/>
+    <extensionPoint name="projectFrameCapabilitiesProvider" interface="com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesProvider" dynamic="true"/>
     <extensionPoint name="projectFrameType" beanClass="com.intellij.openapi.wm.ex.ProjectFrameTypeBean" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

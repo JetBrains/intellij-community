@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NotNullLazyKey
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
@@ -130,11 +129,13 @@ class ProjectFrameCapabilitiesService {
     val TOOL_WINDOW_INIT: Key<Boolean> = Key("PROJECT_TOOL_WINDOW_INIT")
   }
 
-  private val capabilitiesByProject = NotNullLazyKey.createLazyKey<Set<ProjectFrameCapability>, Project>(
-    "project.frame.capabilities"
-  ) { project ->
-    computeProjectFrameCapabilities(project)
-  }
+  /**
+   * Caches the aggregate per project, together with the provider list it was computed from.
+   *
+   * [ExtensionPointName.extensionsIfPointIsRegistered] returns the same list instance until the extension point changes,
+   * so a dynamically loaded or unloaded provider invalidates the cache on the next read.
+   */
+  private val capabilitiesByProject = Key.create<CachedCapabilities>("project.frame.capabilities")
 
   fun has(project: Project, capability: ProjectFrameCapability): Boolean {
     return getAll(project).contains(capability)
@@ -160,7 +161,7 @@ class ProjectFrameCapabilitiesService {
       return null
     }
 
-    val capabilities = getOrComputeCapabilities(project)
+    val capabilities = getOrComputeCapabilities(project, providers)
     var uiPolicy: ProjectFrameUiPolicy? = null
     var uiPolicyProvider: ProjectFrameCapabilitiesProvider? = null
 
@@ -193,11 +194,22 @@ class ProjectFrameCapabilitiesService {
     }
   }
 
-  private fun getOrComputeCapabilities(project: Project): Set<ProjectFrameCapability> {
+  private fun getOrComputeCapabilities(
+    project: Project,
+    providers: List<ProjectFrameCapabilitiesProvider> = EP_NAME.extensionsIfPointIsRegistered,
+  ): Set<ProjectFrameCapability> {
     if (project.isDisposed) {
       return emptySet()
     }
-    return capabilitiesByProject.getValue(project)
+
+    val cached = project.getUserData(capabilitiesByProject)
+    if (cached != null && cached.providers === providers) {
+      return cached.capabilities
+    }
+
+    val capabilities = computeProjectFrameCapabilities(project, providers)
+    project.putUserData(capabilitiesByProject, CachedCapabilities(providers, capabilities))
+    return capabilities
   }
 }
 
@@ -253,8 +265,15 @@ suspend fun isIndexingActivitiesSuppressed(project: Project?): Boolean {
          capabilitiesService.has(project, ProjectFrameCapability.SUPPRESS_INDEXING_ACTIVITIES)
 }
 
-private fun computeProjectFrameCapabilities(project: Project): Set<ProjectFrameCapability> {
-  val providers = ProjectFrameCapabilitiesService.EP_NAME.extensionsIfPointIsRegistered
+private class CachedCapabilities(
+  @JvmField val providers: List<ProjectFrameCapabilitiesProvider>,
+  @JvmField val capabilities: Set<ProjectFrameCapability>,
+)
+
+private fun computeProjectFrameCapabilities(
+  project: Project,
+  providers: List<ProjectFrameCapabilitiesProvider>,
+): Set<ProjectFrameCapability> {
   if (providers.isEmpty()) {
     return emptySet()
   }

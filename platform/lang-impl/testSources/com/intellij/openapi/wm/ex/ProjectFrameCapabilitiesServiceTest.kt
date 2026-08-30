@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.ex
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
@@ -122,6 +123,46 @@ class ProjectFrameCapabilitiesServiceTest {
     val service = ProjectFrameCapabilitiesService()
     assertThat(service.has(project, ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES)).isTrue()
     assertThat(service.getAll(project)).isEqualTo(setOf(ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES))
+  }
+
+  @Test
+  fun cachedCapabilitiesDropWhenTheExtensionPointChanges() {
+    val projectViewProvider = object : ProjectFrameCapabilitiesProvider {
+      override fun getCapabilities(project: Project): Set<ProjectFrameCapability> {
+        return setOf(ProjectFrameCapability.SUPPRESS_PROJECT_VIEW)
+      }
+
+      override fun getUiPolicy(project: Project, capabilities: Set<ProjectFrameCapability>): ProjectFrameUiPolicy? {
+        return null
+      }
+    }
+    val vcsProvider = object : ProjectFrameCapabilitiesProvider {
+      override fun getCapabilities(project: Project): Set<ProjectFrameCapability> {
+        return setOf(ProjectFrameCapability.SUPPRESS_VCS_UI)
+      }
+
+      override fun getUiPolicy(project: Project, capabilities: Set<ProjectFrameCapability>): ProjectFrameUiPolicy? {
+        return null
+      }
+    }
+
+    // an extension point accepts one mask at a time, so the first one is disposed before the second is applied
+    val firstProviderSet = Disposer.newDisposable(disposable, "one provider")
+    ExtensionTestUtil.maskExtensions(ProjectFrameCapabilitiesService.EP_NAME, listOf(projectViewProvider), firstProviderSet)
+
+    val service = ProjectFrameCapabilitiesService()
+    assertThat(service.getAll(project)).isEqualTo(setOf(ProjectFrameCapability.SUPPRESS_PROJECT_VIEW))
+
+    // a dynamically loaded plugin contributes one more provider
+    Disposer.dispose(firstProviderSet)
+    ExtensionTestUtil.maskExtensions(
+      ProjectFrameCapabilitiesService.EP_NAME,
+      listOf(projectViewProvider, vcsProvider),
+      disposable,
+    )
+
+    assertThat(service.getAll(project))
+      .isEqualTo(setOf(ProjectFrameCapability.SUPPRESS_PROJECT_VIEW, ProjectFrameCapability.SUPPRESS_VCS_UI))
   }
 
   @Test
