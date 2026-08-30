@@ -1,13 +1,19 @@
 <idea-plugin allow-bundled-update="true">
   <id>com.jetbrains.performancePlugin</id>
-  <name>Performance Testing</name>
+  <name>Performance Diagnostics</name>
   <vendor>JetBrains</vendor>
   <category>Platform Development</category>
   <resource-bundle>messages.PerformanceTestingBundle</resource-bundle>
 
   <description><![CDATA[
-    <p>Plugin for automated execution of test scripts, capturing performance snapshots
-    and gathering performance statistics.</p>
+    <p>Finds the cause of a slow IDE, and gives you the data to report it.</p>
+
+    <ul>
+      <li>Detects a UI freeze, and names the plugin that caused it.</li>
+      <li>Captures a memory snapshot from <b>Help | Diagnostic Tools</b>.</li>
+      <li>Shows the indexing diagnostics for the current project.</li>
+      <li>Adds performance and hardware data to a support request.</li>
+    </ul>
 
     <p>Want to report a performance problem? — <a href="https://intellij-support.jetbrains.com/hc/en-us/articles/207241235-Reporting-performance-problems">
     Read More</a></p>
