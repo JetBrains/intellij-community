@@ -70,7 +70,6 @@
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="assertj-swing" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.snakeyaml" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jna" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.miglayout.swing" scope="TEST" />

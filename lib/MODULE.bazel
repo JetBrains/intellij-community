@@ -218,20 +218,6 @@ http_file(
 )
 
 http_file(
-    name = "org_assertj-assertj-swing-3_17_1_http",
-    downloaded_file_path = "assertj-swing-3.17.1.jar",
-    sha256 = "e36445438d72d83cc48015dcb3f14d9a97eaa42c4663a9826db2bb50e4c7713b",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/assertj/assertj-swing/3.17.1/assertj-swing-3.17.1.jar",
-)
-
-http_file(
-    name = "org_assertj-assertj-swing-3_17_1-sources_http",
-    downloaded_file_path = "assertj-swing-3.17.1-sources.jar",
-    sha256 = "94f69f706f6b3cf8f098c1c2cfaeecdb5975a65d847a4b8bf33adfee90f07b16",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/assertj/assertj-swing/3.17.1/assertj-swing-3.17.1-sources.jar",
-)
-
-http_file(
     name = "org_apache_lucene-lucene-codecs-10_5_0_http",
     downloaded_file_path = "lucene-codecs-10.5.0.jar",
     sha256 = "9ecc0c7cbe4e8adb9ad29efdf082cf331afa91582badcc6fcc7bbbdf814621ce",
@@ -6466,6 +6452,20 @@ http_file(
     downloaded_file_path = "assertj-core-4.0.0-M1-sources.jar",
     sha256 = "ea1d879460edd40ca7b646955a5b39796ed41d2b38998ee97487833f149df44b",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/assertj/assertj-core/4.0.0-M1/assertj-core-4.0.0-M1-sources.jar",
+)
+
+http_file(
+    name = "org_assertj-assertj-swing-3_17_1_http",
+    downloaded_file_path = "assertj-swing-3.17.1.jar",
+    sha256 = "e36445438d72d83cc48015dcb3f14d9a97eaa42c4663a9826db2bb50e4c7713b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/assertj/assertj-swing/3.17.1/assertj-swing-3.17.1.jar",
+)
+
+http_file(
+    name = "org_assertj-assertj-swing-3_17_1-sources_http",
+    downloaded_file_path = "assertj-swing-3.17.1-sources.jar",
+    sha256 = "94f69f706f6b3cf8f098c1c2cfaeecdb5975a65d847a4b8bf33adfee90f07b16",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/assertj/assertj-swing/3.17.1/assertj-swing-3.17.1-sources.jar",
 )
 
 http_file(

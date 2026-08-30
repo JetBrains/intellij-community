@@ -61,6 +61,9 @@
   </content>
   <content>
     <module name="intellij.libraries.assertj.core" loading="embedded"/>
+    <!-- assertj-swing is a private library of this plugin. The unnamed content tag registers the wrapper in the
+         implicit per-plugin namespace, and 'embedded' lets the main module intellij.featuresTrainer read it -->
+    <module name="intellij.libraries.assertj.swing" loading="embedded"/>
   </content>
   <!-- Not embedded, unlike the one above: intellij.vcs.git.featuresTrainer is a regular content module, and it reads
        the learning project through its own classloader, which has the wrapper as a parent. No 'namespace' attribute,

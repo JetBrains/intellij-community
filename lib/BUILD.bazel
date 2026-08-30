@@ -504,21 +504,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.assertj/assertj-swing-3.17.1.jar_copy",
-    src = "@org_assertj-assertj-swing-3_17_1_http//file",
-    out = "org.assertj/assertj-swing-3.17.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "assertj-swing",
-    jar = "@org_assertj-assertj-swing-3_17_1_http//file",
-    source_jar = "@org_assertj-assertj-swing-3_17_1-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "org.apache.lucene/lucene-codecs-10.5.0.jar_copy",
     src = "@org_apache_lucene-lucene-codecs-10_5_0_http//file",
     out = "org.apache.lucene/lucene-codecs-10.5.0.jar",
@@ -8391,6 +8376,21 @@ jvm_import(
     name = "libraries-assertj-core-assert_j",
     jar = "@org_assertj-assertj-core-4_0_0-M1_http//file",
     source_jar = "@org_assertj-assertj-core-4_0_0-M1-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.assertj/assertj-swing-3.17.1.jar_copy",
+    src = "@org_assertj-assertj-swing-3_17_1_http//file",
+    out = "org.assertj/assertj-swing-3.17.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-assertj-swing-assertj-swing",
+    jar = "@org_assertj-assertj-swing-3_17_1_http//file",
+    source_jar = "@org_assertj-assertj-swing-3_17_1-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

@@ -95,6 +95,9 @@
   </content>
   <content>
     <module name="intellij.libraries.assertj.core" loading="embedded"/>
+    <!-- assertj-swing is a private library of this plugin. The unnamed content tag registers the wrapper in the
+         implicit per-plugin namespace, and 'embedded' publishes the classes to the plugins that depend on this one -->
+    <module name="intellij.libraries.assertj.swing" loading="embedded"/>
   </content>
 
   <actions>

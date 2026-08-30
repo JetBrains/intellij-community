@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.performanceTesting.remoteDriver` start
 jvm_library(
@@ -27,7 +28,7 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//plugins/performanceTesting/core:performanceTesting",
         "//libraries/assertj-core",
-        "@lib//:assertj-swing",
+        "//libraries/assertj-swing",
         "//platform/editor-ui-api:editor-ui",
         "//platform/platform-util-netty:ide-util-netty",
         "//platform/built-in-server-api:builtInServer",
@@ -45,6 +46,8 @@ jvm_library(
         "//platform/util:util-ui",
     ],
 )
+
+content_module_jar(module = ":remote-driver")
 
 jvm_library(
     name = "remote-driver_test_lib",
@@ -67,6 +70,7 @@ jvm_library(
         ":remote-driver",
         "//plugins/performanceTesting/core:performanceTesting_test_lib",
         "//libraries/assertj-core:assertj-core_test_lib",
+        "//libraries/assertj-swing:assertj-swing_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/platform-util-netty:ide-util-netty_test_lib",
         "//platform/built-in-server-api:builtInServer_test_lib",

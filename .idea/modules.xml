@@ -1015,6 +1015,7 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/asm/intellij.libraries.asm.iml" filepath="$PROJECT_DIR$/libraries/asm/intellij.libraries.asm.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/asm-tools/intellij.libraries.asm.tools.iml" filepath="$PROJECT_DIR$/libraries/asm-tools/intellij.libraries.asm.tools.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/assertj-core/intellij.libraries.assertj.core.iml" filepath="$PROJECT_DIR$/libraries/assertj-core/intellij.libraries.assertj.core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/assertj-swing/intellij.libraries.assertj.swing.iml" filepath="$PROJECT_DIR$/libraries/assertj-swing/intellij.libraries.assertj.swing.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/automaton/intellij.libraries.automaton.iml" filepath="$PROJECT_DIR$/libraries/automaton/intellij.libraries.automaton.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/awaitility/intellij.libraries.awaitility.iml" filepath="$PROJECT_DIR$/libraries/awaitility/intellij.libraries.awaitility.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/batik/intellij.libraries.batik.iml" filepath="$PROJECT_DIR$/libraries/batik/intellij.libraries.batik.iml" />

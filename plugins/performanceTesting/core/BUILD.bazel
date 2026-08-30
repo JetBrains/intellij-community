@@ -186,12 +186,12 @@ exports_files(
 dev_dist_plugin(
     content_modules = [
         "//libraries/assertj-core",
-        "//plugins/performanceTesting/remote-driver",
+        "//libraries/assertj-swing",
     ],
     descriptor_module = ":performanceTesting",
     libraries = [
-        "@lib//:assertj-swing",
         "@lib//:libraries-assertj-core-assert_j",
+        "@lib//:libraries-assertj-swing-assertj-swing",
     ],
     prepacked_content_modules = [
         "//plugins/performanceTesting/backend:backend_content_module_jar",
@@ -202,6 +202,7 @@ dev_dist_plugin(
         "//plugins/performanceTesting/rdct:rdct_content_module_jar",
         "//plugins/performanceTesting/remote-driver.compose:remote-driver.compose_content_module_jar",
         "//plugins/performanceTesting/remote-driver.jcef:remote-driver.jcef_content_module_jar",
+        "//plugins/performanceTesting/remote-driver:remote-driver_content_module_jar",
         "//plugins/performanceTesting/structureView:structureView_content_module_jar",
         "//plugins/performanceTesting/vcs:vcs_content_module_jar",
     ],

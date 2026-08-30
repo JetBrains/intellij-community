@@ -395,6 +395,7 @@ libraries/androidx-collections
 libraries/asm
 libraries/asm-tools
 libraries/assertj-core
+libraries/assertj-swing
 libraries/automaton
 libraries/awaitility
 libraries/batik

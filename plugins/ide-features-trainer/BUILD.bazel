@@ -27,13 +27,13 @@ jvm_library(
         ["res/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:assertj-swing"],
+    exports = ["//libraries/assertj-swing"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/guava",
         "//libraries/assertj-core",
-        "@lib//:assertj-swing",
+        "//libraries/assertj-swing",
         "//platform/analysis-api:analysis",
         "//platform/util-ex",
         "//platform/code-style-api:codeStyle",
@@ -83,7 +83,11 @@ jvm_library(
     ),
     module_name = "intellij.featuresTrainer",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:assertj-swing"],
+    exports = [
+        # do not sort,
+        "//libraries/assertj-swing",
+        "//libraries/assertj-swing:assertj-swing_test_lib",
+    ],
     runtime_deps = [
         # do not sort,
         ":featuresTrainer",
@@ -91,6 +95,7 @@ jvm_library(
         "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//libraries/guava:guava_test_lib",
         "//libraries/assertj-core:assertj-core_test_lib",
+        "//libraries/assertj-swing:assertj-swing_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/util-ex:util-ex_test_lib",
         "//platform/code-style-api:codeStyle_test_lib",
@@ -154,6 +159,7 @@ exports_files(
 dev_dist_plugin(
     content_modules = [
         "//libraries/assertj-core",
+        "//libraries/assertj-swing",
         "//plugins/git-features-trainer:vcs-git-featuresTrainer",
         "//plugins/ide-features-trainer/onboarding",
     ],
@@ -161,6 +167,7 @@ dev_dist_plugin(
     descriptor_module = ":featuresTrainer",
     descriptors = {
         "@community//libraries/assertj-core:resources/intellij.libraries.assertj.core.xml": "intellij.libraries.assertj.core.xml",
+        "@community//libraries/assertj-swing:resources/intellij.libraries.assertj.swing.xml": "intellij.libraries.assertj.swing.xml",
         "@community//libraries/git-learning-project:resources/intellij.libraries.git.learning.project.xml": "intellij.libraries.git.learning.project.xml",
         "@community//plugins/git-features-trainer:resources/intellij.vcs.git.featuresTrainer.xml": "intellij.vcs.git.featuresTrainer.xml",
         "@community//plugins/ide-features-trainer/onboarding:resources/intellij.featuresTrainer.onboarding.xml": "intellij.featuresTrainer.onboarding.xml",
@@ -168,8 +175,8 @@ dev_dist_plugin(
         "@community//plugins/kotlin/onboarding-promoter:resources/intellij.kotlin.onboarding.promoter.xml": "intellij.kotlin.onboarding.promoter.xml",
     },
     libraries = [
-        "@lib//:assertj-swing",
         "@lib//:libraries-assertj-core-assert_j",
+        "@lib//:libraries-assertj-swing-assertj-swing",
     ],
     main_module = "intellij.featuresTrainer",
     prepacked_content_modules = [
@@ -189,7 +196,7 @@ jvm_library(
     ),
     module_name = "intellij.featuresTrainer.tests",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:assertj-swing"],
+    exports = ["//libraries/assertj-swing"],
 )
 
 jvm_library(
@@ -212,7 +219,11 @@ jvm_library(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:assertj-swing"],
+    exports = [
+        # do not sort,
+        "//libraries/assertj-swing",
+        "//libraries/assertj-swing:assertj-swing_test_lib",
+    ],
     runtime_deps = [
         # do not sort,
         ":featuresTrainer-tests",
@@ -229,7 +240,8 @@ jvm_library(
         "//libraries/guava:guava_test_lib",
         "//libraries/assertj-core",
         "//libraries/assertj-core:assertj-core_test_lib",
-        "@lib//:assertj-swing",
+        "//libraries/assertj-swing",
+        "//libraries/assertj-swing:assertj-swing_test_lib",
         "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/util-ex",

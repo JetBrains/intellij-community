@@ -193,7 +193,6 @@ jvm_library(
         "//platform/configuration-store-impl:configurationStore-impl_test_lib",
         "//platform/testFramework/extensions:testExtensions",
         "//platform/testFramework/extensions:testExtensions_test_lib",
-        "@lib//:assertj-swing",
         "//libraries/snakeyaml",
         "//libraries/snakeyaml:snakeyaml_test_lib",
         "//libraries/jna",
