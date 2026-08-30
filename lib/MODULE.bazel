@@ -372,20 +372,6 @@ http_file(
 )
 
 http_file(
-    name = "com_jetbrains_fus_reporting-ap-validation-all-2_0_242_http",
-    downloaded_file_path = "ap-validation-all-2.0.242.jar",
-    sha256 = "0460675b92724722986a81a5565c8972e628540cd17e2428bac28e80873e470e",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/ap-validation-all/2.0.242/ap-validation-all-2.0.242.jar",
-)
-
-http_file(
-    name = "com_jetbrains_fus_reporting-ap-validation-all-2_0_242-sources_http",
-    downloaded_file_path = "ap-validation-all-2.0.242-sources.jar",
-    sha256 = "d04aea7955e17c8eb694962c4d9b155888ca15b339aa909502b398ea6ad28fa0",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/ap-validation-all/2.0.242/ap-validation-all-2.0.242-sources.jar",
-)
-
-http_file(
     name = "com_jetbrains_fus_reporting-fus-api-2_0_242_http",
     downloaded_file_path = "fus-api-2.0.242.jar",
     sha256 = "e554cff6d8dd6987db5d70e2f775f246a3f8c6233d2d68e3d42f02993c3195c7",
@@ -8860,6 +8846,20 @@ http_file(
     downloaded_file_path = "flexmark-youtrack-converter-0.64.8-sources.jar",
     sha256 = "ceacb63385bfe87d2cfd6a6ce39fa52d2ebf806ba58c3f63786ee4274fbf930e",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/vladsch/flexmark/flexmark-youtrack-converter/0.64.8/flexmark-youtrack-converter-0.64.8-sources.jar",
+)
+
+http_file(
+    name = "com_jetbrains_fus_reporting-ap-validation-all-2_0_242_http",
+    downloaded_file_path = "ap-validation-all-2.0.242.jar",
+    sha256 = "0460675b92724722986a81a5565c8972e628540cd17e2428bac28e80873e470e",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/ap-validation-all/2.0.242/ap-validation-all-2.0.242.jar",
+)
+
+http_file(
+    name = "com_jetbrains_fus_reporting-ap-validation-all-2_0_242-sources_http",
+    downloaded_file_path = "ap-validation-all-2.0.242-sources.jar",
+    sha256 = "d04aea7955e17c8eb694962c4d9b155888ca15b339aa909502b398ea6ad28fa0",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/ap-validation-all/2.0.242/ap-validation-all-2.0.242-sources.jar",
 )
 
 http_file(

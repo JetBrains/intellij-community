@@ -99,6 +99,9 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.commons.lang3")
     embeddedModule("intellij.libraries.commons.logging")
     embeddedModule("intellij.libraries.fastutil")
+    // embedded because the jar splits the package `com.intellij.internal.statistic.eventLog.validator` with
+    // `intellij.platform.statistics`, which is embedded itself. A split package needs one classloader.
+    embeddedModule("intellij.libraries.fus.ap.validation")
     embeddedModule("intellij.libraries.gson")
     embeddedModule("intellij.libraries.guava")
     embeddedModule("intellij.libraries.hash4j")

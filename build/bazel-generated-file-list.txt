@@ -440,6 +440,7 @@ libraries/ec4j/core
 libraries/fastutil
 libraries/ffmpeg
 libraries/flexmark
+libraries/fus-ap-validation
 libraries/git-learning-project
 libraries/gradle
 libraries/groovy

@@ -501,7 +501,6 @@ jvm_library(
         "//python/python-hatch:hatch",
         "//platform/external-system-impl:externalSystem-impl",
         "//platform/external-system-api:externalSystem",
-        "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
         "//libraries/http-client",
         "//libraries/commons/lang3",
         "//python/impl.helperLocator:community-helpersLocator",
@@ -527,6 +526,15 @@ jvm_library(
         "//python/python-poetry/backend",
         "//platform/eel-nioFs",
     ],
+)
+
+content_module_jar(
+    libraries = [
+        # do not sort,
+        "@lib//:python-community-impl-ml-completion-prev-exprs-models",
+        "@lib//:python-community-impl-completion-ranking-python-with-full-line",
+    ],
+    module = ":python-community-impl",
 )
 
 jvm_library(
@@ -966,7 +974,8 @@ jvm_library(
         "//platform/external-system-impl:externalSystem-impl_test_lib",
         "//platform/external-system-api:externalSystem",
         "//platform/external-system-api:externalSystem_test_lib",
-        "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+        "//libraries/fus-ap-validation",
+        "//libraries/fus-ap-validation:fus-ap-validation_test_lib",
         "//libraries/http-client",
         "//libraries/http-client:http-client_test_lib",
         "//libraries/commons/lang3",

@@ -31,7 +31,7 @@ jvm_library(
     exports = [
         # do not sort,
         "@lib//:com-jetbrains-fus-reporting-fus-api",
-        "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+        "//libraries/fus-ap-validation",
         "@lib//:jetbrains-fus-reporting-api-jvm",
     ],
     deps = [
@@ -70,7 +70,7 @@ jvm_library(
         "//libraries/kotlinx/serialization/json",
         "//libraries/kotlinx/serialization/core",
         "@lib//:com-jetbrains-fus-reporting-fus-api",
-        "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+        "//libraries/fus-ap-validation",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "@lib//:jetbrains-fus-reporting-api-jvm",
     ],
@@ -80,7 +80,6 @@ content_module_jar(
     libraries = [
         # do not sort,
         "@lib//:com-jetbrains-fus-reporting-fus-api",
-        "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
         "@lib//:jetbrains-fus-reporting-api-jvm",
     ],
     module = ":statistics",
@@ -98,7 +97,8 @@ jvm_library(
     exports = [
         # do not sort,
         "@lib//:com-jetbrains-fus-reporting-fus-api",
-        "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+        "//libraries/fus-ap-validation",
+        "//libraries/fus-ap-validation:fus-ap-validation_test_lib",
         "@lib//:jetbrains-fus-reporting-api-jvm",
     ],
     runtime_deps = [
@@ -140,6 +140,7 @@ jvm_library(
         "//libraries/assertj-core:assertj-core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/fus-ap-validation:fus-ap-validation_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     ],
 )
@@ -168,7 +169,7 @@ jvm_library(
     exports = [
         # do not sort,
         "@lib//:com-jetbrains-fus-reporting-fus-api",
-        "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+        "//libraries/fus-ap-validation",
     ],
 )
 
@@ -191,7 +192,8 @@ jvm_library(
     exports = [
         # do not sort,
         "@lib//:com-jetbrains-fus-reporting-fus-api",
-        "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+        "//libraries/fus-ap-validation",
+        "//libraries/fus-ap-validation:fus-ap-validation_test_lib",
     ],
     runtime_deps = [
         # do not sort,
@@ -265,7 +267,8 @@ jvm_library(
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "@lib//:com-jetbrains-fus-reporting-fus-api",
-        "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
+        "//libraries/fus-ap-validation",
+        "//libraries/fus-ap-validation:fus-ap-validation_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     ],

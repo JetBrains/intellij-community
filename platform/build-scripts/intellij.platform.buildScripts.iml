@@ -218,7 +218,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.base" />
     <orderEntry type="module" module-name="intellij.idea.community.build.zip" />
     <orderEntry type="library" name="com.jetbrains.fus.reporting.fus-api" level="project" />
-    <orderEntry type="library" name="com.jetbrains.fus.reporting.ap.validation.all" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.fus.ap.validation" />
     <orderEntry type="library" name="jetbrains.fus.reporting.api.jvm" level="project" />
     <orderEntry type="module-library">
       <library name="netty" type="repository">

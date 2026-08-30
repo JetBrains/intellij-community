@@ -175,7 +175,7 @@
     <orderEntry type="module" module-name="intellij.python.hatch" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="com.jetbrains.fus.reporting.ap.validation.all" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.fus.ap.validation" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.http.client" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.commons.lang3" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.helpersLocator" scope="TEST" />

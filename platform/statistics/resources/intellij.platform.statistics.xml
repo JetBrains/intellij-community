@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.libraries.caffeine"/>
     <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.fus.ap.validation"/>
     <module name="intellij.libraries.jackson"/>
     <module name="intellij.libraries.jackson.databind"/>
     <module name="intellij.libraries.jackson.module.kotlin"/>

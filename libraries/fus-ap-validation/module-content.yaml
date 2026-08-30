@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.fus.ap.validation.jar
+  modules:
+  - name: intellij.libraries.fus.ap.validation
+    libraries:
+      com.jetbrains.fus.reporting.ap.validation.all:
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/2/ap-validation-all-2.jar

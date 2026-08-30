@@ -1,6 +1,7 @@
 <idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.fus.ap.validation"/>
     <module name="intellij.libraries.jackson"/>
     <module name="intellij.libraries.jackson.databind"/>
     <module name="intellij.libraries.jackson.module.kotlin"/>
