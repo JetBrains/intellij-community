@@ -14,12 +14,12 @@ public final class ExternalEntityIndexableIteratorImpl extends SourceRootHolderI
 
   public ExternalEntityIndexableIteratorImpl(@NotNull EntityPointer<?> entityPointer,
                                              @NotNull IndexingSourceRootHolder roots) {
-    super(entityPointer, roots, IndexableIteratorPresentation.create(
-      "External roots from entity (" + roots.getRootsDebugStr() + ")",
-      IndexingBundle.message(
-        "indexable.files.provider.indexing.additional.dependencies"),
-      IndexingBundle.message(
-        "indexable.files.provider.scanning.additional.dependencies")));
+    super(entityPointer, roots,
+          IndexableIteratorPresentation.create(
+            "External roots from entity (" + roots.getRootsDebugStr() + ")",
+            IndexingBundle.messagePointer("indexable.files.provider.indexing.additional.dependencies"),
+            IndexingBundle.messagePointer("indexable.files.provider.scanning.additional.dependencies"))
+    );
   }
 
   @Override

@@ -6,6 +6,8 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Supplier;
+
 @Internal
 public interface IndexableIteratorPresentation {
   /**
@@ -29,11 +31,11 @@ public interface IndexableIteratorPresentation {
   String getRootsScanningProgressText();
 
   static IndexableIteratorPresentation create(@Nullable @NonNls String debugName,
-                                              @Nullable @NlsContexts.ProgressText String indexingProgressText,
-                                              @Nullable @NlsContexts.ProgressText String rootsScanningProgressText) {
+                                              @Nullable @NlsContexts.ProgressText Supplier<String> indexingProgressText,
+                                              @Nullable @NlsContexts.ProgressText Supplier<String> rootsScanningProgressText) {
     record Presentation(@Nullable @NonNls String debugName,
-                        @Nullable @NlsContexts.ProgressText String indexingProgressText,
-                        @Nullable @NlsContexts.ProgressText String rootsScanningProgressText) implements IndexableIteratorPresentation {
+                        @Nullable Supplier<@NlsContexts.ProgressText String> indexingProgressText,
+                        @Nullable Supplier<@NlsContexts.ProgressText String> rootsScanningProgressText) implements IndexableIteratorPresentation {
       @Override
       public String getDebugName() {
         return this.debugName;
@@ -41,12 +43,16 @@ public interface IndexableIteratorPresentation {
 
       @Override
       public @Nullable String getIndexingProgressText() {
-        return this.indexingProgressText;
+        if (this.indexingProgressText == null) return null;
+
+        return this.indexingProgressText.get();
       }
 
       @Override
       public String getRootsScanningProgressText() {
-        return this.rootsScanningProgressText;
+        if (this.rootsScanningProgressText == null) return null;
+
+        return this.rootsScanningProgressText.get();
       }
     }
     return new Presentation(debugName, indexingProgressText, rootsScanningProgressText);

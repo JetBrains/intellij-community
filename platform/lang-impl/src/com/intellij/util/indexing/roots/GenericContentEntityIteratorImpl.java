@@ -14,10 +14,12 @@ public final class GenericContentEntityIteratorImpl extends RootHolderIteratorBa
 
   public GenericContentEntityIteratorImpl(@NotNull EntityPointer<?> entityPointer,
                                           @NotNull IndexingRootHolder roots) {
-    super(entityPointer, roots, IndexableIteratorPresentation.create(
-      "Module unaware content roots from entity (" + roots.getDebugDescription() + ")",
-      IndexingBundle.message("indexable.files.provider.indexing.content"),
-      IndexingBundle.message("indexable.files.provider.scanning.content")));
+    super(entityPointer, roots,
+          IndexableIteratorPresentation.create(
+            "Module unaware content roots from entity (" + roots.getDebugDescription() + ")",
+            IndexingBundle.messagePointer("indexable.files.provider.indexing.content"),
+            IndexingBundle.messagePointer("indexable.files.provider.scanning.content"))
+    );
   }
 
   @Override

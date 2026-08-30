@@ -14,10 +14,11 @@ public final class CustomKindEntityIteratorImpl extends RootHolderIteratorBase {
 
   public CustomKindEntityIteratorImpl(@NotNull EntityPointer<?> entityPointer,
                                       @NotNull IndexingRootHolder roots) {
-    super(entityPointer, roots, IndexableIteratorPresentation.create(
-      "Custom kind roots from entity (" + roots.getDebugDescription() + ")",
-            IndexingBundle.message("indexable.files.provider.indexing.additional.dependencies"),
-            IndexingBundle.message("indexable.files.provider.scanning.additional.dependencies")),
+    super(entityPointer, roots,
+          IndexableIteratorPresentation.create(
+            "Custom kind roots from entity (" + roots.getDebugDescription() + ")",
+            IndexingBundle.messagePointer("indexable.files.provider.indexing.additional.dependencies"),
+            IndexingBundle.messagePointer("indexable.files.provider.scanning.additional.dependencies")),
           true);
   }
 
