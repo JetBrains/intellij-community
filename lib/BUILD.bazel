@@ -2555,21 +2555,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "com.google.protobuf/protobuf-java-util-3.25.5.jar_copy",
-    src = "@com_google_protobuf-protobuf-java-util-3_25_5_http//file",
-    out = "com.google.protobuf/protobuf-java-util-3.25.5.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "google-protobuf-java-util",
-    jar = "@com_google_protobuf-protobuf-java-util-3_25_5_http//file",
-    source_jar = "@com_google_protobuf-protobuf-java-util-3_25_5-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "com.googlecode.plist/dd-plist-1.28.jar_copy",
     src = "@com_googlecode_plist-dd-plist-1_28_http//file",
     out = "com.googlecode.plist/dd-plist-1.28.jar",
@@ -14821,6 +14806,21 @@ jvm_import(
     name = "libraries-plexus-utils-plexus-utils",
     jar = "@org_codehaus_plexus-plexus-utils-3_6_1_http//file",
     source_jar = "@org_codehaus_plexus-plexus-utils-3_6_1-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.google.protobuf/protobuf-java-util-3.25.5.jar_copy",
+    src = "@com_google_protobuf-protobuf-java-util-3_25_5_http//file",
+    out = "com.google.protobuf/protobuf-java-util-3.25.5.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-protobuf-java-util-google-protobuf-java-util",
+    jar = "@com_google_protobuf-protobuf-java-util-3_25_5_http//file",
+    source_jar = "@com_google_protobuf-protobuf-java-util-3_25_5-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

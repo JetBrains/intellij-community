@@ -1,0 +1,49 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.libraries.protobuf.java.util` start
+jvm_library(
+    name = "protobuf-java-util",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.protobuf.java.util",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-protobuf-java-util-google-protobuf-java-util"],
+    runtime_deps = ["@lib//:libraries-protobuf-java-util-google-protobuf-java-util"],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-protobuf-java-util-google-protobuf-java-util"],
+    module = ":protobuf-java-util",
+)
+
+jvm_library(
+    name = "protobuf-java-util_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.protobuf.java.util",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-protobuf-java-util-google-protobuf-java-util"],
+    runtime_deps = [":protobuf-java-util"],
+)
+### auto-generated section `build intellij.libraries.protobuf.java.util` end
+
+### auto-generated section `iml intellij.libraries.protobuf.java.util` start
+exports_files(
+    [
+        "intellij.libraries.protobuf.java.util.iml",
+        "resources/intellij.libraries.protobuf.java.util.xml",
+        "module-content.yaml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.protobuf.java.util` end

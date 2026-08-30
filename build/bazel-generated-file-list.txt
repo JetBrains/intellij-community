@@ -626,6 +626,7 @@ libraries/oshi-core
 libraries/package-search-api-client
 libraries/plexus-utils
 libraries/protobuf
+libraries/protobuf-java-util
 libraries/protobuf-kotlin
 libraries/proxy-vole
 libraries/pty4j
