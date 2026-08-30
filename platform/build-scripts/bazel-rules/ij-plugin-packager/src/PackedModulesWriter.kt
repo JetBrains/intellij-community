@@ -4,9 +4,11 @@ import java.nio.file.Path
 import kotlin.io.path.writeText
 
 /**
- * Generates `plugin-content.yaml` file that describes modules included in the plugin distribution.
+ * Writes the `packed-modules.yaml` file of one plugin distribution.
+ *
+ * The file names each jar of the distribution. Under a jar it names the modules the packager put into that jar.
  */
-internal class PluginContentYamlWriter(
+internal class PackedModulesWriter(
   private val outputFile: Path,
   private val pluginRoot: Path,
 ) {

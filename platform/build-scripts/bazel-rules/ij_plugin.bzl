@@ -13,7 +13,7 @@ def _ij_plugin_impl(ctx):
     plugin_descriptor_module_info = ctx.attr.descriptor_module[_KtJvmInfo]
     dir_name = _module_name_to_directory_name(plugin_descriptor_module_info.module_name)
     output_dir = ctx.actions.declare_directory(dir_name)
-    content_yaml_file = ctx.actions.declare_file("plugin-content.yaml")
+    packed_modules_file = ctx.actions.declare_file("packed-modules.yaml")
 
     ide_build_number = ctx.attr._ide_build_number[_IdeBuildNumberProvider].build_number
     explicit_plugin_version = ctx.attr._plugin_version[_PluginVersionProvider].plugin_version
@@ -46,8 +46,8 @@ def _ij_plugin_impl(ctx):
         args.add(default_ide_build_number_file)
         inputs.append(default_ide_build_number_file)
 
-    args.add("--plugin_content_yaml")
-    args.add(content_yaml_file)
+    args.add("--packed_modules")
+    args.add(packed_modules_file)
     args.add_all(
         "--descriptor_module",
         [plugin_descriptor_jar],
@@ -69,7 +69,7 @@ def _ij_plugin_impl(ctx):
         # so they would make the action key differ across Linux/macOS/Windows (see `bazel_scrubbing.cfg`).
         # `JvmCompile` in `@rules_jvm` relies on the same JBR-is-available-in-the-exec-root assumption.
         inputs = depset(inputs),
-        outputs = [output_dir, content_yaml_file],
+        outputs = [output_dir, packed_modules_file],
         tools = [ctx.file._packager_launcher, ctx.file._packager],
         executable = java_runtime.java_executable_exec_path,
         execution_requirements = {
@@ -88,7 +88,7 @@ def _ij_plugin_impl(ctx):
         progress_message = "Packaging plugin %{label}",
     )
     return [
-        DefaultInfo(files = depset([output_dir, content_yaml_file])),
+        DefaultInfo(files = depset([output_dir, packed_modules_file])),
     ]
 
 _build_number_from_file = "$build_number_from_file"
@@ -130,6 +130,9 @@ def _module_name_to_directory_name(module_name):
 ij_plugin = rule(
     doc = """\
 Builds a directory containing a plugin distribution for IntelliJ-based IDEs.
+
+The rule also writes `packed-modules.yaml` beside that directory. The file names each jar in the distribution, and under
+each jar the modules the packager put into it.
 
 This rule is experimental, and its API may change. Do not migrate plugins to it yet.
 """,

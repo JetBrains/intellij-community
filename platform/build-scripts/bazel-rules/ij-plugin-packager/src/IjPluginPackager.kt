@@ -29,7 +29,7 @@ import kotlin.io.path.readText
  * Other arguments are:
  * * `--descriptor_module module_name:path_to_jar` (mandatory): specifies the name of a JPS module containing the plugin descriptor and path to its JAR file;
  * * `--content_module module_name:path_to_jar` (multiple entries are allowed): includes a plugin content module to the plugin distribution;
- * * `--plugin_content_yaml path`: enables generation of `plugin-content.yaml` file with a human-readable description of modules included in the distribution;
+ * * `--packed_modules path`: enables generation of the `packed-modules.yaml` file, which names each jar in the distribution and the modules packed into it;
  * * `--plugin_version version`: updates `<version>` tag in `plugin.xml` with the provided version;
  * * `--since_build build`: updates `since-build` attribute in `<idea-version>` tag in `plugin.xml` with the provided value;
  * * `--until_build build`: updates `until-build` attribute in `<idea-version>` tag in `plugin.xml` with the provided value;
@@ -53,7 +53,7 @@ object IjPluginPackager {
     require(args.isNotEmpty()) { "Expected an output directory" }
 
     var descriptorModule: ModuleArgument? = null
-    var pluginContentYamlPath: Path? = null
+    var packedModulesPath: Path? = null
     val contentModuleArguments = HashMap<String, ModuleArgument>()
     var pluginVersion: String? = null
     var sinceBuild: String? = null
@@ -72,9 +72,9 @@ object IjPluginPackager {
           val oldValue = contentModuleArguments.put(module.name, module)
           require(oldValue == null) { "Two --content_module arguments for the same module: ${module.name}" }
         }
-        "--plugin_content_yaml" -> {
-          require(pluginContentYamlPath == null) { "--plugin_content_yaml must be specified only once" }
-          pluginContentYamlPath = baseDir.resolve(args[index + 1])
+        "--packed_modules" -> {
+          require(packedModulesPath == null) { "--packed_modules must be specified only once" }
+          packedModulesPath = baseDir.resolve(args[index + 1])
         }
         "--plugin_version" -> {
           require(pluginVersion == null) { "--plugin_version must be specified only once" }
@@ -105,13 +105,13 @@ object IjPluginPackager {
     val originalPluginXmlContent = readEntryFromZip(descriptorJar, PLUGIN_DESCRIPTOR_ENTRY_NAME)
     requireNotNull(originalPluginXmlContent) { "$PLUGIN_DESCRIPTOR_ENTRY_NAME is not found in $descriptorJar" }
     val contentModules = parseContentAndXIncludes(originalPluginXmlContent, descriptorJar.toString()).contentModules
-    val pluginContentYamlWriter = pluginContentYamlPath?.let { PluginContentYamlWriter(it, outputDirectory) }
+    val packedModulesWriter = packedModulesPath?.let { PackedModulesWriter(it, outputDirectory) }
 
     val contentModuleDescriptors = packContentModulesAndReturnTheirDescriptors(
       contentModules = contentModules,
       contentModuleArguments = contentModuleArguments,
       libDirectory = libDirectory,
-      pluginContentYamlWriter = pluginContentYamlWriter,
+      packedModulesWriter = packedModulesWriter,
     )
 
     val buildNumberFromFile = lazy {
@@ -141,15 +141,15 @@ object IjPluginPackager {
         dataFetcher()
       }
     }
-    pluginContentYamlWriter?.addModule(descriptorOutputJar, descriptorModuleArgument.name)
-    pluginContentYamlWriter?.write()
+    packedModulesWriter?.addModule(descriptorOutputJar, descriptorModuleArgument.name)
+    packedModulesWriter?.write()
   }
 
   private fun packContentModulesAndReturnTheirDescriptors(
     contentModules: List<ContentModuleElement>,
     contentModuleArguments: HashMap<String, ModuleArgument>,
     libDirectory: Path,
-    pluginContentYamlWriter: PluginContentYamlWriter?,
+    packedModulesWriter: PackedModulesWriter?,
   ): Map<String, ByteArray> {
     val contentModuleDescriptors = HashMap<String, ByteArray>()
     for (contentModule in contentModules) {
@@ -174,7 +174,7 @@ object IjPluginPackager {
           }
         }
       }
-      pluginContentYamlWriter?.addContentModule(outputJar, contentModule.name)
+      packedModulesWriter?.addContentModule(outputJar, contentModule.name)
     }
     return contentModuleDescriptors
   }

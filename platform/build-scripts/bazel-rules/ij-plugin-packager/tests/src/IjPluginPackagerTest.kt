@@ -59,8 +59,8 @@ internal class IjPluginPackagerTest {
     IjPluginPackager.packPlugin(
       args = listOf(
         "output",
-        "--plugin_content_yaml",
-        "output/plugin-content.yaml",
+        "--packed_modules",
+        "output/packed-modules.yaml",
         "--descriptor_module",
         "descriptor:input/descriptor.jar",
         "--content_module",
@@ -86,7 +86,7 @@ internal class IjPluginPackagerTest {
       </idea-plugin>
     """.trimIndent()
     outputDirectory.assertMatches(directoryContent {
-      file("plugin-content.yaml", """
+      file("packed-modules.yaml", """
         - name: lib/descriptor.jar
           modules:
           - name: descriptor
@@ -119,7 +119,7 @@ internal class IjPluginPackagerTest {
   }
 
   @Test
-  fun doesNotGeneratePluginContentYamlIfOptionIsNotSpecified(@TempDir tempDirectory: Path) {
+  fun doesNotGeneratePackedModulesIfOptionIsNotSpecified(@TempDir tempDirectory: Path) {
     val inputDirectory = tempDirectory.resolve("input")
     directoryContent {
       zip("descriptor.jar") {
@@ -140,7 +140,7 @@ internal class IjPluginPackagerTest {
     )
 
     assertTrue(Files.exists(outputDirectory.resolve("lib/descriptor.jar")))
-    assertFalse(Files.exists(outputDirectory.resolve("plugin-content.yaml")))
+    assertFalse(Files.exists(outputDirectory.resolve("packed-modules.yaml")))
   }
 
   @Test
