@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.java.compiler.impl` start
 jvm_library(
@@ -79,7 +80,7 @@ jvm_library(
         "//libraries/netty/codec-http:libraries-netty-codec-http",
         "//libraries/stream",
         "//libraries/fastutil",
-        "@lib//:jps-javac-extension",
+        "//libraries/jps-javac-extension",
         "//libraries/netty/buffer",
         "//libraries/winp",
         "//libraries/jackson/jackson",
@@ -103,6 +104,8 @@ jvm_library(
         "//platform/lang-api:lang",
     ],
 )
+
+content_module_jar(module = ":impl")
 
 jvm_library(
     name = "impl_test_lib",
@@ -179,6 +182,7 @@ jvm_library(
         "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
         "//libraries/stream:stream_test_lib",
         "//libraries/fastutil:fastutil_test_lib",
+        "//libraries/jps-javac-extension:jps-javac-extension_test_lib",
         "//libraries/netty/buffer:buffer_test_lib",
         "//libraries/winp:winp_test_lib",
         "//libraries/jackson/jackson:jackson_test_lib",

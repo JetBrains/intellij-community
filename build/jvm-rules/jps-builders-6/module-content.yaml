@@ -1,6 +1,3 @@
 - name: dist.all/lib/intellij.platform.jps.build.javac.rt.jar
   modules:
   - name: intellij.platform.jps.build.javac.rt
-  library: jps-javac-extension
-  files:
-  - name: $MAVEN_REPOSITORY$/org/jetbrains/jps/jps-javac-extension/11/jps-javac-extension-11.jar

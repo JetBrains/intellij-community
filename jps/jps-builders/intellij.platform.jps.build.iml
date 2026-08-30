@@ -61,7 +61,7 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
-    <orderEntry type="library" name="jps-javac-extension" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jps.javac.extension" />
     <orderEntry type="module" module-name="intellij.platform.jps.build.javac.rt" />
     <orderEntry type="module" module-name="intellij.platform.tracing.rt" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />

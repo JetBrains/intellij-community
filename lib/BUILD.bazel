@@ -6720,20 +6720,6 @@ jvm_import(
     visibility = ["//visibility:public"],
 )
 
-copy_file(
-    name = "org.jetbrains.jps/jps-javac-extension-11.jar_copy",
-    src = "@org_jetbrains_jps-jps-javac-extension-11_http//file",
-    out = "org.jetbrains.jps/jps-javac-extension-11.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "jps-javac-extension",
-    jar = "@org_jetbrains_jps-jps-javac-extension-11_http//file",
-    visibility = ["//visibility:public"],
-)
-
 jvm_import(
     name = "jspecify",
     jar = "@org_jspecify-jspecify-1_0_0_http//file",
@@ -12167,6 +12153,20 @@ jvm_import(
     name = "org_jruby_jcodings-jcodings-1_0_64_http_import",
     jar = "@org_jruby_jcodings-jcodings-1_0_64_http//file",
     source_jar = "@org_jruby_jcodings-jcodings-1_0_64-sources_http//file",
+)
+
+copy_file(
+    name = "org.jetbrains.jps/jps-javac-extension-11.jar_copy",
+    src = "@org_jetbrains_jps-jps-javac-extension-11_http//file",
+    out = "org.jetbrains.jps/jps-javac-extension-11.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-jps-javac-extension-jps-javac-extension",
+    jar = "@org_jetbrains_jps-jps-javac-extension-11_http//file",
+    visibility = ["//visibility:public"],
 )
 
 copy_file(

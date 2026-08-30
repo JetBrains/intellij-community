@@ -1128,6 +1128,7 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/jline/intellij.libraries.jline.iml" filepath="$PROJECT_DIR$/libraries/jline/intellij.libraries.jline.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jna/intellij.libraries.jna.iml" filepath="$PROJECT_DIR$/libraries/jna/intellij.libraries.jna.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/joni/intellij.libraries.joni.iml" filepath="$PROJECT_DIR$/libraries/joni/intellij.libraries.joni.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/jps-javac-extension/intellij.libraries.jps.javac.extension.iml" filepath="$PROJECT_DIR$/libraries/jps-javac-extension/intellij.libraries.jps.javac.extension.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jsch-agent-proxy/intellij.libraries.jsch.agent.proxy.iml" filepath="$PROJECT_DIR$/libraries/jsch-agent-proxy/intellij.libraries.jsch.agent.proxy.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/json-schema-validator/intellij.libraries.jsonSchemaValidator.iml" filepath="$PROJECT_DIR$/libraries/json-schema-validator/intellij.libraries.jsonSchemaValidator.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jsonpath/intellij.libraries.jsonpath.iml" filepath="$PROJECT_DIR$/libraries/jsonpath/intellij.libraries.jsonpath.iml" />

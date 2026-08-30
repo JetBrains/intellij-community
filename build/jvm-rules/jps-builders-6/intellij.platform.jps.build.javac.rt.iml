@@ -11,7 +11,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="module" module-name="intellij.libraries.javax.annotation" />
-    <orderEntry type="library" name="jps-javac-extension" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jps.javac.extension" />
     <orderEntry type="module" module-name="intellij.libraries.protobuf" />
     <orderEntry type="module" module-name="intellij.libraries.netty.codec.protobuf" />
     <orderEntry type="module" module-name="intellij.libraries.netty.codec.http" />

@@ -46,7 +46,6 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: Map<Str
   val descriptorCacheContainer = DescriptorCacheContainer()
   val layout = PlatformLayout(descriptorCacheContainer)
   // used only in modules that packed into Java
-  layout.withoutProjectLibrary("jps-javac-extension")
   layout.withoutProjectLibrary("Eclipse")
 
   for (customizer in productLayout.platformLayoutSpec) {

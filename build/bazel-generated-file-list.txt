@@ -504,6 +504,7 @@ libraries/jing
 libraries/jline
 libraries/jna
 libraries/joni
+libraries/jps-javac-extension
 libraries/jsch-agent-proxy
 libraries/json-schema-validator
 libraries/jsonpath

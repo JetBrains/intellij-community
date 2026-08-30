@@ -1,0 +1,50 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.libraries.jps.javac.extension` start
+jvm_library(
+    name = "jps-javac-extension",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.jps.javac.extension",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jps-javac-extension-jps-javac-extension"],
+    runtime_deps = ["@lib//:libraries-jps-javac-extension-jps-javac-extension"],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-jps-javac-extension-jps-javac-extension"],
+    module = ":jps-javac-extension",
+)
+
+jvm_library(
+    name = "jps-javac-extension_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.jps.javac.extension",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jps-javac-extension-jps-javac-extension"],
+    runtime_deps = [":jps-javac-extension"],
+)
+### auto-generated section `build intellij.libraries.jps.javac.extension` end
+
+### auto-generated section `iml intellij.libraries.jps.javac.extension` start
+exports_files(
+    [
+        "intellij.libraries.jps.javac.extension.iml",
+        "resources/intellij.libraries.jps.javac.extension.xml",
+        "module-content.yaml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.jps.javac.extension` end

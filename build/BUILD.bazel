@@ -406,7 +406,7 @@ jvm_library(
         # do not sort,
         "//libraries/jetbrains/annotations",
         "//libraries/javax/annotation",
-        "@lib//:jps-javac-extension",
+        "//libraries/jps-javac-extension",
         "//libraries/protobuf",
         "//libraries/netty/codec-protobuf:libraries-netty-codec-protobuf",
         "//libraries/netty/codec-http:libraries-netty-codec-http",
@@ -414,10 +414,7 @@ jvm_library(
     ],
 )
 
-content_module_jar(
-    libraries = ["@lib//:jps-javac-extension"],
-    module = ":build-javac-rt",
-)
+content_module_jar(module = ":build-javac-rt")
 
 jvm_library(
     name = "build-javac-rt_test_lib",
@@ -434,6 +431,7 @@ jvm_library(
         ":build-javac-rt",
         "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/javax/annotation:annotation_test_lib",
+        "//libraries/jps-javac-extension:jps-javac-extension_test_lib",
         "//libraries/protobuf:protobuf_test_lib",
         "//libraries/netty/codec-protobuf:libraries-netty-codec-protobuf_test_lib",
         "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",

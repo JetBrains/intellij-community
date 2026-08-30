@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.libraries.javax.annotation"/>
     <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.jps.javac.extension"/>
     <module name="intellij.libraries.netty.buffer"/>
     <module name="intellij.libraries.netty.codec.http"/>
     <module name="intellij.libraries.netty.codec.protobuf"/>

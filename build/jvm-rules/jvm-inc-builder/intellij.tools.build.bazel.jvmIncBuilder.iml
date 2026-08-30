@@ -10,7 +10,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.jps.build.javac.rt" />
     <orderEntry type="module" module-name="intellij.platform.jps.build.dependencyGraph" />
-    <orderEntry type="library" name="jps-javac-extension" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jps.javac.extension" />
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="library" name="mvstore" level="project" />
     <orderEntry type="library" name="hash4j" level="project" />

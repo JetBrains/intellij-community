@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.jps.javac.extension.jar
+  modules:
+  - name: intellij.libraries.jps.javac.extension
+    libraries:
+      jps-javac-extension:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/jps/jps-javac-extension/11/jps-javac-extension-11.jar

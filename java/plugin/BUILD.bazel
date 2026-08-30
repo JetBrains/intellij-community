@@ -65,7 +65,6 @@ exports_files(
 ### auto-generated section `dev intellij.java.plugin` start
 dev_dist_plugin(
     content_modules = [
-        "//java/compiler/impl",
         "//java/debugger/debugger-agent:java-debugger-agent-holder",
         "//java/debugger/impl",
         "//java/debugger/jb-jdi:java-debugger-libraries-jb-jdi",
@@ -73,8 +72,8 @@ dev_dist_plugin(
         "//jps/jps-builders:build",
         "//jps/jps-launcher:build-launcher",
         "//libraries/completion-ranking-java",
+        "//libraries/jps-javac-extension",
         "//libraries/test-discovery",
-        "@community//build:build-javac-rt",
         "@community//build:dependency-graph",
     ],
     descriptor_module = ":plugin",
@@ -84,15 +83,16 @@ dev_dist_plugin(
         "@lib//:java-debugger-impl-sa-jdwp",
         "@lib//:java-debugger-libraries-jb-jdi-jb-jdi",
         "@lib//:java-debugger-memory-agent-debugger-memory-agent",
-        "@lib//:jps-javac-extension",
         "@lib//:kotlin-metadata",
         "@lib//:libraries-completion-ranking-java-completion-ranking-java",
+        "@lib//:libraries-jps-javac-extension-jps-javac-extension",
         "@lib//:libraries-test-discovery-intellij-test-discovery",
         "@lib//:platform-jps-build-qdox-java-parser",
     ],
     prepacked_content_modules = [
         "//java/codeserver/core:core_content_module_jar",
         "//java/codeserver/highlighting:highlighting_content_module_jar",
+        "//java/compiler/impl:impl_content_module_jar",
         "//java/compiler/openapi:java-compiler_content_module_jar",
         "//java/debugger/backend:backend_content_module_jar",
         "//java/debugger/frontend:frontend_content_module_jar",
@@ -157,6 +157,7 @@ dev_dist_plugin(
         "//java/java-psi-api:psi_content_module_jar": "intellij.java.psi.jar",
         "//java/java-psi-impl:psi-impl_content_module_jar": "intellij.java.psi.impl.jar",
         "//java/java-syntax:syntax_content_module_jar": "intellij.java.syntax.jar",
+        "@community//build:build-javac-rt_content_module_jar": "intellij.platform.jps.build.javac.rt.jar",
     },
 )
 ### auto-generated section `dev intellij.java.plugin` end

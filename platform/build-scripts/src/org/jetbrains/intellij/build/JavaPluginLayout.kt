@@ -16,7 +16,6 @@ object JavaPluginLayout {
       spec.withModuleLibrary("debugger-agent", "intellij.java.debugger.agent.holder", "rt")
 
       spec.withProjectLibrary("Eclipse", "ecj")
-      spec.withProjectLibrary("jps-javac-extension")
       spec.withProjectLibrary("kotlin-metadata")
 
       spec.withModuleLibrary("debugger-memory-agent", "intellij.java.debugger.memory.agent", "")
