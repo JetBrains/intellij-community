@@ -1148,6 +1148,7 @@
     </inspection_tool>
     <inspection_tool class="PatternVariableHidesField" enabled="true" level="Strong Warning" enabled_by_default="true" editorAttributes="Strong Warning" />
     <inspection_tool class="PluginXmlPluginLogo" enabled="true" level="WARNING" enabled_by_default="true" editorAttributes="WARNING_ATTRIBUTES" />
+    <inspection_tool class="PluginXmlReferencesModuleReachability" enabled="true" level="ERROR" enabled_by_default="true" />
     <inspection_tool class="PluginXmlRegistrationCheck" enabled="true" level="ERROR" enabled_by_default="true">
       <scope name="android" level="INFORMATION" enabled="true" editorAttributes="INFORMATION_ATTRIBUTES">
         <option name="ignoreClasses">
