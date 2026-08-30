@@ -121,7 +121,7 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
 
     ThreadingAssertions.softAssertAwtOperationsThread();
 
-    JComponent component = ReadAction.computeBlocking(() -> {
+    JComponent component = ApplicationManager.getApplication().runWriteIntentReadAction(() -> {
       long time = System.currentTimeMillis();
       try {
         return configurable.createComponent();
