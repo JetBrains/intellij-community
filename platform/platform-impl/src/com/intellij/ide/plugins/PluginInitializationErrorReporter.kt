@@ -66,8 +66,10 @@ internal class PluginInitializationErrorStartupReporter : AppLifecycleListener {
       actions += prepareDisableAction(pluginsToDisable)
     }
 
+    val notificationGroupManager = serviceAsync<NotificationGroupManager>()
+
     withContext(RawSwingDispatcher) {
-      serviceAsync<NotificationGroupManager>().getNotificationGroup("Plugin Error")
+      notificationGroupManager.getNotificationGroup("Plugin Error")
         .createNotification(title, content, NotificationType.ERROR)
         .addActions(actions)
         .notify(null)
