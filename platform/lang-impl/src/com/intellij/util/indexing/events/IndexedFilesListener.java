@@ -62,6 +62,7 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
 
       @Override
       public Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
+        //MAYBE RC: implement iterInDbChildren(childrenMayBeUnsorted)? we don't need an overhead of sorting children
         return file instanceof NewVirtualFile ? ((NewVirtualFile)file).iterInDbChildren() : null;
       }
     });

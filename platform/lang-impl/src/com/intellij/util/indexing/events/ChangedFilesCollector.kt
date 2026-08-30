@@ -82,7 +82,7 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
 
   override fun iterateIndexableFiles(file: VirtualFile, iterator: ContentIterator) {
     if (fileBasedIndex.belongsToIndexableFiles(file)) {
-      VfsUtilCore.visitChildrenRecursively(file, object : VirtualFileVisitor<Void?>() {
+      VfsUtilCore.visitChildrenRecursively(file, object : VirtualFileVisitor<Void?>(CHILDREN_MAY_BE_UNSORTED) {
         override fun visitFile(file: VirtualFile): Boolean {
           if (!fileBasedIndex.belongsToIndexableFiles(file)) {
             return false
