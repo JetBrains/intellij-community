@@ -36,7 +36,11 @@ import com.intellij.psi.util.endOffset
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticCheckerKind
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
@@ -69,6 +73,8 @@ import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtLabeledExpression
@@ -101,7 +107,8 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         callElement: KtCallElement,
         sink: InlayTreeSink
     ) {
-        val functionCall: KaFunctionCall<*> = callElement.resolveToCall()?.singleFunctionCallOrNull() ?: return
+        val functionCall: KaFunctionCall<*> = callElement.resolveToCall()?.singleFunctionCallOrNull()
+            ?: return collectMissingValueArguments(callElement, null, emptyList(), contextMenuPayloads = null, sink)
         val functionSymbol: KaFunctionSymbol = functionCall.symbol
         val valueParameters: List<KaValueParameterSymbol> = functionSymbol.valueParameters
 
@@ -122,18 +129,17 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
             contextMenuPayloads = null
         }
 
+        val valueParametersWithNames = calculateValueParametersWithNames(functionSymbol, callElement, valueParameters)
+            ?: return collectMissingValueArguments(callElement, functionSymbol, emptyList(), contextMenuPayloads, sink)
+        collectMissingValueArguments(callElement, functionSymbol, valueParametersWithNames, contextMenuPayloads, sink)
+
         sink.whenOptionEnabled(SHOW_EXCLUDED_PARAMETERS.name) {
             if (excludeListed) {
-                val valueParametersWithNames =
-                    calculateValueParametersWithNames(functionSymbol, callElement, valueParameters) ?: return@whenOptionEnabled
-
                 collectFromParameters(callElement, functionCall, valueParametersWithNames, contextMenuPayloads, sink)
             }
         }
 
         if (excludeListed) return
-
-        val valueParametersWithNames = calculateValueParametersWithNames(functionSymbol, callElement, valueParameters) ?: return
 
         val compiledSource = valueParametersWithNames.any { pair ->
             val psi = pair.first.takeIf { it.origin == KaSymbolOrigin.JAVA_LIBRARY }?.psi ?: return@any false
@@ -263,6 +269,84 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
             }
         }
     }
+
+    context(_: KaSession)
+    private fun collectMissingValueArguments(
+        callElement: KtCallElement,
+        functionSymbol: KaFunctionSymbol?,
+        valueParametersWithNames: List<Pair<KaValueParameterSymbol, Name?>>,
+        contextMenuPayloads: List<InlayPayload>?,
+        sink: InlayTreeSink
+    ) {
+        val argumentList = callElement.valueArgumentList ?: return
+        if (functionSymbol != null) {
+            // KaFirDiagnostic.NoValueForParameter is not reported for constructor calls
+            if (functionSymbol is KaConstructorSymbol) return
+
+            if (valueParametersWithNames.isEmpty() && functionSymbol.valueParameters.isEmpty()) return
+        }
+
+        val missingNames = callElement.noValueForParameterNames()
+        if (missingNames.isEmpty()) return
+
+        val missingParameters = missingValueParameters(missingNames, valueParametersWithNames)
+        if (missingParameters.isEmpty()) return
+
+        val offset = argumentList.rightParenthesis?.startOffset ?: argumentList.endOffset
+        val needsLeadingComma = argumentList.arguments.isNotEmpty() && argumentList.trailingComma == null
+        sink.addPresentation(
+            InlineInlayPosition(offset, true),
+            payloads = contextMenuPayloads,
+            hintFormat = PARAMETER_HINT_FORMAT
+        ) {
+            if (needsLeadingComma) text(", ")
+            for ((index, parameter) in missingParameters.withIndex()) {
+                if (index > 0) text(", ")
+                text(parameter.name.asString(), parameter.symbol?.asNavigatablePsiLoad())
+                text(" = TODO()")
+            }
+        }
+    }
+
+    private fun missingValueParameters(
+        missingNames: Set<Name>,
+        valueParametersWithNames: List<Pair<KaValueParameterSymbol, Name?>>
+    ): List<MissingValueParameter> {
+        val missingParameters = valueParametersWithNames.mapNotNull { (symbol, name) ->
+            name
+                ?.takeIf { !it.isSpecial && (it in missingNames || symbol.name in missingNames) }
+                ?.let { MissingValueParameter(symbol, it) }
+        }
+        if (missingParameters.isNotEmpty() || valueParametersWithNames.isNotEmpty()) return missingParameters
+
+        return missingNames
+            .filter { !it.isSpecial }
+            .map { MissingValueParameter(symbol = null, it) }
+    }
+
+    @OptIn(KaExperimentalApi::class, KaUnstableDiagnosticApi::class)
+    context(_: KaSession)
+    private fun KtCallElement.noValueForParameterNames(): Set<Name> =
+        buildSet {
+            for (element in noValueForParameterDiagnosticElements()) {
+                for (diagnostic in element.diagnostics().directOnly(true).withCheckers(KaDiagnosticCheckerKind.COMMON)) {
+                    if (diagnostic is KaFirDiagnostic.NoValueForParameter) {
+                        this += diagnostic.violatedParameter
+                    }
+                }
+            }
+        }
+
+    private fun KtCallElement.noValueForParameterDiagnosticElements(): List<KtElement> {
+        val qualifiedExpression = (parent as? KtDotQualifiedExpression)
+            ?.takeIf { it.selectorExpression == this }
+        return listOfNotNull(this, valueArgumentList, qualifiedExpression)
+    }
+
+    private data class MissingValueParameter(
+        val symbol: KaValueParameterSymbol?,
+        val name: Name
+    )
 
     context(_: KaSession)
     private fun collectContextParameters(

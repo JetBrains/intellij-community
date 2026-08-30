@@ -143,6 +143,11 @@ public class KtParameterHintsProviderTestGenerated extends AbstractKtParameterHi
         runTest("../../idea/tests/testData/codeInsight/hints/arguments/libraryElement.kt");
     }
 
+    @TestMetadata("missingArguments.kt")
+    public void testMissingArguments() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/arguments/missingArguments.kt");
+    }
+
     @TestMetadata("namedParameters.kt")
     public void testNamedParameters() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/arguments/namedParameters.kt");
