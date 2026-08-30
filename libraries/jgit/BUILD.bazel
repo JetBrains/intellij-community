@@ -1,0 +1,49 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `build intellij.libraries.jgit` start
+jvm_library(
+    name = "jgit",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.jgit",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jgit-jetbrains-intellij-deps-eclipse-jgit"],
+    runtime_deps = ["@lib//:libraries-jgit-jetbrains-intellij-deps-eclipse-jgit"],
+)
+
+content_module_jar(
+    libraries = ["@lib//:libraries-jgit-jetbrains-intellij-deps-eclipse-jgit"],
+    module = ":jgit",
+)
+
+jvm_library(
+    name = "jgit_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.jgit",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jgit-jetbrains-intellij-deps-eclipse-jgit"],
+    runtime_deps = [":jgit"],
+)
+### auto-generated section `build intellij.libraries.jgit` end
+
+### auto-generated section `iml intellij.libraries.jgit` start
+exports_files(
+    [
+        "intellij.libraries.jgit.iml",
+        "resources/intellij.libraries.jgit.xml",
+        "module-content.yaml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.jgit` end

@@ -409,6 +409,7 @@ object CommunityModuleSets {
     module("intellij.platform.diagnostic.freezeAnalyzer")
     module("intellij.platform.warmup")
     module("intellij.platform.inspect")
+    module("intellij.libraries.jgit")
     module("intellij.settingsSync.core")
     module("intellij.spellchecker")
     module("intellij.spellchecker.vcs")

@@ -21,7 +21,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "@lib//:jetbrains-intellij-deps-eclipse-jgit",
+        "//libraries/jgit",
         "//libraries/jgit-ssh",
     ],
     deps = [
@@ -31,7 +31,7 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
         "//platform/platform-api:ide",
         "//platform/platform-impl:ide-impl",
-        "@lib//:jetbrains-intellij-deps-eclipse-jgit",
+        "//libraries/jgit",
         "//libraries/jgit-ssh",
         "//platform/projectModel-api:projectModel",
         "//platform/vcs-impl",
@@ -73,7 +73,8 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        "@lib//:jetbrains-intellij-deps-eclipse-jgit",
+        "//libraries/jgit",
+        "//libraries/jgit:jgit_test_lib",
         "//libraries/jgit-ssh",
         "//libraries/jgit-ssh:jgit-ssh_test_lib",
     ],
@@ -85,6 +86,7 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/platform-api:ide_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//libraries/jgit:jgit_test_lib",
         "//libraries/jgit-ssh:jgit-ssh_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/vcs-impl:vcs-impl_test_lib",
@@ -131,7 +133,6 @@ dev_dist_plugin(
     ],
     descriptor_module = ":settings-repository",
     libraries = [
-        "@lib//:jetbrains-intellij-deps-eclipse-jgit",
         "@lib//:libraries-jgit-ssh-eclipse-jgit-ssh-apache",
         "@lib//:libraries-jgit-ssh-eclipse-jgit-ssh-apache-agent",
         "@lib//:libraries-sshd-osgi-apache-sshd-osgi",

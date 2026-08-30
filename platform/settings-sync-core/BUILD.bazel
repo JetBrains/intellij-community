@@ -19,7 +19,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:jetbrains-intellij-deps-eclipse-jgit"],
+    exports = ["//libraries/jgit"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -33,7 +33,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
         "//platform/projectModel-impl",
         "//platform/platform-impl:ide-impl",
-        "@lib//:jetbrains-intellij-deps-eclipse-jgit",
+        "//libraries/jgit",
         "@lib//:slf4j-api",
         "//platform/service-container",
         "//libraries/kotlinx/coroutines/core",
@@ -67,10 +67,7 @@ jvm_library(
     ],
 )
 
-content_module_jar(
-    libraries = ["@lib//:jetbrains-intellij-deps-eclipse-jgit"],
-    module = ":settingsSync-core",
-)
+content_module_jar(module = ":settingsSync-core")
 
 jvm_library(
     name = "settingsSync-core_test_lib",
@@ -81,7 +78,11 @@ jvm_library(
     ),
     module_name = "intellij.settingsSync.core",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:jetbrains-intellij-deps-eclipse-jgit"],
+    exports = [
+        # do not sort,
+        "//libraries/jgit",
+        "//libraries/jgit:jgit_test_lib",
+    ],
     runtime_deps = [
         # do not sort,
         ":settingsSync-core",
@@ -97,6 +98,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/projectModel-impl:projectModel-impl_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//libraries/jgit:jgit_test_lib",
         "//platform/service-container:service-container_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
@@ -176,7 +178,7 @@ jvm_library(
     ),
     module_name = "intellij.settingsSync.core.tests",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:jetbrains-intellij-deps-eclipse-jgit"],
+    exports = ["//libraries/jgit"],
 )
 
 jvm_library(
@@ -199,7 +201,11 @@ jvm_library(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:jetbrains-intellij-deps-eclipse-jgit"],
+    exports = [
+        # do not sort,
+        "//libraries/jgit",
+        "//libraries/jgit:jgit_test_lib",
+    ],
     runtime_deps = [
         # do not sort,
         ":settingsSync-core-tests",
@@ -232,7 +238,8 @@ jvm_library(
         "//platform/projectModel-impl",
         "//platform/projectModel-impl:projectModel-impl_test_lib",
         "//platform/platform-impl:ide-impl",
-        "@lib//:jetbrains-intellij-deps-eclipse-jgit",
+        "//libraries/jgit",
+        "//libraries/jgit:jgit_test_lib",
         "@lib//:slf4j-api",
         "//platform/service-container",
         "//platform/service-container:service-container_test_lib",

@@ -4964,34 +4964,6 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_intellij_deps-org_eclipse_jgit-6_6_1_202309021850-r-jb-202510311356_http",
-    downloaded_file_path = "org.eclipse.jgit-6.6.1.202309021850-r-jb-202510311356.jar",
-    sha256 = "a36daede93f146973abf54462040963846e919e09a922302210c875337e36d3d",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/org.eclipse.jgit/6.6.1.202309021850-r-jb-202510311356/org.eclipse.jgit-6.6.1.202309021850-r-jb-202510311356.jar",
-)
-
-http_file(
-    name = "com_googlecode_javaewah-JavaEWAH-1_2_3_http",
-    downloaded_file_path = "JavaEWAH-1.2.3.jar",
-    sha256 = "d65226949713c4c61a784f41c51167e7b0316f93764398ebba9e4336b3d954c2",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/googlecode/javaewah/JavaEWAH/1.2.3/JavaEWAH-1.2.3.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps-org_eclipse_jgit-6_6_1_202309021850-r-jb-202510311356-sources_http",
-    downloaded_file_path = "org.eclipse.jgit-6.6.1.202309021850-r-jb-202510311356-sources.jar",
-    sha256 = "dd0ea0af8c7b15235abfe25ca77ecc77bdcf22bbb1ba4052b3cf5e370d77c4b0",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/org.eclipse.jgit/6.6.1.202309021850-r-jb-202510311356/org.eclipse.jgit-6.6.1.202309021850-r-jb-202510311356-sources.jar",
-)
-
-http_file(
-    name = "com_googlecode_javaewah-JavaEWAH-1_2_3-sources_http",
-    downloaded_file_path = "JavaEWAH-1.2.3-sources.jar",
-    sha256 = "abf457c01352b9e44212b131dbae4c2a878668820d168dc981b65170980eca71",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/googlecode/javaewah/JavaEWAH/1.2.3/JavaEWAH-1.2.3-sources.jar",
-)
-
-http_file(
     name = "org_jetbrains_intellij_deps-intellij-deps-java-atk-wrapper-263_33_http",
     downloaded_file_path = "intellij-deps-java-atk-wrapper-263.33.jar",
     sha256 = "effd191bd2589daa12c1d6a11dbdd84529ad290808c8effbb02e86d758d069a3",
@@ -9553,6 +9525,34 @@ http_file(
     downloaded_file_path = "jettison-1.5.4-sources.jar",
     sha256 = "bc7643e6bdb8c3a2995a4420d150ae5b414902eafedbadfdb4cf94c5de31469c",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/jettison/jettison/1.5.4/jettison-1.5.4-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps-org_eclipse_jgit-6_6_1_202309021850-r-jb-202510311356_http",
+    downloaded_file_path = "org.eclipse.jgit-6.6.1.202309021850-r-jb-202510311356.jar",
+    sha256 = "a36daede93f146973abf54462040963846e919e09a922302210c875337e36d3d",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/org.eclipse.jgit/6.6.1.202309021850-r-jb-202510311356/org.eclipse.jgit-6.6.1.202309021850-r-jb-202510311356.jar",
+)
+
+http_file(
+    name = "com_googlecode_javaewah-JavaEWAH-1_2_3_http",
+    downloaded_file_path = "JavaEWAH-1.2.3.jar",
+    sha256 = "d65226949713c4c61a784f41c51167e7b0316f93764398ebba9e4336b3d954c2",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/googlecode/javaewah/JavaEWAH/1.2.3/JavaEWAH-1.2.3.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps-org_eclipse_jgit-6_6_1_202309021850-r-jb-202510311356-sources_http",
+    downloaded_file_path = "org.eclipse.jgit-6.6.1.202309021850-r-jb-202510311356-sources.jar",
+    sha256 = "dd0ea0af8c7b15235abfe25ca77ecc77bdcf22bbb1ba4052b3cf5e370d77c4b0",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/org.eclipse.jgit/6.6.1.202309021850-r-jb-202510311356/org.eclipse.jgit-6.6.1.202309021850-r-jb-202510311356-sources.jar",
+)
+
+http_file(
+    name = "com_googlecode_javaewah-JavaEWAH-1_2_3-sources_http",
+    downloaded_file_path = "JavaEWAH-1.2.3-sources.jar",
+    sha256 = "abf457c01352b9e44212b131dbae4c2a878668820d168dc981b65170980eca71",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/googlecode/javaewah/JavaEWAH/1.2.3/JavaEWAH-1.2.3-sources.jar",
 )
 
 http_file(

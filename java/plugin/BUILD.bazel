@@ -65,6 +65,7 @@ exports_files(
 ### auto-generated section `dev intellij.java.plugin` start
 dev_dist_plugin(
     content_modules = [
+        "//java/compiler/impl",
         "//java/debugger/debugger-agent:java-debugger-agent-holder",
         "//java/debugger/impl",
         "//java/debugger/jb-jdi:java-debugger-libraries-jb-jdi",
@@ -92,7 +93,6 @@ dev_dist_plugin(
     prepacked_content_modules = [
         "//java/codeserver/core:core_content_module_jar",
         "//java/codeserver/highlighting:highlighting_content_module_jar",
-        "//java/compiler/impl:impl_content_module_jar",
         "//java/compiler/openapi:java-compiler_content_module_jar",
         "//java/debugger/backend:backend_content_module_jar",
         "//java/debugger/frontend:frontend_content_module_jar",

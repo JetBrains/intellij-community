@@ -41,7 +41,7 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="library" exported="" name="jetbrains.intellij.deps.eclipse.jgit" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jgit" exported="" />
     <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />

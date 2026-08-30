@@ -497,6 +497,7 @@ libraries/jediterm-ui
 libraries/jetbrains/annotations
 libraries/jetcheck
 libraries/jettison
+libraries/jgit
 libraries/jgit-ssh
 libraries/jgoodies/common
 libraries/jgoodies/forms

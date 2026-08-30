@@ -1121,6 +1121,7 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/jetbrains/annotations/intellij.libraries.jetbrains.annotations.iml" filepath="$PROJECT_DIR$/libraries/jetbrains/annotations/intellij.libraries.jetbrains.annotations.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jetcheck/intellij.libraries.jetcheck.iml" filepath="$PROJECT_DIR$/libraries/jetcheck/intellij.libraries.jetcheck.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jettison/intellij.libraries.jettison.iml" filepath="$PROJECT_DIR$/libraries/jettison/intellij.libraries.jettison.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/jgit/intellij.libraries.jgit.iml" filepath="$PROJECT_DIR$/libraries/jgit/intellij.libraries.jgit.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jgit-ssh/intellij.libraries.jgit.ssh.iml" filepath="$PROJECT_DIR$/libraries/jgit-ssh/intellij.libraries.jgit.ssh.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jgoodies/common/intellij.libraries.jgoodies.common.iml" filepath="$PROJECT_DIR$/libraries/jgoodies/common/intellij.libraries.jgoodies.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jgoodies/forms/intellij.libraries.jgoodies.forms.iml" filepath="$PROJECT_DIR$/libraries/jgoodies/forms/intellij.libraries.jgoodies.forms.iml" />

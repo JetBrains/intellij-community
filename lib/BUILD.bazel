@@ -6244,44 +6244,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.deps/org.eclipse.jgit-6.6.1.202309021850-r-jb-202510311356.jar_copy",
-    src = "@org_jetbrains_intellij_deps-org_eclipse_jgit-6_6_1_202309021850-r-jb-202510311356_http//file",
-    out = "org.jetbrains.intellij.deps/org.eclipse.jgit-6.6.1.202309021850-r-jb-202510311356.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.googlecode.javaewah/JavaEWAH-1.2.3.jar_copy",
-    src = "@com_googlecode_javaewah-JavaEWAH-1_2_3_http//file",
-    out = "com.googlecode.javaewah/JavaEWAH-1.2.3.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "jetbrains-intellij-deps-eclipse-jgit",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":org_jetbrains_intellij_deps-org_eclipse_jgit-6_6_1_202309021850-r-jb-202510311356_http_import",
-        ":com_googlecode_javaewah-JavaEWAH-1_2_3_http_import",
-    ],
-)
-
-jvm_import(
-    name = "org_jetbrains_intellij_deps-org_eclipse_jgit-6_6_1_202309021850-r-jb-202510311356_http_import",
-    jar = "@org_jetbrains_intellij_deps-org_eclipse_jgit-6_6_1_202309021850-r-jb-202510311356_http//file",
-    source_jar = "@org_jetbrains_intellij_deps-org_eclipse_jgit-6_6_1_202309021850-r-jb-202510311356-sources_http//file",
-)
-
-jvm_import(
-    name = "com_googlecode_javaewah-JavaEWAH-1_2_3_http_import",
-    jar = "@com_googlecode_javaewah-JavaEWAH-1_2_3_http//file",
-    source_jar = "@com_googlecode_javaewah-JavaEWAH-1_2_3-sources_http//file",
-)
-
-copy_file(
     name = "org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-263.33.jar_copy",
     src = "@org_jetbrains_intellij_deps-intellij-deps-java-atk-wrapper-263_33_http//file",
     out = "org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-263.33.jar",
@@ -11988,6 +11950,44 @@ jvm_import(
     jar = "@org_codehaus_jettison-jettison-1_5_4_http//file",
     source_jar = "@org_codehaus_jettison-jettison-1_5_4-sources_http//file",
     visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.jetbrains.intellij.deps/org.eclipse.jgit-6.6.1.202309021850-r-jb-202510311356.jar_copy",
+    src = "@org_jetbrains_intellij_deps-org_eclipse_jgit-6_6_1_202309021850-r-jb-202510311356_http//file",
+    out = "org.jetbrains.intellij.deps/org.eclipse.jgit-6.6.1.202309021850-r-jb-202510311356.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.googlecode.javaewah/JavaEWAH-1.2.3.jar_copy",
+    src = "@com_googlecode_javaewah-JavaEWAH-1_2_3_http//file",
+    out = "com.googlecode.javaewah/JavaEWAH-1.2.3.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-jgit-jetbrains-intellij-deps-eclipse-jgit",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":org_jetbrains_intellij_deps-org_eclipse_jgit-6_6_1_202309021850-r-jb-202510311356_http_import",
+        ":com_googlecode_javaewah-JavaEWAH-1_2_3_http_import",
+    ],
+)
+
+jvm_import(
+    name = "org_jetbrains_intellij_deps-org_eclipse_jgit-6_6_1_202309021850-r-jb-202510311356_http_import",
+    jar = "@org_jetbrains_intellij_deps-org_eclipse_jgit-6_6_1_202309021850-r-jb-202510311356_http//file",
+    source_jar = "@org_jetbrains_intellij_deps-org_eclipse_jgit-6_6_1_202309021850-r-jb-202510311356-sources_http//file",
+)
+
+jvm_import(
+    name = "com_googlecode_javaewah-JavaEWAH-1_2_3_http_import",
+    jar = "@com_googlecode_javaewah-JavaEWAH-1_2_3_http//file",
+    source_jar = "@com_googlecode_javaewah-JavaEWAH-1_2_3-sources_http//file",
 )
 
 copy_file(
