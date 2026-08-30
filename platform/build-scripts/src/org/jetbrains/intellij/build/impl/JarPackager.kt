@@ -106,7 +106,6 @@ private val IMPLICIT_PLUGIN_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.S
   // declared by the platform layout of the ultimate-family products only, so a plugin of another product needs its own copy
   "LicenseDecoder",
   "LicenseServerAPI",
-  "Servlets",
   "agentclientprotocol.acp.jvm",
   "agentclientprotocol.acp.ktor",
   "antlr4-runtime",
