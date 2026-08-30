@@ -879,6 +879,7 @@ private suspend fun showResults(
 
     if (forceDialog) {
       showUpdateDialog()
+      PluginsMissingUpdateSourceNotifier.notify(project)
     }
     else {
       UpdateSettingsEntryPointActionProvider.newPluginUpdates(pluginUpdates, customRepoPlugins)
@@ -886,6 +887,7 @@ private suspend fun showResults(
       if (userInitiated) {
         // offer to update only enabled plugins
         showUpdatePluginsNotification(pluginUpdates, project, showUpdateDialog)
+        PluginsMissingUpdateSourceNotifier.notify(project)
       }
     }
   }
@@ -914,6 +916,7 @@ private suspend fun showResults(
   else if (pluginUpdates.isEmpty()) {
     if (forceDialog) {
       NoUpdatesDialog(showSettingsLink).show()
+      PluginsMissingUpdateSourceNotifier.notify(project)
     }
     else if (userInitiated) {
       showNotification(project = project,
@@ -921,6 +924,7 @@ private suspend fun showResults(
                        displayId = "no.updates.available",
                        title = "",
                        message = NoUpdatesDialog.getNoUpdatesText())
+      PluginsMissingUpdateSourceNotifier.notify(project)
     }
   }
 }

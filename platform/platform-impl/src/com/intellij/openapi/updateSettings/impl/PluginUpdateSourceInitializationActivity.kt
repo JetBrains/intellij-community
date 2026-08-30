@@ -32,10 +32,14 @@ class PluginUpdateSourceInitializationActivity : ProjectActivity {
 
   override suspend fun execute(project: Project) {
     PluginUpdateSourceInitializer.initialize()
-    notifyAboutPluginsMissingUpdateSource(project)
+    PluginsMissingUpdateSourceNotifier.notify(project)
   }
+}
 
-  private fun notifyAboutPluginsMissingUpdateSource(project: Project) {
+@ApiStatus.Internal
+object PluginsMissingUpdateSourceNotifier {
+
+  fun notify(project: Project?) {
     if (!PluginUpdateSourceService.isMissingUpdateSourceWarningEnabled()) return
     val service = PluginUpdateSourceService.getInstance()
     val problemPlugins = PluginManagerCore.loadedPlugins.filter { plugin ->
