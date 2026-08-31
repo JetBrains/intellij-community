@@ -24,8 +24,14 @@ import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownImageLoader
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec
+import org.intellij.plugins.markdown.util.MarkdownApplicationScope
 import java.util.LinkedHashMap
 
 internal class MarkdownLivePreviewImageManager(
@@ -36,6 +42,7 @@ internal class MarkdownLivePreviewImageManager(
   private val loadedSources = LinkedHashMap<ImageKey, VirtualFile>()
   private val loadingSources = HashSet<ImageKey>()
   private val rejectedSources = HashSet<ImageKey>()
+  private val coroutineScope = MarkdownApplicationScope.createChildScope()
   private var imageGeometry = geometry()
 
   @Volatile
@@ -94,8 +101,10 @@ internal class MarkdownLivePreviewImageManager(
     if (!loadingSources.add(key)) return
     val file = key.first
     val destination = key.second
-    ApplicationManager.getApplication().executeOnPooledThread {
-      val source = MarkdownImageLoader.load(project, file, destination)
+    coroutineScope.launch(Dispatchers.IO) {
+      val source = withBackgroundProgress(project, MarkdownBundle.message("markdown.image.loading"), cancellable = true) {
+        MarkdownImageLoader.load(project, file, destination)
+      }
       invokeLater(ModalityState.any()) {
         val previousSource = loadedSources[key]
         loadingSources.remove(key)
@@ -150,6 +159,7 @@ internal class MarkdownLivePreviewImageManager(
 
   override fun dispose() {
     if (disposed) return
+    coroutineScope.cancel()
     disposed = true
     for (item in items.toList()) {
       item.dispose()

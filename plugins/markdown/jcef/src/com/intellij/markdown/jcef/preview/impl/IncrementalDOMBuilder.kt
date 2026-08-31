@@ -4,6 +4,7 @@ package com.intellij.markdown.jcef.preview.impl
 import com.intellij.ide.trustedProjects.TrustedProjects.isProjectTrusted
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.toNioPathOrNull
 import org.intellij.plugins.markdown.ui.preview.MarkdownImagePathResolver
@@ -126,17 +127,11 @@ class IncrementalDOMBuilder(
     if (hasFileHost && !node.hasAttr("from-extension")) {
       return
     }
-    if (!hasFileHost) {
-      val path = MarkdownImagePathResolver.resolve(baseFile, projectRoot, originalPath, isProjectTrusted(projectPath))
-      val resolved = path as? MarkdownImagePathResolver.Resolution.Found ?: return
-      node.attr("data-original-src", resolved.url)
-      node.attr("src", PreviewStaticServer.getStaticUrl(fileSchemeResourceProcessor, resolved.url))
-      return
-    }
-
-    val path = MarkdownImagePathResolver.resolve(baseFile, projectRoot, originalPath)
-    val resolved = path as? MarkdownImagePathResolver.Resolution.Found ?: return
-    node.attr("data-original-src", originalPath)
+    val allowOutsideProjectRoot = !hasFileHost && isProjectTrusted(projectPath)
+    val resolved = runBlockingCancellable {
+      MarkdownImagePathResolver.resolve(baseFile, projectRoot, originalPath, allowOutsideProjectRoot)
+    } as? MarkdownImagePathResolver.Resolution.Found ?: return
+    node.attr("data-original-src", if (hasFileHost) originalPath else resolved.url)
     node.attr("src", PreviewStaticServer.getStaticUrl(fileSchemeResourceProcessor, resolved.url))
   }
 

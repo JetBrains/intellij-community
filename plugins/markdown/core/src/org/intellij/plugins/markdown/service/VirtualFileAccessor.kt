@@ -14,6 +14,8 @@ import org.jetbrains.annotations.ApiStatus
 interface VirtualFileAccessor : RemoteApi<Unit> {
   suspend fun tryToLoadFileContent(resourceName: String, virtualFileId: VirtualFileId, projectId: ProjectId): ByteArray?
 
+  suspend fun tryToFindFileByUrl(url: String): VirtualFileId?
+
   companion object {
     @JvmStatic
     fun tryGetInstance(): VirtualFileAccessor? {

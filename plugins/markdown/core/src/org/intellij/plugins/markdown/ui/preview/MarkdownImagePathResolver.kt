@@ -2,51 +2,43 @@
 package org.intellij.plugins.markdown.ui.preview
 
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.toNioPathOrNull
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.ide.vfs.virtualFile
+import org.intellij.plugins.markdown.service.VirtualFileAccessor
 import org.jetbrains.annotations.ApiStatus
-import java.net.URI
 import java.net.URLDecoder
 import java.nio.charset.Charset
-import java.nio.file.Path
 
 @ApiStatus.Internal
 object MarkdownImagePathResolver {
-  fun resolve(baseFile: VirtualFile, projectRoot: VirtualFile, rawPath: String, allowOutsideProjectRoot: Boolean = false): Resolution {
+  suspend fun resolve(baseFile: VirtualFile, projectRoot: VirtualFile, rawPath: String, allowOutsideProjectRoot: Boolean = false): Resolution {
     if (rawPath.startsWith("file:/")) {
-      val path = runCatching { Path.of(URI(rawPath)) }.getOrNull() ?: return Resolution.NotFound
-      return validate(path, projectRoot, allowOutsideProjectRoot)
+      val file = VirtualFileAccessor.tryGetInstance()?.tryToFindFileByUrl(rawPath)?.virtualFile() ?: return Resolution.NotFound
+      return validate(file, projectRoot, allowOutsideProjectRoot)
     }
     var path = runCatching { URLDecoder.decode(rawPath, Charset.defaultCharset()) }.getOrNull() ?: return Resolution.NotFound
     if (SystemInfo.isWindows) path = StringUtil.replace(path, "\\", "/")
-    if (path.startsWith('/')) {
+    val file = if (path.startsWith('/')) {
       if (SystemInfo.isWindows) path = path.trimStart('/')
-      path = findRelativePath(projectRoot, path) ?: path
+      projectRoot.findFileByRelativePath(path) ?: return Resolution.NotFound
     }
     else {
-      path = findRelativePath(baseFile, path) ?: return Resolution.NotFound
+      baseFile.findFileByRelativePath(path) ?: return Resolution.NotFound
     }
-    return validate(Path.of(FileUtil.toSystemIndependentName(path)).normalize(), projectRoot, allowOutsideProjectRoot)
+    return validate(file, projectRoot, allowOutsideProjectRoot)
   }
 
-  private fun validate(path: Path, projectRoot: VirtualFile, allowOutsideProjectRoot: Boolean): Resolution {
-    val rootPath = projectRoot.toNioPathOrNull() ?: return Resolution.NotFound
-    if (!allowOutsideProjectRoot && !path.toAbsolutePath().normalize().startsWith(rootPath.toAbsolutePath().normalize())) {
+  private fun validate(file: VirtualFile, projectRoot: VirtualFile, allowOutsideProjectRoot: Boolean): Resolution {
+    if (!allowOutsideProjectRoot && !VfsUtilCore.isAncestor(projectRoot, file, false)) {
       return Resolution.Forbidden
     }
-    return Resolution.Found(path, FileUtil.toSystemIndependentName(path.toString()))
-  }
-
-  private fun findRelativePath(base: VirtualFile, path: String): String? {
-    val file = base.findFileByRelativePath(path) ?: return null
-    val nioPath = file.toNioPathOrNull() ?: return null
-    return nioPath.normalize().toString()
+    return Resolution.Found(file)
   }
 
   sealed interface Resolution {
-    data class Found(val path: Path, val url: String) : Resolution
+    data class Found(val file: VirtualFile, val url: String = file.path) : Resolution
     data object NotFound : Resolution
     data object Forbidden : Resolution
   }

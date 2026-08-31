@@ -13,68 +13,47 @@ import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FoldingKeys
 import com.intellij.openapi.editor.markup.RangeHighlighter
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.EditorMouseFixture
 import org.intellij.plugins.markdown.settings.MarkdownSettings
-import org.junit.Rule
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
-import java.nio.file.Files
-import java.nio.file.Path
 import javax.imageio.ImageIO
 
-@RunWith(JUnit4::class)
 class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
 
   private val settings get() = MarkdownSettings.getInstance(project)
 
-  @get:Rule
-  val temporaryDirectory = TemporaryDirectory()
-
   override fun setUp() {
     super.setUp()
-    val root = temporaryDirectory.createDir()
-    val rootFile = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root))
-    PsiTestUtil.addContentRoot(myFixture.module, rootFile)
     val livePreview = settings.enableLivePreview
     Disposer.register(testRootDisposable) { settings.enableLivePreview = livePreview }
     settings.enableLivePreview = true
   }
 
-  @Test
   fun testMarkupIsHiddenWhileTheCaretIsElsewhere() {
     configure("Some **bold**, *italic* and `code` here<caret>")
     assertEquals("Some bold, italic and code here", visibleText())
     assertTrue(concealedLivePreviewRegions(myFixture.editor).none { FoldingKeys.HIDE_PLACEHOLDER_BACKGROUND.isIn(it) })
   }
 
-  @Test
   fun testInlineLinkShowsOnlyItsTitle() {
     configure("Read [the docs](https://example.org) today<caret>")
     assertEquals("Read the docs today", visibleText())
   }
 
-  @Test
   fun testAutolinksShowOnlyTheirTarget() {
     configure("See <https://example.org> or mail <team@example.org> here<caret>\n\ntail")
     assertEquals("See https://example.org or mail team@example.org here\n\ntail", visibleText())
   }
 
-  @Test
   fun testUnorderedListMarkersUseDepthPlaceholders() {
     val content = """
       |- one
@@ -90,7 +69,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertTrue(concealedLivePreviewRegions(myFixture.editor).all { FoldingKeys.HIDE_PLACEHOLDER_BACKGROUND.isIn(it) })
   }
 
-  @Test
   fun testCaretOnTheElementRevealsItsMarkers() {
     val content = "Some **bold** text"
     configure(content)
@@ -107,7 +85,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
    * The load-bearing test: touching counts at both ends, so no concealing region may ever sit under or next
    * to a caret. Everything else in the design leans on this.
    */
-  @Test
   fun testEveryCaretOffsetAroundAnElement() {
     val content = "**bold** x"
     configure(content)
@@ -123,7 +100,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     }
   }
 
-  @Test
   fun testCaretOnEitherListMarkerBoundaryRevealsMarker() {
     val content = "- item\n\ntail"
     configure("$content<caret>")
@@ -137,7 +113,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertEmpty(concealed())
   }
 
-  @Test
   fun testIndentingMarkerReplacesItsStalePlaceholder() {
     val content = "- parent\n- child\n\ntail"
     configure("$content<caret>")
@@ -155,7 +130,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertNotSame(staleChildRegion, concealedLivePreviewRegions(myFixture.editor)[1])
   }
 
-  @Test
   fun testListMarkerConcealmentDoesNotMoveItemText() {
     val content = "- bullet\n1. ordered\n\ntail"
     configure("$content<caret>")
@@ -168,7 +142,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertEquals(concealedPositions, offsets.map { myFixture.editor.offsetToXY(it) })
   }
 
-  @Test
   fun testNestedElementRevealsItsAncestor() {
     val content = "**bold *and italic* here**"
     configure(content)
@@ -176,7 +149,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertEmpty("A caret in the inner element must reveal the outer one too", concealed())
   }
 
-  @Test
   fun testSelectionOverAnElementRevealsIt() {
     val content = "a **bold** b **more** c"
     configure(content)
@@ -184,7 +156,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertEquals("Only the selected element is revealed", listOf("**", "**"), concealed())
   }
 
-  @Test
   fun testSelectionEndpointsAreNotDropped() {
     val content = "a **bold** b"
     configure(content)
@@ -196,7 +167,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertEquals(end, myFixture.editor.selectionModel.selectionEnd)
   }
 
-  @Test
   fun testMultipleCaretsRevealOnlyWhatTheyTouch() {
     val content = "**one** and *two* and ~~three~~ tail"
     configure(content)
@@ -209,25 +179,22 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertEquals("Only the element under a caret is revealed", listOf("**", "**", "~~", "~~"), concealed())
   }
 
-  @Test
   fun testConcealingDoesNotChangeTheDocument() {
     val content = "Some **bold** and [docs](https://example.org)<caret>"
     configure(content)
     assertFalse(concealed().isEmpty())
-    assertEquals("Folding must not touch the document", content.removeSuffix("<caret>"), myFixture.editor.document.text)
+    myFixture.checkResult(content.removeSuffix("<caret>"))
   }
 
-  @Test
   fun testThematicBreaksUseEmptyFoldsAndOwnedRules() {
     val content = "---\n***\n___\ntail"
     configure("$content<caret>")
 
     assertEquals(3, thematicBreakHighlighters().size)
     assertEquals(listOf("---", "***", "___"), concealed())
-    assertEquals(content, myFixture.editor.document.text)
+    myFixture.checkResult(content)
   }
 
-  @Test
   fun testThematicBreakRevealsAndRestores() {
     val content = "---\ntail"
     configure("$content<caret>")
@@ -236,7 +203,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     moveCaretTo(rule.startOffset)
     assertEmpty(concealed())
     assertEmpty(thematicBreakHighlighters())
-    assertEquals(content, myFixture.editor.document.text)
+    myFixture.checkResult(content)
     assertEmpty(imageRegions())
 
     moveCaretTo(content.length)
@@ -244,7 +211,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertEquals(1, thematicBreakHighlighters().size)
   }
 
-  @Test
   fun testThematicBreakDoesNotConcealInlineCodeOnThePreviousLine() {
     val content = "`---`\n---\ntail"
     configure("$content<caret>")
@@ -259,7 +225,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertEquals(listOf("`", "`", "---"), concealed())
   }
 
-  @Test
   fun testFrontMatterDelimitersAndThematicBreakUseRuleDecorations() {
     val content = """
       |---
@@ -274,7 +239,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
 
     assertEquals(3, thematicBreakHighlighters().size)
     assertEquals(listOf("---", "---", "---"), concealed())
-    assertEquals(content, myFixture.editor.document.text)
+    myFixture.checkResult(content)
 
     val bodyRule = thematicBreakHighlighters().last()
     moveCaretTo(bodyRule.startOffset)
@@ -286,7 +251,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertEquals(3, thematicBreakHighlighters().size)
   }
 
-  @Test
   fun testStandaloneLocalImageRendersAndRevealsItsSource() {
     addPng(120, 60)
     val content = "![alt](image.png)\n\ntail"
@@ -295,17 +259,16 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     val region = waitForImageRenderer()
     assertEquals("![alt](image.png)", content.substring(region.startOffset, region.endOffset))
     assertTrue(region.renderer is DocRenderer)
-    assertEquals(content, myFixture.editor.document.text)
+    myFixture.checkResult(content)
 
     moveCaretTo(0)
     assertEmpty(imageRegions())
-    assertEquals(content, myFixture.editor.document.text)
+    myFixture.checkResult(content)
 
     moveCaretTo(content.length)
     waitForImageRenderer()
   }
 
-  @Test
   fun testImagesBetweenHeadersBothRender() {
     addPng(120, 60)
     val content = "# Markdown WYSIWYG Demo\n\n![logo](image.png)\n\n![logo](image.png)\n\n# Markdown WYSIWYG Demo"
@@ -315,7 +278,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     waitForImageRegions(2)
   }
 
-  @Test
   fun testAdjacentImagesBothRender() {
     addPng(120, 60)
     configureProjectFile("![logo](image.png)\n![logo](image.png)\n\ntail")
@@ -323,7 +285,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     waitForImageRegions(2)
   }
 
-  @Test
   fun testMovingCaretBetweenImagesDoesNotUseDisposedFoldRegion() {
     addPng(120, 60)
     val first = "![first](image.png)"
@@ -339,7 +300,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertEquals(1, imageRegions().size)
   }
 
-  @Test
   fun testSelectionOverImageYieldsMarkdownSource() {
     addPng(80, 40)
     val imageSource = "![alt](image.png)"
@@ -353,7 +313,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertEquals(imageSource, myFixture.editor.selectionModel.selectedText)
   }
 
-  @Test
   fun testSvgImageUsesItsIntrinsicSize() {
     addBinaryFile(
       "docs/image.svg",
@@ -363,7 +322,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertTrue(waitForImageRenderer().renderer is DocRenderer)
   }
 
-  @Test
   fun testCachedAttachmentImageRendersFromProjectRoot() {
     addBinaryFile(".attachments/image.png", pngBytes(70, 35))
     configureProjectFile("![alt](/.attachments/image.png)\n\ntail")
@@ -371,7 +329,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertTrue(waitForImageRenderer().renderer is DocRenderer)
   }
 
-  @Test
   fun testEncodedLocalImagePathUsesSharedResolver() {
     addBinaryFile("docs/image with space.png", pngBytes(70, 35))
     configureProjectFile("![alt](image%20with%20space.png)\n\ntail")
@@ -379,20 +336,12 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertTrue(waitForImageRenderer().renderer is DocRenderer)
   }
 
-  @Test
   fun testSiblingPrefixPathOutsideProjectRestoresItsSource() {
-    val container = Files.createTempDirectory("markdown-live-preview-boundary")
-    Disposer.register(testRootDisposable) { NioFiles.deleteRecursively(container) }
-    val projectRoot = Files.createDirectories(container.resolve("project"))
-    val sourcePath = Files.createDirectories(projectRoot.resolve("docs")).resolve("test.md")
-    val siblingRoot = Files.createDirectories(container.resolve("project-other"))
-    Files.write(siblingRoot.resolve("image.png"), pngBytes(60, 30))
-    val content = "![alt](../../project-other/image.png)\n\ntail"
-    Files.writeString(sourcePath, content)
-    val localFileSystem = LocalFileSystem.getInstance()
-    val root = requireNotNull(localFileSystem.refreshAndFindFileByNioFile(projectRoot))
-    PsiTestUtil.addContentRoot(myFixture.module, root)
-    val source = requireNotNull(localFileSystem.refreshAndFindFileByNioFile(sourcePath))
+    val content = "![alt](../../../project-other/image.png)\n\ntail"
+    val source = myFixture.addFileToProject("project/docs/test.md", content).virtualFile
+    val siblingImage = myFixture.addFileToProject("../project-other/image.png", "").virtualFile
+    ApplicationManager.getApplication().runWriteAction { siblingImage.setBinaryContent(pngBytes(60, 30)) }
+    PsiTestUtil.addContentRoot(myFixture.module, source.parent!!.parent!!)
     myFixture.configureFromExistingVirtualFile(source)
     myFixture.editor.caretModel.moveToOffset(content.length)
     myFixture.doHighlighting()
@@ -401,31 +350,26 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     PlatformTestUtil.waitWithEventsDispatching("Sibling image fold was not removed", { imageRegions().isEmpty() }, 10)
   }
 
-  @Test
   fun testFileUriOutsideProjectRestoresItsSource() {
-    val image = Files.createTempFile("markdown-live-preview", ".png")
-    try {
-      Files.write(image, pngBytes(60, 30))
-      configureProjectFile("![alt](<${image.toUri()}>)\n\ntail")
-
-      PlatformTestUtil.waitWithEventsDispatching("Outside image fold was not removed", { imageRegions().isEmpty() }, 10)
-    }
-    finally {
-      Files.deleteIfExists(image)
-    }
+    val image = myFixture.addFileToProject("project-other/outside.png", "").virtualFile
+    ApplicationManager.getApplication().runWriteAction { image.setBinaryContent(pngBytes(60, 30)) }
+    val source = myFixture.addFileToProject("project/docs/test.md", "![alt](<${image.url}>)\n\ntail").virtualFile
+    PsiTestUtil.addContentRoot(myFixture.module, source.parent!!.parent!!)
+    myFixture.configureFromExistingVirtualFile(source)
+    myFixture.editor.caretModel.moveToOffset(source.contentsToByteArray().size)
+    myFixture.doHighlighting()
+    PlatformTestUtil.waitWithEventsDispatching("Outside image fold was not removed", { imageRegions().isEmpty() }, 10)
   }
 
-  @Test
   fun testBrokenImageAndMissingImageStayRaw() {
     addBinaryFile("docs/broken.png", "not an image".toByteArray())
     configureProjectFile("![broken](broken.png)\n\n![missing](missing.png)\n\ntail")
 
     waitForNoImageRegion()
 
-    assertEquals("![broken](broken.png)\n\n![missing](missing.png)\n\ntail", myFixture.editor.document.text)
+    myFixture.checkResult("![broken](broken.png)\n\n![missing](missing.png)\n\ntail")
   }
 
-  @Test
   fun testImageRefreshesAfterVfsChange() {
     val image = addPng(100, 40)
     configureProjectFile("![alt](image.png)\n\ntail")
@@ -439,7 +383,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertTrue(imageRegions().single().renderer is DocRenderer)
   }
 
-  @Test
   fun testImageOverByteLimitIsRejectedAfterVfsRefresh() {
     val image = addPng(2, 2)
     configureProjectFile("![alt](image.png)\n\ntail")
@@ -451,7 +394,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     waitForNoImageRegion()
   }
 
-  @Test
   fun testImageOverPixelLimitIsRejectedAfterVfsRefresh() {
     val image = addPng(2, 2)
     configureProjectFile("![alt](image.png)\n\ntail")
@@ -463,7 +405,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     waitForNoImageRegion()
   }
 
-  @Test
   fun testResizingEditorDoesNotRecreateImageFold() {
     addPng(100, 40)
     configureProjectFile("![alt](image.png)\n\ntail")
@@ -478,7 +419,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertSame(renderer, imageRegions().single().renderer)
   }
 
-  @Test
   fun testClickingImagePreservesViewportPosition() {
     addPng(240, 120)
     val content = (1..4).joinToString("\n\n") { "![logo](image.png)" } + "\n\n- tail"
@@ -498,7 +438,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertEquals(verticalOffset, editor.scrollingModel.verticalScrollOffset)
   }
 
-  @Test
   fun testMovingCaretAcrossSmallImageDoesNotJumpViewport() {
     addPng(40, 20)
     val image = "![logo](image.png)"
@@ -521,7 +460,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertEquals(verticalOffset, editor.scrollingModel.verticalScrollOffset)
   }
 
-  @Test
   fun testMovingPastLargeImageUsesMinimumScroll() {
     addPng(100, 1_000)
     val image = "![logo](image.png)"
@@ -547,7 +485,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertTrue(imageRegions().isNotEmpty())
   }
 
-  @Test
   fun testSelectingEverythingRevealsEverything() {
     val content = "Some **bold** and `code`"
     configure(content)
@@ -556,61 +493,51 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertEquals(content, myFixture.editor.selectionModel.selectedText)
   }
 
-  @Test
   fun testBackspacePastAnElementDeletesOneCharacter() {
     val content = "**bold** x"
     configure(content)
     moveCaretTo(content.length - 1)
     assertEquals(listOf("**", "**"), concealed())
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE)
-    assertEquals("**bold**x", myFixture.editor.document.text)
+    myFixture.checkResult("**bold**x")
   }
 
-  @Test
   fun testBackspaceInsideAnElementDeletesOneCharacter() {
     val content = "**bold** x"
     configure(content)
     moveCaretTo("**bold".length)
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE)
-    assertEquals("**bol** x", myFixture.editor.document.text)
+    myFixture.checkResult("**bol** x")
   }
 
-  @Test
   fun testBackspaceAfterAutolinkDeletesOneCharacter() {
     assertBackspaceAfterElement("<https://example.org>")
   }
 
-  @Test
   fun testBackspaceAfterEmphasisDeletesOneCharacter() {
     assertBackspaceAfterElement("*italic*")
   }
 
-  @Test
   fun testBackspaceAfterStrongEmphasisDeletesOneCharacter() {
     assertBackspaceAfterElement("**bold**")
   }
 
-  @Test
   fun testBackspaceAfterCodeSpanDeletesOneCharacter() {
     assertBackspaceAfterElement("`code`")
   }
 
-  @Test
   fun testBackspaceAfterInlineLinkDeletesOneCharacter() {
     assertBackspaceAfterElement("[link](https://example.org)")
   }
 
-  @Test
   fun testBackspaceAfterStrikethroughDeletesOneCharacter() {
     assertBackspaceAfterElement("~~deleted~~")
   }
 
-  @Test
   fun testBackspaceAfterThematicBreakDeletesOneCharacter() {
     assertBackspaceAfterElement("---")
   }
 
-  @Test
   fun testBackspaceAfterImageDoesNotDeleteTheImage() {
     addPng(120, 60)
     val image = "![logo](image.png)"
@@ -620,21 +547,19 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
 
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE)
 
-    assertEquals(content.dropLast(1), myFixture.editor.document.text)
+    myFixture.checkResult(content.dropLast(1))
     assertEquals(content.length - 1, myFixture.editor.caretModel.offset)
     assertEmpty(imageRegions())
   }
 
-  @Test
   fun testDeleteAfterAnElementDeletesOneCharacter() {
     val content = "**bold** x"
     configure(content)
     moveCaretTo(content.indexOf(" x"))
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DELETE)
-    assertEquals("**bold**x", myFixture.editor.document.text)
+    myFixture.checkResult("**bold**x")
   }
 
-  @Test
   fun testLivePreviewSettingReconcilesImmediately() {
     configure("Some **bold** text<caret>")
     assertFalse(concealed().isEmpty())
@@ -647,7 +572,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertEquals(listOf("**", "**"), concealed())
   }
 
-  @Test
   fun testDiffEditorHidesNothing() {
     configure("Some **bold** text<caret>")
     val document = myFixture.editor.document
@@ -663,7 +587,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
   }
 
   /** Exercises the binary search the reconciler uses to find the elements around a caret. */
-  @Test
   fun testOnlyTheTouchedElementRevealsInAManyElementDocument() {
     val content = (1..40).joinToString(" ") { "**w$it**" } + " tail"
     configure(content)
@@ -674,12 +597,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertEquals("With the caret past the end nothing is revealed", 40 * 2, concealed().size)
   }
 
-  /**
-   * Specs carry the document stamp they were computed from, and the reconciler declines them once the
-   * document has moved on. The pass records that same stamp rather than the current one, so declined specs
-   * do not look applied and the next pass recomputes them.
-   */
-  @Test
   fun testSpecsFromAnOlderDocumentAreDeclined() {
     myFixture.configureByText("test.md", "Some **bold** text")
     val editor = myFixture.editor
@@ -700,22 +617,18 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
 
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE)
 
-    assertEquals(element, myFixture.editor.document.text)
+    myFixture.checkResult(element)
     assertEquals(element.length, myFixture.editor.caretModel.offset)
   }
 
-  /** Opens the file and lets the highlighting pass compute and publish the specs, as it does in an editor. */
   private fun configure(content: String) {
     myFixture.configureByText("test.md", content)
     myFixture.doHighlighting()
   }
 
   private fun configureProjectFile(content: String) {
-    val sourcePath = projectRoot().resolve("docs/test.md")
-    Files.createDirectories(sourcePath.parent)
-    Files.writeString(sourcePath, content)
-    val source = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(sourcePath))
-    myFixture.configureFromExistingVirtualFile(source)
+    myFixture.addFileToProject("docs/test.md", content)
+    myFixture.configureFromExistingVirtualFile(myFixture.findFileInTempDir("docs/test.md"))
     myFixture.editor.caretModel.moveToOffset(content.length)
     myFixture.doHighlighting()
   }
@@ -723,10 +636,9 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
   private fun addPng(width: Int, height: Int): VirtualFile = addBinaryFile("docs/image.png", pngBytes(width, height))
 
   private fun addBinaryFile(path: String, bytes: ByteArray): VirtualFile {
-    val filePath = projectRoot().resolve(path)
-    Files.createDirectories(filePath.parent)
-    Files.write(filePath, bytes)
-    return requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(filePath))
+    return myFixture.addFileToProject(path, "").virtualFile.also {
+      ApplicationManager.getApplication().runWriteAction { it.setBinaryContent(bytes) }
+    }
   }
 
   private fun pngBytes(width: Int, height: Int): ByteArray {
@@ -739,8 +651,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     waitForImageRegions(1)
     return imageRegions().single()
   }
-
-  private fun projectRoot(): Path = ModuleRootManager.getInstance(myFixture.module).contentRoots.last().toNioPath()
 
   private fun waitForImageRegions(count: Int) {
     PlatformTestUtil.waitWithEventsDispatching(

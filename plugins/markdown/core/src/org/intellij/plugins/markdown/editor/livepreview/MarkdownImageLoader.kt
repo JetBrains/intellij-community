@@ -5,7 +5,6 @@ import com.intellij.openapi.project.BaseProjectDirectories
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.svg.getSvgDocumentSize
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -18,7 +17,7 @@ import javax.imageio.ImageIO
 @ApiStatus.Internal
 object MarkdownImageLoader {
   @RequiresBackgroundThread
-  fun load(project: Project, file: VirtualFile, destination: String): VirtualFile? {
+  suspend fun load(project: Project, file: VirtualFile, destination: String): VirtualFile? {
     ThreadingAssertions.assertBackgroundThread()
     return try {
       val baseFile = file.parent ?: return null
@@ -27,11 +26,7 @@ object MarkdownImageLoader {
                         ?: return null
       val resolution = MarkdownImagePathResolver.resolve(baseFile, projectRoot, destination)
       if (resolution !is MarkdownImagePathResolver.Resolution.Found) return null
-      val path = resolution.path.toAbsolutePath().normalize()
-      val localFileSystem = LocalFileSystem.getInstance()
-      val imageFile = localFileSystem.findFileByNioFile(path)
-                      ?: localFileSystem.refreshAndFindFileByNioFile(path)
-                      ?: return null
+      val imageFile = resolution.file
       if (!imageFile.isValid || imageFile.isDirectory) return null
       if (!isWithinLimits(imageFile)) return null
       imageFile

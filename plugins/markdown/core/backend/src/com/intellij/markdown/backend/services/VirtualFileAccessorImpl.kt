@@ -6,6 +6,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.BaseProjectDirectories
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.ide.vfs.rpcId
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import org.intellij.plugins.markdown.service.VirtualFileAccessor
@@ -33,6 +35,9 @@ class VirtualFileAccessorImpl : VirtualFileAccessor {
     val content = file.inputStream.use { it.readBytes() }
     return content
   }
+
+  override suspend fun tryToFindFileByUrl(url: String): VirtualFileId? =
+    VirtualFileManager.getInstance().findFileByUrl(url)?.rpcId()
 
   companion object {
     private val logger: Logger = Logger.getInstance(VirtualFileAccessorImpl::class.java)
