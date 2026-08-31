@@ -72,6 +72,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
 
   private val toolWindowIdToBaseIcon: MutableMap<String, Icon> = HashMap()
   private val toolWindowIdZBuffer = ConcurrentLinkedDeque<String>()
+  private val initializedToolWindowIds: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
   init {
     val containerFactory = DockableGridContainerFactory()
@@ -176,7 +177,9 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     val toolWindowId = executor.toolWindowId
     var toolWindow = toolWindowManager.getToolWindow(toolWindowId)
     if (toolWindow != null) {
-      return toolWindow.contentManager
+      val contentManager = toolWindow.contentManager
+      initToolWindow(executor, toolWindowId, executor.toolWindowIcon, contentManager)
+      return contentManager
     }
 
     toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask(
@@ -197,6 +200,9 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   }
 
   private fun initToolWindow(executor: Executor?, toolWindowId: String, toolWindowIcon: Icon, contentManager: ContentManager) {
+    if (!initializedToolWindowIds.add(toolWindowId)) {
+      return
+    }
     toolWindowIdToBaseIcon.put(toolWindowId, toolWindowIcon)
     contentManager.addContentManagerListener(object : ContentManagerListener {
       override fun selectionChanged(event: ContentManagerEvent) {
@@ -217,6 +223,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       contentManager.removeAllContents(true)
       toolWindowIdZBuffer.remove(toolWindowId)
       toolWindowIdToBaseIcon.remove(toolWindowId)
+      initializedToolWindowIds.remove(toolWindowId)
     })
     toolWindowIdZBuffer.addLast(toolWindowId)
   }
@@ -527,6 +534,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     if (id == executor.toolWindowId || toolWindowIdToBaseIcon.containsKey(id)) {
       val contentManager = getContentManagerByToolWindowId(id)
       if (contentManager != null) {
+        initToolWindow(executor, id, executor.toolWindowIcon, contentManager)
         updateToolWindowDecoration(id, executor)
         return contentManager
       }
