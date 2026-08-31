@@ -23,7 +23,6 @@ fleetModule {
 kotlin {
   // KOTLIN__MARKER_START
   compilerOptions.freeCompilerArgs = listOf(
-    "-opt-in=org.jetbrains.kotlin.config.MessageCollectorAccess",
     "-Xcontext-parameters",
     "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks",
     "-progressive",

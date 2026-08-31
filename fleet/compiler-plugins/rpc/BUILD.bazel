@@ -22,7 +22,6 @@ kt_compiler_plugin(
 ### auto-generated section `build fleet.compiler.plugins.rpc` start
 create_kotlinc_options(
     name = "custom_rpc",
-    opt_in = ["org.jetbrains.kotlin.config.MessageCollectorAccess"],
     x_context_parameters = True,
     x_jvm_default = "all-compatibility",
 )

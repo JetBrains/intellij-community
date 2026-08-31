@@ -42,7 +42,6 @@ import kotlin.test.ExperimentalKotlinTestApi
 import kotlin.test.assertTrue
 
 
-@OptIn(ExperimentalKotlinTestApi::class)
 @IJIgnore(issue = "KT-88180")
 @GradleProjectTestApplication
 @TestDataPath($$"$CONTENT_ROOT/testData")

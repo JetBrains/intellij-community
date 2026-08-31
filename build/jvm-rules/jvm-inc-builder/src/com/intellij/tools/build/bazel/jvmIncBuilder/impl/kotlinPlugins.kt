@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.cli.plugins.extractPluginOrderConstraint
 import org.jetbrains.kotlin.cli.report
 import org.jetbrains.kotlin.compiler.plugin.*
 import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.config.MessageCollectorAccess
 import org.jetbrains.kotlin.jvm.abi.JvmAbiCommandLineProcessor
 import org.jetbrains.kotlin.jvm.abi.JvmAbiComponentRegistrar
 import org.jetbrains.kotlin.util.ServiceLoaderLite
@@ -93,7 +92,7 @@ fun configurePlugins(
  * the `-Xcompiler-plugin-order` constraints: `"pluginId1>pluginId2"` means the plugin with
  * [CompilerPluginRegistrar.pluginId] `pluginId1` is executed before the one with `pluginId2`.
  */
-@OptIn(ExperimentalCompilerApi::class, MessageCollectorAccess::class)
+@OptIn(ExperimentalCompilerApi::class)
 fun sortCompilerPluginRegistrarsByOrderConstraints(configuration: CompilerConfiguration, rawConstraints: Array<String>) {
   if (rawConstraints.isEmpty()) {
     return
