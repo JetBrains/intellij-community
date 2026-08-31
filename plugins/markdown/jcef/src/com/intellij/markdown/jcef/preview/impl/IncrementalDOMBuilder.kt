@@ -1,13 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.markdown.jcef.preview.impl
 
-import com.intellij.ide.trustedProjects.TrustedProjects.isProjectTrusted
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.toNioPathOrNull
 import org.intellij.plugins.markdown.ui.preview.MarkdownImagePathResolver
+import org.intellij.plugins.markdown.ui.preview.MarkdownImageResourceProvider
 import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import org.intellij.plugins.markdown.ui.preview.html.PreviewEncodingUtil
@@ -25,9 +23,8 @@ import org.jsoup.parser.TagSet
 @ApiStatus.Internal
 class IncrementalDOMBuilder(
   html: String,
-  private val baseFile: VirtualFile?,
-  private val projectRoot: VirtualFile?,
-  private val fileSchemeResourceProcessor: ResourceProvider? = null,
+  private val sourceFile: VirtualFile?,
+  private val imageResourceProvider: ResourceProvider? = null,
 ) {
 
   private val document = Jsoup.parse(html, createSelfClosingSpanAwareParser())
@@ -104,35 +101,29 @@ class IncrementalDOMBuilder(
     }
   }
 
+  /**
+   * Points the `src` of an image node at [imageResourceProvider], which resolves it later.
+   *
+   * This needs no path of the document, and a Remote Development frontend has none.
+   */
   private fun preprocessNode(node: Node): Node {
     stripReferrerPolicy(node)
-    if (baseFile != null && projectRoot != null && shouldPreprocessImageNode(node)) {
-      try {
-        actuallyProcessImageNode(node, baseFile, projectRoot)
-      }
-      catch (exception: Throwable) {
-        val originalUrlValue = node.attr("src")
-        thisLogger().error("Failed to process image node\nbasePath: $baseFile\noriginalUrl: $originalUrlValue", exception)
-      }
+    val provider = imageResourceProvider
+    if (sourceFile == null || provider == null || !shouldPreprocessImageNode(node)) {
+      return node
+    }
+    val source = node.attr("src")
+    if (source.isEmpty() || MarkdownImagePathResolver.isBrowserOwned(source)) {
+      return node
+    }
+    try {
+      node.attr("data-original-src", source)
+      node.attr("src", PreviewStaticServer.getStaticUrl(provider, MarkdownImageResourceProvider.resourceName(source)))
+    }
+    catch (exception: Throwable) {
+      thisLogger().warn("Failed to rewrite the source of an image node: $source", exception)
     }
     return node
-  }
-
-  private fun actuallyProcessImageNode(node: Node, baseFile: VirtualFile, projectRoot: VirtualFile) {
-    val fileSchemeResourceProcessor = fileSchemeResourceProcessor ?: return
-    val projectPath = projectRoot.toNioPathOrNull() ?: return
-
-    val originalPath = node.attr("src")
-    val hasFileHost = originalPath.startsWith("file:/")
-    if (hasFileHost && !node.hasAttr("from-extension")) {
-      return
-    }
-    val allowOutsideProjectRoot = !hasFileHost && isProjectTrusted(projectPath)
-    val resolved = runBlockingCancellable {
-      MarkdownImagePathResolver.resolve(baseFile, projectRoot, originalPath, allowOutsideProjectRoot)
-    } as? MarkdownImagePathResolver.Resolution.Found ?: return
-    node.attr("data-original-src", if (hasFileHost) originalPath else resolved.url)
-    node.attr("src", PreviewStaticServer.getStaticUrl(fileSchemeResourceProcessor, resolved.url))
   }
 
   private fun shouldPreprocessImageNode(node: Node): Boolean {

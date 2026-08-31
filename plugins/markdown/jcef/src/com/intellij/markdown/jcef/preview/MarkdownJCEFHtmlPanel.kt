@@ -3,7 +3,6 @@ package com.intellij.markdown.jcef.preview
 
 import com.intellij.find.FindManager
 import com.intellij.markdown.frontend.preview.jcef.zoomIndicator.PreviewZoomIndicatorManager
-import com.intellij.markdown.jcef.preview.impl.FileSchemeResourcesProcessor
 import com.intellij.markdown.jcef.preview.impl.IncrementalDOMBuilder
 import com.intellij.markdown.jcef.preview.impl.JcefBrowserPipeImpl
 import com.intellij.markdown.jcef.preview.impl.addRequestHandler
@@ -17,7 +16,6 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.project.BaseProjectDirectories
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
@@ -39,7 +37,6 @@ import com.intellij.util.net.NetUtils
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -63,6 +60,7 @@ import org.intellij.plugins.markdown.ui.preview.MarkdownUpdateHandler
 import org.intellij.plugins.markdown.ui.preview.MarkdownUpdateHandler.PreviewRequest
 import org.intellij.plugins.markdown.ui.preview.PreviewLAFThemeStyles
 import org.intellij.plugins.markdown.ui.preview.PreviewLAFThemeStyles.fontSizeOptions
+import org.intellij.plugins.markdown.ui.preview.MarkdownImageResourceProvider
 import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import org.intellij.plugins.markdown.util.MarkdownApplicationScope
@@ -140,12 +138,6 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
 
   private val coroutineScope = project?.let(MarkdownPluginScope::createChildScope) ?: MarkdownApplicationScope.createChildScope()
 
-  private val projectRoot = coroutineScope.async(context = Dispatchers.Default) {
-    if (virtualFile != null && project != null) {
-      BaseProjectDirectories.getInstance(project).getBaseDirectoryFor(virtualFile)
-    }
-    else null
-  }
 
   private val panelComponent by lazy { createComponent() }
 
@@ -178,8 +170,7 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
 
     coroutineScope.launch {
       try {
-        val projectRoot = projectRoot.await()
-        val fileSchemeResourcesProcessor = createFileSchemeResourcesProcessor(projectRoot)
+        val imageResourceProvider = createImageResourceProvider()
 
         loadIndexContent()
         initialization.complete(Unit)
@@ -188,8 +179,7 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
             when (request) {
               is PreviewRequest.Update -> {
                 val (html, initialScrollOffset, document) = request
-                val baseFile = document?.parent
-                val builder = IncrementalDOMBuilder(html, baseFile, projectRoot, fileSchemeResourcesProcessor)
+                val builder = IncrementalDOMBuilder(html, document, imageResourceProvider)
                 val renderClosure = builder.generateRenderClosure()
                 updateDom(renderClosure, initialScrollOffset, previousRenderClosure.isEmpty())
               }
@@ -253,10 +243,10 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
   }
 
   @ApiStatus.Internal
-  suspend fun setHtmlAndWait(html: String, document: VirtualFile? = null, fileSchemeResourcesProcessor: ResourceProvider? = null) {
+  suspend fun setHtmlAndWait(html: String, document: VirtualFile? = null, imageResourceProvider: ResourceProvider? = null) {
     initialization.await()
 
-    val builder = IncrementalDOMBuilder(html, document?.parent, projectRoot.await(), fileSchemeResourcesProcessor)
+    val builder = IncrementalDOMBuilder(html, document, imageResourceProvider)
     val renderClosure = readAction { builder.generateRenderClosure() }
     updateDom(renderClosure, 0, false)
   }
@@ -362,8 +352,6 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
       viewPort.add(previewInnerComponent, BorderLayout.CENTER)
       panel.add(viewPort)
 
-      projectRoot.await()
-
       panel.stopLoading()
     }
 
@@ -400,17 +388,11 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
     super.openDevtools()
   }
 
-  private fun createFileSchemeResourcesProcessor(projectRoot: VirtualFile?): ResourceProvider? {
-    if (projectRoot == null) return null
-
-    val fileSchemeResourcesProcessor = FileSchemeResourcesProcessor(virtualFile, projectRoot)
-    Disposer.register(this@MarkdownJCEFHtmlPanel, PreviewStaticServer.instance.registerResourceProvider(fileSchemeResourcesProcessor))
-    return fileSchemeResourcesProcessor
-  }
-
   @ApiStatus.Internal
-  suspend fun createFileSchemeResourcesProcessor(): ResourceProvider? {
-    return createFileSchemeResourcesProcessor(projectRoot.await())
+  fun createImageResourceProvider(): ResourceProvider {
+    val provider = MarkdownImageResourceProvider(project, virtualFile)
+    Disposer.register(this@MarkdownJCEFHtmlPanel, PreviewStaticServer.instance.registerResourceProvider(provider))
+    return provider
   }
 
   private inner class MyAggregatingResourceProvider : ResourceProvider {

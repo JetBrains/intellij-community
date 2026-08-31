@@ -21,6 +21,13 @@ class IntelliJImageGeneratingProvider(linkMap: LinkMap) : LinkGeneratingProvider
 
     @JvmStatic
     val ignorePathProcessingAttributeName: String = "md-do-not-process-path"
+
+    private fun clearAngleBrackets(destination: CharSequence): CharSequence {
+      if (destination.length >= 2 && destination.first() == '<' && destination.last() == '>') {
+        return destination.subSequence(1, destination.length - 1)
+      }
+      return destination
+    }
   }
 
   private val referenceLinkProvider = ReferenceLinksGeneratingProvider(linkMap)
@@ -39,7 +46,7 @@ class IntelliJImageGeneratingProvider(linkMap: LinkMap) : LinkGeneratingProvider
     visitor.consumeTagOpen(
       node,
       "img",
-      "src=\"${info.destination}\"",
+      "src=\"${clearAngleBrackets(info.destination)}\"",
       "alt=\"${getPlainTextFrom(info.label, text)}\"",
       info.title?.let { "title=\"$it\"" },
       "$generatedAttributeName=\"true\"",

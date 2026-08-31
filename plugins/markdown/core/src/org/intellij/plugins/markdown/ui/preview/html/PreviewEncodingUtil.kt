@@ -23,4 +23,14 @@ object PreviewEncodingUtil {
   fun encodeUrl(url: String): String {
     return URLEncoder.encode(url, contentCharset).replace("+", "%20")
   }
+
+  fun encodeUrlSafe(text: String): String {
+    val encoder = Base64.getUrlEncoder().withoutPadding()
+    return encoder.encodeToString(text.toByteArray(contentCharset))
+  }
+
+  fun decodeUrlSafe(text: String): String? {
+    val decoder = Base64.getUrlDecoder()
+    return runCatching { decoder.decode(text).toString(contentCharset) }.getOrNull()
+  }
 }

@@ -51,6 +51,10 @@ public class MarkdownHtmlGenerationTest extends BasePlatformTestCase {
     assertEquals(htmlText.trim(), MarkdownUtil.INSTANCE.generateMarkdownHtml(mdFile.getVirtualFile(), mdFile.getText(), getProject()).trim());
   }
 
+  public void testImageDestinationInAngleBrackets() {
+    doTestByHtmlFile();
+  }
+
   public void testCodeFenceWithLang() {
     doTestByHtmlFile();
   }

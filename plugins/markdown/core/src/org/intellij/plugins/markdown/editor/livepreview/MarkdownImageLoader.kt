@@ -20,11 +20,10 @@ object MarkdownImageLoader {
   suspend fun load(project: Project, file: VirtualFile, destination: String): VirtualFile? {
     ThreadingAssertions.assertBackgroundThread()
     return try {
-      val baseFile = file.parent ?: return null
       val projectRoot = BaseProjectDirectories.getInstance(project).getBaseDirectoryFor(file)
                         ?: project.guessProjectDir()
                         ?: return null
-      val resolution = MarkdownImagePathResolver.resolve(baseFile, projectRoot, destination)
+      val resolution = MarkdownImagePathResolver.resolve(file, projectRoot, destination)
       if (resolution !is MarkdownImagePathResolver.Resolution.Found) return null
       val imageFile = resolution.file
       if (!imageFile.isValid || imageFile.isDirectory) return null

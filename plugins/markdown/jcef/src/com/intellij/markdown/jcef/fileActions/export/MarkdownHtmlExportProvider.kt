@@ -191,8 +191,8 @@ internal fun withMarkdownPreview(
     try {
       val document = readAction { FileDocumentManager.getInstance().getDocument(mdFile) } ?: error("Cannot load the Markdown document")
       val content = readAction { HtmlSourceTextPreprocessor().preprocessText(project, document, mdFile) }
-      val fileSchemeResourcesProcessor = panel.createFileSchemeResourcesProcessor()
-      panel.setHtmlAndWait(content, mdFile, fileSchemeResourcesProcessor)
+      val imageResourceProvider = panel.createImageResourceProvider()
+      panel.setHtmlAndWait(content, mdFile, imageResourceProvider)
       action(panel) { Disposer.dispose(panel)}
     }
     catch (e: Exception) {
