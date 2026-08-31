@@ -3,6 +3,7 @@ package com.intellij.platform.lsp.api.customization
 
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.LspServer
+import com.intellij.psi.PsiFile
 import org.eclipse.lsp4j.CodeAction
 import org.eclipse.lsp4j.Diagnostic
 
@@ -72,6 +73,29 @@ open class LspCodeActionsSupport : LspCodeActionsCustomizer() {
   @Suppress("DEPRECATION")
   open fun createIntentionAction(lspServer: LspServer, codeAction: CodeAction): LspIntentionAction? =
     LspIntentionAction(lspServer, codeAction)
+
+  /**
+   * Whether the IDE routes the Inline refactoring to the LSP server.
+   * The IDE requests the code actions of the `refactor.inline` kind at the caret or the selection and applies the chosen one.
+   * The server capabilities gate the request per client, [shouldRunRefactoring] gates it per file.
+   */
+  open val inlineRefactoringSupport: Boolean = true
+
+  /**
+   * Whether the IDE routes the Extract refactorings to the LSP server:
+   * Introduce Variable, Introduce Field, Introduce Constant, and Extract Method.
+   * The IDE requests the code actions of the `refactor.extract.*` kinds at the selection and applies the chosen one.
+   * The server capabilities gate the request per client, [shouldRunRefactoring] gates it per file.
+   */
+  open val extractRefactoringSupport: Boolean = true
+
+  /**
+   * True when the server serves the Inline and Extract refactorings in [psiFile].
+   * A plain text or TextMate file has no PSI structure, so no language refactoring handler serves it.
+   * A plugin can override this for another file type.
+   */
+  open fun shouldRunRefactoring(psiFile: PsiFile): Boolean =
+    psiFile.language.id.let { it == "TEXT" || it == "textmate" }
 }
 
 object LspCodeActionsDisabled : LspCodeActionsCustomizer()

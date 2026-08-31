@@ -216,8 +216,11 @@ c:com.intellij.platform.lsp.api.customization.LspCodeActionsSupport
 - createIntentionAction(com.intellij.platform.lsp.api.LspServer,org.eclipse.lsp4j.CodeAction):com.intellij.platform.lsp.api.customization.LspIntentionAction
 - createQuickFix(com.intellij.platform.lsp.api.LspClient,org.eclipse.lsp4j.CodeAction):com.intellij.platform.lsp.api.customization.LspIntentionAction
 - createQuickFix(com.intellij.platform.lsp.api.LspServer,org.eclipse.lsp4j.CodeAction):com.intellij.platform.lsp.api.customization.LspIntentionAction
+- getExtractRefactoringSupport():Z
+- getInlineRefactoringSupport():Z
 - getIntentionActionsSupport():Z
 - getQuickFixesSupport():Z
+- shouldRunRefactoring(com.intellij.psi.PsiFile):Z
 a:com.intellij.platform.lsp.api.customization.LspCodeLensCustomizer
 f:com.intellij.platform.lsp.api.customization.LspCodeLensDisabled
 - com.intellij.platform.lsp.api.customization.LspCodeLensCustomizer

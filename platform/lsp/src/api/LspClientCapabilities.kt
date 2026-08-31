@@ -213,6 +213,8 @@ internal fun createClientCapabilities(lspCustomization: LspCustomization): Clien
                 CodeActionKind.Empty,
                 CodeActionKind.Source,
                 CodeActionKind.Refactor,
+                CodeActionKind.RefactorInline,
+                CodeActionKind.RefactorExtract,
             )
         )
       }

@@ -93,6 +93,8 @@ jvm_library(
         "//platform/lang-api:lang_test_lib",
         "//platform/lang-impl",
         "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/refactoring",
+        "//platform/refactoring:refactoring_test_lib",
         "//platform/code-style-api:codeStyle",
         "//platform/code-style-api:codeStyle_test_lib",
         "//platform/code-style-impl:codeStyle-impl",

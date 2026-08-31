@@ -499,6 +499,27 @@ class LspClientImpl internal constructor(
            getDynamicCapabilityOptionsForFile(file, LspDynamicCapabilities.rename)?.prepareProvider == true
   }
 
+  /**
+   * A server does not have to list its code action kinds; no listed kinds means every kind.
+   * The static capabilities do not veto a dynamic registration: the kind is supported when either source covers it.
+   * Every dynamic registration matching the file counts, because a server may split its kinds across registrations.
+   */
+  internal fun supportsCodeActionsOfKind(file: VirtualFile, kind: String): Boolean {
+    val provider = serverCapabilities?.codeActionProvider
+    val staticSupport = when {
+      provider == null -> false
+      provider.isLeft -> provider.left == true
+      else -> provider.right?.codeActionKinds?.matchesCodeActionKind(kind) != false
+    }
+    if (staticSupport) return true
+    return getDynamicCapabilityOptionsListForFile(file, LspDynamicCapabilities.codeAction)
+      .any { it.codeActionKinds?.matchesCodeActionKind(kind) != false }
+  }
+
+  // a kind covers its own dot-separated subtree only: `refactor.extract.variable2` is not under `refactor.extract.variable`
+  private fun List<String>.matchesCodeActionKind(kind: String): Boolean =
+    any { it == kind || kind.startsWith("$it.") || it.startsWith("$kind.") }
+
   internal fun getDidSaveOptions(file: VirtualFile): SaveOptions? {
     val textDocumentSync = serverCapabilities?.textDocumentSync
     if (textDocumentSync?.right?.save?.left == true) return SaveOptions(false)
@@ -583,40 +604,40 @@ class LspClientImpl internal constructor(
   private fun <T : TextDocumentRegistrationOptions> getDynamicCapabilityOptionsForFile(
     file: VirtualFile,
     capabilityAndOptionsClass: Pair<String, Class<T>>,
-  ): T? {
+  ): T? = getDynamicCapabilityOptionsListForFile(file, capabilityAndOptionsClass).firstOrNull()
+
+  /** Every registration of the capability whose document selector matches [file]; a registration without a selector matches any file. */
+  private fun <T : TextDocumentRegistrationOptions> getDynamicCapabilityOptionsListForFile(
+    file: VirtualFile,
+    capabilityAndOptionsClass: Pair<String, Class<T>>,
+  ): List<T> {
     if (file.isDirectory) {
       logWarn("Directory not expected here. Capability: ${capabilityAndOptionsClass.first}, file: ${file.path}")
-      return null
+      return emptyList()
     }
+    return dynamicCapabilities.getCapabilityRegistrationOptions(capabilityAndOptionsClass).filter { it.documentSelectorMatches(file) }
+  }
 
-    for (options in dynamicCapabilities.getCapabilityRegistrationOptions(capabilityAndOptionsClass)) {
-      val documentSelector = options.documentSelector ?: return options
+  private fun TextDocumentRegistrationOptions.documentSelectorMatches(file: VirtualFile): Boolean {
+    val documentSelector = documentSelector ?: return true
+    for (filter in documentSelector) {
+      if (filter.scheme != null && filter.scheme != "file") continue
 
-      for (filter in documentSelector) {
-        if (filter.scheme != null && filter.scheme != "file") continue
-
-        val language = filter.language
-        val filterPattern = filter.pattern
-        if (filterPattern != null && filterPattern.isRight) {
-          // A RelativePattern needs its baseUri resolved against the workspace folders. The IDE does not support it yet.
-          logWarn("Ignoring the document filter, its pattern is relative: ${filterPattern.right}")
-          continue
-        }
-        val pattern = filterPattern?.left
-        if (language == null && pattern == null) continue
-        if (language != null && language != descriptor.getLanguageId(file)) continue
-
-        if (pattern != null) {
-          if (!globMatcher.pathMatches(file.path, false, pattern, null)) {
-            continue
-          }
-        }
-
-        return options
+      val language = filter.language
+      val filterPattern = filter.pattern
+      if (filterPattern != null && filterPattern.isRight) {
+        // A RelativePattern needs its baseUri resolved against the workspace folders. The IDE does not support it yet.
+        logWarn("Ignoring the document filter, its pattern is relative: ${filterPattern.right}")
+        continue
       }
-    }
+      val pattern = filterPattern?.left
+      if (language == null && pattern == null) continue
+      if (language != null && language != descriptor.getLanguageId(file)) continue
+      if (pattern != null && !globMatcher.pathMatches(file.path, false, pattern, null)) continue
 
-    return null
+      return true
+    }
+    return false
   }
 
   internal fun appendServerErrorOutput(text: String) {

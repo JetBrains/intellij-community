@@ -137,6 +137,15 @@
                                 order="last"/>
 
     <renameHandler implementation="com.intellij.platform.lsp.impl.features.rename.LspRenameHandler" order="last"/>
+    <inlineActionHandler implementation="com.intellij.platform.lsp.impl.features.inline.LspInlineActionHandler" order="last"/>
+    <lang.refactoringSupport language="" order="last"
+                             implementationClass="com.intellij.platform.lsp.impl.features.extract.LspRefactoringSupportProvider$IntroduceVariable"/>
+    <lang.refactoringSupport language="" order="last"
+                             implementationClass="com.intellij.platform.lsp.impl.features.extract.LspRefactoringSupportProvider$ExtractMethod"/>
+    <lang.refactoringSupport language="" order="last"
+                             implementationClass="com.intellij.platform.lsp.impl.features.extract.LspRefactoringSupportProvider$IntroduceField"/>
+    <lang.refactoringSupport language="" order="last"
+                             implementationClass="com.intellij.platform.lsp.impl.features.extract.LspRefactoringSupportProvider$IntroduceConstant"/>
 
     <!--@formatter:off-->
     <intentionAction> <className>com.intellij.platform.lsp.impl.features.intention.LspIntention0</className>  <bundleName>messages.LspBundle</bundleName> <categoryKey>intention.group.name</categoryKey> <descriptionDirectoryName>LspIntention</descriptionDirectoryName> <language/> </intentionAction>
