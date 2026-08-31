@@ -1222,6 +1222,10 @@ object CommunityLibraryLicenses {
     LibraryLicense("pockets", version = "0.9.1", attachedTo = "intellij.python", url = "https://pockets.readthedocs.io/")
       .newBsd("https://github.com/RobRuana/pockets/blob/master/LICENSE"),
 
+    LibraryLicense("protobuf-java-util", libraryName = "google.protobuf.java.util", url = "https://developers.google.com/protocol-buffers")
+      .newBsd("https://github.com/protocolbuffers/protobuf/blob/main/LICENSE")
+      .suppliedByOrganizations(Suppliers.GOOGLE),
+
     LibraryLicense("protobuf-kotlin", libraryName = "google.protobuf.kotlin", url = "https://developers.google.com/protocol-buffers")
       .newBsd("https://github.com/protocolbuffers/protobuf/blob/main/LICENSE")
       .suppliedByOrganizations(Suppliers.GOOGLE),
@@ -1346,6 +1350,9 @@ object CommunityLibraryLicenses {
         version = "1.0.14",
         authors = "Lucas Theisen"
       ),
+
+    LibraryLicense("SSHJ", libraryName = "SSHJ", url = "https://github.com/hierynomus/sshj")
+      .apache("https://github.com/hierynomus/sshj/blob/master/LICENSE"),
 
     LibraryLicense("StreamEx", libraryName = "StreamEx", url = "https://github.com/amaembo/streamex")
       .apache("https://github.com/amaembo/streamex/blob/master/LICENSE"),
@@ -1528,6 +1535,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("jetbrains.mlapi.catboost"),
     jetbrainsLibrary("jetbrains.mlapi.catboost.shadow.need.slf4j"),
     jetbrainsLibrary("jetbrains.mlapi.core"),
+    jetbrainsLibrary("jetbrains.patronus.codeowners.lib.ownership"),
     jetbrainsLibrary("jshell-frontend"),
     jetbrainsLibrary("jvm-native-trusted-roots"),
     jetbrainsLibrary("kotlin-gradle-plugin-idea"),
