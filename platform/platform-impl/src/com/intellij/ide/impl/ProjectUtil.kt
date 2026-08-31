@@ -464,8 +464,14 @@ object ProjectUtil {
     if (mode == GeneralSettings.OPEN_PROJECT_ASK) {
       if (ApplicationManager.getApplication().isUnitTestMode) return GeneralSettings.OPEN_PROJECT_NEW_WINDOW
       val processor = computed ?: ProjectAttachProcessor.getProcessor(project, null, null)
+      val message = if (processor == null) {
+        IdeBundle.message("prompt.open.project")
+      }
+      else {
+        project?.let { processor.getDescription(it) } ?: IdeBundle.message("prompt.open.project.or.attach")
+      }
       val exitCode = Messages.showDialog(
-        project?.let { processor?.getDescription(it) } ?: IdeBundle.message("prompt.open.project.or.attach"),
+        message,
         IdeBundle.message("prompt.open.project.or.attach.title"), listOfNotNull(
           IdeBundle.message("prompt.open.project.or.attach.button.this.window"),
           IdeBundle.message("prompt.open.project.or.attach.button.new.window"),
