@@ -40,6 +40,7 @@ import java.util.Set;
 public final class ConfigurableExtensionPointUtil {
   public static final @NonNls String CONFIGURABLE_ID_PREFIX = "configurable.group.";
   private static final @NonNls String ROOT_ID = "root";
+  private static final @NonNls String FALLBACK_GROUP_ID = "tools";
   private static final @NonNls String OTHER_ID = "other";
   public static final @NonNls String ROOT_CONFIGURABLE_ID = CONFIGURABLE_ID_PREFIX + ROOT_ID;
   private static final Logger LOG = Logger.getInstance(ConfigurableExtensionPointUtil.class);
@@ -228,9 +229,9 @@ public final class ConfigurableExtensionPointUtil {
     if (bundle == null) {
       bundle = OptionsBundle.getResourceBundle();
       if (!root) {
-        LOG.warn("use other group instead of unexpected one: " + groupId);
-        groupId = OTHER_ID;
-        id = CONFIGURABLE_ID_PREFIX + OTHER_ID;
+        LOG.warn("use '" + FALLBACK_GROUP_ID + "' group instead of unexpected one: " + groupId);
+        groupId = FALLBACK_GROUP_ID;
+        id = CONFIGURABLE_ID_PREFIX + FALLBACK_GROUP_ID;
       }
     }
     Node<SortedConfigurableGroup> node = Node.get(tree, groupId);

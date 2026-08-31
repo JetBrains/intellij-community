@@ -426,11 +426,11 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
                                                node("cyclic.chain")))))),
                       node("configurable.group.cyclic",
                            node("cyclic.configurable")),
-                      node("configurable.group.other",
-                           node("missed.configurable")),
                       node("configurable.group.parent",
                            node("configurable.group.custom",
-                                node("custom.configurable")))),
+                                node("custom.configurable"))),
+                      node("configurable.group.tools",
+                           node("missed.configurable"))),
                  getRootCustom(false));
   }
 
