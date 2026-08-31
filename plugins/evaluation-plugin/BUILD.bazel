@@ -126,7 +126,6 @@ exports_files(
 dev_dist_plugin(
     content_modules = [
         "//libraries/clikt",
-        "//libraries/mcp-kotlin-sdk",
         "//libraries/xerial-snappy-java",
         "//plugins/evaluation-plugin/core",
         "//plugins/evaluation-plugin/languages",
@@ -136,7 +135,6 @@ dev_dist_plugin(
     descriptor_module = ":evaluation-plugin",
     libraries = [
         "@lib//:libraries-clikt-clikt",
-        "@lib//:libraries-mcp-kotlin-sdk-io-modelcontextprotocol-kotlin-sdk",
         "@lib//:libraries-xerial-snappy-java-xerial-snappy-java",
         "@lib//:mockito-junit-jupiter",
     ],
