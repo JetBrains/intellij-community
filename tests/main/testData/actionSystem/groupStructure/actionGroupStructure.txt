@@ -1309,7 +1309,6 @@
         CloseAllToTheLeft
         CloseAllToTheRight
         CloseAllReadonly
-        MoveToolWindowTabFromEditorToToolWindowAction
       <separator>
       ReopenClosedTab
       SplitVertically
@@ -1548,7 +1547,6 @@
   CloseAllToTheLeft
   CloseAllToTheRight
   CloseAllReadonly
-  MoveToolWindowTabFromEditorToToolWindowAction
 [group CodeCompletionGroup]
   CodeCompletion
   SmartTypeCompletion
@@ -1954,6 +1952,8 @@
 [group EditorTabActionGroup]
 [group EditorTabPopupMenu]
   Terminal.RenameSessionInEditor
+  MoveToolWindowTabFromEditorToToolWindowAction
+  <separator>
   CloseEditorsGroup
   <separator>
   CopyPaths

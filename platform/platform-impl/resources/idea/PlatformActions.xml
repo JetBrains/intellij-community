@@ -701,7 +701,6 @@
             <reference ref="CloseAllToTheLeft"/>
             <reference ref="CloseAllToTheRight"/>
             <reference ref="CloseAllReadonly"/>
-            <reference ref="MoveToolWindowTabFromEditorToToolWindowAction"/>
           </group>
           <separator/>
           <reference ref="ReopenClosedTab"/>
@@ -912,6 +911,8 @@
     </group>
 
     <group id="EditorTabPopupMenu">
+      <reference ref="MoveToolWindowTabFromEditorToToolWindowAction"/>
+      <separator/>
       <reference ref="CloseEditorsGroup"/>
       <separator/>
       <reference ref="CopyPaths"/>
