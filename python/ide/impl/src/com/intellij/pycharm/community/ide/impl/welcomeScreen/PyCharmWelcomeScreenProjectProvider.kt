@@ -7,6 +7,7 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.PlatformProjectOpenProcessor
+import com.intellij.platform.ide.nonModalWelcomeScreen.isNonModalWelcomeScreenEnabled
 import com.intellij.pycharm.community.ide.impl.miscProject.impl.MISC_PROJECT_WITH_WELCOME_NAME
 import com.intellij.pycharm.community.ide.impl.miscProject.impl.miscProjectDefaultPath
 import com.jetbrains.python.orLogException
@@ -38,8 +39,14 @@ internal class PyCharmWelcomeScreenProjectProvider : WelcomeScreenProjectProvide
   // We explicitly want to open existing project if the file already belongs to it
   override fun shouldOpenInWelcomeScreenIfFileBelongsToProject(filePath: Path): Boolean = false
 
+  /**
+   * The non-modal Welcome screen must be on. The file opening path creates the Welcome screen project through
+   * [com.intellij.openapi.wm.ex.NoProjectStateHandler], and the only handler declines when the setting is off.
+   */
   override fun canOpenFilesFromSystemFileManager(filePath: Path): Boolean {
-    return Registry.`is`("welcome.screen.open.files", false) && filePath.extension == "ipynb"
+    return isNonModalWelcomeScreenEnabled &&
+           Registry.`is`("welcome.screen.open.files", false) &&
+           filePath.extension == "ipynb"
   }
 
   override suspend fun doCreateOrOpenWelcomeScreenProject(path: Path): Project {
