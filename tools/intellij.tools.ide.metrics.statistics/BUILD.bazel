@@ -1,6 +1,14 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "ide-metrics-statistics-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":ide-metrics-statistics-tests_test_lib"],
+)
+### skip generation section `test intellij.tools.ide.metrics.statistics.tests`
+
 ### auto-generated section `build intellij.tools.ide.metrics.statistics` start
 jvm_library(
     name = "ide-metrics-statistics",
@@ -84,10 +92,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.tools.ide.metrics.statistics.tests` end
-
-### auto-generated section `test intellij.tools.ide.metrics.statistics.tests` start
-jps_test(
-    name = "ide-metrics-statistics-tests_test",
-    runtime_deps = [":ide-metrics-statistics-tests_test_lib"],
-)
-### auto-generated section `test intellij.tools.ide.metrics.statistics.tests` end
