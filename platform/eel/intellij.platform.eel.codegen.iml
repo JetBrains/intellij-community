@@ -19,7 +19,7 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$/codegen">
-      <sourceFolder url="file://$MODULE_DIR$/codegen" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/codegen" isTestSource="true" packagePrefix="com.intellij.platform.eel.codegen" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
