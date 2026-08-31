@@ -1704,4 +1704,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.platform.diagnostic.telemetry.tests",
   "intellij.platform.testFramework.junit5.codeInsight.tests",
   "intellij.terminal.emulator.tests",
+  "intellij.terminal.tests",
 )
