@@ -11,14 +11,11 @@ import com.intellij.python.sdk.backend.evolution.EvoPyProject
 import com.intellij.python.sdk.backend.evolution.EvoRecreateSpec
 import com.intellij.python.sdk.backend.evolution.EvoToolContext
 import com.intellij.python.sdk.backend.evolution.PyToolEvoEnvironmentProvider
-import com.intellij.python.sdk.backend.evolution.defaultVenvDir
-import com.intellij.python.sdk.backend.evolution.evoCreateEnvLeaf
 import com.intellij.python.sdk.backend.evolution.envExistsError
 import com.intellij.python.sdk.backend.evolution.firstFreeVenvDir
 import com.intellij.python.sdk.backend.evolution.listEntryNames
 import com.intellij.python.sdk.backend.evolution.resolveNewVenvDir
-import com.intellij.python.sdk.backend.evolution.toSectionsGroupedByParent
-import com.intellij.python.sdk.backend.evolution.toLeaf
+import com.intellij.python.sdk.backend.evolution.toInProjectAndOtherSections
 import com.intellij.python.sdk.backend.evolution.toolMissing
 import com.intellij.python.sdk.common.evolution.EvoAddNewDto
 import com.intellij.python.sdk.common.evolution.EvoAddNewOptionDto
@@ -43,7 +40,6 @@ import io.github.z4kn4fein.semver.Version
 import io.github.z4kn4fein.semver.VersionFormatException
 import java.nio.file.Path
 import kotlin.io.path.exists
-import kotlin.io.path.name
 import kotlin.io.path.pathString
 import com.jetbrains.python.sdk.uv.UvSdkFlavor
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -73,19 +69,12 @@ internal class UvEvoEnvironmentProvider : PyToolEvoEnvironmentProvider() {
    * project is going to have reads better than a row for the act of adding one, and it is the same row afterwards.
    */
   override suspend fun loadSections(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto {
-    val inProject = defaultVenvDir(pyProject.baseDir)
-    val existing = discovered.firstOrNull { it.venvRoot == inProject }
-    // The project's own `.venv` leads the list under its own heading, whether it is there yet or not — the same shape
-    // Poetry's node has. Headed by what the environment *is* to the project rather than by the folder holding it, which
-    // for this one row is the project directory and says nothing the row does not.
-    val inProjectSection = EvoSectionDto(
+    return EvoLoadResultDto.Ok(discovered.toInProjectAndOtherSections(
+      owner = this,
+      baseDir = pyProject.baseDir,
+      icon = icon,
       label = PySdkBundle.message("evolution.section.in.project"),
-      leaves = listOf(existing?.toLeaf(this)
-                      ?: evoCreateEnvLeaf(title = inProject.name, token = inProject.name, icon = icon)),
-    )
-    val elsewhere = discovered.filter { it.venvRoot != inProject }
-      .toSectionsGroupedByParent(this, addNew = false, baseDir = pyProject.baseDir)
-    return EvoLoadResultDto.Ok(listOf(inProjectSection) + elsewhere)
+    ))
   }
 
   /**

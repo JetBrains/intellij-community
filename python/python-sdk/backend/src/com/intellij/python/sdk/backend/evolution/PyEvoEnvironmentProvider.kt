@@ -53,6 +53,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.Icon
 import kotlin.io.path.exists
+import kotlin.io.path.name
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.pathString
@@ -606,6 +607,37 @@ fun DiscoveredVenv.toLeaf(owner: PyEvoEnvironmentProvider): EvoLeafDto {
     unavailable = otherTool?.let { PySdkBundle.message("evolution.env.owned.by.other.tool", it.label) },
     ownerNodeId = otherTool?.toolId?.id,
   )
+}
+
+/**
+ * The environments that live in the project folder under one heading, then the rest grouped by the folder holding them.
+ *
+ * "In-project" is about where an environment *is* — directly inside the project folder — not what it is called. Only
+ * `<baseDir>/.venv` counted before, so a second environment beside it fell through to the grouping below and earned a
+ * heading naming the project folder: the same place, said twice, reading as somewhere else (PY-91389).
+ *
+ * `.venv` leads the heading either way. It is the folder a new environment lands in, so when it is not there yet its
+ * place is held by the row that creates it, and the environments beside it follow by name.
+ */
+@ApiStatus.Internal
+fun List<DiscoveredVenv>.toInProjectAndOtherSections(
+  owner: PyEvoEnvironmentProvider,
+  baseDir: Path,
+  icon: Icon,
+  label: @Nls String,
+): List<EvoSectionDto> {
+  val defaultDir = defaultVenvDir(baseDir)
+  val inProject = filter { it.venvRoot?.parent == baseDir }
+  val defaultEnv = inProject.firstOrNull { it.venvRoot == defaultDir }
+  val besideIt = inProject.filter { it.venvRoot != defaultDir }.sortedBy { it.venvRoot?.name }
+  val inProjectSection = EvoSectionDto(
+    label = label,
+    leaves = listOf(defaultEnv?.toLeaf(owner)
+                    ?: evoCreateEnvLeaf(title = defaultDir.name, token = defaultDir.name, icon = icon)) +
+             besideIt.map { it.toLeaf(owner) },
+  )
+  val elsewhere = filter { it.venvRoot?.parent != baseDir }.toSectionsGroupedByParent(owner, addNew = false, baseDir = baseDir)
+  return listOf(inProjectSection) + elsewhere
 }
 
 /**
