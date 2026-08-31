@@ -71,7 +71,9 @@ internal class ValidityEvaluatorImpl(
   ) {
     provider.unmarkPossiblyInvalidated()
     val cachedProvider = cache.getRaw(virtualFile, context)
-    LOG.assertTrue(cachedProvider == provider, "Cached: $cachedProvider, expected: $provider")
+    if (cachedProvider != provider) {
+      LOG.error("Cached: $cachedProvider, expected: $provider")
+    }
 
     for (psiFile in provider.cachedPsiFiles) {
       if (!psiFile.isValid) {

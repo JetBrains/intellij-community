@@ -456,9 +456,10 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
 
   @Override
   public @NonNls String toString() {
+    // do not call plain `getContent` here -- it must not load the file text or freeze the content
     return getClass().getName() + "{vFile=" + myVirtualFile
            + (myVirtualFile instanceof VirtualFileWithId ? ", vFileId=" + ((VirtualFileWithId)myVirtualFile).getId() : "")
-           + ", content=" + getContent() + ", eventSystemEnabled=" + supportsSendingPsiEvents() + '}';
+           + ", content=" + getContentImpl(false) + ", eventSystemEnabled=" + supportsSendingPsiEvents() + '}';
   }
 
   public abstract @Nullable PsiFile getCachedPsi(@NotNull Language target);
@@ -553,7 +554,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
 
     @Override
     public @NonNls String toString() {
-      Document doc = getDocument();
+      Document doc = getCachedDocument();
       return "VirtualFileContent{virtualFileSize=" + getVirtualFile().getLength() + ", documentSize=" + (doc == null ? null : doc.getTextLength()) + "}";
     }
   }
