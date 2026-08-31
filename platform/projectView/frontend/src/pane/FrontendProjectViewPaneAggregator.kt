@@ -4,11 +4,12 @@
 package com.intellij.platform.projectView.frontend.pane
 
 import com.intellij.idea.AppMode
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
 import com.intellij.platform.projectView.actions.EditorChoice
-import com.intellij.platform.projectView.pane.FrontendProjectViewPaneAggregator
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
@@ -31,10 +32,14 @@ import kotlinx.coroutines.launch
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
-internal class FrontendProjectViewPaneAggregatorImpl(
+@Service(Service.Level.PROJECT)
+internal class FrontendProjectViewPaneAggregator(
   private val project: Project,
   coroutineScope: CoroutineScope,
-) : FrontendProjectViewPaneAggregator {
+) {
+  companion object {
+    fun getInstance(project: Project): FrontendProjectViewPaneAggregator = project.service()
+  }
 
   private val backendServiceDeferred = coroutineScope.async(CoroutineName("Waiting for the Project View backend")) {
     BackendDelegatingProjectViewPaneService(project, ProjectViewRpc.getInstance())
@@ -74,7 +79,7 @@ internal class FrontendProjectViewPaneAggregatorImpl(
     }
   }
 
-  override suspend fun getPaneDescriptorsFlow(): Flow<List<ProjectViewPaneDescriptorImpl>> {
+  fun getPaneDescriptorsFlow(): Flow<List<ProjectViewPaneDescriptorImpl>> {
     return combine(frontendDescriptors, backendDescriptors) { frontend, backend ->
       when {
         // The backend wins on ID collisions: that's how a light frontend pane is replaced by the real one.
@@ -86,19 +91,19 @@ internal class FrontendProjectViewPaneAggregatorImpl(
     }.distinctUntilChanged()
   }
 
-  override suspend fun getPaneStateFlow(paneDescriptor: ProjectViewPaneDescriptorImpl): Flow<ProjectViewPaneStateEvent> {
+  suspend fun getPaneStateFlow(paneDescriptor: ProjectViewPaneDescriptorImpl): Flow<ProjectViewPaneStateEvent> {
     return paneService(paneDescriptor).getPaneStateFlow(paneDescriptor.id)
   }
 
-  override suspend fun getPaneRequestChannel(paneDescriptor: ProjectViewPaneDescriptorImpl): SendChannel<ProjectViewPaneRequest> {
+  suspend fun getPaneRequestChannel(paneDescriptor: ProjectViewPaneDescriptorImpl): SendChannel<ProjectViewPaneRequest> {
     return paneService(paneDescriptor).getPaneRequestChannel(paneDescriptor.id)
   }
 
-  override suspend fun findNodeForOpenedFile(paneDescriptor: ProjectViewPaneDescriptorImpl, editorChoice: EditorChoice, isInvokedManually: Boolean): ProjectViewNodePath? {
+  suspend fun findNodeForOpenedFile(paneDescriptor: ProjectViewPaneDescriptorImpl, editorChoice: EditorChoice, isInvokedManually: Boolean): ProjectViewNodePath? {
     return paneService(paneDescriptor).findNodeForOpenedFile(paneDescriptor.id, editorChoice, isInvokedManually)
   }
 
-  override suspend fun findNodeForSelectIn(selectInRequest: SelectInRequestDTO): ProjectViewNodePath? {
+  suspend fun findNodeForSelectIn(selectInRequest: SelectInRequestDTO): ProjectViewNodePath? {
     return if (isBackendLoaded.load()) {
       backendService().findNodeForSelectIn(selectInRequest)
     }
@@ -138,4 +143,4 @@ private class BackendDelegatingProjectViewPaneService(
   }
 }
 
-private val LOG = logger<FrontendProjectViewPaneAggregatorImpl>()
+private val LOG = logger<FrontendProjectViewPaneAggregator>()
