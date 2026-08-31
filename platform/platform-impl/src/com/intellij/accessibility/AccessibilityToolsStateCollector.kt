@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.accessibility
 
 import com.intellij.execution.process.OSProcessUtil
@@ -6,13 +6,15 @@ import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.LinuxUiUtil
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.Foundation.NSAutoreleasePool
 import com.intellij.ui.mac.foundation.ID
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
 import java.awt.Toolkit
 
+@OptIn(LowLevelLocalMachineAccess::class)
 internal class AccessibilityToolsStateCollector : ApplicationUsagesCollector() {
   private enum class ScreenReader {
     NVDA, JAWS, VoiceOver, Orca
@@ -46,12 +48,11 @@ internal class AccessibilityToolsStateCollector : ApplicationUsagesCollector() {
   override fun getMetrics(): Set<MetricEvent> {
     val set = mutableSetOf<MetricEvent>()
 
-    when {
-      SystemInfoRt.isWindows -> {
+    when (OS.CURRENT) {
+      OS.Windows -> {
         try {
-          val processList = OSProcessUtil.getProcessList()
-          for (process in processList) {
-            when (process.executableName.lowercase()) {
+          ProcessHandle.allProcesses().forEach {
+            when (OSProcessUtil.processName(it).lowercase()) {
               "nvda.exe" -> {
                 set.add(SCREEN_READER.metric(ScreenReader.NVDA))
               }
@@ -75,7 +76,8 @@ internal class AccessibilityToolsStateCollector : ApplicationUsagesCollector() {
           set.add(OS_HIGH_CONTRAST.metric(true))
         }
       }
-      SystemInfoRt.isMac -> {
+
+      OS.macOS -> {
         val pool = NSAutoreleasePool()
         var universalAccess: ID? = null
         var accessibility: ID? = null
@@ -114,7 +116,8 @@ internal class AccessibilityToolsStateCollector : ApplicationUsagesCollector() {
           pool.drain()
         }
       }
-      SystemInfoRt.isLinux -> {
+
+      OS.Linux -> {
         if (LinuxUiUtil.isOrcaProcessRunning()) {
           set.add(SCREEN_READER.metric(ScreenReader.Orca))
         }
@@ -125,6 +128,8 @@ internal class AccessibilityToolsStateCollector : ApplicationUsagesCollector() {
           set.add(OS_HIGH_CONTRAST.metric(true))
         }
       }
+
+      else -> { }
     }
 
     return set
