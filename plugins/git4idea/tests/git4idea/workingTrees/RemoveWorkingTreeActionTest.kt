@@ -265,6 +265,56 @@ internal class RemoveWorkingTreeActionTest {
       .hasSize(1)
   }
 
+  @Test
+  fun `test a working tree queued in a running batch cannot be deleted concurrently`(): Unit = with(context) {
+    setUpTwoWorktrees()
+    val deletionAttempts = CopyOnWriteArrayList<String>()
+    val firstAttemptStarted = CountDownLatch(1)
+    val releaseFirstAttempt = CountDownLatch(1)
+    // Hold only the batch's first `git worktree remove`, so its second working tree stays queued and unstarted.
+    recordDeletions(deletionAttempts) {
+      if (deletionAttempts.size == 1) {
+        firstAttemptStarted.countDown()
+        releaseFirstAttempt.await(1, TimeUnit.MINUTES)
+      }
+    }
+
+    val toDelete = linkedTrees()
+    assertThat(toDelete).describedAs("Both linked working trees must be set up").hasSize(2)
+    val queued = toDelete[1]
+    val service = GitWorkingTreesService.getInstance(project)
+    val batch = service.deleteWorkingTrees(project, toDelete, repo)
+    try {
+      assertThat(firstAttemptStarted.await(1, TimeUnit.MINUTES))
+        .describedAs("The batch must reach `git worktree remove` for its first working tree")
+        .isTrue()
+
+      assertThat(service.isWorkingTreeDeletionInProgress(queued))
+        .describedAs("A working tree queued in a running batch must be claimed before its turn comes")
+        .isTrue()
+
+      val event = actionEvent(listOf(queued))
+      RemoveWorkingTreeAction().update(event)
+      assertThat(event.presentation.isEnabled)
+        .describedAs("A working tree queued in a running batch must not be removable")
+        .isFalse()
+
+      val concurrent = service.deleteWorkingTrees(project, listOf(queued), repo)
+      timeoutRunBlocking { concurrent.join() }
+      assertThat(deletionAttempts)
+        .describedAs("A concurrent request must not delete a working tree the running batch has queued")
+        .containsExactly(toDelete[0].path.path)
+    }
+    finally {
+      releaseFirstAttempt.countDown()
+    }
+    timeoutRunBlocking { batch.join() }
+
+    assertThat(deletionAttempts)
+      .describedAs("Each working tree of the batch must be deleted exactly once")
+      .containsExactly(toDelete[0].path.path, queued.path.path)
+  }
+
   /**
    * Replaces [Git] with a proxy that records the path of every `git worktree remove` and runs [beforeDeletion] before
    * delegating, so a test can hold one deletion open while it issues a second request.

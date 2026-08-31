@@ -369,16 +369,25 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
    */
   fun deleteWorkingTrees(project: Project, trees: List<GitWorkingTree>, repository: GitRepository): Job {
     return coroutineScope.launch {
+      // The whole batch is claimed up front rather than per tree, so a concurrent call can't pick up a tree this one
+      // has queued but not started yet. A path already claimed fails to `add` and is dropped here, which also
+      // collapses a tree listed twice in [trees] into a single deletion.
+      // Claiming inside `launch` keeps the claim on the same code path as the `finally` that releases it: `launch` on
+      // an already canceled scope never runs the body, so a claim taken outside would stay in the set forever -
+      // greying out that tree's actions and silently rejecting every later attempt to delete it.
+      val toDelete = trees.filter { rootsUnderDeletion.add(it.path) }
+      if (toDelete.isEmpty()) return@launch
+
       val deleted = mutableListOf<GitWorkingTree>()
       try {
-        val deletionTitle = if (trees.size == 1) {
+        val deletionTitle = if (toDelete.size == 1) {
           GitBundle.message("progress.title.deleting.worktree")
         }
         else {
           GitBundle.message("progress.title.deleting.worktrees")
         }
         withBackgroundProgress(project, deletionTitle, cancellable = true) {
-          for (tree in trees) {
+          for (tree in toDelete) {
             if (doDeleteWorkingTree(project, tree, repository)) {
               deleted.add(tree)
             }
@@ -386,6 +395,7 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
         }
       }
       finally {
+        toDelete.forEach { rootsUnderDeletion.remove(it.path) }
         if (!project.isDisposed) {
           notifyWorkingTreesDeletedSuccess(project, deleted.toList())
         }
@@ -393,39 +403,35 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
     }
   }
 
-  /** Returns `true` if [tree] was deleted. */
+  /**
+   * @return `true` if [tree] was deleted.
+   *
+   * [tree]'s path must be claimed in [rootsUnderDeletion] by the caller, which is what keeps `git worktree remove`
+   * from running twice for one path - see [deleteWorkingTrees].
+   */
   private suspend fun doDeleteWorkingTree(project: Project, tree: GitWorkingTree, repository: GitRepository): Boolean {
-    // The worktrees tab is not modal and refreshes only after an asynchronous reload, so the very same row can be
-    // deleted again while this deletion is still running. `git worktree remove` must run at most once per path.
-    if (!rootsUnderDeletion.add(tree.path)) return false
-    try {
-      val existingProject = ProjectUtil.findProject(Path(tree.path.path))
-      if (existingProject != null) {
-        if (shouldStopDeletion(project, tree, existingProject)) {
-          closeProject(existingProject)
-        }
-        else {
-          return false
-        }
+    val existingProject = ProjectUtil.findProject(Path(tree.path.path))
+    if (existingProject != null) {
+      if (shouldStopDeletion(project, tree, existingProject)) {
+        closeProject(existingProject)
       }
-
-      val commandResult = service<Git>().deleteWorkingTree(repository, tree)
-
-      if (commandResult.success()) {
-        onWorkingTreeDeleted(repository, tree)
-        return true
+      else {
+        return false
       }
-
-      if (project.getEelDescriptor().osFamily.isWindows && isPermissionDenied(commandResult)) {
-        return handleFailedDeletionOnWindows(project, repository, tree)
-      }
-      notifyWorkingTreeDeletedError(project, commandResult.errorOutputAsHtmlString)
-      return false
     }
-    finally {
-      // Non-suspending, so the tree is released even when the enclosing progress is canceled or the project is disposed.
-      rootsUnderDeletion.remove(tree.path)
+
+    val commandResult = service<Git>().deleteWorkingTree(repository, tree)
+
+    if (commandResult.success()) {
+      onWorkingTreeDeleted(repository, tree)
+      return true
     }
+
+    if (project.getEelDescriptor().osFamily.isWindows && isPermissionDenied(commandResult)) {
+      return handleFailedDeletionOnWindows(project, repository, tree)
+    }
+    notifyWorkingTreeDeletedError(project, commandResult.errorOutputAsHtmlString)
+    return false
   }
 
   private suspend fun shouldStopDeletion(project: Project, tree: GitWorkingTree, existingProject: Project): Boolean {
