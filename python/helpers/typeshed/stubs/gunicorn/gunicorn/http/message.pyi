@@ -1,7 +1,7 @@
 import io
 import re
 from enum import IntEnum
-from typing import Final
+from typing import Final, Literal
 
 from gunicorn.config import Config
 from gunicorn.http.body import Body
@@ -38,7 +38,11 @@ RFC9110_5_5_INVALID_AND_DANGEROUS: Final[re.Pattern[str]]
 RFC9110_6_5_1_FORBIDDEN_TRAILER: Final[frozenset[str]]
 RFC9110_5_3_SINGLETON_FIELDS: Final[frozenset[str]]
 
-class Message:
+class HeaderPolicy:
+    scheme: str | None
+    version: tuple[int, int] | None
+
+class Message(HeaderPolicy):
     cfg: Config
     unreader: Unreader
     peer_addr: _AddressType
@@ -47,7 +51,7 @@ class Message:
     headers: list[tuple[str, str]]
     trailers: list[tuple[str, str]]
     body: Body | None
-    scheme: str
+    scheme: Literal["https", "http"]
     must_close: bool
     limit_request_fields: int
     limit_request_field_size: int

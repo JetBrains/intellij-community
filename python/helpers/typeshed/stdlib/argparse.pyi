@@ -458,7 +458,7 @@ if sys.version_info >= (3, 12):
                 deprecated: bool = False,
             ) -> None: ...
             @overload
-            @deprecated("The `type`, `choices`, and `metavar` parameters are ignored and will be removed in Python 3.14.")
+            @deprecated("The `type`, `choices`, and `metavar` parameters are ignored; removed in Python 3.14.")
             def __init__(
                 self,
                 option_strings: Sequence[str],
@@ -483,7 +483,7 @@ if sys.version_info >= (3, 12):
                 help: str | None = None,
             ) -> None: ...
             @overload
-            @deprecated("The `type`, `choices`, and `metavar` parameters are ignored and will be removed in Python 3.14.")
+            @deprecated("The `type`, `choices`, and `metavar` parameters are ignored; removed in Python 3.14.")
             def __init__(
                 self,
                 option_strings: Sequence[str],
@@ -509,7 +509,7 @@ else:
             help: str | None = None,
         ) -> None: ...
         @overload
-        @deprecated("The `type`, `choices`, and `metavar` parameters are ignored and will be removed in Python 3.14.")
+        @deprecated("The `type`, `choices`, and `metavar` parameters are ignored; removed in Python 3.14.")
         def __init__(
             self,
             option_strings: Sequence[str],

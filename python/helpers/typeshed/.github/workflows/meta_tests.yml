@@ -35,11 +35,14 @@ jobs:
         platform: ["linux", "win32"]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v8.2.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
         with:
           version-file: "requirements-tests.txt"
-      - run: |
+      - name: Run check_typeshed_structure.py
+        run: |
           uv run \
           --python=3.13 \
           --no-project \
@@ -55,16 +58,18 @@ jobs:
         python-platform: ["Linux", "Windows"]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.13"
-      - uses: astral-sh/setup-uv@v8.2.0
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
         with:
           version-file: "requirements-tests.txt"
       - run: uv pip install -r requirements-tests.txt --system
       - name: Run pyright on typeshed
-        uses: jakebailey/pyright-action@v3
+        uses: jakebailey/pyright-action@8ec14b5cfe41f26e5f41686a31eb6012758217ef # v3
         with:
           version: PATH
           python-platform: ${{ matrix.python-platform }}
@@ -75,15 +80,18 @@ jobs:
     name: "stubsabot: dry run"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v8.2.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
         with:
           version-file: "requirements-tests.txt"
       - name: Git config
         run: |
           git config --global user.name stubsabot
           git config --global user.email '<>'
-      - run: |
+      - name: Run stubsabot
+        run: |
           uv run \
           --python=3.13 \
           --no-project \

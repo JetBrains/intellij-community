@@ -2,7 +2,7 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "dependencyDashboard": true,
   "suppressNotifications": ["prEditedNotification"],
-  "extends": ["config:recommended"],
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
   "labels": ["bot: dependencies"],
   "rebaseLabel": ["bot: rebase"],
   "semanticCommits": "disabled",

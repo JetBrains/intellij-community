@@ -4,6 +4,7 @@ from collections.abc import Iterable
 from typing import ClassVar
 
 from gunicorn.config import Config
+from gunicorn.http.message import Request
 from gunicorn.http2.connection import _H2Connection
 from gunicorn.http2.request import HTTP2Request
 from gunicorn.http2.stream import HTTP2Stream
@@ -25,6 +26,9 @@ class AsyncHTTP2Connection:
 
     def __init__(self, cfg: Config, reader: StreamReader, writer: StreamWriter, client_addr: _AddressType) -> None: ...
     async def initiate_connection(self) -> None: ...
+    async def initiate_upgrade(
+        self, settings_header: bytes | None, http1_req: Request, body: bytes | None = b""
+    ) -> HTTP2Request: ...
     async def receive_data(self, timeout: float | None = None) -> list[HTTP2Request]: ...
     async def send_informational(self, stream_id: int, status: int, headers: Iterable[tuple[str, Incomplete]]) -> None: ...
     async def send_response(

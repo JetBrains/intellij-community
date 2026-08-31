@@ -1,6 +1,8 @@
 name: mypy_primer (comment)
 
-on:
+# workflow_run is needed to comment on PRs from forks. This workflow only reads
+# artifacts as data; it never checks out or executes PR code.
+on: # zizmor: ignore[dangerous-triggers]
   workflow_run:
     workflows:
       - mypy_primer
@@ -18,7 +20,7 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Download diffs
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           script: |
             const fs = require('fs');
@@ -44,7 +46,7 @@ jobs:
 
       - name: Post comment
         id: post-comment
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -79,8 +81,7 @@ jobs:
             return prNumber
 
       - name: Hide old comments
-        # v0.4.0
-        uses: kanga333/comment-hider@c12bb20b48aeb8fc098e35967de8d4f8018fffdf
+        uses: kanga333/comment-hider@c12bb20b48aeb8fc098e35967de8d4f8018fffdf # v0.4.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           leave_visible: 1
