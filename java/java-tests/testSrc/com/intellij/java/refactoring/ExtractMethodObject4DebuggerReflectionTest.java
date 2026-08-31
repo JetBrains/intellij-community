@@ -61,6 +61,22 @@ public class ExtractMethodObject4DebuggerReflectionTest extends LightJavaCodeIns
     doTest("instance.method(42)");
   }
 
+  public void testPublicMethodInPrivateClass() {
+    doTest("privateList.size()", "/PublicMethodInPrivateClass.java");
+  }
+
+  public void testStaticMethodInPrivateClass() {
+    doTest("privateThread.activeCount()", "/PublicMethodInPrivateClass.java");
+  }
+
+  public void testOverloadedMethodInPrivateClass() {
+    doTest("privateList.remove(Integer.valueOf(1))", "/PublicMethodInPrivateClass.java");
+  }
+
+  public void testOverriddenMethodWithNarrowerThrows() {
+    doTest("privateInputStream.read()", "/PublicMethodInPrivateClass.java");
+  }
+
   public void testCallDefaultConstructor() {
     doTest("new Inner()");
   }

@@ -1,0 +1,13 @@
+call text: int result = new Test(privateList).invoke();
+class: 
+public class GeneratedEvaluationClass {
+    private ArrayList<Integer> privateList;
+
+    public GeneratedEvaluationClass(ArrayList<Integer> privateList) {
+        this.privateList = privateList;
+    }
+
+    public int invoke() {
+        return privateList.size();
+    }
+}

@@ -1,0 +1,44 @@
+call text: boolean result = new Test(privateList).invoke();
+class: 
+public class GeneratedEvaluationClass {
+    private ArrayList<Integer> privateList;
+
+    public GeneratedEvaluationClass(ArrayList<Integer> privateList) {
+        this.privateList = privateList;
+    }
+
+    public static boolean callRemove1(Object object, Integer p0) {
+        try {
+            Class<?> klass = Class.forName("PublicMethodInPrivateClass$PrivateList");
+            java.lang.reflect.Method member = null;
+            int interfaceNumber = -1;
+            Class<?>[] interfaces = null;
+            while (member == null) {
+                try {
+                    member = klass.getDeclaredMethod("remove", Class.forName("java.lang.Integer"));
+                } catch (ReflectiveOperationException e) {
+                    if (interfaceNumber == -1) {
+                        interfaces = klass.getInterfaces();
+                        interfaceNumber = 0;
+                    }
+                    if (interfaceNumber < interfaces.length) {
+                        klass = interfaces[interfaceNumber];
+                        interfaceNumber += 1;
+                    } else {
+                        klass = klass.getSuperclass();
+                        if (klass == null) throw e;
+                        interfaceNumber = -1;
+                    }
+                }
+            }
+            member.setAccessible(true);
+            return (boolean) member.invoke(object, p0);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public boolean invoke() {
+        return callRemove1(privateList, Integer.valueOf(1));
+    }
+}

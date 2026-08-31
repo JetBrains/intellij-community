@@ -13,11 +13,13 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.refactoring.extractMethodObject.ItemToReplaceDescriptor;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -54,6 +56,13 @@ public class MethodDescriptor implements ItemToReplaceDescriptor {
   public void replace(@NotNull PsiClass outerClass,
                       @NotNull PsiElementFactory elementFactory,
                       @NotNull PsiMethodCallExpression callExpression) {
+    PsiMethod resolvedMethod = myCallExpression.resolveMethod();
+    if (resolvedMethod != null &&
+        !needReplace(outerClass, resolvedMethod, myCallExpression) &&
+        canUseDirectCall(resolvedMethod)) {
+      return;
+    }
+
     PsiClass containingClass = myMethod.getContainingClass();
     String containingClassName = containingClass == null ? null : ClassUtil.getJVMClassName(containingClass);
     String name = myMethod.getName();
@@ -89,6 +98,17 @@ public class MethodDescriptor implements ItemToReplaceDescriptor {
                                      @NotNull PsiMethodCallExpression referenceExpression) {
     PsiExpression qualifier = referenceExpression.getMethodExpression().getQualifierExpression();
     return !PsiReflectionAccessUtil.isAccessibleMember(method, outerClass, qualifier);
+  }
+
+  private boolean canUseDirectCall(@NotNull PsiMethod resolvedMethod) {
+    PsiType expressionType = myCallExpression.getType();
+    if (expressionType == null || !myAccessibleReturnType.equals(expressionType.getCanonicalText())) return false;
+    if (myMethod.getManager().areElementsEquivalent(myMethod, resolvedMethod)) return true;
+
+    return !myMethod.hasModifierProperty(PsiModifier.STATIC) &&
+           !resolvedMethod.hasModifierProperty(PsiModifier.STATIC) &&
+           MethodSignatureUtil.isSuperMethod(resolvedMethod, myMethod) &&
+           Arrays.equals(myMethod.getThrowsList().getReferencedTypes(), resolvedMethod.getThrowsList().getReferencedTypes());
   }
 
   private static @Nullable PsiType resolveMethodReturnType(@NotNull PsiMethodCallExpression callExpression, @NotNull PsiMethod method) {
