@@ -16,19 +16,21 @@ import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.platform.lsp.util.getOffsetInDocument
 import com.intellij.platform.lsp.util.getRangeInDocument
 import com.intellij.psi.PsiManager
+import com.intellij.util.IconUtil
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
 import kotlin.math.min
 
 internal class LspNavigatableSymbol(
+  private val project: Project,
   private val targetFileOrDir: VirtualFile,
   private val targetSelectionRange: Range?,
 ) : NavigatableSymbol, DocumentationTarget {
   override fun createPointer(): Pointer<LspNavigatableSymbol> = Pointer {
-    if (targetFileOrDir.isValid) LspNavigatableSymbol(targetFileOrDir, targetSelectionRange) else null
+    if (targetFileOrDir.isValid) LspNavigatableSymbol(project, targetFileOrDir, targetSelectionRange) else null
   }
 
-  override fun computePresentation(): TargetPresentation = computeTargetPresentation(targetFileOrDir, targetSelectionRange)
+  override fun computePresentation(): TargetPresentation = computeTargetPresentation(targetFileOrDir, targetSelectionRange, project)
 
   override fun computeDocumentationHint(): @NlsContexts.HintText String? = targetFileOrDir.path
 
@@ -45,7 +47,7 @@ private class LspNavigationTarget(
 ) : NavigationTarget {
   override fun createPointer(): Pointer<LspNavigationTarget> = Pointer.hardPointer(this)
 
-  override fun computePresentation(): TargetPresentation = computeTargetPresentation(targetFileOrDir, targetSelectionRange)
+  override fun computePresentation(): TargetPresentation = computeTargetPresentation(targetFileOrDir, targetSelectionRange, project)
 
   override fun navigationRequest(): NavigationRequest? {
     if (targetFileOrDir.isDirectory) {
@@ -59,9 +61,9 @@ private class LspNavigationTarget(
   }
 }
 
-
-private fun computeTargetPresentation(targetFile: VirtualFile, targetSelectionRange: Range?): TargetPresentation =
+private fun computeTargetPresentation(targetFile: VirtualFile, targetSelectionRange: Range?, project: Project): TargetPresentation =
   TargetPresentation.builder(getTargetPresentableText(targetFile, targetSelectionRange))
+    .icon(IconUtil.computeFileIcon(targetFile, 0, project))
     .locationText(getLocationText(targetFile, targetSelectionRange?.start))
     .presentation()
 

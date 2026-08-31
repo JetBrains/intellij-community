@@ -21,7 +21,9 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.FakePsiElement
 import com.intellij.psi.search.searches.DefinitionsScopedSearch
 import com.intellij.util.Consumer
+import com.intellij.util.IconUtil
 import com.intellij.util.Processor
+import javax.swing.Icon
 
 /**
  * The first half of the [Go To Implementation][GotoImplementationAction] feature for LSP-backed files.
@@ -107,6 +109,15 @@ internal class LspImplementationTargetElement(private val targetPsiFile: PsiFile
   override fun isValid(): Boolean = targetPsiFile.isValid
   override fun getName(): String = wordAt(targetPsiFile, targetOffset) ?: targetPsiFile.name
   override fun getLocationString(): String = targetPsiFile.name
+
+  /**
+   * The popup row icon. The LSP response has no symbol kind, so the target file icon is used.
+   * `ElementBase.getElementIcon()` reads this `ItemPresentation` icon and layers it.
+   */
+  override fun getIcon(open: Boolean): Icon? {
+    val virtualFile = targetPsiFile.virtualFile ?: return null
+    return IconUtil.computeFileIcon(virtualFile, 0, targetPsiFile.project)
+  }
 
   override fun equals(other: Any?): Boolean =
     other is LspImplementationTargetElement && other.targetPsiFile == targetPsiFile && other.targetOffset == targetOffset

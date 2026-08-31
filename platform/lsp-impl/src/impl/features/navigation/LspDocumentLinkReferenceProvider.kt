@@ -68,7 +68,7 @@ private class LspDocumentLinkSymbolReference(
     }
 
     val targetFileOrDir = lspClient.descriptor.findFileByUri(uri) ?: return emptyList()
-    return listOf(LspNavigatableSymbol(targetFileOrDir, null))
+    return listOf(LspNavigatableSymbol(lspClient.project, targetFileOrDir, null))
   }
 }
 

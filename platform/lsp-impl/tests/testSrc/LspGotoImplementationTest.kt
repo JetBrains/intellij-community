@@ -6,6 +6,7 @@ import com.intellij.codeInsight.navigation.GotoTargetHandler
 import com.intellij.codeInsight.navigation.actions.GotoImplementationAction
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
+import com.intellij.openapi.application.readAction
 import com.intellij.platform.lsp.api.customization.LspCustomization
 import com.intellij.platform.lsp.api.customization.LspGoToImplementationCustomizer
 import com.intellij.platform.lsp.api.customization.LspGoToImplementationDisabled
@@ -106,6 +107,7 @@ internal class LspGotoImplementationTest {
       val target = gotoData.targets[0]
       assertEquals(implFile, target.containingFile.virtualFile)
       assertEquals(6, target.textOffset, "Navigation should go to the start of the target selection range")
+      assertNotNull(readAction { target.getIcon(0) }, "The popup row should show the target file icon")
       serverSession.awaitExpected()
     }
 

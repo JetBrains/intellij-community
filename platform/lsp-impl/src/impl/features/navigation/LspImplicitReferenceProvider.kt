@@ -200,7 +200,7 @@ internal class LspImplicitReferenceProvider : ImplicitReferenceProvider {
         rangeInFile = rangeInFile?.union(textRange) ?: textRange
         val targetFile = clientAndLocationLinks.lspClient.libraryFiles.findTargetFile(locationLink.targetUri)
                          ?: return@mapNotNull null
-        LspNavigatableSymbol(targetFile, locationLink.targetSelectionRange)
+        LspNavigatableSymbol(clientAndLocationLinks.lspClient.project, targetFile, locationLink.targetSelectionRange)
       }
     }
 
