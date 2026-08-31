@@ -164,6 +164,18 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
 
   fun `tests sublists with fixed indents disabled`() = doSublistIndentationTest(useFixedIndents = false)
 
+  fun `test fixed two space indent keeps unordered sublist under ordered item`() {
+    runWithTemporaryStyleSettings(project) { settings ->
+      settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).USE_FIXED_INDENTS_FOR_SUBLISTS = true
+      settings.getCommonSettings(MarkdownLanguage.INSTANCE).indentOptions!!.INDENT_SIZE = 2
+      configureFromFileText("nestedList.md", "1. foo\n   * bar\n      * baz")
+
+      performReformatting(project, file)
+
+      checkResultByText("1. foo\n   * bar\n     * baz")
+    }
+  }
+
   override fun getTestDataPath(): String {
     return MarkdownTestingUtil.TEST_DATA_PATH + "/formatter/"
   }

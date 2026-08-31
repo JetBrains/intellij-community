@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.formatter
 
 import com.intellij.psi.autodetect.AbstractIndentAutoDetectionTest
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 
 class MarkdownIndentDetectionTest : AbstractIndentAutoDetectionTest() {
@@ -20,6 +21,18 @@ class MarkdownIndentDetectionTest : AbstractIndentAutoDetectionTest() {
             - fifth
       """.trimIndent(),
       null,
+      4
+    )
+  }
+
+  fun `test one-item nested list indent is detected correctly`() {
+    doTestIndentSizeFromText(
+      """
+        - parent:
+            - child
+        - sibling
+      """.trimIndent(),
+      CommonCodeStyleSettings.IndentOptions().apply { INDENT_SIZE = 2 },
       4
     )
   }

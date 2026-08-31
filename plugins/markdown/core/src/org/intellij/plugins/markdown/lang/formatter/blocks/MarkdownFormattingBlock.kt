@@ -17,6 +17,7 @@ import com.intellij.psi.tree.TokenSet
 import com.intellij.util.text.CharArrayUtil
 import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
+import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
@@ -111,10 +112,12 @@ internal open class MarkdownFormattingBlock(
       if (listItemParent != null && listItemParent.children().any { it.elementType == MarkdownElementTypes.TABLE }) {
         return Indent.getNoneIndent()
       }
-      if (obtainCustomSettings().USE_FIXED_INDENTS_FOR_SUBLISTS) {
-        return Indent.getNormalIndent()
-      }
       val listMarker = listItemParent?.children()?.firstOrNull { it.elementType in MarkdownTokenTypeSets.LIST_MARKERS }
+      if (obtainCustomSettings().USE_FIXED_INDENTS_FOR_SUBLISTS) {
+        val indentSize = settings.getCommonSettings(MarkdownLanguage.INSTANCE).indentOptions?.INDENT_SIZE ?: 0
+        val markerWidth = listMarker?.text?.length ?: 0
+        return if (markerWidth > indentSize) Indent.getSpaceIndent(markerWidth) else Indent.getNormalIndent()
+      }
       return listMarker?.text?.length?.let(Indent::getSpaceIndent) ?: Indent.getNormalIndent()
     }
     return Indent.getNoneIndent()
