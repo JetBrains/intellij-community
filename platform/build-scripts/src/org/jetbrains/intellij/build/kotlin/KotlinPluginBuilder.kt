@@ -81,10 +81,6 @@ abstract class KotlinPluginBuilder(val kind: KotlinPluginKind = System.getProper
       spec.directoryName = "Kotlin"
       spec.mainJarName = "kotlin-plugin.jar"
 
-      for (moduleName in MODULES_SHARED_WITH_CLIENT) {
-        spec.withModule(moduleName, "kotlin-plugin-shared.jar")
-      }
-
       basePluginsAndLibraries(spec)
 
       spec.withProjectLibrary("kotlinc.kotlin-jps-plugin-classpath", "jps/kotlin-jps-plugin.jar")

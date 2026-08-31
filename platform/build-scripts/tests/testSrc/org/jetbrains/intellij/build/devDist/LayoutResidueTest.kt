@@ -59,7 +59,7 @@ class LayoutResidueTest {
 
   @Test
   fun `a content member in a jar the layout names is a raw member and a pure layout member is not`() {
-    // `intellij.kotlin.base.codeInsight.minimal` is the flat case: `kotlin-plugin-shared.jar` replaces its own jar.
+    // The `intellij.demo.flat` module is the flat case. The `flat.jar` file replaces the module JAR.
     val residue = PluginContentResidue(
       memberJars = mapOf(
         "intellij.demo.core" to setOf("standalone/core.jar"),
