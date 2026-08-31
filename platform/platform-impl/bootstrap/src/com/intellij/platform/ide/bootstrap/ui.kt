@@ -37,7 +37,6 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Font
 import java.awt.GraphicsEnvironment
 import java.awt.Toolkit
-import java.awt.dnd.DragSource
 import java.lang.invoke.MethodHandles
 import javax.swing.JOptionPane
 import javax.swing.RepaintManager
@@ -251,11 +250,6 @@ internal fun scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(
           AppUIUtil.updateAppWindowIcon(JOptionPane.getRootFrame())
         }
       }
-    }
-
-    // preloading cursors used by the drag-n-drop AWT subsystem, run on SwingDispatcher to avoid a possible deadlock (see RIDER-80810)
-    launch(CoroutineName("DnD setup") + RawSwingDispatcher) {
-      DragSource.getDefaultDragSource()
     }
 
     launch(RawSwingDispatcher) {
