@@ -8,9 +8,13 @@ import java.lang.reflect.Modifier
 
 private val logger = Logger.getInstance(ComposableFunctionFinder::class.java)
 
-internal val PREVIEW_ANNOTATIONS: Set<String> = setOf(
-  "org.jetbrains.compose.ui.tooling.preview.Preview",
-  "androidx.compose.ui.tooling.preview.Preview", // Android fallback
+internal val MULTIPLATFORM_PREVIEW_ANNOTATIONS: Set<String> = setOf(
+  "androidx.compose.ui.tooling.preview.Preview", // Compose Multiplatform
+  "org.jetbrains.compose.ui.tooling.preview.Preview", // Desktop-only, Deprecated
+)
+
+internal val SWING_PREVIEW_ANNOTATIONS: Set<String> = setOf(
+  "org.jetbrains.compose.swing.tooling.Preview", // Compose Swing UI
 )
 
 // Composable function signatures typically have these parameter patterns:

@@ -31,6 +31,8 @@ import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 
 private const val JETBRAINS_KOTLIN_COMPOSE_COMPILER_JPS_LIB = "jetbrains.kotlin.compose.compiler.plugin"
 private const val INTELLIJ_PLATFORM_COMPOSE_MODULE = "intellij.platform.compose"
+private const val INTELLIJ_PLATFORM_COMPOSE_SWING_MODULE = "intellij.platform.compose.swing"
+private val COMPOSE_UI_MODULES = setOf(INTELLIJ_PLATFORM_COMPOSE_MODULE, INTELLIJ_PLATFORM_COMPOSE_SWING_MODULE)
 
 internal class AddComposeToIJModuleAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -124,8 +126,7 @@ private fun isComposeSupportEnabled(module: Module, composeModule: Module, kotli
   // 3. Kotlin facet
   val facet = FacetManager.getInstance(module).getFacetByType(KotlinFacetType.TYPE_ID) ?: return false
   val settings = facet.configuration.settings
-  val args = settings.compilerSettings?.additionalArguments ?: ""
-  if (!args.contains(COMPOSE_HOT_RELOAD_ENABLED_MARKER)) return false
+  if (!hasFunctionKeyMetaAnnotations(module)) return false
 
   val currentPaths = settings.compilerArguments?.pluginClasspaths ?: emptyArray()
   return currentPaths.contains(kotlinComposePluginJarPath)
@@ -137,7 +138,7 @@ private fun isXmlPlatformComposePresent(module: Module): Boolean {
 
   val dependenciesTag = rootTag.findSubTags("dependencies").firstOrNull() ?: return false
   return dependenciesTag.findSubTags("module")
-    .any { it.getAttributeValue("name") == INTELLIJ_PLATFORM_COMPOSE_MODULE }
+    .any { it.getAttributeValue("name") in COMPOSE_UI_MODULES }
 }
 
 private fun addComposeSupport(module: Module, composeModule: Module, kotlinComposePluginJarPath: String): Boolean {

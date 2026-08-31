@@ -1,12 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.compose.hotreload
 
-import com.intellij.devkit.compose.COMPOSE_HOT_RELOAD_ENABLED_MARKER
 import com.intellij.devkit.compose.DevkitComposeBundle
 import com.intellij.devkit.compose.hasCompose
+import com.intellij.devkit.compose.hasFunctionKeyMetaAnnotations
 import com.intellij.devkit.compose.icons.DevkitComposeIcons
 import com.intellij.devkit.compose.isComposeToolingEnabled
-import com.intellij.facet.FacetManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.module.ModuleUtilCore
@@ -18,7 +17,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
-import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
 import java.util.function.Function
@@ -50,11 +48,9 @@ internal class DevkitHotReloadSuggester : EditorNotificationProvider, DumbAware 
     val psiFile = PsiManager.getInstance(project).findFile(file)
     if (psiFile !is KtFile) return false
 
-    // check if Kotlin facet enables `-P plugin:androidx.compose.compiler.plugins.kotlin:generateFunctionKeyMetaAnnotations=true`
     val module = ModuleUtilCore.findModuleForPsiElement(psiFile) ?: return false
-    val facet = FacetManager.getInstance(module).getFacetByType(KotlinFacetType.TYPE_ID) ?: return false
-    val args = facet.configuration.settings.compilerSettings?.additionalArguments ?: ""
-    if (!args.contains(COMPOSE_HOT_RELOAD_ENABLED_MARKER)) return false
+    if (!hasCompose(module)) return false
+    if (!hasFunctionKeyMetaAnnotations(module)) return false
 
     // only in relevant files with Compose imports
     return psiFile.importDirectives

@@ -20,6 +20,6 @@ internal class ComposePreviewImplicitUsageProvider : ImplicitUsageProvider {
     val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return false
 
     return PsiUtil.isPluginModule(module)
-           && AnnotationUtil.isAnnotated(element, PREVIEW_ANNOTATIONS, 0)
+           && AnnotationUtil.isAnnotated(element, MULTIPLATFORM_PREVIEW_ANNOTATIONS + SWING_PREVIEW_ANNOTATIONS, 0)
   }
 }
