@@ -84,6 +84,30 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     }
   }
 
+  // `getIndentOptionsByFile` needs the PSI, and therefore the RW lock. An editor can be built on
+  // `Dispatchers.UI`, which forbids that lock (IJPL-243574), so this must not run on the calling thread.
+  // `CacheableBackgroundComputable` answers with a seed and computes the value in a background read action.
+  //
+  // The seed is the project setting, not the global default. This value decides which character an indent
+  // writes, so a wrong seed reaches the document, and `DiffUtil` and the review gutters copy it into a
+  // satellite editor permanently. The project setting is right for every file that no
+  // `FileIndentOptionsProvider` overrides.
+  private val useTabCharacter = object : CacheableBackgroundComputable<Boolean>(
+    CodeStyle.getProjectOrDefaultSettings(project).indentOptions.USE_TAB_CHARACTER) {
+    override fun computeValue(project: Project?): Boolean {
+      val file = getVirtualFile()
+      if (project == null || file == null) {
+        return CodeStyle.getProjectOrDefaultSettings(project).getIndentOptions(null).USE_TAB_CHARACTER
+      }
+      val settings = editor?.getUserData(CODE_STYLE_SETTINGS) ?: CodeStyle.getSettings(project, file)
+      return settings.getIndentOptionsByFile(project, file, null).USE_TAB_CHARACTER
+    }
+
+    override fun fireValueChanged(newValue: Boolean) {
+      getState().myUseTabCharacter = newValue
+    }
+  }
+
   constructor() : this(null, null, null)
 
   init {
@@ -133,7 +157,10 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
             propertyName != state::myWrapWhenTypingReachesRightMargin.name &&
             propertyName != state::myShowIntentionBulb.name &&
             propertyName != state::myLineNumeration.name &&
-            propertyName != state::tabSize.name // `tabSize` is managed by logic located in SettingsImpl
+            // `tabSize` and `myUseTabCharacter` are managed by logic located in SettingsImpl. That logic
+            // already fires its own refresh, so a second one here rebuilds the editor for nothing.
+            propertyName != state::tabSize.name &&
+            propertyName != state::myUseTabCharacter.name
         ) {
           fireEditorRefresh()
         }
@@ -309,7 +336,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
       }
       return isUseTabCharacterForForeignProject(project)
     }
-    return state.myUseTabCharacter
+    return useTabCharacter.getValue(project)
   }
   private fun isUseTabCharacterForForeignProject(project: Project): Boolean {
     val file = getVirtualFile()
@@ -322,7 +349,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
   }
 
   override fun setUseTabCharacter(`val`: Boolean) {
-    state.myUseTabCharacter = `val`
+    useTabCharacter.setValue(`val`)
   }
 
   fun reinitSettings() {
@@ -330,6 +357,10 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
       setting.resetCache()
     }
     state.refreshAll()
+    // Recompute the tab character at once, instead of waiting for the next reader. The Remote Development
+    // frontend reads only what the backend pushed, and it never triggers this computation itself, so a
+    // frontend that waits for a reader indents with the previous code style.
+    useTabCharacter.getValue(state.project)
     reinitDocumentIndentOptions()
   }
 

@@ -69,8 +69,10 @@ public final class EditorCoreUtil {
     if (tabsEnd < 0) tabsEnd = 0;
     if (!shouldUseSmartTabs) tabsEnd = newLength;
     StringBuilder buf = new StringBuilder(newLength);
+    // Read this once, like the tab size above it. It is no longer a plain field read.
+    boolean useTabCharacter = editorSettings.isUseTabCharacter(project);
     for (int i = 0; i < newLength;) {
-      if (tabSize > 0 && editorSettings.isUseTabCharacter(project) && i + tabSize <= tabsEnd) {
+      if (tabSize > 0 && useTabCharacter && i + tabSize <= tabsEnd) {
         buf.append('\t');
         i += tabSize;
       }

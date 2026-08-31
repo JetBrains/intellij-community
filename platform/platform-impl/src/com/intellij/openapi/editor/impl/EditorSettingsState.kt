@@ -7,7 +7,6 @@ import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.ComponentManagerEx
@@ -31,16 +30,13 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentListener
 import com.intellij.psi.codeStyle.CodeStyleConstraints
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsListener
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.util.PatternUtil
-import com.intellij.util.SlowOperations
 import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -99,22 +95,14 @@ class EditorSettingsState(private val editor: EditorImpl?,
   var myAutoCodeFoldingEnabled: Boolean by property(true)
   var myAreLineNumbersAfterIcons: Boolean by property { false }
 
+  // [SettingsImpl] manages this property directly, like [tabSize]. Its calculation needs the PSI, and
+  // therefore the RW lock, so it must not run here. An editor can be built on `Dispatchers.UI`, which
+  // forbids that lock (IJPL-243574). [SettingsImpl] computes the value in a background read action and
+  // then assigns it here. `alwaysTransfer` stays true, because the Remote Development frontend cannot
+  // calculate this default itself.
+  var myUseTabCharacter: Boolean by property(
+    CodeStyleSettings.getDefaults().indentOptions.USE_TAB_CHARACTER, alwaysTransfer = true)
   // These come from CodeStyleSettings.
-  var myUseTabCharacter: Boolean by codeStyleProperty {
-    ReadAction.computeBlocking(ThrowableComputable {
-      val file = getVirtualFile()
-
-      if (file == null || project == null) {
-        CodeStyle.getProjectOrDefaultSettings(project).getIndentOptions(null).USE_TAB_CHARACTER
-      }
-      else {
-        val settings = editor?.getUserData(CODE_STYLE_SETTINGS) ?: CodeStyle.getSettings(project, file)
-        SlowOperations.knownIssue("IDEA-333523, EA-914853").use {
-          settings.getIndentOptionsByFile(project, file, null).USE_TAB_CHARACTER
-        }
-      }
-    })
-  }
   var myWrapWhenTypingReachesRightMargin: Boolean by codeStyleProperty {
     val settings = if (editor == null) {
       CodeStyle.getDefaultSettings()
@@ -245,7 +233,6 @@ class EditorSettingsState(private val editor: EditorImpl?,
       CodeStyleSettingsManager.getInstance(project).subscribe(CodeStyleSettingsListener {
         if (it.project != project ||
             it.virtualFile != null && it.virtualFile != editor.virtualFile) return@CodeStyleSettingsListener
-        refresh(::myUseTabCharacter)
         refresh(::myWrapWhenTypingReachesRightMargin)
         refresh(::softMargins)
         refresh(::rightMargin)
@@ -339,10 +326,6 @@ class EditorSettingsState(private val editor: EditorImpl?,
         }
       })
     }
-  }
-
-  private fun getVirtualFile(): VirtualFile? {
-    return (editor ?: return null).virtualFile ?: FileDocumentManager.getInstance().getFile(editor.document)
   }
 
   private fun recalculateLanguage() {
