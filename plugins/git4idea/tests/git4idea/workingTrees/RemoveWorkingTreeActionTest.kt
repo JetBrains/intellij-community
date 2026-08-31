@@ -34,6 +34,9 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Proxy
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 @TestApplication
 @RegistryKey("git.enable.working.trees.feature", "true")
@@ -201,6 +204,73 @@ internal class RemoveWorkingTreeActionTest {
     finally {
       TestDialogManager.setTestDialog(oldTestDialog)
     }
+  }
+
+  @Test
+  fun `test overlapping delete requests remove the working tree once`(): Unit = with(context) {
+    setUpWorktree()
+    val deletionAttempts = CopyOnWriteArrayList<String>()
+    val firstAttemptStarted = CountDownLatch(1)
+    val releaseFirstAttempt = CountDownLatch(1)
+    // Hold the first `git worktree remove` inside the command, so the second request provably overlaps it.
+    recordDeletions(deletionAttempts) {
+      firstAttemptStarted.countDown()
+      releaseFirstAttempt.await(1, TimeUnit.MINUTES)
+    }
+
+    val toDelete = linkedTree()
+    val service = GitWorkingTreesService.getInstance(project)
+    val first = service.deleteWorkingTrees(project, listOf(toDelete), repo)
+    try {
+      assertThat(firstAttemptStarted.await(1, TimeUnit.MINUTES))
+        .describedAs("The first deletion must reach `git worktree remove`")
+        .isTrue()
+
+      // The worktrees tab is not modal and refreshes only after an asynchronous reload, so the very same row can be
+      // selected and deleted again while the first deletion is still running.
+      val second = service.deleteWorkingTrees(project, listOf(toDelete), repo)
+      timeoutRunBlocking { second.join() }
+
+      assertThat(deletionAttempts)
+        .describedAs("The duplicate request must not run `git worktree remove` a second time")
+        .containsExactly(toDelete.path.path)
+    }
+    finally {
+      releaseFirstAttempt.countDown()
+    }
+    timeoutRunBlocking { first.join() }
+
+    assertThat(deletionAttempts)
+      .describedAs("`git worktree remove` must run exactly once per working tree path")
+      .containsExactly(toDelete.path.path)
+    timeoutRunBlocking {
+      waitUntil("the deletion notification is shown") { vcsNotifier.notifications.isNotEmpty() }
+    }
+    assertSuccessfulNotification(GitBundle.message("Git.WorkingTrees.delete.worktree.success.message", toDelete.path.name))
+    assertThat(vcsNotifier.notifications)
+      .describedAs("A rejected duplicate request must not add a notification of its own")
+      .hasSize(1)
+  }
+
+  /**
+   * Replaces [Git] with a proxy that records the path of every `git worktree remove` and runs [beforeDeletion] before
+   * delegating, so a test can hold one deletion open while it issues a second request.
+   */
+  private fun recordDeletions(deletionAttempts: MutableList<String>, beforeDeletion: () -> Unit = {}) {
+    val realGit = Git.getInstance()
+    val recordingGit = Proxy.newProxyInstance(Git::class.java.classLoader, arrayOf(Git::class.java)) { _, method, arguments ->
+      if (method.name == "deleteWorkingTree") {
+        deletionAttempts.add((arguments!![1] as GitWorkingTree).path.path)
+        beforeDeletion()
+      }
+      try {
+        method.invoke(realGit, *(arguments ?: emptyArray()))
+      }
+      catch (e: InvocationTargetException) {
+        throw e.targetException
+      }
+    } as Git
+    ApplicationManager.getApplication().replaceService(Git::class.java, recordingGit, testDisposable)
   }
 
   private fun GitSingleRepoContext.actionEvent(selection: List<GitWorkingTree>): AnActionEvent {
