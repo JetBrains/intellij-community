@@ -305,10 +305,16 @@ public class BuildContextImpl implements BuildContext {
 
     String warn = CLFlags.WARN.getOptionalScalarValue(flags);
     if ("off".equals(warn)) {
-      options.add("-nowarn");
+      if (find(CLFlags.X_WARNING_LEVEL.getValue(flags), level -> level.endsWith(":error") || level.endsWith(":warning")) == null) {
+        // only add global -nowarn flag if there are no overrides for specific warning categories
+        options.add("-nowarn");
+      }
     }
     else if ("error".equals(warn)) {
-      options.add("-Werror");
+      if (find(CLFlags.X_WARNING_LEVEL.getValue(flags), level -> level.endsWith(":disabled") || level.endsWith(":warning")) == null) {
+        // only add global -Werror flag if there are no overrides for specific warning categories
+        options.add("-Werror");
+      }
     }
     else if (warn != null && !"report".equals(warn)) {
       throw new IllegalArgumentException("Unsupported javac warning option: " + warn);

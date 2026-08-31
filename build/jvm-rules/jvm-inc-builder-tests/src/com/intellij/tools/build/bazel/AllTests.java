@@ -21,7 +21,8 @@ import static org.junit.Assert.fail;
   JavaAbiFilterTest.class,
   JavaAnnotationProcessorTests.class,
   WarningLevelTests.class,
-  BuildContextKotlinOptionsTest.class
+  BuildContextKotlinOptionsTest.class,
+  BuildContextJavaOptionsTest.class
 })
 public class AllTests {
 
