@@ -13876,160 +13876,160 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/intentions/moveToCompanion")
-    public static class MoveToCompanion extends AbstractK2IntentionTest {
+    @TestMetadata("../../../idea/tests/testData/intentions/moveToCompanionObject")
+    public static class MoveToCompanionObject extends AbstractK2IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         @TestMetadata("abstractFunction.kt")
         public void testAbstractFunction() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/abstractFunction.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/abstractFunction.kt");
         }
 
         @TestMetadata("abstractProperty.kt")
         public void testAbstractProperty() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/abstractProperty.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/abstractProperty.kt");
         }
 
         @TestMetadata("avoidNameCapture.kt")
         public void testAvoidNameCapture() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/avoidNameCapture.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/avoidNameCapture.kt");
         }
 
         @TestMetadata("doNotQualifyThisLabel.kt")
         public void testDoNotQualifyThisLabel() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/doNotQualifyThisLabel.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/doNotQualifyThisLabel.kt");
         }
 
         @TestMetadata("dropFinal.kt")
         public void testDropFinal() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/dropFinal.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/dropFinal.kt");
         }
 
         @TestMetadata("dropOpen.kt")
         public void testDropOpen() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/dropOpen.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/dropOpen.kt");
         }
 
         @TestMetadata("enumEntry.kt")
         public void testEnumEntry() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/enumEntry.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/enumEntry.kt");
         }
 
         @TestMetadata("expectClass.kt")
         public void testExpectClass() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/expectClass.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/expectClass.kt");
         }
 
         @TestMetadata("functionWithOverride.kt")
         public void testFunctionWithOverride() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/functionWithOverride.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/functionWithOverride.kt");
         }
 
         @TestMetadata("functionWithoutBody.kt")
         public void testFunctionWithoutBody() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/functionWithoutBody.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/functionWithoutBody.kt");
         }
 
         @TestMetadata("genericFunction.kt")
         public void testGenericFunction() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/genericFunction.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/genericFunction.kt");
         }
 
         @TestMetadata("genericFunctionK2.kt")
         public void testGenericFunctionK2() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/genericFunctionK2.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/genericFunctionK2.kt");
         }
 
         @TestMetadata("genericProperty.kt")
         public void testGenericProperty() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/genericProperty.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/genericProperty.kt");
         }
 
         @TestMetadata("genericPropertyK2.kt")
         public void testGenericPropertyK2() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/genericPropertyK2.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/genericPropertyK2.kt");
         }
 
         @TestMetadata("implicitDispatchReceiver.kt")
         public void testImplicitDispatchReceiver() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/implicitDispatchReceiver.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/implicitDispatchReceiver.kt");
         }
 
         @TestMetadata("inInnerClass.kt")
         public void testInInnerClass() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/inInnerClass.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/inInnerClass.kt");
         }
 
         @TestMetadata("inLocalClass.kt")
         public void testInLocalClass() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/inLocalClass.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/inLocalClass.kt");
         }
 
         @TestMetadata("inObject.kt")
         public void testInObject() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/inObject.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/inObject.kt");
         }
 
         @TestMetadata("localFunction.kt")
         public void testLocalFunction() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/localFunction.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/localFunction.kt");
         }
 
         @TestMetadata("overriddenFunction.kt")
         public void testOverriddenFunction() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/overriddenFunction.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/overriddenFunction.kt");
         }
 
         @TestMetadata("overriddenFunctionK2.kt")
         public void testOverriddenFunctionK2() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/overriddenFunctionK2.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/overriddenFunctionK2.kt");
         }
 
         @TestMetadata("overriddenProperty.kt")
         public void testOverriddenProperty() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/overriddenProperty.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/overriddenProperty.kt");
         }
 
         @TestMetadata("overriddenPropertyK2.kt")
         public void testOverriddenPropertyK2() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/overriddenPropertyK2.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/overriddenPropertyK2.kt");
         }
 
         @TestMetadata("propertyUsingClassInstance.kt")
         public void testPropertyUsingClassInstance() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/propertyUsingClassInstance.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/propertyUsingClassInstance.kt");
         }
 
         @TestMetadata("propertyUsingClassInstanceK2.kt")
         public void testPropertyUsingClassInstanceK2() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/propertyUsingClassInstanceK2.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/propertyUsingClassInstanceK2.kt");
         }
 
         @TestMetadata("propertyWithOverride.kt")
         public void testPropertyWithOverride() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/propertyWithOverride.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/propertyWithOverride.kt");
         }
 
         @TestMetadata("redeclarationConflict.kt")
         public void testRedeclarationConflict() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/redeclarationConflict.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/redeclarationConflict.kt");
         }
 
         @TestMetadata("redeclarationConflictK2.kt")
         public void testRedeclarationConflictK2() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/redeclarationConflictK2.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/redeclarationConflictK2.kt");
         }
 
         @TestMetadata("restrictedInstanceName.kt")
         public void testRestrictedInstanceName() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/restrictedInstanceName.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/restrictedInstanceName.kt");
         }
 
         @TestMetadata("topLevelFunction.kt")
         public void testTopLevelFunction() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/moveToCompanion/topLevelFunction.kt");
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/topLevelFunction.kt");
         }
     }
 
