@@ -117,7 +117,7 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
       "$DATA_DIR_NAME/cache.data"
     }
     else {
-      "$DATA_DIR_NAME/${environmentName.name}/cache.data"
+      "$DATA_DIR_NAME/${environmentName.asDirName()}/cache.data"
     }
     val path = PathManager.getSystemDir().resolve(cacheSuffix)
     cacheFiles[environmentName.name] = path

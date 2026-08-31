@@ -54,7 +54,7 @@ object JpsGlobalEntitiesSerializers {
   private fun resolveEnvironmentDir(optionsDir: Path, environmentName: InternalEnvironmentName): Path =
     when (environmentName) {
       InternalEnvironmentName.Local -> optionsDir
-      is InternalEnvironmentName.Custom -> optionsDir.resolve(environmentName.name)
+      is InternalEnvironmentName.Custom -> optionsDir.resolve(environmentName.asDirName())
     }
 }
 
