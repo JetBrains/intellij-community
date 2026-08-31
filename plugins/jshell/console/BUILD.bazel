@@ -2,6 +2,15 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+jps_test(
+    name = "java-jshell-console-tests_test",
+    timeout = "short",
+    sandbox = True,
+    tags = ["community-aggregator"],
+    runtime_deps = [":java-jshell-console-tests_test_lib"],
+)
+### skip generation section `test intellij.java.jshell.console.tests`
+
 ### auto-generated section `build intellij.java.jshell.console` start
 jvm_library(
     name = "console",
@@ -146,10 +155,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.jshell.console.tests` end
-
-### auto-generated section `test intellij.java.jshell.console.tests` start
-jps_test(
-    name = "java-jshell-console-tests_test",
-    runtime_deps = [":java-jshell-console-tests_test_lib"],
-)
-### auto-generated section `test intellij.java.jshell.console.tests` end
