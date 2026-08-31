@@ -4,6 +4,7 @@ import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.config.ConfigurationStorage
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.ide.InstalledIde
+import com.intellij.ide.starter.ide.setProjectTrusted
 import com.intellij.ide.starter.models.IdeInfo
 import com.intellij.ide.starter.models.IdeInfoType
 import com.intellij.ide.starter.models.TestCase
@@ -60,7 +61,7 @@ interface TestContainer {
       return when (context.testCase.ideInfo.productCode == IdeInfoType.ANDROID_STUDIO.productCode) {
         true -> context
           .redirectJarRepositoriesToCacheRedirector()
-          .addProjectToTrustedLocations()
+          .setProjectTrusted()
           .disableFusSendingOnIdeClose()
           .disableReportingStatisticsToProduction()
           .disableReportingStatisticToJetStat()
@@ -87,7 +88,7 @@ interface TestContainer {
             }
           }
           .disableMinimap()
-          .addProjectToTrustedLocations()
+          .setProjectTrusted()
           .disableReportingStatisticsToProduction()
           .disableReportingStatisticToJetStat()
           .disableMigrationNotification()

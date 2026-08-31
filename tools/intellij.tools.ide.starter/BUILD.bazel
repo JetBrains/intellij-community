@@ -63,6 +63,7 @@ jvm_library(
         "//jps/model-serialization",
         "//platform/testFramework/teamCity",
         "//platform/eel-nioFs",
+        "//platform/projectModel-api:projectModel",
     ],
 )
 
@@ -118,6 +119,7 @@ jvm_library(
         "//jps/model-serialization:model-serialization_test_lib",
         "//platform/testFramework/teamCity:teamCity_test_lib",
         "//platform/eel-nioFs:eel-nioFs_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
     ],
 )
 ### auto-generated section `build intellij.tools.ide.starter` end
@@ -128,8 +130,6 @@ exports_files(
         "intellij.tools.ide.starter.iml",
         "resources/ide.general.xml",
         "resources/intellij.tools.ide.starter.xml",
-        "resources/trusted-paths.xml",
-        "resources/trustedSolutions.xml",
     ],
     visibility = ["//visibility:public"],
 )

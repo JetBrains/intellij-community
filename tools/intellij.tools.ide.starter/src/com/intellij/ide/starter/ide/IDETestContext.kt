@@ -24,7 +24,6 @@ import com.intellij.ide.starter.runner.startIdeWithoutProject
 import com.intellij.ide.starter.telemetry.TestTelemetryService
 import com.intellij.ide.starter.telemetry.computeWithSpan
 import com.intellij.ide.starter.utils.FileSystem.deleteRecursivelyQuietly
-import com.intellij.ide.starter.utils.XmlBuilder
 import com.intellij.openapi.diagnostic.LogLevel
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.findOrCreateFile
@@ -32,7 +31,6 @@ import com.intellij.tools.ide.performanceTesting.commands.CommandChain
 import com.intellij.tools.ide.performanceTesting.commands.MarshallableCommand
 import com.intellij.tools.ide.performanceTesting.commands.SdkObject
 import com.intellij.tools.ide.performanceTesting.commands.setupProjectSdk
-import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.tools.ide.util.common.replaceSpecialCharactersWithHyphens
 import com.intellij.ui.NewUiValue
@@ -44,13 +42,8 @@ import org.kodein.di.direct
 import org.kodein.di.factory
 import org.kodein.di.instance
 import org.kodein.di.newInstance
-import org.w3c.dom.Element
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Base64
-import javax.xml.xpath.XPath
-import javax.xml.xpath.XPathConstants
-import javax.xml.xpath.XPathFactory
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.copyToRecursively
 import kotlin.io.path.createDirectories
@@ -62,7 +55,6 @@ import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.notExists
 import kotlin.io.path.readBytes
-import kotlin.io.path.readText
 import kotlin.io.path.walk
 import kotlin.io.path.writeBytes
 import kotlin.io.path.writeText
@@ -297,11 +289,6 @@ open class IDETestContext(
     else {
       logOutput("Cleaning system dir for $this at $paths is disabled due to preserveSystemDir")
     }
-  }
-
-  // Removing this file allows to run IDE with Safe Mode dialog.
-  fun deleteTrustedPathsXml(): IDETestContext = apply {
-    paths.configDir.resolve("options/trusted-paths.xml").deleteRecursivelyQuietly()
   }
 
   fun wipeProjectsDir(): IDETestContext = apply {
@@ -696,61 +683,10 @@ open class IDETestContext(
     return this
   }
 
-  fun addProjectToTrustedLocations(projectPath: Path? = null, addParentDir: Boolean = false, configPath: Path = paths.configDir): IDETestContext {
-    if (this.testCase.projectInfo == NoProject && projectPath == null) return this
-
-    val isRDProduct = this.ide.productCode == IdeInfoType.RIDER.productCode
-
-    val (path, expression) = when (addParentDir) {
-      true -> Pair(first = projectPath?.parent ?: this.resolvedProjectHome.normalize().parent, second = when (isRDProduct) {
-        true -> error("NOT_IMPLEMENTED please add a correct path")
-        else -> "//component[@name='Trusted.Paths.Settings']/option[@name='TRUSTED_PATHS']/list"
-      })
-      else -> Pair(first = projectPath ?: this.resolvedProjectHome.normalize(), second = when (isRDProduct) {
-        true -> "//component[@name='TrustedSolutionStore']/option[@name='trustedLocations']/set"
-        else -> "//component[@name='Trusted.Paths']/option[@name='TRUSTED_PROJECT_PATHS']/map"
-      })
-    }
-
-    val (trustedXmlPath, fileName) = when (isRDProduct) {
-      true -> configPath.toAbsolutePath().resolve("options/trustedSolutions.xml") to "trustedSolutions.xml"
-      else -> configPath.toAbsolutePath().resolve("options/trusted-paths.xml") to "trusted-paths.xml"
-    }
-
-    if (!trustedXmlPath.exists()) {
-      trustedXmlPath.parent.createDirectories()
-      Files.write(trustedXmlPath, this::class.java.classLoader.getResource(fileName)!!.readText().toByteArray())
-    }
-    else {
-      if (trustedXmlPath.readText().contains("\"$path\"")) {
-        logOutput("Trusted xml file content: ${trustedXmlPath.readText()}")
-        return this
-      }
-    }
-
-    try {
-      val xmlDoc = XmlBuilder.parse(trustedXmlPath)
-      val xp: XPath = XPathFactory.newInstance().newXPath()
-
-      val component = xp.evaluate(expression, xmlDoc, XPathConstants.NODE) as Element
-      val entry = when (addParentDir || isRDProduct) {
-        true -> xmlDoc.createElement("option").apply { setAttribute("value", "${path}") }
-        else -> xmlDoc.createElement("entry").apply {
-          setAttribute("key", "$path")
-          setAttribute("value", "true")
-        }
-      }
-      component.appendChild(entry)
-
-      XmlBuilder.writeDocument(xmlDoc, trustedXmlPath)
-      logOutput("Trusted xml file content: ${trustedXmlPath.readText()}")
-    }
-    catch (e: Exception) {
-      logError(e)
-    }
-    return this
-  }
-
+  @Deprecated("Declare the wanted state instead", ReplaceWith("setProjectTrustState(projectPath, configPath)"))
+  fun addProjectToTrustedLocations(projectPath: Path? = null, addParentDir: Boolean = false, configPath: Path = paths.configDir): IDETestContext =
+    if (addParentDir) addTrustedPath((projectPath ?: resolvedProjectHome.normalize()).parent)
+    else setProjectTrusted(projectPath, configPath)
 
   @Suppress("unused")
   fun copyExistingConfig(configPath: Path): IDETestContext {
