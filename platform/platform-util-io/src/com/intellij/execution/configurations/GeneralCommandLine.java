@@ -153,8 +153,17 @@ public class GeneralCommandLine implements UserDataHolder {
     myEelDescriptor = original.myEelDescriptor;
   }
 
-  private static Charset defaultCharset() {
-    return LoadingState.COMPONENTS_LOADED.isOccurred() ? EncodingManager.getInstance().getDefaultConsoleEncoding() : Charset.defaultCharset();
+  /**
+   * Returns an environment that will be inherited by a child process.
+   *
+   * @see #getEffectiveEnvironment()
+   */
+  public @NotNull Map<String, String> getParentEnvironment() {
+    return switch (myParentEnvironmentType) {
+      case SYSTEM -> System.getenv();
+      case CONSOLE -> EnvironmentUtil.getEnvironmentMap();
+      default -> Collections.emptyMap();
+    };
   }
 
   public @NotNull @NlsSafe String getExePath() {
@@ -255,16 +264,10 @@ public class GeneralCommandLine implements UserDataHolder {
     return this;
   }
 
-  /**
-   * Returns an environment that will be inherited by a child process.
-   * @see #getEffectiveEnvironment()
-   */
-  public @NotNull Map<String, String> getParentEnvironment() {
-    return switch (myParentEnvironmentType) {
-      case SYSTEM -> System.getenv();
-      case CONSOLE -> EnvironmentUtil.getEnvironmentMap();
-      default -> Collections.emptyMap();
-    };
+  protected @NotNull List<String> prepareCommandLine(@NotNull String command,
+                                                     @NotNull List<String> parameters,
+                                                     @NotNull Platform platform) {
+    return CommandLineUtil.toCommandLine(command, parameters, platform);
   }
 
   /**
@@ -391,10 +394,6 @@ public class GeneralCommandLine implements UserDataHolder {
     return String.join("\n", prepareCommandLine(myExePath != null ? myExePath : "", myProgramParams.getList(), platform));
   }
 
-  protected @NotNull List<String> prepareCommandLine(@NotNull String command, @NotNull List<String> parameters, @NotNull Platform platform) {
-    return CommandLineUtil.toCommandLine(command, parameters, platform);
-  }
-
   @ApiStatus.NonExtendable
   public @NotNull Process createProcess() throws ExecutionException {
     if (LOG.isDebugEnabled()) {
@@ -424,11 +423,18 @@ public class GeneralCommandLine implements UserDataHolder {
         var mode = System.getProperty("jdk.lang.Process.allowAmbiguousCommands");
         @SuppressWarnings("removal") var sm = System.getSecurityManager();
         if ("false".equalsIgnoreCase(mode) || sm != null) {
-          e.addSuppressed(new IllegalStateException("Suspicious state: allowAmbiguousCommands=" + mode + " SM=" + (sm != null ? sm.getClass() : null)));
+          e.addSuppressed(
+            new IllegalStateException("Suspicious state: allowAmbiguousCommands=" + mode + " SM=" + (sm != null ? sm.getClass() : null)));
         }
       }
       throw new ProcessNotCreatedException(e.getMessage(), e, this);
     }
+  }
+
+  private static Charset defaultCharset() {
+    return LoadingState.COMPONENTS_LOADED.isOccurred()
+           ? EncodingManager.getInstance().getDefaultConsoleEncoding()
+           : Charset.defaultCharset();
   }
 
   @ApiStatus.Internal

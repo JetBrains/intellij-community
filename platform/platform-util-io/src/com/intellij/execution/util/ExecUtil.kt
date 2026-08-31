@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.util
 
 import com.intellij.execution.CommandLineUtil
@@ -28,6 +28,7 @@ import com.intellij.platform.eel.spawnProcess
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.IdeUtilIoBundle
 import com.intellij.util.io.SuperUserStatus
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -36,15 +37,13 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.nio.file.Path
 
+@OptIn(LowLevelLocalMachineAccess::class)
 object ExecUtil {
   private val logger = logger<ExecUtil>()
 
   private val hasSupportedTerminals = lazy {
-    @Suppress("SpellCheckingInspection")
-    PathEnvironmentVariableUtil.isOnPath("konsole") ||
-    PathEnvironmentVariableUtil.isOnPath("gnome-terminal") ||
-    PathEnvironmentVariableUtil.isOnPath("urxvt") ||
-    PathEnvironmentVariableUtil.isOnPath("xterm")
+    @Suppress("SpellCheckingInspection") PathEnvironmentVariableUtil.isOnPath("konsole") || PathEnvironmentVariableUtil.isOnPath("gnome-terminal") || PathEnvironmentVariableUtil.isOnPath(
+      "urxvt") || PathEnvironmentVariableUtil.isOnPath("xterm")
   }
 
   @JvmStatic
@@ -88,8 +87,7 @@ object ExecUtil {
   @JvmStatic
   @Throws(ExecutionException::class)
   @RequiresBackgroundThread(generateAssertion = false)
-  fun execAndGetOutput(commandLine: GeneralCommandLine): ProcessOutput =
-    CapturingProcessHandler(commandLine).runProcess()
+  fun execAndGetOutput(commandLine: GeneralCommandLine): ProcessOutput = CapturingProcessHandler(commandLine).runProcess()
 
   @JvmStatic
   @Throws(ExecutionException::class)
@@ -99,19 +97,15 @@ object ExecUtil {
 
   @JvmStatic
   @RequiresBackgroundThread(generateAssertion = false)
-  fun execAndGetOutput(commandLine: GeneralCommandLine, stdin: String): String =
-    CapturingProcessHandler(commandLine)
-      .apply {
-        addProcessListener(object : ProcessListener {
-          override fun startNotified(event: ProcessEvent) {
-            processInput.writer(commandLine.charset).use {
-              it.write(stdin)
-            }
-          }
-        })
+  fun execAndGetOutput(commandLine: GeneralCommandLine, stdin: String): String = CapturingProcessHandler(commandLine).apply {
+    addProcessListener(object : ProcessListener {
+      override fun startNotified(event: ProcessEvent) {
+        processInput.writer(commandLine.charset).use {
+          it.write(stdin)
+        }
       }
-      .runProcess()
-      .stdout
+    })
+  }.runProcess().stdout
 
   @JvmStatic
   @RequiresBackgroundThread(generateAssertion = false)
@@ -153,11 +147,8 @@ object ExecUtil {
     val sudoCommandLine = SudoCommandProvider.getInstance().sudoCommand(commandLine, prompt)
                           ?: throw UnsupportedOperationException("Cannot `sudo` on this system - no suitable utils found")
 
-    return sudoCommandLine
-      .withWorkingDirectory(commandLine.workingDirectory)
-      .withEnvironment(commandLine.environment)
-      .withParentEnvironmentType(commandLine.parentEnvironmentType)
-      .withRedirectErrorStream(commandLine.isRedirectErrorStream)
+    return sudoCommandLine.withWorkingDirectory(commandLine.workingDirectory).withEnvironment(commandLine.environment)
+      .withParentEnvironmentType(commandLine.parentEnvironmentType).withRedirectErrorStream(commandLine.isRedirectErrorStream)
   }
 
   @ApiStatus.Internal
@@ -179,7 +170,11 @@ object ExecUtil {
   @Suppress("SpellCheckingInspection")
   fun getTerminalCommand(@Nls(capitalization = Nls.Capitalization.Title) title: String?, command: String): List<@NlsSafe String> = when {
     OS.CURRENT == OS.Windows -> {
-      listOf(CommandLineUtil.getWinShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(title?.replace('"', '\'') ?: ""), command)
+      listOf(CommandLineUtil.getWinShellName(),
+             "/c",
+             "start",
+             GeneralCommandLine.inescapableQuote(title?.replace('"', '\'') ?: ""),
+             command)
     }
     OS.CURRENT == OS.macOS -> {
       val prefix = if (title != null) "\"echo -n \" & " + escapeAppleScriptArgument("\\0033]0;${title}\\007") + " & \" ; \" & " else ""
@@ -215,7 +210,12 @@ object ExecUtil {
   @ThrowsChecked(EelExecApi.EnvironmentVariablesException::class)
   @ApiStatus.Internal
   @JvmStatic
-  fun startProcessBlockingUsingEel(descriptor: EelDescriptor, builder: ProcessBuilder, pty: LocalPtyOptions?, isPassParentEnvironment: Boolean): Process {
+  fun startProcessBlockingUsingEel(
+    descriptor: EelDescriptor,
+    builder: ProcessBuilder,
+    pty: LocalPtyOptions?,
+    isPassParentEnvironment: Boolean,
+  ): Process {
     val args = builder.command()
     val exe = args.first().let { exe -> runCatching { Path.of(exe).asEelPath().toString() }.getOrNull() ?: exe }
     val rest = args.subList(1, args.size)
@@ -234,15 +234,9 @@ object ExecUtil {
 
     return runBlockingMaybeCancellable {
       val exec = descriptor.toEelApi().exec
-      val env = (if (isPassParentEnvironment) exec.environmentVariables().eelIt().await() else emptyMap()) +
-                builder.environment()
-      exec.spawnProcess(exe)
-        .args(rest)
-        .workingDirectory(workingDir)
-        .env(env)
-        .interactionOptions(pty?.run { EelExecApi.Pty(initialColumns, initialRows, !consoleMode) })
-        .eelIt()
-        .convertToJavaProcess()
+      val env = (if (isPassParentEnvironment) exec.environmentVariables().eelIt().await() else emptyMap()) + builder.environment()
+      exec.spawnProcess(exe).args(rest).workingDirectory(workingDir).env(env)
+        .interactionOptions(pty?.run { EelExecApi.Pty(initialColumns, initialRows, !consoleMode) }).eelIt().convertToJavaProcess()
     }
   }
 }
