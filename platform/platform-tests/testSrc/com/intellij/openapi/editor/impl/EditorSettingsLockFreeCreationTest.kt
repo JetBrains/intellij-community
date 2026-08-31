@@ -8,20 +8,40 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 
+private const val EDITOR_IMPL_PACKAGE = "com.intellij.openapi.editor.impl"
+
+/** The prefixes of the lock machinery itself, which every reported stack trace starts with. */
+private val LOCK_MACHINERY_PACKAGES = listOf(
+  "com.intellij.platform.locking.",
+  "com.intellij.openapi.application.",
+  "com.intellij.util.concurrency.",
+)
+
 /**
- * An editor can be built on `Dispatchers.UI`, which forbids the RW lock. So the editor settings must
- * take no lock while the editor is built. See IJPL-243574. `SettingsImpl` answers for the tab character
- * from a background read action instead, so these tests also cover where that value comes from.
+ * The class that asked for the lock. It is the first frame below the machinery that reports the request.
+ */
+private fun Throwable.acquisitionSite(): String? =
+  stackTrace.firstOrNull { frame -> LOCK_MACHINERY_PACKAGES.none { frame.className.startsWith(it) } }?.className
+
+/**
+ * An editor can be built on `Dispatchers.UI`, which forbids the RW lock. So the platform must take no lock
+ * while the editor is built. See IJPL-243574. `SettingsImpl` answers for the tab character from a background
+ * read action instead, so these tests also cover where that value comes from.
  */
 class EditorSettingsLockFreeCreationTest : AbstractEditorTest() {
   /**
    * `EditorTextField` builds its editor from `addNotify`, and that can run on `Dispatchers.UI`. It uses
    * the two-argument factory method, so this test uses the same one.
    *
-   * The test watches the editor settings only. `EditorImpl.setHighlighter` and two
-   * `EditorFactoryListener` implementations still take a lock, and IJPL-243574 covers them.
+   * The test releases the write-intent lock, because `Dispatchers.UI` holds none. The release is what gives
+   * the test its reach. `ReadAction.computeBlocking` returns the value directly while read access is allowed,
+   * so it reports no acquisition to a caller that still holds the lock. Only a released lock sends it through
+   * `runReadAction`, where `NestedLocksThreadingSupport.handleLockAccess` reports it.
+   *
+   * The test watches the platform. A lock that a plugin `EditorFactoryListener` takes belongs to that plugin,
+   * and Ultimate loads about 40 listeners that Community does not.
    */
-  fun testEditorSettingsTakeNoLockWhileTheEditorIsBuilt() {
+  fun testTheEditorIsBuiltWithoutTheRwLock() {
     initText("abc")
     // Only the file branch of the indent options reads the PSI, so the test needs a document with a file.
     assertNotNull(editor.virtualFile)
@@ -39,11 +59,9 @@ class EditorSettingsLockFreeCreationTest : AbstractEditorTest() {
       editorFactory.releaseEditor(created)
     }
 
-    val settingsLocks = reported.filter { throwable ->
-      throwable.stackTrace.any { it.className == SettingsImpl::class.java.name || it.className == EditorSettingsState::class.java.name }
-    }
-    assertTrue("the editor settings took a lock while the editor was built: ${settingsLocks.map { it.stackTraceToString() }}",
-               settingsLocks.isEmpty())
+    val platformLocks = reported.filter { it.acquisitionSite()?.startsWith("$EDITOR_IMPL_PACKAGE.") == true }
+    assertTrue("the platform took a lock while the editor was built: ${platformLocks.map { it.stackTraceToString() }}",
+               platformLocks.isEmpty())
   }
 
   /**
