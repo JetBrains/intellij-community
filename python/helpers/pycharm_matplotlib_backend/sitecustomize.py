@@ -1,6 +1,7 @@
 import os
 import sys
 import traceback
+
 SHOW_DEBUG_INFO = os.getenv('PYCHARM_DEBUG', 'False').lower() in ['true', '1']
 
 
