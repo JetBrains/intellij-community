@@ -117,7 +117,7 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
                 sessions
               }
             }
-            updateCurrentSession()
+            dropCurrentSessionIfRemoved()
           }
           is XDebuggerManagerSessionEvent.CurrentSessionChanged -> {
             val sessions = sessionsFlow.value
@@ -125,7 +125,10 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
             val currentSession = findSessionById(sessions, event.currentSession)
             currentSessionId = event.currentSession
             updateCurrentSession()
-            project.messageBus.syncPublisher(XDebuggerManagerProxyListener.TOPIC).activeSessionChanged(previousSession, currentSession)
+            // an event for an already removed session resolves to no change; do not clear the execution point again
+            if (previousSession != currentSession) {
+              project.messageBus.syncPublisher(XDebuggerManagerProxyListener.TOPIC).activeSessionChanged(previousSession, currentSession)
+            }
           }
         }
       }
@@ -136,12 +139,26 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
         }
         listOf()
       }
-      updateCurrentSession()
+      dropCurrentSessionIfRemoved()
     })
   }
 
   private fun updateCurrentSession() {
     _currentSessionFlow.value = findSessionById(sessions, currentSessionId)
+  }
+
+  /**
+   * Updates the current session after a removal from [sessionsFlow].
+   * A removal can drop the current session without a [XDebuggerManagerSessionEvent.CurrentSessionChanged] event.
+   * Fires [XDebuggerManagerProxyListener.activeSessionChanged] in that case,
+   * so the listeners clear the session UI state, for example the execution point.
+   */
+  private fun dropCurrentSessionIfRemoved() {
+    val previousSession = _currentSessionFlow.value
+    updateCurrentSession()
+    if (previousSession != null && _currentSessionFlow.value == null) {
+      project.messageBus.syncPublisher(XDebuggerManagerProxyListener.TOPIC).activeSessionChanged(previousSession, null)
+    }
   }
 
   private fun findSessionById(sessions: List<FrontendXDebuggerSession>, sessionId: XDebugSessionId?): FrontendXDebuggerSession? =
