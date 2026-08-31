@@ -5,7 +5,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
@@ -479,14 +478,6 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
       return myId;
     }
     return node.toScalarRange();
-  }
-
-  public RangeMarker findRangeMarkerAfter() {
-    return myNode.getTree().findRangeMarkerAfter(this);
-  }
-
-  public RangeMarker findRangeMarkerBefore() {
-    return myNode.getTree().findRangeMarkerBefore(this);
   }
 
   @NotNull

@@ -1543,67 +1543,6 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
     return MarkupIterator.mergeIterators(exact, lines, comparator);
   }
 
-  T findRangeMarkerAfter(@NotNull T marker) {
-    l.readLock().lock();
-    try {
-      IntervalNode<T> node = lookupNode(marker);
-
-      boolean foundMarker = false;
-      while (node != null) {
-        List<Supplier<? extends T>> intervals = node.intervals;
-        //noinspection ForLoopReplaceableByForEach
-        for (int i = 0; i < intervals.size(); i++) {
-          Supplier<? extends T> interval = intervals.get(i);
-          T m = interval.get();
-          if (m == null) continue;
-          if (m == marker) {
-            foundMarker = true;
-          }
-          else if (foundMarker) {
-            // found next to marker
-            return m;
-          }
-        }
-        node = node.next();
-        foundMarker = true; // protection against sudden removal of marker
-      }
-      return null;
-    }
-    finally {
-      l.readLock().unlock();
-    }
-  }
-
-  T findRangeMarkerBefore(@NotNull T marker) {
-    l.readLock().lock();
-    try {
-      IntervalNode<T> node = lookupNode(marker);
-
-      boolean foundMarker = false;
-      while (node != null) {
-        List<Supplier<? extends T>> intervals = node.intervals;
-        for (int i = intervals.size() - 1; i >= 0; i--) {
-          Supplier<? extends T> interval = intervals.get(i);
-          T m = interval.get();
-          if (m == null) continue;
-          if (m == marker) {
-            foundMarker = true;
-          }
-          else if (foundMarker) {
-            // found next to marker
-            return m;
-          }
-        }
-        node = node.previous();
-        foundMarker = true; // protection against sudden removal of marker
-      }
-      return null;
-    }
-    finally {
-      l.readLock().unlock();
-    }
-  }
-
   @ApiStatus.Internal
   public String dumpState() {
     StringBuilder b = new StringBuilder("[\n");
