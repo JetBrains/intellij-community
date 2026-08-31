@@ -95,13 +95,18 @@ class EditorSettingsState(private val editor: EditorImpl?,
   var myAutoCodeFoldingEnabled: Boolean by property(true)
   var myAreLineNumbersAfterIcons: Boolean by property { false }
 
-  // [SettingsImpl] manages this property directly, like [tabSize]. Its calculation needs the PSI, and
+  // [SettingsImpl] manages this property directly, like [tabSize]. The per-file value needs the PSI, and
   // therefore the RW lock, so it must not run here. An editor can be built on `Dispatchers.UI`, which
-  // forbids that lock (IJPL-243574). [SettingsImpl] computes the value in a background read action and
-  // then assigns it here. `alwaysTransfer` stays true, because the Remote Development frontend cannot
-  // calculate this default itself.
-  var myUseTabCharacter: Boolean by property(
-    CodeStyleSettings.getDefaults().indentOptions.USE_TAB_CHARACTER, alwaysTransfer = true)
+  // forbids that lock (IJPL-243574). [SettingsImpl] computes the per-file value in a background read action
+  // and then assigns it here, which overrides this default.
+  //
+  // The default is the project setting, and not the global one. It is what the Remote Development frontend
+  // reads until the backend pushes the computed value, and this value selects the character an indent writes.
+  // The project setting needs no lock, and it is right for every file that no `FileIndentOptionsProvider`
+  // overrides. [SettingsImpl] seeds its own computable from the same expression.
+  var myUseTabCharacter: Boolean by codeStyleProperty {
+    CodeStyle.getProjectOrDefaultSettings(project).indentOptions.USE_TAB_CHARACTER
+  }
   // These come from CodeStyleSettings.
   var myWrapWhenTypingReachesRightMargin: Boolean by codeStyleProperty {
     val settings = if (editor == null) {

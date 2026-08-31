@@ -357,9 +357,12 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
       setting.resetCache()
     }
     state.refreshAll()
-    // Recompute the tab character at once, instead of waiting for the next reader. The Remote Development
-    // frontend reads only what the backend pushed, and it never triggers this computation itself, so a
-    // frontend that waits for a reader indents with the previous code style.
+    // Recompute the tab character at once, instead of waiting for the next reader.
+    //
+    // `tabSize` needs no such line, because every repaint reads it, so its next reader is immediate. Nothing
+    // reads the tab character until the user indents, and the Remote Development frontend never reads it at
+    // all: it takes the value the backend pushed. A backend that waited for a local reader would leave that
+    // frontend indenting with the previous code style.
     useTabCharacter.getValue(state.project)
     reinitDocumentIndentOptions()
   }

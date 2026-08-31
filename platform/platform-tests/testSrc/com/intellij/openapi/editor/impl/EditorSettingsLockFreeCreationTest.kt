@@ -5,6 +5,7 @@ import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.TestOnlyThreading
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 
 /**
@@ -71,5 +72,29 @@ class EditorSettingsLockFreeCreationTest : AbstractEditorTest() {
 
     manager.fireCodeStyleSettingsChanged()
     assertEquals(original, settings.isUseTabCharacter(project))
+  }
+
+  /**
+   * The state property carries the value to the Remote Development frontend, which computes none of its own.
+   * Its default must therefore be the project setting, and not the global one. `SettingsImpl` seeds its own
+   * computable from the same expression, so the two sides open on one value.
+   */
+  fun testTheTabCharacterStateDefaultIsTheProjectSetting() {
+    initText("abc")
+    val projectValue = !CodeStyleSettings.getDefaults().indentOptions.USE_TAB_CHARACTER
+    val manager = CodeStyleSettingsManager.getInstance(project)
+    val temporary = manager.cloneSettings(CodeStyle.getSettings(project))
+    temporary.indentOptions.USE_TAB_CHARACTER = projectValue
+
+    CodeStyle.doWithTemporarySettings(project, temporary, Runnable {
+      val editorFactory = EditorFactory.getInstance()
+      val created = editorFactory.createEditor(editor.document, project)
+      try {
+        assertEquals(projectValue, (created.settings as SettingsImpl).getState().myUseTabCharacter)
+      }
+      finally {
+        editorFactory.releaseEditor(created)
+      }
+    })
   }
 }
