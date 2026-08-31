@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowManager
@@ -23,6 +22,7 @@ import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockManager
 import com.intellij.ui.docking.DockableContent
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.launchOnShow
@@ -165,9 +165,9 @@ internal class ToolWindowEditorTabDockContainer private constructor(
      * Registers the editor dock container for the given tool window.
      */
     @JvmStatic
+    @RequiresEdt
     fun install(project: Project, toolWindowId: String, decorator: InternalDecorator) {
-      ApplicationManager.getApplication().invokeLater {
-        if (decorator.getClientProperty(INSTALLED_PROPERTY) == true) return@invokeLater
+        if (decorator.getClientProperty(INSTALLED_PROPERTY) == true) return
         decorator.putClientProperty(INSTALLED_PROPERTY, true)
 
         decorator.launchOnShow("ToolWindowDockContainer") {
@@ -183,7 +183,6 @@ internal class ToolWindowEditorTabDockContainer private constructor(
             Disposer.dispose(disposable)
           }
         }
-      }
     }
   }
 }

@@ -290,7 +290,9 @@ private val LOG = logger<ToolWindowManagerImpl>()
     val decorator = InternalDecoratorImpl(this, contentUi!!, decoratorChild)
     this.decorator = decorator
     if (ToolWindowEditorTabSupportUtil.hasSupport(id)) {
-      ToolWindowEditorTabDockContainer.install(toolWindowManager.project, id, decorator)
+      ApplicationManager.getApplication().invokeLater {
+        ToolWindowEditorTabDockContainer.install(toolWindowManager.project, id, decorator)
+      }
     }
 
     decorator.applyWindowInfo(windowInfo)
