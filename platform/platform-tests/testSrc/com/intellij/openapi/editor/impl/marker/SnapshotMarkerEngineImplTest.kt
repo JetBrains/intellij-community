@@ -10,27 +10,51 @@ import com.intellij.openapi.editor.impl.RangeMarkerStorageImpl
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.ref.GCUtil
+import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.jupiter.api.extension.InvocationInterceptor
+import org.junit.jupiter.api.extension.ReflectiveInvocationContext
 import java.lang.ref.WeakReference
+import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
 import kotlin.concurrent.thread
 
+@TestOnly
+class UsePMarkerImplementationExtension : InvocationInterceptor {
+  override fun interceptTestMethod(
+    invocation: InvocationInterceptor.Invocation<Void>,
+    invocationContext: ReflectiveInvocationContext<Method>,
+    extensionContext: ExtensionContext?,
+  ) {
+    RangeMarkerStorageImpl.usePMarkerImplementationIn<RuntimeException> {
+      super.interceptTestMethod(invocation, invocationContext, extensionContext)
+    }
+  }
+}
+
+@Target(AnnotationTarget.CLASS)
+@ExtendWith(
+  UsePMarkerImplementationExtension::class
+)
+annotation class UsePMarkerImplementation
+
+@UsePMarkerImplementation
 class SnapshotMarkerEngineImplTest {
   @Test
   fun `persistent marker uses snapshot engine`() {
-    RangeMarkerStorageImpl.usePMarkerImplementationIn<RuntimeException> {
-      val document = DocumentImpl("text")
+    val document = DocumentImpl("text")
 
-      val marker = document.createRangeMarker(1, 3, true)
+    val marker = document.createRangeMarker(1, 3, true)
 
-      assertTrue(marker is PMarker)
-    }
+    assertTrue(marker is PMarker)
   }
 
   @Test
@@ -831,7 +855,7 @@ class SnapshotMarkerEngineImplTest {
   }
 
   private fun markerIds(root: PMarkerRoot, tastePreference: Int): List<Long> {
-    val result = ArrayList<Long>()
+    val result = mutableListOf<Long>()
     root.processRangeMarkersOverlappingWith(
       startOffset = 0,
       endOffset = 100,
