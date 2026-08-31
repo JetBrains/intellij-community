@@ -1,38 +1,37 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.lang.formatter.settings
 
+import com.intellij.configurationStore.Property
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 
 @Suppress("PropertyName")
 class MarkdownCustomCodeStyleSettings(settings: CodeStyleSettings) : CustomCodeStyleSettings(MarkdownLanguage.INSTANCE.id, settings) {
-  //BLANK LINES
-  // See IDEA-291443
   @JvmField
-  //@Property(externalName = "min_lines_around_header")
+  @field:Property(externalName = "min_lines_around_header")
   var MAX_LINES_AROUND_HEADER: Int = 1
 
   @JvmField
-  //@Property(externalName = "max_lines_around_header")
+  @field:Property(externalName = "max_lines_around_header")
   var MIN_LINES_AROUND_HEADER: Int = 1
 
 
   @JvmField
-  //@Property(externalName = "min_lines_around_block_elements")
+  @field:Property(externalName = "min_lines_around_block_elements")
   var MAX_LINES_AROUND_BLOCK_ELEMENTS: Int = 1
 
   @JvmField
-  //@Property(externalName = "max_lines_around_block_elements")
+  @field:Property(externalName = "max_lines_around_block_elements")
   var MIN_LINES_AROUND_BLOCK_ELEMENTS: Int = 1
 
 
   @JvmField
-  //@Property(externalName = "min_lines_between_paragraphs")
+  @field:Property(externalName = "min_lines_between_paragraphs")
   var MAX_LINES_BETWEEN_PARAGRAPHS: Int = 1
 
   @JvmField
-  //@Property(externalName = "max_lines_between_paragraphs")
+  @field:Property(externalName = "max_lines_between_paragraphs")
   var MIN_LINES_BETWEEN_PARAGRAPHS: Int = 1
 
   //SPACES
