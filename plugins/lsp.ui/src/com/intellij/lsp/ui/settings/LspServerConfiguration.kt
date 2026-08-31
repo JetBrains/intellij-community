@@ -5,9 +5,11 @@ import com.intellij.configurationStore.Property
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.FileNameMatcher
 import com.intellij.openapi.project.Project
@@ -20,7 +22,7 @@ import com.intellij.util.xmlb.annotations.XMap
 
 @State(
   name = "LspServerSettings",
-  storages = [Storage("lspServers.xml")]
+  storages = [Storage(StoragePathMacros.WORKSPACE_FILE, roamingType = RoamingType.LOCAL)],
 )
 @Service(Service.Level.PROJECT)
 internal class LspServerSettings : PersistentStateComponent<LspServerSettings> {
