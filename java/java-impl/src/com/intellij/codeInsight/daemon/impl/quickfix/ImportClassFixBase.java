@@ -586,6 +586,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   private class ImportClassModCommand implements ModCommandAction {
     @Override
     public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+      if (myClassesToImport.length == 0) return null;
       return Presentation.of(getText());
     }
 
