@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-import static org.jetbrains.plugins.groovy.LightGroovyTestCase.assertType;
+import static org.jetbrains.plugins.groovy.util.GroovyAssertions.assertType;
 
 public interface TypingTest extends BaseTest {
 

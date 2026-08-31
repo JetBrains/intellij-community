@@ -280,7 +280,11 @@ jvm_library(
     ),
     module_name = "intellij.gradle.tests",
     visibility = ["//visibility:public"],
-    exports = ["//platform/external-system-api/testFramework"],
+    exports = [
+        # do not sort,
+        "//platform/external-system-api/testFramework",
+        "//plugins/groovy/testFramework",
+    ],
     runtime_deps = [
         # do not sort,
         "//platform/libraries/cglib",
@@ -321,6 +325,8 @@ jvm_library(
         # do not sort,
         "//platform/external-system-api/testFramework",
         "//platform/external-system-api/testFramework:testFramework_test_lib",
+        "//plugins/groovy/testFramework",
+        "//plugins/groovy/testFramework:testFramework_test_lib",
     ],
     runtime_deps = [
         # do not sort,
@@ -463,8 +469,8 @@ jvm_library(
         "//platform/util/concurrency:concurrency_test_lib",
         "//platform/testRunner",
         "//platform/testRunner:testRunner_test_lib",
-        "//plugins/groovy:groovy-tests",
-        "//plugins/groovy:groovy-tests_test_lib",
+        "//plugins/groovy/testFramework",
+        "//plugins/groovy/testFramework:testFramework_test_lib",
         "//platform/statistics",
         "//platform/statistics:statistics_test_lib",
         "//libraries/junit5",

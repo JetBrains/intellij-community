@@ -1,0 +1,66 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+
+### auto-generated section `build intellij.groovy.testFramework` start
+jvm_provided_library(
+    name = "libraries_junit4_provided",
+    lib = "//libraries/junit4",
+)
+
+jvm_library(
+    name = "testFramework",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.groovy.testFramework",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "//platform/analysis-api:analysis",
+        "//platform/editor-ui-api:editor-ui",
+        "//java/java-psi-api:psi",
+        "//plugins/groovy/groovy-psi:psi",
+        "//platform/testFramework",
+        "//java/testFramework",
+        ":libraries_junit4_provided",
+    ],
+)
+
+jvm_library(
+    name = "testFramework_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.groovy.testFramework",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":testFramework",
+        "//platform/core-api:core_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//java/java-psi-api:psi_test_lib",
+        "//plugins/groovy/groovy-psi:psi_test_lib",
+        "//platform/testFramework:testFramework_test_lib",
+        "//java/testFramework:testFramework_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+    ],
+)
+### auto-generated section `build intellij.groovy.testFramework` end
+
+### auto-generated section `iml intellij.groovy.testFramework` start
+exports_files(
+    [
+        "intellij.groovy.testFramework.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.groovy.testFramework` end

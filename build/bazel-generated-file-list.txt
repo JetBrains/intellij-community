@@ -1325,6 +1325,7 @@ plugins/groovy/rt/classLoader
 plugins/groovy/spock
 plugins/groovy/spock-rt
 plugins/groovy/structuralsearch-groovy
+plugins/groovy/testFramework
 plugins/hg4idea
 plugins/htmltools
 plugins/ide-features-trainer

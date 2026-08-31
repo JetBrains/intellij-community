@@ -21,8 +21,8 @@ import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
 import static com.intellij.testFramework.UsefulTestCase.assertNotNull;
 import static com.intellij.testFramework.UsefulTestCase.assertNull;
 import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
-import static org.jetbrains.plugins.groovy.LightGroovyTestCase.assertType;
 import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.getDelegatesToInfo;
+import static org.jetbrains.plugins.groovy.util.GroovyAssertions.assertType;
 
 public interface ResolveTest extends BaseTest {
 
