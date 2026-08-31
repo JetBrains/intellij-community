@@ -200,10 +200,9 @@ fun startApplication(
     result
   }
 
-  scope.launch {
-    initLafJob.join()
-
-    if (!isHeadless) {
+  if (!isHeadless) {
+    scope.launch {
+      initAwtToolkitJob.join()
       // preload native lib
       JBR.getWindowDecorations()
       if (OS.CURRENT == OS.macOS) {
