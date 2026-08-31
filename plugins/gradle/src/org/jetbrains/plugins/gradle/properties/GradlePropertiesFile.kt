@@ -38,7 +38,7 @@ object GradlePropertiesFile {
 
   @JvmStatic
   fun getProperties(serviceDirectory: String?, projectPath: Path): GradleProperties {
-    val propertyPaths = getPropertyPaths(serviceDirectory, resolveGradleProjectRoot(projectPath), null, projectPath.getEelDescriptor())
+    val propertyPaths = getPropertyPaths(serviceDirectory, resolveGradleProjectRoot(projectPath), null)
     return loadAndMergeProperties(propertyPaths)
   }
 
@@ -59,12 +59,12 @@ object GradlePropertiesFile {
   fun getPropertyPathsInBuildRoot(project: Project, buildRoot: Path): List<Path> {
     val serviceDirectory = GradleSettings.getInstance(project).serviceDirectoryPath
     val gradleHome = GradleLocalSettings.getInstance(project).getGradleHome(buildRoot.toCanonicalPath())
-    return getPropertyPaths(serviceDirectory, buildRoot, gradleHome, project.getEelDescriptor())
+    return getPropertyPaths(serviceDirectory, buildRoot, gradleHome)
   }
 
-  private fun getPropertyPaths(serviceDirectory: String?, buildRoot: Path, gradleHome: String?, eelDescriptor: EelDescriptor): List<Path> {
+  private fun getPropertyPaths(serviceDirectory: String?, buildRoot: Path, gradleHome: String?): List<Path> {
     return listOfNotNull(
-      getPropertyPathInGradleUserHome(serviceDirectory, eelDescriptor),
+      getPropertyPathInGradleUserHome(serviceDirectory, buildRoot.getEelDescriptor()),
       getPropertyPathInBuildRoot(buildRoot),
       getPropertyPathInGradleHome(gradleHome)
     ).map {
