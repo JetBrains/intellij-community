@@ -145,6 +145,7 @@ class EelSystemFolderTest {
     OS.macOS -> EelPlatform.Darwin(EelPlatform.Arch.Unknown)
     OS.FreeBSD -> EelPlatform.FreeBSD(EelPlatform.Arch.Unknown)
     OS.Linux, OS.Other -> EelPlatform.Linux(EelPlatform.Arch.Unknown)
+    OS.HarmonyOS -> EelPlatform.HarmonyOS(EelPlatform.Arch.Unknown)
   }
 }
 
