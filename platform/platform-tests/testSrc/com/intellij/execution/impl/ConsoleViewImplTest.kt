@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.editor.actionSystem.TypedAction
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
+import com.intellij.openapi.editor.impl.RangeMarkerStorageImpl
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.project.Project
@@ -1148,6 +1149,20 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
     assertMarkersEqual(allRangeHighlighters,
                        ExpectedHighlighter(0, 2, ConsoleViewContentType.USER_INPUT)
     )
+  }
+
+  fun testComputeTextToSendWithSnapshotHighlighters() {
+    RangeMarkerStorageImpl.usePMarkerImplementationIn<RuntimeException>() {
+      console.print("first", ConsoleViewContentType.USER_INPUT)
+      console.print("output", ConsoleViewContentType.NORMAL_OUTPUT)
+      console.print("second", ConsoleViewContentType.USER_INPUT)
+      console.flushDeferredText()
+      console.waitAllRequests()
+      consoleEditor.caretModel.moveToOffset(consoleEditor.document.textLength)
+
+      assertEquals("firstsecond", ConsoleTokenUtil.computeTextToSend(consoleEditor, project).toString())
+      assertEquals("", ConsoleTokenUtil.computeTextToSend(consoleEditor, project).toString())
+    }
   }
 
   fun testEnterDuringTypingMustSeparateUserInputTokens() {

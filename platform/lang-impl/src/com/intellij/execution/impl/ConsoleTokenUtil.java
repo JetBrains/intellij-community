@@ -6,10 +6,10 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.impl.RangeMarkerImpl;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -172,18 +172,16 @@ public final class ConsoleTokenUtil {
 
   static @NotNull CharSequence computeTextToSend(@NotNull Editor editor, @NotNull Project project) {
     StringBuilder textToSend = new StringBuilder();
-    // compute text input from the console contents:
-    // all range markers beginning from the caret offset backwards, marked as user input and not marked as already sent
-    for (RangeMarker marker = findTokenMarker(editor, project, editor.getCaretModel().getOffset() - 1);
-         marker != null;
-         marker = ((RangeMarkerImpl)marker).findRangeMarkerBefore()) {
-      ConsoleViewContentType tokenType = getTokenType(marker);
-      if (tokenType != null) {
-        if (tokenType != ConsoleViewContentType.USER_INPUT || marker.getUserData(USER_INPUT_SENT) == Boolean.TRUE) {
+    // Collect unsent user input from token markers that intersect the text before the caret.
+    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(editor.getDocument(), project, true);
+    try (MarkupIterator<RangeHighlighterEx> iterator = model.overlappingIterator(0, editor.getCaretModel().getOffset())) {
+      while (iterator.hasNext()) {
+        RangeHighlighterEx marker = iterator.next();
+        if (getTokenType(marker) != ConsoleViewContentType.USER_INPUT || marker.getUserData(USER_INPUT_SENT) == Boolean.TRUE) {
           continue;
         }
         marker.putUserData(USER_INPUT_SENT, true);
-        textToSend.insert(0, marker.getDocument().getText(marker.getTextRange()));
+        textToSend.append(marker.getDocument().getText(marker.getTextRange()));
       }
     }
     return textToSend;
