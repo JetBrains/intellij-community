@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 
-import androidx.compose.ui.graphics.Color
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -73,15 +72,12 @@ interface WelcomeRightTabContentProvider {
     class Text(
       val text: @Nls String,
       val icon: Icon? = null,
-      val tint: Color = Color.Unspecified,
     ) : WelcomeContent
 
     /** Clickable external link rendered with the standard trailing external-arrow icon. */
     class Link(
       val text: @Nls String,
       val onClick: (Project) -> Unit,
-      val tint: Color = Color.Unspecified,
-      val tintHovered: Color = Color.Unspecified,
     ) : WelcomeContent
   }
 
