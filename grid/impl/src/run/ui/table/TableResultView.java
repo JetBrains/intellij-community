@@ -193,6 +193,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.OptionalInt;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -849,6 +850,12 @@ public final class TableResultView extends JBTableWithResizableCells
     return myClickedHeaderColumnIdx;
   }
 
+  /** Only the column popup sets this, and a test cannot show one. */
+  @TestOnly
+  public void setContextColumn(@NotNull ModelIndex<GridColumn> columnIdx) {
+    myClickedHeaderColumnIdx = columnIdx;
+  }
+
   @Override
   public void updateSortKeysFromColumnAttributes() {
     RowSorter<? extends TableModel> rowSorter = getRowSorter();
@@ -965,12 +972,19 @@ public final class TableResultView extends JBTableWithResizableCells
 
   /**
    * The pinned strip owns the pixel column the divider occupies, so any partial repaint that starts inside the strip
-   * paints the divider again. An overlay in an ancestor is skipped by such repaints and gets erased or ghosted.
+   * paints the divider again. An overlay in an ancestor is skipped by such repaints and gets erased or ghosted. The
+   * line follows the visible rect, so the hosting viewport must not blit, or a scroll copies it along.
    */
   private static void paintPinDivider(@NotNull Graphics g, @NotNull JComponent c, int height) {
     int width = JBUIScale.scale(PIN_DIVIDER_WIDTH);
+    Rectangle visibleRect = c.getVisibleRect();
+    int leadingEdge = Math.max(0, visibleRect.x);
+    int trailingEdge = Math.min(c.getWidth(), visibleRect.x + visibleRect.width);
+    int x = c.getComponentOrientation().isLeftToRight()
+            ? Math.max(leadingEdge, trailingEdge - width)
+            : leadingEdge;
     g.setColor(JBUI.CurrentTheme.EditorTabs.underlineColor());
-    g.fillRect(c.getComponentOrientation().isLeftToRight() ? c.getWidth() - width : 0, 0, width, Math.min(height, c.getHeight()));
+    g.fillRect(x, 0, width, Math.min(height, c.getHeight()));
   }
 
   private void adjustCacheSize() {
@@ -1175,7 +1189,11 @@ public final class TableResultView extends JBTableWithResizableCells
     TableColumn resizingColumn = tableHeader != null ? tableHeader.getResizingColumn() : null;
     if (resizingColumn != null && autoResizeMode == AUTO_RESIZE_OFF) {
       if (resizingColumn instanceof TableResultViewColumn column) {
-        column.setColumnWidthByUser(resizingColumn.getWidth());
+        int width = myFrozenColumnsController == null
+                    ? resizingColumn.getWidth()
+                    : myFrozenColumnsController.constrainFrozenColumnResize(this, column, resizingColumn.getWidth());
+        if (resizingColumn.getWidth() != width) resizingColumn.setWidth(width);
+        column.setColumnWidthByUser(width);
       }
       else {
         resizingColumn.setPreferredWidth(resizingColumn.getWidth());
@@ -1311,11 +1329,15 @@ public final class TableResultView extends JBTableWithResizableCells
 
   @Override
   public void changeSelectedColumnsWidth(int delta) {
-    for (int column : getSelectedColumns()) {
+    int[] selectedColumns = getSelectedColumns();
+    int constrainedDelta = myFrozenColumnsController == null
+                           ? delta
+                           : myFrozenColumnsController.constrainSelectedColumnWidthDelta(this, selectedColumns, delta);
+    for (int column : selectedColumns) {
       if (column < 0) continue;
       ResultViewColumn tableColumn = renderedColumnAt(column);
       if (tableColumn == null) continue;
-      tableColumn.setColumnWidthByUser(Math.max(0, tableColumn.getColumnWidth() + delta));
+      tableColumn.setColumnWidthByUser(Math.max(0, tableColumn.getColumnWidth() + constrainedDelta));
     }
   }
 
@@ -1323,14 +1345,39 @@ public final class TableResultView extends JBTableWithResizableCells
   public void fitColumnsToViewport() {
     int totalColumns = renderedColumnCount();
     if (totalColumns == 0) return;
-    // Split the whole grid width across every visible column, including the pinned ones in the frozen strip.
-    int mainWidth = getParent() instanceof JViewport viewport ? viewport.getExtentSize().width : getWidth();
-    TableResultView frozenView = getPairedFrozenView();
-    int frozenWidth = frozenView == null ? 0 : Math.max(0, frozenView.getWidth());
-    int availableWidth = mainWidth + frozenWidth;
+    int availableWidth = getAvailableColumnsWidth();
     if (availableWidth <= 0) return;
     int columnWidth = Math.max(JBUI.scale(40), availableWidth / totalColumns);
     forEachRenderedColumn(column -> column.setColumnWidthByUser(columnWidth));
+  }
+
+  /**
+   * The width the columns share: the scrollable viewport plus the pinned strip, which is the row header and so sits
+   * outside that viewport. Zero or less while the grid is not laid out.
+   */
+  public int getAvailableColumnsWidth() {
+    int mainWidth = getParent() instanceof JViewport viewport ? viewport.getExtentSize().width : getWidth();
+    return myIsFrozenStrip ? mainWidth : myFrozenColumnsController.getAvailableColumnsWidth();
+  }
+
+  /**
+   * Whether pinning exactly {@code pinnedModelIndices} would leave the unpinned table usable. Widths are the ones the
+   * strip would render, so the scroll position does not matter and a column hidden from the view counts for nothing,
+   * just as the pin operation skips it.
+   */
+  public boolean canFitPinnedColumns(@NotNull Set<Integer> pinnedModelIndices) {
+    int availableWidth = getAvailableColumnsWidth();
+    if (availableWidth <= 0) return true;
+    TableColumnModel columnModel = getColumnModel();
+    int pinnedWidth = 0;
+    int unpinnedWidth = 0;
+    for (int viewColumn = 0; viewColumn < columnModel.getColumnCount(); viewColumn++) {
+      if (!(renderedColumnAt(viewColumn) instanceof TableResultViewColumn column)) continue;
+      int width = column.getFrozenStripWidth();
+      if (pinnedModelIndices.contains(columnModel.getColumn(viewColumn).getModelIndex())) pinnedWidth += width;
+      else unpinnedWidth += width;
+    }
+    return PinnedColumnsFit.fits(pinnedWidth, unpinnedWidth, availableWidth);
   }
 
   /** Runs the operation over the pinned strip columns plus the visible main columns, so column actions span both. */

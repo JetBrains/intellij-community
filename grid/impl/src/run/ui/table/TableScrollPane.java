@@ -4,6 +4,7 @@ import com.intellij.database.datagrid.DataGrid;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBAutoScroller;
+import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBViewport;
 import com.intellij.util.ui.JBInsets;
@@ -11,12 +12,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.BorderFactory;
+import javax.swing.BoundedRangeModel;
 import javax.swing.JComponent;
 import javax.swing.JScrollBar;
 import javax.swing.JViewport;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
+import java.awt.Adjustable;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
@@ -29,6 +32,9 @@ import java.awt.event.MouseEvent;
 public class TableScrollPane extends JBScrollPane {
   protected final TableResultView myResultView;
   private boolean myAddSpaceForHorizontalScrollbar;
+  private boolean myFrozenHorizontalScrollBarVisible;
+  private @Nullable JComponent myOverlaidFrozenCorner;
+  private boolean myOverlaidFrozenCornerWasOpaque;
 
   public TableScrollPane(@NotNull TableResultView table,
                          @NotNull DataGrid grid,
@@ -56,6 +62,77 @@ public class TableScrollPane extends JBScrollPane {
         return myResultView != null ? myResultView.getComponent().getBackground() : super.getBackground();
       }
     };
+  }
+
+  @Override
+  public @NotNull JScrollBar createHorizontalScrollBar() {
+    return new JBScrollBar(Adjustable.HORIZONTAL) {
+      @Override
+      public void setVisible(boolean visible) {
+        super.setVisible(visible && (!myFrozenHorizontalScrollBarVisible || hasScrollableRange(this)));
+      }
+    };
+  }
+
+  boolean isFrozenHorizontalScrollBarVisible() {
+    return myFrozenHorizontalScrollBarVisible;
+  }
+
+  /**
+   * The scroll pane still reserves the horizontal-scrollbar band so its lower leading corner can host the frozen
+   * strip's scrollbar, but an unrelated full-thumb scrollbar must not be exposed when the main table itself fits.
+   */
+  void setFrozenHorizontalScrollBarVisible(boolean visible) {
+    myFrozenHorizontalScrollBarVisible = visible;
+    if (!visible) restoreOverlaidFrozenCorner();
+  }
+
+  private static boolean hasScrollableRange(@NotNull JScrollBar scrollBar) {
+    BoundedRangeModel model = scrollBar.getModel();
+    return (long)model.getMaximum() - model.getMinimum() > model.getExtent();
+  }
+
+  @Override
+  public void doLayout() {
+    super.doLayout();
+    if (myFrozenHorizontalScrollBarVisible) {
+      // HORIZONTAL_SCROLLBAR_ALWAYS reserves a host for the frozen scrollbar. Decide whether the main scrollbar is
+      // useful from its final model, after the scroll pane has laid out and synchronized the viewport.
+      getHorizontalScrollBar().setVisible(true);
+    }
+    updateFrozenScrollBarCorner();
+  }
+
+  /** Gives the frozen scrollbar a visible overlay host when the platform does not reserve a scrollbar band. */
+  private void updateFrozenScrollBarCorner() {
+    Component corner = getCorner(LOWER_LEADING_CORNER);
+    JViewport rowHeader = getRowHeader();
+    if (!myFrozenHorizontalScrollBarVisible || !(corner instanceof JComponent component) || rowHeader == null ||
+        corner.getWidth() > 0 && corner.getHeight() > 0) {
+      restoreOverlaidFrozenCorner();
+      return;
+    }
+
+    int height = Math.min(corner.getPreferredSize().height, rowHeader.getHeight());
+    if (rowHeader.getWidth() <= 0 || height <= 0) {
+      restoreOverlaidFrozenCorner();
+      return;
+    }
+
+    if (myOverlaidFrozenCorner != component) {
+      restoreOverlaidFrozenCorner();
+      myOverlaidFrozenCorner = component;
+      myOverlaidFrozenCornerWasOpaque = component.isOpaque();
+    }
+    component.setOpaque(false);
+    component.setBounds(rowHeader.getX(), rowHeader.getY() + rowHeader.getHeight() - height, rowHeader.getWidth(), height);
+    if (component.getParent() == this) setComponentZOrder(component, 0);
+  }
+
+  private void restoreOverlaidFrozenCorner() {
+    if (myOverlaidFrozenCorner == null) return;
+    myOverlaidFrozenCorner.setOpaque(myOverlaidFrozenCornerWasOpaque);
+    myOverlaidFrozenCorner = null;
   }
 
   public void addSpaceForHorizontalScrollbar(boolean v) {

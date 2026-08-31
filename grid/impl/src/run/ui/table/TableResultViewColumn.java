@@ -55,6 +55,11 @@ public abstract class TableResultViewColumn extends TableColumn implements Resul
     setPreferredWidth(width);
   }
 
+  /** Width this column takes in the pinned strip: a user width wins, otherwise the wider of laid-out and preferred. */
+  int getFrozenStripWidth() {
+    return myWidthSetByUser ? getColumnWidth() : Math.max(getWidth(), getColumnWidth());
+  }
+
   void setFrozenColumnWidth(int width, boolean widthSetByUser) {
     myWidthSetByUser = widthSetByUser;
     myWidthLockedForLayout = true;

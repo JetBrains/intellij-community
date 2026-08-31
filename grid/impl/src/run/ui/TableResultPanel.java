@@ -687,10 +687,7 @@ public class TableResultPanel extends UserDataHolderBase
   }
 
   public void setColumnsPinned(@NotNull ModelIndexSet<GridColumn> columns, boolean pinned) {
-    List<Integer> columnIds = new ArrayList<>(columns.size());
-    for (ModelIndex<GridColumn> column : columns.asIterable()) {
-      columnIds.add(column.value);
-    }
+    List<Integer> columnIds = columnIds(columns);
     GridColumnPinModel updated = pinned ? myColumnPinModel.pinAll(columnIds) : myColumnPinModel.unpinAll(columnIds);
     applyPinModel(updated);
   }
@@ -700,11 +697,50 @@ public class TableResultPanel extends UserDataHolderBase
   }
 
   public void pinColumnsUpToHere(@NotNull ModelIndex<GridColumn> columnIdx) {
-    applyPinModel(myColumnPinModel.pinUpToHere(columnIdx.value, visibleColumnsInDisplayOrder()));
+    pinIfItFits(myColumnPinModel.pinUpToHere(columnIdx.value, visibleColumnsInDisplayOrder()));
   }
 
   public boolean canPinColumnsUpToHere(@NotNull ModelIndex<GridColumn> columnIdx) {
     return isColumnPinningEnabled() && myColumnPinModel.canPinUpToHere(columnIdx.value, visibleColumnsInDisplayOrder());
+  }
+
+  /** Whether the column takes part in the displayed order that "up to here" is counted along. */
+  public boolean isColumnInDisplayOrder(@NotNull ModelIndex<GridColumn> columnIdx) {
+    return visibleColumnsInDisplayOrder().contains(columnIdx.value);
+  }
+
+  /** Pins {@code columns} unless the result would leave no usable width for the unpinned table. */
+  public void pinColumns(@NotNull ModelIndexSet<GridColumn> columns) {
+    pinIfItFits(myColumnPinModel.pinAll(columnIds(columns)));
+  }
+
+  public boolean pinnedColumnsUpToHereFit(@NotNull ModelIndex<GridColumn> columnIdx) {
+    return columnsFit(myColumnPinModel.pinUpToHere(columnIdx.value, visibleColumnsInDisplayOrder()));
+  }
+
+  public boolean pinnedColumnsFit(@NotNull ModelIndexSet<GridColumn> columns) {
+    return columnsFit(myColumnPinModel.pinAll(columnIds(columns)));
+  }
+
+  /**
+   * The width check the pin actions gate on. Restore paths skip it on purpose: a pinned layout that is already too
+   * wide is left alone rather than silently changed (DBE-26267).
+   */
+  private boolean columnsFit(@NotNull GridColumnPinModel pinned) {
+    return !(myResultView instanceof TableResultView view) || view.canFitPinnedColumns(pinned.pinnedIds());
+  }
+
+  /** A presentation can go stale between update and invocation, so the width is checked here too. */
+  private void pinIfItFits(@NotNull GridColumnPinModel updated) {
+    if (columnsFit(updated)) applyPinModel(updated);
+  }
+
+  private static @NotNull List<Integer> columnIds(@NotNull ModelIndexSet<GridColumn> columns) {
+    List<Integer> columnIds = new ArrayList<>(columns.size());
+    for (ModelIndex<GridColumn> column : columns.asIterable()) {
+      columnIds.add(column.value);
+    }
+    return columnIds;
   }
 
   private @NotNull List<Integer> visibleColumnsInDisplayOrder() {
@@ -770,11 +806,7 @@ public class TableResultPanel extends UserDataHolderBase
   }
 
   private void unpinRemovedColumns(@NotNull ModelIndexSet<GridColumn> columns) {
-    List<Integer> removedIds = new ArrayList<>(columns.size());
-    for (ModelIndex<GridColumn> column : columns.asIterable()) {
-      removedIds.add(column.value);
-    }
-    GridColumnPinModel updated = myColumnPinModel.unpinAll(removedIds);
+    GridColumnPinModel updated = myColumnPinModel.unpinAll(columnIds(columns));
     if (updated.equals(myColumnPinModel)) return;
     myUserChangedPinState = true;
     myColumnPinModel = updated;
