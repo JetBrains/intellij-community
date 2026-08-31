@@ -533,7 +533,7 @@ public final class FileManagerImpl implements FileManagerEx {
   }
 
   @Override
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false)
   public @Nullable PsiFile findFile(@NotNull VirtualFile vFile) {
     CodeInsightContext context = CodeInsightContexts.anyContext();
     return findFile(vFile, context);

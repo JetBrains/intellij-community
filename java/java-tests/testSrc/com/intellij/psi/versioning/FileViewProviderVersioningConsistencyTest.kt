@@ -304,6 +304,19 @@ internal class FileViewProviderVersioningConsistencyTest {
   }
 
   @Test
+  fun `PsiManager findFile can be called in versioned environment without read lock`() {
+    val virtualFile = psiFile.virtualFile
+    val expectedFile = runReadActionBlocking {
+      PsiManager.getInstance(project).findFile(virtualFile)
+    }
+
+    PsiVersioningService.freezePsiVersion {
+      ThreadingAssertions.assertNoReadAccess()
+      Assertions.assertSame(expectedFile, PsiManager.getInstance(project).findFile(virtualFile))
+    }
+  }
+
+  @Test
   fun `freezePsiVersion activates getCurrentVersionInsideFrozenPsi`() {
     Assertions.assertNull(InternalPsiVersioning.getCurrentPsiVersionInsideFrozenPsi())
     PsiVersioningService.freezePsiVersion {

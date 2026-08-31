@@ -32,6 +32,7 @@ import com.intellij.psi.PsiTreeChangeListener;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
+import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -198,9 +199,10 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   }
 
   @Override
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false)
   public PsiFile findFile(@NotNull VirtualFile file) {
     ProgressIndicatorProvider.checkCanceled();
+    InternalPsiVersioning.assertReadAccessOrVersionedEnvironment();
     return myFileManager.findFile(file);
   }
 

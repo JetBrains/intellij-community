@@ -45,7 +45,7 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @return the PSI file, or {@code null} if {@code file} is a directory, an invalid virtual file,
    * or the current project is a dummy or default project.
    */
-  @RequiresReadLock
+  @RequiresReadLock(generateAssertion = false)
   @RequiresBackgroundThread(generateAssertion = false)
   public abstract @Nullable PsiFile findFile(@NotNull VirtualFile file);
 
