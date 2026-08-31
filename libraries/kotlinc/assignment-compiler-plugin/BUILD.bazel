@@ -52,6 +52,7 @@ exports_files(
     [
         "intellij.libraries.kotlinc.assignment.compiler.plugin.iml",
         "resources/intellij.libraries.kotlinc.assignment.compiler.plugin.xml",
+        "module-content.yaml",
     ],
     visibility = ["//visibility:public"],
 )

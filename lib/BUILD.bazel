@@ -6972,28 +6972,6 @@ java_library(
 )
 
 copy_file(
-    name = "org.jetbrains.kotlin/assignment-compiler-plugin-for-ide-2.5.0-dev-5674.jar_copy",
-    src = "@org_jetbrains_kotlin-assignment-compiler-plugin-for-ide-2_5_0-dev-5674_http//file",
-    out = "org.jetbrains.kotlin/assignment-compiler-plugin-for-ide-2.5.0-dev-5674.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "kotlinc-assignment-compiler-plugin",
-    jar = "@org_jetbrains_kotlin-assignment-compiler-plugin-for-ide-2_5_0-dev-5674_http//file",
-    source_jar = "@org_jetbrains_kotlin-assignment-compiler-plugin-for-ide-2_5_0-dev-5674-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "kotlinc-assignment-compiler-plugin-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":kotlinc-assignment-compiler-plugin"],
-)
-
-copy_file(
     name = "org.jetbrains.kotlin/compose-compiler-plugin-for-ide-2.5.0-dev-5674.jar_copy",
     src = "@org_jetbrains_kotlin-compose-compiler-plugin-for-ide-2_5_0-dev-5674_http//file",
     out = "org.jetbrains.kotlin/compose-compiler-plugin-for-ide-2.5.0-dev-5674.jar",
@@ -13104,6 +13082,21 @@ jvm_import(
     name = "libraries-kotlinc-analysis-api-platform-interface-kotlinc-analysis-api-platform-interface",
     jar = "@org_jetbrains_kotlin-analysis-api-platform-interface-for-ide-2_5_0-dev-5674_http//file",
     source_jar = "@org_jetbrains_kotlin-analysis-api-platform-interface-for-ide-2_5_0-dev-5674-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.jetbrains.kotlin/assignment-compiler-plugin-for-ide-2.5.0-dev-5674.jar_copy",
+    src = "@org_jetbrains_kotlin-assignment-compiler-plugin-for-ide-2_5_0-dev-5674_http//file",
+    out = "org.jetbrains.kotlin/assignment-compiler-plugin-for-ide-2.5.0-dev-5674.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-kotlinc-assignment-compiler-plugin-kotlinc-assignment-compiler-plugin",
+    jar = "@org_jetbrains_kotlin-assignment-compiler-plugin-for-ide-2_5_0-dev-5674_http//file",
+    source_jar = "@org_jetbrains_kotlin-assignment-compiler-plugin-for-ide-2_5_0-dev-5674-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

@@ -5559,20 +5559,6 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_kotlin-assignment-compiler-plugin-for-ide-2_5_0-dev-5674_http",
-    downloaded_file_path = "assignment-compiler-plugin-for-ide-2.5.0-dev-5674.jar",
-    sha256 = "77e7d096d0c2f4782fb8ae4c3dd99481475cfdedc617f1dc7cfbb3ff1c65867c",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.5.0-dev-5674/assignment-compiler-plugin-for-ide-2.5.0-dev-5674.jar",
-)
-
-http_file(
-    name = "org_jetbrains_kotlin-assignment-compiler-plugin-for-ide-2_5_0-dev-5674-sources_http",
-    downloaded_file_path = "assignment-compiler-plugin-for-ide-2.5.0-dev-5674-sources.jar",
-    sha256 = "9b8b22811fc699085da927ee072f24cca6298569f8c339aaa96c706324331bfb",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.5.0-dev-5674/assignment-compiler-plugin-for-ide-2.5.0-dev-5674-sources.jar",
-)
-
-http_file(
     name = "org_jetbrains_kotlin-compose-compiler-plugin-for-ide-2_5_0-dev-5674_http",
     downloaded_file_path = "compose-compiler-plugin-for-ide-2.5.0-dev-5674.jar",
     sha256 = "9aa17d573460dec61f08e0b10d852bb937141f98b466a145ad01839c51bb615a",
@@ -10463,6 +10449,20 @@ http_file(
     downloaded_file_path = "analysis-api-platform-interface-for-ide-2.5.0-dev-5674-sources.jar",
     sha256 = "7419f287ff4236a36fa289e863b2a25bd0702f9a990821f00015834cf4f8e3ef",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-platform-interface-for-ide/2.5.0-dev-5674/analysis-api-platform-interface-for-ide-2.5.0-dev-5674-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlin-assignment-compiler-plugin-for-ide-2_5_0-dev-5674_http",
+    downloaded_file_path = "assignment-compiler-plugin-for-ide-2.5.0-dev-5674.jar",
+    sha256 = "77e7d096d0c2f4782fb8ae4c3dd99481475cfdedc617f1dc7cfbb3ff1c65867c",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.5.0-dev-5674/assignment-compiler-plugin-for-ide-2.5.0-dev-5674.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlin-assignment-compiler-plugin-for-ide-2_5_0-dev-5674-sources_http",
+    downloaded_file_path = "assignment-compiler-plugin-for-ide-2.5.0-dev-5674-sources.jar",
+    sha256 = "9b8b22811fc699085da927ee072f24cca6298569f8c339aaa96c706324331bfb",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.5.0-dev-5674/assignment-compiler-plugin-for-ide-2.5.0-dev-5674-sources.jar",
 )
 
 http_file(
