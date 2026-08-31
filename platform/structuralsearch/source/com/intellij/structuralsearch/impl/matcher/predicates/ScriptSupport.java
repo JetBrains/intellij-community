@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -105,6 +106,9 @@ public final class ScriptSupport {
     @NotNull String scriptText,
     @NotNull MatchOptions matchOptions
   ) throws MalformedPatternException {
+    if (!TrustedProjects.isProjectTrusted(project)) {
+      throw new MalformedPatternException(SSRBundle.message("error.scripts.untrusted"));
+    }
     final List<StructuralSearchScriptEngine> engines = StructuralSearchScriptEngine.EP_NAME.getExtensionList();
     if (engines.isEmpty()) {
       throw new MalformedPatternException(SSRBundle.message("error.groovy.script.engine.not.available"));
