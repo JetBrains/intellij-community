@@ -96,6 +96,11 @@ abstract class WelcomeScreenRightTab(
       Disposer.register(project) {
         projectToTabMap.remove(projectId)
       }
+      // The editor of the tab disposes the tab when it closes. The map must not answer that dead tab, whose
+      // feature sections are gone, so the tab drops itself here.
+      Disposer.register(tab) {
+        projectToTabMap.remove(projectId, tab)
+      }
       // A repeated show() replaces the tab of the project. The replaced tab holds the sections of the features.
       val replacedTab = projectToTabMap.put(projectId, tab)
       if (replacedTab != null) {

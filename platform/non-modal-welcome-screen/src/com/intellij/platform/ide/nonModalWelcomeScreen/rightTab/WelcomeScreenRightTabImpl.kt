@@ -114,6 +114,12 @@ internal class WelcomeScreenRightTabImpl(
   private var featureContents: List<WelcomeScreenFeatureUI.Content> = emptyList()
   private var disposed: Boolean = false
 
+  /**
+   * Which content the tab shows now. [createContent] bumps it, and the default-content fill drops a result
+   * that a later switch already replaced. Read and written on the EDT only.
+   */
+  private var contentGeneration: Int = 0
+
   init {
     val headerPanel = BorderLayoutPanel()
     headerPanel.isOpaque = false
@@ -275,6 +281,7 @@ internal class WelcomeScreenRightTabImpl(
   }
 
   private fun createContent(builder: (() -> Unit) -> Unit) {
+    contentGeneration++
     backButton.parent?.remove(backButton)
     disposeFeatureContents()
     contentPanel.removeAll()
@@ -305,15 +312,17 @@ internal class WelcomeScreenRightTabImpl(
   }
 
   private fun createDefaultContent(finish: () -> Unit) {
+    val generation = contentGeneration
     contentProvider.coroutineScope.launch {
       try {
         val backendFeatureIds = WelcomeScreenFeatureApi.getInstance().getAvailableFeatureIds().toSet()
         val contents = createFeatureContents(backendFeatureIds)
 
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          // The tab can go while the sections build. A section holds an editor and a scope, so the tab that no longer
-          // takes it must release it here. Both the check and the disposal run on the EDT, and so does [dispose].
-          if (disposed) {
+          // The tab can go while the sections build, and a switch to custom content can replace what this fill
+          // was built for. A section holds an editor and a scope, so a fill that no tab takes must release it
+          // here. Both checks and the disposal run on the EDT, and so does [dispose].
+          if (disposed || generation != contentGeneration) {
             disposeContents(contents)
             return@withContext
           }
