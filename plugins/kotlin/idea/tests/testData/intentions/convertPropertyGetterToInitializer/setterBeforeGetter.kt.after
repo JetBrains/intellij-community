@@ -1,0 +1,4 @@
+var p: Int = 1
+    set(value) {
+        println(value)
+    }

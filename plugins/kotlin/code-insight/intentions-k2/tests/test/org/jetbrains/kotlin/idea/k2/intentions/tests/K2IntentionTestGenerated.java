@@ -5644,6 +5644,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("annotatedGetter.kt")
+        public void testAnnotatedGetter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyGetterToInitializer/annotatedGetter.kt");
+        }
+
         @TestMetadata("block.kt")
         public void testBlock() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertPropertyGetterToInitializer/block.kt");
@@ -5684,6 +5689,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertPropertyGetterToInitializer/hasInitializer.kt");
         }
 
+        @TestMetadata("inCompanionOfInterface.kt")
+        public void testInCompanionOfInterface() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyGetterToInitializer/inCompanionOfInterface.kt");
+        }
+
         @TestMetadata("inInterface.kt")
         public void testInInterface() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertPropertyGetterToInitializer/inInterface.kt");
@@ -5697,6 +5707,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("run.kt")
         public void testRun() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertPropertyGetterToInitializer/run.kt");
+        }
+
+        @TestMetadata("setterBeforeGetter.kt")
+        public void testSetterBeforeGetter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyGetterToInitializer/setterBeforeGetter.kt");
         }
 
         @TestMetadata("simple.kt")
