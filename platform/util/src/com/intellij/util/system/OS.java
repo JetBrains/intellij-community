@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public enum OS {
-  Windows, macOS, Linux, FreeBSD, Other;
+  Windows, macOS, Linux, FreeBSD, HarmonyOS, Other;
 
   /// Represents an operating system this JVM is running on.
   ///
@@ -69,12 +69,12 @@ public enum OS {
 
   /// Returns an instance of [OsInfo] for the current OS.
   public final @NotNull OsInfo getOsInfo() {
-    return (
+    return
       this == Windows ? WindowsInfo.INSTANCE :
       this == macOS ? MacOsInfo.INSTANCE :
       this == Linux ? LinuxInfo.INSTANCE :
-      UnixInfo.INSTANCE
-    );
+      this == HarmonyOS ? HarmonyOSInfo.INSTANCE :
+      UnixInfo.INSTANCE;
   }
 
   public @NotNull Platform getPlatform() {
@@ -88,6 +88,7 @@ public enum OS {
       if (os.startsWith("mac")) return macOS;
       if (os.startsWith("linux")) return Linux;
       if (os.startsWith("freebsd")) return FreeBSD;
+      if (os.startsWith("harmonyos")) return HarmonyOS;
     }
     return Other;
   }
@@ -229,5 +230,10 @@ public enum OS {
       @SuppressWarnings("SpellCheckingInspection")
       long confstr(int name, byte[] buf, long size);
     }
+  }
+  public static final class HarmonyOSInfo extends UnixInfo {
+    private static final HarmonyOSInfo INSTANCE = new HarmonyOSInfo();
+
+    private HarmonyOSInfo() { }
   }
 }

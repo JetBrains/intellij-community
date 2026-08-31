@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -52,6 +52,9 @@ public final class SystemInfo {
   /** Use {@link OS#CURRENT} instead */
   @ApiStatus.Obsolete
   public static final boolean isUnix = OS.CURRENT != OS.Windows;
+  /** Use {@link OS#CURRENT} instead */
+  @ApiStatus.Obsolete
+  public static final boolean isHarmonyOS = OS.CURRENT == OS.HarmonyOS;
 
   /** @deprecated unimportant; use {@link OS.UnixInfo#getDistro()} if needed */
   @Deprecated

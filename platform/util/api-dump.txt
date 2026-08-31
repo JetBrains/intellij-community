@@ -442,6 +442,7 @@ f:com.intellij.openapi.util.StackOverflowPreventedException
 - java.lang.RuntimeException
 - <init>(java.lang.String):V
 f:com.intellij.openapi.util.SystemInfo
+- sf:isHarmonyOS:Z
 - s:getOsName():java.lang.String
 - s:getOsNameAndVersion():java.lang.String
 - s:getWinBuildNumber():java.lang.Long
@@ -2117,6 +2118,7 @@ e:com.intellij.util.system.CpuArch
 - s:values():com.intellij.util.system.CpuArch[]
 e:com.intellij.util.system.OS
 - java.lang.Enum
+- sf:HarmonyOS:com.intellij.util.system.OS
 - f:getBinaryName(java.lang.String):java.lang.String
 - f:getOsInfo():com.intellij.util.system.OS$OsInfo
 - getPlatform():com.intellij.execution.Platform
@@ -2125,6 +2127,8 @@ e:com.intellij.util.system.OS
 - f:parsedVersion():com.intellij.openapi.util.Version
 - s:values():com.intellij.util.system.OS[]
 - f:version():java.lang.String
+f:com.intellij.util.system.OS$HarmonyOSInfo
+- com.intellij.util.system.OS$UnixInfo
 f:com.intellij.util.system.OS$LinuxInfo
 - com.intellij.util.system.OS$UnixInfo
 - isUnderWsl():Z
