@@ -18,6 +18,7 @@ import com.intellij.grazie.remote.LanguageDownloader
 import com.intellij.grazie.utils.isPromotionAllowed
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -146,7 +147,7 @@ class ProofreadConfigurable : BoundSearchableConfigurable(
           oxfordCb.enabled(Lang.BRITISH_ENGLISH in GrazieConfig.get().availableLanguages)
         }
         updateAvailability()
-        GrazieConfig.subscribe(disposable!!) { updateAvailability() }
+        GrazieConfig.subscribe(disposable!!) { invokeOnEdt { updateAvailability() } }
       }
 
       separator()
@@ -197,12 +198,11 @@ class ProofreadConfigurable : BoundSearchableConfigurable(
       // Reserve the space for comment to prevent "jumping" UI
       comment("")
         .applyToComponent {
-          GrazieConfig.subscribe(disposable!!) {
+          fun updateComment() {
             text = if (!isLoggedIn) commentText else ""
           }
-          GrazieCloudConnector.subscribeToAuthorizationStateEvents(disposable!!) {
-            text = if (!isLoggedIn) commentText else ""
-          }
+          GrazieConfig.subscribe(disposable!!) { invokeOnEdt { updateComment() } }
+          GrazieCloudConnector.subscribeToAuthorizationStateEvents(disposable!!) { invokeOnEdt { updateComment() } }
         }
     }
   }
@@ -249,8 +249,8 @@ class ProofreadConfigurable : BoundSearchableConfigurable(
 
   private class GrazieListeningComponentPredicate(private val disposable: Disposable, private val invoker: () -> Boolean) : ComponentPredicate() {
     override fun addListener(listener: (Boolean) -> Unit) {
-      GrazieConfig.subscribe(disposable) { listener(invoke()) }
-      GrazieCloudConnector.subscribeToAuthorizationStateEvents(disposable) { listener(invoke()) }
+      GrazieConfig.subscribe(disposable) { invokeOnEdt { listener(invoke()) } }
+      GrazieCloudConnector.subscribeToAuthorizationStateEvents(disposable) { invokeOnEdt { listener(invoke()) } }
     }
 
     override fun invoke(): Boolean = invoker()
@@ -258,4 +258,10 @@ class ProofreadConfigurable : BoundSearchableConfigurable(
 
   private val isLoggedIn: Boolean
     get() = GrazieConfig.get().processing == Processing.Cloud && GrazieCloudConnector.isAuthorized()
+}
+
+private fun invokeOnEdt(update: () -> Unit) {
+  val application = ApplicationManager.getApplication()
+  if (application.isDispatchThread) update()
+  else application.invokeLater(update, ModalityState.any())
 }
