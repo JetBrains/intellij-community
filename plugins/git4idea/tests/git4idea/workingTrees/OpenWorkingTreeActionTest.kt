@@ -5,12 +5,18 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.utils.io.deleteRecursively
 import com.intellij.vcs.test.refresh
 import git4idea.GitWorkingTree
+import git4idea.commands.Git
 import git4idea.test.GitSingleRepoContext
 import git4idea.test.git
 import git4idea.test.gitSingleRepoContextFixture
@@ -18,12 +24,19 @@ import git4idea.workingTrees.ui.actions.GitWorkingTreeTabActionsDataKeys
 import git4idea.workingTrees.ui.actions.OpenWorkingTreeAction
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.lang.reflect.InvocationTargetException
+import java.lang.reflect.Proxy
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 @TestApplication
 @RegistryKey("git.enable.working.trees.feature", "true")
 internal class OpenWorkingTreeActionTest {
   private val contextFixture = gitSingleRepoContextFixture()
   private val context: GitSingleRepoContext get() = contextFixture.get()
+
+  @TestDisposable
+  private lateinit var testDisposable: Disposable
 
   private fun GitSingleRepoContext.setUpWorktree() {
     git("worktree add -B feature ../treeRoot")
@@ -67,6 +80,46 @@ internal class OpenWorkingTreeActionTest {
     val event = actionEvent(listOf(linkedTree()))
     OpenWorkingTreeAction().update(event)
     assertThat(event.presentation.isEnabled).describedAs("A prunable working tree cannot be opened").isFalse()
+  }
+
+  @Test
+  fun `test action is disabled while the working tree is being deleted`(): Unit = with(context) {
+    setUpWorktree()
+    val realGit = Git.getInstance()
+    val deletionStarted = CountDownLatch(1)
+    val releaseDeletion = CountDownLatch(1)
+    // Hold `git worktree remove` open, so the assertion below runs while the deletion is genuinely in flight.
+    val gatedGit = Proxy.newProxyInstance(Git::class.java.classLoader, arrayOf(Git::class.java)) { _, method, arguments ->
+      if (method.name == "deleteWorkingTree") {
+        deletionStarted.countDown()
+        releaseDeletion.await(1, TimeUnit.MINUTES)
+      }
+      try {
+        method.invoke(realGit, *(arguments ?: emptyArray()))
+      }
+      catch (e: InvocationTargetException) {
+        throw e.targetException
+      }
+    } as Git
+    ApplicationManager.getApplication().replaceService(Git::class.java, gatedGit, testDisposable)
+
+    val toDelete = linkedTree()
+    val deletion = GitWorkingTreesService.getInstance(project).deleteWorkingTrees(project, listOf(toDelete), repo)
+    try {
+      assertThat(deletionStarted.await(1, TimeUnit.MINUTES))
+        .describedAs("The deletion must reach `git worktree remove`")
+        .isTrue()
+
+      val event = actionEvent(listOf(toDelete))
+      OpenWorkingTreeAction().update(event)
+      assertThat(event.presentation.isEnabled)
+        .describedAs("A working tree that is being deleted must not be opened")
+        .isFalse()
+    }
+    finally {
+      releaseDeletion.countDown()
+    }
+    timeoutRunBlocking { deletion.join() }
   }
 
   private fun GitSingleRepoContext.actionEvent(selection: List<GitWorkingTree>): AnActionEvent {

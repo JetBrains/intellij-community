@@ -29,8 +29,13 @@ internal class RemoveWorkingTreeAction : DumbAwareAction() {
   }
 
   private fun isEnabledFor(trees: List<GitWorkingTree>?, project: Project?, repository: GitRepository?): Boolean {
-    return project != null && repository != null && !trees.isNullOrEmpty() && trees.all {
-      !it.isCurrent && !it.isMain && !GitCreateWorkingTreeService.getInstance().isWorkingTreeCreationInProgress(it)
+    if (project == null || repository == null || trees.isNullOrEmpty()) return false
+    val creationService = GitCreateWorkingTreeService.getInstance()
+    val worktreesService = GitWorkingTreesService.getInstance(project)
+    return trees.all {
+      !it.isCurrent && !it.isMain &&
+      !creationService.isWorkingTreeCreationInProgress(it) &&
+      !worktreesService.isWorkingTreeDeletionInProgress(it)
     }
   }
 

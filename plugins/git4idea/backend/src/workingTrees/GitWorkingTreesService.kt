@@ -355,6 +355,10 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
    */
   private val rootsUnderDeletion = ContainerUtil.newConcurrentSet<FilePath>()
 
+  internal fun isWorkingTreeDeletionInProgress(workingTree: GitWorkingTree): Boolean {
+    return rootsUnderDeletion.contains(workingTree.path)
+  }
+
   fun deleteWorkingTree(project: Project, tree: GitWorkingTree, repository: GitRepository): Job {
     return deleteWorkingTrees(project, listOf(tree), repository)
   }

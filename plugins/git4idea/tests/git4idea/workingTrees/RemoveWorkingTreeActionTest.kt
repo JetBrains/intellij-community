@@ -200,6 +200,13 @@ internal class RemoveWorkingTreeActionTest {
         .describedAs("Cancellation must not suppress the notification for already deleted worktrees")
         .hasSize(1)
       assertThat(deletionAttempt).describedAs("Deletion must be cancelled on the second worktree").isEqualTo(2)
+
+      val service = GitWorkingTreesService.getInstance(project)
+      timeoutRunBlocking {
+        waitUntil("the cancelled deletion released its claim") {
+          toDelete.none { service.isWorkingTreeDeletionInProgress(it) }
+        }
+      }
     }
     finally {
       TestDialogManager.setTestDialog(oldTestDialog)
@@ -225,6 +232,12 @@ internal class RemoveWorkingTreeActionTest {
       assertThat(firstAttemptStarted.await(1, TimeUnit.MINUTES))
         .describedAs("The first deletion must reach `git worktree remove`")
         .isTrue()
+
+      val event = actionEvent(listOf(toDelete))
+      RemoveWorkingTreeAction().update(event)
+      assertThat(event.presentation.isEnabled)
+        .describedAs("A working tree whose deletion is in flight must not be removable again")
+        .isFalse()
 
       // The worktrees tab is not modal and refreshes only after an asynchronous reload, so the very same row can be
       // selected and deleted again while the first deletion is still running.

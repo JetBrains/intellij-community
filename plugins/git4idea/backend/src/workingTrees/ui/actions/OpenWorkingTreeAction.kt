@@ -28,7 +28,9 @@ internal class OpenWorkingTreeAction : DumbAwareAction() {
       return false
     }
     val workingTree = trees[0]
-    return !GitCreateWorkingTreeService.getInstance().isWorkingTreeCreationInProgress(workingTree) && !workingTree.isPrunable
+    return !GitCreateWorkingTreeService.getInstance().isWorkingTreeCreationInProgress(workingTree) &&
+           !GitWorkingTreesService.getInstance(project).isWorkingTreeDeletionInProgress(workingTree) &&
+           !workingTree.isPrunable
   }
 
   override fun actionPerformed(e: AnActionEvent) {
