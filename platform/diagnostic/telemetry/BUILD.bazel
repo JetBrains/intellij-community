@@ -2,6 +2,14 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+jps_test(
+    name = "telemetry-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":telemetry-tests_test_lib"],
+)
+### skip generation section `test intellij.platform.diagnostic.telemetry.tests`
+
 ### auto-generated section `build intellij.platform.diagnostic.telemetry` start
 jvm_provided_library(
     name = "libraries_kotlinx_coroutines_core_provided",
@@ -172,10 +180,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.diagnostic.telemetry.tests` end
-
-### auto-generated section `test intellij.platform.diagnostic.telemetry.tests` start
-jps_test(
-    name = "telemetry-tests_test",
-    runtime_deps = [":telemetry-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.diagnostic.telemetry.tests` end
