@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.core.script.k2.modules
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.findEntitiesByVirtualFile
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 
@@ -31,7 +32,7 @@ interface KotlinScriptEntityProvider {
             project: Project,
             virtualFile: VirtualFile
         ): KotlinScriptEntity? = project.workspaceModel.currentSnapshot
-            .getVirtualFileUrlIndex().findEntitiesByUrl(virtualFile.toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager()))
+            .getVirtualFileUrlIndex().findEntitiesByVirtualFile(virtualFile, project.workspaceModel.getVirtualFileUrlManager())
             .filterIsInstance<KotlinScriptEntity>().firstOrNull()
 
         private val EP_NAME: ProjectExtensionPointName<KotlinScriptEntityProvider> =

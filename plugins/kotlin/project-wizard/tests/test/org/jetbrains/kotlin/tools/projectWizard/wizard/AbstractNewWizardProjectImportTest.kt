@@ -10,7 +10,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getSetting
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.backend.workspace.findEntitiesByVirtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.HeavyPlatformTestCase
@@ -194,7 +194,7 @@ abstract class AbstractNewWizardProjectImportTest : HeavyPlatformTestCase() {
         val workspaceModel = this.project.workspaceModel
         val fileUrlManager = workspaceModel.getVirtualFileUrlManager()
         val scriptEntities = workspaceModel.currentSnapshot.getVirtualFileUrlIndex()
-            .findEntitiesByUrl(this.alwaysVirtualFile.toVirtualFileUrl(fileUrlManager))
+            .findEntitiesByVirtualFile(this.alwaysVirtualFile, fileUrlManager)
             .filterIsInstance<KotlinScriptEntity>().toList()
         return scriptEntities.any { it.entitySource is GradleKotlinScriptEntitySource }
     }

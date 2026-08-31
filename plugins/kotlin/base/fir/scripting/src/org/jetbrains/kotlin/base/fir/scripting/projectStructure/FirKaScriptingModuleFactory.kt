@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.base.fir.scripting.projectStructure
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.findEntitiesByVirtualFile
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.psi.PsiFile
@@ -64,8 +65,8 @@ internal class FirKaScriptingModuleFactory : FirKaModuleFactory {
         if (!nameSequence.endsWith(KotlinFileType.DOT_SCRIPT_EXTENSION)) {
             val workspaceModel = WorkspaceModel.getInstance(project)
 
-            val url = virtualFile.toVirtualFileUrl(workspaceModel.getVirtualFileUrlManager())
-            val entitiesByUrl = snapshot.getVirtualFileUrlIndex().findEntitiesByUrl(url)
+            val urlManager = workspaceModel.getVirtualFileUrlManager()
+            val entitiesByUrl = snapshot.getVirtualFileUrlIndex().findEntitiesByVirtualFile(virtualFile, urlManager)
             if (entitiesByUrl.none { it is KotlinScriptEntity }) {
                 return null
             }

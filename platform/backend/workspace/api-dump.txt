@@ -1,4 +1,5 @@
 f:com.intellij.platform.backend.workspace.VirtualFileUrls
+- sf:findEntitiesByVirtualFile(com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex,com.intellij.openapi.vfs.VirtualFile,com.intellij.platform.workspace.storage.url.VirtualFileUrlManager):kotlin.sequences.Sequence
 - sf:getVirtualFile(com.intellij.platform.workspace.storage.url.VirtualFileUrl):com.intellij.openapi.vfs.VirtualFile
 - sf:toVirtualFileUrl(com.intellij.openapi.vfs.VirtualFile,com.intellij.platform.workspace.storage.url.VirtualFileUrlManager):com.intellij.platform.workspace.storage.url.VirtualFileUrl
 com.intellij.platform.backend.workspace.WorkspaceModel

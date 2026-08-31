@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.core.script.k2.modules
 
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.backend.workspace.findEntitiesByVirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.psi.PsiClass
@@ -52,7 +52,7 @@ class ScriptDependencySourceNavigationPolicyForJavaClasses : ClsCustomNavigation
         val snapshot = project.workspaceModel.currentSnapshot
         val index = snapshot.getVirtualFileUrlIndex()
 
-        val sources = index.findEntitiesByUrl(jar.toVirtualFileUrl(urlManager))
+        val sources = index.findEntitiesByVirtualFile(jar, urlManager)
             .filterIsInstance<KotlinScriptLibraryEntity>()
             .flatMap { it.sources }.toSet().mapNotNull { it.virtualFile }
         if (sources.none()) return null

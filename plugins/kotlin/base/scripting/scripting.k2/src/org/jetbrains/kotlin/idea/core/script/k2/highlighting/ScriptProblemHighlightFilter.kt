@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.core.script.k2.highlighting
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.roots.ProjectRootModificationTracker
-import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.backend.workspace.findEntitiesByVirtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValueProvider.Result.create
@@ -51,7 +51,7 @@ internal class ScriptProblemHighlightFilter : ProblemHighlightFilter() {
         val workspaceModel = file.project.workspaceModel
 
         if (workspaceModel.currentSnapshot.getVirtualFileUrlIndex()
-                .findEntitiesByUrl(file.alwaysVirtualFile.toVirtualFileUrl(workspaceModel.getVirtualFileUrlManager()))
+                .findEntitiesByVirtualFile(file.alwaysVirtualFile, workspaceModel.getVirtualFileUrlManager())
                 .filterIsInstance<KotlinScriptEntity>().none()
         ) return false
 

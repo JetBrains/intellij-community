@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.k2
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -12,7 +11,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
-import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.backend.workspace.findEntitiesByVirtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.toBuilder
 import kotlinx.coroutines.CoroutineScope
@@ -87,7 +86,7 @@ class KotlinScriptModuleManager(private val project: Project, private val corout
         val fileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
 
         val modulesToRemove = scripts.flatMap {
-            builder.getVirtualFileUrlIndex().findEntitiesByUrl(it.toVirtualFileUrl(fileUrlManager)).filterIsInstance<KotlinScriptEntity>()
+            builder.getVirtualFileUrlIndex().findEntitiesByVirtualFile(it, fileUrlManager).filterIsInstance<KotlinScriptEntity>()
         }
 
         if (modulesToRemove.isEmpty()) return

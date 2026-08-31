@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.findEntitiesByVirtualFile
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -321,9 +322,8 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
     }
 
     private suspend fun invalidate(virtualFile: VirtualFile) {
-        val url = virtualFile.toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager())
         val entity = project.workspaceModel.currentSnapshot
-            .getVirtualFileUrlIndex().findEntitiesByUrl(url)
+            .getVirtualFileUrlIndex().findEntitiesByVirtualFile(virtualFile, project.workspaceModel.getVirtualFileUrlManager())
             .filterIsInstance<KotlinScriptEntity>().singleOrNull() ?: return
         project.workspaceModel.update("removing .kts modules") { it.removeEntity(entity) }
     }
