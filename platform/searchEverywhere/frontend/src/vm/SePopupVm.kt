@@ -27,6 +27,7 @@ import com.intellij.openapi.project.IncompleteDependenciesService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.frontend.SeSelectionResult
@@ -210,7 +211,7 @@ class SePopupVm(
       }.map { (currentTab, isDumb, isIncomplete) ->
         // IJPL-193615: In RemDev, IncompleteDependenciesService state is not synchronized between frontend and backend,
         // so isIncomplete always remains false on frontend, making dependency loading messages unavailable in RemDev.
-        if (currentTab.isIndexingDependent && isDumb) {
+        if (currentTab.isIndexingDependent && isDumb && !IdeProductMode.isLight) {
           if (currentTab.tabId == SeActionsTab.ID) {
             SearchFieldHint(IdeBundle.message("dumb.mode.analyzing.project"), IdeBundle.message("dumb.mode.some.actions.might.be.unavailable.during.project.analysis"), true)
           }

@@ -80,6 +80,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -500,6 +501,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
   @RequiresReadLock
   private @Nullable Pair<@Nls String, @Nls String> getLoadingTextAndTooltip(List<SearchEverywhereContributor<?>> contributors) {
     if (myProject == null) return null;
+    if (IdeProductMode.isLight()) return null;
 
     boolean isDumb = DumbService.isDumb(myProject);
     boolean isIncomplete = !myProject.getService(IncompleteDependenciesService.class).getState().isComplete();
