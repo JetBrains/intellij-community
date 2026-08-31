@@ -36,6 +36,7 @@ import com.intellij.ui.jcef.JCEFHtmlPanel
 import com.intellij.util.application
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.net.NetUtils
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -67,7 +68,6 @@ import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import org.intellij.plugins.markdown.util.MarkdownApplicationScope
 import org.intellij.plugins.markdown.util.MarkdownPluginScope
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import java.awt.BorderLayout
 import java.awt.Point
 import java.net.URL
@@ -102,6 +102,7 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
   }
 
   private val updateHandler = MarkdownUpdateHandler.Debounced()
+  private val initialization = CompletableDeferred<Unit>()
 
   /** The one served resource meant to be a document: it declares its own policy in a `<meta>`. */
   private fun buildIndexResource(): ResourceProvider.Resource {
@@ -176,30 +177,39 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
     })
 
     coroutineScope.launch {
-      val projectRoot = projectRoot.await()
-      val fileSchemeResourcesProcessor = createFileSchemeResourcesProcessor(projectRoot)
+      try {
+        val projectRoot = projectRoot.await()
+        val fileSchemeResourcesProcessor = createFileSchemeResourcesProcessor(projectRoot)
 
-      loadIndexContent()
-      updateHandler.requests.collectLatest { request ->
-        try {
-          when (request) {
-            is PreviewRequest.Update -> {
-              val (html, initialScrollOffset, document) = request
-              val baseFile = document?.parent
-              val builder = IncrementalDOMBuilder(html, baseFile, projectRoot, fileSchemeResourcesProcessor)
-              val renderClosure = builder.generateRenderClosure()
-              updateDom(renderClosure, initialScrollOffset, previousRenderClosure.isEmpty())
-            }
-            is PreviewRequest.ReloadWithOffset -> {
-              reloadIndexContent()
-              updateDom(previousRenderClosure, request.offset, firstUpdate = true)
+        loadIndexContent()
+        initialization.complete(Unit)
+        updateHandler.requests.collectLatest { request ->
+          try {
+            when (request) {
+              is PreviewRequest.Update -> {
+                val (html, initialScrollOffset, document) = request
+                val baseFile = document?.parent
+                val builder = IncrementalDOMBuilder(html, baseFile, projectRoot, fileSchemeResourcesProcessor)
+                val renderClosure = builder.generateRenderClosure()
+                updateDom(renderClosure, initialScrollOffset, previousRenderClosure.isEmpty())
+              }
+              is PreviewRequest.ReloadWithOffset -> {
+                reloadIndexContent()
+                updateDom(previousRenderClosure, request.offset, firstUpdate = true)
+              }
             }
           }
+          catch (e: Exception) {
+            rethrowControlFlowException(e)
+            thisLogger().error(e)
+          }
         }
-        catch (e: Exception) {
-          rethrowControlFlowException(e)
-          thisLogger().error(e)
-        }
+      }
+      catch (e: Throwable) {
+        initialization.completeExceptionally(e)
+        rethrowControlFlowException(e)
+        thisLogger().error("Failed to initialize the Markdown preview", e)
+        throw e
       }
     }
   }
@@ -243,11 +253,10 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
   }
 
   @ApiStatus.Internal
-  @TestOnly
-  suspend fun setHtmlAndWait(html: String) {
-    loadIndexContent()
+  suspend fun setHtmlAndWait(html: String, document: VirtualFile? = null, fileSchemeResourcesProcessor: ResourceProvider? = null) {
+    initialization.await()
 
-    val builder = IncrementalDOMBuilder(html, null, null, null)
+    val builder = IncrementalDOMBuilder(html, document?.parent, projectRoot.await(), fileSchemeResourcesProcessor)
     val renderClosure = readAction { builder.generateRenderClosure() }
     updateDom(renderClosure, 0, false)
   }
@@ -397,6 +406,11 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
     val fileSchemeResourcesProcessor = FileSchemeResourcesProcessor(virtualFile, projectRoot)
     Disposer.register(this@MarkdownJCEFHtmlPanel, PreviewStaticServer.instance.registerResourceProvider(fileSchemeResourcesProcessor))
     return fileSchemeResourcesProcessor
+  }
+
+  @ApiStatus.Internal
+  suspend fun createFileSchemeResourcesProcessor(): ResourceProvider? {
+    return createFileSchemeResourcesProcessor(projectRoot.await())
   }
 
   private inner class MyAggregatingResourceProvider : ResourceProvider {

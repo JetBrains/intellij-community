@@ -3,11 +3,17 @@ package com.intellij.markdown.jcef.fileActions.export
 
 import com.intellij.markdown.jcef.preview.HtmlExporter
 import com.intellij.markdown.jcef.preview.HtmlResourceSavingSettings
+import com.intellij.markdown.jcef.preview.HtmlSourceTextPreprocessor
+import com.intellij.markdown.jcef.preview.JCEFHtmlPanelProvider
 import com.intellij.markdown.jcef.preview.MarkdownJCEFHtmlPanel
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.TextComponentAccessors
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -18,16 +24,15 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.RowsRange
 import com.intellij.ui.layout.selected
+import kotlinx.coroutines.launch
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.fileActions.MarkdownFileActionFormat
 import org.intellij.plugins.markdown.fileActions.export.MarkdownExportProvider
 import org.intellij.plugins.markdown.fileActions.MarkdownFileActionsBaseDialog
-import org.intellij.plugins.markdown.fileActions.utils.MarkdownFileEditorUtils
-import org.intellij.plugins.markdown.fileActions.utils.MarkdownImportExportUtils
 import org.intellij.plugins.markdown.fileActions.utils.MarkdownImportExportUtils.notifyAndRefreshIfExportSuccess
 import org.intellij.plugins.markdown.fileActions.utils.MarkdownImportExportUtils.validateTargetDir
 import org.intellij.plugins.markdown.ui.MarkdownNotifications
-import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor
+import org.intellij.plugins.markdown.util.MarkdownPluginScope
 import org.jetbrains.annotations.NonNls
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
@@ -46,11 +51,8 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
   override fun exportFile(project: Project, mdFile: VirtualFile, outputFile: String) {
     saveSettings(project)
 
-    val preview = MarkdownFileEditorUtils.findMarkdownPreviewEditor(project, mdFile, true) ?: return
-    val htmlPanel = preview.getUserData(MarkdownPreviewFileEditor.PREVIEW_BROWSER)?.get() ?: return
-
-    if (htmlPanel is MarkdownJCEFHtmlPanel) {
-      htmlPanel.saveHtml(outputFile, service<MarkdownHtmlExportSettings>().getResourceSavingSettings(), project) { path, ok ->
+    withMarkdownPreview(project, mdFile) { htmlPanel, onFinished ->
+      htmlPanel.saveHtml(outputFile, service<MarkdownHtmlExportSettings>().getResourceSavingSettings(), project, onFinished) { path, ok ->
         if (ok) {
           val file = VfsUtil.findFileByIoFile(File(path), true)
           if (file != null) {
@@ -69,8 +71,7 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
   }
 
   override fun validate(project: Project, file: VirtualFile): String? {
-    val preview = MarkdownFileEditorUtils.findMarkdownPreviewEditor(project, file, true)
-    if (preview == null || !MarkdownImportExportUtils.isJCEFPanelOpen(preview)) {
+    if (!JCEFHtmlPanelProvider.canBeUsed()) {
       return MarkdownBundle.message("markdown.export.validation.failure.msg", formatDescription.formatName)
     }
     return null
@@ -142,6 +143,7 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
     path: String,
     resDirPath: HtmlResourceSavingSettings,
     project: Project,
+    onFinished: () -> Unit,
     resultCallback: BiConsumer<String, Boolean>,
   ) {
     cefBrowser.getSource { source ->
@@ -152,6 +154,9 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
       }
       catch (e: Exception) {
         resultCallback.accept(path, false)
+      }
+      finally {
+        onFinished()
       }
     }
   }
@@ -172,5 +177,32 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
 
     @JvmStatic
     val format = MarkdownFileActionFormat("HTML", "html")
+  }
+}
+
+internal fun withMarkdownPreview(
+  project: Project,
+  mdFile: VirtualFile,
+  action: (MarkdownJCEFHtmlPanel, () -> Unit) -> Unit,
+) {
+  val panel = MarkdownJCEFHtmlPanel(project, mdFile)
+  panel.createImmediately()
+  MarkdownPluginScope.scope(project).launch {
+    try {
+      val document = readAction { FileDocumentManager.getInstance().getDocument(mdFile) } ?: error("Cannot load the Markdown document")
+      val content = readAction { HtmlSourceTextPreprocessor().preprocessText(project, document, mdFile) }
+      val fileSchemeResourcesProcessor = panel.createFileSchemeResourcesProcessor()
+      panel.setHtmlAndWait(content, mdFile, fileSchemeResourcesProcessor)
+      action(panel) { Disposer.dispose(panel)}
+    }
+    catch (e: Exception) {
+      Disposer.dispose(panel)
+      rethrowControlFlowException(e)
+      MarkdownNotifications.showError(
+        project,
+        id = MarkdownExportProvider.Companion.NotificationIds.exportFailed,
+        message = MarkdownBundle.message("markdown.export.failure.msg", mdFile.name)
+      )
+    }
   }
 }
