@@ -515,16 +515,22 @@ private class ComboModel(
 ) : ComboBoxModel<String> {
   override fun setSelectedItem(item: Any?) {
     if (item is String) {
-      comboModel.callIfNeeded {
-        val index = model.itemNames().indexOf(item)
-        model.setByIndex(index, item)
-        comboModel.afterOnSelectedItemChanged?.invoke(item, index)
+      val index = model.itemNames().indexOf(item)
+      if (index != -1) {
+        comboModel.callIfNeeded {
+          model.setByIndex(index, item)
+          comboModel.afterOnSelectedItemChanged?.invoke(item, index)
+        }
       }
     }
   }
 
-  override fun getSelectedItem(): String {
-    return getElementAt(model.currentItemIndex())
+  override fun getSelectedItem(): String? {
+    val index = model.currentItemIndex()
+    if (index == -1) {
+      return null
+    }
+    return getElementAt(index)
   }
 
   override fun getSize(): Int {
