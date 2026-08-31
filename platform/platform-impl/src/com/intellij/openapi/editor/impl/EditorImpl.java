@@ -1885,33 +1885,33 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     assertIsDispatchThread();
-    WriteIntentReadAction.run(() -> {
-      Document document = getElfDocument();
-      Disposer.dispose(myHighlighterDisposable);
+    // The lock stays around `reinitSettings` only. The constructor calls this method before `myPanel` exists,
+    // so an editor is built without the RW lock. See IJPL-243574.
+    Document document = getElfDocument();
+    Disposer.dispose(myHighlighterDisposable);
 
-      myHighlighterDisposable = Disposer.newDisposable();
-      document.addDocumentListener(
-        ElfFeatureFlag.isEnabled() ? new EditorHighlighterElfCandidate(highlighter) : highlighter,
-        myHighlighterDisposable
-      );
-      Disposer.register(myDisposable, myHighlighterDisposable);
-      highlighter.setEditor(this);
+    myHighlighterDisposable = Disposer.newDisposable();
+    document.addDocumentListener(
+      ElfFeatureFlag.isEnabled() ? new EditorHighlighterElfCandidate(highlighter) : highlighter,
+      myHighlighterDisposable
+    );
+    Disposer.register(myDisposable, myHighlighterDisposable);
+    highlighter.setEditor(this);
 
-      try (AccessToken ignored = SlowOperations.knownIssue("IJPL-162348")) {
-        highlighter.setText(document.getImmutableCharSequence());
-      }
-      if (!(highlighter instanceof EmptyEditorHighlighter)) {
-        EditorHighlighterCache.rememberEditorHighlighterForCachesOptimization(document, highlighter);
-      }
+    try (AccessToken ignored = SlowOperations.knownIssue("IJPL-162348")) {
+      highlighter.setText(document.getImmutableCharSequence());
+    }
+    if (!(highlighter instanceof EmptyEditorHighlighter)) {
+      EditorHighlighterCache.rememberEditorHighlighterForCachesOptimization(document, highlighter);
+    }
 
-      EditorHighlighter oldHighlighter = myHighlighter;
-      myHighlighter = highlighter;
-      myPropertyChangeSupport.firePropertyChange(PROP_HIGHLIGHTER, oldHighlighter, highlighter);
+    EditorHighlighter oldHighlighter = myHighlighter;
+    myHighlighter = highlighter;
+    myPropertyChangeSupport.firePropertyChange(PROP_HIGHLIGHTER, oldHighlighter, highlighter);
 
-      if (myPanel != null) {
-        reinitSettings();
-      }
-    });
+    if (myPanel != null) {
+      WriteIntentReadAction.run(() -> reinitSettings());
+    }
   }
 
   @Override
