@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertEqualPaths
 import com.intellij.maven.testFramework.fixtures.assertModules
 import com.intellij.maven.testFramework.fixtures.assertOrderedElementsAreEqual
 import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
@@ -700,7 +701,7 @@ class MavenProjectReaderTest(mavenVersion: String, modelVersion: String) {
 
     maven.importProjectAsync()
     val p = maven.projectsTree.projects.first()
-    assertEquals(System.getProperty("java.home"), p.name)
+    assertEqualPaths(System.getProperty("java.home"), p.name!!)
     assertEquals(System.getenv(maven.envVar), p.packaging)
   }
 

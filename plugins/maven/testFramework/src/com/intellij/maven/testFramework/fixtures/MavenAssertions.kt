@@ -8,6 +8,10 @@ import com.intellij.util.containers.CollectionFactory
 import junit.framework.TestCase
 import junit.framework.TestCase.assertEquals
 
+fun assertEqualPaths(actual: String, expected: String) {
+  assertEquals(FileUtil.toSystemIndependentName(expected), FileUtil.toSystemIndependentName(actual))
+}
+
 fun assertUnorderedPathsAreEqual(actual: Collection<String>, expected: Collection<String>) {
   assertEquals(createFilePathSet(expected), createFilePathSet(actual))
 }
