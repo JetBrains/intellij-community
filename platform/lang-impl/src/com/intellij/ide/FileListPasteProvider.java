@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
@@ -66,7 +67,7 @@ public final class FileListPasteProvider implements PasteProvider {
     if (dir != null) {
       final boolean move = LinuxDragAndDropSupport.isMoveOperation(contents);
       if (move) {
-        if (DumbService.isDumb(project) &&
+        if (DumbService.isDumb(project) && !IdeProductMode.isLight() &&
             Messages.showYesNoDialog(project, RefactoringBundle.message("move.handler.is.dumb.during.indexing"),
                                      RefactoringBundle.message("move.title"), Messages.getQuestionIcon()) != Messages.YES) {
           return;

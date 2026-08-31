@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -129,10 +130,11 @@ public final class MoveHandler implements RefactoringActionHandler {
       if (DumbService.isDumb(project)) {
         MoveFilesOrDirectoriesHandler filesOrDirectoriesHandler = MoveHandlerDelegate.EP_NAME.findExtensionOrFail(MoveFilesOrDirectoriesHandler.class);
         if (filesOrDirectoriesHandler.canMove(elements, targetContainer, null)) {
-          int copyDumb = Messages.showYesNoDialog(project,
-                                                  RefactoringBundle.message("move.handler.is.dumb.during.indexing"),
-                                                  getRefactoringName(), Messages.getQuestionIcon());
-          if (copyDumb == Messages.YES) {
+          boolean copyDumb = IdeProductMode.isLight() ||
+                             Messages.showYesNoDialog(project,
+                                                      RefactoringBundle.message("move.handler.is.dumb.during.indexing"),
+                                                      getRefactoringName(), Messages.getQuestionIcon()) == Messages.YES;
+          if (copyDumb) {
             logDelegate(project, filesOrDirectoriesHandler, elements[0].getLanguage());
             filesOrDirectoriesHandler.doMove(project, elements, filesOrDirectoriesHandler.adjustTargetForMove(dataContext, targetContainer), callback);
           }
