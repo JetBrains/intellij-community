@@ -19,9 +19,15 @@ single_version_override(
     patch_strip = 1,
     patches = [
         "//:build/jvm-rules/protobuf-33.4-reuse-win64-for-arm.patch",
+        "//:build/jvm-rules/protobuf-33.4-fail-on-java-core-source-build.patch",
     ],
     version = "33.4",
 )
+
+# Root registration outranks the dependency order, so the prebuilt protobuf-java
+# toolchain always wins over the source toolchain of @protobuf.
+# Do not remove: without it @protobuf//java/core compiles from source.
+register_toolchains("@rules_jvm//:protoc_java_toolchain_toolchain")
 
 bazel_dep(name = "aspect_rules_lint", version = "2.5.0")
 bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.1")

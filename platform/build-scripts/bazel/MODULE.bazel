@@ -48,9 +48,14 @@ single_version_override(
     patch_strip = 1,
     patches = [
         "protobuf-33.4-reuse-win64-for-arm.patch",
+        "protobuf-33.4-fail-on-java-core-source-build.patch",
     ],
     version = "33.4",
 )
+
+# The prebuilt protobuf-java runtime for java_proto_library.
+# Do not remove: without it @protobuf//java/core compiles from source.
+register_toolchains("//:protoc_java_toolchain_toolchain")
 
 intellij_version = "253.29346.138"
 
@@ -81,6 +86,15 @@ maven.install(
 use_repo(maven, "j2b_maven")
 
 bazel_dep(name = "rules_python", version = "1.7.0")
+
+http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+
+http_file(
+    name = "protobuf-java_http",
+    downloaded_file_path = "protobuf-java-4.33.4.jar",
+    sha256 = "3ca892fd6ea8b37d01bb6917dbc0bf2637548b756753f65a28d4f1d4d982347f",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/protobuf/protobuf-java/4.33.4/protobuf-java-4.33.4.jar",
+)
 
 # Use custom remote_java_tools_windows with vc_redist .dll files due to https://github.com/bazelbuild/rules_java/issues/316
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")

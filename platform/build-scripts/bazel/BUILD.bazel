@@ -1,4 +1,5 @@
 load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
+load("@protobuf//bazel/toolchains:proto_lang_toolchain.bzl", "proto_lang_toolchain")
 load("@rules_java//java:defs.bzl", "java_binary", "java_import", "java_test")
 load("@rules_java//toolchains:default_java_toolchain.bzl", "default_java_toolchain")
 load("@rules_kotlin//kotlin:core.bzl", "kt_compiler_plugin", "kt_kotlinc_options")
@@ -6,6 +7,23 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 exports_files(
     ["intellij.platform.buildScripts.bazel.iml"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "protobuf_java",
+    jars = ["@protobuf-java_http//file"],
+)
+
+# Java toolchain for `java_proto_library` with the prebuilt runtime jar above.
+# Without it, resolution falls back to `@protobuf//java/core:toolchain`, which
+# compiles the runtime from source. Registered in MODULE.bazel.
+proto_lang_toolchain(
+    name = "protoc_java_toolchain",
+    command_line = "--java_out=%s",
+    progress_message = "Generating Java proto_library %{label}",
+    runtime = ":protobuf_java",
+    toolchain_type = "@protobuf//bazel/private:java_toolchain_type",
     visibility = ["//visibility:public"],
 )
 

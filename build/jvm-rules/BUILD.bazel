@@ -15,6 +15,18 @@ jvm_import(
     visibility = ["//visibility:public"],
 )
 
+# Java toolchain for `java_proto_library` with the prebuilt runtime jar above.
+# Without it, resolution falls back to `@protobuf//java/core:toolchain`, which
+# compiles the runtime from source. Registered in MODULE.bazel.
+proto_lang_toolchain(
+    name = "protoc_java_toolchain",
+    command_line = "--java_out=%s",
+    progress_message = "Generating Java proto_library %{label}",
+    runtime = ":protobuf_java",
+    toolchain_type = "@protobuf//bazel/private:java_toolchain_type",
+    visibility = ["//visibility:public"],
+)
+
 kt_kotlinc_options(
     name = "rules_jvm_bootstrap_kotlinc_options",
     include_stdlibs = "none",

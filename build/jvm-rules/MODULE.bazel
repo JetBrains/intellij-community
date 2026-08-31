@@ -81,6 +81,7 @@ single_version_override(
     patch_strip = 1,
     patches = [
         "protobuf-33.4-reuse-win64-for-arm.patch",
+        "protobuf-33.4-fail-on-java-core-source-build.patch",
     ],
     version = protobuf_version,
 )
@@ -134,6 +135,10 @@ register_toolchains(
     "@llvm//toolchain:all",
     dev_dependency = True,
 )  # `dev_dependency = True` to avoid registering toolchains in modules using that module
+
+# Not a dev_dependency on purpose: dependent modules must also resolve this
+# toolchain, or they compile `@protobuf//java/core` from source.
+register_toolchains("//:protoc_java_toolchain_toolchain")
 
 http_file(
     name = "protobuf-java_http",
