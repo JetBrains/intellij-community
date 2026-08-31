@@ -19,6 +19,7 @@ import com.intellij.python.sdk.frontend.PySdkFrontendBundle
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.Icon
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -406,6 +407,16 @@ class EvoTreeLazyNodeElement(
         catch (error: EvoRpcFailedException) {
           showLoadError(error, listeners)
           reportLoad(project, PyEvoWidgetCollector.NodeOutcome.ERROR, forceRefresh, startedAt)
+        }
+        // The floor under every branch above. A load that leaves by any other route — the progress this runs under is
+        // cancellable, and a loader can always throw something no branch names — must not leave the node loading: the
+        // widget keeps its tree across opens, so such a node holds a "Loading…" row that nothing will ever replace,
+        // for the life of the tree rather than for this open. Put back as never loaded, so opening it asks again.
+        finally {
+          if (state == State.LOADING) {
+            // The scope this ran in may be cancelled already, and the state still has to be put back.
+            withContext(NonCancellable + Dispatchers.EDT) { updateState(State.CREATED, listeners) }
+          }
         }
       }
     }
