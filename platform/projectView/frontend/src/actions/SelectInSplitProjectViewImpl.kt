@@ -1,12 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.projectView.actions
+package com.intellij.platform.projectView.frontend.actions
 
 import com.intellij.ide.SelectInContext
 import com.intellij.ide.SelectInTarget
 import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
@@ -15,6 +13,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.platform.projectView.actions.EditorChoice
+import com.intellij.platform.projectView.actions.SelectInSplitProjectView
 import com.intellij.platform.projectView.pane.FrontendProjectViewPaneAggregator
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.SelectInContextDTO
@@ -30,25 +30,12 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import kotlin.time.Duration.Companion.seconds
 
-@ApiStatus.Internal
-@Serializable
-enum class EditorChoice {
-  ALL_SELECTED,
-  LAST_FOCUSED_ONLY,
-}
-
-@ApiStatus.Internal
-@Service(Service.Level.PROJECT)
-class SelectInSplitProjectViewImpl(private val project: Project, coroutineScope: CoroutineScope) {
-  companion object {
-    fun getInstance(project: Project): SelectInSplitProjectViewImpl = project.service()
-  }
+internal class SelectInSplitProjectViewImpl(private val project: Project, coroutineScope: CoroutineScope) : SelectInSplitProjectView {
 
   private val tasks = Channel<SelectTask>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -58,17 +45,17 @@ class SelectInSplitProjectViewImpl(private val project: Project, coroutineScope:
     }
   }
 
-  fun isSelectOpenedFileEnabled(): Boolean {
+  override fun isSelectOpenedFileEnabled(): Boolean {
     // TODO when Always Select Opened File is ready
     return true
   }
 
-  fun selectOpenedFile(editorChoice: EditorChoice, invokedManually: Boolean) {
+  override fun selectOpenedFile(editorChoice: EditorChoice, invokedManually: Boolean) {
     LOG.debug { "Scheduling selection, editor choice = $editorChoice" }
     check(tasks.trySend(SelectOpenedFileTask(project, editorChoice, invokedManually)).isSuccess)
   }
 
-  fun selectIn(context: SelectInContext, target: SelectInTarget, requestFocus: Boolean) {
+  override fun selectIn(context: SelectInContext, target: SelectInTarget, requestFocus: Boolean) {
     LOG.debug { "Scheduling selection, target = ${target.minorViewId}, context = $context, requestFocus = $requestFocus" }
     check(tasks.trySend(SelectInTask(context, target, requestFocus)).isSuccess)
   }
@@ -207,7 +194,7 @@ class SplitProjectViewSelectInTarget(
 
   override fun selectIn(context: SelectInContext, requestFocus: Boolean) {
     LOG.debug("Select in $minorViewId: $context, requestFocus=$requestFocus")
-    SelectInSplitProjectViewImpl.getInstance(context.project).selectIn(context, this, requestFocus)
+    SelectInSplitProjectView.getInstance(context.project).selectIn(context, this, requestFocus)
   }
 
   override fun getToolWindowId(): @NonNls String = ToolWindowId.PROJECT_VIEW

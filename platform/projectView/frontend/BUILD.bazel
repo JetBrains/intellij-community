@@ -39,6 +39,7 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
         "//platform/ide-core",
         "//platform/util:util-ui",
+        "//platform/platform-impl/rpc",
     ],
 )
 
@@ -74,6 +75,7 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/util:util-ui_test_lib",
+        "//platform/platform-impl/rpc:rpc_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.projectView.frontend` end

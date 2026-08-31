@@ -10,7 +10,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.actions.ProjectViewOptionMenuUpdater
-import com.intellij.platform.projectView.actions.SplitProjectViewSelectInTarget
+import com.intellij.platform.projectView.frontend.actions.SplitProjectViewSelectInTarget
 import com.intellij.platform.projectView.pane.ProjectViewChildRemoved
 import com.intellij.platform.projectView.pane.ProjectViewChildrenLoaded
 import com.intellij.platform.projectView.pane.ProjectViewChildrenRemoved

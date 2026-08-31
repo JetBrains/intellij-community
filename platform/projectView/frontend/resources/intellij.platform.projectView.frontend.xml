@@ -30,6 +30,10 @@
       serviceImplementation="com.intellij.platform.projectView.frontend.window.ProjectViewToolWindowServiceImpl"
     />
     <projectService
+      serviceInterface="com.intellij.platform.projectView.actions.SelectInSplitProjectView"
+      serviceImplementation="com.intellij.platform.projectView.frontend.actions.SelectInSplitProjectViewImpl"
+    />
+    <projectService
       serviceInterface="com.intellij.platform.projectView.pane.FrontendProjectViewPaneAggregator"
       serviceImplementation="com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneAggregatorImpl"
     />

@@ -11,7 +11,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.platform.projectView.actions.EditorChoice
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
-import com.intellij.platform.projectView.actions.SelectInSplitProjectViewImpl
+import com.intellij.platform.projectView.actions.SelectInSplitProjectView
 import com.intellij.platform.projectView.frontend.window.ProjectViewToolWindowServiceImpl
 import com.intellij.platform.projectView.settings.ProjectViewPaneOptionDTO
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsStateDTO
@@ -49,7 +49,7 @@ internal class SplitProjectViewAutoscrollFromSource(
         if (optionService.getActionState()?.isAutoscrollFromSourceEnabled != true) {
           return@runLatest
         }
-        SelectInSplitProjectViewImpl.getInstance(project).selectOpenedFile(EditorChoice.ALL_SELECTED, invokedManually = false)
+        SelectInSplitProjectView.getInstance(project).selectOpenedFile(EditorChoice.ALL_SELECTED, invokedManually = false)
       }
 
       fun autoscroll() {

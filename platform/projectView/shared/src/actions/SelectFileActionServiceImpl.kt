@@ -110,7 +110,7 @@ internal class SelectFileActionServiceImpl : SelectFileActionService {
   private fun getView(event: AnActionEvent): View? =
     if (isProjectViewSplit()) {
       event.project
-        ?.let { project -> SelectInSplitProjectViewImpl.getInstance(project) }
+        ?.let { project -> SelectInSplitProjectView.getInstance(project) }
         ?.let { impl -> SplitView(impl) }
     }
     else {
@@ -145,7 +145,7 @@ private class LegacyView(private val impl: ProjectViewImpl) : View {
   }
 }
 
-private class SplitView(private val impl: SelectInSplitProjectViewImpl): View {
+private class SplitView(private val impl: SelectInSplitProjectView): View {
   override val isSelectOpenedFileEnabled: Boolean
     get() = impl.isSelectOpenedFileEnabled()
 
