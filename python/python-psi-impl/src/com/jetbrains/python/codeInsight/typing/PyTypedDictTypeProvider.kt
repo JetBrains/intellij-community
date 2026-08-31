@@ -334,12 +334,13 @@ private fun createTypedDictTypeForClass(cls: PyClass, context: TypeEvalContext):
  * a synthetic [PyCustomType] and a TypedDict ancestor is a plain [PyClassType]. The boundary is found by name so that both modes
  * see the same slice, and the arguments dropped along with the expressions are put back by [specializeTypedDictAncestors].
  */
-private fun typedDictAncestors(cls: PyClass, context: TypeEvalContext): List<PyClassLikeType?> {
-  val ancestors = cls.getAncestorTypes(context)
-  val boundary = ancestors.indexOfFirst { nameIsTypedDict(it?.classQName) }
-  val inheritedAsTypedDict = if (boundary >= 0) ancestors.take(boundary) else ancestors
-  return specializeTypedDictAncestors(cls, inheritedAsTypedDict, context)
-}
+private fun typedDictAncestors(cls: PyClass, context: TypeEvalContext): List<PyClassLikeType?> =
+  PyUtil.getParameterizedCachedValue(cls, context) { evalContext ->
+    val ancestors = cls.getAncestorTypes(evalContext)
+    val boundary = ancestors.indexOfFirst { nameIsTypedDict(it?.classQName) }
+    val inheritedAsTypedDict = if (boundary >= 0) ancestors.take(boundary) else ancestors
+    specializeTypedDictAncestors(cls, inheritedAsTypedDict, evalContext)
+  }
 
 /**
  * [PyClass.getAncestorTypes] reports a bare `Base` for `class Child(Base[int])`. This function reads each subscripted
