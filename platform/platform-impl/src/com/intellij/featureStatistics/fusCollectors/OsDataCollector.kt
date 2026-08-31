@@ -18,9 +18,9 @@ import kotlin.io.path.name
 
 @OptIn(LowLevelLocalMachineAccess::class)
 internal class OsDataCollector : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("system.os", 22)
+  private val GROUP = EventLogGroup("system.os", 23)
 
-  private val OS_NAMES = listOf("Windows", "Mac", "Linux", "FreeBSD", "Other")
+  private val OS_NAMES = listOf("Windows", "Mac", "Linux", "FreeBSD", "HarmonyOS", "Other")
 
   private val LOCALES = listOf(
     "am", "ar", "as", "az", "bn", "cs", "da", "de", "el", "en", "es", "fa", "fr", "gu", "ha", "hi", "hu", "ig", "in", "it", "ja", "kk",
@@ -86,6 +86,7 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
     OS.macOS -> "Mac"
     OS.Linux -> "Linux"
     OS.FreeBSD -> "FreeBSD"
+    OS.HarmonyOS -> "HarmonyOS"
     OS.Other -> "Other"
   }
 
