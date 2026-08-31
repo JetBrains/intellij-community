@@ -9,13 +9,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.traceThrowable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isMaximized
@@ -24,23 +22,16 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHe
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.ui.BalloonLayout
 import com.intellij.ui.DisposableWindow
-import com.intellij.ui.ScreenUtil
 import com.intellij.ui.mac.foundation.MacUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.launchOnShow
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.AWTEvent
 import java.awt.BufferCapabilities
 import java.awt.Component
-import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.ImageCapabilities
 import java.awt.Insets
@@ -58,11 +49,6 @@ import javax.swing.JFrame
 import javax.swing.JRootPane
 import javax.swing.SwingUtilities
 import kotlin.math.abs
-import kotlin.time.ComparableTimeMark
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.TimeSource
 
 @ApiStatus.Internal
 class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
@@ -81,25 +67,11 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
     override fun dispose() { }
   }
 
-  private val restoreBoundsRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-
   init {
     if (IDE_FRAME_EVENT_LOG.isDebugEnabled) {
       addComponentListener(EventLogger(frame = this, log = IDE_FRAME_EVENT_LOG))
     }
     IdeEventQueue.getInstance().addDispatcher(mouseActivationWatcher, mouseActivationWatcher)
-    launchOnShow("IdeFrameImpl.restoreBoundsRequests") {
-      var lastAttemptTime: ComparableTimeMark? = null
-      restoreBoundsRequests.collectLatest {
-        val delay = lastAttemptTime?.plus(validSizeCheckInterval().seconds)?.minus(TimeSource.Monotonic.markNow())
-        if (delay != null && delay > Duration.ZERO) {
-          IDE_FRAME_EVENT_LOG.debug { "The frame keeps resizing too quickly, waiting $delay" }
-          delay(delay)
-        }
-        tryToRestoreValidBounds()
-        lastAttemptTime = TimeSource.Monotonic.markNow()
-      }
-    }
   }
 
   var frameHelper: FrameHelper? = null
@@ -110,7 +82,6 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
   var normalBounds: Rectangle? = null
   var screenBounds: Rectangle? = null
   private var boundsInitialized = false
-  private var lastValidBounds: Rectangle? = null
 
   // when this client property is true, we have to ignore 'resizing' events and not spoil 'normal bounds' value for frame
   @JvmField
@@ -426,107 +397,13 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
       boundsInitialized = width > 0 || height > 0
     }
     if (boundsInitialized) {
-      checkForNonsenseBounds("reshape", width, height)
+      checkForNonsenseBounds("reshape", this, width, height)
     }
     IDE_FRAME_EVENT_LOG.traceThrowable {
       Throwable("IdeFrameImpl.reshape(x=$x, y=$y, width=$width, height=$height)")
     }
   }
-
-  /**
-   * Fixes the Windows-specific issue with the window suddenly becoming too small.
-   */
-  internal fun ensureSensibleSize() {
-    if (
-      !SystemInfoRt.isWindows ||
-      !boundsInitialized ||
-      validSizeCheckInterval() <= 0 ||
-      !isShowing
-    ) {
-      return
-    }
-    val currentBounds = bounds
-    if (isValidSize(currentBounds.size)) {
-      lastValidBounds = currentBounds
-    }
-    else {
-      check(restoreBoundsRequests.tryEmit(Unit))
-    }
-  }
-
-  /**
-   * Tries to restore the last valid bounds of the frame.
-   *
-   * Makes several attempts with some delays between them,
-   * to account for various exotic cases
-   * like the monitor configuration being temporarily unavailable after waking up from sleep/hibernation.
-   */
-  private suspend fun tryToRestoreValidBounds() {
-    val delays = listOf(
-      // The first attempt: let all pending move/resize events pass through the queue before restoring.
-      10.milliseconds,
-      // The second attempt: slow enough for the user to notice the issue, but not to start wondering what's going on.
-      100.milliseconds,
-      // The last attempt: let's hope that if the issue was caused by a monitor configuration change, the monitor is detected now.
-      5.seconds,
-    )
-    for (delay in delays) {
-      delay(delay)
-      if (restoreValidBoundsAttempt()) break
-    }
-  }
-
-  private fun restoreValidBoundsAttempt(): Boolean {
-    val currentBounds = bounds
-    if (isValidSize(currentBounds.size)) return true // already restored for some reason
-    val newBounds = Rectangle(lastValidBounds ?: return false)
-    val newBoundsFit = Rectangle(newBounds)
-    ScreenUtil.moveRectangleToFitTheScreen(newBoundsFit) // location
-    ScreenUtil.fitToScreen(newBoundsFit) // size
-    val result = when {
-      !isValidSize(newBoundsFit.size) -> {
-        IDE_FRAME_EVENT_LOG.warn(
-          "The IDE window was externally resized to ${currentBounds.width}x${currentBounds.height}, which is too small." +
-          " Restoring the size is impossible because an attempt to fit the last valid bounds ($newBounds) to the screens resulted in $newBoundsFit"
-        )
-        false
-      }
-      newBoundsFit == newBounds -> {
-        IDE_FRAME_EVENT_LOG.warn(
-          "The IDE window was externally resized to ${currentBounds.width}x${currentBounds.height}, which is too small." +
-          " Restoring the size to the last valid size: ${newBounds.width}x${newBounds.height}"
-        )
-        this.bounds = newBounds
-        true
-      }
-      else -> {
-        IDE_FRAME_EVENT_LOG.warn(
-          "The IDE window was externally resized to ${currentBounds.width}x${currentBounds.height}, which is too small." +
-          " Also the last valid bounds are outside the screens now (possibly due to a monitor configuration change): $newBounds." +
-          " Moving and resizing to fit the screens, the new bounds will be $newBoundsFit"
-        )
-        this.bounds = newBoundsFit
-        true
-      }
-    }
-    logMonitorConfiguration()
-    return result
-  }
-
-  private fun logMonitorConfiguration() {
-    IDE_FRAME_EVENT_LOG.warn("The current monitor configuration is:")
-    for (message in ScreenUtil.loggableMonitorConfiguration(this)) {
-      IDE_FRAME_EVENT_LOG.warn(message)
-    }
-  }
 }
-
-private fun isValidSize(size: Dimension): Boolean =
-  size.width >= FrameBoundsConverter.MIN_WIDTH && size.height >= FrameBoundsConverter.MIN_HEIGHT
-
-// The default value is hardcoded to zero here regardless of the actual default value defined in the XML,
-// because it makes exactly zero sense for this functionality to work before the registry is loaded.
-private fun validSizeCheckInterval(): Int = Registry.intValue("ide.project.frame.auto.fix.size.windows.interval", defaultValue = 0)
 
 private fun isClose(x1: Int, y1: Int, x2: Int, y2: Int): Boolean {
   val threshold = 3

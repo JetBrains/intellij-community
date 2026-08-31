@@ -494,7 +494,6 @@ internal class FrameStateListener(private val defaultFrameInfoHelper: FrameInfoH
     val extendedState = frame.extendedState
     val bounds = frame.bounds
     checkForNonsenseBounds("FrameStateListener.update.bounds", bounds)
-    frame.ensureSensibleSize()
     var normalBoundsOnCurrentScreen: Rectangle? = null
     if (rootPane != null) {
       val oldScreen = frame.screenBounds
