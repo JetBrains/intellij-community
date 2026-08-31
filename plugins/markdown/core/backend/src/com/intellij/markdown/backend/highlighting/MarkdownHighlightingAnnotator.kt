@@ -72,15 +72,17 @@ internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
       setOf(ownStyleKey)
     }
     else {
-      val isDefinitionListTerm = element.parentOfType(MarkdownElementTypes.DEFINITION_TERM) != null
-      val codeSpan = element.parents(withSelf = false)
-        .firstOrNull { it.elementType == MarkdownElementTypes.CODE_SPAN }
+      val parents = element.parents(withSelf = false).toList()
+      val isImageLinkContent = parents.any { it.elementType == MarkdownElementTypes.IMAGE } &&
+                               parents.any { it.elementType == MarkdownElementTypes.INLINE_LINK }
+      val isDefinitionListTerm = parents.any { it.elementType == MarkdownElementTypes.DEFINITION_TERM }
+      val codeSpan = parents.firstOrNull { it.elementType == MarkdownElementTypes.CODE_SPAN }
       if (codeSpan != null && !isDefinitionListTerm) {
         setOf(MarkdownHighlighterColors.CODE_SPAN)
       }
-      else element.parents(withSelf = false)
-        .toList()
+      else parents
         .asReversed()
+        .filterNot { isImageLinkContent && it.elementType == MarkdownElementTypes.IMAGE }
         .mapNotNullTo(linkedSetOf()) {
           it.primaryNonTextAttributesKey()
         }

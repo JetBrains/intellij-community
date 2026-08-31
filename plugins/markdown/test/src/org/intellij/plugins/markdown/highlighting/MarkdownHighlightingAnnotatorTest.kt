@@ -132,6 +132,40 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     }
   }
 
+  fun testImagesKeepImageHighlightingInDifferentContexts() {
+    val text = """
+      # Markdown WYSIWYG Demo
+
+      ![logo](../../imgs/unnamed.png)
+
+      ![logo](../../imgs/unnamed.png)
+      ![logo](../../imgs/unnamed.png)
+
+      # Markdown WYSIWYG Demo
+
+
+      ![logo](../../imgs/unnamed.png)
+    """.trimIndent()
+    myFixture.configureByText("test.md", text)
+    val highlights = myFixture.doHighlighting()
+    val imageText = "![logo](../../imgs/unnamed.png)"
+    val imageStarts = text.indices.filter { text.startsWith(imageText, it) }
+    assertEquals(4, imageStarts.size)
+
+    for (imageStart in imageStarts) {
+      assertElementHighlightedWithKey(highlights, "!", MarkdownHighlighterColors.IMAGE, startOffset = imageStart)
+      val logoStart = imageStart + imageText.indexOf("logo")
+      assertElementHighlightedWithKey(highlights, "logo", MarkdownHighlighterColors.LINK_TEXT, startOffset = logoStart)
+      assertElementHighlightedWithKey(
+        highlights,
+        "logo",
+        MarkdownHighlighterColors.IMAGE,
+        HighlightingState.NOT_HIGHLIGHTED,
+        startOffset = logoStart,
+      )
+    }
+  }
+
   fun testNestedContainersCreateUniquePerRangeTextAnnotations() {
     myFixture.configureByText("test.md", """
       # Header with **bold**
