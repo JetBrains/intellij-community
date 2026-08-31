@@ -11,6 +11,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.system.OS;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
+import kotlin.NotImplementedError;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -334,6 +335,10 @@ public final class UnixProcessManager {
     else if (OS.CURRENT == OS.macOS || OS.CURRENT == OS.FreeBSD) {
       String command = isShortenCommand ? "comm" : "command";
       return new String[]{psCommand, "-ax", "-o", commandLineOnly ? command : "ppid,pid," + command};
+    }
+    else if (OS.CURRENT == OS.HarmonyOS) {
+      //todo[kb] support HarmonyOS
+      throw new NotImplementedError(System.getProperty("os.name") + " is not implemented.");
     }
     else {
       throw new IllegalStateException(System.getProperty("os.name") + " is not supported.");
