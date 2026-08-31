@@ -298,7 +298,7 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
       }
       if (commandResult.success()) {
         onWorkingTreeDeleted(mainRepository, currentWorktree)
-        notifyWorkingTreeDeletedSuccess(mainProject, currentWorktree)
+        notifyWorkingTreesDeletedSuccess(mainProject, listOf(currentWorktree))
       }
       else {
         notifyWorkingTreeDeletedError(mainProject, commandResult.errorOutputAsHtmlString)
@@ -358,19 +358,23 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
     coroutineScope.launch {
       val deleted = mutableListOf<GitWorkingTree>()
       try {
-        for (tree in trees) {
-          if (doDeleteWorkingTree(project, tree, repository)) {
-            deleted.add(tree)
+        val deletionTitle = if (trees.size == 1) {
+          GitBundle.message("progress.title.deleting.worktree")
+        }
+        else {
+          GitBundle.message("progress.title.deleting.worktrees")
+        }
+        withBackgroundProgress(project, deletionTitle, cancellable = true) {
+          for (tree in trees) {
+            if (doDeleteWorkingTree(project, tree, repository)) {
+              deleted.add(tree)
+            }
           }
         }
       }
       finally {
         if (!project.isDisposed) {
-          val singleDeleted = deleted.singleOrNull()
-          when {
-            singleDeleted != null -> notifyWorkingTreeDeletedSuccess(project, singleDeleted)
-            deleted.isNotEmpty() -> notifyWorkingTreesDeletedSuccess(project, deleted.size)
-          }
+          notifyWorkingTreesDeletedSuccess(project, deleted.toList())
         }
       }
     }
@@ -388,9 +392,7 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
       }
     }
 
-    val commandResult = withBackgroundProgress(project, GitBundle.message("progress.title.deleting.worktree"), cancellable = true) {
-      service<Git>().deleteWorkingTree(repository, tree)
-    }
+    val commandResult = service<Git>().deleteWorkingTree(repository, tree)
 
     if (commandResult.success()) {
       onWorkingTreeDeleted(repository, tree)
@@ -437,18 +439,16 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
     RecentProjectsManager.getInstance().removePath(tree.path.path)
   }
 
-  private fun notifyWorkingTreeDeletedSuccess(project: Project, tree: GitWorkingTree) {
-    VcsNotifier.getInstance(project).notifySuccess(GitNotificationIdsHolder.WORKING_TREE_DELETED,
-                                                   "",
-                                                   GitBundle.message("Git.WorkingTrees.delete.worktree.success.message",
-                                                                     tree.path.name))
-  }
-
-  private fun notifyWorkingTreesDeletedSuccess(project: Project, deletedCount: Int) {
-    VcsNotifier.getInstance(project).notifySuccess(GitNotificationIdsHolder.WORKING_TREE_DELETED,
-                                                   "",
-                                                   GitBundle.message("Git.WorkingTrees.delete.worktrees.success.message",
-                                                                     deletedCount))
+  private fun notifyWorkingTreesDeletedSuccess(project: Project, deletedTrees: List<GitWorkingTree>) {
+    if (deletedTrees.isEmpty()) return
+    val singleDeleted = deletedTrees.singleOrNull()
+    val message = if (singleDeleted != null) {
+      GitBundle.message("Git.WorkingTrees.delete.worktree.success.message", singleDeleted.path.name)
+    }
+    else {
+      GitBundle.message("Git.WorkingTrees.delete.worktrees.success.message", deletedTrees.size)
+    }
+    VcsNotifier.getInstance(project).notifySuccess(GitNotificationIdsHolder.WORKING_TREE_DELETED, /*title =*/"", message)
   }
 
   private fun notifyWorkingTreeDeletedError(project: Project, @NlsSafe errorOutput: String) {

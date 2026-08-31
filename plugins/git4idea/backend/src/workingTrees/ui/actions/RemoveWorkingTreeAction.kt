@@ -38,30 +38,38 @@ internal class RemoveWorkingTreeAction : DumbAwareAction() {
     GitWorkingTreesNewBadgeUtil.workingTreesFeatureWasUsed()
     val project = e.project ?: return
     val data = e.getData(SELECTED_WORKING_TREES)
-    val repository = e.getData(GitWorkingTreeTabActionsDataKeys.CURRENT_REPOSITORY)
+    val repository = e.getData(GitWorkingTreeTabActionsDataKeys.CURRENT_REPOSITORY) ?: return
     if (!isEnabledFor(data, project, repository)) return
 
     val trees = data ?: return
+    val result = showDeleteWorktreeDialog(trees)
+    if (result == Messages.YES) {
+      GitWorkingTreesService.getInstance(project).deleteWorkingTrees(project, trees, repository)
+    }
+  }
+
+  private fun showDeleteWorktreeDialog(trees: List<GitWorkingTree>): Int {
     val singleTree = trees.singleOrNull()
-    val result = if (singleTree != null) {
-      Messages.showYesNoDialog(
+    val (message, title, yesText) = if (singleTree != null) {
+      Triple(
         GitBundle.message("Git.WorkingTrees.dialog.delete.worktree.message", singleTree.path.presentableUrl),
         GitBundle.message("Git.WorkingTrees.dialog.delete.worktree.title"),
-        GitBundle.message("Git.WorkingTrees.dialog.delete.worktree.yes.option"),
-        CommonBundle.getCancelButtonText(),
-        AllIcons.General.QuestionDialog)
+        GitBundle.message("Git.WorkingTrees.dialog.delete.worktree.yes.option")
+      )
     }
     else {
-      Messages.showYesNoDialog(
+      Triple(
         GitBundle.message("Git.WorkingTrees.dialog.delete.worktrees.message", trees.size),
         GitBundle.message("Git.WorkingTrees.dialog.delete.worktrees.title"),
-        GitBundle.message("Git.WorkingTrees.dialog.delete.worktrees.yes.option"),
-        CommonBundle.getCancelButtonText(),
-        AllIcons.General.QuestionDialog)
+        GitBundle.message("Git.WorkingTrees.dialog.delete.worktrees.yes.option")
+      )
     }
 
-    if (result == Messages.YES) {
-      GitWorkingTreesService.getInstance(project).deleteWorkingTrees(project, trees, repository!!)
-    }
+    return Messages.showYesNoDialog(
+      message,
+      title,
+      yesText,
+      CommonBundle.getCancelButtonText(),
+      AllIcons.General.QuestionDialog)
   }
 }
