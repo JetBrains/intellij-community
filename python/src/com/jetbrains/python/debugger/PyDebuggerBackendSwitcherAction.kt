@@ -55,6 +55,7 @@ import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.jetbrains.python.icons.PythonIcons
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.lang.ref.WeakReference
 import java.util.concurrent.ConcurrentHashMap
 import java.net.URLEncoder
@@ -168,20 +169,7 @@ internal class PyDebuggerBackendSwitcherAction : ComboBoxAction(), DumbAware {
       )
       if (backend == PyDebuggerBackend.DEBUGPY && !isDebugpyAvailableInProject(project)) {
         e.presentation.isEnabled = false
-        @Suppress("DialogTitleCapitalization")
-        val disabledMsg = when {
-          isPythonDapPluginInstalledButDisabled() -> PyBundle.message("debugger.backend.debugpy.disabled.not.enabled.tooltip")
-          !isPythonDapPluginInstalledAndEnabled() -> PyBundle.message("debugger.backend.debugpy.disabled.not.installed.tooltip")
-          else -> {
-            val sdk = getEffectiveSdk(project)
-            if (sdk != null && PythonSdkUtil.isRemote(sdk)) {
-              PyBundle.message("debugger.backend.debugpy.disabled.remote.tooltip")
-            }
-            else {
-              PyBundle.message("debugger.backend.debugpy.disabled.tooltip")
-            }
-          }
-        }
+        val disabledMsg = debugpyDisabledMessage(project)
         e.presentation.description = disabledMsg
         e.presentation.putClientProperty(ActionUtil.TOOLTIP_TEXT, disabledMsg)
       }
@@ -290,7 +278,7 @@ private fun isPythonDebugTab(e: AnActionEvent): Boolean {
 /**
  * Returns the SDK of the currently selected run configuration, falling back to the project SDK.
  */
-private fun getEffectiveSdk(project: Project): Sdk? =
+internal fun getEffectiveSdk(project: Project): Sdk? =
   (RunManager.getInstance(project).selectedConfiguration?.configuration as? AbstractPythonRunConfiguration<*>)?.sdk
   ?: ProjectRootManager.getInstance(project).projectSdk
 
@@ -423,6 +411,23 @@ internal fun pyDebuggerBackendDisplayName(backend: PyDebuggerBackend): String = 
  */
 internal fun isDebugpyAvailableForSdk(sdk: Sdk, project: Project): Boolean {
   return PyDebuggerBackendSwitchHandler.EP_NAME.extensionList.any { it.isDebugpyAvailableForSdk(project, sdk) }
+}
+
+/**
+ * Explains why the debugpy backend cannot be selected in [project].
+ *
+ * Call it only after a check reports debugpy as unavailable. The backend switcher and the debugger
+ * settings page both show this text, so the wording stays the same in the two places.
+ */
+@ApiStatus.Internal
+fun debugpyDisabledMessage(project: Project): @Nls String = when {
+  isPythonDapPluginInstalledButDisabled() -> PyBundle.message("debugger.backend.debugpy.disabled.not.enabled.tooltip")
+  !isPythonDapPluginInstalledAndEnabled() -> PyBundle.message("debugger.backend.debugpy.disabled.not.installed.tooltip")
+  else -> {
+    val sdk = getEffectiveSdk(project)
+    if (sdk != null && PythonSdkUtil.isRemote(sdk)) PyBundle.message("debugger.backend.debugpy.disabled.remote.tooltip")
+    else PyBundle.message("debugger.backend.debugpy.disabled.tooltip")
+  }
 }
 
 /**
