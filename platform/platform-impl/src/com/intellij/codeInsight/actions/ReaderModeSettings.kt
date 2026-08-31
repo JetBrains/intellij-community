@@ -65,7 +65,7 @@ interface ReaderModeSettings : Disposable {
         return
       }
 
-      if (isBlockingApplication()) {
+      if (canComputeSynchronously()) {
         val matchMode = matchMode(project, file, editor)
         if (matchMode || forceUpdate) {
           applyModeChanged(project = project, editor = editor, matchMode = matchMode, fileIsOpenAlready = fileIsOpenAlready)
@@ -163,9 +163,18 @@ interface ReaderModeSettings : Disposable {
       }
     }
 
-    private fun isBlockingApplication(): Boolean {
+    /**
+     * A headless or unit-test application wants the mode at once, because it has no later frame to paint in.
+     *
+     * A caller that forbids the RW lock is the exception. `matchMode` reads the PSI, and
+     * `ThreadingAssertions.softAssertReadAccess` reports that read while a dispatcher such as `Dispatchers.UI`
+     * forbids the lock, even from inside a read action. So such a caller gets the background path that a
+     * running IDE already uses. See IJPL-243574.
+     */
+    private fun canComputeSynchronously(): Boolean {
       val application = ApplicationManager.getApplication()
-      return application.isHeadlessEnvironment || application.isUnitTestMode
+      return application.lockProhibitedAdvice == null &&
+             (application.isHeadlessEnvironment || application.isUnitTestMode)
     }
   }
 
