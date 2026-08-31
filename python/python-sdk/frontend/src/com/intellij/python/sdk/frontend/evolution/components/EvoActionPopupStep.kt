@@ -163,20 +163,10 @@ open class EvoActionPopupStep(
   }
 
   /**
-   * Set while the pointer is over a control painted *inside* a row's cell — the section header's gear.
-   *
-   * Such a control has its own tooltip, which the popup puts on the list, and the row would otherwise answer over it:
-   * see [getTooltipTextFor]. Read live, since the tooltip is asked for on each hover rather than cached.
-   */
-  @Volatile
-  var rowTooltipSuppressed: Boolean = false
-
-  /**
    * The row's tooltip. This is the one the user sees: [javax.swing.JList.getToolTipText] asks the renderer first and
    * only falls back to the list's own, so anything the popup sets on the list is ignored wherever a row answers here.
    */
   override fun getTooltipTextFor(value: EvoTreeItem?): @NlsContexts.Tooltip String? {
-    if (rowTooltipSuppressed) return null
     val tooltip = value?.tooltip ?: return null
     // A row that can open its process output says so, since nothing else about it suggests it is a control.
     val text = if (value.opensProcessOutput) PySdkFrontendBundle.message("evo.sdk.status.bar.popup.failure.tooltip", tooltip)
