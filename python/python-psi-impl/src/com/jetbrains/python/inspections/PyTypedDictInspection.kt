@@ -425,19 +425,20 @@ class PyTypedDictInspection : PyInspection() {
 
       if (PyNames.POP == callee.name) {
         val key = if (arguments.isNotEmpty()) PyEvaluator.evaluate(arguments[0], String::class.java) else null
-        if (key != null && key in nodeType.fields(myTypeEvalContext) && nodeType.fields(myTypeEvalContext)[key]!!.qualifiers.isRequired == true) {
+        val field = key?.let { nodeType.fields(myTypeEvalContext)[it] }
+        if (field != null && field.qualifiers.isRequired == true) {
           registerProblem(callee.nameElement?.psi, PyPsiBundle.problemMessage("INSP.typeddict.key.cannot.be.deleted", key, nodeType.name))
         }
       }
 
       if (PyNames.SETDEFAULT == callee.name) {
         val key = if (arguments.isNotEmpty()) PyEvaluator.evaluate(arguments[0], String::class.java) else null
-        if (key != null && key in nodeType.fields(myTypeEvalContext) && nodeType.fields(myTypeEvalContext)[key]!!.qualifiers.isRequired == false) {
+        val field = key?.let { nodeType.fields(myTypeEvalContext)[it] }
+        if (field != null && field.qualifiers.isRequired == false) {
           if (node.arguments.size > 1) {
             val valueType = myTypeEvalContext.getType(arguments[1])
-            if (!PyTypeChecker.match(nodeType.fields(myTypeEvalContext)[key]!!.type, valueType, myTypeEvalContext)) {
-              val expectedTypeName = PythonDocumentationProvider.getTypeName(nodeType.fields(myTypeEvalContext)[key]!!.type,
-                                                                             myTypeEvalContext)
+            if (!PyTypeChecker.match(field.type, valueType, myTypeEvalContext)) {
+              val expectedTypeName = PythonDocumentationProvider.getTypeName(field.type, myTypeEvalContext)
               val actualTypeName = PythonDocumentationProvider.getTypeName(valueType, myTypeEvalContext)
               registerProblem(arguments[1],
                               PyPsiBundle.problemMessage("INSP.type.checker.expected.type.got.type.instead",
@@ -469,10 +470,11 @@ class PyTypedDictInspection : PyInspection() {
         for (indexString in PySubscriptionExpressionImpl.getIndexExpressionPossibleValues(target.indexExpression,
                                                                                           myTypeEvalContext,
                                                                                           String::class.java)) {
-          if (targetType.fields(myTypeEvalContext)[indexString]?.qualifiers?.isReadOnly == true) {
+          val field = targetType.fields(myTypeEvalContext)[indexString]
+          if (field?.qualifiers?.isReadOnly == true) {
             registerProblem(target, PyPsiBundle.message("INSP.typeddict.typeddict.field.is.readonly", indexString))
           }
-          else if (indexString !in targetType.fields(myTypeEvalContext) && targetType.extraItemsQualifiers(myTypeEvalContext).isReadOnly) {
+          else if (field == null && targetType.extraItemsQualifiers(myTypeEvalContext).isReadOnly) {
             registerProblem(target, PyPsiBundle.message("INSP.typeddict.typeddict.field.is.readonly", indexString))
           }
 
@@ -527,12 +529,13 @@ class PyTypedDictInspection : PyInspection() {
           }
         }
 
-        val newAttributes = assignedType.fields(myTypeEvalContext).filter { it.key !in targetType.fields(myTypeEvalContext) }
-        newAttributes.forEach { (key, value) ->
+        val targetFields = targetType.fields(myTypeEvalContext)
+        val newAttributes = assignedType.fields(myTypeEvalContext).filter { it.key !in targetFields }
+        newAttributes.forEach { (key, newField) ->
+          val extraItemsQualifiers = targetType.extraItemsQualifiers(myTypeEvalContext)
           val newFieldType = assignedType.getElementType(key, myTypeEvalContext)
-          val newFieldQualifiers = assignedType.fields(myTypeEvalContext)[key]?.qualifiers
 
-          if (!targetType.extraItemsQualifiers(myTypeEvalContext).isReadOnly && newFieldQualifiers?.isRequired == true) {
+          if (!extraItemsQualifiers.isReadOnly && newField.qualifiers.isRequired == true) {
             registerProblem(
               target,
               PyPsiBundle.problemMessage(
@@ -547,7 +550,7 @@ class PyTypedDictInspection : PyInspection() {
           val expectedTypeName = PythonDocumentationProvider.getTypeName(expectedExtraItemsType, myTypeEvalContext)
           val actualTypeName = PythonDocumentationProvider.getTypeName(newFieldType, myTypeEvalContext)
 
-          if (targetType.extraItemsQualifiers(myTypeEvalContext).isRequired == true && !targetType.extraItemsQualifiers(myTypeEvalContext).isReadOnly) {
+          if (extraItemsQualifiers.isRequired == true && !extraItemsQualifiers.isReadOnly) {
             if (!PyTypeChecker.match(expectedExtraItemsType, newFieldType, myTypeEvalContext) ||
                 !PyTypeChecker.match(newFieldType, expectedExtraItemsType, myTypeEvalContext)) {
               registerProblem(
