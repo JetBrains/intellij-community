@@ -3,6 +3,7 @@ from collections.abc import Iterator
 from typing import Literal
 
 from gunicorn.config import Config
+from gunicorn.http.message import HeaderPolicy
 from gunicorn.http2.stream import HTTP2Stream
 
 from .._types import _AddressType
@@ -17,7 +18,7 @@ class HTTP2Body:
     def __len__(self) -> int: ...
     def close(self) -> None: ...
 
-class HTTP2Request:
+class HTTP2Request(HeaderPolicy):
     stream: HTTP2Stream
     cfg: Config
     peer_addr: _AddressType

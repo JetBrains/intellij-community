@@ -8,7 +8,6 @@ _frozen_importlib_external.SourceLoader.source_to_code
 dataclasses.MISSING
 dataclasses._MISSING_TYPE
 dataclasses.field
-mailbox._ProxyFile.__class_getitem__
 
 # =============================================================
 # Allowlist entries that cannot or should not be fixed; >= 3.15

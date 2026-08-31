@@ -36,10 +36,11 @@ jobs:
       fail-fast: false
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v6
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.13"
           cache: pip
@@ -54,7 +55,7 @@ jobs:
           # This only runs stubtest on changed stubs, because it is much faster.
           # Use the daily.yml workflow to run stubtest on all third party stubs.
           function find_stubs {
-            git diff --name-only origin/${{ github.base_ref }} HEAD | \
+            git diff --name-only "origin/${GITHUB_BASE_REF}" HEAD | \
             egrep ^stubs/ | cut -d "/" -f 2 | sort -u | \
             (while read stub; do [ -d "stubs/$stub" ] && echo -n "$stub " || true; done)
           }

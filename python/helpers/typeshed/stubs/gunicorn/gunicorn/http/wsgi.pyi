@@ -2,9 +2,9 @@ import io
 import logging
 import re
 import socket
-from _typeshed import ReadableBuffer, Unused
+from _typeshed import Incomplete, ReadableBuffer, Unused
 from collections.abc import Callable
-from typing import Any, Final, Protocol, type_check_only
+from typing import Any, Final, Protocol, overload, type_check_only
 from typing_extensions import Self
 
 from gunicorn.config import Config
@@ -44,9 +44,27 @@ class WSGIErrorsWrapper(io.RawIOBase):
 def base_environ(cfg: Config) -> _EnvironType: ...
 def default_environ(req: Request, sock: socket.socket, cfg: Config) -> _EnvironType: ...
 def proxy_environ(req: Request) -> _EnvironType: ...
+
+@overload
 def create(
-    req: Request, sock: socket.socket, client: _AddressType, server: _AddressType, cfg: Config
+    req: Request,
+    sock: socket.socket,
+    client: _AddressType,
+    server: _AddressType,
+    cfg: Config,
+    response_class: type[Response] | None = None,
+    response_args: tuple[Incomplete, ...] = (),
 ) -> tuple[Response, _EnvironType]: ...
+@overload
+def create(
+    req: Request,
+    sock: socket.socket,
+    client: _AddressType,
+    server: _AddressType,
+    cfg: Config,
+    response_class: type[Incomplete],
+    response_args: tuple[Incomplete, ...] = (),
+) -> tuple[Incomplete, _EnvironType]: ...
 
 class Response:
     req: Request

@@ -76,6 +76,7 @@ _ASGILifespanValidatorType: TypeAlias = Callable[[str | None], str]
 _HTTP2FrameSizeValidatorType: TypeAlias = Callable[[ConvertibleToInt], int]
 _HTTPProtocolsValidatorType: TypeAlias = Callable[[str | None], list[str]]
 _HttpParserValidatorType: TypeAlias = Callable[[str | None], str]
+_HTTP2CleartextValidatorType: TypeAlias = Callable[[str | bool | None], str]
 
 _ValidatorType: TypeAlias = (  # noqa: Y047
     _BoolValidatorType
@@ -93,6 +94,7 @@ _ValidatorType: TypeAlias = (  # noqa: Y047
     | _HTTP2FrameSizeValidatorType
     | _HTTPProtocolsValidatorType
     | _HttpParserValidatorType
+    | _HTTP2CleartextValidatorType
 )
 
 KNOWN_SETTINGS: list[Setting]
@@ -168,6 +170,8 @@ class Setting(metaclass=SettingMeta):
     def __lt__(self, other: Setting) -> bool: ...
 
     __cmp__ = __lt__
+
+def validate_http2_cleartext(val: str | bool | None) -> str: ...
 
 @overload
 def validate_bool(val: bool) -> bool: ...
@@ -1051,6 +1055,15 @@ class HTTPProtocols(Setting):
     cli: ClassVar[list[str]]
     meta: ClassVar[str]
     validator: ClassVar[_HTTPProtocolsValidatorType]
+    default: ClassVar[str]
+    desc: ClassVar[str]
+
+class HTTP2Cleartext(Setting):
+    name: ClassVar[str]
+    section: ClassVar[str]
+    cli: ClassVar[list[str]]
+    meta: ClassVar[str]
+    validator: ClassVar[_HTTP2CleartextValidatorType]
     default: ClassVar[str]
     desc: ClassVar[str]
 
