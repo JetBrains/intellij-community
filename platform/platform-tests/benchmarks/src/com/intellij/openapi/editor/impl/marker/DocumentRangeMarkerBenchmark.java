@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl.marker;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.util.Processor;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -128,6 +129,41 @@ public class DocumentRangeMarkerBenchmark {
     return accumulator.getCount();
   }
 
+  /**
+   * Calls {@link DocumentEx#processRangeMarkersOverlappingWith(int, int, Processor)} 2,000,000 times.
+   *
+   * <p>This method uses the same marker population and query workload as {@link #reportIntersecting2MQueries}. It also
+   * consumes each marker ID to match {@link SnapshotMarkerEngineBenchmark#enumerateIntersecting2MQueries}.</p>
+   */
+  @Benchmark
+  public long enumerateIntersecting2MQueries(IntersectionState state) {
+    DocumentEx document = state.document;
+    int[] queryStarts = state.queryStarts;
+    int[] queryEnds = state.queryEnds;
+    RangeMarkerIdAccumulator accumulator = state.idAccumulator;
+    accumulator.reset();
+
+    for (int index = 0; index < INTERSECTION_CALLS; index++) {
+      boolean completed = document.processRangeMarkersOverlappingWith(
+        queryStarts[index],
+        queryEnds[index],
+        accumulator
+      );
+      if (!completed) {
+        throw new IllegalStateException("Range-marker processing stopped unexpectedly");
+      }
+    }
+
+    long expectedCount = (long)INTERSECTION_CALLS * state.markersPerQuery;
+    if (accumulator.getCount() != expectedCount) {
+      throw new IllegalStateException(
+        "Expected " + expectedCount + " intersecting markers, got " + accumulator.getCount()
+      );
+    }
+
+    return accumulator.getChecksum() ^ accumulator.getCount();
+  }
+
   @State(Scope.Thread)
   public static class CreateState {
     Document document;
@@ -172,6 +208,7 @@ public class DocumentRangeMarkerBenchmark {
     int[] queryStarts;
     int[] queryEnds;
     final RangeMarkerAccumulator accumulator = new RangeMarkerAccumulator();
+    final RangeMarkerIdAccumulator idAccumulator = new RangeMarkerIdAccumulator();
 
     /** Builds the 50,000-marker population and deterministic query workload once per parameter value and fork. */
     @Setup(Level.Trial)
@@ -217,6 +254,32 @@ public class DocumentRangeMarkerBenchmark {
     }
 
     public void reset() {
+      count = 0L;
+    }
+  }
+
+  /** Reusable processor used by the marker enumeration benchmark. */
+  public static final class RangeMarkerIdAccumulator implements Processor<RangeMarker> {
+    private long checksum;
+    private long count;
+
+    @Override
+    public boolean process(RangeMarker marker) {
+      checksum += ((RangeMarkerEx)marker).getId();
+      count++;
+      return true;
+    }
+
+    public long getChecksum() {
+      return checksum;
+    }
+
+    public long getCount() {
+      return count;
+    }
+
+    public void reset() {
+      checksum = 0L;
       count = 0L;
     }
   }
