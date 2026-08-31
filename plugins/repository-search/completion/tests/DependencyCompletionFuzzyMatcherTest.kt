@@ -75,6 +75,34 @@ class DependencyCompletionFuzzyMatcherTest {
   }
 
   @Test
+  fun `single-token input highlights the matching prefix in the artifact, not an incidental group match`() {
+    assertThat(highlighted("gua", "org.99soft.guice:g-guava")).containsExactly("gua")
+  }
+
+  @Test
+  fun `trailing dash includes the dash when the artifact token ends with one`() {
+    // "guava-" matches the artifact token "guava-" (with dash), which beats "guava" in the group.
+    assertThat(highlighted("guava-", "com.google.guava:guava-testlib:33.6.0-jre")).containsExactly("guava-")
+    assertThat(highlighted("guava.", "com.google.guava:guava.api:1.0.0")).containsExactly("guava.")
+  }
+
+  @Test
+  fun `trailing dash highlights the artifact when both group and artifact token quality is equal`() {
+    // Both group and artifact have a plain "guava" token. The artifact wins the tie.
+    assertThat(highlighted("guava-", "com.google.guava:guava:33.6.0-jre")).containsExactly("guava")
+  }
+
+  @Test
+  fun `trailing dot highlights the artifact over an equal group token`() {
+    assertThat(highlighted("guava.", "com.google.guava:guava:33.6.0-jre")).containsExactly("guava")
+  }
+
+  @Test
+  fun `trailing colon skips the empty second part and highlights the artifact`() {
+    assertThat(highlighted("guava:", "com.google.guava:guava:33.6.0-jre")).containsExactly("guava")
+  }
+
+  @Test
   fun `fragments are non-overlapping and strictly increasing`() {
     val candidate = "org.springframework:spring-boot-starter-web"
     val fragments: List<MatchedFragment> =

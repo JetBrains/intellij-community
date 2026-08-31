@@ -44,14 +44,19 @@ open class DependencyCompletionFuzzyMatcher(prefix: String) : PrefixMatcher(pref
     val result = mutableListOf<MatchedFragment>()
     var cursor = 0
     for (prefixPart in prefixParts) {
-      // Among the remaining name parts, pick the one whose match covers the most prefix tokens, so a
-      // coordinate like group:artifact:version highlights the artifact rather than an incidental match in
-      // the group (e.g. the "boot" of "org.springframework.boot" when searching "boot-starter-actuator").
+      // A trailing delimiter (dash, dot, or colon) produces an empty part; skip it so a trailing
+      // colon does not trigger the fallback path and throw away the already-collected fragments.
+      if (prefixPart.isEmpty()) continue
+      // Among the remaining name parts, pick the one whose match covers the most prefix tokens. Break ties
+      // by total matched-character length; prefer the later part on a further tie, so the artifact beats
+      // an equal-quality match in the group (e.g. "guava" in artifact beats "guava" in "com.google.guava").
       var bestFragments: List<MatchedFragment>? = null
       var bestIndex = -1
       for (k in cursor until nameParts.size) {
         val fragments = matchPart(partOffsets[k], prefixPart, nameParts[k]) ?: continue
-        if (bestFragments == null || fragments.size > bestFragments.size) {
+        if (bestFragments == null ||
+            fragments.size > bestFragments.size ||
+            (fragments.size == bestFragments.size && fragments.totalMatchedLength() >= bestFragments.totalMatchedLength())) {
           bestFragments = fragments
           bestIndex = k
         }
@@ -130,6 +135,8 @@ open class DependencyCompletionFuzzyMatcher(prefix: String) : PrefixMatcher(pref
     }
     return fragments.ifEmpty { null }
   }
+
+  private fun List<MatchedFragment>.totalMatchedLength(): Int = sumOf { it.endOffset - it.startOffset }
 
   private class Token(val text: String, val start: Int, val delimiter: Char?)
 

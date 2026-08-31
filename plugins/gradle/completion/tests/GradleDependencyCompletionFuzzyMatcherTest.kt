@@ -19,9 +19,9 @@ internal class GradleDependencyCompletionFuzzyMatcherTest {
 
   @ParameterizedTest
   @CsvSource(
-    // Case-insensitive: "JUNIT" not found case-sensitively -> fallback finds "junit" at index 4
-    "JUNIT, org.junit:junit:4.13.2, 4, 9",
-    // Multi-part: "junit" found but "missing" not -> fallback finds longest match "junit:" (len=6) at index 4
+    // Case-insensitive: "JUNIT" not found case-sensitively -> fallback finds "junit"
+    "JUNIT, org.junit:junit:4.13.2, 10, 15",
+    // Multi-part: "junit" found but "missing" not -> fallback finds longest match "junit:" (len=6)
     "junit:missing, org.junit:junit:4.13.2, 4, 10",
     // Single part not in any segment -> fallback finds "api" (len=3) in "my-api" at index 15
     "zzz:api, org.example:my-api:1.0, 15, 18",
