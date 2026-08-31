@@ -35,7 +35,7 @@ import java.util.Objects;
 public class Menu extends MenuItem {
   private static final boolean USE_STUB = Boolean.getBoolean("jbScreenMenuBar.useStubItem"); // just for tests/experiments
   private static final int CLOSE_DELAY = Integer.getInteger("jbScreenMenuBar.closeDelay", 500); // in milliseconds
-  private static Boolean IS_ENABLED = null;
+  private static volatile Boolean IS_ENABLED = null;
   private static Menu ourAppMenu = null;
   private final List<MenuItem> myItems = new ArrayList<>();
   private final List<MenuItem> myBuffer = new ArrayList<>();
@@ -392,12 +392,21 @@ public class Menu extends MenuItem {
   //
 
   public static boolean isJbScreenMenuEnabled() {
-    if (IS_ENABLED != null) {
-      return IS_ENABLED;
+    Boolean enabled = IS_ENABLED;
+    if (enabled != null) {
+      return enabled;
     }
+    synchronized (Menu.class) {
+      enabled = IS_ENABLED;
+      if (enabled == null) {
+        enabled = computeJbScreenMenuEnabled();
+        IS_ENABLED = enabled;
+      }
+      return enabled;
+    }
+  }
 
-    IS_ENABLED = false;
-
+  private static boolean computeJbScreenMenuEnabled() {
     if (!MacMenuSettings.isJbSystemMenu) {
       return false;
     }
@@ -423,7 +432,6 @@ public class Menu extends MenuItem {
       return false;
     }
 
-    IS_ENABLED = true;
     getLogger().info("use new ScreenMenuBar implementation");
     return true;
   }
