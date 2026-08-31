@@ -13,11 +13,15 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Service(Level.PROJECT)
 class ModuleWithDependenciesScopeCache {
-  private val cachedScopes: Cache<Pair<Module, Int>, ModuleWithDependenciesScope> = Caffeine.newBuilder()
-    .maximumWeight(Registry.get("module.with.dependencies.scope.cache.max.total.entries.count").asInteger().toLong()) // default is 300k. Ultimate project only needs 40k
-    .weigher { _: Pair<Module, Int>, value: ModuleWithDependenciesScope ->
-      value.rootContainer.size
-    }.build()
+  private val cachedScopes: Cache<Pair<Module, Int>, ModuleWithDependenciesScope> = Caffeine.newBuilder().apply {
+    val limit = Registry.get("module.with.dependencies.scope.cache.max.total.entries.count").asInteger()
+    if (limit > -1) {
+      maximumWeight(limit.toLong()) // default is 300k. Ultimate project only needs 40k
+      weigher { _: Pair<Module, Int>, value: ModuleWithDependenciesScope ->
+        value.rootContainer.size
+      }
+    }
+  }.build()
 
   fun getCachedScope(module: Module, @ScopeConstant options: Int): GlobalSearchScope {
     return cachedScopes.get(Pair(module, options)) { ModuleWithDependenciesScope(module, options) }
