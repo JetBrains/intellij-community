@@ -3,6 +3,7 @@ package com.intellij.platform.project
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.util.AwaitCancellationAndInvoke
@@ -63,7 +64,10 @@ internal class ProjectIdsStorage(cs: CoroutineScope) {
   }
 
   fun findProject(projectId: ProjectId): Project? {
-    return idsToProject[projectId] ?: aliasesToProject[projectId]
+    return idsToProject[projectId]
+           ?: aliasesToProject[projectId]?.also {
+             logger<ProjectIdsStorage>().warn("Used ProjectId alias: $projectId", Throwable())
+           }
   }
 
   /**
