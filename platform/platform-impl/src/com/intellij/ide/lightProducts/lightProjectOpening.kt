@@ -5,6 +5,7 @@ import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
@@ -24,6 +25,7 @@ import com.intellij.platform.eel.provider.setEelDescriptor
 import com.intellij.platform.eel.provider.setEelMachine
 import com.intellij.platform.eel.provider.setRemoteProjectBaseNioPath
 import com.intellij.platform.eel.provider.setRemoteProjectIdentityNioPath
+import com.intellij.util.ThreeState
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.withTimeoutOrNull
@@ -45,6 +47,9 @@ private const val PROJECTS_DIR_NAME = "projects"
  * (see [createLightProjectStoreDir]), the project is hidden from the recent projects list,
  * and closing its window does not show the welcome frame.
  *
+ * The platform checks project trust on the store directory. A trust state already recorded for [path]
+ * is copied to the store directory, so the platform does not ask the user a second time.
+ *
  * [beforeInit] is invoked before the project is initialized, prior to associating the project with its Eel descriptor.
  * [eelMachineInitializer] initializes the Eel machine for the project's Eel descriptor after the project is opened;
  * a `null` result leaves the project without an Eel machine.
@@ -62,6 +67,15 @@ suspend fun openProjectForLightProduct(
   val eelDescriptor = path.getEelDescriptor()
 
   val projectFile = createLightProjectStoreDir(projectStoreSeed)
+
+  // The platform checks trust on the store directory, not on [path] (see `ProjectManagerImpl.checkTrustedState`).
+  // A trust answer recorded for [path] cannot cover the store directory. Copy the known state,
+  // so the user does not see a second trust prompt after a product already asked about [path].
+  val pathTrustedState = TrustedProjects.getProjectTrustedState(path, project = null)
+  if (pathTrustedState != ThreeState.UNSURE) {
+    TrustedProjects.setProjectTrusted(projectFile, project = null, isTrusted = pathTrustedState.toBoolean())
+  }
+
   val options = OpenProjectTask {
     isNewProject = !ProjectUtil.isValidProjectPath(projectFile)
     this.showWelcomeScreen = showWelcomeScreen
