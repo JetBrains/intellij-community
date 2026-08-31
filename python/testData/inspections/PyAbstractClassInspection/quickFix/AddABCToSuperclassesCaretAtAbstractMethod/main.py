@@ -1,7 +1,7 @@
-import abc
+from abc import abstractmethod
 
 
 class A:
-    @abc.ab<caret>stractmethod
+    @ab<caret>stractmethod
     def meth(self):
         ...
