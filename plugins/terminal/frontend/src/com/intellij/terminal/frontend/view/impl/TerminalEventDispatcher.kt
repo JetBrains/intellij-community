@@ -20,9 +20,12 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.terminal.TerminalCmdKShortcutConflictNotification
 import com.intellij.terminal.frontend.action.SendShortcutToTerminalAction
 import com.intellij.terminal.frontend.view.TerminalAllowedActionsProvider
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -94,6 +97,8 @@ private class TerminalEventDispatcher(
       TerminalEscapeBehaviorChangeNotification.showNotificationIfNeeded(editor.project!!)
     }
 
+    TerminalCmdKShortcutConflictNotification.showIfNeeded(editor.project, keyEvent)
+
     if (isAllowedActionShortcut(e.original)) {
       // KeyEvent will be handled by action system, so we need to remember that the next KeyTyped event is not needed
       ignoreNextKeyTypedEvent = true
@@ -163,8 +168,13 @@ private class TerminalEventDispatcher(
     return false
   }
 
+  @OptIn(LowLevelLocalMachineAccess::class)
   private fun getAllowedActionIds(): List<String> {
     val actionIds = LinkedHashSet(ALLOWED_ACTION_IDS)
+    // IJPL-240075: Allow the IDE Commit action to handle Cmd+K in the terminal on macOS
+    if (OS.CURRENT == OS.macOS) {
+      actionIds.add("CheckinProject")
+    }
     TerminalAllowedActionsProvider.EP_NAME.extensionList.flatMapTo(actionIds) { it.getActionIds() }
     return actionIds.toList()
   }

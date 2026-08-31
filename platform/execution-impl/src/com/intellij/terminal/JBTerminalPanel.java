@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal;
 
 import com.intellij.application.options.EditorFontsConstants;
@@ -30,6 +30,7 @@ import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.system.OS;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -323,6 +324,12 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
         res.add(action);
       }
     }
+    if (OS.CURRENT == OS.macOS) {
+      AnAction checkinProjectAction = actionManager.getAction("CheckinProject");
+      if (checkinProjectAction != null) {
+        res.add(checkinProjectAction);
+      }
+    }
     return res;
   }
 
@@ -401,6 +408,8 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     }
 
     private void dispatchKeyEvent(@NotNull KeyEvent e) {
+      TerminalCmdKShortcutConflictNotification.showIfNeeded(getContextProject(), e);
+
       if (e.getID() == KeyEvent.KEY_PRESSED && !skipKeyEvent(e)) {
         if (!JBTerminalPanel.this.isFocusOwner()) {
           if (LOG.isDebugEnabled()) {
