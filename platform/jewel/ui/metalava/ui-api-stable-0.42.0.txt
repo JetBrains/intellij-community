@@ -384,7 +384,8 @@ package org.jetbrains.jewel.ui.component {
   }
 
   public final class GroupHeaderKt {
-    method @androidx.compose.runtime.Composable public static void GroupHeader(@org.jetbrains.annotations.Nls String text, optional androidx.compose.ui.Modifier modifier, optional kotlin.jvm.functions.Function0<kotlin.Unit>? startComponent, optional kotlin.jvm.functions.Function0<kotlin.Unit>? endComponent, optional org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle style, optional androidx.compose.ui.text.TextStyle textStyle);
+    method @Deprecated @androidx.compose.runtime.Composable public static void GroupHeader(@org.jetbrains.annotations.Nls String text, optional androidx.compose.ui.Modifier modifier, optional kotlin.jvm.functions.Function0<kotlin.Unit>? startComponent, optional kotlin.jvm.functions.Function0<kotlin.Unit>? endComponent, optional org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle style, optional androidx.compose.ui.text.TextStyle textStyle);
+    method @androidx.compose.runtime.Composable public static void GroupHeader(@org.jetbrains.annotations.Nls String text, optional androidx.compose.ui.Modifier modifier, optional kotlin.jvm.functions.Function0<kotlin.Unit>? startComponent, optional kotlin.jvm.functions.Function0<kotlin.Unit>? endComponent, optional org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle style, optional androidx.compose.ui.text.TextStyle textStyle, optional boolean enabled);
   }
 
   public final class IconActionButtonKt {
@@ -1634,8 +1635,9 @@ package org.jetbrains.jewel.ui.component.styling {
   }
 
   @androidx.compose.runtime.Immutable @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class GroupHeaderColors {
-    ctor @KotlinOnly public GroupHeaderColors(androidx.compose.ui.graphics.Color divider);
+    ctor @KotlinOnly public GroupHeaderColors(androidx.compose.ui.graphics.Color divider, optional androidx.compose.ui.graphics.Color dividerDisabled);
     property public androidx.compose.ui.graphics.Color divider;
+    property public androidx.compose.ui.graphics.Color dividerDisabled;
     field public static final org.jetbrains.jewel.ui.component.styling.GroupHeaderColors.Companion Companion;
   }
 
