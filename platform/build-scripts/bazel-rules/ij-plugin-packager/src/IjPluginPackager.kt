@@ -34,7 +34,8 @@ import kotlin.io.path.readText
  * * `--since_build build`: updates `since-build` attribute in `<idea-version>` tag in `plugin.xml` with the provided value;
  * * `--until_build build`: updates `until-build` attribute in `<idea-version>` tag in `plugin.xml` with the provided value;
  * * `--build_number_file path`: provides a path to a file with a build number that will be used as a value for `--plugin_version`, `--since_build` and `--until_build` if the
- *   corresponding arguments use `$build_number_from_file` placeholder.
+ *   corresponding arguments use `$build_number_from_file` placeholder. If it's used in `--plugin_version version`, `SNAPSHOT` text is replaced by a big number to follow SemVer
+ *   format.
  *
  * All paths are relative to the base directory of the request.
  */
@@ -128,7 +129,7 @@ object IjPluginPackager {
     PluginJarPackager(descriptorOutputJar).use {
       val patchedPluginXmlContent = patchPluginDescriptor(
         originalContent = originalPluginXmlContent,
-        pluginVersion = substituteBuildNumber(pluginVersion, buildNumberFromFile),
+        pluginVersion = computePluginVersion(pluginVersion, buildNumberFromFile),
         sinceBuild = substituteBuildNumber(sinceBuild, buildNumberFromFile),
         untilBuild = substituteBuildNumber(untilBuild, buildNumberFromFile),
         contentModuleDescriptors = contentModuleDescriptors
@@ -200,8 +201,22 @@ object IjPluginPackager {
   )
 }
 
+private const val BUILD_NUMBER_FROM_FILE_MARKER = $$"$build_number_from_file"
+
+private fun computePluginVersion(string: String?, buildNumberFromFile: Lazy<String>): String? {
+  return if (string == BUILD_NUMBER_FROM_FILE_MARKER) {
+    //transform `263.SNAPSHOT` text to `263.99999999.0` to follow SemVer format
+    var snapshotVersion = buildNumberFromFile.value.replace("SNAPSHOT", "99999999")
+    if (snapshotVersion.count { it == '.' } == 1) {
+      snapshotVersion += ".0"
+    }
+    snapshotVersion
+  }
+  else string
+}
+
 private fun substituteBuildNumber(string: String?, buildNumberFromFile: Lazy<String>): String? {
-  return if (string == $$"$build_number_from_file") buildNumberFromFile.value else string
+  return if (string == BUILD_NUMBER_FROM_FILE_MARKER) buildNumberFromFile.value else string
 }
 
 internal object IjPluginPackagerExecutor : WorkRequestExecutor {

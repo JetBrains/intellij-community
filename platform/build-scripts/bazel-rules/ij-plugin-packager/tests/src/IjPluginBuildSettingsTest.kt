@@ -17,7 +17,7 @@ internal class IjPluginBuildSettingsTest {
     val defaultBuildNumber = resolveRunfile("ij.plugin.packager.test.build-number-file").readText().trim()
     assertPluginDescriptor(
       configuration = "default",
-      expectedVersion = defaultBuildNumber,
+      expectedVersion = defaultBuildNumber.substringBefore('.') + ".99999999.0",
       expectedSinceBuild = defaultBuildNumber,
       expectedUntilBuild = defaultBuildNumber,
     )
