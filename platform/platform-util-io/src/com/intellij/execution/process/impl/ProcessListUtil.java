@@ -39,8 +39,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/// Consider using [ProcessHandle#allProcesses()] instead.
-@ApiStatus.Obsolete
+/// @deprecated might not work in recent Windows 11 versions. Use [ProcessHandle#allProcesses()] instead.
+@Deprecated(forRemoval = true)
 public final class ProcessListUtil {
   private static final Logger LOG = Logger.getInstance(ProcessListUtil.class);
   private static final String WIN_PROCESS_LIST_HELPER_FILENAME = "WinProcessListHelper.exe";

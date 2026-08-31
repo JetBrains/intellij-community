@@ -1,12 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
-import com.intellij.execution.process.impl.ProcessListUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.system.OS;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,11 +18,11 @@ public final class OSProcessUtil {
 
   private OSProcessUtil() { }
 
-  /// Consider using [ProcessHandle#allProcesses()] instead.
-  @ApiStatus.Obsolete
-  @SuppressWarnings("UsagesOfObsoleteApi")
+  /// @deprecated might not work in recent Windows 11 versions. Use [ProcessHandle#allProcesses()] instead.
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings({"removal", "UnnecessaryFullyQualifiedName"})
   public static ProcessInfo @NotNull [] getProcessList() {
-    return ProcessListUtil.getProcessList();
+    return com.intellij.execution.process.impl.ProcessListUtil.getProcessList();
   }
 
   /// Returns an executable name for the given process if available, or an empty string.
