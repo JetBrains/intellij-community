@@ -8,17 +8,12 @@ import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.devkit.core.icons.DevkitCoreIcons
-import com.intellij.lang.LanguageParserDefinitions
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.registerExtension
 import com.intellij.testFramework.replaceService
 import com.intellij.util.application
-import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 
 internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCodeInsightFixtureTestCase() {
 
@@ -36,12 +31,6 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
 
   override fun setUp() {
     super.setUp()
-    LanguageParserDefinitions.INSTANCE.addExplicitExtension(
-      KotlinLanguage.INSTANCE,
-      KotlinParserDefinition(),
-      testRootDisposable,
-    )
-    CodeInsightTestFixtureImpl.associateExtensionTemporarily(KotlinFileType.INSTANCE, "kts", testRootDisposable)
     project.replaceService(
       IntelliJPlatformGradleModelProvider::class.java,
       IntelliJPlatformGradleModelProvider { file ->
