@@ -15,6 +15,7 @@
   <content namespace="jetbrains">
     <module name="intellij.platform.whatsNew"/>
     <module name="intellij.ide.startup.importSettings"/>
+    <module name="intellij.libraries.jps.javac.extension" loading="embedded"/>
     <module name="intellij.platform.customization.min"/>
     <module name="intellij.idea.customization.base"/>
     <module name="intellij.idea.community.ide.customization" loading="embedded"/>

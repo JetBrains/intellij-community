@@ -201,6 +201,10 @@ class MPSProperties : JetBrainsProductProperties() {
         // the sqlite JDBC driver `importSettings` needs; private, so plugins bundle their own copy of it
         privateModule("intellij.libraries.sqlite")
 
+        // `productImplementationModules` holds `intellij.platform.jps.build.javac.rt`, which depends on this wrapper.
+        // The declaration keeps the plugin model the only truth for packaging, so `validateImplicitPlatformModule` passes.
+        embeddedModule("intellij.libraries.jps.javac.extension")
+
         module("intellij.platform.customization.min")
         module("intellij.idea.customization.base")
 
