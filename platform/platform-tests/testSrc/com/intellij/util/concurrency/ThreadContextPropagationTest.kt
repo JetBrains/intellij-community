@@ -16,8 +16,11 @@ import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.NonBlockingReadAction
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint
 import com.intellij.openapi.application.currentThreadContextModality
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -53,6 +56,7 @@ import org.junit.jupiter.api.extension.InvocationInterceptor
 import org.junit.jupiter.api.extension.ReflectiveInvocationContext
 import java.lang.reflect.Method
 import java.util.concurrent.Callable
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
 import java.util.concurrent.ScheduledExecutorService
@@ -325,6 +329,51 @@ class ThreadContextPropagationTest {
         }
       }
     }
+  }
+
+  @Test
+  fun `NBRA reschedule carries the submission context`(): Unit = timeoutRunBlocking {
+    val element = TestElement("element")
+    val probePresence = ConcurrentLinkedQueue<Boolean>()
+    val constraint = object : ContextConstraint {
+      override fun isCorrectContext(): Boolean {
+        probePresence.add(currentThreadContext()[TestElementKey] === element)
+        return true
+      }
+
+      override fun schedule(runnable: Runnable) {
+        runnable.run()
+      }
+
+      override fun toString(): String = "recording constraint"
+    }
+    val action = ReadAction.nonBlocking(Callable { "x" }).withTestConstraint(constraint)
+    val writeActionStarted = Semaphore(1)
+    val writeActionMayFinish = Semaphore(1)
+    @Suppress("ForbiddenInSuspectContextMethod")
+    val promise = withContext(element) {
+      // a write action held during `submit` forces the NBRA through the deferred `invokeLater` reschedule
+      ApplicationManager.getApplication().invokeLater {
+        ApplicationManager.getApplication().runWriteAction {
+          writeActionStarted.up()
+          writeActionMayFinish.timeoutWaitUp()
+        }
+      }
+      writeActionStarted.timeoutWaitUp()
+      val promise = action.submit(AppExecutorUtil.getAppExecutorService())
+      writeActionMayFinish.up()
+      promise
+    }
+    assertEquals("x", PlatformTestUtil.waitForFuture(promise, 10_000))
+    assertFalse(probePresence.isEmpty())
+    assertTrue(probePresence.all { it }, "every constraint evaluation must see the submission context")
+  }
+
+  private fun <T> NonBlockingReadAction<T>.withTestConstraint(constraint: ContextConstraint): NonBlockingReadAction<T> {
+    val withConstraint = NonBlockingReadActionImpl::class.java.getDeclaredMethod("withConstraint", ContextConstraint::class.java)
+    withConstraint.isAccessible = true
+    @Suppress("UNCHECKED_CAST")
+    return withConstraint.invoke(this, constraint) as NonBlockingReadAction<T>
   }
 
   @Test

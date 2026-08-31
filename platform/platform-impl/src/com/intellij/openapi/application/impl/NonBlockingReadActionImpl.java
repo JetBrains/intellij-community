@@ -200,11 +200,22 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
                                            myCoalesceEquality, myProgressIndicator);
   }
 
-  private static void invokeLater(@NotNull Runnable runnable) {
+  /** When the application is gone, runs {@code onExpired} instead of the runnable, so the caller can terminate its submission. */
+  private static void invokeLater(@NotNull Runnable runnable, @NotNull Runnable onExpired) {
     Application app = ApplicationManager.getApplication();
+    if (app == null || app.isDisposed()) {
+      onExpired.run();
+      return;
+    }
     app.getThreadingSupport().runWhenWriteActionIsCompleted(() -> {
       SideEffectGuard.computeWithAllowedSideEffectsBlocking(EnumSet.of(SideEffectGuard.EffectType.INVOKE_LATER), () -> {
-        app.invokeLaterOnWriteThread(runnable, ModalityState.any(), app.getDisposed());
+        app.invokeLaterOnWriteThread(runnable, AnyModalityState.ANY, _ -> {
+          if (!app.isDisposed()) {
+            return false;
+          }
+          onExpired.run();
+          return true;
+        });
         return Unit.INSTANCE;
       });
       return Unit.INSTANCE;
@@ -435,7 +446,11 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     }
 
     private boolean shouldTrackInTests() {
-      return backendExecutor != SYNC_DUMMY_EXECUTOR && ApplicationManager.getApplication().isUnitTestMode();
+      if (backendExecutor == SYNC_DUMMY_EXECUTOR) {
+        return false;
+      }
+      Application app = ApplicationManager.getApplication();
+      return app != null && app.isUnitTestMode();
     }
 
     private boolean hasUnboundedExecutor() {
@@ -493,12 +508,13 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
         indicator.cancel();
       }
       if (builder.myCoalesceEquality != null) {
-        release();
+        runInChildContext(this::release);
       }
       if (hasUnboundedExecutor()) {
         ourUnboundedSubmissionTracker.unregisterSubmission(myStartTrace);
       }
-      if (shouldTrackInTests()) {
+      if (backendExecutor != SYNC_DUMMY_EXECUTOR) {
+        // the application can be gone here, so remove without the test-mode check
         ourTasksForTestMode.remove(this);
       }
     }
@@ -534,7 +550,8 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       }
       else {
         ourTasksByEquality.put(builder.myCoalesceEquality, myReplacement);
-        myReplacement.transferToBgThread();
+        // the pre-computation checks must see the replacement's context, not the finished submission's one
+        myReplacement.runInChildContext(myReplacement::transferToBgThread);
       }
     }
 
@@ -579,6 +596,18 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       return dollars >= 0 ? name.substring(0, dollars) : name;
     }
 
+    private void runInChildContext(@NotNull Runnable action) {
+      if (AppExecutorUtil.propagateContext()) {
+        ThreadContext.installThreadContext(myChildContext.getContext(), true, () -> {
+          action.run();
+          return Unit.INSTANCE;
+        });
+      }
+      else {
+        action.run();
+      }
+    }
+
     void transferToBgThread() {
       if (LOG.isTraceEnabled()) {
         LOG.trace("Submitting " + this);
@@ -607,23 +636,12 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
               computationSuccessful = attemptComputation();
             }
             if (!computationSuccessful) {
-              rescheduleLater();
+              runInChildContext(this::rescheduleLater);
             }
           }
           finally {
             if (builder.myCoalesceEquality != null) {
-              if (AppExecutorUtil.propagateContext()) {
-                // `release` should be called under [myChildContext] as well
-                // since it executes some code to check when to call computation, and this code may rely on the context
-                // e.g. in analyzer: Application and Project are stored in context and `release` uses Application
-                ThreadContext.installThreadContext(myChildContext.getContext(), true, () -> {
-                  release();
-                  return Unit.INSTANCE;
-                });
-              }
-              else {
-                release();
-              }
+              runInChildContext(this::release);
             }
           }
         };
@@ -681,6 +699,9 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
                 else {
                   BaseConstrainedExecution.scheduleWithinConstraints(semaphore::up, null, constraints);
                 }
+              }, () -> {
+                cancel();
+                semaphore.up();
               });
               ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, myProgressIndicator);
               if (isCancelled()) {
@@ -776,7 +797,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
     private void rescheduleLater() {
       if (Promises.isPending(this)) {
-        invokeLater((ContextAwareRunnable) () -> reschedule());
+        invokeLater((ContextAwareRunnable) () -> runInChildContext(this::reschedule), this::cancel);
       }
     }
 
