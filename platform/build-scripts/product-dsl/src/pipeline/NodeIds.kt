@@ -129,4 +129,7 @@ internal object NodeIds {
 
   /** Library license coverage validation */
   @JvmField val LIBRARY_LICENSE_VALIDATION = NodeId("libraryLicenseValidation", NodeCategory.VALIDATION)
+
+  /** Community license coverage for a library that a community or core module set ships */
+  @JvmField val COMMUNITY_LIBRARY_LICENSE_VALIDATION = NodeId("communityLibraryLicenseValidation", NodeCategory.VALIDATION)
 }

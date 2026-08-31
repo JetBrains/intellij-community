@@ -836,6 +836,8 @@ internal fun testGenerationModel(
   productAllowedMissing: Map<String, Set<ContentModuleName>> = emptyMap(),
   dslTestPluginsByProduct: Map<String, List<org.jetbrains.intellij.build.productLayout.TestPluginSpec>> = emptyMap(),
   libraryLicenses: List<LibraryLicense> = emptyList(),
+  communityLibraryLicenses: List<LibraryLicense> = emptyList(),
+  moduleSetsByLabel: Map<String, List<org.jetbrains.intellij.build.productLayout.ModuleSet>> = emptyMap(),
 ): GenerationModel {
   val effectiveOutputProvider = outputProvider ?: stubModuleOutputProvider()
   val effectiveFileUpdater = fileUpdater ?: DeferredFileUpdater(Path.of("."))
@@ -843,7 +845,7 @@ internal fun testGenerationModel(
   val generationMode = if (updateSuppressions) GenerationMode.UPDATE_SUPPRESSIONS else GenerationMode.NORMAL
   return GenerationModel(
     discovery = DiscoveryResult(
-      moduleSetsByLabel = emptyMap(),
+      moduleSetsByLabel = moduleSetsByLabel,
       products = emptyList(),
       testProductSpecs = emptyList(),
       moduleSetSources = emptyMap(),
@@ -855,6 +857,7 @@ internal fun testGenerationModel(
       outputProvider = effectiveOutputProvider,
       projectLibraryToModuleMap = effectiveOutputProvider.getProjectLibraryToModuleMap(),
       libraryLicenses = libraryLicenses,
+      communityLibraryLicenses = communityLibraryLicenses,
       pluginAllowedMissingDependencies = pluginAllowedMissingDependencies,
       testLibraryAllowedInModule = testLibraryAllowedInModule,
       suppressionConfigPath = suppressionConfigPath,

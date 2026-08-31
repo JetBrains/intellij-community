@@ -351,13 +351,16 @@ Run 'Generate Product Layouts' to fix automatically.
 
 ## Missing Library License
 
-Emitted by `LibraryLicenseValidator` (ruleName `LibraryLicenseValidation`, category `MISSING_LIBRARY_LICENSE`).
+Emitted by `LibraryLicenseValidator` (ruleName `LibraryLicenseValidation`) and by
+`CommunityLibraryLicenseValidator` (ruleName `CommunityLibraryLicenseValidation`). Both use the category
+`MISSING_LIBRARY_LICENSE`. The `Scope` line and the fix line separate the two reports.
 
 ```
 Libraries without a license entry
 
 Every library that an installation packages needs a license entry.
 The entry gives the license name and the library origin for the legal report.
+Scope: the plugin graph
 
   * some-library-1.2.3
     Coordinates: com.example:some-library:1.2.3

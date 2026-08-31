@@ -4,6 +4,7 @@
 package org.jetbrains.intellij.build.productLayout.validator
 
 import com.intellij.platform.pluginGraph.ContentSourceKind
+import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.getLibraryFileName
 import org.jetbrains.intellij.build.productLayout.model.error.MissingLibraryLicenseError
 import org.jetbrains.intellij.build.productLayout.model.error.MissingLibraryLicenseViolation
@@ -70,17 +71,12 @@ internal object LibraryLicenseValidator : PipelineNode {
       }
     }
 
-    // a library can come from more than one module, so report it once
-    val libraryToModule = HashMap<JpsLibrary, String>()
-    var checkedModuleCount = 0
-    for (moduleName in moduleNames) {
-      val module = outputProvider.findModule(moduleName) ?: continue
-      checkedModuleCount++
-      val enumerator = JpsJavaExtensionService.dependencies(module).recursively().includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME)
-      for (library in enumerator.libraries) {
-        libraryToModule.put(library, moduleName)
-      }
-    }
+    val coveredNames = licenses.flatMapTo(HashSet()) { it.getLibraryNames() }
+    val (checkedModuleCount, violations) = collectMissingLicenseViolations(
+      moduleNames = moduleNames,
+      outputProvider = outputProvider,
+      coveredNames = coveredNames,
+    )
 
     // the graph always holds a production module, and a silent pass would hide every missing entry
     check(checkedModuleCount != 0) {
@@ -88,30 +84,53 @@ internal object LibraryLicenseValidator : PipelineNode {
       "entries. A pass here would hide every missing license entry."
     }
 
-    val coveredNames = licenses.flatMapTo(HashSet()) { it.getLibraryNames() }
-
-    val violations = ArrayList<MissingLibraryLicenseViolation>()
-    for ((library, moduleName) in libraryToModule) {
-      val libraryName = getLibraryFileName(library)
-      if (coveredNames.contains(libraryName) || isImplicitLibrary(libraryName)) {
-        continue
-      }
-      // a directory of JARs with the name `Ant` and a Maven library with the name `ant` coexist.
-      // The license entry gives the name `Ant`.
-      if (libraryName == "ant") {
-        continue
-      }
-
-      // the coordinates go into the report only, and they never change whether the rule reports a library
-      val coordinates = library.asTyped(JpsRepositoryLibraryType.INSTANCE)?.properties?.data?.toString()
-      violations.add(MissingLibraryLicenseViolation(libraryName = libraryName, coordinates = coordinates, moduleName = moduleName))
-    }
-
     if (violations.isNotEmpty()) {
       // the error sorts the violations in its own format function
-      ctx.emitError(MissingLibraryLicenseError(context = "the plugin graph", violations = violations))
+      ctx.emitError(MissingLibraryLicenseError(context = "the plugin graph", violations = violations, licenseFile = "CommunityLibraryLicenses.kt or UltimateLibraryLicenses.kt"))
     }
   }
+}
+
+/**
+ * Reads the production runtime libraries of each module, and reports the ones no license entry covers.
+ *
+ * Returns the number of modules that resolved to a JPS module, and the violations. Both rules need the count, because a
+ * zero would make a pass meaningless.
+ */
+internal fun collectMissingLicenseViolations(
+  moduleNames: Collection<String>,
+  outputProvider: ModuleOutputProvider,
+  coveredNames: Set<String>,
+): Pair<Int, List<MissingLibraryLicenseViolation>> {
+  // a library can come from more than one module, so report it once
+  val libraryToModule = HashMap<JpsLibrary, String>()
+  var checkedModuleCount = 0
+  for (moduleName in moduleNames) {
+    val module = outputProvider.findModule(moduleName) ?: continue
+    checkedModuleCount++
+    val enumerator = JpsJavaExtensionService.dependencies(module).recursively().includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME)
+    for (library in enumerator.libraries) {
+      libraryToModule.put(library, moduleName)
+    }
+  }
+
+  val violations = ArrayList<MissingLibraryLicenseViolation>()
+  for ((library, moduleName) in libraryToModule) {
+    val libraryName = getLibraryFileName(library)
+    if (coveredNames.contains(libraryName) || isImplicitLibrary(libraryName)) {
+      continue
+    }
+    // a directory of JARs with the name `Ant` and a Maven library with the name `ant` coexist.
+    // The license entry gives the name `Ant`.
+    if (libraryName == "ant") {
+      continue
+    }
+
+    // the coordinates go into the report only, and they never change whether the rule reports a library
+    val coordinates = library.asTyped(JpsRepositoryLibraryType.INSTANCE)?.properties?.data?.toString()
+    violations.add(MissingLibraryLicenseViolation(libraryName = libraryName, coordinates = coordinates, moduleName = moduleName))
+  }
+  return checkedModuleCount to violations
 }
 
 /**
@@ -119,7 +138,7 @@ internal object LibraryLicenseValidator : PipelineNode {
  *
  * A license entry is required for a main library such as `ktor-client`, and not for its sub-libraries.
  */
-private fun isImplicitLibrary(libraryName: String): Boolean {
+internal fun isImplicitLibrary(libraryName: String): Boolean {
   return ((libraryName.startsWith("ktor-") || libraryName.startsWith("io.ktor.")) && (libraryName != "ktor-client")) ||
          libraryName.startsWith("skiko-awt-runtime-")
 }

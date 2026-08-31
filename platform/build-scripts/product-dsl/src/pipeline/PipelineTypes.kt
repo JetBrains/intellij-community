@@ -60,6 +60,15 @@ internal data class DiscoveryResult(
   /** Core module sets */
   val coreModuleSets: List<ModuleSet>
     get() = moduleSetsByLabel.get(ModuleSetSourceLabels.CORE) ?: emptyList()
+
+  /**
+   * The module sets a community product can ship.
+   *
+   * `ultimateGenerator` maps the COMMUNITY and CORE labels to the community generated META-INF directory, and the
+   * ULTIMATE label to the `licenseCommon` one. So a library of such a set needs an entry in the community license list.
+   */
+  val communityShippedModuleSets: List<ModuleSet>
+    get() = communityModuleSets + coreModuleSets
 }
 
 /**

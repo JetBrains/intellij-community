@@ -85,6 +85,12 @@ data class ModuleSetGenerationConfig(
    */
   @JvmField val libraryLicenses: List<LibraryLicense> = emptyList(),
   /**
+   * The license entries the community license validation rule checks against.
+   * Pass the community list alone here. The ultimate superset holds the community list, so it hides a misplaced entry.
+   * An empty list turns that rule off.
+   */
+  @JvmField val communityLibraryLicenses: List<LibraryLicense> = emptyList(),
+  /**
    * Modules allowed having specific testing libraries in production scope.
    * Maps module name to the set of testing library names it's allowed to have.
    * More precise than a blanket allowlist - each module can only have the specific libraries it needs.

@@ -9,6 +9,9 @@ Ensures every third-party library that reaches a distribution has a license entr
 ## Inputs
 
 - Config: `libraryLicenses` on `ModuleSetGenerationConfig` (the license list).
+  The ultimate generator passes the ultimate superset, which holds the community list. So this rule cannot see an
+  entry that a community product misses. [community-library-license.md](community-library-license.md) reads
+  `communityLibraryLicenses`, the community list alone, and covers that case.
 - Plugin graph: every content module with a production content source, and the main module of every production plugin.
 - JPS model: the module of each name through `ModuleOutputProvider.findModule`.
 - JPS model: production runtime dependencies from `JpsJavaExtensionService.dependencies(module).recursively().includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME)`.
@@ -48,6 +51,7 @@ Ensures every third-party library that reaches a distribution has a license entr
 
 ## Related
 
+- [community-library-license.md](community-library-license.md)
 - [validation-rules.md](../validation-rules.md)
 - [errors.md](../errors.md)
 - [library-module.md](library-module.md)

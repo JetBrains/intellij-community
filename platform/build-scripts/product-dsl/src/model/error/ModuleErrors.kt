@@ -428,6 +428,8 @@ internal data class MissingLibraryLicenseViolation(
 internal data class MissingLibraryLicenseError(
   override val context: String,
   @JvmField val violations: List<MissingLibraryLicenseViolation>,
+  /** The file a fix must edit. Two rules emit this error, and each one names the file it reads. */
+  @JvmField val licenseFile: String,
   override val ruleName: String = "LibraryLicenseValidation",
 ) : ValidationError {
   override val category: ErrorCategory get() = ErrorCategory.MISSING_LIBRARY_LICENSE
@@ -438,6 +440,7 @@ internal data class MissingLibraryLicenseError(
     appendLine()
     appendLine("${s.yellow}Every library that an installation packages needs a license entry.${s.reset}")
     appendLine("${s.yellow}The entry gives the license name and the library origin for the legal report.${s.reset}")
+    appendLine("${s.gray}Scope: $context${s.reset}")
     appendLine()
 
     for (violation in violations.sortedBy { it.libraryName }) {
@@ -450,7 +453,7 @@ internal data class MissingLibraryLicenseError(
 
     appendLine()
     appendLine("${s.yellow}Fix:${s.reset}")
-    appendLine("1. Add the license entry to CommunityLibraryLicenses.kt or UltimateLibraryLicenses.kt.")
+    appendLine("1. Add the license entry to $licenseFile.")
     appendLine("2. Change the dependency scope to TEST if only tests use the library.")
     appendLine("3. Change the dependency scope to PROVIDED if only compilation uses the library.")
     appendLine()
