@@ -6,7 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.platform.projectView.pane.ProjectViewPaneProvider
-import com.intellij.platform.projectView.pane.ProjectViewPaneService
+import com.intellij.platform.projectView.pane.ProjectViewPaneServiceBase
 import kotlinx.coroutines.CoroutineScope
 
 internal val BackendProjectViewPaneProviderEP = ExtensionPointName.create<ProjectViewPaneProvider>("com.intellij.project.view.pane.model.backend")
@@ -15,7 +15,7 @@ internal val BackendProjectViewPaneProviderEP = ExtensionPointName.create<Projec
 internal class BackendProjectViewPaneService(
   project: Project,
   coroutineScope: CoroutineScope,
-) : ProjectViewPaneService(project, coroutineScope, { BackendProjectViewPaneProviderEP.extensionList }, "BackendProjectViewPaneService") {
+) : ProjectViewPaneServiceBase(project, coroutineScope, { BackendProjectViewPaneProviderEP.extensionList }, "BackendProjectViewPaneService") {
   companion object {
     fun getInstance(project: Project): BackendProjectViewPaneService = project.service()
   }

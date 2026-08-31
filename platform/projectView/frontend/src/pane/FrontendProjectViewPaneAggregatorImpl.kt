@@ -14,11 +14,13 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneKind
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
+import com.intellij.platform.projectView.pane.ProjectViewPaneService
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
 import com.intellij.platform.projectView.pane.SelectInRequestDTO
 import com.intellij.platform.projectView.rpc.ProjectViewRpc
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,9 +36,9 @@ internal class FrontendProjectViewPaneAggregatorImpl(
   coroutineScope: CoroutineScope,
 ) : FrontendProjectViewPaneAggregator {
 
-  private fun frontendService(): FrontendProjectViewPaneService = FrontendProjectViewPaneService.getInstance(project)
-
-  private suspend fun backendService(): ProjectViewRpc = ProjectViewRpc.getInstance()
+  private val backendServiceDeferred = coroutineScope.async(CoroutineName("Waiting for the Project View backend")) {
+    BackendDelegatingProjectViewPaneService(project, ProjectViewRpc.getInstance())
+  }
   
   // null means "not loaded yet", as opposed to "loaded, but there are no panes"
   private val frontendDescriptors = MutableStateFlow<Map<ProjectViewPaneId, ProjectViewPaneDescriptorImpl>?>(null)
@@ -52,11 +54,23 @@ internal class FrontendProjectViewPaneAggregatorImpl(
       }
     }
     coroutineScope.launch(CoroutineName("PV backend pane descriptors fetching")) {
-      backendService().getPaneDescriptorsFlow(project.projectId()).collect { descriptors ->
+      backendService().getPaneDescriptorsFlow().collect { descriptors ->
         LOG.info("Loaded the backend PV pane descriptors: ${descriptors.joinToString { it.id.idString }}")
         backendDescriptors.value = descriptors.associateBy { it.id }
         isBackendLoaded.store(true)
       }
+    }
+  }
+
+  private fun frontendService(): ProjectViewPaneService = FrontendProjectViewPaneService.getInstance(project)
+
+  private suspend fun backendService(): ProjectViewPaneService = backendServiceDeferred.await()
+  
+  private suspend fun paneService(descriptor: ProjectViewPaneDescriptorImpl): ProjectViewPaneService {
+    return when (descriptor.kind) {
+      ProjectViewPaneKind.BACKEND -> backendService()
+      ProjectViewPaneKind.LIGHT -> frontendService()
+      ProjectViewPaneKind.UI_ONLY -> TODO("Not implemented yet")
     }
   }
 
@@ -73,54 +87,54 @@ internal class FrontendProjectViewPaneAggregatorImpl(
   }
 
   override suspend fun getPaneStateFlow(paneDescriptor: ProjectViewPaneDescriptorImpl): Flow<ProjectViewPaneStateEvent> {
-    return when (paneDescriptor.kind) {
-      ProjectViewPaneKind.LIGHT -> {
-        frontendService().getPaneStateFlow(paneDescriptor.id)
-      }
-      ProjectViewPaneKind.BACKEND -> {
-        backendService().getPaneStateFlow(project.projectId(), paneDescriptor.id).map { it.toEvent() }
-      }
-      ProjectViewPaneKind.UI_ONLY -> {
-        TODO("Not implemented yet")
-      }
-    }
+    return paneService(paneDescriptor).getPaneStateFlow(paneDescriptor.id)
   }
 
   override suspend fun getPaneRequestChannel(paneDescriptor: ProjectViewPaneDescriptorImpl): SendChannel<ProjectViewPaneRequest> {
-    return when (paneDescriptor.kind) {
-      ProjectViewPaneKind.LIGHT -> {
-        frontendService().getPaneRequestChannel(paneDescriptor.id)
-      }
-      ProjectViewPaneKind.BACKEND -> {
-        backendService().getPaneRequestChannel(project.projectId(), paneDescriptor.id)
-      }
-      ProjectViewPaneKind.UI_ONLY -> {
-        TODO("Not implemented yet")
-      }
-    }
+    return paneService(paneDescriptor).getPaneRequestChannel(paneDescriptor.id)
   }
 
   override suspend fun findNodeForOpenedFile(paneDescriptor: ProjectViewPaneDescriptorImpl, editorChoice: EditorChoice, isInvokedManually: Boolean): ProjectViewNodePath? {
-    return when (paneDescriptor.kind) {
-      ProjectViewPaneKind.LIGHT -> {
-        frontendService().findNodeForOpenedFile(paneDescriptor.id, editorChoice, isInvokedManually)
-      }
-      ProjectViewPaneKind.BACKEND -> {
-        backendService().findNodeForOpenedFile(project.projectId(), paneDescriptor.id, editorChoice, isInvokedManually)
-      }
-      ProjectViewPaneKind.UI_ONLY -> {
-        TODO("Not implemented yet")
-      }
-    }
+    return paneService(paneDescriptor).findNodeForOpenedFile(paneDescriptor.id, editorChoice, isInvokedManually)
   }
 
   override suspend fun findNodeForSelectIn(selectInRequest: SelectInRequestDTO): ProjectViewNodePath? {
     return if (isBackendLoaded.load()) {
-      backendService().findNodeForSelectIn(project.projectId(), selectInRequest)
+      backendService().findNodeForSelectIn(selectInRequest)
     }
     else {
       frontendService().findNodeForSelectIn(selectInRequest)
     }
+  }
+}
+
+private class BackendDelegatingProjectViewPaneService(
+  private val project: Project,
+  private val rpc: ProjectViewRpc,
+) : ProjectViewPaneService {
+
+  override suspend fun getPaneDescriptorsFlow(): Flow<List<ProjectViewPaneDescriptorImpl>> {
+    return rpc.getPaneDescriptorsFlow(project.projectId())
+  }
+
+  override suspend fun getPaneStateFlow(paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEvent> {
+    return rpc.getPaneStateFlow(project.projectId(), paneId).map { it.toEvent() }
+  }
+
+  override suspend fun getPaneRequestChannel(paneId: ProjectViewPaneId): SendChannel<ProjectViewPaneRequest> {
+    return rpc.getPaneRequestChannel(project.projectId(), paneId)
+  }
+
+  override suspend fun findNodeForOpenedFile(
+    paneId: ProjectViewPaneId,
+    editorChoice: EditorChoice,
+    isInvokedManually: Boolean,
+  ): ProjectViewNodePath? {
+    return rpc.findNodeForOpenedFile(project.projectId(), paneId, editorChoice, isInvokedManually)
+  }
+
+  override suspend fun findNodeForSelectIn(selectInRequestDTO: SelectInRequestDTO): ProjectViewNodePath? {
+    return rpc.findNodeForSelectIn(project.projectId(), selectInRequestDTO)
   }
 }
 

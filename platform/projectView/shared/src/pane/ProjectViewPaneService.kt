@@ -49,7 +49,7 @@ interface ProjectViewPaneProvider {
    * (the Scope panes, for example, come and go as the user edits the scope list).
    *
    * A provider is expected to keep emitting the same [ProjectViewPaneModel] instances for panes that haven't
-   * changed: [ProjectViewPaneService] uses instance identity to tell an unchanged pane from a new one, and only
+   * changed: [ProjectViewPaneServiceBase] uses instance identity to tell an unchanged pane from a new one, and only
    * the new ones are started (and only the vanished ones are stopped). Consequently, a pane whose descriptor
    * changes must be emitted as a *new* instance, or the change won't be noticed.
    */
@@ -57,12 +57,25 @@ interface ProjectViewPaneProvider {
 }
 
 @ApiStatus.Internal
-abstract class ProjectViewPaneService(
+interface ProjectViewPaneService {
+  suspend fun getPaneDescriptorsFlow(): Flow<List<ProjectViewPaneDescriptorImpl>>
+
+  suspend fun getPaneStateFlow(paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEvent>
+
+  suspend fun getPaneRequestChannel(paneId: ProjectViewPaneId): SendChannel<ProjectViewPaneRequest>
+
+  suspend fun findNodeForOpenedFile(paneId: ProjectViewPaneId, editorChoice: EditorChoice, isInvokedManually: Boolean): ProjectViewNodePath?
+
+  suspend fun findNodeForSelectIn(selectInRequestDTO: SelectInRequestDTO): ProjectViewNodePath?
+}
+
+@ApiStatus.Internal
+abstract class ProjectViewPaneServiceBase(
   private val project: Project,
   coroutineScope: CoroutineScope,
   private val getProviders: () -> List<ProjectViewPaneProvider>,
   private val debugName: String = "ProjectViewPaneService",
-) {
+) : ProjectViewPaneService {
 
   protected abstract val isFrontend: Boolean
 
@@ -144,18 +157,18 @@ abstract class ProjectViewPaneService(
     return managers.value?.get(paneId)
   }
 
-  suspend fun getPaneRequestChannel(paneId: ProjectViewPaneId): SendChannel<ProjectViewPaneRequest> {
+  override suspend fun getPaneRequestChannel(paneId: ProjectViewPaneId): SendChannel<ProjectViewPaneRequest> {
     return awaitManager(paneId)?.getRequestChannel() ?: Channel<ProjectViewPaneRequest>(capacity = 0).also { it.close() }
   }
 
-  fun getPaneDescriptorsFlow(): Flow<List<ProjectViewPaneDescriptorImpl>> {
+  override suspend fun getPaneDescriptorsFlow(): Flow<List<ProjectViewPaneDescriptorImpl>> {
     return managers
       .filterNotNull()
       .map { managers -> managers.values.map { it.descriptor } }
       .distinctUntilChanged()
   }
 
-  suspend fun getPaneStateFlow(paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEvent> {
+  override suspend fun getPaneStateFlow(paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEvent> {
     return awaitManager(paneId)?.getPaneStateFlow() ?: emptyFlow()
   }
 
@@ -163,13 +176,13 @@ abstract class ProjectViewPaneService(
     return managers.value?.get(paneId)?.pane
   }
 
-  suspend fun findNodeForOpenedFile(paneId: ProjectViewPaneId, editorChoice: EditorChoice, isInvokedManually: Boolean): ProjectViewNodePath? {
+  override suspend fun findNodeForOpenedFile(paneId: ProjectViewPaneId, editorChoice: EditorChoice, isInvokedManually: Boolean): ProjectViewNodePath? {
     val managers = managers.value ?: return null
     val pane = managers[paneId]?.pane ?: return null
     return pane.findNodeForSelectIn(SelectByEditorImpl(editorChoice, isInvokedManually))
   }
 
-  suspend fun findNodeForSelectIn(selectInRequestDTO: SelectInRequestDTO): ProjectViewNodePath? {
+  override suspend fun findNodeForSelectIn(selectInRequestDTO: SelectInRequestDTO): ProjectViewNodePath? {
     val managers = managers.value ?: return null
     val manager = managers.values.firstOrNull { pane ->
       pane.descriptor.selectInTargetDescriptors.any { selectInTargetDescriptor ->
@@ -284,4 +297,4 @@ private class ProjectViewPaneManager(val pane: ProjectViewPaneModel, val descrip
   }
 }
 
-private val LOG = logger<ProjectViewPaneService>()
+private val LOG = logger<ProjectViewPaneServiceBase>()
