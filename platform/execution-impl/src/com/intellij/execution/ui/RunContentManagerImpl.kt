@@ -47,6 +47,7 @@ import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.docking.DockManager
 import com.intellij.util.SmartList
 import com.intellij.util.ui.EmptyIcon
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.future.await
@@ -756,8 +757,13 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       val killable = processHandler is KillableProcess && (processHandler as KillableProcess).canKillProcess()
       val task = object : WaitForProcessTask(processHandler, sessionName, projectClosing, project) {
         override fun onCancel() {
-          if (killable && !processHandler.isProcessTerminated) {
-            (processHandler as KillableProcess).killProcess()
+          if (!killable) return
+          // killProcess can block, and this callback runs on the EDT
+          // the atomic start keeps the kill job alive when the tab removal cancels the scope
+          descriptor.coroutineScope.launch(Dispatchers.IO, start = CoroutineStart.ATOMIC) {
+            if (!processHandler.isProcessTerminated) {
+              (processHandler as KillableProcess).killProcess()
+            }
           }
         }
       }
