@@ -377,6 +377,15 @@
                      language="kotlin"
                      key="inspection.redundant.if.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.IfExpressionWithIdenticalBranchesInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+                     enabledByDefault="true"
+                     cleanupTool="false"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.if.expression.with.identical.branches.display.name" bundle="messages.KotlinBundle"/>
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.KotlinLoggerInitializedWithForeignClassInspection"
                       groupPath="Kotlin"
                       groupBundle="messages.KotlinBundle" groupKey="group.names.logging"

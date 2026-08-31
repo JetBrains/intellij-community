@@ -1,0 +1,11 @@
+// PROBLEM: 'if' expression has identical branches
+// FIX: Collapse 'if' expression
+
+fun test(flag: Boolean) {
+    run {
+        val value = 42
+        println(value)
+    }
+    val value = "outside"
+    println(value)
+}

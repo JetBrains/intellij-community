@@ -88,6 +88,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/covariantEquals")
             model("${idea}/inspectionsLocal/explicitThis")
             model("${idea}/inspectionsLocal/redundantIf")
+            model("${idea}/inspectionsLocal/ifExpressionWithIdenticalBranches")
             model("${idea}/intentions/convertTryFinallyToUseCall")
             model("${idea}/inspectionsLocal/redundantLambdaArrow")
             model("${idea}/inspectionsLocal/redundantLambdaOrAnonymousFunction")

@@ -6952,6 +6952,139 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/ifExpressionWithIdenticalBranches")
+    public static class IfExpressionWithIdenticalBranches extends AbstractK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("bracedAndUnbraced.kt")
+        public void testBracedAndUnbraced() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/ifExpressionWithIdenticalBranches/bracedAndUnbraced.kt");
+        }
+
+        @TestMetadata("commentInBlockExpression.kt")
+        public void testCommentInBlockExpression() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/ifExpressionWithIdenticalBranches/commentInBlockExpression.kt");
+        }
+
+        @TestMetadata("commentInDiscardedBranch.kt")
+        public void testCommentInDiscardedBranch() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/ifExpressionWithIdenticalBranches/commentInDiscardedBranch.kt");
+        }
+
+        @TestMetadata("commentInEmptyBranches.kt")
+        public void testCommentInEmptyBranches() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/ifExpressionWithIdenticalBranches/commentInEmptyBranches.kt");
+        }
+
+        @TestMetadata("comments.kt")
+        public void testComments() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/ifExpressionWithIdenticalBranches/comments.kt");
+        }
+
+        @TestMetadata("commonPureConditions.kt")
+        public void testCommonPureConditions() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/ifExpressionWithIdenticalBranches/commonPureConditions.kt");
+        }
+
+        @TestMetadata("customGetterCondition.kt")
+        public void testCustomGetterCondition() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/ifExpressionWithIdenticalBranches/customGetterCondition.kt");
+        }
+
+        @TestMetadata("declarationOnlyExpression.kt")
+        public void testDeclarationOnlyExpression() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/ifExpressionWithIdenticalBranches/declarationOnlyExpression.kt");
+        }
+
+        @TestMetadata("declarationScope.kt")
+        public void testDeclarationScope() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/ifExpressionWithIdenticalBranches/declarationScope.kt");
+        }
+
+        @TestMetadata("delegatedCondition.kt")
+        public void testDelegatedCondition() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/ifExpressionWithIdenticalBranches/delegatedCondition.kt");
+        }
+
+        @TestMetadata("differentBranches.kt")
+        public void testDifferentBranches() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/ifExpressionWithIdenticalBranches/differentBranches.kt");
+        }
+
+        @TestMetadata("differentCommentsInStatementBlock.kt")
+        public void testDifferentCommentsInStatementBlock() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/ifExpressionWithIdenticalBranches/differentCommentsInStatementBlock.kt");
+        }
+
+        @TestMetadata("emptyBranches.kt")
+        public void testEmptyBranches() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/ifExpressionWithIdenticalBranches/emptyBranches.kt");
+        }
+
+        @TestMetadata("emptyBranchesAsExpression.kt")
+        public void testEmptyBranchesAsExpression() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/ifExpressionWithIdenticalBranches/emptyBranchesAsExpression.kt");
+        }
+
+        @TestMetadata("escapingContinue.kt")
+        public void testEscapingContinue() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/ifExpressionWithIdenticalBranches/escapingContinue.kt");
+        }
+
+        @TestMetadata("escapingLoopJump.kt")
+        public void testEscapingLoopJump() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/ifExpressionWithIdenticalBranches/escapingLoopJump.kt");
+        }
+
+        @TestMetadata("escapingReturnToRun.kt")
+        public void testEscapingReturnToRun() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/ifExpressionWithIdenticalBranches/escapingReturnToRun.kt");
+        }
+
+        @TestMetadata("missingElse.kt")
+        public void testMissingElse() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/ifExpressionWithIdenticalBranches/missingElse.kt");
+        }
+
+        @TestMetadata("sameCommentsInStatementBlock.kt")
+        public void testSameCommentsInStatementBlock() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/ifExpressionWithIdenticalBranches/sameCommentsInStatementBlock.kt");
+        }
+
+        @TestMetadata("sameTextDifferentResolvedCalls.kt")
+        public void testSameTextDifferentResolvedCalls() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/ifExpressionWithIdenticalBranches/sameTextDifferentResolvedCalls.kt");
+        }
+
+        @TestMetadata("shadowedRun.kt")
+        public void testShadowedRun() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/ifExpressionWithIdenticalBranches/shadowedRun.kt");
+        }
+
+        @TestMetadata("sideEffectingCondition.kt")
+        public void testSideEffectingCondition() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/ifExpressionWithIdenticalBranches/sideEffectingCondition.kt");
+        }
+
+        @TestMetadata("sideEffectingEmptyBranches.kt")
+        public void testSideEffectingEmptyBranches() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/ifExpressionWithIdenticalBranches/sideEffectingEmptyBranches.kt");
+        }
+
+        @TestMetadata("statementBlock.kt")
+        public void testStatementBlock() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/ifExpressionWithIdenticalBranches/statementBlock.kt");
+        }
+
+        @TestMetadata("throwExpression.kt")
+        public void testThrowExpression() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/ifExpressionWithIdenticalBranches/throwExpression.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/convertTryFinallyToUseCall")
     public static class ConvertTryFinallyToUseCall extends AbstractK2LocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {

@@ -1,0 +1,11 @@
+// PROBLEM: 'if' expression has identical branches
+// FIX: Collapse 'if' expression
+
+private fun run(block: () -> Unit) {}
+
+fun test(flag: Boolean) {
+    kotlin.run {
+        val value = 42
+        println(value)
+    }
+}

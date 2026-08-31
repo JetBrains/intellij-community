@@ -1,0 +1,10 @@
+// HIGHLIGHT: WARNING
+// PROBLEM: 'if' expression has identical branches
+// FIX: Collapse 'if' expression (may change semantics)
+
+private val topLevelFlag = true
+
+class Test(private val flag: Boolean) {
+    fun test(first: Any?, second: Any?, value: Any): Int =
+        if (topLevelFlag && !this.flag && first != null && first === second && value is String) <caret>42 else 42
+}
