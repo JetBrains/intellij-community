@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -51,6 +52,7 @@ import java.util.List;
 import static com.intellij.execution.StoppableRunDescriptorsKt.getStoppableDescriptors;
 
 public class StopAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+  private static final Logger LOG = Logger.getInstance(StopAction.class);
 
   private WeakReference<JBPopup> myActivePopupRef = null;
 
@@ -95,7 +97,7 @@ public class StopAction extends DumbAwareAction implements ActionRemoteBehaviorS
       }
     }
     else {
-      RunContentDescriptor contentDescriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
+      RunContentDescriptor contentDescriptor = getRecentlyStartedContentDescriptor(e.getDataContext());
       ProcessHandler processHandler = contentDescriptor == null ? null : contentDescriptor.getProcessHandler();
       if (processHandler != null && !processHandler.isProcessTerminated()) {
         if (!processHandler.isProcessTerminating()) {
@@ -218,7 +220,11 @@ public class StopAction extends DumbAwareAction implements ActionRemoteBehaviorS
       showStopPopup(e, dataContext, project, popup);
     }
     else {
-      ExecutionManagerImpl.stopProcess(getRecentlyStartedContentDescriptor(dataContext));
+      RunContentDescriptor contentDescriptor = getRecentlyStartedContentDescriptor(dataContext);
+      if (contentDescriptor == null) {
+        LOG.warn("The stop action found no run content descriptor at place " + e.getPlace());
+      }
+      ExecutionManagerImpl.stopProcess(contentDescriptor);
     }
   }
 
