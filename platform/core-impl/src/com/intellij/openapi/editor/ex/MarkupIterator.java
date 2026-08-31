@@ -20,7 +20,7 @@ import java.util.NoSuchElementException;
 public interface MarkupIterator<T> extends PeekableIterator<T>, AutoCloseable {
   void dispose();
 
-  MarkupIterator EMPTY = new MarkupIterator() {
+  MarkupIterator<?> EMPTY = new MarkupIterator<Object>() {
     @Override
     public void dispose() {
     }
@@ -52,16 +52,16 @@ public interface MarkupIterator<T> extends PeekableIterator<T>, AutoCloseable {
   };
   static <T> @NotNull MarkupIterator<T> emptyIterator() {
     //noinspection unchecked
-    return EMPTY;
+    return (MarkupIterator<T>)EMPTY;
   }
 
   static @NotNull <T> MarkupIterator<T> mergeIterators(final @NotNull MarkupIterator<T> iterator1,
                                                        final @NotNull MarkupIterator<T> iterator2,
                                                        final @NotNull Comparator<? super T> comparator) {
-    if (iterator1 == MarkupIterator.EMPTY) {
+    if (iterator1 == EMPTY) {
       return iterator2;
     }
-    if (iterator2 == MarkupIterator.EMPTY) {
+    if (iterator2 == EMPTY) {
       return iterator1;
     }
     return new MarkupIterator<T>() {
