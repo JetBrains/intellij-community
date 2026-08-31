@@ -3,6 +3,14 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+jps_test(
+    name = "swing-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":swing-tests_test_lib"],
+)
+### skip generation section `test intellij.platform.compose.swing.tests`
+
 ### auto-generated section `build intellij.platform.compose.swing` start
 create_kotlinc_options(
     name = "custom_swing",
@@ -165,10 +173,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.compose.swing.tests` end
-
-### auto-generated section `test intellij.platform.compose.swing.tests` start
-jps_test(
-    name = "swing-tests_test",
-    runtime_deps = [":swing-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.compose.swing.tests` end

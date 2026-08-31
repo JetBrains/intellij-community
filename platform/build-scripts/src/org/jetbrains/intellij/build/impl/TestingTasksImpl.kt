@@ -1700,4 +1700,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.driver.client.tests",
   "intellij.gradle.backend.tests",
   "intellij.java.jshell.console.tests",
+  "intellij.platform.compose.swing.tests",
 )
