@@ -674,18 +674,6 @@
       <add-to-group group-id="CallHierarchyPopupMenu"/>
     </reference>
 
-    <group id="EditorPopupMenuDebug">
-      <separator/>
-      <reference ref="EvaluateExpression"/>
-      <reference ref="RunToCursor"/>
-      <reference ref="ForceRunToCursor"/>
-      <separator/>
-      <group id="EditorPopupMenuDebugHotSwap">
-        <separator/>
-      </group>
-      <add-to-group group-id="EditorLangPopupMenu" relative-to-action="EditorPopupMenu.Run" anchor="before"/>
-    </group>
-
     <group id="ConsoleView.PopupMenu">
       <reference ref="ConsoleEditorPopupMenu"/>
       <separator/>

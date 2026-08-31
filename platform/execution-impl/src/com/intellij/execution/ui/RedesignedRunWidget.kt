@@ -221,10 +221,10 @@ class RunToolbarTopLevelExecutorActionGroup : ActionGroup() {
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     e ?: return emptyArray()
-    return arrayOf(
+    return listOfNotNull(
       e.actionManager.getAction(IdeActions.ACTION_DEFAULT_RUNNER),
       e.actionManager.getAction(IdeActions.ACTION_DEFAULT_DEBUGGER)
-    )
+    ).toTypedArray()
   }
 }
 

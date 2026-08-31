@@ -614,49 +614,50 @@
     Stop
     StopBackgroundProcesses
     ShowLiveRunConfigurations
-    DebugMainMenu
-      <separator>
-      DebuggingActionsGroup
-        DebugReloadGroup
-          XDebugger.Hotswap.Modified.Files
-          UpdateRunningApplication
+    DebugActionsInRunGroup
+      DebugMainMenu
         <separator>
-        StepOver.Ref
-          StepOver
-        ForceStepOver
-        StepInto
-        StepIntoMyCode
-        ForceStepInto
-        SmartStepInto
-        StepOut
-        Debugger.StepOutOfBlock
-        RunToCursor
-        ForceRunToCursor
-        Debugger.PopFrame
-        Debugger.ForceEarlyReturn
-        Debugger.ThrowException
-        Pause.Ref
-          Pause
-        Resume.Ref
-          Resume
+        DebuggingActionsGroup
+          DebugReloadGroup
+            XDebugger.Hotswap.Modified.Files
+            UpdateRunningApplication
+          <separator>
+          StepOver.Ref
+            StepOver
+          ForceStepOver
+          StepInto
+          StepIntoMyCode
+          ForceStepInto
+          SmartStepInto
+          StepOut
+          Debugger.StepOutOfBlock
+          RunToCursor
+          ForceRunToCursor
+          Debugger.PopFrame
+          Debugger.ForceEarlyReturn
+          Debugger.ThrowException
+          Pause.Ref
+            Pause
+          Resume.Ref
+            Resume
+          <separator>
+          EvaluateExpression
+          ShowExecutionPoint
+          <separator>
+          DumpThreads
+          StepOverInstruction
+          RepairDebuggerViewAction
+        BreakpointActionsGroup
+          Debugger.RestoreBreakpoint
+          ToggleLineBreakpoint
+          ToggleBreakpointAction
+            ToggleMethodBreakpoint
+            ToggleFieldBreakpoint
+          ToggleTemporaryLineBreakpoint
+          ToggleBreakpointEnabled
+        ViewBreakpoints
         <separator>
-        EvaluateExpression
-        ShowExecutionPoint
-        <separator>
-        DumpThreads
-        StepOverInstruction
-        RepairDebuggerViewAction
-      BreakpointActionsGroup
-        Debugger.RestoreBreakpoint
-        ToggleLineBreakpoint
-        ToggleBreakpointAction
-          ToggleMethodBreakpoint
-          ToggleFieldBreakpoint
-        ToggleTemporaryLineBreakpoint
-        ToggleBreakpointEnabled
-      ViewBreakpoints
-      <separator>
-      SetNextStatement
+        SetNextStatement
     RunTestGroup
       SmRunTestGroup
         <separator>
@@ -2901,7 +2902,7 @@
   Stop
   StopBackgroundProcesses
   ShowLiveRunConfigurations
-  DebugMainMenu
+  DebugActionsInRunGroup
   RunTestGroup
 [group RunTab.TopToolbar]
   RunDashboard.Run
@@ -3161,14 +3162,9 @@
   TouchBarDebug
 [group TouchBarDebug]
   Rerun
-  Resume.Ref
-  Pause.Ref
+  XDebugger.Touchbar.Debug.Top
   Stop
   XDebugger.Touchbar.Debug
-  <separator>
-  TouchBarDebug.StepButtons
-  <separator>
-  TouchBarDebug_alt
 [group TouchBarDebug.ForceStepButtons]
   RunToCursor
   ForceStepOver
@@ -3208,7 +3204,7 @@
   Back
   Forward
   <separator>
-  ToggleLineBreakpoint
+  TouchBarDefault_cmd.Debug
   ToggleBookmark
 [group TouchBarDefault_cmd.alt]
   <separator>

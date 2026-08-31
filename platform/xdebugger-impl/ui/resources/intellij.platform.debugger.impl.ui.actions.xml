@@ -203,12 +203,45 @@
       <reference ref="EditorToggleUseSoftWraps"/>
     </group>
 
+    <group id="XDebugger.Touchbar.Debug.Top">
+      <reference ref="Resume.Ref"/>
+      <reference ref="Pause.Ref"/>
+      <add-to-group group-id="TouchBarDebug" anchor="after" relative-to-action="Rerun"/>
+    </group>
+
     <group id="XDebugger.Touchbar.Debug">
       <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
       <separator text="type.small"/>
       <reference ref="XDebugger.MuteBreakpoints"/>
+      <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
+      <separator text="type.flexible"/>
+      <group id="TouchBarDebug.StepButtons" compact="true">
+        <reference ref="StepOver.Ref"/>
+        <reference ref="StepInto"/>
+        <reference ref="StepOut"/>
+      </group>
+      <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
+      <separator text="type.small"/>
+      <group id="TouchBarDebug_alt">
+        <reference ref="ViewBreakpoints"/>
+        <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
+        <separator text="type.flexible"/>
+        <group id="TouchBarDebug.ForceStepButtons" compact="true">
+          <reference ref="RunToCursor"/>
+          <reference ref="ForceStepOver"/>
+          <reference ref="ForceStepInto"/>
+          <reference ref="SmartStepInto"/>
+        </group>
+        <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
+        <separator text="type.small"/>
+      </group>
+
       <add-to-group group-id="TouchBarDebug" anchor="after" relative-to-action="Stop"/>
     </group>
+
+    <reference ref="ToggleLineBreakpoint">
+      <add-to-group group-id="TouchBarDefault_cmd.Debug" anchor="first"/>
+    </reference>
 
     <group id="XDebugger.Code.Toolbar" class="com.intellij.xdebugger.impl.actions.DebuggerCodeToolbarGroup">
       <add-to-group group-id="Floating.CodeToolbar" anchor="after" relative-to-action="Floating.CodeToolbar.Surround"/>
@@ -260,7 +293,7 @@
     <group id="DebugMainMenu">
       <separator/>
       <group id="DebuggingActionsGroup" popup="true">
-        <group id="DebugReloadGroup"/>
+        <reference ref="DebugReloadGroup"/>
         <separator/>
         <reference ref="StepOver.Ref"/>
         <reference ref="ForceStepOver"/>
@@ -287,6 +320,19 @@
       <reference ref="ViewBreakpoints"/>
       <separator/>
 
+      <add-to-group group-id="DebugActionsInRunGroup" anchor="first"/>
+    </group>
+
+    <group id="EditorPopupMenuDebug">
+      <separator/>
+      <reference ref="EvaluateExpression"/>
+      <reference ref="RunToCursor"/>
+      <reference ref="ForceRunToCursor"/>
+      <separator/>
+      <group id="EditorPopupMenuDebugHotSwap">
+        <separator/>
+      </group>
+      <add-to-group group-id="EditorLangPopupMenu" relative-to-action="EditorPopupMenu.Run" anchor="before"/>
     </group>
   </actions>
 </idea-plugin>

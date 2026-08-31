@@ -102,9 +102,12 @@
       <reference ref="StopBackgroundProcesses"/>
       <reference ref="ShowLiveRunConfigurations"/>
 
+      <group id="DebugActionsInRunGroup"/>
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="RefactoringMenu"/>
     </group>
     <!--endregion-->
+
+    <group id="DebugReloadGroup"/>
 
     <!--region Build Main Menu-->
     <group id="BuildMenu" popup="true">
@@ -137,20 +140,12 @@
     </reference>
     <!--endregion-->
 
-    <reference ref="EditBreakpoint"/>
-    <reference ref="Resume.Ref"/>
-    <reference ref="Pause.Ref"/>
-    <reference ref="StepOver.Ref"/>
-    <reference ref="DebugMainMenu">
-      <add-to-group group-id="RunMenu" anchor="last"/>
-    </reference>
-
     <reference ref="RunnerLayoutActions"/>
 
     <reference ref="SendEOF"/>
 
     <reference ref="RunTestGroup">
-      <add-to-group group-id="RunMenu" anchor="after" relative-to-action="DebugMainMenu"/>
+      <add-to-group group-id="RunMenu" anchor="after" relative-to-action="DebugActionsInRunGroup"/>
     </reference>
 
     <reference ref="ActivateRunToolWindow">
@@ -160,31 +155,7 @@
     <!--region TouchBar -->
     <group id="TouchBarDebug">
       <reference ref="Rerun"/>
-      <reference ref="Resume.Ref"/>
-      <reference ref="Pause.Ref"/>
       <reference ref="Stop"/>
-      <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
-      <separator text="type.flexible"/>
-      <group id="TouchBarDebug.StepButtons" compact="true">
-        <reference ref="StepOver.Ref"/>
-        <reference ref="StepInto"/>
-        <reference ref="StepOut"/>
-      </group>
-      <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
-      <separator text="type.small"/>
-      <group id="TouchBarDebug_alt">
-        <reference ref="ViewBreakpoints"/>
-        <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
-        <separator text="type.flexible"/>
-        <group id="TouchBarDebug.ForceStepButtons" compact="true">
-          <reference ref="RunToCursor"/>
-          <reference ref="ForceStepOver"/>
-          <reference ref="ForceStepInto"/>
-          <reference ref="SmartStepInto"/>
-        </group>
-        <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
-        <separator text="type.small"/>
-      </group>
 
       <add-to-group group-id="TouchBar" anchor="last"/>
     </group>
@@ -201,9 +172,9 @@
       <add-to-group group-id="TouchBarDefault" anchor="first"/>
     </group>
 
-    <reference ref="ToggleLineBreakpoint">
+    <group id="TouchBarDefault_cmd.Debug">
       <add-to-group group-id="TouchBarDefault_cmd" anchor="last"/>
-    </reference>
+    </group>
     <!--endregion-->
   </actions>
 </idea-plugin>
