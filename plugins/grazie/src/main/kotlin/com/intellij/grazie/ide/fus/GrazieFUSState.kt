@@ -17,7 +17,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.internal.statistic.utils.getPluginInfo
 
 internal class GrazieFUSState : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("grazie.state", 11)
+  private val GROUP = EventLogGroup("grazie.state", 12)
   private val ENABLE_LANGUAGE = GROUP.registerEvent(
     "enabled.language",
     EventFields.Enum("value", LanguageISO::class.java) { it.name.lowercase() }
@@ -54,6 +54,8 @@ internal class GrazieFUSState : ApplicationUsagesCollector() {
 
   //Ex. JB AIA Grazie Pro metrics
   private val AUTO_FIX = GROUP.registerEvent("settings.auto.fix", EventFields.Enabled)
+
+  private val SPECIFICATION_ANALYSIS = GROUP.registerEvent("settings.specification.analysis", EventFields.Enabled)
 
   private val PROCESSING = GROUP.registerEvent(
     "settings.processing",
@@ -102,6 +104,9 @@ internal class GrazieFUSState : ApplicationUsagesCollector() {
     }
     if (state.autoFix != DEFAULT_STATE.autoFix) {
       metrics.add(AUTO_FIX.metric(state.autoFix))
+    }
+    if (state.specificationAnalysisEnabled != DEFAULT_STATE.specificationAnalysisEnabled) {
+      metrics.add(SPECIFICATION_ANALYSIS.metric(state.specificationAnalysisEnabled))
     }
 
     val defaults = CheckingContext()
