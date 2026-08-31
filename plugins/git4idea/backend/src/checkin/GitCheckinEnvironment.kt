@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.checkin
 
 import com.google.common.collect.HashMultiset
@@ -122,6 +122,7 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
       OS.Windows,
       OS.Linux,
       OS.FreeBSD,
+      OS.HarmonyOS,
       OS.Other -> GitBundle.message("commit.action.name")
     }
   }
