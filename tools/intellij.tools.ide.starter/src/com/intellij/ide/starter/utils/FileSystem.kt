@@ -3,6 +3,17 @@ package com.intellij.ide.starter.utils
 import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.process.exec.ProcessExecutor
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.fs.EelFileUtils
+import com.intellij.platform.eel.fs.createTemporaryDirectory
+import com.intellij.platform.eel.getOrThrow
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.eel.provider.utils.EelPathTransfer
+import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.util.ThreeState
@@ -13,6 +24,7 @@ import com.intellij.util.io.createDirectories
 import com.intellij.util.io.zip.JBZipEntry
 import com.intellij.util.io.zip.JBZipFile
 import com.intellij.util.system.OS
+import kotlinx.coroutines.runBlocking
 import java.io.IOException
 import java.io.OutputStream
 import java.nio.charset.StandardCharsets
@@ -218,13 +230,16 @@ object FileSystem {
 
   fun Path.listDirectoryEntriesQuietly(): List<Path>? = runCatching { listDirectoryEntries() }.getOrNull()
 
-  // TODO: use com.intellij.platform.eel.EelApi.getArchive when it's ready?
   fun unpackTarGz(tarFile: Path, targetDir: Path) {
     require(tarFile.name.endsWith(".tar.gz")) { "File $tarFile must be tar.gz archive" }
 
     try {
       Files.createDirectories(targetDir)
-      when (OS.CURRENT) {
+      val descriptor = targetDir.getEelDescriptor()
+      if (descriptor != LocalEelDescriptor) {
+        unpackTarGzOnEel(descriptor, tarFile, targetDir)
+      }
+      else when (OS.CURRENT) {
         OS.Windows -> Decompressor.Tar(tarFile).extract(targetDir)
         OS.Linux, OS.macOS -> ProcessExecutor(
           presentableName = "extract-tar",
@@ -240,6 +255,36 @@ object FileSystem {
       // as in `unpackZip`: the archive belongs to its supplier, only the half-written target is ours
       targetDir.deleteRecursivelyQuietly()
       throw Exception("Failed to unpack $tarFile. The unpack target is removed. ${e.message}", e)
+    }
+  }
+
+  /**
+   * Extracts [tarFile] into [targetDir], a directory on [descriptor].
+   *
+   * The `tar` branch of [unpackTarGz] starts a process on the host machine.
+   * That process cannot serve a target on another eel, because the host cannot open the working directory.
+   * [com.intellij.platform.eel.EelArchiveApi] runs the extraction on [descriptor] instead.
+   *
+   * [tarFile] first moves to [descriptor] if the file is still on the host machine.
+   * The same rule applies in [com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerEel].
+   */
+  @Suppress("RAW_RUN_BLOCKING")
+  private fun unpackTarGzOnEel(descriptor: EelDescriptor, tarFile: Path, targetDir: Path): Unit = runBlocking {
+    val eel = descriptor.toEelApi()
+    var archive = tarFile.asEelPath()
+    val tempDir = if (EelPathUtils.isPathLocal(tarFile)) {
+      val directory = eel.fs.createTemporaryDirectory().prefix("starter-unpack-").getOrThrow()
+      archive = directory.resolve(tarFile.name)
+      EelPathTransfer.walkingTransfer(tarFile, archive.asNioPath(), false, false)
+      directory
+    }
+    else null
+
+    try {
+      eel.archive.extract(archive, targetDir.asEelPath())
+    }
+    finally {
+      tempDir?.let { EelFileUtils.deleteRecursively(it.asNioPath()) }
     }
   }
 

@@ -52,7 +52,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
-import static com.intellij.execution.util.ExecUtil.startProcessBlockingUsingEel;
+import static com.intellij.execution.configurations.EelProcessLauncherKt.startProcessBlockingUsingEel;
 import static com.intellij.platform.eel.provider.EelPathDescriptorKt.getEelDescriptor;
 
 /**
