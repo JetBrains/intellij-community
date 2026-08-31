@@ -48,6 +48,8 @@ internal class ModuleList(
   @JvmField val community: List<ModuleDescriptor>,
   @JvmField val ultimate: List<ModuleDescriptor>,
   @JvmField val skipped: List<ModuleDescriptor>,
+  /** Mapping from module to data of `plugin.xml` file in its resources for plugins that should be built by `ij_plugin` rule */
+  @JvmField val moduleToPluginXmlContentData: Map<ModuleDescriptor, PluginXmlContentData>,
   private val pluginContentCandidateOverrides: Map<String, Set<String>?>,
   /**
    * The generator that built this list, which the candidacy fold needs.
@@ -636,7 +638,7 @@ internal class BazelBuildFileGenerator(
 
   fun getLibraryModuleExporting(jpsLibraryName: String): String? = projectLibraryToLibraryModule[jpsLibraryName]
 
-  fun computeModuleList(m2Repo: Path): ModuleList {
+  fun computeModuleList(m2Repo: Path, skipGenerationOfPluginTargets: Boolean): ModuleList {
     val community = ArrayList<ModuleDescriptor>()
     val ultimate = ArrayList<ModuleDescriptor>()
     val skippedModules = ArrayList<ModuleDescriptor>()
@@ -667,14 +669,16 @@ internal class BazelBuildFileGenerator(
     ultimate.sortBy { it.module.name }
     skippedModules.sortBy { it.module.name }
 
+    val allModules = community + ultimate
     val result = ModuleList(
       community = community,
       ultimate = ultimate,
       skipped = skippedModules,
+      moduleToPluginXmlContentData = if (!skipGenerationOfPluginTargets) computePluginXmlContentData(allModules) else emptyMap(),
       pluginContentCandidateOverrides = pluginContentCandidateOverrides,
       context = this,
     )
-    for (module in (community + ultimate)) {
+    for (module in allModules) {
       val hasSources = module.sources.isNotEmpty()
       result.deps.put(module, generateDeps(m2Repo = m2Repo, module = module, hasSources = hasSources, isTest = false, context = this))
 
@@ -682,6 +686,17 @@ internal class BazelBuildFileGenerator(
       result.testDeps.put(module, generateDeps(m2Repo = m2Repo, module = module, hasSources = hasTestSources, isTest = true, context = this))
     }
 
+    return result
+  }
+
+  private fun computePluginXmlContentData(modules: List<ModuleDescriptor>): Map<ModuleDescriptor, PluginXmlContentData> {
+    val result = IdentityHashMap<ModuleDescriptor, PluginXmlContentData>()
+    for (module in modules) {
+      val pluginXmlContentData = module.resources.firstNotNullOfOrNull { descriptor -> parsePluginXmlContent(descriptor) }
+      if (pluginXmlContentData != null) {
+        result[module] = pluginXmlContentData
+      }
+    }
     return result
   }
 
@@ -702,18 +717,17 @@ internal class BazelBuildFileGenerator(
   fun generateModuleTargets(list: ModuleList, isCommunity: Boolean): List<ModuleTargets> {
     validateCustomModules(list)
 
-    val skipGenerationOfPluginTargets = shouldSkipGenerationOfPluginTargets()
     val targetsPerModule = mutableListOf<ModuleTargets>()
     for (module in (if (isCommunity) list.community else list.ultimate)) {
       if (generated.putIfAbsent(module, true) == null) {
         val buildTargetsBazel = BuildFile()
-        targetsPerModule.add(buildTargetsBazel.generateBuildTargets(module, list, skipGenerationOfPluginTargets))
+        targetsPerModule.add(buildTargetsBazel.generateBuildTargets(module, list))
       }
     }
     return targetsPerModule
   }
 
-  fun generateModuleBuildFiles(list: ModuleList, isCommunity: Boolean, skipGenerationOfPluginTargets: Boolean): ModuleGenerationResult {
+  fun generateModuleBuildFiles(list: ModuleList, isCommunity: Boolean): ModuleGenerationResult {
     validateCustomModules(list)
     val targetsPerModule = mutableListOf<ModuleTargets>()
     val fileToUpdater = LinkedHashMap<Path, BazelFileUpdater>()
@@ -734,7 +748,7 @@ internal class BazelBuildFileGenerator(
         }
 
         val buildTargetsBazel = BuildFile()
-        val generatedTargets = buildTargetsBazel.generateBuildTargets(module, list, skipGenerationOfPluginTargets)
+        val generatedTargets = buildTargetsBazel.generateBuildTargets(module, list)
 
         // A module whose compilation targets are hand-written packs no `lib/` jar, exactly as it did not when packing was
         // an attribute of those targets: the attribute lived in this section, so a skipped section never carried it. The
@@ -968,7 +982,7 @@ internal class BazelBuildFileGenerator(
     }
   }
 
-  private fun BuildFile.generateBuildTargets(moduleDescriptor: ModuleDescriptor, moduleList: ModuleList, skipGenerationOfPluginTargets: Boolean): ModuleTargets {
+  private fun BuildFile.generateBuildTargets(moduleDescriptor: ModuleDescriptor, moduleList: ModuleList): ModuleTargets {
     val module = moduleDescriptor.module
     val customModule = customModules[moduleDescriptor.module.name]
     val jvmTarget = getLanguageLevel(module)
@@ -1190,12 +1204,7 @@ internal class BazelBuildFileGenerator(
       else -> "$outputDirectory/${jarName.label}.jar"
     }
 
-    val pluginDescriptorContentData = if (!skipGenerationOfPluginTargets) {
-      moduleDescriptor.resources.firstNotNullOfOrNull { descriptor -> parsePluginXmlContent(descriptor) }
-    }
-    else {
-      null
-    }
+    val pluginDescriptorContentData = moduleList.moduleToPluginXmlContentData[moduleDescriptor]
     val pluginDistributionTarget = pluginDescriptorContentData?.let {
       load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
       target("ij_plugin") {

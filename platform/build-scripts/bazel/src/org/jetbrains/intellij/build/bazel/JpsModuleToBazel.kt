@@ -176,10 +176,10 @@ internal class JpsModuleToBazel {
         customModules = if (defaultCustomModules.toBooleanStrict()) DEFAULT_CUSTOM_MODULES else emptyMap(),
         kotlincDefaults = kotlincDefaults,
       )
-      val moduleList = generator.computeModuleList(m2RepoPath)
+      val moduleList = generator.computeModuleList(m2RepoPath, skipGenerationOfPluginTargets)
       // first, generate community to collect libs that used by community (to separate community and ultimate libs)
-      val communityResult = generator.generateModuleBuildFiles(moduleList, isCommunity = true, skipGenerationOfPluginTargets)
-      val ultimateResult = generator.generateModuleBuildFiles(moduleList, isCommunity = false, skipGenerationOfPluginTargets)
+      val communityResult = generator.generateModuleBuildFiles(moduleList, isCommunity = true)
+      val ultimateResult = generator.generateModuleBuildFiles(moduleList, isCommunity = false)
       val moduleTargets = communityResult.moduleTargets + ultimateResult.moduleTargets
       // Before the first save, so that a target-name collision fails the run with the tree as it was found.
       checkOnePluginPerJarTargetPackage(pluginJarPackagesOf(moduleTargets))

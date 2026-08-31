@@ -154,7 +154,8 @@ internal class JpsModuleToBazelTargetsOnly {
           }
         }
 
-        val moduleList = generator.computeModuleList(m2Repo)
+        val skipGenerationOfPluginTargets = shouldSkipGenerationOfPluginTargets()
+        val moduleList = generator.computeModuleList(m2Repo, skipGenerationOfPluginTargets)
         val communityTargets = generator.generateModuleTargets(moduleList, isCommunity = true)
         val allTargets = if (ultimateRoot == null) {
           communityTargets
