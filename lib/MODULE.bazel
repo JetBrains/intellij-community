@@ -890,10 +890,10 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_diogen-diogen-analysis-0_6_0_http",
-    downloaded_file_path = "diogen-analysis-0.6.0.jar",
-    sha256 = "d4f518c6c34199e4d20cf0175eae06b55de4e20c1032ffd3baf9a195ff30fe59",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/diogen/diogen-analysis/0.6.0/diogen-analysis-0.6.0.jar",
+    name = "org_jetbrains_diogen-diogen-analysis-0_7_0_http",
+    downloaded_file_path = "diogen-analysis-0.7.0.jar",
+    sha256 = "821149d3b7c536f9a21e4449ea173b2fd4cb1bc9546e08ce217e24939eb66734",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/diogen/diogen-analysis/0.7.0/diogen-analysis-0.7.0.jar",
 )
 
 http_file(
@@ -904,10 +904,10 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_diogen-diogen-analysis-0_6_0-sources_http",
-    downloaded_file_path = "diogen-analysis-0.6.0-sources.jar",
-    sha256 = "ac3655eb2abdbf4d6e7315576f5632eb2574ba9301e7add8a1d85501746d2d25",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/diogen/diogen-analysis/0.6.0/diogen-analysis-0.6.0-sources.jar",
+    name = "org_jetbrains_diogen-diogen-analysis-0_7_0-sources_http",
+    downloaded_file_path = "diogen-analysis-0.7.0-sources.jar",
+    sha256 = "44ef572cbc892046fb487151207e6e369d68998a7c38b13fda7c15f4f1d51692",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/diogen/diogen-analysis/0.7.0/diogen-analysis-0.7.0-sources.jar",
 )
 
 http_file(
