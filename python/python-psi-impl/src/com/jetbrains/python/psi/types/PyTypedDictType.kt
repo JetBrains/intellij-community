@@ -294,7 +294,7 @@ class PyTypedDictType private constructor(
       context: TypeEvalContext,
       mismatch: ((ProblemMessage) -> Unit)? = null,
     ): Boolean? {
-      if (expected is PyClassType && expected.isParameterized) {
+      if (expected is PyClassType && expected !is PyTypedDictType && expected.isParameterized) {
         matchTypedDictWithCollection(expected, actual, context)?.let { return it }
       }
 

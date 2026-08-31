@@ -725,6 +725,37 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
+    @TestFor(issues = ["PY-85440", "PY-91630"])
+    fun `structurally equal generic TypedDicts are assignable`() = test("""
+      from typing import TypedDict
+
+      class A[T](TypedDict):
+          value: T
+
+      class B[T](TypedDict):
+          value: T
+
+      def f(b: B[int]):
+          a: A[int] = b
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-85440", "PY-91630"])
+    fun `generic TypedDicts with incompatible item types are not assignable`() = test("""
+      from typing import TypedDict
+
+      class A[T](TypedDict):
+          value: T
+
+      class B[T](TypedDict):
+          value: T
+
+      def f(b: B[str]):
+          a: A[int] = b
+      #               └ WARNING Expected type 'A[int]', got 'B[str]' instead
+      """)
+
+    @Test
     @TestFor(issues = ["PY-85440"])
     fun `bound method of a generic TypedDict`() = test("""
       from typing import TypedDict
