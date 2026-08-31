@@ -69,7 +69,10 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    module_name = "intellij.terminal.tests",
+    associates = [
+        "//plugins/terminal/frontend",
+        "//plugins/terminal/frontend:frontend_test_lib",
+    ],
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
@@ -101,8 +104,6 @@ jvm_library(
         "//plugins/terminal:terminal_test_lib",
         "//plugins/terminal/backend",
         "//plugins/terminal/backend:backend_test_lib",
-        "//plugins/terminal/frontend",
-        "//plugins/terminal/frontend:frontend_test_lib",
         "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
         "//plugins/terminal/completion",
         "//plugins/terminal/completion:completion_test_lib",
@@ -190,6 +191,8 @@ jvm_library(
         "//libraries/junit5-params:junit5-params_test_lib",
         "//platform/util/jdom",
         "//platform/util/jdom:jdom_test_lib",
+        "//platform/runtime/product",
+        "//platform/runtime/product:product_test_lib",
     ],
 )
 ### auto-generated section `build intellij.terminal.tests` end
