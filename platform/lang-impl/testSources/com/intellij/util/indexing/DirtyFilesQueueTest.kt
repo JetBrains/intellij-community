@@ -34,15 +34,15 @@ import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.LightProjectDescriptor.TEST_MODULE_NAME
 import com.intellij.testFramework.LoggedErrorProcessor
-import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.TemporaryDirectoryExtension
 import com.intellij.testFramework.TestActionEvent.createTestEvent
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.createTestOpenProjectOptions
-import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.useProjectAsync
 import com.intellij.testFramework.utils.vfs.createFile
 import com.intellij.util.CommonProcessors
@@ -64,13 +64,13 @@ import com.intellij.util.io.KeyDescriptor
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.junit.After
-import org.junit.Assume.assumeTrue
-import org.junit.Before
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TestName
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assumptions.assumeTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit.SECONDS
 import java.util.concurrent.atomic.AtomicInteger
@@ -90,27 +90,22 @@ private class DoNoRethrowBrokenIndexingErrors : LoggedErrorProcessor() {
  * See also com.intellij.functionalTests.FunctionalDirtyFilesQueueTest
  */
 
-//@RunWith(JUnit4::class)
+@TestApplication
 class DirtyFilesQueueTest {
-  companion object {
-    @ClassRule
-    @JvmField
-    val appRule: ApplicationRule = ApplicationRule()
-  }
-
-  @Rule
-  @JvmField
-  val tempDir: TemporaryDirectory = TemporaryDirectory()
+  @RegisterExtension
+  val tempDir = TemporaryDirectoryExtension()
   val nameToPathMap = mutableMapOf<String, Path>()
 
-  @Rule
-  @JvmField
-  val testNameRule = TestName()
+  private lateinit var testNameRule: TestInfo
+
+  private val TestInfo.methodName: String
+    get() = testMethod.orElseThrow().name
 
   private lateinit var testRootDisposable: CheckedDisposable
 
-  @Before
-  fun setup() {
+  @BeforeEach
+  fun setup(testInfo: TestInfo) {
+    testNameRule = testInfo
     testRootDisposable = Disposer.newCheckedDisposable("DirtyFilesQueueTest")
     ShutDownTracker.getInstance().registerShutdownTask { // delete files after they are persisted by FileBasedIndexImpl.performShutdown
       FileUtil.delete(getQueueFile())
@@ -118,9 +113,9 @@ class DirtyFilesQueueTest {
     }
   }
 
-  @After
-  fun tearDown() {
-    runInEdtAndWait {
+  @AfterEach
+  fun tearDown(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
       Disposer.dispose(testRootDisposable) // must dispose in EDT
     }
   }
@@ -665,12 +660,12 @@ class DirtyFilesQueueTest {
   /** Skips cursor-cleanup contract tests when either independently configurable production feature is disabled. */
   private fun assumeProjectRequestCursorFeaturesEnabled() {
     assumeTrue(
-      "Project request cursor tracking is disabled",
-      FileBasedIndexImpl.USE_REQUEST_VERSION_TO_SKIP_REPEATING_UPDATES
+      FileBasedIndexImpl.USE_REQUEST_VERSION_TO_SKIP_REPEATING_UPDATES,
+      "Project request cursor tracking is disabled"
     )
     assumeTrue(
-      "Cleanup by project request cursors is disabled",
-      FileBasedIndexImpl.CLEAN_REQUESTS_VISITED_BY_ALL_PROJECTS
+      FileBasedIndexImpl.CLEAN_REQUESTS_VISITED_BY_ALL_PROJECTS,
+      "Cleanup by project request cursors is disabled"
     )
   }
 
@@ -695,7 +690,7 @@ class DirtyFilesQueueTest {
 
     override fun dependsOnFileContent(): Boolean = true
 
-    override fun getIndexer(): DataIndexer<String?, String?, FileContent?> = DataIndexer<String?, String?, FileContent?> {
+    override fun getIndexer(): DataIndexer<String?, String?, FileContent?> = {
       when {
         fails -> error("Bad file failed to index")
         else -> mapOf("key" to "value")
@@ -766,7 +761,7 @@ class DirtyFilesQueueTest {
       BadFileBasedIndexExtension.fails = false
       restart(skipFullScanning = true)
 
-      openProject(testNameRule.methodName) { project, module ->
+      openProject(testNameRule.methodName) { project, _ ->
         val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
         val allKeys = smartReadAction(project = project) {
           fileBasedIndex.getAllKeys(BadFileBasedIndexExtension().name, project)
@@ -927,10 +922,11 @@ class DirtyFilesQueueTest {
     waitForIndexesAfterAction: Boolean = true,
     action: suspend (Project, ModuleEntity) -> T,
   ): T {
-    val projectFile = nameToPathMap.computeIfAbsent(name) { n -> TemporaryDirectory.generateTemporaryPath("project_$n") }
+    val projectFile = nameToPathMap.computeIfAbsent(name) { n -> tempDir.newPath("project_$n") }
     val reopenProject = ProjectUtil.isValidProjectPath(projectFile)
     projectFile.createDirectories()
-    @Suppress("DATA_CLASS_INVISIBLE_COPY_USAGE_WARNING") val options = createTestOpenProjectOptions().copy(projectName = name)
+    @Suppress("DATA_CLASS_INVISIBLE_COPY_USAGE_WARNING")
+    val options = createTestOpenProjectOptions().copy(projectName = name)
     SystemProperties.setProperty("intellij.indexes.diagnostics.should.dump.paths.of.indexed.files", "true")
     IndexDiagnosticDumper.shouldDumpInUnitTestMode = true
     WorkspaceModelCacheImpl.forceEnableCaching(testRootDisposable)
