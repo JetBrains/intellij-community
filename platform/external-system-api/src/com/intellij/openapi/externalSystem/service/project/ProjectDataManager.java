@@ -95,5 +95,12 @@ public interface ProjectDataManager {
      * @param modelsProvider - idea models with all modifications
      */
     default void finalizeImportData(@Nullable ProjectData projectData, @NotNull IdeModifiableModelsProvider modelsProvider) {}
+
+    /**
+     * Filters data services before they start to process.
+     * @param service - project data service processing data
+     * @param projectSystemId - project system id belonging to data which will be processed
+     */
+    default <E, I> boolean ignoreDataService(@NotNull ProjectDataService<E, I> service, @Nullable ProjectSystemId projectSystemId) { return false; }
   }
 }

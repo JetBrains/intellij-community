@@ -312,7 +312,9 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
 
     ensureTheDataIsReadyToUse(toImport);
 
-    @NotNull List<ProjectDataService<?, ?>> services = findService(key);
+    @NotNull List<ProjectDataService<?, ?>> services = ContainerUtil.filter(findService(key), service ->
+      ProjectDataImportExtension.EP_NAME.findFirstSafe(listener -> listener.ignoreDataService(service, projectSystemId)) == null
+    );
     @NotNull List<WorkspaceDataService<?>> workspaceServices = findWorkspaceService(key);
     if (services.isEmpty() && workspaceServices.isEmpty()) {
       LOG.debug(String.format("No data service is registered for %s", key));
