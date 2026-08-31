@@ -38,18 +38,17 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import com.intellij.vcs.git.repo.GitRepositoryModel
 import com.intellij.vcs.git.workingTrees.GitWorkingTreesUtil
-import org.jetbrains.annotations.VisibleForTesting
-import git4idea.workingTrees.ui.GitWorktreesUiUtil
 import git4idea.GitNotificationIdsHolder
 import git4idea.GitRemoteBranch
 import git4idea.GitWorkingTree
-import git4idea.workingTrees.dialog.GitWorktreeCreationRequest
-import git4idea.workingTrees.dialog.WorktreeBranchSpec
 import git4idea.commands.Git
 import git4idea.commands.GitCommandResult
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
+import git4idea.workingTrees.dialog.GitWorktreeCreationRequest
+import git4idea.workingTrees.dialog.WorktreeBranchSpec
+import git4idea.workingTrees.ui.GitWorktreesUiUtil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -62,9 +61,10 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
-import java.awt.Window
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
+import java.awt.Window
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.exists
@@ -296,16 +296,7 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
       val mainProject = ProjectUtil.findProject(Path(mainWorktreePath)) ?: return@launch
       val mainRepository = GitRepositoryManager.getInstance(mainProject).repositories.singleOrNull() ?: return@launch
 
-      val commandResult = withBackgroundProgress(mainProject, GitBundle.message("progress.title.deleting.worktree"), cancellable = true) {
-        service<Git>().deleteWorkingTree(mainRepository, currentWorktree)
-      }
-      if (commandResult.success()) {
-        onWorkingTreeDeleted(mainRepository, currentWorktree)
-        notifyWorkingTreesDeletedSuccess(mainProject, listOf(currentWorktree))
-      }
-      else {
-        notifyWorkingTreeDeletedError(mainProject, commandResult.errorOutputAsHtmlString)
-      }
+      deleteWorkingTrees(mainProject, listOf(currentWorktree), mainRepository).join()
     }
   }
 
