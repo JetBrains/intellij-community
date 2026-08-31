@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertContainsElements
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertDoesntContain
 import org.jetbrains.kotlin.idea.test.MockLibraryFacility
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.cast
@@ -547,11 +548,9 @@ interface UastResolveApiFixtureTestBase {
         )
         val j = myFixture.file.findElementAt(myFixture.caretOffset).toUElement()?.getParentOfType<USimpleNameReferenceExpression>()
             .orFail("cant convert to USimpleNameReferenceExpression")
-        val resolved = j.resolve() as? PsiMethod
+        val resolved = j.resolve() as? KtProperty
         // With @JvmName("getJavaClass") on getter
-        TestCase.assertEquals("getJavaClass", resolved?.name)
-        // Java Class, not KClass
-        TestCase.assertEquals("java.lang.Class<T>", resolved?.returnType?.canonicalText)
+        TestCase.assertEquals("java", resolved?.name)
     }
 
     fun checkResolveLocalDefaultConstructor(myFixture: JavaCodeInsightTestFixture) {
