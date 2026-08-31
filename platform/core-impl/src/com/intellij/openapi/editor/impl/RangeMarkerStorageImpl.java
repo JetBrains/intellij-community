@@ -34,8 +34,8 @@ public final class RangeMarkerStorageImpl implements RangeMarkerStorage {
     myPersistentRangeMarkers = new PersistentRangeMarkerTree(dispatcher);
     myDocument = document;
   }
-  private static class Holder {
-    private static boolean USE_PMARKER_IMPLEMENTATION = Registry.is("editor.range.marker.use.pmarker.internal");
+  static class Holder {
+    static boolean USE_PMARKER_IMPLEMENTATION = Registry.is("editor.range.marker.use.pmarker.internal");
   }
   @Override
   public @NotNull RangeMarkerEx createRangeMarker(@NotNull DocumentEx hostDocument,
@@ -122,8 +122,11 @@ public final class RangeMarkerStorageImpl implements RangeMarkerStorage {
     return (rangeMarker instanceof PersistentRangeMarker) ? myPersistentRangeMarkers : myRangeMarkers;
   }
   public static <E extends Throwable> void usePMarkerImplementationIn(@NotNull ThrowableRunnable<E> runnable) throws E {
+    usePMarkerImplementationIn(true, runnable);
+  }
+  public static <E extends Throwable> void usePMarkerImplementationIn(boolean usePMarkerImpl, @NotNull ThrowableRunnable<E> runnable) throws E {
     boolean old = Holder.USE_PMARKER_IMPLEMENTATION;
-    Holder.USE_PMARKER_IMPLEMENTATION = true;
+    Holder.USE_PMARKER_IMPLEMENTATION = usePMarkerImpl;
     try {
       runnable.run();
     }

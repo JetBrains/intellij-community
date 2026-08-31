@@ -27,25 +27,6 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
 import kotlin.concurrent.thread
 
-@TestOnly
-class UsePMarkerImplementationExtension : InvocationInterceptor {
-  override fun interceptTestMethod(
-    invocation: InvocationInterceptor.Invocation<Void>,
-    invocationContext: ReflectiveInvocationContext<Method>,
-    extensionContext: ExtensionContext?,
-  ) {
-    RangeMarkerStorageImpl.usePMarkerImplementationIn<RuntimeException> {
-      super.interceptTestMethod(invocation, invocationContext, extensionContext)
-    }
-  }
-}
-
-@Target(AnnotationTarget.CLASS)
-@ExtendWith(
-  UsePMarkerImplementationExtension::class
-)
-annotation class UsePMarkerImplementation
-
 @UsePMarkerImplementation
 class SnapshotMarkerEngineImplTest {
   @Test
