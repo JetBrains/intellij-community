@@ -98,7 +98,7 @@ internal class ProjectViewToolWindowServiceImpl(
   private val optionService = ProjectViewActionSupportImpl(currentPaneMutableFlow)
 
   override val currentPaneDescriptor: ProjectViewPaneDescriptorImpl?
-    get() = currentPaneMutableFlow.value?.descriptor
+    get() = currentPaneMutableFlow.value?.descriptor as ProjectViewPaneDescriptorImpl?
 
   private val orderedDescriptors = MutableStateFlow<List<ProjectViewPaneDescriptorImpl>>(emptyList())
   
@@ -154,7 +154,7 @@ internal class ProjectViewToolWindowServiceImpl(
             // and then the old content is disposed, which will cancel the old job automatically.
             LOG.debug { "Initializing the pane ${descriptor.id}, descriptor = $descriptor" }
             val pane = withContext(Dispatchers.UI) {
-              TreeBasedFrontendProjectViewPane(project, descriptor)
+              aggregator.createPane(descriptor)
             }
             val paneManager = PaneManager(paneContentManager, pane)
             val job = managementScope.launch(CoroutineName("Manage PV pane ${descriptor.id}")) {
@@ -296,10 +296,10 @@ internal class ProjectViewToolWindowServiceImpl(
 
   private inner class PaneManager(
     private val paneContentManager: PaneContentManager,
-    private val pane: TreeBasedFrontendProjectViewPane,
+    private val pane: FrontendProjectViewPane,
   ) {
     val descriptor: ProjectViewPaneDescriptorImpl
-      get() = pane.descriptor
+      get() = pane.descriptor as ProjectViewPaneDescriptorImpl
     
     private val initialized = CompletableDeferred<Unit>()
     
@@ -364,18 +364,27 @@ internal class ProjectViewToolWindowServiceImpl(
             if (currentPane == pane) {
               LOG.debug { "The pane ${pane.id} is selected, starting to collect its updates"}
               try {
-                aggregator.getPaneStateFlow(pane.descriptor).collect { event ->
-                  try {
-                    LOG.trace { "Update pane state for ${pane.id}: $event" }
-                    pane.applyStateChange(event)
-                  }
-                  catch (e: Exception) {
-                    rethrowControlFlowException(e)
-                    LOG.error(
-                      "An error has occurred when updating the pane ${pane.id} state, the state might be inconsistent. " +
-                      "The problematic event was $event",
-                      e
-                    )
+                val paneStateFlow = aggregator.getPaneStateFlow(descriptor)
+                if (paneStateFlow == null) {
+                  LOG.debug { "The pane ${pane.id} has no state flow, nothing to collect"}
+                }
+                else if (pane !is TreeBasedFrontendProjectViewPane) {
+                  LOG.warn("The pane ${pane.id} has a state flow, but it's not a TreeBasedFrontendProjectViewPane")
+                }
+                else {
+                  paneStateFlow.collect { event ->
+                    try {
+                      LOG.trace { "Update pane state for ${pane.id}: $event" }
+                      pane.applyStateChange(event)
+                    }
+                    catch (e: Exception) {
+                      rethrowControlFlowException(e)
+                      LOG.error(
+                        "An error has occurred when updating the pane ${pane.id} state, the state might be inconsistent. " +
+                        "The problematic event was $event",
+                        e
+                      )
+                    }
                   }
                 }
               }
@@ -390,26 +399,41 @@ internal class ProjectViewToolWindowServiceImpl(
           }
         }
         launch(CoroutineName("Pane ${pane.id} requests to the backend")) {
-          LOG.debug { "Sending pane requests for ${pane.id}" }
-          try {
-            val outChannel = aggregator.getPaneRequestChannel(pane.descriptor)
-            for (request in pane.requestChannel) {
-              try {
-                LOG.trace { "Sent request for pane ${pane.id}: $request" }
-                outChannel.send(request)
-              }
-              catch (e: Exception) {
-                rethrowControlFlowException(e)
-                LOG.error(
-                  "An error has occurred when trying to send a request to the backend. " +
-                  "The problematic request was $request",
-                  e
-                )
+          val inChannel = (pane as? TreeBasedFrontendProjectViewPane)?.requestChannel
+          val outChannel = aggregator.getPaneRequestChannel(descriptor)
+          if (inChannel == null && outChannel != null) {
+            LOG.warn(
+              "The pane ${pane.id} only partially implements requests to the backend: " +
+              "the backend provides a channel, but the UI doesn't"
+            )
+          }
+          if (inChannel != null && outChannel == null) {
+            LOG.warn(
+              "The pane ${pane.id} only partially implements requests to the backend: " +
+              "the UI provides a channel, but the backend doesn't"
+            )
+          }
+          if (inChannel != null && outChannel != null) {
+            LOG.debug { "Sending pane requests for ${pane.id}" }
+            try {
+              for (request in inChannel) {
+                try {
+                  LOG.trace { "Sent request for pane ${pane.id}: $request" }
+                  outChannel.send(request)
+                }
+                catch (e: Exception) {
+                  rethrowControlFlowException(e)
+                  LOG.error(
+                    "An error has occurred when trying to send a request to the backend. " +
+                    "The problematic request was $request",
+                    e
+                  )
+                }
               }
             }
-          }
-          finally {
-            LOG.debug { "Finished sending pane requests for ${pane.id}" }
+            finally {
+              LOG.debug { "Finished sending pane requests for ${pane.id}" }
+            }
           }
         }
         LOG.debug { "Managing pane ${pane.id}" }
@@ -450,7 +474,7 @@ internal class ProjectViewToolWindowServiceImpl(
       get() = pane.id
     
     val descriptor: ProjectViewPaneDescriptorImpl
-      get() = pane.descriptor
+      get() = pane.descriptor as ProjectViewPaneDescriptorImpl
   }
   
   private inner class PaneContentManager @RequiresEdt constructor(toolWindow: ToolWindow) {
@@ -488,10 +512,10 @@ internal class ProjectViewToolWindowServiceImpl(
     }
 
     @RequiresEdt
-    fun createAndAddContent(pane: TreeBasedFrontendProjectViewPane): PaneContent? {
+    fun createAndAddContent(pane: FrontendProjectViewPane): PaneContent? {
       val newContent = ContentFactory.getInstance().createContent(
         /* component = */ pane.component,
-        /* displayName = */ pane.displayName,
+        /* displayName = */ (pane.descriptor as ProjectViewPaneDescriptorImpl).presentableName,
         /* isLockable = */ false
       )
       newContent.putUserData(PANE_KEY, pane)

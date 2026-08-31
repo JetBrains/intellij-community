@@ -61,7 +61,7 @@ internal suspend fun <T> withProjectViewPane(
   val pumps = childScope("ProjectViewPaneTestHarness pumps")
   // Consumer loop (EDT-confined): apply backend events into the tree model.
   pumps.launch(Dispatchers.EDT) {
-    aggregator.getPaneStateFlow(descriptor).collect { event ->
+    aggregator.getPaneStateFlow(descriptor)?.collect { event ->
       model.applyStateChange(event)
       applied.update { it + 1 }
     }
@@ -70,7 +70,7 @@ internal suspend fun <T> withProjectViewPane(
   pumps.launch {
     val out = aggregator.getPaneRequestChannel(descriptor)
     for (request in model.requestChannel) {
-      out.send(request)
+      out?.send(request)
     }
   }
 

@@ -5,6 +5,7 @@ package com.intellij.platform.projectView.frontend.actions
 
 import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
+import com.intellij.platform.projectView.frontend.impl.TreeBasedFrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.settings.NestingRuleDTO
 import com.intellij.platform.projectView.settings.ProjectViewPaneOptionDTO
@@ -38,4 +39,8 @@ internal class ProjectViewActionSupportImpl(
   ) {
     currentPane.value?.getOptionSupport()?.requestFileNestingChange(fileNestingOn, activeRules)
   }
+}
+
+private fun FrontendProjectViewPane.getOptionSupport(): ProjectViewActionSupport? {
+  return (this as? TreeBasedFrontendProjectViewPane)?.getOptionSupport()
 }

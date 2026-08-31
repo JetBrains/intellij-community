@@ -102,7 +102,7 @@ internal class TreeBasedFrontendProjectViewPane(
   override val descriptor: ProjectViewPaneDescriptorImpl
     get() = paneTreeModel.descriptor
 
-  override val displayName: @NlsSafe String
+  val displayName: @NlsSafe String
     get() = paneTreeModel.descriptor.presentableName
 
   override val selectInTargets: Collection<SelectInTarget>
@@ -111,7 +111,7 @@ internal class TreeBasedFrontendProjectViewPane(
   override val component: JComponent
     field = ContentPanel(scrollPane)
 
-  override val requestChannel: ReceiveChannel<ProjectViewPaneRequest>
+  val requestChannel: ReceiveChannel<ProjectViewPaneRequest>
     get() = paneTreeModel.requestChannel
 
   override var isCurrent: Boolean = false
@@ -167,9 +167,9 @@ internal class TreeBasedFrontendProjectViewPane(
     }
   }
 
-  override fun getOptionSupport(): ProjectViewActionSupport = paneTreeModel.getOptionSupport()
+  fun getOptionSupport(): ProjectViewActionSupport = paneTreeModel.getOptionSupport()
 
-  override suspend fun applyStateChange(event: ProjectViewPaneStateEvent) {
+  suspend fun applyStateChange(event: ProjectViewPaneStateEvent) {
     withContext(Dispatchers.UI) {
       paneTreeModel.applyStateChange(event)
     }

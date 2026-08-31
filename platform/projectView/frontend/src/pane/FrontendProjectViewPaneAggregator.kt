@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
 import com.intellij.platform.projectView.actions.EditorChoice
+import com.intellij.platform.projectView.frontend.impl.TreeBasedFrontendProjectViewPane
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
@@ -19,6 +20,7 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneService
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
 import com.intellij.platform.projectView.pane.SelectInRequestDTO
 import com.intellij.platform.projectView.rpc.ProjectViewRpc
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -46,12 +48,19 @@ internal class FrontendProjectViewPaneAggregator(
   }
   
   // null means "not loaded yet", as opposed to "loaded, but there are no panes"
+  private val uiDescriptors = MutableStateFlow<Map<ProjectViewPaneId, ProjectViewPaneDescriptorImpl>?>(null)
   private val frontendDescriptors = MutableStateFlow<Map<ProjectViewPaneId, ProjectViewPaneDescriptorImpl>?>(null)
   private val backendDescriptors = MutableStateFlow<Map<ProjectViewPaneId, ProjectViewPaneDescriptorImpl>?>(null)
 
   private val isBackendLoaded = AtomicBoolean(false)
 
   init {
+    coroutineScope.launch(CoroutineName("PV UI pane descriptors fetching")) {
+      pureUiService().getPaneDescriptorsFlow().collect { descriptors ->
+        LOG.info("Loaded the UI pane descriptors: ${descriptors.joinToString { it.id.idString }}")
+        uiDescriptors.value = descriptors.associateBy { it.id }
+      }
+    }
     coroutineScope.launch(CoroutineName("PV frontend pane descriptors fetching")) {
       frontendService().getPaneDescriptorsFlow().collect { descriptors ->
         LOG.info("Loaded the frontend PV pane descriptors: ${descriptors.joinToString { it.id.idString }}")
@@ -70,32 +79,63 @@ internal class FrontendProjectViewPaneAggregator(
   private fun frontendService(): ProjectViewPaneService = FrontendProjectViewPaneService.getInstance(project)
 
   private suspend fun backendService(): ProjectViewPaneService = backendServiceDeferred.await()
+
+  private fun pureUiService(): PureUiProjectViewPaneService = PureUiProjectViewPaneService.getInstance(project)
   
   private suspend fun paneService(descriptor: ProjectViewPaneDescriptorImpl): ProjectViewPaneService {
     return when (descriptor.kind) {
       ProjectViewPaneKind.BACKEND -> backendService()
       ProjectViewPaneKind.LIGHT -> frontendService()
-      ProjectViewPaneKind.UI_ONLY -> TODO("Not implemented yet")
+      ProjectViewPaneKind.UI_ONLY -> pureUiService()
     }
   }
 
   fun getPaneDescriptorsFlow(): Flow<List<ProjectViewPaneDescriptorImpl>> {
-    return combine(frontendDescriptors, backendDescriptors) { frontend, backend ->
-      when {
+    return combine(uiDescriptors, frontendDescriptors, backendDescriptors) { ui, frontend, backend ->
+      val pureUiPaneDescriptors = ui.orEmpty()
+      val fullPaneDescriptors = when {
         // The backend wins on ID collisions: that's how a light frontend pane is replaced by the real one.
         backend != null -> (frontend.orEmpty() + backend).values
         // In the monolith mode, the backend is immediately available, no point showing light panes.
         frontend != null && !AppMode.isMonolith() -> frontend.values
         else -> emptyList()
-      }.sortedBy { it.order }
+      }
+      val result = mutableListOf<ProjectViewPaneDescriptorImpl>()
+      for (pureUiDescriptor in pureUiPaneDescriptors.values) {
+        result += pureUiDescriptor
+      }
+      // The choice between a pure UI pane and a full pane is arbitrary, it's an error either way.
+      // If we end up in this situation, it's most likely the legacy pane compatibility layer picked something.
+      // So our best guess is to pick the pure UI one instead.
+      for (fullDescriptor in fullPaneDescriptors) {
+        if (fullDescriptor.id in pureUiPaneDescriptors) {
+          LOG.warn(
+            "Duplicate pane ID ${fullDescriptor.id}: " +
+            "full = $fullDescriptor, " +
+            "pure UI = ${pureUiPaneDescriptors[fullDescriptor.id]}"
+          )
+          continue
+        }
+        result += fullDescriptor
+      }
+      result.sortedBy { it.order }
     }.distinctUntilChanged()
   }
 
-  suspend fun getPaneStateFlow(paneDescriptor: ProjectViewPaneDescriptorImpl): Flow<ProjectViewPaneStateEvent> {
+  @RequiresEdt
+  fun createPane(descriptor: ProjectViewPaneDescriptorImpl): FrontendProjectViewPane {
+    return when (descriptor.kind) {
+      ProjectViewPaneKind.BACKEND -> TreeBasedFrontendProjectViewPane(project, descriptor)
+      ProjectViewPaneKind.LIGHT -> TreeBasedFrontendProjectViewPane(project, descriptor)
+      ProjectViewPaneKind.UI_ONLY -> pureUiService().createPane(descriptor)
+    }
+  }
+
+  suspend fun getPaneStateFlow(paneDescriptor: ProjectViewPaneDescriptorImpl): Flow<ProjectViewPaneStateEvent>? {
     return paneService(paneDescriptor).getPaneStateFlow(paneDescriptor.id)
   }
 
-  suspend fun getPaneRequestChannel(paneDescriptor: ProjectViewPaneDescriptorImpl): SendChannel<ProjectViewPaneRequest> {
+  suspend fun getPaneRequestChannel(paneDescriptor: ProjectViewPaneDescriptorImpl): SendChannel<ProjectViewPaneRequest>? {
     return paneService(paneDescriptor).getPaneRequestChannel(paneDescriptor.id)
   }
 

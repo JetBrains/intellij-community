@@ -60,9 +60,9 @@ interface ProjectViewPaneProvider {
 interface ProjectViewPaneService {
   suspend fun getPaneDescriptorsFlow(): Flow<List<ProjectViewPaneDescriptorImpl>>
 
-  suspend fun getPaneStateFlow(paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEvent>
+  suspend fun getPaneStateFlow(paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEvent>?
 
-  suspend fun getPaneRequestChannel(paneId: ProjectViewPaneId): SendChannel<ProjectViewPaneRequest>
+  suspend fun getPaneRequestChannel(paneId: ProjectViewPaneId): SendChannel<ProjectViewPaneRequest>?
 
   suspend fun findNodeForOpenedFile(paneId: ProjectViewPaneId, editorChoice: EditorChoice, isInvokedManually: Boolean): ProjectViewNodePath?
 
