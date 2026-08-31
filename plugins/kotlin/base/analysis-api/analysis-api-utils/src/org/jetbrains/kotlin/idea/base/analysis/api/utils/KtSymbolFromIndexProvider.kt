@@ -58,6 +58,7 @@ import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasByExpansionShortNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
 import org.jetbrains.kotlin.idea.stubindex.cancelableCollectFilterProcessor
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.isMultiPlatform
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -527,7 +528,7 @@ private fun findAllNamesForTypes(
     scope: GlobalSearchScope,
     builtinTypes: KaBuiltinTypes,
 ): Set<Name> {
-    val visitedTypes = hashMapOf<Name, Set<Name>>()
+    val visitedTypes = hashMapOf<ClassId, Set<Name>>()
 
     fun findAllNamesForType(type: KaType): Set<Name> = when (type) {
         is KaFlexibleType -> findAllNamesForType(type.lowerBound)
@@ -551,15 +552,15 @@ private fun findAllNamesForTypes(
         }
 
         is KaClassType -> {
-            val typeName = type.classId
-                .shortClassName
+            val classId = type.classId
+            val typeName = classId.shortClassName
 
-            visitedTypes[typeName]?.let { return it }
-
-            val names = if (typeName.isSpecial) {
+            if (typeName.isSpecial) {
                 emptySet()
             } else {
-                buildSet {
+                visitedTypes[classId]?.let { return it }
+
+                val names = buildSet {
                     add(typeName)
                     addAll(getPossibleTypeAliasExpansionNames(project, typeName, scope))
 
@@ -569,9 +570,9 @@ private fun findAllNamesForTypes(
                         ?.flatMap { findAllNamesForType(it) }
                         ?.forEach { add(it) }
                 }
+                visitedTypes[classId] = names
+                names
             }
-            visitedTypes[typeName] = names
-            names
         }
 
         else -> emptySet()
