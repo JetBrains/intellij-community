@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import com.intellij.openapi.editor.impl.RangeMarkerImpl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.psi.PsiElement;
@@ -50,7 +49,7 @@ public final class ManagedHighlighterRecycler {
     if (UpdateHighlightersUtil.LOG.isDebugEnabled()) {
       UpdateHighlightersUtil.LOG.debug("MHR.recycleHighlighter " + highlighter + HighlightInfoUpdaterImpl.currentProgressInfo());
     }
-    long range = ((RangeMarkerImpl)highlighter).getScalarRange();
+    long range = highlighter.getScalarRange();
     incinerator.computeIfAbsent(range, _ -> new ArrayList<>()).add(new InvalidPsi(psiElement, info));
   }
 
