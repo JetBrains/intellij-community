@@ -88,5 +88,7 @@
     <applicationService serviceImplementation="com.intellij.codeInsight.generation.GetterTemplatesManager"/>
     <applicationSettings service="com.intellij.codeInsight.generation.SetterTemplatesManager"/>
     <applicationSettings service="com.intellij.codeInsight.generation.GetterTemplatesManager"/>
+
+    <lang.parserDefinition language="SPI" implementationClass="com.intellij.spi.parsing.SPIParserDefinition"/>
   </extensions>
 </idea-plugin>
