@@ -65,7 +65,7 @@ class ActiveChangeListTrackerImpl(val project: Project) : ActiveChangeListTracke
 
     var success = false
     val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
-    changeListManager.executeUnderDataLock {
+    changeListManager.executeUnderReadActionDataLock {
       if (changeListManager.getChangeList(changelistId) != null) {
         forcedChangeListId = changelistId
         try {

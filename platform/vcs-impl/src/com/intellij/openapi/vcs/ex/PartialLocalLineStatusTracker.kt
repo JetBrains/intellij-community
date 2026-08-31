@@ -764,9 +764,9 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
   @RequiresEdt
   @ApiStatus.Internal
   fun recreateBlocks(map: Map<Range, LocalChangeList>) {
-    changeListManager.executeUnderDataLock {
+    changeListManager.executeUnderReadActionDataLock {
       val rangesToBlockData = map.entries.associate { (range, changelist) ->
-        if (changeListManager.getChangeList(changelist.id) == null) return@executeUnderDataLock
+        if (changeListManager.getChangeList(changelist.id) == null) return@executeUnderReadActionDataLock
         val newMarker = ChangeListMarker(changelist)
         com.intellij.diff.util.Range(range.vcsLine1, range.vcsLine2, range.line1, range.line2) to ChangeListBlockData(marker = newMarker) as DocumentTracker.BlockData
       }
@@ -782,8 +782,8 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
 
   @RequiresEdt
   private fun moveToChangelist(condition: (Block) -> Boolean, changelist: LocalChangeList) {
-    changeListManager.executeUnderDataLock {
-      if (changeListManager.getChangeList(changelist.id) == null) return@executeUnderDataLock
+    changeListManager.executeUnderReadActionDataLock {
+      if (changeListManager.getChangeList(changelist.id) == null) return@executeUnderReadActionDataLock
       val newMarker = ChangeListMarker(changelist)
 
       documentTracker.writeLock {
@@ -949,7 +949,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     var success = false
     documentTracker.doFrozen {
       // ensure that changelist can't disappear in the middle of operation
-      changeListManager.executeUnderDataLock {
+      changeListManager.executeUnderReadActionDataLock {
         documentTracker.writeLock {
           success = documentTracker.setFrozenState(state.vcsContent, state.currentContent, state.ranges.map { it.range })
           if (success) {
@@ -972,7 +972,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     var success = false
     documentTracker.doFrozen {
       // ensure that changelist can't disappear in the middle of operation
-      changeListManager.executeUnderDataLock {
+      changeListManager.executeUnderReadActionDataLock {
         documentTracker.writeLock {
           success = documentTracker.setFrozenState(states.map { it.range })
           if (success) {

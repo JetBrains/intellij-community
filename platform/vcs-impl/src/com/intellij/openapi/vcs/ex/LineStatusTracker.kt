@@ -53,7 +53,7 @@ interface LineStatusTracker<out R : Range> : LineStatusTrackerI<R> {
  *
  * There's a lock order:
  * [com.intellij.openapi.application.Application.runReadAction] ->
- * [com.intellij.openapi.vcs.changes.ChangeListManagerImpl.executeUnderDataLock] ->
+ * [com.intellij.openapi.vcs.changes.ChangeListManagerImpl.dataLock] ->
  * [LineStatusTracker.readLock].
  * Which means implementations CAN NOT access CLM during most operations, including [DocumentTracker.Handler].
  *
