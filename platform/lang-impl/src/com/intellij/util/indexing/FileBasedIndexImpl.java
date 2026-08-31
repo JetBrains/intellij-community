@@ -2086,7 +2086,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
     IndexingStamp.flushCache(fileId);
 
-    myFilesToUpdateCollector.scheduleForUpdate(FileIndexingRequest.updateRequest(file), containingProjects, dirtyQueueProjects);
+    myFilesToUpdateCollector.scheduleForUpdate(FileIndexingRequest.updateRequest(file), containingProjects,
+                                               ContainerUtil.union(dirtyQueueProjects, containingProjects));
   }
 
   public void doInvalidateIndicesForFile(int fileId,
