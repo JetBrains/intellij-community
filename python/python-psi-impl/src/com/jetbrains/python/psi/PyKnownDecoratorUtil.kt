@@ -5,7 +5,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.FunctionParameter
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -24,8 +23,7 @@ object PyKnownDecoratorUtil {
    * Map decorators of element to [PyKnownDecorator].
    *
    * @param element decoratable element to check
-   * @param context type evaluation context. If it doesn't allow switch to AST, decorators will be compared by the text of the last component
-   * of theirs qualified names.
+   * @param context type evaluation context. If it doesn't allow switch to AST, the imports of the file give the qualified name of a decorator.
    * @return list of known decorators in declaration order with duplicates (with any)
    */
   @JvmStatic
@@ -50,29 +48,94 @@ object PyKnownDecoratorUtil {
     if (PyNames.GETTER == lastComponent || PyNames.SETTER == lastComponent || PyNames.DELETER == lastComponent) {
       return emptyList()
     }
-    if (context.maySwitchToAST(decorator)) {
-      val containingFile = decorator.containingFile
-      val resolved: List<PsiElement?>
-      if (containingFile is PyiFile) {
-        // In .pyi files it's safe to resolve decorators such as "@overload" flow-insensitively.
-        resolved = PyResolveUtil.resolveQualifiedNameInScope(qualifiedName, containingFile as ScopeOwner, context)
-      }
-      else {
-        resolved = PyUtil.multiResolveTopPriority(
-          decorator.callee!!,
-          PyResolveContext.defaultContext(context)
-        )
-      }
-      return resolved
-        .filterIsInstance<PyQualifiedNameOwner>()
-        .mapNotNull { it.qualifiedName }
-        .map(PyNames.FQN::unqualifyBuiltinName)
-        .map { QualifiedName.fromDottedString(it!!) }
-        .mapNotNull { findByQualifiedName(it) }
+    val containingFile = decorator.containingFile
+    if (!context.maySwitchToAST(decorator)) {
+      // Without the AST, the imports of the file give the qualified name of the decorator. This reads stubs only.
+      if (containingFile !is PyFile) return emptyList()
+      return asKnownDecoratorsInFile(qualifiedName, containingFile)
+    }
+    val resolved = if (containingFile is PyiFile) {
+      // In .pyi files it's safe to resolve decorators such as "@overload" flow-insensitively.
+      PyResolveUtil.resolveQualifiedNameInScope(qualifiedName, containingFile, context)
     }
     else {
-      return asKnownDecorators(qualifiedName)
+      PyUtil.multiResolveTopPriority(decorator.callee!!, PyResolveContext.defaultContext(context))
     }
+    return resolved
+      .filterIsInstance<PyQualifiedNameOwner>()
+      .mapNotNull { it.qualifiedName }
+      .map(PyNames.FQN::unqualifyBuiltinName)
+      .map { QualifiedName.fromDottedString(it!!) }
+      .mapNotNull { findByQualifiedName(it) }
+  }
+
+  /**
+   * Returns the known decorators that [qualifiedName], as it is written in [file], can point to.
+   *
+   * The method reads the import statements of the file and resolves nothing, so it stays inside the stubs of the file.
+   * It sees a top-level import only, which includes an import under `if TYPE_CHECKING:`.
+   *
+   * An import gives the module of a name, but the file cannot tell where that module takes the name from.
+   * A decorator of the same top-level package matches first.
+   * If the package holds no such decorator, the module can re-export one, as `propcache._helpers_py` re-exports
+   * `functools.cached_property`, so the short name matches.
+   * A relative import comes from the package of the file, which holds no known decorator, so the name is not one.
+   * A name that the file itself defines belongs to the module of the file, as `classmethod` does in `builtins.pyi`.
+   * For any other name the short name is all the file gives. This covers a builtin, a name from a star import,
+   * an import inside a function, and a member of a local object as in `@my_property.expression`.
+   */
+  private fun asKnownDecoratorsInFile(qualifiedName: QualifiedName, file: PyFile): List<PyKnownDecorator> {
+    return computeKnownDecoratorsInFile(qualifiedName, file)
+  }
+
+  private fun computeKnownDecoratorsInFile(qualifiedName: QualifiedName, file: PyFile): List<PyKnownDecorator> {
+    val firstName = qualifiedName.firstComponent ?: return emptyList()
+    val tail = qualifiedName.removeHead(1)
+    val importedNames = mutableListOf<QualifiedName>()
+
+    for (importElement in file.importTargets) {
+      val importedQName = importElement.importedQName ?: continue
+      val asName = importElement.asName
+      if (asName != null) {
+        if (asName == firstName) importedNames.add(importedQName.append(tail))
+      }
+      else if (importedQName.firstComponent == firstName) {
+        // "import a.b" binds "a", so the name of the decorator is already absolute.
+        importedNames.add(qualifiedName)
+      }
+    }
+    for (fromImport in file.fromImports) {
+      // A star import keeps the name, so the short name still finds the decorator further down.
+      if (fromImport.isStarImport) continue
+      if (fromImport.importElements.none { it.visibleName == firstName }) continue
+      if (fromImport.relativeLevel != 0) return emptyList()
+      val source = fromImport.importSourceQName ?: continue
+      for (importElement in fromImport.importElements) {
+        if (importElement.visibleName == firstName) {
+          importElement.importedQName?.let { importedNames.add(source.append(it).append(tail)) }
+        }
+      }
+    }
+
+    if (importedNames.isNotEmpty()) {
+      return importedNames.flatMap { importedName ->
+        val byQualifiedName = findByQualifiedName(importedName)
+        if (byQualifiedName != null) return@flatMap listOf(byQualifiedName)
+        val byShortName = findByShortName(importedName.lastComponent!!)
+        byShortName.filter { it.qualifiedName.firstComponent == importedName.firstComponent }.ifEmpty { byShortName }
+      }
+    }
+    val defined = definedName(file, firstName)
+    if (defined != null) {
+      val definedQName = (defined as? PyQualifiedNameOwner)?.qualifiedName ?: return emptyList()
+      val name = PyNames.FQN.unqualifyBuiltinName(definedQName)!!
+      return listOfNotNull(findByQualifiedName(QualifiedName.fromDottedString(name).append(tail)))
+    }
+    return findByShortName(qualifiedName.lastComponent!!)
+  }
+
+  private fun definedName(file: PyFile, name: String): PsiElement? {
+    return file.findTopLevelClass(name) ?: file.findTopLevelFunction(name) ?: file.findTopLevelAttribute(name)
   }
 
   @ApiStatus.Internal
@@ -91,8 +154,7 @@ object PyKnownDecoratorUtil {
    * Check that given element has any non-standard (read "unreliable") decorators.
    *
    * @param element decoratable element to check
-   * @param context type evaluation context. If it doesn't allow switch to AST, decorators will be compared by the text of the last component
-   * of theirs qualified names.
+   * @param context type evaluation context. If it doesn't allow switch to AST, the imports of the file give the qualified name of a decorator.
    * @see PyKnownDecorator
    */
   @JvmStatic
@@ -104,8 +166,7 @@ object PyKnownDecoratorUtil {
    * Checks that given function has any decorators from `abc` module.
    *
    * @param element Python function to check
-   * @param context type evaluation context. If it doesn't allow switch to AST, decorators will be compared by the text of the last component
-   * of theirs qualified names.
+   * @param context type evaluation context. If it doesn't allow switch to AST, the imports of the file give the qualified name of a decorator.
    * @see PyKnownDecorator
    */
   @JvmStatic

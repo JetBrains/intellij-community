@@ -886,6 +886,19 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
   @Nested
   inner class DecoratedMethodsAndClassDecorators {
     @Test
+    @TestFor(issues = ["PY-85200"])
+    fun `classmethod is still known when the file has a star import`() = test("""
+      from os.path import *
+
+      class C:
+          @classmethod
+          def make(cls) -> "C": ...
+
+      expr = C.make()
+      #└ TYPE C
+      """.trimIndent())
+
+    @Test
     @TestFor(issues = ["PY-51321"])
     fun `class decorated function`() = test("""
       class A:

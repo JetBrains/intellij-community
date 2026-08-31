@@ -24,6 +24,19 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
   @Nested
   inner class PropertyTypeInference {
     @Test
+    @TestFor(issues = ["PY-85200"])
+    fun `property is still known when the file has a star import`() = test("""
+      from os.path import *
+
+      class C:
+          @property
+          def x(self) -> int: ...
+
+      expr = C().x
+      #└ TYPE int
+      """.trimIndent())
+
+    @Test
     fun `property attribute accessed on class`() = test("""
       class C:
           x = property(lambda self: 'foo', None, None)
@@ -1248,6 +1261,119 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
       #└ TYPE int
       """.trimIndent())
 
+    /** The shape of `propcache._helpers_py`: a module re-exports `functools.cached_property` under the same name. */
+    @Test
+    @TestFor(issues = ["PY-85200"])
+    fun `cached_property re-exported by another module is still a property`() = test("""
+      from propcache_helpers import cached_property
+
+      class C:
+          @cached_property
+          def x(self) -> int: ...
+
+      expr = C().x
+      #└ TYPE int
+      """.trimIndent(),
+      "propcache_helpers.py" to "from functools import cached_property")
+
+    /** The same re-export, one level deeper, because a package facade re-exports from a leaf module. */
+    @Test
+    @TestFor(issues = ["PY-85200"])
+    fun `cached_property re-exported twice is still a property`() = test("""
+      from propcache_api import cached_property
+
+      class C:
+          @cached_property
+          def x(self) -> int: ...
+
+      expr = C().x
+      #└ TYPE int
+      """.trimIndent(),
+      "propcache_helpers.py" to "from functools import cached_property",
+      "propcache_api.py" to "from propcache_helpers import cached_property")
+
+    @Test
+    @TestFor(issues = ["PY-85200"])
+    fun `descriptor imported under the name cached_property is not a property`() = test("""
+      from propcache_api import under_cached_property as cached_property
+
+      class C:
+          _cache: dict[str, object]
+          @cached_property
+          def x(self) -> int: ...
+
+      expr = C().x
+      #└ TYPE int
+      """.trimIndent(),
+      "propcache_api.py" to DESCRIPTOR_MODULE)
+
+    @Test
+    @TestFor(issues = ["PY-85200"])
+    fun `descriptor imported by a relative import is not a property`() = test("""
+      from .propcache_api import cached_property
+
+      class C:
+          _cache: dict[str, object]
+          @cached_property
+          def x(self) -> int: ...
+
+      expr = C().x
+      #└ TYPE int
+      """.trimIndent(),
+      "propcache_api.py" to (DESCRIPTOR_MODULE + "\n\ncached_property = under_cached_property\n"))
+
+    @Test
+    @TestFor(issues = ["PY-85200"])
+    fun `descriptor class named cached_property is not a property`() = test("""
+      from typing import Any, Callable, Mapping, Protocol, Self, overload
+
+      class _CacheImpl[Cache: Mapping[str, Any]](Protocol):
+          _cache: Cache
+
+      class cached_property[T]:
+          def __init__(self, wrapped: Callable[[Any], T]): ...
+          @overload
+          def __get__(self, inst: None, owner: type[object] | None = None) -> Self: ...
+          @overload
+          def __get__(self, inst: _CacheImpl[Any], owner: type[object] | None = None) -> T: ...
+          def __get__(self, inst: _CacheImpl[Any] | None, owner: type[object] | None = None) -> T | Self: ...
+
+      class C:
+          _cache: dict[str, Any]
+          @cached_property
+          def x(self) -> int: ...
+
+      expr = C().x
+      #└ TYPE int
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-85200"])
+    fun `descriptor aliased to the name cached_property is not a property`() = test("""
+      from typing import Any, Callable, Mapping, Protocol, Self, overload
+
+      class _CacheImpl[Cache: Mapping[str, Any]](Protocol):
+          _cache: Cache
+
+      class under_cached_property[T]:
+          def __init__(self, wrapped: Callable[[Any], T]): ...
+          @overload
+          def __get__(self, inst: None, owner: type[object] | None = None) -> Self: ...
+          @overload
+          def __get__(self, inst: _CacheImpl[Any], owner: type[object] | None = None) -> T: ...
+          def __get__(self, inst: _CacheImpl[Any] | None, owner: type[object] | None = None) -> T | Self: ...
+
+      cached_property = under_cached_property
+
+      class C:
+          _cache: dict[str, Any]
+          @cached_property
+          def x(self) -> int: ...
+
+      expr = C().x
+      #└ TYPE int
+      """.trimIndent())
+
     @Test
     @TestFor(issues = ["PY-63737"])
     fun `generic descriptor subclass used as decorator accessed on class`() = test("""
@@ -1913,4 +2039,22 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
       expr = C().attr
       #└ TYPE int
       """.trimIndent())
+
+  companion object {
+    /** A descriptor in the shape of `propcache.api.under_cached_property`. */
+    private val DESCRIPTOR_MODULE = """
+      from typing import Any, Callable, Mapping, Protocol, Self, overload
+
+      class _CacheImpl[Cache: Mapping[str, Any]](Protocol):
+          _cache: Cache
+
+      class under_cached_property[T]:
+          def __init__(self, wrapped: Callable[[Any], T]): ...
+          @overload
+          def __get__(self, inst: None, owner: type[object] | None = None) -> Self: ...
+          @overload
+          def __get__(self, inst: _CacheImpl[Any], owner: type[object] | None = None) -> T: ...
+          def __get__(self, inst: _CacheImpl[Any] | None, owner: type[object] | None = None) -> T | Self: ...
+      """.trimIndent()
+  }
 }

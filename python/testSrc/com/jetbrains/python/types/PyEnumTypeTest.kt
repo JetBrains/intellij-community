@@ -1008,20 +1008,20 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
         blue = 3
 
     Color.__members__
-    #        └ TYPE MappingProxyType[Literal["red", "green", "blue"], Literal[Color.red, Color.green, Color.blue]]
+    #        └ TYPE MappingProxyType[str, Color] FIXME MappingProxyType[Literal["red", "green", "blue"], Literal[Color.red, Color.green, Color.blue]]
     
     
     class Empty(Enum):
         pass
 
     Empty.__members__
-    #       └ TYPE MappingProxyType[str, object]
+    #       └ TYPE MappingProxyType[str, Empty]
     
     class EmptyInt(IntEnum):
         pass
 
     EmptyInt.__members__
-    #         └ TYPE MappingProxyType[str, int]
+    #         └ TYPE MappingProxyType[str, EmptyInt]
     """.trimIndent())
 
   @Test

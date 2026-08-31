@@ -210,6 +210,7 @@ object PyNames {
   const val SETTER: String = "setter"
   const val DELETER: String = "deleter"
   const val GETTER: String = "getter"
+  @Deprecated("deprecated")
   const val CACHED_PROPERTY: String = "cached_property"
 
   const val ALL: String = "__all__"
