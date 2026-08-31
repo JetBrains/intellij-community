@@ -42,6 +42,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.RunnableCallable;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.BlockingJob;
 import com.intellij.util.concurrency.ChildContext;
 import com.intellij.util.concurrency.Propagation;
 import com.intellij.util.concurrency.Semaphore;
@@ -670,6 +671,9 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
             else {
               context = ThreadContext.currentThreadContext();
             }
+            // the caller blocks until the computation ends, so it must not run under an ambient blocking job:
+            // that job would capture the computation and any nested runBlocking, and break read-lock sharing
+            context = context.minusKey(BlockingJob.Companion);
             boolean couldRun = ThreadContext.installThreadContext(context, true, this::attemptComputation);
 
             if (!couldRun) {
@@ -847,7 +851,13 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
         throw e;
       }
       catch (Throwable e) {
-        failJob(e);
+        if (backendExecutor == SYNC_DUMMY_EXECUTOR) {
+          // the synchronous caller rethrows the error from blockingGet; a failed job would surface it as an unhandled exception instead
+          completeJob();
+        }
+        else {
+          failJob(e);
+        }
         setError(e);
       }
     }

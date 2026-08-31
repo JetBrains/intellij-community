@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,10 +36,14 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.BlockingJob;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.ui.UIUtil;
+import kotlin.Unit;
+import kotlinx.coroutines.CompletableJob;
+import kotlinx.coroutines.JobKt;
 import one.util.streamex.IntStreamEx;
 import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NotNull;
@@ -471,6 +476,21 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
       }).executeSynchronously());
       assertNull(loggedError.get());
     });
+  }
+
+  public void testSyncExecutionDeliversFailureUnderBlockingJob() {
+    CompletableJob blockingJob = JobKt.Job(null);
+    watchLoggedExceptions(loggedError -> {
+      ThreadContext.installThreadContext(ThreadContext.currentThreadContext().plus(new BlockingJob(blockingJob)), true, () -> {
+        assertThrows(UnsupportedOperationException.class, () -> ReadAction.nonBlocking(() -> {
+          throw new UnsupportedOperationException();
+        }).executeSynchronously());
+        return Unit.INSTANCE;
+      });
+      assertNull(loggedError.get());
+    });
+    blockingJob.complete();
+    assertFalse("the blocking job must not be canceled by a delivered sync failure", blockingJob.isCancelled());
   }
 
   private static void watchLoggedExceptions(Consumer<? super AtomicReference<Throwable>> runnable) {
