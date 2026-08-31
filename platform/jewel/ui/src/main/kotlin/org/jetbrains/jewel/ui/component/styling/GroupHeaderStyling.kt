@@ -44,21 +44,36 @@ public class GroupHeaderStyle(
 @Immutable
 @GenerateDataFunctions
 public class GroupHeaderColors(
-    /** The color of the divider line. */
-    public val divider: Color
+    /** The color of the enabled divider line. */
+    public val divider: Color,
+    /** The color of the disabled divider line. */
+    public val dividerDisabled: Color = divider,
 ) {
+    @Deprecated("Use GroupHeaderColors with the dividerDisabled parameter.", level = DeprecationLevel.HIDDEN)
+    public constructor(
+        /** The color of the enabled divider line. */
+        divider: Color
+    ) : this(divider, divider)
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
         other as GroupHeaderColors
 
-        return divider == other.divider
+        if (divider != other.divider) return false
+        if (dividerDisabled != other.dividerDisabled) return false
+
+        return true
     }
 
-    override fun hashCode(): Int = divider.hashCode()
+    override fun hashCode(): Int {
+        var result = divider.hashCode()
+        result = 31 * result + dividerDisabled.hashCode()
+        return result
+    }
 
-    override fun toString(): String = "GroupHeaderColors(divider=$divider)"
+    override fun toString(): String = "GroupHeaderColors(divider=$divider, dividerDisabled=$dividerDisabled)"
 
     /** Companion object for [GroupHeaderColors]. */
     public companion object
