@@ -101,6 +101,9 @@ sealed interface EelPlatform {
   class Darwin(override val arch: Arch) : Posix()
 
   @ApiStatus.Experimental
+  class HarmonyOS(override val arch: Arch) : Posix() //todo[kb] double-check. HarmonyOS provides partial POSIX compatibility
+
+  @ApiStatus.Experimental
   class Windows(override val arch: Arch) : EelPlatform {
     override val osFamily: EelOsFamily = EelOsFamily.Windows
     override fun toString(): String = "${javaClass.simpleName} $arch"
@@ -141,6 +144,7 @@ val EelPlatform.osName: String
     is Darwin -> "darwin"
     is EelPlatform.Windows -> "windows"
     is FreeBSD -> "freebsd"
+    is EelPlatform.HarmonyOS -> "harmonyos"
   }
 
 /** Canonical arch name compatible with [EelPlatform.getFor], e.g. `"x86_64"`, `"arm64"`. */

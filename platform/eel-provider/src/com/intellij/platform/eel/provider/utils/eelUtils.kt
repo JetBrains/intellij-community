@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
@@ -23,6 +23,7 @@ fun EelPlatform.toOs(): OS {
     is EelPlatform.Linux -> OS.Linux
     is EelPlatform.Darwin -> OS.macOS
     is EelPlatform.FreeBSD -> OS.FreeBSD
+    is EelPlatform.HarmonyOS -> OS.HarmonyOS
   }
 }
 

@@ -558,7 +558,7 @@ private suspend fun DeployingContextAndShell.execIjent(
  */
 private fun DeployingContext.getLoginShellCmd(targetPlatform: EelPlatform.Posix): String? =
   when (targetPlatform) {
-    is EelPlatform.Linux ->
+    is EelPlatform.Linux, is EelPlatform.HarmonyOS ->
       getent?.let { """$it passwd "${'$'}($whoami)" | $cut -d: -f7""" }
 
     // BSD-like systems, including macOS, don't have `getent`, but their `id` prints the whole passwd entry with the option `-P`.

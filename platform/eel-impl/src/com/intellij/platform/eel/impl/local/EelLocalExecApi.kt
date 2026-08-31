@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.impl.local
 
 import com.intellij.execution.CommandLineUtil
@@ -23,10 +23,10 @@ import com.intellij.platform.eel.EelProcessManagementPosixApi
 import com.intellij.platform.eel.EelProcessManagementWindowsApi
 import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.eel.EelWindowsProcess
-import com.intellij.platform.eel.environmentVariablesAwaitReporter
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.LocalEelExecApi
 import com.intellij.platform.eel.channels.EelDelicateApi
+import com.intellij.platform.eel.environmentVariablesAwaitReporter
 import com.intellij.platform.eel.impl.base.EelExecApiEnvironmentVariableCache
 import com.intellij.platform.eel.impl.base.bindProcessToScopeIfSet
 import com.intellij.platform.eel.impl.base.commandLineForDebug
@@ -49,7 +49,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
-import kotlin.time.Duration.Companion.nanoseconds
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -62,6 +61,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.isDirectory
+import kotlin.time.Duration.Companion.nanoseconds
 
 @OptIn(EelDelicateApi::class)
 @ApiStatus.Internal
@@ -184,7 +184,7 @@ class EelLocalExecPosixApi(
         }
       }
 
-      is EelPlatform.FreeBSD, is EelPlatform.Linux -> {
+      is EelPlatform.FreeBSD, is EelPlatform.Linux, is EelPlatform.HarmonyOS -> { //todo[kb] double-check HOS
         // TODO This code wasn't checked on BSD.
         var passwdLines =
           try {
