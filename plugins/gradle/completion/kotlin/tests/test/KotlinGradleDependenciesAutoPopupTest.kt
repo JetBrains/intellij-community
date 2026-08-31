@@ -13,6 +13,7 @@ import com.intellij.repository.search.completion.api.DependencyGroupCompletionRe
 import com.intellij.repository.search.completion.api.DependencyPartCompletionResult
 import com.intellij.repository.search.completion.api.DependencyVersionCompletionRequest
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTester
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.runInEdtAndWait
@@ -80,8 +81,7 @@ class KotlinGradleDependenciesAutoPopupTest : K2GradleCodeInsightTestCase() {
   ) = runTest(gradleVersion) {
     val file = writeTextAndCommit("build.gradle.kts", fileContent)
     codeInsightFixture.configureFromExistingVirtualFile(file)
-    // make sure that IDEA is ready for completion
-    codeInsightFixture.doHighlighting()
+    prepareForCompletion()
     runInEdtAndWait {
       val lookupElements = codeInsightFixture.completeBasic()
       assertNotNull(lookupElements) { "Autocompletion was not expected: fixture.completeBasic() returned null" }
@@ -97,6 +97,19 @@ class KotlinGradleDependenciesAutoPopupTest : K2GradleCodeInsightTestCase() {
     }
     autoPopupTester.joinAutopopup()
     assertion()
+  }
+
+  private fun prepareForCompletion() {
+    val fixture = codeInsightFixture as CodeInsightTestFixtureImpl
+    // Allow a code analyzer to restart during highlighting. The fixture rejects this restart by default.
+    fixture.canChangeDocumentDuringHighlighting(true)
+    try {
+      // Wait for initial analysis after file configuration. This prevents completion from racing with the test setup.
+      fixture.doHighlighting()
+    }
+    finally {
+      fixture.canChangeDocumentDuringHighlighting(false)
+    }
   }
 
   /**
