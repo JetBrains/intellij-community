@@ -85,7 +85,11 @@ object PyEvoWidgetCollector : CounterUsagesCollector() {
     /** A row's inline icon, opening the panel of base Pythons its environment could be built on. */
     BASE_PYTHON_PANEL,
 
-    /** The gear on the "Select Environment" header, opening Settings | Python | Tools | Package Manager. */
+    /**
+     * The "Settings" row, opening Settings | Python | Tools | Package Manager.
+     *
+     * Named for the gear it used to be, and kept under that name so the metric stays one series across the change.
+     */
     GEAR_SETTINGS,
 
     /** A failed row was clicked, opening the Python Process Output tool window on that run. */

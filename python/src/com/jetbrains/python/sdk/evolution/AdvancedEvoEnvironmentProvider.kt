@@ -14,13 +14,14 @@ import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.collectAddInterpreterActions
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import javax.swing.Icon
 
-/** The "advanced" node: the full set of add-interpreter actions. Not tool-specific. */
+/** The "Custom" node: the full set of add-interpreter actions. Not tool-specific. */
 internal class AdvancedEvoEnvironmentProvider : PyEvoEnvironmentProvider {
   override val toolId: ToolId get() = ToolId(EvoNodeIds.ADVANCED)
   override val nodeKind: EvoNodeKind get() = EvoNodeKind.ADVANCED
-  override val label: String get() = "Advanced"
+  override val label: String get() = PySdkBundle.message("evolution.node.custom")
   override val icon: Icon get() = AllIcons.Toolwindows.ToolWindowInternal
 
   override suspend fun loadSections(pyProject: EvoPyProject, fileSystem: FileSystem<PathHolder.Eel>, discovered: List<DiscoveredVenv>): EvoLoadResultDto {

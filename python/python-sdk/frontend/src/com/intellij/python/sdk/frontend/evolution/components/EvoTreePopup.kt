@@ -8,7 +8,6 @@ import com.intellij.util.ui.JBFont
 import com.intellij.ui.ComponentUtil
 import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.icons.AllIcons
-import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.ide.setToolTipText
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -16,7 +15,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.ui.popup.PopupStep
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.PopupTitle
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
@@ -30,11 +28,9 @@ import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.SeparatorWithText
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.paint.RectanglePainter
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
-import com.intellij.util.IconUtil
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -44,7 +40,6 @@ import java.awt.Container
 import java.awt.Cursor
 import java.awt.Dimension
 import java.awt.Graphics
-import java.awt.Graphics2D
 import java.awt.GridBagConstraints
 import java.awt.Insets
 import java.awt.Point
@@ -69,26 +64,8 @@ import javax.swing.border.EmptyBorder
 import javax.swing.event.ListSelectionEvent
 import javax.swing.event.ListSelectionListener
 import kotlin.math.max
-import kotlin.math.min
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.Nls
-
-private val SETTINGS_GEAR: Icon = AllIcons.General.GearPlain
-
-/** Distance (unscaled px) from the popup's right edge to the gear icon's right edge, tuned to sit over the `>` column. */
-private const val GEAR_RIGHT_INSET = 10
-
-/** Padding (unscaled px) around the gear icon that the hover fill covers — the button's surface beyond the glyph. */
-private const val GEAR_HOVER_PADDING: Int = 3
-
-/** Corner radius (unscaled px) of the gear's hover fill, matching the platform's action-button rounding. */
-private const val GEAR_HOVER_ARC: Int = 4
-
-/** Downward nudge (unscaled px) from vertical center, so the gear's optical center lines up with the caption text. */
-private const val GEAR_VERTICAL_OFFSET = 1
-
-/** Clear space (unscaled px) between the header caption and the gear, so the two never touch — a word space. */
-private const val GEAR_CAPTION_GAP = 6
 
 /** Gap (unscaled px) between a submenu and the left edge of the parent popup it is placed next to. */
 private const val SUBMENU_LEFT_GAP = 2
@@ -157,19 +134,6 @@ private const val NEXT_STEP_TIGHT_INSET = 4
 private const val NEXT_STEP_VERSION_INSET = 8
 
 /**
- * Captions whose header carries the settings gear. Both spellings of the same section — it reads "Select" before an
- * interpreter is configured and "Change" afterwards — so the gear survives the switch.
- *
- * File-level rather than a property of [EvoTreePopup]: `GroupedElementsRenderer`'s constructor calls
- * `createSeparator()`, so the renderer reads these before its own `popup` field has been assigned. Anything reached
- * from there has to be independent of the popup instance.
- */
-private val GEAR_CAPTIONS: Set<String> = setOf(
-  PySdkFrontendBundle.message("evo.sdk.status.bar.popup.select.environment"),
-  PySdkFrontendBundle.message("evo.sdk.status.bar.popup.change.environment"),
-)
-
-/**
  * Captions rendered as the platform's plain group header rather than this popup's caption-then-rule look.
  *
  * Both name the section that closes the popup below the tool list. Which of the two is there depends only on whether an
@@ -181,22 +145,15 @@ private val PLAIN_CAPTIONS: Set<String> = setOf(
 )
 
 /**
- * A group-header separator that also paints a settings gear at its right edge — but only while it is rendering one of
- * the [gearCaptions] sections (the "Select/Change Environment" header). A painted separator can't hold real action
- * components, so the gear click is hit-tested and handled in [EvoTreePopup].
+ * A group-header separator that runs the rule beside the caption rather than above it — `Python 3.14 ───────`.
  *
- * [plainCaptions] — and a section headed by a rule and no caption — opt back out of this class's custom look entirely,
+ * [plainCaptions] — and a section headed by a rule and no caption — opt back out of this custom look entirely,
  * rendering as the platform's own group header: a full-width rule with the caption below it. See [isPlain].
  */
-private class GearGroupHeaderSeparator(
+private class EvoGroupHeaderSeparator(
   private val labelInsets: Insets,
-  private val gearCaptions: Set<String>,
   private val plainCaptions: Set<String>,
-  /** Read fresh on every paint, so hover state never has to be pushed into this reused component. */
-  private val isGearHovered: () -> Boolean,
 ) : GroupHeaderSeparator(labelInsets) {
-  /** True while this reused component is currently rendering the gear-bearing section. */
-  val showsGear: Boolean get() = caption in gearCaptions
 
   /**
    * True while rendering a section that wants the platform's plain group header instead of this class's look.
@@ -225,16 +182,10 @@ private class GearGroupHeaderSeparator(
   override fun getPreferredElementSize(): Dimension {
     if (isPlain) return super.getPreferredElementSize()   // includes the platform's allowance for the rule above
     val size = if (caption == null) Dimension(0, 0) else getLabelSize(labelInsets)
-    // Ask for the gear's own footprint as well. Without it the popup is sized to the caption alone, and a caption that
-    // just fits leaves the gear — painted over the same line — sitting on its last word.
-    if (showsGear) size.width += gearFootprint()
     size.height += topGap
     JBInsets.addTo(size, insets)
     return size
   }
-
-  /** Width the gear needs at the right end of its header: the icon, its right inset, and the gap before it. */
-  private fun gearFootprint(): Int = gearIcon().iconWidth + JBUI.scale(GEAR_RIGHT_INSET + GEAR_CAPTION_GAP)
 
   /**
    * Paints the caption and, filling the rest of the line, the rule — `Python 3.14 ───────`.
@@ -254,14 +205,6 @@ private class GearGroupHeaderSeparator(
     bounds.width -= labelInsets.left + labelInsets.right
     bounds.y += labelInsets.top
     bounds.height -= labelInsets.top + labelInsets.bottom
-    // The gear occupies the right end of this very line, so take that end away before the caption is laid out in what
-    // is left. Otherwise the caption is laid out across the whole line and only ellipsizes at the popup's edge, which
-    // let a long caption run under the gear.
-    if (showsGear) {
-      val room = gearBounds().x - JBUI.scale(GEAR_CAPTION_GAP) - bounds.x
-      bounds.width = max(0, min(bounds.width, room))
-    }
-
     val metrics = g.fontMetrics
     val iconR = Rectangle()
     val textR = Rectangle()
@@ -272,21 +215,6 @@ private class GearGroupHeaderSeparator(
     g.color = textForeground
     g.drawString(label, textR.x, textR.y + metrics.ascent)
 
-    // The gear takes the right end of its own header, so that one gets no rule — the two would overlap.
-    if (showsGear) {
-      val icon = gearIcon()
-      val at = gearBounds()
-      // Hovered, it gets the same rounded fill an action button does, so it reads as something clickable.
-      if (isGearHovered()) {
-        val pad = JBUI.scale(GEAR_HOVER_PADDING)
-        val arc = JBUI.scale(GEAR_HOVER_ARC)
-        g.color = JBUI.CurrentTheme.ActionButton.hoverBackground()
-        RectanglePainter.FILL.paint(
-          g as Graphics2D, at.x - pad, at.y - pad, at.width + 2 * pad, at.height + 2 * pad, arc)
-      }
-      icon.paintIcon(this, g, at.x, at.y)
-      return
-    }
     // Only when the caption was not clipped: a rule after an ellipsis would suggest there is room left on the line.
     if (label != caption) return
     val from = textR.x + textR.width + JBUI.scale(SEPARATOR_RULE_GAP)
@@ -297,34 +225,6 @@ private class GearGroupHeaderSeparator(
     g.color = foreground
     g.fillRect(from, y, to - from, 1)
   }
-
-  /** The 16px gear scaled down to the caption font's ascent, so it reads at the same size as the header text. */
-  private fun gearIcon(): Icon {
-    val target = getFontMetrics(font).ascent
-    val scale = target.toFloat() / SETTINGS_GEAR.iconHeight
-    return if (scale in 0.98f..1.02f) SETTINGS_GEAR else IconUtil.scale(SETTINGS_GEAR, this, scale)
-  }
-
-  /**
-   * The gear's bounds within this separator: its icon is right-aligned at [GEAR_RIGHT_INSET] so it sits over the rows'
-   * `>` arrow column, without measuring the rendered rows. Vertically centered, then nudged down by
-   * [GEAR_VERTICAL_OFFSET] to align with the caption text.
-   */
-  fun gearBounds(): Rectangle {
-    val icon = gearIcon()
-    val x = width - icon.iconWidth - JBUI.scale(GEAR_RIGHT_INSET)
-    val y = (height - icon.iconHeight) / 2 + JBUI.scale(GEAR_VERTICAL_OFFSET)
-    return Rectangle(x, y, icon.iconWidth, icon.iconHeight)
-  }
-
-  /**
-   * The clickable area: [gearBounds] grown by the hover fill's padding, so the button's whole painted surface responds
-   * rather than only the glyph inside it.
-   */
-  fun gearHitBounds(): Rectangle {
-    val pad = JBUI.scale(GEAR_HOVER_PADDING)
-    return Rectangle(gearBounds()).also { JBInsets.addTo(it, JBUI.insets(pad)) }
-  }
 }
 
 class EvoPopupListElementRenderer(private val popup: EvoTreePopup) : PopupListElementRenderer<EvoTreeItem>(popup) {
@@ -334,35 +234,12 @@ class EvoPopupListElementRenderer(private val popup: EvoTreePopup) : PopupListEl
   private val reloadLabel = JLabel()
   private val signLabel = JLabel()
 
-  // Replace the plain group header with one that paints a settings gear on the "Select Environment" section.
+  // Replace the plain group header with one that runs the rule beside the caption.
   @Suppress("DEPRECATION") // overrides a platform method that returns the deprecated SeparatorWithText
   override fun createSeparator(): SeparatorWithText {
     val labelInsets = if (ExperimentalUI.isNewUI()) JBUI.CurrentTheme.Popup.separatorLabelInsets()
                       else defaultItemComponentBorder.getBorderInsets(JLabel())
-    // Runs from the superclass constructor, so it must not touch `popup` — only the lambda may, and that is invoked
-    // at paint time, by which point the field is assigned.
-    return GearGroupHeaderSeparator(labelInsets, GEAR_CAPTIONS, PLAIN_CAPTIONS) { popup.gearHovered }
-  }
-
-  /**
-   * Paints the gear-bearing row as unselected while the pointer is on the gear.
-   *
-   * The section header — gear included — is painted *inside* its first row's cell, so hovering the gear puts the
-   * pointer genuinely within that row and the platform selects it. Pointing at a header control should not look like
-   * pointing at the environment below it, so the selection is suppressed here, in the painting only: clearing the real
-   * selection would break the gear's own click, since `ListPopupImpl.MyList.processMouseEvent` forwards a click to
-   * listeners only while the row under the pointer is the selected one.
-   */
-  override fun getListCellRendererComponent(
-    list: JList<out EvoTreeItem>?,
-    value: EvoTreeItem?,
-    index: Int,
-    isSelected: Boolean,
-    cellHasFocus: Boolean,
-  ): Component {
-    val onGearHeader = value?.separatorAbove?.text?.let { it in GEAR_CAPTIONS } == true
-    val paintSelected = isSelected && !(onGearHeader && popup.gearHovered)
-    return super.getListCellRendererComponent(list, value, index, paintSelected, cellHasFocus)
+    return EvoGroupHeaderSeparator(labelInsets, PLAIN_CAPTIONS)
   }
 
   // The platform passes a null value during layout measurement, so the params must be nullable.
@@ -800,11 +677,6 @@ open class EvoTreePopup private constructor(
     border = JBUI.Borders.empty(CAPTION_ONLY_VERTICAL_INSET, CAPTION_LEFT_INSET, CAPTION_ONLY_VERTICAL_INSET, 0)
   }
 
-  /** Caption of the section header that carries the settings gear. */
-
-  /** Tooltip shown while hovering the settings gear. */
-  private val gearTooltip: @NlsContexts.Tooltip String = PySdkFrontendBundle.message("evo.sdk.status.bar.popup.settings.gear.tooltip")
-
 
   init {
     setMaxRowCount(maxRowCount)
@@ -839,11 +711,9 @@ open class EvoTreePopup private constructor(
     list.addListSelectionListener { resolveVisibleDetails() }
     resolveVisibleDetails()
 
-    // A click on a tool's inline reload icon re-scans that tool; a click on the "Select Environment" gear opens the
-    // Package Managers settings. isActionClick() below stops either from also selecting/expanding a row.
+    // A click on a tool's inline reload icon re-scans that tool. isActionClick() below stops it from also
+    // selecting/expanding a row.
     list.addMouseListener(object : MouseAdapter() {
-      override fun mouseExited(e: MouseEvent) = setGearHovered(false)
-
       override fun mouseReleased(e: MouseEvent) {
         // The right button is what offers a row's base Pythons. No icon stands for it: an icon on every such row cost
         // the width of the whole trailing column, and the rows it appeared on are most of a tool's list.
@@ -856,32 +726,20 @@ open class EvoTreePopup private constructor(
             PyEvoWidgetCollector.controlUsed(project, PyEvoWidgetCollector.Control.RELOAD, item.evoNodeStats() ?: EvoNodeStats(EvoNodeKind.OTHER))
           }
           reloadShowingLoadingPanel(item)
-          return
         }
-        if (settingsGearAt(e.point)) openPackageManagersSettings()
       }
     })
 
-    // Two hover targets live in the list's own tooltip: the gear's help text, and the full folder path behind an elided
-    // section header. They share one listener because each would otherwise clear the other's tooltip on the next move.
-    // The remembered values guard against redundant per-move updates.
+    // The list's own tooltip carries the full folder path behind an elided section header. The remembered value guards
+    // against redundant per-move updates.
     // The cursor is deliberately not touched here. `ListPopupImpl.createList` already gives the whole list a hand
-    // cursor, which is right for every part of it — the rows, the inline icons and the gear are all click targets — and
-    // setting it per-position only ever downgraded the rows to a plain arrow.
+    // cursor, which is right for every part of it — the rows and the inline icons are all click targets — and setting
+    // it per-position only ever downgraded the rows to a plain arrow.
     list.addMouseMotionListener(object : MouseMotionAdapter() {
       private var shownTooltip: @Nls String? = null
       override fun mouseMoved(e: MouseEvent) {
-        val overGear = settingsGearAt(e.point)
-        setGearHovered(overGear)
-        // Pointing at the header's gear is not pointing at the row it is painted over, so that row's submenu should
-        // not stay open behind it. Done on every move rather than only on entry: the platform's hover timer can still
-        // be pending from the row itself and would otherwise reopen the submenu under the pointer.
-        if (overGear) disposeChildren()
-        val tooltip = when {
-          overGear -> gearTooltip
-          // The header strip is painted inside the top cell of its section, so it is checked before the row under it.
-          else -> separatorTooltipAt(e.point)
-        }
+        // The header strip is painted inside the top cell of its section, so it is checked before the row under it.
+        val tooltip = separatorTooltipAt(e.point)
         if (tooltip != shownTooltip) {
           shownTooltip = tooltip
           list.setToolTipText(tooltip?.let { HtmlChunk.raw(multiLineTooltip(it)) })
@@ -966,10 +824,10 @@ open class EvoTreePopup private constructor(
     return (0 until model.size).any { step.hasSubstep(model.getElementAt(it) as? EvoTreeItem) }
   }
 
-  // Don't let a click on one of the inline icons or the settings gear select/expand a row — the mouse listener handles
+  // Don't let a click on one of the inline icons select/expand a row — the mouse listener handles
   // all three.
   override fun isActionClick(e: MouseEvent): Boolean =
-    !dismissesPicker() && reloadIconItemAt(e.point) == null && !settingsGearAt(e.point) && super.isActionClick(e)
+    !dismissesPicker() && reloadIconItemAt(e.point) == null && super.isActionClick(e)
 
   /**
    * True when this click is the one that closed a base-Python picker, and so must do nothing else.
@@ -1073,62 +931,15 @@ open class EvoTreePopup private constructor(
     val comp = renderer.getListCellRendererComponent(jList, item, row, false, false) as? JComponent ?: return null
     comp.setBounds(0, 0, cell.width, cell.height)
     layoutRecursively(comp)
-    val separator = findGearSeparator(comp) ?: return null
+    val separator = findSeparator(comp) ?: return null
     val topLeft = SwingUtilities.convertPoint(separator, 0, 0, comp)
     return Rectangle(cell.x + topLeft.x, cell.y + topLeft.y, separator.width, separator.height)
   }
 
-  /** True if [point] hits the settings gear painted on the "Select Environment" separator (in that section's top cell). */
-  private fun settingsGearAt(point: Point): Boolean {
-    val model = list.model ?: return false
-    val row = list.locationToIndex(point)
-    if (row < 0 || row >= model.size) return false
-    val item = model.getElementAt(row) as? EvoTreeItem ?: return false
-    return item.separatorAbove?.text in GEAR_CAPTIONS && settingsGearBounds(row, item)?.contains(point) == true
-  }
-
-  /** Bounds (in list coordinates) of the settings gear on [row]'s "Select Environment" separator, or null. */
-  private fun settingsGearBounds(row: Int, item: EvoTreeItem): Rectangle? {
-    val cell = list.getCellBounds(row, row) ?: return null
-    @Suppress("UNCHECKED_CAST")
-    val jList = list as JList<Any?>
-    val renderer = jList.cellRenderer ?: return null
-    val comp = renderer.getListCellRendererComponent(jList, item, row, false, false) as? JComponent ?: return null
-    comp.setBounds(0, 0, cell.width, cell.height)
-    layoutRecursively(comp)
-    val sep = findGearSeparator(comp)?.takeIf { it.showsGear } ?: return null
-    val gb = sep.gearHitBounds()
-    val topLeft = SwingUtilities.convertPoint(sep, gb.x, gb.y, comp)
-    return Rectangle(cell.x + topLeft.x, cell.y + topLeft.y, gb.width, gb.height)
-  }
-
-  /** True while the pointer is over the settings gear; the separator reads this when it paints. */
-  internal var gearHovered: Boolean = false
-    private set
-
-  /** Records gear hover and repaints, but only when the state actually flips — this runs on every mouse move. */
-  private fun setGearHovered(hovered: Boolean) {
-    if (gearHovered == hovered) return
-    gearHovered = hovered
-    // The gear is painted inside the top row's cell, so that row answers for the tooltip and its own text would show
-    // over the gear — see [EvoActionPopupStep.getTooltipTextFor]. Silencing the row is the only way the gear's own text
-    // reaches the screen.
-    evoStep?.rowTooltipSuppressed = hovered
-    list.repaint()
-  }
-
-  private fun findGearSeparator(c: Component): GearGroupHeaderSeparator? {
-    if (c is GearGroupHeaderSeparator) return c
-    if (c is Container) c.components.forEach { child -> findGearSeparator(child)?.let { return it } }
+  private fun findSeparator(c: Component): EvoGroupHeaderSeparator? {
+    if (c is EvoGroupHeaderSeparator) return c
+    if (c is Container) c.components.forEach { child -> findSeparator(child)?.let { return it } }
     return null
-  }
-
-  private fun openPackageManagersSettings() {
-    val project = CommonDataKeys.PROJECT.getData(dataContext) ?: return
-    PyEvoWidgetCollector.controlUsed(project, PyEvoWidgetCollector.Control.GEAR_SETTINGS)
-    cancel() // close the popup before showing the (modal) settings dialog
-    // Select the Package Managers page by its configurable id (findById), not by display name.
-    ShowSettingsUtilImpl.showSettingsDialog(project, "python.package.managers.group.settings", null)
   }
 
   /** Triggers lazy detail resolution for every [EvoLazyDetail] leaf currently visible in the list's viewport. */
