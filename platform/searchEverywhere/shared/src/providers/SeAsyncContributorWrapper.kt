@@ -3,10 +3,12 @@ package com.intellij.platform.searchEverywhere.providers
 
 import com.intellij.ide.actions.GotoFileItemProvider
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
+import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
 import com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.progress.EmptyProgressIndicatorBase
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -18,13 +20,31 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeExtendedInfo
 import com.intellij.platform.searchEverywhere.SeExtendedInfoBuilder
 import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
+import com.intellij.platform.searchEverywhere.utils.suspendLazy
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 class SeAsyncContributorWrapper<I : Any>(val contributor: SearchEverywhereContributor<I>) : Disposable {
+  /**
+   * The renderer of a legacy PSI contributor is a Swing component, and its constructor takes the AWT tree lock.
+   * A background thread must not take that lock, because the EDT can hold it and wait for the write-intent lock.
+   * The renderer is created on the EDT once, before the first search. See IJPL-211777.
+   */
+  private val rendererInitialization = suspendLazy {
+    (contributor as? PSIPresentationBgRendererWrapper)?.let { wrapper ->
+      withContext(Dispatchers.EDT) {
+        wrapper.initElementsRenderer()
+      }
+    }
+  }
+
   suspend fun fetchElements(pattern: String, consumer: AsyncProcessorBase<I>, operationDisposable: Disposable? = null) {
     if (pattern.isEmpty() && !contributor.isEmptyPatternSupported) return
+
+    rendererInitialization.getValue()
 
     coroutineToIndicator { indicator ->
       val attemptIndicator = RetryProgressIndicator(indicator)

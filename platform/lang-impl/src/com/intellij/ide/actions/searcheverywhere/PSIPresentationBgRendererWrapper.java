@@ -24,6 +24,7 @@ import com.intellij.ui.render.RendererPanelsUtils;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
@@ -61,6 +62,8 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
   private static final Logger LOG = Logger.getInstance(PSIPresentationBgRendererWrapper.class);
 
   private final WeightedSearchEverywhereContributor<Object> myDelegate;
+  private final Object myDelegateRendererLock = new Object();
+  private volatile ListCellRenderer<? super Object> myDelegateRenderer;
 
   public PSIPresentationBgRendererWrapper(AbstractGotoSEContributor delegate) {
     this((WeightedSearchEverywhereContributor<Object>)delegate);
@@ -127,20 +130,47 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
       .presentation();
   }
 
+  /**
+   * Creates the delegate renderer and keeps it for the later calls.
+   * <p>
+   * The renderer is a Swing component, so its constructor takes the AWT tree lock. A background thread must not
+   * take that lock, because the EDT can hold it and wait for the write-intent lock. Call this method on the EDT
+   * before a background search starts. See IJPL-211777.
+   */
+  @RequiresEdt
+  @ApiStatus.Internal
+  public void initElementsRenderer() {
+    getDelegateRenderer();
+  }
+
+  private @NotNull ListCellRenderer<? super Object> getDelegateRenderer() {
+    ListCellRenderer<? super Object> renderer = myDelegateRenderer;
+    if (renderer != null) return renderer;
+
+    synchronized (myDelegateRendererLock) {
+      renderer = myDelegateRenderer;
+      if (renderer == null) {
+        renderer = myDelegate.getElementsRenderer();
+        myDelegateRenderer = renderer;
+      }
+      return renderer;
+    }
+  }
+
   private Function<PsiElement, TargetPresentation> createPSICalculator() {
-    SearchEverywherePsiRenderer renderer = (SearchEverywherePsiRenderer)myDelegate.getElementsRenderer();
+    SearchEverywherePsiRenderer renderer = (SearchEverywherePsiRenderer)getDelegateRenderer();
     return element -> renderer.computePresentation(element);
   }
 
   @Override
   public @NotNull ListCellRenderer<? super Object> getElementsRenderer() {
-    PsiElementListCellRenderer<?> renderer = (PsiElementListCellRenderer<?>)myDelegate.getElementsRenderer();
+    PsiElementListCellRenderer<?> renderer = (PsiElementListCellRenderer<?>)getDelegateRenderer();
     return new WrapperRenderer((list, o) -> renderer.getItemMatchers(list, o));
   }
 
   @ApiStatus.Internal
   public PsiElementListCellRenderer.ItemMatchers getNonComponentItemMatchers(@NotNull Function<Object, PsiElementListCellRenderer.ItemMatchers> matcherProvider, @NotNull Object value) {
-    PsiElementListCellRenderer<?> renderer = (PsiElementListCellRenderer<?>)myDelegate.getElementsRenderer();
+    PsiElementListCellRenderer<?> renderer = (PsiElementListCellRenderer<?>)getDelegateRenderer();
     return renderer.getNonComponentItemMatchers(matcherProvider, value);
   }
 
