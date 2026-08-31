@@ -197,7 +197,7 @@ class CondaPyEnvironmentProvider : PyEnvironmentProvider<CondaPyEnvironmentSpec>
         val linuxArch = if (CpuArch.isArm64()) "aarch64" else arch
         "Miniconda3-$version-Linux-$linuxArch.sh"
       }
-      OS.FreeBSD, OS.Other -> throw UnsupportedOperationException("Unsupported OS: ${OS.CURRENT}")
+      OS.FreeBSD, OS.HarmonyOS, OS.Other -> throw UnsupportedOperationException("Unsupported OS: ${OS.CURRENT}")
     }
   }
 
