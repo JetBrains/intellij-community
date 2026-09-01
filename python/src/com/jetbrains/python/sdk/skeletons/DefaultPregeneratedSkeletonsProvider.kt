@@ -18,7 +18,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.ZipUtil
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.sdk.PythonEnvironment
+import com.intellij.python.community.impl.conda.environment.CondaEnvironment
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonInterpreter
 import org.jetbrains.annotations.ApiStatus
@@ -93,7 +93,7 @@ fun getPregeneratedSkeletonsName(
   if (PythonSdkUtil.isRemote(sdk)) return null
   @NonNls val versionString = sdk.versionString ?: return null
   val rich = sdk.pythonInterpreter(false)
-  val effectiveVersion = if (rich.pythonEnvironment is PythonEnvironment.Conda) "Anaconda-$versionString" else versionString
+  val effectiveVersion = if (rich.pythonEnvironment is CondaEnvironment) "Anaconda-$versionString" else versionString
   return getPrebuiltSkeletonsName(generatorVersion, effectiveVersion, withMinorVersion, withExtension)
 }
 

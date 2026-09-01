@@ -8,7 +8,7 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.python.community.impl.conda.icons.PythonCommunityImplCondaIcons
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PythonBinary
-import com.jetbrains.python.sdk.PythonEnvironment
+import com.intellij.python.community.impl.conda.environment.CondaEnvironment
 import com.jetbrains.python.sdk.detectPythonEnvironment
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.PythonFlavorProvider
@@ -43,7 +43,7 @@ internal object CondaEnvSdkFlavor : CPythonSdkFlavor<PyCondaFlavorData>() {
 
   override fun isValidSdkPath(pythonBinaryPath: PythonBinary): Boolean {
     return super.isValidSdkPath(pythonBinaryPath) &&
-           pythonBinaryPath.detectPythonEnvironment().successOrNull is PythonEnvironment.Conda
+           pythonBinaryPath.detectPythonEnvironment().successOrNull is CondaEnvironment
   }
 
   override fun isPlatformIndependent(): Boolean = true

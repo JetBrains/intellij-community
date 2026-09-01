@@ -69,20 +69,16 @@
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.MacPythonSdkFlavor"/>
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor"/>
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.WinPythonSdkFlavor"/>
-    <pythonEnvironmentProvider id="conda" order="after venv"
-                               implementation="com.jetbrains.python.sdk.impl.CondaEnvironmentProvider"/>
     <!-- Claims any layout, so it must stay last. -->
     <pythonEnvironmentProvider id="system" order="last"
                                implementation="com.jetbrains.python.sdk.impl.SystemPythonEnvironmentProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceImplementation="com.jetbrains.python.packaging.PyCondaPackageService"/>
     <applicationService serviceInterface="com.jetbrains.python.sdk.WinRegistryService"
                         serviceImplementation="com.jetbrains.python.sdk.WinRegistryServiceImpl"/>
     <applicationService serviceImplementation="com.jetbrains.python.sdk.PySdkSettings"/>
     <applicationSettings service="com.jetbrains.python.sdk.PySdkSettings"/>
-    <applicationSettings service="com.jetbrains.python.packaging.PyCondaPackageService"/>
     <registryKey key="python.activate.env.reader.timeout.ms"
                  defaultValue="60000"
                  restartRequired="false"

@@ -31,6 +31,7 @@ jvm_library(
         "//platform/execution",
         "//platform/analysis-api:analysis",
         "//python/python-exec-service:community-execService",
+        "//python/conda",
     ],
 )
 
@@ -79,6 +80,8 @@ jvm_library(
         "//python/python-exec-service:community-execService_test_lib",
         "//python/python-sdk/backend",
         "//python/python-sdk/backend:backend_test_lib",
+        "//python/conda",
+        "//python/conda:conda_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.test.env.conda` end

@@ -7,6 +7,7 @@
     <module name="intellij.libraries.jackson.dataformat.yaml"/>
     <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.kotlinx.io"/>
+    <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.python.community"/>
@@ -24,10 +25,14 @@
     <!-- Claim environment.yml/environment.yaml as YAML files belonging to the Python plugin so that the
          plugin advertiser doesn't promote unrelated third-party plugins for these conda env files (PY-89976). -->
     <fileType name="YAML" fileNames="environment.yml;environment.yaml"/>
+    <applicationService serviceImplementation="com.jetbrains.python.packaging.PyCondaPackageService"/>
+    <applicationSettings service="com.jetbrains.python.packaging.PyCondaPackageService"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
     <pyDependenciesFileProvider implementation="com.intellij.python.community.impl.conda.environmentYml.CondaEnvironmentYmlFileProvider"/>
+    <pythonEnvironmentProvider id="conda" order="after venv"
+                               implementation="com.intellij.python.community.impl.conda.environment.CondaEnvironmentProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
