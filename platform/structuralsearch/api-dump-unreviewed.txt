@@ -997,7 +997,6 @@ f:com.intellij.structuralsearch.plugin.ui.UIUtil
 - s:getOrAddReplacementVariable(java.lang.String,com.intellij.structuralsearch.plugin.ui.Configuration):com.intellij.structuralsearch.ReplacementVariableDefinition
 - s:getOrAddVariableConstraint(java.lang.String,com.intellij.structuralsearch.plugin.ui.Configuration):com.intellij.structuralsearch.MatchVariableConstraint
 - s:invokeAction(com.intellij.structuralsearch.plugin.ui.Configuration,com.intellij.structuralsearch.plugin.ui.SearchContext):V
-- s:isTarget(java.lang.String,com.intellij.structuralsearch.MatchOptions):Z
 - s:setContent(com.intellij.openapi.editor.Editor,java.lang.String):V
 - s:setContent(com.intellij.ui.EditorTextField,java.lang.String):V
 c:com.intellij.structuralsearch.plugin.ui.UsageViewContext
