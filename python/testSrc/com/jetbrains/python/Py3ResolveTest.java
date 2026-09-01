@@ -1,15 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.StackOverflowPreventedException;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -21,17 +21,21 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
-import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyNamedParameterImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
 
@@ -1151,18 +1155,16 @@ public class Py3ResolveTest extends PyResolveTestCase {
     assertUnresolved();
   }
 
-  // PY-82850
+  // PY-82850, PY-83181
   public void testNonIdempotentComputation() {
-    PyTestCase.fixme("PY-83181", StackOverflowPreventedException.class, "", () -> {
-      RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+    RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
 
-      myFixture.configureByFile("resolve/" + getTestName(false) + ".py");
-      PsiElement result1 = findReferenceByMarker(myFixture.getFile(), "<ref1>").resolve();
-      assertNotNull(result1);
+    myFixture.configureByFile("resolve/" + getTestName(false) + ".py");
+    PsiElement result1 = findReferenceByMarker(myFixture.getFile(), "<ref1>").resolve();
+    assertNotNull(result1);
 
-      PsiElement result2 = findReferenceByMarker(myFixture.getFile(), "<ref2>").resolve();
-      assertNotNull(result2);
-    });
+    PsiElement result2 = findReferenceByMarker(myFixture.getFile(), "<ref2>").resolve();
+    assertNotNull(result2);
   }
 
   // PY-83803
@@ -1175,6 +1177,45 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
     PsiElement result2 = findReferenceByMarker(myFixture.getFile(), "<ref2>").resolve();
     assertNotNull(result2);
+  }
+
+
+  // PY-83181
+  public void testParameterAnnotationSelfShadow() {
+    myFixture.configureByFile("resolve/" + getTestName(false) + ".py");
+    PyFunction function = PsiTreeUtil.findChildOfType(myFixture.getFile(), PyFunction.class);
+    assertNotNull(function);
+    PyNamedParameter parameter = function.getParameterList().getParameters()[0].getAsNamed();
+    assertNotNull(parameter);
+
+    // Force the stub-only resolution path, the one used when evaluating an annotations without switching to AST.
+    TypeEvalContext fallbackContext = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+    PyExpression annotationExpr = PyTypingTypeProvider.getAnnotationValue(parameter, fallbackContext);
+    assertNotNull("annotation fragment", annotationExpr);
+
+    Ref<PyType> typeRef = PyTypingTypeProvider.getType(annotationExpr, fallbackContext, false);
+    assertNotNull("resolved type", typeRef);
+    PyType type = typeRef.get();
+    assertInstanceOf(type, PyClassType.class);
+    assertEquals("builtins.object", ((PyClassType)type).getClassQName());
+  }
+
+  // PY-83181
+  public void testReturnAnnotationSelfShadow() {
+    myFixture.configureByFile("resolve/" + getTestName(false) + ".py");
+    PyFunction function = PsiTreeUtil.findChildOfType(myFixture.getFile(), PyFunction.class);
+    assertNotNull(function);
+
+    // Force the stub-only resolution path, the one used when evaluating an annotations without switching to AST.
+    TypeEvalContext fallbackContext = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+    PyExpression returnAnnotationExpr = PyTypingTypeProvider.getAnnotationValue(function, fallbackContext);
+    assertNotNull("annotation fragment", returnAnnotationExpr);
+
+    Ref<PyType> typeRef = PyTypingTypeProvider.getType(returnAnnotationExpr, fallbackContext, false);
+    assertNotNull("resolved type", typeRef);
+    PyType type = typeRef.get();
+    assertInstanceOf(type, PyClassType.class);
+    assertEquals("builtins.object", ((PyClassType)type).getClassQName());
   }
 
   private void assertResolvesToItself() {

@@ -4803,6 +4803,59 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #          ^^^^^^^^ WARNING 'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types
     """.trimIndent())
 
+  @Test
+  @TestFor(issues = ["PY-54527", "PY-91274"])
+  fun `parameter annotation that names the parameter resolves outside of the function`() = test(
+    """
+    from lib import f, C
+
+    f("", 1)
+    # │   └ WARNING Expected type 'str', got 'Literal[1]' instead
+    # ^^ WARNING Expected type 'int', got 'Literal[""]' instead
+    C().m(type=1) # WARNING Expected type 'type | None', got 'Literal[1]' instead
+    """.trimIndent(),
+    "lib.py" to """
+      def f(str: int, int: str) -> None: ...
+
+      class C:
+          def m(self, *, type: type | None = None) -> None: ...
+      """.trimIndent(),
+  )
+
+  @Test
+  @TestFor(issues = ["PY-83181"])
+  fun `return annotation that names a parameter resolves outside of the function`() = test(
+    """
+    from lib import f
+
+    expr = f("")
+    # └ TYPE int
+    """.trimIndent(),
+    "lib.py" to """
+    def f(int) -> int: ...
+    """.trimIndent(),
+  )
+
+  @Test
+  @TestFor(issues = ["PY-83181"])
+  fun `Literal enum annotation that names the parameter resolves outside of the function`() = test("""
+    from lib import f, Color
+
+    f(Color.RED)
+    f(Color.GREEN) # WARNING Expected type 'Literal[Color.RED]', got 'Literal[Color.GREEN]' instead
+    """.trimIndent(),
+    "lib.py" to """
+      from enum import Enum
+      from typing import Literal
+
+      class Color(Enum):
+          RED = 1
+          GREEN = 2
+
+      def f(Color: Literal[Color.RED]) -> None: ...
+      """.trimIndent(),
+  )
+
   companion object {
     private const val TRIPLE_QUOTE = "\"\"\""
   }

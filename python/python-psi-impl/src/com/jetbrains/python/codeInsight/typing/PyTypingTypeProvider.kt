@@ -57,6 +57,7 @@ import com.jetbrains.python.psi.PyDecoratable
 import com.jetbrains.python.psi.PyDoubleStarExpression
 import com.jetbrains.python.psi.PyEllipsisLiteralExpression
 import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyExpressionCodeFragment
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyForPart
 import com.jetbrains.python.psi.PyFunction
@@ -2874,19 +2875,14 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       val qualifiedName = expression.asQualifiedName()
       val pyFile = FileContextUtil.getContextFile(expression) as? PyFile
 
-      val anchor = expression.containingFile.context
-      val scopeOwner: ScopeOwner?
-
-      when (anchor) {
-        null -> {
-          scopeOwner = pyFile
-        }
-        is ScopeOwner -> {
-          scopeOwner = anchor
-        }
-        else -> {
-          scopeOwner = ScopeUtil.getScopeOwner(anchor)
-        }
+      val containingFile = expression.containingFile
+      val anchor = containingFile.context
+      val scopeOwner: ScopeOwner? = when {
+        anchor == null -> pyFile
+        // The scope owner of a fragment knows that a parameter or return annotation is resolved outside of the function
+        containingFile is PyExpressionCodeFragment -> ScopeUtil.getScopeOwner(containingFile)
+        anchor is ScopeOwner -> anchor
+        else -> ScopeUtil.getScopeOwner(anchor)
       }
 
       if (scopeOwner != null && qualifiedName != null) {
