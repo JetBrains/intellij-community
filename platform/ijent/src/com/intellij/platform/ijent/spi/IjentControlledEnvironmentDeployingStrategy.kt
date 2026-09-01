@@ -95,10 +95,19 @@ abstract class IjentControlledEnvironmentDeployingStrategy : IjentDeployingStrat
   /** See [IjentConnectionContext.remoteTerminationSettled]; exposed so a deployer's own teardown can await it. */
   protected val remoteTerminationSettled: CompletableDeferred<Unit> = CompletableDeferred()
 
-  override suspend fun createIjentSession(provider: IjentSessionProvider): IjentSession.Posix =
+  /** Called after the connected session has taken ownership of the launched process. */
+  protected open fun onSessionConnected(ijentSession: IjentSession) {}
+
+  override suspend fun createIjentSession(provider: IjentSessionProvider): IjentSession =
+    createIjentSessionForPlatform(provider, ::getTargetPlatform)
+
+  protected suspend fun createIjentSessionForPlatform(
+    provider: IjentSessionProvider,
+    getPlatform: suspend () -> EelPlatform,
+  ): IjentSession =
     try {
       deployEvents.emit(DeployEvent.DEPLOY_STARTED)
-      val targetPlatform = getTargetPlatform()
+      val targetPlatform = getPlatform()
       val remotePathToBinary = copyFile(ijentExecFileProvider.getIjentBinary(targetPlatform))
       val mediator = createProcess(remotePathToBinary)
       val connectionStrategy = getConnectionStrategy()
@@ -113,7 +122,8 @@ abstract class IjentControlledEnvironmentDeployingStrategy : IjentDeployingStrat
         remoteTerminationSettled = remoteTerminationSettled,
       ))
       deployEvents.emit(DeployEvent.CONNECT_FINISHED)
-      ijentSession as IjentSession.Posix
+      onSessionConnected(ijentSession)
+      ijentSession
     }
     finally {
       close()
