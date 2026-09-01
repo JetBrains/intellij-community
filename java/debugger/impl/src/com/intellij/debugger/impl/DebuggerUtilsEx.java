@@ -1212,8 +1212,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
                                                        @NotNull String className,
                                                        @NotNull String methodName,
                                                        int line) {
-    ReferenceType classType = ContainerUtil.getFirstItem(virtualMachine.classesByName(className));
-    if (classType != null) {
+    GeneratedLocation generatedLocation = null;
+    for (ReferenceType classType : virtualMachine.classesByName(className)) {
       try {
         if (line >= 0) {
           for (Method method : declaredMethodsByName(classType, methodName)) {
@@ -1223,10 +1223,15 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
             }
           }
         }
-        return new GeneratedLocation(classType, methodName, line);
+        if (generatedLocation == null) {
+          generatedLocation = new GeneratedLocation(classType, methodName, line);
+        }
       }
       catch (ObjectCollectedException ignored) {
       }
+    }
+    if (generatedLocation != null) {
+      return generatedLocation;
     }
     return new GeneratedLocation(new GeneratedReferenceType(virtualMachine, className), methodName, line);
   }
