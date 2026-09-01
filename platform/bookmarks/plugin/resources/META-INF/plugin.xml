@@ -1,5 +1,4 @@
 <!--suppress SplitModeMixedDependencies -->
-<!--suppress PluginXmlPluginLogo -->
 <idea-plugin>
   <id>intellij.bookmarks.plugin</id>
   <name>Bookmarks</name>
