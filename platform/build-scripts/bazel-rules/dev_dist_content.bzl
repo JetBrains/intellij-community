@@ -553,7 +553,7 @@ _dev_dist_plugin_content = rule(
     doc = """Which jars a dev distribution must have on hand to assemble one plugin.
 
     One target per plugin, in the plugin's own package, generated from the project model: the plugin's own `<content>`
-    with every `xi:include` followed, plus the `dev-dist.yaml` residue beside the plugin for what the model cannot
+    with every `xi:include` followed, plus the central content residue for what the model cannot
     reach. The fragment that owns the plugin deps on it, directly or through a `dev_dist_content_set`, and gets its
     declared inputs from the provider.
 

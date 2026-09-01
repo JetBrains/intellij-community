@@ -277,12 +277,25 @@ internal class BazelBuildFileGenerator(
   /**
    * The modules each plugin's layout merges that its own `<content>` does not name; see [readPluginExtraMembers].
    *
-   * The one content-residue field that is not on the plugin's `dev_dist_plugin` call, because the monorepo reads it and
-   * cannot parse Starlark. `@community//build:dev_dist_plugin_tables` names the file, so a hermetic run sees it.
+   * The one content-residue field the monorepo reads, which is why it has a file of its own.
+   * `@community//build:dev_dist_plugin_tables` names that file, so a hermetic run sees it.
    */
   val pluginExtraMembers: Map<String, List<String>> by lazy {
     readPluginExtraMembers(
       (ultimateRoot?.resolve("community") ?: communityRoot).resolve("build/$PLUGIN_EXTRA_MEMBERS_FILE_NAME")
+    )
+  }
+
+  /**
+   * The other seven content-residue fields, by plugin main module; see [readPluginContentResidue].
+   *
+   * Read through [contentResidueOf], which joins it with [pluginExtraMembers] and is the fall-back rule every caller
+   * shares. Central, because the hermetic `bazel-targets.json` run reads the residue and materializes its project
+   * model out of declared labels; the same filegroup names this file.
+   */
+  val pluginContentResidue: Map<String, ContentResidueSection> by lazy {
+    readPluginContentResidue(
+      (ultimateRoot?.resolve("community") ?: communityRoot).resolve("build/$PLUGIN_CONTENT_RESIDUE_FILE_NAME")
     )
   }
 
@@ -750,15 +763,6 @@ internal class BazelBuildFileGenerator(
             imlTargetsBazel.exportFile(recipePath)
           }
         }
-        // The content residue, exported for the reason the recipe is: it states the members the derivation cannot
-        // reach, so a residue the hermetic run cannot see is a `contentTarget` naming fewer members than the
-        // checked-in one.
-        devDistResiduePackagePath(module)?.let { residuePath ->
-          if (!fileUpdater.handWrittenExportedFiles().contains(residuePath)) {
-            imlTargetsBazel.exportFile(residuePath)
-          }
-        }
-
         val devBazel = BuildFile()
         devBazel.emitDevDistPlugin(
           module = module,

@@ -54,7 +54,6 @@ exports_files(
     [
         "intellij.mcpserver.plugin.iml",
         "resources/META-INF/plugin.xml",
-        "dev-dist.yaml",
     ],
     visibility = ["//visibility:public"],
 )

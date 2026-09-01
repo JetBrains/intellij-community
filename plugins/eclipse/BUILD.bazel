@@ -148,7 +148,6 @@ exports_files(
         "resources/META-INF/plugin.xml",
         "resources/org/jetbrains/idea/eclipse/conversion/template.empty.project.xml",
         "resources/org/jetbrains/idea/eclipse/conversion/template.project.xml",
-        "dev-dist.yaml",
     ],
     visibility = ["//visibility:public"],
 )

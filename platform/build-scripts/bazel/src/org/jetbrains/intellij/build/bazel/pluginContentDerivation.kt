@@ -41,7 +41,7 @@ internal class DerivedPluginContent(
 )
 
 /**
- * What the model cannot answer about one plugin's content, which is what a `dev-dist.yaml` beside the plugin would hold.
+ * What the model cannot answer about one plugin's content, which is what one plugin's residue rows hold.
  *
  * [PluginContentResidue.NONE] means pure convention, and the Phase-0 measurement is what the fields are: every one of
  * them is a class the comparison found and no field is speculative. A plugin layout decides each field, and evaluating a

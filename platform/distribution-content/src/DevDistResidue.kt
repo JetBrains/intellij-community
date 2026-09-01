@@ -31,12 +31,14 @@ import kotlin.io.path.readText
 const val DEV_DIST_EXTRA_MEMBERS_FILE_NAME: String = "dev_dist_plugin_extra_members.txt"
 
 /**
- * One plugin's remaining dev-distribution residue, beside the plugin's own main module.
+ * The retired per-plugin residue file, which no tree holds and nothing reads.
  *
- * The merged members left this file for the table above, and the rest of the content residue is moving onto the
- * plugin's own `dev_dist_plugin` call. The name is still declared here because one reader outside the converter names
- * it: the orphan sweep of `contentRecipeOrphans.kt` claims the file. The descriptor deviations left for the
- * `plugin_descriptor_residue` section of `dev_dist_plugin_model_tables.txt`, so the converter is the one producer now.
+ * Every part of it moved to a central table under `community/build/`. The merged members went to the table above, the
+ * descriptor deviations to the `plugin_descriptor_residue` section of `dev_dist_plugin_model_tables.txt`, and the
+ * remaining seven content fields to `dev_dist_plugin_content_residue.txt`.
+ *
+ * The name stays declared because the orphan sweep of `contentRecipeOrphans.kt` claims it, and claiming it is still
+ * right: a checked-in file of this name is now a file nothing reads, which is what that sweep is for.
  *
  * The name states the dev distribution, because `plugin-descriptor.yaml` is DevKit's documentation data for the plugin
  * descriptor format. `PluginDescriptorDocumentationTargetProvider` reads that file, and the SDK Docs page generator

@@ -34,7 +34,8 @@ import kotlin.io.path.readText
  *
  * The descriptor deviation of a plugin is here and no longer beside the plugin. `plugin-model-tool` is its one
  * producer, so a file beside the plugin needed a second producer that kept this file's bytes verbatim. The content
- * deviation still sits beside the plugin, in `dev-dist.yaml`, because the converter is that file's producer.
+ * deviation is central too, and in a file of its own, because its producer is the converter; see
+ * [PLUGIN_CONTENT_RESIDUE_FILE_NAME].
  */
 internal const val PLUGIN_MODEL_TABLES_FILE_NAME: String = "dev_dist_plugin_model_tables.txt"
 

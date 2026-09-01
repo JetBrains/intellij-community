@@ -8,18 +8,27 @@ import com.intellij.openapi.roots.GeneratedSourceFilterNotification
 import com.intellij.openapi.roots.GeneratedSourcesFilter
 import com.intellij.openapi.vfs.VirtualFile
 
-/** The dev-distribution residue, beside a plugin main module that needs one. */
-private const val DEV_DIST_RESIDUE_FILE_NAME: String = "dev-dist.yaml"
+/**
+ * The tables under `community/build/` that the residue-writing converter run owns.
+ *
+ * Names and not paths, which is what a [GeneratedSourcesFilter] is handed. Each name is distinctive enough that no
+ * other file of this project carries it.
+ */
+private val DEV_DIST_RESIDUE_FILE_NAMES: Set<String> = setOf(
+  "dev_dist_plugin_content_population.txt",
+  "dev_dist_plugin_content_residue.txt",
+  "dev_dist_plugin_extra_members.txt",
+)
 
 /**
  * Marks the dev-distribution residue a packaging test writes, so that the editor says who owns the file.
  *
- * `dev-dist.yaml` states what the JPS-to-Bazel converter cannot derive from the project model.
- * `AllProductsPackagingTest` patches the file when a layout change makes the derivation wrong.
+ * The tables state what the JPS-to-Bazel converter cannot derive from the project model.
+ * `AllProductsPackagingTest` patches them when a layout change makes the derivation wrong.
  */
 internal class DevDistResidueGeneratedSourcesFilter : GeneratedSourcesFilter() {
   override fun isGeneratedSource(file: VirtualFile, project: Project): Boolean {
-    return IntelliJProjectUtil.isIntelliJPlatformProject(project) && file.name == DEV_DIST_RESIDUE_FILE_NAME
+    return IntelliJProjectUtil.isIntelliJPlatformProject(project) && file.name in DEV_DIST_RESIDUE_FILE_NAMES
   }
 
   override fun getNotification(file: VirtualFile, project: Project): GeneratedSourceFilterNotification {

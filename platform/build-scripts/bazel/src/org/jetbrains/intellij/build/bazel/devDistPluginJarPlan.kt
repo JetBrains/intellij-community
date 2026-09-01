@@ -72,7 +72,7 @@ internal class DerivedPluginJar(
  * Four derivations meet here, and each one already existed:
  *
  * 1. [derivePluginContent] gives the members - the plugin's own `<content>` with every `xi:include` followed, plus the
- *    `extra_members` rows of `dev-dist.yaml` - and where the plugin puts each member's jar. [deriveMemberJarPath]
+ *    merged members of `dev_dist_plugin_extra_members.txt` - and where the plugin puts each member's jar. [deriveMemberJarPath]
  *    answers the jar, as the convention with the three corrections the residue states;
  * 2. [DevDistPluginModelTables.pluginJarPlacement] gives the plugin's directory and main jar name, which are a
  *    `PluginLayout` decision the model does not hold. A plugin with no row takes [pluginJarPlacementConvention];

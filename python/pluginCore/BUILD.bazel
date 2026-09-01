@@ -52,7 +52,6 @@ exports_files(
     [
         "intellij.python.community.plugin.iml",
         "resources/META-INF/plugin.xml",
-        "dev-dist.yaml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -361,7 +361,8 @@ internal class JpsModuleToBazel {
       }
       println()
       println("Every other change of this run is written. To let these rows leave, either add the reports of the")
-      println("products that are missing above, or delete the row from that plugin's 'dev-dist.yaml' by hand and let")
+      println("products that are missing above, or delete the plugin's row from")
+      println("'$PLUGIN_CONTENT_RESIDUE_FILE_NAME' by hand and let")
       println("--verify-dev-dist-residue confirm it.")
       println()
       println(CONTENT_REPORT_USAGE)
@@ -375,7 +376,7 @@ internal class JpsModuleToBazel {
      * residue together no longer reproduce what those builds pack, and it never compares the derivation against itself.
      *
      * The run still regenerates the tree, because the synthesis needs the whole module list. `verify` withholds the
-     * residue writes alone, so this mode is a check on `dev-dist.yaml` and not a read-only run of the converter.
+     * residue writes alone, so this mode is a check on the residue and not a read-only run of the converter.
      *
      * The repair command names every zip this run read. A repair against fewer products than the check would fit the
      * residue to those products, which is the corruption this gate exists to prevent.
@@ -385,7 +386,7 @@ internal class JpsModuleToBazel {
     private fun reportStaleDevDistResidues(result: DevDistResidueWriteResult, contentReports: List<Path>) {
       println()
       if (result.divergent.isNotEmpty()) {
-        println("${result.divergent.size} plugins have a stale 'dev-dist.yaml':")
+        println("${result.divergent.size} plugins have a stale row set in '$PLUGIN_CONTENT_RESIDUE_FILE_NAME':")
         for (divergence in result.divergent) {
           print(devDistResidueDivergenceReport(divergence))
         }

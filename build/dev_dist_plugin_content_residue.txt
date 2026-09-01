@@ -1,0 +1,484 @@
+# Generated - do not edit.
+#
+# What a plugin's dev-distribution content needs that the convention does not give, by plugin main module.
+#
+# The JPS-to-Bazel converter derives a plugin's content from the project model: the members come from the
+# plugin's own `<content>`, the jar of each member from the loading rule and the member's own descriptor, the
+# libraries from what the members declare. This file is the remainder. A plugin with no row is pure convention,
+# and every row states one `PluginLayout` decision.
+#
+# `<plugin main module>`, a field name, then that field's own tokens, tab separated. Tabs, because a jar path
+# and a plugin directory both hold a space today.
+#
+# Nine field names for seven fields. `merges_no_library` says that a member's jar merges no library at all,
+# which `merged_library` cannot say. `project_library` and `module_library` split one field because a row
+# states an owning module or states none.
+#
+# `member_jar` is the one field whose token is a path. `PluginLayout.withModule(name, jarName)` states a free
+# string that no rule derives, so the row has to carry it. Every other token is a name. A row is never a Bazel
+# label, because a label carries the artifact version of a library.
+#
+# Two fields have no row in this tree today, `lib_root_jar` and `module_library`. They are part of the
+# vocabulary, so a reader who finds no row for one has found nothing wrong.
+#
+# This file has two peculiarities worth stating rather than leaving to a reader.
+#
+# It is not a sixth section of `dev_dist_plugin_model_tables.txt`, although the row shape is that file's
+# `plugin_descriptor_residue` shape. The producer differs. `plugin-model-tool` writes all five sections of that
+# file, and this file is written by `./build/jpsModelToBazel.cmd --write-dev-dist-residue
+# --content-report=<zip>`, which reads a distribution build's content report. `plugin-model-tool` cannot read
+# one. One writer per file is what stops either tool from stating a table it cannot derive, and
+# `dev_dist_plugin_content_population.txt` is a separate file for that same reason and has this same producer.
+#
+# The eighth field of a plugin's content residue, its merged members, is in
+# `dev_dist_plugin_extra_members.txt` and not here. The split is by reader. That field is the one the monorepo
+# reads, through `readDevDistExtraMembers`, and neither of its callers runs the converter or parses this table.
+# This file has one reader, the converter.
+
+intellij.aiCodeReview.plugin	vetoed_member	intellij.air.review.mcp
+
+intellij.aiagentextensions	vetoed_member	intellij.aiagentextensions.contrib
+
+intellij.aidebugger	vetoed_member	intellij.aidebugger.evaluation
+
+intellij.aiplayground	vetoed_member	intellij.libraries.mlapi.catboost
+intellij.aiplayground	vetoed_member	intellij.libraries.mlapi.core
+
+intellij.air.plugin	vetoed_member	intellij.libraries.air.jcp
+intellij.air.plugin	vetoed_member	intellij.libraries.kotlin.logging
+intellij.air.plugin	vetoed_member	intellij.libraries.ktor.server.content.negotiation
+intellij.air.plugin	vetoed_member	intellij.libraries.ktor.server.sse
+intellij.air.plugin	vetoed_member	intellij.libraries.schema.kenerator
+
+intellij.android.gradle.dsl	separate_jar	intellij.android.gradle.dsl.flags
+
+intellij.android.plugin.descriptor	member_jar	intellij.android.adt.ui	adt-ui.jar
+intellij.android.plugin.descriptor	member_jar	intellij.android.adt.ui.compose	adt-ui.jar
+intellij.android.plugin.descriptor	member_jar	intellij.android.adt.ui.model	adt-ui.jar
+intellij.android.plugin.descriptor	member_jar	intellij.android.artwork	artwork.jar
+intellij.android.plugin.descriptor	member_jar	intellij.android.artwork-compose	artwork.jar
+intellij.android.plugin.descriptor	member_jar	intellij.android.buildCommon	build-common.jar
+intellij.android.plugin.descriptor	member_jar	intellij.android.common	android-common.jar
+intellij.android.plugin.descriptor	member_jar	intellij.android.gradle-tooling.api	android-gradle.jar
+intellij.android.plugin.descriptor	member_jar	intellij.android.gradle-tooling.impl	android-gradle.jar
+intellij.android.plugin.descriptor	member_jar	intellij.android.inspectors-common.api	inspectors-common.jar
+intellij.android.plugin.descriptor	member_jar	intellij.android.inspectors-common.api-ide	inspectors-common.jar
+intellij.android.plugin.descriptor	member_jar	intellij.android.inspectors-common.ui	inspectors-common.jar
+intellij.android.plugin.descriptor	member_jar	intellij.android.jps.model	android-common.jar
+intellij.android.plugin.descriptor	member_jar	intellij.android.kotlin.idea	android-kotlin.jar
+intellij.android.plugin.descriptor	member_jar	intellij.android.kotlin.idea.common	android-kotlin.jar
+intellij.android.plugin.descriptor	member_jar	intellij.android.kotlin.idea.k2	android-kotlin.jar
+intellij.android.plugin.descriptor	member_jar	intellij.android.kotlin.output.parser	android-kotlin.jar
+intellij.android.plugin.descriptor	member_jar	intellij.android.layoutlib-loader	layoutlib-loader.jar
+intellij.android.plugin.descriptor	member_jar	intellij.android.lint.common	lint-ide.jar
+intellij.android.plugin.descriptor	member_jar	intellij.android.memory-usage	memory-usage.jar
+intellij.android.plugin.descriptor	member_jar	intellij.android.profilers	android-profilers.jar
+intellij.android.plugin.descriptor	member_jar	intellij.android.profilers.atrace	android-profilers.jar
+intellij.android.plugin.descriptor	member_jar	intellij.android.profilers.ui	android-profilers.jar
+intellij.android.plugin.descriptor	member_jar	intellij.android.projectSystem.gradle.models	android-project-system-gradle-models.jar
+intellij.android.plugin.descriptor	member_jar	intellij.android.projectSystem.gradle.sync	android-gradle.jar
+intellij.android.plugin.descriptor	member_jar	intellij.android.transportDatabase	android-profilers.jar
+intellij.android.plugin.descriptor	member_jar	intellij.android.utp	utp.jar
+intellij.android.plugin.descriptor	project_library	kotlinx-coroutines-guava
+
+intellij.ant	member_jar	intellij.ant.jps	ant-jps.jar
+
+intellij.aspectj	member_jar	intellij.aspectj.jps	aspectj-jps.jar
+
+intellij.bigdatatools.plugin.spark	member_jar	intellij.bigdatatools.plugin.spark.gradle.tooling	bigdatatools-plugin-spark-gradle-tooling.jar
+
+intellij.c	vetoed_member	intellij.libraries.completion.ranking.cpp
+
+intellij.clion.makefile	vetoed_member	intellij.libraries.jsr305
+
+intellij.clouds.kubernetes	vetoed_member	intellij.clouds.kubernetes
+
+intellij.compilation.charts	member_jar	intellij.compilation.charts.jps	compilation-charts-jps.jar
+
+intellij.cucumber.java	member_jar	intellij.cucumber.jvmFormatter	cucumber-jvmFormatter.jar
+intellij.cucumber.java	member_jar	intellij.cucumber.jvmFormatter3	cucumber-jvmFormatter3.jar
+intellij.cucumber.java	member_jar	intellij.cucumber.jvmFormatter4	cucumber-jvmFormatter4.jar
+intellij.cucumber.java	member_jar	intellij.cucumber.jvmFormatter5	cucumber-jvmFormatter5.jar
+
+intellij.cwm	member_jar	intellij.frontend.split.customization	frontend-split/frontend-split.jar
+intellij.cwm	member_jar	intellij.remoteDev.icons	frontend-split/remote-dev-icons.jar
+
+intellij.database.plugin	merges_no_library	intellij.database.dialects.cassandra
+intellij.database.plugin	merges_no_library	intellij.database.dialects.clickhouse
+intellij.database.plugin	merges_no_library	intellij.database.dialects.cockroach
+intellij.database.plugin	merges_no_library	intellij.database.dialects.db2
+intellij.database.plugin	merges_no_library	intellij.database.dialects.derby
+intellij.database.plugin	merges_no_library	intellij.database.dialects.exasol
+intellij.database.plugin	merges_no_library	intellij.database.dialects.greenplum
+intellij.database.plugin	merges_no_library	intellij.database.dialects.h2
+intellij.database.plugin	merges_no_library	intellij.database.dialects.hsql
+intellij.database.plugin	merges_no_library	intellij.database.dialects.redshift
+intellij.database.plugin	merges_no_library	intellij.database.dialects.snowflake
+intellij.database.plugin	merges_no_library	intellij.database.dialects.vertica
+intellij.database.plugin	separate_jar	intellij.database.impl.frontend
+
+intellij.devkit	member_jar	intellij.devkit.jps	devkit-jps.jar
+
+intellij.dfa.analysis.plugin	vetoed_member	intellij.libraries.qodana.sarif
+
+intellij.eclipse	member_jar	intellij.eclipse.common	eclipse-common.jar
+intellij.eclipse	member_jar	intellij.eclipse.jps	eclipse-jps.jar
+
+intellij.editSuggestion	member_jar	intellij.editSuggestion.psi	editSuggestion-frontend.jar
+intellij.editSuggestion	member_jar	intellij.editSuggestion.psiPredictor	editSuggestion-frontend.jar
+intellij.editSuggestion	member_jar	intellij.editSuggestion.tokenizer	editSuggestion-frontend.jar
+intellij.editSuggestion	separate_jar	intellij.editSuggestion.java
+intellij.editSuggestion	separate_jar	intellij.editSuggestion.kotlin
+
+intellij.errorProne	member_jar	intellij.errorProne.jps	jps/errorProne-jps.jar
+
+intellij.evaluationPlugin	member_jar	intellij.tools.ide.metrics.collector	evaluationPlugin.jar
+intellij.evaluationPlugin	member_jar	intellij.tools.ide.util.common	evaluationPlugin.jar
+intellij.evaluationPlugin	project_library	io.modelcontextprotocol.kotlin.sdk
+intellij.evaluationPlugin	vetoed_member	intellij.evaluationPlugin.llm
+
+intellij.flex	member_jar	intellij.flex.jps	flex-jps.jar
+intellij.flex	member_jar	intellij.flex.shared	flex-shared.jar
+
+intellij.gateway.plugin	member_jar	intellij.gateway	gateway-standalone/gateway.jar
+intellij.gateway.plugin	member_jar	intellij.gateway.core	gateway-standalone/gateway.core.jar
+intellij.gateway.plugin	member_jar	intellij.gateway.core	modules/intellij.gateway.core.jar
+intellij.gateway.plugin	member_jar	intellij.gateway.standalone.ssh	modules/intellij.gateway.standalone.ssh.jar
+intellij.gateway.plugin	member_jar	intellij.platform.commercial.dependencies	gateway-standalone/gateway.core.jar
+intellij.gateway.plugin	raw_member	intellij.gateway.core
+
+intellij.go.plugin	member_jar	intellij.go.frontend	frontend-split/go-frontend.jar
+intellij.go.plugin	vetoed_member	intellij.libraries.completion.ranking.go
+intellij.go.plugin	vetoed_member	intellij.libraries.re2j
+
+intellij.graalvm	member_jar	intellij.graalvm.jps.build	jps/graalvm-jps-plugin.jar
+
+intellij.gradle.java.plugin	member_jar	intellij.gradle.jps	gradle-jps.jar
+
+intellij.gradle.plugin	member_jar	intellij.gradle.toolingExtension	gradle-tooling-extension-api.jar
+intellij.gradle.plugin	member_jar	intellij.gradle.toolingExtension.impl	gradle-tooling-extension-impl.jar
+intellij.gradle.plugin	member_jar	intellij.gradle.toolingProxy	gradle-tooling-proxy.jar
+intellij.gradle.plugin	member_jar	intellij.libraries.groovy	groovy.jar
+intellij.gradle.plugin	member_jar	intellij.libraries.groovy.ant	groovy-ant.jar
+intellij.gradle.plugin	project_library	Ant
+intellij.gradle.plugin	vetoed_member	intellij.gradle.toolingExtension
+intellij.gradle.plugin	vetoed_member	intellij.gradle.toolingExtension.impl
+intellij.gradle.plugin	vetoed_member	intellij.gradle.toolingProxy
+
+intellij.groovy	member_jar	intellij.groovy.constants.rt	groovy-constants-rt.jar
+intellij.groovy	member_jar	intellij.groovy.jps	groovy-jps.jar
+intellij.groovy	member_jar	intellij.groovy.rt	groovy-rt.jar
+intellij.groovy	member_jar	intellij.groovy.rt.classLoader	groovy-rt-class-loader.jar
+intellij.groovy	member_jar	intellij.groovy.spock.rt	groovy-spock-rt.jar
+
+intellij.hibernate	member_jar	intellij.hibernate.console	hibernate-console.jar
+intellij.hibernate	member_jar	intellij.hibernate.console.v3	hibernate3-console.jar
+intellij.hibernate	member_jar	intellij.hibernate.console.v4	hibernate4-console.jar
+intellij.hibernate	member_jar	intellij.hibernate.console.v5	hibernate5-console.jar
+intellij.hibernate	member_jar	intellij.hibernate.console.v52	hibernate52-console.jar
+
+intellij.java.aetherDependencyResolver.plugin	vetoed_member	intellij.libraries.maven.resolver.provider
+intellij.java.aetherDependencyResolver.plugin	vetoed_member	intellij.repository.search.common
+
+intellij.java.guiForms.designer	member_jar	intellij.java.guiForms.jps	jps/java-guiForms-jps.jar
+
+intellij.java.jshell	member_jar	intellij.java.jshell.protocol	jshell-protocol.jar
+
+intellij.java.plugin	member_jar	intellij.platform.jps.build.launcher	jps-launcher.jar
+intellij.java.plugin	project_library	Eclipse
+intellij.java.plugin	vetoed_member	intellij.java.compiler.impl
+intellij.java.plugin	vetoed_member	intellij.java.debugger.impl
+intellij.java.plugin	vetoed_member	intellij.java.debugger.memory.agent
+intellij.java.plugin	vetoed_member	intellij.libraries.completion.ranking.java
+
+intellij.javaFX.community	member_jar	intellij.javaFX.common	javaFX-common.jar
+intellij.javaFX.community	member_jar	intellij.javaFX.jps	javaFX-jps.jar
+intellij.javaFX.community	member_jar	intellij.javaFX.sceneBuilder	rt/sceneBuilderBridge.jar
+
+intellij.javaee.app.servers.impl	member_jar	intellij.javaee.appServers.cloud.rt	javaee-appServers-cloud-rt.jar
+intellij.javaee.app.servers.impl	member_jar	intellij.javaee.appServers.rt	javaee-appServers-rt.jar
+intellij.javaee.app.servers.impl	member_jar	intellij.javaee.appServers.view	AppServersView.jar
+
+intellij.javaee.appServers.glassfish	member_jar	intellij.javaee.appServers.glassfish.agent.rt	glassfishIntegration.jar
+intellij.javaee.appServers.glassfish	member_jar	intellij.javaee.appServers.glassfish.agent.rt	specifics/glassfish2-specifics.jar
+intellij.javaee.appServers.glassfish	member_jar	intellij.javaee.appServers.glassfish.agent.rt	specifics/glassfish3-specifics.jar
+intellij.javaee.appServers.glassfish	member_jar	intellij.javaee.appServers.glassfish.agent.rt	specifics/glassfish3.1-specifics.jar
+intellij.javaee.appServers.glassfish	member_jar	intellij.javaee.appServers.glassfish.agent.rt	specifics/glassfish5.1-specifics.jar
+intellij.javaee.appServers.glassfish	member_jar	intellij.javaee.appServers.glassfish.v2.agent.rt	specifics/glassfish2-specifics.jar
+intellij.javaee.appServers.glassfish	member_jar	intellij.javaee.appServers.glassfish.v3.agent.rt	specifics/glassfish3-specifics.jar
+intellij.javaee.appServers.glassfish	member_jar	intellij.javaee.appServers.glassfish.v3.base.agent.rt	specifics/glassfish3-specifics.jar
+intellij.javaee.appServers.glassfish	member_jar	intellij.javaee.appServers.glassfish.v3.base.agent.rt	specifics/glassfish3.1-specifics.jar
+intellij.javaee.appServers.glassfish	member_jar	intellij.javaee.appServers.glassfish.v3.base.agent.rt	specifics/glassfish5.1-specifics.jar
+intellij.javaee.appServers.glassfish	member_jar	intellij.javaee.appServers.glassfish.v3_1.agent.rt	specifics/glassfish3.1-specifics.jar
+intellij.javaee.appServers.glassfish	member_jar	intellij.javaee.appServers.glassfish.v3_1.base.agent.rt	specifics/glassfish3.1-specifics.jar
+intellij.javaee.appServers.glassfish	member_jar	intellij.javaee.appServers.glassfish.v3_1.base.agent.rt	specifics/glassfish5.1-specifics.jar
+intellij.javaee.appServers.glassfish	member_jar	intellij.javaee.appServers.glassfish.v5_1.agent.rt	specifics/glassfish5.1-specifics.jar
+
+intellij.javaee.appServers.jboss	member_jar	intellij.javaee.appServers.jboss.agent.impl.rt	specifics/legacy-specifics.jar
+intellij.javaee.appServers.jboss	member_jar	intellij.javaee.appServers.jboss.agent.rt	javaee-appServers-jboss.jar
+intellij.javaee.appServers.jboss	member_jar	intellij.javaee.appServers.jboss.agent.rt	specifics/jboss7-specifics.jar
+intellij.javaee.appServers.jboss	member_jar	intellij.javaee.appServers.jboss.agent.rt	specifics/wildfly11-specifics.jar
+intellij.javaee.appServers.jboss	member_jar	intellij.javaee.appServers.jboss.agent.rt	specifics/wildfly28-specifics.jar
+intellij.javaee.appServers.jboss	member_jar	intellij.javaee.appServers.jboss.v11.agent.rt	specifics/wildfly11-specifics.jar
+intellij.javaee.appServers.jboss	member_jar	intellij.javaee.appServers.jboss.v28.agent.rt	specifics/wildfly28-specifics.jar
+intellij.javaee.appServers.jboss	member_jar	intellij.javaee.appServers.jboss.v7.agent.rt	specifics/jboss7-specifics.jar
+
+intellij.javaee.appServers.tomcat	member_jar	intellij.javaee.appServers.tomee.agent.impl.rt	specifics/tomee-specifics.jar
+intellij.javaee.appServers.tomcat	member_jar	intellij.javaee.appServers.tomee.agent.rt	javaee-appServers-tomcat.jar
+intellij.javaee.appServers.tomcat	member_jar	intellij.javaee.appServers.tomee.agent.rt	specifics/tomee-specifics.jar
+
+intellij.javaee.appServers.weblogic	member_jar	intellij.javaee.appServers.weblogic.agent.impl.rt	specifics/weblogicSpecifics.jar
+intellij.javaee.appServers.weblogic	member_jar	intellij.javaee.appServers.weblogic.jps	jps/javaee-appServers-weblogic-jps.jar
+
+intellij.javaee.appServers.websphere	member_jar	intellij.javaee.appServers.websphere.agent.impl.rt	specifics/webSphereClientImpl.jar
+intellij.javaee.appServers.websphere	member_jar	intellij.javaee.appServers.websphere.jps	jps/javaee-appServers-websphere-jps.jar
+
+intellij.javaee.jax.rs	member_jar	intellij.javaee.jax.ws.rt	javaee-jax-ws-rt.jar
+
+intellij.javaee.jax.ws	member_jar	intellij.javaee.jax.ws.rt	javaee-jax-ws-rt.jar
+
+intellij.javaee.jpa.impl	member_jar	intellij.javaee.jpa.jps	jps/javaee-jpa-jps.jar
+
+intellij.javaee.jsp	vetoed_member	intellij.javaee.jsp.base.impl
+
+intellij.javaee.platform.plugin	member_jar	intellij.javaee.jasper.v2.rt	jasper-v2-rt.jar
+intellij.javaee.platform.plugin	member_jar	intellij.javaee.jasper.v21.rt	rt/jasper-v21-rt.jar
+intellij.javaee.platform.plugin	member_jar	intellij.javaee.jasper.v23.java8.rt	rt/jasper-v23-java8-rt.jar
+intellij.javaee.platform.plugin	member_jar	intellij.javaee.jasper.v23.rt	rt/jasper-v23-rt.jar
+intellij.javaee.platform.plugin	member_jar	intellij.javaee.jps	jps/javaee-jps.jar
+intellij.javaee.platform.plugin	member_jar	intellij.javaee.rt	javaee-rt.jar
+
+intellij.javascript.plugin	vetoed_member	intellij.libraries.completion.ranking.js
+intellij.javascript.plugin	vetoed_member	intellij.libraries.completion.ranking.typescript
+
+intellij.junit	member_jar	intellij.junit.rt	junit-rt.jar
+intellij.junit	member_jar	intellij.junit.v5.rt	junit5-rt.jar
+intellij.junit	member_jar	intellij.junit.v6.rt	junit6-rt.jar
+
+intellij.jupyter.plugin	vetoed_member	intellij.jupyter.convert
+
+intellij.kmm.plugin	member_jar	kotlin-ultimate.apple-gradle-plugin-api.rt	kotlin-ultimate-apple-gradle-plugin-api-rt.jar
+intellij.kmm.plugin	member_jar	kotlin-ultimate.mobile-gradle-tooling.rt	kotlin-ultimate.mobile-gradle-tooling.rt.jar
+intellij.kmm.plugin	project_library	github.jnr.constants
+intellij.kmm.plugin	project_library	github.jnr.ffi
+intellij.kmm.plugin	project_library	kotlinc.kotlin-compiler-cli
+intellij.kmm.plugin	project_library	kotlinc.kotlin-objcexport-header-generator
+intellij.kmm.plugin	vetoed_member	intellij.libraries.completion.ranking.cpp
+intellij.kmm.plugin	vetoed_member	intellij.libraries.completion.ranking.swift
+intellij.kmm.plugin	vetoed_member	intellij.libraries.sqlite
+
+intellij.kotlin.cri.bazel.plugin	member_jar	intellij.monorepo.devkit.bazel	kotlin-cri-bazel-plugin.jar
+
+intellij.kotlin.jsr223.plugin	member_jar	intellij.libraries.kotlinc.kotlin.compiler.common	intellij.libraries.kotlinc.kotlin.compiler.common.jar
+intellij.kotlin.jsr223.plugin	project_library	kotlinc.kotlin-compiler-fe10
+
+intellij.kotlin.plugin	project_library	javax-inject
+intellij.kotlin.plugin	project_library	kotlin-metadata
+intellij.kotlin.plugin	project_library	kotlinc.allopen-compiler-plugin
+intellij.kotlin.plugin	project_library	kotlinc.assignment-compiler-plugin
+intellij.kotlin.plugin	project_library	kotlinc.compose-compiler-plugin
+intellij.kotlin.plugin	project_library	kotlinc.js-plain-objects-compiler-plugin
+intellij.kotlin.plugin	project_library	kotlinc.kotlin-build-tools-api
+intellij.kotlin.plugin	project_library	kotlinc.kotlin-build-tools-cri-impl
+intellij.kotlin.plugin	project_library	kotlinc.kotlin-build-tools-impl
+intellij.kotlin.plugin	project_library	kotlinc.kotlin-compiler-fe10
+intellij.kotlin.plugin	project_library	kotlinc.kotlin-compiler-ir
+intellij.kotlin.plugin	project_library	kotlinc.kotlin-dataframe-compiler-plugin
+intellij.kotlin.plugin	project_library	kotlinc.kotlin-gradle-statistics
+intellij.kotlin.plugin	project_library	kotlinc.kotlin-jps-plugin-classpath
+intellij.kotlin.plugin	project_library	kotlinc.kotlin-scripting-dependencies
+intellij.kotlin.plugin	project_library	kotlinc.lombok-compiler-plugin
+intellij.kotlin.plugin	project_library	kotlinc.noarg-compiler-plugin
+intellij.kotlin.plugin	project_library	kotlinc.parcelize-compiler-plugin
+intellij.kotlin.plugin	project_library	kotlinc.sam-with-receiver-compiler-plugin
+intellij.kotlin.plugin	project_library	kotlinc.scripting-compiler-plugin
+intellij.kotlin.plugin	project_library	vavr
+intellij.kotlin.plugin	raw_member	intellij.kotlin.base.codeInsight.minimal
+intellij.kotlin.plugin	raw_member	intellij.kotlin.highlighting.minimal
+intellij.kotlin.plugin	separate_jar	intellij.kotlin.duplicate.scope
+intellij.kotlin.plugin	vetoed_member	intellij.libraries.completion.ranking.kotlin
+intellij.kotlin.plugin	vetoed_member	intellij.libraries.kotlin.gradle.plugin.idea
+intellij.kotlin.plugin	vetoed_member	intellij.libraries.kotlin.gradle.plugin.idea.proto
+intellij.kotlin.plugin	vetoed_member	intellij.libraries.kotlin.tooling.core
+
+intellij.marketplace	member_jar	intellij.java.compiler.instrumentationUtil	boot/marketplace-bootstrap.jar
+intellij.marketplace	member_jar	intellij.libraries.asm	boot/marketplace-bootstrap.jar
+intellij.marketplace	member_jar	intellij.libraries.jackson.jr.objects	boot/marketplace-impl.jar
+intellij.marketplace	member_jar	intellij.marketplace.bootstrap	boot/marketplace-bootstrap.jar
+intellij.marketplace	member_jar	intellij.marketplace.core	boot/marketplace-impl.jar
+intellij.marketplace	member_jar	intellij.platform.commercial.license	boot/marketplace-impl.jar
+
+intellij.maven.plugin	member_jar	intellij.maven.artifactResolver.common	artifact-resolver-m31.jar
+intellij.maven.plugin	member_jar	intellij.maven.artifactResolver.m31	artifact-resolver-m31.jar
+intellij.maven.plugin	member_jar	intellij.maven.server	maven-server.jar
+intellij.maven.plugin	member_jar	intellij.maven.server.eventListener	intellij.maven.rt/maven-event-listener.jar
+intellij.maven.plugin	member_jar	intellij.maven.server.indexer	intellij.maven.server.indexer/maven-server-indexer.jar
+intellij.maven.plugin	member_jar	intellij.maven.server.m3.common	intellij.maven.server3/maven3-server-common.jar
+intellij.maven.plugin	member_jar	intellij.maven.server.m3.impl	intellij.maven.server3/maven3-server.jar
+intellij.maven.plugin	member_jar	intellij.maven.server.m36.impl	intellij.maven.server36/maven36-server.jar
+intellij.maven.plugin	member_jar	intellij.maven.server.m40	intellij.maven.server4/maven40-server.jar
+intellij.maven.plugin	member_jar	intellij.maven.server.telemetry	intellij.maven.server3/maven-server-telemetry.jar
+intellij.maven.plugin	member_jar	intellij.maven.server.telemetry	intellij.maven.server4/maven-server-telemetry.jar
+
+intellij.mcpserver.plugin	vetoed_member	intellij.mcpserver.stdio
+
+intellij.ml.llm	merged_library	intellij.ml.llm.libraries.grazie.cloud	ai.grazie.api.gateway.client.jvm
+intellij.ml.llm	merged_library	intellij.ml.llm.libraries.grazie.cloud	ai.grazie.auth.gec-agg-model-public-jvm
+intellij.ml.llm	merged_library	intellij.ml.llm.libraries.grazie.cloud	ai.grazie.client.attribute.jvm
+intellij.ml.llm	merged_library	intellij.ml.llm.libraries.grazie.cloud	ai.grazie.indexing.indexing:indexing-server-api-jvm
+intellij.ml.llm	merged_library	intellij.ml.llm.libraries.grazie.cloud	ai.grazie.llm.llm-agg-api-model-jvm
+intellij.ml.llm	merged_library	intellij.ml.llm.libraries.grazie.cloud	ai.jetbrains.code.prompt.executor.grazie.koog.jvm.v1
+intellij.ml.llm	vetoed_member	intellij.libraries.mlapi.catboost
+intellij.ml.llm	vetoed_member	intellij.libraries.mlapi.core
+intellij.ml.llm	vetoed_member	intellij.ml.grazie.pro
+intellij.ml.llm	vetoed_member	intellij.ml.llm.agents.acp
+intellij.ml.llm	vetoed_member	intellij.ml.llm.core
+intellij.ml.llm	vetoed_member	intellij.ml.llm.libraries.grazie
+
+intellij.monorepo.devkit.plugin	member_jar	intellij.monorepo.devkit.common	jps/monorepo-devkit-jps.jar
+intellij.monorepo.devkit.plugin	member_jar	intellij.monorepo.devkit.common	modules/intellij.monorepo.devkit.common.jar
+intellij.monorepo.devkit.plugin	member_jar	intellij.monorepo.devkit.jps	jps/monorepo-devkit-jps.jar
+intellij.monorepo.devkit.plugin	raw_member	intellij.monorepo.devkit.common
+
+intellij.nativeDebug.plugin	project_library	antlr4-runtime
+
+intellij.performanceTesting	vetoed_member	intellij.performanceTesting.remoteDriver
+
+intellij.php.impl	member_jar	intellij.php	php-openapi.jar
+intellij.php.impl	vetoed_member	intellij.libraries.completion.ranking.php
+
+intellij.platform.vcs.plugin	vetoed_member	intellij.platform.sqlite
+
+intellij.python.community.plugin	vetoed_member	intellij.libraries.jsr305
+intellij.python.community.plugin	vetoed_member	intellij.libraries.mlapi.catboost
+intellij.python.community.plugin	vetoed_member	intellij.libraries.tuweni.toml
+intellij.python.community.plugin	vetoed_member	intellij.python.community.impl
+
+intellij.ruby.plugin	vetoed_member	intellij.libraries.completion.ranking.ruby
+intellij.ruby.plugin	vetoed_member	intellij.libraries.joni
+
+intellij.rustrover.plugin	vetoed_member	intellij.libraries.completion.ranking.rust
+intellij.rustrover.plugin	vetoed_member	intellij.rustrover.core
+intellij.rustrover.plugin	vetoed_member	intellij.rustrover.debugger
+
+intellij.searchEverywhereMl	vetoed_member	intellij.libraries.mlapi.core
+
+intellij.space	member_jar	intellij.space.java.jps	jps/space-java-jps.jar
+
+intellij.spring.core.plugin	vetoed_member	intellij.spring.core.analysis.xml
+
+intellij.station.plugin	member_jar	intellij.station.comms.mcp	modules/intellij.station.aia.jar
+intellij.station.plugin	vetoed_member	intellij.station.aia
+
+intellij.testng	member_jar	intellij.testng.rt	testng-rt.jar
+
+intellij.textmate.plugin	vetoed_member	intellij.libraries.joni
+
+intellij.vcs.git	member_jar	intellij.vcs.git.rt	git4idea-rt.jar
+
+intellij.xpath	member_jar	intellij.xpath.rt	rt/xslt-rt.jar
+
+language-server.plugins.bazel	vetoed_member	intellij.libraries.grpc
+
+language-server.plugins.bazel.lsp	vetoed_member	intellij.libraries.jsr305
+
+language-server.plugins.dap-jvm	vetoed_member	intellij.java.compiler.impl
+language-server.plugins.dap-jvm	vetoed_member	intellij.java.debugger.impl
+language-server.plugins.dap-jvm	vetoed_member	intellij.java.debugger.memory.agent
+
+language-server.plugins.db-connectivity.lsp	vetoed_member	intellij.libraries.flexmark
+
+language-server.plugins.go	member_jar	intellij.go	intellij.go.jar
+language-server.plugins.go	member_jar	intellij.go.plan9	intellij.go.plan9.jar
+language-server.plugins.go	member_jar	intellij.go.testing	intellij.go.testing.jar
+language-server.plugins.go	member_jar	intellij.go.utils	intellij.go.utils.jar
+language-server.plugins.go	vetoed_member	intellij.libraries.re2j
+
+language-server.plugins.java	member_jar	intellij.java.backend	intellij.java.backend.jar
+language-server.plugins.java	member_jar	intellij.platform.jps.build.launcher	jps-launcher.jar
+language-server.plugins.java	vetoed_member	intellij.libraries.completion.ranking.java
+
+language-server.plugins.kotlin	project_library	javax-inject
+language-server.plugins.kotlin	project_library	kotlin-metadata
+language-server.plugins.kotlin	project_library	kotlinc.allopen-compiler-plugin
+language-server.plugins.kotlin	project_library	kotlinc.assignment-compiler-plugin
+language-server.plugins.kotlin	project_library	kotlinc.compose-compiler-plugin
+language-server.plugins.kotlin	project_library	kotlinc.js-plain-objects-compiler-plugin
+language-server.plugins.kotlin	project_library	kotlinc.kotlin-build-tools-api
+language-server.plugins.kotlin	project_library	kotlinc.kotlin-build-tools-cri-impl
+language-server.plugins.kotlin	project_library	kotlinc.kotlin-build-tools-impl
+language-server.plugins.kotlin	project_library	kotlinc.kotlin-compiler-fe10
+language-server.plugins.kotlin	project_library	kotlinc.kotlin-compiler-ir
+language-server.plugins.kotlin	project_library	kotlinc.kotlin-dataframe-compiler-plugin
+language-server.plugins.kotlin	project_library	kotlinc.kotlin-gradle-statistics
+language-server.plugins.kotlin	project_library	kotlinc.kotlin-scripting-dependencies
+language-server.plugins.kotlin	project_library	kotlinc.lombok-compiler-plugin
+language-server.plugins.kotlin	project_library	kotlinc.noarg-compiler-plugin
+language-server.plugins.kotlin	project_library	kotlinc.parcelize-compiler-plugin
+language-server.plugins.kotlin	project_library	kotlinc.sam-with-receiver-compiler-plugin
+language-server.plugins.kotlin	project_library	kotlinc.scripting-compiler-plugin
+language-server.plugins.kotlin	project_library	vavr
+language-server.plugins.kotlin	raw_member	kotlin.scripting
+
+language-server.plugins.kotlin-dap.lsp	member_jar	intellij.kotlin.jvm.debugger.core	intellij.kotlin.jvm.debugger.core.jar
+language-server.plugins.kotlin-dap.lsp	member_jar	intellij.kotlin.jvm.debugger.eval4j	intellij.kotlin.jvm.debugger.eval4j.jar
+language-server.plugins.kotlin-dap.lsp	member_jar	kotlin.jvm-debugger.evaluation	kotlin.jvm-debugger.evaluation.jar
+
+language-server.plugins.kotlin.lsp	member_jar	language-server.workspace-import.maven-plugin	workspace-import-maven-plugin.jar
+language-server.plugins.kotlin.lsp	vetoed_member	intellij.libraries.gradle.tooling
+
+language-server.plugins.mcp	vetoed_member	intellij.mcpserver.stdio
+
+language-server.plugins.sql	merged_library	intellij.charts	lets-plot-swing
+language-server.plugins.sql	merges_no_library	intellij.database.dialects.cassandra
+language-server.plugins.sql	merges_no_library	intellij.database.dialects.clickhouse
+language-server.plugins.sql	merges_no_library	intellij.database.dialects.cockroach
+language-server.plugins.sql	merges_no_library	intellij.database.dialects.db2
+language-server.plugins.sql	merges_no_library	intellij.database.dialects.derby
+language-server.plugins.sql	merges_no_library	intellij.database.dialects.exasol
+language-server.plugins.sql	merges_no_library	intellij.database.dialects.greenplum
+language-server.plugins.sql	merges_no_library	intellij.database.dialects.h2
+language-server.plugins.sql	merges_no_library	intellij.database.dialects.hsql
+language-server.plugins.sql	merges_no_library	intellij.database.dialects.redshift
+language-server.plugins.sql	merges_no_library	intellij.database.dialects.snowflake
+language-server.plugins.sql	merges_no_library	intellij.database.dialects.vertica
+language-server.plugins.sql	separate_jar	intellij.database.dialects.base
+language-server.plugins.sql	separate_jar	intellij.database.dialects.bigquery
+language-server.plugins.sql	separate_jar	intellij.database.dialects.cassandra
+language-server.plugins.sql	separate_jar	intellij.database.dialects.clickhouse
+language-server.plugins.sql	separate_jar	intellij.database.dialects.cockroach
+language-server.plugins.sql	separate_jar	intellij.database.dialects.couchbase
+language-server.plugins.sql	separate_jar	intellij.database.dialects.db2
+language-server.plugins.sql	separate_jar	intellij.database.dialects.derby
+language-server.plugins.sql	separate_jar	intellij.database.dialects.duckdb
+language-server.plugins.sql	separate_jar	intellij.database.dialects.dynamo
+language-server.plugins.sql	separate_jar	intellij.database.dialects.exasol
+language-server.plugins.sql	separate_jar	intellij.database.dialects.generic
+language-server.plugins.sql	separate_jar	intellij.database.dialects.greenplum
+language-server.plugins.sql	separate_jar	intellij.database.dialects.h2
+language-server.plugins.sql	separate_jar	intellij.database.dialects.hive
+language-server.plugins.sql	separate_jar	intellij.database.dialects.hivebase
+language-server.plugins.sql	separate_jar	intellij.database.dialects.hsql
+language-server.plugins.sql	separate_jar	intellij.database.dialects.maria
+language-server.plugins.sql	separate_jar	intellij.database.dialects.mongo
+language-server.plugins.sql	separate_jar	intellij.database.dialects.mongo.sql
+language-server.plugins.sql	separate_jar	intellij.database.dialects.mssql
+language-server.plugins.sql	separate_jar	intellij.database.dialects.mssql.impl
+language-server.plugins.sql	separate_jar	intellij.database.dialects.mysql
+language-server.plugins.sql	separate_jar	intellij.database.dialects.mysqlbase
+language-server.plugins.sql	separate_jar	intellij.database.dialects.mysqlbase.impl
+language-server.plugins.sql	separate_jar	intellij.database.dialects.oracle
+language-server.plugins.sql	separate_jar	intellij.database.dialects.postgres
+language-server.plugins.sql	separate_jar	intellij.database.dialects.postgresbase
+language-server.plugins.sql	separate_jar	intellij.database.dialects.postgresgreenplumbase
+language-server.plugins.sql	separate_jar	intellij.database.dialects.redis
+language-server.plugins.sql	separate_jar	intellij.database.dialects.redis.backend
+language-server.plugins.sql	separate_jar	intellij.database.dialects.redshift
+language-server.plugins.sql	separate_jar	intellij.database.dialects.snowflake
+language-server.plugins.sql	separate_jar	intellij.database.dialects.spark
+language-server.plugins.sql	separate_jar	intellij.database.dialects.sql92
+language-server.plugins.sql	separate_jar	intellij.database.dialects.sqlite
+language-server.plugins.sql	separate_jar	intellij.database.dialects.sybase
+language-server.plugins.sql	separate_jar	intellij.database.dialects.vertica
+
+language-server.plugins.sql.lsp	vetoed_member	intellij.libraries.flexmark

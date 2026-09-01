@@ -35,7 +35,6 @@ internal class JpsModuleToBazelTargetsOnly {
       val starlarkLibrary = mutableListOf<String>()
       val starlarkIml = mutableListOf<String>()
       val starlarkPluginDistribution = mutableListOf<String>()
-      val starlarkDevDistResidue = mutableListOf<String>()
       val starlarkContentModuleRecipe = mutableListOf<String>()
 
       for (arg in expandedArgs) {
@@ -58,8 +57,6 @@ internal class JpsModuleToBazelTargetsOnly {
             starlarkIml.add(arg.substringAfter("="))
           arg.startsWith("--starlark-plugin-distribution=") ->
             starlarkPluginDistribution.add(arg.substringAfter("="))
-          arg.startsWith("--starlark-dev-dist-residue=") ->
-            starlarkDevDistResidue.add(arg.substringAfter("="))
           arg.startsWith("--starlark-content-module-recipe=") ->
             starlarkContentModuleRecipe.add(arg.substringAfter("="))
           else -> error("Unknown argument: $arg")
@@ -71,7 +68,7 @@ internal class JpsModuleToBazelTargetsOnly {
       check(manifest != null) { "Missing required --manifest=<path> argument" }
       val hasStarlarkTargets = starlarkProduction.isNotEmpty() || starlarkTest.isNotEmpty() || starlarkLibrary.isNotEmpty() ||
                                starlarkIml.isNotEmpty() || starlarkPluginDistribution.isNotEmpty() ||
-                               starlarkDevDistResidue.isNotEmpty() || starlarkContentModuleRecipe.isNotEmpty()
+                               starlarkContentModuleRecipe.isNotEmpty()
       check(hasStarlarkTargets || noStarlarkTargets) {
         "Either --starlark-* targets or --no-starlark-targets must be provided"
       }
@@ -186,7 +183,7 @@ internal class JpsModuleToBazelTargetsOnly {
         if (hasStarlarkTargets) {
           assertStarlarkParity(
             targets, starlarkProduction, starlarkTest, starlarkLibrary, starlarkIml,
-            starlarkPluginDistribution, starlarkDevDistResidue, starlarkContentModuleRecipe,
+            starlarkPluginDistribution, starlarkContentModuleRecipe,
             moduleList = moduleList,
             communityRoot = communityRoot,
             ultimateRoot = ultimateRoot,
@@ -223,7 +220,6 @@ internal class JpsModuleToBazelTargetsOnly {
       starlarkLibrary: List<String>,
       starlarkIml: List<String>,
       starlarkPluginDistribution: List<String>,
-      starlarkDevDistResidue: List<String>,
       starlarkContentModuleRecipe: List<String>,
       moduleList: ModuleList,
       communityRoot: Path,
@@ -245,24 +241,6 @@ internal class JpsModuleToBazelTargetsOnly {
         // descriptor, while an entry may exist for its `contentTarget` alone. `devDistResidues` below is what keeps the
         // other half honest.
         targets.pluginDistributionTargets.values.mapNotNull { it.target.takeIf(String::isNotEmpty) }.sorted(),
-        allowDuplicates = false,
-      )
-      // The residue of both leaves, asserted on its *input* rather than on the label.
-      //
-      // It carries both halves of what the two leaves need beyond the derivation, so it is the one assertion for both.
-      // The derivation states a plugin's members from the project model and the `content:` part states what it cannot
-      // reach, so a residue this run cannot see makes `contentTarget` name fewer members than the full-checkout run's
-      // does. The `descriptor:` part is what decides a `descriptorTargets` section beyond the convention, and a silently
-      // missing entry is a plugin whose patched descriptor no fragment reads. The labels themselves are not compared:
-      // whether a residue changes a leaf depends on what the residue says, and this side cannot parse YAML.
-      assertTargetsEqual(
-        "devDistResidues",
-        starlarkDevDistResidue.sorted(),
-        moduleList.allModules.mapNotNull { module ->
-          devDistResiduePackagePath(module)?.let { residuePath ->
-            "${bazelPackagePrefix(module = module, communityRoot = communityRoot, ultimateRoot = ultimateRoot)}:$residuePath"
-          }
-        }.distinct().sorted(),
         allowDuplicates = false,
       )
       // `contentModuleJarTarget`, asserted on its input for the same reason `pluginContentReports` is.

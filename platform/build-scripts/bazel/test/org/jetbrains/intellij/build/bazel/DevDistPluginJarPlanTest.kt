@@ -409,15 +409,15 @@ internal class DevDistPluginJarPlanTest {
 
   @Test
   fun `a written member_jars row comes back as the jar set the derivation reads`() {
-    // The written file and the parser, and not a hand-written text: a serial name the writer's key does not match would
-    // decode as an empty map, because `recipeYaml` runs with `strictMode = false`.
+    // The written table and its own reader, and not a hand-written text: the two state the field vocabulary separately
+    // and no compiler pins them to each other.
     val section = ContentResidueSection(
-      memberJars = mapOf("intellij.demo.rt" to listOf("demo-rt.jar"), "intellij.demo.ns" to listOf("ns/ns.jar", "demo.jar")),
+      memberJars = mapOf("intellij.demo.ns" to listOf("demo.jar", "ns/ns.jar"), "intellij.demo.rt" to listOf("demo-rt.jar")),
     )
-    val file = temporaryFolder.root.toPath().resolve("dev-dist.yaml")
-    file.writeText(composeDevDistResidueText(section)!!)
+    val file = temporaryFolder.root.toPath().resolve(PLUGIN_CONTENT_RESIDUE_FILE_NAME)
+    file.writeText(renderPluginContentResidue(mapOf("intellij.demo.plugin" to section)))
 
-    val parsed = parseDevDistResidue(file)!!.content!!
+    val parsed = readPluginContentResidue(file).getValue("intellij.demo.plugin")
     assertEquals(section.memberJars, parsed.memberJars)
     assertEquals(
       mapOf("intellij.demo.rt" to setOf("demo-rt.jar"), "intellij.demo.ns" to setOf("ns/ns.jar", "demo.jar")),

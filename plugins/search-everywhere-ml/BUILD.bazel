@@ -74,7 +74,6 @@ exports_files(
     [
         "intellij.searchEverywhereMl.iml",
         "resources/META-INF/plugin.xml",
-        "dev-dist.yaml",
     ],
     visibility = ["//visibility:public"],
 )
