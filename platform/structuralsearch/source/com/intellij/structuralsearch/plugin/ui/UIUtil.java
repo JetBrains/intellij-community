@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.template.impl.TemplateContextTypes;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -223,7 +224,8 @@ public final class UIUtil {
       }
 
       if (codeFragment != null) {
-        final Document doc = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
+        PsiFile f = codeFragment;
+        final Document doc = ReadAction.computeBlocking(() -> f.getViewProvider().getDocument());
         assert doc != null : "code fragment element should be physical";
         return doc;
       }
