@@ -11,7 +11,7 @@ interface ProjectViewUpdater {
 
 /**
  * Lets a [ProjectViewUpdater] report the progress of its internal update queue so the model can
- * implement [TreeBasedProjectViewPaneModel.awaitPendingUpdates]. Every event the updater queues for
+ * wait if necessary until all requested updates are applied. Every event the updater queues for
  * later processing must be reported via [eventSubmitted], and once queued events have been turned
  * into node updates they must be reported via [eventsProcessed].
  */

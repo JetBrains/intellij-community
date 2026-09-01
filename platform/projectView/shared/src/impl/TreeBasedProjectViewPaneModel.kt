@@ -178,26 +178,9 @@ abstract class TreeBasedProjectViewPaneModel<T : Any>(override val project: Proj
   }
 
   /**
-   * Suspends until every update that was submitted before this call has been applied to the tree.
+   * Flushes update queues that belong to the implementation and are therefore invisible to [ProjectViewUpdaterProgressReporter].
    *
-   * "Submitted" means either already passed to [updateNode], or already sitting in the updater's
-   * internal queue (see [ProjectViewUpdaterProgressReporter]). This lets a caller mutate the VFS/PSI
-   * and then be sure, once this returns, that the changes are reflected in the tree state.
-   *
-   * Throws [CancellationException] if the pane is not being managed, or if its management finishes
-   * before the pending updates are applied.
-   */
-  suspend fun awaitPendingUpdates() {
-    val treeState = currentTreeState.load()
-                    ?: throw CancellationException("The Project View pane is not being managed")
-    treeState.awaitPendingUpdates()
-  }
-
-  /**
-   * Flushes update queues that belong to the implementation and are therefore invisible to
-   * [awaitPendingUpdates], which only knows about the [ProjectViewUpdaterProgressReporter] epochs.
-   *
-   * Called before every [awaitPendingUpdates], including the implicit ones done by "Select In" and
+   * Used to wait for all updates including those requested by "Select In" and
    * "Autoscroll from Source", so that whatever the queue is holding has become an update by the time
    * the tree is searched.
    */
