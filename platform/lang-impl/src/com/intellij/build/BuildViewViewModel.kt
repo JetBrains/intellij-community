@@ -30,7 +30,7 @@ class BuildViewViewModel(val scope: CoroutineScope) : FlowWithHistory<BuildViewE
     requestFocus: Boolean,
     activateToolWindow: Boolean,
     treeViewId: BuildViewId?,
-    consoleComponent: ComponentDirectTransferId,
+    consoleComponent: ComponentDirectTransferId?,
     processHandler: ProcessHandlerDto?,
   ) {
     updateHistoryAndEmit {

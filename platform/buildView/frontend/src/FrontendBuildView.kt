@@ -31,7 +31,7 @@ internal class FrontendBuildView(
   parentScope: CoroutineScope,
   val buildId: BuildId,
   treeViewId: BuildViewId?,
-  consoleComponent: ComponentDirectTransferId,
+  consoleComponent: ComponentDirectTransferId?,
 ) : JPanel(BorderLayout()), Disposable {
   private val scope = parentScope.childScope("FrontendBuildView")
   internal val treeView: BuildTreeView?
@@ -41,7 +41,7 @@ internal class FrontendBuildView(
   }
 
   init {
-    val console = consoleComponent.getComponent()
+    val console = consoleComponent?.getComponent()
     if (treeViewId != null) {
       treeView = BuildTreeView(project, scope, treeViewId, false)
       restoreSavedFiltering(treeView)
@@ -53,7 +53,9 @@ internal class FrontendBuildView(
     }
     else {
       treeView = null
-      add(console)
+      if (console != null) {
+        add(console)
+      }
     }
   }
 

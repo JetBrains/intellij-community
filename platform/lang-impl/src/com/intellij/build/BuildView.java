@@ -248,7 +248,8 @@ public class BuildView extends CompositeView<ExecutionConsole>
     return getView(BuildTreeConsoleView.class.getName(), BuildTreeConsoleView.class);
   }
 
-  // returns a non-null value after the view is initialized (after build start event is processed)
+  // Returns a non-null value after the view is initialized (after the build start event is processed).
+  // Null value is expected only in headless mode.
   JComponent getConsoleComponent() {
     BuildTreeConsoleView eventView = getEventView();
     if (eventView != null) {

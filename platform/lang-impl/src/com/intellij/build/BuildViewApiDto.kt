@@ -26,7 +26,7 @@ sealed interface BuildViewEvent {
     val requestFocus: Boolean,
     val activateToolWindow: Boolean,
     val treeViewId: BuildViewId?,
-    val consoleComponent: ComponentDirectTransferId,
+    val consoleComponent: ComponentDirectTransferId?,
     val processHandler: ProcessHandlerDto?,
   ) : BuildViewEvent
 

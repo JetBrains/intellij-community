@@ -142,7 +142,7 @@ class BackendMultipleBuildsView(private val project: Project, internal val viewM
         buildView.onEvent(buildId, event)
 
         val treeViewId = buildView.eventView?.buildViewId
-        val consoleComponent = buildView.consoleComponent.setupTransfer(buildView)
+        val consoleComponent = buildView.consoleComponent?.setupTransfer(buildView)
 
         val processHandler = buildInfo.processHandler
         if (processHandler is Disposable) {
