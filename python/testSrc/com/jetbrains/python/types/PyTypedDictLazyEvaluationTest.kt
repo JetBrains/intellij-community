@@ -197,6 +197,33 @@ class PyTypedDictLazyEvaluationTest : PyTestCase() {
   }
 
   /** A chain of [DEPTH] TypedDicts, each declaring [FAN_OUT] items of the next one. */
+  fun testSubstitutingATypedDictIntoAGenericDoesNotEvaluateItsItems() {
+    val file = configure("""
+      from typing import TypedDict
+
+
+      class Box[T](TypedDict):
+          value: T
+          other: str
+
+
+      def wrap[U](x: U) -> list[U]: ...
+
+
+      def f(b: Box[int]):
+          expr = wrap(b)
+      """.trimIndent())
+    val context = TypeEvalContext.codeAnalysis(myFixture.project, file)
+    val items = itemsOf(file, "Box")
+
+    // `wrap(b)` is `list[Box[int]]`, so the TypedDict is cloned while U is substituted.
+    val call = file.findTopLevelFunction("f")!!.statementList.statements
+      .filterIsInstance<PyAssignmentStatement>().single().assignedValue!!
+    context.getType(call)
+
+    assertEmpty("Cloning a TypedDict must not evaluate its items", items.filter { context.getKnownType(it) != null })
+  }
+
   private fun hierarchy(): String {
     val declarations = (0 until DEPTH).joinToString("\n\n\n") { level ->
       val items = (0 until FAN_OUT).joinToString("\n") { "    f$it: \"T${level + 1}\"" }

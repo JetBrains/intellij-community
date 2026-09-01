@@ -2213,14 +2213,21 @@ object PyTypeChecker {
         return if (match(selfScopeClassType, result, context)) result else selfType
       }
 
-      override fun cloneTypeArguments(typeArguments: List<PyType?>): List<PyType?> {
+      override fun visitPyClassType(classType: PyClassType): PyType? {
+        if (!classType.isParameterized) {
+          return super.visitPyClassType(classType)
+        }
+        val clonedClassType = PyCollectionTypeImpl(
+          classType.pyClass, classType.isDefinition,
+          substituteTypeArguments(classType.typeArguments)
+        )
+        return if (classType is PyClassTypeImpl) classType.withUserDataCopy(clonedClassType) else clonedClassType
+      }
+
+      fun substituteTypeArguments(typeArguments: List<PyType?>): List<PyType?> {
         return typeArguments.flatMap { typeArg ->
           flattenUnpackedTuple(clone<PyType>(typeArg))
         }
-      }
-
-      override fun cloneTypedDictTypeArguments(typedDictType: PyTypedDictType): List<PyType?> {
-        return cloneTypeArguments(typedDictType.typeArgumentsOrDeclaredParameters.orEmpty())
       }
 
       /**
@@ -2253,7 +2260,7 @@ object PyTypeChecker {
             )
           },
           typedDictType.declaredTypeParameters,
-          cloneTypedDictTypeArguments(typedDictType),
+          substituteTypeArguments(typedDictType.typeArgumentsOrDeclaredParameters.orEmpty()),
         )
       }
 

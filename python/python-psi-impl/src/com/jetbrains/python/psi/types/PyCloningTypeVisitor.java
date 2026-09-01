@@ -8,12 +8,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.IdentityHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -40,8 +38,10 @@ import java.util.stream.Collectors;
 @ApiStatus.Experimental
 public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
   private final @NotNull TypeEvalContext myTypeEvalContext;
-  private final @NotNull Set<@Nullable PyType> cloning = Sets.newIdentityHashSet();
-  private final @NotNull Map<@Nullable PyType, @Nullable PyType> cloned = new IdentityHashMap<>();
+  // Synchronized rather than concurrent: while `python.type.any` is off, an unknown type is a null, and a null key is what a
+  // ConcurrentHashMap refuses. A lazily cloned component is asked for on any thread, outside the traversal that filled these.
+  private final @NotNull Set<@Nullable PyType> cloning = Collections.synchronizedSet(Sets.newIdentityHashSet());
+  private final @NotNull Map<@Nullable PyType, @Nullable PyType> cloned = Collections.synchronizedMap(new IdentityHashMap<>());
 
   public static @Nullable PyType clone(@Nullable PyType type, @NotNull PyCloningTypeVisitor visitor) {
     return visitor.clone(type);
@@ -76,24 +76,6 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
     }
     finally {
       cloning.remove(type);
-    }
-  }
-
-  /**
-   * Runs {@code body} as the start of a fresh traversal: a component cloned lazily runs on an arbitrary stack, possibly nested
-   * inside the cloning of a type it legitimately has to clone itself. The memo of cloned types is kept, so nothing is repeated.
-   * <p>
-   * Synchronized because deferring makes the visitor outlive its traversal: the lazy components of one cloned type may be asked
-   * for from several threads, and they share its memo and cycle-detection state.
-   */
-  protected final synchronized <T> T cloneDeferred(@NotNull Supplier<T> body) {
-    final List<PyType> suspended = new ArrayList<>(cloning);
-    cloning.clear();
-    try {
-      return body.get();
-    }
-    finally {
-      cloning.addAll(suspended);
     }
   }
 
@@ -149,26 +131,19 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
       typedDictType.isClosed(),
       evalContext -> cloneExtraItems(typedDictType, evalContext),
       typedDictType.getDeclaredTypeParameters(),
-      cloneTypedDictTypeArguments(typedDictType));
-  }
-
-  /** Clones the arguments a TypedDict already has. Substitution overrides this to parameterize a generic one. */
-  protected @NotNull List<PyType> cloneTypedDictTypeArguments(@NotNull PyTypedDictType typedDictType) {
-    return cloneTypeArguments(typedDictType.getTypeArguments());
+      ContainerUtil.map(typedDictType.getTypeArguments(), type -> clone(type)));
   }
 
   private @NotNull PyTypedDictType.FieldTypeAndTotality cloneExtraItems(@NotNull PyTypedDictType typedDictType,
                                                                        @NotNull TypeEvalContext context) {
-    return cloneDeferred(() -> {
-      PyTypedDictType.FieldTypeAndTotality extraItems = typedDictType.extraItems(context);
-      return new PyTypedDictType.FieldTypeAndTotality(extraItems.getValue(), clone(extraItems.getType()), extraItems.getQualifiers());
-    });
+    PyTypedDictType.FieldTypeAndTotality extraItems = typedDictType.extraItems(context);
+    return new PyTypedDictType.FieldTypeAndTotality(extraItems.getValue(), clone(extraItems.getType()), extraItems.getQualifiers());
   }
 
   private @NotNull Map<String, PyTypedDictType.FieldTypeAndTotality> cloneFields(@NotNull PyTypedDictType typedDictType,
                                                                                 @NotNull TypeEvalContext context) {
     // TODO Copied from PyTypeChecker.substitute, revise
-    return cloneDeferred(() -> typedDictType.fields(context).entrySet().stream().collect(
+    return typedDictType.fields(context).entrySet().stream().collect(
       Collectors.toMap(
         Map.Entry::getKey,
         field -> new PyTypedDictType.FieldTypeAndTotality(
@@ -177,7 +152,7 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
           field.getValue().getQualifiers()
         )
       )
-    ));
+    );
   }
 
   @Override
@@ -233,20 +208,15 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
         impl.createInstance(
           classType.getPyClass(),
           classType.isDefinition(),
-          cloneTypeArguments(classType.getTypeArguments())
+          ContainerUtil.map(classType.getTypeArguments(), type -> clone(type))
         )
       );
     }
     return new PyCollectionTypeImpl(
       classType.getPyClass(),
       classType.isDefinition(),
-      cloneTypeArguments(classType.getTypeArguments())
+      ContainerUtil.map(classType.getTypeArguments(), type -> clone(type))
     );
-  }
-
-  /** Overridable because substitution has to normalize the result — flattening an unpacked tuple, for one — everywhere alike. */
-  protected @NotNull List<PyType> cloneTypeArguments(@NotNull List<PyType> typeArguments) {
-    return ContainerUtil.map(typeArguments, type -> clone(type));
   }
 
   @Override
