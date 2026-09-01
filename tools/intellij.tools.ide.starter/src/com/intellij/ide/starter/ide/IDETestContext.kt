@@ -26,7 +26,9 @@ import com.intellij.ide.starter.telemetry.computeWithSpan
 import com.intellij.ide.starter.utils.FileSystem.deleteRecursivelyQuietly
 import com.intellij.openapi.diagnostic.LogLevel
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.io.findOrCreateFile
+import com.intellij.platform.testFramework.teamCity.TeamCityReporter.SyntheticTestKind
 import com.intellij.tools.ide.performanceTesting.commands.CommandChain
 import com.intellij.tools.ide.performanceTesting.commands.MarshallableCommand
 import com.intellij.tools.ide.performanceTesting.commands.SdkObject
@@ -42,6 +44,7 @@ import org.kodein.di.direct
 import org.kodein.di.factory
 import org.kodein.di.instance
 import org.kodein.di.newInstance
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Base64
@@ -286,11 +289,32 @@ open class IDETestContext(
       disableGotItTooltips()
     }
 
-  fun wipeSystemDir(): IDETestContext = apply {
+  /**
+   * Clears the system directory unless [preserveSystemDir] is set.
+   *
+   * With [failOnWipeError] the clean-up throws an [IOException] when it cannot delete the directory. Use it in a test that
+   * measures a cold start, because a cache that survives makes the next run start warm and report a wrong number.
+   *
+   * Without it the clean-up reports a synthetic [SyntheticTestKind.TEST_INFRA_EXCEPTION] with the stack trace of the
+   * failure and lets the test go on. The failure stays visible on the CI.
+   */
+  fun wipeSystemDir(failOnWipeError: Boolean = false): IDETestContext = apply {
     if (!preserveSystemDir) {
-      //TODO: it would be better to allocate a new context instead of wiping the folder
       logOutput("Cleaning system dir for $this at $paths")
-      paths.systemDir.deleteRecursivelyQuietly()
+      val systemDir = paths.systemDir
+      // NioFiles retries 10 times per file with a 10 ms pause. Windows needs the pause to release the handles of a
+      // process that the starter killed. It returns without an error when the directory is already absent.
+      runCatching { NioFiles.deleteRecursively(systemDir) }
+        .onFailure { error ->
+          if (failOnWipeError) {
+            throw IOException("Failed to clean the system directory for test '$testName': $systemDir", error)
+          }
+          CIServer.instance.reportTestFailure(
+            testName = "Failed to clean the system directory at $systemDir. A cache that survives makes the next run start warm.",
+            message = "Failed to clean the system directory for test '$testName': $systemDir",
+            details = error.stackTraceToString(),
+            kind = SyntheticTestKind.TEST_INFRA_EXCEPTION)
+        }
     }
     else {
       logOutput("Cleaning system dir for $this at $paths is disabled due to preserveSystemDir")
