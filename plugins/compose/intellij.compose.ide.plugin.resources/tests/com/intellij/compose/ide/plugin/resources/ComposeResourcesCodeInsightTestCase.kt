@@ -1,9 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.resources
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.testFramework.common.ThreadLeakTracker
 import com.intellij.testFramework.common.runAll
 import com.intellij.util.io.DigestUtil
 import org.gradle.util.GradleVersion
@@ -12,6 +18,8 @@ import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightBaseTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.Parameter
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ValueSource
@@ -38,8 +46,24 @@ abstract class ComposeResourcesCodeInsightTestCase : GradleCodeInsightBaseTestCa
   override fun tearDown() {
     runAll(
       { KotlinSdkType.removeKotlinSdkInTests() },
+      { removeAndroidSdks() },
       { super.tearDown() }
     )
+  }
+
+  /**
+   * The Gradle sync creates an Android SDK from the local Android SDK path, and the SDK leak tracker reports it.
+   * The name prefix is `com.android.tools.idea.sdk.AndroidSdks.SDK_NAME_PREFIX`, which this module cannot depend on.
+   */
+  private fun removeAndroidSdks() {
+    invokeAndWaitIfNeeded {
+      runWriteAction {
+        val jdkTable = ProjectJdkTable.getInstance()
+        jdkTable.allJdks
+          .filter { it.name.startsWith(ANDROID_SDK_NAME_PREFIX) }
+          .forEach(jdkTable::removeJdk)
+      }
+    }
   }
 
   protected fun testComposeResourcesProject(test: () -> Unit) {
@@ -60,6 +84,31 @@ abstract class ComposeResourcesCodeInsightTestCase : GradleCodeInsightBaseTestCa
   }
 
   companion object {
+    private var longRunningAndroidThreads: Disposable? = null
+
+    /**
+     * `AdbLibApplicationService` starts these application-scoped threads when the project opens. They outlive each
+     * test, and the thread leak tracker reports them as leaks.
+     *
+     * `ThreadLeakTracker.longRunningThreadCreated` writes the prefixes into a static set, and it removes them when
+     * the parent disposable dies. The parent is therefore a disposable of this class: it lives through every
+     * per-test leak check, and it does not hide a leak of `InnocuousThread-` from a later test class.
+     */
+    @JvmStatic
+    @BeforeAll
+    fun registerLongRunningAndroidThreads() {
+      longRunningAndroidThreads = Disposer.newDisposable("ComposeResourcesLongRunningAndroidThreads").also {
+        ThreadLeakTracker.longRunningThreadCreated(it, "AndroidAdbSessionHost", "InnocuousThread-")
+      }
+    }
+
+    @JvmStatic
+    @AfterAll
+    fun unregisterLongRunningAndroidThreads() {
+      longRunningAndroidThreads?.let(Disposer::dispose)
+      longRunningAndroidThreads = null
+    }
+
     private const val COMPOSE_RESOURCES_PROJECT_NAME = "ComposeResources"
 
     private val COMPOSE_RESOURCES_PROJECT = GradleTestFixtureBuilder.create(COMPOSE_RESOURCES_PROJECT_NAME) {
@@ -113,5 +162,7 @@ abstract class ComposeResourcesCodeInsightTestCase : GradleCodeInsightBaseTestCa
       relativeNames.none { it == "build" || it in GENERATED_TEST_DATA_ROOT_NAMES }
 
     private val GENERATED_TEST_DATA_ROOT_NAMES = setOf(".gradle", ".idea", ".kotlin")
+
+    private const val ANDROID_SDK_NAME_PREFIX = "Android "
   }
 }
