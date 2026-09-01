@@ -41,10 +41,12 @@ class AnalysisConfig(
     val headLimit: Int = 100,
     val tailLimit: Int = 25,
     val smartIndent: Boolean = true,
-    val showSize: Boolean = true
+    val showSize: Boolean = true,
+    val useMergedNominatedClassesReport: Boolean = false
   ) {
     companion object {
-      fun default(): TreeDisplayOptions = TreeDisplayOptions()
+      // The default options are used for nominated classes. Other reports keep their existing path selection.
+      fun default(): TreeDisplayOptions = TreeDisplayOptions(minimumPaths = 3, useMergedNominatedClassesReport = true)
       fun all(smartIndent: Boolean = true,
               showSize: Boolean = true): TreeDisplayOptions =
         TreeDisplayOptions(minimumObjectSize = 0,

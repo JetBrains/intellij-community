@@ -22,14 +22,11 @@ import java.nio.channels.FileChannel
 @ApiStatus.Internal
 class FileBackedIntList(private val buffer: ByteBuffer) : IntList {
 
-  override operator fun get(index: Int): Int {
-    buffer.position(index * 4)
-    return buffer.int
-  }
+  // Absolute reads and writes keep the buffer position unchanged, so concurrent reads are safe.
+  override operator fun get(index: Int): Int = buffer.getInt(index * 4)
 
   override operator fun set(index: Int, value: Int) {
-    buffer.position(index * 4)
-    buffer.putInt(value)
+    buffer.putInt(index * 4, value)
   }
 
   companion object {

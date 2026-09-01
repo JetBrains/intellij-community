@@ -38,6 +38,7 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import it.unimi.dsi.fastutil.longs.LongArrayList
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.PrintWriter
@@ -137,21 +138,62 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
       appendLine()
     }
 
+    if (perClassOptions.treeDisplayOptions.useMergedNominatedClassesReport) {
+      appendMergedNominatedClassesReport(progress)
+    }
+    else {
+      appendLegacyNominatedClassReports(progress)
+    }
+    progress.fraction = 1.0
+  }
+
+  private fun StringBuilder.appendMergedNominatedClassesReport(progress: PartialProgressIndicator) {
+    val perClassOptions = config.perClassOptions
     val nav = analysisContext.navigator
+    // One tree merges shared root paths and reports each root once.
+    val referenceRegistry = GCRootPathsTree(analysisContext, perClassOptions.treeDisplayOptions, null)
+    val stopwatch = Stopwatch.createStarted()
+    var totalNominatedObjectCount = 0
+    var hasNominatedClass = false
     var counter = 0
-    val nominatedClassNames = config.perClassOptions.classNames
+
+    perClassOptions.classNames.forEach { className ->
+      val classDefinition = nav.classStore.getClassIfExists(className) ?: return@forEach
+      val set = nominatedInstances[classDefinition]!!
+      hasNominatedClass = true
+      progress.fraction = counter.toDouble() / nominatedInstances.size
+      progress.text2 = DiagnosticBundle.message("hprof.analysis.progress", set.size, classDefinition.prettyName)
+      totalNominatedObjectCount += set.size
+      referenceRegistry.registerObjectsOfClass(set, classDefinition)
+      set.clear()
+      counter++
+    }
+
+    if (hasNominatedClass) {
+      appendLine("CLASS: all nominated classes ($totalNominatedObjectCount objects)")
+      append(referenceRegistry.printTree())
+      if (config.metaInfoOptions.include) {
+        appendLine("Report for all nominated classes created in $stopwatch")
+      }
+      appendLine()
+    }
+  }
+
+  private fun StringBuilder.appendLegacyNominatedClassReports(progress: PartialProgressIndicator) {
+    val perClassOptions = config.perClassOptions
+    val nav = analysisContext.navigator
     val stopwatch = Stopwatch.createUnstarted()
-    nominatedClassNames.forEach { className ->
+    var counter = 0
+
+    perClassOptions.classNames.forEach { className ->
       val classDefinition = nav.classStore.getClassIfExists(className) ?: return@forEach
       val set = nominatedInstances[classDefinition]!!
       progress.fraction = counter.toDouble() / nominatedInstances.size
       progress.text2 = DiagnosticBundle.message("hprof.analysis.progress", set.size, classDefinition.prettyName)
       stopwatch.reset().start()
       appendLine("CLASS: ${classDefinition.prettyName} (${set.size} objects)")
-      val referenceRegistry = GCRootPathsTree(analysisContext, perClassOptions.treeDisplayOptions, classDefinition)
-      set.forEach { objectId ->
-        referenceRegistry.registerObject(objectId)
-      }
+      val referenceRegistry = GCRootPathsTree(analysisContext, perClassOptions.treeDisplayOptions, null)
+      referenceRegistry.registerObjectsOfClass(set, classDefinition)
       set.clear()
       append(referenceRegistry.printTree())
       if (config.metaInfoOptions.include) {
@@ -160,7 +202,6 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
       appendLine()
       counter++
     }
-    progress.fraction = 1.0
   }
 
   private fun prepareHistogramSection(): String {
@@ -205,6 +246,11 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
     val sizesList = analysisContext.sizesList
     val visitedList = analysisContext.visitedList
     val refIndexList = analysisContext.refIndexList
+
+    val classIndexList = analysisContext.classIndexList
+    val indexedClasses = analysisContext.indexedClasses
+    val classToIndex = Object2IntOpenHashMap<ClassDefinition>()
+    indexedClasses.clear()
 
     val roots = nav.createRootsIterator()
     nominatedInstances.clear()
@@ -304,6 +350,16 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
 
         visitedInstancesCount++
         nominatedInstances[currentObjectClass]?.add(id)
+
+        if (classIndexList != null) {
+          var classIndex = classToIndex.getInt(currentObjectClass)
+          if (classIndex == 0) {
+            indexedClasses.add(currentObjectClass)
+            classIndex = indexedClasses.size
+            classToIndex.put(currentObjectClass, classIndex)
+          }
+          classIndexList[id] = classIndex
+        }
 
         var isLeaf = true
         nav.copyReferencesTo(references)

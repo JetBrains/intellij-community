@@ -107,7 +107,7 @@ class ObjectNavigatorOnAuxFiles(
       return
     }
     if (classDefinition.isPrimitiveArray()) {
-      preloadPrimitiveArray()
+      preloadPrimitiveArray(referenceResolution)
       return
     }
     if (classDefinition.isArray()) {
@@ -157,8 +157,13 @@ class ObjectNavigatorOnAuxFiles(
     return extraData
   }
 
-  private fun preloadPrimitiveArray() {
+  private fun preloadPrimitiveArray(referenceResolution: ReferenceResolution) {
     arraySize = readNonNegativeLEB128Int(aux)
+    // A size query does not need the array content.
+    if (referenceResolution == ReferenceResolution.NO_REFERENCES) {
+      arrayData = null
+      return
+    }
     val size = Type.getType(getClass().name).size
     arrayData = ByteArray(arraySize * size)
     aux.get(arrayData)

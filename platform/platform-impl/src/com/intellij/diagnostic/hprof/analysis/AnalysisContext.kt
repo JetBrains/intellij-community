@@ -15,6 +15,7 @@
  */
 package com.intellij.diagnostic.hprof.analysis
 
+import com.intellij.diagnostic.hprof.classstore.ClassDefinition
 import com.intellij.diagnostic.hprof.classstore.ClassStore
 import com.intellij.diagnostic.hprof.histogram.Histogram
 import com.intellij.diagnostic.hprof.navigator.ObjectNavigator
@@ -23,6 +24,7 @@ import com.intellij.diagnostic.hprof.util.UByteList
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.longs.LongArrayList
+import java.util.BitSet
 
 class AnalysisContext(
   val navigator: ObjectNavigator,
@@ -37,4 +39,20 @@ class AnalysisContext(
   val disposedObjectsIDs: IntOpenHashSet = IntOpenHashSet()
   val disposerParentToChildren: Long2ObjectOpenHashMap<LongArrayList> = Long2ObjectOpenHashMap<LongArrayList>()
   var disposerTreeObjectId: Int = 0
+
+  // Optional class cache filled during the traverse: object id -> 1-based index into indexedClasses.
+  // Zero means "not recorded". GCRootPathsTree falls back to the navigator when the cache is absent.
+  var classIndexList: IntList? = null
+  val indexedClasses: ArrayList<ClassDefinition> = ArrayList()
+
+  // Bitmap view of disposedObjectsIDs for the per-path-element checks in GCRootPathsTree.
+  // Initialize it on the first use, after AnalyzeDisposer fills the set.
+  val disposedObjectsBits: BitSet by lazy {
+    val bits = BitSet(navigator.instanceCount.toInt() + 1)
+    val iterator = disposedObjectsIDs.iterator()
+    while (iterator.hasNext()) {
+      bits.set(iterator.nextInt())
+    }
+    bits
+  }
 }

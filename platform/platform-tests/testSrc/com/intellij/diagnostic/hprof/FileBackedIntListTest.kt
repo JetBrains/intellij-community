@@ -61,7 +61,7 @@ class FileBackedIntListTest {
     assertEquals(list[2], 0)
   }
 
-  @Test(expected = java.nio.BufferUnderflowException::class)
+  @Test(expected = IndexOutOfBoundsException::class)
   fun getOutOfBounds() {
     list[10]
   }

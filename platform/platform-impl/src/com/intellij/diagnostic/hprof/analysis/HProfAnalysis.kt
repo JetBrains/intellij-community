@@ -22,6 +22,7 @@ import com.intellij.diagnostic.hprof.histogram.Histogram
 import com.intellij.diagnostic.hprof.navigator.ObjectNavigator
 import com.intellij.diagnostic.hprof.parser.HProfEventBasedParser
 import com.intellij.diagnostic.hprof.util.FileBackedIntList
+import com.intellij.diagnostic.hprof.util.FileBackedObjectMetaList
 import com.intellij.diagnostic.hprof.util.FileBackedUByteList
 import com.intellij.diagnostic.hprof.util.FileBackedUShortList
 import com.intellij.diagnostic.hprof.util.HeapReportUtils.sectionHeader
@@ -144,12 +145,15 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
         return prepareSimplifiedReport(result, histogram)
       }
 
+      // The interleaved records keep the per-object fields of one GC path step on one page.
+      if (!FileBackedObjectMetaList.isSupported(navigator.instanceCount + 1)) {
+        return prepareSimplifiedReport(result, histogram)
+      }
+
       prepareFilesStopwatch.stop()
 
-      val parentList = fileBackedListProvider.createIntList("parents", navigator.instanceCount + 1)
-      val sizesList = fileBackedListProvider.createIntList("sizes", navigator.instanceCount + 1)
+      val objectMetaList = FileBackedObjectMetaList.createEmpty(openTempEmptyFileChannel("objectMeta"), navigator.instanceCount + 1)
       val visitedList = fileBackedListProvider.createIntList("visited", navigator.instanceCount + 1)
-      val refIndexList = fileBackedListProvider.createUByteList("refIndex", navigator.instanceCount + 1)
 
       analysisStopwatch.start()
 
@@ -162,12 +166,13 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
       val analysisContext = AnalysisContext(
         navigator,
         analysisConfig,
-        parentList,
-        sizesList,
+        objectMetaList.parentList,
+        objectMetaList.sizesList,
         visitedList,
-        refIndexList,
+        objectMetaList.refIndexList,
         histogram
       )
+      analysisContext.classIndexList = objectMetaList.classIndexList
 
       val analysisReport = analysisCallback(analysisContext, fileBackedListProvider, PartialProgressIndicator(progress, 0.4, 0.4))
       if (analysisReport.isNotBlank()) {
