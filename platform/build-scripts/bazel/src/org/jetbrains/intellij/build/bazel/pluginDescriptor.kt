@@ -47,33 +47,6 @@ internal class PluginDescriptor(
   @JvmField val retainProductDescriptor: Boolean,
 )
 
-/** The population the plan generator states; see [readPluginDescriptorPopulation]. */
-internal const val PLUGIN_DESCRIPTOR_POPULATION_FILE_NAME: String = "dev_dist_plugin_descriptor_population.txt"
-
-/**
- * Which layout variants a descriptor target exists for, by plugin main module.
- *
- * One `<main module>` or `<main module>/<variant>` per line, and a `#` line is a comment. The empty string is the
- * variant of a plugin whose one layout serves every platform.
- *
- * Fail-open on an absent file: an empty map emits no descriptor target anywhere, and a checkout whose plan generator
- * has never run is exactly the case that must still convert.
- */
-internal fun readPluginDescriptorPopulation(file: Path): Map<String, List<String>> {
-  if (!file.exists()) {
-    return emptyMap()
-  }
-  val result = LinkedHashMap<String, MutableList<String>>()
-  for (raw in file.readText().lineSequence()) {
-    val line = raw.trim()
-    if (line.isEmpty() || line.startsWith('#')) {
-      continue
-    }
-    result.computeIfAbsent(line.substringBefore('/')) { ArrayList() }.add(line.substringAfter('/', ""))
-  }
-  return result
-}
-
 /**
  * One section of a plugin's descriptor residue - what the convention does not give about one (plugin, layout variant).
  *

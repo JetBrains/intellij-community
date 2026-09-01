@@ -197,18 +197,25 @@ internal class BazelBuildFileGenerator(
   private val moduleToDescriptor = IdentityHashMap<JpsModule, ModuleDescriptor>()
 
   /**
+   * The three tables `plugin-model-tool` hands this run; see [PLUGIN_MODEL_TABLES_FILE_NAME].
+   *
+   * One read, because they are one file. Under `community/build/` in both kinds of checkout, so a community-only run
+   * reads the same rows and never matches one naming a plugin it does not have.
+   */
+  private val devDistPluginModelTables: DevDistPluginModelTables by lazy {
+    readDevDistPluginModelTables((ultimateRoot?.resolve("community") ?: communityRoot).resolve("build/$PLUGIN_MODEL_TABLES_FILE_NAME"))
+  }
+
+  /**
    * The candidacy answers a run cannot fold for itself, by module name; see
-   * [PLUGIN_CONTENT_CANDIDATE_OVERRIDES_FILE_NAME].
+   * [DevDistPluginModelTables.contentCandidateOverrides].
    *
    * Only a community-only run needs them, and only for the handful of community modules whose deciding report is in
    * ultimate. An ultimate run folds the same answer out of the reports it can see, so reading them unconditionally
    * changes nothing there and keeps the two runs on one code path.
    */
-  private val pluginContentCandidateOverrides: Map<String, Set<String>?> by lazy {
-    readPluginContentCandidateOverrides(
-      (ultimateRoot?.resolve("community") ?: communityRoot).resolve("build/$PLUGIN_CONTENT_CANDIDATE_OVERRIDES_FILE_NAME")
-    )
-  }
+  private val pluginContentCandidateOverrides: Map<String, Set<String>?>
+    get() = devDistPluginModelTables.contentCandidateOverrides
 
   /**
    * Module names a `content_module_jar` refusal was already reported for.
@@ -227,28 +234,19 @@ internal class BazelBuildFileGenerator(
   }
 
   /**
-   * The layout variants a `dev_dist_plugin_descriptor` target exists for, by plugin main module.
-   *
-   * The population is a product question, and 490 of this project's modules are a plugin main module with a checked-in
-   * content report while 163 of them are bundled by `idea`. So the plan generator states the population, and this reads
-   * it - see `PLUGIN_DESCRIPTOR_POPULATION_FILE_NAME`. A plain text file for the reason
-   * `dev_dist_plugin_content_vetoes.txt` is one.
-   *
-   * A community-only checkout reads the same file and never matches a line naming a plugin it does not have, which is
-   * the verdict the community half of an ultimate checkout reaches too.
+   * The layout variants a `dev_dist_plugin_descriptor` target exists for, by plugin main module; see
+   * [DevDistPluginModelTables.descriptorPopulation].
    */
-  val pluginDescriptorPopulation: Map<String, List<String>> by lazy {
-    readPluginDescriptorPopulation(
-      (ultimateRoot?.resolve("community") ?: communityRoot).resolve("build/$PLUGIN_DESCRIPTOR_POPULATION_FILE_NAME")
-    )
-  }
+  val pluginDescriptorPopulation: Map<String, List<String>>
+    get() = devDistPluginModelTables.descriptorPopulation
 
   /**
    * The modules a `dev_dist_plugin` states content for; see [readPluginContentPopulation].
    *
    * The counterpart of [pluginDescriptorPopulation] for the content leaf, and the one signal for whether a plugin gets
-   * one. An absent file states no plugin at all, so a hermetic run has to be handed it -
-   * `@community//build:dev_dist_plugin_content_tables` is what names it.
+   * one. Its own file, because its producer is this converter's residue-writing run and not `plugin-model-tool`. An
+   * absent file states no plugin at all, so a hermetic run has to be handed it -
+   * `@community//build:dev_dist_plugin_tables` is what names it, together with [PLUGIN_MODEL_TABLES_FILE_NAME].
    */
   val pluginContentPopulation: Set<String> by lazy {
     readPluginContentPopulation(
@@ -257,15 +255,8 @@ internal class BazelBuildFileGenerator(
   }
 
   /** Product/plugin layout transformations that make a raw module-output jar ineligible for direct handoff. */
-  val pluginContentModuleJarVetoes: Set<String> by lazy {
-    val file = (ultimateRoot?.resolve("community") ?: communityRoot).resolve("build/dev_dist_plugin_content_vetoes.txt")
-    if (Files.exists(file)) {
-      Files.readAllLines(file).asSequence().map(String::trim).filter { it.isNotEmpty() && !it.startsWith('#') }.toSet()
-    }
-    else {
-      emptySet()
-    }
-  }
+  val pluginContentModuleJarVetoes: Set<String>
+    get() = devDistPluginModelTables.contentModuleJarVetoes
 
   fun getKnownModuleDescriptorOrError(module: JpsModule): ModuleDescriptor {
     return moduleToDescriptor.get(module) ?: error("No descriptor for module ${module.name}")

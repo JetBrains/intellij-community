@@ -277,7 +277,7 @@ private const val POPULATION_HEADER: String = """# Generated - do not edit.
 # in `dev-dist.yaml`.
 #
 # The layout variant is not here. A plugin's membership does not depend on it, which is what separates this
-# file from `dev_dist_plugin_descriptor_population.txt`.
+# file from the `descriptor_population` section of `dev_dist_plugin_model_tables.txt`.
 """
 
 /** What one [writeDevDistResidues] pass did, so a caller can print the population the arc pays for. */

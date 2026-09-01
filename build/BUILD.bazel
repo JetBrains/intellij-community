@@ -27,29 +27,29 @@ exports_files(
 
 jps_library_derivation_pipeline_test_suite(name = "jps_library_derivation_pipeline_test")
 
-# What the JPS-to-Bazel converter reads besides the project model: which plugins get a content leaf at all, the layout
-# exclusions that make a module output unpackable, and the candidacy a community-only checkout cannot fold for itself.
-# A hermetic run that does not materialize them is not the checkout run - it silently decides all three questions the
-# other way - so both targets-json generators name this group.
+# Every table the JPS-to-Bazel converter reads besides the project model: which plugins get a content leaf at all,
+# which (plugin, layout variant) gets a descriptor leaf, the layout exclusions that make a module output unpackable,
+# and the candidacy a community-only checkout cannot fold for itself.
 #
-# The population is the one that decides whether a plugin gets a leaf. Without it a hermetic run states content for no
-# plugin, `contentTarget` empties for every one of them, and the dev-distribution plan then declares one input less per
-# plugin than its assembly reads.
+# One group, because a hermetic run that does not materialize a table is not the checkout run - it decides that
+# table's question the other way, in silence. The content population was such a table: the run answered the
+# population question from the checked-in reports for months, and the shrink looked like the intended shrink. So
+# both targets-json generators name this one group, and a new table joins a file that is already here.
+#
+# Two files, split by producer. `plugin-model-tool` states the three tables of `dev_dist_plugin_model_tables.txt`,
+# one section each. The converter's own residue-writing run states the population, off a distribution build's
+# `content-report.zip`, and `plugin-model-tool` only reads it. One writer per file is what keeps a
+# `plugin-model-tool` run from ever stating a population it cannot derive.
+#
+# The population is the table that decides whether a plugin gets a leaf. Without it a hermetic run states content for
+# no plugin, `contentTarget` empties for every one of them, and the dev-distribution plan then declares one input
+# less per plugin than its assembly reads.
 filegroup(
-    name = "dev_dist_plugin_content_tables",
+    name = "dev_dist_plugin_tables",
     srcs = [
-        "dev_dist_plugin_content_candidate_overrides.txt",
         "dev_dist_plugin_content_population.txt",
-        "dev_dist_plugin_content_vetoes.txt",
+        "dev_dist_plugin_model_tables.txt",
     ],
-    visibility = ["//visibility:public"],
-)
-
-# What the converter reads to decide which plugins get a `dev_dist_plugin_descriptor` target. A hermetic run that does
-# not materialize it emits no such target at all, so both targets-json generators name this group.
-filegroup(
-    name = "dev_dist_plugin_descriptor_tables",
-    srcs = ["dev_dist_plugin_descriptor_population.txt"],
     visibility = ["//visibility:public"],
 )
 
@@ -70,8 +70,7 @@ label_flag(
 jps_to_bazel_targets_json(
     name = "community_bazel_targets_json",
     srcs = [
-               ":dev_dist_plugin_content_tables",
-               ":dev_dist_plugin_descriptor_tables",
+               ":dev_dist_plugin_tables",
                "//:jps_to_bazel_community_model_root_files",
            ] + ALL_COMMUNITY_IML_TARGETS + ALL_COMMUNITY_MODULE_DESCRIPTOR_TARGETS +
            ALL_COMMUNITY_DEV_DIST_RESIDUE_FILES + ALL_COMMUNITY_CONTENT_MODULE_RECIPE_FILES,

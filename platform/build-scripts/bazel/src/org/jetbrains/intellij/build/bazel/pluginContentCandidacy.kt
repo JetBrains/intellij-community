@@ -55,7 +55,7 @@ internal class DerivedPluginCandidacy(
  * Three inputs of the original are `PluginLayout` state and stay out: `modulesWithCustomPath`, the frontend module
  * filter, and `getModulesWithExcludedModuleLibraries`. Evaluating a product layout is the work this generator exists to
  * keep out of a fragment action, so where one of those decides, the answer is stated rather than derived - see
- * [PLUGIN_CONTENT_CANDIDATE_OVERRIDES_FILE_NAME].
+ * [DevDistPluginModelTables.contentCandidateOverrides].
  *
  * Fail closed. A member whose descriptor this cannot read is vetoed rather than offered, because an offered jar that the
  * distribution does not pack goes missing and is noticed at class-load time. A plugin with no `META-INF/plugin.xml` of
@@ -307,7 +307,8 @@ private fun reportCandidacyLibraryDisagreement(moduleName: String, first: Set<St
  * ADR 0007 rule 4. The fold is a repo-global AND, so a checkout holding only the community half reaches a different
  * verdict for a community module the ultimate half has an opinion about - and the converter writes the same attributes
  * in both, which is what `Assert Bazel Files Are In Sync With JPS Model (Community Only)` fails on.
- * `dev_dist_plugin_content_candidate_overrides.txt` is the correction, and this is the answer that file has to state.
+ * The `$CONTENT_CANDIDATE_OVERRIDES_SECTION` section of `$PLUGIN_MODEL_TABLES_FILE_NAME` is the correction, and this is
+ * the answer that section has to state.
  *
  * The row is the answer of the **ultimate** run, which is also the global answer: `-M` means some plugin outside
  * `community/` vetoes M, and `+M` plus a sorted library list means the plugins that offer M are all outside `community/`
@@ -349,7 +350,7 @@ internal fun communityOnlyCandidacyOverrideRows(moduleList: ModuleList): List<St
       // two libraries, so the writer refuses it rather than the reader mis-splitting it. No library name in the
       // repository holds a space today.
       check(library.isNotEmpty() && !library.any(Char::isWhitespace)) {
-        "A library name with whitespace cannot be recorded in $PLUGIN_CONTENT_CANDIDATE_OVERRIDES_FILE_NAME:" +
+        "A library name with whitespace cannot be recorded in $PLUGIN_MODEL_TABLES_FILE_NAME:" +
         " `$library` of $name"
       }
     }

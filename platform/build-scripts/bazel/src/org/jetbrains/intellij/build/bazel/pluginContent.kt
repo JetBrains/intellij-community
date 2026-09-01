@@ -101,13 +101,17 @@ internal const val PLUGIN_CONTENT_POPULATION_FILE_NAME: String = "dev_dist_plugi
  * Which modules are a plugin main module the dev distribution states content for, one name per line.
  *
  * A `#` line is a comment. Flat names, no variant: a plugin's membership does not depend on the layout variant, which is
- * the one thing that separates this file from `dev_dist_plugin_descriptor_population.txt`. Two files rather than two
- * meanings per line, because the two populations differ - 516 plugins state content and 173 state a descriptor.
+ * the one thing that separates this file from the descriptor population. Two statements rather than two meanings per
+ * line, because the two populations differ - 516 plugins state content and 173 state a descriptor.
+ *
+ * Its own file, and not a section of [PLUGIN_MODEL_TABLES_FILE_NAME], because its producer is not that file's producer.
+ * The residue-writing run of this converter states it, and `plugin-model-tool` only reads it. One writer per file is
+ * what keeps a `plugin-model-tool` run from ever stating a population it cannot derive.
  *
  * The converter needs the population and cannot fold it for itself. Whether a module is a plugin main module is a
- * **product** question. A plain text file for the reason [PLUGIN_CONTENT_CANDIDATE_OVERRIDES_FILE_NAME] gives: it keeps
- * this reader independent of Starlark. Under `community/build/`, so a community-only checkout reads the same file; a line
- * naming a plugin that checkout does not have is a line it never matches.
+ * **product** question. A plain text file for the reason [PLUGIN_MODEL_TABLES_FILE_NAME] gives: it keeps this reader
+ * independent of Starlark. Under `community/build/`, so a community-only checkout reads the same file; a line naming a
+ * plugin that checkout does not have is a line it never matches.
  *
  * An absent file gives an empty population, and then this run states content for no plugin at all. The generator's own
  * integration tests each build a throwaway project and check in a population file of their own.
