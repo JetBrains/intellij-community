@@ -27,8 +27,10 @@ import com.intellij.platform.util.progress.reportProgressScope
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.util.execution.ParametersListUtil
 import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonArray
@@ -209,19 +211,23 @@ class UniversalToolset : McpToolset {
       throw e
     }
     finally {
-      val callInfo = currentCoroutineContext().mcpCallInfo
-      McpServerCounterUsagesCollector.logMcpToolCall(
-        descriptor = tool.descriptor,
-        outcome = outcome,
-        durationMs = callMark.elapsedNow().inWholeMilliseconds,
-        invocationMode = McpToolCallInvocationMode.VIA_ROUTER,
-        launchOrigin = launchOriginOf(callInfo.mcpSessionOptions),
-        clientName = callInfo.clientInfo.name,
-        transportType = null,
-        argumentBytes = jsonArgs.toString().length,
-        // Absent when the call threw: there is no result to size, which is not the same as a result of size zero.
-        resultBytes = resultBytes,
-      )
+      // The call can end by cancellation, so report from a non-cancellable context. A cancelled context would
+      // fail the context read and drop the row.
+      withContext(NonCancellable) {
+        val callInfo = currentCoroutineContext().mcpCallInfo
+        McpServerCounterUsagesCollector.logMcpToolCall(
+          descriptor = tool.descriptor,
+          outcome = outcome,
+          durationMs = callMark.elapsedNow().inWholeMilliseconds,
+          invocationMode = McpToolCallInvocationMode.VIA_ROUTER,
+          launchOrigin = launchOriginOf(callInfo.mcpSessionOptions),
+          clientName = callInfo.clientInfo.name,
+          transportType = null,
+          argumentBytes = jsonArgs.toString().length,
+          // Absent when the call threw: there is no result to size, which is not the same as a result of size zero.
+          resultBytes = resultBytes,
+        )
+      }
     }
   }
 
