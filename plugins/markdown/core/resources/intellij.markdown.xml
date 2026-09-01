@@ -58,6 +58,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <lang.lineWrapStrategy language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownLineWrapPositionStrategy"/>
     <registryKey key="markdown.live.preview.image.max.bytes"
                  defaultValue="4194304"
                  description="Maximum image file size in bytes for Markdown live preview."/>
