@@ -58,6 +58,23 @@ sealed class BaseLayout {
 
   fun hasLibrary(name: String): Boolean = includedProjectLibraries.any { it.libraryName == name }
 
+  /**
+   * The names of the project libraries this layout declares.
+   *
+   * A test that states a classpath from the layout needs the names, and the collection itself is internal. The
+   * accessor answers the names alone, because a name is what a library root lookup takes.
+   */
+  @ApiStatus.Internal
+  fun getIncludedProjectLibraryNames(): List<String> = includedProjectLibraries.map { it.libraryName }
+
+  /**
+   * The module libraries this layout declares, as the library name with the module that owns it.
+   *
+   * See [getIncludedProjectLibraryNames] for why the accessor exists.
+   */
+  @ApiStatus.Internal
+  fun getIncludedModuleLibraryNames(): List<Pair<String, String>> = includedModuleLibraries.map { it.libraryName to it.moduleName }
+
   fun filteredIncludedModuleNames(excludedRelativeJarPath: String, includeFromSubdirectories: Boolean = true): Sequence<String> {
     return _includedModules.asSequence().filter {
       it.relativeOutputFile != excludedRelativeJarPath && (includeFromSubdirectories || !it.relativeOutputFile.contains('/')) 

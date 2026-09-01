@@ -36,6 +36,7 @@ import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
+import org.jetbrains.intellij.build.impl.DistributionBuilderState
 import org.jetbrains.intellij.build.impl.moduleRepository.MODULE_DESCRIPTORS_COMPACT_PATH
 import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
 import org.jetbrains.intellij.build.impl.asArchivedIfNeeded
@@ -60,7 +61,7 @@ import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 
-private data class PackageResult(
+internal data class PackageResult(
   @JvmField val projectHome: Path,
   @JvmField val jpsProject: JpsProject,
   @JvmField val content: ParsedContentReport,
@@ -92,6 +93,13 @@ private data class TargetValidationTask(
 private data class PackagingTask(
   @JvmField val spec: PackagingTargetSpec,
   @JvmField val startSignal: CompletableDeferred<Unit>?,
+  /**
+   * The layout of the target, which the build computes before it packs a jar.
+   *
+   * A packaging task that fails before it computes the layout completes this exceptionally, so a `LAYOUT` validation
+   * aborts instead of waiting for a result that never comes.
+   */
+  @JvmField val layoutDeferred: CompletableDeferred<PackagedLayout>,
   @JvmField val resultDeferred: Deferred<TaskResult<PackageResult>>,
 ) {
   fun start() {
@@ -152,16 +160,46 @@ data class PackagingSuiteValidationSpec(
   @JvmField val validator: PackagingSuiteValidator,
 )
 
+/**
+ * The layout of one target, as the build computed it before it packed a jar.
+ *
+ * A validation that reads it states the content of the distribution from the project model. It therefore runs beside
+ * the packaging of its target, and not after it.
+ */
 @Internal
-data class PackagingTargetValidationContext(
+class PackagedLayout(
+  @JvmField val buildContext: BuildContext,
+  @JvmField val distributionState: DistributionBuilderState,
+)
+
+/**
+ * What a target validation reads, which decides when it can run.
+ *
+ * [LAYOUT] waits for the layout alone, so it overlaps the packaging of its own target. [CONTENT] waits for the
+ * packaged content report, so it runs after the packaging of its target ends.
+ */
+@Internal
+enum class PackagingTargetValidationStage {
+  LAYOUT,
+  CONTENT,
+}
+
+@Internal
+class PackagingTargetValidationContext internal constructor(
   @JvmField val target: PackagingTargetSpec,
   @JvmField val projectHome: Path,
   @JvmField val tempDir: Path,
   @JvmField val project: JpsProject,
   @JvmField val outputProvider: ModuleOutputProvider,
-  @JvmField val runtimeModuleRepository: RuntimeModuleRepository?,
-  @JvmField val content: ParsedContentReport,
-)
+  @JvmField val layout: PackagedLayout,
+  private val packageResultProvider: suspend () -> PackageResult,
+) {
+  /** The content report of the packaged distribution. A [PackagingTargetValidationStage.LAYOUT] validation must not read it. */
+  suspend fun content(): ParsedContentReport = packageResultProvider().content
+
+  /** The runtime module repository of the packaged distribution, or `null` when the build generated none. */
+  suspend fun runtimeModuleRepository(): RuntimeModuleRepository? = packageResultProvider().runtimeModuleRepository
+}
 
 @Internal
 data class PackagingTargetValidationSpec(
@@ -170,6 +208,7 @@ data class PackagingTargetValidationSpec(
   @JvmField val problemMessage: String,
   @JvmField val threshold: Int = Int.MAX_VALUE,
   @JvmField val alwaysCreateSuccessTest: Boolean = true,
+  @JvmField val stage: PackagingTargetValidationStage = PackagingTargetValidationStage.CONTENT,
   @JvmField val validator: PackagingTargetValidator,
 )
 
@@ -633,13 +672,15 @@ private fun createPackagingTasks(
   for (target in spec.targets) {
     val startSignal = if (waitForScheduledStart) CompletableDeferred<Unit>() else null
     val coroutineStart = if (waitForScheduledStart) CoroutineStart.DEFAULT else CoroutineStart.LAZY
+    val layoutDeferred = CompletableDeferred<PackagedLayout>()
     result.add(
       PackagingTask(
         spec = target,
         startSignal = startSignal,
+        layoutDeferred = layoutDeferred,
         resultDeferred = scope.async(start = coroutineStart) {
           startSignal?.await()
-          captureTaskResult {
+          val taskResult = captureTaskResult {
             withTelemetrySpan(
               telemetry = telemetry,
               name = "package target: ${target.id}",
@@ -656,9 +697,13 @@ private fun createPackagingTasks(
                 projectHome = spec.homePath,
                 buildOutputRoot = suiteContext.tempDir.resolve(target.id),
               )
-              computePackageResult(context = context)
+              computePackageResult(context = context, layoutDeferred = layoutDeferred)
             }
           }
+          // the task can fail before it computes the layout, and a LAYOUT validation waits for the layout alone.
+          // `completeExceptionally` does nothing when the layout is there already.
+          taskResult.failure?.let { layoutDeferred.completeExceptionally(it) }
+          taskResult
         },
       )
     )
@@ -727,11 +772,18 @@ private fun createTargetValidationTasks(
               configure = { span ->
                 span.setAttribute("packaging.target.id", validation.targetId)
                 span.setAttribute("packaging.validation.name", validation.name)
+                span.setAttribute("packaging.validation.stage", validation.stage.name)
               },
             ) {
+              val abortMessage = "Target validation '${validation.name}' for ${validation.targetId} skipped because packaging failed"
               val suiteContext = suiteContextDeferred.await()
-              val packageResult = packagingTask.resultDeferred.await()
-                .getOrAbort("Target validation '${validation.name}' for ${validation.targetId} skipped because packaging failed")
+              val layout = packagingTask.layoutDeferred.awaitOrAbort(abortMessage)
+              val packageResultProvider: suspend () -> PackageResult = {
+                packagingTask.resultDeferred.await().getOrAbort(abortMessage)
+              }
+              if (validation.stage == PackagingTargetValidationStage.CONTENT) {
+                packageResultProvider()
+              }
               spanBuilder("run target validation: ${validation.targetId} ${validation.name}").use {
                 val validationTempDir = suiteContext.tempDir
                   .resolve("target-validation")
@@ -741,12 +793,12 @@ private fun createTargetValidationTasks(
                 validation.validator(
                   PackagingTargetValidationContext(
                     target = packagingTask.spec,
-                    projectHome = packageResult.projectHome,
+                    projectHome = layout.buildContext.paths.projectHome,
                     tempDir = validationTempDir,
-                    project = packageResult.jpsProject,
+                    project = layout.buildContext.project,
                     outputProvider = suiteContext.compilationContext.outputProvider,
-                    runtimeModuleRepository = packageResult.runtimeModuleRepository,
-                    content = packageResult.content,
+                    layout = layout,
+                    packageResultProvider = packageResultProvider,
                   )
                 )
               }
@@ -810,6 +862,26 @@ private fun <T> TaskResult<T>.getOrThrow(): T {
     throw failure
   }
   return requireNotNull(value)
+}
+
+/**
+ * The layout, or an abort with [message] when the packaging failed before it computed one.
+ *
+ * It mirrors [getOrAbort], which does the same for the packaged result.
+ */
+private suspend fun CompletableDeferred<PackagedLayout>.awaitOrAbort(message: String): PackagedLayout {
+  try {
+    return await()
+  }
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: TestAbortedException) {
+    throw e
+  }
+  catch (e: Throwable) {
+    throw TestAbortedException(message, e)
+  }
 }
 
 private fun <T> TaskResult<T>.getOrAbort(message: String): T {
@@ -905,7 +977,7 @@ private fun createDerivedBuildContext(
   )
 }
 
-private suspend fun computePackageResult(context: BuildContext): PackageResult {
+private suspend fun computePackageResult(context: BuildContext, layoutDeferred: CompletableDeferred<PackagedLayout>): PackageResult {
   return doRunTestBuild(
     context = context,
     writeTelemetry = false,
@@ -913,6 +985,9 @@ private suspend fun computePackageResult(context: BuildContext): PackageResult {
     checkThatBundledPluginInFrontendArePresent = false,
     traceSpanName = context.productProperties.baseFileName,
     build = { buildContext ->
+      // the state is a suspending lazy of the build context, so `buildDistributions` reuses this one.
+      val distributionState = spanBuilder("compute distribution state").use { buildContext.distributionState() }
+      layoutDeferred.complete(PackagedLayout(buildContext = buildContext, distributionState = distributionState))
       buildDistributions(buildContext)
       PackageResult(
         content = spanBuilder("read content report").use {

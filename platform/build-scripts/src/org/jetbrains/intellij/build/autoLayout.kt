@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.xml.dom.readXmlAsModel
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.impl.BUILT_IN_HELP_MODULE_NAME
 import org.jetbrains.intellij.build.impl.DescriptorCacheWriter
 import org.jetbrains.intellij.build.impl.JarPackager
@@ -23,9 +24,46 @@ internal suspend fun inferModuleSources(
   context: BuildContext,
 ) {
   val frontendModuleFilter = context.getFrontendModuleFilter()
+  val children = inferredAutoLayoutChildren(
+    layout = layout,
+    directDependencies = helper.getModuleDependencies(layout.mainModule),
+    addedModules = addedModules,
+    platformLayout = platformLayout,
+    pluginLayouts = context.productProperties.productLayout.pluginLayouts,
+  )
+  for (name in children) {
+    val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = getDefaultJarName(layout, name, frontendModuleFilter), reason = "<- ${layout.mainModule}")
+    jarPackager.computeSourcesForModule(item = moduleItem, layout = layout, searchableOptionSet = searchableOptionSet)
+  }
+}
+
+/**
+ * The extra modules an `auto` plugin layout takes, in the order the assembly packs them.
+ *
+ * The one owner of the rule. The assembly asks through [inferModuleSources], and a test that states a plugin classpath
+ * from the project model asks before the assembly runs. A second spelling of the rule would drift, and the two answers
+ * would then disagree about the classpath of every `auto` plugin.
+ *
+ * The rule reads the direct production dependencies of the main module. It takes a module whose name starts with the
+ * main module name without the `.plugin` suffix, and it drops a module the platform or another plugin layout already
+ * packs.
+ *
+ * [addedModules] holds the modules the caller packs already, and the function adds each candidate it reads. The
+ * assembly puts the plugin content modules and the layout members there. A caller that reads no plugin descriptor
+ * passes the layout members alone, so it can name a content module of the same plugin.
+ */
+@Internal
+fun inferredAutoLayoutChildren(
+  layout: PluginLayout,
+  directDependencies: Sequence<String>,
+  addedModules: MutableSet<String>,
+  platformLayout: PlatformLayout,
+  pluginLayouts: Collection<PluginLayout>,
+): List<String> {
   // for now, check only direct dependencies of the main plugin module
   val childPrefix = "${layout.mainModule.removeSuffix(".plugin")}."
-  for (name in helper.getModuleDependencies(layout.mainModule)) {
+  val result = ArrayList<String>()
+  for (name in directDependencies) {
     if (!name.startsWith(childPrefix)) {
       continue
     }
@@ -34,13 +72,13 @@ internal suspend fun inferModuleSources(
       continue
     }
 
-    val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = getDefaultJarName(layout, name, frontendModuleFilter), reason = "<- ${layout.mainModule}")
-    if (isIncludedIntoAnotherPlugin(platformLayout = platformLayout, moduleItem = moduleItem, layout = layout, moduleName = name, context = context)) {
+    if (isIncludedIntoAnotherPlugin(platformLayout = platformLayout, layout = layout, moduleName = name, pluginLayouts = pluginLayouts)) {
       continue
     }
 
-    jarPackager.computeSourcesForModule(item = moduleItem, layout = layout, searchableOptionSet = searchableOptionSet)
+    result.add(name)
   }
+  return result
 }
 
 internal suspend fun computeModuleSourcesByContent(
@@ -264,11 +302,15 @@ private fun getDefaultJarName(layout: PluginLayout, moduleName: String, frontend
   }
 }
 
-private fun isIncludedIntoAnotherPlugin(platformLayout: PlatformLayout, moduleItem: ModuleItem, layout: PluginLayout, moduleName: String, context: BuildContext): Boolean {
+private fun isIncludedIntoAnotherPlugin(
+  platformLayout: PlatformLayout,
+  layout: PluginLayout,
+  moduleName: String,
+  pluginLayouts: Collection<PluginLayout>,
+): Boolean {
   return when {
-    platformLayout.includedModules.contains(moduleItem) -> true
     platformLayout.includedModules.any { it.moduleName == moduleName } -> true
-    else -> context.productProperties.productLayout.pluginLayouts.any { otherPluginLayout ->
+    else -> pluginLayouts.any { otherPluginLayout ->
       otherPluginLayout !== layout && otherPluginLayout.includedModules.any { it.moduleName == moduleName }
     }
   }
