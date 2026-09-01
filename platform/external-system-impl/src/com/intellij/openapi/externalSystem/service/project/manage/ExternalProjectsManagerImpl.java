@@ -90,28 +90,34 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
     myRunManagerListener = new ExternalSystemRunManagerListener(this);
     myWatcher = new ExternalSystemProjectsWatcherImpl(myProject);
 
-    ApplicationManager.getApplication().getMessageBus().connect(coroutineScope)
-      .subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
-        @Override
-        public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-          Set<ProjectSystemId> availableES = new HashSet<>();
-          for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemManager.EP_NAME.getExtensionList()) {
-            ProjectSystemId id = manager.getSystemId();
-            availableES.add(id);
-          }
+    try {
+      ApplicationManager.getApplication().getMessageBus().connect(coroutineScope)
+        .subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+          @Override
+          public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+            Set<ProjectSystemId> availableES = new HashSet<>();
+            for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemManager.EP_NAME.getExtensionList()) {
+              ProjectSystemId id = manager.getSystemId();
+              availableES.add(id);
+            }
 
-          Iterator<ExternalProjectsView> iterator = myProjectsViews.iterator();
-          while (iterator.hasNext()) {
-            ExternalProjectsView view = iterator.next();
-            if (!availableES.contains(view.getSystemId())) {
-              iterator.remove();
-            }
-            if (view instanceof Disposable) {
-              Disposer.dispose((Disposable)view);
+            Iterator<ExternalProjectsView> iterator = myProjectsViews.iterator();
+            while (iterator.hasNext()) {
+              ExternalProjectsView view = iterator.next();
+              if (!availableES.contains(view.getSystemId())) {
+                iterator.remove();
+              }
+              if (view instanceof Disposable) {
+                Disposer.dispose((Disposable)view);
+              }
             }
           }
-        }
-      });
+        });
+    }
+    catch (Throwable e) {
+      Disposer.dispose(this);
+      throw e;
+    }
   }
 
   public static ExternalProjectsManagerImpl getInstance(@NotNull Project project) {
