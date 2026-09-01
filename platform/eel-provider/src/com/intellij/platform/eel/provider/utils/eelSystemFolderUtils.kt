@@ -2,7 +2,6 @@
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
@@ -20,16 +19,17 @@ import java.nio.file.Path
 
 @ApiStatus.Experimental
 object EelSystemFolderUtils {
-
   @JvmStatic
   suspend fun getCommonDataFolder(descriptor: EelDescriptor): Path {
     if (descriptor === LocalEelDescriptor) return PathManager.getCommonDataPath()
+
     return getCommonDataFolder(descriptor.toEelApiBlocking())
   }
 
   @JvmStatic
   suspend fun getCommonDataFolder(eel: EelApi): Path {
     if (eel.descriptor === LocalEelDescriptor) return PathManager.getCommonDataPath()
+
     // Compose the path in the host's own form: `getDefaultCommonDataPathFor` may return a raw environment value
     // (XDG_DATA_HOME, APPDATA), which is a host-native string that `Path.of` would misroute to the local file system.
     val options = EnvironmentVariablesOptionsBuilder().loginInteractiveViaShell().build()
@@ -53,6 +53,8 @@ object EelSystemFolderUtils {
   @JvmStatic
   @RequiresBackgroundThread(generateAssertion = false)
   fun getSystemFolder(eel: EelApi): Path {
+    if (eel.descriptor === LocalEelDescriptor) return PathManager.getSystemDir()
+
     val selector = PathManager.getPathsSelector() ?: "IJ-Platform"
     val systemPath = PathManager.getDefaultSystemPathFor(
       eel.platform.toOs(),

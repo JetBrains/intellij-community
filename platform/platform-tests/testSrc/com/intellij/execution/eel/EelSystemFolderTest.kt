@@ -127,7 +127,7 @@ class EelSystemFolderTest {
   }
 
   @Test
-  fun `system folder of the local environment is a plain host path`() {
+  fun `system folder of the local environment is not invented`() {
     val hostHome = Path(SystemProperties.getUserHome()).toAbsolutePath()
     val eel = FakeEelApi(
       descriptor = LocalEelDescriptor,
@@ -137,14 +137,7 @@ class EelSystemFolderTest {
     )
 
     val systemFolder = EelSystemFolderUtils.getSystemFolder(eel)
-
-    assertThat(systemFolder.isAbsolute).describedAs("`%s` must be absolute", systemFolder).isTrue()
-    assertThat(systemFolder.startsWith(hostHome))
-      .describedAs("`%s` must be located under the host home directory `%s`", systemFolder, hostHome)
-      .isTrue()
-    assertThat(systemFolder.endsWith(Path(VENDOR, selector)))
-      .describedAs("`%s` must end with the vendor and the paths selector", systemFolder)
-      .isTrue()
+    assertThat(systemFolder).isEqualTo(PathManager.getSystemDir())
   }
 
   private fun hostPlatform(): EelPlatform = when (OS.CURRENT) {
@@ -203,7 +196,7 @@ private class FakeEelApi(
   override val fs: EelFileSystemApi get() = unused("fs")
   override val tunnels: EelTunnelsApi get() = unused("tunnels")
   override val archive: EelArchiveApi get() = unused("archive")
-}
 
-private fun unused(what: String): Nothing =
-  throw AssertionError("EelApi.$what is not implemented for EelSystemFolderTest")
+  private fun unused(what: String): Nothing =
+    throw AssertionError("EelApi.$what is not implemented for EelSystemFolderTest")
+}
