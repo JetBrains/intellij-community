@@ -216,8 +216,6 @@ class BuildContextImpl internal constructor(
   override val generateRuntimeModuleRepository: Boolean
     get() = useModularLoader || options.generateRuntimeModuleRepository
 
-  private var builtinModulesData: BuiltinModulesFileData? = null
-
   internal val jarPackagerDependencyHelper: JarPackagerDependencyHelper by lazy { JarPackagerDependencyHelper(outputProvider) }
 
   override val nonBundledPlugins: Path by lazy { paths.artifactDir.resolve("${applicationInfo.productCode}-plugins") }
@@ -271,19 +269,16 @@ class BuildContextImpl internal constructor(
     }
   }
 
-  override var builtinModule: BuiltinModulesFileData?
-    get() {
-      if (options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
-        return null
-      }
-      else {
-        return builtinModulesData ?: throw IllegalStateException("builtinModulesData is not set. Make sure `BuildTasksImpl.buildProvidedModuleList` was called before")
-      }
+  private val builtinModules = suspendingLazy("provided module list") {
+    if (isStepSkipped(BuildOptions.PROVIDED_MODULES_LIST_STEP) || !shouldBuildDistributions()) {
+      null
     }
-    set(value) {
-      check(builtinModulesData == null) { "builtinModulesData was already set" }
-      builtinModulesData = value
+    else {
+      buildProvidedModuleList(this@BuildContextImpl)
     }
+  }
+
+  override suspend fun builtinModules(): BuiltinModulesFileData? = builtinModules.await()
 
   override fun addDistFile(file: DistFile) {
     Span.current().addEvent("add app resource", Attributes.of(AttributeKey.stringKey("file"), file.toString()))

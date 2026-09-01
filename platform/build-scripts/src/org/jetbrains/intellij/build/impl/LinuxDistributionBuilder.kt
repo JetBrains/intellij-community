@@ -393,7 +393,7 @@ class LinuxDistributionBuilder(
   private suspend fun writeProductJsonFile(targetDir: Path, arch: JvmArchitecture, withRuntime: Boolean): Path {
     val json = generateProductInfoJson(
       relativePathToBin = "bin",
-      builtinModules = context.builtinModule,
+      builtinModules = context.builtinModules(),
       launch = listOf(
         ProductInfoLaunchData.create(
           OsFamily.LINUX.osName,

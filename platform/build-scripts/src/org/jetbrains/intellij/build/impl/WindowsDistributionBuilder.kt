@@ -547,7 +547,7 @@ internal class WindowsDistributionBuilder(
     val baseName = context.add64IfNeeded(context.productProperties.baseFileName)
     val json = generateProductInfoJson(
       relativePathToBin = "bin",
-      builtinModules = context.builtinModule,
+      builtinModules = context.builtinModules(),
       launch = listOf(
         ProductInfoLaunchData.create(
           os = OsFamily.WINDOWS.osName,

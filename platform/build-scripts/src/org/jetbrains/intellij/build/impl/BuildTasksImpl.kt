@@ -27,6 +27,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildTasks
+import org.jetbrains.intellij.build.BuiltinModulesFileData
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.DistFile
 import org.jetbrains.intellij.build.DistFileContent
@@ -407,50 +408,46 @@ internal suspend fun createDistributionState(context: BuildContext): Distributio
   val enabledPluginModules = getEnabledPluginModules(pluginsToPublish, context)
   // computed only based on a bundled and plugins to publish lists; by intention, compatible plugins are not taken in an account
   val projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(enabledPluginModules, context)
+  val platform = createPlatformLayout(projectLibrariesUsedByPlugins = projectLibrariesUsedByPlugins, context = context)
 
-  if (!context.shouldBuildDistributions() || context.isStepSkipped(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
-    return distributionState(pluginsToPublish = pluginsToPublish, projectLibrariesUsedByPlugins = projectLibrariesUsedByPlugins, context = context)
+  if (context.shouldBuildDistributions() && productLayout.buildAllCompatiblePlugins) {
+    spanBuilder("collecting compatible plugins").use {
+      collectCompatiblePluginsToPublish(pluginsToPublish = pluginsToPublish, platformLayout = platform, context = context)
+      filterPluginsToPublish(pluginsToPublish, context)
+    }
   }
 
-  return spanBuilder("collecting compatible plugins").use {
-    val providedModuleFile = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-builtinModules.json")
-    val builtinModuleData = spanBuilder("build provided module list").use {
-      Files.deleteIfExists(providedModuleFile)
-      // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
-      spanBuilder("run BundledPluginsLister").use {
-        context.createProductRunner().runProduct(
-          args = listOf("listBundledPlugins", providedModuleFile.toString()),
-          additionalVmProperties = additionalProperties(),
-        )
-      }
+  return DistributionBuilderState(platformLayout = platform, pluginsToPublish = pluginsToPublish, context = context)
+}
 
-      context.productProperties.customizeBuiltinModules(context = context, builtinModulesFile = providedModuleFile)
-      try {
-        val builtinModuleData = readBuiltinModulesFile(providedModuleFile)
-        context.builtinModule = builtinModuleData
-        builtinModuleData
-      }
-      catch (_: NoSuchFileException) {
-        throw IllegalStateException("Failed to build provided modules list: $providedModuleFile doesn't exist")
-      }
+/**
+ * Starts the product in headless mode and reads the list of the built-in modules that it reports.
+ *
+ * The run needs a packed development distribution, so the call is expensive.
+ * See [BuildOptions.PROVIDED_MODULES_LIST_STEP].
+ */
+internal suspend fun buildProvidedModuleList(context: BuildContext): BuiltinModulesFileData {
+  return spanBuilder("build provided module list").use {
+    val providedModuleFile = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-builtinModules.json")
+    Files.deleteIfExists(providedModuleFile)
+    // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
+    spanBuilder("run BundledPluginsLister").use {
+      context.createProductRunner().runProduct(
+        args = listOf("listBundledPlugins", providedModuleFile.toString()),
+        additionalVmProperties = additionalProperties(),
+      )
+    }
+
+    context.productProperties.customizeBuiltinModules(context = context, builtinModulesFile = providedModuleFile)
+    val builtinModuleData = try {
+      readBuiltinModulesFile(providedModuleFile)
+    }
+    catch (_: NoSuchFileException) {
+      throw IllegalStateException("Failed to build provided modules list: $providedModuleFile doesn't exist")
     }
 
     context.notifyArtifactBuilt(providedModuleFile)
-
-    if (productLayout.buildAllCompatiblePlugins) {
-      collectCompatiblePluginsToPublish(builtinModuleData = builtinModuleData, pluginsToPublish = pluginsToPublish, context = context)
-      filterPluginsToPublish(pluginsToPublish, context)
-
-      DistributionBuilderState(
-        platformLayout = createPlatformLayout(projectLibrariesUsedByPlugins = projectLibrariesUsedByPlugins, context = context),
-        pluginsToPublish = pluginsToPublish,
-        context = context,
-      )
-    }
-    else {
-      val platform = createPlatformLayout(context)
-      DistributionBuilderState(platformLayout = platform, pluginsToPublish = pluginsToPublish, context = context)
-    }
+    builtinModuleData
   }
 }
 
@@ -462,16 +459,6 @@ internal suspend fun createDistributionState(context: BuildContext): Distributio
  @see https://youtrack.jetbrains.com/issue/IJPL-203604
 **/
 internal fun additionalProperties(): VmProperties = VmProperties(mapOf("user.home" to System.getProperty("user.home")))
-
-private suspend fun distributionState(
-  pluginsToPublish: Set<PluginLayout>,
-  projectLibrariesUsedByPlugins: Map<String, Set<String>>,
-  context: BuildContext,
-): DistributionBuilderState {
-  val platform = createPlatformLayout(projectLibrariesUsedByPlugins, context)
-  val distState = DistributionBuilderState(platform, pluginsToPublish, context)
-  return distState
-}
 
 suspend fun buildDistributions(context: BuildContext): Unit = block("build distributions") {
   context.reportDistributionBuildNumber()
@@ -489,6 +476,9 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
   val distributionState = context.distributionState()
 
   coroutineScope {
+    // the headless IDE start is expensive, so it runs beside the JAR packing
+    launch(CoroutineName("provided module list")) { context.builtinModules() }
+
     createMavenArtifactJob(distributionState.platformLayout, context)
 
     if (!context.shouldBuildDistributions()) {
@@ -781,7 +771,7 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
 
   val productJson = generateProductInfoJson(
     relativePathToBin = "bin",
-    builtinModules = context.builtinModule,
+    builtinModules = context.builtinModules(),
     launch = sequenceOf(JvmArchitecture.x64, JvmArchitecture.aarch64).flatMap { arch ->
       listOf(
         ProductInfoLaunchData.create(

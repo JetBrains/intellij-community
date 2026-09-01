@@ -102,9 +102,13 @@ interface BuildContext : CompilationContext {
   fun getBundledPluginModules(): List<String>
 
   /**
-   * See [BuildOptions.PROVIDED_MODULES_LIST_STEP]
+   * Returns the list of the built-in modules that the product reports about itself.
+   * Returns null when the build skips [BuildOptions.PROVIDED_MODULES_LIST_STEP], or when it builds no distribution.
+   *
+   * The first caller pays the start of the headless IDE, because the start needs a packed development distribution.
+   * The build of the distributions asks for the list early, so the start runs beside the packaging.
    */
-  var builtinModule: BuiltinModulesFileData?
+  suspend fun builtinModules(): BuiltinModulesFileData?
 
   val appInfoXml: String
 

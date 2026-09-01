@@ -117,6 +117,8 @@ val packagingContentBuildStepsToSkip: PersistentSet<String> = persistentSetOf(
   BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP,
   BuildOptions.LOCALIZE_STEP,
   BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED,
+  // the test writes no product-info.json and publishes no artifact, and the compatible plugins no longer need the headless IDE start
+  BuildOptions.PROVIDED_MODULES_LIST_STEP,
   "JupyterFrontEndResourcesGenerator",
 )
 
