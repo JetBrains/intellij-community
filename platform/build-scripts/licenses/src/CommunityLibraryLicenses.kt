@@ -1498,7 +1498,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("find-file-model"),
     jetbrainsLibrary("find-file-model-experimental"),
     jetbrainsLibrary("git-learning-project"),
-    jetbrainsLibrary("jetbrains.ai.completion.trigger.nes.polyglot.demo"),jetbrainsLibrary("jetbrains.compose.components.ui.tooling.preview.desktop"),
+    jetbrainsLibrary("jetbrains.ai.completion.trigger.nes.polyglot"),jetbrainsLibrary("jetbrains.compose.components.ui.tooling.preview.desktop"),
     jetbrainsLibrary("jetbrains.compose.hot.reload.devtools.api"),
     jetbrainsLibrary("jetbrains.compose.hot.reload.gradle.idea"),
     jetbrainsLibrary("jetbrains.intellij.deps.rwmutex.idea"),
