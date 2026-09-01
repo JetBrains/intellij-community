@@ -200,12 +200,8 @@ private class LegacyBackendProjectViewPaneModel(
   }
 
   override suspend fun manageState(builder: ProjectViewPaneStateBuilder) {
-    coroutineScope {
-      launch(CoroutineName("Manage pane $id")) {
-        legacyPaneManager.subId = subId
-        legacyPaneManager.manageState(id, builder)
-      }
-    }
+    legacyPaneManager.subId = subId
+    legacyPaneManager.manageState(id, builder)
   }
 
   override suspend fun setPaneSelected(
