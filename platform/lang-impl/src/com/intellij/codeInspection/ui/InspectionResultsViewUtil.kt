@@ -111,7 +111,9 @@ private class CoroutineScopeProvider(val scope: CoroutineScope) {
       for (path in paths) {
         val node = path.lastPathComponent
         if (node !is SuppressableInspectionTreeNode) continue
-        readAction { node.updateAvailableSuppressActions() }
+        readAction {
+          node.getAvailableSuppressActions()
+        }
       }
 
       withContext(Dispatchers.EDT) {
