@@ -163,7 +163,7 @@ public final class PythonSdkUpdater {
   }
 
   private static void scheduleUpdate(@NotNull Sdk sdk, @NotNull Project project, @NotNull PyUpdateSdkRequestData requestData) {
-    if (project.isDisposed()) {
+    if (project.isDisposed() || (sdk instanceof Disposable sdkDisposable && Disposer.isDisposed(sdkDisposable))) {
       return;
     }
 
@@ -268,12 +268,17 @@ public final class PythonSdkUpdater {
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
+      if (myProject.isDisposed() || isSdkDisposed()) {
+        return;
+      }
       PythonPackageManager manager = PythonPackageManager.Companion.forSdk(myProject, mySdk);
       // Cancel the indicator when the SDK is disposed to terminate any running processes (e.g., skeleton generation).
       // This explicit cancellation should become unnecessary on migrating PythonSdkUpdater to coroutines and withBackgroundProgress.
       Disposable indicatorDisposable = getIndicatorDisposable(indicator);
       if (mySdk instanceof Disposable sdkDisposable) {
-        Disposer.register(sdkDisposable, indicatorDisposable);
+        if (!Disposer.tryRegister(sdkDisposable, indicatorDisposable)) {
+          return;
+        }
       }
       else {
         Disposer.register(PythonPluginDisposable.getInstance(myProject), indicatorDisposable);
@@ -443,15 +448,18 @@ public final class PythonSdkUpdater {
         boolean existed = ourUnderRefresh.remove(mySdk);
         LOG.assertTrue(existed, "Error in SDK refresh scheduling: refreshed SDK is not in the set.");
         requestData = ourToBeRefreshed.remove(mySdk);
-        if (requestData != null) {
+        // Decide under the lock whether the queued update really starts: re-adding the SDK and only then
+        // discovering that the project or the SDK is gone would leave it in ourUnderRefresh forever, which
+        // both retains a disposed SDK and makes every later scheduleUpdate believe a refresh is in flight.
+        if (requestData != null && !myProject.isDisposed() && !isSdkDisposed()) {
           ourUnderRefresh.add(mySdk);
+        }
+        else {
+          requestData = null;
         }
       }
 
       if (requestData != null) {
-        if (Disposer.isDisposed(myProject)) {
-          return;
-        }
         ProgressManager.getInstance().run(new PyUpdateSdkTask(myProject, mySdk, requestData));
       }
     }
