@@ -257,7 +257,7 @@ common --worker_max_multiplex_instances=PackContentModuleJar=HOST_CPUS*2
 # The same for the plugin jars, which `dev_dist_plugin_jar` packs under a mnemonic of its own. The figure is the
 # sibling's, and it is inherited rather than re-measured: nothing has measured a pool size over the plugin jars, whose
 # median is larger. `no-cache` is deliberately **not** inherited, because only a measurement over this population can
-# settle it, and `build/dev-dist-measurements.md` holds the one that says the cache stays.
+# settle it, and `build/dev-dist-measurements-history.md` holds the one that says the cache stays.
 common --worker_max_multiplex_instances=PackPluginJar=HOST_CPUS*2
 
 

@@ -652,7 +652,7 @@ internal fun mergedLibraryTargetLabels(
  * the *same* report both gives the module its own jar and writes the sibling. One of the 10 is
  * `intellij.java.debugger.impl`, and another occurrence vetoes it anyway. So a narrower rule would gain no module.
  *
- * The bytes agree, and `dev-dist-measurements.md` holds the per-owner table. The 9 own 68 277 444 bytes of self-named
+ * The bytes agree, and `dev-dist-measurements-history.md` holds the per-owner table. The 9 own 68 277 444 bytes of self-named
  * jar on one composite tree, and one module holds 97.1 % of that.
  *
  * When [simplePluginContentEntry] refuses an entry, this fold vetoes every content module the entry names. It does not

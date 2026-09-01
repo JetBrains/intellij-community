@@ -170,7 +170,7 @@ func (p *artifactPlugin) changedAt(stage string) bool {
 	return false
 }
 
-// isStampsOnly is class (a) of `dev-dist-measurements.md`: no per-layout lambda and no structural stage changed the
+// isStampsOnly is class (a) of `dev-dist-measurements-history.md`: no per-layout lambda and no structural stage changed the
 // text, so `patched` **is** the text the stamps stage produced.
 func (p *artifactPlugin) isStampsOnly() bool {
 	for _, stage := range []string{stageRawTextPatcher, stageTextPatcher, stageIncludes, stageContentModules} {

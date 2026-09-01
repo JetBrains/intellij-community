@@ -402,7 +402,7 @@ def _dev_dist_plugin_jar_impl(ctx):
         # `no-cache` and the multiplex instance count - and both were measured over the platform's 2 524 jars, whose
         # median is a fraction of a plugin jar's. Sharing the mnemonic would apply both figures to a population nothing
         # has measured yet, and would also fold this population into the standing per-mnemonic figure that
-        # `dev-dist-measurements.md` quotes for the platform.
+        # `dev-dist-measurements-history.md` quotes for the platform.
         mnemonic = "PackPluginJar",
         progress_message = "Packing plugin jar of %{label}",
     )
@@ -433,7 +433,7 @@ _dev_dist_plugin_jar = rule(
 The jar's name comes from here and not from a module, which is the first reason this is a rule of its own: a plugin
 layout names a jar freely, and a jar it names itself carries a name no member has. `reportMovablePluginJars` prints how
 many such jars got a target, how many the model derives and every refusal, once per converter run, so no count is
-frozen here. `build/dev-dist-measurements.md` holds the dated figures.
+frozen here. `build/dev-dist-measurements-history.md` holds the dated figures.
 
 **A jar named after its one member never comes here.** The `content_module_jar` beside that member packs the same bytes
 under the same name, and a plugin says only where its `lib/` puts the jar - `prepacked_content_modules`, or a

@@ -176,7 +176,7 @@ internal fun composeDerivedPluginJars(
    *
    * Last of the parameters, and appended rather than put beside [handedOverMembers]. Two same-typed parameters that
    * change places compile to two positions a named argument cannot tell apart, and the incremental compiler recompiles
-   * no caller of an unchanged signature; `build/dev-dist-measurements.md` records the run that cost.
+   * no caller of an unchanged signature; `build/dev-dist-measurements-history.md` records the run that cost.
    */
   handedOverJars: Set<String> = emptySet(),
 ): List<DerivedPluginJar> {
