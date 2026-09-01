@@ -615,6 +615,7 @@ f:org.jetbrains.jewel.ui.component.RadioButtonState
 f:org.jetbrains.jewel.ui.component.RadioButtonState$Companion
 - f:of-fp8g3n8(Z,Z,Z,Z,Z,Z):J
 - bs:of-fp8g3n8$default(org.jetbrains.jewel.ui.component.RadioButtonState$Companion,Z,Z,Z,Z,Z,Z,I,java.lang.Object):J
+f:org.jetbrains.jewel.ui.component.ScrollIndicatorKt
 f:org.jetbrains.jewel.ui.component.ScrollableContainerKt
 - sf:HorizontallyScrollableContainer(androidx.compose.foundation.gestures.ScrollableState,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,Z,androidx.compose.foundation.interaction.MutableInteractionSource,androidx.compose.foundation.v2.ScrollbarAdapter,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
 - bsf:HorizontallyScrollableContainer(androidx.compose.foundation.gestures.ScrollableState,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,Z,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
@@ -1958,7 +1959,9 @@ f:org.jetbrains.jewel.ui.component.styling.ScrollbarStylingKt
 - sf:getLocalScrollbarStyle():androidx.compose.runtime.ProvidableCompositionLocal
 org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 - sf:Companion:org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$Companion
+- getCollapseDelay-UwyO8pc():J
 - a:getExpandAnimationDuration-UwyO8pc():J
+- getExpandDelay-UwyO8pc():J
 - a:getLingerDuration-UwyO8pc():J
 - a:getThumbColorAnimationDuration-UwyO8pc():J
 - a:getTrackColorAnimationDuration-UwyO8pc():J
@@ -1971,9 +1974,11 @@ f:org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$AlwaysVisible
 - org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 - sf:$stable:I
 - sf:Companion:org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$AlwaysVisible$Companion
-- b:<init>(F,androidx.compose.foundation.layout.PaddingValues,androidx.compose.foundation.layout.PaddingValues,J,J,J,J,F,androidx.compose.foundation.layout.PaddingValues,J,J,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- b:<init>(F,androidx.compose.foundation.layout.PaddingValues,androidx.compose.foundation.layout.PaddingValues,J,J,J,J,F,androidx.compose.foundation.layout.PaddingValues,J,J,J,J,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - equals(java.lang.Object):Z
+- getCollapseDelay-UwyO8pc():J
 - getExpandAnimationDuration-UwyO8pc():J
+- getExpandDelay-UwyO8pc():J
 - getLingerDuration-UwyO8pc():J
 - f:getScrollbarBackgroundColorDark-0d7_KjU():J
 - f:getScrollbarBackgroundColorLight-0d7_KjU():J
@@ -1991,8 +1996,11 @@ f:org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$WhenScrolling
 - org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 - sf:$stable:I
 - sf:Companion:org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$WhenScrolling$Companion
+- b:<init>(F,F,androidx.compose.foundation.layout.PaddingValues,androidx.compose.foundation.layout.PaddingValues,J,J,J,J,J,J,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - equals(java.lang.Object):Z
+- getCollapseDelay-UwyO8pc():J
 - getExpandAnimationDuration-UwyO8pc():J
+- getExpandDelay-UwyO8pc():J
 - getLingerDuration-UwyO8pc():J
 - getThumbColorAnimationDuration-UwyO8pc():J
 - getTrackColorAnimationDuration-UwyO8pc():J
