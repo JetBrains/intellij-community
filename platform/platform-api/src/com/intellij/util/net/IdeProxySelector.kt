@@ -13,6 +13,7 @@ import java.net.SocketAddress
 import java.net.URI
 import java.net.URL
 import java.util.concurrent.CancellationException
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Predicate
 
@@ -89,7 +90,7 @@ class IdeProxySelector(
       val selector = getAutoProxySelector(pacUrl)
       try {
         val result = selector.select(uri)
-        LOG.debug { "$uri: pac/autodetect proxy select result: $result" }
+        LOG.debug { "$uri: PAC/autodetect proxy select result: $result" }
         return result
       } catch (_: StackOverflowError) {
         LOG.warn("$uri: no proxy, too large PAC script (JRE-247)")
@@ -111,11 +112,12 @@ class IdeProxySelector(
   private fun getAutoProxySelector(pacUrl: URL?): ProxySelector {
     val autoProxy = autoProxyResult.get()
     if (autoProxy != null && autoProxy.pacUrl?.toString() == pacUrl?.toString()) return autoProxy.selector
+
     synchronized(this) {
       val autoProxy = autoProxyResult.get()
       if (autoProxy != null && autoProxy.pacUrl?.toString() == pacUrl?.toString()) return autoProxy.selector
 
-      val searchStartMs = System.currentTimeMillis()
+      val searchStart = System.nanoTime()
       val detectedSelector = try {
         NetUtils.getProxySelector(pacUrl?.toString())
       }
@@ -132,7 +134,7 @@ class IdeProxySelector(
         }
       }
       if (pacUrl == null) {
-        proxyAutodetectDurationMs = System.currentTimeMillis() - searchStartMs
+        proxyAutodetectDurationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - searchStart)
       }
       autoProxyResult.set(AutoProxyHolder(pacUrl, resultSelector))
       return resultSelector
@@ -148,7 +150,7 @@ class IdeProxySelector(
 
     private const val DOCUMENT_BUILDER_FACTORY_KEY = "javax.xml.parsers.DocumentBuilderFactory"
 
-    // holds either autodetected proxy or a pac proxy, pac url is null if autodetect is used
+    // holds either autodetected proxy or a PAC proxy; PAC URL is null if autodetect is used
     private data class AutoProxyHolder(val pacUrl: URL?, val selector: ProxySelector)
 
     private data class ExceptionsMatcherHolder(val exceptions: String, val matcher: Predicate<String>)

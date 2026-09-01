@@ -31,13 +31,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @see Region
- * @see RegionSettings
- */
+/// @see Region
+/// @see RegionSettings
 @ApiStatus.Internal
 public final class RegionUrlMapper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.RegionUrlMapper");
+  private static final Logger LOG = Logger.getInstance(RegionUrlMapper.class);
 
   private static final int CACHE_DATA_EXPIRATION_MIN = SystemProperties.getIntProperty("ide.region.url.mapping.expiration.timeout", 2);
   private static final String CONFIG_URL_DEFAULT = "https://www.jetbrains.com/config/JetBrainsResourceMapping.json";
@@ -50,12 +48,12 @@ public final class RegionUrlMapper {
   private static final boolean FORCE_REGION_MAPPINGS_LOAD = Boolean.getBoolean("force.region.mappings.load");
 
   static {
-    for (Region reg : Region.values()) {
-      String propName = "jb.mapper.configuration.url";
+    for (var reg : Region.values()) {
+      var propName = "jb.mapper.configuration.url";
       if (reg != Region.NOT_SET) {
         propName = propName + "." + reg.name().toLowerCase(Locale.ENGLISH);
       }
-      String overridden = System.getProperty(propName, "");
+      var overridden = System.getProperty(propName, "");
       if (!overridden.isBlank()) {
         OVERRIDE_CONFIG_URL_TABLE.put(reg, overridden);
       }
@@ -68,28 +66,24 @@ public final class RegionUrlMapper {
 
   private RegionUrlMapper() { }
 
-  /**
-   * @see #tryMapUrlBlocking(String, Region)
-   * @see #tryMapUrl(String) when calling from a suspending context, consider using the async version
-   * @see RegionSettings
-   */
+  /// @see #tryMapUrlBlocking(String, Region)
+  /// @see #tryMapUrl(String) when calling from a suspending context, consider using the async version
+  /// @see RegionSettings
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
   public static @NotNull String tryMapUrlBlocking(@NotNull String url) {
     return tryMapUrlBlocking(url, RegionSettings.getRegion());
   }
 
-  /**
-   * Maps the specified resource URL to a corresponding region-specific URL.
-   * <p>
-   * <b>IMPORTANT</b>: the method is potentially long-executing; involves network calls.
-   * Also note that in case the network call fails, this method returns the original URL silently (hence, "try" in its name).
-   *
-   * @param url the original resource URL
-   * @param region the region for which the original url might be adjusted
-   * @return the adjusted url in case the mapping is configured, or the original url if no adjustments are required
-   * @see #tryMapUrl(String, Region) when calling from a suspending context, consider using the async version
-   */
+  /// Maps the specified resource URL to a corresponding region-specific URL.
+  ///
+  /// **IMPORTANT**: the method is potentially long-executing; involves network calls.
+  /// Also note that in case the network call fails, this method returns the original URL silently (hence, "try" in its name).
+  ///
+  /// @param url the original resource URL
+  /// @param region the region for which the original URL might be adjusted
+  /// @return the adjusted URL in case the mapping is configured, or the original URL if no adjustments are required
+  /// @see #tryMapUrl(String, Region) when calling from a suspending context, consider using the async version
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
   public static @NotNull String tryMapUrlBlocking(@NotNull String url, @NotNull Region region) {
@@ -105,24 +99,20 @@ public final class RegionUrlMapper {
     }
   }
 
-  /**
-   * @see #tryMapUrl(String, Region)
-   * @see RegionSettings
-   */
+  /// @see #tryMapUrl(String, Region)
+  /// @see RegionSettings
   public static @NotNull CompletableFuture<@NotNull String> tryMapUrl(@NotNull String url) {
     return tryMapUrl(url, RegionSettings.getRegion());
   }
 
-  /**
-   * Maps the specified resource URL to a corresponding region-specific URL.
-   * <p>
-   * <b>IMPORTANT</b>: The operation may involve network calls, and if that fails,
-   * the returned future resolves to the original URL silently (hence, "try" in its name).
-   *
-   * @param url the original resource URL
-   * @param region the region for which the original url might be adjusted
-   * @return a CompletableFuture that resolves to the adjusted url in case the mapping is configured, or the original url otherwise
-   */
+  /// Maps the specified resource URL to a corresponding region-specific URL.
+  ///
+  /// **IMPORTANT**: The operation may involve network calls, and if that fails,
+  /// the returned future resolves to the original URL silently (hence "try" in its name).
+  ///
+  /// @param url the original resource URL
+  /// @param region the region for which the original URL might be adjusted
+  /// @return a CompletableFuture that resolves to the adjusted URL in case the mapping is configured, or the original URL otherwise
   public static @NotNull CompletableFuture<@NotNull String> tryMapUrl(@NotNull String url, @NotNull Region region) {
     return ourCache.get(region)
       .exceptionally(t -> {
@@ -162,15 +152,13 @@ public final class RegionUrlMapper {
   }
 
   private static @NotNull String getConfigUrl(@NotNull Region reg) {
-    String overridden = OVERRIDE_CONFIG_URL_TABLE.get(reg);
+    var overridden = OVERRIDE_CONFIG_URL_TABLE.get(reg);
     return overridden != null ? overridden : CONFIG_URL_TABLE.getOrDefault(reg, CONFIG_URL_DEFAULT);
   }
 
-  /*
-   * Mapper for a given region.
-   * Represents the contents of the JSON configuration loaded for a particular region
-   * and provides the methods for applying the mapping rules found in that configuration.
-   */
+  /// Mapper for a given region.
+  /// Represents the contents of the JSON configuration loaded for a particular region
+  /// and provides the methods for applying the mapping rules found in that configuration.
   private static final class RegionMapping {
     private static final RegionMapping EMPTY = new RegionMapping(List.of());
     private static final RegionMapping FAILED = new RegionMapping(List.of(
@@ -196,11 +184,11 @@ public final class RegionUrlMapper {
     }
 
     public static @NotNull RegionMapping fromJson(@NotNull String json) throws JsonParseException {
-      List<PatternReplacement> result = new SmartList<>();
-      for (Map<String, Object> mapping : JsonUtil.<Map<String, Object>>nextList(new JsonReaderEx(json))) {
+      var result = new SmartList<PatternReplacement>();
+      for (var mapping : JsonUtil.<Map<String, Object>>nextList(new JsonReaderEx(json))) {
         if (mapping.size() == 1) {
-          Map.Entry<String, Object> entry = mapping.entrySet().iterator().next();
-          String pattern = entry.getKey();
+          var entry = mapping.entrySet().iterator().next();
+          var pattern = entry.getKey();
           if (!Strings.isEmpty(pattern) && entry.getValue() instanceof String replacement) {
             result.add(new PatternReplacement(pattern, replacement));
           }
