@@ -77,8 +77,37 @@ fun CoroutineContext.coroutineNameAppended(name: String, separator: String = " >
   return CoroutineName(if (parentName == null) name else parentName + separator + name)
 }
 
+/**
+ * Provides scoped access to the modal UI shown while IJent is unavailable.
+ *
+ * The dialog solves two goals.
+ * 1. It indicates the problem to the user when otherwise an application freeze would occur.
+ * 2. It pumps EDT events so the reconnect or redeploy process in most situations can show some UI to ask for credentials.
+ *
+ * If not explicitly requested, the dialog can be shown after some timeout. But if requested, it will be shown as soon as possible.
+ *
+ * Several synchronous file-system calls may discover the same unavailable IJent concurrently. Only one unavailable
+ * dialog can be shown at a time, so a caller does not necessarily receive a dialog created for its own request.
+ * Instead, it joins the first compatible dialog that is actually shown.
+ */
 interface ReconnectUiHandle {
-  suspend fun requestDialogImmediately(): ReconnectUiDialog?
+  
+  /**
+   * Requests an IJent-unavailable dialog and runs [f] while the selected dialog session is leased by this caller.
+   *
+   * Used when some UI has to be shown for reconnecting/redeploying IJent.
+   *
+   * The selected dialog is the first suitable dialog that is actually shown. It may have been initiated by another
+   * concurrent file-system operation. This sharing is intentional: only one unavailable dialog can be active at a
+   * time, and the caller which owns EDT wins because EDT is needed to show the dialog.
+   *
+   * The dialog must remain open while [f] executes. The callback may suspend and may use [ReconnectUiDialog.edtAndModality]
+   * across those suspension points because its lease prevents the corresponding dialog session from being closed
+   * merely because its original owner has completed.
+   *
+   * @throws IllegalStateException if no dialog can be shown within the implementation-defined timeout.
+   */
+  suspend fun <T> withRequestedDialog(f: suspend (dialog: ReconnectUiDialog) -> T): T
 }
 
 interface ReconnectUiDialog {

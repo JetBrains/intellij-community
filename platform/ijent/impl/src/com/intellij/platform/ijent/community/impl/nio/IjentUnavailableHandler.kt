@@ -15,13 +15,17 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.awt.Component
 import java.io.IOException
@@ -55,16 +59,31 @@ interface IjentUnavailableHandler {
 
 class ReconnectUiHandleImpl : ReconnectUiHandle {
   private val requested = CompletableDeferred<Unit>()
-  // should be interpreted as a plain flow of state, Pending -> Showing -> Pending -> Showing
-  private val dialogStateFlowInternal = MutableStateFlow<Deferred<ReconnectUiDialogImpl>?>(null)
-  val dialogStateFlow: Flow<ReconnectUiDialogImpl> get() = dialogStateFlowInternal.filterNotNull().map { it.await() }
-  override suspend fun requestDialogImmediately(): ReconnectUiDialogImpl? {
+  // interpreted as a plain flow of state, Pending -> Showing -> Pending -> Showing
+  private val dialogStateFlow = MutableStateFlow<Deferred<ReconnectUiDialogImpl>?>(null)
+  @OptIn(ExperimentalCoroutinesApi::class)
+  val currentDialog: ReconnectUiDialogImpl?
+    get() {
+      val session = dialogStateFlow.value ?: return null
+      if (!session.isCompleted || session.isCancelled) return null
+      if (session.getCompletionExceptionOrNull() != null) return null
+      return session.getCompleted()
+    }
+  override suspend fun <T> withRequestedDialog(f: suspend (dialog: ReconnectUiDialog) -> T): T {
     requested.complete(Unit)
-    return withTimeoutOrNull(1.seconds) {
-      dialogStateFlow.first()
+    val dialogShown = withTimeoutOrNull(1.seconds) {
+      dialogStateFlow.filterNotNull().map { it.await() }.first()
     } ?: run {
-      LOG.warn("No ijent-unavailable dialog shown despite requested. Probably a deadlock.")
-      null
+      throw IllegalStateException("Could not show ijent-unavailable dialog. Probably a deadlock.")
+    }
+    dialogShown.leaseCount.getAndUpdate { if (it >= 0) it + 1 else it }.let {
+      if (it < 0) throw IllegalStateException("Could not show ijent-unavailable dialog. Dialog disappeared.")
+    }
+    try {
+      return f(dialogShown)
+    }
+    finally {
+      dialogShown.leaseCount.update { it - 1 }
     }
   }
   fun requestDialog() {
@@ -72,11 +91,13 @@ class ReconnectUiHandleImpl : ReconnectUiHandle {
   }
   suspend fun awaitRequested(): Unit = requested.await()
   fun setDialogSession(dialogSession: Deferred<ReconnectUiDialogImpl>) {
-    dialogStateFlowInternal.value = dialogSession
+    dialogStateFlow.value = dialogSession
   }
 }
 
 class ReconnectUiDialogImpl(val modalityState: ModalityState, override val component: Component) : ReconnectUiDialog {
+  // positive if somebody is using the dialog, negative if the dialog is disposed
+  val leaseCount: MutableStateFlow<Int> = MutableStateFlow(0)
   // modality technically doesn't need to be stored here, but it's a good indicator that a dialog is actually shown
   override val edtAndModality: CoroutineContext
     get() = Dispatchers.EDT + modalityState.asContextElement()
@@ -87,11 +108,11 @@ internal suspend fun <T> showModalDialogOnTimeout(eelDescriptor: EelDescriptor, 
   //  for EDT - basic events could be dispatched even before showing dialog.
   // TODO Now showing the dialog works only when EDT is free. In fact it's not free e.g. for DiskQueryRelay.
 
+  val timeout = callerContext.unavailableDialogTimeout()
+  val uiHandle = callerContext.reconnectUi as ReconnectUiHandleImpl
   return coroutineScope {
     val dialogJob = if (IjentRegistry.getInstance().isEnabled("ijent.unavailable.dialog.enabled", true)) {
       launch {
-        val timeout = callerContext.unavailableDialogTimeout()
-        val uiHandle = callerContext.reconnectUi as ReconnectUiHandleImpl
         // skip waiting for timeout if dialog is requested explicitly
         withTimeoutOrNull(timeout) {
           uiHandle.awaitRequested()
@@ -119,6 +140,14 @@ internal suspend fun <T> showModalDialogOnTimeout(eelDescriptor: EelDescriptor, 
       body()
     }
     finally {
+      withContext(NonCancellable) {
+        uiHandle.currentDialog?.apply {
+          do {
+            val released = leaseCount.first { it <= 0 }
+            val updated = leaseCount.compareAndSet(released, -1)
+          } while (!updated)
+        }
+      }
       dialogJob?.cancel()
     }
   }
