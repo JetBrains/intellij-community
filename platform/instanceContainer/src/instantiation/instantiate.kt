@@ -11,6 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import java.lang.invoke.MethodType
@@ -274,6 +275,7 @@ private suspend fun <T> instantiate(
   lazyArgs: List<Argument>,
   instantiate: (Array<out Any>) -> T,
 ): T {
+  var instanceScope: CoroutineScope? = null
   val args: Array<Any> = if (lazyArgs.isEmpty()) {
     ArrayUtilRt.EMPTY_OBJECT_ARRAY
   }
@@ -294,7 +296,7 @@ private suspend fun <T> instantiate(
       .toArray(ArrayUtilRt.EMPTY_OBJECT_ARRAY)
       .also { args ->
         replaceScopeMarkerWithScope(args) {
-          parentScope.childScope(instanceClass.name)
+          parentScope.childScope(instanceClass.name).also { instanceScope = it }
         }
       }
   }
@@ -306,10 +308,18 @@ private suspend fun <T> instantiate(
   // Non-cancellable section is required to silence throwIfImpatient().
   // In general, we want initialization to be cancellable, and it must be canceled only on parent scope cancellation,
   // which happens only on project/application shutdown, or on plugin unload.
-  Cancellation.withNonCancelableSection().use {
-    return withStoredTemporaryContext(parentScope) {
-      instantiate(args)
+  try {
+    Cancellation.withNonCancelableSection().use {
+      return withStoredTemporaryContext(parentScope) {
+        instantiate(args)
+      }
     }
+  }
+  catch (e: Throwable) {
+    // A failed constructor returns no instance, so only this cancellation can release
+    // what the constructor tied to the scope.
+    instanceScope?.cancel()
+    throw e
   }
 }
 

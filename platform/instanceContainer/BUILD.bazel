@@ -112,6 +112,8 @@ jvm_library(
         "//platform/testFramework/common:common_test_lib",
         "//platform/testFramework/core",
         "//platform/testFramework/core:core_test_lib",
+        "//platform/util",
+        "//platform/util:util_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.instanceContainer.tests` end

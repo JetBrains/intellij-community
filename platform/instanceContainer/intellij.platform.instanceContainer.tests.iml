@@ -14,5 +14,6 @@
     <orderEntry type="module" module-name="intellij.platform.instanceContainer" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
   </component>
 </module>

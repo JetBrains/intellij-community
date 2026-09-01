@@ -65,6 +65,7 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.SlowOperations
 import com.intellij.util.ThreeState
 import com.intellij.util.application
+import com.intellij.util.asDisposable
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -138,6 +139,10 @@ class ChangeListManagerImpl(
   val conflictTracker: ChangelistConflictTracker = ChangelistConflictTracker(project, this)
 
   init {
+    // A `this`-rooted registration from a failed constructor stays in the Disposer tree forever.
+    // The scope-backed parent avoids that: the container cancels the scope also on a constructor failure.
+    val constructorDisposable = coroutineScope.asDisposable()
+
     val busConnection = project.getMessageBus().connect(coroutineScope)
     busConnection.subscribe(ChangeListListener.TOPIC, listeners.getMulticaster())
     listeners.addListener(object : ChangeListAdapter() {
@@ -158,7 +163,7 @@ class ChangeListManagerImpl(
 
     VcsManagedFilesHolder.VCS_IGNORED_FILES_HOLDER_EP.addChangeListener(project, Runnable {
       VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
-    }, this)
+    }, constructorDisposable)
     VcsEP.EP_NAME.addChangeListener(coroutineScope, Runnable {
       resetChangedFiles()
       VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
@@ -169,9 +174,9 @@ class ChangeListManagerImpl(
       override fun afterValueChanged(value: RegistryValue) {
         updateChangeListAvailability()
       }
-    }, this)
+    }, constructorDisposable)
 
-    Disposer.register(this, updateDisposable) // register defensively, in case "projectClosing" won't be called
+    Disposer.register(constructorDisposable, updateDisposable) // register defensively, in case "projectClosing" won't be called
     busConnection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
       override fun projectClosing(project: Project) {
         if (project === this@ChangeListManagerImpl.project) {

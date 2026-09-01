@@ -37,6 +37,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.task.ProjectTaskContext;
 import com.intellij.task.ProjectTaskManager;
+import com.intellij.util.CoroutineScopeKt;
 import com.intellij.util.SmartList;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
@@ -85,39 +86,35 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
     myProject = project;
     myShortcutsManager = new ExternalSystemShortcutsManager(project);
     this.coroutineScope = coroutineScope;
-    Disposer.register(this, myShortcutsManager);
+    // A `this`-rooted registration from a failed constructor stays in the Disposer tree forever.
+    // The scope-backed parent avoids that: the container cancels the scope also on a constructor failure.
+    Disposer.register(CoroutineScopeKt.asDisposable(coroutineScope), myShortcutsManager);
     myTaskActivator = new ExternalSystemTaskActivator(project);
     myRunManagerListener = new ExternalSystemRunManagerListener(this);
     myWatcher = new ExternalSystemProjectsWatcherImpl(myProject);
 
-    try {
-      ApplicationManager.getApplication().getMessageBus().connect(coroutineScope)
-        .subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
-          @Override
-          public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-            Set<ProjectSystemId> availableES = new HashSet<>();
-            for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemManager.EP_NAME.getExtensionList()) {
-              ProjectSystemId id = manager.getSystemId();
-              availableES.add(id);
-            }
+    ApplicationManager.getApplication().getMessageBus().connect(coroutineScope)
+      .subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+        @Override
+        public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+          Set<ProjectSystemId> availableES = new HashSet<>();
+          for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemManager.EP_NAME.getExtensionList()) {
+            ProjectSystemId id = manager.getSystemId();
+            availableES.add(id);
+          }
 
-            Iterator<ExternalProjectsView> iterator = myProjectsViews.iterator();
-            while (iterator.hasNext()) {
-              ExternalProjectsView view = iterator.next();
-              if (!availableES.contains(view.getSystemId())) {
-                iterator.remove();
-              }
-              if (view instanceof Disposable) {
-                Disposer.dispose((Disposable)view);
-              }
+          Iterator<ExternalProjectsView> iterator = myProjectsViews.iterator();
+          while (iterator.hasNext()) {
+            ExternalProjectsView view = iterator.next();
+            if (!availableES.contains(view.getSystemId())) {
+              iterator.remove();
+            }
+            if (view instanceof Disposable) {
+              Disposer.dispose((Disposable)view);
             }
           }
-        });
-    }
-    catch (Throwable e) {
-      Disposer.dispose(this);
-      throw e;
-    }
+        }
+      });
   }
 
   public static ExternalProjectsManagerImpl getInstance(@NotNull Project project) {
