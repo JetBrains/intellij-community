@@ -55,14 +55,12 @@
                     interface="com.intellij.python.sdk.backend.evolution.PyEvoEnvironmentProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.interpreterPresentationProvider"
-                    interface="com.jetbrains.python.sdk.PythonInterpreterPresentationProvider"
+                    interface="com.intellij.python.sdk.backend.PythonInterpreterPresentationProvider"
                     dynamic="true"/>
     <!-- The `id` names the kind of environment. It is the only place a kind is named. -->
     <extensionPoint qualifiedName="Pythonid.pythonEnvironmentProvider"
-                    beanClass="com.jetbrains.python.sdk.PythonEnvironmentProviderBean"
-                    dynamic="true">
-      <with attribute="implementation" implements="com.jetbrains.python.sdk.PythonEnvironmentProvider"/>
-    </extensionPoint>
+                    interface="com.intellij.python.sdk.backend.PythonEnvironmentProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -71,7 +69,7 @@
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.WinPythonSdkFlavor"/>
     <!-- Claims any layout, so it must stay last. -->
     <pythonEnvironmentProvider id="system" order="last"
-                               implementation="com.intellij.python.sdk.backend.SystemPythonEnvironmentProvider"/>
+                               implementation="com.intellij.python.sdk.backend.impl.SystemPythonEnvironmentProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

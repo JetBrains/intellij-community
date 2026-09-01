@@ -13,7 +13,7 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.Result
 import com.jetbrains.python.sdk.ObservableMutex.AlreadyLocked
-import com.jetbrains.python.sdk.impl.PySdkBundle
+import com.intellij.python.sdk.backend.PySdkBundle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.StateFlow

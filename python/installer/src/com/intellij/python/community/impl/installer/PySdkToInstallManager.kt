@@ -8,7 +8,7 @@ import com.jetbrains.python.sdk.Product
 import com.jetbrains.python.sdk.Resource
 import com.jetbrains.python.sdk.ResourceType
 import com.jetbrains.python.sdk.SdksKeeper
-import com.jetbrains.python.sdk.impl.PySdkBundle
+import com.intellij.python.sdk.backend.PySdkBundle
 import com.jetbrains.python.sdk.installer.BinaryInstallation
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString

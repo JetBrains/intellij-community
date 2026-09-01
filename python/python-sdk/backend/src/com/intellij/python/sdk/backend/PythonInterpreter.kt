@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.sdk
+package com.intellij.python.sdk.backend
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -11,8 +11,11 @@ import com.jetbrains.python.frameActivationCache.CacheKeys
 import com.jetbrains.python.frameActivationCache.getOrComputeOnFrameActivation
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.impl.enrichLocalPythonSdkWithHomeInfo
-import com.jetbrains.python.sdk.impl.pythonEnvironmentCache
+import com.jetbrains.python.sdk.findPythonSdk
+import com.jetbrains.python.sdk.validatePythonAndGetInfo
+import com.jetbrains.python.sdk.version
+import com.intellij.python.sdk.backend.impl.enrichLocalPythonSdkWithHomeInfo
+import com.intellij.python.sdk.backend.impl.pythonEnvironmentCache
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -35,7 +38,6 @@ import org.jetbrains.annotations.ApiStatus
  *  - [Sdk.pythonInterpreterOrNull] — synchronous read; returns `null` only when nothing has ever been
  *    cached for the SDK.
  */
-@ApiStatus.Internal
 class PythonInterpreter internal constructor(
   internal val sdk: Sdk,
   val environmentResult: PyResult<PythonEnvironment>?,
@@ -74,7 +76,6 @@ class PythonInterpreter internal constructor(
  * a Python 2.7-era `virtualenv`, or a remote machine, where environment detection does not reach yet. That answer is
  * cached until the user next activates the IDE.
  */
-@ApiStatus.Internal
 suspend fun PythonInterpreter.getVersion(): PyResult<LanguageLevel> =
   pythonEnvironment?.version?.let { LanguageLevel.fromPythonVersionSafe(it) }?.let { PyResult.success(it) }
   ?: sdk.getOrComputeOnFrameActivation(PY_SDK_LANG_LEVEL_CACHE_KEY) {
@@ -89,7 +90,6 @@ suspend fun PythonInterpreter.getVersion(): PyResult<LanguageLevel> =
  * counts as "already attempted". For a guaranteed fresh result, call [pythonInterpreter] on a background
  * thread.
  */
-@get:ApiStatus.Internal
 val Sdk.pythonInterpreterOrNull: PythonInterpreter?
   get() = pythonEnvironmentCache?.let { PythonInterpreter(this, it) }
 
@@ -108,14 +108,12 @@ val Sdk.pythonInterpreterOrNull: PythonInterpreter?
  *
  * @param forceRefresh re-detect even if a cached result already exists.
  */
-@ApiStatus.Internal
 @RequiresBackgroundThread(generateAssertion = false)
 @RequiresBlockingContext
 fun Sdk.pythonInterpreter(forceRefresh: Boolean = false): PythonInterpreter {
   return PythonInterpreter(this, enrichLocalPythonSdkWithHomeInfo(forceRefresh))
 }
 
-@ApiStatus.Internal
 suspend fun Sdk.pythonInterpreterAsync(forceRefresh: Boolean = false): PythonInterpreter = withContext(Dispatchers.IO) {
   this@pythonInterpreterAsync.pythonInterpreter(forceRefresh)
 }
@@ -125,7 +123,4 @@ private val PY_SDK_LANG_LEVEL_CACHE_KEY = CacheKeys<PyResult<LanguageLevel>>("Py
 /**
  * Get [PythonInterpreter] if [PyProject] has it
  */
-@ApiStatus.Internal
-suspend fun PyProject.getInterpreter(): PythonInterpreter? =
-  @Suppress("UsagesOfObsoleteApi") // Temporary hack
-  residesOnModule.findPythonSdk()?.pythonInterpreterAsync()
+suspend fun PyProject.getInterpreter(): PythonInterpreter? = residesOnModule.findPythonSdk()?.pythonInterpreterAsync()

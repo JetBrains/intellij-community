@@ -1,22 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.python.sdk.backend
+package com.intellij.python.sdk.backend.impl
 
-import com.intellij.openapi.util.NlsSafe
+import com.intellij.python.sdk.backend.PythonEnvironment
+import com.intellij.python.sdk.backend.PythonEnvironmentProvider
+import com.intellij.python.sdk.backend.SystemPythonEnvironment
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.sdk.PythonEnvironment
-import com.jetbrains.python.sdk.PythonEnvironmentProvider
-import org.jetbrains.annotations.ApiStatus
-
-/**
- * A system-wide Python installation: no root of its own, no library of its own, nothing to activate.
- */
-@ApiStatus.Internal
-data class SystemPythonEnvironment(
-  /** Always null: a system interpreter records nothing about itself, so its version is only known by running it. */
-  override val version: @NlsSafe String? = null,
-  override val pythonBinaryPath: PythonBinary,
-) : PythonEnvironment
 
 /**
  * Whatever no other provider claims.

@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run
 
-import com.jetbrains.python.sdk.ActivationScript
-import com.jetbrains.python.sdk.detectPythonEnvironment
+import com.intellij.python.sdk.backend.ActivationScript
+import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.jetbrains.python.sdk.terminal.Shell
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path

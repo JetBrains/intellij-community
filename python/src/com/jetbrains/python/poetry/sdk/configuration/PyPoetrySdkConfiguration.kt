@@ -35,8 +35,8 @@ import com.jetbrains.python.sdk.configuration.PyProjectTomlConfigurationExtensio
 import com.jetbrains.python.sdk.configuration.findEnvOrNull
 import com.jetbrains.python.sdk.configuration.prepareSdkCreator
 import com.jetbrains.python.sdk.createSdk
-import com.jetbrains.python.sdk.impl.PySdkBundle
-import com.jetbrains.python.sdk.impl.resolvePythonBinary
+import com.intellij.python.sdk.backend.PySdkBundle
+import com.intellij.python.sdk.backend.resolvePythonBinary
 import com.jetbrains.python.sdk.poetry.PyPoetrySdkAdditionalData
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.pytools.resolveExecutable

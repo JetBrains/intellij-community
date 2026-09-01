@@ -20,11 +20,11 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.python.terminal.shared.PyVirtualEnvTerminalSettings
 import com.jetbrains.python.orLogException
-import com.jetbrains.python.sdk.PythonEnvironment
+import com.intellij.python.sdk.backend.PythonEnvironment
 import com.jetbrains.python.sdk.activationEnvironment
-import com.jetbrains.python.sdk.ShellActivation
+import com.intellij.python.sdk.backend.ShellActivation
 import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
-import com.jetbrains.python.sdk.pythonInterpreter
+import com.intellij.python.sdk.backend.pythonInterpreter
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.terminal.Shell
 import org.jetbrains.annotations.ApiStatus

@@ -27,7 +27,7 @@ private val LOG: Logger = fileLogger()
  * through these read-only RPC calls and render it into UI; [selectInterpreter] is the single mutating
  * call that actually switches the module interpreter.
  *
- * The interpreter model is the platform's [com.jetbrains.python.sdk.PythonInterpreter] /
+ * The interpreter model is the platform's [com.intellij.python.sdk.backend.PythonInterpreter] /
  * `PythonInterpreterPresentation` on the backend; on the wire it is flattened into [PyInterpreterDto]
  * (display) plus a [PyInterpreterRef] (selection token). What every call is addressed to is a `PyProject`,
  * referenced by [ProjectId] plus its [EvoPyProjectDto.key] — the project's base dir, resolved on the backend

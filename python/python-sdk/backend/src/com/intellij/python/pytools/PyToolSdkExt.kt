@@ -12,7 +12,7 @@ import com.intellij.python.sdk.backend.resolveToolVersion
 import com.intellij.python.sdk.backend.toolExecutableWithBaseArgs
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.PythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreter
 import java.nio.file.Path
 
 /*

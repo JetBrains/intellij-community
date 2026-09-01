@@ -8,6 +8,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil;
+import com.intellij.python.sdk.backend.PythonEnvironment;
+import com.intellij.python.sdk.backend.PythonEnvironmentExtKt;
+import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -122,6 +126,6 @@ public final class PythonSdkUtil {
   /** The id its provider declares in xml, or {@code null} when no environment was detected. */
   private static @Nullable String kindIdOf(@NotNull Sdk sdk) {
     PythonEnvironment environment = PythonInterpreterKt.pythonInterpreter(sdk, false).getPythonEnvironment();
-    return environment == null ? null : PythonEnvironmentProviderKt.getKindId(environment);
+    return environment == null ? null : PythonEnvironmentExtKt.getKindId(environment);
   }
 }

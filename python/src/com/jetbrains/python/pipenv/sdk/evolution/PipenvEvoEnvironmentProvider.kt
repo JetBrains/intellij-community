@@ -23,7 +23,7 @@ import com.jetbrains.python.getOrNull
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.configuration.PIPENV_TOOL_ID
-import com.jetbrains.python.sdk.impl.resolvePythonBinary
+import com.intellij.python.sdk.backend.resolvePythonBinary
 import com.jetbrains.python.sdk.pipenv.PIP_FILE
 import com.jetbrains.python.sdk.pipenv.createPipenvSdk
 import com.jetbrains.python.sdk.pipenv.pipfileRequiresPython

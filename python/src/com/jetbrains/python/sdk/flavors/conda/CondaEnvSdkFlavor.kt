@@ -9,7 +9,7 @@ import com.intellij.python.community.impl.conda.icons.PythonCommunityImplCondaIc
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PythonBinary
 import com.intellij.python.community.impl.conda.environment.CondaEnvironment
-import com.jetbrains.python.sdk.detectPythonEnvironment
+import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.PythonFlavorProvider
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor

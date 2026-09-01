@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.python.packaging.getCondaBasePython
+import com.intellij.python.sdk.backend.activationEnvironment
 import com.jetbrains.python.sdk.activationEnvironment
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path

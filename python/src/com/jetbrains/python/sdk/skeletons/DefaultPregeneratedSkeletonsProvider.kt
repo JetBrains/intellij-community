@@ -20,7 +20,7 @@ import com.intellij.util.io.ZipUtil
 import com.jetbrains.python.PyBundle
 import com.intellij.python.community.impl.conda.environment.CondaEnvironment
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.jetbrains.python.sdk.pythonInterpreter
+import com.intellij.python.sdk.backend.pythonInterpreter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.io.IOException

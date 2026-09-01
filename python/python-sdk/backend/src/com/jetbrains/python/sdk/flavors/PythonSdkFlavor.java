@@ -25,7 +25,7 @@ import com.jetbrains.python.sdk.CustomSdkHomePattern;
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
-import com.jetbrains.python.sdk.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import kotlin.coroutines.Continuation;
 import org.jetbrains.annotations.ApiStatus;
@@ -329,7 +329,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   }
 
   /**
-   * @deprecated use {@link com.jetbrains.python.sdk.PythonInterpreterKt#getVersion(PythonInterpreter, Continuation)}
+   * @deprecated use {@link com.intellij.python.sdk.backend.PythonInterpreterKt#getVersion(PythonInterpreter, Continuation)}
    * or {@link com.intellij.python.community.execService.python.ApiKt#validatePythonAndGetInfo(Path, Continuation)}
    * or {@link com.jetbrains.python.sdk.SdkExtKt#validatePythonAndGetInfo(Sdk, Continuation)}
    */
@@ -346,7 +346,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   }
 
   /**
-   * @deprecated use {@link com.jetbrains.python.sdk.PythonInterpreterKt#getVersion(PythonInterpreter, Continuation)}
+   * @deprecated use {@link com.intellij.python.sdk.backend.PythonInterpreterKt#getVersion(PythonInterpreter, Continuation)}
    * or {@link com.intellij.python.community.execService.python.ApiKt#validatePythonAndGetInfo(Path, Continuation)}
    * or {@link com.jetbrains.python.sdk.SdkExtKt#validatePythonAndGetInfo(Sdk, Continuation)}
    */
@@ -369,7 +369,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   }
 
   /**
-   * @deprecated use {@link com.jetbrains.python.sdk.PythonInterpreterKt#getVersion(PythonInterpreter, Continuation)}
+   * @deprecated use {@link com.intellij.python.sdk.backend.PythonInterpreterKt#getVersion(PythonInterpreter, Continuation)}
    * or {@link com.intellij.python.community.execService.python.ApiKt#validatePythonAndGetInfo(Path, Continuation)}
    * or {@link com.jetbrains.python.sdk.SdkExtKt#validatePythonAndGetInfo(Sdk, Continuation)}
    */
@@ -400,7 +400,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   }
 
   /**
-   * @deprecated use {@link com.jetbrains.python.sdk.PythonInterpreterKt#getVersion(PythonInterpreter, Continuation)}
+   * @deprecated use {@link com.intellij.python.sdk.backend.PythonInterpreterKt#getVersion(PythonInterpreter, Continuation)}
    * or {@link com.intellij.python.community.execService.python.ApiKt#validatePythonAndGetInfo(Path, Continuation)}
    * or {@link com.jetbrains.python.sdk.SdkExtKt#validatePythonAndGetInfo(Sdk, Continuation)}
    */
@@ -411,7 +411,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
 
 
   /**
-   * @deprecated use {@link com.jetbrains.python.sdk.PythonInterpreterKt#getVersion(PythonInterpreter, Continuation)}
+   * @deprecated use {@link com.intellij.python.sdk.backend.PythonInterpreterKt#getVersion(PythonInterpreter, Continuation)}
    * or {@link com.intellij.python.community.execService.python.ApiKt#validatePythonAndGetInfo(Path, Continuation)}
    * or {@link com.jetbrains.python.sdk.SdkExtKt#validatePythonAndGetInfo(Sdk, Continuation)}
    */

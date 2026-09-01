@@ -53,7 +53,7 @@ import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
 import com.jetbrains.python.sdk.configuration.getSdkCreator
 import com.jetbrains.python.sdk.configuration.suppressors.suppressTipAndInspectionsFor
 import com.jetbrains.python.sdk.configurePythonSdk
-import com.jetbrains.python.sdk.impl.PySdkBundle
+import com.intellij.python.sdk.backend.PySdkBundle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext

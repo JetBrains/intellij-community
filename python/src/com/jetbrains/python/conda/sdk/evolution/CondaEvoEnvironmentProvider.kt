@@ -39,8 +39,8 @@ import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
-import com.jetbrains.python.sdk.impl.PySdkBundle
-import com.jetbrains.python.sdk.impl.resolvePythonBinary
+import com.intellij.python.sdk.backend.PySdkBundle
+import com.intellij.python.sdk.backend.resolvePythonBinary
 import java.nio.file.Path
 import kotlin.io.path.name
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor

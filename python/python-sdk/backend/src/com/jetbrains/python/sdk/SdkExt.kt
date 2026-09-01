@@ -25,8 +25,8 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.mapResult
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.impl.PySdkBundle
-import com.jetbrains.python.sdk.impl.buildPresentationInfo
+import com.intellij.python.sdk.backend.PySdkBundle
+import com.intellij.python.sdk.backend.impl.buildPresentationInfo
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil.isPythonSdk
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
@@ -36,6 +36,7 @@ import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import kotlin.io.path.Path
+import com.intellij.python.sdk.backend.PythonInterpreterPresentation
 
 @get:Internal
 val BASE_DIR: Key<Path> = Key.create("PYTHON_PROJECT_BASE_PATH")

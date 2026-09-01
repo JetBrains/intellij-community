@@ -17,7 +17,7 @@ import com.intellij.util.ui.EDT;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import com.jetbrains.python.sdk.impl.PySdkBundle;
+import com.intellij.python.sdk.backend.PySdkBundle;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import kotlin.coroutines.Continuation;
 import org.jetbrains.annotations.ApiStatus;

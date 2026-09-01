@@ -18,7 +18,7 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.run.ActivatableScriptExtKt;
-import com.jetbrains.python.sdk.impl.PySdkBundle;
+import com.intellij.python.sdk.backend.PySdkBundle;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

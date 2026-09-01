@@ -32,8 +32,8 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.evolution.requiresPython
-import com.jetbrains.python.sdk.impl.PySdkBundle
-import com.jetbrains.python.sdk.impl.resolvePythonHome
+import com.intellij.python.sdk.backend.PySdkBundle
+import com.intellij.python.sdk.backend.resolvePythonHome
 import com.jetbrains.python.sdk.uv.setupExistingEnvAndSdk
 import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnv
 import io.github.z4kn4fein.semver.Version

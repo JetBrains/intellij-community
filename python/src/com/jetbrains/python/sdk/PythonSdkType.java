@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk;
 
+import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterKt;
+import com.intellij.python.sdk.backend.PythonBinaryExtKt;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.ide.DataManager;
 import com.intellij.notification.Notification;
@@ -309,7 +312,7 @@ public final class PythonSdkType extends SdkType {
       LOG.warn("Invalid SDK home path: " + sdkHome, e);
       return sdkHome;
     }
-    var pythonEnvironment = PythonEnvironmentKt.detectPythonEnvironment(pythonBinary).getSuccessOrNull();
+    var pythonEnvironment = PythonBinaryExtKt.detectPythonEnvironment(pythonBinary).getSuccessOrNull();
     if (pythonEnvironment == null) {
       return FileUtil.getLocationRelativeToUserHome(pythonBinary.toAbsolutePath().toString(), false);
     }

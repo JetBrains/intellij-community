@@ -34,6 +34,7 @@ import javax.swing.JList
 import javax.swing.JScrollPane
 import javax.swing.ListSelectionModel
 import javax.swing.event.ListSelectionListener
+import com.jetbrains.python.sdk.pyInterpreterPresentation
 
 internal class PyPackagesSdkController(private val project: Project) : Disposable.Default {
 

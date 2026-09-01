@@ -11,7 +11,7 @@ import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.sdk.BASE_DIR
 import com.intellij.python.venv.environment.VenvEnvironment
 import com.jetbrains.python.sdk.baseDir
-import com.jetbrains.python.sdk.detectPythonEnvironment
+import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.venvReader.VirtualEnvReader

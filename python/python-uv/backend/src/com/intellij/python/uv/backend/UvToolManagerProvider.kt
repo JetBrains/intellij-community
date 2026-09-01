@@ -17,7 +17,7 @@ import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.toFileSystem
-import com.jetbrains.python.sdk.impl.PySdkBundle
+import com.intellij.python.sdk.backend.PySdkBundle
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 

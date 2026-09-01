@@ -4,8 +4,8 @@ package com.jetbrains.python.hatch.sdk.configuration
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import com.intellij.python.community.execService.python.validatePythonAndGetInfo
-import com.jetbrains.python.sdk.detectPythonEnvironment
-import com.jetbrains.python.sdk.impl.resolvePythonBinary
+import com.intellij.python.sdk.backend.detectPythonEnvironment
+import com.intellij.python.sdk.backend.resolvePythonBinary
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.PythonInfo
 import com.intellij.openapi.diagnostic.Logger

@@ -11,7 +11,7 @@ import com.intellij.platform.eel.fs.EelFileUtils
 import com.intellij.util.io.HttpRequests
 import com.jetbrains.python.sdk.Binary
 import com.jetbrains.python.sdk.Resource
-import com.jetbrains.python.sdk.impl.PySdkBundle
+import com.intellij.python.sdk.backend.PySdkBundle
 import com.jetbrains.python.sdk.installer.BinaryInstaller
 import com.jetbrains.python.sdk.installer.BinaryInstallerException
 import com.jetbrains.python.sdk.installer.CancelledPrepareException

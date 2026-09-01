@@ -14,9 +14,9 @@ import com.intellij.util.EnvironmentUtil
 import com.intellij.util.ShellEnvironmentReader
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.sdk.ActivationScript
-import com.jetbrains.python.sdk.PythonEnvironment
-import com.jetbrains.python.sdk.detectPythonEnvironment
+import com.intellij.python.sdk.backend.ActivationScript
+import com.intellij.python.sdk.backend.PythonEnvironment
+import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.jetbrains.python.sdk.terminal.Shell
 import com.jetbrains.python.sdk.terminal.Shell.Companion.systemDefaultShell
 import kotlinx.coroutines.Dispatchers

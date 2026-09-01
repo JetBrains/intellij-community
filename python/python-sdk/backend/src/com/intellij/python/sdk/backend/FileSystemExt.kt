@@ -12,7 +12,6 @@ import com.intellij.python.pytools.pyExecutable
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
-import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.runExecutableWithProgress
 import java.nio.file.Path
 import kotlin.time.Duration.Companion.minutes
@@ -38,19 +37,10 @@ suspend fun <P : PathHolder> FileSystem<P>.resolveExecutable(
   pathFromSdk: FullPathOnTarget? = null,
 ): P? {
   pathFromSdk?.let { parsePath(it).successOrNull }?.let { return it }
-  val eelDescriptor = eelDescriptor ?: return detectTool(executable)
+  val eelDescriptor = eelDescriptor ?: return detectTool(executable.toolCommandSpec)
   val path = PyExecutableCache.getInstance().get(eelDescriptor, executable) ?: return null
   return parsePath(path.toString()).successOrNull
 }
-
-/**
- * Detects [executable] here using its [PyExecutable.toolCommandSpec] — the bridge from a tool identity to the
- * filesystem's raw `ToolCommandSpec` detection primitive.
- */
-internal suspend fun <P : PathHolder> FileSystem<P>.detectTool(
-  executable: PyExecutable,
-  filter: (P) -> Boolean = { true },
-): P? = detectTool(executable.toolCommandSpec, filter)
 
 /** Resolves [executable] here (see [resolveExecutable]) and runs it with [args], returning [transformer]'s result. */
 suspend fun <P : PathHolder, T> FileSystem<P>.runTool(
@@ -103,4 +93,6 @@ suspend fun <P : PathHolder> FileSystem<P>.runTool(
  * For executables with no [PyExecutable] identity — `uvx`, or an ad-hoc tool name — so no custom path or cache is
  * involved.
  */
-suspend fun <P : PathHolder> FileSystem<P>.detectExecutableInPath(name: String): P? = detectTool(pyExecutable(name))
+suspend fun <P : PathHolder> FileSystem<P>.detectExecutableInPath(name: String): P? {
+  return detectTool(pyExecutable(name).toolCommandSpec)
+}

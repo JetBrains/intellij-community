@@ -9,7 +9,7 @@ import com.intellij.python.pytools.runtime.PyToolRuntime
 import com.intellij.python.uv.backend.runtime.UvConstants
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.python.PythonBinary
-import com.jetbrains.python.sdk.impl.resolvePythonHome
+import com.intellij.python.sdk.backend.resolvePythonHome
 import kotlinx.coroutines.Dispatchers
 import org.junit.jupiter.api.TestInfo
 import java.nio.file.Path

@@ -8,7 +8,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.jetbrains.python.sdk.Binary
 import com.jetbrains.python.sdk.Resource
 import com.jetbrains.python.sdk.ResourceType
-import com.jetbrains.python.sdk.impl.PySdkBundle
+import com.intellij.python.sdk.backend.PySdkBundle
 import com.jetbrains.python.sdk.installer.CancelledProcessException
 import com.jetbrains.python.sdk.installer.ExecutionProcessException
 import com.jetbrains.python.sdk.installer.LOGGER

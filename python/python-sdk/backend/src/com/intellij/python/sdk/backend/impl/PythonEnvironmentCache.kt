@@ -1,18 +1,18 @@
-package com.jetbrains.python.sdk.impl
+package com.intellij.python.sdk.backend.impl
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.sdk.PythonInterpreter
-import com.jetbrains.python.sdk.PythonEnvironment
-import com.jetbrains.python.sdk.detectPythonEnvironment
-import com.jetbrains.python.sdk.impl.PySdkBundle.message
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.PythonEnvironment
+import com.intellij.python.sdk.backend.detectPythonEnvironment
+import com.intellij.python.sdk.backend.PySdkBundle.message
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil.isPythonSdk
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil.isRemote
-import com.jetbrains.python.sdk.pythonInterpreter
-import com.jetbrains.python.sdk.pythonInterpreterOrNull
+import com.intellij.python.sdk.backend.pythonInterpreter
+import com.intellij.python.sdk.backend.pythonInterpreterOrNull
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 

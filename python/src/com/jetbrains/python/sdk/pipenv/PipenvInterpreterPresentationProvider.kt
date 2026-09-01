@@ -3,7 +3,7 @@ package com.jetbrains.python.sdk.pipenv
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.toNioPathOrNull
-import com.jetbrains.python.sdk.PythonInterpreterPresentationProvider
+import com.intellij.python.sdk.backend.PythonInterpreterPresentationProvider
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.pySdkAdditionalData
 

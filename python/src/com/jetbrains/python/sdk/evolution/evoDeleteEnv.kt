@@ -4,8 +4,8 @@ package com.jetbrains.python.sdk.evolution
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.platform.eel.fs.EelFileUtils
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.sdk.impl.PySdkBundle
-import com.jetbrains.python.sdk.impl.resolvePythonBinary
+import com.intellij.python.sdk.backend.PySdkBundle
+import com.intellij.python.sdk.backend.resolvePythonBinary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus

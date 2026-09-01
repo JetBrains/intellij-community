@@ -1,22 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.sdk
+package com.intellij.python.sdk.backend
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.components.service
-import com.intellij.python.sdk.backend.service.ActivatableEnvironmentService
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
-import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.sdk.impl.detectPythonEnvironmentImpl
 import com.jetbrains.python.sdk.terminal.Shell
-import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 /**
  * A script a shell sources to activate an environment.
  */
-@ApiStatus.Internal
 data class ActivationScript(
   val scriptPath: Path,
   val args: List<String>? = null,
@@ -34,7 +27,6 @@ data class ActivationScript(
  * The caller has no knowledge of any kind of environment. It asks the environment for one of these two shapes and
  * hands it to the shell integration.
  */
-@ApiStatus.Internal
 sealed interface ShellActivation {
   /** A script the shell sources, with its arguments. */
   data class SourceScript(val scriptPath: Path, val args: List<String>? = null) : ShellActivation
@@ -53,7 +45,6 @@ sealed interface ShellActivation {
  * root of its own, no library directory of its own, and nothing to activate. A question that only one tool can
  * answer does not belong here. It belongs on that tool's own type, where only that tool's module can read it.
  */
-@ApiStatus.Internal
 interface PythonEnvironment {
   /**
    * The interpreter version this environment records about itself, or null when it records none.
@@ -115,24 +106,11 @@ interface PythonEnvironment {
 }
 
 /**
- * Detects the Python environment from the file system layout around this binary.
- *
- * Each kind is detected by its own [PythonEnvironmentProvider], so this function names no kind. A binary that no
- * other provider claims is a [PythonEnvironment.SystemPython].
- *
- * Returns an error if the binary does not exist or is not executable, or if a provider owns the layout but the
- * layout is broken.
+ * A system-wide Python installation: no root of its own, no library of its own, nothing to activate.
  */
-@ApiStatus.Internal
-@RequiresBackgroundThread
-fun PythonBinary.detectPythonEnvironment(): PyResult<PythonEnvironment> = detectPythonEnvironmentImpl()
+data class SystemPythonEnvironment(
+  /** Always null: a system interpreter records nothing about itself, so its version is only known by running it. */
+  override val version: @NlsSafe String? = null,
+  override val pythonBinaryPath: PythonBinary,
+) : PythonEnvironment
 
-/** The activation environment for [this] Python environment. */
-@ApiStatus.Internal
-suspend fun PythonEnvironment.activationEnvironment(): PyResult<Map<String, String>> =
-  service<ActivatableEnvironmentService>().activationEnvironment(this)
-
-/** The activation environment for the interpreter at [this] path (its environment is detected on a cache miss). */
-@ApiStatus.Internal
-suspend fun PythonBinary.activationEnvironment(): PyResult<Map<String, String>> =
-  service<ActivatableEnvironmentService>().activationEnvironment(this)

@@ -33,8 +33,8 @@ import com.jetbrains.python.getOrNull
 import com.jetbrains.python.hatch.sdk.createSdk
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
-import com.jetbrains.python.sdk.impl.PySdkBundle
-import com.jetbrains.python.sdk.impl.resolvePythonBinary
+import com.intellij.python.sdk.backend.PySdkBundle
+import com.intellij.python.sdk.backend.resolvePythonBinary
 import java.nio.file.Path
 import com.intellij.python.hatch.impl.sdk.HatchSdkFlavor
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor

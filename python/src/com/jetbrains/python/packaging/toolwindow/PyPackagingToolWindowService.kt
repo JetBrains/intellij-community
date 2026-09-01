@@ -90,6 +90,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import com.jetbrains.python.sdk.pyInterpreterPresentation
 
 @Service(Service.Level.PROJECT)
 internal class PyPackagingToolWindowService(val project: Project, val serviceScope: CoroutineScope) : Disposable {

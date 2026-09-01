@@ -63,7 +63,7 @@ import org.jetbrains.annotations.ApiStatus
 @Deprecated(message = "Use com.jetbrains.python.project.PyProject.Companion.getPyProjects")
 val Project.modules: Array<Module> get() = ModuleManager.getInstance(this).modules
 
-@Deprecated(message = "Use com.jetbrains.python.sdk.PythonInterpreterKt.getInterpreter (internal only), or get SDK directly using a platfrom API (third party)")
+@Deprecated(message = "Use com.intellij.python.sdk.backend.PythonInterpreterKt.getInterpreter (internal only), or get SDK directly using a platfrom API (third party)")
 val Project.sdks: List<Sdk> get() = modules.mapNotNull(Module::getSdk)
 
 /**

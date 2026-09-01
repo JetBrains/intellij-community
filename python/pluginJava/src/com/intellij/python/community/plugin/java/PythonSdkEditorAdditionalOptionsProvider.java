@@ -13,7 +13,7 @@ import com.jetbrains.python.packaging.PyPackageManagers;
 import com.jetbrains.python.packaging.PyPackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.impl.PySdkBundle;
+import com.intellij.python.sdk.backend.PySdkBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;

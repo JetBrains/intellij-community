@@ -23,6 +23,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 import kotlin.io.path.div
+import com.intellij.python.sdk.backend.pythonInterpreter
 
 @Internal
 fun configurePythonSdk(project: Project, module: Module, sdk: Sdk) {

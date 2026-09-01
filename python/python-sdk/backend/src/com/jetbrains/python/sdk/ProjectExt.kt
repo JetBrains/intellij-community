@@ -19,7 +19,7 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.codeCouldProbablyBeRunWithConfig
-import com.jetbrains.python.sdk.impl.PySdkBundle.message
+import com.intellij.python.sdk.backend.PySdkBundle.message
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.InvalidPathException

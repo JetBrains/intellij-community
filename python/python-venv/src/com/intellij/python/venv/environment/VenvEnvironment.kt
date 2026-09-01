@@ -9,10 +9,10 @@ import com.intellij.python.venv.PyVenvBundle.message
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.sdk.ActivationScript
-import com.jetbrains.python.sdk.PythonEnvironment
-import com.jetbrains.python.sdk.PythonEnvironmentProvider
-import com.jetbrains.python.sdk.impl.resolvePythonHome
+import com.intellij.python.sdk.backend.ActivationScript
+import com.intellij.python.sdk.backend.PythonEnvironment
+import com.intellij.python.sdk.backend.PythonEnvironmentProvider
+import com.intellij.python.sdk.backend.resolvePythonHome
 import com.jetbrains.python.sdk.terminal.Shell
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException

@@ -26,7 +26,7 @@ import com.intellij.python.pytools.ExternalPyTool
 import com.intellij.python.pytools.ui.icons.PythonPytoolsUIIcons
 import com.jetbrains.python.Result
 import com.intellij.python.pytools.validateCustomPath
-import com.jetbrains.python.sdk.pythonInterpreter
+import com.intellij.python.sdk.backend.pythonInterpreter
 import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

@@ -17,7 +17,7 @@ import com.intellij.python.venv.environment.VenvEnvironment
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.configuration.EnvCheckerResult
 import com.jetbrains.python.sdk.configuration.findEnvOrNull
-import com.jetbrains.python.sdk.detectPythonEnvironment
+import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.jetbrains.python.sdk.setAssociationToModule
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.pytools.resolveExecutable

@@ -34,6 +34,7 @@ import javax.swing.BoxLayout
 import javax.swing.Box
 import javax.swing.JPanel
 import javax.swing.SwingConstants
+import com.jetbrains.python.sdk.pyInterpreterPresentation
 
 internal class PyInstallDialogWorkspaceSelector(
   private val project: Project,

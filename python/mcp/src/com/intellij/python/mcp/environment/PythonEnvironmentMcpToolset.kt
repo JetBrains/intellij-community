@@ -21,12 +21,12 @@ import com.intellij.python.pyproject.model.api.SdkForModuleConfigInstruction
 import com.intellij.python.pyproject.model.api.configureSdkIfNeeded
 import com.intellij.python.pyproject.model.api.getModuleSdkState
 import com.intellij.python.pyproject.model.api.getPyProjectManager
-import com.jetbrains.python.sdk.PythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.findPythonSdk
-import com.jetbrains.python.sdk.getVersion
-import com.jetbrains.python.sdk.kindId
-import com.jetbrains.python.sdk.pythonInterpreterAsync
+import com.intellij.python.sdk.backend.getVersion
+import com.intellij.python.sdk.backend.kindId
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.serialization.Serializable
 import kotlin.io.path.pathString

@@ -18,7 +18,7 @@ import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.community.execService.execute
 import com.intellij.python.community.execService.python.HelperName
 import com.intellij.python.community.execService.python.addHelper
-import com.jetbrains.python.sdk.impl.PySdkBundle.message
+import com.intellij.python.sdk.backend.PySdkBundle.message
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult

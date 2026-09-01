@@ -17,7 +17,7 @@ import com.intellij.python.test.env.core.PyEnvironment
 import com.intellij.python.test.env.core.PyEnvironmentSpec
 import com.intellij.util.containers.orNull
 import com.jetbrains.python.PythonBinary
-import com.jetbrains.python.sdk.impl.resolvePythonHome
+import com.intellij.python.sdk.backend.resolvePythonHome
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.junit.jupiter.api.extension.ClassTemplateInvocationContext

@@ -1,11 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.sdk
+package com.intellij.python.sdk.backend
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import org.jetbrains.annotations.ApiStatus
+import com.jetbrains.python.sdk.pySdkAdditionalData
 
 /**
  * Lets the tool that owns an interpreter write its short label, where the default one reads badly.
@@ -24,7 +24,6 @@ import org.jetbrains.annotations.ApiStatus
  * One provider serves one flavor, and an interpreter has one flavor, so no call site chooses between providers. This is
  * the same selection that `PyProjectManager.forSdk` makes.
  */
-@ApiStatus.Internal
 interface PythonInterpreterPresentationProvider {
   /** The flavor whose interpreters this provider labels. */
   val flavorType: Class<out PythonSdkFlavor<*>>

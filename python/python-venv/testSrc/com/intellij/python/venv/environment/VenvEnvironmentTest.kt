@@ -4,8 +4,8 @@ package com.intellij.python.venv.environment
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.junit5.TestApplication
 import com.jetbrains.python.PythonBinary
-import com.jetbrains.python.sdk.detectPythonEnvironment
-import com.jetbrains.python.sdk.kindId
+import com.intellij.python.sdk.backend.detectPythonEnvironment
+import com.intellij.python.sdk.backend.kindId
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf

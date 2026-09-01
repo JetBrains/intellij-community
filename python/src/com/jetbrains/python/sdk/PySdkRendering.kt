@@ -11,6 +11,7 @@ import com.jetbrains.python.isNonToolVirtualEnv
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil.isRemote
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import com.intellij.python.sdk.backend.PythonInterpreterPresentation
 
 @Nls
 val noInterpreterMarker: String = "<${PyBundle.message("python.sdk.there.is.no.interpreter")}>"

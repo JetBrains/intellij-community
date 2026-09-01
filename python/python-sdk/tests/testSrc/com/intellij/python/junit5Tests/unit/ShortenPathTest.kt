@@ -2,9 +2,9 @@ package com.intellij.python.junit5Tests.unit
 
 import com.intellij.python.sdk.backend.evolution.toSectionLabel
 import com.intellij.util.SystemProperties
-import com.jetbrains.python.sdk.PythonInterpreterPresentation
-import com.jetbrains.python.sdk.impl.isNameDerivedFromHomePath
-import com.jetbrains.python.sdk.impl.shortenPath
+import com.intellij.python.sdk.backend.PythonInterpreterPresentation
+import com.intellij.python.sdk.backend.impl.isNameDerivedFromHomePath
+import com.intellij.python.sdk.backend.impl.shortenPath
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue

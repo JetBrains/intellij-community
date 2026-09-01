@@ -1,9 +1,8 @@
-package com.jetbrains.python.sdk
+package com.intellij.python.sdk.backend
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.text.trimMiddle
-import com.jetbrains.python.sdk.impl.shortenPath
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.python.sdk.backend.impl.shortenPath
 import javax.swing.Icon
 
 
@@ -20,7 +19,6 @@ import javax.swing.Icon
  *   `false` when [name] is a free-form label such as `SSH (sftp://...)` or a caller-supplied
  *   custom name, in which case the renderer trims the middle instead. See PY-89560.
  */
-@ApiStatus.Internal
 data class PythonInterpreterPresentation(
   val name: @NlsSafe String,
   val suffix: @NlsSafe String?,

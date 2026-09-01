@@ -11,6 +11,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.module.PyModuleService
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.ApiStatus
+import com.intellij.python.sdk.backend.pythonInterpreter
 
 /**
  * Returns the Python SDK configured for this module, or `null` if none is set.

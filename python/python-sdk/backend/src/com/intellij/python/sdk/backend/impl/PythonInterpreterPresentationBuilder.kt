@@ -1,4 +1,4 @@
-package com.jetbrains.python.sdk.impl
+package com.intellij.python.sdk.backend.impl
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.projectRoots.Sdk
@@ -7,8 +7,8 @@ import com.intellij.ui.LayeredIcon
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PySdkUtil
-import com.jetbrains.python.sdk.PythonInterpreterPresentation
-import com.jetbrains.python.sdk.PythonInterpreterPresentationProvider
+import com.intellij.python.sdk.backend.PythonInterpreterPresentation
+import com.intellij.python.sdk.backend.PythonInterpreterPresentationProvider
 import com.jetbrains.python.sdk.isRunAsRootViaSudo
 import com.jetbrains.python.sdk.isSdkSeemsValid
 import com.jetbrains.python.sdk.pySdkAdditionalData
