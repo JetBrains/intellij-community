@@ -46,7 +46,10 @@ type rollbackMessages struct {
 // outcome against the live pool. A non-zero exit code counts as leaseHeld, because
 // nothing returned the lease.
 func rollbackAcquire(rt Runtime, identity LeaseIdentity) rollbackOutcome {
-	spawned := rt.Spawn(returnCommand(identity), SpawnOptions{})
+	// A half-prepared workspace can be dirty, so the return can meet the confirmation
+	// prompt. The rollback answers it. The caller never received this workspace, and a
+	// rollback that aborts at the prompt leaves a lease that nothing can return.
+	spawned := rt.Spawn(returnCommand(identity), SpawnOptions{Stdin: returnPromptAnswer})
 	if spawned.ExitCode != 0 {
 		return rollbackOutcome{SpawnResult: spawned, state: leaseHeld}
 	}

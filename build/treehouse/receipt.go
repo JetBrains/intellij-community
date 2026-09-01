@@ -157,6 +157,15 @@ func parseAllocation(rt Runtime, value any) (LeaseIdentity, error) {
 	return LeaseIdentity{Path: absPath(rt, path), LeaseID: leaseID, LeaseHolder: leaseHolder}, nil
 }
 
+// returnPromptAnswer is what the CLI reads at "Worktree has uncommitted changes. Clean and
+// return? [Y/n]". The wrapper writes the answer itself, because `--confirm-preserved` is
+// already that answer and a session of an agent has no TTY. A lease that only a person at a
+// terminal can return stays open forever.
+//
+// The answer is not a `--force`. The CLI still detaches the workspace and still honors both
+// lease guards, and verifyReturned still reads the live pool for the outcome.
+const returnPromptAnswer = "y\n"
+
 // returnCommand always guards the return with both halves of the lease identity, so a
 // lease that another holder took in the meantime stays untouched. It never passes
 // `--force`.

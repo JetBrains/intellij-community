@@ -102,16 +102,17 @@ status, requires an empty process list, checks Git status, and calls `treehouse 
 identity guards. Running outside the leased workspace prevents the wrapper and its parent shell
 from appearing as workspace processes. The receipt is removed only after Treehouse reports success.
 
-If Git is dirty after the preservation checks, use an interactive TTY and explicitly attest that
-the work is preserved:
+If Git is dirty after the preservation checks, attest explicitly that the work is preserved:
 
 ```bash
 ../../../community/tools/treehouse.cmd write return --workspace <leased-path> --confirm-preserved
 ```
 
-Treehouse will ask `Clean and return? [Y/n]`; answer `Y` only after those checks pass. The wrapper
-refuses a dirty return without the flag or without a TTY, and never substitutes `--force`. A dirty
-return is verified against the live lease state, not against the exit code.
+Treehouse asks `Clean and return? [Y/n]`, and the wrapper answers it. The flag is already that
+answer, so no TTY is required and a session of an agent can return a dirty workspace. Pass the flag
+only after the preservation checks pass, because the return cleans the workspace. The wrapper
+refuses a dirty return without the flag, and never substitutes `--force`. A dirty return is
+verified against the live lease state, not against the exit code.
 
 If return fails, retain the lease and report the path, lease ID, and holder printed in the error.
 Do not fall back to a raw Git worktree, another clone, or another workspace manager.

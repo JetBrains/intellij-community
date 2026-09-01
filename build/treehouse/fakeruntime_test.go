@@ -106,7 +106,6 @@ type FakeRuntime struct {
 	t          *testing.T
 	cwd        string
 	env        map[string]string
-	isTTY      bool
 	spawned    []spawnCall
 	responses  []SpawnResult
 	files      map[string]string
@@ -138,8 +137,6 @@ func (r *FakeRuntime) Env(name string) (string, bool) {
 	value, ok := r.env[name]
 	return value, ok
 }
-
-func (r *FakeRuntime) IsTTY() bool { return r.isTTY }
 
 func (r *FakeRuntime) Now() time.Time {
 	return time.Date(2026, time.August, 6, 10, 0, 0, 0, time.UTC)

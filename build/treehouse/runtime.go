@@ -28,19 +28,18 @@ type SpawnResult struct {
 	Stderr   string
 }
 
-// SpawnOptions selects the standard-stream wiring of a child process.
+// SpawnOptions holds the standard input of a child process. The wrapper always captures
+// the output of a child, so a failure reaches the JSON envelope.
 type SpawnOptions struct {
-	// Interactive gives the child the wrapper's own streams, so a prompt of the child
-	// is answerable. The captured Stdout and Stderr are then empty.
-	Interactive bool
+	// Stdin is the text the child reads on its standard input. An empty value gives the
+	// child no input at all, so a read of the child reaches the end of the input at once.
+	Stdin string
 }
 
 // Runtime holds every effect of the wrapper. A test replaces it with a fake.
 type Runtime interface {
 	Cwd() string
 	Env(name string) (string, bool)
-	// IsTTY reports whether a person can answer a prompt of a child process.
-	IsTTY() bool
 	Now() time.Time
 	UUID() string
 	ReadTextFile(path string) (string, error)
@@ -65,20 +64,6 @@ func newOSRuntime() *osRuntime {
 func (r *osRuntime) Cwd() string { return r.cwd }
 
 func (r *osRuntime) Env(name string) (string, bool) { return os.LookupEnv(name) }
-
-// IsTTY requires both streams to be a character device, because the child of an
-// interactive spawn reads the prompt answer from one and writes the prompt to the other.
-func (r *osRuntime) IsTTY() bool {
-	return isCharDevice(os.Stdin) && isCharDevice(os.Stdout)
-}
-
-func isCharDevice(file *os.File) bool {
-	info, err := file.Stat()
-	if err != nil {
-		return false
-	}
-	return info.Mode()&os.ModeCharDevice != 0
-}
 
 func (r *osRuntime) Now() time.Time { return time.Now() }
 
@@ -139,16 +124,13 @@ func (r *osRuntime) Spawn(command []string, options SpawnOptions) SpawnResult {
 		// wants the check off, so it sets the variable even when the caller did not.
 		child.Env = append(os.Environ(), "TREEHOUSE_NO_UPDATE_CHECK=1")
 	}
+	if options.Stdin != "" {
+		child.Stdin = strings.NewReader(options.Stdin)
+	}
 	stdout := &strings.Builder{}
 	stderr := &strings.Builder{}
-	if options.Interactive {
-		child.Stdin = os.Stdin
-		child.Stdout = os.Stdout
-		child.Stderr = os.Stderr
-	} else {
-		child.Stdout = stdout
-		child.Stderr = stderr
-	}
+	child.Stdout = stdout
+	child.Stderr = stderr
 
 	err := child.Run()
 	result := SpawnResult{Stdout: stdout.String(), Stderr: stderr.String()}

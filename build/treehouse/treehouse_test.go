@@ -330,8 +330,8 @@ func TestWriteReturnReturnsACleanWorkspaceWithBothLeaseGuards(t *testing.T) {
 		"--if-lease-id", "lease-1",
 		"--if-lease-holder", "agent-session",
 	)
-	if rt.call(3).options != (SpawnOptions{Interactive: false}) {
-		t.Fatalf("the return of a clean workspace is interactive: %#v", rt.call(3).options)
+	if rt.call(3).options != (SpawnOptions{}) {
+		t.Fatalf("the return of a clean workspace sends input: %#v", rt.call(3).options)
 	}
 	assertNoForce(t, rt)
 	if !contains(rt.call(2).command, "core.fsmonitor=false") {
@@ -373,23 +373,10 @@ func TestWriteReturnRequiresPreservationConfirmationForADirtyWorkspace(t *testin
 	}
 }
 
-func TestWriteReturnRequiresATTYForAConfirmedDirtyReturn(t *testing.T) {
+// A dirty return needs no TTY. The wrapper answers the confirmation prompt of the CLI,
+// because --confirm-preserved is already that answer.
+func TestWriteReturnAnswersThePromptOfAConfirmedDirtyReturn(t *testing.T) {
 	rt := newFakeRuntime(t)
-	prepareReturn(rt, " M changed.kt\n")
-
-	data, err := execute([]string{
-		"write", "return", "--workspace", WORKSPACE, "--confirm-preserved",
-	}, rt)
-	failure := requireFailure(t, data, err)
-
-	assertMessage(t, failure, "interactive TTY")
-	assertExitCode(t, failure, 2)
-	assertSpawnCount(t, rt, 3)
-}
-
-func TestWriteReturnDelegatesAConfirmedDirtyReturnInteractively(t *testing.T) {
-	rt := newFakeRuntime(t)
-	rt.isTTY = true
 	prepareReturn(rt, " M changed.kt\n")
 	// The return call, then the live check of verifyReturned.
 	rt.push(result("", 0, ""), jsonResult([]any{AVAILABLE}))
@@ -399,9 +386,10 @@ func TestWriteReturnDelegatesAConfirmedDirtyReturnInteractively(t *testing.T) {
 	}, rt)
 	output := requireSuccess(t, data, err)
 
-	if rt.call(3).options != (SpawnOptions{Interactive: true}) {
-		t.Fatalf("the return of a dirty workspace is not interactive: %#v", rt.call(3).options)
+	if rt.call(3).options != (SpawnOptions{Stdin: "y\n"}) {
+		t.Fatalf("the return of a dirty workspace does not answer the prompt: %#v", rt.call(3).options)
 	}
+	assertNoForce(t, rt)
 	assertSubset(t, output, map[string]any{"returned": true, "dirty": true})
 	assertQueueDrained(t, rt)
 }
@@ -606,6 +594,38 @@ func TestWriteAcquireRollbackRemovesTheReceiptWhenTheLeaseIsGone(t *testing.T) {
 	}
 }
 
+// The rollback of an acquire can meet the same confirmation prompt, so it sends the same
+// answer. A rollback that aborts at the prompt leaves a lease that nothing can return.
+func TestWriteAcquireRollbackAnswersTheReturnPrompt(t *testing.T) {
+	for _, trigger := range rollbackTriggers {
+		t.Run(trigger.name, func(t *testing.T) {
+			rt := newFakeRuntime(t)
+			trigger.prepare(rt)
+			// The rollback return, then the live check that confirms it.
+			rt.push(result("", 0, ""), jsonResult([]any{AVAILABLE}))
+
+			data, err := execute([]string{"write", "acquire", "--holder", "agent-session"}, rt)
+			requireFailure(t, data, err)
+
+			found := false
+			for index, call := range rt.spawned {
+				if len(call.command) < 2 || call.command[0] != treehouseCommandName || call.command[1] != "return" {
+					continue
+				}
+				found = true
+				if call.options != (SpawnOptions{Stdin: "y\n"}) {
+					t.Fatalf("spawn %d does not answer the return prompt: %#v", index, call.options)
+				}
+			}
+			if !found {
+				t.Fatalf("no rollback return was recorded: %v", rt.commands())
+			}
+			assertNoForce(t, rt)
+			assertQueueDrained(t, rt)
+		})
+	}
+}
+
 func TestWriteAcquireRollbackKeepsTheReceiptWhenTheLeaseSurvivesASuccessfulExit(t *testing.T) {
 	for _, trigger := range rollbackTriggers {
 		t.Run(trigger.name, func(t *testing.T) {
@@ -718,7 +738,6 @@ func TestTheWrapperNeverPassesForce(t *testing.T) {
 	assertNoForce(t, acquire)
 
 	returned := newFakeRuntime(t)
-	returned.isTTY = true
 	prepareReturn(returned, " M changed.kt\n")
 	returned.push(result("", 0, ""), jsonResult([]any{AVAILABLE}))
 	data, err = execute([]string{
