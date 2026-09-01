@@ -179,6 +179,7 @@ abstract class ProjectViewPaneServiceBase(
   override suspend fun findNodeForOpenedFile(paneId: ProjectViewPaneId, editorChoice: EditorChoice, isInvokedManually: Boolean): ProjectViewNodePath? {
     val managers = managers.value ?: return null
     val pane = managers[paneId]?.pane ?: return null
+    // no need for withPaneActive because (Always) Select Opened File is only used for the active pane
     return pane.findNodeForSelectIn(SelectByEditorImpl(editorChoice, isInvokedManually))
   }
 
