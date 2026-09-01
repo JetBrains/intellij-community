@@ -291,8 +291,8 @@
 
     "toggle-on-bg": "accent-brand-bg",
     "toggle-off-bg": "transparent-black-40",
+    "toggle-off-border": "transparent",
     "toggle-on-border": "accent-brand-bg",
-    "toggle-off-border": "transparent-black-40",
     "toggle-on-disabled-bg": "control-bg-disabled",
     "toggle-off-disabled-bg": "control-bg-disabled",
     "toggle-on-disabled-border": "control-border-disabled",
@@ -1752,20 +1752,7 @@
       "Checkbox.Focus.Wide": "#3574F0",
       "Checkbox.Foreground.Disabled": "#C9CCD6",
       "Checkbox.Background.Disabled": "#F7F8FA",
-      "Checkbox.Border.Disabled": "#DFE1E5",
-
-      "Toggle.Background.Default": "toggle-off-bg",
-      "Toggle.Border.Default": "toggle-off-border",
-      "Toggle.Foreground.Default": "toggle-off-notch",
-      "Toggle.Background.Selected": "toggle-on-bg",
-      "Toggle.Border.Selected": "toggle-on-border",
-      "Toggle.Foreground.Selected": "toggle-on-notch",
-      "Toggle.Background.Disabled": "toggle-off-disabled-bg",
-      "Toggle.Border.Disabled": "toggle-off-disabled-border",
-      "Toggle.Foreground.Disabled": "toggle-off-disabled-notch",
-      "Toggle.Background.SelectedDisabled": "toggle-on-disabled-bg",
-      "Toggle.Border.SelectedDisabled": "toggle-on-disabled-border",
-      "Toggle.Foreground.SelectedDisabled": "toggle-on-disabled-notch"
+      "Checkbox.Border.Disabled": "#DFE1E5"
     }
   }
 }

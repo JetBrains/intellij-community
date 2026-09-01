@@ -50,7 +50,21 @@
 
     "SelectionActive": "#304c80",
     "SelectionActiveLight": "#304c80",
-    "SelectionInactive": "#474A4D"
+    "SelectionInactive": "#474A4D",
+
+    "toggle-on-bg": "SelectionActive",
+    "toggle-off-bg": "#FFFFFF29",
+    "toggle-off-border": "BorderTransparent",
+    "toggle-on-border": "ComponentBorderFocus",
+    "toggle-on-disabled-bg": "#43494A",
+    "toggle-off-disabled-bg": "#43494A",
+    "toggle-on-disabled-border": "#545556",
+    "toggle-off-disabled-border": "#545556",
+    "toggle-focus-border": "ComponentBorderFocus",
+    "toggle-on-notch": "#DFE1E5",
+    "toggle-off-notch": "#CED0D6",
+    "toggle-on-disabled-notch": "#606060",
+    "toggle-off-disabled-notch": "#606060"
   },
 
   "ui": {
@@ -939,20 +953,7 @@
       "Checkbox.Background.Disabled": "#43494A",
       "Checkbox.Background.Selected": "#363738",
       "Checkbox.Border.Disabled": "#545556",
-      "Checkbox.Foreground.Disabled": "#606060",
-
-      "Toggle.Background.Default": "#FFFFFF29",
-      "Toggle.Border.Default": "#FFFFFF29",
-      "Toggle.Foreground.Default": "#CED0D6",
-      "Toggle.Background.Selected": "SelectionActive",
-      "Toggle.Border.Selected": "ComponentBorderFocus",
-      "Toggle.Foreground.Selected": "#DFE1E5",
-      "Toggle.Background.Disabled": "#43494A",
-      "Toggle.Border.Disabled": "#545556",
-      "Toggle.Foreground.Disabled": "#606060",
-      "Toggle.Background.SelectedDisabled": "#43494A",
-      "Toggle.Border.SelectedDisabled": "#545556",
-      "Toggle.Foreground.SelectedDisabled": "#606060"
+      "Checkbox.Foreground.Disabled": "#606060"
     }
   }
 }

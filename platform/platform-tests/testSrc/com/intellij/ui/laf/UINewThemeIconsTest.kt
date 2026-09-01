@@ -12,6 +12,9 @@ import com.intellij.util.xml.dom.createXmlStreamReader
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 
+private const val COLOR_FILL_KEY = "color-fill-key"
+private const val COLOR_STROKE_KEY = "color-stroke-key"
+
 class UINewThemeIconsTest {
 
   private val iconsPath = "/themes/expUI/icons/dark/"
@@ -19,17 +22,14 @@ class UINewThemeIconsTest {
   private val lafIconsPath = "/com/intellij/ide/ui/laf/icons/"
 
   /**
-   * Islands toggles have no per-theme copies — a single asset per state, recolored via `Toggle.*` palette keys
+   * Islands toggles have no per-theme copies — a single asset per state, recolored by
+   * [com.intellij.ide.ui.laf.darcula.ui.IslandsOnOffButtonUI] from the theme color each element
+   * names in its `color-fill-key` / `color-stroke-key` attribute.
    */
-  private val toggleAvailableKeys: Map<Set<String>, Set<String>> = mapOf(
-    setOf("toggleOff.svg") to
-      setOf("Toggle.Background.Default", "Toggle.Border.Default", "Toggle.Foreground.Default"),
-    setOf("toggleOn.svg") to
-      setOf("Toggle.Background.Selected", "Toggle.Border.Selected", "Toggle.Foreground.Selected"),
-    setOf("toggleOffDisabled.svg") to
-      setOf("Toggle.Background.Disabled", "Toggle.Border.Disabled", "Toggle.Foreground.Disabled"),
-    setOf("toggleOnDisabled.svg") to
-      setOf("Toggle.Background.SelectedDisabled", "Toggle.Border.SelectedDisabled", "Toggle.Foreground.SelectedDisabled")
+  private val toggleIcons: Set<String> = setOf(
+    "toggleOff.svg", "toggleOn.svg",
+    "toggleOffFocused.svg", "toggleOnFocused.svg",
+    "toggleOffDisabled.svg", "toggleOnDisabled.svg",
   )
 
   private val allAvailableKeys: Map<Set<String>, Set<String>> = mapOf(
@@ -56,31 +56,56 @@ class UINewThemeIconsTest {
     }
   }
 
+  /**
+   * Every painted element must name a theme color, otherwise it silently keeps the color baked into
+   * the asset instead of following the theme.
+   */
   @Test
-  fun testToggleIcons() {
-    for ((names, availableKeys) in toggleAvailableKeys.entries) {
-      for (name in names) {
-        checkIcon(name, availableKeys, lafIconsPath)
+  fun testToggleIconsNameAColor() {
+    for (name in toggleIcons) {
+      forEachElement(name, lafIconsPath) { attributes ->
+        val named = attributes.keys.count { it == COLOR_FILL_KEY || it == COLOR_STROKE_KEY }
+        val painted = attributes.entries.count { (key, value) -> (key == ATTR_FILL || key == ATTR_STROKE) && value != "none" }
+        if (named != painted) {
+          fail("Icon: $name, $painted painted attribute(s) but $named color key(s), see IslandsOnOffButtonUI-spec.md")
+        }
       }
     }
   }
 
   /**
-   * The toggle assets are shared by all themes, so an Islands theme that misses a key renders that
+   * The toggle assets are shared by all themes, so an Islands theme that misses a color renders that
    * element with the color baked into the asset instead of its own.
    */
   @Test
-  fun testToggleKeysDeclaredByIslandsThemes() {
+  fun testToggleColorsDeclaredByIslandsThemes() {
+    val keys = sortedSetOf<String>()
+    for (name in toggleIcons) {
+      forEachElement(name, lafIconsPath) { attributes ->
+        attributes[COLOR_FILL_KEY]?.let { keys.add(it) }
+        attributes[COLOR_STROKE_KEY]?.let { keys.add(it) }
+      }
+    }
+    if (keys.isEmpty()) {
+      fail("No color keys found in the toggle assets")
+    }
+
     val themes = listOf("ManyIslandsDark", "ManyIslandsLight", "ManyIslandsDarcula", "HighContrast")
     for (theme in themes) {
       val path = "/themes/islands/$theme.theme.json"
       val text = javaClass.getResourceAsStream(path)?.reader()?.readText() ?: fail("Theme not found: $path")
-      for (key in toggleAvailableKeys.values.flatten()) {
+      for (key in keys) {
         if (!text.contains("\"$key\"")) {
-          fail("Theme: $theme, palette key $key is not declared, see IslandsOnOffButtonUI-spec.md")
+          fail("Theme: $theme, color $key is not declared, see IslandsOnOffButtonUI-spec.md")
         }
       }
     }
+  }
+
+  private fun forEachElement(name: String, path: String, check: (Map<String, String>) -> Unit) {
+    createJSvgDocument(createXmlStreamReader(javaClass.getResourceAsStream(path + name)!!), object : AttributeMutator {
+      override fun invoke(attributes: MutableMap<String, String>) = check(attributes)
+    })
   }
 
   private fun checkIcon(name: String, availableKeys: Set<String>, path: String) {

@@ -291,8 +291,8 @@
 
     "toggle-on-bg": "accent-brand-bg",
     "toggle-off-bg": "transparent-white-50",
+    "toggle-off-border": "transparent",
     "toggle-on-border": "accent-brand-bg",
-    "toggle-off-border": "transparent-white-50",
     "toggle-on-disabled-bg": "transparent",
     "toggle-off-disabled-bg": "transparent",
     "toggle-on-disabled-border": "control-border-disabled",
@@ -1800,20 +1800,7 @@
 
   "icons": {
     "ColorPalette": {
-      "#CED0D6": "icon-default-stroke",
-
-      "Toggle.Background.Default": "toggle-off-bg",
-      "Toggle.Border.Default": "toggle-off-border",
-      "Toggle.Foreground.Default": "toggle-off-notch",
-      "Toggle.Background.Selected": "toggle-on-bg",
-      "Toggle.Border.Selected": "toggle-on-border",
-      "Toggle.Foreground.Selected": "toggle-on-notch",
-      "Toggle.Background.Disabled": "toggle-off-disabled-bg",
-      "Toggle.Border.Disabled": "toggle-off-disabled-border",
-      "Toggle.Foreground.Disabled": "toggle-off-disabled-notch",
-      "Toggle.Background.SelectedDisabled": "toggle-on-disabled-bg",
-      "Toggle.Border.SelectedDisabled": "toggle-on-disabled-border",
-      "Toggle.Foreground.SelectedDisabled": "toggle-on-disabled-notch"
+      "#CED0D6": "icon-default-stroke"
     }
   }
 }

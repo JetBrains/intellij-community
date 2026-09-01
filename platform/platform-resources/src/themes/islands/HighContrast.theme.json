@@ -8,7 +8,21 @@
   "colors": {
     "core-border": "#c4c4c4",
     "core-border-transparent": "#00000000",
-    "tab-selected-bg-active": "#2121a6"
+    "tab-selected-bg-active": "#2121a6",
+
+    "toggle-on-bg": "#1AEBFF",
+    "toggle-off-bg": "#000000",
+    "toggle-off-border": "#1AEBFF",
+    "toggle-on-border": "#1AEBFF",
+    "toggle-on-disabled-bg": "#AA6E28",
+    "toggle-off-disabled-bg": "#000000",
+    "toggle-on-disabled-border": "#AA6E28",
+    "toggle-off-disabled-border": "#AA6E28",
+    "toggle-focus-border": "#1AEBFF",
+    "toggle-on-notch": "#000000",
+    "toggle-off-notch": "#1AEBFF",
+    "toggle-on-disabled-notch": "#000000",
+    "toggle-off-disabled-notch": "#AA6E28"
   },
 
   "ui": {
@@ -789,21 +803,7 @@
       "Checkbox.Border.Disabled": "#AA6E28",
       "Checkbox.Foreground.Disabled": "#AA6E28",
 
-      "Toggle.Background.Default": "#000000",
-      "Toggle.Border.Default": "#1AEBFF",
-      "Toggle.Foreground.Default": "#1AEBFF",
-      "Toggle.Background.Selected": "#1AEBFF",
-      "Toggle.Border.Selected": "#1AEBFF",
-      "Toggle.Foreground.Selected": "#000000",
-      "Toggle.Background.Disabled": "#000000",
-      "Toggle.Border.Disabled": "#AA6E28",
-      "Toggle.Foreground.Disabled": "#AA6E28",
-      "Toggle.Background.SelectedDisabled": "#AA6E28",
-      "Toggle.Border.SelectedDisabled": "#AA6E28",
-      "Toggle.Foreground.SelectedDisabled": "#000000",
-
       "#CED0D6": "#FFFFFF"
-
     }
   }
 }

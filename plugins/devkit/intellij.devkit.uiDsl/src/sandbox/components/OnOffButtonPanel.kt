@@ -27,6 +27,20 @@ internal class OnOffButtonPanel : UISandboxPanel {
             }
           }
         }
+
+        // Only the enabled states: a disabled toggle is not focusable, so it has no focused asset.
+        // Focus is forced so every state is comparable at a glance, the way ButtonTypesPanel does it —
+        // the toggles above still show the real thing when tabbed to.
+        for (isSelected in listOf(false, true)) {
+          row {
+            val toggle = cell(object : OnOffButton() {
+              override fun hasFocus(): Boolean = true
+            }).applyToComponent {
+              this.isSelected = isSelected
+            }
+            label(getStateText(toggle.component, DevkitUiDslBundle.message("sandbox.focused")))
+          }
+        }
       }
     }
   }
