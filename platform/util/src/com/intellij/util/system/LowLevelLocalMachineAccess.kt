@@ -3,16 +3,9 @@ package com.intellij.util.system
 
 import org.jetbrains.annotations.ApiStatus
 
-@MustBeDocumented
-@Retention(value = AnnotationRetention.BINARY)
-@RequiresOptIn(
-  level = RequiresOptIn.Level.WARNING,
-  message = "Please, read `LowLevelLocalMachineAccess` annotation doc thoroughly, to make sure you know what you are doing"
-)
 /**
- * In most cases this is *not* what you are looking for.
- * Except for the lowest level, all code must be written against Eel: [com.intellij.platform.eel.EelApi].
- * You should either get [com.intellij.platform.eel.EelApi] as an argument, or obtain it from [java.nio.file.Path] or project,
+ * The code working with project files should use the Eel API: [com.intellij.platform.eel.EelApi].
+ * Get [com.intellij.platform.eel.EelApi] as an argument or from [java.nio.file.Path] or `com.intellij.openapi.project.Project]`,
  * and use [com.intellij.platform.eel.EelApi.platform] to check an OS.
  *
  * Showcase: `EelShowCaseTest`
@@ -27,7 +20,12 @@ import org.jetbrains.annotations.ApiStatus
  *   p.getEelDescriptor().osFamily
  * }
  * ```
- * Contact `#ij-eel` in case of questions
  */
+@MustBeDocumented
+@Retention(value = AnnotationRetention.BINARY)
+@RequiresOptIn(
+  level = RequiresOptIn.Level.WARNING,
+  message = "Please read `LowLevelLocalMachineAccess` annotation doc thoroughly, to make sure you know what you are doing"
+)
 @ApiStatus.Internal
 annotation class LowLevelLocalMachineAccess

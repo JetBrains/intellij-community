@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.fs.EelFileSystemApi
@@ -20,7 +20,7 @@ interface LocalEelApi : EelApi
  * a Docker container, or a Dev Container.
  *
  * Unlike [EelDescriptor], which only *describes* how to reach an environment, an [EelApi] represents a *running, connected* one.
- * Obtain it from a descriptor with `descriptor.toEelApi()` (suspending) or `descriptor.toEelApiBlocking()`; the descriptor itself comes
+ * Get it from a descriptor with `descriptor.toEelApi()` (suspending) or `descriptor.toEelApiBlocking()`; the descriptor itself comes
  * from `project.getEelDescriptor()` or `path.getEelDescriptor()`. Establishing the connection may start, deploy, or connect to an
  * IntelliJ Agent and can fail with [EelUnavailableException].
  *
@@ -37,7 +37,7 @@ interface LocalEelApi : EelApi
 @ApiStatus.Experimental
 interface EelApi {
   /**
-   * The [EelDescriptor] this instance was obtained from, i.e. the route to this environment.
+   * The [EelDescriptor] this instance was obtained from, i.e., the route to this environment.
    */
   @get:ApiStatus.Experimental
   val descriptor: EelDescriptor

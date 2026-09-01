@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.system;
 
 import com.intellij.jna.JnaLoader;
@@ -18,35 +18,20 @@ import org.jetbrains.annotations.Nullable;
 public enum CpuArch {
   X86(32), X86_64(64), ARM32(32), ARM64(64), OTHER(0), UNKNOWN(0);
 
-  /**
-   * <p>A CPU architecture this Java VM is executed on.
-   * Here, {@link CpuArch#OTHER} is an architecture not yet supported by JetBrains Runtime,
-   * and {@link CpuArch#UNKNOWN} means the code was unable to detect an architecture.</p>
-   *
-   * <p><b>Note</b>: may not correspond to the actual hardware if a JVM is "virtualized" (like WoW64 or Rosetta 2).</p>
-   * <strong>Warning</strong>: In most cases this is <strong>not</strong> what you are looking for.
-   * Except for the lowest level, all code must be written against Eel: {@link com.intellij.platform.eel.EelApi}.
-   * You should either get {@link com.intellij.platform.eel.EelApi} as an argument, or obtain it from {@link java.nio.file.Path} or project, and use
-   * {@link com.intellij.platform.eel.EelApi#getPlatform()} to check an OS.
-   * <br/>
-   * Showcase, see: <code>EelShowCaseTest</code>
-   *  <pre>
-   *   suspend fun getOs(p:Project) {
-   *     val d = p.getEelDescriptor()
-   *     d.osFamily
-   *     d.toEelApi().exec.environmentVariables().eelIt().await()
-   *   }
-   *   fun getOs(p:Path) {
-   *     p.getEelDescriptor().osFamily
-   *   }
-   * </pre>
-   */
+  /// A CPU architecture this Java VM is executed on.
+  /// Here, [CpuArch#OTHER] is an architecture not yet supported by JetBrains Runtime,
+  /// and [CpuArch#UNKNOWN] means the code was unable to detect an architecture.
+  ///
+  /// **Note**: may not correspond to the actual hardware if a JVM is "virtualized" (like WoW64 or Rosetta 2).
+  ///
+  /// For project files, prefer the Eel API instead (see `EelProviderProjectUtilKt.getEelDescriptor(Project)`
+  /// and `EelPathDescriptorKt#getEelDescriptor(Path)`).
+  ///
+  /// @see LowLevelLocalMachineAccess
   @LowLevelLocalMachineAccess
-  public static final CpuArch CURRENT = fromString(System.getProperty("os.arch"));
+  public static final @NotNull CpuArch CURRENT = fromString(System.getProperty("os.arch"));
   private static @Nullable Boolean ourEmulated;
-  /**
-   * Machine word size, in bits.
-   */
+  /// Machine word size, in bits.
   public final int width;
 
   CpuArch(int width) {
@@ -54,8 +39,7 @@ public enum CpuArch {
       try {
         width = Integer.parseInt(System.getProperty("sun.arch.data.model", "32"));
       }
-      catch (NumberFormatException ignored) {
-      }
+      catch (NumberFormatException ignored) { }
     }
     this.width = width;
   }
@@ -77,9 +61,7 @@ public enum CpuArch {
 
   public static boolean is32Bit() { return CURRENT.width == 32; }
 
-  /**
-   * The method tries to detect whether this JVM is executed in a known emulated environment - Rosetta 2, WoW64, etc.
-   */
+  /// The method tries to detect whether this JVM is executed in a known emulated environment - Rosetta 2, WoW64, etc.
   public static boolean isEmulated() {
     if (ourEmulated == null) {
       if (CURRENT == X86_64) {

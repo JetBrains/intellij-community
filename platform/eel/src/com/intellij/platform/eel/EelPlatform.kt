@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.EelPlatform.Arch
@@ -12,12 +12,12 @@ import org.jetbrains.annotations.ApiStatus
  *
  * It contains only the type of the operating system: Windows or Posix.
  *
- * The reason of the difference between [EelOsFamily] and [EelPlatform]
+ * The reason for the difference between [EelOsFamily] and [EelPlatform]
  * is that [EelPlatform] in general can be generated only after an actual connection
  * to a remote machine. In contrast, [EelOsFamily] is known before any I/O.
  * Although the remote machine can suddenly become a Windows-machine
  * after being a Posix-machine for a while,
- * too much other functionality would break down in such an occasion.
+ * too much other functionality would break down on such an occasion.
  */
 @ApiStatus.Experimental
 enum class EelOsFamily {
@@ -69,8 +69,8 @@ val EelOsFamily.directorySeparators: CharArray
   }
 
 /**
- * A heavier version of [EelOsFamily] that contains enough information for choosing
- * right binary files, shared libraries and other machine-dependent things.
+ * A heavier version of [EelOsFamily] that contains enough information for choosing the right binary files,
+ * shared libraries, and other machine-dependent things.
  */
 @ApiStatus.Experimental
 sealed interface EelPlatform {
@@ -79,6 +79,7 @@ sealed interface EelPlatform {
   val osFamily: EelOsFamily
 
   @ApiStatus.Experimental
+  @Suppress("ClassName")
   sealed interface Arch {
     data object X86_64 : Arch
     data object ARM_64 : Arch
