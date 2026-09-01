@@ -21,9 +21,9 @@ import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 
-/** The modules the plugin layout merges into the plugin's own jar, from the residue beside the plugin. */
-private fun readMergedMembers(mainModule: JpsModule): List<String> {
-  return readDevDistExtraMembers(mainModule.contentRootsList.urls.map { JpsPathUtil.urlToNioPath(it) })
+/** The modules the plugin layout merges into the plugin's own jar, from the central merged-member table. */
+private fun readMergedMembers(projectHome: Path, mainModule: JpsModule): List<String> {
+  return readDevDistExtraMembers(projectHome, mainModule.name)
 }
 
 /**
@@ -340,7 +340,7 @@ private class YamlFileBasedPluginLayoutProvider(
     val membersToIgnore = mergedMembersToIgnore[mainModule.name] ?: emptySet()
     val jpsModulesInClasspath = LinkedHashSet<String>()
     jpsModulesInClasspath.add(mainModule.name)
-    readMergedMembers(mainModule).filterNotTo(jpsModulesInClasspath) { it in membersToIgnore }
+    readMergedMembers(projectHome, mainModule).filterNotTo(jpsModulesInClasspath) { it in membersToIgnore }
     return PluginLayoutDescription(
       mainJpsModule = mainModule.name,
       pluginDescriptorPath = PLUGIN_XML_RELATIVE_PATH,

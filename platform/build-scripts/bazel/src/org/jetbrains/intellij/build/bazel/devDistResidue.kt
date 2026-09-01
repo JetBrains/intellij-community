@@ -29,7 +29,11 @@ internal data class DevDistResidueFile(
 )
 
 /**
- * The content half of a plugin's residue: eight fields, every one optional.
+ * The content half of a plugin's residue: seven fields, every one optional.
+ *
+ * The eighth, the merged members, is not here. It is the one field the monorepo reads, so it sits in
+ * `dev_dist_plugin_extra_members.txt` where a reader needs no Starlark and no YAML; see [readPluginExtraMembers].
+ * [toResidue] takes it as a parameter and joins the two halves into the one shape the derivations read.
  *
  * Every field is a class the Phase-0 two-producer comparison found, and no field is speculative. Each states one
  * `PluginLayout` decision, and evaluating a product layout is the work this generator exists to keep out of a fragment
@@ -37,16 +41,6 @@ internal data class DevDistResidueFile(
  */
 @Serializable
 internal data class ContentResidueSection(
-  /**
-   * Module names the layout packs that the plugin's own `<content>` does not name - a `PluginLayout.withModule` call.
-   *
-   * The one field a reader outside this generator declares too. `readDevDistExtraMembers` in
-   * `community/platform/distribution-content/src/DevDistResidue.kt` reads it with `strictMode = false`, so a rename of
-   * the serial name leaves that reader answering an empty list for every plugin. Rename both, and let
-   * `PatronusConfigYamlConsistencyTest` confirm it: the Patronus seeds come from this field, and it compares the
-   * generated rules byte for byte.
-   */
-  @JvmField @SerialName("extra_members") val extraMembers: List<String> = emptyList(),
   /**
    * Members whose jar this plugin puts at `lib/<module>.jar` although the derivation says `lib/modules/<module>.jar`.
    *
@@ -161,20 +155,32 @@ internal fun descriptorResidueOf(module: ModuleDescriptor): Map<String, Descript
   return module.devDistResidue?.descriptor ?: emptyMap()
 }
 
-/** The content half of [module]'s residue, in the shape the two derivations take, or [PluginContentResidue.NONE]. */
-internal fun contentResidueOf(module: ModuleDescriptor): PluginContentResidue {
-  return module.devDistResidue?.content?.toResidue() ?: PluginContentResidue.NONE
+/**
+ * The content half of [module]'s residue, in the shape the two derivations take, or [PluginContentResidue.NONE].
+ *
+ * Joins the plugin's own seven fields with its merged members, which are central; see [readPluginExtraMembers]. A
+ * plugin can have either half alone: one that only merges a member has no section, and one that only renames a jar has
+ * no row in the table.
+ */
+internal fun contentResidueOf(module: ModuleDescriptor, context: BazelBuildFileGenerator): PluginContentResidue {
+  val extraMembers = context.pluginExtraMembers.get(module.module.name).orEmpty().toSet()
+  val section = module.devDistResidue?.content
+  if (section == null) {
+    return if (extraMembers.isEmpty()) PluginContentResidue.NONE else PluginContentResidue(extraMembers = extraMembers)
+  }
+  return section.toResidue(extraMembers)
 }
 
 /**
  * This section in the shape the two derivations take.
  *
- * The one place the eight fields cross from the file's shape into the derivation's. The residue writer composes a
- * section rather than reading one, and it takes the same route, so a new field reaches both readers together.
+ * The one place the seven fields cross from the file's shape into the derivation's, with the merged members joined in
+ * from the central table. The residue writer composes a section rather than reading one, and it takes the same route,
+ * so a new field reaches both readers together.
  */
-internal fun ContentResidueSection.toResidue(): PluginContentResidue {
+internal fun ContentResidueSection.toResidue(extraMembers: Set<String> = emptySet()): PluginContentResidue {
   return PluginContentResidue(
-    extraMembers = extraMembers.toSet(),
+    extraMembers = extraMembers,
     libRootJars = libRootJars.toSet(),
     rawMembers = rawMembers.toSet(),
     vetoedMembers = vetoedMembers.toSet(),

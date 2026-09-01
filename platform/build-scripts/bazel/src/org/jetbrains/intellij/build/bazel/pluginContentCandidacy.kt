@@ -88,7 +88,7 @@ internal fun derivePluginContentCandidacy(
   module: ModuleDescriptor,
   moduleList: ModuleList,
   context: BazelBuildFileGenerator,
-  residue: PluginContentResidue = contentResidueOf(module),
+  residue: PluginContentResidue = contentResidueOf(module = module, context = context),
   closure: WalkedContentModules? = derivePluginContentClosure(module = module, moduleList = moduleList, context = context),
 ): DerivedPluginCandidacy {
   val offers = ArrayList<DerivedCandidacyOffer>()

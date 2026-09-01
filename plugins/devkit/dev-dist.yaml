@@ -18,9 +18,6 @@
 # No row is a Bazel label, because a label carries the artifact version of a library. A row is a path only
 # where the layout names a jar that no rule derives, which is what `member_jars` states.
 content:
-  # Modules the layout packs that this plugin's `<content>` does not name - a `PluginLayout.withModule` call.
-  extra_members:
-  - "intellij.devkit.jps"
   # The jars this plugin packs a member into, where `PluginLayout.withModule(name, jarName)` names the jar. The
   # whole jar set of the member, relative to the plugin's `lib/`, and the plugin's main jar name means the main jar.
   member_jars:

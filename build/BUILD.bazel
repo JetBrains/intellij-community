@@ -36,10 +36,13 @@ jps_library_derivation_pipeline_test_suite(name = "jps_library_derivation_pipeli
 # population question from the checked-in reports for months, and the shrink looked like the intended shrink. So
 # both targets-json generators name this one group, and a new table joins a file that is already here.
 #
-# Two files, split by producer. `plugin-model-tool` states the three tables of `dev_dist_plugin_model_tables.txt`,
-# one section each. The converter's own residue-writing run states the population, off a distribution build's
-# `content-report.zip`, and `plugin-model-tool` only reads it. One writer per file is what keeps a
+# Three files, split by producer. `plugin-model-tool` states the sections of `dev_dist_plugin_model_tables.txt`. The
+# converter's own residue-writing run states the population and the merged members, off a distribution build's
+# `content-report.zip`, and `plugin-model-tool` only reads them. One writer per file is what keeps a
 # `plugin-model-tool` run from ever stating a population it cannot derive.
+#
+# The merged members are the one content-residue field that is not on the plugin's own `dev_dist_plugin` call. Only
+# that field has a reader outside the converter, and neither of those readers parses Starlark.
 #
 # The population is the table that decides whether a plugin gets a leaf. Without it a hermetic run states content for
 # no plugin, `contentTarget` empties for every one of them, and the dev-distribution plan then declares one input
@@ -48,6 +51,7 @@ filegroup(
     name = "dev_dist_plugin_tables",
     srcs = [
         "dev_dist_plugin_content_population.txt",
+        "dev_dist_plugin_extra_members.txt",
         "dev_dist_plugin_model_tables.txt",
     ],
     visibility = ["//visibility:public"],

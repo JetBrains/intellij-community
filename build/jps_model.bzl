@@ -216,7 +216,7 @@ def _find_descriptor_rel_paths(project_root, module_name, resource_roots, extra_
 
 _DEV_DIST_RESIDUE_FILE_NAME = "dev-dist.yaml"
 
-def _find_dev_dist_residue_rel_path(project_root, first_content_root):
+def _find_dev_dist_residue_rel_path(ctx, project_root, first_content_root):
     """The `dev-dist.yaml` of the plugin this module is the main module of, or `None`.
 
     The residue is what a plugin's dev-distribution leaves state beyond the derivation, and only the converter reads it -
@@ -235,11 +235,19 @@ def _find_dev_dist_residue_rel_path(project_root, first_content_root):
     if first_content_root == None:
         return None
     rel_path = _join_project_relative_path(first_content_root, _DEV_DIST_RESIDUE_FILE_NAME)
-    return rel_path if project_root.get_child(rel_path).exists else None
+    path = project_root.get_child(rel_path)
+
+    # Watched, and not only probed. `path.exists` reads the filesystem and records nothing, so a residue that is
+    # deleted leaves its label in the generated list and Bazel then fails the analysis of every target that reads the
+    # group - "target 'dev-dist.yaml' not declared in package". The watch is what makes a creation or a deletion
+    # re-evaluate this extension. `ctx.watch` accepts a path that does not exist, which is the case that matters:
+    # a residue added later has to invalidate too.
+    ctx.watch(path)
+    return rel_path if path.exists else None
 
 _CONTENT_MODULE_RECIPE_FILE_NAME = "module-content.yaml"
 
-def _find_content_module_recipe_rel_path(project_root, first_content_root):
+def _find_content_module_recipe_rel_path(ctx, project_root, first_content_root):
     """The `module-content.yaml` of the `lib/` jar this module owns, or `None`.
 
     The recipe is what says whether a platform content module owns a jar of its own, and only the converter reads it -
@@ -259,7 +267,11 @@ def _find_content_module_recipe_rel_path(project_root, first_content_root):
     if first_content_root == None:
         return None
     rel_path = _join_project_relative_path(first_content_root, _CONTENT_MODULE_RECIPE_FILE_NAME)
-    return rel_path if project_root.get_child(rel_path).exists else None
+    path = project_root.get_child(rel_path)
+
+    # Watched for the reason [_find_dev_dist_residue_rel_path] gives.
+    ctx.watch(path)
+    return rel_path if path.exists else None
 
 def watch_project_model_files(ctx, project_root):
     idea_dir = project_root.get_child(".idea")
@@ -348,10 +360,12 @@ def read_project_model(ctx, project_root, extra_descriptor_rel_paths_by_module =
                 extra_rel_paths = extra_descriptor_rel_paths_by_module.get(module_name, []),
             ),
             dev_dist_residue_rel_path = _find_dev_dist_residue_rel_path(
+                ctx = ctx,
                 project_root = project_root,
                 first_content_root = iml_roots.first_content_root,
             ),
             content_module_recipe_rel_path = _find_content_module_recipe_rel_path(
+                ctx = ctx,
                 project_root = project_root,
                 first_content_root = iml_roots.first_content_root,
             ),

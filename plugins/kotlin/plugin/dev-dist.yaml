@@ -18,9 +18,6 @@
 # No row is a Bazel label, and no row is a path. A label carries the artifact version of a library, and a path
 # restates a rule the rule already derives.
 content:
-  # Modules the layout packs that this plugin's `<content>` does not name - a `PluginLayout.withModule` call.
-  extra_members:
-  - "kotlin.frontend.split"
   # Members that get a jar of their own where the derivation packs them into the plugin's main jar.
   separate_jars:
   - "intellij.kotlin.duplicate.scope"

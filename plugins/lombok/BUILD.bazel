@@ -136,7 +136,6 @@ exports_files(
     [
         "intellij.lombok.iml",
         "src/main/resources/intellij.lombok.xml",
-        "dev-dist.yaml",
     ],
     visibility = ["//visibility:public"],
 )

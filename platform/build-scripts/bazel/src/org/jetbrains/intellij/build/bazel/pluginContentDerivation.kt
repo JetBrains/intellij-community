@@ -88,7 +88,7 @@ internal fun computeDerivedPluginContent(
   module: ModuleDescriptor,
   moduleList: ModuleList,
   context: BazelBuildFileGenerator,
-  residue: PluginContentResidue = contentResidueOf(module),
+  residue: PluginContentResidue = contentResidueOf(module = module, context = context),
 ): DerivedPluginContent? {
   if (!isDevDistContentPlugin(module = module, context = context)) {
     return null
@@ -158,7 +158,7 @@ internal fun derivePluginContent(
   module: ModuleDescriptor,
   moduleList: ModuleList,
   context: BazelBuildFileGenerator,
-  residue: PluginContentResidue = contentResidueOf(module),
+  residue: PluginContentResidue = contentResidueOf(module = module, context = context),
 ): DerivedPluginContent {
   val moduleName = module.module.name
   val closure = derivePluginContentClosure(module = module, moduleList = moduleList, context = context)

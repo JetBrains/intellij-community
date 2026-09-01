@@ -49,16 +49,24 @@ internal fun writeDevDistResidues(
   val divergent = ArrayList<DevDistResidueDivergence>()
   // The fold over the reports, with no override in play. It is the authority for every row this writes.
   val reportCandidates = foldPluginContentCandidacy(reports = reports.values.toList(), overrides = emptyMap())
+  // What each covered plugin merges, for the central table below. A plugin with no row states no merged member.
+  val extraMembers = TreeMap<String, List<String>>()
   for (module in moduleList.community + moduleList.ultimate) {
     val entries = reports.get(module.module.name) ?: continue
     val file = module.contentRoots.firstOrNull()?.resolve(DEV_DIST_RESIDUE_FILE_NAME) ?: continue
-    val section = synthesizeContentResidue(
+    val synthesized = synthesizeContentResidue(
       module = module,
       moduleList = moduleList,
       context = context,
       reportCandidates = reportCandidates,
       entries = entries,
     )
+    val section = synthesized.section
+    if (synthesized.extraMembers.isNotEmpty()) {
+      extraMembers.put(module.module.name, synthesized.extraMembers)
+      rowsPerField.merge("extra_members", synthesized.extraMembers.size, Int::plus)
+      pluginsPerField.merge("extra_members", 1, Int::plus)
+    }
     for ((field, rows) in contentResidueFieldRows(section)) {
       rowsPerField.merge(field, rows, Int::plus)
       pluginsPerField.merge(field, 1, Int::plus)
@@ -72,6 +80,7 @@ internal fun writeDevDistResidues(
     }
   }
   val population = foldPluginContentPopulation(moduleList = moduleList, context = context, reports = reports)
+  val extraMembersTable = foldPluginExtraMembers(context = context, reported = reports.keys, folded = extraMembers)
   // The direction rule gates a write alone. A verify run writes nothing, so holding a change back there would only hide
   // it from the reader; `reportStaleDevDistResidues` states the partial read instead.
   val (skipped, applied) = when {
@@ -89,6 +98,7 @@ internal fun writeDevDistResidues(
       }
     }
     population.write()
+    extraMembersTable.write()
   }
   return DevDistResidueWriteResult(
     // What the run applied, so that a held-back plugin is counted under `skipped` alone and never twice.
@@ -268,6 +278,68 @@ private class PluginContentPopulation(
   }
 }
 
+/**
+ * Folds the merged members off the same reports, into the one content-residue field the monorepo reads.
+ *
+ * The partial-read rule is the population's, and for the same reason: a report names the plugins of one product, so a
+ * run given fewer reports than the whole population **keeps** every plugin it cannot speak for. Writing only what the
+ * supplied reports name would drop another product's merged members, and every dropped row takes a `withModule` call
+ * with it. See [foldPluginContentPopulation] for the argument in full.
+ *
+ * A plugin a report covers and this run folds no member for loses its rows, which is a removal a covering report may
+ * make. That is the one direction that differs from [residueChangeAddsOnly]: there the unit is a file and a partial
+ * read holds a whole file back, here the unit is a plugin and a covered plugin is fully spoken for.
+ */
+private fun foldPluginExtraMembers(
+  context: BazelBuildFileGenerator,
+  reported: Set<String>,
+  folded: Map<String, List<String>>,
+): PluginExtraMembersTable {
+  val file = (context.ultimateRoot?.resolve("community") ?: context.communityRoot)
+    .resolve("build/$PLUGIN_EXTRA_MEMBERS_FILE_NAME")
+  val rows = TreeMap<String, List<String>>()
+  // Every plugin no supplied report covers, exactly as the file already states it.
+  for ((plugin, members) in readPluginExtraMembers(file)) {
+    if (plugin !in reported) {
+      rows.put(plugin, members)
+    }
+  }
+  rows.putAll(folded)
+  val text = buildString {
+    append(EXTRA_MEMBERS_HEADER)
+    for ((plugin, members) in rows) {
+      append('\n').append('[').append(plugin).append(']').append('\n')
+      for (member in members) {
+        append(member).append('\n')
+      }
+    }
+  }
+  return PluginExtraMembersTable(file = file, text = text)
+}
+
+/** The merged-member table one pass folded, ready to write. */
+private class PluginExtraMembersTable(@JvmField val file: Path, @JvmField val text: String) {
+  fun write() {
+    if (!Files.isRegularFile(file) || file.readText() != text) {
+      file.writeText(text)
+    }
+  }
+}
+
+private const val EXTRA_MEMBERS_HEADER: String = """# Generated - do not edit.
+#
+# Modules a plugin's layout packs that the plugin's own `<content>` does not name, by plugin main module.
+#
+# One `PluginLayout.withModule` call per line, under the `[<plugin main module>]` that makes it. Nothing in the
+# project model states these, which is why they are written down at all.
+#
+# The rest of a plugin's content residue sits on the plugin's own `dev_dist_plugin` call. This one field is
+# central because it is the one field the monorepo reads: `readDevDistExtraMembers` of
+# `community/platform/distribution-content/src/DevDistResidue.kt`, reached by the Patronus rule seeds and by the
+# plugin-layout description the Rider and CLion packaging tests use. Neither runs the converter and neither can
+# parse Starlark, so the field a third reader needs is the field that stays in a flat file.
+"""
+
 private const val POPULATION_HEADER: String = """# Generated - do not edit.
 #
 # Which modules a `dev_dist_plugin` states dev-distribution content for, one plugin main module per line.
@@ -363,7 +435,7 @@ private fun synthesizeContentResidue(
   context: BazelBuildFileGenerator,
   reportCandidates: Map<String, Set<String>>,
   entries: List<RecipeEntry>,
-): ContentResidueSection? {
+): SynthesizedContentResidue {
   val reportPaths = reportedPrepackedMemberPaths(entries)
   val libRootJars = ArrayList<String>()
   val separateJars = ArrayList<String>()
@@ -433,7 +505,7 @@ private fun synthesizeContentResidue(
   val derived = derivePluginContent(module = module, moduleList = moduleList, context = context, residue = section.toResidue())
   val reportMembers = reportMemberNames(module = module, entries = entries)
   val extraMembers = (reportMembers - derived.memberNames.toSet()).sorted()
-  val withExtras = section.copy(extraMembers = extraMembers).toResidue()
+  val withExtras = section.toResidue(extraMembers.toSet())
   val withMembers = derivePluginContent(module = module, moduleList = moduleList, context = context, residue = withExtras)
 
   val rawMembers = ArrayList<String>()
@@ -447,7 +519,6 @@ private fun synthesizeContentResidue(
     }
   }
   val withMembership = section.copy(
-    extraMembers = extraMembers,
     rawMembers = rawMembers.sorted(),
     memberJars = synthesizeMemberJars(module = module, context = context, derived = withMembers, entries = entries),
   )
@@ -460,8 +531,22 @@ private fun synthesizeContentResidue(
       entries = entries,
     )
   )
-  return result.takeIf { contentResidueFieldRows(it).isNotEmpty() }
+  return SynthesizedContentResidue(
+    section = result.takeIf { contentResidueFieldRows(it).isNotEmpty() },
+    extraMembers = extraMembers,
+  )
 }
+
+/**
+ * What [synthesizeContentResidue] states for one plugin, split by where each half is written.
+ *
+ * [section] goes beside the plugin and [extraMembers] goes into the central table, because the merged members are the
+ * one field the monorepo reads; see [readPluginExtraMembers]. Either half can be empty on its own.
+ */
+private class SynthesizedContentResidue(
+  @JvmField val section: ContentResidueSection?,
+  @JvmField val extraMembers: List<String>,
+)
 
 /** [memberJarRows] for one plugin, with the plugin's own main jar name read off the placement table. */
 private fun synthesizeMemberJars(
@@ -601,7 +686,6 @@ internal fun contentResidueFieldRows(section: ContentResidueSection?): Map<Strin
     }
   }
   // The order [composeDevDistResidueText] writes the fields in, so a reader meets them once.
-  put("extra_members", section.extraMembers.size)
   put("lib_root_jars", section.libRootJars.size)
   put("separate_jars", section.separateJars.size)
   put("member_jars", section.memberJars.size)
@@ -633,7 +717,6 @@ internal fun composeDevDistResidueText(content: ContentResidueSection?, existing
   builder.append(DEV_DIST_RESIDUE_HEADER)
   if (content != null) {
     builder.append("content:\n")
-    appendNames(builder, "extra_members", content.extraMembers, EXTRA_MEMBERS_COMMENT)
     appendNames(builder, "lib_root_jars", content.libRootJars, LIB_ROOT_JARS_COMMENT)
     appendNames(builder, "separate_jars", content.separateJars, SEPARATE_JARS_COMMENT)
     appendNestedNames(builder, "member_jars", content.memberJars, MEMBER_JARS_COMMENT)
@@ -722,9 +805,6 @@ private const val DEV_DIST_RESIDUE_HEADER: String = """# Generated - do not edit
 #
 # No row is a Bazel label, because a label carries the artifact version of a library. A row is a path only
 # where the layout names a jar that no rule derives, which is what `member_jars` states.
-"""
-
-private const val EXTRA_MEMBERS_COMMENT: String = """  # Modules the layout packs that this plugin's `<content>` does not name - a `PluginLayout.withModule` call.
 """
 
 private const val LIB_ROOT_JARS_COMMENT: String = """  # Members whose jar goes to `lib/<module>.jar` where the derivation says `lib/modules/<module>.jar`.

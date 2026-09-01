@@ -138,7 +138,7 @@ internal fun derivedPluginJarsOf(
     derivedJars = derivedJars,
     handedOverMembers = derived.result.handedOverMembers,
     closureMembers = closureMembers,
-    memberJars = contentResidueOf(module).memberJars,
+    memberJars = contentResidueOf(module = module, context = context).memberJars,
     handedOverJars = handedOverJars,
   )
 }

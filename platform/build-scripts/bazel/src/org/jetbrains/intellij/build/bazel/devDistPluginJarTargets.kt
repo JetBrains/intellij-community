@@ -423,7 +423,7 @@ internal fun computeDerivedPluginPacking(
   moduleList: ModuleList,
   context: BazelBuildFileGenerator,
 ): DerivedPluginPacking? {
-  val residue = contentResidueOf(module)
+  val residue = contentResidueOf(module = module, context = context)
   val first = computeDerivedPluginContent(module = module, moduleList = moduleList, context = context, residue = residue)
                 ?: return null
   val firstJars = derivedPluginJarsOf(module = module, derived = first, moduleList = moduleList, context = context)

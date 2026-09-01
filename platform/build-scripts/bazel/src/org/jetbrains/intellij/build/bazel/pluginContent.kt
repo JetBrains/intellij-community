@@ -107,6 +107,47 @@ internal class PluginContentResult(
 /** The population the residue writer states; see [readPluginContentPopulation]. */
 internal const val PLUGIN_CONTENT_POPULATION_FILE_NAME: String = "dev_dist_plugin_content_population.txt"
 
+/** The merged members the residue writer states; see [readPluginExtraMembers]. */
+internal const val PLUGIN_EXTRA_MEMBERS_FILE_NAME: String = "dev_dist_plugin_extra_members.txt"
+
+/**
+ * The modules a plugin's layout packs that its own `<content>` does not name, by plugin main module.
+ *
+ * A `PluginLayout.withModule` call and nothing else, which is why no rule derives it. The rest of a plugin's content
+ * residue sits on the plugin's own `dev_dist_plugin` call, and this one field is central because it is the one field
+ * the monorepo reads. `readDevDistExtraMembers` of `community/platform/distribution-content/src/DevDistResidue.kt` is
+ * that reader, and `PatronusRuleComputer` and `PluginLayoutDescription` reach it - neither can parse Starlark, and
+ * neither runs the converter. A flat text table is what both sides can read with fifteen lines each.
+ *
+ * The format is the population's, plus a key: `[<plugin main module>]` opens a section and every line under it is one
+ * member name. A `#` line is a comment. Under `community/build/`, so a community-only checkout reads the same file.
+ *
+ * An absent file gives no merged member for any plugin, which is the same verdict as a plugin with no row: pure
+ * `<content>`. `--write-dev-dist-residue --content-report=<zip>` is the one producer.
+ */
+internal fun readPluginExtraMembers(file: Path): Map<String, List<String>> {
+  if (!file.exists()) {
+    return emptyMap()
+  }
+  val result = LinkedHashMap<String, MutableList<String>>()
+  var members: MutableList<String>? = null
+  for (raw in file.readText().lineSequence()) {
+    val line = raw.trim()
+    if (line.isEmpty() || line.startsWith('#')) {
+      continue
+    }
+    if (line.startsWith('[') && line.endsWith(']')) {
+      members = result.computeIfAbsent(line.substring(1, line.length - 1)) { ArrayList() }
+      continue
+    }
+    val current = requireNotNull(members) {
+      "$file states the member '$line' above the first `[<plugin main module>]` line, so no plugin owns it"
+    }
+    current.add(line)
+  }
+  return result
+}
+
 /**
  * Which modules are a plugin main module the dev distribution states content for, one name per line.
  *

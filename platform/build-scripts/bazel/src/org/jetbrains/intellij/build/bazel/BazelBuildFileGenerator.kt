@@ -274,6 +274,18 @@ internal class BazelBuildFileGenerator(
     )
   }
 
+  /**
+   * The modules each plugin's layout merges that its own `<content>` does not name; see [readPluginExtraMembers].
+   *
+   * The one content-residue field that is not on the plugin's `dev_dist_plugin` call, because the monorepo reads it and
+   * cannot parse Starlark. `@community//build:dev_dist_plugin_tables` names the file, so a hermetic run sees it.
+   */
+  val pluginExtraMembers: Map<String, List<String>> by lazy {
+    readPluginExtraMembers(
+      (ultimateRoot?.resolve("community") ?: communityRoot).resolve("build/$PLUGIN_EXTRA_MEMBERS_FILE_NAME")
+    )
+  }
+
   /** Product/plugin layout transformations that make a raw module-output jar ineligible for direct handoff. */
   val pluginContentModuleJarVetoes: Set<String>
     get() = devDistPluginModelTables.contentModuleJarVetoes
