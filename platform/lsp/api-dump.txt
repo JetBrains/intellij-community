@@ -520,10 +520,12 @@ a:com.intellij.platform.lsp.util.Lsp4jService
 f:com.intellij.platform.lsp.util.Lsp4jService$Companion
 - f:getInstance():com.intellij.platform.lsp.util.Lsp4jService
 f:com.intellij.platform.lsp.util.Lsp4jUtilKt
+- sf:applySimpleTextEdits(com.intellij.openapi.editor.Document,java.util.List):Z
 - sf:applyTextEdit(com.intellij.openapi.editor.Document,org.eclipse.lsp4j.TextEdit):Z
 - sf:applyTextEdits(com.intellij.openapi.editor.Document,java.util.List):Z
 - sf:getLsp4jPosition(com.intellij.openapi.editor.Document,I):org.eclipse.lsp4j.Position
 - sf:getLsp4jRange(com.intellij.openapi.editor.Document,I,I):org.eclipse.lsp4j.Range
+- sf:getMessageIfStringOrEmpty(org.eclipse.lsp4j.Diagnostic):java.lang.String
 - sf:getOffsetInDocument(com.intellij.openapi.editor.Document,org.eclipse.lsp4j.Position):java.lang.Integer
 - sf:getRangeInDocument(com.intellij.openapi.editor.Document,org.eclipse.lsp4j.Range):com.intellij.openapi.util.TextRange
 f:com.intellij.platform.lsp.util.LspNavigationUtilsKt

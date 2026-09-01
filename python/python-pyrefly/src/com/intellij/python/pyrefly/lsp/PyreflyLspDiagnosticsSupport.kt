@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ex.QuickFixWrapper
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.lsp.util.messageIfStringOrEmpty
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
@@ -40,7 +41,7 @@ internal fun customizePyreflyQuickFixes(
   return buildList {
     val file = holder.currentAnnotationSession.file
     val code = diagnostic.code?.left
-    val description = diagnostic.message
+    val description = diagnostic.messageIfStringOrEmpty
 
     if (code == UNKNOWN_NAME) {
       val node = PsiTreeUtil.findElementOfClassAtRange(file, textRange.startOffset, textRange.endOffset,

@@ -7890,59 +7890,59 @@ http_file(
 )
 
 http_file(
-    name = "org_eclipse_lsp4j-org_eclipse_lsp4j_debug-0_24_0_http",
-    downloaded_file_path = "org.eclipse.lsp4j.debug-0.24.0.jar",
-    sha256 = "df9927dd2d5d4279ffd7096bca2efe9dc914ba0439bbe835e32ec332b8f21793",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/lsp4j/org.eclipse.lsp4j.debug/0.24.0/org.eclipse.lsp4j.debug-0.24.0.jar",
+    name = "org_eclipse_lsp4j-org_eclipse_lsp4j_debug-1_0_0_http",
+    downloaded_file_path = "org.eclipse.lsp4j.debug-1.0.0.jar",
+    sha256 = "7f4e543b7be46ac929a58e49c5c5af14d9f0558a458f21d39648b2e36a985dec",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/lsp4j/org.eclipse.lsp4j.debug/1.0.0/org.eclipse.lsp4j.debug-1.0.0.jar",
 )
 
 http_file(
-    name = "org_eclipse_lsp4j-org_eclipse_lsp4j_debug-0_24_0-sources_http",
-    downloaded_file_path = "org.eclipse.lsp4j.debug-0.24.0-sources.jar",
-    sha256 = "64abb402f61ef1c2cdd687ed3342f75a0b7a754bcd52f9a66a0a660e4e571124",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/lsp4j/org.eclipse.lsp4j.debug/0.24.0/org.eclipse.lsp4j.debug-0.24.0-sources.jar",
+    name = "org_eclipse_lsp4j-org_eclipse_lsp4j_debug-1_0_0-sources_http",
+    downloaded_file_path = "org.eclipse.lsp4j.debug-1.0.0-sources.jar",
+    sha256 = "26a8c7b9ff13d54ae66b7bf5566201edab27105056736d3e6b42829e90323653",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/lsp4j/org.eclipse.lsp4j.debug/1.0.0/org.eclipse.lsp4j.debug-1.0.0-sources.jar",
 )
 
 http_file(
-    name = "org_eclipse_lsp4j-org_eclipse_lsp4j-0_24_0_http",
-    downloaded_file_path = "org.eclipse.lsp4j-0.24.0.jar",
-    sha256 = "2caea31ffa2abd13c6f5d13489be071ad08f108eae83a34473ac72d96cf72922",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/lsp4j/org.eclipse.lsp4j/0.24.0/org.eclipse.lsp4j-0.24.0.jar",
+    name = "org_eclipse_lsp4j-org_eclipse_lsp4j-1_0_0_http",
+    downloaded_file_path = "org.eclipse.lsp4j-1.0.0.jar",
+    sha256 = "ccd78893facc6bfcc359d56cba05d3d5b85eb41e4c40d4b4215ca45db5f416d9",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/lsp4j/org.eclipse.lsp4j/1.0.0/org.eclipse.lsp4j-1.0.0.jar",
 )
 
 http_file(
-    name = "org_eclipse_lsp4j-org_eclipse_lsp4j-0_24_0-sources_http",
-    downloaded_file_path = "org.eclipse.lsp4j-0.24.0-sources.jar",
-    sha256 = "057e8f7a9f1cac74257dca2070a030c0366a78a14b2946635b5a00f422982775",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/lsp4j/org.eclipse.lsp4j/0.24.0/org.eclipse.lsp4j-0.24.0-sources.jar",
+    name = "org_eclipse_lsp4j-org_eclipse_lsp4j-1_0_0-sources_http",
+    downloaded_file_path = "org.eclipse.lsp4j-1.0.0-sources.jar",
+    sha256 = "e5a5ed6ddc23508af07700b79217212376ddcd45f7e8dffbd29c8aecf8de8944",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/lsp4j/org.eclipse.lsp4j/1.0.0/org.eclipse.lsp4j-1.0.0-sources.jar",
 )
 
 http_file(
-    name = "org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc_debug-0_24_0_http",
-    downloaded_file_path = "org.eclipse.lsp4j.jsonrpc.debug-0.24.0.jar",
-    sha256 = "946997b27d3fc4693323edd014ecdd8cd51f03731f3368de6bbfb65ff0a22972",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/lsp4j/org.eclipse.lsp4j.jsonrpc.debug/0.24.0/org.eclipse.lsp4j.jsonrpc.debug-0.24.0.jar",
+    name = "org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc_debug-1_0_0_http",
+    downloaded_file_path = "org.eclipse.lsp4j.jsonrpc.debug-1.0.0.jar",
+    sha256 = "056b4f729bfd960462d2ad533e3975ff976d67b37a5f8e5d659a60542c8aab8d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/lsp4j/org.eclipse.lsp4j.jsonrpc.debug/1.0.0/org.eclipse.lsp4j.jsonrpc.debug-1.0.0.jar",
 )
 
 http_file(
-    name = "org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc_debug-0_24_0-sources_http",
-    downloaded_file_path = "org.eclipse.lsp4j.jsonrpc.debug-0.24.0-sources.jar",
-    sha256 = "bf9e8ad088f5f535993ec149b1e91288242757c23c563b21d7c4f4291ab2ac22",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/lsp4j/org.eclipse.lsp4j.jsonrpc.debug/0.24.0/org.eclipse.lsp4j.jsonrpc.debug-0.24.0-sources.jar",
+    name = "org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc_debug-1_0_0-sources_http",
+    downloaded_file_path = "org.eclipse.lsp4j.jsonrpc.debug-1.0.0-sources.jar",
+    sha256 = "67607d02789dc5aed9c107faeb63e11c3e2297f156143788181b78b21eb807f1",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/lsp4j/org.eclipse.lsp4j.jsonrpc.debug/1.0.0/org.eclipse.lsp4j.jsonrpc.debug-1.0.0-sources.jar",
 )
 
 http_file(
-    name = "org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc-0_24_0_http",
-    downloaded_file_path = "org.eclipse.lsp4j.jsonrpc-0.24.0.jar",
-    sha256 = "7721572e849d4f359b46ede55d5604b982ff498d0d92ebc70e18029f59823c08",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/lsp4j/org.eclipse.lsp4j.jsonrpc/0.24.0/org.eclipse.lsp4j.jsonrpc-0.24.0.jar",
+    name = "org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc-1_0_0_http",
+    downloaded_file_path = "org.eclipse.lsp4j.jsonrpc-1.0.0.jar",
+    sha256 = "9647feb0524bf763c878e12ab878a684102b81cccb3f77feecbec709d54f9bbb",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/lsp4j/org.eclipse.lsp4j.jsonrpc/1.0.0/org.eclipse.lsp4j.jsonrpc-1.0.0.jar",
 )
 
 http_file(
-    name = "org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc-0_24_0-sources_http",
-    downloaded_file_path = "org.eclipse.lsp4j.jsonrpc-0.24.0-sources.jar",
-    sha256 = "08ea295d4dfec646d3db5b4f6e8ae66d5acfb511f36ca66905916d7ce2773986",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/lsp4j/org.eclipse.lsp4j.jsonrpc/0.24.0/org.eclipse.lsp4j.jsonrpc-0.24.0-sources.jar",
+    name = "org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc-1_0_0-sources_http",
+    downloaded_file_path = "org.eclipse.lsp4j.jsonrpc-1.0.0-sources.jar",
+    sha256 = "a4b8e4aec42bfa272f4e1ec47b9c45d1d4fe9241201cd0504010bdfba4d69bd4",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/lsp4j/org.eclipse.lsp4j.jsonrpc/1.0.0/org.eclipse.lsp4j.jsonrpc-1.0.0-sources.jar",
 )
 
 http_file(

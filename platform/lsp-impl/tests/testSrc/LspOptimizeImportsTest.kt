@@ -177,7 +177,7 @@ class LspOptimizeImportsTest {
             Either.forLeft(
               TextDocumentEdit(
                 VersionedTextDocumentIdentifier(fileUri, null),
-                listOf(TextEdit(Range(Position(0, 0), Position(0, 1)), "Z"))
+                listOf(Either.forLeft(TextEdit(Range(Position(0, 0), Position(0, 1)), "Z")))
               )
             )
           )

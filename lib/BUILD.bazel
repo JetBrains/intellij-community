@@ -10055,62 +10055,62 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.eclipse.lsp4j/org.eclipse.lsp4j.debug-0.24.0.jar_copy",
-    src = "@org_eclipse_lsp4j-org_eclipse_lsp4j_debug-0_24_0_http//file",
-    out = "org.eclipse.lsp4j/org.eclipse.lsp4j.debug-0.24.0.jar",
+    name = "org.eclipse.lsp4j/org.eclipse.lsp4j.debug-1.0.0.jar_copy",
+    src = "@org_eclipse_lsp4j-org_eclipse_lsp4j_debug-1_0_0_http//file",
+    out = "org.eclipse.lsp4j/org.eclipse.lsp4j.debug-1.0.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-eclipse-lsp4j-debug-eclipse-lsp4j-debug",
-    jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j_debug-0_24_0_http//file",
-    source_jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j_debug-0_24_0-sources_http//file",
+    jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j_debug-1_0_0_http//file",
+    source_jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j_debug-1_0_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.eclipse.lsp4j/org.eclipse.lsp4j-0.24.0.jar_copy",
-    src = "@org_eclipse_lsp4j-org_eclipse_lsp4j-0_24_0_http//file",
-    out = "org.eclipse.lsp4j/org.eclipse.lsp4j-0.24.0.jar",
+    name = "org.eclipse.lsp4j/org.eclipse.lsp4j-1.0.0.jar_copy",
+    src = "@org_eclipse_lsp4j-org_eclipse_lsp4j-1_0_0_http//file",
+    out = "org.eclipse.lsp4j/org.eclipse.lsp4j-1.0.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-eclipse-lsp4j-eclipse-lsp4j",
-    jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j-0_24_0_http//file",
-    source_jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j-0_24_0-sources_http//file",
+    jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j-1_0_0_http//file",
+    source_jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j-1_0_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.eclipse.lsp4j/org.eclipse.lsp4j.jsonrpc.debug-0.24.0.jar_copy",
-    src = "@org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc_debug-0_24_0_http//file",
-    out = "org.eclipse.lsp4j/org.eclipse.lsp4j.jsonrpc.debug-0.24.0.jar",
+    name = "org.eclipse.lsp4j/org.eclipse.lsp4j.jsonrpc.debug-1.0.0.jar_copy",
+    src = "@org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc_debug-1_0_0_http//file",
+    out = "org.eclipse.lsp4j/org.eclipse.lsp4j.jsonrpc.debug-1.0.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-eclipse-lsp4j-jsonrpc-debug-eclipse-lsp4j-jsonrpc-debug",
-    jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc_debug-0_24_0_http//file",
-    source_jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc_debug-0_24_0-sources_http//file",
+    jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc_debug-1_0_0_http//file",
+    source_jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc_debug-1_0_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.eclipse.lsp4j/org.eclipse.lsp4j.jsonrpc-0.24.0.jar_copy",
-    src = "@org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc-0_24_0_http//file",
-    out = "org.eclipse.lsp4j/org.eclipse.lsp4j.jsonrpc-0.24.0.jar",
+    name = "org.eclipse.lsp4j/org.eclipse.lsp4j.jsonrpc-1.0.0.jar_copy",
+    src = "@org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc-1_0_0_http//file",
+    out = "org.eclipse.lsp4j/org.eclipse.lsp4j.jsonrpc-1.0.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-eclipse-lsp4j-jsonrpc-eclipse-lsp4j-jsonrpc",
-    jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc-0_24_0_http//file",
-    source_jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc-0_24_0-sources_http//file",
+    jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc-1_0_0_http//file",
+    source_jar = "@org_eclipse_lsp4j-org_eclipse_lsp4j_jsonrpc-1_0_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

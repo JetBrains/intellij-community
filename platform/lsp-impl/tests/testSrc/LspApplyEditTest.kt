@@ -102,11 +102,11 @@ class LspApplyEditTest {
       ApplyWorkspaceEditParams(WorkspaceEdit(listOf(
         Either.forLeft(TextDocumentEdit(
           VersionedTextDocumentIdentifier(serverSession.fileUri(file1), null),
-          listOf(TextEdit(Range(Position(0, 0), Position(0, 5)), "FIRST")),
+          listOf(Either.forLeft(TextEdit(Range(Position(0, 0), Position(0, 5)), "FIRST"))),
         )),
         Either.forLeft(TextDocumentEdit(
           VersionedTextDocumentIdentifier(serverSession.fileUri(file2), null),
-          listOf(TextEdit(Range(Position(0, 0), Position(0, 6)), "SECOND")),
+          listOf(Either.forLeft(TextEdit(Range(Position(0, 0), Position(0, 6)), "SECOND"))),
         )),
       )))
     }
@@ -148,7 +148,7 @@ class LspApplyEditTest {
         }),
         Either.forLeft(TextDocumentEdit(
           VersionedTextDocumentIdentifier(serverSession.fileUri(virtualFile), null),
-          listOf(TextEdit(Range(Position(0, 0), Position(0, 5)), "goodbye")),
+          listOf(Either.forLeft(TextEdit(Range(Position(0, 0), Position(0, 5)), "goodbye"))),
         )),
       )))
     }

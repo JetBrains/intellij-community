@@ -45,6 +45,7 @@ import org.eclipse.lsp4j.DocumentLink
 import org.eclipse.lsp4j.DocumentLinkParams
 import org.eclipse.lsp4j.DocumentOnTypeFormattingParams
 import org.eclipse.lsp4j.DocumentRangeFormattingParams
+import org.eclipse.lsp4j.DocumentRangesFormattingParams
 import org.eclipse.lsp4j.DocumentSymbol
 import org.eclipse.lsp4j.DocumentSymbolParams
 import org.eclipse.lsp4j.ExecuteCommandParams
@@ -57,6 +58,9 @@ import org.eclipse.lsp4j.InitializeParams
 import org.eclipse.lsp4j.InitializeResult
 import org.eclipse.lsp4j.InitializedParams
 import org.eclipse.lsp4j.InlayHint
+import org.eclipse.lsp4j.InlineCompletionItem
+import org.eclipse.lsp4j.InlineCompletionList
+import org.eclipse.lsp4j.InlineCompletionParams
 import org.eclipse.lsp4j.InlayHintParams
 import org.eclipse.lsp4j.InlineValue
 import org.eclipse.lsp4j.InlineValueParams
@@ -93,6 +97,9 @@ import org.eclipse.lsp4j.ShowMessageRequestParams
 import org.eclipse.lsp4j.SignatureHelp
 import org.eclipse.lsp4j.SignatureHelpParams
 import org.eclipse.lsp4j.SymbolInformation
+import org.eclipse.lsp4j.TextDocumentContentParams
+import org.eclipse.lsp4j.TextDocumentContentRefreshParams
+import org.eclipse.lsp4j.TextDocumentContentResult
 import org.eclipse.lsp4j.TextEdit
 import org.eclipse.lsp4j.TypeDefinitionParams
 import org.eclipse.lsp4j.TypeHierarchyItem
@@ -152,6 +159,7 @@ internal abstract class ServerSessionProtocolScope {
   // region Completion
   val COMPLETION = lspRequest<CompletionParams, Either<List<CompletionItem>, CompletionList>>("textDocument/completion")
   val COMPLETION_ITEM_RESOLVE = lspRequest<CompletionItem, CompletionItem>("completionItem/resolve")
+  val INLINE_COMPLETION = lspRequest<InlineCompletionParams, Either<List<InlineCompletionItem>, InlineCompletionList>>("textDocument/inlineCompletion")
   // endregion
 
   // region Navigation
@@ -211,6 +219,7 @@ internal abstract class ServerSessionProtocolScope {
   // region Formatting
   val FORMATTING = lspRequest<DocumentFormattingParams, List<TextEdit>>("textDocument/formatting")
   val RANGE_FORMATTING = lspRequest<DocumentRangeFormattingParams, List<TextEdit>>("textDocument/rangeFormatting")
+  val RANGES_FORMATTING = lspRequest<DocumentRangesFormattingParams, List<TextEdit>>("textDocument/rangesFormatting")
   val ON_TYPE_FORMATTING = lspRequest<DocumentOnTypeFormattingParams, List<TextEdit>>("textDocument/onTypeFormatting")
   // endregion
 
@@ -222,6 +231,7 @@ internal abstract class ServerSessionProtocolScope {
 
   // region Folding & selection
   val FOLDING_RANGE = lspRequest<FoldingRangeRequestParams, List<FoldingRange>>("textDocument/foldingRange")
+  val FOLDING_RANGE_REFRESH = lspRequest<Unit, Void>("workspace/foldingRange/refresh") { c, _ -> c.refreshFoldingRanges() }
   val SELECTION_RANGE = lspRequest<SelectionRangeParams, List<SelectionRange>>("textDocument/selectionRange")
   // endregion
 
@@ -275,6 +285,11 @@ internal abstract class ServerSessionProtocolScope {
   // region Inline values
   val INLINE_VALUE = lspRequest<InlineValueParams, List<InlineValue>>("textDocument/inlineValue")
   val INLINE_VALUE_REFRESH = lspRequest<Unit, Void>("workspace/inlineValue/refresh") { c, _ -> c.refreshInlineValues() }
+  // endregion
+
+  // region Text document content
+  val TEXT_DOCUMENT_CONTENT = lspRequest<TextDocumentContentParams, TextDocumentContentResult>("workspace/textDocumentContent")
+  val TEXT_DOCUMENT_CONTENT_REFRESH = lspRequest<TextDocumentContentRefreshParams, Void>("workspace/textDocumentContent/refresh") { c, p -> c.refreshTextDocumentContent(p) }
   // endregion
 
   // region Monikers

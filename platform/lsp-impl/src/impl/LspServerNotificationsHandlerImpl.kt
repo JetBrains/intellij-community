@@ -373,7 +373,7 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
   private fun getNotificationType(params: MessageParams): NotificationType = when (params.type) {
     MessageType.Error -> NotificationType.ERROR
     MessageType.Warning -> NotificationType.WARNING
-    MessageType.Info, MessageType.Log -> NotificationType.INFORMATION
+    MessageType.Info, MessageType.Log, MessageType.Debug -> NotificationType.INFORMATION
   }
 
   private fun doNotify(

@@ -370,7 +370,7 @@ internal class LspRenameTest {
         WorkspaceEdit(listOf(
           Either.forLeft(TextDocumentEdit(
             VersionedTextDocumentIdentifier(fileUri, null),
-            listOf(TextEdit(Range(Position(0, 6), Position(0, 9)), "Bar")),
+            listOf(Either.forLeft(TextEdit(Range(Position(0, 6), Position(0, 9)), "Bar"))),
           )),
           Either.forRight(RenameFile(fileUri, newFileUri)),
         ))
@@ -408,7 +408,7 @@ internal class LspRenameTest {
         WorkspaceEdit(listOf(
           Either.forLeft(TextDocumentEdit(
             VersionedTextDocumentIdentifier(fileUri, null),
-            listOf(TextEdit(Range(Position(0, 6), Position(0, 9)), "Qux")),
+            listOf(Either.forLeft(TextEdit(Range(Position(0, 6), Position(0, 9)), "Qux"))),
           )),
           Either.forRight(DeleteFile(obsoleteFileUri)),
         ))

@@ -535,7 +535,13 @@ class LspClientImpl internal constructor(
         if (filter.scheme != null && filter.scheme != "file") continue
 
         val language = filter.language
-        val pattern = filter.pattern
+        val filterPattern = filter.pattern
+        if (filterPattern != null && filterPattern.isRight) {
+          // A RelativePattern needs its baseUri resolved against the workspace folders. The IDE does not support it yet.
+          logWarn("Ignoring the document filter, its pattern is relative: ${filterPattern.right}")
+          continue
+        }
+        val pattern = filterPattern?.left
         if (language == null && pattern == null) continue
         if (language != null && language != descriptor.getLanguageId(file)) continue
 

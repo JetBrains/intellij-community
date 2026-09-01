@@ -146,11 +146,12 @@ private fun MessageType.levelTag(): @NlsSafe String = when (this) {
   MessageType.Warning -> "WARN"
   MessageType.Info -> "INFO"
   MessageType.Log -> "LOG"
+  MessageType.Debug -> "DEBUG"
 }
 
 private fun MessageType.contentType(): ConsoleViewContentType = when (this) {
   MessageType.Error -> ConsoleViewContentType.LOG_ERROR_OUTPUT
   MessageType.Warning -> ConsoleViewContentType.LOG_WARNING_OUTPUT
   MessageType.Info -> ConsoleViewContentType.LOG_INFO_OUTPUT
-  MessageType.Log -> ConsoleViewContentType.LOG_DEBUG_OUTPUT
+  MessageType.Log, MessageType.Debug -> ConsoleViewContentType.LOG_DEBUG_OUTPUT
 }

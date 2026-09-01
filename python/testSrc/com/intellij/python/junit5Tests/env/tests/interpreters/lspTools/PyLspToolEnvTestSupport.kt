@@ -15,6 +15,7 @@ import com.intellij.platform.lsp.api.LspClientManagerListener
 import com.intellij.platform.lsp.api.LspIntegrationProvider
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.impl.LspClientImpl
+import com.intellij.platform.lsp.util.messageIfStringOrEmpty
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.python.junit5Tests.framework.env.pySdkFixture
 import com.intellij.python.pytools.PyTool
@@ -121,7 +122,7 @@ internal suspend fun awaitLspErrorDiagnostics(
  */
 internal fun assertReportsIntAssignmentError(errors: List<Diagnostic>, tool: String) {
   assertTrue(errors.any { error ->
-    val message = error.message.orEmpty()
+    val message = error.messageIfStringOrEmpty
     message.contains("assignable", ignoreCase = true) && message.contains("int")
   }) {
     "Expected $tool to report an int-assignability error for `x: int = \"not an int\"`, got: $errors"
