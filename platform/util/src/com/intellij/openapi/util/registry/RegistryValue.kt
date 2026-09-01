@@ -51,6 +51,7 @@ open class RegistryValue @Internal constructor(
 
   private var stringCachedValue: String? = null
   private var intCachedValue: Int? = null
+  private var longCachedValue: Long? = null
   private var doubleCachedValue = Double.NaN
   private var booleanCachedValue: Boolean? = null
 
@@ -73,6 +74,20 @@ open class RegistryValue @Internal constructor(
     if (result == null) {
       result = resolveRequiredValue(key = key).toBoolean()
       booleanCachedValue = result
+    }
+    return result
+  }
+
+  fun asLong(): Long {
+    var result = longCachedValue
+    if (result == null) {
+      result = try {
+        resolveRequiredValue(key = key).toLong()
+      }
+      catch (_: NumberFormatException) {
+        registry.getBundleValue(key, keyDescriptor).toLong()
+      }
+      longCachedValue = result
     }
     return result
   }
@@ -368,6 +383,7 @@ open class RegistryValue @Internal constructor(
   internal fun resetCache() {
     stringCachedValue = null
     intCachedValue = null
+    longCachedValue = null
     doubleCachedValue = Double.NaN
     booleanCachedValue = null
   }

@@ -37,13 +37,13 @@ object MarkdownImageLoader {
   }
 
   private fun isWithinLimits(file: VirtualFile): Boolean {
-    val maxBytes = Registry.intValue("markdown.live.preview.image.max.bytes").toLong()
+    val maxBytes = Registry.longValue("markdown.live.preview.image.max.bytes")
     if (maxBytes < 0 || file.length > maxBytes) return false
 
     val content = file.contentsToByteArray()
     if (content.size.toLong() > maxBytes) return false
 
-    val maxPixels = Registry.intValue("markdown.live.preview.image.max.pixels").toLong()
+    val maxPixels = Registry.longValue("markdown.live.preview.image.max.pixels")
     val pixels = if (file.extension.equals("svg", ignoreCase = true)) {
       readSvgPixelCount(content)
     } else {

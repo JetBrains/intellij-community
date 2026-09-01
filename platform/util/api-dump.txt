@@ -682,6 +682,8 @@ f:com.intellij.openapi.util.registry.Registry
 - sf:is(java.lang.String):Z
 - sf:is(java.lang.String,Z):Z
 - f:isLoaded():Z
+- sf:longValue(java.lang.String):J
+- sf:longValue(java.lang.String,J):J
 - sf:stringValue(java.lang.String):java.lang.String
 - sf:stringValue(java.lang.String,java.lang.String):java.lang.String
 f:com.intellij.openapi.util.registry.Registry$Companion
@@ -695,6 +697,8 @@ f:com.intellij.openapi.util.registry.Registry$Companion
 - f:intValue(java.lang.String,I,I,I):I
 - f:is(java.lang.String):Z
 - f:is(java.lang.String,Z):Z
+- f:longValue(java.lang.String):J
+- f:longValue(java.lang.String,J):J
 - f:stringValue(java.lang.String):java.lang.String
 - f:stringValue(java.lang.String,java.lang.String):java.lang.String
 c:com.intellij.openapi.util.registry.RegistryValue
@@ -702,6 +706,7 @@ c:com.intellij.openapi.util.registry.RegistryValue
 - asBoolean():Z
 - f:asDouble():D
 - f:asInteger():I
+- f:asLong():J
 - f:asOptions():java.util.List
 - asString():java.lang.String
 - f:getKey():java.lang.String

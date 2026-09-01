@@ -116,6 +116,25 @@ class Registry {
 
     @Throws(MissingResourceException::class)
     @JvmStatic
+    fun longValue(@NonNls key: String): Long = getInstance().resolveValue(key).asLong()
+
+    @JvmStatic
+    fun longValue(@NonNls key: String, defaultValue: Long): Long {
+      if (!LoadingState.COMPONENTS_LOADED.isOccurred) {
+        LoadingState.COMPONENTS_REGISTERED.checkOccurred()
+        return defaultValue
+      }
+
+      try {
+        return registry.resolveValue(key).asLong()
+      }
+      catch (_: MissingResourceException) {
+        return defaultValue
+      }
+    }
+
+    @Throws(MissingResourceException::class)
+    @JvmStatic
     fun intValue(@NonNls key: String): Int = getInstance().resolveValue(key).asInteger()
 
     @JvmStatic
