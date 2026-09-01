@@ -37,7 +37,6 @@ internal class BackendActionInFrontendGroupInspection : DevKitPluginXmlInspectio
     val module = element.module ?: return
     val file = holder.fileElement.file
     val moduleAnalysis = SplitModeModuleKindResolver.getOrComputeModuleAnalysis(module, file)
-    if (SplitModeInspectionUtil.shouldReportSinglePluginLevelErrorInsteadOfManyNestedErrors(file, moduleAnalysis)) return
 
     when (element) {
       is AddToGroup -> checkBackendActionAddedToFrontendGroup(element, moduleAnalysis, holder)
@@ -101,7 +100,7 @@ internal class BackendActionInFrontendGroupInspection : DevKitPluginXmlInspectio
       GlobalSearchScope.projectScope(manager.project),
     ) { registration ->
       val action = registration as? Action ?: return@processAction true
-      if (!action.hasModuleKind(ModuleKind.BACKEND)) return@processAction true
+      if (!action.isRegisteredInModuleKind(ModuleKind.BACKEND)) return@processAction true
 
       hasBackendActionRegistration = true
       false
@@ -119,7 +118,7 @@ internal class BackendActionInFrontendGroupInspection : DevKitPluginXmlInspectio
       GlobalSearchScope.projectScope(manager.project),
     ) { registration ->
       val group = registration as? Group ?: return@processGroup true
-      if (!group.hasModuleKind(ModuleKind.FRONTEND)) return@processGroup true
+      if (!group.isRegisteredInModuleKind(ModuleKind.FRONTEND)) return@processGroup true
 
       hasFrontendGroupRegistration = true
       false
@@ -141,9 +140,9 @@ internal class BackendActionInFrontendGroupInspection : DevKitPluginXmlInspectio
     )
   }
 
-  private fun ActionOrGroup.hasModuleKind(kind: ModuleKind): Boolean {
+  private fun ActionOrGroup.isRegisteredInModuleKind(expectedKind: ModuleKind): Boolean {
     val module = module ?: return false
     val descriptor = DomUtil.getFile(this)
-    return SplitModeModuleKindResolver.getOrComputeModuleAnalysis(module, descriptor).resolvedModuleKind.kind == kind
+    return SplitModeModuleKindResolver.getOrComputeModuleAnalysis(module, descriptor).resolvedModuleKind.kind == expectedKind
   }
 }
