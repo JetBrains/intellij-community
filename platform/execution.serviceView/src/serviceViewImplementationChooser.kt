@@ -14,6 +14,9 @@ private val LOG  by lazy {
   fileLogger()
 }
 
+// value of `services.view.split.products` that enables the split implementation in every product
+private const val ALL_PRODUCTS = "*"
+
 @ApiStatus.Internal
 // FIXME: When we consider client services stable enough, all usages of the method must be removed,
 //        and the corresponding classes must be moved to frontend modules of their plugins
@@ -74,8 +77,10 @@ private val shouldEnableLuxedRunToolwindowInServiceViewCachedRegistryValue by la
 // mutating state of current services implementation
 @ApiStatus.Internal
 fun isCurrentProductSupportSplitServiceView(): Boolean {
-  val value = getValueIfExists("services.view.split.products")?.asString() ?: return false
-  val productCodes = value.split(",").toSet()
+  val value = getValueIfExists("services.view.split.products")?.asString()?.trim() ?: return false
+  if (value == ALL_PRODUCTS) return true
+
+  val productCodes = value.split(",").mapTo(mutableSetOf()) { it.trim() }
   val currentProductCode = if (IdeProductMode.isFrontend) {
     ApplicationInfoEx.getInstanceEx().fullIdeProductCode
   }
