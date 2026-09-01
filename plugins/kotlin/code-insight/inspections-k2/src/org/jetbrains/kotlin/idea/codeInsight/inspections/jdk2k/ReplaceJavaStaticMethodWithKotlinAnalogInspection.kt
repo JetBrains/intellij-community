@@ -11,14 +11,16 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.containers.toArray
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -45,14 +47,14 @@ internal class ReplaceJavaStaticMethodWithKotlinAnalogInspection :
     override fun isApplicableByPsi(element: KtCallExpression): Boolean =
         !findReplacementCandidatesByPsi(element).isEmpty()
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): List<Replacement>? {
         val replacements = findReplacementCandidatesByPsi(element).filter {
             it.isApplicable(element)
         }
 
-        val javaMethodFqName = element.resolveToCall()
-            ?.singleFunctionCallOrNull()?.symbol?.callableId?.asSingleFqName()
+        val javaMethodFqName = element.tryResolveCall()?.single?.function?.symbol?.callableId?.asSingleFqName()
 
         return replacements.filter {
             javaMethodFqName == FqName(it.javaMethodFqName) && it.transformation.isApplicableByAnalyze(element)

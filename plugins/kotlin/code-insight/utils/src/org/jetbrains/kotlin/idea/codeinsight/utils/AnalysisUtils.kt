@@ -2,17 +2,18 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.isImplicitReferenceToCompanion
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitInvokeCall
-import org.jetbrains.kotlin.analysis.api.resolution.calls
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.simple
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
@@ -25,14 +26,15 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.type
-import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -80,13 +82,14 @@ fun KaSymbol.getFqNameIfPackageOrNonLocal(): FqName? = when (this) {
     else -> null
 }
 
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 fun KtCallExpression.isArrayOfFunction(): Boolean {
     val functionNames = ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY.values.toSet() +
             ArrayFqNames.ARRAY_OF_FUNCTION +
             ArrayFqNames.EMPTY_ARRAY
 
-    val call = resolveToCall()?.singleFunctionCallOrNull()?.symbol?.callableId ?: return false
+    val call = tryResolveCall()?.single?.function?.symbol?.callableId ?: return false
 
     return call.packageName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME &&
             functionNames.contains(call.callableName)
@@ -97,9 +100,10 @@ fun KtCallExpression.isArrayOfFunction(): Boolean {
  *
  * @return `true` if the expression is an implicit `invoke` call, `false` otherwise.
  */
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 fun KtCallExpression.isImplicitInvokeCall(): Boolean =
-    resolveToCall()?.singleFunctionCallOrNull() is KaImplicitInvokeCall
+    tryResolveCall()?.single?.function is KaImplicitInvokeCall
 
 /**
  * Returns containing class symbol, if [reference] is a short reference to a companion object. Otherwise, returns null.
@@ -140,12 +144,12 @@ context(_: KaSession)
 fun KaCallableSymbol.canBeUsedAsExtension(): Boolean =
     isExtension || this is KaVariableSymbol && (returnType as? KaFunctionType)?.hasReceiver == true
 
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 fun KtExpression.resolveExpression(): KaSymbol? {
     val reference = mainReference?:(this as? KtThisExpression)?.instanceReference?.mainReference
     reference?.resolveToSymbol()?.let { return it }
-    val call = resolveToCall()?.calls?.singleOrNull() ?: return null
-    return if (call is KaCallableMemberCall<*, *>) call.symbol else null
+    return tryResolveExpressionCall()?.single?.simple?.symbol
 }
 
 /**

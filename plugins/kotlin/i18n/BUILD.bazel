@@ -29,6 +29,7 @@ jvm_library(
         "//plugins/java-i18n",
         "//plugins/properties/properties-psi-impl:backend-psi",
         "//plugins/kotlin/code-insight/api",
+        "//plugins/kotlin/base/code-insight",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
     ],
 )
@@ -55,6 +56,7 @@ jvm_library(
         "//plugins/java-i18n:java-i18n_test_lib",
         "//plugins/properties/properties-psi-impl:backend-psi_test_lib",
         "//plugins/kotlin/code-insight/api:api_test_lib",
+        "//plugins/kotlin/base/code-insight:code-insight_test_lib",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
     ],
 )

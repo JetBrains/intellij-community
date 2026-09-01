@@ -3,9 +3,11 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.inspections.ReplacePrintlnWithLoggingInspection.Util.isPrintFunction
@@ -27,6 +29,7 @@ internal class ReplacePrintlnWithLoggingInspection : AbstractKotlinInspection() 
         fun CallableId.isPrintFunction(): Boolean = this in printFunctions
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun buildVisitor(
         holder: ProblemsHolder,
         isOnTheFly: Boolean,
@@ -39,7 +42,7 @@ internal class ReplacePrintlnWithLoggingInspection : AbstractKotlinInspection() 
         val identifier = call.calleeExpression?.text ?: return
 
         val callableId = analyze(call) {
-            call.resolveToCall()?.singleFunctionCallOrNull()?.symbol?.callableId
+            call.tryResolveCall()?.single?.function?.symbol?.callableId
         } ?: return
 
         if (!callableId.isPrintFunction()) return

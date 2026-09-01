@@ -7,18 +7,17 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.siyeh.ig.psiutils.TestUtils
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsResultOfLambda
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.builtinTypes
 import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isNullable
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.KtExpression
@@ -33,6 +32,7 @@ private const val NAME_HINT_EXCEPTION: String = "Exception"
 private const val NAME_HINT_ERROR: String = "Error"
 
 internal class KotlinThrowableNotThrownInspection : AbstractKotlinInspection() {
+    @OptIn(KaExperimentalApi::class)
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitor<*, *> = callExpressionVisitor { callExpression ->
         val calleeExpression = callExpression.calleeExpression ?: return@callExpressionVisitor
         if (!calleeExpression.text.let { it.contains(NAME_HINT_EXCEPTION) || it.contains(NAME_HINT_ERROR) })
@@ -41,7 +41,7 @@ internal class KotlinThrowableNotThrownInspection : AbstractKotlinInspection() {
             return@callExpressionVisitor
 
         analyze(callExpression) {
-            val functionSymbol = callExpression.resolveToCall()?.successfulFunctionCallOrNull()?.symbol ?: return@callExpressionVisitor
+            val functionSymbol = callExpression.resolveSuccessfulCall()?.symbol ?: return@callExpressionVisitor
             val type = functionSymbol.returnType
             if (type.classId == KaStandardTypeClassIds.NOTHING || type.isNullable) return@callExpressionVisitor
             if (!type.isSubtypeOf(builtinTypes.throwable)) return@callExpressionVisitor

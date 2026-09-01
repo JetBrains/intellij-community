@@ -10,10 +10,10 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray
@@ -50,14 +50,14 @@ internal class KotlinArrayHashCodeInspection : KotlinApplicableInspectionBase<Kt
         return calleeName == "hashCode"
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtQualifiedExpression): Context? {
         val receiverType = element.receiverExpression.expressionType ?: return null
         if (!receiverType.isArrayOrPrimitiveArray) return null
 
         val callExpression = element.selectorExpression as? KtCallExpression ?: return null
-        val call = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-        val functionSymbol = call.symbol as? KaNamedFunctionSymbol ?: return null
+        val functionSymbol = callExpression.resolveSuccessfulCall()?.symbol as? KaNamedFunctionSymbol ?: return null
         if (functionSymbol.callableId != HASH_CODE_CALLABLE_ID) return null
 
         return Context(receiverType.isNestedArray)

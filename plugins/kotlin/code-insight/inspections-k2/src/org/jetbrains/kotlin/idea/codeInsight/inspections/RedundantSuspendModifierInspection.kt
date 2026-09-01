@@ -9,10 +9,11 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.descendants
 import com.intellij.psi.util.findParentOfType
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallResolutionAttempt
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaKotlinPropertySymbol
@@ -40,6 +41,7 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.namedFunctionVisitor
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 
 internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
@@ -79,6 +81,7 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
     private fun KaCallableSymbol.isTodoSymbol(): Boolean =
         this is KaNamedFunctionSymbol && callableId?.asSingleFqName() == todoFqName
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtNamedFunction.isSuspendModifierRedundant(): Boolean {
         var isSuspendModifierRedundant = true
@@ -98,14 +101,15 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
             }
 
             context(session: KaSession)
-            override fun processUnresolvedCall(element: KtElement, callInfo: KaCallInfo?): Boolean {
-                if (callInfo != null) {
+            override fun processUnresolvedCall(element: KtElement, callInfo: KaCallResolutionAttempt?): Boolean {
+                return if (callInfo != null) {
                     // A callInfo of null means that the element could not be resolved at all, so it is not even unresolved.
                     // For example, if the element is not an expression, so we ignore those cases.
                     isSuspendModifierRedundant = false
-                    return false
+                    false
+                } else {
+                    true
                 }
-                return true
             }
         })
 
@@ -116,8 +120,8 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
                     val expression =
                         reference.element.parent.findParentOfType<KtExpression>() ?: return@Processor isSuspendModifierRedundant
                     analyze(expression) {
-                        val call = expression.resolveToCall() ?: return@analyze
-                        val functionCall = call.singleFunctionCallOrNull() ?: return@analyze
+                        val functionCall =
+                            (expression as? KtResolvableCall)?.resolveSuccessfulCall()?.function ?: return@analyze
 
                         val anySuspendFunctionType =
                             functionCall.valueArgumentMapping.any {

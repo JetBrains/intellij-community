@@ -24,36 +24,38 @@ import com.intellij.psi.util.startOffset
 import org.jdom.Element
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.scopes.syntheticJavaPropertiesScope
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.calls
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.successful
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.scopes.declarationScope
 import org.jetbrains.kotlin.analysis.api.scopes.scope
+import org.jetbrains.kotlin.analysis.api.scopes.syntheticJavaPropertiesScope
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaJavaFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.directlyOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isFunctionType
 import org.jetbrains.kotlin.analysis.api.types.isFunctionalInterface
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.types.lowerBoundIfFlexible
 import org.jetbrains.kotlin.analysis.api.types.receiverType
 import org.jetbrains.kotlin.analysis.api.types.restore
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
-import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
@@ -97,6 +99,7 @@ import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
@@ -153,15 +156,14 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
             val expectedType = callableReferenceExpression.singleExpression()?.expectedType
             if (expectedType?.isFunctionType != true && expectedType?.isFunctionalInterface != true) return
 
-            val symbol = callableReferenceExpression.resolveSymbol() ?: return
+            val symbol = callableReferenceExpression.resolveSuccessfulSymbol() ?: return
 
             val symbolPsi = (symbol as? KaCallableSymbol)?.psi ?: return
 
             val problemHighlightType = getProblemHighlightType(symbolPsi)
 
             val receiverType =
-                callableReferenceExpression.resolveToCall()
-                    ?.successfulFunctionCallOrNull()?.dispatchReceiver?.type?.lowerBoundIfFlexible()
+                callableReferenceExpression.resolveSuccessfulCall()?.function?.dispatchReceiver?.type?.lowerBoundIfFlexible()
                     ?: callableReferenceExpression.receiverType?.lowerBoundIfFlexible() ?: return
 
             val syntheticProperty = getSyntheticProperty(propertyNames, receiverType) ?: return
@@ -228,8 +230,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         }
 
         analyze(callExpression) {
-            val resolvedCall = callExpression.resolveToCall() ?: return
-            val resolvedFunctionCall = resolvedCall.successfulFunctionCallOrNull() ?: return
+            val resolvedFunctionCall = callExpression.resolveSuccessfulCall() ?: return
 
             val successfulFunctionCallSymbol = resolvedFunctionCall.symbol
 
@@ -567,15 +568,17 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         val receiverTypePointer = receiverType.createPointer()
         analyze(newExpressionFromCodeFragment) {
             val receiverType = receiverTypePointer.restore() ?: return false
-            val resolvedCall = newExpressionFromCodeFragment.resolveToCall() ?: return false
-            if (resolvedCall is KaErrorCallInfo) {
+            val resolvedCall = (newExpressionFromCodeFragment as? KtResolvableCall)?.tryResolveCall() ?: return false
+            if (resolvedCall.successful == null) {
                 return false
             }
 
             // This check is needed only for references because a synthetic property with reference might occasionally be hidden
             // by some variable or argument in the same scope
+            val variableAccessCall =
+                resolvedCall.calls.singleOrNull { it is KaVariableAccessCall } as? KaVariableAccessCall
             if (qualifiedExpressionForSelector == null) {
-                val replacementReceiverType = resolvedCall.successfulVariableAccessCall()
+                val replacementReceiverType = variableAccessCall
                     ?.dispatchReceiver
                     ?.type
                     ?.lowerBoundIfFlexible()
@@ -585,7 +588,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
             } else {
                 // Check that the call resolves without errors, for example, that we don't do `a?.stringProperty = 1`
                 // After KTIJ-29110 is fixed, will be covered with tests propertyTypeIsMoreSpecific1 and propertyTypeIsMoreSpecific2
-                return resolvedCall.successfulVariableAccessCall()?.symbol is KaSyntheticJavaPropertySymbol
+                return variableAccessCall?.symbol is KaSyntheticJavaPropertySymbol
             }
         }
     }

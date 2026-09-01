@@ -3,11 +3,12 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.constructor
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddConstructorParameterFromSuperTypeCallFix
@@ -23,7 +24,7 @@ internal object AddConstructorParameterFromSuperTypeCallFixFactory {
     private fun createCallFix(diagnostic: KaFirDiagnostic.NoValueForParameter): AddConstructorParameterFromSuperTypeCallFix? {
         val superTypeCallEntry = diagnostic.psi as? KtSuperTypeCallEntry ?: return null
         val valueArgumentList = superTypeCallEntry.valueArgumentList ?: return null
-        val superTypeCall = superTypeCallEntry.resolveToCall()?.singleConstructorCallOrNull() ?: return null
+        val superTypeCall = superTypeCallEntry.tryResolveCall()?.single?.constructor ?: return null
         val containingSymbol = superTypeCall.symbol as? KaFunctionSymbol ?: return null
         val parameterIndex = containingSymbol.valueParameters.indexOfFirst { it.name == diagnostic.violatedParameter }
         val containingClass = superTypeCallEntry.containingClass() ?: return null

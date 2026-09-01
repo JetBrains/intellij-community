@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.asPsiType
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
@@ -36,10 +35,10 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.session.useSiteSession
@@ -127,6 +126,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getValueParameters
 import org.jetbrains.kotlin.psi.psiUtil.isLambdaOutsideParentheses
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addIfNotNull
 import java.util.Collections
@@ -150,17 +150,19 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
                     }
                 }
 
+                @OptIn(KaExperimentalApi::class)
                 override fun visitKtElement(element: KtElement) {
                     super.visitKtElement(element)
 
-                    val symbol = element.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
+                    // TODO: migration issue KTIJ-39782
+                    val singleCall = (element as? KtResolvableCall)?.resolveSuccessfulCall()?.simple ?: return
 
-                    val parameter = (symbol?.symbol as? KaParameterSymbol)?.psi as? KtParameter
+                    val parameter = (singleCall.symbol as? KaParameterSymbol)?.psi as? KtParameter
                     if (parameter != null && !parameter.hasValOrVar() && parameter.ownerDeclaration == targetParent) {
                         usages.putValue(parameter, element)
                     }
 
-                    symbol?.contextArguments?.forEach { arg ->
+                    singleCall.contextArguments.forEach { arg ->
                         val contextParameterSymbol = (arg.unwrapSmartCasts() as? KaImplicitReceiverValue)?.symbol as? KaContextParameterSymbol
                         val targetParameter = contextParameterSymbol?.psi as? KtParameter
                         if (targetParameter != null && targetParameter.ownerDeclaration == targetParent) {
@@ -170,7 +172,10 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
 
                     fun isImplicitReceiverReference(receiverValue: KaReceiverValue?): Boolean =
                         ((receiverValue?.unwrapSmartCasts() as? KaImplicitReceiverValue)?.symbol as? KaReceiverParameterSymbol)?.psi == receiverTypeRef
-                    if (receiverTypeRef != null && (isImplicitReceiverReference(symbol?.dispatchReceiver) || isImplicitReceiverReference(symbol?.extensionReceiver))) {
+
+                    if (receiverTypeRef != null && (isImplicitReceiverReference(singleCall.dispatchReceiver) || isImplicitReceiverReference(
+                            singleCall.extensionReceiver
+                        ))) {
                         usages.putValue(receiverTypeRef, element)
                     }
                 }

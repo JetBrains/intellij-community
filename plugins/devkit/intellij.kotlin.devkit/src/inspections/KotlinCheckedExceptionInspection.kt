@@ -22,14 +22,12 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractCallsInPlaceContractEffectDeclaration
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractInvocationKind
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.calls
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.successfulConstructorCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -72,7 +70,7 @@ class KotlinCheckedExceptionInspection : AbstractKotlinInspection() {
     override fun compute(): CachedValueProvider.Result<Collection<AnnotationAndException>>? {
       // Resolves the function designated by `element` and collects contents of `@ThrowsChecked` and `@Throws` annotations.
       val exceptionsToCheck: MutableCollection<AnnotationAndException> = analyze(element) {
-        val call = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return@analyze hashSetOf()
+        val call = element.resolveSuccessfulCall() ?: return@analyze hashSetOf()
         val annotatedSymbol = call.symbol as? KaAnnotatedSymbol ?: return@analyze hashSetOf()
         exceptionsToCheck(annotatedSymbol.annotations.mapNotNull { it.psi as? KtAnnotationEntry }).toHashSet()
       }
@@ -81,11 +79,9 @@ class KotlinCheckedExceptionInspection : AbstractKotlinInspection() {
       run {
         val calleeExpression = element.calleeExpression as? KtNameReferenceExpression ?: return@run
         analyze(calleeExpression) {
-          for (call in (calleeExpression.resolveToCall() ?: return@analyze).calls) {
-            if (call is KaCallableMemberCall<*, *>) {
-              val annotations = call.partiallyAppliedSymbol.signature.returnType.annotations
-              exceptionsToCheck.addAll(exceptionsToCheck(annotations.mapNotNull { it.psi as? KtAnnotationEntry }))
-            }
+          for (call in (calleeExpression.resolveSuccessfulCall() ?: return@analyze).calls) {
+            val annotations = call.signature.returnType.annotations
+            exceptionsToCheck.addAll(exceptionsToCheck(annotations.mapNotNull { it.psi as? KtAnnotationEntry }))
           }
         }
       }
@@ -149,7 +145,7 @@ class KotlinCheckedExceptionInspection : AbstractKotlinInspection() {
             // but not prevent any unexpected exception in compile time.
             loop@ for (catchClause in currentNode.catchClauses) {
               analyze(catchClause) {
-                val typeRef = catchClause.catchParameter?.typeReference?.resolveSymbol()
+                val typeRef = catchClause.catchParameter?.typeReference?.resolveSuccessfulSymbol()
                 val typeSymbol = if (typeRef is KaTypeAliasSymbol) typeRef.expandedType.expandedSymbol else typeRef
                 val cls = typeSymbol?.getFqNameIfPackageOrNonLocal()?.maybeToKotlinFqName()
                 exceptionsToCheckWithSuperclasses.values.removeAll { superClasses ->
@@ -200,7 +196,6 @@ class KotlinCheckedExceptionInspection : AbstractKotlinInspection() {
   private class AddAnnotationQuickFix() : PsiUpdateModCommandQuickFix() {
     override fun getFamilyName(): @IntentionFamilyName String = DevKitKotlinBundle.message("intention.checked.exceptions.add.annotation")
 
-    @OptIn(KaExperimentalApi::class)
     override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
       // TODO Use the power of ModPsiUpdater.
 
@@ -369,14 +364,13 @@ private fun FqName.maybeToKotlinFqName(): FqName =
 private data class AnnotationAndException(val annotationName: FqName, val exceptionName: FqName, val expandedExceptionName: FqName?)
 
 /** Parses a list of annotations, extracts all classes from all `@ThrowChecked`, return fully qualified names of the extracted classes. */
+@OptIn(KaExperimentalApi::class)
 private fun exceptionsToCheck(annotations: Collection<KtAnnotationEntry>): Collection<AnnotationAndException> {
   val result = mutableListOf<AnnotationAndException>()
   for (annotation in annotations) {
     analyze(annotation) annotationAnalyze@{
-      val constructorCall =
-        annotation.resolveToCall()?.successfulConstructorCallOrNull()
-        ?: return@annotationAnalyze
-      val annotationFqName = constructorCall.symbol.containingClassId?.asSingleFqName()
+      val call = annotation.resolveSuccessfulCall() ?: return@annotationAnalyze
+      val annotationFqName = call.symbol.containingClassId?.asSingleFqName()
       if (annotationFqName?.isEelThrowsChecked() == true || annotationFqName?.isKotlinThrows() == true) {
         for (valueArgument in annotation.valueArguments) {
           val cle =
@@ -435,7 +429,7 @@ private fun KtLambdaExpression.executedInPlaceByCallable(): LambdaCheckResult {
   }
 
   analyze(callExpression) {
-    val call = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return@analyze
+    val call = callExpression.resolveSuccessfulCall() ?: return@analyze
     val fqName = call.symbol.callableId?.asSingleFqName() ?: return@analyze
 
     // TODO Optimize
@@ -448,7 +442,7 @@ private fun KtLambdaExpression.executedInPlaceByCallable(): LambdaCheckResult {
   }
 
   val callerAnnotations: Collection<KtAnnotationEntry> = analyze(callExpression) {
-    val call = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return@analyze emptyList()
+    val call = callExpression.resolveSuccessfulCall() ?: return@analyze emptyList()
     val callerAnnotations = call.symbol.annotations.mapNotNull { it.psi as? KtAnnotationEntry }
 
     val functionSymbol = call.symbol as? KaNamedFunctionSymbol
@@ -477,7 +471,7 @@ private fun KtLambdaExpression.executedInPlaceByCallable(): LambdaCheckResult {
 
   val parameterAnnotations: Collection<KtAnnotationEntry> = when (val calleeExpression = callExpression.calleeExpression) {
     is KtNameReferenceExpression -> analyze(calleeExpression) {
-      val signature = calleeExpression.resolveToCall()?.successfulFunctionCallOrNull()?.valueArgumentMapping[this@executedInPlaceByCallable]
+      val signature = calleeExpression.resolveSuccessfulCall()?.function?.valueArgumentMapping[this@executedInPlaceByCallable]
       if (signature != null) {
         val symbol = signature.symbol
         symbol.returnType.annotations.mapNotNull { it.psi as? KtAnnotationEntry }

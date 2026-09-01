@@ -6,10 +6,11 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.variable
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.isInitializedByLazy
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeUnnecessaryParentheses
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.getOutermostParenthesizedExpressionOrThis
 import org.jetbrains.kotlin.idea.util.hasJvmFieldAnnotation
+import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
@@ -105,6 +107,7 @@ internal class LazyWithoutDelegationInspection :
         return refs.map { ref -> findLazyValueAccessor(ref) ?: return null }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun findLazyValueAccessor(ref: KtNameReferenceExpression): KtDotQualifiedExpression? {
         val propertyAccess = generateSequence(ref.getOutermostParenthesizedExpressionOrThis()) { expression ->
@@ -115,10 +118,8 @@ internal class LazyWithoutDelegationInspection :
         val parent = propertyAccess.parent as? KtDotQualifiedExpression ?: return null
         if (parent.receiverExpression != propertyAccess) return null
         val isLazyValueCall = parent.selectorExpression
-                    ?.resolveToCall()
-                    ?.singleVariableAccessCall()
-                    ?.symbol
-                    ?.callableId == StandardKotlinNames.Lazy.lazyValue
+            ?.tryResolveExpressionCall()?.single?.variable
+            ?.symbol?.callableId == StandardKotlinNames.Lazy.lazyValue
 
         return parent.takeIf { isLazyValueCall }
     }

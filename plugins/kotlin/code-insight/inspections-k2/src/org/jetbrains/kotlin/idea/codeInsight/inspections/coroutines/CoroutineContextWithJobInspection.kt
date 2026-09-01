@@ -8,9 +8,9 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -52,9 +52,10 @@ internal class CoroutineContextWithJobInspection : KotlinApplicableInspectionBas
 
     class Context(val jobSource: SmartPsiElementPointer<KtExpression>, val jobIsCancellable: Boolean, val usedBuilder: CallableId)
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): Context? {
-        val functionCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
+        val functionCall = element.resolveSuccessfulCall() ?: return null
 
         val matchedBuilderInfo = SUPPORTED_BUILDERS.find { it.callableId == functionCall.symbol.callableId } ?: return null
 

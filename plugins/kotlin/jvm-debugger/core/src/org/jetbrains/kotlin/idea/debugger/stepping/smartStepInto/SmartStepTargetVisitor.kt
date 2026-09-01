@@ -10,12 +10,11 @@ import com.intellij.util.Range
 import com.intellij.util.containers.OrderedSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.scopes.memberScope
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -351,11 +350,11 @@ class SmartStepTargetVisitor(
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
         if (checkLineRangeFits(expression.getLineRange())) {
             analyze(expression) {
-                val variableAccessCall = expression.resolveToCall()?.successfulCallOrNull<KaVariableAccessCall>() ?: return
-                val symbol = variableAccessCall.symbol as? KaPropertySymbol ?: return
+                val symbol = expression.resolveSuccessfulSymbol() as? KaPropertySymbol ?: return
                 recordProperty(expression, symbol)
             }
         }

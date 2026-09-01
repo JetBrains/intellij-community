@@ -9,10 +9,12 @@ import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.execution.actions.ConfigurationFromContextImpl
 import com.intellij.testFramework.assertInstanceOf
 import com.intellij.testFramework.runInEdtAndWait
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.gradle.AbstractKotlinGradleCodeInsightBaseTest
 import org.jetbrains.kotlin.idea.gradleJava.run.findTaskNameAround
@@ -50,23 +52,23 @@ abstract class AbstractKotlinGradleRunConfigurationProducerBaseTest : AbstractKo
         }
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
+    @OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class)
     private fun getConfigurationContextDetails(context: ConfigurationContext): String {
         val module = context.module
         val location = context.location
         val psiElement = location?.psiElement
         val callExpression = psiElement?.getParentOfType<KtCallExpression>(false, KtScriptInitializer::class.java)
-        val resolvedCall = callExpression?.let {
+        val resolutionAttempt = callExpression?.let {
             allowAnalysisOnEdt {
                 analyze(callExpression) {
-                    callExpression.resolveToCall()
+                    callExpression.tryResolveCall()
                 }
             }
         }
         val functionCall = callExpression?.let {
             allowAnalysisOnEdt {
                 analyze(callExpression) {
-                    callExpression.resolveToCall()?.singleFunctionCallOrNull()
+                    resolutionAttempt?.single?.function
                 }
             }
         }
@@ -82,7 +84,7 @@ abstract class AbstractKotlinGradleRunConfigurationProducerBaseTest : AbstractKo
             |  Kotlin: ${psiElement?.let { isInGradleKotlinScript(it) }}
             |  Project path: ${module?.let { GradleRunnerUtil.resolveProjectPath(it) }}
             |  Task: $taskName
-            |   - Resolved call: $resolvedCall
+            |   - Resolution attempt: $resolutionAttempt
             |   - Function call: $functionCall
         """.trimMargin()
     }

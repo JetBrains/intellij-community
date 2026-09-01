@@ -55,6 +55,7 @@ jvm_library(
         "//plugins/kotlin/base/psi",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//plugins/kotlin/base/analysis",
+        "//plugins/kotlin/base/code-insight",
         ":plugins_IntelliLang_backend_provided",
     ],
 )
@@ -95,6 +96,7 @@ jvm_library(
         "//plugins/kotlin/base/psi:psi_test_lib",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//plugins/kotlin/base/analysis:analysis_test_lib",
+        "//plugins/kotlin/base/code-insight:code-insight_test_lib",
         "//plugins/IntelliLang/backend",
         "//plugins/IntelliLang/backend:backend_test_lib",
     ],

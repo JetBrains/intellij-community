@@ -6,10 +6,10 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.collectCallCandidates
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
@@ -98,11 +98,11 @@ fun getCallExpressionSymbol(argument: KtExpression): Pair<KaFunctionSymbol, KaVa
 @ApiStatus.Internal
 context(session: KaSession)
 fun resolveFunctionCall(expression: KtExpression): KaFunctionCall<*>? {
-    val successfulCall = expression.resolveToCall()?.successfulFunctionCallOrNull()
-    if (successfulCall != null) return successfulCall
+    val resolvableCall = expression as? KtResolvableCall ?: return null
+    resolvableCall.resolveSuccessfulCall()?.function?.let { return it }
     if (!ApplicationManager.getApplication().isUnitTestMode) return null
     // Functions with context receivers are not resolved in K2 tests for some reason
-    return (expression as? KtResolvableCall)?.collectCallCandidates()?.firstOrNull()?.candidate as? KaFunctionCall<*>
+    return resolvableCall.collectCallCandidates().firstOrNull()?.candidate?.function
 }
 
 context(session: KaSession)

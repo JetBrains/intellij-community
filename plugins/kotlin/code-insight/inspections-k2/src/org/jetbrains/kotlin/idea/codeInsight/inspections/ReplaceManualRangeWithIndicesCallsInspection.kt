@@ -15,12 +15,10 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.variable
 import org.jetbrains.kotlin.analysis.api.scopes.declarationScope
 import org.jetbrains.kotlin.analysis.api.scopes.scope
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray
@@ -48,6 +46,8 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.RangeKtExpressionType.RANGE_U
 import org.jetbrains.kotlin.idea.codeinsight.utils.RangeKtExpressionType.UNTIL
 import org.jetbrains.kotlin.idea.codeinsight.utils.getImplicitReceiverInfo
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionSymbol
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
@@ -149,10 +149,11 @@ class ReplaceManualRangeWithIndicesCallsInspection : KotlinApplicableInspectionB
      * Returns a [RangeExpression] only if it resolves to a Kotlin stdlib range function.
      * This prevents false positives when custom `until`/`rangeTo` functions are defined.
      */
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun rangeExpressionByAnalyze(expression: KtExpression): RangeExpression? =
         rangeExpressionByPsi(expression)?.takeIf {
-            val callableId = expression.resolveToCall()?.singleFunctionCallOrNull()?.symbol?.callableId
+            val callableId = (expression.resolveSuccessfulExpressionSymbol() as? KaCallableSymbol)?.callableId
             callableId != null && isStdlibRangeFunction(callableId)
         }
 
@@ -243,9 +244,10 @@ class ReplaceManualRangeWithIndicesCallsInspection : KotlinApplicableInspectionB
         return (this as? KtConstantExpression)?.text?.toIntOrNull() == value
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun resolveReceiverType(expression: KtExpression): KaType? {
-        val variableCall = expression.resolveToCall()?.successfulVariableAccessCall() ?: return null
+        val variableCall = expression.resolveSuccessfulExpressionCall()?.variable ?: return null
 
         // For member properties, use dispatchReceiver
         // For extension properties (like lastIndex), use extensionReceiver

@@ -18,13 +18,15 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiManager
 import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotated
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleOrMultiCall
+import org.jetbrains.kotlin.analysis.api.resolution.simple
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -132,9 +134,9 @@ internal fun refreshGradleProject(module: Module) {
   }
 }
 
+@OptIn(KaExperimentalApi::class)
 internal fun checkRequiresComposePlugin(expression: KtCallExpression): Boolean = analyze(expression) {
-  val call = expression.resolveToCall()?.singleFunctionCallOrNull() as? KaCallableMemberCall<*, *>
-             ?: return@analyze false
+  val call = expression.tryResolveCall()?.single?.simple ?: return@analyze false
 
   isComposableInvocation(call) || isRememberInCompositionCall(call)
 }
@@ -147,8 +149,9 @@ internal fun checkRequiresComposePlugin(expression: KtSimpleNameExpression): Boo
 }
 
 @OptIn(KaExperimentalApi::class)
-context(session: KaSession)
-internal fun isComposableInvocation(memberCall: KaCallableMemberCall<*, *>): Boolean {
+internal fun isComposableInvocation(memberCall: KaSimpleOrMultiCall): Boolean {
+  if (memberCall !is KaSimpleCall<*, *>) return false
+
   fun hasComposableAnnotation(annotated: KaAnnotated?): Boolean {
     return annotated != null && COMPOSABLE_ANNOTATION_CLASS_ID in annotated.annotations
   }
@@ -163,7 +166,7 @@ internal fun isComposableInvocation(memberCall: KaCallableMemberCall<*, *>): Boo
 
       if (!callableSymbol.isInvokeOperatorCall()) return false
 
-      val typeInvokeOperatorIsCalledOn = memberCall.partiallyAppliedSymbol.dispatchReceiver?.type ?: return false
+      val typeInvokeOperatorIsCalledOn = memberCall.dispatchReceiver?.type ?: return false
       hasComposableAnnotation(typeInvokeOperatorIsCalledOn)
     }
     is KaPropertySymbol -> hasComposableAnnotation(callableSymbol.getter)
@@ -171,8 +174,8 @@ internal fun isComposableInvocation(memberCall: KaCallableMemberCall<*, *>): Boo
   }
 }
 
-context(session: KaSession)
-internal fun isRememberInCompositionCall(memberCall: KaCallableMemberCall<*, *>): Boolean {
+@OptIn(KaExperimentalApi::class)
+internal fun isRememberInCompositionCall(memberCall: KaSimpleCall<*, *>): Boolean {
   fun hasRememberInCompositionAnnotation(annotated: KaAnnotated?): Boolean {
     return annotated != null && REMEMBER_IN_COMPOSITION_CLASS_ID in annotated.annotations
   }

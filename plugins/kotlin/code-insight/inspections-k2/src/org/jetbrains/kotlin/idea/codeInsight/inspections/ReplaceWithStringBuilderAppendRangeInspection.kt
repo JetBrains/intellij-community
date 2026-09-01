@@ -9,17 +9,19 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.arrayElementType
-import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray
 import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray
 import org.jetbrains.kotlin.analysis.api.types.isNullable
-import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -61,6 +63,7 @@ internal class ReplaceWithStringBuilderAppendRangeInspection :
     override fun createQuickFix(element: KtCallExpression, context: Context): KotlinModCommandQuickFix<KtCallExpression> =
         ReplaceFix(context)
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): Context? {
         if (!element.platform.isJvm()) return null
@@ -68,7 +71,7 @@ internal class ReplaceWithStringBuilderAppendRangeInspection :
         if (calleeExpression.text != appendFunctionName.asString()) return null
         if (element.valueArguments.size != 3) return null
 
-        val resolvedCall = element.resolveToCall()?.singleFunctionCallOrNull() ?: return null
+        val resolvedCall = element.tryResolveCall()?.single?.function ?: return null
         val symbol = resolvedCall.symbol
 
         val parameters = symbol.valueParameters

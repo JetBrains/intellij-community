@@ -9,9 +9,9 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.SmartPsiElementPointer
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -48,9 +48,10 @@ internal class CopyWithoutNamedArgumentsInspection :
                 element.valueArguments.any { !it.isNamed() }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): Context? {
-        val call = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
+        val call = element.resolveSuccessfulCall() ?: return null
         val receiver = call.dispatchReceiver?.type?.expandedSymbol as? KaNamedClassSymbol
         if (receiver?.isData != true) return null
 

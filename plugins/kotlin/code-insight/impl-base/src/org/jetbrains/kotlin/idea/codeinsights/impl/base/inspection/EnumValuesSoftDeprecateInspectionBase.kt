@@ -9,13 +9,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.findParentOfType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
@@ -29,7 +28,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isOptInRequired
-import org.jetbrains.kotlin.idea.statistics.KotlinLanguageFeaturesFUSCollector
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionSymbol
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -38,6 +37,7 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtContainerNode
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -58,15 +58,16 @@ abstract class EnumValuesSoftDeprecateInspectionBase : AbstractKotlinInspection(
 
     protected open fun isDeprecatedExpression(callExpression: KtCallExpression): Boolean = callExpression.text == "values()"
 
+    @OptIn(KaExperimentalApi::class)
     final override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor =
+        @OptIn(KaExperimentalApi::class)
         callExpressionVisitor(fun(callExpression: KtCallExpression) {
             if (holder.file !is KtFile) return
             if (!isEnumValuesSoftDeprecateEnabled(holder.file as KtFile)) return
             if (!isDeprecatedExpression(callExpression)) return
 
             analyze(callExpression) {
-                val resolvedCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return
-                val resolvedCallSymbol = resolvedCall.symbol
+                val resolvedCallSymbol = callExpression.resolveSuccessfulCall()?.symbol ?: return
 
                 if (!isSoftDeprecatedEnumValuesCall(resolvedCallSymbol)) return
 
@@ -154,10 +155,10 @@ abstract class EnumValuesSoftDeprecateInspectionBase : AbstractKotlinInspection(
         return ReplaceFixType.WITH_CAST
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
-    private fun getCallableMethodIdString(expression: KtElement?): String? {
-        val resolvedCall = expression?.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
-        return resolvedCall?.symbol?.callableId?.toString()
+    private fun getCallableMethodIdString(expression: KtExpression?): String? {
+        return (expression?.resolveSuccessfulExpressionSymbol() as? KaCallableSymbol)?.callableId?.toString()
     }
 
     protected enum class ReplaceFixType {

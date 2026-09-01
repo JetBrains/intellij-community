@@ -10,11 +10,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -78,8 +77,7 @@ internal class ConvertTypeOfToCollectionLiteralInspection :
     context(session: KaSession)
     override fun prepareContext(element: KtDotQualifiedExpression): Context? {
         val callExpr = element.selectorExpression as? KtCallExpression ?: return null
-        val call = callExpr.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-        val functionSymbol = call.symbol as? KaNamedFunctionSymbol ?: return null
+        val functionSymbol = callExpr.resolveSuccessfulCall()?.symbol as? KaNamedFunctionSymbol ?: return null
 
         if (functionSymbol.name.asString() != "of" || !functionSymbol.isOperator) return null
         val expressionType = element.expressionType ?: return null

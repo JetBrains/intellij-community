@@ -6,14 +6,12 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.startOffset
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
-import org.jetbrains.kotlin.analysis.api.resolution.KaSuccessCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.highlighting.BeforeResolveHighlightingExtension
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -35,6 +33,7 @@ internal class ParameterNamesHighlightingVisitor(
             ?.languageVersionSettings
             ?.supportsFeature(LanguageFeature.ExplicitContextArguments) == true
 
+    @OptIn(KaExperimentalApi::class)
     override fun visitArgument(argument: KtValueArgument) {
         val argumentName = argument.getArgumentName() ?: return
         val eq = argument.equalsToken ?: return
@@ -62,16 +61,10 @@ internal class ParameterNamesHighlightingVisitor(
 
                 else -> {
                     context(kaSession) {
-                        val resolveToCall = callExpression.resolveToCall()
-                        val call =
-                            when(resolveToCall) {
-                                is KaSuccessCallInfo -> resolveToCall.call
-                                is KaErrorCallInfo -> callExpression.resolveToCallCandidates().firstOrNull()?.candidate
-                                else -> null
-                            }
-                        val callableMemberCall = call as? KaCallableMemberCall<*, *>
+                        val resolutionAttempt = callExpression.tryResolveCall()
+                        val call = resolutionAttempt?.single?.function ?: return
                         val contextParameterSymbols =
-                            (callableMemberCall?.symbol as? KaFunctionSymbol)?.contextParameters ?: return
+                            call.symbol.contextParameters
                         contextParameterSymbols.any { it.name == argumentName.asName }
                     }
                 }

@@ -7,12 +7,11 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.types.isNullable
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.inspections.RedundantRequireNotNullCallInspection.Context
@@ -99,10 +98,10 @@ private fun extractArgument(element: KtCallExpression): KtReferenceExpression? =
 private fun getFunctionName(element: KtCallExpression): String? =
     element.calleeExpression?.text
 
+@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun validateFunctionCall(element: KtCallExpression): Boolean {
-    val call = element.resolveToCall() ?: return false
-    val callableFqName = call.successfulFunctionCallOrNull()?.symbol?.callableId?.asSingleFqName() ?: return false
+    val callableFqName = element.resolveSuccessfulSymbol()?.callableId?.asSingleFqName() ?: return false
     return callableFqName == REQUIRE_NOT_NULL_FQ_NAME ||
             callableFqName == CHECK_NOT_NULL_FQ_NAME
 }

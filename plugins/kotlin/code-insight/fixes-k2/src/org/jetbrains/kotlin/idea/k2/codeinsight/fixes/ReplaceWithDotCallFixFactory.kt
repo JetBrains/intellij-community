@@ -1,19 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.simple
+import org.jetbrains.kotlin.analysis.api.resolution.single
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.ReplaceWithDotCallFix
 import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 
 object ReplaceWithDotCallFixFactory {
     val replaceWithDotCallFactory: KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.UnnecessarySafeCall> =
@@ -44,11 +45,10 @@ object ReplaceWithDotCallFixFactory {
         return callChainCount
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun KtSafeQualifiedExpression.selectorHasNotNullReturnType(): Boolean {
-        val returnType = resolveToCall()
-            ?.singleCallOrNull<KaCallableMemberCall<*, *>>()
-            ?.partiallyAppliedSymbol
+        val returnType = tryResolveCall()?.single?.simple
             ?.signature
             ?.returnType
         return returnType?.isMarkedNullable == false

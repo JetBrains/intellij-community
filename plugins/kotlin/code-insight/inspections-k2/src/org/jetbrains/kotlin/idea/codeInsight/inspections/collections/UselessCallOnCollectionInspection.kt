@@ -11,9 +11,11 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.isClassType
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
@@ -68,6 +70,7 @@ open class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
     protected inner class UselessFilterConversion(
         override val targetCallableId: CallableId,
     ) : QualifiedFunctionCallConversion {
+        @OptIn(KaExperimentalApi::class)
         context(_: KaSession)
         override fun createProblemDescriptor(
             manager: InspectionManager,
@@ -78,7 +81,7 @@ open class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
             val receiverType = expression.receiverExpression.expressionType as? KaClassType ?: return null
             val receiverTypeArgument = receiverType.typeArguments.singleOrNull() ?: return null
             val receiverTypeArgumentType = receiverTypeArgument.type ?: return null
-            val resolvedCall = expression.resolveToCall()?.singleFunctionCallOrNull() ?: return null
+            val resolvedCall = expression.tryResolveCall()?.single?.function ?: return null
             val callableName = resolvedCall.symbol.callableId?.callableName?.asString() ?: return null
             if (callableName == "filterIsInstance") {
                 if (receiverTypeArgument is KaTypeArgumentWithVariance && receiverTypeArgument.variance == Variance.IN_VARIANCE) return null
@@ -137,7 +140,7 @@ open class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
                     val constantValue = returnExpression.constantBoolean() ?: return null
 
                     val label = statement.getTargetLabel() ?: return null
-                    val resolved = label.resolveSymbol()?.psi ?: return null
+                    val resolved = label.resolveSuccessfulSymbol()?.psi ?: return null
                     if (!resolved.isEquivalentTo(lambda.functionLiteral))
                         return null
 
@@ -192,6 +195,7 @@ open class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
         private val replacementName: String
             get() = replacementCallableId.callableName.asString()
 
+        @OptIn(KaExperimentalApi::class)
         context(_: KaSession)
         override fun createProblemDescriptor(
             manager: InspectionManager,
@@ -202,7 +206,7 @@ open class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
             val receiverType = expression.receiverExpression.expressionType as? KaClassType ?: return null
             val receiverTypeArgument = receiverType.typeArguments.singleOrNull() ?: return null
             val receiverTypeArgumentType = receiverTypeArgument.type ?: return null
-            val resolvedCall = expression.resolveToCall()?.singleFunctionCallOrNull() ?: return null
+            val resolvedCall = expression.tryResolveCall()?.single?.function ?: return null
 
             if (receiverTypeArgumentType.isNullable) return null
             // Check if there is a function argument
@@ -237,7 +241,7 @@ open class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
         if (expression !is KtLambdaExpression) return false
         var labelledReturnReturnsNullable = false
         expression.bodyExpression?.forEachDescendantOfType<KtReturnExpression> { returnExpression ->
-            val targetExpression = returnExpression.resolveSymbol()?.psi?.parent
+            val targetExpression = returnExpression.resolveSuccessfulSymbol()?.psi?.parent
             if (targetExpression == expression) {
                 labelledReturnReturnsNullable = labelledReturnReturnsNullable ||
                         returnExpression.returnedExpression?.expressionType?.isNullable == true

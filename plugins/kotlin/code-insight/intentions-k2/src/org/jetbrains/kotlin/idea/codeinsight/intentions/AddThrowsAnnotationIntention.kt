@@ -9,11 +9,9 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility.LOCAL
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -75,6 +73,7 @@ internal class AddThrowsAnnotationIntention : KotlinApplicableModCommandAction<K
         return true
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtThrowExpression): Context? {
         val type = element.thrownExpression?.expressionType ?: return null
@@ -102,8 +101,7 @@ internal class AddThrowsAnnotationIntention : KotlinApplicableModCommandAction<K
 
         if (firstArgument is KtCallExpression) {
             // Annotation arguments should be constants, so function calls are not allowed (except `arrayOf`)
-            val functionCall = firstArgument.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-            val fqName = functionCall.symbol.callableId?.asSingleFqName() ?: return null
+            val fqName = firstArgument.resolveSuccessfulSymbol()?.callableId?.asSingleFqName() ?: return null
             if (fqName != KOTLIN_ARRAY_OF_FQ_NAME) return null
         }
 

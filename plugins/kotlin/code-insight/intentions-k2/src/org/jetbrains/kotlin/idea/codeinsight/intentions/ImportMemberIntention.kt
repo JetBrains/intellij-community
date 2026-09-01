@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
@@ -66,7 +66,7 @@ internal class ImportMemberIntention :
         val symbol =
             // for implicit companion object references, we want to import the outer class
             reference.resolveCompanionObjectShortReferenceToContainingClassSymbol()
-                ?: (element.elementToImport as? KtResolvable)?.resolveSymbol()
+                ?: (element.elementToImport as? KtResolvable)?.resolveSuccessfulSymbol()
                 ?: return null
         
         val file = element.containingKtFile

@@ -4,12 +4,11 @@ package org.jetbrains.kotlin.idea.codeinsight.intentions.contexts
 
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -21,6 +20,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDesc
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -142,6 +142,7 @@ object ContextParameterUtils {
      * either via a direct reference to a context parameter or as an implicit context argument
      * of a resolved call.
      */
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     fun consumedContextParameters(
         body: KtExpression,
@@ -167,12 +168,10 @@ object ContextParameterUtils {
                 }
             }
 
-            val appliedSymbol = node.resolveToCall()
-                ?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
-                ?.partiallyAppliedSymbol
+            val simpleCall = node.resolveSuccessfulExpressionCall()?.simple
                 ?: return@forEachDescendantOfType
 
-            appliedSymbol.contextArguments.forEach { arg ->
+            simpleCall.contextArguments.forEach { arg ->
                 val symbol = (arg.unwrapSmartCasts() as? KaImplicitReceiverValue)?.symbol
                 if (symbol is KaContextParameterSymbol && symbol in allParameters) {
                     consumed += symbol

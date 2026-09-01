@@ -5,13 +5,15 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.EmptinessCheckFunctionUtils
+import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -61,6 +63,7 @@ abstract class AbstractUselessCallInspection : AbstractKotlinInspection() {
     protected interface QualifiedFunctionCallConversion : Conversion<KtQualifiedExpression> {
         val targetCallableId: CallableId
 
+        @OptIn(KaExperimentalApi::class)
         @ApiStatus.NonExtendable
         override fun createProblemDescriptor(
             manager: InspectionManager,
@@ -72,7 +75,7 @@ abstract class AbstractUselessCallInspection : AbstractKotlinInspection() {
             if (calleeExpression.text != targetCallableId.callableName.asString()) return null
 
             analyze(element) {
-                val resolvedCall = calleeExpression.resolveToCall()?.singleFunctionCallOrNull() ?: return null
+                val resolvedCall = calleeExpression.tryResolveExpressionCall()?.single?.function ?: return null
                 val resolvedCallableId = resolvedCall.symbol.callableId ?: return null
                 if (resolvedCallableId != targetCallableId) return null
 

@@ -6,10 +6,9 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
 import org.jetbrains.kotlin.idea.base.psi.relativeTo
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -44,12 +43,13 @@ class RemoveForLoopIndicesIntention :
         return multiParameter.entries.size == 2
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtForExpression): Context? {
         val loopRange = element.loopRange as? KtDotQualifiedExpression ?: return null
         val multiParameter = element.destructuringDeclaration ?: return null
 
-        val functionCall = loopRange.resolveToCall()?.successfulFunctionCallOrNull()?.symbol?.callableId?.asSingleFqName() ?: return null
+        val functionCall = loopRange.resolveSuccessfulSymbol()?.callableId?.asSingleFqName() ?: return null
         if (functionCall !in WITH_INDEX_FQ_NAMES) return null
         val indexVar = multiParameter.entries[0]
         if (ReferencesSearch.search(indexVar).any()) return null

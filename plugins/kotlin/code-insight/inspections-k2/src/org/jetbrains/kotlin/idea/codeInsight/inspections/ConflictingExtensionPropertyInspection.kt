@@ -16,9 +16,7 @@ import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.scopes.syntheticJavaPropertiesScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeprecationLevel
@@ -133,9 +131,10 @@ class ConflictingExtensionPropertyInspection : KotlinApplicableInspectionBase<Kt
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtExpression?.isMethodCall(method: KaCallableSymbol): Boolean = when (this) {
-        is KtCallExpression -> resolveToCall()?.successfulFunctionCallOrNull()?.symbol?.matches(method) == true
+        is KtCallExpression -> resolveSuccessfulSymbol()?.matches(method) == true
         is KtQualifiedExpression -> {
             val receiver = receiverExpression
             receiver is KtThisExpression && receiver.labelQualifier == null && selectorExpression.isMethodCall(method)
@@ -144,12 +143,13 @@ class ConflictingExtensionPropertyInspection : KotlinApplicableInspectionBase<Kt
         else -> false
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtExpression?.isSetterMethodCall(method: KaCallableSymbol, valueParameterName: Name): Boolean = when (this) {
         is KtCallExpression -> {
             val argumentExpression = valueArguments.singleOrNull()?.getArgumentExpression() as? KtSimpleNameExpression
             argumentExpression?.getReferencedNameAsName() == valueParameterName &&
-                    resolveToCall()?.successfulFunctionCallOrNull()?.symbol?.matches(method) == true
+                    resolveSuccessfulSymbol()?.matches(method) == true
         }
 
         is KtQualifiedExpression -> {

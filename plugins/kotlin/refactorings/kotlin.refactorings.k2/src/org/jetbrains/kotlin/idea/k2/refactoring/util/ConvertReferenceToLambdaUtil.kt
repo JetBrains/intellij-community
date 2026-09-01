@@ -6,12 +6,10 @@ import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.resolution.KaSingleCall
-import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
@@ -49,21 +47,21 @@ object ConvertReferenceToLambdaUtil {
     ): String? {
         val valueArgumentParent = element.parent as? KtValueArgument
         val callGrandParent = valueArgumentParent?.parent?.parent as? KtCallExpression
-        val resolvedCall = callGrandParent?.resolveToCall()?.successfulFunctionCallOrNull()
+        val resolvedCall = callGrandParent?.resolveSuccessfulCall()
         val matchingParameterType = resolvedCall?.valueArgumentMapping?.get(element)?.returnType
         val matchingParameterIsExtension = matchingParameterType is KaFunctionType && matchingParameterType.receiverType != null
 
         val receiverExpression = element.receiverExpression
         val receiverType = element.receiverType
 
-        val callableSymbol = element.resolveSymbol()?.let { symbol ->
+        val callableSymbol = element.resolveSuccessfulSymbol()?.let { symbol ->
             (symbol as? KaValueParameterSymbol)?.primaryConstructorProperty ?: symbol
         } ?: return null
 
         val receiverExpressionSelector = receiverExpression?.getQualifiedElementSelector()
         val receiverSymbol =
-            ((receiverExpressionSelector as? KtResolvableCall)?.resolveCall() as? KaSingleCall<*, *>)?.symbol
-                ?: (receiverExpressionSelector as? KtResolvable)?.resolveSymbol()
+            (receiverExpressionSelector as? KtResolvableCall)?.resolveSuccessfulCall()?.simple?.symbol
+                ?: (receiverExpressionSelector as? KtResolvable)?.resolveSuccessfulSymbol()
 
         val acceptsReceiverAsParameter =
                 !matchingParameterIsExtension &&

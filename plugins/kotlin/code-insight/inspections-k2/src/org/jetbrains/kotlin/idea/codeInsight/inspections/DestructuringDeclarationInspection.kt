@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -410,7 +410,7 @@ private fun removeEntriesEntrySetInLoopRange(
     val selectorName = selectorExpression?.getReferencedName()
     if (selectorName == "entries" || selectorName == "entrySet") {
         analyze(selectorExpression) {
-            val callableSymbol = selectorExpression.resolveSymbol() as? KaCallableSymbol
+            val callableSymbol = selectorExpression.resolveSuccessfulSymbol() as? KaCallableSymbol
             if (callableSymbol != null) {
                 val containingSymbol = callableSymbol.containingSymbol as? KaClassSymbol
                 val mapEntrySymbol = findClass(StandardClassIds.Map)

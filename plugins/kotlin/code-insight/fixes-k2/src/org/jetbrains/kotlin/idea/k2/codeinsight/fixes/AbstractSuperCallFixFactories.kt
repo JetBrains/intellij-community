@@ -10,10 +10,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.java.generate.template.TemplateResource
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
@@ -56,12 +56,13 @@ internal object AbstractSuperCallFixFactories {
         listOfNotNull(createQuickFix(diagnostic.psi))
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun createQuickFix(element: PsiElement): ModCommandAction? {
         val expression = element as? KtNameReferenceExpression ?: return null
         val containingClass = expression.getNonStrictParentOfType<KtClassOrObject>() ?: return null
         val containingFunction = expression.parentOfType<KtNamedFunction>() ?: return null
-        val functionSymbol = expression.resolveToCall()?.successfulFunctionCallOrNull()?.symbol ?: return null
+        val functionSymbol = expression.resolveSuccessfulCall()?.symbol ?: return null
 
         context(session: KaSession)
         fun computeInfoIfNotInObject(containingClass: KtClassOrObject): Info? {
@@ -185,9 +186,8 @@ private class SpecifySuperTypeExplicitlyFix(
 
 context(session: KaSession)
 private fun getSuperClassFqNameToReferTo(expression: KtNameReferenceExpression): FqName? {
-    fun tryViaCalledFunction(): KaCallableSymbol? = expression.resolveToCall()
-        ?.successfulFunctionCallOrNull()
-        ?.symbol
+    @OptIn(KaExperimentalApi::class)
+    fun tryViaCalledFunction(): KaCallableSymbol? = expression.resolveSuccessfulCall()?.symbol
         ?.allOverriddenSymbols?.find { (it as? KaFunctionSymbol)?.modality != KaSymbolModality.ABSTRACT }
 
     context(session: KaSession)

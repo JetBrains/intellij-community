@@ -4,13 +4,14 @@
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.base.analysis"/>
     <module name="intellij.kotlin.base.analysis.utils"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
     <module name="intellij.kotlin.base.psi"/>
     <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.codeInsight.liveTemplates"/>
     <module name="intellij.kotlin.references"/>
+    <module name="intellij.libraries.guava"/>
     <module name="intellij.libraries.kotlinc.analysis.api"/>
     <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
-    <module name="intellij.libraries.guava"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>

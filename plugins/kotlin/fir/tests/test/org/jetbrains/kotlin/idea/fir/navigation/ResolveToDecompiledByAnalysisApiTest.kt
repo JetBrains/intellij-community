@@ -2,15 +2,17 @@
 package org.jetbrains.kotlin.idea.fir.navigation
 
 import com.intellij.util.ThrowableRunnable
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.MockLibraryFacility
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 import org.jetbrains.kotlin.test.TestMetadata
 
 class ResolveToDecompiledByAnalysisApiTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -21,13 +23,13 @@ class ResolveToDecompiledByAnalysisApiTest : KotlinLightCodeInsightFixtureTestCa
     )
 
     @TestMetadata("idea/tests/testData/decompiler/navigation/resolveByAnalysisApi/LambdaScope.kt")
-    @OptIn(KaAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
     fun testLambdaScope() {
         myFixture.configureByFile(fileName())
         val reference = myFixture.getReferenceAtCaretPosition()!!
         allowAnalysisOnEdt {
             analyze(reference.element as KtElement) {
-                (reference.element as KtElement).resolveToCall()
+                (reference.element as KtResolvableCall).resolveSuccessfulCall()
             }
         }
     }

@@ -11,7 +11,7 @@ import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaBackingFieldSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.copied
@@ -199,7 +199,7 @@ class IntroduceBackingPropertyIntention :
         val fieldReferences = mutableListOf<SmartPsiElementPointer<KtSimpleNameExpression>>()
         element.acceptChildren(object : KtTreeVisitorVoid() {
             override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
-                val variableSymbol = expression.resolveSymbol()
+                val variableSymbol = expression.resolveSuccessfulSymbol()
                 if (variableSymbol is KaBackingFieldSymbol) {
                     fieldReferences.add(expression.createSmartPointer())
                 }

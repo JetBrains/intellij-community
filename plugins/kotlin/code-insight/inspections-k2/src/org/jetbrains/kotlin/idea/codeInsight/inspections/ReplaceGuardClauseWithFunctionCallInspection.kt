@@ -7,12 +7,12 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
-import org.jetbrains.kotlin.analysis.api.resolution.successfulConstructorCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -88,6 +88,7 @@ internal class ReplaceGuardClauseWithFunctionCallInspection :
     override fun getApplicableRanges(element: KtIfExpression): List<TextRange> =
         ApplicabilityRanges.ifKeyword(element)
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtIfExpression): Context? {
         val call = element.getCallExpression() ?: return null
@@ -99,9 +100,7 @@ internal class ReplaceGuardClauseWithFunctionCallInspection :
         if (argumentTypeClassId != null && argumentTypeClassId != KaStandardTypeClassIds.STRING) return null
         if (element.isUsedAsExpression) return null
 
-        val fqName = call.resolveToCall()
-            ?.successfulConstructorCallOrNull()
-            ?.symbol
+        val fqName = (call.resolveSuccessfulSymbol() as? KaConstructorSymbol)
             ?.containingClassId
             ?.asSingleFqName() ?: return null
 

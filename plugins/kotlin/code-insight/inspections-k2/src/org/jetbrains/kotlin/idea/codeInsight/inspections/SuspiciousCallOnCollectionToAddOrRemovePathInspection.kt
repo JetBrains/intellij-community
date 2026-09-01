@@ -10,11 +10,11 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -87,6 +87,7 @@ internal class SuspiciousCallOnCollectionToAddOrRemovePathInspection : KotlinApp
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtExpression): Context? {
         fun typeClassId(type: KaType?): ClassId? =
@@ -155,8 +156,8 @@ internal class SuspiciousCallOnCollectionToAddOrRemovePathInspection : KotlinApp
             else -> return null
         }
 
-        val call = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-        return if (call.symbol.callableId in SUSPICIOUS_CALLABLE_IDS) {
+        val symbol = element.resolveSuccessfulSymbol() as? KaFunctionSymbol ?: return null
+        return if (symbol.callableId in SUSPICIOUS_CALLABLE_IDS) {
             Context(isPlus)
         } else {
             null

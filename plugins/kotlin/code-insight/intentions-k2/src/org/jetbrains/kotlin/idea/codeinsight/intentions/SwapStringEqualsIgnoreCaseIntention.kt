@@ -6,10 +6,9 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -37,12 +36,11 @@ internal class SwapStringEqualsIgnoreCaseIntention :
         return callExpression.valueArguments.mapNotNull { it.getArgumentExpression() }.size == 2
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtDotQualifiedExpression): Unit? {
         val callExpression = element.selectorExpression as? KtCallExpression ?: return null
-        val resolvedFqName = callExpression.resolveToCall()
-            ?.successfulFunctionCallOrNull()
-            ?.symbol
+        val resolvedFqName = callExpression.resolveSuccessfulSymbol()
             ?.callableId
             ?.asSingleFqName() ?: return null
         if (resolvedFqName != EQUALS_FQ_NAME) return null

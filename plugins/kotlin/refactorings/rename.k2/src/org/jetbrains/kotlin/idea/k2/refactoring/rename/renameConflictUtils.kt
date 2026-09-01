@@ -13,13 +13,11 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
@@ -41,6 +39,7 @@ import org.jetbrains.kotlin.idea.refactoring.rename.BasicUnresolvableCollisionUs
 import org.jetbrains.kotlin.idea.refactoring.rename.UsageInfoWithFqNameReplacement
 import org.jetbrains.kotlin.idea.refactoring.rename.UsageInfoWithReplacement
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -72,7 +71,7 @@ fun checkClassNameShadowing(
     newUsages: MutableList<UsageInfo>
 ) {
 
-    val newFqName = declaration.fqName?.parent()?.let { it.child(Name.identifier(newName)) }
+    val newFqName = declaration.fqName?.parent()?.child(Name.identifier(newName))
 
     if (newFqName != null) {
         val usageIterator = originalUsages.listIterator()
@@ -120,6 +119,7 @@ fun checkClassLikeNameShadowing(declaration: KtNamedDeclaration, newName: String
     }
 }
 
+@OptIn(KaExperimentalApi::class)
 fun checkCallableShadowing(
     declaration: KtNamedDeclaration,
     newName: String,
@@ -159,8 +159,8 @@ fun checkCallableShadowing(
                                                        callExpression.javaClass,
                                                        KotlinLanguage.INSTANCE)
 
-            val resolveCall = copyCallExpression?.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
-            val resolvedSymbol = resolveCall?.partiallyAppliedSymbol?.symbol
+            val resolveCall = copyCallExpression?.resolveSuccessfulExpressionCall()?.simple
+            val resolvedSymbol = resolveCall?.symbol
             if (resolvedSymbol is KaSyntheticJavaPropertySymbol) {
                 val getter = resolvedSymbol.javaGetterSymbol.psi
                 externalDeclarations.addIfNotNull(getter)
@@ -308,11 +308,11 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
 
     val psiFactory = KtPsiFactory(callExpression.project)
     analyze(callExpression) {
-        val appliedSymbol = callExpression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
-        val receiver = appliedSymbol?.extensionReceiver ?: appliedSymbol?.dispatchReceiver
+        val singleCall = callExpression.resolveSuccessfulExpressionCall()?.simple
+        val receiver = singleCall?.extensionReceiver ?: singleCall?.dispatchReceiver
 
         fun getExplicitQualifier(receiverValue: KaExplicitReceiverValue): String? {
-            val containingSymbol = appliedSymbol?.symbol?.containingDeclaration
+            val containingSymbol = singleCall?.symbol?.containingDeclaration
             val enumClassSymbol = containingSymbol?.containingDeclaration
             //add companion qualifier to avoid clashes with enum entries
             return if (containingSymbol is KaNamedClassSymbol && containingSymbol.classKind == KaClassKind.COMPANION_OBJECT &&
@@ -326,7 +326,7 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
         }
 
         val qualifierText = when (receiver) {
-            is KaImplicitReceiverValue -> runUnless(appliedSymbol?.symbol?.isCompanion == true) { getThisQualifier(receiver) }
+            is KaImplicitReceiverValue -> runUnless(singleCall?.symbol?.isCompanion == true) { getThisQualifier(receiver) }
 
             is KaExplicitReceiverValue -> {
                 getExplicitQualifier(receiver) ?: return QualifiedState(null, true)
@@ -341,7 +341,7 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
             }
 
             null -> {
-                val symbol = appliedSymbol?.symbol
+                val symbol = singleCall?.symbol
                 val containingSymbol = symbol?.containingDeclaration
                 val containerFQN =
                     if (containingSymbol is KaClassSymbol) {

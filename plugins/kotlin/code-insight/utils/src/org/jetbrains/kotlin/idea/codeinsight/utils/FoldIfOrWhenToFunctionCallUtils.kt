@@ -1,10 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.util.reformatted
@@ -87,9 +89,10 @@ object FoldIfOrWhenToFunctionCallUtils {
         element.replace(headCall.getQualifiedExpressionForSelectorOrThis()).reformatted()
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtCallExpression.fqNameAndParameters(): Pair<FqName, List<KaVariableSignature<KaValueParameterSymbol>>>? {
-        val functionCall = resolveToCall()?.singleFunctionCallOrNull() ?: return null
+        val functionCall = tryResolveCall()?.single?.function ?: return null
         val fqName = functionCall.symbol.callableId?.asSingleFqName() ?: return null
         val parameters = valueArguments.mapNotNull { functionCall.valueArgumentMapping[it.getArgumentExpression()] }
         return fqName to parameters

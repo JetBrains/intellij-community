@@ -7,10 +7,10 @@ import com.intellij.codeInspection.util.IntentionName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.expressionComparedToNull
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -55,11 +55,12 @@ internal class SimplifyAssertNotNullInspection :
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): Context? {
 
         val calleeExpression = element.calleeExpression as? KtNameReferenceExpression ?: return null
-        val functionSymbol = calleeExpression.resolveToCall()?.successfulFunctionCallOrNull()?.symbol
+        val functionSymbol = calleeExpression.resolveSuccessfulSymbol() as? KaCallableSymbol
         if (functionSymbol?.callableId.toString() != "kotlin/assert") return null
 
         val prevDeclaration = findVariableDeclaration(element) ?: return null

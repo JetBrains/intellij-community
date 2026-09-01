@@ -3,10 +3,10 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -54,13 +54,14 @@ internal object AddSuspendModifierFixFactory {
     }
 }
 
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 internal fun KtElement.containingFunction(): KtNamedFunction? {
     return when (val containingFunction = getParentOfTypes2<KtFunctionLiteral, KtNamedFunction>()) {
         is KtFunctionLiteral -> {
             val call = containingFunction.getStrictParentOfType<KtCallExpression>()
-            val resolvedCall = call?.resolveToCall()?.successfulFunctionCallOrNull()
-            if (resolvedCall?.symbol?.isInlineOrInsideInline() == true) {
+            val symbol = call?.resolveSuccessfulCall()?.symbol
+            if (symbol.isInlineOrInsideInline()) {
                 containingFunction.containingFunction()
             } else {
                 null

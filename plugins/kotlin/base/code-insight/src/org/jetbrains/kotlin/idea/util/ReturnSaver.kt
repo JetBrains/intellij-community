@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtBlockExpression
@@ -40,7 +40,7 @@ class ReturnSaver(val function: KtNamedFunction) {
             allowAnalysisFromWriteAction {
                 body.forEachDescendantOfType<KtReturnExpression> {
                     analyze(it) {
-                        if (it.resolveSymbol()?.psi == function) {
+                        if (it.resolveSuccessfulSymbol()?.psi == function) {
                             hasReturn = true
                             it.putCopyableUserData(RETURN_KEY, Unit)
                         }

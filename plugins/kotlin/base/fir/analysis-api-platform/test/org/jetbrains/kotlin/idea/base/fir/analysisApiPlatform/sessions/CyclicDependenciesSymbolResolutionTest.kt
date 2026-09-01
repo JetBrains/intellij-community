@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.sessions
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.builtinTypes
@@ -71,7 +71,7 @@ class CyclicDependenciesSymbolResolutionTest : AbstractMultiModuleTest() {
         val ktCallee = ktCall.calleeExpression as KtSimpleNameExpression
         Assert.assertEquals(expectedName, ktCallee.getReferencedName())
 
-        val callableSymbol = ktCall.resolveCall()!!.symbol
+        val callableSymbol = ktCall.resolveSuccessfulCall()!!.symbol
         Assert.assertEquals(expectedType, callableSymbol.returnType)
     }
 }

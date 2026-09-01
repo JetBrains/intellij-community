@@ -14,9 +14,8 @@ import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnn
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.resolution.KaCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.session.canBeAnalysed
@@ -53,6 +52,7 @@ import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
+    @OptIn(KaExperimentalApi::class)
     override fun processCompanionObjectInternalReferences(
         companionObject: KtObjectDeclaration,
         referenceProcessor: Processor<PsiReference>
@@ -80,9 +80,9 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
         })
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
-    private fun callReceiverRefersToCompanionObject(call: KaCall, companionObject: KtObjectDeclaration): Boolean {
-        if (call !is KaCallableMemberCall<*, *>) return false
+    private fun callReceiverRefersToCompanionObject(call: KaSimpleCall<*, *>, companionObject: KtObjectDeclaration): Boolean {
         val implicitReceivers = call.getImplicitReceivers()
         val companionObjectSymbol = companionObject.symbol
         return companionObjectSymbol in implicitReceivers.map { it.symbol }

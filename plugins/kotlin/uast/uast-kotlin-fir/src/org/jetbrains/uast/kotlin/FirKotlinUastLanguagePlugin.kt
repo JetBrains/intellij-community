@@ -7,11 +7,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.constructor
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.name.FqName
@@ -103,12 +105,11 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
         }
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
     private fun KtNamedFunction.isJvmStatic() = annotationEntries.any { annotation ->
         annotation.shortName?.asString() == JVM_STATIC_FQN.shortName().asString() && allowAnalysisOnEdt {
             analyze(annotation) {
-                annotation.resolveToCall()
-                    ?.singleConstructorCallOrNull()
+                annotation.tryResolveCall()?.single?.constructor
                     ?.symbol
                     ?.containingClassId
                     ?.asSingleFqName() == JVM_STATIC_FQN

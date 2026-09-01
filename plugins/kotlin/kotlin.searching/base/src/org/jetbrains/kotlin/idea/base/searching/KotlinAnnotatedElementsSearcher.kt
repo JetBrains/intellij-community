@@ -19,13 +19,15 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.Processor
 import com.intellij.util.QueryExecutor
 import com.intellij.util.indexing.FileBasedIndex
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.constructor
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.asJava.ImpreciseResolveResult
@@ -136,6 +138,7 @@ class KotlinAnnotatedElementsSearcher : QueryExecutor<PsiModifierListOwner, Anno
             return processAnnotatedMembers(annClass, null, null, useScope, preFilter, consumer)
         }
 
+        @OptIn(KaExperimentalApi::class)
         private fun processAnnotatedMembers(
             annClass: PsiClass?,
             explicitFqn: String?,
@@ -176,7 +179,7 @@ class KotlinAnnotatedElementsSearcher : QueryExecutor<PsiModifierListOwner, Anno
                                 @OptIn(KaAllowAnalysisFromWriteAction::class)
                                 allowAnalysisFromWriteAction {
                                     analyze(elt) {
-                                        val annotationSymbol = elt.resolveToCall()?.singleConstructorCallOrNull()?.symbol
+                                        val annotationSymbol = elt.tryResolveCall()?.single?.constructor?.symbol
                                             ?: return false
                                         val annotationType = annotationSymbol.returnType as? KaClassType ?: return false
                                         val fqName = annotationType.classId.asFqNameString()

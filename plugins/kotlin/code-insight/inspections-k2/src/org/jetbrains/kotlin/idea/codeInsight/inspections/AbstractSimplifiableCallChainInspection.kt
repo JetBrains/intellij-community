@@ -5,11 +5,11 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainExpres
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainExpressions.Companion.isLiteralValue
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ConversionId
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.SimplifyCallChainFix
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -95,14 +96,15 @@ internal abstract class AbstractSimplifiableCallChainInspection :
         return true
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtQualifiedExpression): CallChainConversion? {
         val callChainExpressions = CallChainExpressions.from(element) ?: return null
         val conversionId = ConversionId(callChainExpressions.firstCalleeExpression, callChainExpressions.secondCalleeExpression)
         val candidateConversions = getPotentialConversions(element, conversionId).ifEmpty { return null }
 
-        val firstCall = callChainExpressions.firstCalleeExpression.resolveToCall() ?: return null
-        val secondCall = callChainExpressions.secondCalleeExpression.resolveToCall() ?: return null
+        val firstCall = callChainExpressions.firstCalleeExpression.resolveSuccessfulExpressionCall()?.function ?: return null
+        val secondCall = callChainExpressions.secondCalleeExpression.resolveSuccessfulExpressionCall()?.function ?: return null
 
         if (secondCall.containsFunctionalArgumentsOfAnyKind()) return null
 
@@ -128,8 +130,8 @@ internal abstract class AbstractSimplifiableCallChainInspection :
     private fun isConversionApplicable(
         expression: KtQualifiedExpression,
         conversion: CallChainConversion,
-        firstCall: KaCallInfo,
-        secondCall: KaCallInfo,
+        firstCall: KaFunctionCall<*>,
+        secondCall: KaFunctionCall<*>,
     ): Boolean {
         if (isRequiredNotNullAssertionMissing(conversion, expression)) return false
         if (isMapNotNullOnPrimitiveArrayConversion(conversion, firstCall)) return false
@@ -162,22 +164,22 @@ internal abstract class AbstractSimplifiableCallChainInspection :
     }
 
     context(_: KaSession)
-    private fun isMapNotNullOnPrimitiveArrayConversion(conversion: CallChainConversion, firstCall: KaCallInfo): Boolean {
+    private fun isMapNotNullOnPrimitiveArrayConversion(conversion: CallChainConversion, functionCall: KaFunctionCall<*>): Boolean {
         if (conversion.replacementName != CallChainConversions.MAP_NOT_NULL) return false
-        val extensionReceiverType = firstCall.successfulFunctionCallOrNull()?.extensionReceiver?.type
-            ?: return false
+        val extensionReceiverType = functionCall.extensionReceiver?.type ?: return false
         return extensionReceiverType.isArrayOrPrimitiveArray && extensionReceiverType.symbol?.typeParameters.orEmpty().isEmpty()
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
-    private fun isAppliedOnMapReceiver(firstCall: KaCallInfo): Boolean {
-        return firstCall.successfulFunctionCallOrNull()?.isCalledOnMapExtensionReceiver == true
+    private fun isAppliedOnMapReceiver(functionCall: KaFunctionCall<*>): Boolean {
+        return functionCall.isCalledOnMapExtensionReceiver
     }
 
     context(_: KaSession)
-    private fun isJoinToConversionWithNonMatchingFirstLambda(conversion: CallChainConversion, firstCall: KaCallInfo): Boolean {
+    private fun isJoinToConversionWithNonMatchingFirstLambda(conversion: CallChainConversion, functionCall: KaFunctionCall<*>): Boolean {
         if (!conversion.replacementName.startsWith(CallChainConversions.JOIN_TO)) return false
-        val lambdaArgSignature = firstCall.lastFunctionalArgumentSignatureOrNull() ?: return false
+        val lambdaArgSignature = functionCall.lastFunctionalArgumentSignatureOrNull() ?: return false
         val lambdaType = lambdaArgSignature.returnType as? KaFunctionType ?: return false
         return !lambdaType.returnType.isSubtypeOf(ClassId.topLevel(StandardNames.FqNames.charSequence.toSafe()))
     }
@@ -188,7 +190,7 @@ internal abstract class AbstractSimplifiableCallChainInspection :
      * Since the inspection ignores lambdas with returns, it's safe to check only the last expression's type.
      */
     context(_: KaSession)
-    private fun isMaxMinByConversionWithNullableFirstLambda(conversion: CallChainConversion, firstCall: KaCallInfo): Boolean {
+    private fun isMaxMinByConversionWithNullableFirstLambda(conversion: CallChainConversion, functionCall: KaFunctionCall<*>): Boolean {
         if (
             conversion.replacementName !in listOf(
                 CallChainConversions.MAX_BY,
@@ -198,30 +200,30 @@ internal abstract class AbstractSimplifiableCallChainInspection :
             )
         ) return false
 
-        val lastLambdaArgumentExpression = firstCall.lastLambdaArgumentExpressionOrNull() ?: return false
+        val lastLambdaArgumentExpression = functionCall.lastLambdaArgumentExpressionOrNull() ?: return false
         return lastLambdaArgumentExpression.bodyExpression?.lastBlockStatementOrThis()?.expressionType?.isMarkedNullable == true
     }
 
     context(_: KaSession)
-    private fun isAssociateConversionWithWrongArgumentCount(conversion: CallChainConversion, secondCall: KaCallInfo): Boolean {
+    private fun isAssociateConversionWithWrongArgumentCount(conversion: CallChainConversion, functionCall: KaFunctionCall<*>): Boolean {
         if (conversion.firstName != CallChainConversions.MAP || conversion.secondName != CallChainConversions.TO_MAP) return false
-        val argCount = secondCall.successfulFunctionCallOrNull()?.valueArgumentMapping?.size ?: return false
+        val argCount = functionCall.valueArgumentMapping.size
         return conversion.replacementName == CallChainConversions.ASSOCIATE && argCount != 0 || conversion.replacementName == CallChainConversions.ASSOCIATE_TO && argCount != 1
     }
 
     context(_: KaSession)
-    private fun isSuspendForbiddenButFound(conversion: CallChainConversion, firstCall: KaCallInfo): Boolean {
+    private fun isSuspendForbiddenButFound(conversion: CallChainConversion, functionCall: KaFunctionCall<*>): Boolean {
         if (conversion.enableSuspendFunctionCall) return false
-        val callArguments = firstCall.successfulFunctionCallOrNull()?.valueArgumentMapping ?: return false
+        val callArguments = functionCall.valueArgumentMapping
         return callArguments.keys.any { argumentExpression ->
             argumentExpression.anyDescendantOfType<KtCallExpression> { subCallExpr -> subCallExpr.isSuspendCall() }
         }
     }
 
     context(_: KaSession)
-    private fun isInapplicableSumOfConversion(conversion: CallChainConversion, firstCall: KaCallInfo): Boolean {
+    private fun isInapplicableSumOfConversion(conversion: CallChainConversion, functionCall: KaFunctionCall<*>): Boolean {
         if (conversion.firstName != CallChainConversions.MAP || conversion.secondName != CallChainConversions.SUM || conversion.replacementName != CallChainConversions.SUM_OF) return false
-        val (functionalArgumentExpr, signature) = firstCall.lastFunctionalArgumentWithSignatureOrNull() ?: return false
+        val (functionalArgumentExpr, signature) = functionCall.lastFunctionalArgumentWithSignatureOrNull() ?: return false
         val lambdaReturnType = signature.returnType.lambdaReturnTypeOrNull() ?: return false
         if (!lambdaReturnType.isApplicableTypeForSumOf()) return true
 
@@ -234,8 +236,8 @@ internal abstract class AbstractSimplifiableCallChainInspection :
 
     // region AA utilities
     context(_: KaSession)
-    private fun KaCallInfo.isCalling(fqName: FqName): Boolean =
-        successfulFunctionCallOrNull()?.symbol?.getFqNameIfPackageOrNonLocal() == fqName
+    private fun KaFunctionCall<*>.isCalling(fqName: FqName): Boolean =
+        symbol.getFqNameIfPackageOrNonLocal() == fqName
 
     @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
@@ -243,26 +245,25 @@ internal abstract class AbstractSimplifiableCallChainInspection :
         returnType.functionTypeFamily != null
 
     context(_: KaSession)
-    private fun KaCallInfo.containsFunctionalArgumentsOfAnyKind(): Boolean {
-        val functionCall = successfulFunctionCallOrNull() ?: return false
-        return functionCall.valueArgumentMapping.any { (_, argSignature) ->
+    private fun KaFunctionCall<*>.containsFunctionalArgumentsOfAnyKind(): Boolean {
+        return valueArgumentMapping.any { (_, argSignature) ->
             argSignature.isFunctionalTypeOfAnyKind()
         }
     }
 
     context(_: KaSession)
-    private fun KaCallInfo.lastFunctionalArgumentWithSignatureOrNull(): Pair<KtExpression, KaVariableSignature<KaValueParameterSymbol>>? {
-        val (argument, signature) = successfulFunctionCallOrNull()?.valueArgumentMapping?.entries?.lastOrNull() ?: return null
+    private fun KaFunctionCall<*>.lastFunctionalArgumentWithSignatureOrNull(): Pair<KtExpression, KaVariableSignature<KaValueParameterSymbol>>? {
+        val (argument, signature) = valueArgumentMapping.entries.lastOrNull() ?: return null
         if (!signature.isFunctionalTypeOfAnyKind()) return null
         return argument to signature
     }
 
     context(_: KaSession)
-    private fun KaCallInfo.lastFunctionalArgumentSignatureOrNull(): KaVariableSignature<KaValueParameterSymbol>? =
+    private fun KaFunctionCall<*>.lastFunctionalArgumentSignatureOrNull(): KaVariableSignature<KaValueParameterSymbol>? =
         lastFunctionalArgumentWithSignatureOrNull()?.second
 
     context(_: KaSession)
-    private fun KaCallInfo.lastLambdaArgumentExpressionOrNull(): KtLambdaExpression? =
+    private fun KaFunctionCall<*>.lastLambdaArgumentExpressionOrNull(): KtLambdaExpression? =
         lastFunctionalArgumentWithSignatureOrNull()?.first as? KtLambdaExpression
 
     context(_: KaSession)
@@ -277,27 +278,29 @@ internal abstract class AbstractSimplifiableCallChainInspection :
                 classId == StandardClassIds.ULong ||
                 classId == KaStandardTypeClassIds.DOUBLE
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtCallExpression.isSuspendCall(): Boolean {
-        val resolvedCall = resolveToCall() ?: return false
-        val symbol = resolvedCall.successfulFunctionCallOrNull()?.symbol ?: return false
+        val symbol = this.resolveSuccessfulCall()?.symbol ?: return false
         return symbol is KaNamedFunctionSymbol && symbol.isSuspend
     }
     // endregion
 }
 
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
-internal val KaCallableMemberCall<*, *>.isCalledOnMapExtensionReceiver: Boolean
+internal val KaSimpleCall<*, *>.isCalledOnMapExtensionReceiver: Boolean
     get() {
-        val extensionReceiver = partiallyAppliedSymbol.extensionReceiver ?: return false
+        val extensionReceiver = extensionReceiver ?: return false
 
         return extensionReceiver.type.isSubtypeOf(StandardClassIds.Map)
     }
 
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
-internal val KaCallableMemberCall<*, *>.isCalledOnMapDispatchReceiver: Boolean
+internal val KaSimpleCall<*, *>.isCalledOnMapDispatchReceiver: Boolean
     get() {
-        val dispatchReceiver = partiallyAppliedSymbol.dispatchReceiver ?: return false
+        val dispatchReceiver = dispatchReceiver ?: return false
 
         return dispatchReceiver.type.isSubtypeOf(StandardClassIds.Map)
     }

@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -108,7 +108,7 @@ internal class ConvertCollectionLiteralToTypeOfExpressionInspection :
     @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun findClassSymbolForLiteral(element: KtCollectionLiteralExpression): KaNamedClassSymbol? {
-        val resolvedSymbol = element.resolveSymbol()
+        val resolvedSymbol = element.resolveSuccessfulSymbol()
         if (resolvedSymbol != null && resolvedSymbol.name.asString() == "of" && resolvedSymbol.isOperator) {
             val companion = resolvedSymbol.containingSymbol as? KaClassSymbol
             if (companion?.classKind == KaClassKind.COMPANION_OBJECT) {

@@ -8,17 +8,18 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallResolutionAttempt
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundArrayAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaDelegatedConstructorCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaForLoopCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleOrMultiCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.successful
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
@@ -45,6 +46,7 @@ import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtUnaryExpression
 import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.KtValueArgumentName
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 
 sealed interface CallTarget {
     val caller: KtElement
@@ -97,10 +99,12 @@ interface KotlinCallTargetProcessor {
      * Processes a call that resolved as an error.
      * If false is returned from this function, no further elements will be processed.
      */
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
-    fun processUnresolvedCall(element: KtElement, callInfo: KaCallInfo?): Boolean
+    fun processUnresolvedCall(element: KtElement, callInfo: KaCallResolutionAttempt?): Boolean
 }
 
+@OptIn(KaExperimentalApi::class)
 private fun (context(KaSession) (CallTarget) -> Unit).toCallTargetProcessor(): KotlinCallTargetProcessor {
     val processor = this
     return object : KotlinCallTargetProcessor {
@@ -111,7 +115,7 @@ private fun (context(KaSession) (CallTarget) -> Unit).toCallTargetProcessor(): K
         }
 
         context(session: KaSession)
-        override fun processUnresolvedCall(element: KtElement, callInfo: KaCallInfo?): Boolean {
+        override fun processUnresolvedCall(element: KtElement, callInfo: KaCallResolutionAttempt?): Boolean {
             return true
         }
     }
@@ -181,16 +185,17 @@ object KotlinCallProcessor {
         return current
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun handle(element: KtElement, processor: KotlinCallTargetProcessor): Boolean {
         analyze(element) {
-            val callInfo = element.resolveToCall()
-            val call = callInfo?.successfulCallOrNull<KaCall>()
+            val resolutionAttempt: KaCallResolutionAttempt? = (element as? KtResolvableCall)?.tryResolveCall()
+            val call: KaSimpleOrMultiCall? = resolutionAttempt?.successful
 
             return with(processor) {
                 if (call != null) {
                     processResolvedCall(processor, element, call)
                 } else {
-                    processUnresolvedCall(element, callInfo)
+                    processUnresolvedCall(element, resolutionAttempt)
                 }
             }
         }
@@ -199,7 +204,7 @@ object KotlinCallProcessor {
 
     @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
-    fun processResolvedCall(targetProcessor: KotlinCallTargetProcessor, element: KtElement, call: KaCall): Boolean {
+    fun processResolvedCall(targetProcessor: KotlinCallTargetProcessor, element: KtElement, call: KaSimpleOrMultiCall): Boolean {
         with(targetProcessor) {
             return when (call) {
                 is KaDelegatedConstructorCall -> processCallTarget(FunctionCallTarget(element, call))

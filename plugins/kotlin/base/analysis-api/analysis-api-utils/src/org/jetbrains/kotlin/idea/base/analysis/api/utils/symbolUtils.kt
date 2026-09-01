@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
 import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.scopes.memberScope
-import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -130,8 +130,8 @@ private fun canBeReplaced(
     val contentElement = dotQualifiedExpression ?: callExpression ?: return false
 
     analyze(contentElement) {
-        val newSymbol = contentElement.getPossiblyQualifiedCallExpression()?.resolveCall()?.symbol ?: return false
-        val originalSymbol = parentCall.resolveCall()?.symbol ?: return false
+        val newSymbol = contentElement.getPossiblyQualifiedCallExpression()?.resolveSuccessfulCall()?.symbol ?: return false
+        val originalSymbol = parentCall.resolveSuccessfulCall()?.symbol ?: return false
         return newSymbol.equalsOrEqualsByPsi(originalSymbol)
     }
 }
@@ -152,7 +152,7 @@ fun samConstructorCallsToBeConverted(functionCall: KtCallExpression): Collection
     val valueArguments = functionCall.valueArguments
     if (valueArguments.none { canBeSamConstructorCall(it) }) return emptyList()
 
-    val resolvedFunctionCall = functionCall.resolveCall() ?: return emptyList()
+    val resolvedFunctionCall = functionCall.resolveSuccessfulCall() ?: return emptyList()
 
     /**
      * Checks that SAM conversion for [arg] and [call] in the argument position is possible
@@ -168,7 +168,7 @@ fun samConstructorCallsToBeConverted(functionCall: KtCallExpression): Collection
      * SAM constructor will lead to passing object of different type.
      */
     fun samConversionIsPossible(arg: KtValueArgument, call: KtCallExpression): Boolean {
-        val functionCall = call.resolveCall()
+        val functionCall = call.resolveSuccessfulCall()
         // we suppose that SAM constructors return type is always not nullable
         (functionCall?.symbol as? KaSamConstructorSymbol)?.takeUnless { it.returnType.isMarkedNullable }
             ?: return false

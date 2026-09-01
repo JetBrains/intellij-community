@@ -7,18 +7,18 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.simple
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -31,12 +31,12 @@ import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.approximateToDenotableSubtypeOrSelf
 import org.jetbrains.kotlin.analysis.api.types.arrayElementType
 import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -123,6 +123,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addIfNotNull
 
@@ -132,19 +133,25 @@ class CodeInliner(
     private val inlineSetter: Boolean,
     private val replacement: CodeToInline
 ) : AbstractCodeInliner<KtElement, KtParameter, KaType, KtDeclaration>(call, replacement) {
+    @OptIn(KaExperimentalApi::class)
     private val mapping: Map<KtExpression, Name>? = analyze(call) {
-        treeUpToCall().resolveToCall()?.singleFunctionCallOrNull()?.valueArgumentMapping?.mapValues { e -> e.value.name }
+        val treeUpToCall = treeUpToCall() as? KtResolvableCall ?: return@analyze null
+        treeUpToCall.tryResolveCall()?.single?.function?.valueArgumentMapping?.mapValues { e -> e.value.name }
     }
 
+    @OptIn(KaExperimentalApi::class)
     private val contextArguments: List<String?>? = analyze(call) {
-        treeUpToCall().resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.contextArguments?.map {
+        val treeUpToCall = treeUpToCall() as? KtResolvableCall ?: return@analyze null
+        treeUpToCall.tryResolveCall()?.single?.simple?.contextArguments?.map {
             createReplacementForContextArgument(it)
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     private val explicitContextArguments: Map<Name, String>? = analyze(call) {
-        val partiallyAppliedSymbol = treeUpToCall().resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol ?: return@analyze null
-        partiallyAppliedSymbol.symbol.contextParameters.zip(partiallyAppliedSymbol.contextArguments)
+        val treeUpToCall = treeUpToCall() as? KtResolvableCall ?: return@analyze null
+        val singleCall = treeUpToCall.tryResolveCall()?.single?.simple ?: return@analyze null
+        singleCall.symbol.contextParameters.zip(singleCall.contextArguments)
             .mapNotNull<Pair<KaContextParameterSymbol, KaReceiverValue>, Pair<Name, @NlsSafe String>> { (cp, cpArg) ->
                 val explicitArg = (cpArg as? KaExplicitReceiverValue)?.expression?.text ?: return@mapNotNull null
                 cp.name to explicitArg
@@ -172,10 +179,9 @@ class CodeInliner(
         val originalDeclaration = analyze(call) {
             //it might resolve in java method which is converted to kotlin by j2k
             //the originalDeclaration in this case should point to the converted non-physical function
-            (call.parent as? KtCallableReferenceExpression
-                ?: treeUpToCall())
-                .resolveToCall()
-                ?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.symbol?.psi?.navigationElement as? KtDeclaration
+            val resolvableCall = (call.parent as? KtCallableReferenceExpression
+                ?: treeUpToCall()) as? KtResolvableCall
+            resolvableCall?.tryResolveCall()?.single?.simple?.symbol?.psi?.navigationElement as? KtDeclaration
                 ?: replacement.originalDeclaration
         } ?: return null
         val callableForParameters = (if (assignment != null && originalDeclaration is KtProperty)
@@ -234,9 +240,9 @@ class CodeInliner(
 
         if (receiver == null) {
             analyze(call) {
-                val partiallyAppliedSymbol =
-                    call.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
-                val receiverValue = partiallyAppliedSymbol?.extensionReceiver ?: partiallyAppliedSymbol?.dispatchReceiver
+                val singleCall =
+                    (call as? KtResolvableCall)?.tryResolveCall()?.single?.simple
+                val receiverValue = singleCall?.extensionReceiver ?: singleCall?.dispatchReceiver
                 if (receiverValue is KaImplicitReceiverValue) {
                     val symbol = receiverValue.symbol
                     val thisText = when {
@@ -293,8 +299,10 @@ class CodeInliner(
             namer = { it.nameAsSafeName },
             typeRetriever = {
                 analyze(call) {
-                    call.resolveToCall()
-                        ?.singleFunctionCallOrNull()?.typeArgumentsMapping?.entries?.find { entry -> entry.key.psi?.navigationElement == it }?.value
+                    val functionCall = (call as? KtResolvableCall)?.tryResolveCall()?.single?.function
+                    functionCall?.typeArgumentsMapping?.entries?.find { entry ->
+                        entry.key.psi?.navigationElement == it
+                    }?.value
                 }
             },
             renderType = {

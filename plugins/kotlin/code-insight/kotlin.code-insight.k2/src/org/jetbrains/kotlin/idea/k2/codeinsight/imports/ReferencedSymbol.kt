@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.expressions.contextSensitiveResolutionStatus
 import org.jetbrains.kotlin.analysis.api.resolution.KaContextSensitiveResolutionStatus
@@ -13,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.calls
-import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
@@ -260,6 +259,7 @@ private fun isTypeAliasedInnerClassConstructorCall(target: KaSymbol, reference: 
             reference.resolveToSymbols().any { it is KaConstructorSymbol && it.containingDeclaration == target }
 }
 
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun resolveExtensionReceiverForFunctionalTypeVariable(
     referenceExpression: KtNameReferenceExpression?,
@@ -272,7 +272,7 @@ private fun resolveExtensionReceiverForFunctionalTypeVariable(
         return null
     }
 
-    val parentCallInfo = parentCall.resolveToCall()?.singleCallOrNull<KaImplicitInvokeCall>() ?: return null
+    val parentCallInfo = parentCall.tryResolveCall()?.single as? KaImplicitInvokeCall? ?: return null
     return parentCallInfo.extensionReceiver as? KaExplicitReceiverValue
 }
 

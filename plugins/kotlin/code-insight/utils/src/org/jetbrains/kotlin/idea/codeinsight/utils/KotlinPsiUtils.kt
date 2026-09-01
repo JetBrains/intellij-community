@@ -10,13 +10,15 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
@@ -30,6 +32,7 @@ import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.negate
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -414,14 +417,16 @@ tailrec fun KtDotQualifiedExpression.expressionWithoutClassInstanceAsReceiver():
 fun KtClass.isOpen(): Boolean = hasModifier(KtTokens.OPEN_KEYWORD)
 fun KtClass.isInheritable(): Boolean = isOpen() || isAbstract() || isSealed()
 
+@OptIn(KaExperimentalApi::class)
 @ApiStatus.Internal
 context(_: KaSession)
 fun KtExpression.isSynthesizedFunction(): Boolean {
     val symbol =
-        resolveToCall()?.singleFunctionCallOrNull()?.symbol ?: mainReference?.resolveToSymbol() ?: return false
+        tryResolveExpressionCall()?.single?.function?.symbol ?: mainReference?.resolveToSymbol() ?: return false
     return symbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED
 }
 
+@OptIn(KaExperimentalApi::class)
 @ApiStatus.Internal
 context(_: KaSession)
 fun KtCallExpression.isCallingAnyOf(vararg fqNames: FqName): Boolean {
@@ -429,8 +434,7 @@ fun KtCallExpression.isCallingAnyOf(vararg fqNames: FqName): Boolean {
     val targetFqNames = fqNames.filter { it.shortName().asString() == calleeText }
     if (targetFqNames.none()) return false
 
-    val fqName = resolveToCall()
-        ?.singleFunctionCallOrNull()
+    val fqName = tryResolveCall()?.single?.function
         ?.symbol
         ?.callableId
         ?.asSingleFqName()

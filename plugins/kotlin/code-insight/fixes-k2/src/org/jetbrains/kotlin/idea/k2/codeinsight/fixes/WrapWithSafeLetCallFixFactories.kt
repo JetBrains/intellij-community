@@ -8,17 +8,19 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.compositeScope
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
+import org.jetbrains.kotlin.analysis.api.resolution.variable
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
@@ -28,6 +30,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.core.FirKotlinNameSuggester
+import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -201,12 +204,13 @@ internal object WrapWithSafeLetCallFixFactories {
         )
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun isCallingFunctionalTypeVariableInLocalScope(callExpression: KtCallExpression): Boolean? {
         val calleeExpression = callExpression.calleeExpression
         val calleeName = calleeExpression?.text?.let(Name::identifierIfValid) ?: return null
         val callSite = callExpression.parent as? KtQualifiedExpression ?: callExpression
-        val functionalVariableSymbol = calleeExpression.resolveToCall()?.singleVariableAccessCall()?.symbol ?: return false
+        val functionalVariableSymbol = calleeExpression.tryResolveExpressionCall()?.single?.variable?.symbol ?: return false
         val localScope = callExpression.containingKtFile.scopeContext(callSite).compositeScope()
         // If no symbol in the local scope contains the called symbol, then the symbol must be a member symbol.
 
@@ -277,11 +281,12 @@ internal object WrapWithSafeLetCallFixFactories {
         )
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun getDeclaredParameterNameForArgument(argumentExpression: KtExpression): String? {
         val valueArgument = argumentExpression.parent as? KtValueArgument ?: return null
         val callExpression = argumentExpression.parentOfType<KtCallExpression>()
-        val successCallTarget = callExpression?.resolveToCall()?.singleFunctionCallOrNull()?.symbol ?: return null
+        val successCallTarget = callExpression?.tryResolveCall()?.single?.function?.symbol ?: return null
 
         return successCallTarget.valueParameters.getOrNull(valueArgument.argumentIndex)?.name?.identifierOrNullIfSpecial
     }
@@ -296,6 +301,7 @@ internal object WrapWithSafeLetCallFixFactories {
         return current
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun isExpressionAtNullablePosition(expression: KtExpression): Boolean {
         val parent = expression.parent
@@ -309,7 +315,7 @@ internal object WrapWithSafeLetCallFixFactories {
                 // In the following logic, if call is missing, unresolved, or contains error, we just stop here so the wrapped call would be
                 // inserted here.
                 val functionCall = parent.getParentOfType<KtCallExpression>(strict = true) ?: return true
-                val resolvedCall = functionCall.resolveToCall()?.singleFunctionCallOrNull() ?: return true
+                val resolvedCall = functionCall.tryResolveCall()?.single?.function ?: return true
                 doesFunctionAcceptNull(resolvedCall, parent.argumentIndex) ?: true
             }
             parent is KtBinaryExpression -> {
@@ -317,7 +323,7 @@ internal object WrapWithSafeLetCallFixFactories {
                     // If current expression is an l-value in an assignment, just keep going up because one cannot assign to a let call.
                     return false
                 }
-                val resolvedCall = parent.resolveToCall()?.singleFunctionCallOrNull()
+                val resolvedCall = parent.tryResolveCall()?.single?.function
                 when {
                     resolvedCall != null -> {
                         // The binary expression is a call to some function

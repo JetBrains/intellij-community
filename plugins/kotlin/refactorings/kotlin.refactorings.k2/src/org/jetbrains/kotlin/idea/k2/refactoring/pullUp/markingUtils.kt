@@ -5,11 +5,8 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
@@ -21,6 +18,8 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenOptionsForIde
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionSymbol
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.CopyablePsiUserDataProperty
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -61,19 +60,20 @@ internal fun markElements(
             override fun visitThisExpression(expression: KtThisExpression): Unit = visitSuperOrThis(expression)
             override fun visitSuperExpression(expression: KtSuperExpression): Unit = visitSuperOrThis(expression)
 
+            @OptIn(KaExperimentalApi::class)
             private fun visitSuperOrThis(expression: KtInstanceExpressionWithLabel) {
                 val callee = expression.getQualifiedExpressionForReceiver()?.selectorExpression?.getCalleeExpressionIfAny() ?: return
-                val calleeTarget = callee.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.symbol ?: return
+                val calleeTarget = callee.resolveSuccessfulExpressionSymbol() ?: return
                 if (calleeTarget.containingDeclaration == targetClass.symbol) {
                     expression.replaceWithTargetThis = true
                     affectedElements.add(expression)
                 }
             }
 
+            @OptIn(KaExperimentalApi::class)
             override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
-                val resolvedCall = expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>() ?: return
-                val partiallyAppliedSymbol = resolvedCall.partiallyAppliedSymbol
-                val receiverValue = partiallyAppliedSymbol.extensionReceiver ?: partiallyAppliedSymbol.dispatchReceiver ?: return
+                val resolvedCall = expression.resolveSuccessfulExpressionCall()?.simple ?: return
+                val receiverValue = resolvedCall.extensionReceiver ?: resolvedCall.dispatchReceiver ?: return
 
                 val implicitThis = receiverValue.type.expandedSymbol ?: return
                 val implicitThisElement = implicitThis.psi ?: return

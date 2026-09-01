@@ -1,18 +1,18 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.hasOrOverridesCallableId
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 
@@ -82,6 +82,7 @@ internal sealed class CoroutineContextJobStatus {
             return expression.detectStatus()
         }
 
+        @OptIn(KaExperimentalApi::class)
         context(_: KaSession)
         private fun KtExpression?.detectStatus(): CoroutineContextJobStatus {
             val expression = this ?: return Unknown
@@ -92,7 +93,7 @@ internal sealed class CoroutineContextJobStatus {
 
             val expressionType = expression.expressionType ?: return Unknown
 
-            val resolvedCall = expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
+            val resolvedCall = expression.resolveSuccessfulExpressionCall()?.simple
 
             return when {
                 expressionType.isSubtypeOf(CoroutinesIds.NonCancellable.ID) -> WithJob(expression, isCancellable = false)

@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclaratio
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaValueParameterSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
@@ -98,7 +98,7 @@ internal object SpecifyOverrideExplicitlyFixFactory {
     context(_: KaSession)
     private fun KtDelegatedSuperTypeEntry.getSymbol(): KaNamedSymbol? {
         val nameReferenceExpression = delegateExpression as? KtNameReferenceExpression ?: return null
-        return nameReferenceExpression.resolveSymbol() as? KaNamedSymbol
+        return nameReferenceExpression.resolveSuccessfulSymbol() as? KaNamedSymbol
     }
 
     @KaExperimentalApi

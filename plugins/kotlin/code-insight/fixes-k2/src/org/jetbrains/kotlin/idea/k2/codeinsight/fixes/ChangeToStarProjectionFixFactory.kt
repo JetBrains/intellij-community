@@ -2,11 +2,11 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
@@ -47,6 +47,7 @@ internal object ChangeToStarProjectionFixFactory {
         listOf(quickFix)
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun getQuickFix(element: PsiElement): ChangeToStarProjectionFix? {
         val (binaryExpr, typeReference, typeElement) = StarProjectionUtils.getChangeToStarProjectionFixInfo(element) ?: return null
@@ -62,15 +63,16 @@ internal object ChangeToStarProjectionFixFactory {
             val type = when (parent) {
                 is KtValueArgument -> {
                     val callExpr = parent.getStrictParentOfType<KtCallExpression>()
-                    val functionCall = callExpr?.resolveToCall()?.successfulFunctionCallOrNull()
+                    val functionCall = callExpr?.resolveSuccessfulCall()
                     functionCall?.valueArgumentMapping?.get(parent.getArgumentExpression())?.symbol?.returnType
                 }
 
                 is KtQualifiedExpression ->
-                    if (KtPsiUtil.safeDeparenthesize(parent.receiverExpression) == binaryExpr)
-                        parent.resolveToCall()?.successfulFunctionCallOrNull()?.symbol?.receiverParameter?.returnType
-                    else
+                    if (KtPsiUtil.safeDeparenthesize(parent.receiverExpression) == binaryExpr) {
+                        parent.resolveSuccessfulCall()?.symbol?.receiverParameter?.returnType
+                    } else {
                         null
+                    }
 
                 else ->
                     null

@@ -5,10 +5,9 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.psi.codeStyle.CodeStyleManager
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
@@ -56,14 +55,13 @@ internal class ConvertToIndexedFunctionCallIntention :
             .firstOrNull()
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): Context? {
         val callee = element.calleeExpression ?: return null
         val (functionFqName, newFunctionName) = functions[callee.text] ?: return null
 
-        val resolvedFqName = element.resolveToCall()
-            ?.successfulFunctionCallOrNull()
-            ?.symbol
+        val resolvedFqName = element.resolveSuccessfulSymbol()
             ?.callableId
             ?.asSingleFqName() ?: return null
         if (resolvedFqName != functionFqName) return null

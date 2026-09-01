@@ -3,11 +3,11 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories
 
 import com.intellij.psi.util.ReadActionCachedValue
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.resolution.KaSuccessCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.highlighter.operationReferenceForBinaryExpressionOrThis
 import org.jetbrains.kotlin.idea.imports.KtFileWithReplacedImports
@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 
 internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFixFactory() {
     context(session: KaSession)
@@ -106,6 +107,7 @@ internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFi
      * 
      * Does in-the-air resolution with [KtFileWithReplacedImports], so can be expensive.
      */    
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun resolvesWithoutErrors(originalCallExpression: KtElement, candidate: ImportCandidate): Boolean {
         val containingFile = originalCallExpression.containingKtFile
@@ -125,9 +127,7 @@ internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFi
 
         return fileWithReplacedImports.withExtraImport(candidateFqName) {
             fileWithReplacedImports.analyze {
-                val copyCallInfo = copyCallExpression.resolveToCall()
-
-                copyCallInfo is KaSuccessCallInfo
+                (copyCallExpression as? KtResolvableCall)?.resolveSuccessfulCall() != null
             }
         }
     }

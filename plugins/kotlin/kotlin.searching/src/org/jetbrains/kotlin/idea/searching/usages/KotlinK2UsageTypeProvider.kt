@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.searching.usages
 
 import com.intellij.psi.PsiPackage
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.resolution.KaSingleCall
-import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
@@ -93,8 +93,8 @@ internal class KotlinK2UsageTypeProvider : KotlinUsageTypeProvider() {
         }
 
         return analyze(refExpr) {
-            val targetSymbol = ((refExpr as? KtResolvableCall)?.resolveCall() as? KaSingleCall<*, *>)?.symbol
-                ?: refExpr.resolveSymbol()
+            val targetSymbol = (refExpr as? KtResolvableCall)?.resolveSuccessfulCall()?.simple?.symbol
+                ?: refExpr.resolveSuccessfulSymbol()
             when (targetSymbol) {
                 is KaClassifierSymbol ->
                     when (targetSymbol) {

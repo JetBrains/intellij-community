@@ -5,10 +5,12 @@ package org.jetbrains.kotlin.idea.codeinsight.intentions
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -41,11 +43,12 @@ class ConvertUnsafeCastCallToUnsafeCastIntention : KotlinApplicableModCommandAct
     return callExpression.calleeExpression?.text == "unsafeCast"
   }
 
+  @OptIn(KaExperimentalApi::class)
   context(session: KaSession)
   override fun prepareContext(element: KtDotQualifiedExpression): Context? {
     val callExpression = element.selectorExpression as? KtCallExpression ?: return null
 
-    val call = callExpression.resolveToCall()?.singleFunctionCallOrNull() ?: return null
+    val call = callExpression.tryResolveCall()?.single?.function ?: return null
     val callableSymbol = call.symbol as? KaCallableSymbol ?: return null
     val fqName = callableSymbol.importableFqName?.asString()
     if (fqName != "kotlin.js.unsafeCast") return null

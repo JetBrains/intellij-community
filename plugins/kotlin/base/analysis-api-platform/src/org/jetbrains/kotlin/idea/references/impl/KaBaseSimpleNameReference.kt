@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
-import org.jetbrains.kotlin.analysis.api.resolution.KaSingleOrMultiCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleOrMultiCall
 import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.resolution.symbols
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
@@ -54,7 +54,7 @@ internal class KaBaseSimpleNameReference(
         val symbolsFromCall = (element as? KtResolvableCall)?.takeUnless { it is KtOperationReferenceExpression }
             ?.tryResolveCall()
             ?.calls
-            ?.flatMap(KaSingleOrMultiCall::symbols)
+            ?.flatMap(KaSimpleOrMultiCall::symbols)
             ?.takeUnless(List<KaSymbol>::isEmpty)
 
         return symbolsFromCall ?: element.tryResolveSymbols()?.symbols.orEmpty()

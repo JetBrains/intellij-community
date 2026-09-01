@@ -10,11 +10,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
@@ -114,10 +113,11 @@ class SuspiciousCallableReferenceInLambdaInspection : KotlinApplicableInspection
         return hasDefaults && params.size - 1 > args.size || argsAreNamed
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun isValidFunctionCallContext(element: KtLambdaExpression): Boolean {
         val functionCall = element.getStrictParentOfType<KtCallExpression>()
-            ?.resolveToCall()?.successfulFunctionCallOrNull() ?: return true
+            ?.resolveSuccessfulCall() ?: return true
 
         val argumentExpression = (element.parent as? ValueArgument)?.getArgumentExpression()
         val parameter = functionCall.valueArgumentMapping.entries.firstOrNull { it.key == argumentExpression }?.value
@@ -219,11 +219,11 @@ private fun buildReferenceText(element: KtLambdaExpression, callableRefExpr: KtC
     val callableReference = callableRefExpr.callableReference
     val receiverExpression = callableRefExpr.receiverExpression ?: return "::${callableReference.text.trim()}"
 
-    val receiverSymbol = (receiverExpression as? KtResolvable)?.resolveSymbol()
+    val receiverSymbol = (receiverExpression as? KtResolvable)?.resolveSuccessfulSymbol()
     val lambdaSymbol = element.functionLiteral.symbol
 
     return if ((receiverSymbol == null || receiverSymbol is KaValueParameterSymbol) && receiverSymbol?.containingSymbol == lambdaSymbol) {
-        val callableReferenceCall = callableRefExpr.resolveToCall()?.successfulFunctionCallOrNull()
+        val callableReferenceCall = callableRefExpr.resolveSuccessfulCall()
         val receiverType =
             callableReferenceCall?.let { it.extensionReceiver?.type ?: it.dispatchReceiver?.type }
         val typeText = receiverType?.render(position = Variance.INVARIANT)?.substringAfterLast('.') ?: ""
@@ -243,7 +243,7 @@ private fun canMove(lambdaExpression: KtLambdaExpression): Boolean {
 
     // No parameters in lambda and in reference
     if (lambdaParamType == null) {
-        val target = body.resolveSymbol() ?: return false
+        val target = body.resolveSuccessfulSymbol() ?: return false
         return when (target) {
             is KaVariableSymbol -> (target.returnType as? KaFunctionType)?.parameterTypes?.isEmpty() == true
             is KaFunctionSymbol -> target.valueParameters.isEmpty()
@@ -252,7 +252,7 @@ private fun canMove(lambdaExpression: KtLambdaExpression): Boolean {
     }
 
     // Receiver in reference matches parameter
-    val receiverSymbol = (body.receiverExpression as? KtResolvable)?.resolveSymbol()
+    val receiverSymbol = (body.receiverExpression as? KtResolvable)?.resolveSuccessfulSymbol()
     if (receiverSymbol == lambdaParam) return true
 
     val receiverType = when (receiverSymbol) {
@@ -272,7 +272,7 @@ private fun canMove(lambdaExpression: KtLambdaExpression): Boolean {
     }
 
     // Fallback to function resolution
-    val funcSymbol = body.resolveSymbol() as? KaFunctionSymbol ?: return false
+    val funcSymbol = body.resolveSuccessfulSymbol() as? KaFunctionSymbol ?: return false
     val paramType = funcSymbol.valueParameters.firstOrNull()?.returnType ?: return false
     return paramType.semanticallyEquals(lambdaParamType)
 }

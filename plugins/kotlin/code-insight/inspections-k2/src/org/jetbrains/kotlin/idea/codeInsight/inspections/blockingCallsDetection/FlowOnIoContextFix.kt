@@ -6,9 +6,9 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -24,6 +24,7 @@ internal class FlowOnIoContextFix : PsiUpdateModCommandQuickFix() {
         return KotlinBundle.message("intention.flow.on.dispatchers.io")
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
         val callExpression = element.parentOfType<KtCallExpression>() ?: return
         analyze(callExpression) {
@@ -32,7 +33,7 @@ internal class FlowOnIoContextFix : PsiUpdateModCommandQuickFix() {
 
             if (flowOnCallOrNull == null) {
                 val callWithFlowReceiver = callExpression.parentOfType<KtCallExpression>() ?: return
-                val resolvedCall = callWithFlowReceiver.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>() ?: return
+                val resolvedCall: KaSimpleCall<*, *> = callWithFlowReceiver.resolveSuccessfulCall() ?: return
                 if (!CoroutineBlockingCallInspectionUtils.isInsideFlowChain(resolvedCall)) return
 
                 val dotQualifiedParent = callWithFlowReceiver.parentOfType<KtDotQualifiedExpression>()

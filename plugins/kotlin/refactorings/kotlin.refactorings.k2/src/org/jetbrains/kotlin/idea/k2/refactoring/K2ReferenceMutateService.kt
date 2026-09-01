@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
@@ -452,7 +452,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
             @OptIn(KaAllowAnalysisOnEdt::class)
             allowAnalysisOnEdt {
                 analyze(ktReference.element) {
-                    val symbol = (ktReference.element as? KtResolvable)?.resolveSymbol()
+                    val symbol = (ktReference.element as? KtResolvable)?.resolveSuccessfulSymbol()
                     if (symbol is KaSyntheticJavaPropertySymbol) {
                         val newName = ktReference.getAdjustedNewName(newElementName)
                         if (newName == null) {

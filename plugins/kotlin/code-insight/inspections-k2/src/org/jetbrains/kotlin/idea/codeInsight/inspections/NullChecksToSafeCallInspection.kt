@@ -8,11 +8,8 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.isStableForSmartCasting
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
@@ -78,6 +75,7 @@ private fun replaceNullChecksWithSafeCall(element: KtBinaryExpression, project: 
     }
 }
 
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun isNullChecksToSafeCallFixAvailable(expression: KtBinaryExpression): Boolean {
     fun String.afterIgnoreCalls() = replace("?.", ".")
@@ -85,8 +83,8 @@ private fun isNullChecksToSafeCallFixAvailable(expression: KtBinaryExpression): 
     val (lte, rte) = collectNullCheckExpressions(expression) ?: return false
     if (!hasStableSmartCast(rte.receiverExpression)) return false
 
-    val resolvedCall = rte.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>() ?: return false
-    val hasNullableExtensionReceiver = resolvedCall.symbol.receiverType?.isMarkedNullable == true
+    val symbol = rte.resolveSuccessfulSymbol() ?: return false
+    val hasNullableExtensionReceiver = symbol.receiverType?.isMarkedNullable == true
 
     return !hasNullableExtensionReceiver && rte.receiverExpression.text.afterIgnoreCalls() == lte.text.afterIgnoreCalls()
 }

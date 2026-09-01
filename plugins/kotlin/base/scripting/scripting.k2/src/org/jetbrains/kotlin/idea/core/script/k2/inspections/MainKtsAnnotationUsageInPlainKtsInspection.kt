@@ -15,10 +15,12 @@ import com.intellij.modcommand.ModMoveFile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.constructor
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.core.script.k2.isMainKtsScript
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
@@ -45,13 +47,13 @@ class MainKtsAnnotationUsageInPlainKtsInspection : KotlinApplicableInspectionBas
         return shortName in MAIN_KTS_ANNOTATION_SHORT_NAMES && !element.containingKtFile.isMainKtsScript()
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtAnnotationEntry): String? {
         val annotationShortName = element.shortName?.asString() ?: return null
 
         val annotationFqName = element
-            .resolveToCall()
-            ?.singleConstructorCallOrNull()
+            .tryResolveCall()?.single?.constructor
             ?.symbol
             ?.containingClassId
             ?.asSingleFqName()

@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
@@ -112,8 +113,8 @@ internal class DeprecatedCallableAddReplaceWithInspection :
             @OptIn(KaExperimentalApi::class)
             override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
                 val symbol = (
-                    expression.mainReference.resolveCompanionObjectShortReferenceToContainingClassSymbol()
-                        ?: expression.resolveSymbol()
+                        expression.mainReference.resolveCompanionObjectShortReferenceToContainingClassSymbol()
+                            ?: expression.resolveSuccessfulSymbol()
                     ) as? KaDeclarationSymbol ?: return
                 if (symbol.visibility == KaSymbolVisibility.PRIVATE) {
                     isGood = false

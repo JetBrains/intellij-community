@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.components.isClassType
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluateAsAnnotationValue
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbols
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbols
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -218,7 +218,7 @@ private class MarkerCollector(private val moduleApiVersion: ApiVersion) {
     @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun collectMarkers(expression: KtReferenceExpression) {
-        val symbols = expression.resolveSymbols()
+        val symbols = expression.resolveSuccessfulSymbols()
         for (symbol in symbols) {
             (symbol as? KaAnnotatedSymbol)?.collectMarkers()
 
@@ -268,7 +268,7 @@ private class MarkerCollector(private val moduleApiVersion: ApiVersion) {
     @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun collectMarkers(delegate: KtPropertyDelegate) {
-        delegate.resolveSymbols().forEach { (it as? KaAnnotatedSymbol)?.collectMarkers() }
+        delegate.resolveSuccessfulSymbols().forEach { (it as? KaAnnotatedSymbol)?.collectMarkers() }
     }
 
     context(_: KaSession)

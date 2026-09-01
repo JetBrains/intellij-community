@@ -7,9 +7,9 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.KaSingleCall
-import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -32,7 +32,8 @@ internal class AddFullQualifierIntention :
     @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtNameReferenceExpression): Context? {
-        val contextSymbol = ((element as? KtResolvableCall)?.resolveCall() as? KaSingleCall<*, *>)?.symbol ?: element.resolveSymbol()
+        val contextSymbol =
+            (element as? KtResolvableCall)?.resolveSuccessfulCall()?.simple?.symbol ?: element.resolveSuccessfulSymbol()
         return if (contextSymbol != null && AddQualifiersUtil.isApplicableTo(element, contextSymbol)) {
             val fqName = AddQualifiersUtil.getFqName(contextSymbol)
             require(fqName != null)

@@ -3,14 +3,15 @@
   <dependencies>
     <module name="intellij.java.debugger.impl"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.kotlin.base.codeInsight"/>
     <module name="intellij.kotlin.base.psi"/>
     <module name="intellij.kotlin.codeInsight.inspections"/>
     <module name="intellij.kotlin.codeInsight.shared"/>
     <module name="intellij.kotlin.jvm.debugger.base.util"/>
     <module name="intellij.kotlin.jvm.debugger.core"/>
+    <module name="intellij.libraries.asm"/>
     <module name="intellij.libraries.kotlinc.analysis.api"/>
     <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
-    <module name="intellij.libraries.asm"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.analysis.impl"/>
     <module name="intellij.platform.core"/>

@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -24,7 +24,7 @@ internal class RedundantReturnLabelInspection : AbstractKotlinInspection() {
             val function = returnExpression.getParentOfType<KtNamedFunction>(true, KtLambdaExpression::class.java) ?: return
 
             if (function.name == null &&
-                analyze(returnExpression) { returnExpression.resolveSymbol() != function.symbol }
+                analyze(returnExpression) { returnExpression.resolveSuccessfulSymbol() != function.symbol }
             ) return
 
             val labelName = label.getReferencedName()

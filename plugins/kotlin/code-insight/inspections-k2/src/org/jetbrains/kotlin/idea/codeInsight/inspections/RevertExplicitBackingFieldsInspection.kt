@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaBackingFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -140,7 +141,7 @@ internal class RevertExplicitBackingFieldsInspection :
     context(session: KaSession)
     private fun isReferenceTo(ref: KtNameReferenceExpression, property: KtProperty): Boolean {
         val propertySymbol = property.symbol
-        val resolvedSymbol = ref.resolveSymbol()
+        val resolvedSymbol = ref.resolveSuccessfulSymbol()
         if (ref.getReferencedName() != property.name) return false
         return resolvedSymbol == propertySymbol ||
                 (resolvedSymbol is KaBackingFieldSymbol && resolvedSymbol.owningProperty == propertySymbol)

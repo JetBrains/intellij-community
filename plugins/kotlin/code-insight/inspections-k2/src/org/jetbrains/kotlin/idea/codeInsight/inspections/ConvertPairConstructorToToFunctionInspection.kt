@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -47,7 +47,7 @@ internal class ConvertPairConstructorToToFunctionInspection : KotlinApplicableIn
     @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): Unit? {
-        val calleeSymbol = element.resolveSymbol() as? KaConstructorSymbol ?: return null
+        val calleeSymbol = element.resolveSuccessfulSymbol() as? KaConstructorSymbol ?: return null
         if (calleeSymbol.importableFqName != PAIR_FQ_NAME) return null
 
         return Unit

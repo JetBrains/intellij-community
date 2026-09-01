@@ -7,14 +7,15 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.simple
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
 import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
@@ -51,6 +52,7 @@ internal class RemoveExplicitSuperQualifierInspection :
     override fun isApplicableByPsi(element: KtSuperExpression): Boolean =
         element.superTypeQualifier != null
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtSuperExpression): Context? {
         if (element.superTypeQualifier == null) return null
@@ -59,7 +61,7 @@ internal class RemoveExplicitSuperQualifierInspection :
         val selector = qualifiedExpression.selectorExpression ?: return null
 
         // Check if the selector has a resolved call, probably
-        val resolvedCall = selector.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>() ?: return null
+        val resolvedCall = selector.tryResolveExpressionCall()?.single?.simple ?: return null
 
         // Create a non-qualified super expression to check if it would resolve to the same call
         val nonQualifiedSuper = toNonQualified(element)
@@ -70,11 +72,11 @@ internal class RemoveExplicitSuperQualifierInspection :
         val newCallableId =
             analyze(newQualifiedExpression) {
                 val callableMemberCall =
-                    newQualifiedExpression.selectorExpression?.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()
-                callableMemberCall?.partiallyAppliedSymbol?.signature?.callableId
+                    newQualifiedExpression.selectorExpression?.tryResolveExpressionCall()?.single?.simple
+                callableMemberCall?.signature?.callableId
             }
 
-        if (resolvedCall.partiallyAppliedSymbol.signature.callableId != newCallableId) return null
+        if (resolvedCall.signature.callableId != newCallableId) return null
 
         return Context(qualifiedExpression)
     }

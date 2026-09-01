@@ -19,7 +19,7 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaLocalVariableSymbol
@@ -107,7 +107,7 @@ internal class UnnecessaryVariableInspection : AbstractKotlinInspection() {
         fun isExactCopy(): Boolean {
             if (property.isVar || initializer !is KtNameReferenceExpression || property.typeReference != null) return false
 
-            val symbol = (initializer as? KtResolvable)?.resolveSymbol()
+            val symbol = (initializer as? KtResolvable)?.resolveSuccessfulSymbol()
             val initializerSymbol = symbol as? KaLocalVariableSymbol ?: symbol as? KaParameterSymbol ?: return false
 
             val isVal = initializerSymbol.isVal
@@ -136,7 +136,7 @@ internal class UnnecessaryVariableInspection : AbstractKotlinInspection() {
             val nextStatement = property.getNextSiblingIgnoringWhitespaceAndComments() as? KtReturnExpression ?: return false
             val returned = nextStatement.returnedExpression as? KtNameReferenceExpression ?: return false
 
-            val returnedSymbol = (returned as? KtResolvable)?.resolveSymbol() as? KaNamedSymbol ?: return false
+            val returnedSymbol = (returned as? KtResolvable)?.resolveSuccessfulSymbol() as? KaNamedSymbol ?: return false
 
             val elementSymbol = property.symbol as? KaNamedSymbol ?: return false
 

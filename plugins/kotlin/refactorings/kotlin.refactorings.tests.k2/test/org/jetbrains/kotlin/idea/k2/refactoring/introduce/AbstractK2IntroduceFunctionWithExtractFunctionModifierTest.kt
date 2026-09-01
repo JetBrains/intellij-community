@@ -2,8 +2,10 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.introduce
 
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractFunctionDescriptorModifier
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractableCodeDescriptor
@@ -26,11 +28,12 @@ abstract class AbstractK2IntroduceFunctionWithExtractFunctionModifierTest: Abstr
 }
 
 private class MyComposeExtractFunctionDescriptorModifier : ExtractFunctionDescriptorModifier {
+    @OptIn(KaExperimentalApi::class)
     private fun KtLambdaArgument.isComposable(): Boolean {
         val callExpression = parent as KtCallExpression
         val lambdaExpression = getLambdaExpression() ?: return false
         analyze(callExpression) {
-            val call = callExpression.resolveToCall()?.singleFunctionCallOrNull() ?: return false
+            val call = callExpression.tryResolveCall()?.single?.function ?: return false
             val parameterTypeForLambda = call.valueArgumentMapping[lambdaExpression]?.returnType ?: return false
             return parameterTypeForLambda.annotations.classIds.any { it == MY_COMPOSABLE_CLASS_ID }
         }

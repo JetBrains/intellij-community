@@ -6,13 +6,12 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
@@ -50,12 +49,13 @@ object NamedArgumentUtils {
      * Associates each argument of [call] with its argument name if `argumentName = argument` is valid for all arguments. Optionally,
      * starts at [startArgument] if it's not `null`.
      */
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun associateArgumentNamesStartingAt(
         call: KtCallElement,
         startArgument: KtValueArgument?
     ): Map<SmartPsiElementPointer<KtValueArgument>, Name>? {
-        val resolvedCall = call.resolveToCall()?.singleFunctionCallOrNull() ?: return null
+        val resolvedCall = call.tryResolveCall()?.single?.function ?: return null
         if (!resolvedCall.symbol.hasStableParameterNames) {
             return null
         }
@@ -81,13 +81,14 @@ object NamedArgumentUtils {
      * The method also works for [argument] that is [KtLambdaArgument], since
      * the argument name can be used after moving [KtLambdaArgument] inside parentheses.
      */
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun getStableNameFor(argument: KtValueArgument): Name? {
         val callElement: KtCallElement = getCallElement(argument) ?: return null
-        val resolveToCall = callElement.resolveToCall()
-        val resolvedCall = resolveToCall?.singleFunctionCallOrNull() ?: (resolveToCall as? KaErrorCallInfo)?.singleCallOrNull() ?: return null
-        if (!resolvedCall.symbol.hasStableParameterNames) return null
-        return getNameForNameableArgument(argument, callElement, resolvedCall)
+        val resolveToCall = callElement.tryResolveCall()
+        val functionCall = resolveToCall?.single?.function ?: return null
+        if (!functionCall.symbol.hasStableParameterNames) return null
+        return getNameForNameableArgument(argument, callElement, functionCall)
     }
 
     context(_: KaSession)

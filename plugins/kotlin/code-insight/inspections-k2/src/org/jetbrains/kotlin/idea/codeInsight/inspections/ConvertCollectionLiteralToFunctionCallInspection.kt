@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -54,7 +54,7 @@ internal class ConvertCollectionLiteralToFunctionCallInspection :
     context(session: KaSession)
     override fun prepareContext(element: KtCollectionLiteralExpression): Context? {
         if (element.directDiagnostics(filter = KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).isNotEmpty()) return null
-        val resolvedSymbol = element.resolveSymbol() ?: return null
+        val resolvedSymbol = element.resolveSuccessfulSymbol() ?: return null
         if (!LITERAL_TO_FUNCTION_CANDIDATES.contains(resolvedSymbol.importableFqName)) return null
         return Context(resolvedSymbol.name)
     }

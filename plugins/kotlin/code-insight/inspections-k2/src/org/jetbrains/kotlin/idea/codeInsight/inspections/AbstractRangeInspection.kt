@@ -3,22 +3,24 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.builtins.StandardNames.BUILT_INS_PACKAGE_NAME
 import org.jetbrains.kotlin.idea.codeInsight.inspections.AbstractRangeInspection.ContextWrapper
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.RangeKtExpressionType
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.getRangeBinaryExpressionType
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 
 abstract class AbstractRangeInspection<C : Any> : KotlinApplicableInspectionBase.Simple<KtExpression, ContextWrapper<C>>() {
     sealed class RangeExpression {
@@ -47,12 +49,13 @@ abstract class AbstractRangeInspection<C : Any> : KotlinApplicableInspectionBase
             }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     fun rangeExpressionByAnalyze(expression: KtExpression): RangeExpression? =
         rangeExpressionByPsi(expression)?.takeIf {
-            val call = expression.resolveToCall()?.singleFunctionCallOrNull()
-            val packageName = call?.symbol?.callableId?.packageName
-            packageName != null && packageName.startsWith(Name.identifier("kotlin"))
+            val functionCall = (expression as? KtResolvableCall)?.resolveSuccessfulCall()?.function
+            val packageName = functionCall?.symbol?.callableId?.packageName ?: return@takeIf false
+            packageName.startsWith(BUILT_INS_PACKAGE_NAME)
         }
 
     data class ContextWrapper<C : Any>(

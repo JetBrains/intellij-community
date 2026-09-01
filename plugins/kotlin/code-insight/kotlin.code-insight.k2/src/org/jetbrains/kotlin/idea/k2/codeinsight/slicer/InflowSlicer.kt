@@ -11,16 +11,17 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaNonPublicApi
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.dataflow.computeExitPointSnapshot
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitInvokeCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.simple
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaBackingFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -197,6 +198,7 @@ class InflowSlicer(
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun processExpression(expression: KtExpression) {
         val lambda = when (expression) {
             is KtLambdaExpression -> expression.functionLiteral
@@ -277,10 +279,10 @@ class InflowSlicer(
 
             is KtDotQualifiedExpression -> {
                 analyze(expression) {
-                    val call = expression.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()
+                    val call = expression.tryResolveCall()?.single?.simple
                     val symbol = call?.symbol
                     if (symbol is KaNamedFunctionSymbol && symbol.isBuiltinFunctionInvoke) {
-                        (call.partiallyAppliedSymbol.dispatchReceiver as? KaExplicitReceiverValue)?.expression?.passToProcessorAsValue(mode.withBehaviour(LambdaResultInflowBehaviour))
+                        (call.dispatchReceiver as? KaExplicitReceiverValue)?.expression?.passToProcessorAsValue(mode.withBehaviour(LambdaResultInflowBehaviour))
                     } else {
                         ((symbol as? KaSyntheticJavaPropertySymbol)?.javaGetterSymbol ?: symbol)?.psi?.passDeclarationToProcessorWithOverriders()
                     }
@@ -289,7 +291,7 @@ class InflowSlicer(
 
             is KtCallExpression -> {
                 analyze(expression) {
-                    val call = expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
+                    val call = expression.resolveSuccessfulCall()
                     if (call is KaImplicitInvokeCall) {
                         (call.dispatchReceiver as? KaExplicitReceiverValue)?.expression?.passToProcessorAsValue(mode.withBehaviour(LambdaResultInflowBehaviour))
                     } else {

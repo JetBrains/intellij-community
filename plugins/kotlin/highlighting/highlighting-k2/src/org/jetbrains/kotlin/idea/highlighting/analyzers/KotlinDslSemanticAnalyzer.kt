@@ -4,10 +4,10 @@ package org.jetbrains.kotlin.idea.highlighting.analyzers
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.analysis.api.types.allSupertypes
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.highlighting.dsl.DslStyleUtils
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -58,9 +59,10 @@ internal class KotlinDslSemanticAnalyzer(holder: HighlightInfoHolder, session: K
      * 1) Its type specifier is marked with an annotation, that is marked by a dsl annotation
      * 2) The class or its superclasses' definition is marked by a dsl annotation
      */
+    @OptIn(KaExperimentalApi::class)
     private fun expressionHighlightType(expression: KtExpression): HighlightInfoType? {
         val dslAnnotation = context(session) {
-            val functionCall = expression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
+            val functionCall = expression.resolveSuccessfulExpressionCall()?.function ?: return null
             // function declaration lambda receiver has a dsl marker
 
             // to check function declaration arguments type, rather call site

@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -68,8 +68,8 @@ internal class RedundantElvisReturnNullInspection : KotlinApplicableInspectionBa
         val outerReturn = element.getStrictParentOfType<KtReturnExpression>() ?: return null
         val innerReturn = element.right as? KtReturnExpression ?: return null
 
-        val outerReturnTarget = outerReturn.resolveSymbol() ?: return null
-        val innerReturnTarget = innerReturn.resolveSymbol() ?: return null
+        val outerReturnTarget = outerReturn.resolveSuccessfulSymbol() ?: return null
+        val innerReturnTarget = innerReturn.resolveSuccessfulSymbol() ?: return null
 
         // Returns point to different targets, we cannot remove the inner return
         if (outerReturnTarget != innerReturnTarget) return null

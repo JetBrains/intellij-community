@@ -19,8 +19,10 @@ import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.variable
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -37,6 +39,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.MovePropertyT
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.MovePropertyToConstructorUtils.moveToConstructor
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isComplexInitializer
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtAnonymousInitializer
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -230,7 +233,7 @@ internal class JoinDeclarationAndAssignmentInspection :
         val containingClass = constructor.getContainingClassOrObject()
         if (containingClass.isData()) return false
 
-        val paramSymbol = (initializer as? KtResolvable)?.resolveSymbol() as? KaValueParameterSymbol ?: return false
+        val paramSymbol = (initializer as? KtResolvable)?.resolveSuccessfulSymbol() as? KaValueParameterSymbol ?: return false
         if (element.nameAsName != paramSymbol.name) return false
 
         val parameter = paramSymbol.psi as? KtParameter ?: return false
@@ -292,6 +295,7 @@ internal class JoinDeclarationAndAssignmentInspection :
 
     private fun List<PsiElement>.hasComments(): Boolean = any { it is PsiComment }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun findFirstAssignment(property: KtProperty): KtBinaryExpression? {
         if (property.typeReference == null) return null
@@ -309,7 +313,7 @@ internal class JoinDeclarationAndAssignmentInspection :
             return null
         }
 
-        val assignmentCall = firstAssignment.left?.resolveToCall()?.singleVariableAccessCall()?.symbol ?: return null
+        val assignmentCall = firstAssignment.left?.tryResolveExpressionCall()?.single?.variable?.symbol ?: return null
         if (assignmentCall != property.symbol) return null
 
         if (propertyContainer !is KtClassBody) return firstAssignment

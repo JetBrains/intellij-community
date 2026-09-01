@@ -18,7 +18,7 @@ import com.intellij.psi.util.siblings
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
@@ -181,7 +181,7 @@ class ConvertToExplicitBackingFieldsInspection :
     @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun resolveToProperty(expression: KtNameReferenceExpression): KtProperty? {
-        val symbol = expression.resolveSymbol() as? KaPropertySymbol ?: return null
+        val symbol = expression.resolveSuccessfulSymbol() as? KaPropertySymbol ?: return null
         return symbol.psi as? KtProperty
     }
 

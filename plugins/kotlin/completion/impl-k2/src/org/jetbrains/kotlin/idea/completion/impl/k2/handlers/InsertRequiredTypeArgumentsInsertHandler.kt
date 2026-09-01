@@ -11,19 +11,21 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import kotlinx.serialization.Serializable
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallResolutionAttempt
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.calls
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
 import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
+import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameters.Corrected
 import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinFirCompletionParameters.CorrectionType
-import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.withChainedInsertHandler
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -86,6 +88,7 @@ private data class TypeArgsWithOffset(val args: KtTypeArgumentList, val offset: 
 
 private var UserDataHolder.argList: TypeArgsWithOffset? by UserDataProperty(Key("KotlinInsertTypeArgument.ARG_LIST"))
 
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun addParamTypesIfNeeded(position: PsiElement): PsiElement? {
     val callBeforeDot = position.getCallBeforeDot() ?: return null
@@ -93,11 +96,10 @@ private fun addParamTypesIfNeeded(position: PsiElement): PsiElement? {
     // Type arguments are already specified, no need to add them
     if (callBeforeDot.typeArguments.isNotEmpty()) return null
 
-    val resolvedCall = callBeforeDot.resolveToCall()
+    val resolutionAttempt: KaCallResolutionAttempt = callBeforeDot.tryResolveCall() ?: return null
     // The call is already successfully resolved, no type arguments are needed
-    if (resolvedCall !is KaErrorCallInfo) return null
     // If there is no call with an error type, then we cannot fix it by adding explicit types
-    if (!resolvedCall.hasCandidateWithErrorTypes()) return null
+    if (!resolutionAttempt.hasCandidateWithErrorTypes()) return null
 
     // We attempt to fix the unresolved call by restoring the type arguments it had before adding the `.`
     val fixedPosition = addParamTypes(position)
@@ -106,7 +108,7 @@ private fun addParamTypesIfNeeded(position: PsiElement): PsiElement? {
     // If the call now resolves successfully, then we return the new position
     analyze(newCallBeforeDot) {
         return fixedPosition.takeIf {
-            newCallBeforeDot.resolveToCall()?.successfulFunctionCallOrNull() != null
+            newCallBeforeDot.resolveSuccessfulCall() != null
         }
     }
 }
@@ -205,8 +207,9 @@ private fun KaFunctionCall<*>.hasErrorTypeArgument(): Boolean {
     return typeArgumentsMapping.any { (_, type) -> type is KaErrorType }
 }
 
-private fun KaErrorCallInfo.hasCandidateWithErrorTypes(): Boolean {
-    val candidates = candidateCalls.filterIsInstance<KaFunctionCall<*>>()
+@OptIn(KaExperimentalApi::class)
+private fun KaCallResolutionAttempt.hasCandidateWithErrorTypes(): Boolean {
+    val candidates = this.calls.filterIsInstance<KaFunctionCall<*>>()
     return candidates.any { it.hasErrorTypeArgument() }
 }
 

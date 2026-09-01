@@ -8,9 +8,8 @@ import com.intellij.codeInspection.blockingCallsDetection.MethodContext
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -40,12 +39,13 @@ internal class CoroutineBlockingMethodChecker : BlockingMethodChecker {
         return sourcePsi is KtNamedFunction && sourcePsi.modifierList?.hasSuspendModifier() == true
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun getQuickFixesFor(elementContext: ElementContext): Array<LocalQuickFix> {
         val element = elementContext.element
         if (element !is KtCallExpression) return emptyArray()
 
         analyze(element) {
-            val resolvedCall = element.parentOfType<KtCallExpression>()?.resolveToCall()?.successfulCallOrNull<KaCall>()
+            val resolvedCall = element.parentOfType<KtCallExpression>()?.resolveSuccessfulCall()
 
             return when {
                 !isApplicable(element.containingFile) || !isKotlinxOnClasspath(element) -> emptyArray()

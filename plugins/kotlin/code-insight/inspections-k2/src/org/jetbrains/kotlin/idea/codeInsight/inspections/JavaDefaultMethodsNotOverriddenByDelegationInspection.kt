@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.scopes.memberScope
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -60,7 +61,7 @@ internal class JavaDefaultMethodsNotOverriddenByDelegationInspection : AbstractK
                     val delegateClass = delegateExpression.expressionType?.symbol as? KaClassSymbol ?: return
                     val javaDefaultMethodsToOverride = collectJavaDefaultMethodsToOverride(delegateClass, inheritedJavaDefaultMethods)
 
-                    val delegateSymbol = (delegateExpression as? KtResolvable)?.resolveSymbol()
+                    val delegateSymbol = (delegateExpression as? KtResolvable)?.resolveSuccessfulSymbol()
                     val delegateName = when (delegateSymbol) {
                         is KaVariableSymbol -> delegateSymbol.name.asString()
                         else -> null

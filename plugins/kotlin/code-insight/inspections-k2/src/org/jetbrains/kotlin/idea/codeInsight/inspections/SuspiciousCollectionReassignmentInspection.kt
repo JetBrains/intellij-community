@@ -13,13 +13,14 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.findClass
@@ -52,6 +53,7 @@ import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.types.Variance
 
 class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
+    @OptIn(KaExperimentalApi::class)
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         binaryExpressionVisitor(fun(binaryExpression) {
             analyze(binaryExpression) {
@@ -66,7 +68,6 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
                 if (!leftType.isReadOnlyCollectionOrMap()) return
 
                 // TODO there are no tests for this check; add the tests or remove it
-                @OptIn(KaExperimentalApi::class)
                 val diagnostics = binaryExpression.directDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
                 if (diagnostics.any { it.severity == KaSeverity.ERROR }) return
 
@@ -83,7 +84,6 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
                 }
                 if (fixes.isEmpty()) return
 
-                @OptIn(KaExperimentalApi::class)
                 val typeText = leftType.render(renderer = KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT).takeWhile { it != '<' }.lowercase()
                 val operationReference = binaryExpression.operationReference
                 holder.registerProblem(
@@ -157,6 +157,7 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
             val emptyCollectionFactoryMethods =
                 listOf("emptyList", "emptySet", "emptyMap", "listOf", "setOf", "mapOf").map { "kotlin.collections.$it" }
 
+            @OptIn(KaExperimentalApi::class)
             context(session: KaSession)
             fun isApplicable(binaryExpression: KtBinaryExpression, property: KtProperty): Boolean {
                 if (binaryExpression.operationToken != KtTokens.PLUSEQ) return false
@@ -165,7 +166,7 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
                 val initializer = property.initializer as? KtCallExpression ?: return false
 
                 if (initializer.valueArguments.isNotEmpty()) return false
-                val initializerResultingSymbol = initializer.resolveToCall()?.singleFunctionCallOrNull()?.symbol
+                val initializerResultingSymbol = initializer.tryResolveCall()?.single?.function?.symbol
                 val fqName = initializerResultingSymbol?.callableId?.asSingleFqName()?.asString()
                 if (fqName !in emptyCollectionFactoryMethods) return false
 

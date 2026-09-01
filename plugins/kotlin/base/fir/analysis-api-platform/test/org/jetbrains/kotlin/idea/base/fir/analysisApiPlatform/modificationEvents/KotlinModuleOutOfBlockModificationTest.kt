@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEventKind
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
-import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -597,7 +597,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
             allowAnalysisOnEdt {
                 analyze(codeFragment) {
                     val callExpression = codeFragment.findDescendantOfType<KtCallExpression>() ?: error("Replaced call is not found")
-                    val resolvedCall = callExpression.resolveCall()
+                    val resolvedCall = callExpression.resolveSuccessfulCall()
                     assert(resolvedCall == null)
                 }
             }
@@ -614,7 +614,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
             allowAnalysisOnEdt {
                 analyze(codeFragment) {
                     val callExpression = codeFragment.findDescendantOfType<KtCallExpression>() ?: error("Replaced call is not found")
-                    val resolvedCall = callExpression.resolveCall()
+                    val resolvedCall = callExpression.resolveSuccessfulCall()
                     val resolvedFunction = resolvedCall?.symbol as? KaNamedFunctionSymbol
                     assert(resolvedFunction != null && resolvedFunction.name.asString() == "main" )
                 }

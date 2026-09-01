@@ -5,10 +5,10 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.single
+import org.jetbrains.kotlin.analysis.api.resolution.variable
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.unwrapSmartCasts
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.util.collectContextParameterValu
 import org.jetbrains.kotlin.idea.k2.refactoring.util.createContextArgumentReplacementMapForVariableAccess
 import org.jetbrains.kotlin.idea.k2.refactoring.util.createReplacementReceiverArgumentExpression
 import org.jetbrains.kotlin.idea.refactoring.updateSimpleName
+import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -70,9 +71,10 @@ internal class KotlinPropertyCallUsage(
         return (wrappedElement ?: newElement) as? KtExpression
     }
 
+    @OptIn(KaExperimentalApi::class)
     private val explicitReceiver: SmartPsiElementPointer<KtExpression>? =
         allowAnalysisFromWriteActionInEdt(element) {
-            val variableAccessCall = element.resolveToCall()?.singleCallOrNull<KaVariableAccessCall>()
+            val variableAccessCall = element.tryResolveExpressionCall()?.single?.variable
             val receiverValue = variableAccessCall?.extensionReceiver?.unwrapSmartCasts()
             (receiverValue as? KaExplicitReceiverValue)?.expression?.createSmartPointer()
         }

@@ -7,10 +7,9 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
@@ -44,13 +43,13 @@ internal class ReplaceAddWithPlusAssignIntention : KotlinApplicableModCommandAct
     override fun prepareContext(element: KtDotQualifiedExpression): Unit? {
         if (element.isUsedAsExpression) return null
 
-        val resolvedCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
+        val resolvedCall = element.resolveSuccessfulCall() ?: return null
         val receiver = resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver ?: return null
         val receiverType = receiver.type as? KaClassType ?: return null
 
         if (!receiverType.isSubtypeOf(StandardClassIds.MutableCollection)) return null
 
-        val variableSymbol = (element.receiverExpression as? KtResolvable)?.resolveSymbol() as? KaVariableSymbol ?: return null
+        val variableSymbol = (element.receiverExpression as? KtResolvable)?.resolveSuccessfulSymbol() as? KaVariableSymbol ?: return null
         if (!variableSymbol.isVal) return null
 
         return Unit

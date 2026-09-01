@@ -4,11 +4,13 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
+import org.jetbrains.kotlin.analysis.api.resolution.variable
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
@@ -27,10 +29,11 @@ import org.jetbrains.kotlin.util.graph.sortTopologically
 
 object ReorderParametersFixFactory {
 
-    val unInitializedParameter = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UninitializedParameter ->
+    val unInitializedParameter: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.UninitializedParameter> = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UninitializedParameter ->
         createQuickFix(diagnostic)
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun createQuickFix(diagnostic: KaFirDiagnostic<*>): List<ReorderParametersFix> {
         val function: KtNamedFunction = diagnostic.psi.parentOfType(withSelf = true) ?: return emptyList()
@@ -41,7 +44,7 @@ object ReorderParametersFixFactory {
                 parameter.defaultValue
                     ?.childrenDfsSequence()
                     ?.filterIsInstance<KtNameReferenceExpression>()
-                    ?.mapNotNull { it.resolveToCall()?.singleVariableAccessCall()?.symbol as? KaValueParameterSymbol }
+                    ?.mapNotNull { it.tryResolveCall()?.single?.variable?.symbol as? KaValueParameterSymbol }
                     ?.filter { it.containingDeclaration == functionSymbol }
                     ?.map { DirectedGraph.Edge(from = it.name.asString(), to = parameterName) }
                     ?.toList()

@@ -12,8 +12,11 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.constructor
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
@@ -96,14 +99,16 @@ internal class ConvertSecondaryConstructorToPrimaryInspection :
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private tailrec fun KtSecondaryConstructor.isReachableByDelegationFrom(
         constructor: KtSecondaryConstructor, visited: Set<KtSecondaryConstructor> = emptySet()
     ): Boolean {
         if (constructor == this) return true
         if (constructor in visited) return false
-        val delegatedConstructor = constructor.getDelegationCall().resolveToCall()
-            ?.singleConstructorCallOrNull()?.symbol?.psi as? KtSecondaryConstructor ?: return false
+        val delegatedConstructor = constructor
+            .getDelegationCall()
+            .tryResolveCall()?.single?.constructor?.symbol?.psi as? KtSecondaryConstructor ?: return false
         return isReachableByDelegationFrom(delegatedConstructor, visited + constructor)
     }
 
@@ -163,7 +168,7 @@ internal class ConvertSecondaryConstructorToPrimaryInspection :
 
         val classRefIdx = klass.superTypeListEntries.indexOfFirst {
             val classifierSymbol =
-                (it.typeReference?.typeElement as? KtUserType)?.referenceExpression?.resolveSymbol() as? KaClassifierSymbol
+                (it.typeReference?.typeElement as? KtUserType)?.referenceExpression?.resolveSuccessfulSymbol() as? KaClassifierSymbol
 
             fun isClassSymbol(symbol: KaClassifierSymbol?): Boolean = symbol is KaClassSymbol && symbol.classKind == KaClassKind.CLASS
 

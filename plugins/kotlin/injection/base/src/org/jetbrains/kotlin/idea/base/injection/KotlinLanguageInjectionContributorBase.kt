@@ -39,13 +39,15 @@ import org.intellij.plugins.intelliLang.inject.java.InjectionCache
 import org.intellij.plugins.intelliLang.inject.java.JavaLanguageInjectionSupport
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
@@ -740,7 +742,7 @@ private fun KtBinaryExpression.isSimpleStandardConcatenationExpression(): Boolea
     this.operationTokenOrNull == KtTokens.PLUS &&
             left.isSimpleConcatenationSubexpression() && right.isSimpleConcatenationSubexpression()
 
-@OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
+@OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
 private fun PsiElement.isStandardConcatenationExpression(): Boolean {
     if (this !is KtBinaryExpression || this.operationTokenOrNull != KtTokens.PLUS) return false
     if (isSimpleStandardConcatenationExpression()) return true
@@ -749,7 +751,7 @@ private fun PsiElement.isStandardConcatenationExpression(): Boolean {
     val packageFqName = allowAnalysisOnEdt {
         allowAnalysisFromWriteAction {
             analyze(referenceExpression) {
-                val singleFunctionCallOrNull = referenceExpression.resolveToCall()?.singleFunctionCallOrNull()
+                val singleFunctionCallOrNull = referenceExpression.tryResolveCall()?.single?.function
                 singleFunctionCallOrNull?.symbol?.callableId?.packageName
             }
         }

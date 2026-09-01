@@ -3,15 +3,10 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.utils
 
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.KaCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaSingleCall
 import org.jetbrains.kotlin.analysis.api.resolution.collectCallCandidates
-import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -19,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.types.restore
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.k2.refactoring.util.findContextToAnalyze
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionSymbol
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCollectionLiteralExpression
@@ -124,12 +120,11 @@ internal fun nameResolvesToStdlib(expression: KtCallExpression, calleeName: Stri
         val callableSymbol: KaCallableSymbol? = when (val fragmentExpression: KtExpression? = fragment.getContentElement()) {
             is KtDotQualifiedExpression -> {
                 // Handle qualified expressions like "receiver.function()"
-                (fragmentExpression.collectCallCandidates().singleOrNull()?.candidate as? KaSingleCall<*, *>)?.signature?.symbol
+                fragmentExpression.collectCallCandidates().singleOrNull()?.candidate?.simple?.signature?.symbol
             }
             else -> {
                 // Handle other expressions
-                val resolvedFragmentCall = fragmentExpression?.resolveToCall()?.successfulCallOrNull<KaCall>()
-                (resolvedFragmentCall as? KaCallableMemberCall<*, *>)?.symbol
+                fragmentExpression?.resolveSuccessfulExpressionSymbol() as? KaCallableSymbol
             }
         }
 
@@ -173,6 +168,6 @@ internal fun isCollectionLiteralSafeAsArgument(
         val literalType = literal.expressionType ?: return false
         if (!literalType.semanticallyEquals(restoredType)) return false
         val outerCall = literal.getParentOfType<KtCallExpression>(strict = true) ?: return true
-        outerCall.resolveCall() != null
+        outerCall.resolveSuccessfulCall() != null
     }
 }

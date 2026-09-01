@@ -10,12 +10,13 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.variable
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
@@ -40,6 +41,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinMo
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.getCallExpressionSymbol
 import org.jetbrains.kotlin.idea.codeinsight.utils.isInlinedArgument
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -85,16 +87,16 @@ internal class SuspiciousImplicitCoroutineScopeReceiverAccessInspection :
         return qualifiedExpression == null
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtExpression): Context? {
         // Resolve the call to check if it's a CoroutineScope function
-        val resolvedCall = element.resolveToCall()?.let { callInfo ->
+        val resolvedCall =
             when (element) {
-                is KtCallExpression -> callInfo.successfulFunctionCallOrNull()
-                is KtSimpleNameExpression -> callInfo.successfulVariableAccessCall()
+                is KtCallExpression -> element.resolveSuccessfulCall()
+                is KtSimpleNameExpression -> element.resolveSuccessfulExpressionCall()?.simple?.variable
                 else -> null
-            }
-        } ?: return null
+            } ?: return null
 
         // Check if the receiver is an implicit receiver
         val callReceiver = resolvedCall.run { extensionReceiver ?: dispatchReceiver }

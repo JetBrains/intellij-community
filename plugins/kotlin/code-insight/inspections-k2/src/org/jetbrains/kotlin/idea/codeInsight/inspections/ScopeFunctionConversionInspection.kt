@@ -16,17 +16,15 @@ import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
@@ -58,6 +56,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
 import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtClass
@@ -142,7 +141,7 @@ private fun getCounterparts(expression: KtCallExpression): List<String> {
     }
 
     return analyze(callee) {
-        val symbol = callee.resolveCall()?.symbol ?: return@analyze emptyList()
+        val symbol = callee.resolveSuccessfulSymbol() as? KaCallableSymbol ?: return@analyze emptyList()
         if (symbol.receiverType == null && (symbol as? KaNamedFunctionSymbol)?.name?.asString() != "with") return@analyze emptyList()
 
         counterpartCandidates.filter { counterpartName ->
@@ -307,6 +306,7 @@ private class ReceiverToParameterVisitor(
     private val session: KaSession
 ) : KtTreeVisitorVoid() {
 
+    @OptIn(KaExperimentalApi::class)
     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
         super.visitSimpleNameExpression(expression)
         // Skip operation references like '+', '-', etc.
@@ -314,10 +314,10 @@ private class ReceiverToParameterVisitor(
 
         // Try to resolve the call
         val resolvedCall = context(session) {
-            expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>() 
+            expression.resolveSuccessfulExpressionCall()?.simple
         } ?: return
-        val dispatchReceiver: KaReceiverValue? = resolvedCall.partiallyAppliedSymbol.dispatchReceiver
-        val extensionReceiver = resolvedCall.partiallyAppliedSymbol.extensionReceiver
+        val dispatchReceiver: KaReceiverValue? = resolvedCall.dispatchReceiver
+        val extensionReceiver = resolvedCall.extensionReceiver
 
         // If the call is on the lambda's receiver, replace it with a call on the parameter
         if (context(session) {
@@ -473,6 +473,7 @@ private class ParameterToReceiverVisitor(
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
         super.visitSimpleNameExpression(expression)
 
@@ -495,9 +496,9 @@ private class ParameterToReceiverVisitor(
         } else {
             // Handle implicit receiver references that need to be qualified
             val resolvedCall = context(session) {
-                expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
+                expression.resolveSuccessfulExpressionCall()?.simple
             } ?: return
-            val dispatchReceiver = resolvedCall.partiallyAppliedSymbol.dispatchReceiver
+            val dispatchReceiver = resolvedCall.dispatchReceiver
 
             // Skip if this is the receiver from the lambda we're converting (e.g., 'with' to 'run')
             if (context(session) { isReceiverFromFunctionLiteral(dispatchReceiver, functionLiteral) }) return
@@ -509,7 +510,7 @@ private class ParameterToReceiverVisitor(
             if (symbol !is KaDeclarationSymbol) return
 
             val implicitReceiverValue = context(session) {
-                expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.dispatchReceiver as? KaImplicitReceiverValue 
+                expression.resolveSuccessfulExpressionCall()?.simple?.dispatchReceiver as? KaImplicitReceiverValue
             } ?: return
 
             // Get the appropriate qualifier for this receiver
@@ -563,10 +564,11 @@ private class ParameterToReceiverVisitor(
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun visitThisExpression(expression: KtThisExpression) {
         // Handle 'this' expressions that need to be qualified
         val implicitReceiverValue = context(session) {
-            expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.dispatchReceiver as? KaImplicitReceiverValue
+            expression.resolveSuccessfulExpressionCall()?.simple?.dispatchReceiver as? KaImplicitReceiverValue
         }
 
         if (implicitReceiverValue == null) {

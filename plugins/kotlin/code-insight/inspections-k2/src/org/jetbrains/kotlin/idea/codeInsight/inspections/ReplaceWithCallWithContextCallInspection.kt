@@ -10,14 +10,10 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -27,7 +23,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinAp
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames.WITH_CALLABLE_ID
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtElement
@@ -69,10 +65,10 @@ internal class ReplaceWithCallWithContextCallInspection :
         return true
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): ReplaceContext? {
-        val resolvedCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-        if (resolvedCall.symbol.callableId != WITH_CALLABLE_ID) return null
+        if (element.resolveSuccessfulSymbol()?.callableId != WITH_CALLABLE_ID) return null
         val lambda = getLambda(element) ?: return null
         val receiverParameter = lambda.functionLiteral.symbol.receiverParameter ?: return null
 
@@ -94,21 +90,20 @@ internal class ReplaceWithCallWithContextCallInspection :
         var usedAsContext = false
         val problem = bodyExpression.anyDescendantOfType<KtElement> { node ->
             when (node) {
-                is KtThisExpression -> node.resolveSymbol() == receiverParameter
+                is KtThisExpression -> node.resolveSuccessfulSymbol() == receiverParameter
                 is KtCallableReferenceExpression -> {
-                    val appliedSymbol =
-                        node.callableReference.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
-                    appliedSymbol?.dispatchReceiver.isReceiver(receiverParameter) ||
-                            appliedSymbol?.extensionReceiver.isReceiver(receiverParameter)
+                    val singleCall = node.callableReference.resolveSuccessfulExpressionCall()?.simple
+                    singleCall?.dispatchReceiver.isReceiver(receiverParameter) ||
+                            singleCall?.extensionReceiver.isReceiver(receiverParameter)
                     //TODO: HERE also handle context argument when KT-73145 Callable references to declarations with context parameters will be available from 2.5
                 }
 
                 is KtSimpleNameExpression -> {
-                    val appliedSymbol = node.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
-                    if (appliedSymbol != null) {
-                        if (appliedSymbol.dispatchReceiver.isReceiver(receiverParameter)) return@anyDescendantOfType true
-                        if (appliedSymbol.extensionReceiver.isReceiver(receiverParameter)) return@anyDescendantOfType true
-                        if (appliedSymbol.contextArguments.any { it.isReceiver(receiverParameter) }) {
+                    val singleCall = node.resolveSuccessfulExpressionCall()?.simple
+                    if (singleCall != null) {
+                        if (singleCall.dispatchReceiver.isReceiver(receiverParameter)) return@anyDescendantOfType true
+                        if (singleCall.extensionReceiver.isReceiver(receiverParameter)) return@anyDescendantOfType true
+                        if (singleCall.contextArguments.any { it.isReceiver(receiverParameter) }) {
                             usedAsContext = true
                         }
                     }

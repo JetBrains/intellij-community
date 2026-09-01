@@ -9,9 +9,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaIdeApi
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
@@ -103,11 +103,10 @@ internal class KotlinOptionsToCompilerOptionsInspection : AbstractKotlinInspecti
         return ApplicationManager.getApplication().isUnitTestMode() || kotlinOptionsAreOfNeededType(referenceExpression)
     }
 
-    @OptIn(KaIdeApi::class)
+    @OptIn(KaIdeApi::class, KaExperimentalApi::class)
     private fun kotlinOptionsAreOfNeededType(referenceExpression: KtReferenceExpression): Boolean {
         val jvmClassForKotlinCompileTask = analyze(referenceExpression) {
-            val symbol = referenceExpression.resolveToCall()
-                ?.successfulFunctionCallOrNull()?.signature?.symbol
+            val symbol = referenceExpression.resolveSuccessfulSymbol()
             val containingDeclarationOrSymbol =
                 (symbol?.containingDeclaration as? KaClassLikeSymbol)
                     ?: referenceExpression.resolveExpression()?.containingSymbol

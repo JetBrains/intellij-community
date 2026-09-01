@@ -10,13 +10,13 @@ import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.projectStructure.copyOrigin
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.single
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -43,13 +43,14 @@ import org.jetbrains.kotlin.psi.KtTypeProjection
 
 private val INLINE_REIFIED_FUNCTIONS_WITH_INSIGNIFICANT_TYPE_ARGUMENTS: Set<String> = setOf("kotlin.arrayOf")
 
+@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 fun areTypeArgumentsRedundant(
     typeArgumentList: KtTypeArgumentList,
     approximateFlexible: Boolean = false,
 ): Boolean {
     val callExpression = typeArgumentList.parent as? KtCallExpression ?: return false
-    val symbol = callExpression.resolveToCall()?.successfulFunctionCallOrNull()?.symbol ?: return false
+    val symbol = callExpression.resolveSuccessfulSymbol() ?: return false
     if (isInlineReifiedFunction(symbol)) return false
 
     if (symbol.receiverType == null && callExpression.valueArguments.isEmpty()) {
@@ -141,8 +142,7 @@ private fun areTypeArgumentsEqual(
 context(_: KaSession)
 private fun collectCallExpressionInfo(callExpression: KtCallExpression): List<KaTypePointer<KaType>>? {
     return callExpression
-        .resolveToCall()
-        ?.singleFunctionCallOrNull()
+        .tryResolveCall()?.single?.function
         ?.typeArgumentsMapping
         ?.values
         ?.map { it.createPointer() }

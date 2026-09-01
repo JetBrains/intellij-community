@@ -7,16 +7,18 @@ import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBlockExpression
@@ -47,6 +49,7 @@ internal class DeferredResultUnusedInspection(@JvmField var standardOnly: Boolea
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun check(expression: KtExpression): Boolean {
         // Check whatever possible by PSI
         if (!isExpressionApplicable(expression)) return false
@@ -63,7 +66,7 @@ internal class DeferredResultUnusedInspection(@JvmField var standardOnly: Boolea
         // Then check by call using Analysis API
         analyze(expression) {
             if (expression.isUsedAsExpression) return false
-            val call = expression.resolveToCall()?.singleFunctionCallOrNull() ?: return false
+            val call = expression.tryResolveExpressionCall()?.single?.function ?: return false
             return shouldReportCall(call)
         }
     }

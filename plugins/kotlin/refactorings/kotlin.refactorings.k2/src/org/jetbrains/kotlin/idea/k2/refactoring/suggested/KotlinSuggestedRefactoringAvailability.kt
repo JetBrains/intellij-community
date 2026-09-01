@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.projectStructure.contextModule
 import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.session.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
@@ -65,7 +65,7 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
                         scope.accept(
                             simpleNameExpressionRecursiveVisitor { r ->
                                 hasReferences = hasReferences || analyzeCopy(scope as KtElement, KaDanglingFileResolutionMode.PREFER_SELF) {
-                                    r.resolveSymbol()?.psi == declarationCopy
+                                    r.resolveSuccessfulSymbol()?.psi == declarationCopy
                                 }
                             })
                         hasReferences

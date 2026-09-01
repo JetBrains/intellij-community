@@ -7,9 +7,9 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -59,9 +59,10 @@ internal class SuspendCoroutineLacksCancellationGuaranteesInspection :
         visitTargetElement(it, holder, isOnTheFly)
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): Context? {
-        val functionCall = element.resolveToCall()?.successfulFunctionCallOrNull()
+        val functionCall = element.resolveSuccessfulCall()
 
         val calledFunction = functionCall?.symbol ?: return null
         if (calledFunction.callableId != SUSPEND_COROUTINE_ID) return null

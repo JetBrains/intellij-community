@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -173,7 +173,7 @@ private fun getFunctionalInterfaceSymbol(
     call: KtCallExpression,
 ): KaNamedClassSymbol? {
     return (diagnostic.classSymbol as? KaNamedClassSymbol)
-        ?: (((call.calleeExpression as? KtResolvable)?.resolveSymbol() as? KaTypeAliasSymbol)?.expandedType?.expandedSymbol as? KaNamedClassSymbol)
+        ?: (((call.calleeExpression as? KtResolvable)?.resolveSuccessfulSymbol() as? KaTypeAliasSymbol)?.expandedType?.expandedSymbol as? KaNamedClassSymbol)
 }
 
 private fun computeInterfaceName(call: KtCallExpression, classSymbol: KaNamedClassSymbol): String? {

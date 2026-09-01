@@ -31,9 +31,11 @@ import com.intellij.psi.util.descendantsOfType
 import com.intellij.util.Processor
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.asJava.LightClassUtil.getLightClassMethods
 import org.jetbrains.kotlin.asJava.LightClassUtil.getLightClassPropertyMethods
@@ -205,6 +207,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
             }
         }
 
+        @OptIn(KaExperimentalApi::class)
         fun process() {
             var element: SmartPsiElementPointer<PsiElement>? = null
             var classNameForCompanionObject: String? = null
@@ -295,7 +298,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                     klass.declarations.filterIsInstance<KtEnumEntry>().forEach { enumEntry ->
                         enumEntry.descendantsOfType<KtEnumEntrySuperclassReferenceExpression>().forEach { superEntry ->
                             val target = analyze(superEntry) {
-                                superEntry.resolveToCall()?.singleFunctionCallOrNull()?.symbol?.psi
+                                superEntry.tryResolveCall()?.single?.function?.symbol?.psi
                             }
                             if (target != el &&
                                 !(kotlinOptions.acceptOverloads && target is KtConstructor<*> && target.containingClass() == klass)

@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.session.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.session.useSiteSession
@@ -359,7 +359,7 @@ private fun IExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
                         }
                     }
 
-                    val targetSymbol = expression.resolveSymbol() as? KaAnnotatedSymbol ?: return
+                    val targetSymbol = expression.resolveSuccessfulSymbol() as? KaAnnotatedSymbol ?: return
                     processSymbolAnnotations(targetSymbol)
 
                     val typeSymbol = (targetSymbol as? KaCallableSymbol)?.returnType?.expandedSymbol ?: return

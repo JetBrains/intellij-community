@@ -8,7 +8,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -70,7 +70,7 @@ internal class PreferCurrentCoroutineContextToCoroutineContextInspection : Kotli
     context(session: KaSession)
     private fun isCoroutineContextFunctionAccess(reference: KtNameReferenceExpression): Boolean {
         return reference.getReferencedNameAsName() == KOTLIN_COROUTINES_CONTEXT_ID.callableName &&
-                (reference.resolveSymbol() as? KaPropertySymbol)?.callableId == KOTLIN_COROUTINES_CONTEXT_ID
+                (reference.resolveSuccessfulSymbol() as? KaPropertySymbol)?.callableId == KOTLIN_COROUTINES_CONTEXT_ID
     }
 
     context(session: KaSession)

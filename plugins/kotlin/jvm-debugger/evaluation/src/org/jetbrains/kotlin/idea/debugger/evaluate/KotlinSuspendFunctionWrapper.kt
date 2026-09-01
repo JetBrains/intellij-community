@@ -9,11 +9,12 @@ import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentsOfType
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.KaCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
-import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallResolutionAttempt
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallResolutionError
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
@@ -95,6 +96,7 @@ internal class KotlinSuspendFunctionWrapper(
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun isSuspendCall(element: PsiElement): Boolean {
         var result = false
         KotlinCallProcessor.process(element, object : KotlinCallTargetProcessor {
@@ -108,18 +110,19 @@ internal class KotlinSuspendFunctionWrapper(
             }
 
             context(session: KaSession)
-            override fun processUnresolvedCall(element: KtElement, callInfo: KaCallInfo?): Boolean {
-                if (callInfo is KaErrorCallInfo
+            override fun processUnresolvedCall(element: KtElement, callInfo: KaCallResolutionAttempt?): Boolean {
+                return if (callInfo is KaCallResolutionError
                     && callInfo.candidateCalls.size == 1
                     && callInfo.diagnostic.factoryName == "INVISIBLE_MEMBER"
                 ) {
-                    return processResolvedCall(element, callInfo.candidateCalls.single())
+                    processResolvedCall(element, callInfo.candidateCalls.single())
+                } else {
+                    true
                 }
-                return true
             }
 
             context(session: KaSession)
-            private fun processResolvedCall(element: KtElement, call: KaCall): Boolean {
+            private fun processResolvedCall(element: KtElement, call: KaSimpleCall<*, *>): Boolean {
                 val targetProcessor = this
                 return with(KotlinCallProcessor) { processResolvedCall(targetProcessor, element, call) }
             }

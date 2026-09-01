@@ -14,20 +14,22 @@ import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.changeSignature.CallerUsageInfo
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallResolutionError
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.simple
+import org.jetbrains.kotlin.analysis.api.resolution.single
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
@@ -88,6 +90,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.sure
@@ -97,15 +100,15 @@ internal class KotlinFunctionCallUsage(
     private val callee: PsiElement
 ) : UsageInfo(element), KotlinBaseChangeSignatureUsage, WithContextParameters {
 
-    @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
     private val indexToExpMap: Map<Int, SmartPsiElementPointer<KtExpression>>? = allowAnalysisFromWriteAction {
         allowAnalysisOnEdt {
             analyze(element) {
-                val ktCall = element.resolveToCall()
-                val functionCall = ktCall?.singleFunctionCallOrNull()
+                val resolutionAttempt = element.tryResolveCall()
+                val functionCall = resolutionAttempt?.single?.function
                     ?: return@allowAnalysisOnEdt null
-                if (ktCall is KaErrorCallInfo && (functionCall.signature.valueParameters.size != element.valueArguments.size ||
-                        ktCall.diagnostic is KaFirDiagnostic.NamedParameterNotFound)) {
+                if (resolutionAttempt is KaCallResolutionError && (functionCall.signature.valueParameters.size != element.valueArguments.size ||
+                        resolutionAttempt.diagnostic is KaFirDiagnostic.NamedParameterNotFound)) {
                     //don't update broken call sites e.g. if new parameter is added as follows
                     //first add new argument to all function usages and only then call refactoring to update function hierarchy
                     return@allowAnalysisOnEdt null
@@ -156,12 +159,12 @@ internal class KotlinFunctionCallUsage(
         }
     }
 
-    @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
+    @OptIn(KaExperimentalApi::class, KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
     private val explicitToImplicitExtensionReceiver: Pair<String?, String?> =
         allowAnalysisFromWriteAction {
             allowAnalysisOnEdt {
                 analyze(element) {
-                    val receiverValue = element.resolveToCall()?.singleFunctionCallOrNull()?.extensionReceiver
+                    val receiverValue = element.tryResolveCall()?.single?.function?.extensionReceiver
                     when (val receiver = (receiverValue as? KaSmartCastedReceiverValue)?.original ?: receiverValue) {
                         is KaExplicitReceiverValue -> receiver.expression.text to null
                         is KaImplicitReceiverValue -> {
@@ -182,14 +185,16 @@ internal class KotlinFunctionCallUsage(
     @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
     private val onReceiver  = allowAnalysisFromWriteAction { allowAnalysisOnEdt { analyze(element) { onReceiver(element) } } }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
-    private fun onReceiver(element: KtElement): Boolean {
-        val partiallyAppliedSymbol = element.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
-        val receiverValue = (partiallyAppliedSymbol?.dispatchReceiver ?: partiallyAppliedSymbol?.extensionReceiver)?.let { (it as? KaSmartCastedReceiverValue)?.original ?: it }
+    private fun onReceiver(element: KtResolvableCall): Boolean {
+        val call = element.resolveSuccessfulCall()?.simple ?: return false
+        val receiverValue = (call.dispatchReceiver ?: call.extensionReceiver)?.let { (it as? KaSmartCastedReceiverValue)?.original ?: it }
 
         if ((receiverValue as? KaImplicitReceiverValue)?.symbol is KaReceiverParameterSymbol) return true
 
-        return receiverValue is KaExplicitReceiverValue && onReceiver(receiverValue.expression)
+        return receiverValue is KaExplicitReceiverValue &&
+                (receiverValue.expression as? KtResolvableCall)?.let { onReceiver(it) } == true
     }
 
     override fun getContextParametersValues(changeInfo: KotlinChangeInfoBase): List<String> =

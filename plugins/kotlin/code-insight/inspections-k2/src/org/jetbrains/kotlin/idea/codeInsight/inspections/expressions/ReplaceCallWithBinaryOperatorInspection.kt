@@ -8,13 +8,15 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.builtinTypes
 import org.jetbrains.kotlin.analysis.api.types.hasFlexibleNullability
@@ -29,6 +31,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.getWrappingPrefixExpressionOr
 import org.jetbrains.kotlin.idea.codeinsight.utils.invertedComparison
 import org.jetbrains.kotlin.idea.codeinsight.utils.isZeroIntegerConstant
 import org.jetbrains.kotlin.idea.codeinsight.utils.singleArgumentExpression
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionSymbol
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
@@ -80,6 +83,7 @@ internal class ReplaceCallWithBinaryOperatorInspection :
                 || identifier in OperatorNameConventions.BINARY_OPERATION_NAMES)
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtDotQualifiedExpression): Context? {
         val callExpression = element.selectorExpression as? KtCallExpression ?: return null
@@ -88,7 +92,7 @@ internal class ReplaceCallWithBinaryOperatorInspection :
         val argument = callExpression.singleArgumentExpression() ?: return null
 
         val resolvedCall =
-            callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
+            callExpression.resolveSuccessfulCall() ?: return null
         if (resolvedCall.symbol.valueParameters.size != 1) return null
         if (resolvedCall.typeArgumentsMapping.isNotEmpty()) return null
         if (!element.isReceiverExpressionWithValue()) return null
@@ -176,9 +180,9 @@ internal class ReplaceCallWithBinaryOperatorInspection :
     private fun getOperationToken(calleeExpression: KtSimpleNameExpression): KtSingleValueToken? {
         val identifier = calleeExpression.getReferencedNameAsName()
         val dotQualified = calleeExpression.parent.parent as? KtDotQualifiedExpression ?: return null
+        @OptIn(KaExperimentalApi::class)
         fun isOperatorOrCompatible(): Boolean {
-            val functionCall = calleeExpression.resolveToCall()?.successfulFunctionCallOrNull()
-            return (functionCall?.symbol as? KaNamedFunctionSymbol)?.isOperator == true
+            return (calleeExpression.resolveSuccessfulSymbol() as? KaNamedFunctionSymbol)?.isOperator == true
         }
         return when (identifier) {
             OperatorNameConventions.EQUALS -> {
@@ -228,10 +232,11 @@ private fun KaCallableSymbol.isAnyEquals(): Boolean {
     return allOverriddenSymbolsWithSelf.any { it.callableId == KOTLIN_ANY_EQUALS_CALLABLE_ID }
 }
 
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KtExpression.isAnyEquals(): Boolean {
-    val resolvedCall = resolveToCall()?.successfulFunctionCallOrNull() ?: return false
-    return resolvedCall.symbol.isAnyEquals()
+    val symbol = resolveSuccessfulExpressionSymbol() as? KaFunctionSymbol ?: return false
+    return symbol.isAnyEquals()
 }
 
 /**

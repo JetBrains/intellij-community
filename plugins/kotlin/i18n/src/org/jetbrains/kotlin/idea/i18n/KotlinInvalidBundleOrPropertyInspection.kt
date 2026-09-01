@@ -11,9 +11,11 @@ import com.intellij.lang.properties.psi.Property
 import com.intellij.lang.properties.references.PropertyReference
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -41,6 +43,7 @@ class KotlinInvalidBundleOrPropertyInspection : AbstractKotlinInspection() {
                 }
             }
 
+            @OptIn(KaExperimentalApi::class)
             private fun processPropertyReference(ref: PropertyReference, template: KtStringTemplateExpression) {
                 if (ref.isSoft) return // don't highlight soft references, they are inserted in every string literal
 
@@ -64,7 +67,7 @@ class KotlinInvalidBundleOrPropertyInspection : AbstractKotlinInspection() {
                 if (keyArgumentIndex < 0) return
 
                 analyze(callExpression) {
-                    val callable = callExpression.resolveToCall()?.singleFunctionCallOrNull()?.symbol ?: return
+                    val callable = callExpression.tryResolveCall()?.single?.function?.symbol ?: return
                     if (callable.valueParameters.size != keyArgumentIndex + 2) return
                     if (!callable.valueParameters.last().isVararg) return
                 }

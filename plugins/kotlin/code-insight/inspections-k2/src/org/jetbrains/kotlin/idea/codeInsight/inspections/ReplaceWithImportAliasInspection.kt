@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -65,7 +65,7 @@ internal class ReplaceWithImportAliasInspection :
             !it.isAllUnder && it.alias != null && it.importedFqName?.shortName()?.asString() == name
         }.ifEmpty { return null }
 
-        val fqName = element.resolveSymbol()?.importableFqName ?: return null
+        val fqName = element.resolveSuccessfulSymbol()?.importableFqName ?: return null
         val aliasNameIdentifier = imports.find { it.importedFqName == fqName }?.alias?.nameIdentifier ?: return null
         
         return Context(

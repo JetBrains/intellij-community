@@ -7,7 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
@@ -83,13 +83,13 @@ internal class ConvertOptInMarkerToRequirementIntention :
         ) // inapplicable on those elements
             return null
 
-        val constructorSymbol = parentAnnotation.resolveSymbol() ?: return null
+        val constructorSymbol = parentAnnotation.resolveSuccessfulSymbol() ?: return null
         val classSymbol = constructorSymbol.containingSymbol as? KaNamedClassSymbol ?: return null
 
         if (classSymbol.classId != OptInNames.OPT_IN_CLASS_ID)
             return null
 
-        val klsSymbol = lit.resolveSymbol() ?: return null
+        val klsSymbol = lit.resolveSuccessfulSymbol() ?: return null
         val klsId = (klsSymbol as? KaNamedClassSymbol)?.classId ?: return null
 
         return Context(klsId, element)

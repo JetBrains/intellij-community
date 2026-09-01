@@ -5,10 +5,9 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -76,8 +75,7 @@ private fun hasSingleNonNamedArgument(element: KtCallExpression): Boolean {
     return argument.getArgumentExpression() != null
 }
 
+@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
-private fun getFunctionSymbol(element: KtCallExpression): KaNamedFunctionSymbol? {
-    val call = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-    return call.symbol as? KaNamedFunctionSymbol
-}
+private fun getFunctionSymbol(element: KtCallExpression): KaNamedFunctionSymbol? =
+    element.resolveSuccessfulSymbol() as? KaNamedFunctionSymbol

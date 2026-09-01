@@ -14,13 +14,14 @@ import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -101,12 +102,13 @@ object K2CreateParameterFromUsageBuilder {
         return listOf(CreateParameterFromUsageAction(qualifiedElement, refExpr.getReferencedName(), valVar, container))
     }
 
+    @OptIn(KaExperimentalApi::class)
     fun generateCreateParameterActionForNamedParameterNotFound(arg: KtValueArgument): IntentionAction? {
         val name = arg.getArgumentName()?.text?: return null
         val expression = arg.getArgumentExpression()?: return null
         analyze (arg) {
             val callExpression = (arg.parent?.parent as? KtCallElement) ?: return null
-            val call = callExpression.resolveToCall()?.singleFunctionCallOrNull() ?: return null
+            val call = callExpression.tryResolveCall()?.single?.function ?: return null
             val namedDeclaration = call.symbol.psi as? KtNamedDeclaration ?: return null
             val namedDeclClass = if (namedDeclaration is KtConstructor<*>) namedDeclaration.getContainingClassOrObject() else namedDeclaration
             val valVar = if (namedDeclClass is KtClass && (namedDeclClass.isData() || namedDeclClass.isAnnotation()))

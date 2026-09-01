@@ -5,18 +5,19 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallCandidateInfo
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
@@ -209,9 +210,10 @@ private val ARRAY_OF_FUNCTION_NAMES: Set<Name> = setOf(ArrayFqNames.ARRAY_OF_FUN
         ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY.values +
         ArrayFqNames.EMPTY_ARRAY
 
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 fun isArrayOfCall(callElement: KtCallElement): Boolean {
-    val resolvedCall = callElement.resolveToCall()?.singleFunctionCallOrNull() ?: return false
+    val resolvedCall = callElement.tryResolveCall()?.single?.function ?: return false
     val callableId = resolvedCall.signature.callableId ?: return false
     return callableId.packageName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME && callableId.callableName in ARRAY_OF_FUNCTION_NAMES
 }
@@ -236,8 +238,9 @@ fun KtReference.resolveToExpandedSymbol(): KaSymbol? = when (val symbol = resolv
 /**
  * @return implicit receivers of [this], including implicit receivers with smart casts, which are unwrapped to [KaImplicitReceiverValue]
  */
-fun KaCallableMemberCall<*, *>.getImplicitReceivers(): List<KaImplicitReceiverValue> = partiallyAppliedSymbol
-    .let { listOfNotNull(it.dispatchReceiver, it.extensionReceiver) }
+@OptIn(KaExperimentalApi::class)
+fun KaSimpleCall<*, *>.getImplicitReceivers(): List<KaImplicitReceiverValue> =
+    listOfNotNull(dispatchReceiver, extensionReceiver)
     .map { it.unwrapSmartCasts() }
     .filterIsInstance<KaImplicitReceiverValue>()
 

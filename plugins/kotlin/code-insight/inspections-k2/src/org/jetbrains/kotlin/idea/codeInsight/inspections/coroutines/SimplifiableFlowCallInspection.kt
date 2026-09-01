@@ -3,9 +3,8 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
-import org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines.CoroutinesIds
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.idea.codeInsight.inspections.AbstractSimplifiableCallInspection
 import org.jetbrains.kotlin.idea.codeInsight.inspections.isIdentityLambda
 import org.jetbrains.kotlin.name.CallableId
@@ -26,7 +25,7 @@ internal class SimplifiableFlowCallInspection : AbstractSimplifiableCallInspecti
         @OptIn(KaExperimentalApi::class)
         context(_: KaSession)
         override fun analyze(callExpression: KtCallExpression): String? {
-            val functionCall = callExpression.resolveCall() ?: return null
+            val functionCall = callExpression.resolveSuccessfulCall() ?: return null
 
             val transformArgument = functionCall.findArgumentExpressionByParameterName(CoroutinesIds.ParameterNames.transform) as? KtLambdaExpression ?: return null
             if (!transformArgument.isIdentityLambda()) return null

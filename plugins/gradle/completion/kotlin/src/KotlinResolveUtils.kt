@@ -4,7 +4,6 @@ package com.intellij.gradle.completion.kotlin
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
-import com.intellij.util.asSafely
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
@@ -12,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.components.compositeScope
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
-import org.jetbrains.kotlin.analysis.api.resolution.KaSingleCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -50,7 +49,7 @@ private fun KtCallExpression.isReceiverSubtypeOf(supertypeFqn: FqName): Boolean 
     if (functionCall == null) {
       // An expression might not be resolved to a single call due to ambiguity - e.g. when inputting arguments is not finished yet.
       return callExpression.resolveToCallCandidates().any { candidateInfo ->
-        val candidateCall = candidateInfo.candidate.asSafely<KaSingleCall<*, *>>() ?: return@any false
+        val candidateCall = candidateInfo.candidate as? KaSimpleCall<*, *> ?: return@any false
         isReceiverForCallASubtypeOf(candidateCall, supertype)
       }
     }
@@ -62,7 +61,7 @@ private fun KtCallExpression.isReceiverSubtypeOf(supertypeFqn: FqName): Boolean 
 
 @OptIn(KaExperimentalApi::class)
 context(session: KaSession)
-private fun isReceiverForCallASubtypeOf(call: KaSingleCall<*, *>, supertype: KaType): Boolean {
+private fun isReceiverForCallASubtypeOf(call: KaSimpleCall<*, *>, supertype: KaType): Boolean {
   val receiverType = call.extensionReceiver?.type
                      ?: call.dispatchReceiver?.type
                      ?: return false

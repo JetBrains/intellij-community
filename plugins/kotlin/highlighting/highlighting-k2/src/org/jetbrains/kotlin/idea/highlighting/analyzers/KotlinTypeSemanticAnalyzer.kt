@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
@@ -64,7 +64,7 @@ internal class KotlinTypeSemanticAnalyzer(holder: HighlightInfoHolder, session: 
             return
         }
 
-        val symbol = ((expression as? KtResolvable)?.resolveSymbol()) as? KaClassifierSymbol ?: return
+        val symbol = ((expression as? KtResolvable)?.resolveSuccessfulSymbol()) as? KaClassifierSymbol ?: return
 
         val color = symbol.toInfoType()
 

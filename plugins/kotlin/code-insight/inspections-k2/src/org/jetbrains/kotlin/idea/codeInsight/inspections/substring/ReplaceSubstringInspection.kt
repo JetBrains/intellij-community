@@ -2,11 +2,10 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections.substring
 
 import com.intellij.codeInspection.ProblemsHolder
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.isPure
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
@@ -28,10 +27,10 @@ abstract class ReplaceSubstringInspection: KotlinApplicableInspectionBase.Simple
     ): KtVisitor<*, *> = dotQualifiedExpressionVisitor {
         visitTargetElement(it, holder, isOnTheFly)
     }
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     protected fun resolvesToMethod(element: KtDotQualifiedExpression, fqMethodName: String): Boolean {
-        val resolvedCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return false
-        val callableId = resolvedCall.symbol.callableId?.asSingleFqName()
+        val callableId = element.resolveSuccessfulSymbol()?.callableId?.asSingleFqName()
         return callableId?.asString() == fqMethodName
     }
 

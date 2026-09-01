@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
@@ -201,7 +201,7 @@ private fun isRunBlocking(function: KaNamedFunctionSymbol): Boolean {
 @OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun KtCallExpression.resolveToFunctionSymbol(): KaNamedFunctionSymbol? =
-    resolveSymbol() as? KaNamedFunctionSymbol
+    this.resolveSuccessfulSymbol() as? KaNamedFunctionSymbol
 
 /**
  * Checks if the given element is in a suspend context (either in a suspend function or in a suspend lambda).
@@ -251,7 +251,7 @@ private fun KtFunctionLiteral.usesCoroutineScopeReceiver(): Boolean {
     return bodyExpression.anyDescendantOfType<KtExpression> { expression ->
         when (expression) {
             is KtThisExpression -> {
-                val resolvedSymbol = expression.resolveSymbol()
+                val resolvedSymbol = expression.resolveSuccessfulSymbol()
                 resolvedSymbol == lambdaReceiverParameter
             }
 

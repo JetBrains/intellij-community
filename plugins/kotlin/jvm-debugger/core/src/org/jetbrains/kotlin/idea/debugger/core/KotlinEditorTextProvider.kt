@@ -12,13 +12,14 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.parents
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaAnnotationCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaSuccessCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.successful
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
@@ -194,15 +195,17 @@ private object AnalysisApiBasedKotlinEditorTextProvider : KotlinEditorTextProvid
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun isReferenceAllowed(reference: KtReferenceExpression, allowMethodCalls: Boolean): Boolean = runDumbAnalyze(reference, fallback = false) f@ {
         when {
             reference is KtBinaryExpressionWithTypeRHS -> return@f true
             reference is KtOperationReferenceExpression && reference.operationSignTokenType == KtTokens.ELVIS -> return@f true
             reference is KtCollectionLiteralExpression -> return@f false
             reference is KtCallExpression -> {
-                val callInfo = reference.resolveToCall() as? KaSuccessCallInfo ?: return@f false
+                val resolutionAttempt = reference.tryResolveCall() ?: return@f false
+                val call = resolutionAttempt.successful ?: return@f false
 
-                return@f when (val call = callInfo.call) {
+                return@f when (call) {
                     is KaAnnotationCall -> {
                         val languageVersionSettings = reference.languageVersionSettings
                         languageVersionSettings.supportsFeature(LanguageFeature.InstantiationOfAnnotationClasses)

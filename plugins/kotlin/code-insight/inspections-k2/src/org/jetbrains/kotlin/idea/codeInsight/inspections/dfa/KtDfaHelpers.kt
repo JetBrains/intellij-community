@@ -13,35 +13,38 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.RelationType
 import com.intellij.psi.PsiTypes
 import com.intellij.psi.tree.IElementType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
-import org.jetbrains.kotlin.analysis.api.types.arrayElementType
-import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
-import org.jetbrains.kotlin.analysis.api.types.defaultType
-import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
-import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
-import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.types.hasFlexibleNullability
-import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray
 import org.jetbrains.kotlin.analysis.api.components.isClassType
-import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.types.classId
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.types.withNullability
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.arrayElementType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.defaultType
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.hasFlexibleNullability
+import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.idea.codeInsight.inspections.dfa.KtClassDef.Companion.classDef
+import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtBinaryExpressionWithTypeRHS
@@ -152,6 +155,7 @@ internal fun KaVariableSymbol.toSpecialField(): SpecialField? {
     return field
 }
 
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 internal fun KtExpression.getKotlinType(): KaType? {
     var parent = this.parent
@@ -167,7 +171,7 @@ internal fun KtExpression.getKotlinType(): KaType? {
     // So we have to patch the original call type, widening it to its upper bound.
     // Current implementation is not always precise and may result in skipping a useful warning.
     if (parent is KtBinaryExpressionWithTypeRHS && parent.operationReference.text == "as?") {
-        val call = resolveToCall()?.singleFunctionCallOrNull()
+        val call = tryResolveExpressionCall()?.single?.function
         if (call != null) {
             val functionReturnType = (call.symbol as? KaNamedFunctionSymbol)?.returnType
             if (functionReturnType is KaTypeParameterType) {
@@ -249,13 +253,14 @@ internal fun getConstant(expr: KtConstantExpression): DfType {
     }
 }
 
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 internal fun getInlineableLambda(expr: KtCallExpression): LambdaAndParameter? {
     val lambdaArgument = expr.lambdaArguments.singleOrNull() ?: return null
     val lambdaExpression = lambdaArgument.getLambdaExpression() ?: return null
     val index = expr.valueArguments.indexOf(lambdaArgument)
     assert(index >= 0)
-    val resolvedCall = expr.resolveToCall()?.singleFunctionCallOrNull() ?: return null
+    val resolvedCall = expr.tryResolveCall()?.single?.function ?: return null
     val symbol = resolvedCall.symbol as? KaNamedFunctionSymbol
     if (symbol == null || !symbol.isInline) return null
     val parameterSymbol = resolvedCall.valueArgumentMapping[lambdaExpression]?.symbol ?: return null

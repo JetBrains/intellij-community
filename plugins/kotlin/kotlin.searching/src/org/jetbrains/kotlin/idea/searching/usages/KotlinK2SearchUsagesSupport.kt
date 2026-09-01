@@ -24,8 +24,8 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.projectStructure.kaModule
 import org.jetbrains.kotlin.analysis.api.resolution.KaDelegatedConstructorCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaSingleCall
-import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.session.canBeAnalysed
@@ -103,7 +103,7 @@ internal class KotlinK2SearchUsagesSupport(private val project: Project) : Kotli
                 //don't resolve to psi to avoid symbol -> psi, psi -> symbol conversion
                 //which doesn't work well for e.g. kotlin.FunctionN classes due to mapping in
                 //`org.jetbrains.kotlin.analysis.api.fir.FirDeserializedDeclarationSourceProvider`
-                val invokeSymbol = ((element as? KtResolvableCall)?.resolveCall() as? KaSingleCall<*, *>)?.symbol ?: return false
+                val invokeSymbol = (element as? KtResolvableCall)?.resolveSuccessfulCall()?.simple?.symbol ?: return false
                 if (invokeSymbol is KaNamedFunctionSymbol && invokeSymbol.name == OperatorNameConventions.INVOKE) {
                     val searchTargetContainerSymbol = searchTarget.symbol
 
@@ -419,6 +419,7 @@ internal class KotlinK2SearchUsagesSupport(private val project: Project) : Kotli
         return element.originalElement.containingFile != null
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun createConstructorHandle(ktDeclaration: KtDeclaration): KotlinSearchUsagesSupport.ConstructorCallHandle {
         return object : KotlinSearchUsagesSupport.ConstructorCallHandle {
             override fun referencedTo(element: KtElement): Boolean {
@@ -437,6 +438,7 @@ internal class KotlinK2SearchUsagesSupport(private val project: Project) : Kotli
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun createConstructorHandle(psiMethod: PsiMethod): KotlinSearchUsagesSupport.ConstructorCallHandle {
         return object : KotlinSearchUsagesSupport.ConstructorCallHandle {
             override fun referencedTo(element: KtElement): Boolean {

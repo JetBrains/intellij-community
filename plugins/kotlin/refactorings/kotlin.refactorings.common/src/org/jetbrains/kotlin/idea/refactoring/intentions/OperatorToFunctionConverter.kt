@@ -2,16 +2,18 @@
 package org.jetbrains.kotlin.idea.refactoring.intentions
 
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
@@ -177,12 +179,12 @@ object OperatorToFunctionConverter {
         }
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
+    @OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class)
     private fun getCalledFunctionName(element: KtBinaryExpression): Name? = allowAnalysisOnEdt {
         @OptIn(KaAllowAnalysisFromWriteAction::class)
         allowAnalysisFromWriteAction {
             analyze(element) {
-                val resolvedCall = element.resolveToCall()?.singleFunctionCallOrNull()
+                val resolvedCall = element.tryResolveCall()?.single?.function
                 val targetSymbol = resolvedCall?.symbol
 
                 (targetSymbol as? KaNamedSymbol)?.name
@@ -217,12 +219,12 @@ object OperatorToFunctionConverter {
         return expressionToReplace.replace(transformed) as KtExpression
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
+    @OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
     private fun appendIfVarargType(element: KtArrayAccessExpression, pattern: BuilderByPattern<KtExpression>) {
         allowAnalysisOnEdt {
             allowAnalysisFromWriteAction {
                 analyze(element) {
-                    val argumentMapping = element.resolveToCall()?.singleFunctionCallOrNull()?.valueArgumentMapping.orEmpty()
+                    val argumentMapping = element.tryResolveCall()?.single?.function?.valueArgumentMapping.orEmpty()
                     if (argumentMapping[element.indexExpressions.firstOrNull()]?.symbol?.isVararg == true) {
                         argumentMapping[(element.parent as KtBinaryExpression).right]?.symbol?.name?.asString()
                             .let { pattern.appendFixedText("$it = ") }
@@ -348,13 +350,13 @@ object OperatorToFunctionConverter {
                 !isLambdaWithReceiver
     }
 
-    @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
     private fun resolveImplicitReceiverText(element: KtCallExpression): String? {
         val callee = element.calleeExpression!!
         val owner = allowAnalysisOnEdt {
             allowAnalysisFromWriteAction {
                 analyze(callee) {
-                    val functionCall = element.resolveToCall()?.successfulFunctionCallOrNull()
+                    val functionCall = element.resolveSuccessfulCall()
                     val symbol = (functionCall?.extensionReceiver as? KaImplicitReceiverValue)?.symbol
                     (symbol as? KaReceiverParameterSymbol)?.owningCallableSymbol?.psi
                 }

@@ -11,14 +11,17 @@ import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.variable
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isOverridable
+import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -63,14 +66,15 @@ internal class SelfAssignmentInspection : KotlinApplicableInspectionBase.Simple<
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtBinaryExpression): String? {
         val left = element.left
         val right = element.right
 
-        val leftResolvedCall = left?.resolveToCall()?.singleVariableAccessCall()
+        val leftResolvedCall = left?.tryResolveExpressionCall()?.single?.variable
         val leftCallee = leftResolvedCall?.symbol ?: return null
-        val rightResolvedCall = right?.resolveToCall()?.singleVariableAccessCall()
+        val rightResolvedCall = right?.tryResolveExpressionCall()?.single?.variable
         val rightCallee = rightResolvedCall?.symbol ?: return null
 
         if (leftCallee != rightCallee) return null
@@ -108,16 +112,17 @@ internal class SelfAssignmentInspection : KotlinApplicableInspectionBase.Simple<
     context(_: KaSession)
     private fun KtExpression.receiverSymbol(): KaSymbol? {
         when (val receiverExpression = (this as? KtDotQualifiedExpression)?.receiverExpression) {
-            is KtThisExpression -> return receiverExpression.resolveSymbol()
-            is KtNameReferenceExpression -> return receiverExpression.resolveSymbol()
+            is KtThisExpression -> return receiverExpression.resolveSuccessfulSymbol()
+            is KtNameReferenceExpression -> return receiverExpression.resolveSuccessfulSymbol()
         }
 
         return getImplicitReceiverSymbolIfExists()
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtExpression.getImplicitReceiverSymbolIfExists(): KaSymbol? {
-        val implicitReceiver = this.resolveToCall()?.singleVariableAccessCall()?.let {
+        val implicitReceiver = tryResolveExpressionCall()?.single?.variable?.let {
             it.dispatchReceiver ?: it.extensionReceiver
         }
 

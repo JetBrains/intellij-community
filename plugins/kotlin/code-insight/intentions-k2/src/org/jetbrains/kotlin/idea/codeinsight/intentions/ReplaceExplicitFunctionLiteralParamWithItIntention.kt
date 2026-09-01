@@ -8,10 +8,11 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.application
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
@@ -40,6 +41,7 @@ internal class ReplaceExplicitFunctionLiteralParamWithItIntention : SelfTargetin
 
     override fun startInWriteAction(): Boolean = false
 
+    @OptIn(KaExperimentalApi::class)
     override fun isApplicableTo(element: KtElement, caretOffset: Int): Boolean {
         val functionLiteral = targetFunctionLiteral(element, caretOffset) ?: return false
         val explicitParameterName = functionLiteral.valueParameters.singleOrNull()?.name ?: return false
@@ -55,8 +57,9 @@ internal class ReplaceExplicitFunctionLiteralParamWithItIntention : SelfTargetin
 
             return computeWithProgressIconIfNeeded(element.findExistingEditor()!!, caretOffset) {
                 analyze(contentElement) {
-                    val resolveToCall = contentElement.getPossiblyQualifiedCallExpression()?.resolveToCall()
-                    resolveToCall?.singleFunctionCallOrNull()?.symbol != null
+                    val functionCall =
+                        contentElement.getPossiblyQualifiedCallExpression()?.tryResolveCall()?.single?.function
+                    functionCall?.symbol != null
                 }
             }
         }
@@ -81,7 +84,7 @@ private fun targetFunctionLiteral(element: KtElement, caretOffset: Int, editor: 
         val existingEditor = editor ?: element.findExistingEditor() ?: return null
         return computeWithProgressIconIfNeeded(existingEditor, caretOffset) {
             analyze(expression) {
-                val target = expression.resolveSymbol() as? KaValueParameterSymbol ?: return@analyze null
+                val target = expression.resolveSuccessfulSymbol() as? KaValueParameterSymbol ?: return@analyze null
                 val functionDescriptor = target.containingSymbol as? KaAnonymousFunctionSymbol ?: return@analyze null
                 functionDescriptor.psi as? KtFunctionLiteral
             }

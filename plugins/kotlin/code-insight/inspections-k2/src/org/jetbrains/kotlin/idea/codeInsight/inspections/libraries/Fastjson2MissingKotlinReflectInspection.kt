@@ -11,11 +11,13 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -50,11 +52,12 @@ class Fastjson2MissingKotlinReflectInspection :
         visitTargetElement(expression, holder, isOnTheFly)
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(
         element: KtCallExpression,
     ): Context? {
-        val symbol = element.resolveToCall()?.singleFunctionCallOrNull()?.symbol ?: return null
+        val symbol = element.tryResolveCall()?.single?.function?.symbol ?: return null
         val callableId = symbol.callableId ?: return null
 
         // fastjson2 API is split between member functions (e.g. JSON.parseObject) and

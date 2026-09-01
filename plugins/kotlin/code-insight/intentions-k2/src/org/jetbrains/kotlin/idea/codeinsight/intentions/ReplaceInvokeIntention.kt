@@ -8,10 +8,9 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.startOffset
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
@@ -47,10 +46,10 @@ class ReplaceInvokeIntention : KotlinApplicableModCommandAction<KtDotQualifiedEx
                 selectorExpression.typeArgumentList == null
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtDotQualifiedExpression): Unit? {
-        val resolvedCall = element.callExpression?.referenceExpression()?.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-        val symbol = resolvedCall.symbol as? KaNamedFunctionSymbol ?: return null
+        val symbol = element.callExpression?.referenceExpression()?.resolveSuccessfulSymbol() as? KaNamedFunctionSymbol ?: return null
 
         return symbol.isOperator.asUnit
     }

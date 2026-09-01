@@ -6,11 +6,11 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AssociateFuncti
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AssociateFunctionUtil.lambda
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AssociateFunctionUtil.lastStatement
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AssociateFunctionUtil.pair
+import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds.BASE_COLLECTIONS_PACKAGE
@@ -50,11 +51,12 @@ import org.jetbrains.kotlin.types.Variance
 
 class ReplaceAssociateFunctionInspection : AbstractKotlinInspection() {
 
+    @OptIn(KaExperimentalApi::class)
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitorVoid = dotQualifiedExpressionVisitor(fun(dotQualifiedExpression) {
         val callExpression = dotQualifiedExpression.callExpression ?: return
         val calleeExpression = callExpression.calleeExpression ?: return
         val calleeExpressionFqName = analyze(calleeExpression) {
-            val functionCall = calleeExpression.resolveToCall()?.singleFunctionCallOrNull() ?: return
+            val functionCall = calleeExpression.tryResolveExpressionCall()?.single?.function ?: return
             functionCall.symbol.callableId?.asSingleFqName() ?: return
         }
         if (calleeExpressionFqName !in validAssociateFqNames) return

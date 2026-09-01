@@ -63,6 +63,7 @@ jvm_library(
         "//platform/util/concurrency",
         "//platform/statistics",
         "//platform/util:util-ui",
+        "//plugins/kotlin/base/code-insight",
     ],
 )
 
@@ -113,6 +114,7 @@ jvm_library(
         "//platform/util/concurrency:concurrency_test_lib",
         "//platform/statistics:statistics_test_lib",
         "//platform/util:util-ui_test_lib",
+        "//plugins/kotlin/base/code-insight:code-insight_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.searching.base` end

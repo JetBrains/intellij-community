@@ -44,8 +44,10 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
@@ -102,12 +104,13 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun collectFromParameters(
         callElement: KtCallElement,
         sink: InlayTreeSink
     ) {
-        val functionCall: KaFunctionCall<*> = callElement.resolveToCall()?.singleFunctionCallOrNull()
+        val functionCall: KaFunctionCall<*> = callElement.tryResolveCall()?.single?.function
             ?: return collectMissingValueArguments(callElement, null, emptyList(), contextMenuPayloads = null, sink)
         val functionSymbol: KaFunctionSymbol = functionCall.symbol
         val valueParameters: List<KaValueParameterSymbol> = functionSymbol.valueParameters

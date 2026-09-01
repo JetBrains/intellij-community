@@ -10,7 +10,11 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.types.KaCapturedType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
@@ -31,7 +35,7 @@ import org.jetbrains.kotlin.types.Variance
 @OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 fun getRenderedTypeArguments(element: KtCallElement): String? {
-    val resolvedCall = element.resolveToCall()?.singleFunctionCallOrNull() ?: return null
+    val resolvedCall = element.tryResolveCall()?.single?.function ?: return null
     val typeParameterSymbols = resolvedCall.symbol.typeParameters
     if (typeParameterSymbols.isEmpty()) return null
     val renderedTypeParameters = buildList {

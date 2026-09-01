@@ -4,14 +4,15 @@ package org.jetbrains.kotlin.idea.codeinsight.intentions
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.simple
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
+import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -33,10 +34,11 @@ internal class ConvertTrimIndentToTrimMarginIntention :
         return template.text.startsWith("\"\"\"") && template.isSurroundedByLineBreaksOrBlanks()
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): Unit? {
         val callee = element.calleeExpression ?: return null
-        val symbol = callee.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.symbol ?: return null
+        val symbol = callee.tryResolveExpressionCall()?.single?.simple?.symbol ?: return null
         return (symbol.callableId?.asSingleFqName() == FqName("kotlin.text.trimIndent")).asUnit
     }
 

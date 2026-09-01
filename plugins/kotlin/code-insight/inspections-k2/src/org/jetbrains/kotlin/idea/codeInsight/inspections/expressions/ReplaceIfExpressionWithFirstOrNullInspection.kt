@@ -7,11 +7,10 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -143,9 +142,10 @@ private fun FirstElementRead.isResolvable(): Boolean = when (this) {
     is FirstElementRead.FirstCall -> expression.callExpression?.calleeCallableId() in FIRST_CALLABLE_IDS
 }
 
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KtCallExpression.calleeCallableId(): CallableId? =
-    resolveToCall()?.successfulFunctionCallOrNull()?.symbol?.callableId
+    this.resolveSuccessfulSymbol()?.callableId
 
 private enum class Emptiness {
     EMPTY,

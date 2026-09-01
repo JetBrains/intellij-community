@@ -1,13 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight
 
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.classId
@@ -39,11 +41,12 @@ internal class K2KotlinNameSuggestionProvider : KotlinNameSuggestionProvider() {
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun getNameForArgument(argument: KtValueArgument): String? {
         val callElement = (argument.parent as? KtValueArgumentList)?.parent as? KtCallElement ?: return null
         val arg = argument.getArgumentExpression() ?: return null
         analyze(callElement) {
-            val resolvedCall = callElement.resolveToCall()?.singleFunctionCallOrNull() ?: return null
+            val resolvedCall = callElement.tryResolveCall()?.single?.function ?: return null
             return resolvedCall.valueArgumentMapping[arg]?.name?.asString()
         }
     }

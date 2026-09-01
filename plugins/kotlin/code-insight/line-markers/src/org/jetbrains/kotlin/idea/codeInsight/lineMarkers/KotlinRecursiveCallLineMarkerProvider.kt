@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.KaSingleCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
@@ -98,7 +98,7 @@ internal class KotlinRecursiveCallLineMarkerProvider : AbstractKotlinLineMarkerP
 @OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun checkDispatchReceiver(target: CallTarget): Boolean {
-        var dispatchReceiver = (target.call as? KaSingleCall<*, *>)?.dispatchReceiver ?: return true
+        var dispatchReceiver = (target.call as? KaSimpleCall<*, *>)?.dispatchReceiver ?: return true
         while (dispatchReceiver is KaSmartCastedReceiverValue) {
             dispatchReceiver = dispatchReceiver.original
         }

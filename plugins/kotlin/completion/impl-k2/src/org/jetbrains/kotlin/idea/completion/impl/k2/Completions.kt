@@ -3,15 +3,16 @@ package org.jetbrains.kotlin.idea.completion.impl.k2
 
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.psi.PsiErrorElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi
 import org.jetbrains.kotlin.analysis.api.resolution.KaApplicableCallCandidateInfo
-import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaInapplicableCallCandidateInfo
-import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.findValueArgument
@@ -151,6 +152,7 @@ internal fun KotlinRawPositionContext.isAfterRangeOperator(): Boolean {
         }
 }
 
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 internal fun KotlinRawPositionContext.allowsOnlyNamedArguments(): Boolean {
     if (this !is KotlinExpressionNameReferencePositionContext) return false
@@ -162,7 +164,7 @@ internal fun KotlinRawPositionContext.allowsOnlyNamedArguments(): Boolean {
 
     if (valueArgument.getArgumentName() != null) return false
 
-    val call = callElement.resolveToCall()?.singleCallOrNull<KaFunctionCall<*>>() ?: return false
+    val call = callElement.tryResolveCall()?.single?.function ?: return false
 
     if (CallParameterInfoProvider.isJavaArgumentWithNonDefaultName(
             call.signature,

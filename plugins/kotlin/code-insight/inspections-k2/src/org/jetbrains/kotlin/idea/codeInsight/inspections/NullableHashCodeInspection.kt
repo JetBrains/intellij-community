@@ -6,11 +6,13 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.types.isNullable
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.hasOrOverridesCallableId
@@ -53,6 +55,7 @@ internal class NullableHashCodeInspection : KotlinApplicableInspectionBase.Simpl
         return element.getHashCodeSafeQualifiedExpression() != null
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtBinaryExpression): Unit? {
         val safeQualifiedExpression = element.getHashCodeSafeQualifiedExpression() ?: return null
@@ -60,7 +63,7 @@ internal class NullableHashCodeInspection : KotlinApplicableInspectionBase.Simpl
         if (!receiverType.isNullable) return null
 
         val callExpression = safeQualifiedExpression.selectorExpression as? KtCallExpression ?: return null
-        val functionSymbol = callExpression.resolveToCall()?.singleFunctionCallOrNull()?.symbol ?: return null
+        val functionSymbol = callExpression.tryResolveCall()?.single?.function?.symbol ?: return null
         return functionSymbol.hasOrOverridesCallableId(HASH_CODE_CALLABLE_ID).asUnit
     }
 

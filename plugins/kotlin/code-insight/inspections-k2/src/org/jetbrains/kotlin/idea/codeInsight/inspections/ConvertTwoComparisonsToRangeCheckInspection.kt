@@ -8,21 +8,23 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.util.applyIf
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.types.lowerBoundIfFlexible
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
-import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.getSingleUnwrappedStatementOrThis
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -216,6 +218,7 @@ internal class ConvertTwoComparisonsToRangeCheckInspection : KotlinApplicableIns
         return KtPsiFactory(project).createExpression(constantVal.toDouble().toString())
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtBinaryExpression): Context? {
         val psiContext = element.getPsiContext() ?: return null
@@ -295,7 +298,7 @@ internal class ConvertTwoComparisonsToRangeCheckInspection : KotlinApplicableIns
                 KtPsiFactory(containingFunction.project).createExpressionCodeFragment(replacementExpression.text, element)
             val fragmentExpression = fragment.getContentElement() as? KtBinaryExpression ?: return null
             analyze(fragment) {
-                val resolvedSymbol = fragmentExpression.operationReference.resolveToCall()?.singleFunctionCallOrNull()?.symbol ?: return null
+                val resolvedSymbol = fragmentExpression.operationReference.tryResolveCall()?.single?.function?.symbol ?: return null
 
                 if (resolvedSymbol == containingFunction.symbol) {
                     return null

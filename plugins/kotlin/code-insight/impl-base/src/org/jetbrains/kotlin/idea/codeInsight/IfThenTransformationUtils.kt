@@ -17,17 +17,15 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
@@ -55,6 +53,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.wrapWithLet
 import org.jetbrains.kotlin.idea.formatter.rightMarginOrDefault
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBlockExpression
@@ -297,12 +296,13 @@ object IfThenTransformationUtils {
         "java.lang.NullPointerException"
     )
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun throwsNullPointerExceptionWithNoArguments(throwExpression: KtThrowExpression): Boolean {
         val thrownExpression = throwExpression.thrownExpression as? KtCallExpression ?: return false
 
         val nameExpression = thrownExpression.calleeExpression as? KtNameReferenceExpression ?: return false
-        val resolveCall = nameExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return false
+        val resolveCall = nameExpression.resolveSuccessfulCall() ?: return false
         val declDescriptor = resolveCall.symbol.containingDeclaration ?: return false
 
         val exceptionName = (declDescriptor as? KaClassLikeSymbol)?.classId?.asSingleFqName()?.asString() ?: return false
@@ -335,9 +335,10 @@ object IfThenTransformationUtils {
     private fun hasImplicitReceiverReplaceableBySafeCall(data: IfThenTransformationData): Boolean =
         data.checkedExpression is KtThisExpression && getImplicitReceiverValue(data) != null
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun getImplicitReceiverValue(data: IfThenTransformationData): KaReceiverValue? {
-        val resolvedCall = data.baseClause.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>() ?: return null
+        val resolvedCall = data.baseClause.resolveSuccessfulExpressionCall()?.simple ?: return null
         return resolvedCall.getImplicitReceivers().firstOrNull()
     }
 }
@@ -396,17 +397,15 @@ sealed class IfThenTransformationStrategy {
             }
         }
 
+        @OptIn(KaExperimentalApi::class)
         context(_: KaSession)
         private fun KtExpression.hasImplicitReceiverMatchingThisExpression(thisExpression: KtThisExpression): Boolean {
             val thisExpressionSymbol = thisExpression.instanceReference.mainReference.resolveToSymbol() ?: return false
             // we need to resolve callee instead of call, because in case of variable call, call is resolved to `invoke`
-            val callableMemberCall = this.getCalleeExpressionIfAny()?.resolveCallableMemberCall() ?: return false
+            val singleCall = getCalleeExpressionIfAny()?.resolveSuccessfulExpressionCall()?.simple ?: return false
 
-            return callableMemberCall.getImplicitReceivers().any { it.symbol == thisExpressionSymbol }
+            return singleCall.getImplicitReceivers().any { it.symbol == thisExpressionSymbol }
         }
-
-        context(_: KaSession)
-        private fun KtExpression.resolveCallableMemberCall(): KaCallableMemberCall<*, *>? = this.resolveToCall()?.successfulCallOrNull()
 
         context(_: KaSession)
         private fun KtExpression.collectVariableCalls(): Set<KtCallExpression> = this

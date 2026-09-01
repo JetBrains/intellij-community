@@ -10,9 +10,11 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.resolution.constructor
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -46,12 +48,13 @@ internal class MigrateDiagnosticSuppressionInspection : AbstractKotlinInspection
         })
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun isSuppressAnnotation(annotationEntry: KtAnnotationEntry): Boolean {
         val calleeExpression = annotationEntry.calleeExpression ?: return false
         if (calleeExpression.text != "Suppress") return false
 
         analyze(calleeExpression) {
-            val constructorCall = calleeExpression.resolveToCall()?.singleConstructorCallOrNull() ?: return false
+            val constructorCall = calleeExpression.tryResolveCall()?.single?.constructor ?: return false
             val fqName = constructorCall.symbol.importableFqName ?: return false
 
             return fqName == StandardNames.FqNames.suppress

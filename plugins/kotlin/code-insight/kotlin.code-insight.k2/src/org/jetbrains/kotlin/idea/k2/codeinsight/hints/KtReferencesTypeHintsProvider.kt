@@ -9,26 +9,27 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.types.augmentedByWarningLevelAnnotations
-import org.jetbrains.kotlin.analysis.api.types.classId
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.constructor
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSamConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
-import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.types.augmentedByWarningLevelAnnotations
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.base.psi.isOneLiner
@@ -40,6 +41,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.calculateAllTypes
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.KtAnnotatedExpression
 import org.jetbrains.kotlin.psi.KtBlockExpression
@@ -362,11 +364,12 @@ private fun isUnclearType(type: KaType, element: KtCallableDeclaration): Boolean
     return type.classId != KaStandardTypeClassIds.ANY
 }
 
+@OptIn(KaExperimentalApi::class)
 internal fun collectLambdaTypeHint(lambdaExpression: KtExpression, sink: InlayTreeSink) {
     val functionLiteral = lambdaExpression.getStrictParentOfType<KtFunctionLiteral>() ?: return
 
     analyze(lambdaExpression) {
-        val functionCall = functionLiteral.resolveToCall()?.singleFunctionCallOrNull() ?: return
+        val functionCall = functionLiteral.tryResolveExpressionCall()?.single?.function ?: return
         sink.addPresentation(InlineInlayPosition(lambdaExpression.endOffset, true), hintFormat = HintFormat.default) {
             text(": ")
             printKtType(functionCall.symbol.returnType)
@@ -375,16 +378,17 @@ internal fun collectLambdaTypeHint(lambdaExpression: KtExpression, sink: InlayTr
 
 }
 
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun isConstructorCall(initializer: KtExpression?): Boolean {
     val callExpression = initializer as? KtCallExpression ?: return false
-    val resolveCall = initializer.resolveToCall() ?: return false
-    val functionCall = resolveCall.singleFunctionCallOrNull()
+    val resolutionAttempt = callExpression.tryResolveCall() ?: return false
+    val functionCall = resolutionAttempt.single?.function
     if (functionCall?.symbol is KaSamConstructorSymbol) {
         return true
     }
 
-    val constructorCall = resolveCall.singleConstructorCallOrNull()
+    val constructorCall = resolutionAttempt.single?.constructor
     return constructorCall != null && (constructorCall.symbol.typeParameters.isEmpty() || callExpression.typeArgumentList != null)
 }
 

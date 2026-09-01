@@ -9,11 +9,13 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -88,10 +90,10 @@ internal class DuplicateArgumentsInSetOfAndMapOfFunctionsInspection :
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun getDuplicateArguments(element: KtCallExpression): Map<Any?, List<SmartPsiElementPointer<KtExpression>>> {
-        val callableId = element.resolveToCall()
-            ?.singleFunctionCallOrNull()
+        val callableId = element.tryResolveCall()?.single?.function
             ?.symbol
             ?.callableId
             ?: return emptyMap()

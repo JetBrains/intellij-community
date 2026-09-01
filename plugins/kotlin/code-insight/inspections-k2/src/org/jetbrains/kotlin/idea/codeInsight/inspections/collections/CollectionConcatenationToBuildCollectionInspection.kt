@@ -16,7 +16,7 @@ import com.intellij.psi.util.parents
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.classId
@@ -189,7 +189,7 @@ class CollectionConcatenationToBuildCollectionInspection :
     context(_: KaSession)
     private fun KtExpression.isBuildCollectionCall(collectionType: Context.CollectionType): Boolean {
         val callExpression = transformingCallExpression() ?: return false
-        val resolvedTo = callExpression.resolveSymbol() ?: return false
+        val resolvedTo = callExpression.resolveSuccessfulSymbol() ?: return false
         return resolvedTo.callableId?.asSingleFqName()?.asString() == collectionType.buildCallFqName
     }
 
@@ -241,7 +241,7 @@ class CollectionConcatenationToBuildCollectionInspection :
     private fun KtExpression.toTransformingOperation(): Context.Operation.TransformingOperation? {
         if (this !is KtQualifiedExpression) return null
         val callExpression = selectorExpression as? KtCallExpression ?: return null
-        val resolvedTo = callExpression.resolveSymbol() ?: return null
+        val resolvedTo = callExpression.resolveSuccessfulSymbol() ?: return null
         val fqName = resolvedTo.callableId?.asSingleFqName()?.asString() ?: return null
         val kind = Context.Operation.TransformingOperation.Kind.byCallFqName(fqName) ?: return null
         return Context.Operation.TransformingOperation(createSmartPointer(), kind)
@@ -254,7 +254,7 @@ class CollectionConcatenationToBuildCollectionInspection :
     @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtOperationReferenceExpression.isDefaultStdlibCollectionOperation(): Boolean {
-        val resolvedTo = resolveSymbol() as? KaCallableSymbol ?: return false
+        val resolvedTo = resolveSuccessfulSymbol() as? KaCallableSymbol ?: return false
         return resolvedTo.callableId?.packageName == StandardNames.COLLECTIONS_PACKAGE_FQ_NAME
     }
 

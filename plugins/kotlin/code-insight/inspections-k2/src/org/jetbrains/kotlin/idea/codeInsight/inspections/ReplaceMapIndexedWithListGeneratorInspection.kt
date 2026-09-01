@@ -11,9 +11,8 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
@@ -78,7 +77,7 @@ internal class ReplaceMapIndexedWithListGeneratorInspection :
     @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): Context? {
-        val resolvedCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
+        val resolvedCall = element.resolveSuccessfulCall() ?: return null
         val symbol = resolvedCall.symbol as? KaNamedFunctionSymbol ?: return null
         if (symbol.importableFqName != StandardKotlinNames.Collections.mapIndexed) return null
         val receiver = resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver ?: return null
@@ -91,7 +90,7 @@ internal class ReplaceMapIndexedWithListGeneratorInspection :
                 val functionLiteral = argumentExpression.functionLiteral
                 functionLiteral.collectDescendantsOfType<KtReturnExpression>().forEach {
                     val targetsMapIndexed = it.getTargetLabel()
-                        ?.resolveSymbol()
+                        ?.resolveSuccessfulSymbol()
                         ?.psi == functionLiteral
 
                     if (targetsMapIndexed) {

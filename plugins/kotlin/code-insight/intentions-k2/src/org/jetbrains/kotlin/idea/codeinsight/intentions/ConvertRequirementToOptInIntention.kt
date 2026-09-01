@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
@@ -60,7 +60,7 @@ internal class ConvertRequirementToOptInIntention :
     override fun prepareContext(element: KtAnnotationEntry): Context? {
         if (element.parent.parent is KtParameter) return null // inapplicable on those elements
 
-        val constructorSymbol = element.resolveSymbol() ?: return null
+        val constructorSymbol = element.resolveSuccessfulSymbol() ?: return null
         val classSymbol = constructorSymbol.containingSymbol as? KaNamedClassSymbol ?: return null
 
         if (!classSymbol.annotations.any {
@@ -74,7 +74,7 @@ internal class ConvertRequirementToOptInIntention :
         val existingOptInAnnotation =
             (element.findParentOfType<KtModifierList>()?.annotationEntries
                 ?: (element.parent as? KtExpression)?.getAnnotationEntries())
-                ?.find { it.resolveSymbol()?.containingClassId == OptInNames.OPT_IN_CLASS_ID && it.useSiteTarget?.getAnnotationUseSiteTarget() == useSiteTarget?.getAnnotationUseSiteTarget() }
+                ?.find { it.resolveSuccessfulSymbol()?.containingClassId == OptInNames.OPT_IN_CLASS_ID && it.useSiteTarget?.getAnnotationUseSiteTarget() == useSiteTarget?.getAnnotationUseSiteTarget() }
 
         return Context(classId.asSingleFqName(), existingOptInAnnotation, useSiteTarget)
     }

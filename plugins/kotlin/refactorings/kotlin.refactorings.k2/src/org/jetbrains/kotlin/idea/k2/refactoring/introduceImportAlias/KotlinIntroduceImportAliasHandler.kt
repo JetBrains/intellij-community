@@ -22,7 +22,7 @@ import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.components.compositeScope
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.scopes.asCompositeScope
 import org.jetbrains.kotlin.analysis.api.scopes.combinedDeclaredMemberScope
@@ -88,7 +88,7 @@ object KotlinIntroduceImportAliasHandler : RefactoringActionHandler {
                 var receiverExpression = element.getReceiverExpression()
                 while (receiverExpression != null) {
                     val resolveToSymbol = (((receiverExpression as? KtQualifiedExpression)?.selectorExpression
-                        ?: receiverExpression) as? KtResolvable)?.resolveSymbol()
+                        ?: receiverExpression) as? KtResolvable)?.resolveSuccessfulSymbol()
                     scopes.addIfNotNull(
                         (resolveToSymbol as? KaNamedClassSymbol)?.combinedDeclaredMemberScope ?: (resolveToSymbol as? KaPackageSymbol)?.packageScope
                     )

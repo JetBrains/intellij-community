@@ -2,11 +2,10 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.inspections.utils
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.isFunctionType
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -95,6 +94,7 @@ internal fun hasImplicitItConflicts(lambdaArgument: KtLambdaArgument): Boolean {
  * @param lambdaArgument The lambda argument to find a name for
  * @return A unique parameter name
  */
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 internal fun findUniqueParameterName(lambdaArgument: KtLambdaArgument): String {
     // Create a name validator to check if suggested names are valid
@@ -106,9 +106,9 @@ internal fun findUniqueParameterName(lambdaArgument: KtLambdaArgument): String {
 
     // Get the receiver type from the call expression
     val callExpression = lambdaArgument.getStrictParentOfType<KtCallExpression>()
-    val resolvedCall = callExpression?.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
-    val dispatchReceiver = resolvedCall?.partiallyAppliedSymbol?.dispatchReceiver
-    val extensionReceiver = resolvedCall?.partiallyAppliedSymbol?.extensionReceiver
+    val singleCall = callExpression?.resolveSuccessfulCall()
+    val dispatchReceiver = singleCall?.dispatchReceiver
+    val extensionReceiver = singleCall?.extensionReceiver
     val parameterType = dispatchReceiver?.type ?: extensionReceiver?.type
 
     // If we have a type, suggest a name based on it

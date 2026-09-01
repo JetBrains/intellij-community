@@ -8,7 +8,7 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.returnType
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.arrayElementType
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
@@ -49,7 +49,7 @@ internal class CanBePrimaryConstructorPropertyInspection :
     context(session: KaSession)
     override fun prepareContext(element: KtProperty): MovePropertyToConstructorInfo? {
         val initializer = element.initializer ?: return null
-        val paramSymbol = (initializer as? KtResolvable)?.resolveSymbol() as? KaValueParameterSymbol ?: return null
+        val paramSymbol = (initializer as? KtResolvable)?.resolveSuccessfulSymbol() as? KaValueParameterSymbol ?: return null
         if (element.nameAsName != paramSymbol.name) return null
         val propertyType = element.returnType
         val isMergeableType = if (paramSymbol.isVararg) {

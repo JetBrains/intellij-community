@@ -14,16 +14,14 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsResultOfLambda
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
-import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_IMPLICIT_RECEIVERS_AND_PARAMS
 import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_RETURN_EXPRESSIONS
 import org.jetbrains.kotlin.idea.codeinsight.utils.isFollowedByNewLine
@@ -168,6 +166,7 @@ class KtLambdasHintsProvider(
         return false
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun printReceiverParameter(
         lambdaExpression: KtLambdaExpression,
@@ -178,8 +177,7 @@ class KtLambdasHintsProvider(
         anonymousFunctionSymbol.receiverParameter?.let { receiverSymbol ->
             val skipped = lambdaExpression.functionLiteral.getParentOfType<KtCallExpression>(false, KtBlockExpression::class.java)
                 ?.let { callExpression ->
-                    val functionCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return@let true
-                    val functionSymbol = functionCall.symbol
+                    val functionSymbol = callExpression.resolveSuccessfulSymbol() ?: return@let true
                     functionSymbol.isExcludeListed(excludeListMatchers)
                 }
 
@@ -242,4 +240,3 @@ internal fun KaFunctionSymbol.isExcludeListed(excludeListMatchers: List<Matcher>
     val parameterNames = valueParameters.map { it.name.asString() }
     return excludeListMatchers.any { it.isMatching(callableFqName, parameterNames) }
 }
-

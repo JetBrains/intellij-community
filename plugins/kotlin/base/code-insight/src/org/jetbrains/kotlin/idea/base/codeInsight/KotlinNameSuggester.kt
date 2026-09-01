@@ -11,8 +11,8 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.approximateToSuperPublicDenotableOrSelf
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.calls
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
@@ -211,8 +211,7 @@ class KotlinNameSuggester(
         val valueArgument = argumentExpression.parent as? KtValueArgument ?: return emptySequence()
         val callElement = getCallElement(valueArgument) ?: return emptySequence()
 
-        val resolvedCall =
-            callElement.tryResolveCall()?.calls?.singleOrNull { it is KaFunctionCall<*> } as? KaFunctionCall<*> ?: return emptySequence()
+        val resolvedCall = callElement.tryResolveCall()?.single?.function ?: return emptySequence()
 
         val argExpr = valueArgument.getArgumentExpression()
         val parameter = resolvedCall.valueArgumentMapping[argExpr]?.symbol

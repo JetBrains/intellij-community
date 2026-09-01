@@ -19,13 +19,9 @@ import com.intellij.util.containers.toMultiMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
@@ -99,7 +95,7 @@ private fun PsiNamedElement.isVisibleTo(usage: KtElement): Boolean {
         symbol
     } else {
         if (this !is PsiMember) return false // get Java symbol through resolve because it is not possible through getSymbol
-        (usage as? KtResolvable)?.resolveSymbol() as? KaDeclarationSymbol ?: return false
+        (usage as? KtResolvable)?.resolveSuccessfulSymbol() as? KaDeclarationSymbol ?: return false
     }
     return createUseSiteVisibilityChecker(file, receiverExpression = null, usage).isVisible(symbol)
 }
@@ -276,8 +272,7 @@ fun checkVisibilityConflictsForInternalUsages(
                                         // to reuse the same code as for Kotlin.
                                         val refererSymbol =
                                             usageElement.getStrictParentOfType<KtNamedDeclaration>()?.symbol ?: return@analyze false
-                                        val referencedSymbol = (usageElement as? KtResolvable)?.resolveSymbol()
-                                            ?: usageElement.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.symbol
+                                        val referencedSymbol = (usageElement as? KtResolvable)?.resolveSuccessfulSymbol()
                                             ?: return@analyze false
                                         referencedSymbol.isProtectedVisibleFrom(refererSymbol)
                                     }

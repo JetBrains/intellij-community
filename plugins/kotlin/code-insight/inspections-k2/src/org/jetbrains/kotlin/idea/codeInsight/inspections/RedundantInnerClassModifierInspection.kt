@@ -23,12 +23,9 @@ import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.junit.JUnitCommonClassNames
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.javaInterop.namedClassSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -48,7 +45,6 @@ import org.jetbrains.kotlin.idea.k2.refactoring.getThisReceiverOwner
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
@@ -134,12 +130,13 @@ class RedundantInnerClassModifierInspection : AbstractKotlinInspection(), Cleanu
                     outerClassSymbols,
                     hasSuperType
                 )
-                is KtThisExpression -> expression.resolveSymbol() in outerClassSymbols
+                is KtThisExpression -> expression.resolveSuccessfulSymbol() in outerClassSymbols
                 else -> false
             }
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtNameReferenceExpression.isReferenceToOuterClass(
         innerClass: KtClass,
@@ -147,7 +144,7 @@ class RedundantInnerClassModifierInspection : AbstractKotlinInspection(), Cleanu
         outerClassSymbols: List<KaClassSymbol>,
         hasSuperType: Boolean
     ): Boolean {
-        val resolvedCall = this.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
+        val resolvedCall = this.resolveSuccessfulCall()
         if (resolvedCall != null && resolvedCall.getImplicitReceivers().any { receiver ->
                 outerClassSymbols.any { outerClass -> outerClass == receiver.symbol }
             }) {
@@ -173,8 +170,8 @@ class RedundantInnerClassModifierInspection : AbstractKotlinInspection(), Cleanu
                     if (receiverTypeOfReference == null) {
                         return false
                     } else {
-                        val callableMemberCall = parentQualified.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
-                        val dispatchReceiver = callableMemberCall?.partiallyAppliedSymbol?.dispatchReceiver
+                        val callableMemberCall = parentQualified.resolveSuccessfulCall()
+                        val dispatchReceiver = callableMemberCall?.dispatchReceiver
                         val receiverOwnerType = (dispatchReceiver?.getThisReceiverOwner() as? KaCallableSymbol)?.receiverType
                         if (receiverOwnerType != null && receiverTypeOfReference.type.semanticallyEquals(receiverOwnerType, KaSubtypingErrorTypePolicy.STRICT)) {
                             return false
@@ -195,7 +192,7 @@ class RedundantInnerClassModifierInspection : AbstractKotlinInspection(), Cleanu
     private fun KtQualifiedExpression.hasThisReceiverOfOuterClass(outerClassSymbols: List<KaClassSymbol>): Boolean {
         return parent !is KtQualifiedExpression
                 && receiverExpression is KtThisExpression
-                && (receiverExpression as KtThisExpression).resolveSymbol() in outerClassSymbols
+                && (receiverExpression as KtThisExpression).resolveSuccessfulSymbol() in outerClassSymbols
     }
 
     private class RemoveInnerModifierFix : LocalQuickFix {

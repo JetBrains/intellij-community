@@ -21,18 +21,17 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.prevLeafs
 import com.intellij.psi.util.startOffset
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
-import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
@@ -77,6 +76,7 @@ internal class UnusedUnaryOperatorInspection : KotlinApplicableInspectionBase<Kt
         return true
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtExpression): Context? {
         val prefix = element.getPrefix() ?: return null
@@ -84,7 +84,7 @@ internal class UnusedUnaryOperatorInspection : KotlinApplicableInspectionBase<Kt
         if (isUsedAsExpression(prefix, parentBinary)) return null
 
         val operationReference = prefix.operationReference
-        val referencedSymbol = operationReference.resolveToCall()?.successfulFunctionCallOrNull()?.symbol
+        val referencedSymbol = operationReference.resolveSuccessfulSymbol()
 
         val isUnaryOperatorCallOnPrimitiveType = referencedSymbol?.isUnderKotlinPackage()
                                                  ?: isUnaryOperatorOnIntLiteralReference(operationReference.mainReference)

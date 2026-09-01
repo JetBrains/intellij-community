@@ -5,11 +5,11 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.compose.ide.plugin.shared.highlighting.ComposablePropertyCallHighlightingTestCase
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.resolution.KaCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 internal class K2ComposablePropertyCallHighlightingTestCase : ComposablePropertyCallHighlightingTestCase() {
   private val ext = ComposableFunctionCallHighlighterExtension()
 
-  @OptIn(KaAllowAnalysisOnEdt::class)
+  @OptIn(KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
   override fun PsiFile.highlightCallUnderCaret(): HighlightInfoType? = allowAnalysisOnEdt {
     val element = checkNotNull(this.findElementAt(editor.caretModel.offset)) {
       "Element at caret not found!"
@@ -26,7 +26,7 @@ internal class K2ComposablePropertyCallHighlightingTestCase : ComposableProperty
 
     return analyze(file as KtFile) {
       val call = (element.parentOfType<KtCallExpression>() ?: element.parentOfType<KtNameReferenceExpression>())
-        ?.resolveToCall()?.successfulCallOrNull<KaCall>()
+        ?.resolveSuccessfulCall()?.simple
 
       checkNotNull(call) {
         "Call was not found!"

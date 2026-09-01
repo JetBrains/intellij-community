@@ -10,12 +10,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.addIfNotNull
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
@@ -76,6 +74,7 @@ class RedundantLambdaArrowInspection : KotlinApplicableInspectionBase.Simple<KtL
         return true
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtLambdaExpression): Unit? {
         val functionLiteral = element.functionLiteral
@@ -89,8 +88,9 @@ class RedundantLambdaArrowInspection : KotlinApplicableInspectionBase.Simple<KtL
 
         val functionLiteralSymbol = functionLiteral.symbol
         return (!functionLiteral.anyDescendantOfType<KtNameReferenceExpression> {
-                it.text == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier && it.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.symbol?.containingDeclaration != functionLiteralSymbol
-            }).asUnit
+            it.text == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier &&
+                    it.resolveSuccessfulSymbol()?.containingDeclaration != functionLiteralSymbol
+        }).asUnit
     }
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitor<*, *> {
@@ -117,6 +117,7 @@ class RedundantLambdaArrowInspection : KotlinApplicableInspectionBase.Simple<KtL
     }
 }
 
+@OptIn(KaExperimentalApi::class)
 private fun KtCallExpression.nestedCallsAreUnchanged(lambdaExpression: KtLambdaExpression): Boolean {
     val bodyStart = lambdaExpression.bodyExpression!!.startOffsetInParent
     val qualifiedExpression = parent as? KtQualifiedExpression
@@ -130,14 +131,14 @@ private fun KtCallExpression.nestedCallsAreUnchanged(lambdaExpression: KtLambdaE
     val resolveResults = mutableListOf<PsiElement>()
     analyze(fragmentWithoutArrow) {
         fragmentWithoutArrow.forEachDescendantOfType<KtCallExpression> {
-            resolveResults.addIfNotNull(it.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.symbol?.psi)
+            resolveResults.addIfNotNull(it.resolveSuccessfulSymbol()?.psi)
         }
     }
 
     val originalResults = mutableListOf<PsiElement>()
     analyze(this) {
         fullExpr.forEachDescendantOfType<KtCallExpression> {
-            originalResults.addIfNotNull(it.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.symbol?.psi)
+            originalResults.addIfNotNull(it.resolveSuccessfulSymbol()?.psi)
         }
     }
 

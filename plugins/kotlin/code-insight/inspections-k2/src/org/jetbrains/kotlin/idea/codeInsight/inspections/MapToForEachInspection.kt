@@ -18,7 +18,8 @@ import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -96,7 +97,7 @@ internal class MapToForEachInspection : KotlinApplicableInspectionBase.Simple<Kt
         val whole = element.getQualifiedExpressionForSelectorOrThis()
         if (whole.isUsedAsExpression) return null
 
-        val resolvedCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
+        val resolvedCall = element.resolveSuccessfulCall() ?: return null
         val functionSymbol = resolvedCall.symbol
 
         val replacementName = when (functionSymbol.importableFqName) {
@@ -165,7 +166,7 @@ internal class MapToForEachInspection : KotlinApplicableInspectionBase.Simple<Kt
 }
 
 @OptIn(KaExperimentalApi::class)
-context(_: KaSession)
+context(session: KaSession)
 private fun collectReturns(
     element: KtCallExpression,
 ): List<SmartPsiElementPointer<KtReturnExpression>>? {
@@ -178,7 +179,7 @@ private fun collectReturns(
 
     return buildList {
         for (returnExpr in functionLike.collectDescendantsOfType<KtReturnExpression>()) {
-            val targetsMap = returnExpr.getTargetLabel()?.resolveSymbol()?.psi == functionLike
+            val targetsMap = returnExpr.getTargetLabel()?.resolveSuccessfulSymbol()?.psi == functionLike
             if (!targetsMap) continue
 
             if (returnExpr.returnedExpression?.isUnitLiteral() == false) return null

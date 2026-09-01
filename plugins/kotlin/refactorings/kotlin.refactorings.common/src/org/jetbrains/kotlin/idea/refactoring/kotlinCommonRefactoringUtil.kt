@@ -22,13 +22,15 @@ import com.intellij.refactoring.util.ConflictsUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallResolutionError
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.successful
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
+import org.jetbrains.kotlin.analysis.api.resolution.variable
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.isFunctionType
@@ -89,6 +91,7 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.unpackFunctionLiteral
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.util.Collections
 import kotlin.math.min
@@ -279,6 +282,7 @@ fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(
     return originalList
 }
 
+@OptIn(KaExperimentalApi::class)
 @ApiStatus.Internal
 context(_: KaSession)
 fun KtCallExpression.canMoveLambdaOutsideParentheses(
@@ -300,18 +304,19 @@ fun KtCallExpression.canMoveLambdaOutsideParentheses(
     val callee = calleeExpression
     if (callee !is KtNameReferenceExpression) return true
 
-    val resolveCall = callee.resolveToCall() ?: return false
-    val call = resolveCall.successfulFunctionCallOrNull()
+    val resolutionAttempt = (callee as? KtResolvableCall)?.tryResolveCall()
+    val call = resolutionAttempt?.successful
+    val functionCall = call?.function
 
     fun KaType.isFunctionalType(): Boolean = this is KaTypeParameterType || isSuspendFunctionType || isFunctionType || isFunctionalInterface
 
-    if (call == null) {
-        val paramType = resolveCall.successfulVariableAccessCall()?.symbol?.returnType
+    if (functionCall == null) {
+        val paramType = call?.variable?.symbol?.returnType
         if (paramType != null && paramType.isFunctionalType()) {
             return true
         }
         val calls =
-            (resolveCall as? KaErrorCallInfo)?.candidateCalls?.filterIsInstance<KaFunctionCall<*>>() ?:
+            (resolutionAttempt as? KaCallResolutionError)?.candidateCalls?.filterIsInstance<KaFunctionCall<*>>() ?:
             emptyList()
 
         return calls.isEmpty() || calls.all { functionalCall ->
@@ -321,8 +326,8 @@ fun KtCallExpression.canMoveLambdaOutsideParentheses(
         }
     }
 
-    val lastParameter = call.valueArgumentMapping[lastLambdaExpression]
-        ?: lastLambdaExpression.parentLabeledExpression()?.let(call.valueArgumentMapping::get)
+    val lastParameter = functionCall.valueArgumentMapping[lastLambdaExpression]
+        ?: lastLambdaExpression.parentLabeledExpression()?.let(functionCall.valueArgumentMapping::get)
         ?: return false
 
     if (lastParameter.symbol.isVararg) {
@@ -330,7 +335,7 @@ fun KtCallExpression.canMoveLambdaOutsideParentheses(
         return false
     }
 
-    return if (lastParameter.symbol != call.signature.valueParameters.lastOrNull()?.symbol) {
+    return if (lastParameter.symbol != functionCall.signature.valueParameters.lastOrNull()?.symbol) {
         false
     } else {
         lastParameter.returnType.isFunctionalType()

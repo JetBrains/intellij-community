@@ -11,10 +11,7 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaLocalVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
@@ -84,10 +81,10 @@ internal class UnusedContextParameterCallInspection :
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitor<*, *> =
         callExpressionVisitor { visitTargetElement(it, holder, isOnTheFly) }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): BodyContext? {
-        val resolvedCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-        if (resolvedCall.symbol.callableId != contextCallableId) return null
+        if (element.resolveSuccessfulSymbol()?.callableId != contextCallableId) return null
         val lambda = element.contextLambda() ?: return null
         val contextParameters = lambda.functionLiteral.symbol.contextParameters
         if (contextParameters.isEmpty()) return null
@@ -132,7 +129,7 @@ internal class UnusedContextParameterCallInspection :
                 unwrapped.entries.all { it is KtLiteralStringTemplateEntry || it is KtEscapeStringTemplateEntry }
 
             is KtSimpleNameExpression -> {
-                val symbol = unwrapped.resolveSymbol()
+                val symbol = unwrapped.resolveSuccessfulSymbol()
                 symbol is KaLocalVariableSymbol || symbol is KaValueParameterSymbol
             }
 

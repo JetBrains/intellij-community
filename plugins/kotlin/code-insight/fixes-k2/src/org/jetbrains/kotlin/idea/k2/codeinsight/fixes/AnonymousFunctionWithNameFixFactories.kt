@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.RemoveNameFromFunctionExpressionFix
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -19,7 +19,7 @@ internal object AnonymousFunctionWithNameFixFactories {
 
         element.forEachDescendantOfType<KtReturnExpression> {
             if (!wereAutoLabelUsages && it.getLabelNameAsName() == name) {
-                wereAutoLabelUsages = it.resolveSymbol()?.psi == element
+                wereAutoLabelUsages = it.resolveSuccessfulSymbol()?.psi == element
             }
         }
 

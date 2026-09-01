@@ -7,11 +7,11 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -42,14 +42,14 @@ internal class UnusedLambdaExpressionBodyInspection : KotlinApplicableInspection
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean = true
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): Context? {
         if (element.isUsedAsExpression || (element.parent as? KtCallExpression)?.calleeExpression == element) {
             return null
         }
 
-        val resolvedCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-        val symbol = resolvedCall.symbol
+        val symbol = element.resolveSuccessfulSymbol() as? KaCallableSymbol ?: return null
         if (symbol.returnType !is KaFunctionType) {
             return null
         }

@@ -6,12 +6,13 @@ import com.intellij.psi.createSmartPointer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
@@ -51,7 +52,7 @@ object ForLoopUtils {
         val functionLiteralSymbol = functionLiteral.symbol
         return buildList {
             lambdaBody.forEachDescendantOfType<KtReturnExpression> { returnExpression ->
-                if (returnExpression.resolveSymbol() == functionLiteralSymbol) {
+                if (returnExpression.resolveSuccessfulSymbol() == functionLiteralSymbol) {
                     add(returnExpression.createSmartPointer())
                 }
             }
@@ -84,7 +85,7 @@ object ForLoopUtils {
             } else {
                 // Check if the candidate would conflict with existing names
                 !body.anyDescendantOfType<KtSimpleNameExpression> { nameExpr ->
-                    nameExpr.getReferencedName() == candidate && nameExpr.resolveSymbol() != null
+                    nameExpr.getReferencedName() == candidate && nameExpr.resolveSuccessfulSymbol() != null
                 }
             }
         }
@@ -105,7 +106,7 @@ object ForLoopUtils {
 
         body.forEachDescendantOfType<KtNameReferenceExpression> { reference ->
             if (reference.getReferencedName() == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier &&
-                reference.resolveSymbol() == parameterSymbol
+                reference.resolveSuccessfulSymbol() == parameterSymbol
             ) {
                 reference.replace(factory.createExpression(newName))
             }
@@ -159,7 +160,7 @@ object ForLoopUtils {
     context(_: KaSession)
     private fun KtExpression.referencesSymbol(symbol: KaSymbol): Boolean =
         anyDescendantOfType<KtNameReferenceExpression> { ref ->
-            ref.resolveSymbol() == symbol
+            ref.resolveSuccessfulSymbol() == symbol
         }
 
     internal fun relabelReturns(
@@ -204,12 +205,13 @@ object ForLoopUtils {
      *
      * Returns false for `Long`/`Short`/`Byte`/`Char` ranges — those don't fit `repeat(Int, …)`.
      */
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     internal fun KtBinaryExpression.isZeroBasedRange(): Boolean {
         val left = left ?: return false
         if (left.evaluate()?.value != 0) return false
 
-        val call = resolveToCall()?.singleFunctionCallOrNull() ?: return false
+        val call = tryResolveCall()?.single?.function ?: return false
         return call.symbol.callableId in ZERO_BASED_INT_RANGE_CALLABLE_IDS && expressionType?.symbol?.classId == StandardClassIds.IntRange
     }
 }

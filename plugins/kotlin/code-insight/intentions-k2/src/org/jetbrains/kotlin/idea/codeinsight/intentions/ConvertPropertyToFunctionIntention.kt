@@ -20,10 +20,11 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.PsiWhiteSpace
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.compositeScope
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.session.canBeAnalysed
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -56,6 +57,7 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.siblings
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 
 private data class ElementContext(
     val callables: Collection<PsiElement>,
@@ -192,6 +194,7 @@ private fun convertProperty(
     originalProperty.replace(psiFactory.createFunction(property.text))
 }
 
+@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun prepareContext(
     element: KtProperty,
@@ -245,7 +248,7 @@ private fun prepareContext(
                     if (usage is KtSimpleNameReference) {
                         val expression = usage.expression
                         analyze(expression) {
-                            if (expression.resolveToCall() != null && expression.getStrictParentOfType<KtCallableReferenceExpression>() == null) {
+                            if ((expression as? KtResolvableCall)?.resolveSuccessfulCall() != null && expression.getStrictParentOfType<KtCallableReferenceExpression>() == null) {
                                 kotlinRefsToReplaceWithCall.add(expression)
                             } else if (nameChanged) {
                                 refsToRename.add(usage)

@@ -8,10 +8,11 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.runIf
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.classId
@@ -24,6 +25,8 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinMo
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.ImplicitReceiverInfo
 import org.jetbrains.kotlin.idea.codeinsight.utils.getImplicitReceiverInfo
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionSymbol
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
@@ -81,9 +84,10 @@ internal class ReplaceAddAllWithMapToInspection : KotlinApplicableInspectionBase
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtExpression): Context? {
-        val resolvedCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
+        val resolvedCall = element.resolveSuccessfulExpressionCall()?.function ?: return null
         val symbol = resolvedCall.symbol
 
         return when (element) {
@@ -136,10 +140,11 @@ internal class ReplaceAddAllWithMapToInspection : KotlinApplicableInspectionBase
         return true
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun replacementOperation(argument: KtExpression?): Name? {
-        val argumentCall = argument?.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-        return when (argumentCall.symbol.callableId) {
+        val symbol = argument?.resolveSuccessfulExpressionSymbol() as? KaCallableSymbol ?: return null
+        return when (symbol.callableId) {
             mapCallableId -> mapToName
             filterCallableId -> filterToName
             else -> null

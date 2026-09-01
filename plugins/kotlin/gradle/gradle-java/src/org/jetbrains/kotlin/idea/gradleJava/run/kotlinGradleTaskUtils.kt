@@ -10,24 +10,27 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.simple
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.analysis.api.types.withNullability
-import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -87,12 +90,12 @@ private fun isIdentifierInPropertyWithDelegate(leafElement: LeafPsiElement): Boo
         ?.parent.safeAs<KtProperty>()?.hasDelegateExpression()
         ?: false
 
+@OptIn(KaExperimentalApi::class)
 private fun findTaskNameInSurroundingCallExpression(element: PsiElement): String? {
     val callExpression = element.getParentOfType<KtCallExpression>(false, KtScriptInitializer::class.java) ?: return null
     if (!hasNameRelatedToTasks(callExpression)) return null
     return analyze(callExpression) {
-        val resolvedCall = callExpression.resolveToCall() ?: return null
-        val functionCall = resolvedCall.singleFunctionCallOrNull() ?: return null
+        val functionCall = callExpression.tryResolveCall()?.single?.function ?: return null
         if (!doesCustomizeTask(functionCall)) return null
         val nameArgument = functionCall.valueArgumentMapping
             .filterValues { isStringParameterSignature(it) }
@@ -114,6 +117,7 @@ private fun hasNameRelatedToTasks(callExpression: KtCallExpression): Boolean {
     return methodName in taskContainerMethods || methodName == "task"
 }
 
+@OptIn(KaExperimentalApi::class)
 private fun findTaskNameInSurroundingProperty(element: PsiElement): String? {
     val stopAt = arrayOf(KtScriptInitializer::class.java, KtLambdaExpression::class.java)
     // A property element could contain e.g., `val taskName by tasks.registering{}` or `val taskName by tasks.creating{}`
@@ -121,16 +125,16 @@ private fun findTaskNameInSurroundingProperty(element: PsiElement): String? {
     // `tasks.registering{}` would be a delegateExpression for the example above
     val delegateExpression = property.delegateExpression ?: return null
     return analyze(delegateExpression) {
-        val resolvedCall = delegateExpression.resolveToCall() ?: return null
-        val singleCall = resolvedCall.singleCallOrNull<KaCallableMemberCall<*, *>>() ?: return null
+        val singleCall = delegateExpression.tryResolveExpressionCall()?.single?.simple ?: return null
         if (!doesCustomizeTask(singleCall)) return null
         val taskName = property.symbol.name.identifier
         taskName
     }
 }
 
-private fun doesCustomizeTask(functionCall: KaCallableMemberCall<*, *>): Boolean {
-    val callableId = functionCall.partiallyAppliedSymbol.symbol.callableId ?: return false
+@OptIn(KaExperimentalApi::class)
+private fun doesCustomizeTask(functionCall: KaSimpleCall<*, *>): Boolean {
+    val callableId = functionCall.symbol.callableId ?: return false
     val methodName = callableId.callableName.identifier
     val classFqName = getReceiverClassFqName(functionCall)
         ?: callableId.classId?.asSingleFqName()
@@ -139,9 +143,10 @@ private fun doesCustomizeTask(functionCall: KaCallableMemberCall<*, *>): Boolean
             || isMethodOfProject(methodName, classFqName)
 }
 
-private fun getReceiverClassFqName(functionCall: KaCallableMemberCall<*, *>): FqName? {
-    val type = functionCall.partiallyAppliedSymbol.extensionReceiver?.type
-        ?: functionCall.partiallyAppliedSymbol.dispatchReceiver?.type
+@OptIn(KaExperimentalApi::class)
+private fun getReceiverClassFqName(functionCall: KaSimpleCall<*, *>): FqName? {
+    val type = functionCall.extensionReceiver?.type
+        ?: functionCall.dispatchReceiver?.type
     val unwrappedType = if (type is KaFlexibleType) type.lowerBound else type
 
     return unwrappedType?.symbol?.classId?.asSingleFqName()

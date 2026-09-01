@@ -10,7 +10,7 @@ import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -48,7 +48,7 @@ internal class ReplaceWithOrdinaryAssignmentIntention : KotlinApplicableModComma
         if (element.right == null) return false
 
         analyze(element) {
-            val resultingSymbol = operationReference.resolveSymbol() as? KaFunctionSymbol ?: return false
+            val resultingSymbol = operationReference.resolveSuccessfulSymbol() as? KaFunctionSymbol ?: return false
             return resultingSymbol.callableId?.callableName !in OperatorNameConventions.ASSIGNMENT_OPERATIONS
         }
     }

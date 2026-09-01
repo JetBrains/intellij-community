@@ -6,9 +6,8 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentsOfType
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -20,6 +19,7 @@ internal class ChangeContextFix : PsiUpdateModCommandQuickFix() {
         return KotlinBundle.message("intention.switch.context.to.dispatchers.io")
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
         val callExpression = element
             .parentsOfType<KtCallExpression>()
@@ -28,7 +28,7 @@ internal class ChangeContextFix : PsiUpdateModCommandQuickFix() {
 
         val ktPsiFactory = KtPsiFactory(project, true)
         val replacedArgument = analyze(callExpression) {
-            callExpression.resolveToCall()?.successfulCallOrNull<KaCall>()
+            callExpression.resolveSuccessfulCall()
                 ?.getFirstArgumentExpression()
                 ?.replaced(ktPsiFactory.createExpression("kotlinx.coroutines.Dispatchers.IO")) ?: return
         }

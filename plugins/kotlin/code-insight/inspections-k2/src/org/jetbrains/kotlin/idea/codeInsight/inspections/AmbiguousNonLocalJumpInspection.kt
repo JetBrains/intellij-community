@@ -10,7 +10,8 @@ import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractCallsIn
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractInvocationKind
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -99,10 +100,10 @@ private fun findCallExprThatCausesUnlabeledNonLocalBreakOrContinueAmbiguity(jump
 private fun checkAmbiguityForUnlabeledNonLocalBreakOrContinue(functionLiteral: PsiElement): AmbiguousCallInfo? {
     val callExpression = functionLiteral.findMatchingCallExpr() ?: return null
     analyze(callExpression) {
-        val successfulCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
+        val successfulCall = callExpression.resolveSuccessfulCall() ?: return null
         val calleeExpression = callExpression.calleeExpression as? KtReferenceExpression ?: return null
         val lambdaParamName = successfulCall.valueArgumentMapping[functionLiteral]?.takeIf(::isInlinedParameter)?.name ?: return null
-        val calleeExpressionSymbol = calleeExpression.resolveSymbol()
+        val calleeExpressionSymbol = calleeExpression.resolveSuccessfulSymbol()
             ?.let { it as? KaNamedFunctionSymbol }
             ?.takeIf(KaNamedFunctionSymbol::isInline) ?: return null
         if (calleeExpressionSymbol.hasNoCallsInPlaceContract(lambdaParamName)) {

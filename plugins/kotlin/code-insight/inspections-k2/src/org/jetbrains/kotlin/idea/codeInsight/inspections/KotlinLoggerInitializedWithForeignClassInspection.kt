@@ -18,9 +18,9 @@ import com.intellij.util.xmlb.SerializationFilterBase
 import com.intellij.util.xmlb.XmlSerializer
 import com.siyeh.ig.BaseInspection
 import org.jdom.Element
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -107,15 +107,14 @@ internal class KotlinLoggerInitializedWithForeignClassInspection :
         return listOf(TextRange.from(classLiteral.textRange.startOffset - element.textRange.startOffset, classLiteral.textLength))
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): Context? {
         val (_, classLiteralName, containingClassName) = element.foreignClassLiteral() ?: return null
 
         val callee = element.calleeExpression ?: return null
         val loggerMethodFqNames = loggerFactoryFqNames[callee.text] ?: return null
-        val methodFqName = element.resolveToCall()
-            ?.successfulFunctionCallOrNull()
-            ?.symbol
+        val methodFqName = element.resolveSuccessfulCall()?.symbol
             ?.callableId
             ?.asSingleFqName()
             ?: return null

@@ -8,7 +8,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiBasedModCommandAction
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.psi.setFunctionTypeReference
@@ -153,7 +153,7 @@ private fun KtNamedFunction.collectTargetedReturnExpressions(): List<KtReturnExp
             }
 
             override fun visitReturnExpression(expression: KtReturnExpression) {
-                if (expression.resolveSymbol() == functionSymbol) {
+                if (expression.resolveSuccessfulSymbol() == functionSymbol) {
                     add(expression)
                 }
                 super.visitReturnExpression(expression)

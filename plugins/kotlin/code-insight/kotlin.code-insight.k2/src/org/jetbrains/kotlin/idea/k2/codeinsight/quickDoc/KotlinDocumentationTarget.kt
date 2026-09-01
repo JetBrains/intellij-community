@@ -21,10 +21,8 @@ import com.intellij.psi.createSmartPointer
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.scopes.staticMemberScope
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -40,7 +38,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
 import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.getExpectsForActual
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
@@ -60,6 +57,7 @@ import org.jetbrains.kotlin.idea.highlighting.kdoc.KDocTemplate
 import org.jetbrains.kotlin.idea.highlighting.kdoc.findKDocByPsi
 import org.jetbrains.kotlin.idea.highlighting.kdoc.insert
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -266,6 +264,7 @@ private fun getContainerInfo(ktDeclaration: KtDeclaration): HtmlChunk {
     return HtmlChunk.fragment(fqNameSection, fileNameSection)
 }
 
+@OptIn(KaExperimentalApi::class)
 private fun @receiver:Nls StringBuilder.renderEnumSpecialFunction(
     originalElement: PsiElement?,
     element: KtClass,
@@ -277,9 +276,9 @@ private fun @receiver:Nls StringBuilder.renderEnumSpecialFunction(
         // element is not an KtReferenceExpression, but KtClass of enum
         // so reference extracted from originalElement
         analyze(referenceExpression) {
-            val symbol = referenceExpression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.symbol as? KaNamedSymbol
+            val symbol = referenceExpression.resolveSuccessfulExpressionCall()?.simple?.symbol
             val name = symbol?.name?.asString()
-            if (name != null && symbol is KaDeclarationSymbol) {
+            if (name != null) {
                 renderEnumSpecialSymbol(symbol, name, element, quickNavigation)
                 return
             }

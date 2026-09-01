@@ -5,15 +5,15 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.simple
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinNon
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinParameterUsage
 import org.jetbrains.kotlin.idea.k2.refactoring.getThisQualifier
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -56,6 +57,7 @@ import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.KtValueArgumentName
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 internal object KotlinChangeSignatureUsageSearcher {
@@ -132,11 +134,11 @@ internal object KotlinChangeSignatureUsageSearcher {
         analyze(ktCallableDeclaration) {
             val declarationSymbol = ktCallableDeclaration.symbol as KaCallableSymbol
             ktCallableDeclaration.accept(object : KtTreeVisitorVoid() {
+                @OptIn(KaExperimentalApi::class)
                 override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
-                    val memberCall = expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
-                    val partiallyAppliedSymbol = memberCall?.partiallyAppliedSymbol ?: return
+                    val memberCall = expression.resolveSuccessfulExpressionCall()?.simple ?: return
 
-                    val symbol = partiallyAppliedSymbol.symbol
+                    val symbol = memberCall.symbol
                     if (symbol is KaContextParameterSymbol) {
                         val contextParameter = symbol.psi as? KtParameter ?: return
                         val parameterInfo =
@@ -152,7 +154,7 @@ internal object KotlinChangeSignatureUsageSearcher {
                     }
 
                     val usedContextParameters =
-                        partiallyAppliedSymbol
+                        memberCall
                             .contextArguments
                             .mapNotNull { receiverValue ->
                                 val contextParameterSymbol =
@@ -173,6 +175,7 @@ internal object KotlinChangeSignatureUsageSearcher {
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     internal fun findReceiverReferences(ktCallableDeclaration: KtCallableDeclaration, result: MutableList<in UsageInfo>, changeInfo: KotlinChangeInfo) {
         analyze(ktCallableDeclaration) {
             val originalReceiverInfo = changeInfo.newParameters.find { it.oldIndex == 0 && !it.wasContextParameter }.takeIf { changeInfo.oldReceiverInfo != null } ?: changeInfo.oldReceiverInfo
@@ -182,9 +185,9 @@ internal object KotlinChangeSignatureUsageSearcher {
                 override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
                     super.visitSimpleNameExpression(expression)
 
-                    val call = expression.resolveToCall()
+                    val attempt = (expression as? KtResolvableCall)?.tryResolveCall()
 
-                    if (call == null) {
+                    if (attempt == null) {
                         val parentExpression = expression.parent
                         if (originalReceiverType != null) {
                             //deleted or changed receiver, must be preserved as simple parameter
@@ -210,11 +213,10 @@ internal object KotlinChangeSignatureUsageSearcher {
                         }
                     }
 
-                    val partiallyAppliedSymbol = (call?.singleVariableAccessCall() ?: call?.singleFunctionCallOrNull())?.partiallyAppliedSymbol
-
-                    if (partiallyAppliedSymbol != null) {
-                        val receiverValue = partiallyAppliedSymbol.extensionReceiver ?: partiallyAppliedSymbol.dispatchReceiver
-                        val symbol = partiallyAppliedSymbol.symbol
+                    val singleCall = attempt?.single?.simple
+                    if (singleCall != null) {
+                        val receiverValue = singleCall.extensionReceiver ?: singleCall.dispatchReceiver
+                        val symbol = singleCall.symbol
                         val containingSymbol = symbol.containingDeclaration
                         if (receiverValue != null) {
                             val receiverExpression = (receiverValue as? KaExplicitReceiverValue)?.expression
@@ -237,7 +239,7 @@ internal object KotlinChangeSignatureUsageSearcher {
                                 if (name != null) {
                                     if (receiverExpression is KtThisExpression) {
                                         result.add(KotlinNonQualifiedOuterThisUsage(receiverExpression, name))
-                                    } else if (receiverValue is KaImplicitReceiverValue && partiallyAppliedSymbol.extensionReceiver == null && receiverExpression is KtNameReferenceExpression) {
+                                    } else if (receiverValue is KaImplicitReceiverValue && singleCall.extensionReceiver == null && receiverExpression is KtNameReferenceExpression) {
                                         result.add(KotlinImplicitThisUsage(receiverExpression, getThisQualifier(receiverValue)))
                                     }
                                 }

@@ -10,9 +10,11 @@ import com.intellij.psi.util.parents
 import com.intellij.psi.util.parentsOfType
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.sun.jdi.Location
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.isSuspendFunctionType
@@ -141,11 +143,12 @@ internal class KotlinVariableNameFinder(val debugProcess: DebugProcessImpl) {
         return symbol.isSuspend
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun isCoroutineContextAvailableFromLambda(expression: KtExpression): Boolean {
         val literalParent = expression.parentOfType<KtFunctionLiteral>(withSelf = true) ?: return false
         val parentCall = KtPsiUtil.getParentCallIfPresent(literalParent) as? KtCallExpression ?: return false
-        val call = parentCall.resolveToCall()?.singleFunctionCallOrNull() ?: return false
+        val call = parentCall.tryResolveCall()?.single?.function ?: return false
         val valueArgument = parentCall.getContainingValueArgument(expression) ?: return false
         val argumentSymbol = call.valueArgumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return false
         return argumentSymbol.returnType.isSuspendFunctionType

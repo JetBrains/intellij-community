@@ -5,9 +5,8 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.findClass
@@ -94,8 +93,7 @@ private fun lambdaParameterName(parameter: KtParameter): String? {
     val parameterIndex = functionLiteral.valueParameters.indexOf(parameter).takeIf { it >= 0 } ?: return null
     val lambdaArgument = functionLiteral.getParentOfType<KtLambdaArgument>(strict = true) ?: return null
     val callExpression = lambdaArgument.getParentOfType<KtCallExpression>(strict = true) ?: return null
-    val functionType = callExpression.resolveToCall()
-        ?.successfulFunctionCallOrNull()
+    val functionType = callExpression.resolveSuccessfulCall()
         ?.valueArgumentMapping
         ?.get(lambdaArgument.getArgumentExpression())
         ?.returnType as? KaFunctionType ?: return null

@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -63,7 +63,7 @@ internal object ChangeToLabeledReturnFixFactory {
 
                     // check if the current function literal is inlined and stop processing outer declarations if it's not
                     if (call?.calleeExpression !is KtReferenceExpression) break
-                    val symbol = call.resolveSymbol()
+                    val symbol = call.resolveSuccessfulSymbol()
                     if (!(symbol is KaNamedFunctionSymbol && symbol.isInline)) break
                 }
 

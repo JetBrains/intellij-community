@@ -10,7 +10,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
@@ -86,7 +86,7 @@ internal class ConvertToForEachFunctionCallIntention :
         val callExpression = loopRange.getPossiblyQualifiedCallExpression()
         if (callExpression?.calleeExpression?.text == WITH_INDEX_NAME) {
             if (element.loopParameter?.destructuringDeclaration?.entries?.size != 2) return null
-            val symbol = callExpression.resolveSymbol() as? KaNamedFunctionSymbol ?: return null
+            val symbol = callExpression.resolveSuccessfulSymbol() as? KaNamedFunctionSymbol ?: return null
             if (symbol.callableId?.asSingleFqName() !in withIndexedFunctionFqNames) return null
         }
 

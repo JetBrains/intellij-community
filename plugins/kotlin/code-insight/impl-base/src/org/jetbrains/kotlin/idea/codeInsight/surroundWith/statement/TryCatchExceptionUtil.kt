@@ -3,19 +3,20 @@ package org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallResolutionAttempt
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundArrayAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaSuccessCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.successful
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
@@ -31,6 +32,7 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtTreeVisitor
 import org.jetbrains.kotlin.psi.KtUnaryExpression
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 
 
 object TryCatchExceptionUtil {
@@ -93,6 +95,7 @@ private class ExceptionClassCollector : KtTreeVisitor<Unit?>() {
         return super.visitUnaryExpression(expression, data)
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun <T : KtElement> processElement(element: T) {
         if (hasLocalClasses) {
             return
@@ -102,14 +105,15 @@ private class ExceptionClassCollector : KtTreeVisitor<Unit?>() {
             @OptIn(KaAllowAnalysisFromWriteAction::class)
             allowAnalysisFromWriteAction {
                 analyze(element) {
-                    processCall(element.resolveToCall())
+                    processCall((element as? KtResolvableCall)?.tryResolveCall())
                 }
             }
         }
     }
 
-    private fun processCall(callInfo: KaCallInfo?) {
-        val call = (callInfo as? KaSuccessCallInfo)?.call ?: return
+    @OptIn(KaExperimentalApi::class)
+    private fun processCall(resolutionAttempt: KaCallResolutionAttempt?) {
+        val call = resolutionAttempt?.successful ?: return
 
         when (call) {
             is KaFunctionCall<*> -> processCallable(call.symbol)
@@ -122,11 +126,13 @@ private class ExceptionClassCollector : KtTreeVisitor<Unit?>() {
                     }
                 }
             }
+
             is KaCompoundVariableAccessCall -> processCallable(call.operationCall.symbol)
             is KaCompoundArrayAccessCall -> {
                 processCallable(call.getterCall.symbol)
                 processCallable(call.setterCall.symbol)
             }
+
             else -> {}
         }
     }

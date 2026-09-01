@@ -6,7 +6,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -57,7 +57,7 @@ internal class ReplaceRepeatWithForLoopIntention :
     @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): ReturnsToReplace? {
-        val symbol = element.resolveSymbol() as? KaNamedFunctionSymbol ?: return null
+        val symbol = element.resolveSuccessfulSymbol() as? KaNamedFunctionSymbol ?: return null
         if (symbol.callableId != REPEAT_KEYWORD_CALLABLE_IDS) return null
         val lambda = element.getLambdaArgument() ?: return null
         return lambda.computeReturnsToReplace()

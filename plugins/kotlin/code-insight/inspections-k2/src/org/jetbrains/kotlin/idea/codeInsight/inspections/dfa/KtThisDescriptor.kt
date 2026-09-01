@@ -11,17 +11,14 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.idea.codeInsight.inspections.dfa.KtClassDef.Companion.classDef
-import org.jetbrains.kotlin.idea.references.KtReference
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
-import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtThisExpression
 
 class KtThisDescriptor internal constructor(val dfType: DfType, val classDef: KtClassDef?, val contextName: String? = null)
@@ -59,7 +56,7 @@ class KtThisDescriptor internal constructor(val dfType: DfType, val classDef: Kt
         context(_: KaSession)
         fun descriptorFromThis(expr: KtThisExpression): Pair<VariableDescriptor?, KaType?> {
             val exprType = expr.getKotlinType()
-            val symbol = expr.resolveSymbol()
+            val symbol = expr.resolveSuccessfulSymbol()
             val declType: KaType?
             if (symbol is KaReceiverParameterSymbol && exprType != null) {
                 val function = symbol.psi as? KtFunctionLiteral

@@ -5,16 +5,14 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
@@ -33,6 +31,7 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.setValOrVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.toValVar
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtConstructor
@@ -246,7 +245,7 @@ class KotlinParameterInfo(
         private fun targetToCollect(expression: KtSimpleNameExpression): Int? {
 
             analyze(expression) {
-                val target = expression.resolveSymbol()
+                val target = expression.resolveSuccessfulSymbol()
                 val declarationSymbol = callableDeclaration.symbol as? KaCallableSymbol ?: return null
                 if (target is KaValueParameterSymbol) {
                     if (declarationSymbol is KaFunctionSymbol && target.containingDeclaration == declarationSymbol) {
@@ -273,7 +272,7 @@ class KotlinParameterInfo(
                     return 0
                 }
 
-                val symbol = expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
+                val symbol = expression.resolveSuccessfulExpressionCall()?.simple
                 (symbol?.dispatchReceiver as? KaImplicitReceiverValue)?.symbol
                     ?.takeIf { it == declarationSymbol.receiverParameter || it == declarationSymbol.containingDeclaration }
                     ?.let { return Int.MAX_VALUE }

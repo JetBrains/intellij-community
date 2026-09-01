@@ -9,13 +9,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionSymbol
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -23,7 +22,6 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.binaryExpressionVisitor
 import org.jetbrains.kotlin.psi.createExpressionByPattern
-import org.jetbrains.kotlin.resolution.KtResolvableCall
 
 private const val NAN_NAME = "NaN"
 private const val REGULAR_PATTERN = "$0.isNaN()"
@@ -100,7 +98,7 @@ context(session: KaSession)
 private fun isNaNExpression(expression: KtExpression): Boolean {
     if (expression.text?.endsWith(NAN_NAME) != true) return false
 
-    val symbol = ((expression as? KtResolvableCall)?.resolveCall() as? KaVariableAccessCall)?.symbol ?: return false
+    val symbol = expression.resolveSuccessfulExpressionSymbol() as? KaVariableSymbol ?: return false
     val fqName = symbol.callableId?.asSingleFqName()?.asString() ?: return false
 
     return NaNSet.contains(fqName)

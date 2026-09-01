@@ -6,9 +6,9 @@ import com.intellij.psi.util.descendantsOfType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.KaSingleCall
-import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
@@ -99,7 +99,7 @@ fun KtSimpleNameExpression.isRedundantCompanionReference(): Boolean {
 
     val referenceName = this.text
 
-    val symbol = this.resolveSymbol()
+    val symbol = resolveSuccessfulSymbol()
     val objectDeclaration =
         if (symbol is KaNamedClassSymbol && symbol.classKind == KaClassKind.COMPANION_OBJECT) {
             // Try to get the PSI for the companion object
@@ -127,7 +127,7 @@ fun KtSimpleNameExpression.isRedundantCompanionReference(): Boolean {
         parent.selectorExpression to parent.selectorExpression!!.text
     }
 
-    val oldTarget = ((oldTargetExpression as? KtResolvableCall)?.resolveCall() as? KaSingleCall<*, *>)?.symbol?.psi ?: return false
+    val oldTarget = (oldTargetExpression as? KtResolvableCall)?.resolveSuccessfulCall()?.simple?.symbol?.psi ?: return false
     val fragment = KtPsiFactory(this.project).createExpressionCodeFragment(
         simplifiedText,
         this
@@ -135,7 +135,7 @@ fun KtSimpleNameExpression.isRedundantCompanionReference(): Boolean {
 
     val q = fragment.getContentElement() ?: return false
     return oldTarget == analyze(q) {
-        ((q as? KtResolvableCall)?.resolveCall() as? KaSingleCall<*, *>)?.symbol?.psi
+        (q as? KtResolvableCall)?.resolveSuccessfulCall()?.simple?.symbol?.psi
     }
 }
 

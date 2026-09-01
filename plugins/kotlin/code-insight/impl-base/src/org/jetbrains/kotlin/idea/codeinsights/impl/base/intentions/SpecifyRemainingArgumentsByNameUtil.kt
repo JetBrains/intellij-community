@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaCallCandidate
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.collectCallCandidates
-import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.useSiteModule
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
@@ -302,7 +302,7 @@ object SpecifyRemainingArgumentsByNameUtil {
     context(session: KaSession)
     fun findRemainingNamedArguments(element: KtValueArgumentList): RemainingArgumentsData? {
         val functionCall = element.parent as? KtCallExpression ?: return null
-        val resolvedCall = functionCall.resolveCall()
+        val resolvedCall = functionCall.resolveSuccessfulCall()
         val existingArgumentsCount = functionCall.valueArguments.size
 
         return if (resolvedCall != null) {

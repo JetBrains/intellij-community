@@ -8,11 +8,13 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.returnType
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
@@ -24,13 +26,13 @@ import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.defaultType
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.analysis.api.types.withNullability
-import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.builtins.StandardNames.EQUALS_NAME
 import org.jetbrains.kotlin.builtins.StandardNames.HASHCODE_NAME
 import org.jetbrains.kotlin.builtins.StandardNames.TO_STRING_NAME
@@ -94,25 +96,25 @@ internal class KotlinRedundantOverrideInspection : KotlinApplicableInspectionBas
     override fun createQuickFix(element: KtNamedFunction, context: Unit): KotlinModCommandQuickFix<KtNamedFunction> =
         RedundantOverrideFix
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtNamedFunction): Unit? {
         val symbol = element.symbol
         val qualifiedExpression = element.qualifiedExpression()
         val superCallElement = qualifiedExpression?.selectorExpression as? KtCallElement ?: return null
-        val superCallInfo = superCallElement.resolveToCall() ?: return null
-        val superFunctionCallOrNull = superCallInfo.singleFunctionCallOrNull() ?: return null
-        val superFunctionSymbol = superFunctionCallOrNull.symbol
+        val superFunctionCall = superCallElement.tryResolveCall()?.single?.function ?: return null
+        val superFunctionSymbol = superFunctionCall.symbol
         val superFunctionIsAny = superFunctionSymbol.callableId in CALLABLE_IDS_OF_ANY
 
         if (element.containingClassOrObject?.isData() == true) {
             if (superFunctionIsAny) return null
-            val allSuperOverriddenSymbols = superFunctionCallOrNull.symbol.allOverriddenSymbolsWithSelf
+            val allSuperOverriddenSymbols = superFunctionCall.symbol.allOverriddenSymbolsWithSelf
             if (allSuperOverriddenSymbols.any { it.callableId in CALLABLE_IDS_OF_ANY }) return null
         }
 
         if (hasDerivedProperty(element, symbol)) return null
 
-        val superCallValueParameters = superFunctionCallOrNull.signature.valueParameters
+        val superCallValueParameters = superFunctionCall.signature.valueParameters
         val functionValueParameters = symbol.valueParameters
 
         if (functionValueParameters.size == superCallValueParameters.size &&

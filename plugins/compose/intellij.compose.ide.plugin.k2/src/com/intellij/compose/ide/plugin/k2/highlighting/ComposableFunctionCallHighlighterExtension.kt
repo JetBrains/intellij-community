@@ -23,22 +23,26 @@ import com.intellij.compose.ide.plugin.shared.highlighting.COMPOSABLE_CALL_TEXT_
 import com.intellij.compose.ide.plugin.shared.isComposeEnabledForElementModule
 import com.intellij.compose.ide.plugin.shared.isElementInLibrarySource
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.KaCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleOrMultiCall
 import org.jetbrains.kotlin.idea.highlighting.KotlinCallHighlighterExtension
 
 /**
  * Used to apply styles for calls to @Composable functions.
  */
 internal class ComposableFunctionCallHighlighterExtension : KotlinCallHighlighterExtension {
+  @OptIn(KaExperimentalApi::class)
   context(session: KaSession)
-  override fun highlightCall(elementToHighlight: PsiElement, call: KaCall): HighlightInfoType? {
-    val memberCall = call as? KaCallableMemberCall<*, *> ?: return null
-    if (!isComposableInvocation(memberCall)) return null
+  override fun highlightCall(
+    elementToHighlight: PsiElement,
+    call: KaSimpleOrMultiCall,
+  ): HighlightInfoType? {
+    if (!isComposableInvocation(call)) return null
 
     return if (isComposeEnabledForElementModule(elementToHighlight) || isElementInLibrarySource(elementToHighlight))
       COMPOSABLE_CALL_TEXT_TYPE
     else null
   }
+
 }

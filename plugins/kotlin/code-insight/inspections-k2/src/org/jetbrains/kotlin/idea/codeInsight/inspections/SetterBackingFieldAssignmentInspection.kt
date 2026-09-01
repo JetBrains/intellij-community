@@ -11,7 +11,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformatted
@@ -80,7 +80,7 @@ internal class SetterBackingFieldAssignmentInspection : KotlinApplicableInspecti
                 is KtCallExpression ->
                     expr.valueArguments.any { arg ->
                         val argumentSymbol = arg.getArgumentExpression()
-                            ?.let { (it as? KtResolvable)?.resolveSymbol() }
+                            ?.let { (it as? KtResolvable)?.resolveSuccessfulSymbol() }
 
                         argumentSymbol != null && argumentSymbol == parameter.symbol
                     }

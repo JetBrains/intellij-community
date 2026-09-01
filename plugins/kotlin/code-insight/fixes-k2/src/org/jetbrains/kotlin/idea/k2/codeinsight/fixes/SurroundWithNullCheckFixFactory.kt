@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.components.compositeScope
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
@@ -98,7 +98,7 @@ internal object SurroundWithNullCheckFixFactory {
         // Surround declaration (even of local variable) with null check is generally a bad idea
         if (expressionTarget is KtDeclaration) return emptyList()
 
-        val referenceSymbol = nullableExpression.resolveSymbol() as? KaNamedSymbol ?: return emptyList()
+        val referenceSymbol = nullableExpression.resolveSuccessfulSymbol() as? KaNamedSymbol ?: return emptyList()
         val file = expressionTarget.containingKtFile
         val scope = file.scopeContext(expressionTarget).compositeScope()
 

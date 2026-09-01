@@ -10,11 +10,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
@@ -25,6 +26,8 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertLambdaToReferenceUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
 import org.jetbrains.kotlin.idea.codeinsight.utils.plus
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainExpressions
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionSymbol
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.StandardClassIds.BASE_COLLECTIONS_PACKAGE
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -70,17 +73,18 @@ internal class ReplaceMapKeysCallChainWithKeysInspection : KotlinApplicableInspe
         return PsiTreeUtil.findChildOfType(lambdaExpression, PsiComment::class.java) == null
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtQualifiedExpression): Unit? {
         val callChainExpressions = CallChainExpressions.from(element) ?: return null
 
         val firstCall =
-            callChainExpressions.firstCalleeExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
+            callChainExpressions.firstCalleeExpression.resolveSuccessfulExpressionCall()?.simple ?: return null
         if (firstCall.symbol.callableId?.asSingleFqName() != StandardKotlinNames.Collections.map) return null
         if (!firstCall.isCalledOnMapExtensionReceiver) return null
 
         val secondCall =
-            callChainExpressions.secondCalleeExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
+            callChainExpressions.secondCalleeExpression.resolveSuccessfulExpressionCall()?.simple ?: return null
         if (secondCall.symbol.callableId?.asSingleFqName() != COLLECTIONS_TO_SET_FQ_NAME) return null
 
         val lambdaExpression =
@@ -126,6 +130,7 @@ private fun KtCallExpression.singleLambdaExpression(): KtLambdaExpression? {
     return (argument as? KtLambdaArgument)?.getLambdaExpression() ?: argument.getArgumentExpression() as? KtLambdaExpression
 }
 
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KtLambdaExpression.mapsMapEntryToKey(): Boolean {
     val lambdaParameterSymbol = functionLiteral.symbol.valueParameters.singleOrNull() ?: return false
@@ -133,12 +138,12 @@ private fun KtLambdaExpression.mapsMapEntryToKey(): Boolean {
     val returnedExpression = KtPsiUtil.safeDeparenthesize(statement) as? KtDotQualifiedExpression ?: return false
 
     val receiverExpression = returnedExpression.receiverExpression
-    val receiverSymbol = receiverExpression.resolveToCall()?.successfulVariableAccessCall()?.symbol ?: return false
+    val receiverSymbol = receiverExpression.resolveSuccessfulExpressionSymbol() as? KaVariableSymbol ?: return false
     if (receiverSymbol != lambdaParameterSymbol) return false
 
     val selectorExpression = returnedExpression.selectorExpression as? KtNameReferenceExpression ?: return false
     if (selectorExpression.getReferencedName() != KEY_PROPERTY_NAME) return false
 
-    val keySymbol = selectorExpression.resolveToCall()?.successfulVariableAccessCall()?.symbol ?: return false
+    val keySymbol = selectorExpression.resolveSuccessfulSymbol() as? KaVariableSymbol ?: return false
     return keySymbol.callableId?.asSingleFqName() == MAP_ENTRY_KEY_FQ_NAME
 }

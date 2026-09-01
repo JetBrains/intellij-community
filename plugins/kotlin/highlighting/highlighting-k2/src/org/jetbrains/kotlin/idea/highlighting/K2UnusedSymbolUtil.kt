@@ -33,16 +33,15 @@ import com.intellij.util.Processor
 import com.siyeh.ig.psiutils.SerializationUtils
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaSingleCall
-import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbols
-import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.constructor
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbols
+import org.jetbrains.kotlin.analysis.api.resolution.simple
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.scopes.memberScope
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.session.canBeAnalysed
@@ -102,6 +101,7 @@ import org.jetbrains.kotlin.idea.searching.inheritors.findAllInheritors
 import org.jetbrains.kotlin.idea.searching.inheritors.hasAnyInheritors
 import org.jetbrains.kotlin.idea.searching.inheritors.hasAnyOverridings
 import org.jetbrains.kotlin.idea.util.findAnnotation
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionSymbol
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.JvmStandardClassIds
@@ -256,6 +256,7 @@ object K2UnusedSymbolUtil {
             // Kotlin Notebook injections do check references
             && containingFile.virtualFile !is VirtualFileWindow
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun isHiddenFromResolution(declaration: KtNamedDeclaration): Boolean {
         val anno = declaration.findAnnotation(
@@ -263,10 +264,10 @@ object K2UnusedSymbolUtil {
             useSiteTarget = null,
             withResolve = false,
         ) ?: return false
-        val call = anno.resolveToCall()?.successfulFunctionCallOrNull() ?: return false
+        val call = anno.resolveSuccessfulCall() ?: return false
         val levelArgument = call.valueArgumentMapping.entries.find { it.value.symbol.name == DEPRECATION_LEVEL_PARAMETER_NAME } ?: return false
-        val levelArgumentCall = levelArgument.key.resolveToCall()?.successfulVariableAccessCall() ?: return false
-        return levelArgumentCall.symbol.importableFqName == DEPRECATION_LEVEL_HIDDEN
+        val levelArgumentSymbol = levelArgument.key.resolveSuccessfulExpressionSymbol() as? KaCallableSymbol ?: return false
+        return levelArgumentSymbol.importableFqName == DEPRECATION_LEVEL_HIDDEN
     }
 
     fun isLocalDeclaration(declaration: KtNamedDeclaration): Boolean {
@@ -342,7 +343,7 @@ object K2UnusedSymbolUtil {
     fun checkAnnotatedUsingPatterns(declaration: KtNamedDeclaration, annotationPatterns: Collection<String>): Boolean {
         if (declaration.annotationEntries.isEmpty()) return false
         val annotationsPresent = declaration.annotationEntries.mapNotNull {
-            val constructorSymbol = it.resolveSymbol() ?: return@mapNotNull null
+            val constructorSymbol = it.resolveSuccessfulSymbol() ?: return@mapNotNull null
             constructorSymbol.containingClassId?.asSingleFqName()?.asString()
         }
         if (annotationsPresent.isEmpty()) return false
@@ -492,6 +493,7 @@ object K2UnusedSymbolUtil {
         return true
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun hasReferences(
         project: Project,
@@ -511,8 +513,8 @@ object K2UnusedSymbolUtil {
                             val refElement = it.element
                             refElement is KtElement && analyze(refElement) {
                                 refElement.getStrictParentOfType<KtTypeAlias>() != null // ignore unusedness of type aliased classes - they are too hard to trace
-                                        || refElement.getStrictParentOfType<KtCallExpression>()?.resolveToCall()
-                                    ?.singleFunctionCallOrNull()?.symbol == symbolPointer?.restoreSymbol()
+                                        || refElement.getStrictParentOfType<KtCallExpression>()
+                                    ?.tryResolveCall()?.single?.function?.symbol == symbolPointer?.restoreSymbol()
                             }
                         })
             ) {
@@ -599,7 +601,7 @@ object K2UnusedSymbolUtil {
         })
 
         return setOfImportedDeclarations
-            .filter { symbol in it.resolveSymbols() }
+            .filter { symbol in it.resolveSuccessfulSymbols() }
             .any { !checkReference(it, declaration, originalDeclaration) }
     }
 
@@ -707,7 +709,7 @@ object K2UnusedSymbolUtil {
     private fun KtImportDirective.resolveReferenceToSymbol(): KaSymbol? = when (importedReference) {
         is KtReferenceExpression -> importedReference as KtReferenceExpression
         else -> importedReference?.getChildOfType<KtReferenceExpression>()
-    }?.resolveSymbol()
+    }?.resolveSuccessfulSymbol()
 
     @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
@@ -723,8 +725,8 @@ object K2UnusedSymbolUtil {
         fun KtExpression.isNameInEnumStaticMethods(): Boolean {
             if (getQualifiedExpressionForSelector() != null) return false
             if (((this as? KtNameReferenceExpression)?.parent as? KtCallableReferenceExpression)?.receiverExpression != null) return false
-            val symbol = ((this as? KtResolvableCall)?.resolveCall() as? KaSingleCall<*, *>)?.symbol
-                ?: (this as? KtResolvable)?.resolveSymbol() as? KaCallableSymbol
+            val symbol = (this as? KtResolvableCall)?.resolveSuccessfulCall()?.simple?.symbol
+                ?: (this as? KtResolvable)?.resolveSuccessfulSymbol() as? KaCallableSymbol
                 ?: return false
             return symbol.callableId?.asSingleFqName() in enumStaticMethods
         }
@@ -846,6 +848,7 @@ object K2UnusedSymbolUtil {
         return hasTextUsages
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun createQuickFixes(declaration: KtNamedDeclaration): List<IntentionAction> {
         if (declaration is KtParameter) {
@@ -894,7 +897,7 @@ object K2UnusedSymbolUtil {
         fixes += SafeDeleteFix(declaration)
 
         for (annotationEntry in declaration.annotationEntries) {
-            val annotationClassId = annotationEntry.resolveToCall()?.singleConstructorCallOrNull()?.symbol?.containingClassId ?: continue
+            val annotationClassId = annotationEntry.tryResolveCall()?.single?.constructor?.symbol?.containingClassId ?: continue
             val fqName = annotationClassId.asSingleFqName().asString()
 
             // checks taken from com.intellij.codeInspection.util.SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes

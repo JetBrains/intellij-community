@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -76,7 +76,7 @@ class KotlinHighLevelFunctionTypeArgumentInfoHandler : KotlinHighLevelTypeArgume
 
         val visibilityChecker = createUseSiteVisibilityChecker(fileSymbol, explicitReceiver, callElement)
         val symbols = callElement.resolveToCallCandidates()
-            .mapNotNull { (it.candidate as? KaCallableMemberCall<*, *>)?.partiallyAppliedSymbol?.signature }
+            .mapNotNull { (it.candidate as? KaSimpleCall<*, *>)?.signature }
             .filterIsInstance<KaFunctionSignature<*>>()
             .filter { candidate ->
                 // We use the `LENIENT` error type policy to permit candidates even when there are partially specified type arguments (e.g.,

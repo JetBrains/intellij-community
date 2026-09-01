@@ -8,9 +8,9 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -38,9 +38,10 @@ internal class JavaMapForEachInspection : KotlinApplicableInspectionBase.Simple<
         return JavaMapForEachInspectionUtils.applicableByPsi(element)
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): Context? {
-        val call = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
+        val call = element.resolveSuccessfulCall() ?: return null
         if (!call.isCalledOnMapDispatchReceiver) return null
 
         val lambda = element.singleLambdaArgumentExpression() ?: return null

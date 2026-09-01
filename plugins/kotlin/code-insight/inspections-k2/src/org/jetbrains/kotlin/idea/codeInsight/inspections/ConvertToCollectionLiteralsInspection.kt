@@ -9,11 +9,10 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
@@ -75,10 +74,10 @@ internal class ConvertToCollectionLiteralsInspection :
         return true
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): Context? {
-        val callSymbol = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-        val fqName = callSymbol.symbol.callableId?.asSingleFqName() ?: return null
+        val fqName = element.resolveSuccessfulCall()?.symbol?.callableId?.asSingleFqName() ?: return null
         if (fqName !in TARGET_FUNCTION_FQ_NAMES) return null
 
         val expressionType = element.expressionType ?: return null

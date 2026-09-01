@@ -8,10 +8,11 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiWhiteSpace
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.simple
+import org.jetbrains.kotlin.analysis.api.resolution.single
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
@@ -33,6 +34,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtTypeAlias
 import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 
 internal class KotlinTypeDeclarationProvider : TypeDeclarationPlaceAwareProvider {
 
@@ -137,10 +139,11 @@ internal class KotlinTypeDeclarationProvider : TypeDeclarationPlaceAwareProvider
         return PsiElement.EMPTY_ARRAY
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun KtElement.resolvePsiOfTypeAtCallSite(): PsiElement? =
         analyze(this) {
-            val memberCall = resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>() ?: return@analyze null
-            val type = memberCall.partiallyAppliedSymbol.signature.returnType
+            val memberCall = (this as? KtResolvableCall)?.tryResolveCall()?.single?.simple ?: return@analyze null
+            val type = memberCall.signature.returnType
             type.upperBoundIfFlexible().abbreviationOrSelf.symbol?.psi
         }
 }

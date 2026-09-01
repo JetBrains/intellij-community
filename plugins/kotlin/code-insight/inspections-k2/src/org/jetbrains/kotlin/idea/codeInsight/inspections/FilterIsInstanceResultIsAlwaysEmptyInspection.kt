@@ -5,8 +5,8 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
@@ -89,6 +89,7 @@ class FilterIsInstanceResultIsAlwaysEmptyInspection: AbstractKotlinInspection() 
      *
      * The same logic can be applied to the case when T is `final` instead.
      */
+    @OptIn(KaExperimentalApi::class)
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitorVoid {
         return callExpressionVisitor { ktCall ->
             analyze(ktCall) {
@@ -96,19 +97,18 @@ class FilterIsInstanceResultIsAlwaysEmptyInspection: AbstractKotlinInspection() 
                 val calleeExpression = callExpression.calleeExpression ?: return@callExpressionVisitor
                 if (calleeExpression.text !in filterIsInstanceShortNames) return@callExpressionVisitor
 
-                val callSymbol =
-                    calleeExpression.resolveToCall()?.successfulFunctionCallOrNull()
-                        ?: return@callExpressionVisitor
+                val singleCall =
+                    callExpression.resolveSuccessfulCall() ?: return@callExpressionVisitor
 
-                val callableId = callSymbol.symbol.callableId ?: return@callExpressionVisitor
+                val callableId = singleCall.symbol.callableId ?: return@callExpressionVisitor
                 val callableName = callableId.callableName
                 if (callableId !in filterIsInstanceCallableIds) return@callExpressionVisitor
 
-                val receiverType = callSymbol.extensionReceiver?.type as? KaClassType ?: return@callExpressionVisitor
+                val receiverType = singleCall.extensionReceiver?.type as? KaClassType ?: return@callExpressionVisitor
                 val receiverElementType = receiverType.typeArguments.singleOrNull()?.type ?: return@callExpressionVisitor
 
                 val targetType =
-                    (callSymbol.signature.returnType as? KaClassType)?.typeArguments?.singleOrNull()?.type ?: return@callExpressionVisitor
+                    (singleCall.signature.returnType as? KaClassType)?.typeArguments?.singleOrNull()?.type ?: return@callExpressionVisitor
 
                 val targetTypeBounds = targetType.boundsOrSelf ?: return@callExpressionVisitor
                 val elementTypeBounds = receiverElementType.boundsOrSelf ?: return@callExpressionVisitor

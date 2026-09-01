@@ -17,10 +17,10 @@ import com.intellij.psi.createSmartPointer
 import org.jdom.Element
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.successfulConstructorCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.constructor
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
@@ -129,6 +129,7 @@ internal class JavaCollectionWithNullableTypeArgumentInspection :
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtElement): Context? {
         val typeArguments = element.getTypeArguments() ?: return null
@@ -137,7 +138,7 @@ internal class JavaCollectionWithNullableTypeArgumentInspection :
         val collectionName: FqName
         when (element) {
             is KtCallExpression -> {
-                val constructorCall = element.resolveToCall()?.successfulConstructorCallOrNull() ?: return null
+                val constructorCall = element.resolveSuccessfulCall()?.constructor ?: return null
                 collectionName = constructorCall.symbol.importableFqName ?: return null
 
                 if (typeArguments.isEmpty()) {
@@ -310,7 +311,7 @@ private fun KtTypeProjection.isExplicitlyNullable(): Boolean {
 context(_: KaSession)
 private fun KtTypeProjection.isImplicitlyNullable(): Boolean {
     val userType = typeReference?.typeElement as? KtUserType ?: return false
-    val symbol = userType.referenceExpression?.resolveSymbol() as? KaClassifierSymbol ?: return false
+    val symbol = userType.referenceExpression?.resolveSuccessfulSymbol() as? KaClassifierSymbol ?: return false
     return symbol.defaultType.isNullable
 }
 

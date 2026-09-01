@@ -11,7 +11,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
@@ -82,7 +82,7 @@ internal sealed class ConvertFunctionWithDemorgansLawIntention(
         val (fromFunctionName, _, _, negatePredicate) = conversions[element.calleeExpression?.text] ?: return null
         val fqNames = functions[fromFunctionName] ?: return null
         val targetFunctionName =
-            element.resolveSymbol()?.importableFqName ?: return null
+            element.resolveSuccessfulSymbol()?.importableFqName ?: return null
         if (targetFunctionName !in fqNames) return null
 
         val lambda = element.singleLambdaArgumentExpression() ?: return null
@@ -91,7 +91,7 @@ internal sealed class ConvertFunctionWithDemorgansLawIntention(
 
         val functionPredicate = when (lastStatement) {
             is KtReturnExpression -> {
-                val targetSymbol = lastStatement.resolveSymbol()
+                val targetSymbol = lastStatement.resolveSuccessfulSymbol()
                 val lambdaSymbol = lambda.functionLiteral.symbol
                 if (targetSymbol == lambdaSymbol) lastStatement.returnedExpression else null
             }

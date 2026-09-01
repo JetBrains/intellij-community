@@ -81,6 +81,7 @@ jvm_library(
         "//java/java-analysis-api:analysis",
         "//java/java-frontback-psi-api:frontback-psi",
         "//plugins/kotlin/base/scripting/scripting.shared",
+        "//plugins/kotlin/base/code-insight",
     ],
 )
 
@@ -147,6 +148,7 @@ jvm_library(
         "//java/java-analysis-api:analysis_test_lib",
         "//java/java-frontback-psi-api:frontback-psi_test_lib",
         "//plugins/kotlin/base/scripting/scripting.shared:scripting.shared_test_lib",
+        "//plugins/kotlin/base/code-insight:code-insight_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.analysis` end

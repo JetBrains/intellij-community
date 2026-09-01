@@ -13,6 +13,8 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
@@ -99,7 +101,7 @@ internal class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection
             is KtUserType -> element.referenceExpression as? KtNameReferenceExpression
             else -> null
         } ?: return true
-        val intendedFqName = reference.resolveSymbol()?.importableFqName ?: return true
+        val intendedFqName = reference.resolveSuccessfulSymbol()?.importableFqName ?: return true
 
         return element.containingKtFile.importDirectives.none { import ->
             import.aliasName != null && import.importedFqName == intendedFqName

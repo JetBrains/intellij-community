@@ -11,10 +11,10 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.text.UniqueNameGenerator
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.returnType
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
@@ -195,8 +195,9 @@ private class Converter(
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession) private fun getArgumentExpressionToProcess(callElement: KtCallElement): KtExpression? {
-        val valueArgumentMapping = callElement.resolveToCall()?.successfulFunctionCallOrNull()?.valueArgumentMapping ?: return null
+        val valueArgumentMapping = callElement.resolveSuccessfulCall()?.valueArgumentMapping ?: return null
         val parameter = data.changeInfo.method.getValueParameters()[data.functionParameterIndex]
         val entry = valueArgumentMapping.entries.find { (_, value) -> value.name.asString() == parameter.name } ?: return null
         return KtPsiUtil.deparenthesize(entry.key)

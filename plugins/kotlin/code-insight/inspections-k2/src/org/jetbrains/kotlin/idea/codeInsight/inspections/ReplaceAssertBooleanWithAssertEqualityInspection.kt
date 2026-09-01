@@ -8,12 +8,10 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.tree.IElementType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
@@ -123,6 +121,7 @@ private fun optimizeImports(file: KtFile) {
         ?.forEach { it.delete() }
 }
 
+@OptIn(KaExperimentalApi::class)
 context(session: KaSession?)
 private fun KtCallExpression.extractAssertionInfo(): Pair<String, IElementType>? {
     val assertionName = (calleeExpression as? KtNameReferenceExpression)?.getReferencedName() ?: return null
@@ -139,7 +138,7 @@ private fun KtCallExpression.extractAssertionInfo(): Pair<String, IElementType>?
 
     if (session == null) return assertionName to operationToken
 
-    val callableSymbol = resolveToCall()?.successfulFunctionCallOrNull()?.symbol as? KaCallableSymbol ?: return null
+    val callableSymbol = this.resolveSuccessfulSymbol() ?: return null
     val containingPackage = callableSymbol.callableId?.packageName?.asString()
     if (containingPackage != kotlinTestPackage) return null
 

@@ -13,13 +13,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.isClassType
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.simple
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -156,6 +157,7 @@ private fun KtQualifiedExpression.findCallChain(): CallChain? {
     return CallChain(qualified, lastCall, calls.size)
 }
 
+@OptIn(KaExperimentalApi::class)
 private fun collectCallExpression(expression: KtQualifiedExpression): List<KtCallExpression> {
     val calls = mutableListOf<KtCallExpression>()
 
@@ -165,10 +167,9 @@ private fun collectCallExpression(expression: KtQualifiedExpression): List<KtCal
         calls.add(call)
         val receiver = qualified.receiverExpression
         if (receiver is KtCallExpression) {
-            val partiallyAppliedSymbol =
-                receiver.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
+            val singleCall = receiver.tryResolveCall()?.single?.simple
             val implicitReceiverValue =
-                (partiallyAppliedSymbol?.extensionReceiver ?: partiallyAppliedSymbol?.dispatchReceiver) as? KaImplicitReceiverValue
+                (singleCall?.extensionReceiver ?: singleCall?.dispatchReceiver) as? KaImplicitReceiverValue
             val hasImplicitReceiver = implicitReceiverValue != null
             if (hasImplicitReceiver) {
                 calls.add(receiver)
@@ -188,9 +189,9 @@ private fun collectCallExpression(expression: KtQualifiedExpression): List<KtCal
             .asSequence()
             .map { call ->
                 val partiallySymbol = transformationAndTerminations[call.calleeText()]?.let { fqName ->
-                    val partiallySymbol = call.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
-                    val symbolCallableId = partiallySymbol?.symbol?.callableId?.asSingleFqName()
-                    partiallySymbol?.takeIf { symbolCallableId == fqName }
+                    val singleCall = call.tryResolveCall()?.single?.simple
+                    val symbolCallableId = singleCall?.symbol?.callableId?.asSingleFqName()
+                    singleCall?.takeIf { symbolCallableId == fqName }
                 }
                 call to partiallySymbol
             }

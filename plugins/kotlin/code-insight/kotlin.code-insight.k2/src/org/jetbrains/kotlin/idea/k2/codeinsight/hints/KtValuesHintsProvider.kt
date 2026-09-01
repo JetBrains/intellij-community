@@ -5,12 +5,14 @@ import com.intellij.codeInsight.hints.declarative.HintFormat
 import com.intellij.codeInsight.hints.declarative.InlayTreeSink
 import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
@@ -39,14 +41,14 @@ class KtValuesHintsProvider : AbstractKtInlayHintsProvider() {
         collectForRanges(element, sink)
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun collectForKotlinTime(element: PsiElement, sink: InlayTreeSink) {
         val expression = element as? KtDotQualifiedExpression ?: return
         val selectorExpression = expression.selectorExpression ?: return
 
         sink.whenOptionEnabled(SHOW_KOTLIN_TIME.name) {
             val callableId = analyze(expression) {
-                val variableAccessCall = expression.resolveToCall()?.successfulVariableAccessCall()
-                variableAccessCall?.symbol?.callableId
+                expression.resolveSuccessfulSymbol()?.callableId
             } ?: return@whenOptionEnabled
 
             if (callableId.classId.takeIf { it == DURATION_CLASS_ID || it == DURATION_COMPANION_CLASS_ID } == null) {
@@ -92,9 +94,10 @@ class KtValuesHintsProvider : AbstractKtInlayHintsProvider() {
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun isApplicableForRanges(binaryExpression: KtBinaryExpression, leftExp: KtExpression, rightExp: KtExpression): Boolean {
-        val functionCallOrNull = binaryExpression.resolveToCall()?.singleFunctionCallOrNull()
+        val functionCallOrNull = binaryExpression.tryResolveCall()?.single?.function
         functionCallOrNull?.symbol?.takeIf {
             val packageName = it.callableId?.packageName
             packageName == StandardNames.RANGES_PACKAGE_FQ_NAME || packageName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME

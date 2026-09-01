@@ -28,10 +28,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.kaModule
-import org.jetbrains.kotlin.analysis.api.resolution.KaCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
@@ -170,7 +167,7 @@ context(_: KaSession)
 private fun fakePsiMethodForReifiedInline(
     callableSymbol: KaCallableSymbol,
     context: KtElement,
-    kaCallInfo: KaCallInfo? = null,
+    kaCallInfo: KaSimpleCall<*, *>? = null,
 ): PsiMethod? {
     // `inline` w/ `reified` type param from binary dependency,
     // which we can't find source PSI, so fake it
@@ -231,11 +228,12 @@ private fun KaCallableSymbol.isInline(): Boolean = when (this) {
     else -> false
 }
 
+@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 internal fun toPsiMethod(
     functionSymbol: KaFunctionSymbol,
     context: KtElement,
-    kaCallInfo: KaCallInfo? = null,
+    kaCallInfo: KaSimpleCall<*, *>? = null,
 ): PsiMethod? {
     // Error handling for a case like KTIJ-23503: Outer.<no name provided>.Inner from broken code
     val nameToCheck = if (functionSymbol is KaConstructorSymbol)
@@ -297,7 +295,7 @@ private fun toPsiMethodForDeserialized(
     functionSymbol: KaFunctionSymbol,
     context: KtElement,
     psi: KtFunction?,
-    kaCallInfo: KaCallInfo? = null,
+    kaCallInfo: KaSimpleCall<*, *>? = null,
 ): PsiMethod? {
 
     fun equalSignatures(psiMethod: PsiMethod): Boolean {
@@ -425,9 +423,8 @@ private fun toPsiMethodForDeserialized(
 }
 
 @OptIn(KaExperimentalApi::class)
-private fun KaCallInfo?.typeArgumentsMappingOrEmptyMap(): Map<KaSymbolPointer<KaTypeParameterSymbol>, KaTypePointer<KaType>> =
-    (this?.successfulCallOrNull<KaCall>() as? KaCallableMemberCall<*, *>)
-        ?.typeArgumentsMapping
+private fun KaSimpleCall<*, *>?.typeArgumentsMappingOrEmptyMap(): Map<KaSymbolPointer<KaTypeParameterSymbol>, KaTypePointer<KaType>> =
+    this?.typeArgumentsMapping
         ?.map { (typeParamSymbol, type) ->
             typeParamSymbol.createPointer() to type.createPointer()
         }?.toMap()
@@ -502,15 +499,16 @@ internal fun toPsiType(
     ) ?: UastErrorType
 }
 
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 internal fun receiverType(
-    ktCall: KaCallableMemberCall<*, *>,
+    ktCall: KaSimpleCall<*, *>,
     source: UElement,
     context: KtElement,
 ): PsiType? {
-    val ktType = ktCall.partiallyAppliedSymbol.extensionReceiver?.type
-        ?: ktCall.partiallyAppliedSymbol.dispatchReceiver?.type
-        ?: ktCall.partiallyAppliedSymbol.signature.receiverType
+    val ktType = ktCall.extensionReceiver?.type
+        ?: ktCall.dispatchReceiver?.type
+        ?: ktCall.signature.receiverType
     if (ktType == null ||
         ktType is KaErrorType ||
         ktType.classId == KaStandardTypeClassIds.UNIT

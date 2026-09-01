@@ -4,8 +4,9 @@ package org.jetbrains.kotlin.idea.highlighting
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.KaCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleOrMultiCall
 import org.jetbrains.kotlin.idea.highlighting.analyzers.KotlinFunctionCallSemanticAnalyzer
 
 /**
@@ -24,8 +25,9 @@ interface KotlinCallHighlighterExtension {
      * Note that this function is used by [KotlinFunctionCallSemanticAnalyzer]. When this function returns a non-null [HighlightInfoType],
      * [KotlinFunctionCallSemanticAnalyzer] uses it instead of the default one to highlight [call].
      */
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
-    fun highlightCall(elementToHighlight: PsiElement, call: KaCall): HighlightInfoType?
+    fun highlightCall(elementToHighlight: PsiElement, call: KaSimpleOrMultiCall): HighlightInfoType?
 
     companion object {
         val EP_NAME: ExtensionPointName<KotlinCallHighlighterExtension> = ExtensionPointName.create("org.jetbrains.kotlin.callHighlighterExtension")

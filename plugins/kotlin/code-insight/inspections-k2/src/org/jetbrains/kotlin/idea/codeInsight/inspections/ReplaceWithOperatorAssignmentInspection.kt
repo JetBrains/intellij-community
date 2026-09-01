@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
@@ -71,7 +72,7 @@ internal class ReplaceWithOperatorAssignmentInspection :
         val operatorAssignment = buildOperatorAssignment(element) ?: return null
 
         analyze(operatorAssignment) {
-            if (operatorAssignment.operationReference.resolveSymbol() == null) return null
+            if (operatorAssignment.operationReference.resolveSuccessfulSymbol() == null) return null
         }
 
         val problemHighlightType = getProblemHighlightType(element)
@@ -158,7 +159,7 @@ private fun checkExpressionRepeat(
 context(session: KaSession)
 private fun isPrimitiveOperation(expression: KtBinaryExpression): Boolean {
     val operationSymbol = expression.operationReference
-        .resolveSymbol()
+        .resolveSuccessfulSymbol()
         ?.containingSymbol as? KaClassSymbol ?: return false
 
     return operationSymbol.defaultType.classId in KaStandardTypeClassIds.PRIMITIVES

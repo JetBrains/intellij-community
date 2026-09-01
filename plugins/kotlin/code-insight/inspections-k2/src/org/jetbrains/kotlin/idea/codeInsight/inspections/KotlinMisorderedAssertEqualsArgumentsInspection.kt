@@ -17,7 +17,8 @@ import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
@@ -116,9 +117,10 @@ internal class KotlinMisorderedAssertEqualsArgumentsInspection :
         return arguments.size >= 2 && arguments.none { it.isNamed() }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): Context? {
-        val call = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
+        val call = element.resolveSuccessfulCall() ?: return null
         val functionSymbol = call.symbol
         val methodName = functionSymbol.assertMethodNameOrNull() ?: return null
 
@@ -240,13 +242,14 @@ internal class KotlinMisorderedAssertEqualsArgumentsInspection :
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtCallExpression.looksLikeExpectedCall(
         receiverExpression: KtExpression?,
         parameterPosition: ParameterPosition,
         visited: MutableSet<KtExpression>,
     ): Boolean {
-        val functionSymbol = resolveToCall()?.successfulFunctionCallOrNull()?.symbol as? KaFunctionSymbol ?: return false
+        val functionSymbol = this.resolveSuccessfulSymbol() ?: return false
         if (parameterPosition == ParameterPosition.ACTUAL && (functionSymbol as? KaNamedFunctionSymbol)?.name?.asString() == "expected") return true
 
         val allArgumentsAreExpectedLike = valueArguments.all { argument ->
@@ -281,7 +284,7 @@ internal class KotlinMisorderedAssertEqualsArgumentsInspection :
     private fun KtNameReferenceExpression.looksLikeExpectedReference(
         parameterPosition: ParameterPosition,
         visited: MutableSet<KtExpression>,
-    ): Boolean = resolveSymbol()?.looksLikeExpectedSymbol(parameterPosition, visited) == true
+    ): Boolean = resolveSuccessfulSymbol()?.looksLikeExpectedSymbol(parameterPosition, visited) == true
 
     context(_: KaSession)
     private fun KaSymbol.looksLikeExpectedSymbol(
@@ -314,7 +317,7 @@ internal class KotlinMisorderedAssertEqualsArgumentsInspection :
     context(_: KaSession)
     private fun KtExpression.isClassLikeQualifier(): Boolean {
         return when (val expression = unwrapParentheses()) {
-            is KtNameReferenceExpression -> expression.resolveSymbol() is KaClassSymbol
+            is KtNameReferenceExpression -> expression.resolveSuccessfulSymbol() is KaClassSymbol
             is KtDotQualifiedExpression -> expression.selectorExpression?.isClassLikeQualifier() == true
             else -> false
         }

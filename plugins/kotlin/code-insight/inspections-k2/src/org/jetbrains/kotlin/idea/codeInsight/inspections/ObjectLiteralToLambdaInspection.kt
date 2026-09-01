@@ -20,7 +20,9 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
@@ -49,6 +51,7 @@ import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParenthes
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.ReturnSaver
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtBlockExpression
@@ -76,6 +79,7 @@ import org.jetbrains.kotlin.types.Variance
 
 @Suppress("DEPRECATION")
 internal class ObjectLiteralToLambdaInspection : IntentionBasedInspection<KtObjectLiteralExpression>(ObjectLiteralToLambdaIntention::class) {
+    @OptIn(KaExperimentalApi::class)
     override fun problemHighlightType(element: KtObjectLiteralExpression): ProblemHighlightType {
         val data = extractData(element) ?: return super.problemHighlightType(element)
         val bodyBlock = data.singleFunction.bodyBlockExpression
@@ -87,7 +91,7 @@ internal class ObjectLiteralToLambdaInspection : IntentionBasedInspection<KtObje
         val valueArgument = element.parent as? KtValueArgument
         valueArgument?.getStrictParentOfType<KtCallExpression>()?.let { call ->
             val classId = analyze(call) {
-                val functionCallOrNull = call.resolveToCall()?.successfulFunctionCallOrNull()
+                val functionCallOrNull = call.resolveSuccessfulCall()
                 val argumentExpression = valueArgument.getArgumentExpression()
                 val variableSignature = functionCallOrNull?.valueArgumentMapping?.get(argumentExpression)
                 val returnType = variableSignature?.returnType?.withNullability(isMarkedNullable = false) as? KaClassType
@@ -133,7 +137,7 @@ class ObjectLiteralToLambdaIntention : SelfTargetingRangeIntention<KtObjectLiter
                     allowAnalysisFromWriteAction {
                         analyze(instanceReference) {
                             val containingSymbol = singleFunction.symbol.containingSymbol ?: return@analyze false
-                            val resolveToSymbol = instanceReference.resolveSymbol()
+                            val resolveToSymbol = instanceReference.resolveSuccessfulSymbol()
 
                             resolveToSymbol.equalsOrEqualsByPsi(containingSymbol)
                         }
@@ -153,7 +157,7 @@ class ObjectLiteralToLambdaIntention : SelfTargetingRangeIntention<KtObjectLiter
                     allowAnalysisFromWriteAction {
                         analyze(expression) {
                             val containingSymbol = singleFunction.symbol.containingSymbol ?: return@analyze false
-                            val functionCall = expression.resolveToCall()?.successfulFunctionCallOrNull() ?: return@analyze false
+                            val functionCall = expression.resolveSuccessfulExpressionCall()?.simple ?: return@analyze false
                             functionCall.getImplicitReceivers().any {
                                 it.symbol == containingSymbol
                             }

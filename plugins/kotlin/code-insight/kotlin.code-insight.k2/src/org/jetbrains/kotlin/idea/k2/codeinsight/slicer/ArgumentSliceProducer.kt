@@ -7,9 +7,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitInvokeCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.codeInsight.slicer.KotlinSliceAnalysisMode
@@ -30,6 +30,7 @@ data class ArgumentSliceProducer(
 
     override val testPresentation: String = "ARGUMENT #$parameterIndex".let { if (isExtension) "$it EXTENSION" else it }
 
+    @OptIn(KaExperimentalApi::class)
     private fun extractArgumentExpression(refElement: PsiElement): PsiElement? {
         val refParent = refElement.parent
         return when {
@@ -39,7 +40,7 @@ data class ArgumentSliceProducer(
                     ?: (refParent as? KtDotQualifiedExpression)?.selectorExpression as? KtCallElement
                     ?: return null
                 analyze(callElement) {
-                    val callInfo = callElement.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
+                    val callInfo = callElement.resolveSuccessfulCall() ?: return null
 
                     val parameterIndexToUse = parameterIndex + (if (isExtension && (callInfo is KaImplicitInvokeCall)) 1 else 0)
 

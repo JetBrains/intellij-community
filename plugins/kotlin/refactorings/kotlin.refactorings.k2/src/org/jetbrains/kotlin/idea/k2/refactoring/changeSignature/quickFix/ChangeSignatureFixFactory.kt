@@ -19,20 +19,13 @@ import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.asPsiType
-import org.jetbrains.kotlin.analysis.api.types.buildSubstitutor
-import org.jetbrains.kotlin.analysis.api.types.builtinFunctionTypeFamilies
-import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
-import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.types.functionTypeFamily
-import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.returnType
-import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
+import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
+import org.jetbrains.kotlin.analysis.api.renderer.render
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallResolutionError
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
@@ -40,10 +33,16 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
+import org.jetbrains.kotlin.analysis.api.types.buildSubstitutor
+import org.jetbrains.kotlin.analysis.api.types.builtinFunctionTypeFamilies
+import org.jetbrains.kotlin.analysis.api.types.functionTypeFamily
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
 import org.jetbrains.kotlin.builtins.StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.approximateAnonymousObjectToSupertypeOrSelf
@@ -74,6 +73,7 @@ import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.ValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 import org.jetbrains.kotlin.types.Variance
 
 object ChangeSignatureFixFactory {
@@ -224,11 +224,11 @@ object ChangeSignatureFixFactory {
             return prepareFunctionalLiteralChangeInfo(psi as KtLambdaExpression, input)
         }
         val callElement = psi.parentOfType<KtCallElement>(input.type == ChangeType.REMOVE) ?: return null
-        val functionCall =
-            ((callElement.resolveToCall() as? KaErrorCallInfo)?.candidateCalls?.firstOrNull() as? KaCallableMemberCall<*, *>)
+        val singleCall =
+            (callElement.tryResolveCall() as? KaCallResolutionError)?.candidateCalls?.firstOrNull()
                 ?: return null
 
-        val psiElement = functionCall.partiallyAppliedSymbol.symbol.psi
+        val psiElement = singleCall.symbol.psi
 
         if (psiElement is PsiMethod) {
             val result = psiElement.parameterList.parameters.mapIndexed { idx, param ->
@@ -323,7 +323,7 @@ object ChangeSignatureFixFactory {
                 val parameters = (ktCallableDeclaration as? KtCallableDeclaration)?.valueParameters ?: emptyList()
                 val arguments = callElement.valueArguments
                 val substitutor = buildSubstitutor {
-                    for (entry in functionCall.typeArgumentsMapping) {
+                    for (entry in singleCall.typeArgumentsMapping) {
                         substitution(entry.key, entry.value)
                     }
                 }
@@ -486,13 +486,14 @@ object ChangeSignatureFixFactory {
         )
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun createRemoveParameterFix(
         element: KtElement,
         parameterName: String,
     ): List<ParameterQuickFix> {
         val functionLikeSymbol =
-            ((element.resolveToCall() as? KaErrorCallInfo)?.candidateCalls?.firstOrNull() as? KaCallableMemberCall<*, *>)?.symbol as? KaFunctionSymbol
+            ((element as? KtResolvableCall)?.tryResolveCall() as? KaCallResolutionError)?.candidateCalls?.firstOrNull()?.symbol as? KaFunctionSymbol
                 ?: return emptyList()
 
         if (!isWritable(functionLikeSymbol)) return emptyList()
@@ -527,7 +528,7 @@ object ChangeSignatureFixFactory {
 
         val callElement = valueArgument.parentOfType<KtCallElement>() ?: return emptyList()
         val functionLikeSymbol =
-            ((callElement.resolveToCall() as? KaErrorCallInfo)?.candidateCalls?.firstOrNull() as? KaCallableMemberCall<*, *>)?.symbol as? KaFunctionSymbol
+            (callElement.tryResolveCall() as? KaCallResolutionError)?.candidateCalls?.firstOrNull()?.symbol as? KaFunctionSymbol
                 ?: return emptyList()
 
         if (!isWritable(functionLikeSymbol)) return emptyList()

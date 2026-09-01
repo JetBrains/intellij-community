@@ -21,7 +21,9 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.single
+import org.jetbrains.kotlin.analysis.api.resolution.variable
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.session.useSiteModule
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
@@ -48,6 +50,7 @@ import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.codeInsight.inspections.dfa.KtClassDef.Companion.classDef
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
+import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
 import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
@@ -220,7 +223,7 @@ class KtVariableDescriptor(
                 return KtThisDescriptor.descriptorFromThis(expr).first?.let { varFactory.createVariableValue(it) }
             }
             if (expr !is KtSimpleNameExpression) return null
-            val symbol: KaVariableSymbol = expr.resolveSymbol() as? KaVariableSymbol ?: return null
+            val symbol: KaVariableSymbol = expr.resolveSuccessfulSymbol() as? KaVariableSymbol ?: return null
             if (symbol is KaValueParameterSymbol || symbol is KaLocalVariableSymbol || symbol is KaContextParameterSymbol) {
                 return varFactory.createVariableValue(symbol.variableDescriptor())
             }
@@ -248,6 +251,7 @@ class KtVariableDescriptor(
             return null
         }
 
+        @OptIn(KaExperimentalApi::class)
         context(_: KaSession)
         private fun findQualifier(factory: DfaValueFactory, expr: KtSimpleNameExpression, symbol: KaVariableSymbol): DfaVariableValue? {
             val parent = expr.parent
@@ -256,7 +260,7 @@ class KtVariableDescriptor(
                 val receiver = parent.receiverExpression
                 return createFromSimpleName(factory, receiver)
             }
-            var dispatchReceiver = expr.resolveToCall()?.singleVariableAccessCall()?.dispatchReceiver
+            var dispatchReceiver = expr.tryResolveExpressionCall()?.single?.variable?.dispatchReceiver
             dispatchReceiver = (dispatchReceiver as? KaSmartCastedReceiverValue)?.original ?: dispatchReceiver
             val receiverParameter = (dispatchReceiver as? KaImplicitReceiverValue)?.symbol as? KaReceiverParameterSymbol
             val functionLiteral = receiverParameter?.psi as? KtFunctionLiteral

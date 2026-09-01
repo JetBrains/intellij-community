@@ -13,10 +13,10 @@ import com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteCustomUsageInfo
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDeleteUsageInfo
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.javaInterop.callableSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
@@ -69,6 +69,7 @@ class KotlinJavaSafeDeleteDelegate : JavaSafeDeleteDelegate {
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun createParameterUsagesFromResolvedCall(
         callExpression: KtCallElement,
@@ -86,7 +87,7 @@ class KotlinJavaSafeDeleteDelegate : JavaSafeDeleteDelegate {
             else -> null
         } ?: return
 
-        val resolvedCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return
+        val resolvedCall = callExpression.resolveSuccessfulCall() ?: return
 
         val valueArguments = callExpression.valueArguments.filterIsInstance<KtValueArgument>().filter { argument ->
             val argumentExpression = argument.getArgumentExpression()

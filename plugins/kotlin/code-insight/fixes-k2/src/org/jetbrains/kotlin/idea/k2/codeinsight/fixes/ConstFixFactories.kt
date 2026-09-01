@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.classId
@@ -32,7 +32,7 @@ internal object ConstFixFactories {
             } ?: return@ModCommandBased emptyList()
 
             val property: KtProperty = analyze(expression) {
-                val propertySymbol = expression.resolveSymbol() ?: return@analyze null
+                val propertySymbol = expression.resolveSuccessfulSymbol() ?: return@analyze null
                 (propertySymbol.psi as? KtProperty)?.takeIf { constModifierApplicable(it) }
             } ?: return@ModCommandBased emptyList()
 

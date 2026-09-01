@@ -14,8 +14,8 @@ import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.dataflow.implicitReceiverSmartCasts
 import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
@@ -204,9 +204,10 @@ internal class VerboseNullabilityAndEmptinessInspection :
      * Validates that the function call receiver is suitable for null-or-empty checks.
      * Returns false for nullable types or primitive arrays where isNullOrEmpty wouldn't be appropriate.
      */
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun checkTargetFunctionReceiver(expression: KtCallExpression): Boolean {
-        val call = expression.resolveToCall()?.successfulFunctionCallOrNull() ?: return false
+        val call = expression.resolveSuccessfulCall() ?: return false
         val type = call.dispatchReceiver?.type ?: call.extensionReceiver?.type ?: return false
 
         val isNotNullable = !type.isMarkedNullable
@@ -485,12 +486,12 @@ private fun resolve(chunk: TargetChunk): Any? {
         }
 
         is KtCallExpression -> {
-            val call = chunk.expression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
+            val call = chunk.expression.resolveSuccessfulCall() ?: return null
             getSingleReceiver(call.dispatchReceiver, call.extensionReceiver)
         }
 
         is KtNameReferenceExpression -> {
-            chunk.expression.resolveSymbol()
+            chunk.expression.resolveSuccessfulSymbol()
         }
 
         else -> null
@@ -586,10 +587,10 @@ private fun hasSmartCast(chunk: TargetChunk): Boolean {
 /**
  * Resolves a call expression to its underlying function symbol.
  */
+@OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun resolveToFunctionSymbol(expression: KtCallExpression): KaFunctionSymbol? {
-    val call = expression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-    return call.symbol
+    return expression.resolveSuccessfulSymbol()
 }
 
 /**

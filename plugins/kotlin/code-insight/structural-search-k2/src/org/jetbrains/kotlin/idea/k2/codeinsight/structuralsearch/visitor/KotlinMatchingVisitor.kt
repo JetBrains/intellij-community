@@ -12,10 +12,10 @@ import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor
 import com.intellij.structuralsearch.impl.matcher.handlers.LiteralWithSubstitutionHandler
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
@@ -480,10 +480,11 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun KtCallElement.resolveParameters(): List<KtParameter> {
         analyze(this) {
-            val callInfo = resolveToCall()?.successfulFunctionCallOrNull() ?: return emptyList()
-            return callInfo.signature.valueParameters.mapNotNull { it.symbol.psi as? KtParameter? }
+            val functionCall = this.resolveSuccessfulCall() ?: return emptyList()
+            return functionCall.signature.valueParameters.mapNotNull { it.symbol.psi as? KtParameter? }
         }
     }
 

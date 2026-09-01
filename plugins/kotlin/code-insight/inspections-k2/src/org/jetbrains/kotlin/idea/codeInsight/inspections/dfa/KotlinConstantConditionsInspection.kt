@@ -40,8 +40,11 @@ import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -514,9 +517,10 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             return REPEATING_COMPILATION_WARNINGS.any { checker.isSuppressedFor(anchor, it) }
         }
 
+        @OptIn(KaExperimentalApi::class)
         private fun isCallToBuiltInMethod(call: KtCallExpression, methodName: String): Boolean {
             return analyze(call) {
-                val functionCall: KaFunctionCall<*> = call.resolveToCall()?.singleFunctionCallOrNull() ?: return@analyze false
+                val functionCall: KaFunctionCall<*> = call.tryResolveCall()?.single?.function ?: return@analyze false
                 val target: KaNamedFunctionSymbol = functionCall.symbol as? KaNamedFunctionSymbol ?: return@analyze false
                 if (target.name.asString() != methodName) return@analyze false
                 return StandardNames.BUILT_INS_PACKAGE_FQ_NAME == target.callableId?.packageName
@@ -537,6 +541,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             return isCallToBuiltInMethod(call, "also")
         }
 
+        @OptIn(KaExperimentalApi::class)
         context(_: KaSession)
         private fun isAssertion(parent: PsiElement?, value: Boolean): Boolean {
             return when (parent) {
@@ -556,7 +561,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                     if (!value) return false
                     val valueArgList = parent.parent as? KtValueArgumentList ?: return false
                     val call = valueArgList.parent as? KtCallExpression ?: return false
-                    val functionCall: KaFunctionCall<*> = call.resolveToCall()?.singleFunctionCallOrNull() ?: return false
+                    val functionCall: KaFunctionCall<*> = call.tryResolveCall()?.single?.function ?: return false
                     val target: KaNamedFunctionSymbol = functionCall.symbol as? KaNamedFunctionSymbol ?: return false
                     val name = target.name.asString()
                     if (name != "assert" && name != "require" && name != "check") return false
@@ -693,7 +698,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                             receiver = receiver.selectorExpression
                         }
                         if (receiver is KtSimpleNameExpression) {
-                            val symbol = receiver.resolveSymbol()
+                            val symbol = receiver.resolveSuccessfulSymbol()
                             if (symbol is KaEnumEntrySymbol) {
                                 // ordinal() call on explicit enum constant
                                 return true

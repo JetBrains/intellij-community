@@ -1,10 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.calls
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.psi.KtSimpleNameStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.psiUtil.isSingleQuoted
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal object UnresolvedInvocationQuickFixFactories {
@@ -59,10 +61,11 @@ internal object UnresolvedInvocationQuickFixFactories {
         return AddInterpolationPrefixFix(stringTemplateExpression, prefixLength)
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun containsResolvedReferences(stringTemplateExpression: KtStringTemplateExpression): Boolean {
         return stringTemplateExpression.entries.filterIsInstance<KtSimpleNameStringTemplateEntry>().any { nameEntry ->
-            val resolvedCalls = nameEntry.expression?.resolveToCall()?.calls.orEmpty()
+            val resolvedCalls = (nameEntry.expression as? KtResolvableCall)?.tryResolveCall()?.calls.orEmpty()
             resolvedCalls.isNotEmpty()
         }
     }

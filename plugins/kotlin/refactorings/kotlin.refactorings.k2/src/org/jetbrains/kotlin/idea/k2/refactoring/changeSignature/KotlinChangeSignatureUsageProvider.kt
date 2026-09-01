@@ -11,7 +11,7 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureUsageProvider
 import com.intellij.refactoring.changeSignature.JavaChangeInfo
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -95,7 +95,8 @@ class KotlinChangeSignatureUsageProvider : ChangeSignatureUsageProvider {
                 when {
                     callElementParent != null -> {
                         val isCopyOfDataClass = analyze(element) {
-                            val functionSymbol = (reference.element as? KtSimpleNameExpression)?.resolveSymbol() as? KaNamedFunctionSymbol
+                            val functionSymbol =
+                                (reference.element as? KtSimpleNameExpression)?.resolveSuccessfulSymbol() as? KaNamedFunctionSymbol
                             functionSymbol?.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED &&
                                     functionSymbol.name.asString() == "copy" && (functionSymbol.containingSymbol as? KaNamedClassSymbol)?.isData == true
                         }

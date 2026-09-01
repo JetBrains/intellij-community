@@ -6,10 +6,11 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.single
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -73,13 +74,14 @@ object AnonymousFunctionToLambdaUtil {
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun prepareAnonymousFunctionToLambdaContext(element: KtNamedFunction): KtExpression? {
         if (element.receiverTypeReference != null && element.expectedType == null) return null
         val argument = element.getStrictParentOfType<KtValueArgument>()?.getArgumentExpression()
         val callElement = argument?.getStrictParentOfType<KtCallElement>()
         val typeParameterIndexes = if (callElement != null && callElement.typeArgumentList == null) {
-            val functionalType = callElement.resolveToCall()?.singleFunctionCallOrNull()?.valueArgumentMapping?.get(argument)?.symbol?.returnType
+            val functionalType = callElement.tryResolveCall()?.single?.function?.valueArgumentMapping?.get(argument)?.symbol?.returnType
 
             val typeArguments = (functionalType as? KaClassType)?.typeArguments?.let {
                 if (it.isNotEmpty()) it.dropLast(1) else it
@@ -149,7 +151,6 @@ object AnonymousFunctionToLambdaUtil {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     private class ReturnSaver(val function: KtNamedFunction) {
         companion object {
             private val RETURN_KEY = Key<Unit>("RETURN_KEY")
@@ -158,19 +159,24 @@ object AnonymousFunctionToLambdaUtil {
         val isEmpty: Boolean
 
         init {
+            isEmpty = !markReturnExpressions()
+        }
+
+        @OptIn(KaExperimentalApi::class)
+        private fun markReturnExpressions(): Boolean {
             var hasReturn = false
             analyze(function) {
                 val functionSymbol = function.symbol
                 val body = function.bodyExpression!!
                 body.forEachDescendantOfType<KtReturnExpression> {
-                    if (it.resolveSymbol() == functionSymbol) {
+                    if (it.resolveSuccessfulSymbol() == functionSymbol) {
                         hasReturn = true
                         it.putCopyableUserData(RETURN_KEY, Unit)
                     }
                 }
             }
 
-            isEmpty = !hasReturn
+            return hasReturn
         }
 
         private fun clear() {

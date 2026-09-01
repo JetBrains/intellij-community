@@ -22,8 +22,8 @@ import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter.ON
 import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbols
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbols
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
@@ -86,7 +86,7 @@ private fun KtFile.hasAnnotationToSuppressDeprecation(): Boolean {
     val suppressAnnotationEntry = annotationEntries.firstOrNull {
         val calleeExpression = it.calleeExpression ?: return@firstOrNull false
         if (it.shortName?.asString() != "Suppress") return@firstOrNull false
-        calleeExpression.resolveCall()?.symbol?.importableFqName == StandardNames.FqNames.suppress
+        calleeExpression.resolveSuccessfulCall()?.symbol?.importableFqName == StandardNames.FqNames.suppress
     } ?: return false
 
     return suppressAnnotationEntry.valueArguments.any {
@@ -101,7 +101,7 @@ private fun KtImportDirective.isImportToBeRemoved(): Boolean {
     if (isAllUnder) return false
 
     val symbols = (importedReference?.getQualifiedElementSelector() as? KtResolvable)
-        ?.resolveSymbols()
+        ?.resolveSuccessfulSymbols()
         ?.filterIsInstance<KaDeclarationSymbol>()
         .orEmpty()
     return symbols.isNotEmpty() && symbols.all { fetchReplaceWithPattern(it) != null }

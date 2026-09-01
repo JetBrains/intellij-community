@@ -10,17 +10,16 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.isClassType
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray
 import org.jetbrains.kotlin.analysis.api.types.isNestedArray
-import org.jetbrains.kotlin.analysis.api.types.classId
-import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.inspections.KotlinArrayToStringInspection.Context
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -110,6 +109,7 @@ internal class KotlinArrayToStringInspection : KotlinApplicableInspectionBase<Kt
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtExpression): Context? {
         return when (element) {
@@ -117,8 +117,7 @@ internal class KotlinArrayToStringInspection : KotlinApplicableInspectionBase<Kt
                 val receiverType = element.receiverExpression.expressionType ?: return null
                 if (!receiverType.isArrayOrPrimitiveArray) return null
                 val callExpression = element.selectorExpression as? KtCallExpression ?: return null
-                val call = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-                val functionSymbol = call.symbol as? KaNamedFunctionSymbol ?: return null
+                val functionSymbol = callExpression.resolveSuccessfulCall()?.symbol as? KaNamedFunctionSymbol ?: return null
                 if (functionSymbol.callableId != TO_STRING_CALLABLE_ID) return null
 
                 Context(receiverType.isNestedArray, isImplicitConversion = false)
@@ -134,8 +133,7 @@ internal class KotlinArrayToStringInspection : KotlinApplicableInspectionBase<Kt
             }
 
             is KtCallExpression -> {
-                val call = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-                val functionSymbol = call.symbol as? KaNamedFunctionSymbol ?: return null
+                val functionSymbol = element.resolveSuccessfulCall()?.symbol as? KaNamedFunctionSymbol ?: return null
                 val callableId = functionSymbol.callableId ?: return null
                 if (callableId !in IMPLICIT_TO_STRING_CALLABLE_IDS) return null
 
@@ -143,7 +141,7 @@ internal class KotlinArrayToStringInspection : KotlinApplicableInspectionBase<Kt
                 if (arguments.size != 1) return null
                 val argType = arguments[0].getArgumentExpression()?.expressionType ?: return null
                 if (!argType.isArrayOrPrimitiveArray) return null
-                if (argType.isClassType(CHAR_ARRAY_CLASS_ID)) return null
+                if (argType.classId == CHAR_ARRAY_CLASS_ID) return null
 
                 Context(argType.isNestedArray, isImplicitConversion = true)
             }

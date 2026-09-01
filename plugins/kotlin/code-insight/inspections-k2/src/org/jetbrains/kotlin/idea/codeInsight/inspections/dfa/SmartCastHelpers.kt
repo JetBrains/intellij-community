@@ -5,22 +5,22 @@ import com.intellij.psi.SyntaxTraverser
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaNonPublicApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.dataflow.implicitReceiverSmartCasts
 import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.simple
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
+import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtContainerNode
@@ -50,7 +50,7 @@ internal fun isSmartCastNecessary(expr: KtExpression, value: Boolean): Boolean {
                 val info = e.smartCastInfo
                 if (info != null) {
                     val expectedType = (if (e.parent is KtThisExpression) e.parent else e).expectedType
-                    val ktType = values[e.resolveSymbol()]
+                    val ktType = values[e.resolveSuccessfulSymbol()]
                     return@any ktType != null && !info.smartCastType.semanticallyEquals(ktType)
                             && (expectedType == null || !ktType.isSubtypeOf(expectedType))
                 }
@@ -58,9 +58,9 @@ internal fun isSmartCastNecessary(expr: KtExpression, value: Boolean): Boolean {
 
             val implicitReceiverSmartCastList = e.implicitReceiverSmartCasts
             if (implicitReceiverSmartCastList.isNotEmpty()) {
-                val symbol = e.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
-                if (symbol != null) {
-                    var receiver = symbol.dispatchReceiver ?: symbol.extensionReceiver
+                val singleCall = e.tryResolveExpressionCall()?.single?.simple
+                if (singleCall != null) {
+                    var receiver = singleCall.dispatchReceiver ?: singleCall.extensionReceiver
                     if (receiver is KaSmartCastedReceiverValue) {
                         receiver = receiver.original
                     }
@@ -82,7 +82,7 @@ private fun getValuesInExpression(expr: KtExpression): Map<KaSymbol, KaType> {
     SyntaxTraverser.psiTraverser(expr)
         .filter(KtReferenceExpression::class.java)
         .forEach { e ->
-            val symbol = e.resolveSymbol()
+            val symbol = e.resolveSuccessfulSymbol()
             if (symbol != null) {
                 val type = e.expressionType
                 if (type != null) {

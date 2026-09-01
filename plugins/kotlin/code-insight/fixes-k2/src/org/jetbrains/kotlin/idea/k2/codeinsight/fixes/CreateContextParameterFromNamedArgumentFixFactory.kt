@@ -3,13 +3,14 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.builtinTypes
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -31,7 +32,7 @@ internal object CreateContextParameterFromNamedArgumentFixFactory {
         val argumentExpression = argument.getArgumentExpression() ?: return@ModCommandBased emptyList()
 
         val callExpression = argument.parent?.parent as? KtCallExpression ?: return@ModCommandBased emptyList()
-        val call = callExpression.resolveToCall()?.singleFunctionCallOrNull() ?: return@ModCommandBased emptyList()
+        val call = callExpression.tryResolveCall()?.single?.function ?: return@ModCommandBased emptyList()
 
         val targetFunction = call.symbol.psi as? KtNamedFunction ?: return@ModCommandBased emptyList()
         if (!targetFunction.canRefactorElement()) return@ModCommandBased emptyList()

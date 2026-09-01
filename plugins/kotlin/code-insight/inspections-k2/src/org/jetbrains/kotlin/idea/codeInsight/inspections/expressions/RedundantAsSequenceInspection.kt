@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
@@ -126,7 +126,7 @@ private fun checkFunctionCall(expression: KtCallExpression, nameToFqNameMap: Map
 @OptIn(KaExperimentalApi::class)
 context(session: KaSession)
 private fun resolveToFunctionSymbol(expression: KtCallExpression): KaNamedFunctionSymbol? =
-    expression.resolveSymbol() as? KaNamedFunctionSymbol
+    expression.resolveSuccessfulSymbol() as? KaNamedFunctionSymbol
 
 private val collectionTerminationFunctionNames: List<String> = listOf(
     "all",

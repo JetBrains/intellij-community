@@ -13,13 +13,13 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaSingleOrMultiCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleOrMultiCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbols
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbols
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -280,7 +280,7 @@ private fun removeUnusedTypeParameters(typeParameters: List<KtTypeParameter>) {
  */
 @OptIn(KaExperimentalApi::class)
 context(_: KaSession)
-private fun KaCallableMemberCall<*, *>.hasContextReceiverOfType(type: KaType): Boolean {
+private fun KaSimpleCall<*, *>.hasContextReceiverOfType(type: KaType): Boolean {
     val substitutor = buildSubstitutor {
         substitutions(typeArgumentsMapping)
     }
@@ -309,13 +309,12 @@ private fun isUsageOfSymbol(symbol: KaDeclarationSymbol, element: KtElement): Bo
     if (element !is KtExpression) return false
 
     val receiverType = (symbol as? KaCallableSymbol)?.receiverType
-    fun isUsageOfSymbolInResolvedCall(resolvedCall: KaSingleOrMultiCall): Boolean = when (resolvedCall) {
+    fun isUsageOfSymbolInResolvedCall(resolvedCall: KaSimpleOrMultiCall): Boolean = when (resolvedCall) {
         is KaFunctionCall<*>, is KaVariableAccessCall -> {
-            val partiallyAppliedSymbol = resolvedCall.partiallyAppliedSymbol
 
-            partiallyAppliedSymbol.dispatchReceiver?.getThisReceiverOwner() == symbol ||
-                    partiallyAppliedSymbol.extensionReceiver?.getThisReceiverOwner() == symbol ||
-                    partiallyAppliedSymbol.contextArguments.any { it.getThisReceiverOwner() == symbol } ||
+            resolvedCall.dispatchReceiver?.getThisReceiverOwner() == symbol ||
+                    resolvedCall.extensionReceiver?.getThisReceiverOwner() == symbol ||
+                    resolvedCall.contextArguments.any { it.getThisReceiverOwner() == symbol } ||
                     (receiverType != null && resolvedCall.hasContextReceiverOfType(receiverType)) // potentially captured by context receiver
         }
 
@@ -324,7 +323,7 @@ private fun isUsageOfSymbol(symbol: KaDeclarationSymbol, element: KtElement): Bo
 
     when (element) {
         is KtClassLiteralExpression -> {
-            val typeParameterType = ((element.receiverExpression as? KtResolvable)?.resolveSymbol() as? KaTypeParameterSymbol)?.defaultType
+            val typeParameterType = ((element.receiverExpression as? KtResolvable)?.resolveSuccessfulSymbol() as? KaTypeParameterSymbol)?.defaultType
             if (typeParameterType != null && receiverType?.semanticallyEquals(typeParameterType) == true) {
                 return true
             }
@@ -333,12 +332,12 @@ private fun isUsageOfSymbol(symbol: KaDeclarationSymbol, element: KtElement): Bo
 
     @OptIn(KaExperimentalApi::class)
     fun processOperators(e: KtResolvableCall): Boolean {
-        return e.resolveSymbols().filterIsInstance<KaFunctionSymbol>().any { receiverType?.symbol == it.containingDeclaration }
+        return e.resolveSuccessfulSymbols().filterIsInstance<KaFunctionSymbol>().any { receiverType?.symbol == it.containingDeclaration }
     }
 
     return when (element) {
         is KtThisExpression -> { // Check if this refers to our receiver
-            val referencedSymbol = element.resolveSymbol()
+            val referencedSymbol = element.resolveSuccessfulSymbol()
             referencedSymbol is KaReceiverParameterSymbol && referencedSymbol.owningCallableSymbol == symbol
         }
 
@@ -352,7 +351,7 @@ private fun isUsageOfSymbol(symbol: KaDeclarationSymbol, element: KtElement): Bo
         is KtForExpression -> processOperators(element)
 
         is KtResolvableCall -> {
-            val resolvedCall = element.resolveCall() ?: return false
+            val resolvedCall = element.resolveSuccessfulCall() ?: return false
             isUsageOfSymbolInResolvedCall(resolvedCall)
         }
 

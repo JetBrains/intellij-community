@@ -7,10 +7,11 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.analysis.api.types.upperBoundIfFlexible
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
@@ -133,6 +135,7 @@ internal class KotlinBigDecimalEqualsInspection :
                 element.calleeExpression?.text == "equals" &&
                 element.parent is KtQualifiedExpression
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtExpression): Context? {
         return when (element) {
@@ -143,8 +146,8 @@ internal class KotlinBigDecimalEqualsInspection :
                 val leftType = left.expressionType?.takeIf { isBigDecimal(it) } ?: return null
                 val rightType = right.expressionType?.takeIf { isBigDecimal(it) } ?: return null
 
-                val operatorCallableId =
-                    element.operationReference.resolveToCall()?.successfulFunctionCallOrNull()?.symbol?.callableId ?: return null
+                val simpleCall = element.operationReference.resolveSuccessfulCall()?.function
+                val operatorCallableId = simpleCall?.symbol?.callableId ?: return null
                 // to avoid FP with a custom operator extension function
                 if (operatorCallableId != bigDecimalEquals) return null
 
@@ -157,9 +160,9 @@ internal class KotlinBigDecimalEqualsInspection :
                 val expression = element.parent as? KtQualifiedExpression ?: return null
                 val nullableReceiverType = expression.receiverExpression.expressionType?.isMarkedNullable == true
                 val calleeExpression = element.calleeExpression
-                val call =
-                    calleeExpression?.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-                if (call.symbol.callableId != bigDecimalEquals) return null
+                val symbol =
+                    calleeExpression?.resolveSuccessfulExpressionCall()?.function?.symbol ?: return null
+                if (symbol.callableId != bigDecimalEquals) return null
 
                 val singleArgument = element.valueArguments.singleOrNull() ?: return null
                 val argumentExpression = singleArgument.getArgumentExpression() ?: return null

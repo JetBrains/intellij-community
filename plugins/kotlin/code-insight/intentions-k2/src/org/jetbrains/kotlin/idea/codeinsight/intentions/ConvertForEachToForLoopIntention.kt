@@ -6,7 +6,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -106,7 +106,7 @@ internal class ConvertForEachToForLoopIntention
     @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtCallExpression.isForEachByAnalyze(): Boolean {
-        val symbol = resolveSymbol() as? KaNamedFunctionSymbol ?: return false
+        val symbol = this.resolveSuccessfulSymbol() as? KaNamedFunctionSymbol ?: return false
         val callableId = symbol.callableId
         return callableId in FOR_EACH_CALLABLE_IDS || callableId in FOR_EACH_INDEXED_CALLABLE_IDS
     }

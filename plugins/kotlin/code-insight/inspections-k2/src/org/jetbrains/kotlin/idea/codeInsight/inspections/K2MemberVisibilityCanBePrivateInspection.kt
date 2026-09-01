@@ -12,10 +12,9 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.descriptors.Visibilities
@@ -39,7 +38,6 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
-import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -56,6 +54,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifier
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierTypeOrDefault
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 
 class K2MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
 
@@ -84,6 +83,7 @@ class K2MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun canBePrivate(declaration: KtNamedDeclaration): Boolean {
         analyze(declaration) {
             if (declaration.hasModifier(KtTokens.PRIVATE_KEYWORD) || declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false
@@ -128,8 +128,10 @@ class K2MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
                     otherUsageFound = true
                     return@Processor false
                 }
-                val receiverType = ((usage as? KtElement)?.resolveToCall()
-                    ?.successfulCallOrNull<KaCall>() as? KaCallableMemberCall<*, *>)?.partiallyAppliedSymbol?.dispatchReceiver?.type?.expandedSymbol?.psi
+                val resolvableCall = usage as? KtResolvableCall
+                val receiverType =
+                    resolvableCall?.resolveSuccessfulCall()?.simple
+                        ?.dispatchReceiver?.type?.expandedSymbol?.psi
                 if (receiverType != null && receiverType != containingClassOrObject) {
                     otherUsageFound = true
                     return@Processor false

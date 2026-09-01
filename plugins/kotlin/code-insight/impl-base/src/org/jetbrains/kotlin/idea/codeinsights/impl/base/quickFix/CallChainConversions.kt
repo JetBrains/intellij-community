@@ -6,12 +6,13 @@ import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.constructor
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
@@ -535,13 +536,15 @@ object AssociateFunctionUtil {
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun KtExpression.isReferenceTo(another: KaValueParameterSymbol): Boolean {
         val referenceExpression = this as? KtNameReferenceExpression ?: return false
-        val symbol = referenceExpression.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.symbol
+        val symbol = referenceExpression.resolveSuccessfulCall()?.symbol
         return symbol == another
     }
 
+    @OptIn(KaExperimentalApi::class)
     @ApiStatus.Internal
     context(_: KaSession)
     fun pair(expression: KtExpression): Pair<KtExpression, KtExpression>? {
@@ -556,7 +559,7 @@ object AssociateFunctionUtil {
                 is KtCallExpression -> {
                     if (calleeExpression?.text != "Pair") return null
                     if (valueArguments.size != 2) return null
-                    val constructorSymbol = resolveToCall()?.singleConstructorCallOrNull()?.symbol ?: return null
+                    val constructorSymbol = tryResolveCall()?.single?.constructor?.symbol ?: return null
                     val classId = (constructorSymbol.returnType as? KaClassType)?.classId ?: return null
                     if (classId != PAIR_CLASS_ID) return null
                     val first = valueArguments[0]?.getArgumentExpression() ?: return null

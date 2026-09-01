@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -81,4 +81,4 @@ internal class ReplaceCollectionCountWithSizeInspection : KotlinApplicableInspec
 @OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KtCallExpression.resolveToFunctionSymbol(): KaNamedFunctionSymbol? =
-    resolveSymbol() as? KaNamedFunctionSymbol
+    this.resolveSuccessfulSymbol() as? KaNamedFunctionSymbol

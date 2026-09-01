@@ -14,17 +14,18 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.analysis.api.components.isClassType
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.resolution.simple
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
@@ -46,7 +47,7 @@ internal class ObjectInheritsExceptionInspection : AbstractKotlinInspection(), C
                 val isException = analyze(declaration) {
                     val symbol = declaration.symbol as? KaNamedClassSymbol ?: return
                     symbol.superTypes.any {
-                        it.isClassType(StandardKotlinNames.throwableClassId) ||
+                        it.classId == StandardKotlinNames.throwableClassId ||
                                 it.isSubtypeOf(StandardKotlinNames.throwableClassId)
                     }
                 }
@@ -64,6 +65,7 @@ internal class ObjectInheritsExceptionInspection : AbstractKotlinInspection(), C
     private class ChangeObjectToClassQuickFix : PsiUpdateModCommandQuickFix() {
         override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("inspection.object.exception.to.class.quick.fix.name")
 
+        @OptIn(KaExperimentalApi::class)
         override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
             val objectDeclaration =
                 (element as? LeafPsiElement)?.let { it.parent as? KtObjectDeclaration } ?: return
@@ -106,9 +108,8 @@ internal class ObjectInheritsExceptionInspection : AbstractKotlinInspection(), C
                     if (qualifiedExpression != null) {
                         if (qualifiedExpression.selectorExpression != expression) {
                             val functionCallOrVariableAccess = analyze(qualifiedExpression) {
-                                val resolveToCall = qualifiedExpression.resolveToCall()
-                                val call = resolveToCall?.singleCallOrNull<KaCallableMemberCall<*, *>>() ?: return@analyze false
-                                val symbol = call.symbol
+                                val resolveToCall = qualifiedExpression.tryResolveCall()?.single?.simple ?: return@analyze false
+                                val symbol = resolveToCall.symbol
                                 symbol !is KaConstructorSymbol && symbol is KaFunctionSymbol || symbol is KaVariableSymbol
                             }
                             if (!functionCallOrVariableAccess) return@forEach

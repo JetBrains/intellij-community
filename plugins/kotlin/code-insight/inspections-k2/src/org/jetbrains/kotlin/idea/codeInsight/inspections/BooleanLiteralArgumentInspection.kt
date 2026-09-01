@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -71,7 +71,7 @@ internal class BooleanLiteralArgumentInspection(
         if (diagnostics.any { it.severity == KaSeverity.ERROR }) return null
         val name = getStableNameFor(element) ?: return null
 
-        val symbol = call.resolveSymbol() ?: return null
+        val symbol = call.resolveSuccessfulSymbol() ?: return null
         if ((symbol as? KaConstructorSymbol)?.importableFqName in ignoreConstructors) return null
         if (!symbol.hasStableParameterNames) return null
 

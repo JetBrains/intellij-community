@@ -12,9 +12,9 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.childrenOfType
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray
 import org.jetbrains.kotlin.config.LanguageVersion
@@ -125,6 +125,7 @@ internal class ReplaceIsEmptyWithIfEmptyInspection : KotlinApplicableInspectionB
     override fun getApplicableRanges(element: KtIfExpression): List<TextRange> =
         ApplicabilityRanges.ifKeyword(element)
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtIfExpression): Replacement? {
         if (element.languageVersionSettings.languageVersion < LanguageVersion.KOTLIN_1_3) return null
@@ -139,7 +140,7 @@ internal class ReplaceIsEmptyWithIfEmptyInspection : KotlinApplicableInspectionB
         if (conditionCalleeExpression.text !in conditionFunctionShortNames) return null
 
         val functionSymbol =
-            conditionCallExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
+            conditionCallExpression.resolveSuccessfulCall() ?: return null
         val receiverParameter = functionSymbol.dispatchReceiver ?: functionSymbol.extensionReceiver
         val receiverType = receiverParameter?.type ?: return null
         if (receiverType.isArrayOrPrimitiveArray) return null

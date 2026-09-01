@@ -6,7 +6,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -73,7 +73,7 @@ internal class ReplaceForEachWithRepeatIntention :
     @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): Context? {
-        val callee = element.resolveSymbol() as? KaNamedFunctionSymbol ?: return null
+        val callee = element.resolveSuccessfulSymbol() as? KaNamedFunctionSymbol ?: return null
         if (callee.callableId !in FOR_EACH_CALLABLE_IDS) return null
 
         val qualified = element.getQualifiedExpressionForSelector() as? KtDotQualifiedExpression ?: return null

@@ -6,11 +6,10 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -66,10 +65,10 @@ internal class ReplaceMapGetOrDefaultInspection :
         return callExpression.arguments() != null
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun isApplicableByAnalyze(callExpression: KtCallExpression, receiverExpression: KtExpression): Boolean {
-        val call = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return false
-        if (call.symbol.getFqNameIfPackageOrNonLocal() != getOrDefaultFqName) return false
+        if (callExpression.resolveSuccessfulSymbol()?.getFqNameIfPackageOrNonLocal() != getOrDefaultFqName) return false
         val receiverType = receiverExpression.expressionType as? KaClassType ?: return false
         val lastTypeArgument = receiverType.typeArguments.lastOrNull() ?: return false
         return lastTypeArgument.type?.isMarkedNullable != true

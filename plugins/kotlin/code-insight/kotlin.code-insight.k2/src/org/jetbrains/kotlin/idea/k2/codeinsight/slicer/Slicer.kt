@@ -12,13 +12,14 @@ import com.intellij.slicer.JavaSliceUsage
 import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.simple
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
@@ -37,6 +38,7 @@ import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectDeclarationIfAny
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchOverriders
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -232,17 +234,19 @@ abstract class Slicer(
     }
 
     // ignore parameter usages in function contract
+    @OptIn(KaExperimentalApi::class)
     private fun shouldIgnoreVariableUsage(usage: UsageInfo): Boolean {
         val element = usage.element ?: return true
         return element.parents.any { el ->
             el is KtCallExpression &&
                     (el.calleeExpression as? KtSimpleNameExpression)?.getReferencedName() == "contract" &&
-                    analyze(el) { el.resolveToCall()?.singleFunctionCallOrNull()?.symbol?.callableId?.asSingleFqName()?.asString() == "kotlin.contracts.contract" }
+                    analyze(el) { el.tryResolveCall()?.single?.function?.symbol?.callableId?.asSingleFqName()?.asString() == "kotlin.contracts.contract" }
         }
     }
 
     protected fun canProcessParameter(parameter: KtParameter): Boolean = !parameter.isVarArg
 
+    @OptIn(KaExperimentalApi::class)
     protected fun processExtensionReceiverUsages(
         declaration: KtCallableDeclaration,
         body: KtExpression?,
@@ -264,7 +268,7 @@ abstract class Slicer(
 
             //implicit this
             body.forEachDescendantOfType<KtSimpleNameExpression> { simpleNameExpression ->
-                val symbol = simpleNameExpression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol ?: return@forEachDescendantOfType
+                val symbol = simpleNameExpression.resolveSuccessfulExpressionCall()?.simple ?: return@forEachDescendantOfType
                 if ((symbol.extensionReceiver as? KaImplicitReceiverValue)?.symbol == extensionReceiver) {
                     symbol.symbol.receiverParameter?.psi?.passToProcessor(mode)
                 }

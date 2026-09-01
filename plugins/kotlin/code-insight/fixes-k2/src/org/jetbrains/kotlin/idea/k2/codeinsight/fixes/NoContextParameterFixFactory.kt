@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
 import org.jetbrains.kotlin.analysis.api.components.KaScopeImplicitArgumentValue
 import org.jetbrains.kotlin.analysis.api.components.compositeScope
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToCallCandidates
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
@@ -17,8 +16,10 @@ import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallCandidateInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
@@ -220,15 +221,17 @@ internal object NoContextParameterFixFactory {
             SurroundCallWithContextFix.Wrapper.WITH
         }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun findSurroundingContextCall(element: KtElement): KtCallExpression? {
         val parentCall = element.getStrictParentOfType<KtLambdaArgument>()?.parent as? KtCallExpression ?: return null
         val calleeName = (parentCall.calleeExpression as? KtNameReferenceExpression)?.getReferencedName()
         if (calleeName != CONTEXT_FQ_NAME.shortName().asString()) return null
-        val resolvedFqName = parentCall.resolveToCall()?.singleFunctionCallOrNull()?.symbol?.callableId?.asSingleFqName()
+        val resolvedFqName = parentCall.tryResolveCall()?.single?.function?.symbol?.callableId?.asSingleFqName()
         return if (resolvedFqName == null || resolvedFqName == CONTEXT_FQ_NAME) parentCall else null
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun findValueCandidates(
         useSite: KtElement,
@@ -257,6 +260,7 @@ internal object NoContextParameterFixFactory {
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun innerContextScopeAlreadyContainsType(
         surroundingContextCall: KtCallExpression,

@@ -16,12 +16,10 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.javaGetterName
 import org.jetbrains.kotlin.analysis.api.components.javaSetterName
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
@@ -36,6 +34,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRena
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo.Companion.internalUsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo.Companion.markInternalUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.OuterInstanceReferenceUsageInfo
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -283,10 +282,11 @@ private fun traverseOuterInstanceReferences(
         val outerClassPsi = outerClassSymbol.psi
         var found = false
         member.accept(object : PsiRecursiveElementWalkingVisitor() {
+            @OptIn(KaExperimentalApi::class)
             private fun getOuterInstanceReference(element: PsiElement): OuterInstanceReferenceUsageInfo? {
                 return when (element) {
                     is KtThisExpression -> {
-                        val referencedSymbol = element.resolveSymbol() ?: return null
+                        val referencedSymbol = element.resolveSuccessfulSymbol() ?: return null
                         val symbolPsi = referencedSymbol.psi
                         val isIndirect = when {
                             referencedSymbol == outerClassSymbol -> false
@@ -297,20 +297,23 @@ private fun traverseOuterInstanceReferences(
                     }
 
                     is KtSimpleNameExpression -> {
-                        val resolvedCall = element.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>() ?: return null
-                        val dispatchReceiver = resolvedCall.partiallyAppliedSymbol.dispatchReceiver as? KaImplicitReceiverValue
-                        val extensionReceiver = resolvedCall.partiallyAppliedSymbol.extensionReceiver as? KaImplicitReceiverValue
+                        val resolvedCall = element.resolveSuccessfulExpressionCall()?.simple ?: return null
+                        val dispatchReceiver = resolvedCall.dispatchReceiver as? KaImplicitReceiverValue
+                        val extensionReceiver = resolvedCall.extensionReceiver as? KaImplicitReceiverValue
+                        val dispatchReceiverSymbol = dispatchReceiver?.symbol
+                        val extensionReceiverSymbol = extensionReceiver?.symbol
+
                         var isIndirect = false
                         val isDoubleReceiver = when (outerClassSymbol) {
-                            dispatchReceiver?.symbol -> extensionReceiver != null
-                            extensionReceiver?.symbol -> dispatchReceiver != null
+                            dispatchReceiverSymbol -> extensionReceiver != null
+                            extensionReceiverSymbol -> dispatchReceiver != null
                             else -> {
                                 isIndirect = true
                                 when {
-                                    dispatchReceiver?.symbol?.isStrictAncestorOf(outerClassSymbol) == true ->
+                                    dispatchReceiverSymbol?.isStrictAncestorOf(outerClassSymbol) == true ->
                                         extensionReceiver != null
 
-                                    extensionReceiver?.symbol?.isStrictAncestorOf(outerClassSymbol) == true ->
+                                    extensionReceiverSymbol?.isStrictAncestorOf(outerClassSymbol) == true ->
                                         dispatchReceiver != null
 
                                     else -> return null

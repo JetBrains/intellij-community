@@ -4,12 +4,15 @@ package org.jetbrains.kotlin.idea.gradleCodeInsightCommon
 import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.simple
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
+import org.jetbrains.kotlin.analysis.api.resolution.variable
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
@@ -18,6 +21,7 @@ import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 import org.jetbrains.plugins.gradle.service.resolve.GradleProjectReference
 
 private const val GRADLE_SEPARATOR = ":"
@@ -65,18 +69,19 @@ class KotlinGradleProjectReferenceProvider: AbstractKotlinGradleReferenceProvide
         return callableId.packageName == KGP_PACKAGE && callableId.className == KOTLIN_DEPENDENCY_HANDLER_CLASS
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
     private fun getProjectAccessors(element: PsiElement): List<String>? {
         val dotQualifiedExpression = element.getParentOfType<KtDotQualifiedExpression>(true, KtDeclarationWithBody::class.java) ?: return null
         val (variableCallableId, functionCallableId) =
             allowAnalysisOnEdt {
                 analyze(dotQualifiedExpression) {
-                    val elementCallableId = (element as? KtElement)?.resolveToCall()?.singleVariableAccessCall()?.symbol?.callableId
+                    val elementCallableId = (element as? KtResolvableCall)?.tryResolveCall()?.single?.variable?.symbol?.callableId
                     if (elementCallableId?.packageName == GRADLE_DSL_PACKAGE && elementCallableId.callableName == GRADLE_DSL_PROJECTS) return emptyList()
 
-                    val resolveCallOld = dotQualifiedExpression.resolveToCall()
-                    val variableAccessCall = resolveCallOld?.singleVariableAccessCall()
-                    val functionCall = resolveCallOld?.singleFunctionCallOrNull()
+                    val resolutionAttempt = dotQualifiedExpression.tryResolveCall()
+                    val single = resolutionAttempt?.single?.simple
+                    val variableAccessCall = single?.variable
+                    val functionCall = single?.function
                     variableAccessCall?.symbol?.callableId to functionCall?.symbol?.callableId
                 }
             }

@@ -3,11 +3,10 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -65,10 +64,10 @@ internal class UnusedEqualsInspection : AbstractKotlinInspection() {
             }
         }
 
+        @OptIn(KaExperimentalApi::class)
         context(session: KaSession)
         private fun isAnyEquals(expression: KtCallExpression): Boolean {
-            val call = expression.resolveToCall()?.successfulFunctionCallOrNull() ?: return false
-            val symbol = call.symbol as? KaNamedFunctionSymbol ?: return false
+            val symbol = expression.resolveSuccessfulSymbol() as? KaNamedFunctionSymbol ?: return false
             return symbol.isEqualsMethodSymbol()
         }
     }

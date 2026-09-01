@@ -12,9 +12,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.containingModule
 import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
 import org.jetbrains.kotlin.analysis.api.types.isNullable
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.name.FqName
@@ -100,7 +100,7 @@ private fun createCandidate(
     displayName: String,
 ): TargetClassCandidateParameter? {
     if (typeReference.type.isNullable) return null
-    return typeReference.resolveSymbol()?.takeIf { classifierSymbol ->
+    return typeReference.resolveSuccessfulSymbol()?.takeIf { classifierSymbol ->
         classifierSymbol.isSuitableTargetClass() && declaration.symbol.containingSymbol != classifierSymbol
     }?.importableFqName?.let { fqName ->
         TargetClassCandidateParameter(

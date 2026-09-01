@@ -8,7 +8,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaBackingFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
@@ -90,7 +90,7 @@ internal fun isBackingFieldReference(expression: KtExpression?, property: KtProp
 context(session: KaSession)
 private fun isBackingFieldReference(namedReference: KtNameReferenceExpression, property: KtProperty): Boolean {
     if (namedReference.text != KtTokens.FIELD_KEYWORD.value) return false
-    val fieldSymbol = namedReference.resolveSymbol()
+    val fieldSymbol = namedReference.resolveSuccessfulSymbol()
     if (fieldSymbol !is KaBackingFieldSymbol) return false
     return fieldSymbol.owningProperty.psi == property
 }

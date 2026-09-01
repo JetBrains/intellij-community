@@ -9,7 +9,7 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.util.findParentOfType
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.resolution.resolveCall
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -56,7 +56,7 @@ internal class AddParameterNameAtCallsitesIntention : PsiBasedModCommandAction<K
                 val callExpression = reference.element.parentsWithSelf.firstIsInstanceOrNull<KtCallElement>() ?: continue
                 if (!callExpression.isValid) continue
                 analyze(callExpression) {
-                    val resolveCall = callExpression.resolveCall() ?: return@analyze
+                    val resolveCall = callExpression.resolveSuccessfulCall() ?: return@analyze
                     val (argument) = resolveCall.valueArgumentMapping.entries.firstOrNull { it.value.name == parameterName }
                         ?: return@analyze
                     when (val parent = argument.parent) {

@@ -8,14 +8,14 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallResolutionError
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.resolution.KtResolvable
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 import org.jetbrains.kotlin.types.Variance
 
 object ChangeParameterTypeFixFactory {
@@ -66,6 +67,7 @@ object ChangeParameterTypeFixFactory {
         createTypeMismatchFixes(psi, diagnostic.expectedType.withNullability(isMarkedNullable = true))
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun createTypeMismatchFixes(psi: KtExpression, targetType: KaType): List<KotlinQuickFixAction<*>> {
         val outermostExpression = psi.getOutermostParenthesizedExpressionOrThis()
@@ -78,7 +80,8 @@ object ChangeParameterTypeFixFactory {
             val callElement = valueArgument.parentOfType<KtCallElement>() ?: return emptyList()
             argumentKey to callElement
         }
-        val memberCall = (callElement.resolveToCall() as? KaErrorCallInfo)?.candidateCalls?.firstOrNull() as? KaFunctionCall<*>
+        val memberCall =
+            ((callElement as? KtResolvableCall)?.tryResolveCall() as? KaCallResolutionError)?.candidateCalls?.firstOrNull() as? KaFunctionCall<*>
         val functionLikeSymbol = memberCall?.symbol ?: return emptyList()
 
         val paramSymbol = memberCall.valueArgumentMapping[argumentKey]
@@ -98,7 +101,7 @@ object ChangeParameterTypeFixFactory {
         } else {
             psi
         }
-        val referencedSymbol = (argumentOrSelectorExpression as? KtResolvable)?.resolveSymbol()?.let { symbol ->
+        val referencedSymbol = (argumentOrSelectorExpression as? KtResolvable)?.resolveSuccessfulSymbol()?.let { symbol ->
             if (symbol is KaPropertySymbol) {
                 getValueParameterSymbolForPropertySymbol(symbol)
             } else {

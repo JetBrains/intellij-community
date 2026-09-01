@@ -23,15 +23,14 @@ import com.intellij.refactoring.util.RefactoringUtil
 import com.intellij.util.containers.reverse
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.renderer.render
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.function
+import org.jetbrains.kotlin.analysis.api.resolution.simple
+import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
+import org.jetbrains.kotlin.analysis.api.resolution.variable
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.signatures.asSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -82,6 +81,9 @@ import org.jetbrains.kotlin.idea.refactoring.removeOverrideModifier
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameRefactoringSupport
 import org.jetbrains.kotlin.idea.refactoring.rename.dropDefaultValue
 import org.jetbrains.kotlin.idea.util.isBackingFieldRequired
+import org.jetbrains.kotlin.idea.util.tryResolveExpressionCall
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
+import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionSymbol
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name.identifier
@@ -123,6 +125,7 @@ import org.jetbrains.kotlin.psi.psiUtil.asAssignment
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierTypeOrDefault
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 import org.jetbrains.kotlin.types.Variance
 
 private val MODIFIERS_TO_LIFT_IN_SUPERCLASS = listOf(KtTokens.PRIVATE_KEYWORD)
@@ -150,10 +153,10 @@ internal class K2PullUpHelper(
 
             override fun visitKtFile(file: KtFile, data: Nothing?): Boolean = false
 
+            @OptIn(KaExperimentalApi::class)
             override fun visitSimpleNameExpression(expression: KtSimpleNameExpression, arg: Nothing?): Boolean = analyze(expression) {
-                val resolvedCall = expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>() ?: return true
-                val partiallyAppliedSymbol = resolvedCall.partiallyAppliedSymbol
-                val receiverValue = partiallyAppliedSymbol.dispatchReceiver ?: partiallyAppliedSymbol.extensionReceiver
+                val resolvedCall = expression.resolveSuccessfulExpressionCall()?.simple ?: return true
+                val receiverValue = resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver
                 val receiver = (receiverValue as? KaExplicitReceiverValue)?.expression
                 if (receiver != null && receiver !is KtThisExpression && receiver !is KtSuperExpression) return true
 
@@ -176,6 +179,7 @@ internal class K2PullUpHelper(
         }, null
     )
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun getCommonInitializer(
         currentInitializer: KtExpression?,
@@ -193,8 +197,7 @@ internal class K2PullUpHelper(
                 val receiver = (lhs as? KtQualifiedExpression)?.receiverExpression
                 if (receiver != null && receiver !is KtThisExpression) return@let
 
-                val resolvedCall = lhs.resolveToCall()?.successfulVariableAccessCall() ?: return@let
-                if (resolvedCall.symbol != propertySymbol) return@let
+                if (lhs.resolveSuccessfulExpressionSymbol() != propertySymbol) return@let
 
                 if (initializerCandidate == null) {
                     if (currentInitializer == null) {
@@ -222,6 +225,7 @@ internal class K2PullUpHelper(
         val elementsToRemove: Set<KtElement>,
     )
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun getInitializerInfo(
         property: KtProperty,
@@ -242,7 +246,7 @@ internal class K2PullUpHelper(
         val usedParameters = LinkedHashSet<KtParameter>()
         val visitor = object : KtTreeVisitorVoid() {
             override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
-                val resolvedCall = expression.resolveToCall()?.singleVariableAccessCall() ?: return
+                val resolvedCall = expression.tryResolveExpressionCall()?.single?.variable ?: return
                 val receiverValue = resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver
                 val receiver = (receiverValue as? KaExplicitReceiverValue)?.expression
                 if (receiver != null && receiver !is KtThisExpression) return
@@ -572,6 +576,7 @@ internal class K2PullUpHelper(
             return movedMember
         }
 
+        @OptIn(KaExperimentalApi::class)
         fun moveCallableMember(member: KtCallableDeclaration, memberCopy: KtCallableDeclaration): KtCallableDeclaration {
             val movedMember: KtCallableDeclaration
             val clashingSuper = allowAnalysisFromWriteActionInEdt(member) {
@@ -622,8 +627,8 @@ internal class K2PullUpHelper(
                     CONSTRUCTOR_VAL_VAR_MODIFIERS.forEach { member.removeModifier(it) }
 
                     allowAnalysisFromWriteActionInEdt(data.sourceClass) {
-                        val superEntry = data.getSuperEntryForTargetClass()
-                        val superResolvedCall = superEntry?.resolveToCall()?.singleFunctionCallOrNull()
+                        val superEntry: KtSuperTypeListEntry? = data.getSuperEntryForTargetClass()
+                        val superResolvedCall = (superEntry as? KtResolvableCall)?.tryResolveCall()?.single?.function
                         if (superResolvedCall != null) {
                             val superCall = if (superEntry !is KtSuperTypeCallEntry || superEntry.valueArgumentList == null) {
                                 superEntry.replaced(psiFactory.createSuperTypeCallEntry("${superEntry.text}()"))
