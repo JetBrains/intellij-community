@@ -15,7 +15,7 @@ internal class ScrollbarHelperTest {
     fun `non-Mac systems do not initialize native preferences`() {
         val helper = createScrollbarHelper(false) { error("The native helper must not initialize") }
         assertEquals(ScrollbarVisibility.AlwaysVisible.default(), helper.scrollbarVisibilityStyleFlow.value)
-        assertEquals(TrackClickBehavior.JumpToSpot, helper.trackClickBehaviorFlow.value)
+        assertEquals(TrackClickBehavior.NextPage, helper.trackClickBehaviorFlow.value)
     }
 
     @Test

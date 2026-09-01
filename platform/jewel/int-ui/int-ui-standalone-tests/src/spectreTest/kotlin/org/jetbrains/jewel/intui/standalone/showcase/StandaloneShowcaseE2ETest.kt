@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.thread
 import kotlin.test.assertEquals
 import org.jetbrains.jewel.e2e.PopupScenarios
+import org.jetbrains.jewel.e2e.ScrollbarScenarios
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.JewelFlags
 import org.jetbrains.jewel.intui.standalone.awaitWindow
@@ -50,6 +51,7 @@ class StandaloneShowcaseE2ETest {
             val automator =
                 SpectreShowcaseAutomator(ComposeAutomator.inProcess(RobotDriver.synthetic(app.awaitWindow())))
             PopupScenarios.runAll(automator, failures)
+            ScrollbarScenarios.runAll(automator, failures)
         } finally {
             app.stop()
         }
@@ -96,9 +98,9 @@ private fun Showcase() {
         viewModel = viewModel,
         toolbarButtonMetrics =
             IconButtonMetrics(
-                minSize = DpSize(24.dp, 24.dp),
-                cornerSize = CornerSize(4.dp),
-                padding = PaddingValues(2.dp),
+                minSize = DpSize(40.dp, 40.dp),
+                cornerSize = CornerSize(6.dp),
+                padding = PaddingValues(5.dp),
                 borderWidth = 0.dp,
             ),
     )

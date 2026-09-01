@@ -92,7 +92,7 @@ public fun ScrollbarStyle.Companion.tabStripMacOsDark(
 public fun ScrollbarStyle.Companion.tabStripWindowsAndLinuxLight(
     colors: ScrollbarColors = ScrollbarColors.windowsAndLinuxLight(),
     metrics: ScrollbarMetrics = ScrollbarMetrics.tabStripWindowsAndLinux(),
-    trackClickBehavior: TrackClickBehavior = TrackClickBehavior.JumpToSpot,
+    trackClickBehavior: TrackClickBehavior = TrackClickBehavior.NextPage,
     scrollbarVisibility: ScrollbarVisibility = ScrollbarHelper.scrollbarVisibilityStyle,
 ): ScrollbarStyle =
     ScrollbarStyle(
@@ -106,7 +106,7 @@ public fun ScrollbarStyle.Companion.tabStripWindowsAndLinuxLight(
 public fun ScrollbarStyle.Companion.tabStripWindowsAndLinuxDark(
     colors: ScrollbarColors = ScrollbarColors.windowsAndLinuxDark(),
     metrics: ScrollbarMetrics = ScrollbarMetrics.tabStripWindowsAndLinux(),
-    trackClickBehavior: TrackClickBehavior = TrackClickBehavior.JumpToSpot,
+    trackClickBehavior: TrackClickBehavior = TrackClickBehavior.NextPage,
     scrollbarVisibility: ScrollbarVisibility = ScrollbarHelper.scrollbarVisibilityStyle,
 ): ScrollbarStyle =
     ScrollbarStyle(

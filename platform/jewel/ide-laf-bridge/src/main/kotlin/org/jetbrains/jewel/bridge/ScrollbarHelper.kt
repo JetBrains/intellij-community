@@ -95,5 +95,5 @@ internal class MacScrollbarHelperImpl(private val preferences: MacScrollbarPrefe
 private object DummyScrollbarHelper : ScrollbarHelper {
     override val scrollbarVisibilityStyleFlow: StateFlow<ScrollbarVisibility> =
         MutableStateFlow(ScrollbarVisibility.AlwaysVisible.default())
-    override val trackClickBehaviorFlow: StateFlow<TrackClickBehavior> = MutableStateFlow(TrackClickBehavior.JumpToSpot)
+    override val trackClickBehaviorFlow: StateFlow<TrackClickBehavior> = MutableStateFlow(TrackClickBehavior.NextPage)
 }

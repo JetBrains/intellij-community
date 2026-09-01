@@ -17,6 +17,28 @@ public object ShowcaseE2eTags {
 
     /** The popup content a ComboBox shows, set by the component itself rather than by either sample. */
     public const val COMBO_BOX_POPUP: String = "Jewel.ComboBox.Popup"
+
+    public const val SCROLLBARS_ALWAYS_VISIBLE: String = "showcase.scrollbars.alwaysVisible"
+    public const val SCROLLBARS_REDUCED_CONTENT: String = "showcase.scrollbars.reducedContent"
+    public const val SCROLLBARS_CLICK_JUMP_TO_SPOT: String = "showcase.scrollbars.clickBehavior.jumpToSpot"
+    public const val SCROLLBARS_CLICK_NEXT_PAGE: String = "showcase.scrollbars.clickBehavior.nextPage"
+
+    public const val SCROLLBARS_CONTAINER_LAZY_COLUMN: String = "showcase.scrollbars.container.lazyColumn"
+    public const val SCROLLBARS_CONTAINER_COLUMN: String = "showcase.scrollbars.container.column"
+    public const val SCROLLBARS_CONTAINER_ALIGNED_COLUMN: String = "showcase.scrollbars.container.alignedColumn"
+    public const val SCROLLBARS_CONTAINER_ROW: String = "showcase.scrollbars.container.row"
+    public const val SCROLLBARS_CONTAINER_LAZY_ROW: String = "showcase.scrollbars.container.lazyRow"
+    public const val SCROLLBARS_CONTAINER_GRID_DEFAULT: String = "showcase.scrollbars.container.gridDefault"
+    public const val SCROLLBARS_CONTAINER_GRID_SPAN_AWARE: String = "showcase.scrollbars.container.gridSpanAware"
+
+    public const val SCROLLBARS_MODIFIER_LAZY_COLUMN: String = "showcase.scrollbars.modifier.lazyColumn"
+    public const val SCROLLBARS_MODIFIER_COLUMN: String = "showcase.scrollbars.modifier.column"
+    public const val SCROLLBARS_MODIFIER_ALIGNED_COLUMN: String = "showcase.scrollbars.modifier.alignedColumn"
+    public const val SCROLLBARS_MODIFIER_ROW: String = "showcase.scrollbars.modifier.row"
+    public const val SCROLLBARS_MODIFIER_LAZY_ROW: String = "showcase.scrollbars.modifier.lazyRow"
+
+    public const val SCROLLBARS_LAZY_COLUMN_FIRST_ITEM: String = "showcase.scrollbars.lazyColumn.firstItem"
+    public const val SCROLLBARS_LAZY_COLUMN_FOURTH_ITEM: String = "showcase.scrollbars.lazyColumn.fourthItem"
 }
 
 /**

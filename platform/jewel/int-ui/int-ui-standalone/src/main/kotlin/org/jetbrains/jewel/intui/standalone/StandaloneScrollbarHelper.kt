@@ -91,10 +91,10 @@ public class StandaloneScrollbarHelper(
 private object DummyScrollbarHelper : ScrollbarHelper {
     override val scrollbarVisibilityStyleFlow: StateFlow<ScrollbarVisibility> =
         MutableStateFlow(ScrollbarVisibility.AlwaysVisible.default())
-    override val trackClickBehaviorFlow: StateFlow<TrackClickBehavior> = MutableStateFlow(TrackClickBehavior.JumpToSpot)
+    override val trackClickBehaviorFlow: StateFlow<TrackClickBehavior> = MutableStateFlow(TrackClickBehavior.NextPage)
 
     override val trackClickBehavior: TrackClickBehavior
-        get() = TrackClickBehavior.JumpToSpot
+        get() = TrackClickBehavior.NextPage
 
     override val scrollbarVisibilityStyle: ScrollbarVisibility
         get() = ScrollbarVisibility.AlwaysVisible.default()
