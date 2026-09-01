@@ -420,7 +420,11 @@ public class ProjectSdksModel implements SdkModel {
     myModified = true;
 
     downloadExtension.showDownloadUI(type, this, parent, project, selectedSdk, null,
-                                     sdk -> setupInstallableSdk(project, type, sdk, callback));
+                                     sdk -> {
+                                       final Sdk incompleteSdk = createIncompleteSdk(type, sdk);
+                                       callback.accept(incompleteSdk);
+                                       downloadSdk(project, incompleteSdk);
+                                     });
   }
 
   @ApiStatus.Internal
@@ -455,36 +459,24 @@ public class ProjectSdksModel implements SdkModel {
   }
 
   /**
-   * Creates an incomplete SDK for the given download task and starts the download.
-   *
-   * @param project optional host for the background progress;
-   *                {@code null} means the download runs without visible progress
+   * @deprecated use {@link #createIncompleteSdk(SdkType, SdkDownloadTask)} and {@link #downloadSdk(Project, Sdk)}
+   * to show project-bounded download progress.
    */
-  @RequiresEdt
-  public void setupInstallableSdk(@Nullable Project project,
-                                  @NotNull SdkType type,
-                                  @NotNull SdkDownloadTask downloadTask,
-                                  @Nullable java.util.function.Consumer<? super Sdk> callback) {
-    final Sdk incompleteSdk = createIncompleteSdk(type, downloadTask, callback);
-    downloadSdk(project, incompleteSdk);
-  }
-
-  /**
-   * @deprecated use {@link #setupInstallableSdk(Project, SdkType, SdkDownloadTask, java.util.function.Consumer)}
-   * to show the download progress in a project
-   */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @RequiresEdt
   public void setupInstallableSdk(@NotNull SdkType type,
                                   @NotNull SdkDownloadTask downloadTask,
                                   @Nullable java.util.function.Consumer<? super Sdk> callback) {
-    setupInstallableSdk(null, type, downloadTask, callback);
+    final Sdk incompleteSdk = createIncompleteSdk(type, downloadTask);
+    if (callback != null) {
+      callback.accept(incompleteSdk);
+    }
+    downloadSdk(null, incompleteSdk);
   }
 
   @ApiStatus.Internal
   public final @NotNull Sdk createIncompleteSdk(@NotNull SdkType type,
-                                                @NotNull SdkDownloadTask downloadTask,
-                                                java.util.function.@Nullable Consumer<? super Sdk> callback) {
+                                                @NotNull SdkDownloadTask downloadTask) {
     Sdk tempSdk = createDownloadSdkInternal(type, downloadTask, myProjectSdks.values());
 
     AtomicReference<Sdk> sdk = new AtomicReference<>();
@@ -493,9 +485,6 @@ public class ProjectSdksModel implements SdkModel {
       tracker.registerEditableSdk(tempSdk, editableSdk);
       tracker.tryRegisterSdkDownloadFailureHandler(editableSdk, () -> removeSdk(editableSdk));
       sdk.set(editableSdk);
-      if (callback != null) {
-        callback.accept(editableSdk);
-      }
     });
 
     return sdk.get();

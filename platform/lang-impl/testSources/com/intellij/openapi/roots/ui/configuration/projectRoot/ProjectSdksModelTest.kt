@@ -15,13 +15,11 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.util.Consumer
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.UIUtil
 import org.junit.Assert
 import java.io.IOException
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.absolute
 import kotlin.io.path.createTempDirectory
 
@@ -94,7 +92,6 @@ class ProjectSdksModelTest : LightPlatformTestCase() {
 
     fun doDownload(onSdk: (Sdk) -> Unit = {},
                    actualDownload: (ProgressIndicator) -> Unit) {
-      val editableSdk = AtomicReference<Sdk>()
       val isDownloadCompleted = CountDownLatch(1)
 
       val incompleteSdk = model.createIncompleteSdk(type, MyDownloadTask(
@@ -104,17 +101,14 @@ class ProjectSdksModelTest : LightPlatformTestCase() {
           ThreadingAssertions.assertBackgroundThread()
           actualDownload(indicator)
         }
-      ), Consumer { sdk ->
-        editableSdk.set(sdk)
-        onSdk(sdk)
-      })
+      ))
+      onSdk(incompleteSdk)
       downloadSdk(project, incompleteSdk)
 
       // wait for background download completion
-      val sdk = editableSdk.get() ?: error("The incomplete SDK is expected to be created")
-      Assert.assertTrue("The download is expected to be running for $sdk",
+      Assert.assertTrue("The download is expected to be running for $incompleteSdk",
                         SdkDownloadTracker.getInstance().tryRegisterDownloadingListener(
-                          sdk, testRootDisposable, null) { isDownloadCompleted.countDown() })
+                          incompleteSdk, testRootDisposable, null) { isDownloadCompleted.countDown() })
 
       PlatformTestUtil.waitWithEventsDispatching("The SDK download is not completed", { isDownloadCompleted.count == 0L }, 60)
       UIUtil.dispatchAllInvocationEvents()
