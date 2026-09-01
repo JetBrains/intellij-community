@@ -490,6 +490,55 @@ internal class TerminalEmulatorOutputProjectorTest {
     assertThat(collectUpdate().text.count { it == 'A' }).isEqualTo(100)
   }
 
+  @Test
+  fun `a same-column height growth that recovers scrollback keeps exact tracking`() =
+    withProjector(columns = 80, rows = 5) {
+      // 20 lines into a 5-row screen: 15 scroll off into scrollback.
+      write((0 until 20).joinToString("\r\n") { "R%02d".format(it) })
+      collectUpdate()
+
+      // Growing to 20 rows recovers all 15 of them back onto the screen (scrollbackRows drops to 0),
+      // which must not be mistaken for a burst that overran the retained scrollback.
+      emulator.resize(TerminalSize(80, 20))
+      val event = collectUpdate()
+
+      assertThat(projector.isHistoryReplaced).isFalse()
+      assertThat(event.startLineLogicalIndex).isEqualTo(0L)
+      assertThat(event.text.split('\n')).isEqualTo((0 until 20).map { "R%02d".format(it) })
+    }
+
+  @Test
+  fun `a partial scrollback recovery on growth keeps the earlier anchor`() = withProjector(columns = 80, rows = 5) {
+    write((0 until 30).joinToString("\r\n") { "R%02d".format(it) })
+    val first = collectUpdate()
+    assertThat(first.startLineLogicalIndex).isEqualTo(0L)
+
+    // Growing to 15 rows recovers only some of the 25 scrolled-off lines; whatever remains in scrollback
+    // must still be reported as unchanged, not wiped and restarted at index 0.
+    emulator.resize(TerminalSize(80, 15))
+    val event = collectUpdate()
+
+    assertThat(projector.isHistoryReplaced).isFalse()
+    assertThat(event.text.split('\n').last()).isEqualTo("R29")
+  }
+
+  @Test
+  fun `a growth that recovers exactly one row does not trip the eviction fallback`() =
+    withProjector(columns = 80, rows = 5) {
+      // 20 lines into a 5-row screen: 15 scroll off into scrollback.
+      write((0 until 20).joinToString("\r\n") { "R%02d".format(it) })
+      collectUpdate()
+
+      // Growing by a single row recovers exactly one scrolled-off line ("R14") - the smallest possible
+      // resize, and the one case a "negative means evicted" heuristic would misclassify as unrecoverable.
+      emulator.resize(TerminalSize(80, 6))
+      val event = collectUpdate()
+
+      assertThat(projector.isHistoryReplaced).isFalse()
+      assertThat(event.startLineLogicalIndex).isEqualTo(14L)
+      assertThat(event.text.split('\n')).isEqualTo((14..19).map { "R%02d".format(it) })
+    }
+
   // ---------------------------------------------------------------------------
   // Two updates from one write
   // ---------------------------------------------------------------------------

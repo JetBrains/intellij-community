@@ -107,8 +107,8 @@ internal class IncrementalTextBuffer(private val emulator: TerminalEmulator) {
    * Accumulates the full text buffer ([fullScrollback]) from the [HistoryMark]: appends the lines finalized into
    * history since the previous sync (the newest [HistoryMark.finalizedLineCount] scrollback rows), so it grows past
    * what the emulator retains. Reflow (resize), clear/reset (count shrinks) and mark eviction ([HistoryMark] returns
-   * -1 when a single write outran the whole retained scrollback) can't be expressed as a suffix append, so re-sync
-   * to the retained window there — the same degradation the bounded [scrollback] mirror makes.
+   * `null` when a single write outran the whole retained scrollback) can't be expressed as a suffix append, so
+   * re-sync to the retained window there — the same degradation the bounded [scrollback] mirror makes.
    *
    * Also asserts the core [HistoryMark] contract on every sync: the emulator's retained scrollback is exactly the
    * tail of the accumulated history. This cross-checks the mark's finalized-line count against the independently
@@ -116,12 +116,13 @@ internal class IncrementalTextBuffer(private val emulator: TerminalEmulator) {
    */
   private fun updateFullScrollback(cur: Int) {
     val finalized = historyMark.finalizedLineCount()
-    if (pendingResize || finalized < 0) {
-      // Reflow (resize) or a mark eviction (finalized < 0: a single write outran the whole retained scrollback)
-      // can't be a clean suffix append -> re-sync to the retained window, degrading like the bounded [scrollback]
-      // mirror. Note: ordinary page-based eviction is NOT such a case -- scrollbackRows drops in steps as whole
-      // pages are pruned, but the mark tracks the boundary content, so [HistoryMark.finalizedLineCount] stays
-      // correct across those drops and the append path below still holds.
+    if (pendingResize || finalized == null || finalized < 0) {
+      // Reflow (resize), a mark eviction (finalized == null: a single write outran the whole retained
+      // scrollback), or a resize recovering rows out of scrollback (finalized < 0) can't be a clean suffix
+      // append -> re-sync to the retained window, degrading like the bounded [scrollback] mirror. Note:
+      // ordinary page-based eviction is NOT such a case -- scrollbackRows drops in steps as whole pages are
+      // pruned, but the mark tracks the boundary content, so [HistoryMark.finalizedLineCount] stays correct
+      // across those drops and the append path below still holds.
       fullScrollback.clear()
       for (i in 0 until cur) fullScrollback.add(emulator.scrollbackLine(i).toStyledText().text)
     }

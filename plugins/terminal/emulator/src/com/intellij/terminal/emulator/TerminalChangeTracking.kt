@@ -51,9 +51,12 @@ sealed interface ScreenChange {
  * mark.reset()
  * ```
  *
+ * A resize can move the boundary the other way: growing the screen can pull rows back out of scrollback
+ * to fill it, which [finalizedLineCount] then reports as a *negative* count.
+ *
  * The count stays exact even after the scrollback byte cap begins evicting the oldest lines — where a
  * raw [TerminalEmulator.scrollbackRows] delta plateaus and under-counts — because the mark tracks the
- * content itself, not an index. It fails only ([finalizedLineCount] returns `-1`) if the marked
+ * content itself, not an index. It fails only ([finalizedLineCount] returns `null`) if the marked
  * boundary is itself evicted, i.e. more than the whole retained scrollback scrolled past between two
  * [reset]s; the caller must then fall back to a full re-sync of the visible screen.
  *
@@ -64,10 +67,11 @@ sealed interface ScreenChange {
 interface HistoryMark : AutoCloseable {
   /**
    * The number of lines finalized into scrollback (scrolled above the active screen) since this mark
-   * was created or last [reset], or `-1` if the marked boundary has itself been evicted from the
+   * was created or last [reset]; negative if a resize instead pulled that many lines back out of
+   * scrollback onto the screen; or `null` if the marked boundary has itself been evicted from the
    * bounded scrollback (the caller must then re-sync fully). Read-only: does not move the mark.
    */
-  fun finalizedLineCount(): Int
+  fun finalizedLineCount(): Int?
 
   /**
    * Re-anchors the mark to the current history / active-screen boundary, so the next

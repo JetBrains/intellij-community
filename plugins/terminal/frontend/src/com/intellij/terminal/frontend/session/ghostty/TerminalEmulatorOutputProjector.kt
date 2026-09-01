@@ -62,15 +62,17 @@ class TerminalEmulatorOutputProjector(private val emulator: TerminalEmulator) {
    * soft-wrapped line where it straddles the boundary, and one row read to detect that it does.)
    *
    * [TerminalContentUpdatedEvent.startLineLogicalIndex] grows as lines scroll off into history ([screenTopLogical]),
-   * as long as [historyMark] can report exactly how many rows were finalized since the last call — which it
-   * can as long as that count does not exceed what the scrollback currently retains.
+   * as long as [historyMark] can report exactly how many rows were finalized since the last call. A growing
+   * resize can instead pull rows back out of scrollback onto the screen, which [historyMark] reports as a
+   * *negative* count.
    *
-   * Two things end that: the count exceeding the retained scrollback, which makes the old numbering
-   * unrecoverable, or one update finalizing more than [HISTORY_REPLACE_LINES] rows, where reading them all
-   * costs more than the content is worth. Either way this reports the active screen alone at index `0` and
-   * keeps doing that — cheap, bounded by the screen height — until an update finalizes *nothing*, meaning the
-   * output stopped. It then reads the retained scrollback once and resumes exact tracking. Waiting for a full
-   * stop, rather than for the output to merely slow down, keeps the one expensive read out of the burst.
+   * Two things make the count unusable: [historyMark] returning `null` (the marked boundary was itself
+   * evicted, so the old numbering is unrecoverable), or one update finalizing more than [HISTORY_REPLACE_LINES]
+   * rows, where reading them all costs more than the content is worth. Either way this reports the active
+   * screen alone at index `0` and keeps doing that — cheap, bounded by the screen height — until an update
+   * finalizes *nothing*, meaning the output stopped. It then reads the retained scrollback once and resumes
+   * exact tracking. Waiting for a full stop, rather than for the output to merely slow down, keeps the one
+   * expensive read out of the burst.
    *
    * The trade-off: as long as anything keeps scrolling (output arrives faster than [OUTPUT_POLL_INTERVAL]),
    * the model holds only the visible screen, so steady output that never pauses keeps its scrollback hidden until it does.
@@ -79,14 +81,13 @@ class TerminalEmulatorOutputProjector(private val emulator: TerminalEmulator) {
   fun buildContentUpdate(): TerminalContentUpdatedEvent {
     val screenRows = emulator.size.rows
     val curScrollbackRows = emulator.scrollbackRows
-    // finalizedLineCount() also picks up rows a resize (reflow) finalized without a write.
+    // finalizedLineCount() also picks up rows a resize (reflow) finalized, or un-finalized, without a write;
+    // null means the marked boundary was evicted.
     val finalizedSinceLastEmit = historyMark.finalizedLineCount()
     historyMark.reset()
 
-    val canTrackExactly = finalizedSinceLastEmit in 0..curScrollbackRows
     // Nothing at all scrolled since the last update.
     val outputStopped = finalizedSinceLastEmit == 0
-    val tooMuchToRead = finalizedSinceLastEmit > HISTORY_REPLACE_LINES
 
     // This update's window: where it starts in scrollback, and the absolute index that start maps to.
     var fromH: Int
@@ -103,11 +104,19 @@ class TerminalEmulatorOutputProjector(private val emulator: TerminalEmulator) {
         fromH = 0
         startLogical = 0L
       }
-      // Either the numbering is unrecoverable, or this window is simply too big to be worth reading.
-      !canTrackExactly || tooMuchToRead -> {
+      // The boundary was evicted, or this window is simply too big to be worth reading.
+      finalizedSinceLastEmit == null || finalizedSinceLastEmit > HISTORY_REPLACE_LINES -> {
         isHistoryReplaced = true
         fromH = curScrollbackRows
         startLogical = 0L
+      }
+      // A resize recovered rows from scrollback onto the screen instead of finalizing new ones: nothing new
+      // to read from scrollback, but the anchor has to move back by however many logical lines that was.
+      finalizedSinceLastEmit < 0 -> {
+        fromH = curScrollbackRows
+        val recoveredCount = (-finalizedSinceLastEmit).coerceAtMost(screenRows)
+        val recoveredRows = (0 until recoveredCount).map { emulator.screenLine(it) }
+        startLogical = screenTopLogical - completedLogicalLines(recoveredRows, recoveredCount)
       }
       // Normal scenario: report the changed tail
       else -> {

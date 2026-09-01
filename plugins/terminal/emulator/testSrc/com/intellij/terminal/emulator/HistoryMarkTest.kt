@@ -66,8 +66,8 @@ class HistoryMarkTest {
         // A renderer's per-frame step: append whatever just scrolled off, then re-anchor. Polling every
         // line means at most one line is finalized per poll, so the mark is never at risk of eviction.
         val finalized = mark.finalizedLineCount()
-        assertThat(finalized).describedAs { "mark unexpectedly evicted at line $i" }.isNotNegative()
-        appended.addAll(mark.newlyFinalized(emulator, finalized))
+        assertThat(finalized).describedAs { "mark unexpectedly evicted at line $i" }.isNotNull().isNotNegative()
+        appended.addAll(mark.newlyFinalized(emulator, checkNotNull(finalized)))
         mark.reset()
       }
     }
@@ -86,7 +86,10 @@ class HistoryMarkTest {
 }
 
 /** The `n` newest scrollback lines — the ones just reported finalized by [HistoryMark.finalizedLineCount]. */
-private fun HistoryMark.newlyFinalized(emulator: TerminalEmulator, n: Int = finalizedLineCount()): List<String> {
+private fun HistoryMark.newlyFinalized(
+  emulator: TerminalEmulator,
+  n: Int = checkNotNull(finalizedLineCount()) { "the mark was unexpectedly evicted" },
+): List<String> {
   val scrollbackRows = emulator.scrollbackRows
   return (scrollbackRows - n until scrollbackRows).map { emulator.scrollbackLine(it).toStyledText().text }
 }

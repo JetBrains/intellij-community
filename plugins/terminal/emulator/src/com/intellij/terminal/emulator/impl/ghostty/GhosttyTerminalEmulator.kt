@@ -883,7 +883,7 @@ internal class GhosttyTerminalEmulator(
       trackedRef = outRef.get(C_PTR, 0L)
     }
 
-    override fun finalizedLineCount(): Int {
+    override fun finalizedLineCount(): Int? {
       ensureOpen()
       ensureMarkOpen()
       val r = try {
@@ -892,7 +892,7 @@ internal class GhosttyTerminalEmulator(
         throw RuntimeException("ghostty_tracked_grid_ref_point failed", t)
       }
       if (r == GhosttyResult.NO_VALUE) {
-        return -1 // the pinned boundary line has been evicted from the bounded scrollback
+        return null // the pinned boundary line has been evicted from the bounded scrollback
       }
       if (r != GhosttyResult.SUCCESS) {
         throw IllegalStateException("ghostty_tracked_grid_ref_point returned $r")
