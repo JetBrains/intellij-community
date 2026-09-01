@@ -26,22 +26,25 @@ data class ProjectViewPaneDescriptorImpl(
   val icon: Icon?,
   val selectInTargetDescriptors: List<SelectInTargetDescriptor>,
 ) : ProjectViewPaneDescriptor {
-  fun toDTO(): ProjectViewPaneDescriptorDTO = ProjectViewPaneDescriptorDTO(
-    id = id,
-    kind = kind,
-    presentableName = presentableName,
-    order = order,
-    isDefault = isDefault,
-    iconId = icon?.rpcId(),
-    selectInTargetDescriptors = selectInTargetDescriptors
-  )
+  fun toDTO(): ProjectViewPaneDescriptorDTO {
+    if (kind != ProjectViewPaneKind.BACKEND) {
+      throw IllegalArgumentException("Only BACKEND descriptors should be serialized, but got $this")
+    }
+    return ProjectViewPaneDescriptorDTO(
+      id = id,
+      presentableName = presentableName,
+      order = order,
+      isDefault = isDefault,
+      iconId = icon?.rpcId(),
+      selectInTargetDescriptors = selectInTargetDescriptors
+    )
+  }
 }
 
 @ApiStatus.Internal
 @Serializable
 data class ProjectViewPaneDescriptorDTO(
   val id: ProjectViewPaneId,
-  val kind: ProjectViewPaneKind,
   val presentableName: @NlsSafe String,
   val order: Int,
   val isDefault: Boolean,
@@ -50,7 +53,7 @@ data class ProjectViewPaneDescriptorDTO(
 ) {
   fun toDescriptor(): ProjectViewPaneDescriptorImpl = ProjectViewPaneDescriptorImpl(
     id = id,
-    kind = kind,
+    kind = ProjectViewPaneKind.BACKEND, // only backend descriptors are ever serialized
     presentableName = presentableName,
     order = order,
     isDefault = isDefault,
