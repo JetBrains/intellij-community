@@ -9,7 +9,7 @@ import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.ui.xQuery
 
 fun Finder.goWelcomeScreen(action: GoWelcomeScreenUI.() -> Unit = {}): GoWelcomeScreenUI {
-  return x(xQuery { byTitle("GoLandWorkspace – Welcome to GoLand") }, GoWelcomeScreenUI::class.java).apply(action)
+  return x(xQuery { byTitle("GoLand Home – Welcome to GoLand") }, GoWelcomeScreenUI::class.java).apply(action)
 }
 
 fun Driver.goWelcomeScreen(action: GoWelcomeScreenUI.() -> Unit = {}): GoWelcomeScreenUI {
