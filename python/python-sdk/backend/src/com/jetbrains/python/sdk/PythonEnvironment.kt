@@ -1,7 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.components.service
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.pathSeparator
@@ -11,12 +13,14 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.sdk.impl.PySdkBundle.message
 import com.jetbrains.python.sdk.impl.detectPythonEnvironmentImpl
 import com.jetbrains.python.sdk.terminal.Shell
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
+import kotlin.io.path.isExecutable
 import kotlin.io.path.pathString
 
 @ApiStatus.Internal
@@ -26,6 +30,33 @@ interface HasPythonHome {
    * at runtime. Library/standard-library and `site-packages` directories live underneath this path.
    */
   val pythonHomePath: PythonHomePath
+}
+
+/**
+ * An environment that ships a library directory of its own, as opposed to using the base interpreter's.
+ *
+ * A virtual environment has one. A conda environment and a system interpreter do not, so a caller that needs a
+ * library directory for those must read the interpreter's standard library instead.
+ */
+@ApiStatus.Internal
+interface HasOwnLibRoot {
+  /** The environment's own library directory, for example `lib/pythonX.Y/`. */
+  val libRoot: Path
+}
+
+/**
+ * What a terminal must run to activate an environment.
+ *
+ * The terminal has no knowledge of any kind of environment. It asks the environment for one of these two shapes and
+ * hands it to the shell integration.
+ */
+@ApiStatus.Internal
+sealed interface TerminalActivation {
+  /** A script the shell sources, with its arguments. */
+  data class SourceScript(val scriptPath: Path, val args: List<String>? = null) : TerminalActivation
+
+  /** Shell code the shell runs. conda uses it, because it activates through a hook rather than a script. */
+  data class Snippet(val code: String) : TerminalActivation
 }
 
 @ApiStatus.Internal
@@ -42,6 +73,18 @@ interface Activatable {
   )
 
   val activation: (shellType: Shell.Type) -> Script?
+
+  /**
+   * What a terminal running [shellType] must do to activate this environment, or null when there is nothing to run.
+   *
+   * The activation script serves most environments and most shells, so that is the default. An environment overrides
+   * this only where a terminal needs something else than the script.
+   *
+   * [postProcessEnv][Script.postProcessEnv] plays no part here. The shell activates itself and the IDE never reads
+   * the result back, which is what makes this different from [activationEnvironment].
+   */
+  fun terminalActivation(shellType: Shell.Type): TerminalActivation? =
+    activation(shellType)?.let { TerminalActivation.SourceScript(it.scriptPath, it.args) }
 }
 
 /**
@@ -76,8 +119,8 @@ sealed interface PythonEnvironment {
      */
     val config: Map<String, String>,
     /** The `lib/` or `lib/pythonX.Y/` directory of the virtual environment. */
-    val libRoot: Path,
-  ) : PythonEnvironment, HasPythonHome, Activatable {
+    override val libRoot: Path,
+  ) : PythonEnvironment, HasPythonHome, HasOwnLibRoot, Activatable {
     /**
      * Resolves the venv activation script that fits [Shell.Type] in the directory next to the python
      * binary (`Scripts/` on Windows, `bin/` on Unix). Returns `null` if no matching script exists.
@@ -145,6 +188,38 @@ sealed interface PythonEnvironment {
 
         Activatable.Script(activateScript, listOf(pythonHomePath.pathString), postProcessEnv)
       }
+    }
+
+    /**
+     * PowerShell activates through the `conda init` hook, so it gets a snippet. Every other shell sources the script.
+     *
+     * `conda init` writes the hook into the user profile. The IDE runs the hook by hand, because it cannot ask the
+     * user to install the hook and then restart the terminal. When the conda executable is missing, the snippet tells
+     * the user to run `conda init` instead.
+     */
+    override fun terminalActivation(shellType: Shell.Type): TerminalActivation? =
+      if (shellType == Shell.Type.POWERSHELL) TerminalActivation.Snippet(powerShellActivationCode())
+      else super.terminalActivation(shellType)
+
+    private fun powerShellActivationCode(): String {
+      val condaPath = condaExecutable?.takeIf { it.isExecutable() }
+      if (condaPath == null) {
+        fileLogger().warn("Can't find $condaExecutable, will not activate conda")
+        return "echo '${message("powershell.conda.not.activated", "conda")}'"
+      }
+
+      // The quotes are inside "Write-Host".
+      val errorMessage = message("powershell.conda.not.activated", condaPath).replace('\'', '"')
+
+      // The conda path needs no escape for a space, because conda cannot have one.
+      return """
+        & '${StringUtil.escapeChar(condaPath.toString(), '\'')}' shell.powershell hook | Out-String | Invoke-Expression ;
+        try {
+          conda activate '${StringUtil.escapeChar(pythonHomePath.toString(), '\'')}'
+        } catch {
+          Write-Host('${StringUtil.escapeChar(errorMessage, '\'')}')
+        }
+        """.trimIndent()
     }
 
     /** Root of the base conda installation (contains `condabin`/`Scripts`, `Library`, …); the conda executable lives two levels down. */

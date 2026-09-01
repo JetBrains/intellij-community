@@ -57,12 +57,25 @@
     <extensionPoint qualifiedName="Pythonid.interpreterPresentationProvider"
                     interface="com.jetbrains.python.sdk.PythonInterpreterPresentationProvider"
                     dynamic="true"/>
+    <!-- The `id` names the kind of environment. It is the only place a kind is named. -->
+    <extensionPoint qualifiedName="Pythonid.pythonEnvironmentProvider"
+                    beanClass="com.jetbrains.python.sdk.PythonEnvironmentProviderBean"
+                    dynamic="true">
+      <with attribute="implementation" implements="com.jetbrains.python.sdk.PythonEnvironmentProvider"/>
+    </extensionPoint>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.MacPythonSdkFlavor"/>
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor"/>
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.WinPythonSdkFlavor"/>
+    <pythonEnvironmentProvider id="venv"
+                               implementation="com.jetbrains.python.sdk.impl.VenvEnvironmentProvider"/>
+    <pythonEnvironmentProvider id="conda" order="after venv"
+                               implementation="com.jetbrains.python.sdk.impl.CondaEnvironmentProvider"/>
+    <!-- Claims any layout, so it must stay last. -->
+    <pythonEnvironmentProvider id="system" order="last"
+                               implementation="com.jetbrains.python.sdk.impl.SystemPythonEnvironmentProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -5,7 +5,9 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.junit5.TestApplication
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.sdk.PythonEnvironment
+import com.jetbrains.python.sdk.PythonEnvironmentProvider
 import com.jetbrains.python.sdk.detectPythonEnvironment
+import com.jetbrains.python.sdk.kindId
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -127,6 +129,32 @@ internal class PythonEnvironmentDetectorTest {
 
     assertInstanceOf(PythonEnvironment.SystemPython::class.java, environment)
     assertNull(environment.version)
+  }
+
+  /**
+   * The registered ids, in order.
+   *
+   * The ids are a public contract, because the MCP `get_python_environment` tool reports them. They live in xml, so a
+   * test guards them. `system` claims any layout and must stay last.
+   */
+  @Test
+  fun providerIds() {
+    assertEquals(listOf("venv", "conda", "system"), PythonEnvironmentProvider.EP_NAME.extensionList.map { it.id })
+  }
+
+  @Test
+  fun kindIdNamesTheEnvironment(@TempDir root: Path) {
+    assertAll(
+      Executable {
+        assertEquals("venv", createVenv(root.resolve("venv"), "version = 3.14.4").detectPythonEnvironment().orThrow().kindId)
+      },
+      Executable {
+        assertEquals("conda", createConda(root.resolve("conda"), "python-3.14.4-h0_0.json").detectPythonEnvironment().orThrow().kindId)
+      },
+      Executable {
+        assertEquals("system", createPythonBinary(root.resolve("system")).detectPythonEnvironment().orThrow().kindId)
+      },
+    )
   }
 
   /** Writes a virtual environment in [root]: the `pyvenv.cfg` with [config], the library root, and the interpreter. */
