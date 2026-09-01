@@ -9,9 +9,10 @@ import org.jetbrains.intellij.build.pycharm.sdks.CondaUpdater
 import org.jetbrains.intellij.build.pycharm.sdks.PythonUpdater
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.Path
+import kotlin.io.path.writeText
 
 val SUPPORTED_LEVELS = LanguageLevel.SUPPORTED_LEVELS.filter { it.isAtLeast(LanguageLevel.PYTHON38) }
-val SDKS_JSON_PATH = Path(".", "community", "python", "python-sdk", "resources", "sdks.json")
+val SDKS_JSON_PATH = Path(".", "community", "python", "python-sdk", "backend", "resources", "sdks.json")
 
 fun Sdks.releases(): List<Release> = this.python + this.conda
 
@@ -41,5 +42,5 @@ fun main() {
     conda = CondaUpdater().getReleases(),
   )
   val sdksJson = SdksKeeper.serialize(sdks)
-  SDKS_JSON_PATH.toFile().writeText(sdksJson)
+  SDKS_JSON_PATH.writeText(sdksJson)
 }
