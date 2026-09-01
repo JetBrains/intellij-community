@@ -398,4 +398,10 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
     addJSpecifyNullMarked(myFixture);
     doTest();
   }
+
+  public void testJSpecifyDeconstructionTypeArgument() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
 }

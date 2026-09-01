@@ -109,6 +109,7 @@ import com.intellij.codeInspection.dataFlow.lang.ir.SwapInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.WrapDerivedVariableInstruction;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfStreamStateType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
@@ -1414,6 +1415,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addPatternTypeTest(innerPattern, instanceofAnchor, endPatternOffset, patternDfaVar, checkType);
     }
     else {
+      DfType declaredType = patternDfaVar.getInherentType();
+      if (!(checkType instanceof PsiPrimitiveType) &&
+          declaredType instanceof DfReferenceType &&
+          !declaredType.equals(patternDfaVar.getDfType())) {
+        addInstruction(new EnsureInstruction(null, RelationType.IS, declaredType, null));
+      }
       addInstruction(new SimpleAssignmentInstruction(null, patternDfaVar));
     }
   }

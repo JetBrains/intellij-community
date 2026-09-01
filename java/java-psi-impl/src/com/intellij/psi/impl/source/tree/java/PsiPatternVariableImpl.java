@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaElementVisitor;
@@ -23,6 +24,8 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +80,18 @@ public class PsiPatternVariableImpl extends CompositePsiElement implements PsiPa
 
   @Override
   public @NotNull PsiType getType() {
-    return JavaSharedImplUtil.getType(getTypeElement(), getNameIdentifier());
+    return CachedValuesManager.getProjectPsiDependentCache(this, __ -> calculateType());
+  }
+
+  private @NotNull PsiType calculateType() {
+    PsiType type = JavaSharedImplUtil.getType(getTypeElement(), getNameIdentifier());
+    if (!type.getNullability().equals(TypeNullability.UNKNOWN)) return type;
+    // A container annotation such as @NullMarked does not apply to the written type of pattern variable.
+    // A component of a deconstruction pattern takes the nullability of the record component that it binds.
+    // The type arguments of the pattern are substituted first.
+    PsiType componentType = JavaPsiPatternUtil.getDeconstructedImplicitPatternType(getPattern());
+    if (componentType == null) return type;
+    return type.withNullability(componentType.getNullability());
   }
 
   @Override

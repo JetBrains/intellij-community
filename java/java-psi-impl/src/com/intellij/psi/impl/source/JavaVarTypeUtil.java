@@ -146,7 +146,8 @@ public final class JavaVarTypeUtil {
             }
           }
         }
-        return JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass, targetSubstitutor);
+        return JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass, targetSubstitutor)
+          .withNullability(classType.getNullability());
       }
       return classType;
     }
