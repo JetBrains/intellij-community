@@ -37,6 +37,7 @@ import java.lang.reflect.Proxy
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
 @TestApplication
 @RegistryKey("git.enable.working.trees.feature", "true")
@@ -263,6 +264,75 @@ internal class RemoveWorkingTreeActionTest {
     assertThat(vcsNotifier.notifications)
       .describedAs("A rejected duplicate request must not add a notification of its own")
       .hasSize(1)
+  }
+
+  @Test
+  fun `test deleted working tree remains claimed until reload removes it`(): Unit = with(context) {
+    setUpWorktree()
+    val realGit = Git.getInstance()
+    val deletionAttempts = CopyOnWriteArrayList<String>()
+    val deletionCompleted = AtomicBoolean()
+    val reloadStarted = CountDownLatch(1)
+    val releaseReload = CountDownLatch(1)
+    val proxiedGit = Proxy.newProxyInstance(Git::class.java.classLoader, arrayOf(Git::class.java)) { _, method, arguments ->
+      if (method.name == "listWorktrees" && deletionCompleted.get()) {
+        reloadStarted.countDown()
+        releaseReload.await(1, TimeUnit.MINUTES)
+      }
+      if (method.name == "deleteWorkingTree") {
+        deletionAttempts.add((arguments!![1] as GitWorkingTree).path.path)
+      }
+      val result = try {
+        method.invoke(realGit, *(arguments ?: emptyArray()))
+      }
+      catch (e: InvocationTargetException) {
+        throw e.targetException
+      }
+      if (method.name == "deleteWorkingTree") {
+        deletionCompleted.set(true)
+      }
+      result
+    } as Git
+    ApplicationManager.getApplication().replaceService(Git::class.java, proxiedGit, testDisposable)
+
+    val toDelete = linkedTree()
+    val service = GitWorkingTreesService.getInstance(project)
+    val deletion = service.deleteWorkingTrees(project, listOf(toDelete), repo)
+    try {
+      assertThat(reloadStarted.await(1, TimeUnit.MINUTES))
+        .describedAs("The deletion must start refreshing the worktrees model")
+        .isTrue()
+      timeoutRunBlocking { deletion.join() }
+
+      assertThat(repo.workingTreeHolder.getWorkingTrees().any { it.path == toDelete.path })
+        .describedAs("The blocked reload must leave the deleted worktree in the current model")
+        .isTrue()
+      assertThat(service.isWorkingTreeDeletionInProgress(toDelete))
+        .describedAs("A deleted worktree must remain claimed while its stale row is visible")
+        .isTrue()
+
+      val event = actionEvent(listOf(toDelete))
+      RemoveWorkingTreeAction().update(event)
+      assertThat(event.presentation.isEnabled)
+        .describedAs("The stale worktree row must not become removable again")
+        .isFalse()
+
+      val duplicate = service.deleteWorkingTrees(project, listOf(toDelete), repo)
+      timeoutRunBlocking { duplicate.join() }
+      assertThat(deletionAttempts)
+        .describedAs("The stale row must not issue another `git worktree remove`")
+        .containsExactly(toDelete.path.path)
+    }
+    finally {
+      releaseReload.countDown()
+    }
+
+    timeoutRunBlocking {
+      waitUntil("The refreshed model removes the deleted worktree and releases its claim") {
+        repo.workingTreeHolder.getWorkingTrees().none { it.path == toDelete.path } &&
+        !service.isWorkingTreeDeletionInProgress(toDelete)
+      }
+    }
   }
 
   @Test

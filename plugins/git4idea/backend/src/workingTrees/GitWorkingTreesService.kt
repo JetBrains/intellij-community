@@ -33,6 +33,7 @@ import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.vcs.impl.shared.RepositoryId
 import com.intellij.util.application
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
@@ -46,6 +47,7 @@ import git4idea.commands.GitCommandResult
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
+import git4idea.remoteApi.GitRepositoryFrontendSynchronizer
 import git4idea.workingTrees.dialog.GitWorktreeCreationRequest
 import git4idea.workingTrees.dialog.WorktreeBranchSpec
 import git4idea.workingTrees.ui.GitWorktreesUiUtil
@@ -66,6 +68,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Window
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.time.Duration.Companion.minutes
@@ -73,7 +76,17 @@ import kotlin.time.Duration.Companion.minutes
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class GitWorkingTreesService(private val project: Project, val coroutineScope: CoroutineScope) {
+  /**
+   * Paths of the working trees whose deletion is in progress, including successfully deleted trees that are still
+   * present in the asynchronously refreshed model. [GitWorkingTree] itself is unusable as a key: the tab hands out a
+   * fresh instance on every reload, while [FilePath] is the stable identity of a working tree.
+   */
+  private val rootsUnderDeletion = ContainerUtil.newConcurrentSet<FilePath>()
+  private val rootsAwaitingRemovalFromModel = ConcurrentHashMap<FilePath, RepositoryId>()
+
   init {
+    project.messageBus.connect(coroutineScope).subscribe(GitRepositoryFrontendSynchronizer.TOPIC, WorkingTreesLoadedListener())
+
     if (!ApplicationManager.getApplication().isUnitTestMode && !ApplicationManager.getApplication().isHeadlessEnvironment) {
       scheduleBackgroundRefresh()
 
@@ -340,12 +353,6 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
     return resolveProjectPathToOpen(tree, candidates)
   }
 
-  /**
-   * Paths of the working trees whose deletion is in progress. [GitWorkingTree] itself is unusable as a key: the tab
-   * hands out a fresh instance on every reload, while [FilePath] is the stable identity of a working tree.
-   */
-  private val rootsUnderDeletion = ContainerUtil.newConcurrentSet<FilePath>()
-
   internal fun isWorkingTreeDeletionInProgress(workingTree: GitWorkingTree): Boolean {
     return rootsUnderDeletion.contains(workingTree.path)
   }
@@ -363,9 +370,8 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
       // The whole batch is claimed up front rather than per tree, so a concurrent call can't pick up a tree this one
       // has queued but not started yet. A path already claimed fails to `add` and is dropped here, which also
       // collapses a tree listed twice in [trees] into a single deletion.
-      // Claiming inside `launch` keeps the claim on the same code path as the `finally` that releases it: `launch` on
-      // an already canceled scope never runs the body, so a claim taken outside would stay in the set forever -
-      // greying out that tree's actions and silently rejecting every later attempt to delete it.
+      // Claiming inside `launch` keeps failed and canceled claims on the same code path as the `finally` that releases them.
+      // A successfully deleted path remains claimed until WorkingTreesLoaded no longer contains it.
       val toDelete = trees.filter { rootsUnderDeletion.add(it.path) }
       if (toDelete.isEmpty()) return@launch
 
@@ -386,7 +392,11 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
         }
       }
       finally {
-        toDelete.forEach { rootsUnderDeletion.remove(it.path) }
+        toDelete.forEach {
+          if (!rootsAwaitingRemovalFromModel.containsKey(it.path)) {
+            rootsUnderDeletion.remove(it.path)
+          }
+        }
         if (!project.isDisposed) {
           notifyWorkingTreesDeletedSuccess(project, deleted.toList())
         }
@@ -454,6 +464,7 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
   }
 
   private fun onWorkingTreeDeleted(repository: GitRepository, tree: GitWorkingTree) {
+    rootsAwaitingRemovalFromModel[tree.path] = repository.repositoryId()
     repository.workingTreeHolder.scheduleReload()
     RecentProjectsManager.getInstance().removePath(tree.path.path)
   }
@@ -587,5 +598,24 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
     finally {
       generalSettings.confirmOpenNewProject = savedConfirmOpen
     }
+  }
+
+  private inner class WorkingTreesLoadedListener : GitRepositoryFrontendSynchronizer {
+    override fun workingTreesLoaded(repository: GitRepository) {
+      val repositoryId = repository.repositoryId()
+      val currentRoots = repository.workingTreeHolder.getWorkingTrees().map { it.path }.toSet()
+      for ((root, awaitingRepositoryId) in rootsAwaitingRemovalFromModel) {
+        if (awaitingRepositoryId == repositoryId && root !in currentRoots &&
+            rootsAwaitingRemovalFromModel.remove(root, awaitingRepositoryId)) {
+          rootsUnderDeletion.remove(root)
+        }
+      }
+    }
+
+    override fun repositoryCreated(repository: GitRepository) = Unit
+    override fun repositoryUpdated(repository: GitRepository) = Unit
+    override fun tagsHidden() = Unit
+    override fun favoriteRefsUpdated(repository: GitRepository?) = Unit
+    override fun forceSync() = Unit
   }
 }
