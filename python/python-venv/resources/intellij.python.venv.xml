@@ -24,5 +24,7 @@
 
   <extensions defaultExtensionNs="Pythonid">
     <pythonSdkFlavor implementation="com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor"/>
+    <pythonEnvironmentProvider id="venv"
+                               implementation="com.intellij.python.venv.environment.VenvEnvironmentProvider"/>
   </extensions>
 </idea-plugin>

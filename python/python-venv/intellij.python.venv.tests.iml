@@ -21,6 +21,9 @@
     <content url="file://$MODULE_DIR$/testResources">
       <sourceFolder url="file://$MODULE_DIR$/testResources" type="java-test-resource" />
     </content>
+    <content url="file://$MODULE_DIR$/testSrc">
+      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
+    </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />

@@ -112,39 +112,6 @@ interface PythonEnvironment {
   /** Absolute path to the Python interpreter executable backing this environment. */
   val pythonBinaryPath: PythonBinary
 
-  /** Virtual environment with parsed `pyvenv.cfg` contents. */
-  data class Venv(
-    override val version: @NlsSafe String?,
-    override val pythonBinaryPath: PythonBinary,
-    override val pythonHomePath: PythonHomePath,
-    /**
-     * Key/value pairs parsed from `pyvenv.cfg`. Empty for legacy `virtualenv` layouts (Python 2.7-era)
-     * that ship `bin/activate_this.py` instead of `pyvenv.cfg`.
-     */
-    val config: Map<String, String>,
-    /** The `lib/` or `lib/pythonX.Y/` directory of the virtual environment. */
-    override val libRoot: Path,
-  ) : PythonEnvironment, HasPythonHome, HasOwnLibRoot, Activatable {
-    /**
-     * Resolves the venv activation script that fits [Shell.Type] in the directory next to the python
-     * binary (`Scripts/` on Windows, `bin/` on Unix). Returns `null` if no matching script exists.
-     *
-     * On Windows the choice depends on the shell: PowerShell needs `Activate.ps1` (cmd's `activate.bat`
-     * cannot mutate the calling PowerShell session), while cmd / unknown shells get `activate.bat`.
-     */
-    override val activation: (shellType: Shell.Type) -> Activatable.Script? = { shellType ->
-      val isWindows = pythonBinaryPath.getEelDescriptor().osFamily == EelOsFamily.Windows
-      val scriptName = when (shellType) {
-        Shell.Type.POWERSHELL -> "Activate.ps1"
-        Shell.Type.FISH -> "activate.fish"
-        Shell.Type.CSH -> "activate.csh"
-        Shell.Type.BASH, Shell.Type.SH, Shell.Type.ZSH, Shell.Type.UNKNOWN ->
-          if (isWindows) "activate.bat" else "activate"
-      }
-      pythonBinaryPath.resolveSibling(scriptName).takeIf { it.exists() }?.let { Activatable.Script(it) }
-    }
-  }
-
   /** Conda environment (has `conda-meta` directory). */
   data class Conda(
     override val version: @NlsSafe String?,
@@ -239,15 +206,13 @@ interface PythonEnvironment {
 }
 
 /**
- * Detects the Python environment type from the file system layout around this binary.
+ * Detects the Python environment from the file system layout around this binary.
  *
- * - If `pyvenv.cfg` exists (PEP 405, Python 3.3+), returns [PythonEnvironment.Venv] with the full parsed config map.
- * - If `bin/activate_this.py` or `Scripts/activate_this.py` exists (legacy `virtualenv` for Python 2.7),
- *   returns [PythonEnvironment.Venv] with an empty config map.
- * - If `conda-meta/` directory exists, returns [PythonEnvironment.Conda] with the resolved conda executable.
- * - Otherwise returns [PythonEnvironment.SystemPython].
+ * Each kind is detected by its own [PythonEnvironmentProvider], so this function names no kind. A binary that no
+ * other provider claims is a [PythonEnvironment.SystemPython].
  *
- * Returns an error if the binary does not exist or is not executable.
+ * Returns an error if the binary does not exist or is not executable, or if a provider owns the layout but the
+ * layout is broken.
  */
 @ApiStatus.Internal
 @RequiresBackgroundThread

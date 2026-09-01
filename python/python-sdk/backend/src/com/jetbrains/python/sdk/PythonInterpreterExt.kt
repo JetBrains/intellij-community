@@ -49,7 +49,7 @@ fun PythonInterpreter.sitePackagesDirectory(): VirtualFile? = libDirectory()?.fi
  *
  * Class roots are scanned for `__future__.py`/`__future__.pyc` plus `xml/` and `email/`; under
  * unit-test mode a folder named `Lib` also qualifies to support mock SDKs. Independent of
- * environment kind: for a [PythonEnvironment.Venv] this still returns the *base* interpreter's
+ * environment kind: for a virtual environment this still returns the *base* interpreter's
  * stdlib (which is included in the venv's class roots), not the venv's own (mostly empty) lib.
  */
 @Internal

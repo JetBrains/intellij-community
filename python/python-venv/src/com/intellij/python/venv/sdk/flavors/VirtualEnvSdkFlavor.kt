@@ -9,7 +9,7 @@ import com.intellij.python.venv.icons.PythonVenvIcons
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.sdk.BASE_DIR
-import com.jetbrains.python.sdk.PythonEnvironment
+import com.intellij.python.venv.environment.VenvEnvironment
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.detectPythonEnvironment
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor
@@ -45,12 +45,12 @@ class VirtualEnvSdkFlavor private constructor() : CPythonSdkFlavor<PyFlavorData.
     candidates.addAll(reader.findVEnvInterpreters())
     candidates.addAll(reader.findPyenvInterpreters())
 
-    candidates.filter { it.detectPythonEnvironment().successOrNull is PythonEnvironment.Venv }
+    candidates.filter { it.detectPythonEnvironment().successOrNull is VenvEnvironment }
   }
 
   override fun isValidSdkPath(pythonBinaryPath: Path): Boolean {
     return super.isValidSdkPath(pythonBinaryPath) &&
-           pythonBinaryPath.detectPythonEnvironment().successOrNull is PythonEnvironment.Venv
+           pythonBinaryPath.detectPythonEnvironment().successOrNull is VenvEnvironment
   }
 
   override fun getIcon(): Icon = PythonVenvIcons.VirtualEnv

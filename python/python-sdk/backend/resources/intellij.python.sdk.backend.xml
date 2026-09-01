@@ -69,8 +69,6 @@
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.MacPythonSdkFlavor"/>
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor"/>
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.WinPythonSdkFlavor"/>
-    <pythonEnvironmentProvider id="venv"
-                               implementation="com.jetbrains.python.sdk.impl.VenvEnvironmentProvider"/>
     <pythonEnvironmentProvider id="conda" order="after venv"
                                implementation="com.jetbrains.python.sdk.impl.CondaEnvironmentProvider"/>
     <!-- Claims any layout, so it must stay last. -->

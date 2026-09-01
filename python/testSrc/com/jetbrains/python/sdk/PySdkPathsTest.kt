@@ -437,7 +437,7 @@ class PySdkPathsTest {
     return runWriteActionAndWait {
       val venv = moduleRoot.createChildDirectory(this, "venv")
 
-      venv.createChildData(this, "pyvenv.cfg")  // see PythonEnvironment.Venv detection
+      venv.createChildData(this, "pyvenv.cfg")  // the marker the venv environment provider looks for
 
       val bin = venv.createChildDirectory(this, "bin")
       // PythonEnvironment.detectPythonEnvironment requires an executable binary.
