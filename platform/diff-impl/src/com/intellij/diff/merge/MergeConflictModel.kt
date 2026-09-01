@@ -162,10 +162,17 @@ class MergeConflictModel(
     }
   }
 
+  /**
+   * Applies every auto-resolvable change to the output document.
+   *
+   * @return true when it changed the output document, false when there was nothing to auto-resolve. A caller that persists
+   * the output, for example the multi-file merge dialog, must save only when this returns true. Otherwise it would write the
+   * seeded merge base back to the file. See `MultipleFileMergeDialog.resolveAutomatically`.
+   */
   @RequiresWriteLock
-  fun resolveAllChangesAutomatically() {
+  fun resolveAllChangesAutomatically(): Boolean {
     val autoResolvableChanges = getAutoResolvableChanges()
-    if (autoResolvableChanges.isEmpty()) return
+    if (autoResolvableChanges.isEmpty()) return false
     val affected = autoResolvableChanges.mapTo(IntArrayList()) { it.index }
     val success = executeMergeCommand(
       DiffBundle.message("action.presentation.merge.resolve.automatically.text"),
@@ -179,6 +186,7 @@ class MergeConflictModel(
     if (success) {
       wasReviewed = false
     }
+    return success
   }
 
   fun acceptRevisionForSide(side: Side) {
