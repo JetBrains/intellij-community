@@ -228,11 +228,6 @@ dev_dist_plugin(
         "//libraries/opentest4j",
         "//plugins/groovy/git",
         "//plugins/groovy/groovy-psi:psi",
-        "//plugins/groovy/jps-plugin:jps",
-        "//plugins/groovy/rt",
-        "//plugins/groovy/rt-constants:constants-rt",
-        "//plugins/groovy/rt/classLoader",
-        "//plugins/groovy/spock-rt",
     ],
     descriptor_module = ":groovy",
     libraries = [
@@ -249,6 +244,13 @@ dev_dist_plugin(
         "//plugins/groovy/langInjection:langInjection_content_module_jar",
         "//plugins/groovy/spock:spock_content_module_jar",
         "//plugins/groovy/structuralsearch-groovy:structuralSearch_content_module_jar",
+    ],
+    prepacked_layout_jars = [
+        ":groovy-constants-rt_dev_dist_plugin_jar",
+        ":groovy-jps_dev_dist_plugin_jar",
+        ":groovy-rt-class-loader_dev_dist_plugin_jar",
+        ":groovy-rt_dev_dist_plugin_jar",
+        ":groovy-spock-rt_dev_dist_plugin_jar",
     ],
 )
 

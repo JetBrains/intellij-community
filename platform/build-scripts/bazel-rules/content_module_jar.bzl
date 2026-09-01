@@ -144,39 +144,42 @@ def _module(target, attr_name):
         fail("%s has a module name ('%s') but produced no output jar" % (target.label, info.module_name), attr = attr_name)
     return struct(jar = info.all_output_jars[0], name = info.module_name)
 
-def _content_module_jar_impl(ctx):
-    before = [_module(target, "modules_before") for target in ctx.attr.modules_before]
-    owner = _module(ctx.attr.module, "module")
-    after = [_module(target, "modules_after") for target in ctx.attr.modules_after]
-    merged = before + [owner] + after
+def _declare_spans(ctx, name):
+    """The action's span file, or `None` when the trace flag is off.
 
-    module_name = owner.name
-    module_jars = [module.jar for module in merged]
-    merged_module_names = [module.name for module in merged]
+    Named after what the caller states rather than after the jar, because two targets may write a jar of one name and a
+    target name is unique in its package. `dev-dist trace` joins a span file to an action through the action's primary
+    output, so the jar and this file must not disagree about which action wrote them.
+    """
+    if not ctx.attr._trace_spans[BuildSettingInfo].value:
+        return None
+    return ctx.actions.declare_file(name + ".spans.json")
 
-    library_entries = _library_entries(ctx)
-    library_jars = _merge_order_jars(library_entries)
+def _pack(ctx, output, spans, module_jars, library_jars, merged_module_names, mnemonic, progress_message, extra_flags = []):
+    """Runs the packer over one jar, for either of this file's two rules.
 
-    output = ctx.actions.declare_file(module_name + ".jar")
+    The two rules differ in the jar's identity - its path, its mnemonic and its provider - and in nothing the packer
+    sees. So the flag file, the worker contract and the merge order are stated once here.
+
+    The packer takes a flag file rather than arguments: a product packs hundreds of jars from thousands of inputs, and
+    `--flagfile=` is the only argument it accepts. `output=` starts a group, so the order below is the grammar's own:
+    the output, the trace file, the flags of the jar, then the libraries and then the module outputs. Libraries lead
+    because that is `buildAsset`'s order, and the packer resolves an entry two sources both offer to the first one.
+    """
     args = ctx.actions.args()
     args.set_param_file_format("multiline")
-
-    # The packer takes a flag file rather than arguments: a product packs hundreds of jars from thousands of inputs, and
-    # `--flagfile=` is the only argument it accepts.
     args.use_param_file("--flagfile=%s", use_always = True)
     args.add(output, format = "output=%s")
 
     outputs = [output]
-
-    # Inside the flag file, as a `trace-file=` line, rather than as a `--trace-file=` argument - which is what every
-    # other producer of these span files takes. A worker has no other per-action channel: Bazel splits a worker spawn's
-    # arguments at the param file, everything before it becomes the worker *process*'s command line and part of its
-    # `WorkerKey`, and a per-action path there would start a fresh worker for each of the ~2 500 actions. Everything
-    # added to this `Args` lands in the file instead. It follows `output=`, because the grammar starts a group there.
-    spans = None
-    if ctx.attr._trace_spans[BuildSettingInfo].value:
-        spans = ctx.actions.declare_file(module_name + ".spans.json")
-
+    if spans:
+        # Inside the flag file, as a `trace-file=` line, rather than as a `--trace-file=` argument - which is what every
+        # other producer of these span files takes. A worker has no other per-action channel: Bazel splits a worker
+        # spawn's arguments at the param file, everything before it becomes the worker *process*'s command line and part
+        # of its `WorkerKey`, and a per-action path there would start a fresh worker for each of the ~2 500 actions.
+        # Everything added to this `Args` lands in the file instead. It follows `output=`, because the grammar starts a
+        # group there.
+        #
         # The `File`, not `spans.path`: this argument travels in a param file that output path mapping may rewrite, and
         # only the `File` form is rewritten with it. `intellij_dev_dist.bzl`'s `_declare_spans` passes the string,
         # because there the argument sits on a local-exec command line among neighbours that all pass strings.
@@ -188,16 +191,17 @@ def _content_module_jar_impl(ctx):
 
     if _keep_manifest(library_jars, merged_module_names):
         args.add("keep-manifest=true")
-    if ctx.attr.rewrite_boot_class_path:
-        args.add("rewrite-boot-class-path=true")
+    for flag in extra_flags:
+        args.add(flag)
 
     # Files, not `.path` strings, so path mapping can rewrite them.
     args.add_all(library_jars, format_each = "library=%s")
     args.add_all(module_jars, format_each = "module=%s")
 
     ctx.actions.run(
-        # One mnemonic for every content-module jar, so a strategy or an execution-info override reaches all of them.
-        mnemonic = "PackContentModuleJar",
+        # One mnemonic per producer, so a strategy or an execution-info override reaches every jar of that producer and
+        # of no other. `common.bazelrc` pins a pool size to each, and `no-cache` to the platform one alone.
+        mnemonic = mnemonic,
         inputs = depset(library_jars + module_jars),
         outputs = outputs,
         executable = ctx.executable._packer,
@@ -207,8 +211,8 @@ def _content_module_jar_impl(ctx):
         # repository at 2 524 jars, one process per action cost 38.4 s where the worker costs 26.0 s, and 6.6 s once the
         # action stopped being cached.
         #
-        # `requires-worker-protocol` is absent because proto is Bazel's default, and the packer speaks it: it decodes the
-        # six fields by hand in `internal/worker`, with no protobuf dependency and no generated schema, the way
+        # `requires-worker-protocol` is absent because proto is Bazel's default, and the packer speaks it: it decodes
+        # the six fields by hand in `internal/worker`, with no protobuf dependency and no generated schema, the way
         # `@rules_jvm//worker-framework:protocol.kt` already decodes the same message on the JVM side. Every other worker
         # in this repository is on the same default. An explicit `"proto"` would only add something that can drift from
         # the code - and an unrecognised value here is a hard failure, so a typo in one is worse than its absence.
@@ -229,7 +233,35 @@ def _content_module_jar_impl(ctx):
             "no-sandbox": "1",
         },
         arguments = [args],
+        progress_message = progress_message,
+    )
+    return outputs
+
+def _content_module_jar_impl(ctx):
+    before = [_module(target, "modules_before") for target in ctx.attr.modules_before]
+    owner = _module(ctx.attr.module, "module")
+    after = [_module(target, "modules_after") for target in ctx.attr.modules_after]
+    merged = before + [owner] + after
+
+    module_name = owner.name
+    module_jars = [module.jar for module in merged]
+    merged_module_names = [module.name for module in merged]
+
+    library_entries = _library_entries(ctx)
+    library_jars = _merge_order_jars(library_entries)
+
+    output = ctx.actions.declare_file(module_name + ".jar")
+    spans = _declare_spans(ctx, module_name)
+    _pack(
+        ctx,
+        output = output,
+        spans = spans,
+        module_jars = module_jars,
+        library_jars = library_jars,
+        merged_module_names = merged_module_names,
+        mnemonic = "PackContentModuleJar",
         progress_message = "Packing distribution jar of %{label}",
+        extra_flags = ["rewrite-boot-class-path=true"] if ctx.attr.rewrite_boot_class_path else [],
     )
     return [
         DefaultInfo(files = depset([output])),
@@ -317,7 +349,7 @@ DevDistPluginJarInfo = provider(
 
         The same token `dev_dist_content.bzl` already carries on a prepacked relation, so the two producers of a plugin
         jar state its destination in one vocabulary. It holds a `/` for a jar the layout puts in a subdirectory, which
-        `_conventional_prepacked_path` cannot express and which 71 of one fragment's 352 packed jars need.""",
+        `_conventional_prepacked_path` cannot express and which a fifth of a plugin fragment's packed jars need.""",
         "member_jars": "tuple of File: the own jar of every merged module, in merge order.",
         "member_modules": "tuple of string: the same members by JPS module name - see `ContentModuleJarInfo`.",
         "library_jars": "tuple of struct(label, jars): the merged libraries, one entry per container.",
@@ -358,50 +390,20 @@ def _dev_dist_plugin_jar_impl(ctx):
     # `//build/dev-dist-content` is - can both hold `modules/x.jar`, and a target name is the one token Bazel already
     # keeps unique per package.
     output = ctx.actions.declare_file(ctx.label.name + "/" + relative_output_file)
-
-    args = ctx.actions.args()
-    args.set_param_file_format("multiline")
-    args.use_param_file("--flagfile=%s", use_always = True)
-    args.add(output, format = "output=%s")
-
-    outputs = [output]
-    spans = None
-    if ctx.attr._trace_spans[BuildSettingInfo].value:
-        # Beside the jar and named after the target, not after the jar: the jar's name is the layout's and two targets
-        # may share it, where a target name may not. See the sibling for why this rides in the flag file.
-        spans = ctx.actions.declare_file(ctx.label.name + ".spans.json")
-        args.add(spans, format = "trace-file=%s")
-        outputs.append(spans)
-
-    if _keep_manifest(library_jars, merged_module_names):
-        args.add("keep-manifest=true")
-
-    # Libraries first and then the module outputs, which is `buildAsset`'s own order: it merges the jar-level sources of
-    # `AssetDescriptor.sources` - the module libraries - ahead of everything `includedModules` holds, and the packer
-    # resolves an entry two sources both offer to the first one. The module order is the layout's member order, which is
-    # the order this attribute states.
-    args.add_all(library_jars, format_each = "library=%s")
-    args.add_all(module_jars, format_each = "module=%s")
-
-    ctx.actions.run(
+    spans = _declare_spans(ctx, ctx.label.name)
+    _pack(
+        ctx,
+        output = output,
+        spans = spans,
+        module_jars = module_jars,
+        library_jars = library_jars,
+        merged_module_names = merged_module_names,
         # A mnemonic of its own, and not the sibling's. `common.bazelrc` pins two options to `PackContentModuleJar` -
         # `no-cache` and the multiplex instance count - and both were measured over the platform's 2 524 jars, whose
         # median is a fraction of a plugin jar's. Sharing the mnemonic would apply both figures to a population nothing
         # has measured yet, and would also fold this population into the standing per-mnemonic figure that
         # `dev-dist-measurements.md` quotes for the platform.
         mnemonic = "PackPluginJar",
-        inputs = depset(library_jars + module_jars),
-        outputs = outputs,
-        executable = ctx.executable._packer,
-        # The sibling's measured set, copied rather than re-derived: the same packer does the same work under the same
-        # strategy. See `_content_module_jar_impl` for what each entry buys and what its absence means.
-        execution_requirements = {
-            "supports-workers": "1",
-            "supports-multiplex-workers": "1",
-            "supports-worker-cancellation": "1",
-            "no-sandbox": "1",
-        },
-        arguments = [args],
         progress_message = "Packing plugin jar of %{label}",
     )
     return [
@@ -429,14 +431,14 @@ _dev_dist_plugin_jar = rule(
             doc = """The jar's destination, relative to the plugin's own `lib/` - `modules/x.jar`, `specifics/y.jar`, `z.jar`.
 
 The jar's name comes from here and not from a module, which is the first reason this is a rule of its own: a plugin
-layout names a jar freely, and 98 of the 413 non-main jars the model derives and no relation hands over yet carry a name
-no member has. The denominator takes out every jar a `content_module_jar` already packs, which is thousands.
+layout names a jar freely, and a jar it names itself carries a name no member has. `reportMovablePluginJars` prints how
+many such jars got a target, how many the model derives and every refusal, once per converter run, so no count is
+frozen here. `build/dev-dist-measurements.md` holds the dated figures.
 
 **A jar named after its one member never comes here.** The `content_module_jar` beside that member packs the same bytes
 under the same name, and a plugin says only where its `lib/` puts the jar - `prepacked_content_modules`, or a
-`prepacked_jars` row. Measured on 2026-09-01: 307 of those 413 are that shape, and a target here for one of them would be
-a checked-in copy of the model. `_collect_prepacked` in `dev_dist_content.bzl` refuses the same restatement one layer
-up.""",
+`prepacked_jars` row. Most of the movable jars are that shape, and a target here for one of them would be a checked-in
+copy of the model. `_collect_prepacked` in `dev_dist_content.bzl` refuses the same restatement one layer up.""",
             mandatory = True,
         ),
         "modules": attr.label_list(

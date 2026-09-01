@@ -16,6 +16,13 @@ internal class PluginJarTarget(
   @JvmField val relativeOutputFile: String,
   /** The members' own `jvm_library` targets, in the layout's member order. */
   @JvmField val memberLabels: List<String>,
+  /**
+   * The same members by JPS module name, in the same order.
+   *
+   * What the hand-off needs. A member of a jar this target packs leaves the plugin's `content_modules`, and a name is
+   * the key [resolvePluginContent] works in.
+   */
+  @JvmField val memberNames: List<String>,
   /** The merged libraries' container targets, in merge order; see [PluginContent.libraryContainerLabels]. */
   @JvmField val libraryLabels: List<String>,
 )
@@ -25,7 +32,7 @@ internal class PluginJarTarget(
  *
  * **The jar's name decides it, and nothing else.** A jar named after its one member holds what that member's own
  * `content_module_jar` already packs: the same one module output, the same libraries off the same `.iml`, the same jar
- * name. So the member's target is the producer, one target for a member up to 45 plugins ship, and the plugin says only
+ * name. So the member's target is the producer - one target for a member many plugins ship - and the plugin says only
  * where its `lib/` puts the jar. A jar the plugin's layout names itself has no such member, and `dev_dist_plugin_jar` is
  * the producer for it.
  *
@@ -40,11 +47,11 @@ internal enum class PluginJarProducer(@JvmField val message: String) {
    * The member's own `content_module_jar`, which this tree already holds.
    *
    * [isPrepackedPluginContentModule] is true for the member, so the target exists and the hand-off vocabulary accepts
-   * it. What the plugin still lacks is the *relation*: `prepacked_content_modules` for `modules/<member>.jar`, or a
-   * `prepacked_jars` row for the embedded `<member>.jar`. The relation needs the destination the plugin's layout states,
-   * which the derivation now holds, and wiring it is the hand-over slice's work rather than a new target vocabulary.
+   * it. What the plugin states is the *relation*: `prepacked_content_modules` for `modules/<member>.jar`, or a
+   * `prepacked_jars` row for the embedded `<member>.jar`. [MovablePluginJars.memberRelations] holds the ones this run
+   * wires, and [MovablePluginJars.withheldRelations] the ones a refusal keeps back.
    */
-  MEMBER_JAR_TARGET("the member's own `content_module_jar` packs it, and the plugin needs the relation"),
+  MEMBER_JAR_TARGET("the member's own `content_module_jar` packs it"),
 
   /**
    * The member's own jar, for a member the candidacy states no packing target for.
@@ -116,9 +123,9 @@ internal enum class PluginJarExclusion(@JvmField val message: String) {
    *
    * **Only the half this generator answers for reaches this refusal.** [pluginJarProducer] runs first, so a
    * member-named half of the same destination is counted under its own producer in [MovablePluginJars.memberNamed], and
-   * the count here is 1 for such a pair. The hand-over slice reads that map as one relation each, so it has to ask the
-   * ambiguity again: a relation for such a jar would name a destination the layout also writes from a second member.
-   * B2a's wider relation key is what separates them.
+   * the count here is 1 for such a pair. The relation is keyed by the plugin and the destination, so two plugins that
+   * derive one jar of a name are two relations. What that key does not separate is one plugin's two members at one
+   * destination: a relation there would name a destination the layout also writes from the other member.
    */
   AMBIGUOUS_DESTINATION("the plugin derives two jars at one destination"),
 
@@ -131,6 +138,16 @@ internal enum class PluginJarExclusion(@JvmField val message: String) {
    * [productionModuleLibraryNames] takes no project library, so the derivation would pack the jar without it.
    */
   VETOED_MEMBER("the residue vetoes a member"),
+
+  /**
+   * The plugin packs a member's raw output into a second jar of its own, so the member cannot leave the fragment.
+   *
+   * [ContentResidueSection.rawMembers] states it, and [derivePluginContent] already gates the member hand-off on the
+   * same row. A hand-off takes the member's raw jar out of the fragment's declaration, and that second jar still needs
+   * it. `intellij.gateway.core` is the case. Its own `lib/modules/` jar is plain, and the gateway layout packs the raw
+   * output into `lib/gateway-standalone/gateway.core.jar` as well.
+   */
+  RAW_MEMBER("the plugin packs a member's raw output into a second jar"),
 
   /** A member this project holds no Bazel target for, so nothing can name its output. */
   UNKNOWN_MEMBER("a member has no Bazel target"),
@@ -175,19 +192,18 @@ internal enum class PluginJarExclusion(@JvmField val message: String) {
  *
  * The plugin twin of [EXCLUDED_CONTENT_MODULES], and the same class of fact: what the layout really put in the jar is not
  * what the model derives, so a packing action would write a jar that differs and nothing would notice until class-load
- * time. The value is the cause, and both rows were **measured** by `./build/dev-dist.cmd plugin-jars` on 2026-09-01 - not
- * predicted.
+ * time. The value is the cause, and every row was **measured** and not predicted. A gate states each row: the first two
+ * came from `./build/dev-dist.cmd plugin-jars` on 2026-09-01, and the third from the hand-off refusing itself on the
+ * same day.
  *
  * **A converter-side list, and not a section of [PLUGIN_MODEL_TABLES_FILE_NAME].** That file is the hand-off from
  * `plugin-model-tool`, and one writer per file is what keeps it honest. Nothing in `plugin-model-tool` reads or derives
  * these rows: they are a property of the bytes one fragment wrote, and only a byte comparison finds them. A section with
  * no producer is the shape ADR 0008 records having gone wrong once.
  *
- * **Two rows, because the emission reaches two such jars.** Nine jars of the fragment failed the byte comparison on
- * 2026-09-01, and seven of them are named after their one member, so [PluginJarProducer] now takes them out before this
- * map is asked. Their measured causes are the hand-over slice's evidence rather than dead rows here, and
- * `build/dev-dist-measurements.md` holds them. A row that stops being needed is a jar that can be moved, and the byte
- * gate is what finds that out.
+ * A jar named after its one member never reaches this map, because [PluginJarProducer] takes it out first. A row that
+ * stops being needed is a jar that can be moved, and the byte gate is what finds that out.
+ * `build/dev-dist-measurements.md` holds the run behind every row.
  */
 private val UNPACKABLE_PLUGIN_JARS: Map<String, String> = mapOf(
   // The layout keeps the members' module libraries out of the jar and lays them beside it. `isSeparateLibraryJar` inside
@@ -198,6 +214,11 @@ private val UNPACKABLE_PLUGIN_JARS: Map<String, String> = mapOf(
   // The one order failure of the whole set. Both jars hold the same 5 entries.
   "plugins/maven-plugin/lib/artifact-resolver-m31.jar" to
   "the members merge in another order: the two jars hold one entry set and the layout puts `META-INF/plexus/` first",
+  // Measured on 2026-09-01 by the hand-over itself: `validatePrepackedPluginContentHandoff` refused the relation with
+  // "has patched module output". A `ModuleOutputPatcher` entry is a `PluginLayout` decision, so the jar holds a path no
+  // module output has and a packing action would write the jar without it.
+  "plugins/gateway-plugin/lib/gateway-standalone/gateway.jar" to
+  "the layout patches a member's module output",
 )
 
 /**
@@ -210,11 +231,16 @@ private val UNPACKABLE_PLUGIN_JARS: Map<String, String> = mapOf(
  */
 internal fun reportMovablePluginJars(targets: List<BazelBuildFileGenerator.ModuleTargets>) {
   val emitted = targets.sumOf { it.pluginJars.targets.size }
+  val relations = targets.sumOf { it.pluginJars.memberRelations.size }
   val excluded = LinkedHashMap<PluginJarExclusion, Int>()
+  val withheld = LinkedHashMap<PluginJarExclusion, Int>()
   val memberNamed = LinkedHashMap<PluginJarProducer, Int>()
   for (module in targets) {
     for ((reason, jars) in module.pluginJars.excluded) {
       excluded.merge(reason, jars.size, Int::plus)
+    }
+    for ((reason, jars) in module.pluginJars.withheldRelations) {
+      withheld.merge(reason, jars.size, Int::plus)
     }
     for ((producer, jars) in module.pluginJars.memberNamed) {
       memberNamed.merge(producer, jars.size, Int::plus)
@@ -230,6 +256,11 @@ internal fun reportMovablePluginJars(targets: List<BazelBuildFileGenerator.Modul
   for (producer in PluginJarProducer.values()) {
     val count = memberNamed.get(producer) ?: continue
     println("  $count not this generator's to emit: ${producer.message}")
+  }
+  println("  $relations of them handed to that target by a relation")
+  for (reason in PluginJarExclusion.values()) {
+    val count = withheld.get(reason) ?: continue
+    println("  relation withheld $count: ${reason.message}")
   }
   for (reason in PluginJarExclusion.values()) {
     val count = excluded.get(reason) ?: continue
@@ -310,6 +341,7 @@ internal fun refusePluginJar(
   scrambles: Boolean,
   ambiguousDestinations: Set<String>,
   vetoedMembers: Set<String>,
+  rawMembers: Set<String>,
   unknownMembers: Set<String>,
   crossRepositoryMembers: Set<String>,
   memberLibraries: Map<String, Set<String>?>,
@@ -318,6 +350,7 @@ internal fun refusePluginJar(
     scrambles -> PluginJarExclusion.SCRAMBLING_PLUGIN
     jar.relativeOutputFile in ambiguousDestinations -> PluginJarExclusion.AMBIGUOUS_DESTINATION
     jar.members.any { it in vetoedMembers } -> PluginJarExclusion.VETOED_MEMBER
+    jar.members.any { it in rawMembers } -> PluginJarExclusion.RAW_MEMBER
     jar.name in UNPACKABLE_PLUGIN_JARS -> PluginJarExclusion.STATED_UNPACKABLE
     jar.members.any { it in unknownMembers } -> PluginJarExclusion.UNKNOWN_MEMBER
     jar.members.any { it in crossRepositoryMembers } -> PluginJarExclusion.CROSS_REPOSITORY_MEMBER
@@ -344,10 +377,116 @@ internal class MovablePluginJars(
    * Counted and not emitted. See [PluginJarProducer], which holds the reason.
    */
   @JvmField val memberNamed: Map<PluginJarProducer, List<String>> = emptyMap(),
+  /**
+   * Where this plugin puts the jar of each [PluginJarProducer.MEMBER_JAR_TARGET] member it hands over, by module name.
+   *
+   * The relation the member-named half needs, in the shape [resolvePluginContent] already takes: the two existing
+   * attributes carry it, and this generator writes no target for such a jar.
+   */
+  @JvmField val memberRelations: Map<String, String> = emptyMap(),
+  /**
+   * The [PluginJarProducer.MEMBER_JAR_TARGET] jars this run does **not** hand over, by reason.
+   *
+   * Its own map and not part of [excluded], because the two answer different questions: [excluded] is a target this
+   * generator would have written and refused, and this is a relation to a target that already exists.
+   */
+  @JvmField val withheldRelations: Map<PluginJarExclusion, List<String>> = emptyMap(),
 ) {
   companion object {
     @JvmField val NONE: MovablePluginJars = MovablePluginJars(targets = emptyList(), excluded = emptyMap())
   }
+}
+
+/** One plugin's whole dev-distribution packing statement: what it declares, and what packs its own jars. */
+internal class DerivedPluginPacking(
+  @JvmField val content: DerivedPluginContent,
+  /** Every jar the plugin puts in its own directory, with [DerivedPluginJar.isHandedOver] over both producers. */
+  @JvmField val jars: List<DerivedPluginJar>,
+  @JvmField val movable: MovablePluginJars,
+)
+
+/**
+ * Both halves of one plugin's packing statement, from one walk of its content.
+ *
+ * Two resolutions of the content leaf, in this order, because the two answers depend on each other in one direction
+ * only: the movable set is a function of the derived jars, and which members the leaf still declares is a function of
+ * the movable set. So the first pass answers who packs each jar, and the second takes the members of the jars that got a
+ * packing target out of the leaf. Nothing between the two is walked again; see [withPluginJarHandOff].
+ *
+ * The second pass composes the jars again as well, because a jar reads its own hand-off from the destinations of the
+ * targets the first pass produced. A plugin with no target of its own pays for neither pass.
+ *
+ * `null` for a module the dev distribution states no content for.
+ */
+internal fun computeDerivedPluginPacking(
+  module: ModuleDescriptor,
+  moduleList: ModuleList,
+  context: BazelBuildFileGenerator,
+): DerivedPluginPacking? {
+  val residue = contentResidueOf(module)
+  val first = computeDerivedPluginContent(module = module, moduleList = moduleList, context = context, residue = residue)
+                ?: return null
+  val firstJars = derivedPluginJarsOf(module = module, derived = first, moduleList = moduleList, context = context)
+  val movable = computeMovablePluginJars(
+    module = module,
+    derived = first,
+    jars = firstJars,
+    residue = residue,
+    moduleList = moduleList,
+    context = context,
+  )
+  // A member leaves the content leaf only where the moved jar is its whole jar set. `intellij.javaee.appServers.tomee
+  // .agent.rt` is in `specifics/tomee-specifics.jar` and in the plugin's main jar, so the fragment still packs its raw
+  // output and still has to declare it. The jar moves either way; only the declaration stays.
+  val memberJars = residue.memberJars
+  val layoutJarMembers = movable.targets.asSequence()
+    .flatMap { it.memberNames }
+    .filterTo(LinkedHashSet()) { (memberJars.get(it)?.size ?: 1) == 1 }
+  // The destinations those targets pack, which is the key the jars read; see [DerivedPluginJar.isHandedOver]. The
+  // member set above answers the declaration and this answers the jar, so the tomee case moves the jar and keeps the
+  // declaration.
+  val handedOverJars = movable.targets.mapTo(LinkedHashSet()) { it.relativeOutputFile }
+  if (layoutJarMembers.isEmpty() && movable.memberRelations.isEmpty()) {
+    for (warning in first.warnings) {
+      println(warning)
+    }
+    return DerivedPluginPacking(
+      content = first,
+      // No member leaves the leaf, and a target can still own a jar: every member of it holds a second jar. So the
+      // jars are composed a second time where a target exists, and the first pass's answer stands where none does.
+      jars = if (handedOverJars.isEmpty()) {
+        firstJars
+      }
+      else {
+        derivedPluginJarsOf(module = module, derived = first, moduleList = moduleList, context = context, handedOverJars = handedOverJars)
+      },
+      movable = movable,
+    )
+  }
+  val content = first.withPluginJarHandOff(
+    module = module,
+    residue = residue,
+    layoutJarMembers = layoutJarMembers,
+    memberRelations = movable.memberRelations,
+    moduleList = moduleList,
+    context = context,
+  )
+  // The second pass's warnings, and not the first pass's. The two resolutions warn about the same labels, and a handed
+  // over member drops the warnings it was the only reason for.
+  for (warning in content.warnings) {
+    println(warning)
+  }
+  return DerivedPluginPacking(
+    content = content,
+    jars = derivedPluginJarsOf(
+      module = module,
+      derived = content,
+      moduleList = moduleList,
+      context = context,
+      handedOverJars = handedOverJars,
+    ),
+    movable = movable,
+  )
 }
 
 /**
@@ -360,15 +499,15 @@ internal class MovablePluginJars(
  *
  * **A member-named jar is another producer's.** [pluginJarProducer] takes it out before any refusal runs, so a target
  * here states only what no convention derives. That split is what the emission owes; see the enum for the case that
- * proved it.
+ * proved it. Such a jar still gets the same refusal question, because the relation to its member's target is a hand-off
+ * too - the answer goes to [MovablePluginJars.memberRelations] or to [MovablePluginJars.withheldRelations].
  *
  * **Non-main jars only.** A plugin's main jar holds the plugin's own patched descriptor, and `dev_dist_plugin_jar` has no
- * attribute for a produced file. B0 measured the main jars and the user chose the non-main half first, so a main jar is
- * out of scope here rather than refused - it has no exclusion class.
+ * attribute for a produced file. So a main jar is out of scope here rather than refused - it has no exclusion class.
  *
  * **A handed-over jar is not a candidate either.** A `content_module_jar` target already packs it and
- * `./build/dev-dist.cmd jars` is its byte gate. Two targets packing one destination is what B2a's relation key would then
- * have to separate.
+ * `./build/dev-dist.cmd jars` is its byte gate. The relation names one producer for one destination, so this emission is
+ * what keeps a second target off a destination a relation already carries.
  *
  * The walk cost is nil: [derived] is the content derivation the generation run already made, and the library sets come
  * out of it. Nothing here reads a file or lists a directory.
@@ -376,47 +515,34 @@ internal class MovablePluginJars(
 internal fun computeMovablePluginJars(
   module: ModuleDescriptor,
   derived: DerivedPluginContent,
+  /** Every jar of the plugin, from the first pass of [computeDerivedPluginPacking]. */
+  jars: List<DerivedPluginJar>,
+  residue: PluginContentResidue,
   moduleList: ModuleList,
   context: BazelBuildFileGenerator,
 ): MovablePluginJars {
-  if (!isDevDistContentPlugin(module = module, context = context)) {
-    return MovablePluginJars.NONE
-  }
-  val jars = derivedPluginJarsOf(module = module, derived = derived, moduleList = moduleList, context = context)
-    .filter { !it.isMainJar && !it.isHandedOver }
-  if (jars.isEmpty()) {
+  val movable = jars.filter { !it.isMainJar && !it.isHandedOver }
+  if (movable.isEmpty()) {
     return MovablePluginJars.NONE
   }
 
   val targets = ArrayList<PluginJarTarget>()
   val excluded = LinkedHashMap<PluginJarExclusion, MutableList<String>>()
   val memberNamed = LinkedHashMap<PluginJarProducer, MutableList<String>>()
-  fun refuse(jar: DerivedPluginJar, reason: PluginJarExclusion) {
-    excluded.computeIfAbsent(reason) { ArrayList() }.add(jar.name)
-  }
+  val memberRelations = LinkedHashMap<String, String>()
+  val withheldRelations = LinkedHashMap<PluginJarExclusion, MutableList<String>>()
 
-  val residue = contentResidueOf(module)
   val scrambles = descriptorResidueOf(module).values.any { it?.noEmbedding == true }
   // Every destination this plugin derives twice. A partition needs the whole set before the first verdict, which is why
   // this is counted ahead of the loop rather than inside it.
-  val ambiguous = jars.groupingBy { it.relativeOutputFile }.eachCount().filterValues { it > 1 }.keys
-  for (jar in jars) {
-    // Before every refusal, because a refusal is about a target this generator would write and a member-named jar is not
-    // one. The two questions are also independent: a member-named jar the residue vetoes still has no target here, and
-    // the hand-over slice needs it counted under its producer rather than under a reason for not emitting.
-    val producer = pluginJarProducer(jar = jar) {
-      context.hasContentModuleJarTarget(memberName = it, moduleList = moduleList)
-    }
-    if (producer != PluginJarProducer.PLUGIN_JAR_TARGET) {
-      memberNamed.computeIfAbsent(producer) { ArrayList() }.add(jar.name)
-      continue
-    }
-    val members = jar.members.map { moduleList.getModuleDescriptorOrNull(it) }
-    val refusal = refusePluginJar(
+  val ambiguous = movable.groupingBy { it.relativeOutputFile }.eachCount().filterValues { it > 1 }.keys
+  fun refusalOf(jar: DerivedPluginJar, members: List<ModuleDescriptor?>): PluginJarExclusion? {
+    return refusePluginJar(
       jar = jar,
       scrambles = scrambles,
       ambiguousDestinations = ambiguous,
       vetoedMembers = residue.vetoedMembers,
+      rawMembers = residue.rawMembers,
       unknownMembers = jar.members.filterIndexedTo(HashSet()) { index, name ->
         members.get(index) == null || name in moduleList.skippedModules
       },
@@ -428,8 +554,33 @@ internal fun computeMovablePluginJars(
       },
       memberLibraries = derived.memberLibraries,
     )
+  }
+  for (jar in movable) {
+    // Before every refusal, because a refusal is about a target this generator would write and a member-named jar is not
+    // one. The two questions are also independent: a member-named jar the residue vetoes still has no target here, and
+    // the hand-over needs it counted under its producer rather than under a reason for not emitting.
+    val producer = pluginJarProducer(jar = jar) {
+      context.hasContentModuleJarTarget(memberName = it, moduleList = moduleList)
+    }
+    val members = jar.members.map { moduleList.getModuleDescriptorOrNull(it) }
+    if (producer != PluginJarProducer.PLUGIN_JAR_TARGET) {
+      memberNamed.computeIfAbsent(producer) { ArrayList() }.add(jar.name)
+      if (producer == PluginJarProducer.MEMBER_JAR_TARGET) {
+        // The same refusals, over the relation instead of over a target. Nothing here writes a jar, and every one of
+        // those reasons is a reason the packed jar is not the jar the layout puts at this destination.
+        val withheld = refusalOf(jar, members)
+        if (withheld == null) {
+          memberRelations[jar.members.single()] = jar.relativeOutputFile
+        }
+        else {
+          withheldRelations.computeIfAbsent(withheld) { ArrayList() }.add(jar.name)
+        }
+      }
+      continue
+    }
+    val refusal = refusalOf(jar, members)
     if (refusal != null) {
-      refuse(jar, refusal)
+      excluded.computeIfAbsent(refusal) { ArrayList() }.add(jar.name)
       continue
     }
     // The union over the members, because one jar's library set is one attribute. A jar that reaches this point either
@@ -450,16 +601,23 @@ internal fun computeMovablePluginJars(
       refuse = { println("WARN: ${jar.name} keeps being packed by JarPackager: $it") },
     )
     if (libraryLabels == null) {
-      refuse(jar, PluginJarExclusion.UNNAMEABLE_LIBRARY)
+      excluded.computeIfAbsent(PluginJarExclusion.UNNAMEABLE_LIBRARY) { ArrayList() }.add(jar.name)
       continue
     }
     targets.add(
       PluginJarTarget(
         relativeOutputFile = jar.relativeOutputFile,
         memberLabels = members.map { context.getBazelDependencyLabel(it!!, module) },
+        memberNames = jar.members,
         libraryLabels = libraryLabels,
       )
     )
   }
-  return MovablePluginJars(targets = targets, excluded = excluded, memberNamed = memberNamed)
+  return MovablePluginJars(
+    targets = targets,
+    excluded = excluded,
+    memberNamed = memberNamed,
+    memberRelations = memberRelations,
+    withheldRelations = withheldRelations,
+  )
 }

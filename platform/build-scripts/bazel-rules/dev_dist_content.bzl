@@ -24,7 +24,7 @@ Two shapes were measured and rejected before settling on a sidecar rule plus an 
 
 load("@rules_java//java:defs.bzl", "JavaInfo")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
-load(":content_module_jar.bzl", "ContentModuleJarInfo")
+load(":content_module_jar.bzl", "ContentModuleJarInfo", "DevDistPluginJarInfo")
 
 DevDistContentInfo = provider(
     doc = "The module and library jars one slice of a dev distribution is made of.",
@@ -35,7 +35,18 @@ DevDistContentInfo = provider(
         # Not bare `File`s, unlike the module halves: a library's manifest key is the container target's label, which is
         # not derivable from the files. See `_collect_libraries`.
         "library_jars": "depset of struct(label, jars): `label` being the container target's own label.",
-        "prepacked_plugin_jars": "depset of struct(plugin_main_module, content_module, relative_output_file, jar).",
+        "prepacked_plugin_jars": "depset of struct(plugin_main_module, content_modules, relative_output_file, jar).",
+        "prepacked_layout_jars": """The same records for a jar the plugin's own layout names - see `prepacked_layout_jars`.
+
+        A depset of its own, and not merged into `prepacked_plugin_jars`, because one consumer needs the two apart: the
+        reference fragment packs these jars itself and hands off the member ones, which is what keeps a byte comparand
+        for them. Everything else unions the two.""",
+        "layout_jar_module_jars": """depset of File: the member jars every `prepacked_layout_jars` record merges.
+
+        What a fragment declares *instead* of the packed jar when it packs the jar itself. The packing target already
+        holds the list, so the reference reads it off the same provider the relation comes from and the two cannot
+        disagree about what one jar is made of.""",
+        "layout_jar_library_jars": "depset of struct(label, jars): the same for the libraries those jars merge.",
     },
 )
 
@@ -234,7 +245,12 @@ def _dev_dist_platform_payload_impl(ctx):
         DevDistContentInfo(
             module_jars = depset(packed_member_jars),
             library_jars = depset(packed_library_jars),
+            # A platform payload states no plugin relation of either kind. It is the `lib/` half, and both prepacked
+            # shapes belong to a plugin's own `lib/`.
             prepacked_plugin_jars = depset(),
+            prepacked_layout_jars = depset(),
+            layout_jar_module_jars = depset(),
+            layout_jar_library_jars = depset(),
         ),
     ]
 
@@ -405,7 +421,7 @@ def _collect_prepacked(label, plugin_main_module, prepacked_content_modules, pre
         info = target[ContentModuleJarInfo]
         prepacked_plugin_jars.append(depset([struct(
             plugin_main_module = plugin_main_module,
-            content_module = info.module_name,
+            content_modules = (info.module_name,),
             relative_output_file = _conventional_prepacked_path(info.module_name),
             jar = info.jar,
         )]))
@@ -426,10 +442,45 @@ def _collect_prepacked(label, plugin_main_module, prepacked_content_modules, pre
             fail("%s: '%s' is not the own jar name of %s" % (label, relative_output_file, info.module_name))
         prepacked_plugin_jars.append(depset([struct(
             plugin_main_module = plugin_main_module,
-            content_module = info.module_name,
+            content_modules = (info.module_name,),
             relative_output_file = relative_output_file,
             jar = info.jar,
         )]))
+
+def _collect_layout_jars(label, plugin_main_module, prepacked_layout_jars, records, module_jars, library_jars):
+    """Turn the plugin's own packing targets into relations, and carry what each of those jars is made of.
+
+    A relation restates nothing here. `dev_dist_plugin_jar` already states the plugin, the destination and the member
+    list, so the label alone is the whole relation - where a member hand-off needs the destination, because the packed
+    jar is the member's and two plugins place it differently.
+
+    [module_jars] and [library_jars] are the same jar seen from the other side: what a producer would merge to make it.
+    Only the reference fragment reads them, and reading them off this provider is what keeps the reference and the
+    hand-off describing one jar.
+
+    Args:
+        label: the target being analyzed, for a failure message.
+        plugin_main_module: the plugin these relations belong to.
+        prepacked_layout_jars: the plugin's own `dev_dist_plugin_jar` targets.
+        records: the list of depsets to append the relations to.
+        module_jars: the list of depsets to append the merged member jars to.
+        library_jars: the list of depsets to append the merged library entries to.
+    """
+    for target in prepacked_layout_jars:
+        info = target[DevDistPluginJarInfo]
+        if info.plugin_main_module != plugin_main_module:
+            # The packing target carries the plugin itself, so a target of another plugin would key its relation to that
+            # other plugin and reach a layout this content never describes.
+            fail("%s: %s packs a jar of '%s', and this content states '%s'" %
+                 (label, target.label, info.plugin_main_module, plugin_main_module))
+        records.append(depset([struct(
+            plugin_main_module = plugin_main_module,
+            content_modules = info.member_modules,
+            relative_output_file = info.relative_output_file,
+            jar = info.jar,
+        )]))
+        module_jars.append(depset(info.member_jars))
+        library_jars.append(depset(info.library_jars))
 
 # The provider gate is the whole check. It used to be `_KtJvmInfo` plus three `fail`s in `_collect_prepacked` - "has no
 # `content_module_jar` output", "must have exactly one", "has no module name" - because the label named a module and the
@@ -450,27 +501,52 @@ plugin's `lib/`. Declared rather than derived because the path belongs to the *r
     providers = [ContentModuleJarInfo],
 )
 
+_PREPACKED_LAYOUT_JARS_ATTR = attr.label_list(
+    doc = """The plugin's own `dev_dist_plugin_jar` targets, for a jar its layout names itself.
+
+A plain label list where the two attributes above are keyed by a destination, because a packing target of the plugin's
+own already states the destination and the whole member list. Such a jar holds a name no member has, or several members,
+or both, so no member could carry the relation. The fragment stops packing exactly these jars, and the packed-plugin-jars
+component places them.""",
+    providers = [DevDistPluginJarInfo],
+)
+
 def _dev_dist_plugin_content_impl(ctx):
     module_jars = []
     library_jars = []
     prepacked_plugin_jars = []
+    prepacked_layout_jars = []
+    layout_jar_module_jars = []
+    layout_jar_library_jars = []
 
+    plugin_main_module = ctx.attr.descriptor_module[_KtJvmInfo].module_name
     _collect_modules([ctx.attr.descriptor_module], module_jars)
     _collect_modules(ctx.attr.content_modules, module_jars)
     _collect_libraries(ctx, library_jars)
 
     _collect_prepacked(
         label = ctx.label,
-        plugin_main_module = ctx.attr.descriptor_module[_KtJvmInfo].module_name,
+        plugin_main_module = plugin_main_module,
         prepacked_content_modules = ctx.attr.prepacked_content_modules,
         prepacked_jars = ctx.attr.prepacked_jars,
         prepacked_plugin_jars = prepacked_plugin_jars,
+    )
+    _collect_layout_jars(
+        label = ctx.label,
+        plugin_main_module = plugin_main_module,
+        prepacked_layout_jars = ctx.attr.prepacked_layout_jars,
+        records = prepacked_layout_jars,
+        module_jars = layout_jar_module_jars,
+        library_jars = layout_jar_library_jars,
     )
 
     return [DevDistContentInfo(
         module_jars = depset(transitive = module_jars),
         library_jars = depset(transitive = library_jars),
         prepacked_plugin_jars = depset(transitive = prepacked_plugin_jars),
+        prepacked_layout_jars = depset(transitive = prepacked_layout_jars),
+        layout_jar_module_jars = depset(transitive = layout_jar_module_jars),
+        layout_jar_library_jars = depset(transitive = layout_jar_library_jars),
     )]
 
 _dev_dist_plugin_content = rule(
@@ -504,6 +580,7 @@ _dev_dist_plugin_content = rule(
         ),
         "prepacked_content_modules": _PREPACKED_CONTENT_MODULES_ATTR,
         "prepacked_jars": _PREPACKED_JARS_ATTR,
+        "prepacked_layout_jars": _PREPACKED_LAYOUT_JARS_ATTR,
         "_kotlin_stdlib": _KOTLIN_STDLIB_ATTR,
     },
 )
@@ -526,12 +603,18 @@ def _dev_dist_content_set_impl(ctx):
     module_jars = []
     library_jars = []
     prepacked_plugin_jars = []
+    prepacked_layout_jars = []
+    layout_jar_module_jars = []
+    layout_jar_library_jars = []
 
     for dep in ctx.attr.deps:
         info = dep[DevDistContentInfo]
         module_jars.append(info.module_jars)
         library_jars.append(info.library_jars)
         prepacked_plugin_jars.append(info.prepacked_plugin_jars)
+        prepacked_layout_jars.append(info.prepacked_layout_jars)
+        layout_jar_module_jars.append(info.layout_jar_module_jars)
+        layout_jar_library_jars.append(info.layout_jar_library_jars)
 
     _collect_modules(ctx.attr.modules, module_jars)
     _collect_libraries(ctx, library_jars)
@@ -559,6 +642,12 @@ def _dev_dist_content_set_impl(ctx):
         module_jars = depset(transitive = module_jars),
         library_jars = depset(transitive = library_jars),
         prepacked_plugin_jars = depset(transitive = prepacked_plugin_jars),
+        # No `prepacked_layout_jars` of its own. A set completes a plugin across the repository split, and a plugin jar
+        # is packed in the plugin's own package by a target that names the plugin itself - so a completion has nothing to
+        # add to it, exactly as it has no `prepacked_jars`. What the deps carry passes through.
+        prepacked_layout_jars = depset(transitive = prepacked_layout_jars),
+        layout_jar_module_jars = depset(transitive = layout_jar_module_jars),
+        layout_jar_library_jars = depset(transitive = layout_jar_library_jars),
     )]
 
 dev_dist_content_set = rule(

@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.bazel
 
 import org.jetbrains.jps.model.JpsGlobal
+import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.nio.file.Path
@@ -259,6 +260,15 @@ internal fun resolvePluginContent(
   moduleList: ModuleList,
   context: BazelBuildFileGenerator,
   warn: (String) -> Unit,
+  /**
+   * The members of the jars the plugin's own `dev_dist_plugin_jar` targets pack; see `MovablePluginJars.targets`.
+   *
+   * The second hand-off channel, and the one no member can carry: such a jar holds a name no member has, or several
+   * members. The member is therefore handed over without a destination of its own - the packing target states the
+   * destination - and it leaves both `contentModuleLabels` and the library walk, which is what shrinks the fragment's
+   * declaration. Only the generation path states it; the residue writer's comparison reads a report and states none.
+   */
+  prepackedByPluginJar: Set<String> = emptySet(),
 ): PluginContentResult {
   val moduleName = module.module.name
   val contentModuleLabels = ArrayList<String>()
@@ -268,6 +278,8 @@ internal fun resolvePluginContent(
   val crossRepositoryRawModules = ArrayList<String>()
   val members = ArrayList<ModuleDescriptor>()
   members.add(module)
+  // The members whose own packing target holds their production module libraries; see the branch below.
+  val packedMembers = ArrayList<ModuleDescriptor>()
   // The members this plugin really handed over, whichever repository packs them. What is inside their jars is what this
   // target must stop declaring; see [recordedLibraries].
   val handedOver = HashSet<String>()
@@ -276,6 +288,22 @@ internal fun resolvePluginContent(
     if (member == null || moduleList.skippedModules.contains(memberName)) {
       // A module this generator does not convert - a standalone Bazel project, or one the report outlived - has no label.
       warn("WARN: $moduleName content target: no Bazel target for member module $memberName")
+      continue
+    }
+    if (memberName in prepackedByPluginJar) {
+      // The plugin's own packing target holds this member, so no label here names the member: the relation is the
+      // target's label, and the target states the destination and the whole member list.
+      //
+      // The member still reaches the library walk. The packed jar holds only what the target merges, which is the
+      // member's *production module* libraries. The plugin's layout packs everything else the member declares, and the
+      // fragment resolves it. `intellij.testng.rt` is the case. It declares the project library `TestNG`, the layout
+      // packs that library beside the plugin's own jar, and dropping the member left the assembly with a jar nobody
+      // declared.
+      //
+      // Ahead of the cross-repository branch, and safe there: `computeMovablePluginJars` refuses a jar with an ultimate
+      // member in a community plugin, so such a member never reaches this set.
+      handedOver.add(memberName)
+      packedMembers.add(member)
       continue
     }
     val relativeOutputFile = prepackedMemberPaths.get(memberName)
@@ -329,6 +357,7 @@ internal fun resolvePluginContent(
   val libraries = computeLibraryContainerLabels(
     module = module,
     members = members,
+    packedMembers = packedMembers,
     recordedLibraries = recordedLibrariesOf(handedOver),
     context = context,
     warn = warn,
@@ -337,9 +366,12 @@ internal fun resolvePluginContent(
   val crossRepository = crossRepositoryPrepackedModules.distinct().sorted()
   val crossRepositoryRaw = crossRepositoryRawModules.distinct().sorted()
   val crossRepositoryLibraries = libraries.dropped.distinct().sorted()
+  // A plugin whose whole content is one packing target of its own still needs the leaf, because the leaf is where the
+  // relation is written. So the emptiness rule is over every attribute the leaf has, this one included.
   if (contentModuleLabels.isEmpty() &&
       prepackedContentModuleLabels.isEmpty() &&
       prepackedJarDestinations.isEmpty() &&
+      prepackedByPluginJar.isEmpty() &&
       libraries.declared.isEmpty()) {
     return PluginContentResult(
       content = null,
@@ -437,17 +469,30 @@ internal fun reportedPrepackedMemberPaths(entries: List<RecipeEntry>): Map<Strin
 private fun computeLibraryContainerLabels(
   module: ModuleDescriptor,
   members: List<ModuleDescriptor>,
+  packedMembers: List<ModuleDescriptor>,
   recordedLibraries: Set<RecordedLibrary>,
   context: BazelBuildFileGenerator,
   warn: (String) -> Unit,
 ): PluginLibraryLabels {
   val libraries = LinkedHashSet<Library>()
   // The modules whose *whole* declared library set is in `libraries`, which is what lets an unnamed recorded library be
-  // recognised as already covered - see below.
+  // recognised as already covered - see below. A packed member counts: what this walk skips for it is inside its own
+  // jar, so an unnamed module library of it is covered rather than missing.
   val collected = HashSet<String>()
   for (member in members) {
     if (collected.add(member.module.name)) {
       collectDeclaredLibraries(module = member, libraries = libraries, context = context, warn = warn)
+    }
+  }
+  for (member in packedMembers) {
+    if (collected.add(member.module.name)) {
+      collectDeclaredLibraries(
+        module = member,
+        libraries = libraries,
+        context = context,
+        warn = warn,
+        skipPackedModuleLibraries = true,
+      )
     }
   }
 
@@ -571,6 +616,14 @@ private fun collectDeclaredLibraries(
   libraries: MutableCollection<Library>,
   context: BazelBuildFileGenerator,
   warn: (String) -> Unit,
+  /**
+   * Skips what a packing target already merged: this module's production-scope *module* libraries.
+   *
+   * Exactly [productionModuleLibraryNames]' own filter, which is the set `dev_dist_plugin_jar` merges. Everything else
+   * stays: a project library, and a module library of another scope, are packed by the plugin's layout somewhere the
+   * hand-off does not reach, and the fragment has to resolve them.
+   */
+  skipPackedModuleLibraries: Boolean = false,
 ) {
   for (element in module.module.dependenciesList.dependencies) {
     if (element !is JpsLibraryDependency) {
@@ -581,6 +634,12 @@ private fun collectDeclaredLibraries(
     if (parentReference.resolve() is JpsGlobal) {
       // An application-level library is a local development setting, never part of a distribution.
       continue
+    }
+    if (skipPackedModuleLibraries && parentReference is JpsModuleReference) {
+      val scope = context.javaExtensionService.getDependencyExtension(element)?.scope
+      if (scope == JpsJavaDependencyScope.COMPILE || scope == JpsJavaDependencyScope.RUNTIME) {
+        continue
+      }
     }
 
     val jpsLibrary = element.library ?: continue

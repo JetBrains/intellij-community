@@ -21,6 +21,9 @@ internal class DerivedPluginContent(
    *
    * The eligible half of [memberPaths], with the `raw_members` rows taken out. [resolvePluginContent] reads it as the
    * hand-off itself, exactly as it reads the report's own map, so a member here loses its raw output from the fragment.
+   *
+   * [withPluginJarHandOff] adds the relations the movable-set decision found, so this always states what
+   * [resolvePluginContent] was given.
    */
   @JvmField val prepackedPaths: Map<String, String>,
   /**
@@ -68,11 +71,11 @@ internal class PluginContentResidue(
 }
 
 /**
- * [derivePluginContent] as the generator asks it, and `null` for a module outside the population.
+ * [derivePluginContent] over one plugin, and `null` for a module outside the population.
  *
- * The one producer at the emit site. `null` rather than an empty result, because the generator reads two things off one
- * derivation - the content leaf and the movable jar set - and a module the dev distribution states no content for has
- * neither.
+ * The first of the two passes [computeDerivedPluginPacking] makes, and no caller outside it. `null` rather than an empty
+ * result, because the generator reads two things off one derivation - the content leaf and the movable jar set - and a
+ * module the dev distribution states no content for has neither.
  *
  * The two plugins Phase 0 of this arc held out need no branch here, and both are worth naming. `intellij.lombok` keeps
  * its `META-INF/plugin.xml` in `community/plugins/lombok/plugin/resources/`, which belongs to another module, so the
@@ -85,15 +88,57 @@ internal fun computeDerivedPluginContent(
   module: ModuleDescriptor,
   moduleList: ModuleList,
   context: BazelBuildFileGenerator,
+  residue: PluginContentResidue = contentResidueOf(module),
 ): DerivedPluginContent? {
   if (!isDevDistContentPlugin(module = module, context = context)) {
     return null
   }
-  val derived = derivePluginContent(module = module, moduleList = moduleList, context = context)
-  for (warning in derived.warnings) {
-    println(warning)
-  }
-  return derived
+  return derivePluginContent(module = module, moduleList = moduleList, context = context, residue = residue)
+}
+
+/**
+ * The same derivation, with the jars the plugin's own packing targets pack handed over as well.
+ *
+ * A second [resolvePluginContent] and not a patch of the first one's answer. Handing a member over changes three things
+ * at once - the member leaves `contentModuleLabels`, its libraries leave the library walk, and its residue rows leave
+ * `recordedLibraries` - and only the one body that decides all three can keep them in step. Everything before that body
+ * is unchanged, so nothing is walked, parsed or read a second time.
+ *
+ * Two passes and not one, because the movable set is a function of the jars, and the jars are a function of the first
+ * pass. [computeDerivedPluginPacking] is the one caller and holds that order.
+ */
+internal fun DerivedPluginContent.withPluginJarHandOff(
+  module: ModuleDescriptor,
+  residue: PluginContentResidue,
+  /** The members of the jars a `dev_dist_plugin_jar` of this plugin packs. */
+  layoutJarMembers: Set<String>,
+  /** Where this plugin puts the jar of each member it now hands to that member's own `content_module_jar`. */
+  memberRelations: Map<String, String>,
+  moduleList: ModuleList,
+  context: BazelBuildFileGenerator,
+): DerivedPluginContent {
+  val warnings = ArrayList<String>()
+  val paths = if (memberRelations.isEmpty()) prepackedPaths else prepackedPaths + memberRelations
+  return DerivedPluginContent(
+    result = resolvePluginContent(
+      module = module,
+      memberNames = memberNames,
+      prepackedMemberPaths = paths,
+      prepackedByPluginJar = layoutJarMembers,
+      recordedLibrariesOf = { handedOver ->
+        residue.libraries.filterTo(LinkedHashSet()) { it.ownerModule == null || it.ownerModule !in handedOver }
+      },
+      moduleList = moduleList,
+      context = context,
+      warn = warnings::add,
+    ),
+    memberNames = memberNames,
+    memberPaths = memberPaths,
+    prepackedPaths = paths,
+    closureMembers = closureMembers,
+    memberLibraries = memberLibraries,
+    warnings = warnings,
+  )
 }
 
 /**

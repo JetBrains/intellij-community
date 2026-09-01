@@ -41,6 +41,7 @@ def dev_dist_plugin(
         libraries = [],
         prepacked_content_modules = [],
         prepacked_jars = {},
+        prepacked_layout_jars = [],
         descriptor = "",
         variants = [],
         **descriptor_attrs):
@@ -57,6 +58,7 @@ def dev_dist_plugin(
         libraries: see `dev_dist_plugin_content.libraries`.
         prepacked_content_modules: see `dev_dist_plugin_content.prepacked_content_modules`.
         prepacked_jars: see `dev_dist_plugin_content.prepacked_jars`.
+        prepacked_layout_jars: see `dev_dist_plugin_content.prepacked_layout_jars`.
         descriptor: the plugin's own `META-INF/plugin.xml`, as a path inside `descriptor_module`'s Bazel package. Its
             presence is what asks for the descriptor leaves, for the reason the content attributes are what ask for the
             content leaf: the rule makes it mandatory, and `computePluginDescriptor` emits nothing without it.
@@ -87,6 +89,7 @@ def dev_dist_plugin(
         "libraries": libraries,
         "prepacked_content_modules": prepacked_content_modules,
         "prepacked_jars": prepacked_jars,
+        "prepacked_layout_jars": prepacked_layout_jars,
     }
     stated_content = [attr for attr, value in content.items() if value]
     if stated_content:

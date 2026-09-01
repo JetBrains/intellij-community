@@ -193,7 +193,9 @@ internal suspend fun generateCoreClasspathFromPlugins(
     }
     for (assembled in buildResult.prepackedContentJars) {
       val jar = assembled.jar
-      if (jar.contentModule in classPathModules) {
+      // Any member, because the jar is the unit the core classpath takes. A jar of several members holds an embedded one
+      // and the classpath needs the whole jar, exactly as it needs the whole jar of a single embedded member.
+      if (jar.contentModules.any { it in classPathModules }) {
         classPathResult.add(buildResult.dir.resolve("lib").resolve(jar.relativeOutputFile))
       }
     }

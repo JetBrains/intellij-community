@@ -113,15 +113,15 @@ exports_files(
 
 ### auto-generated section `dev intellij.javaFX.community` start
 dev_dist_plugin(
-    content_modules = [
-        "//plugins/javaFX/common",
-        "//plugins/javaFX/jps",
-        "//plugins/javaFX/sceneBuilder",
-        "//plugins/javaFX:javaFX-properties",
-    ],
+    content_modules = ["//plugins/javaFX:javaFX-properties"],
     descriptor_module = ":community",
     libraries = ["@lib//:java_f_x-scene_builder-_scene_builder_kit11"],
     prepacked_content_modules = ["//plugins/javaFX:javaFX_content_module_jar"],
+    prepacked_layout_jars = [
+        ":javaFX-common_dev_dist_plugin_jar",
+        ":javaFX-jps_dev_dist_plugin_jar",
+        ":rt_sceneBuilderBridge_dev_dist_plugin_jar",
+    ],
 )
 
 dev_dist_plugin_jar(

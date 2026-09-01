@@ -127,7 +127,7 @@ internal class PrepackedClassPathOrderTest {
     return AssembledPrepackedPluginContentJar(
       jar = PrepackedPluginContentJar(
         pluginMainModule = "intellij.example.plugin",
-        contentModule = "intellij." + relativeOutputFile.substringAfterLast('/').removeSuffix(".jar"),
+        contentModules = listOf("intellij." + relativeOutputFile.substringAfterLast('/').removeSuffix(".jar")),
         relativeOutputFile = relativeOutputFile,
       ),
       assetOrdinal = assetOrdinal,

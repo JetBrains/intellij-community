@@ -98,7 +98,7 @@ internal suspend fun computeModuleSourcesByContent(
       continue
     }
 
-    if (jarPackager.handOffPluginContentModule(
+    if (jarPackager.handOffPluginJarMember(
         pluginLayout = pluginLayout,
         moduleName = moduleName,
         relativeOutputFile = relativeOutputFile,

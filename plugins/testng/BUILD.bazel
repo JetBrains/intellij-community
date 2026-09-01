@@ -171,7 +171,6 @@ exports_files(
 
 ### auto-generated section `dev intellij.testng` start
 dev_dist_plugin(
-    content_modules = ["//plugins/testng_rt:testng-rt"],
     descriptor = "resources/META-INF/plugin.xml",
     descriptor_module = ":testng",
     descriptors = {
@@ -185,6 +184,7 @@ dev_dist_plugin(
     prepacked_jars = {
         "//libraries/testng:testng_content_module_jar": "intellij.libraries.testng.jar",
     },
+    prepacked_layout_jars = [":testng-rt_dev_dist_plugin_jar"],
 )
 
 dev_dist_plugin_jar(

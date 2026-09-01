@@ -138,6 +138,9 @@ class JarPackager private constructor(
 
   private val prepackedContentJars = ArrayList<AssembledPrepackedPluginContentJar>()
 
+  /** The members each taken relation was offered, in offer order; see [validatePrepackedPluginContent]. */
+  private val claimedPrepackedMembers = LinkedHashMap<PrepackedPluginContentKey, MutableList<String>>()
+
   companion object {
     suspend fun pack(includedModules: Collection<ModuleItem>, outputDir: Path, context: BuildContext) {
       val packager = JarPackager(outDir = outputDir, context = context, platformLayout = null, isRootDir = false, moduleOutputPatcher = ModuleOutputPatcher())
@@ -284,6 +287,23 @@ class JarPackager private constructor(
         continue
       }
 
+      // The second hand-off site. A jar the plugin's layout names itself holds members this loop packs, and the
+      // `<content>` loop above never sees them. `tomee-specifics.jar` and `junit-rt.jar` are two such jars. So a
+      // relation for one of them reaches the assembly only here. The one function serves both loops, so both offer a
+      // member on the same terms.
+      if (layout is PluginLayout &&
+          handOffPluginJarMember(
+            pluginLayout = layout,
+            moduleName = item.moduleName,
+            relativeOutputFile = item.relativeOutputFile,
+            searchableOptionSet = searchableOptionSet,
+          )) {
+        // Added exactly as a packed module is. `inferModuleSources` packs every module of an `auto` layout that this set
+        // does not hold, so a handed-off module missing from it would be packed a second time from its raw output.
+        addedModules.add(item.moduleName)
+        continue
+      }
+
       computeSourcesForModule(item, layout, searchableOptionSet)
       addedModules.add(item.moduleName)
     }
@@ -307,7 +327,14 @@ class JarPackager private constructor(
     checkImplicitProjectLibraries(layout)
   }
 
-  internal fun handOffPluginContentModule(
+  /**
+   * Offers one module of one destination to a relation, and answers whether the relation took it.
+   *
+   * Both member loops call it: the `<content>` loop of `computeModuleSourcesByContent`, and the `includedModules` loop
+   * above. A relation names the whole member list of its jar, so a jar of several members is offered once per member and
+   * the assembly stops packing every one of them.
+   */
+  internal fun handOffPluginJarMember(
     pluginLayout: PluginLayout,
     moduleName: String,
     relativeOutputFile: String,
@@ -342,22 +369,30 @@ class JarPackager private constructor(
       hasLayoutPlacedModuleLibrary = pluginLayout.includedModuleLibraries.any { it.moduleName == moduleName },
       isTestPluginModule = helper.isTestPluginModule(moduleName, module),
     )
-    // `assets.size` is the index `getJarAsset` would have given this jar. `computeSourcesForModule` never runs for a
-    // handed-off module, and that function creates this jar's asset first. The passes that would create a *second* asset
-    // are all refused above, `hasSeparateLibraryJar` among them, so no later hand-off's ordinal shifts. See
-    // [AssembledPrepackedPluginContentJar].
-    prepackedContentJars.add(AssembledPrepackedPluginContentJar(jar = expected, assetOrdinal = assets.size))
+    val claimed = claimedPrepackedMembers.get(key)
+    if (claimed == null) {
+      // `assets.size` is the index `getJarAsset` would have given this jar. `computeSourcesForModule` never runs for a
+      // handed-off module, and that function creates this jar's asset first. The passes that would create a *second*
+      // asset are all refused above, `hasSeparateLibraryJar` among them, so no later hand-off's ordinal shifts.
+      //
+      // Recorded at the *first* member of the jar and at no later one. One jar is one asset, whichever member the
+      // assembly offers next, so a second record would both place the jar twice and shift every ordinal after it. See
+      // [AssembledPrepackedPluginContentJar].
+      prepackedContentJars.add(AssembledPrepackedPluginContentJar(jar = expected, assetOrdinal = assets.size))
+      claimedPrepackedMembers.put(key, mutableListOf(moduleName))
+    }
+    else {
+      claimed.add(moduleName)
+    }
     return true
   }
 
   private fun validatePrepackedPluginContent(layout: PluginLayout) {
-    val expected = prepackedPluginContent.keys.filterTo(HashSet()) { it.pluginMainModule == layout.mainModule }
-    val actual = prepackedContentJars.mapTo(HashSet()) { it.jar.key }
-    check(actual == expected) {
-      "Prepacked plugin content of ${layout.mainModule} does not match its descriptor/layout:" +
-      " missing ${(expected - actual).sortedBy(PrepackedPluginContentKey::relativeOutputFile)}," +
-      " unexpected ${(actual - expected).sortedBy(PrepackedPluginContentKey::relativeOutputFile)}"
-    }
+    validatePrepackedPluginContentClaims(
+      pluginMainModule = layout.mainModule,
+      expected = prepackedPluginContent.filterKeys { it.pluginMainModule == layout.mainModule },
+      claimed = prepackedContentJars.associate { it.jar.key to claimedPrepackedMembers.getValue(it.jar.key) },
+    )
   }
 
   /**
@@ -844,6 +879,39 @@ class JarPackager private constructor(
 }
 
 /**
+ * Fails the assembly when one plugin's relations and the jars its layout really offered do not match.
+ *
+ * The other half of the hand-off, and the half only a whole layout can answer. [validatePrepackedPluginContentHandoff]
+ * runs at every offer and sees one member, so it refuses the wrong module at a destination. This runs once the layout
+ * has offered everything, so it is the only place a *missing* member shows up.
+ *
+ * Two failures, and each one ships a wrong distribution. A key the layout never reached is a relation whose jar the
+ * composer places and no layout jar matches, which is how a stale destination reads. A member the layout never offered
+ * is a member the packing target merged and the fragment packs somewhere else, so the distribution holds it twice.
+ *
+ * [claimed] holds the members the layout offered for each jar a relation took, in offer order.
+ */
+@VisibleForTesting
+internal fun validatePrepackedPluginContentClaims(
+  pluginMainModule: String,
+  expected: Map<PrepackedPluginContentKey, PrepackedPluginContentJar>,
+  claimed: Map<PrepackedPluginContentKey, List<String>>,
+) {
+  check(claimed.keys == expected.keys) {
+    "Prepacked plugin content of $pluginMainModule does not match its descriptor/layout:" +
+    " missing ${(expected.keys - claimed.keys).sortedBy(PrepackedPluginContentKey::relativeOutputFile)}," +
+    " unexpected ${(claimed.keys - expected.keys).sortedBy(PrepackedPluginContentKey::relativeOutputFile)}"
+  }
+  for ((key, jar) in expected) {
+    val members = claimed.getValue(key)
+    check(members.toSet() == jar.contentModules.toSet()) {
+      "Prepacked plugin content ${key.pluginMainModule}/${key.relativeOutputFile} packs ${jar.contentModules.sorted()}," +
+      " and the layout offered ${members.sorted()}"
+    }
+  }
+}
+
+/**
  * Taking a prepacked jar means [JarPackager.computeSourcesForModule] never runs for that module, so everything that function
  * would have done is silently dropped, not merely done elsewhere. The generator that picks the relation cannot see any of these facts,
  * hence the assembler - the one place that knows both sides - refuses the handoff instead of shipping a quietly different plugin.
@@ -862,10 +930,13 @@ internal fun validatePrepackedPluginContentHandoff(
 ) {
   val relation = "${expected.pluginMainModule}/${expected.relativeOutputFile}"
   // The relation is found by its destination, so the destination always agrees. What can disagree is the member: the
-  // layout can send another module of the same plugin to this destination, and the packed jar holds the member the
+  // layout can send another module of the same plugin to this destination, and the packed jar holds the members the
   // relation names. Such a hand-off would drop one module and pack another one twice.
-  check(expected.contentModule == actualContentModule) {
-    "Prepacked plugin content $relation packs '${expected.contentModule}', but JarPackager offered '$actualContentModule'"
+  //
+  // Membership and not equality, because one jar holds several members and the assembly offers them one at a time.
+  // `validatePrepackedPluginContent` is what then asserts that every member of the relation was offered.
+  check(expected.contentModules.contains(actualContentModule)) {
+    "Prepacked plugin content $relation packs ${expected.contentModules}, but JarPackager offered '$actualContentModule'"
   }
   check(!hasModuleExclusions) { "Prepacked plugin content $relation has module exclusions" }
   check(!hasPatchedOutput) { "Prepacked plugin content $relation has patched module output" }

@@ -43,9 +43,7 @@ exports_files(
 
 ### auto-generated section `dev intellij.gradle.java.plugin` start
 dev_dist_plugin(
-    content_modules = ["//plugins/gradle/jps-plugin:jps"],
     descriptor_module = ":plugin",
-    libraries = ["@lib//:gradle-jps-ant"],
     prepacked_content_modules = [
         "//plugins/gradle-maven:gradle-java-maven_content_module_jar",
         "//plugins/gradle/gradle-dependency-updater:dependencyUpdater_content_module_jar",
@@ -61,6 +59,7 @@ dev_dist_plugin(
     prepacked_jars = {
         "//plugins/gradle/java:java_content_module_jar": "intellij.gradle.java.jar",
     },
+    prepacked_layout_jars = [":gradle-jps_dev_dist_plugin_jar"],
 )
 
 dev_dist_plugin_jar(

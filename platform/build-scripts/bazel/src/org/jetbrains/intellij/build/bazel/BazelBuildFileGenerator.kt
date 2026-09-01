@@ -1191,22 +1191,13 @@ internal class BazelBuildFileGenerator(
       )
     }
 
-    // What this plugin contributes to a dev distribution: derived from the project model for every plugin the
-    // population names, and gated on nothing else, unlike `ij_plugin`, whose opt-in marker is about packaging.
-    val derivedPluginContent = computeDerivedPluginContent(module = moduleDescriptor, moduleList = moduleList, context = this@BazelBuildFileGenerator)
-    val pluginContentResult = derivedPluginContent?.result ?: EMPTY_PLUGIN_CONTENT_RESULT
+    // What this plugin contributes to a dev distribution, and which of its own jars a packing target packs: derived from
+    // the project model for every plugin the population names, and gated on nothing else, unlike `ij_plugin`, whose
+    // opt-in marker is about packaging. One walk of the plugin's `<content>` answers both.
+    val packing = computeDerivedPluginPacking(module = moduleDescriptor, moduleList = moduleList, context = this@BazelBuildFileGenerator)
+    val pluginContentResult = packing?.content?.result ?: EMPTY_PLUGIN_CONTENT_RESULT
     val pluginContent = pluginContentResult.content
-
-    // The jars of this plugin a `dev_dist_plugin_jar` target may pack, from the same derivation the jar comparison
-    // measures. Off the content derivation above, so the movable set costs no second walk of the plugin's `<content>`.
-    val movablePluginJars = derivedPluginContent?.let {
-      computeMovablePluginJars(
-        module = moduleDescriptor,
-        derived = it,
-        moduleList = moduleList,
-        context = this@BazelBuildFileGenerator,
-      )
-    } ?: MovablePluginJars.NONE
+    val movablePluginJars = packing?.movable ?: MovablePluginJars.NONE
 
     // What this plugin's descriptor patch declares. Gated on the same thing the content target is - the module is a
     // plugin main module the dev distribution knows - plus a `META-INF/plugin.xml` its own Bazel package holds.

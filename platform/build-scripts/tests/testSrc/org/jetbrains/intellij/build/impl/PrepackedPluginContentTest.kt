@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 internal class PrepackedPluginContentTest {
   private val relation = PrepackedPluginContentJar(
     pluginMainModule = "intellij.plugin",
-    contentModule = "intellij.plugin.content",
+    contentModules = listOf("intellij.plugin.content"),
     relativeOutputFile = "modules/intellij.plugin.content.jar",
   )
 
@@ -18,7 +18,7 @@ internal class PrepackedPluginContentTest {
     assertThatCode {
       validatePrepackedPluginContentHandoff(
         expected = relation,
-        actualContentModule = relation.contentModule,
+        actualContentModule = relation.contentModules.single(),
         hasModuleExclusions = false,
         hasPatchedOutput = false,
         hasPatchedDescriptor = false,
@@ -50,8 +50,51 @@ internal class PrepackedPluginContentTest {
       )
     }.isInstanceOf(IllegalStateException::class.java)
       .hasMessageContaining("intellij.plugin/modules/intellij.plugin.content.jar")
-      .hasMessageContaining("packs 'intellij.plugin.content'")
+      .hasMessageContaining("packs [intellij.plugin.content]")
       .hasMessageContaining("offered 'intellij.plugin.other'")
+  }
+
+  /**
+   * A jar the plugin's own layout names holds several members, and the assembly offers them one at a time. So the
+   * hand-off asks for membership, and `JarPackager.validatePrepackedPluginContent` is what then asserts that the whole
+   * member list arrived.
+   */
+  @Test
+  fun `accepts every member of a jar the relation names several members of`() {
+    val shared = PrepackedPluginContentJar(
+      pluginMainModule = "intellij.plugin",
+      contentModules = listOf("intellij.plugin.rt", "intellij.plugin.rt.impl"),
+      relativeOutputFile = "specifics/plugin-rt.jar",
+    )
+    for (member in shared.contentModules) {
+      assertThatCode {
+        validatePrepackedPluginContentHandoff(
+          expected = shared,
+          actualContentModule = member,
+          hasModuleExclusions = false,
+          hasPatchedOutput = false,
+          hasPatchedDescriptor = false,
+          hasGeneratedSearchableOptions = false,
+          hasSeparateLibraryJar = false,
+          hasLayoutPlacedModuleLibrary = false,
+          isTestPluginModule = false,
+        )
+      }.doesNotThrowAnyException()
+    }
+    assertThatThrownBy {
+      validatePrepackedPluginContentHandoff(
+        expected = shared,
+        actualContentModule = "intellij.plugin.other",
+        hasModuleExclusions = false,
+        hasPatchedOutput = false,
+        hasPatchedDescriptor = false,
+        hasGeneratedSearchableOptions = false,
+        hasSeparateLibraryJar = false,
+        hasLayoutPlacedModuleLibrary = false,
+        isTestPluginModule = false,
+      )
+    }.isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining("packs [intellij.plugin.rt, intellij.plugin.rt.impl]")
   }
 
   @Test
@@ -85,6 +128,47 @@ internal class PrepackedPluginContentTest {
     assertRejected("is a test plugin module", isTestPluginModule = true)
   }
 
+  /**
+   * The other half of the hand-off, which only a whole layout can answer. The three cases are the three ways a relation
+   * and a layout can disagree once every member has been offered.
+   */
+  @Test
+  fun `rejects a relation the layout never reached, and a member it never offered`() {
+    val shared = PrepackedPluginContentJar(
+      pluginMainModule = "intellij.plugin",
+      contentModules = listOf("intellij.plugin.rt", "intellij.plugin.rt.impl"),
+      relativeOutputFile = "specifics/plugin-rt.jar",
+    )
+    val expected = mapOf(shared.key to shared)
+
+    assertThatCode {
+      validatePrepackedPluginContentClaims(
+        pluginMainModule = shared.pluginMainModule,
+        expected = expected,
+        claimed = mapOf(shared.key to shared.contentModules),
+      )
+    }.doesNotThrowAnyException()
+
+    // A stale destination: the layout moved the jar, so no offer ever found the relation.
+    assertThatThrownBy {
+      validatePrepackedPluginContentClaims(pluginMainModule = shared.pluginMainModule, expected = expected, claimed = emptyMap())
+    }.isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining("of intellij.plugin does not match its descriptor/layout")
+      .hasMessageContaining("missing [PrepackedPluginContentKey(pluginMainModule=intellij.plugin, relativeOutputFile=specifics/plugin-rt.jar)]")
+
+    // The one failure only this check can see. The packing target merged the member, and the layout packs it into
+    // another jar of the same plugin, so the distribution would hold the member twice.
+    assertThatThrownBy {
+      validatePrepackedPluginContentClaims(
+        pluginMainModule = shared.pluginMainModule,
+        expected = expected,
+        claimed = mapOf(shared.key to listOf("intellij.plugin.rt")),
+      )
+    }.isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining("intellij.plugin/specifics/plugin-rt.jar packs [intellij.plugin.rt, intellij.plugin.rt.impl]")
+      .hasMessageContaining("the layout offered [intellij.plugin.rt]")
+  }
+
   private fun assertRejected(
     message: String,
     hasModuleExclusions: Boolean = false,
@@ -98,7 +182,7 @@ internal class PrepackedPluginContentTest {
     assertThatThrownBy {
       validatePrepackedPluginContentHandoff(
         expected = relation,
-        actualContentModule = relation.contentModule,
+        actualContentModule = relation.contentModules.single(),
         hasModuleExclusions = hasModuleExclusions,
         hasPatchedOutput = hasPatchedOutput,
         hasPatchedDescriptor = hasPatchedDescriptor,

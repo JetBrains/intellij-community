@@ -43,10 +43,17 @@ internal class DerivedPluginJar(
   /** The members that come from the plugin's own `<content>`; `FileEntry.contentModules`. */
   @JvmField val contentModules: List<String>,
   /**
-   * Whether a `content_module_jar` target packs this jar, so no fragment packs it.
+   * Whether a packing target packs this jar, so no fragment packs it.
    *
-   * A handed-over jar reaches the composed distribution through the packed-plugin-jars component, so a fragment's plan
-   * holds no row for it. `./build/dev-dist.cmd jars` is that jar's own byte gate.
+   * Either producer: the member's own `content_module_jar` for a jar named after one member, and the plugin's own
+   * `dev_dist_plugin_jar` for a jar the layout names itself. A handed-over jar reaches the composed distribution through
+   * the packed-plugin-jars component, so a fragment's plan holds no row for it. `./build/dev-dist.cmd jars` and
+   * `./build/dev-dist.cmd plugin-jars` are the two byte gates over them.
+   *
+   * **Two producers, two keys.** A jar the layout names itself is read by its own destination, because that is what
+   * `dev_dist_plugin_jar` states. A jar named after one member is read by that member. The keys cannot be swapped.
+   * `intellij.maven.server.telemetry` is a member of two jars the layout names, so it keeps its declaration while a
+   * packing target owns both jars; see [ContentResidueSection.memberJars].
    */
   @JvmField val isHandedOver: Boolean,
   /**
@@ -69,8 +76,9 @@ internal class DerivedPluginJar(
  *    answers the jar, as the convention with the three corrections the residue states;
  * 2. [DevDistPluginModelTables.pluginJarPlacement] gives the plugin's directory and main jar name, which are a
  *    `PluginLayout` decision the model does not hold. A plugin with no row takes [pluginJarPlacementConvention];
- * 3. [PluginContentResult.handedOverMembers] says which of those jars a packing target already packs, which is the
- *    decision [resolvePluginContent] made for the content leaf;
+ * 3. [PluginContentResult.handedOverMembers] says which member's own jar a packing target already packs, which is the
+ *    decision [resolvePluginContent] made for the content leaf, and [MovablePluginJars.targets] says the same of the
+ *    jars the layout names itself;
  * 4. [ContentResidueSection.memberJars] gives the jars the layout names itself, which no rule derives. A row states the
  *    member's whole jar set, so it wins over the path of 1 and over the main-jar co-pack below.
  *
@@ -85,17 +93,7 @@ internal fun derivePluginJars(
   module: ModuleDescriptor,
   moduleList: ModuleList,
   context: BazelBuildFileGenerator,
-): List<DerivedPluginJar> {
-  if (!isDevDistContentPlugin(module = module, context = context)) {
-    return emptyList()
-  }
-  return derivedPluginJarsOf(
-    module = module,
-    derived = derivePluginContent(module = module, moduleList = moduleList, context = context),
-    moduleList = moduleList,
-    context = context,
-  )
-}
+): List<DerivedPluginJar> = computeDerivedPluginPacking(module = module, moduleList = moduleList, context = context)?.jars.orEmpty()
 
 /**
  * [derivePluginJars] over a content derivation the caller already made.
@@ -108,6 +106,13 @@ internal fun derivedPluginJarsOf(
   derived: DerivedPluginContent,
   moduleList: ModuleList,
   context: BazelBuildFileGenerator,
+  /**
+   * The destinations the plugin's own `dev_dist_plugin_jar` targets pack; see [MovablePluginJars.targets].
+   *
+   * Empty on the first pass of [computeDerivedPluginPacking], which asks who packs each jar and therefore runs before
+   * the answer exists.
+   */
+  handedOverJars: Set<String> = emptySet(),
 ): List<DerivedPluginJar> {
   val mainModule = module.module.name
   val placement = pluginJarPlacementOf(mainModule = mainModule, context = context)
@@ -134,6 +139,7 @@ internal fun derivedPluginJarsOf(
     handedOverMembers = derived.result.handedOverMembers,
     closureMembers = closureMembers,
     memberJars = contentResidueOf(module).memberJars,
+    handedOverJars = handedOverJars,
   )
 }
 
@@ -158,12 +164,21 @@ internal fun composeDerivedPluginJars(
    * map has no derivable jar, and the main jar holds it too.
    */
   derivedJars: Map<String, String>,
-  /** The members of [derivedJars] whose jar a `content_module_jar` target packs. */
+  /** The members whose own `content_module_jar` packs their jar - see [DerivedPluginJar.isHandedOver]. */
   handedOverMembers: Set<String>,
   /** The members the plugin's own `<content>` names, which is what splits `contentModules` from `modules`. */
   closureMembers: Set<String>,
   /** See [ContentResidueSection.memberJars]. */
   memberJars: Map<String, Set<String>>,
+  /**
+   * The destinations the plugin's own `dev_dist_plugin_jar` targets pack - the second key of
+   * [DerivedPluginJar.isHandedOver].
+   *
+   * Last of the parameters, and appended rather than put beside [handedOverMembers]. Two same-typed parameters that
+   * change places compile to two positions a named argument cannot tell apart, and the incremental compiler recompiles
+   * no caller of an unchanged signature; `build/dev-dist-measurements.md` records the run that cost.
+   */
+  handedOverJars: Set<String> = emptySet(),
 ): List<DerivedPluginJar> {
   val result = ArrayList<DerivedPluginJar>()
   val mainJarContentModules = ArrayList<String>()
@@ -202,6 +217,8 @@ internal fun composeDerivedPluginJars(
         members = listOf(memberName),
         modules = if (memberName in closureMembers) emptyList() else listOf(memberName),
         contentModules = if (memberName in closureMembers) listOf(memberName) else emptyList(),
+        // The member's key. This jar is the member's own, at the destination the derivation gives it, so the member's
+        // own `content_module_jar` is the producer that can pack it.
         isHandedOver = memberName in handedOverMembers,
       )
     )
@@ -214,8 +231,10 @@ internal fun composeDerivedPluginJars(
         members = members,
         modules = members.filter { it !in closureMembers },
         contentModules = members.filter { it in closureMembers },
-        // A jar the layout names holds a raw module output, so no `content_module_jar` target packs it.
-        isHandedOver = false,
+        // The destination's key. No member of such a jar is named after it, so the producer is the plugin's own
+        // `dev_dist_plugin_jar`, and that target states a destination. The members cannot answer for this jar: one
+        // member can hold a second jar, and it then keeps its declaration while both jars move.
+        isHandedOver = path in handedOverJars,
       )
     )
   }
@@ -253,7 +272,7 @@ internal data class ExecutedPlanEntry(
    * for a symlink, `reused` for a declared input it put on the classpath as it was, `dir` for a directory.
    *
    * Only `jar` is compared. A `placed` or `link` row is a file the packer did not produce, so the recipe states no
-   * member for it and there is nothing to derive; those are the residue S4 has to name.
+   * member for it and there is nothing to derive. Naming those outputs is a later slice's work.
    */
   val kind: String = "",
   val modules: List<RecipeModule> = emptyList(),
@@ -359,7 +378,7 @@ internal class PluginJarPlanComparison(
  * descriptor a build produced, and no generated recipe can state either. So both sides are parsed and the parsed values
  * are compared, and this states which fields it reads: the output name, `modules` and `contentModules`.
  *
- * **The comparison covers every `jar` output of the plan, not the 342 the replay reproduces.** The replay's hold-out is
+ * **The comparison covers every `jar` output of the plan, and not only the outputs the replay reproduces.** The replay's hold-out is
  * a property of the packer's flag grammar - `replayableKinds` in `build/dev-dist/internal/devdist/replay.go` - and not
  * of the recipe, so a held-out output still has a plan row and still has a derived jar.
  *

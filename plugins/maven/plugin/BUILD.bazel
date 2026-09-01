@@ -46,16 +46,10 @@ dev_dist_plugin(
     content_modules = [
         "//build/deps:dependencies",
         "//plugins/maven",
-        "//plugins/maven-server-api:maven-server",
         "//plugins/maven/artifact-resolver-m31:artifactResolver-m31",
         "//plugins/maven/artifact-resolver/common",
-        "//plugins/maven/maven-event-listener:server-eventListener",
         "//plugins/maven/maven-server-indexer:server-indexer",
         "//plugins/maven/maven-server-telemetry:server-telemetry",
-        "//plugins/maven/maven3-server-common:server-m3-common",
-        "//plugins/maven/maven3-server-impl:server-m3-impl",
-        "//plugins/maven/maven36-server-impl:server-m36-impl",
-        "//plugins/maven/maven40-server-impl:server-m40",
     ],
     descriptor_module = ":plugin",
     libraries = [
@@ -110,6 +104,16 @@ dev_dist_plugin(
     prepacked_jars = {
         "//plugins/maven/model:model_content_module_jar": "intellij.maven.model.jar",
     },
+    prepacked_layout_jars = [
+        ":intellij.maven.rt_maven-event-listener_dev_dist_plugin_jar",
+        ":intellij.maven.server36_maven36-server_dev_dist_plugin_jar",
+        ":intellij.maven.server3_maven-server-telemetry_dev_dist_plugin_jar",
+        ":intellij.maven.server3_maven3-server-common_dev_dist_plugin_jar",
+        ":intellij.maven.server3_maven3-server_dev_dist_plugin_jar",
+        ":intellij.maven.server4_maven-server-telemetry_dev_dist_plugin_jar",
+        ":intellij.maven.server4_maven40-server_dev_dist_plugin_jar",
+        ":maven-server_dev_dist_plugin_jar",
+    ],
 )
 
 dev_dist_plugin_jar(

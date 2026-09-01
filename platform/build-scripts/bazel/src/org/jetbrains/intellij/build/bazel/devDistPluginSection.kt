@@ -59,6 +59,10 @@ internal fun BuildFile.emitDevDistPlugin(
     descriptor?.markers?.ifNotEmpty { option("markers", it) }
     content?.prepackedContentModuleLabels?.ifNotEmpty { option("prepacked_content_modules", it) }
     content?.prepackedJarDestinations?.ifNotEmpty { option("prepacked_jars", LinkedHashMap(it)) }
+    // Derived from the destination, not carried on the content: the target's name is a function of the destination
+    // alone, and `emitDevDistPluginJars` below writes the target under that same name in this same package. A second
+    // statement of the label would be one more thing for the two to disagree about.
+    jars.map { ":" + pluginJarTargetName(it.relativeOutputFile) }.sorted().ifNotEmpty { option("prepacked_layout_jars", it) }
     descriptor?.refusedContentModules?.ifNotEmpty { option("refused_content_modules", it) }
     if (descriptor?.retainProductDescriptor == true) {
       option("retain_product_descriptor", true)

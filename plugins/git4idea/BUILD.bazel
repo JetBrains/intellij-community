@@ -70,10 +70,7 @@ exports_files(
 
 ### auto-generated section `dev intellij.vcs.git` start
 dev_dist_plugin(
-    content_modules = [
-        "//plugins/git4idea/backend",
-        "//plugins/git4idea/rt",
-    ],
+    content_modules = ["//plugins/git4idea/backend"],
     descriptor_module = ":vcs-git",
     libraries = ["@lib//:cucumber-testing"],
     prepacked_content_modules = [
@@ -84,6 +81,7 @@ dev_dist_plugin(
         "//plugins/git4idea/shared:shared_content_module_jar",
         "//plugins/git4idea/terminal:terminal_content_module_jar",
     ],
+    prepacked_layout_jars = [":git4idea-rt_dev_dist_plugin_jar"],
 )
 
 dev_dist_plugin_jar(

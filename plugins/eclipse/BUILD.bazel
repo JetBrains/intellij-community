@@ -156,13 +156,13 @@ exports_files(
 
 ### auto-generated section `dev intellij.eclipse` start
 dev_dist_plugin(
-    content_modules = [
-        "//plugins/eclipse/common-eclipse-util:common",
-        "//plugins/eclipse/jps-plugin:jps",
-    ],
     descriptor = "resources/META-INF/plugin.xml",
     descriptor_module = ":eclipse",
     main_module = "intellij.eclipse",
+    prepacked_layout_jars = [
+        ":eclipse-common_dev_dist_plugin_jar",
+        ":eclipse-jps_dev_dist_plugin_jar",
+    ],
 )
 
 dev_dist_plugin_jar(

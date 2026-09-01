@@ -496,11 +496,50 @@ internal class DevDistPluginJarPlanTest {
   )
 
   @Test
+  fun `a jar the layout names reads its own destination, and never its members`() {
+    // The plugin's own `dev_dist_plugin_jar` packs such a jar, and that target states a destination. The members
+    // answer another question - whether the leaf still declares them - and the two answers differ for the case below.
+    val members = listOf(MEMBER, "intellij.demo.extra")
+    val statedJar = mapOf(MEMBER to setOf("rt/demo-rt.jar"), "intellij.demo.extra" to setOf("rt/demo-rt.jar"))
+
+    assertFalse(derive(memberNames = members, memberJars = statedJar).single { !it.isMainJar }.isHandedOver)
+    // Every member handed over through the *member* channel, and no target of this plugin. Reading the members here
+    // would take the jar out of the movable set while the fragment still packs it.
+    assertFalse(
+      derive(memberNames = members, memberJars = statedJar, handedOverMembers = members.toSet())
+        .single { !it.isMainJar }.isHandedOver
+    )
+    assertTrue(
+      derive(memberNames = members, memberJars = statedJar, handedOverJars = setOf("rt/demo-rt.jar"))
+        .single { !it.isMainJar }.isHandedOver
+    )
+  }
+
+  @Test
+  fun `a member of two jars the layout names moves both jars and keeps its declaration`() {
+    // `intellij.maven.server.telemetry` is the case: the residue gives it `intellij.maven.server3/…` and
+    // `intellij.maven.server4/maven-server-telemetry.jar`. The fragment packs its raw output into the second jar, so
+    // `computeDerivedPluginPacking` leaves the member declared - and both jars still have a packing target.
+    val statedJars = mapOf(MEMBER to setOf("server3/telemetry.jar", "server4/telemetry.jar"))
+    val jars = derive(
+      memberNames = listOf(MEMBER),
+      memberJars = statedJars,
+      handedOverJars = setOf("server3/telemetry.jar", "server4/telemetry.jar"),
+    )
+
+    assertEquals(listOf(true, true), jars.filter { !it.isMainJar }.map { it.isHandedOver })
+    // The residue states the member's whole jar set and no row of it names the main jar, so the main jar holds the
+    // plugin's own module alone.
+    assertEquals(listOf("intellij.demo"), jars.single { it.isMainJar }.members)
+  }
+
+  @Test
   fun `each refusal class takes the jar out of the movable set`() {
     // One case per class, and the message is asserted rather than the constant, so a renamed class still reads.
     assertEquals(PluginJarExclusion.SCRAMBLING_PLUGIN, refuse(scrambles = true))
     assertEquals(PluginJarExclusion.AMBIGUOUS_DESTINATION, refuse(ambiguousDestinations = setOf("modules/$MEMBER.jar")))
     assertEquals(PluginJarExclusion.VETOED_MEMBER, refuse(vetoedMembers = setOf(MEMBER)))
+    assertEquals(PluginJarExclusion.RAW_MEMBER, refuse(rawMembers = setOf(MEMBER)))
     assertEquals(PluginJarExclusion.UNKNOWN_MEMBER, refuse(unknownMembers = setOf(MEMBER)))
     assertEquals(PluginJarExclusion.CROSS_REPOSITORY_MEMBER, refuse(crossRepositoryMembers = setOf(MEMBER)))
     assertEquals(PluginJarExclusion.UNSTATED_MEMBER_LIBRARIES, refuse(memberLibraries = emptyMap()))
@@ -526,6 +565,7 @@ internal class DevDistPluginJarPlanTest {
         scrambles = false,
         ambiguousDestinations = emptySet(),
         vetoedMembers = emptySet(),
+        rawMembers = emptySet(),
         unknownMembers = emptySet(),
         crossRepositoryMembers = emptySet(),
         memberLibraries = mapOf(MEMBER to emptySet()),
@@ -543,6 +583,7 @@ internal class DevDistPluginJarPlanTest {
         scrambles = true,
         ambiguousDestinations = setOf("modules/$MEMBER.jar"),
         vetoedMembers = setOf(MEMBER),
+        rawMembers = setOf(MEMBER),
         unknownMembers = setOf(MEMBER),
         crossRepositoryMembers = setOf(MEMBER),
         memberLibraries = emptyMap(),
@@ -579,6 +620,7 @@ internal class DevDistPluginJarPlanTest {
     scrambles: Boolean = false,
     ambiguousDestinations: Set<String> = emptySet(),
     vetoedMembers: Set<String> = emptySet(),
+    rawMembers: Set<String> = emptySet(),
     unknownMembers: Set<String> = emptySet(),
     crossRepositoryMembers: Set<String> = emptySet(),
     memberLibraries: Map<String, Set<String>?> = mapOf(MEMBER to setOf("junit4")),
@@ -594,6 +636,7 @@ internal class DevDistPluginJarPlanTest {
     scrambles = scrambles,
     ambiguousDestinations = ambiguousDestinations,
     vetoedMembers = vetoedMembers,
+    rawMembers = rawMembers,
     unknownMembers = unknownMembers,
     crossRepositoryMembers = crossRepositoryMembers,
     memberLibraries = memberLibraries,
@@ -605,15 +648,18 @@ internal class DevDistPluginJarPlanTest {
     memberJars: Map<String, Set<String>> = emptyMap(),
     derivedJars: Map<String, String> = emptyMap(),
     closureMembers: Set<String> = emptySet(),
+    handedOverMembers: Set<String> = emptySet(),
+    handedOverJars: Set<String> = emptySet(),
   ): List<DerivedPluginJar> = composeDerivedPluginJars(
     libDir = "plugins/demo/lib/",
     mainJarName = "demo.jar",
     mainModule = "intellij.demo",
     memberNames = memberNames,
     derivedJars = derivedJars,
-    handedOverMembers = emptySet(),
+    handedOverMembers = handedOverMembers,
     closureMembers = closureMembers,
     memberJars = memberJars,
+    handedOverJars = handedOverJars,
   )
 
   /** [deriveMemberJar] for [MEMBER] under the demo plugin's `demo.jar`, as a member the convention gives its own jar. */
