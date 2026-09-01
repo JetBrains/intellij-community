@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Pair
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.Dispatchers
 import org.jdom.Element
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
@@ -17,6 +18,7 @@ import org.jetbrains.intellij.build.classPath.XIncludeElementResolverImpl
 import org.jetbrains.intellij.build.classPath.descriptorResolveContext
 import org.jetbrains.intellij.build.classPath.resolveIncludes
 import org.jetbrains.intellij.build.findFileInModuleSources
+import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.productLayout.ProductModulesLayout
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
@@ -27,8 +29,12 @@ suspend fun collectCompatiblePluginsToPublish(pluginsToPublish: MutableSet<Plugi
   val availableModulesAndPlugins = HashSet(collectBundledLayoutNames(platformLayout = platformLayout, context = context))
 
   val minimal = System.getProperty("intellij.build.minimal").toBoolean()
-  val descriptorMap = collectPluginDescriptors(skipImplementationDetails = !minimal, skipBundled = true, honorCompatiblePluginsToIgnore = true, context = context)
-  val descriptorMapWithBundled = collectPluginDescriptors(skipImplementationDetails = true, skipBundled = false, honorCompatiblePluginsToIgnore = true, context = context)
+  // One walk over the project serves both maps. The walk reads every plugin descriptor once, and the two maps
+  // differ only in the bundled plugins and in the implementation-detail plugins, which a filter states.
+  val allDescriptors = collectPluginDescriptors(skipImplementationDetails = false, skipBundled = false, honorCompatiblePluginsToIgnore = true, context = context)
+  val bundledPluginModules = java.util.Set.copyOf(context.getBundledPluginModules())
+  val descriptorMap = allDescriptors.filterValuesTo { it.mainModule !in bundledPluginModules && (minimal || !it.isImplementationDetail) }
+  val descriptorMapWithBundled = allDescriptors.filterValuesTo { !it.isImplementationDetail }
   val productModuleAliases = context.productProperties.getProductContentDescriptor()?.productModuleAliases?.map { it.value } ?: emptyList()
   val bundledPluginIds = descriptorMapWithBundled.values
     .asSequence().map { it.id }
@@ -169,27 +175,33 @@ suspend fun collectPluginDescriptors(
     .setAttribute("skip.bundled", skipBundled)
     .setAttribute("honor.compatible.plugins.to.ignore", honorCompatiblePluginsToIgnore)
     .use {
-      val pluginDescriptors = LinkedHashMap<String, PluginDescriptor>()
       val productLayout = context.productProperties.productLayout
       val nonTrivialPlugins = groupPluginLayoutsByMainModule(productLayout)
       val allBundledPlugins = java.util.Set.copyOf(context.getBundledPluginModules())
 
-      for (jpsModule in context.project.modules) {
+      val candidates = context.project.modules.filter { jpsModule ->
         val moduleName = jpsModule.name
-        if ((skipBundled && allBundledPlugins.contains(moduleName)) ||
-            (honorCompatiblePluginsToIgnore && productLayout.compatiblePluginsToIgnore.contains(moduleName))) {
-          continue
-        }
-
-        val pluginDescriptor = readPluginDescriptor(
-          moduleName = moduleName,
+        !(skipBundled && allBundledPlugins.contains(moduleName)) &&
+        !(honorCompatiblePluginsToIgnore && productLayout.compatiblePluginsToIgnore.contains(moduleName))
+      }
+      // Each read parses one descriptor and resolves its includes, so the reads run in parallel. The map keeps the
+      // project order, because a later duplicate key must win the same way it did in a sequential loop.
+      val descriptors = candidates.mapConcurrent(workerDispatcher = Dispatchers.IO) { jpsModule ->
+        readPluginDescriptor(
+          moduleName = jpsModule.name,
           skipImplementationDetails = skipImplementationDetails,
           applyPublishFilters = true,
           allBundledPlugins = allBundledPlugins,
           nonTrivialPlugins = nonTrivialPlugins,
           context = context,
-        ) ?: continue
+        )
+      }
 
+      val pluginDescriptors = LinkedHashMap<String, PluginDescriptor>()
+      for (pluginDescriptor in descriptors) {
+        if (pluginDescriptor == null) {
+          continue
+        }
         pluginDescriptors.put(pluginDescriptor.id, pluginDescriptor)
         for (module in pluginDescriptor.declaredModules) {
           pluginDescriptors.put(module, pluginDescriptor)
@@ -197,6 +209,17 @@ suspend fun collectPluginDescriptors(
       }
       pluginDescriptors
     }
+}
+
+/** The entries whose descriptor passes [predicate], in the order of this map. Every key of a kept descriptor stays. */
+private fun Map<String, PluginDescriptor>.filterValuesTo(predicate: (PluginDescriptor) -> Boolean): MutableMap<String, PluginDescriptor> {
+  val result = LinkedHashMap<String, PluginDescriptor>()
+  for ((key, descriptor) in this) {
+    if (predicate(descriptor)) {
+      result.put(key, descriptor)
+    }
+  }
+  return result
 }
 
 private fun groupPluginLayoutsByMainModule(productLayout: ProductModulesLayout): Map<String, List<PluginLayout>> {
@@ -255,7 +278,8 @@ private suspend fun readPluginDescriptor(
     return null
   }
 
-  if (skipImplementationDetails && xml.getAttributeValue("implementation-detail") == "true") {
+  val isImplementationDetail = xml.getAttributeValue("implementation-detail") == "true"
+  if (skipImplementationDetails && isImplementationDetail) {
     Span.current().addEvent(
       "skip module",
       Attributes.of(
@@ -373,7 +397,15 @@ private suspend fun readPluginDescriptor(
   }
 
   return PluginDescriptor(
-    id, xml.getChildTextTrim("description"), declaredModules, requiredDependencies, incompatiblePlugins, optionalDependencies, moduleName, pluginLayouts
+    id = id,
+    description = xml.getChildTextTrim("description"),
+    declaredModules = declaredModules,
+    requiredDependencies = requiredDependencies,
+    incompatiblePlugins = incompatiblePlugins,
+    optionalDependencies = optionalDependencies,
+    mainModule = moduleName,
+    pluginLayouts = pluginLayouts,
+    isImplementationDetail = isImplementationDetail,
   )
 }
 
@@ -417,4 +449,6 @@ class PluginDescriptor(
   @JvmField val optionalDependencies: List<Pair<String, String>>,
   @JvmField val mainModule: String,
   @JvmField val pluginLayouts: List<PluginLayout>,
+  /** Whether the descriptor states `implementation-detail="true"`. A user cannot disable such a plugin. */
+  @JvmField val isImplementationDetail: Boolean = false,
 )

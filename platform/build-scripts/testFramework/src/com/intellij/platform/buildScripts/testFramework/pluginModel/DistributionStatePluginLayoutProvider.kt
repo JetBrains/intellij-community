@@ -1,10 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.testFramework.pluginModel
 
+import com.intellij.platform.pluginSystem.parser.impl.LoadPathUtil
+import com.intellij.platform.pluginSystem.parser.impl.parseContentAndXIncludes
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
+import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.getProductionLibraryDependencies
 import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.DistributionBuilderState
@@ -15,8 +18,10 @@ import org.jetbrains.intellij.build.impl.getPluginLayoutsByJpsModuleNames
 import org.jetbrains.intellij.build.inferredAutoLayoutChildren
 import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.productLayout.util.getProductionModuleDependencies
+import org.jetbrains.intellij.build.resolveDescriptor
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
@@ -71,7 +76,55 @@ suspend fun createLayoutProviderByDistributionState(
       mainModules = layoutByMainModule.keys,
       outputProvider = context.outputProvider,
     ),
+    contentModulesByMainModule = collectContentModulesByMainModule(
+      mainModules = layoutByMainModule.keys,
+      outputProvider = context.outputProvider,
+    ),
   )
+}
+
+/**
+ * The JPS modules that own the content modules of each plugin, read from the plugin descriptor and its includes.
+ *
+ * The build packs the libraries of a content module beside the plugin, so the packaged content report lists their
+ * roots. The provider reads no descriptor for the members, and it needs none. The library roots are the one field
+ * where a content module counts, so this pre-pass reads the descriptor for them alone.
+ *
+ * An include that no module answers is skipped. The roots are wider than the packed set already, and the
+ * `plugin-layout-parity` validation reports a root the report has and the provider does not.
+ */
+private suspend fun collectContentModulesByMainModule(
+  mainModules: Collection<String>,
+  outputProvider: ModuleOutputProvider,
+): Map<String, List<String>> {
+  return mainModules.mapConcurrent(workerDispatcher = Dispatchers.IO) { mainModule ->
+    val module = outputProvider.findModule(mainModule) ?: return@mapConcurrent null
+    val pluginXml = findFileInModuleSources(module = module, relativePath = PLUGIN_XML_RELATIVE_PATH, onlyProductionSources = true)
+                    ?: return@mapConcurrent null
+    val contentModules = LinkedHashSet<String>()
+    val visited = HashSet<String>()
+    var pending: List<ByteArray> = listOf(Files.readAllBytes(pluginXml))
+    while (pending.isNotEmpty()) {
+      val next = ArrayList<ByteArray>()
+      for (data in pending) {
+        val parsed = parseContentAndXIncludes(input = data, locationSource = null)
+        parsed.contentModules.mapTo(contentModules) { it.name.substringBeforeLast('/') }
+        for (include in parsed.xIncludePaths) {
+          if (include.isEmpty() || !visited.add(include)) {
+            continue
+          }
+          resolveDescriptor(
+            module = module,
+            path = LoadPathUtil.toLoadPath(include),
+            outputProvider = outputProvider,
+            searchAnyModuleOutput = false,
+          )?.let(next::add)
+        }
+      }
+      pending = next
+    }
+    mainModule to contentModules.toList()
+  }.filterNotNull().toMap()
 }
 
 private suspend fun collectMainModulesWithPluginDescriptor(
@@ -98,6 +151,7 @@ private class DistributionStatePluginLayoutProvider(
   private val corePluginDescriptorPath: String,
   private val outputProvider: ModuleOutputProvider,
   private val mainModulesWithPluginDescriptor: Set<String>,
+  private val contentModulesByMainModule: Map<String, List<String>>,
 ) : PluginLayoutProvider {
   private val libraryRootCache = ConcurrentHashMap<String, List<Path>>()
 
@@ -126,8 +180,8 @@ private class DistributionStatePluginLayoutProvider(
    * and the child rule cannot tell one from an ordinary dependency.
    *
    * [PluginLayoutDescription.libraryRootsInClasspath] is wider than the packed set on purpose. It holds every library
-   * the members declare, and not only the ones the build packs into `lib/`. The one reader resolves an `xi:include`
-   * against the roots, so a root too many costs a lookup and a root too few loses a descriptor.
+   * the members and the content modules declare, and not only the ones the build packs into `lib/`. The one reader
+   * resolves an `xi:include` against the roots, so a root too many costs a lookup and a root too few loses a descriptor.
    */
   override fun loadPluginLayout(mainModule: JpsModule): PluginLayoutDescription? {
     val layout = layoutByMainModule[mainModule.name] ?: return null
@@ -148,11 +202,13 @@ private class DistributionStatePluginLayoutProvider(
     if (layout.auto) {
       members.addAll(inferAutoChildren(layout))
     }
+    // the build packs the libraries of a content module beside the plugin, so its roots count and the module does not
+    val modulesWithLibraries = members + contentModulesByMainModule.get(mainModule.name).orEmpty()
     return PluginLayoutDescription(
       mainJpsModule = mainModule.name,
       pluginDescriptorPath = PLUGIN_XML_RELATIVE_PATH,
       jpsModulesInClasspath = members,
-      libraryRootsInClasspath = collectLibraryRoots(layout = layout, members = members),
+      libraryRootsInClasspath = collectLibraryRoots(layout = layout, members = modulesWithLibraries),
     )
   }
 
