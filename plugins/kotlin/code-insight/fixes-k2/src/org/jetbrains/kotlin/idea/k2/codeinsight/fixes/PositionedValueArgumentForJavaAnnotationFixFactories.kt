@@ -36,6 +36,11 @@ internal object PositionedValueArgumentForJavaAnnotationFixFactories {
             listOfNotNull(createFixIfAvailable(diagnostic.psi))
         }
 
+    val replaceWithNamedArgumentsWarningFixFactory =
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.PositionedValueArgumentForJavaAnnotationWarning ->
+            listOfNotNull(createFixIfAvailable(diagnostic.psi))
+        }
+
     context(session: KaSession)
     private fun createFixIfAvailable(
         element: KtElement,
