@@ -1,14 +1,13 @@
 package com.intellij.ide.starter.buildTool
 
 import com.intellij.ide.starter.ide.IDETestContext
-import com.intellij.ide.starter.utils.XmlBuilder
+import com.intellij.ide.starter.utils.editXmlConfig
+import com.intellij.ide.starter.utils.orCreateChildElement
+import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
+import com.intellij.util.xmlb.Constants
 import org.w3c.dom.Element
 import java.nio.file.Path
-import javax.xml.xpath.XPath
-import javax.xml.xpath.XPathConstants
-import javax.xml.xpath.XPathFactory
 import kotlin.io.path.notExists
-import kotlin.io.path.readText
 
 class JpsBuildTool(testContext: IDETestContext) : BuildTool(BuildToolType.JPS, testContext) {
   private val ideaDir: Path
@@ -20,108 +19,51 @@ class JpsBuildTool(testContext: IDETestContext) : BuildTool(BuildToolType.JPS, t
   private val workspaceXmlPath: Path
     get() = ideaDir.resolve("workspace.xml")
 
-  fun setBuildProcessHeapSize(heapSizeMb: Int): JpsBuildTool {
-    return patchXmlConfigFile(
-      configFile = compilerXmlPath,
-      componentName = "CompilerConfiguration",
-      optionName = "BUILD_PROCESS_HEAP_SIZE",
-      optionValue = "$heapSizeMb"
-    )
-  }
+  fun setBuildProcessHeapSize(heapSizeMb: Int): JpsBuildTool =
+    setOption(compilerXmlPath, COMPILER_CONFIGURATION, "BUILD_PROCESS_HEAP_SIZE", "$heapSizeMb")
 
-  fun enableParallelCompilation(): JpsBuildTool {
-    return patchXmlConfigFile(
-      configFile = workspaceXmlPath,
-      componentName = "CompilerWorkspaceConfiguration",
-      optionName = "PARALLEL_COMPILATION",
-      optionValue = "true")
-  }
+  fun enableParallelCompilation(): JpsBuildTool =
+    setOption(workspaceXmlPath, "CompilerWorkspaceConfiguration", "PARALLEL_COMPILATION", "true")
 
-  private fun patchXmlConfigFile(
+  /** Adds `-D[key]=[value]` to the VM options of the build process. The option keeps its other values, once each. */
+  fun addBuildVmOption(key: String, value: String): JpsBuildTool =
+    editOption(compilerXmlPath, COMPILER_CONFIGURATION, "BUILD_PROCESS_ADDITIONAL_VM_OPTIONS") { option ->
+      val newOption = "-D$key=$value"
+      val values = option.getAttribute(Constants.VALUE).split(" ").filter { it.isNotEmpty() }
+      if (newOption !in values) {
+        option.setAttribute(Constants.VALUE, (values + newOption).joinToString(" "))
+      }
+    }
+
+  /** Puts [value] into the option [option] of the component [component], and drops the value it had. */
+  private fun setOption(configFile: Path, component: String, option: String, value: String): JpsBuildTool =
+    editOption(configFile, component, option) { it.setAttribute(Constants.VALUE, value) }
+
+  /**
+   * Applies [edit] to the option [optionName] of the component [componentName] of [configFile], and creates the
+   * component and the option when [configFile] holds none. A file that does not exist stays absent.
+   */
+  private fun editOption(
     configFile: Path,
     componentName: String,
     optionName: String,
-    optionValue: String,
-    checkExpression: String = "option name=\"$optionName\" value=\"$optionValue\""
+    edit: (Element) -> Unit,
   ): JpsBuildTool {
     if (configFile.notExists()) return this
-    val content = configFile.readText()
-    if (content.contains(checkExpression)) return this
 
-    val xmlDoc = XmlBuilder.parse(configFile)
-    xmlDoc.documentElement.normalize()
-    val xp: XPath = XPathFactory.newInstance().newXPath()
-
-    if (content.contains(componentName)) {
-
-      if (configFile.readText().contains(optionName)) {
-        val node = xp.evaluate("//component/option[@name='$optionName']", xmlDoc, XPathConstants.NODE) as Element
-        node.removeAttribute("value")
-        node.setAttribute("value", optionValue)
-      }
-      else {
-        val componentNode = xp.evaluate("//component[@name='$componentName']", xmlDoc, XPathConstants.NODE) as Element
-        val optionElement = xmlDoc.createElement("option")
-        optionElement.setAttribute("name", optionName)
-        optionElement.setAttribute("value", optionValue)
-        componentNode.appendChild(optionElement)
-      }
+    // the config of a project can grow large, so the result does not go to the log
+    editXmlConfig(configFile, PROJECT_TAG, logContent = false) { xmlDoc ->
+      val option = xmlDoc.documentElement
+        .orCreateChildElement(ComponentStorageUtil.COMPONENT, componentName)
+        .orCreateChildElement(Constants.OPTION, optionName)
+      edit(option)
     }
-    else {
-      val firstNode = xmlDoc.firstChild
-      val componentElement = xmlDoc.createElement("component")
-      componentElement.setAttribute("name", componentName)
-      val optionElement = xmlDoc.createElement("option")
-      optionElement.setAttribute("name", optionName)
-      optionElement.setAttribute("value", optionValue)
-      firstNode.appendChild(componentElement).appendChild(optionElement)
-    }
-    XmlBuilder.writeDocument(xmlDoc, configFile)
-
     return this
   }
 
-  fun addBuildVmOption(key: String, value: String): JpsBuildTool {
-    if (compilerXmlPath.notExists()) return this
-    val content = compilerXmlPath.readText()
-    val newOption = "-D$key=$value"
-    if (content.contains(newOption)) return this
-
-    val xmlDoc = XmlBuilder.parse(compilerXmlPath)
-    xmlDoc.documentElement.normalize()
-    val xp: XPath = XPathFactory.newInstance().newXPath()
-
-    if (content.contains("CompilerConfiguration")) {
-
-      if (compilerXmlPath.readText().contains("BUILD_PROCESS_ADDITIONAL_VM_OPTIONS")) {
-
-        val optionNode = xp.evaluate("//component/option[@name='BUILD_PROCESS_ADDITIONAL_VM_OPTIONS']", xmlDoc,
-                                     XPathConstants.NODE) as Element
-        val oldValue = optionNode.getAttribute("value")
-
-        val newValue = "$oldValue $newOption"
-        optionNode.removeAttribute("value")
-        optionNode.setAttribute("value", newValue)
-      }
-      else {
-        val componentNode = xp.evaluate("//component[@name='CompilerConfiguration']", xmlDoc, XPathConstants.NODE) as Element
-        val optionElement = xmlDoc.createElement("option")
-        optionElement.setAttribute("name", "BUILD_PROCESS_ADDITIONAL_VM_OPTIONS")
-        optionElement.setAttribute("value", newOption)
-        componentNode.appendChild(optionElement)
-      }
-    }
-    else {
-      val firstNode = xmlDoc.firstChild
-      val componentElement = xmlDoc.createElement("component")
-      componentElement.setAttribute("name", "CompilerConfiguration")
-      val optionElement = xmlDoc.createElement("option")
-      optionElement.setAttribute("name", "BUILD_PROCESS_ADDITIONAL_VM_OPTIONS")
-      optionElement.setAttribute("value", newOption)
-      firstNode.appendChild(componentElement).appendChild(optionElement)
-    }
-    XmlBuilder.writeDocument(xmlDoc, compilerXmlPath)
-
-    return this
+  private companion object {
+    /** The root of a config file of the project level. */
+    const val PROJECT_TAG = "project"
+    const val COMPILER_CONFIGURATION = "CompilerConfiguration"
   }
 }
