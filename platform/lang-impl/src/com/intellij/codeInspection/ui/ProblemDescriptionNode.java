@@ -149,9 +149,11 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   @Override
   protected boolean calculateIsValid() {
     if (myDescriptor == null) return false;
-    if (myElement == null || !myElement.isValid()) return false;
-    if (myDescriptor instanceof ProblemDescriptor) {
-      PsiElement psiElement = ((ProblemDescriptor)myDescriptor).getPsiElement();
+    if (myElement == null || !myElement.isValid()) {
+      return false;
+    }
+    if (myDescriptor instanceof ProblemDescriptor problemDescriptor) {
+      PsiElement psiElement = problemDescriptor.getPsiElement();
       return psiElement != null && psiElement.isValid();
     }
     return true;

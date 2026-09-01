@@ -52,8 +52,7 @@ internal class FileMarkerRoot private constructor(
     private val FILE_MARKER_ROOT_REF_KEY: Key<Reference<FileMarkerRoot>> = Key.create("snapshot.range.marker.root")
 
     internal fun getOrCreate(document: DocumentImpl): FileMarkerRoot? {
-      val application = ApplicationManager.getApplication() ?: return null
-      val fileDocumentManager = application.getServiceIfCreated(FileDocumentManager::class.java) ?: return null
+      val fileDocumentManager = ApplicationManager.getApplication()?.getService(FileDocumentManager::class.java) ?: return null
       val file = fileDocumentManager.getFile(document) ?: return null
       val initialRootReference = markerRoot(document)
 

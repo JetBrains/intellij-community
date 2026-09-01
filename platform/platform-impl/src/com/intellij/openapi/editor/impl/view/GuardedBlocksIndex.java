@@ -20,7 +20,7 @@ public final class GuardedBlocksIndex {
   private final boolean[] guards;
   private final int length;
 
-  GuardedBlocksIndex(int @NotNull [] offsets, boolean @NotNull [] guards, int length) {
+  private GuardedBlocksIndex(int @NotNull [] offsets, boolean @NotNull [] guards, int length) {
     assert offsets.length == guards.length;
     assert length <= offsets.length;
 
@@ -102,7 +102,7 @@ public final class GuardedBlocksIndex {
   // Document independent for unit test purpose
   public static sealed class Builder permits DocumentBuilder {
     @VisibleForTesting
-    public @NotNull GuardedBlocksIndex build(int start, int end, @NotNull List<RangeMarker> guardedBlocks) {
+    public @NotNull GuardedBlocksIndex build(int start, int end, @NotNull List<? extends RangeMarker> guardedBlocks) {
       assert 0 <= start && start <= end;
       List<Offset> offsetList = guardedBlocks.stream().flatMap(r -> {
         int rangeStart = r.getStartOffset();
