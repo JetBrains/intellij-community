@@ -38,6 +38,7 @@ import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import java.awt.event.MouseEvent
+import javax.swing.Icon
 
 internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor(), DumbAware {
   override fun getInfo(element: PsiElement): Info? {
@@ -111,13 +112,13 @@ internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor(), DumbA
 
     val configurations = CachedValuesManager.getCachedValue(element) {
       CachedValueProvider.Result.create(
-        getConfigurations(element),
+        getConfigurations(element).map { ConfigurationInfo(it.uniqueID, it.name, it.configuration.icon) },
         PsiModificationTracker.getInstance(element.project).forLanguages { !it.isKindOf(MarkdownLanguage.INSTANCE) }
       )
     }
     if (configurations.isEmpty()) return null
 
-    val actions = configurations.map(::RunConfigurationAction).toTypedArray()
+    val actions = configurations.map { RunConfigurationAction(element, it) }.toTypedArray()
     return Info(
       AllIcons.RunConfigurations.TestState.Run_run,
       actions
@@ -140,6 +141,16 @@ internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor(), DumbA
           .distinctBy { it.uniqueID }
       }
       .toList()
+  }
+
+  private fun findSettings(
+    runManager: RunManager,
+    element: PsiElement,
+    uniqueID: String,
+  ): RunnerAndConfigurationSettings? {
+    runManager.allSettings.firstOrNull { it.uniqueID == uniqueID }?.let { return it }
+    if (!element.isValid) return null
+    return getConfigurations(element).firstOrNull { it.uniqueID == uniqueID }
   }
 
   private fun getText(element: PsiElement): @NlsSafe String {
@@ -180,11 +191,17 @@ internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor(), DumbA
     && element.parent.firstChild == element
 
 
-  private class RunConfigurationAction(private val settings: RunnerAndConfigurationSettings): AnAction({ settings.name }, settings.configuration.icon) {
+  private data class ConfigurationInfo(val uniqueID: String, val name: @NlsSafe String, val icon: Icon?)
+
+  private inner class RunConfigurationAction(
+    private val element: PsiElement,
+    private val configuration: ConfigurationInfo,
+  ) : AnAction({ configuration.name }, configuration.icon) {
     override fun actionPerformed(event: AnActionEvent) {
-      val project = event.project ?: settings.configuration.project
+      val project = event.project ?: element.project
       TrustedProjectUtil.executeIfTrusted(project) {
         val runManager = RunManager.getInstance(project)
+        val settings = findSettings(runManager, element, configuration.uniqueID) ?: return@executeIfTrusted
         if (!runManager.hasSettings(settings)) {
           runManager.setTemporaryConfiguration(settings)
         }
