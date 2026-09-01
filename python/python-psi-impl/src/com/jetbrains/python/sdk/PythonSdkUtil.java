@@ -21,6 +21,11 @@ import java.util.List;
 @SuppressWarnings("unused")
 public final class PythonSdkUtil {
 
+  /** The `id` the venv provider declares in `intellij.python.venv.xml`. */
+  private static final String VENV_KIND_ID = "venv";
+  /** The `id` the conda provider declares in `intellij.python.community.impl.conda.xml`. */
+  private static final String CONDA_KIND_ID = "conda";
+
   public static final String REMOTE_SOURCES_DIR_NAME = com.jetbrains.python.sdk.legacy.PythonSdkUtil.REMOTE_SOURCES_DIR_NAME;
   public static final String SKELETON_DIR_NAME = com.jetbrains.python.sdk.legacy.PythonSdkUtil.SKELETON_DIR_NAME;
   public static final OrderRootType BUILTIN_ROOT_TYPE = com.jetbrains.python.sdk.legacy.PythonSdkUtil.BUILTIN_ROOT_TYPE;
@@ -96,4 +101,27 @@ public final class PythonSdkUtil {
     return PySkeletonUtil.getSitePackagesDirectory(pythonSdk);
   }
 
+  /**
+   * @deprecated use {@link PythonInterpreter}
+   */
+  @Deprecated
+  @RequiresBackgroundThread(generateAssertion = false)
+  public static boolean isVirtualEnv(@NotNull Sdk sdk) {
+    return VENV_KIND_ID.equals(kindIdOf(sdk));
+  }
+
+  /**
+   * @deprecated use {@link PythonInterpreter}
+   */
+  @Deprecated
+  @RequiresBackgroundThread(generateAssertion = false)
+  public static boolean isCondaVirtualEnv(@NotNull Sdk sdk) {
+    return CONDA_KIND_ID.equals(kindIdOf(sdk));
+  }
+
+  /** The id its provider declares in xml, or {@code null} when no environment was detected. */
+  private static @Nullable String kindIdOf(@NotNull Sdk sdk) {
+    PythonEnvironment environment = PythonInterpreterKt.pythonInterpreter(sdk, false).getPythonEnvironment();
+    return environment == null ? null : PythonEnvironmentProviderKt.getKindId(environment);
+  }
 }
