@@ -123,7 +123,7 @@ internal class FrontendProjectViewPaneAggregator(
   }
 
   @RequiresEdt
-  fun createPane(descriptor: ProjectViewPaneDescriptorImpl): FrontendProjectViewPane {
+  fun createPane(descriptor: ProjectViewPaneDescriptorImpl): FrontendProjectViewPane? {
     return when (descriptor.kind) {
       ProjectViewPaneKind.BACKEND -> TreeBasedFrontendProjectViewPane(project, descriptor)
       ProjectViewPaneKind.LIGHT -> TreeBasedFrontendProjectViewPane(project, descriptor)
@@ -158,7 +158,7 @@ private class BackendDelegatingProjectViewPaneService(
   private val rpc: ProjectViewRpc,
 ) : ProjectViewPaneService {
 
-  override suspend fun getPaneDescriptorsFlow(): Flow<List<ProjectViewPaneDescriptorImpl>> {
+  override suspend fun getPaneDescriptorsFlow(): Flow<Collection<ProjectViewPaneDescriptorImpl>> {
     return rpc.getPaneDescriptorsFlow(project.projectId())
   }
 

@@ -58,7 +58,7 @@ interface ProjectViewPaneProvider {
 
 @ApiStatus.Internal
 interface ProjectViewPaneService {
-  suspend fun getPaneDescriptorsFlow(): Flow<List<ProjectViewPaneDescriptorImpl>>
+  suspend fun getPaneDescriptorsFlow(): Flow<Collection<ProjectViewPaneDescriptorImpl>>
 
   suspend fun getPaneStateFlow(paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEvent>?
 
@@ -161,7 +161,7 @@ abstract class ProjectViewPaneServiceBase(
     return awaitManager(paneId)?.getRequestChannel() ?: Channel<ProjectViewPaneRequest>(capacity = 0).also { it.close() }
   }
 
-  override suspend fun getPaneDescriptorsFlow(): Flow<List<ProjectViewPaneDescriptorImpl>> {
+  override suspend fun getPaneDescriptorsFlow(): Flow<Collection<ProjectViewPaneDescriptorImpl>> {
     return managers
       .filterNotNull()
       .map { managers -> managers.values.map { it.descriptor } }

@@ -19,13 +19,15 @@ import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFi
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory
 import com.intellij.platform.ide.nonModalWelcomeScreen.DefaultFileDragAndDropHandler
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
-import com.intellij.platform.ide.nonModalWelcomeScreen.isWelcomeExperienceProjectSync
+import com.intellij.platform.ide.nonModalWelcomeScreen.isNonModalWelcomeScreenEnabled
+import com.intellij.platform.ide.nonModalWelcomeScreen.isWelcomeExperienceProject
 import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WELCOME_SCREEN_IS_SHOWN
 import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanel
 import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanelActions
 import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanelSelectInTarget
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider
-import com.intellij.platform.projectView.frontend.pane.PureUiProjectViewPane
+import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
+import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneModel
 import com.intellij.platform.projectView.frontend.pane.PureUiProjectViewPaneProvider
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder
@@ -42,6 +44,8 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.util.asDisposable
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import org.jdom.Element
 import java.awt.BorderLayout
 import javax.swing.BoxLayout
@@ -50,10 +54,20 @@ import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
 import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
 
 internal class FrontendWelcomeScreenLeftPanelProvider : PureUiProjectViewPaneProvider {
-  override fun describe(project: Project, builder: ProjectViewPaneDescriptorBuilder): ProjectViewPaneDescriptor {
+  override fun getPaneModelsFlow(project: Project): Flow<Collection<FrontendProjectViewPaneModel>> {
+    return flow {
+      if (project.isWelcomeExperienceProject() && isNonModalWelcomeScreenEnabled) {
+        emit(listOf(FrontendWelcomeScreenLeftPanelModel(project)))
+      }
+    }
+  }
+}
+
+private class FrontendWelcomeScreenLeftPanelModel(private val project: Project) : FrontendProjectViewPaneModel {
+  override suspend fun describe(builder: ProjectViewPaneDescriptorBuilder): ProjectViewPaneDescriptor {
     builder.setDefault(
       !Registry.`is`("ide.welcome.screen.change.project.view.depending.on.opened.file", false) &&
-      project.isWelcomeExperienceProjectSync()
+      project.isWelcomeExperienceProject()
     )
     return builder.build(
       id = projectViewPaneId(WelcomeScreenLeftPanel.ID),
@@ -62,7 +76,7 @@ internal class FrontendWelcomeScreenLeftPanelProvider : PureUiProjectViewPanePro
     )
   }
 
-  override fun createPane(project: Project, descriptor: ProjectViewPaneDescriptor): PureUiProjectViewPane {
+  override fun createPane(descriptor: ProjectViewPaneDescriptor): FrontendProjectViewPane {
     return FrontendWelcomeScreenLeftPanelService.getInstance(project).createPane(descriptor)
   }
 }
@@ -82,7 +96,7 @@ internal class FrontendWelcomeScreenLeftPanel(
   private val project: Project,
   private val scope: CoroutineScope,
   override val descriptor: ProjectViewPaneDescriptor,
-) : PureUiProjectViewPane {
+) : FrontendProjectViewPane {
   private lateinit var searchField: SearchTextField
 
   override val component: JComponent by lazy { createComponent() }
@@ -96,9 +110,6 @@ internal class FrontendWelcomeScreenLeftPanel(
 
 // TODO
   // override fun getIcon(): Icon = IconManager.getInstance().getPlatformIcon(PlatformIcons.Folder)
-
-  // TODO
-  // override fun isInitiallyVisible(): Boolean = project.isWelcomeExperienceProjectSync() && isNonModalWelcomeScreenEnabled
 
   private fun setupDragAndDrop(component: JComponent) {
     val target = object : DnDNativeTarget {

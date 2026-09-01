@@ -3,12 +3,21 @@ package com.intellij.platform.projectView.frontend.pane
 
 import com.intellij.ide.SelectInTarget
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
+import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
+
+@ApiStatus.Experimental
+interface FrontendProjectViewPaneModel {
+  suspend fun describe(builder: ProjectViewPaneDescriptorBuilder): ProjectViewPaneDescriptor
+
+  @RequiresEdt
+  fun createPane(descriptor: ProjectViewPaneDescriptor): FrontendProjectViewPane
+}
 
 @ApiStatus.Experimental
 interface FrontendProjectViewPane {

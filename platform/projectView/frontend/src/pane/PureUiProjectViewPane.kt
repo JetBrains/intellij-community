@@ -7,8 +7,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.platform.projectView.actions.EditorChoice
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
-import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
-import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilderImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
@@ -17,55 +15,59 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneService
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
 import com.intellij.platform.projectView.pane.SelectInRequestDTO
-import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface PureUiProjectViewPaneProvider {
-  fun describe(project: Project, builder: ProjectViewPaneDescriptorBuilder): ProjectViewPaneDescriptor
-  
-  @RequiresEdt
-  fun createPane(project: Project, descriptor: ProjectViewPaneDescriptor): PureUiProjectViewPane
+  fun getPaneModelsFlow(project: Project): Flow<Collection<FrontendProjectViewPaneModel>>
 }
-
-@ApiStatus.Experimental
-interface PureUiProjectViewPane : FrontendProjectViewPane
 
 private val PURE_UI_EP = ExtensionPointName.create<PureUiProjectViewPaneProvider>("com.intellij.project.view.pane.pure.ui")
 
 @Service(Service.Level.PROJECT)
-internal class PureUiProjectViewPaneService(private val project: Project) : ProjectViewPaneService {
+internal class PureUiProjectViewPaneService(
+  private val project: Project,
+  scope: CoroutineScope,
+) : ProjectViewPaneService {
   companion object {
     fun getInstance(project: Project): PureUiProjectViewPaneService = project.service()
   }
-  
-  override suspend fun getPaneDescriptorsFlow(): Flow<List<ProjectViewPaneDescriptorImpl>> {
-    return flowOf(PURE_UI_EP.extensionList.map { provider -> describe(provider) })
+
+  private val modelByDescriptor = MutableStateFlow<Map<ProjectViewPaneDescriptorImpl, FrontendProjectViewPaneModel>?>(null)
+
+  init {
+    scope.launch(CoroutineName("Mange pure UI pane models")) {
+      supervisorScope {
+        val modelFlows = PURE_UI_EP.extensionList.map { it.getPaneModelsFlow(project) }
+        combine(modelFlows) { modelsByProvider -> modelsByProvider.flatMap { it } }.collect { models ->
+          modelByDescriptor.value = models.associateBy { describe(it) }
+        }
+      }
+    }
   }
-  
-  private fun describe(provider: PureUiProjectViewPaneProvider): ProjectViewPaneDescriptorImpl {
+
+  private suspend fun describe(model: FrontendProjectViewPaneModel): ProjectViewPaneDescriptorImpl {
     val builder = ProjectViewPaneDescriptorBuilderImpl()
     builder.kind = ProjectViewPaneKind.UI_ONLY
-    return provider.describe(project, builder) as ProjectViewPaneDescriptorImpl
+    return model.describe(builder) as ProjectViewPaneDescriptorImpl
   }
-  
-  fun createPane(descriptor: ProjectViewPaneDescriptorImpl): FrontendProjectViewPane {
-    val result = PURE_UI_EP.computeSafeIfAny { provider ->
-      val eachDescriptor = describe(provider)
-      if (eachDescriptor == descriptor) {
-        provider.createPane(project, descriptor)
-      }
-      else {
-        null
-      }
-    }
-    if (result == null) {
-      throw IllegalArgumentException("The pane ${descriptor.id} was not found")
-    }
-    return result
+
+  override suspend fun getPaneDescriptorsFlow(): Flow<Collection<ProjectViewPaneDescriptorImpl>> {
+    return modelByDescriptor.filterNotNull().map { it.keys }
+  }
+
+  fun createPane(descriptor: ProjectViewPaneDescriptorImpl): FrontendProjectViewPane? {
+    return modelByDescriptor.value?.get(descriptor)?.createPane(descriptor)
   }
 
   override suspend fun getPaneStateFlow(paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEvent>? {

@@ -156,6 +156,14 @@ internal class ProjectViewToolWindowServiceImpl(
             val pane = withContext(Dispatchers.UI) {
               aggregator.createPane(descriptor)
             }
+            if (pane == null) {
+              LOG.warn(
+                "The pane ${descriptor.id} doesn't have UI. " +
+                "Either it was already removed by the provider, or the provider is buggy. " +
+                "Descriptor = $descriptor"
+              )
+              continue
+            }
             val paneManager = PaneManager(paneContentManager, pane)
             val job = managementScope.launch(CoroutineName("Manage PV pane ${descriptor.id}")) {
               try {
