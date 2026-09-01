@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.Urls
 import com.intellij.util.io.HttpRequests
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.ui.MarkdownNotifications
@@ -134,8 +135,13 @@ internal class HtmlExporter(
   }
 
   private fun getImgUriWithProtocol(imgSrc: String): String {
-    return if (imgSrc.startsWith("file:")) imgSrc
-    else File(imgSrc).toURI().toString()
+    return when {
+      imgSrc.startsWith("file:") -> imgSrc
+      imgSrc.startsWith("http:") || imgSrc.startsWith("https:") -> {
+        Urls.newFromEncoded(imgSrc).toExternalForm()
+      }
+      else -> File(imgSrc).toURI().toString()
+    }
   }
 
   private fun getResource(url: String): ByteArray? =
