@@ -37,7 +37,8 @@ class PythonProcessOutputToolWindowUi(data: ComponentData) : ToolWindowUiCompone
       )
     }
       // The tree can hold more than one matching row, because each interpreter probe adds one.
-      // Take the newest row. waitOneContainsText fails on two rows exactly as it fails on none.
+      // Any matching row answers the check, so take the first one. waitOneContainsText fails on
+      // two rows exactly as it fails on none.
       .waitAnyTexts(
         message = "Finding at least one logged process with command containing '$commandSubstring'",
         timeout = timeout,
