@@ -1,11 +1,20 @@
 <!--suppress SplitModeMixedDependencies -->
-<!--suppress PluginXmlPluginLogo -->
 <!--suppress AllContentModulesOptionalLoadingRule -->
 <idea-plugin>
   <id>intellij.execution.serviceView.plugin</id>
   <name>Services View</name>
-  <description>Provides Services tool window and actions</description>
   <vendor>JetBrains</vendor>
+  <description><![CDATA[
+    Provides the Services tool window. The tool window shows the services of the project in one tree.
+    It includes the run and debug configurations, the remote server connections, and the deployments.
+    <br/>
+    Start, debug, or stop a service from the tree, then follow its status and its console output.
+    Group the tree by type, by status, or by folder, and filter it to the services that you need.
+    Open a service in a new tab, or move it to a separate tool window.
+    <br/>
+    Other plugins add their own services to the same tree such as Database, Docker, MCP Server and Kubernetes.
+  ]]></description>
+
   <content namespace="jetbrains">
     <module name="intellij.platform.execution.serviceView"/>
     <module name="intellij.platform.clouds"/>
