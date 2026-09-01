@@ -190,4 +190,19 @@
       </problem>
     </problems>
   </test>
+  <test name="RunBlocking suppressed by the @Suppress annotation">
+    <input_files>
+      <input_file path="SuppressedRunBlocking.kt"/>
+    </input_files>
+    <problems>
+      <problem>
+        <trace_element fq_name="SuppressedRunBlocking.reported" file="SuppressedRunBlocking.kt" offset="207"/>
+        <trace_element fq_name="--> runBlocking" file="SuppressedRunBlocking.kt" offset="228"/>
+      </problem>
+      <problem>
+        <trace_element fq_name="SuppressedRunBlocking.reportedForOtherId" file="SuppressedRunBlocking.kt" offset="509"/>
+        <trace_element fq_name="--> runBlocking" file="SuppressedRunBlocking.kt" offset="540"/>
+      </problem>
+    </problems>
+  </test>
 </tests>

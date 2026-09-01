@@ -47,6 +47,9 @@ class RunBlockingInspection() : GlobalInspectionTool() {
                 val el = it.element
                 val refEntity = globalContext.refManager.getReference(el.containingFile)
                 val expr: PsiElement = (el as? KtCallExpression)?.calleeExpression ?: el
+                if (isSuppressedFor(expr)) {
+                    return@runReadAction
+                }
                 problemDescriptionsProcessor.addProblemElement(
                     refEntity,
                     RunBlockingProblemDescriptor(expr, it.stacTrace)
