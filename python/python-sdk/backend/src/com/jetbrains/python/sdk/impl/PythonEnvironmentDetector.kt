@@ -24,15 +24,3 @@ internal fun PythonBinary.detectPythonEnvironmentImpl(): PyResult<PythonEnvironm
   return PythonEnvironmentProvider.EP_NAME.extensionList.firstNotNullOfOrNull { it.instance.detect(this) }
          ?: error("No ${PythonEnvironmentProvider.EP_NAME.name} claimed $this. The system provider claims any layout, so it is not registered.")
 }
-
-/**
- * A system-wide Python installation: whatever no other provider claims.
- *
- * Register it last, because it answers for any layout.
- */
-internal class SystemPythonEnvironmentProvider : PythonEnvironmentProvider {
-  override val environmentClass: Class<out PythonEnvironment> = PythonEnvironment.SystemPython::class.java
-
-  override fun detect(pythonBinary: PythonBinary): PyResult<PythonEnvironment> =
-    PythonEnvironment.SystemPython(pythonBinaryPath = pythonBinary).let { PyResult.success(it) }
-}

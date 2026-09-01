@@ -12,7 +12,7 @@ import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.WinRegistryService
 import com.jetbrains.python.sdk.getAppxFiles
-import com.jetbrains.python.sdk.PythonEnvironment
+import com.intellij.python.sdk.backend.SystemPythonEnvironment
 import com.jetbrains.python.sdk.detectPythonEnvironment
 import com.jetbrains.python.venvReader.tryResolvePath
 import kotlinx.coroutines.Dispatchers
@@ -54,7 +54,7 @@ class WindowsSystemPythonProvider(val winRegistryBase: WinRegistryService? = nul
     val pythons = withContext(Dispatchers.IO) {
       val fromPath = names.flatMap { name ->
         PathEnvironmentVariableUtil.findAll(name)
-      }.filter { it.detectPythonEnvironment().successOrNull is PythonEnvironment.SystemPython }
+      }.filter { it.detectPythonEnvironment().successOrNull is SystemPythonEnvironment }
 
       (fromPath + getPythonsFromStore() + getPythonsFromRegistry()).toSet()
     }

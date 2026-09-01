@@ -14,7 +14,7 @@ import com.intellij.util.EnvironmentUtil
 import com.intellij.util.ShellEnvironmentReader
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.sdk.Activatable
+import com.jetbrains.python.sdk.ActivationScript
 import com.jetbrains.python.sdk.PythonEnvironment
 import com.jetbrains.python.sdk.detectPythonEnvironment
 import com.jetbrains.python.sdk.terminal.Shell
@@ -65,7 +65,7 @@ internal class ActivatableEnvironmentService {
       // Only a successful read is cached: a throwing loader records nothing in Caffeine, so a transient failure
       // (e.g. a timed-out conda activation) is retried next call instead of being remembered as an empty map.
       val value = cache.get(environment.pythonBinaryPath) {
-        if (environment is Activatable) readActivationEnvironment(environment) else emptyMap()
+        readActivationEnvironment(environment)
       }
       PyResult.success(value)
     }
@@ -85,12 +85,12 @@ internal class ActivatableEnvironmentService {
    * PY-71917) while not leaking the reader shell's own variables into the target process.
    */
   @OptIn(LowLevelLocalMachineAccess::class)
-  private fun readActivationEnvironment(environment: Activatable): Map<String, String> {
+  private fun readActivationEnvironment(environment: PythonEnvironment): Map<String, String> {
     val shellType = systemDefaultShell?.type ?: Shell.Type.UNKNOWN
-    val script = environment.activation(shellType) ?: return emptyMap()
+    val script = environment.activationScript(shellType) ?: return emptyMap()
     val isWindows = script.scriptPath.getEelDescriptor().osFamily == EelOsFamily.Windows
 
-    fun readShellEnv(sourced: Activatable.Script?): Map<String, String> {
+    fun readShellEnv(sourced: ActivationScript?): Map<String, String> {
       val command = if (isWindows) {
         ShellEnvironmentReader.winShellCommand(sourced?.scriptPath, sourced?.args)
       }

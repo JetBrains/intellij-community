@@ -13,11 +13,10 @@ import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.packaging.findCondaExecutableRelativeToEnv
-import com.jetbrains.python.sdk.Activatable
-import com.jetbrains.python.sdk.HasPythonHome
+import com.jetbrains.python.sdk.ActivationScript
 import com.jetbrains.python.sdk.PythonEnvironment
 import com.jetbrains.python.sdk.PythonEnvironmentProvider
-import com.jetbrains.python.sdk.TerminalActivation
+import com.jetbrains.python.sdk.ShellActivation
 import com.jetbrains.python.sdk.impl.resolvePythonHome
 import com.jetbrains.python.sdk.terminal.Shell
 import org.jetbrains.annotations.ApiStatus
@@ -41,8 +40,10 @@ data class CondaEnvironment(
   val isBase: Boolean,
   /** Path to the `conda` executable resolved relative to this environment, or `null` if not found. */
   val condaExecutable: Path? = null,
-) : PythonEnvironment, HasPythonHome, Activatable {
-  override val activation: (shellType: Shell.Type) -> Activatable.Script? = {
+) : PythonEnvironment {
+  override val isActivatable: Boolean = true
+
+  override fun activationScript(shellType: Shell.Type): ActivationScript? {
     val osFamily = pythonBinaryPath.getEelDescriptor().osFamily
     val isWindows = osFamily == EelOsFamily.Windows
 
@@ -55,7 +56,7 @@ data class CondaEnvironment(
                     baseSubdirs.mapNotNull { condaBaseDir?.resolve(it)?.resolve(scriptName) })
       .firstOrNull { it.exists() }
 
-    activate?.let { activateScript ->
+    return activate?.let { activateScript ->
       // conda runs base python under the hood; its MKL DLLs live in the base install's `Library\bin`, which
       // activating a (non-base) env does not add. Append it *after* the activated env's own dirs so base python
       // can load them while the env still takes precedence (PY-57146). Windows-only.
@@ -75,7 +76,7 @@ data class CondaEnvironment(
           patched
         }
 
-      Activatable.Script(activateScript, listOf(pythonHomePath.pathString), postProcessEnv)
+      ActivationScript(activateScript, listOf(pythonHomePath.pathString), postProcessEnv)
     }
   }
 
@@ -86,9 +87,9 @@ data class CondaEnvironment(
    * user to install the hook and then restart the terminal. When the conda executable is missing, the snippet tells
    * the user to run `conda init` instead.
    */
-  override fun terminalActivation(shellType: Shell.Type): TerminalActivation? =
-    if (shellType == Shell.Type.POWERSHELL) TerminalActivation.Snippet(powerShellActivationCode())
-    else super.terminalActivation(shellType)
+  override fun shellActivation(shellType: Shell.Type): ShellActivation? =
+    if (shellType == Shell.Type.POWERSHELL) ShellActivation.Snippet(powerShellActivationCode())
+    else super.shellActivation(shellType)
 
   private fun powerShellActivationCode(): String {
     val condaPath = condaExecutable?.takeIf { it.isExecutable() }

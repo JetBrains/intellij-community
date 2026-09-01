@@ -20,9 +20,9 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.python.terminal.shared.PyVirtualEnvTerminalSettings
 import com.jetbrains.python.orLogException
-import com.jetbrains.python.sdk.Activatable
+import com.jetbrains.python.sdk.PythonEnvironment
 import com.jetbrains.python.sdk.activationEnvironment
-import com.jetbrains.python.sdk.TerminalActivation
+import com.jetbrains.python.sdk.ShellActivation
 import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 import com.jetbrains.python.sdk.pythonInterpreter
 import com.jetbrains.python.sdk.pythonSdk
@@ -83,12 +83,12 @@ class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
    * An unknown shell cannot source anything, so the environment is read by the default shell and passed on as
    * variables instead. Every other shell asks the environment itself, so no kind of environment is named here.
    */
-  private fun activate(shell: Shell, sdk: Sdk, environment: Activatable, envs: MutableMap<String, String>): Jediterm? {
+  private fun activate(shell: Shell, sdk: Sdk, environment: PythonEnvironment, envs: MutableMap<String, String>): Jediterm? {
     if (shell.type == Shell.Type.UNKNOWN) return activateUnknownShell(sdk, envs)
-    return when (val activation = environment.terminalActivation(shell.type)) {
+    return when (val activation = environment.shellActivation(shell.type)) {
       null -> null
-      is TerminalActivation.SourceScript -> Jediterm(activation.scriptPath, activation.args)
-      is TerminalActivation.Snippet -> Jediterm(activation.code)
+      is ShellActivation.SourceScript -> Jediterm(activation.scriptPath, activation.args)
+      is ShellActivation.Snippet -> Jediterm(activation.code)
     }
   }
 
@@ -180,12 +180,11 @@ class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
       return
     }
 
-    val activatable = pythonEnvironment as? Activatable
-    if (activatable == null) {
+    if (!pythonEnvironment.isActivatable) {
       logger.debug("Nothing to activate for ${sdk.homePath}")
       return
     }
-    val jediterm = activate(shell, sdk, activatable, envs)
+    val jediterm = activate(shell, sdk, pythonEnvironment, envs)
     jediterm?.buildEnvironmentVariables()?.let { envs.putAll(it) }
 
 

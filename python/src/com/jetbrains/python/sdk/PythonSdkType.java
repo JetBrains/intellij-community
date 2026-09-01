@@ -313,7 +313,8 @@ public final class PythonSdkType extends SdkType {
     if (pythonEnvironment == null) {
       return FileUtil.getLocationRelativeToUserHome(pythonBinary.toAbsolutePath().toString(), false);
     }
-    var path = pythonEnvironment instanceof HasPythonHome ? ((HasPythonHome)pythonEnvironment).getPythonHomePath() : pythonBinary;
+    var home = pythonEnvironment.getPythonHomePath();
+    var path = home != null ? home : pythonBinary;
     return FileUtil.getLocationRelativeToUserHome(path.toAbsolutePath().toString(), false);
   }
 

@@ -71,7 +71,7 @@
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.WinPythonSdkFlavor"/>
     <!-- Claims any layout, so it must stay last. -->
     <pythonEnvironmentProvider id="system" order="last"
-                               implementation="com.jetbrains.python.sdk.impl.SystemPythonEnvironmentProvider"/>
+                               implementation="com.intellij.python.sdk.backend.SystemPythonEnvironmentProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

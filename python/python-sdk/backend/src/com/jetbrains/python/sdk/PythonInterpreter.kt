@@ -50,10 +50,10 @@ class PythonInterpreter internal constructor(
 
   /** Environment root (venv / conda prefix) when the detected environment has one; `null` otherwise. */
   val pythonHomePath: PythonHomePath?
-    get() = (pythonEnvironment as? HasPythonHome)?.pythonHomePath
+    get() = pythonEnvironment?.pythonHomePath
 
   val isActivatable: Boolean
-    get() = pythonEnvironment is Activatable
+    get() = pythonEnvironment?.isActivatable == true
 
   override fun equals(other: Any?): Boolean {
     return sdk == (other as? PythonInterpreter)?.sdk

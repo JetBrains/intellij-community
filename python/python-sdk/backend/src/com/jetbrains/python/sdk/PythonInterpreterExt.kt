@@ -22,13 +22,13 @@ val PythonInterpreter.presentation: PythonInterpreterPresentation
 /**
  * The Python `lib/` directory backing this SDK, or `null` when it cannot be located.
  *
- * An environment with a library directory of its own ([HasOwnLibRoot]) answers with it, through
+ * An environment with a library directory of its own answers with it, through
  * [venvLibDirectory]. Every other environment, and an unknown one, answers with the interpreter's
  * standard library directory, through [stdlibLibDirectory].
  */
 @RequiresBackgroundThread
 private fun PythonInterpreter.libDirectory(): VirtualFile? =
-  if (pythonEnvironment is HasOwnLibRoot) venvLibDirectory() else stdlibLibDirectory()
+  if (pythonEnvironment?.libRoot != null) venvLibDirectory() else stdlibLibDirectory()
 
 /**
  * The `site-packages/` directory inside this SDK's [libDirectory], or `null` when either the lib
@@ -70,10 +70,10 @@ fun PythonInterpreter.stdlibLibDirectory(): VirtualFile? {
 }
 
 /**
- * The environment's own `lib/pythonX.Y/` directory when this SDK's environment has one
- * ([HasOwnLibRoot]), or `null` otherwise (including when no environment was detected).
+ * The environment's own `lib/pythonX.Y/` directory when this SDK's environment has one,
+ * or `null` otherwise (including when no environment was detected).
  *
- * Resolves [HasOwnLibRoot.libRoot] against the SDK's class roots first (covering both
+ * Resolves [PythonEnvironment.libRoot] against the SDK's class roots first (covering both
  * direct matches and the `site-packages` shortcut, since the `venv` module doesn't add
  * `lib/pythonX.Y` itself to `sys.path`), with a [LocalFileSystem] fallback when the SDK has no
  * class roots yet (e.g. a fresh empty SDK created for package management).
@@ -81,7 +81,7 @@ fun PythonInterpreter.stdlibLibDirectory(): VirtualFile? {
 @Internal
 @RequiresBackgroundThread
 fun PythonInterpreter.venvLibDirectory(): VirtualFile? {
-  val libRoot = (pythonEnvironment as? HasOwnLibRoot)?.libRoot ?: return null
+  val libRoot = pythonEnvironment?.libRoot ?: return null
   val classRoots = sdkClassRoots
   // Empty in case of a temporary empty SDK created to install package management.
   if (classRoots.isEmpty()) {

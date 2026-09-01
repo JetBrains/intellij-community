@@ -9,9 +9,7 @@ import com.intellij.python.venv.PyVenvBundle.message
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.sdk.Activatable
-import com.jetbrains.python.sdk.HasOwnLibRoot
-import com.jetbrains.python.sdk.HasPythonHome
+import com.jetbrains.python.sdk.ActivationScript
 import com.jetbrains.python.sdk.PythonEnvironment
 import com.jetbrains.python.sdk.PythonEnvironmentProvider
 import com.jetbrains.python.sdk.impl.resolvePythonHome
@@ -37,7 +35,7 @@ data class VenvEnvironment(
   val config: Map<String, String>,
   /** The `lib/` or `lib/pythonX.Y/` directory of the virtual environment. */
   override val libRoot: Path,
-) : PythonEnvironment, HasPythonHome, HasOwnLibRoot, Activatable {
+) : PythonEnvironment {
   /**
    * Resolves the venv activation script that fits [Shell.Type] in the directory next to the python
    * binary (`Scripts/` on Windows, `bin/` on Unix). Returns `null` if no matching script exists.
@@ -45,7 +43,9 @@ data class VenvEnvironment(
    * On Windows the choice depends on the shell: PowerShell needs `Activate.ps1` (cmd's `activate.bat`
    * cannot mutate the calling PowerShell session), while cmd / unknown shells get `activate.bat`.
    */
-  override val activation: (shellType: Shell.Type) -> Activatable.Script? = { shellType ->
+  override val isActivatable: Boolean = true
+
+  override fun activationScript(shellType: Shell.Type): ActivationScript? {
     val isWindows = pythonBinaryPath.getEelDescriptor().osFamily == EelOsFamily.Windows
     val scriptName = when (shellType) {
       Shell.Type.POWERSHELL -> "Activate.ps1"
@@ -54,7 +54,7 @@ data class VenvEnvironment(
       Shell.Type.BASH, Shell.Type.SH, Shell.Type.ZSH, Shell.Type.UNKNOWN ->
         if (isWindows) "activate.bat" else "activate"
     }
-    pythonBinaryPath.resolveSibling(scriptName).takeIf { it.exists() }?.let { Activatable.Script(it) }
+    return pythonBinaryPath.resolveSibling(scriptName).takeIf { it.exists() }?.let { ActivationScript(it) }
   }
 }
 

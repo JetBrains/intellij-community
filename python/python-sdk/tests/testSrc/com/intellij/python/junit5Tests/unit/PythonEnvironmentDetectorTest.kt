@@ -4,7 +4,7 @@ package com.intellij.python.junit5Tests.unit
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.junit5.TestApplication
 import com.jetbrains.python.PythonBinary
-import com.jetbrains.python.sdk.PythonEnvironment
+import com.intellij.python.sdk.backend.SystemPythonEnvironment
 import com.jetbrains.python.sdk.detectPythonEnvironment
 import com.jetbrains.python.sdk.kindId
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -31,7 +31,7 @@ internal class PythonEnvironmentDetectorTest {
   fun systemPython(@TempDir root: Path) {
     val environment = createPythonBinary(root).detectPythonEnvironment().orThrow()
 
-    assertInstanceOf(PythonEnvironment.SystemPython::class.java, environment)
+    assertInstanceOf(SystemPythonEnvironment::class.java, environment)
     assertNull(environment.version)
   }
 
