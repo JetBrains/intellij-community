@@ -3,10 +3,13 @@ package com.intellij.driver.sdk.ui.components.common.toolwindows
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.ideLogger
-import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.waitFor
+import kotlin.time.Duration.Companion.seconds
+
+private val TOOL_WINDOW_STATE_TIMEOUT = 30.seconds
 
 open class ToolWindowToolbarUi(data: ComponentData) : UiComponent(data) {
   fun stripeButton(locator: QueryBuilder.() -> String): StripeButtonUi = x(StripeButtonUi::class.java, locator)
@@ -34,7 +37,9 @@ class ToolWindowLeftToolbarUi(data: ComponentData) : ToolWindowToolbarUi(data) {
   val persistenceButton: StripeButtonUi = stripeButton("Persistence")
   val valgrindButton: StripeButtonUi = stripeButton("Run Valgrind Memcheck")
   val vcpkg: StripeButtonUi = stripeButton("Vcpkg")
-  fun openMoreToolWindow() { moreButton.click() }
+  fun openMoreToolWindow() {
+    moreButton.click()
+  }
 }
 
 class ToolWindowRightToolbarUi(data: ComponentData) : ToolWindowToolbarUi(data) {
@@ -60,23 +65,24 @@ class StripeButtonUi(data: ComponentData) : UiComponent(data) {
 
   fun open() {
     val toolWindow = button.getToolWindow()
-    driver.ideLogger.info("Opening tool window: id=${toolWindow.getId()}, component=${component.getClass()}, active=${toolWindow.isActive()}")
-    if (!toolWindow.isActive()) {
-      val toolWindowId = toolWindow.getId()
-      val activateToolWindowAction = driver.utility(ActivateToolWindowActionManager::class)
-        .getActionIdForToolWindow(toolWindowId)
-      driver.ideLogger.info("Calling action on window: id=$toolWindowId, action=$activateToolWindowAction, component=${component.javaClass.simpleName}")
-      driver.invokeAction(activateToolWindowAction, component = component)
+    val id = toolWindow.getId()
+    driver.ideLogger.info("Opening tool window: id=$id, active=${toolWindow.isActive()}, visible=${toolWindow.isVisible()}")
+    driver.withContext(OnDispatcher.EDT) {
+      toolWindow.activate(runnable = null, autoFocusContents = true, forced = true)
+    }
+    waitFor("Tool window '$id' is visible", timeout = TOOL_WINDOW_STATE_TIMEOUT) {
+      toolWindow.isVisible()
     }
   }
 
-  fun toolwindowIsPresented(): Boolean {
-    return button.getToolWindow().isVisible()
-  }
-
   fun close() {
+    val toolWindow = button.getToolWindow()
+    val id = toolWindow.getId()
     driver.withContext(OnDispatcher.EDT) {
-      button.getToolWindow().hide()
+      toolWindow.hide()
+    }
+    waitFor("Tool window '$id' is hidden", timeout = TOOL_WINDOW_STATE_TIMEOUT) {
+      !toolWindow.isVisible()
     }
   }
 
@@ -91,13 +97,13 @@ class StripeButtonUi(data: ComponentData) : UiComponent(data) {
     fun getId(): String
     fun isActive(): Boolean
     fun isVisible(): Boolean
+
+    /**
+     * Shows the tool window. The call never hides it, so a repeated call is safe.
+     */
+    fun activate(runnable: Runnable?, autoFocusContents: Boolean, forced: Boolean)
     fun stretchWidth(value: Int)
     fun hide()
     fun stretchHeight(value: Int)
-  }
-
-  @Remote($$"com.intellij.ide.actions.ActivateToolWindowAction$Manager")
-  interface ActivateToolWindowActionManager {
-    fun getActionIdForToolWindow(id: String): String
   }
 }
