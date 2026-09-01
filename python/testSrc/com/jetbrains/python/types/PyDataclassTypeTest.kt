@@ -1080,4 +1080,38 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
           a: str = field(default_factory=(lambda: str)) # WARNING Expected type 'str', got 'type[str]' instead
       """.trimIndent())
   }
+
+  @Nested
+  inner class NestedDataclassThroughInstance {
+    @Test
+    @TestFor(issues = ["PY-91150"])
+    fun `nested dataclass called through self`() = test("""
+      from dataclasses import dataclass
+
+      class Adapter:
+          @dataclass
+          class Command:
+              x: int
+
+          def do(self):
+              expr = self.Command(1)
+      #       └ TYPE Command
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-91150"])
+    fun `nested dataclass passed as an argument through instance`() = test("""
+      from dataclasses import dataclass
+
+      class Adapter:
+          @dataclass
+          class Command:
+              x: int
+
+          def do(self, arg: Command) -> None: ...
+
+      a = Adapter()
+      a.do(a.Command(1))
+      """.trimIndent())
+  }
 }

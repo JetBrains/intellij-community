@@ -523,8 +523,11 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     PyType memberType = PyTypeUtil.getTypeOfMember(resolveResults, context, anchor);
     PyType specializedMemberType = PyTypeUtil.specializeMemberType(classType, selfType, memberType, context);
 
-    boolean isFunction = specializedMemberType instanceof PyCallableType && !(specializedMemberType instanceof PyClassLikeType) ||
-                         specializedMemberType instanceof PyOverloadType;
+    boolean resolvesToClass = ContainerUtil.and(resolveResults,
+                                                result -> result.getElement() instanceof PyClass);
+    boolean isFunction = !resolvesToClass &&
+                         (specializedMemberType instanceof PyCallableType && !(specializedMemberType instanceof PyClassLikeType) ||
+                          specializedMemberType instanceof PyOverloadType);
     if (isFunction) {
       // Callable that is also an instance attribute, as opposed to a normal method definition, as in:
       //
