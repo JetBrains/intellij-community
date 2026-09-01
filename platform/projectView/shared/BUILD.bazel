@@ -44,6 +44,7 @@ jvm_library(
         "//platform/util/coroutines",
         "//platform/platform-impl/concurrency",
         "//platform/util/concurrency",
+        "//platform/project-frame",
     ],
 )
 
@@ -84,6 +85,7 @@ jvm_library(
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/platform-impl/concurrency:concurrency_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
+        "//platform/project-frame:project-frame_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.projectView` end
