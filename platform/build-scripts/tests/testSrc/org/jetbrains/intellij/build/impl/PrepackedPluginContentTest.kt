@@ -14,11 +14,11 @@ internal class PrepackedPluginContentTest {
   )
 
   @Test
-  fun `accepts an unchanged module at the expected path`() {
+  fun `accepts the member the relation names`() {
     assertThatCode {
       validatePrepackedPluginContentHandoff(
         expected = relation,
-        actualRelativeOutputFile = relation.relativeOutputFile,
+        actualContentModule = relation.contentModule,
         hasModuleExclusions = false,
         hasPatchedOutput = false,
         hasPatchedDescriptor = false,
@@ -30,12 +30,16 @@ internal class PrepackedPluginContentTest {
     }.doesNotThrowAnyException()
   }
 
+  /**
+   * The relation is found by its destination, so a second member of the same plugin can arrive at it. The packed jar
+   * holds the member the relation names, so such a hand-off would drop one module and pack another one twice.
+   */
   @Test
-  fun `rejects a different JarPackager placement`() {
+  fun `rejects another member of the plugin at this destination`() {
     assertThatThrownBy {
       validatePrepackedPluginContentHandoff(
         expected = relation,
-        actualRelativeOutputFile = "intellij.plugin.content.jar",
+        actualContentModule = "intellij.plugin.other",
         hasModuleExclusions = false,
         hasPatchedOutput = false,
         hasPatchedDescriptor = false,
@@ -45,8 +49,9 @@ internal class PrepackedPluginContentTest {
         isTestPluginModule = false,
       )
     }.isInstanceOf(IllegalStateException::class.java)
-      .hasMessageContaining("expected 'modules/intellij.plugin.content.jar'")
-      .hasMessageContaining("selected 'intellij.plugin.content.jar'")
+      .hasMessageContaining("intellij.plugin/modules/intellij.plugin.content.jar")
+      .hasMessageContaining("packs 'intellij.plugin.content'")
+      .hasMessageContaining("offered 'intellij.plugin.other'")
   }
 
   @Test
@@ -93,7 +98,7 @@ internal class PrepackedPluginContentTest {
     assertThatThrownBy {
       validatePrepackedPluginContentHandoff(
         expected = relation,
-        actualRelativeOutputFile = relation.relativeOutputFile,
+        actualContentModule = relation.contentModule,
         hasModuleExclusions = hasModuleExclusions,
         hasPatchedOutput = hasPatchedOutput,
         hasPatchedDescriptor = hasPatchedDescriptor,

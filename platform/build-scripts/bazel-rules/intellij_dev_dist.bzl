@@ -77,21 +77,25 @@ def _add_input_entry(ctx, entries, origins, logical_key, files, source, origin):
         ))
 
 def _prepacked_by_relation(ctx, entries):
-    """Index prepacked plugin-jar records by their *(plugin, content module)* relation.
+    """Index prepacked plugin-jar records by their *(plugin, destination)* relation.
 
-    Same relation, same placement and same jar is the normal case - a content module shared by two plugins, or a
-    community half and the completion set naming the same member - and deduplicates. Anything else is two producers
-    disagreeing about where one jar goes, which the composer would only catch if the paths happened to collide.
+    The destination and not the member, because the jar is what a packing action produces and what the composer places.
+    One packed jar reaches two plugins at two destinations, so the destination is what tells the two relations apart;
+    the member cannot, and a later slice gives one relation more than one member.
+
+    Same relation, same member and same jar is the normal case - a content module shared by two plugins, or a community
+    half and the completion set naming the same member - and deduplicates. Anything else is two producers disagreeing
+    about what goes to one destination of one plugin, which the composer would only catch as a path collision.
     """
     result = {}
     for entry in entries:
-        key = (entry.plugin_main_module, entry.content_module)
+        key = (entry.plugin_main_module, entry.relative_output_file)
         previous = result.get(key)
-        if previous != None and (previous.relative_output_file != entry.relative_output_file or previous.jar != entry.jar):
+        if previous != None and (previous.content_module != entry.content_module or previous.jar != entry.jar):
             fail("%s: prepacked plugin relation %s/%s is provided by conflicting records" % (
                 ctx.label,
                 entry.plugin_main_module,
-                entry.content_module,
+                entry.relative_output_file,
             ))
         result[key] = entry
     return result
@@ -189,13 +193,16 @@ def _dev_build_inputs_impl(ctx):
 
     prepacked_by_key = _prepacked_by_relation(ctx, prepacked_plugin_jars)
 
+    # One relation per line, as `<plugin main module>\t<`lib/`-relative destination>\t<content module>`. The first two
+    # columns are the relation's key, which is why they lead; the member follows as the payload, and it is what tells
+    # `JarPackager` which module not to pack. `readPrepackedPluginContentPlan` in `DevDistMain.kt` is the one reader.
     plan_lines = []
     for key in sorted(prepacked_by_key.keys()):
         entry = prepacked_by_key[key]
-        for value in [entry.plugin_main_module, entry.content_module, entry.relative_output_file]:
+        for value in [entry.plugin_main_module, entry.relative_output_file, entry.content_module]:
             if "\t" in value or "\n" in value:
                 fail("%s: prepacked plugin plan value contains a tab or newline: %s" % (ctx.label, value))
-        plan_lines.append("%s\t%s\t%s" % (entry.plugin_main_module, entry.content_module, entry.relative_output_file))
+        plan_lines.append("%s\t%s\t%s" % (entry.plugin_main_module, entry.relative_output_file, entry.content_module))
     prepacked_plan = ctx.actions.declare_file(ctx.label.name + ".prepacked-plugin-jars")
     ctx.actions.write(prepacked_plan, ("\n".join(plan_lines) + "\n") if plan_lines else "")
 
@@ -769,13 +776,16 @@ def _packed_plugin_jars_component_impl(ctx):
         entries.extend(fragment.prepacked_plugin_jars.to_list())
     records = _prepacked_by_relation(ctx, entries)
 
+    # One relation per line, as `<plugin main module>\t<`lib/`-relative destination>\t<jar path>`. The first two columns
+    # are the relation's key, and the third is the bytes to place there. The member is not written: this component only
+    # copies a jar to a destination, and the destination is now part of the key. `collectPrepackedPluginContentJars` is
+    # the one reader, and it joins these lines to the fragment's placement manifests on the same two columns.
     metadata_lines = []
     jars = []
     for key in sorted(records.keys()):
         entry = records[key]
-        metadata_lines.append("%s\t%s\t%s\t%s" % (
+        metadata_lines.append("%s\t%s\t%s" % (
             entry.plugin_main_module,
-            entry.content_module,
             entry.relative_output_file,
             entry.jar.path,
         ))

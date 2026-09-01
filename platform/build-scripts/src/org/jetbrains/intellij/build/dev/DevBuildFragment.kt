@@ -4,14 +4,26 @@ package org.jetbrains.intellij.build.dev
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.ModuleItem
 
-/** Stable key of one plugin content-module jar handed from JarPackager to a Bazel packing action. */
+/**
+ * Stable key of one plugin jar handed from JarPackager to a Bazel packing action.
+ *
+ * One jar of one plugin, because the jar is what a packing action produces and what the composer places. A plugin puts
+ * one member's jar under `lib/modules/` and another plugin puts the same bytes directly in `lib/`, so the destination
+ * belongs to the relation - and it identifies the relation, while the member alone cannot: a jar may hold a name no
+ * member gives it, and a jar may hold more than one member.
+ */
 @ApiStatus.Internal
 data class PrepackedPluginContentKey(
   @JvmField val pluginMainModule: String,
-  @JvmField val contentModule: String,
+  /** Path below the plugin's `lib/` directory. */
+  @JvmField val relativeOutputFile: String,
 )
 
-/** The product-independent jar relation. Placement is validated against the product layout before it is used. */
+/**
+ * The product-independent jar relation. Placement is validated against the product layout before it is used.
+ *
+ * [key] is the relation's identity. [contentModule] is the payload: the one member this jar holds.
+ */
 @ApiStatus.Internal
 data class PrepackedPluginContentJar(
   @JvmField val pluginMainModule: String,
@@ -20,7 +32,7 @@ data class PrepackedPluginContentJar(
   @JvmField val relativeOutputFile: String,
 ) {
   val key: PrepackedPluginContentKey
-    get() = PrepackedPluginContentKey(pluginMainModule = pluginMainModule, contentModule = contentModule)
+    get() = PrepackedPluginContentKey(pluginMainModule = pluginMainModule, relativeOutputFile = relativeOutputFile)
 }
 
 /**

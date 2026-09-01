@@ -592,14 +592,21 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
   return runDir
 }
 
+/**
+ * Where this assembly put every jar it took from a packing action, as
+ * `<plugin main module>\t<`lib/`-relative destination>\t<distribution-relative path>`.
+ *
+ * The first two columns are the relation's key, so the composer joins these lines to the jar records on the same pair.
+ * `collectPrepackedPluginContentJars` is the one reader.
+ */
 private fun writePrepackedPluginContentPlacement(file: Path, plugins: List<PluginBuildResult>, runDir: Path) {
   val placements = LinkedHashMap<PrepackedPluginContentKey, String>()
   for (plugin in plugins.sortedBy(PluginBuildResult::mainModule)) {
-    for (jar in plugin.prepackedContentJars.map { it.jar }.sortedBy(PrepackedPluginContentJar::contentModule)) {
+    for (jar in plugin.prepackedContentJars.map { it.jar }.sortedBy(PrepackedPluginContentJar::relativeOutputFile)) {
       val finalPath = runDir.relativize(plugin.dir.resolve("lib").resolve(jar.relativeOutputFile)).invariantSeparatorsPathString
       val previous = placements.put(jar.key, finalPath)
       check(previous == null) {
-        "Prepacked plugin content ${jar.pluginMainModule}/${jar.contentModule} was placed twice: $previous and $finalPath"
+        "Prepacked plugin content ${jar.pluginMainModule}/${jar.relativeOutputFile} was placed twice: $previous and $finalPath"
       }
     }
   }
@@ -607,7 +614,7 @@ private fun writePrepackedPluginContentPlacement(file: Path, plugins: List<Plugi
   Files.writeString(file, buildString {
     for ((key, finalPath) in placements) {
       append(key.pluginMainModule).append('\t')
-        .append(key.contentModule).append('\t')
+        .append(key.relativeOutputFile).append('\t')
         .append(finalPath).append('\n')
     }
   })

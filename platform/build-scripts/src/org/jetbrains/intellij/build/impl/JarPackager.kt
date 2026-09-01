@@ -313,12 +313,15 @@ class JarPackager private constructor(
     relativeOutputFile: String,
     searchableOptionSet: SearchableOptionSetDescriptor?,
   ): Boolean {
-    val key = PrepackedPluginContentKey(pluginMainModule = pluginLayout.mainModule, contentModule = moduleName)
+    // The destination the layout picked, so a relation is offered the jar it named and no other. A relation the layout
+    // sends somewhere else is not found here, and `validatePrepackedPluginContent` then fails the build over it: the
+    // relation stays in `expected` and reaches `actual` through nothing.
+    val key = PrepackedPluginContentKey(pluginMainModule = pluginLayout.mainModule, relativeOutputFile = relativeOutputFile)
     val expected = prepackedPluginContent.get(key) ?: return false
     val module = context.outputProvider.findRequiredModule(moduleName)
     validatePrepackedPluginContentHandoff(
       expected = expected,
-      actualRelativeOutputFile = relativeOutputFile,
+      actualContentModule = moduleName,
       hasModuleExclusions = !pluginLayout.moduleExcludes.get(moduleName).isNullOrEmpty(),
       hasPatchedOutput = moduleOutputPatcher.patchCount(moduleName) != 0,
       // The plugin's descriptor lands in the jar of the main module, which is the layout's main jar. Both patch
@@ -352,8 +355,8 @@ class JarPackager private constructor(
     val actual = prepackedContentJars.mapTo(HashSet()) { it.jar.key }
     check(actual == expected) {
       "Prepacked plugin content of ${layout.mainModule} does not match its descriptor/layout:" +
-      " missing ${(expected - actual).sortedBy(PrepackedPluginContentKey::contentModule)}," +
-      " unexpected ${(actual - expected).sortedBy(PrepackedPluginContentKey::contentModule)}"
+      " missing ${(expected - actual).sortedBy(PrepackedPluginContentKey::relativeOutputFile)}," +
+      " unexpected ${(actual - expected).sortedBy(PrepackedPluginContentKey::relativeOutputFile)}"
     }
   }
 
@@ -848,7 +851,7 @@ class JarPackager private constructor(
 @VisibleForTesting
 internal fun validatePrepackedPluginContentHandoff(
   expected: PrepackedPluginContentJar,
-  actualRelativeOutputFile: String,
+  actualContentModule: String,
   hasModuleExclusions: Boolean,
   hasPatchedOutput: Boolean,
   hasPatchedDescriptor: Boolean,
@@ -857,9 +860,12 @@ internal fun validatePrepackedPluginContentHandoff(
   hasLayoutPlacedModuleLibrary: Boolean,
   isTestPluginModule: Boolean,
 ) {
-  val relation = "${expected.pluginMainModule}/${expected.contentModule}"
-  check(expected.relativeOutputFile == actualRelativeOutputFile) {
-    "Prepacked plugin content $relation expected '${expected.relativeOutputFile}', but JarPackager selected '$actualRelativeOutputFile'"
+  val relation = "${expected.pluginMainModule}/${expected.relativeOutputFile}"
+  // The relation is found by its destination, so the destination always agrees. What can disagree is the member: the
+  // layout can send another module of the same plugin to this destination, and the packed jar holds the member the
+  // relation names. Such a hand-off would drop one module and pack another one twice.
+  check(expected.contentModule == actualContentModule) {
+    "Prepacked plugin content $relation packs '${expected.contentModule}', but JarPackager offered '$actualContentModule'"
   }
   check(!hasModuleExclusions) { "Prepacked plugin content $relation has module exclusions" }
   check(!hasPatchedOutput) { "Prepacked plugin content $relation has patched module output" }
@@ -874,7 +880,7 @@ internal fun validatePrepackedPluginContentHandoff(
   // A produced descriptor is a file, so a packing action *could* hold it. Lifting this refusal for that case is a
   // change to what the packing action declares, and it needs its own gate. It is not a consequence of the channel.
   check(!hasPatchedDescriptor) {
-    "Prepacked plugin content $relation would replace '$actualRelativeOutputFile', which receives a patched $PLUGIN_XML_RELATIVE_PATH"
+    "Prepacked plugin content $relation would replace a jar which receives a patched $PLUGIN_XML_RELATIVE_PATH"
   }
   check(!hasGeneratedSearchableOptions) { "Prepacked plugin content $relation has generated searchable options" }
   // `computeSourcesForModuleLibs` lifts every `isSeparateLibraryJar` file out of the module jar into its own `lib/<name>.jar`. That call
