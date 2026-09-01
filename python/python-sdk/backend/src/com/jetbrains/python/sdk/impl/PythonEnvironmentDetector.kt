@@ -84,14 +84,41 @@ internal fun PythonBinary.detectPythonEnvironmentImpl(): PyResult<PythonEnvironm
 }
 
 /**
- * The interpreter version a `pyvenv.cfg` states, or null when it states none.
+ * The interpreter version the `pyvenv.cfg` states, or null when it states none.
  *
- * `version` is what the standard library's `venv` writes; `version_info` is the fuller form other tools write, whose
- * `.final.0` tail is not part of a version anyone shows.
+ * No PEP defines a version key. [PEP 405](https://peps.python.org/pep-0405/) defines only `home` and
+ * `include-system-site-packages`. Each tool adds its own key in its own shape:
+ *
+ * - `version_info`: `virtualenv` writes the full `sys.version_info` as `major.minor.micro.releaselevel.serial`.
+ *   The release level is a word: `alpha`, `beta`, `candidate` or `final`. An example is `3.14.0.candidate.1`.
+ *   uv writes the same key as `major.minor.micro`.
+ * - `version`: the standard library `venv` and `virtualenv` write `major.minor.micro`. An example is `3.14.4`.
+ * - `python-version`: [PEP 838](https://peps.python.org/pep-0838/) adds `major.minor` only. An example is `3.14`.
+ *
+ * `version_info` comes first, because only that key can carry a pre-release. `python-version` comes last, because it
+ * is the least exact. A value the parser does not accept falls through to the next key.
  */
 private fun Map<String, String>.recordedVersion(): String? =
-  this["version"]?.takeIf { it.isNotBlank() }
-  ?: this["version_info"]?.substringBefore(".final")?.takeIf { it.isNotBlank() }
+  sequenceOf("version_info", "version", "python-version").firstNotNullOfOrNull { key -> this[key]?.let(::parseRecordedVersion) }
+
+/** The `sys.version_info` release level, mapped to its [PEP 440](https://peps.python.org/pep-0440/) suffix. `final` gets no suffix. */
+private val PRE_RELEASE_SUFFIX: Map<String, String> = mapOf("alpha" to "a", "beta" to "b", "candidate" to "rc")
+
+/**
+ * [raw] as a version to show, or null when [raw] does not start with a number.
+ *
+ * The parser keeps up to three leading numbers, then adds a pre-release suffix. It drops a tail that it does not know.
+ * `3.14.4.final.0` gives `3.14.4`, and `3.14.0.candidate.1` gives `3.14.0rc1`.
+ */
+private fun parseRecordedVersion(raw: String): String? {
+  val parts = raw.trim().split('.')
+  val numbers = parts.takeWhile { it.isNotEmpty() && it.all(Char::isDigit) }
+  if (numbers.isEmpty()) return null
+  val version = numbers.take(3).joinToString(".")
+  val suffix = parts.getOrNull(numbers.size)?.let(PRE_RELEASE_SUFFIX::get) ?: return version
+  val serial = parts.getOrNull(numbers.size + 1)?.takeIf { it.isNotEmpty() && it.all(Char::isDigit) } ?: return version
+  return "$version$suffix$serial"
+}
 
 /**
  * The version of the `python` package conda recorded in [condaMeta], read from the name of its entry.
