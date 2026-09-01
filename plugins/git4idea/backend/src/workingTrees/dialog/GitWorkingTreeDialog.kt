@@ -189,7 +189,10 @@ internal class GitWorkingTreeDialog(
         cell(newBranchNameField)
           .align(Align.FILL)
           .validationRequestor(WHEN_GRAPH_PROPAGATION_FINISHED(propertyGraph))
-          .validationOnInput { validateNewBranchNameField() }
+          .validationOnInput {
+            if (newBranchName.get().isBlank()) return@validationOnInput null
+            validateNewBranchNameField()
+          }
           .validationOnApply { validateNewBranchNameField() }
       }
         .bottomGap(BottomGap.MEDIUM)
@@ -200,7 +203,10 @@ internal class GitWorkingTreeDialog(
           .bindText(projectName)
           .align(Align.FILL)
           .validationRequestor(WHEN_GRAPH_PROPAGATION_FINISHED(propertyGraph))
-          .validationOnInput { validateProjectName() }
+          .validationOnInput {
+            if (projectName.get().isBlank()) return@validationOnInput null
+            validateProjectName()
+          }
           .validationOnApply { validateProjectName() }
       }
       row(GitBundle.message("working.tree.dialog.label.location")) {
@@ -210,7 +216,10 @@ internal class GitWorkingTreeDialog(
           .bindText(parentPath)
           .align(Align.FILL)
           .validationRequestor(WHEN_GRAPH_PROPAGATION_FINISHED(propertyGraph))
-          .validationOnInput { validateLocationOnInput() }
+          .validationOnInput {
+            if (parentPath.get().isBlank()) return@validationOnInput null
+            validateLocationOnInput()
+          }
           .validationOnApply { validateLocationOnApply() }
           .comment("", maxLineLength = MAX_LINE_LENGTH_WORD_WRAP)
 
