@@ -383,10 +383,15 @@ internal class FrozenColumnsController(
     installFrozenScrolling(parent, frozen)
 
     // The frozen table has its own model instance, so forward granular updates without stacking listeners on rebuild.
+    // The originating place travels along: dropping it makes every listener treat an edit of its own as a foreign
+    // change, and the Record View then rewrites the field being typed in.
     val modelSync = TableModelListener { event ->
       val currentFrozen = frozenView ?: return@TableModelListener
       val model = currentFrozen.model
-      model.fireTableChanged(TableModelEvent(model, event.firstRow, event.lastRow, event.column, event.type))
+      model.fireTableChanged(
+        if (event is GridTableModel.RequestedTableModelEvent)
+          GridTableModel.RequestedTableModelEvent(model, event.firstRow, event.lastRow, event.column, event.type, event.place)
+        else TableModelEvent(model, event.firstRow, event.lastRow, event.column, event.type))
     }
     frozenModelSync = modelSync
     primaryView.model.addTableModelListener(modelSync)
