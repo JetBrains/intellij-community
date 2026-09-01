@@ -1522,7 +1522,7 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
   jetbrainsLibrary("find-file-model"),
   jetbrainsLibrary("find-file-model-experimental"),
   jetbrainsLibrary("git-learning-project"),
-  jetbrainsLibrary("jetbrains.ai.completion.trigger.nes.polyglot.demo"),
+  jetbrainsLibrary("jetbrains.ai.completion.trigger.nes.polyglot"),
     jetbrainsLibrary("jetbrains.compose.components.ui.tooling.preview.desktop"),
     jetbrainsLibrary("jetbrains.compose.hot.reload.devtools.api"),
     jetbrainsLibrary("jetbrains.compose.hot.reload.gradle.idea"),
