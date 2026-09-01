@@ -48,6 +48,34 @@ private const val CONTENT_REPORT_USAGE: String =
   "deletes its build output, the report with it."
 
 /**
+ * What `--verify-dev-dist-plan=` takes, and how to get the file it names.
+ *
+ * The plan is a pure side output of a fragment action, so a plain build writes none: the flag has to be on, and the
+ * output group has to be asked for. `_declare_plan` in `intellij_dev_dist.bzl` is the declaration.
+ */
+private const val DEV_DIST_PLAN_USAGE: String =
+  "--verify-dev-dist-plan=<file> compares the jars this model derives for a plugin against the jars a dev-distribution\n" +
+  "fragment really packed. Repeat it once per fragment.\n" +
+  "\n" +
+  "A fragment writes its plan only when asked:\n" +
+  "  ./bazel.cmd build //build:idea_dev_plugins_plugins_rest \\\n" +
+  "    --@community//platform/build-scripts/bazel-rules:dev_dist_plans \\\n" +
+  "    --output_groups=+dev_dist_plans\n" +
+  "\n" +
+  "The file is '<target name>.plan.yaml' beside the fragment's other outputs."
+
+/**
+ * What a differing plan comparison prints, which names the one field that closes most of the remainder.
+ *
+ * Beside the two usage strings above, because all three are what this entry point says about one mode.
+ */
+private const val PLUGIN_JAR_PLAN_REMAINDER: String =
+  "The model and the run name different jars above, and one missing residue field is what most of it is: a\n" +
+  "`PluginLayout.withModule(name, jarName)` member reaches `extra_members` of 'dev-dist.yaml' with no jar name, so the\n" +
+  "derivation co-packs it into the plugin's main jar. That over-states the main jar and leaves the member's own jar\n" +
+  "unnamed, which is the same fact counted twice - once as a difference and once as a hold-out."
+
+/**
  To enable debug logging in Bazel: --sandbox_debug --verbose_failures --define=kt_trace=1
  */
 internal class JpsModuleToBazel {
@@ -67,11 +95,17 @@ internal class JpsModuleToBazel {
       var writeDevDistResidue = false
       var verifyDevDistResidue = false
       val contentReports = ArrayList<Path>()
+      val devDistPlans = ArrayList<Path>()
 
       for (arg in args) {
         when {
           arg == "--write-dev-dist-residue" -> writeDevDistResidue = true
           arg == "--verify-dev-dist-residue" -> verifyDevDistResidue = true
+          arg.startsWith("--verify-dev-dist-plan=") -> {
+            val plan = Path.of(arg.substringAfter("=")).toAbsolutePath().normalize()
+            check(plan.isRegularFile()) { "Dev-distribution plan $plan must be an existing file. $DEV_DIST_PLAN_USAGE" }
+            devDistPlans.add(plan)
+          }
           arg.startsWith("--content-report=") -> {
             contentReports.addAll(resolveContentReports(Path.of(arg.substringAfter("="))))
           }
@@ -247,6 +281,18 @@ internal class JpsModuleToBazel {
         }
         else if (result.skippedPartialRemovals.isNotEmpty()) {
           reportSkippedPartialRemovals(result)
+        }
+      }
+
+      // After the residue, for the same reason it comes after generation: a check must not change what the run writes.
+      if (devDistPlans.isNotEmpty()) {
+        println()
+        println("dev-dist plan: ${devDistPlans.size} fragment plan(s)")
+        val agreed = reportPluginJarPlanComparison(moduleList = moduleList, context = generator, plans = devDistPlans)
+        if (!agreed) {
+          println()
+          println(PLUGIN_JAR_PLAN_REMAINDER)
+          exitProcess(1)
         }
       }
     }

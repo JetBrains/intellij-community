@@ -18,6 +18,12 @@
 # `[descriptor_population]` - which (plugin, layout variant) a `dev_dist_plugin_descriptor` target exists for,
 # one `<main module>` or `<main module>/<variant>` per row. The converter emits one target per row, beside
 # the plugin.
+#
+# `[plugin_jar_placement]` - where a plugin puts its own jars, for the plugin whose layout renames its
+# directory or its main jar. Three tab-separated tokens: `<main module>`, `<directory>`, `<main jar name>`.
+# A plugin with no row takes the convention `intellij.a.b` -> `a-b` and `a-b.jar`, which is what
+# `PluginLayout` gives a plugin that renames neither. The converter needs both names to state a jar of the
+# plugin in the dev-distribution recipe, and no project model holds either.
 
 [content_vetoes]
 intellij.angular.backend
@@ -219,3 +225,67 @@ intellij.wsl.remoteSdk/windows
 intellij.xml.refactoring
 intellij.xpath
 intellij.yaml
+
+[plugin_jar_placement]
+intellij.android.design-plugin.descriptor	design-tools	design-tools.jar
+intellij.android.plugin.descriptor	android	android.jar
+intellij.ant	ant	antIntegration.jar
+intellij.cwm	cwm-plugin	cwm-plugin.jar
+intellij.database.plugin	DatabaseTools	database-plugin.jar
+intellij.diagram.plugin	uml	uml-support.jar
+intellij.groovy	Groovy	Groovy.jar
+intellij.java.guiForms.designer	uiDesigner	uiDesigner.jar
+intellij.java.plugin	java	java-impl.jar
+intellij.javaFX.community	javaFX	javaFX.jar
+intellij.javaee.appServers.glassfish	Glassfish	glassfishIntegration.jar
+intellij.javaee.appServers.weblogic	weblogicIntegration	weblogicIntegration.jar
+intellij.javaee.jpa.impl	JPA	jpa-support.jar
+intellij.javaee.jpa.jpb.model	JPA Model	jpa-model.jar
+intellij.javaee.jpabuddy.bootstrap	JPA Buddy	jpa-buddy.jar
+intellij.javaee.platform.plugin	JavaEE	javaee-platform.jar
+intellij.javaee.web.impl	JavaeeWeb	javaee-web.jar
+intellij.kotlin.jsr223.plugin	KotlinScripting	kotlin-scripting-plugin.jar
+intellij.kotlin.plugin	Kotlin	kotlin-plugin.jar
+intellij.lombok.plugin	lombok	lombok-plugin.jar
+intellij.php.impl	php-impl	php.jar
+intellij.python.community.plugin	python-ce	python-ce.jar
+intellij.python.plugin	python	python.jar
+intellij.remoteDevServer	remote-dev-server	remote-dev-server.jar
+intellij.rider.plugins.cpp	rider-cpp	rider-cpp.jar
+intellij.rider.plugins.debuggerLinq	debuggerLinq	debuggerLinq.jar
+intellij.rider.plugins.dotCommon	dotCommon	dotCommon.jar
+intellij.rider.plugins.dotCover	dotCover	dotCover.jar
+intellij.rider.plugins.dotTrace.dotMemory	dotTrace.dotMemory	dotTrace.dotMemory.jar
+intellij.rider.plugins.dpa	dpa	dpa.jar
+intellij.rider.plugins.efCore	rider-efcore	rider-plugins-efCore.jar
+intellij.rider.plugins.godot	rider-godot	rider-plugins-godot.jar
+intellij.rider.plugins.godot.gdscript	rider-gdscript	rider-plugins-godot-gdscript.jar
+intellij.rider.plugins.sqlproj	rider-sqlproj-plugin	rider-plugins-sqlproj.jar
+intellij.rider.plugins.unity	rider-unity	rider-plugins-unity.jar
+intellij.rider.plugins.unreal.link	UnrealLink	rider-plugins-unreal-link.jar
+intellij.rider.plugins.verse	rider-verse	rider-plugins-verse.jar
+intellij.ruby.plugin	ruby	ruby.jar
+intellij.rustrover.plugin	intellij-rust	intellij-rust.jar
+intellij.spring.core.plugin	Spring	spring.jar
+intellij.tasks.core	tasks	tasks-core.jar
+intellij.testng	testng	testng-plugin.jar
+language-server.plugins.bazel	bazel	language-server-plugins-bazel.jar
+language-server.plugins.bazel.lsp	bazel.lsp	language-server-plugins-bazel-lsp.jar
+language-server.plugins.dap-jvm	dap-jvm	language-server-plugins-dap-jvm.jar
+language-server.plugins.db-connectivity	db-connectivity	language-server-plugins-db-connectivity.jar
+language-server.plugins.db-connectivity.lsp	db-connectivity.lsp	language-server-plugins-db-connectivity-lsp.jar
+language-server.plugins.editorconfig	editorconfig	language-server-plugins-editorconfig.jar
+language-server.plugins.go	go	language-server-plugins-go.jar
+language-server.plugins.go.lsp	go.lsp	language-server-plugins-go-lsp.jar
+language-server.plugins.java	java	language-server-plugins-java.jar
+language-server.plugins.java-base.lsp	java-base.lsp	language-server-plugins-java-base-lsp.jar
+language-server.plugins.java-dap.lsp	java-dap.lsp	language-server-plugins-java-dap-lsp.jar
+language-server.plugins.java.lsp	java.lsp	language-server-plugins-java-lsp.jar
+language-server.plugins.kotlin	kotlin	language-server-plugins-kotlin.jar
+language-server.plugins.kotlin-dap.lsp	kotlin-dap.lsp	language-server-plugins-kotlin-dap-lsp.jar
+language-server.plugins.kotlin.lsp	kotlin.lsp	language-server-plugins-kotlin-lsp.jar
+language-server.plugins.mcp	mcp	language-server-plugins-mcp.jar
+language-server.plugins.spring	spring	language-server-plugins-spring.jar
+language-server.plugins.spring.lsp	spring.lsp	language-server-plugins-spring-lsp.jar
+language-server.plugins.sql	sql	language-server-plugins-sql.jar
+language-server.plugins.sql.lsp	sql.lsp	language-server-plugins-sql-lsp.jar

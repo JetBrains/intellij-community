@@ -15,7 +15,7 @@ internal class DevDistPluginModelTablesTest {
   val temporaryFolder: TemporaryFolder = TemporaryFolder()
 
   @Test
-  fun `one file states the three tables`() {
+  fun `one file states the four tables`() {
     val tables = read(
       "# a comment\n" +
       "\n" +
@@ -30,7 +30,10 @@ internal class DevDistPluginModelTablesTest {
       "[$DESCRIPTOR_POPULATION_SECTION]\n" +
       "intellij.one.layout\n" +
       "intellij.per.platform/mac\n" +
-      "intellij.per.platform/win\n"
+      "intellij.per.platform/win\n" +
+      "\n" +
+      "[$PLUGIN_JAR_PLACEMENT_SECTION]\n" +
+      "intellij.renamed\tRenamed Plugin\trenamed.jar\n"
     )
 
     assertEquals(setOf("intellij.vetoed"), tables.contentModuleJarVetoes)
@@ -42,6 +45,18 @@ internal class DevDistPluginModelTablesTest {
       mapOf("intellij.one.layout" to listOf(""), "intellij.per.platform" to listOf("mac", "win")),
       tables.descriptorPopulation,
     )
+    // A directory holding a space is why the row is tab separated: `intellij.javaee.jpa.jpb.model` places `JPA Model`.
+    val placement = tables.pluginJarPlacement.getValue("intellij.renamed")
+    assertEquals("Renamed Plugin", placement.directory)
+    assertEquals("renamed.jar", placement.mainJarName)
+  }
+
+  @Test
+  fun `a plugin with no row takes the convention`() {
+    val placement = pluginJarPlacementConvention("intellij.clouds.docker.impl")
+
+    assertEquals("clouds-docker-impl", placement.directory)
+    assertEquals("clouds-docker-impl.jar", placement.mainJarName)
   }
 
   @Test
@@ -51,15 +66,20 @@ internal class DevDistPluginModelTablesTest {
     assertEquals(emptySet<String>(), tables.contentModuleJarVetoes)
     assertEquals(emptyMap<String, Set<String>?>(), tables.contentCandidateOverrides)
     assertEquals(emptyMap<String, List<String>>(), tables.descriptorPopulation)
+    assertEquals(emptyMap<String, PluginJarPlacement>(), tables.pluginJarPlacement)
   }
 
   @Test
   fun `an empty section states an empty table`() {
-    val tables = read("[$CONTENT_VETOES_SECTION]\n[$CONTENT_CANDIDATE_OVERRIDES_SECTION]\n[$DESCRIPTOR_POPULATION_SECTION]\n")
+    val tables = read(
+      "[$CONTENT_VETOES_SECTION]\n[$CONTENT_CANDIDATE_OVERRIDES_SECTION]\n" +
+      "[$DESCRIPTOR_POPULATION_SECTION]\n[$PLUGIN_JAR_PLACEMENT_SECTION]\n"
+    )
 
     assertEquals(emptySet<String>(), tables.contentModuleJarVetoes)
     assertEquals(emptyMap<String, Set<String>?>(), tables.contentCandidateOverrides)
     assertEquals(emptyMap<String, List<String>>(), tables.descriptorPopulation)
+    assertEquals(emptyMap<String, PluginJarPlacement>(), tables.pluginJarPlacement)
   }
 
   @Test
@@ -75,6 +95,11 @@ internal class DevDistPluginModelTablesTest {
       // the other way, which is the class of defect one declared file exists to remove.
       "[content_veto]\nintellij.vetoed\n" to "is not a section of this file",
       "intellij.vetoed\n" to "is above the first section header",
+      // A two-token placement row would read the jar name as absent, and the recipe would then name a jar the
+      // distribution does not hold.
+      "[$PLUGIN_JAR_PLACEMENT_SECTION]\nintellij.renamed\tRenamed\n" to "a row states",
+      "[$PLUGIN_JAR_PLACEMENT_SECTION]\nintellij.renamed\tRenamed\tone.jar\nintellij.renamed\tOther\ttwo.jar\n" to
+        "has two placement rows",
     )) {
       val failure = assertThrows(IllegalStateException::class.java) { read(text) }
       assertTrue(failure.message, failure.message!!.contains(clause))

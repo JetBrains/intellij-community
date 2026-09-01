@@ -184,6 +184,13 @@ java_test(
 )
 
 java_test(
+    name = "dev-dist-plugin-jar-plan-tests",
+    size = "small",
+    test_class = "org.jetbrains.intellij.build.bazel.DevDistPluginJarPlanTest",
+    runtime_deps = [":bazel-generator-integration-tests-lib"],
+)
+
+java_test(
     name = "dev-dist-residue-direction-tests",
     size = "small",
     test_class = "org.jetbrains.intellij.build.bazel.DevDistResidueDirectionTest",

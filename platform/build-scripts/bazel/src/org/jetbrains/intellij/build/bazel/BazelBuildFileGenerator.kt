@@ -197,7 +197,7 @@ internal class BazelBuildFileGenerator(
   private val moduleToDescriptor = IdentityHashMap<JpsModule, ModuleDescriptor>()
 
   /**
-   * The three tables `plugin-model-tool` hands this run; see [PLUGIN_MODEL_TABLES_FILE_NAME].
+   * The four tables `plugin-model-tool` hands this run; see [PLUGIN_MODEL_TABLES_FILE_NAME].
    *
    * One read, because they are one file. Under `community/build/` in both kinds of checkout, so a community-only run
    * reads the same rows and never matches one naming a plugin it does not have.
@@ -257,6 +257,16 @@ internal class BazelBuildFileGenerator(
   /** Product/plugin layout transformations that make a raw module-output jar ineligible for direct handoff. */
   val pluginContentModuleJarVetoes: Set<String>
     get() = devDistPluginModelTables.contentModuleJarVetoes
+
+  /**
+   * Where a plugin puts its own jars, by plugin main module, for the plugin that deviates; see
+   * [DevDistPluginModelTables.pluginJarPlacement].
+   *
+   * Read by the dev-distribution jar-plan comparison alone. Generation states membership and never a path of the
+   * plugin's own, so nothing a generation run writes depends on this table.
+   */
+  val pluginJarPlacement: Map<String, PluginJarPlacement>
+    get() = devDistPluginModelTables.pluginJarPlacement
 
   fun getKnownModuleDescriptorOrError(module: JpsModule): ModuleDescriptor {
     return moduleToDescriptor.get(module) ?: error("No descriptor for module ${module.name}")
