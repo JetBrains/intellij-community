@@ -487,11 +487,14 @@ private fun applyProjectFrameUiPolicy(
 ) {
   val exclusiveShowing = projectFrameUiPolicy.toolWindowIdsToExclusiveShowing
   if (exclusiveShowing.isNotEmpty()) {
-    val impl = toolWindowManager as ToolWindowManagerImpl
+    val toHide = toolWindowManager.toolWindowIds.filter { !exclusiveShowing.contains(it) }
 
-    for (id in toolWindowManager.toolWindowIds) {
-      if (!exclusiveShowing.contains(id)) {
-        impl.hideToolWindow(id, removeFromStripe = true)
+    if (toHide.isNotEmpty()) {
+      toolWindowManager.invokeLater {
+        val impl = toolWindowManager as ToolWindowManagerImpl
+        for (id in toHide) {
+          impl.hideToolWindow(id, removeFromStripe = true)
+        }
       }
     }
   }
