@@ -355,8 +355,9 @@ class MergeConflictModel(
   }
 
   fun canResolveChangeAutomatically(changeIndex: Int, side: ThreeSide): Boolean {
-    val change = getByIndex(changeIndex)
+    if (mergeRequest.conflictType.isModifyDeleteFileConflict()) return false
 
+    val change = getByIndex(changeIndex)
     return if (change.isConflict) {
       side == ThreeSide.BASE &&
       change.conflictType.canBeResolved() &&
@@ -369,6 +370,11 @@ class MergeConflictModel(
       change.isChange(side) &&
       !isChangeRangeModified(change)
     }
+  }
+
+  private fun ConflictType.isModifyDeleteFileConflict() = when (this) {
+    ConflictType.MODIFIED_DELETED, ConflictType.DELETED_MODIFIED -> true
+    ConflictType.DEFAULT, ConflictType.ADDED_ADDED -> false
   }
 
   private fun TextMergeRequest.resetOutputContent() {
