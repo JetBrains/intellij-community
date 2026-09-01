@@ -48,7 +48,21 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
     doTest(left, base, right, changesCount, IgnorePolicy.DEFAULT, f)
   }
 
+  fun doTest(
+    left: String, base: String, right: String, changesCount: Int,
+    conflictType: ConflictType, f: TestBuilder.() -> Unit,
+  ) {
+    doTest(left, base, right, changesCount, IgnorePolicy.DEFAULT, conflictType, f)
+  }
+
   fun doTest(left: String, base: String, right: String, changesCount: Int, policy: IgnorePolicy, f: TestBuilder.() -> Unit) {
+    doTest(left, base, right, changesCount, policy, ConflictType.DEFAULT, f)
+  }
+
+  fun doTest(
+    left: String, base: String, right: String, changesCount: Int, policy: IgnorePolicy,
+    conflictType: ConflictType, f: TestBuilder.() -> Unit,
+  ) {
     val contentFactory = DiffContentFactoryImpl()
     val leftContent: DocumentContent = contentFactory.create(parseSource(left))
     val baseContent: DocumentContent = contentFactory.create(parseSource(base))
@@ -57,7 +71,7 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
     outputContent.document.setReadOnly(false)
 
     val context = MockMergeContext(project)
-    val request = MockMergeRequest(leftContent, baseContent, rightContent, outputContent)
+    val request = MockMergeRequest(leftContent, baseContent, rightContent, outputContent, conflictType)
 
     val settings = TextDiffSettings()
     settings.ignorePolicy = policy
@@ -376,10 +390,13 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
     }
   }
 
-  private class MockMergeRequest(val left: DocumentContent,
-                                 val base: DocumentContent,
-                                 val right: DocumentContent,
-                                 val output: DocumentContent) : TextMergeRequest() {
+  private class MockMergeRequest(
+    val left: DocumentContent,
+    val base: DocumentContent,
+    val right: DocumentContent,
+    val output: DocumentContent,
+    private val requestConflictType: ConflictType = ConflictType.DEFAULT,
+  ) : TextMergeRequest() {
     override fun getTitle(): String? = null
 
     override fun applyResult(result: MergeResult) {
@@ -390,6 +407,8 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
     override fun getOutputContent(): DocumentContent = output
 
     override fun getContentTitles(): List<String?> = listOf(null, null, null)
+
+    override fun getConflictType(): ConflictType = requestConflictType
   }
 
   enum class SidesState {

@@ -820,6 +820,38 @@ class MergeTest : MergeTestBase() {
     }
   }
 
+  fun testDoNotAutoResolveDeletedByUsFileConflict() {
+    // "deleted by us": ours (left) removed the file, theirs (right) kept the base content (e.g. a rename).
+    doTest("", "A_B_C", "A_B_C", 1, ConflictType.DELETED_MODIFIED) {
+      assertFalse(0.canResolveConflict())
+
+      runApplyNonConflictsAction(ThreeSide.BASE)
+      0.assertResolved(NONE)
+      assertContent("A_B_C")
+    }
+  }
+
+  fun testDoNotAutoResolveDeletedByThemFileConflict() {
+    // "deleted by them": theirs (right) removed the file, ours (left) kept the base content.
+    doTest("A_B_C", "A_B_C", "", 1, ConflictType.MODIFIED_DELETED) {
+      assertFalse(0.canResolveConflict())
+
+      runApplyNonConflictsAction(ThreeSide.BASE)
+      0.assertResolved(NONE)
+      assertContent("A_B_C")
+    }
+  }
+
+  fun testAutoResolveDeletionWithoutFileConflictType() {
+    // Control: without the modify/delete ConflictType, the same one-sided change still auto-resolves.
+    doTest("", "A_B_C", "A_B_C", 1) {
+      assertTrue(0.canResolveConflict())
+
+      runApplyNonConflictsAction(ThreeSide.BASE)
+      0.assertResolved(BOTH)
+    }
+  }
+
   fun testApplySeveralActions() {
     doTest("X_1_Y_2_Z_3_4_U_W_",
                           "X_a_Y_b_Z_c_U_d_W_",

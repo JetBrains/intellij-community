@@ -2,6 +2,7 @@
 package com.intellij.diff.requests;
 
 import com.intellij.diff.contents.DocumentContent;
+import com.intellij.diff.merge.ConflictType;
 import com.intellij.diff.merge.MergeCallback;
 import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.merge.MergeUtil;
@@ -25,6 +26,7 @@ public class TextMergeRequestImpl extends TextMergeRequest {
   private final @NotNull List<DocumentContent> myContents;
 
   private final @NotNull CharSequence myOriginalContent;
+  private final @NotNull ConflictType myConflictType;
 
   private final @Nullable @NlsContexts.DialogTitle String myTitle;
   private final @NotNull List<String> myTitles;
@@ -35,12 +37,23 @@ public class TextMergeRequestImpl extends TextMergeRequest {
                               @NotNull List<DocumentContent> contents,
                               @Nullable @NlsContexts.DialogTitle String title,
                               @NotNull List<@Nls String> contentTitles) {
+    this(project, output, originalContent, contents, ConflictType.DEFAULT, title, contentTitles);
+  }
+
+  public TextMergeRequestImpl(@Nullable Project project,
+                              @NotNull DocumentContent output,
+                              @NotNull CharSequence originalContent,
+                              @NotNull List<DocumentContent> contents,
+                              @NotNull ConflictType conflictType,
+                              @Nullable @NlsContexts.DialogTitle String title,
+                              @NotNull List<@Nls String> contentTitles) {
     assert contents.size() == 3;
     assert contentTitles.size() == 3;
     myProject = project;
 
     myOutput = output;
     myOriginalContent = originalContent;
+    myConflictType = conflictType;
 
     myContents = contents;
     myTitles = contentTitles;
@@ -55,6 +68,11 @@ public class TextMergeRequestImpl extends TextMergeRequest {
   @Override
   public @NotNull List<DocumentContent> getContents() {
     return myContents;
+  }
+
+  @Override
+  public @NotNull ConflictType getConflictType() {
+    return myConflictType;
   }
 
   @Override

@@ -333,7 +333,8 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
 
     List<DocumentContent> contents = DiffUtil.getDocumentContentsForViewer(project, byteContents, output, conflictType);
 
-    return new TextMergeRequestImpl(project, outputContent, originalContent, contents, title, contentTitles);
+    ConflictType effectiveConflictType = conflictType != null ? conflictType : ConflictType.DEFAULT;
+    return new TextMergeRequestImpl(project, outputContent, originalContent, contents, effectiveConflictType, title, contentTitles);
   }
 
   @Override

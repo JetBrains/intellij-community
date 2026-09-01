@@ -12,4 +12,8 @@ public abstract class TextMergeRequest extends ThreesideMergeRequest {
 
   @Override
   public abstract @NotNull DocumentContent getOutputContent();
+
+  public @NotNull ConflictType getConflictType() {
+    return ConflictType.DEFAULT;
+  }
 }

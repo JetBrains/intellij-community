@@ -351,6 +351,7 @@ f:com.intellij.diff.merge.MergeTool$ToolbarComponents
 a:com.intellij.diff.merge.TextMergeRequest
 - com.intellij.diff.merge.ThreesideMergeRequest
 - <init>():V
+- getConflictType():com.intellij.diff.merge.ConflictType
 - a:getContents():java.util.List
 - a:getOutputContent():com.intellij.diff.contents.DocumentContent
 a:com.intellij.diff.merge.ThreesideMergeRequest
