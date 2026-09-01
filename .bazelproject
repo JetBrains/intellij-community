@@ -3,6 +3,19 @@
 
 dot_idea_directory_location: .idea.bazel
 
+index_all_files_in_directories: true
+
+directories:
+  .
+  -build/download
+  -build/dependencies/build/android-sdk
+  -config
+  -out
+  -platform/sqlite/target
+  -system
+  -test-config
+  -test-system
+
 targets:
   //...
   @rules_jvm//...
