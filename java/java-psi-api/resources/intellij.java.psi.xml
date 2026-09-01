@@ -5,6 +5,6 @@
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey key="java.highest.language.level" defaultValue="26" description="Highest released language level" restartRequired="false"/>
+    <registryKey key="java.highest.language.level" defaultValue="27" description="Highest released language level" restartRequired="false"/>
   </extensions>
 </idea-plugin>
