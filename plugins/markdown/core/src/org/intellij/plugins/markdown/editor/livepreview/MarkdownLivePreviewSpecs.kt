@@ -103,7 +103,7 @@ private fun PsiElement.toImageSpec(): MarkdownLivePreviewSpec.Image? {
     return null
   }
   val lineRange = image.wholeLineRange() ?: return null
-  return MarkdownLivePreviewSpec.Image(lineRange, destination)
+  return MarkdownLivePreviewSpec.Image(lineRange.toMarkdownLivePreviewRange(), destination)
 }
 
 private fun List<MarkdownImage>.hasNonBlankTextBetween(paragraphText: String, paragraphStart: Int): Boolean {
@@ -121,7 +121,7 @@ private fun PsiElement.toSetextCodeSpanUnderlineSpec(): MarkdownLivePreviewSpec?
 }
 
 private fun PsiElement.toHorizontalRuleSpec(): MarkdownLivePreviewSpec.HorizontalRule {
-  return MarkdownLivePreviewSpec.HorizontalRule(wholeLineRange() ?: textRange)
+  return MarkdownLivePreviewSpec.HorizontalRule((wholeLineRange() ?: textRange).toMarkdownLivePreviewRange())
 }
 
 private fun PsiElement.toFrontMatterDelimiterSpec(): MarkdownLivePreviewSpec? {
@@ -174,8 +174,8 @@ private fun PsiElement.toBulletSpec(): MarkdownLivePreviewSpec.Bullet? {
     .count { PsiUtilCore.getElementType(it) == MarkdownElementTypes.LIST_ITEM }
   val markerStart = textRange.startOffset + markerOffset
   return MarkdownLivePreviewSpec.Bullet(
-    range = textRange,
-    concealRange = TextRange(markerStart, markerStart + 1),
+    range = textRange.toMarkdownLivePreviewRange(),
+    concealRange = TextRange(markerStart, markerStart + 1).toMarkdownLivePreviewRange(),
     placeholderText = BULLET_PLACEHOLDERS[(depth - 1) % BULLET_PLACEHOLDERS.length].toString(),
   )
 }
@@ -225,14 +225,17 @@ private fun PsiElement.toAutolinkSpecs(): MarkdownLivePreviewSpec.Conceal? {
   val closeBracket = nextSibling ?: return null
   if (PsiUtilCore.getElementType(closeBracket) != MarkdownTokenTypes.GT) return null
   return MarkdownLivePreviewSpec.Conceal(
-    range = TextRange(openBracket.textRange.startOffset, closeBracket.textRange.endOffset),
-    conceals = listOf(openBracket.textRange, closeBracket.textRange),
+    range = TextRange(openBracket.textRange.startOffset, closeBracket.textRange.endOffset).toMarkdownLivePreviewRange(),
+    conceals = listOf(openBracket.textRange, closeBracket.textRange).map { it.toMarkdownLivePreviewRange() },
   )
 }
 
 private fun PsiElement.inlineConceal(vararg conceals: TextRange): MarkdownLivePreviewSpec.Conceal? {
   val ranges = conceals.filterNot { it.isEmpty }
-  return if (ranges.isEmpty()) null else MarkdownLivePreviewSpec.Conceal(textRange, ranges)
+  return if (ranges.isEmpty()) null else MarkdownLivePreviewSpec.Conceal(
+    textRange.toMarkdownLivePreviewRange(),
+    ranges.map { it.toMarkdownLivePreviewRange() },
+  )
 }
 
 private fun PsiElement.childList(): List<PsiElement> = node.getChildren(null).map { it.psi }

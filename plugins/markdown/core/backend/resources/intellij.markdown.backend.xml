@@ -16,6 +16,7 @@
       <module name="intellij.platform.ide.core"/>
       <module name="intellij.platform.ide.core.impl"/>
       <module name="intellij.platform.ide.impl"/>
+      <module name="intellij.platform.ide.progress"/>
       <module name="intellij.platform.indexing"/>
       <module name="intellij.platform.kernel.backend"/>
       <module name="intellij.platform.lang"/>
@@ -35,6 +36,8 @@
     </actions>
     <extensions defaultExtensionNs="com.intellij">
       <highlightingPassFactory implementation="com.intellij.markdown.backend.editor.livepreview.MarkdownLivePreviewPassFactory"/>
+      <platform.rpc.backend.remoteApiProvider
+        implementation="com.intellij.markdown.backend.editor.livepreview.MarkdownLivePreviewRemoteApiProvider"/>
       <completion.contributor
         language="Markdown" implementationClass="com.intellij.markdown.backend.completion.MarkdownAtPathCompletionContributor"/>
       <platform.rpc.backend.remoteApiProvider

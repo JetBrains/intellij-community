@@ -13,13 +13,16 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.colors.CodeInsightColors
+import com.intellij.openapi.editor.event.BulkAwareDocumentListener
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
+import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.editor.event.VisibleAreaEvent
 import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.FoldingKeys
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
@@ -30,22 +33,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.ui.paint.LinePainter2D
-import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewImage
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecSet
+import org.intellij.plugins.markdown.editor.livepreview.toTextRange
 import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.awt.Graphics
 import java.awt.Graphics2D
-import java.util.LinkedHashMap
-import java.util.LinkedHashSet
 import java.util.SequencedMap
 import java.util.SequencedSet
 
@@ -68,11 +67,11 @@ class MarkdownLivePreviewReconciler private constructor(
   /**
    * The regions we own, keyed by the concealed range each was created for. The keys go stale as soon as the
    * document changes - regions move with the text - so [reconcileNow] re-keys them from the regions
-   * themselves, and every path that trusts the keys first checks the spec set against the document stamp.
+   * themselves. Every path that trusts the keys first checks the spec set against the document version.
    */
   private val ownedRegions = LinkedHashMap<TextRange, FoldRegion>()
   private val ownedHorizontalRules = LinkedHashMap<TextRange, RangeHighlighter>()
-  private val imageManager = MarkdownLivePreviewImageManager(project, editor)
+  private val imageRenderer = MarkdownLivePreviewImageRenderer(project, editor)
 
   /** Indices of the elements we have already revealed, so [revealNow] can act on the difference alone. */
   private var revealedElements = emptySet<Int>()
@@ -98,18 +97,19 @@ class MarkdownLivePreviewReconciler private constructor(
       override fun selectionChanged(event: SelectionEvent) = onCaretChanged()
     }, this)
     editor.scrollingModel.addVisibleAreaListener(object : VisibleAreaListener {
-      override fun visibleAreaChanged(e: VisibleAreaEvent) = imageManager.updateGeometry()
+      override fun visibleAreaChanged(e: VisibleAreaEvent) = imageRenderer.updateGeometry()
+    }, this)
+    editor.document.addDocumentListener(object : BulkAwareDocumentListener {
+      override fun documentChangedNonBulk(event: DocumentEvent) = scheduleReconcile()
+      override fun bulkUpdateFinished(document: Document) = scheduleReconcile()
+    }, this)
+    editor.foldingModel.addListener(object : FoldingListener {
+      override fun onFoldProcessingEnd() = scheduleReconcile()
     }, this)
 
     val connection = project.messageBus.connect(this)
     connection.subscribe(MarkdownSettings.ChangeListener.TOPIC, object : MarkdownSettings.ChangeListener {
       override fun settingsChanged(settings: MarkdownSettings) = scheduleReconcile()
-    })
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-      override fun after(events: List<VFileEvent>) {
-        imageManager.invalidate(events) { scheduleReconcile() }
-        scheduleReconcile()
-      }
     })
   }
 
@@ -119,9 +119,18 @@ class MarkdownLivePreviewReconciler private constructor(
    */
   @RequiresEdt
   fun publishSpecs(specSet: MarkdownLivePreviewSpecSet) {
-    ThreadingAssertions.assertEventDispatchThread()
+    val previousSpecSet = this.specSet
+    if (previousSpecSet != null && !previousSpecSet.documentVersion.matchesDocument(specSet.documentVersion)) {
+      imageRenderer.resetRequestedImages()
+    }
     this.specSet = specSet
     reconcileNow()
+  }
+
+  @TestOnly
+  @RequiresEdt
+  fun hasCurrentSpecs(): Boolean {
+    return specSet?.documentVersion?.matches(editor.document, project) == true
   }
 
   /**
@@ -131,19 +140,13 @@ class MarkdownLivePreviewReconciler private constructor(
    */
   @RequiresEdt
   fun reconcileNow() {
-    ThreadingAssertions.assertEventDispatchThread()
     if (disposed || updating || editor.isDisposed || editor.document.isInBulkUpdate) return
     if (!isLivePreviewEnabled()) {
       removeAllOwned()
       return
     }
     val specSet = this.specSet ?: return
-    if (specSet.documentStamp != editor.document.modificationStamp) return
-    val imageDestinations = specSet.elements
-      .filterIsInstance<MarkdownLivePreviewSpec.Image>()
-      .mapTo(HashSet()) { it.destination }
-    imageManager.retainSources(imageDestinations)
-
+    if (!specSet.documentVersion.matches(editor.document, project)) return
     val revealed = revealedElementIndices(specSet)
     val (regions, lines) = buildOwnedState(specSet, revealed)
     reconcileConcealRegions(regions)
@@ -158,16 +161,21 @@ class MarkdownLivePreviewReconciler private constructor(
     specSet.elements.forEachIndexed { index, spec ->
       if (index in revealed) return@forEachIndexed
       when (spec) {
-        is MarkdownLivePreviewSpec.Conceal -> spec.conceals.forEach { regions[it] = OwnedRegion.Text(null) }
+        is MarkdownLivePreviewSpec.Conceal -> spec.conceals.forEach { regions[it.toTextRange()] = OwnedRegion.Text(null) }
         is MarkdownLivePreviewSpec.HorizontalRule -> {
-          regions[spec.range] = OwnedRegion.HorizontalRule
-          lines.add(spec.range)
+          val range = spec.range.toTextRange()
+          regions[range] = OwnedRegion.HorizontalRule
+          lines.add(range)
         }
         is MarkdownLivePreviewSpec.Image -> {
-          val source = imageManager.load(spec) { scheduleReconcile() } ?: return@forEachIndexed
-          regions[spec.range] = OwnedRegion.Image(source)
+          val image = spec.source
+          if (image == null) {
+            imageRenderer.requestImage(spec.destination)
+            return@forEachIndexed
+          }
+          regions[spec.range.toTextRange()] = OwnedRegion.Image(spec.destination, image, specSet.documentVersion.elementsHash)
         }
-        is MarkdownLivePreviewSpec.Bullet -> regions[spec.concealRange] = OwnedRegion.Text(spec.placeholderText)
+        is MarkdownLivePreviewSpec.Bullet -> regions[spec.concealRange.toTextRange()] = OwnedRegion.Text(spec.placeholderText)
       }
     }
     return OwnedState(regions, lines)
@@ -175,7 +183,6 @@ class MarkdownLivePreviewReconciler private constructor(
 
   @RequiresEdt
   fun handleBackspace(): Boolean {
-    ThreadingAssertions.assertEventDispatchThread()
     if (disposed || editor.isDisposed || editor.selectionModel.hasSelection()) return false
     val caretOffset = editor.caretModel.offset
     val document = editor.document
@@ -192,6 +199,14 @@ class MarkdownLivePreviewReconciler private constructor(
     val existing = LinkedHashMap<TextRange, FoldRegion>()
     for (region in ownedRegions.values) {
       if (region.isValid) existing[region.currentRange()] = region
+    }
+
+    for ((range, wanted) in desired) {
+      if (wanted !is OwnedRegion.Image) continue
+      val item = (existing[range] as? CustomFoldRegion)?.markdownImageRenderItem() ?: continue
+      if (item.destination == wanted.destination) {
+        imageRenderer.updateItem(item, wanted.image, wanted.elementsHash)
+      }
     }
 
     val toRemove = existing.entries
@@ -213,7 +228,7 @@ class MarkdownLivePreviewReconciler private constructor(
           val region = when (wanted) {
             is OwnedRegion.Text -> concealRange(range, wanted.placeholderText)
             is OwnedRegion.HorizontalRule -> concealRange(range, null)
-            is OwnedRegion.Image -> createImageRegion(range, wanted.source)
+            is OwnedRegion.Image -> createImageRegion(range, wanted.destination, wanted.image, wanted.elementsHash)
             else -> null
           }
           if (region != null) next[range] = region
@@ -259,7 +274,7 @@ class MarkdownLivePreviewReconciler private constructor(
     ownedHorizontalRules.clear()
     revealedElements = emptySet()
     specSet = null
-    Disposer.dispose(imageManager)
+    Disposer.dispose(imageRenderer)
   }
 
   private fun onCaretChanged() {
@@ -276,7 +291,7 @@ class MarkdownLivePreviewReconciler private constructor(
     // The folding model is a document listener in its own right, so its tree may still be catching up.
     if (document.isInEventsHandling) return
     val specSet = this.specSet ?: return
-    if (specSet.documentStamp != document.modificationStamp) return
+    if (!specSet.documentVersion.matches(document, project)) return
     if (!isLivePreviewEnabled()) return
 
     val revealed = revealedElementIndices(specSet)
@@ -286,10 +301,10 @@ class MarkdownLivePreviewReconciler private constructor(
     val rangesToRemove = HashSet<TextRange>()
     for (index in newlyRevealed) {
       when (val spec = specSet.elements[index]) {
-        is MarkdownLivePreviewSpec.Conceal -> rangesToRemove.addAll(spec.conceals)
-        is MarkdownLivePreviewSpec.HorizontalRule -> rangesToRemove.add(spec.range)
-        is MarkdownLivePreviewSpec.Image -> rangesToRemove.add(spec.range)
-        is MarkdownLivePreviewSpec.Bullet -> rangesToRemove.add(spec.concealRange)
+        is MarkdownLivePreviewSpec.Conceal -> spec.conceals.mapTo(rangesToRemove) { it.toTextRange() }
+        is MarkdownLivePreviewSpec.HorizontalRule -> rangesToRemove.add(spec.range.toTextRange())
+        is MarkdownLivePreviewSpec.Image -> rangesToRemove.add(spec.range.toTextRange())
+        is MarkdownLivePreviewSpec.Bullet -> rangesToRemove.add(spec.concealRange.toTextRange())
       }
     }
     revealOwnedRegions(rangesToRemove)
@@ -367,10 +382,15 @@ class MarkdownLivePreviewReconciler private constructor(
     return region
   }
 
-  private fun createImageRegion(range: TextRange, source: VirtualFile): CustomFoldRegion? {
+  private fun createImageRegion(
+    range: TextRange,
+    destination: String,
+    image: MarkdownLivePreviewImage,
+    elementsHash: Int,
+  ): CustomFoldRegion? {
     if (range.isEmpty) return null
     val document = editor.document
-    val item = imageManager.createItem(range, source)
+    val item = imageRenderer.createItem(range, destination, image, elementsHash)
     val foldingModel = editor.foldingModel
     foldingModel.getRegionsOverlappingWith(range.startOffset, range.endOffset)
       .asSequence()
@@ -486,7 +506,6 @@ class MarkdownLivePreviewReconciler private constructor(
     /** The reconciler for [editor], attaching one on first use. Null in cases a reconciler can't be created. */
     @RequiresEdt
     fun getOrCreate(editor: Editor): MarkdownLivePreviewReconciler? {
-      ThreadingAssertions.assertEventDispatchThread()
       if (editor !is EditorEx || editor.isDisposed) return null
       val project = editor.project ?: return null
       val existing = editor.getUserData(KEY)
@@ -562,10 +581,14 @@ private sealed interface OwnedRegion {
     }
   }
 
-  data class Image(val source: VirtualFile) : OwnedRegion {
+  data class Image(
+    val destination: String,
+    val image: MarkdownLivePreviewImage,
+    val elementsHash: Int,
+  ) : OwnedRegion {
     override fun matches(region: FoldRegion): Boolean {
       val item = (region as? CustomFoldRegion)?.markdownImageRenderItem() ?: return false
-      return item.source == source
+      return item.destination == destination
     }
   }
 }

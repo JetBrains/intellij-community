@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.FoldRegion
+import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FoldingKeys
 import com.intellij.openapi.editor.markup.RangeHighlighter
@@ -22,6 +23,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.EditorMouseFixture
+import com.intellij.util.DocumentUtil
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
@@ -123,6 +125,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     select(childText + 1, childText + 2)
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_INDENT_SELECTION)
     myFixture.doHighlighting()
+    waitForCurrentSpecs()
     myFixture.editor.selectionModel.removeSelection()
     moveCaretTo(myFixture.editor.document.textLength)
 
@@ -578,7 +581,9 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     val diffEditor = EditorFactory.getInstance().createEditor(document, project, myFixture.file.virtualFile, false, EditorKind.DIFF)
     try {
       val reconciler = MarkdownLivePreviewReconciler.getOrCreate(diffEditor)!!
-      reconciler.publishSpecs(MarkdownLivePreviewSpecSet(document.modificationStamp, computeLivePreviewSpecs(myFixture.file)))
+      reconciler.publishSpecs(
+        MarkdownLivePreviewSpecSet(MarkdownLivePreviewDocumentVersion.capture(document, project), computeLivePreviewSpecs(myFixture.file))
+      )
       assertEmpty("A diff editor must show the raw source", concealed(diffEditor))
     }
     finally {
@@ -603,12 +608,40 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     PsiDocumentManager.getInstance(project).commitAllDocuments()
     val reconciler = MarkdownLivePreviewReconciler.getOrCreate(editor)!!
     val elements = computeLivePreviewSpecs(myFixture.file)
+    val oldVersion = MarkdownLivePreviewDocumentVersion.capture(editor.document, project)
+    (editor.document as DocumentEx).setModificationStamp(editor.document.modificationStamp + 1)
 
-    reconciler.publishSpecs(MarkdownLivePreviewSpecSet(editor.document.modificationStamp - 1, elements))
+    reconciler.publishSpecs(
+      MarkdownLivePreviewSpecSet(oldVersion, elements)
+    )
     assertEmpty("Specs computed from an older document must be declined", concealed())
 
-    reconciler.publishSpecs(MarkdownLivePreviewSpecSet(editor.document.modificationStamp, elements))
+    reconciler.publishSpecs(
+      MarkdownLivePreviewSpecSet(MarkdownLivePreviewDocumentVersion.capture(editor.document, project), elements)
+    )
     assertEquals(listOf("**", "**"), concealed())
+  }
+
+  fun testSpecsPublishedDuringBulkUpdateAreAppliedAfterItFinishes() {
+    myFixture.configureByText("test.md", "Some **bold** text<caret>")
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    val editor = myFixture.editor
+    val reconciler = MarkdownLivePreviewReconciler.getOrCreate(editor)!!
+    val specSet = MarkdownLivePreviewSpecSet(
+      MarkdownLivePreviewDocumentVersion.capture(editor.document, project),
+      computeLivePreviewSpecs(myFixture.file),
+    )
+
+    DocumentUtil.executeInBulk(editor.document, true) {
+      reconciler.publishSpecs(specSet)
+      assertEmpty("A bulk update must delay reconciliation", concealed())
+    }
+
+    PlatformTestUtil.waitWithEventsDispatching(
+      "The pending live-preview specs were not applied",
+      { concealed() == listOf("**", "**") },
+      10,
+    )
   }
 
   private fun assertBackspaceAfterElement(element: String) {
@@ -624,6 +657,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
   private fun configure(content: String) {
     myFixture.configureByText("test.md", content)
     myFixture.doHighlighting()
+    waitForCurrentSpecs()
   }
 
   private fun configureProjectFile(content: String) {
@@ -631,6 +665,15 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     myFixture.configureFromExistingVirtualFile(myFixture.findFileInTempDir("docs/test.md"))
     myFixture.editor.caretModel.moveToOffset(content.length)
     myFixture.doHighlighting()
+    waitForCurrentSpecs()
+  }
+
+  private fun waitForCurrentSpecs() {
+    PlatformTestUtil.waitWithEventsDispatching(
+      "Live-preview specs were not reconciled",
+      { MarkdownLivePreviewReconciler.getExisting(myFixture.editor)?.hasCurrentSpecs() == true },
+      10,
+    )
   }
 
   private fun addPng(width: Int, height: Int): VirtualFile = addBinaryFile("docs/image.png", pngBytes(width, height))

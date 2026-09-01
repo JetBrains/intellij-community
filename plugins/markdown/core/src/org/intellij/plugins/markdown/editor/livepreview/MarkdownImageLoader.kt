@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.editor.livepreview
 
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.project.BaseProjectDirectories
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -16,6 +18,8 @@ import javax.imageio.ImageIO
 
 @ApiStatus.Internal
 object MarkdownImageLoader {
+  private val LOG = Logger.getInstance(MarkdownImageLoader::class.java)
+
   @RequiresBackgroundThread
   suspend fun load(project: Project, file: VirtualFile, destination: String): VirtualFile? {
     ThreadingAssertions.assertBackgroundThread()
@@ -30,7 +34,9 @@ object MarkdownImageLoader {
       if (!isWithinLimits(imageFile)) return null
       imageFile
     }
-    catch (_: Exception) {
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      LOG.warn("Failed to resolve Markdown image $destination", e)
       null
     }
   }
@@ -60,7 +66,9 @@ object MarkdownImageLoader {
       else if (width <= 0 || height <= 0) null
       else width * height
     }
-    catch (_: Exception) {
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      LOG.warn("Failed to read Markdown SVG image", e)
       null
     }
   }
@@ -78,7 +86,9 @@ object MarkdownImageLoader {
         if (width <= 0 || height <= 0) return@use null
         width.toDouble() * height.toDouble()
       }
-      catch (_: Exception) {
+      catch (e: Throwable) {
+        rethrowControlFlowException(e)
+        LOG.warn("Failed to read Markdown raster image", e)
         null
       }
       finally {

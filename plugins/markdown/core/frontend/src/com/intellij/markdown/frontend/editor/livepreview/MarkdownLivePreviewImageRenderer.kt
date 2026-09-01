@@ -4,51 +4,55 @@ package com.intellij.markdown.frontend.editor.livepreview
 import com.intellij.codeInsight.documentation.render.DocRenderItem
 import com.intellij.codeInsight.documentation.render.DocRenderItemUpdater
 import com.intellij.codeInsight.documentation.render.DocRenderer
+import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.ex.FoldingModelEx
+import com.intellij.openapi.editor.impl.editorIdOrNull
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.platform.ide.progress.withBackgroundProgress
+import fleet.rpc.client.durable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.editor.livepreview.MarkdownImageLoader
-import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec
+import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewImage
+import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewRemoteApi
+import org.intellij.plugins.markdown.ui.preview.MarkdownImageResourceProvider
+import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
 import org.intellij.plugins.markdown.util.MarkdownApplicationScope
-import java.util.LinkedHashMap
 
-internal class MarkdownLivePreviewImageManager(
-  private val project: Project,
-  private val editor: Editor
+internal class MarkdownLivePreviewImageRenderer(
+  project: Project,
+  private val editor: Editor,
 ) : Disposable {
   private val items = HashSet<MarkdownImageRenderItem>()
-  private val loadedSources = LinkedHashMap<ImageKey, VirtualFile>()
-  private val loadingSources = HashSet<ImageKey>()
-  private val rejectedSources = HashSet<ImageKey>()
-  private val coroutineScope = MarkdownApplicationScope.createChildScope()
+  private val requestedDestinations = HashSet<String>()
   private var imageGeometry = geometry()
+
+  private val coroutineScope = MarkdownApplicationScope.createChildScope()
+  private val document = FileDocumentManager.getInstance().getFile(editor.document) ?: error("Markdown live preview editor has no document file")
+  private val editorId = editor.editorIdOrNull()
+  private val resourceProvider = MarkdownImageResourceProvider(project, document)
 
   @Volatile
   private var disposed = false
 
   init {
+    Disposer.register(this, PreviewStaticServer.instance.registerResourceProvider(resourceProvider))
+
     val foldingModel = editor.foldingModel
     if (foldingModel is FoldingModelEx) {
       foldingModel.addListener(object : FoldingListener {
@@ -64,7 +68,6 @@ internal class MarkdownLivePreviewImageManager(
 
   @RequiresEdt
   fun updateGeometry() {
-    ThreadingAssertions.assertEventDispatchThread()
     val geometry = geometry()
     if (geometry == imageGeometry) return
     imageGeometry = geometry
@@ -72,102 +75,54 @@ internal class MarkdownLivePreviewImageManager(
   }
 
   @RequiresEdt
-  fun retainSources(destinations: Set<String>) {
-    ThreadingAssertions.assertEventDispatchThread()
-    val file = FileDocumentManager.getInstance().getFile(editor.document) ?: return
-    val keys = destinations.mapTo(HashSet()) { ImageKey(file, it) }
-    loadedSources.keys.retainAll(keys)
-    rejectedSources.retainAll(keys)
-  }
-
-  @RequiresEdt
-  fun load(spec: MarkdownLivePreviewSpec.Image, onImageLoaded: () -> Unit): VirtualFile? {
-    ThreadingAssertions.assertEventDispatchThread()
-    val file = FileDocumentManager.getInstance().getFile(editor.document) ?: return null
-    val key = ImageKey(file, spec.destination)
-    if (key in rejectedSources) return null
-    val cachedSource = loadedSources[key]
-    if (cachedSource != null) {
-      if (cachedSource.isValid) return cachedSource
-      loadedSources.remove(key)
-    }
-    if (key !in loadingSources) {
-      startLoading(key, onImageLoaded)
-    }
-    return null
-  }
-
-  private fun startLoading(key: ImageKey, onImageLoaded: () -> Unit) {
-    if (!loadingSources.add(key)) return
-    val file = key.first
-    val destination = key.second
-    coroutineScope.launch(Dispatchers.IO) {
-      val source = withBackgroundProgress(project, MarkdownBundle.message("markdown.image.loading"), cancellable = true) {
-        MarkdownImageLoader.load(project, file, destination)
+  fun requestImage(destination: String) {
+    val editorId = editorId ?: return
+    if (disposed || !requestedDestinations.add(destination)) return
+    coroutineScope.launch(Dispatchers.Default) {
+      try {
+        durable {
+          MarkdownLivePreviewRemoteApi.getInstance().requestLivePreviewImage(editorId, destination)
+        }
       }
-      invokeLater(ModalityState.any()) {
-        val previousSource = loadedSources[key]
-        loadingSources.remove(key)
-        if (disposed) return@invokeLater
-        if (source == null) {
-          if (previousSource == null) {
-            rejectedSources.add(key)
-            return@invokeLater
-          }
-          loadedSources.remove(key)
-          rejectedSources.add(key)
-          onImageLoaded()
-          return@invokeLater
-        }
-        rejectedSources.remove(key)
-        loadedSources[key] = source
-        if (previousSource != null && previousSource == source) {
-          refreshRenderers(source)
-        }
-        onImageLoaded()
+      catch (throwable: Throwable) {
+        rethrowControlFlowException(throwable)
+        LOG.warn("Failed to request Markdown image $destination", throwable)
       }
     }
   }
 
   @RequiresEdt
-  fun createItem(range: TextRange, source: VirtualFile): MarkdownImageRenderItem {
-    ThreadingAssertions.assertEventDispatchThread()
-    val item = MarkdownImageRenderItem(editor, range, source) { items.remove(it) }
+  fun resetRequestedImages() {
+    requestedDestinations.clear()
+  }
+
+  @RequiresEdt
+  fun updateItem(item: MarkdownImageRenderItem, image: MarkdownLivePreviewImage, elementsHash: Int) {
+    if (disposed || item !in items) return
+    val imageUrl = imageUrl(item.destination, elementsHash)
+    if (!item.updateSource(image, elementsHash, imageUrl)) return
+    DocRenderItemUpdater.updateRenderers(listOf(item), true)
+  }
+
+  @RequiresEdt
+  fun createItem(range: TextRange, destination: String, image: MarkdownLivePreviewImage, elementsHash: Int): MarkdownImageRenderItem {
+    val item = MarkdownImageRenderItem(editor, range, destination, image, elementsHash, imageUrl(destination, elementsHash)) { items.remove(it) }
     items.add(item)
     return item
   }
 
-  fun invalidate(events: List<VFileEvent>, onImageLoaded: () -> Unit) {
-    if (disposed) return
-    val files = HashSet<VirtualFile>()
-    for (event in events) {
-      val file = event.file ?: continue
-      files.add(file)
-    }
-    if (files.isEmpty()) return
-    invokeLater(ModalityState.any()) {
-      if (disposed) return@invokeLater
-      rejectedSources.clear()
-      val keysToReload = loadedSources.entries
-        .filter { entry -> entry.value in files }
-        .map { entry -> entry.key }
-      for (key in keysToReload) {
-        startLoading(key, onImageLoaded)
-      }
-    }
+  private fun imageUrl(destination: String, elementsHash: Int): String {
+    val resourceName = MarkdownImageResourceProvider.resourceName(destination)
+    return "${PreviewStaticServer.getStaticUrl(resourceProvider, resourceName)}?refresh=$elementsHash"
   }
 
   override fun dispose() {
     if (disposed) return
-    coroutineScope.cancel()
     disposed = true
-    for (item in items.toList()) {
-      item.dispose()
-    }
+    coroutineScope.cancel()
+    requestedDestinations.clear()
+    items.toList().forEach { it.dispose() }
     items.clear()
-    loadedSources.clear()
-    loadingSources.clear()
-    rejectedSources.clear()
   }
 
   private fun geometry(): MarkdownImageGeometry {
@@ -186,27 +141,24 @@ internal class MarkdownLivePreviewImageManager(
       scaleContext.dispose()
     }
   }
-
-  private fun refreshRenderers(source: VirtualFile) {
-    val affected = items.filter { item -> item.source == source }
-    DocRenderItemUpdater.updateRenderers(affected, true)
-  }
-
-  private fun invokeLater(state: ModalityState, runnable: Runnable) = ApplicationManager.getApplication().invokeLater(runnable, state)
 }
-
-private typealias ImageKey = Pair<VirtualFile, String>
 
 internal class MarkdownImageRenderItem(
   override val editor: Editor,
   range: TextRange,
-  val source: VirtualFile,
+  val destination: String,
+  image: MarkdownLivePreviewImage,
+  private var elementsHash: Int,
+  private var imageUrl: String,
   private val onDispose: (MarkdownImageRenderItem) -> Unit,
 ) : DocRenderItem {
-  val renderer = DocRenderer(this, true) { MarkdownLivePreviewPositionKeeper(editor) }
+  var source: VirtualFileId = image.source
+    private set
   private var disposed = false
 
-  override val textToRender: String = HtmlChunk.tag("img").attr("src", source.url).toString()
+  val renderer = DocRenderer(this, true) { MarkdownLivePreviewPositionKeeper(editor) }
+
+  override var textToRender: String = imageText(imageUrl)
   override val highlighter: RangeHighlighter = editor.markupModel.addRangeHighlighter(
     null, range.startOffset, range.endOffset, 0, HighlighterTargetArea.EXACT_RANGE,
   )
@@ -219,6 +171,16 @@ internal class MarkdownImageRenderItem(
   override fun getInlineDocumentation() = null
   override fun getInlineDocumentationTarget() = null
 
+  @RequiresEdt
+  fun updateSource(image: MarkdownLivePreviewImage, elementsHash: Int, imageUrl: String): Boolean {
+    if (source == image.source && this.elementsHash == elementsHash) return false
+    source = image.source
+    this.elementsHash = elementsHash
+    this.imageUrl = imageUrl
+    textToRender = imageText(imageUrl)
+    return true
+  }
+
   fun dispose() {
     if (disposed) return
     disposed = true
@@ -226,7 +188,11 @@ internal class MarkdownImageRenderItem(
     highlighter.dispose()
     onDispose(this)
   }
+
+  private fun imageText(url: String): String = HtmlChunk.tag("img").attr("src", url).toString()
 }
+
+private val LOG = logger<MarkdownLivePreviewImageRenderer>()
 
 private data class MarkdownImageGeometry(
   val width: Int,

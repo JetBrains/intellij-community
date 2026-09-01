@@ -1,7 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.editor.livepreview
 
-import com.intellij.openapi.util.TextRange
+import com.intellij.ide.rpc.DocumentPatchVersion
+import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
@@ -180,7 +181,29 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     )
   }
 
-  private fun MarkdownLivePreviewSpec.concealedRanges(): List<TextRange> = when (this) {
+  fun testDocumentVersionUsesLocalStampWithoutPatchVersion() {
+    myFixture.configureByText("test.md", "text")
+    val document = myFixture.editor.document as DocumentEx
+    val version = MarkdownLivePreviewDocumentVersion.capture(document, project)
+
+    assertTrue(version.matches(document, project))
+    document.setModificationStamp(document.modificationStamp + 1)
+    assertFalse(version.matches(document, project))
+  }
+
+  fun testDocumentVersionUsesPatchVersionWhenPresent() {
+    val patchVersion = DocumentPatchVersion(7, 11)
+
+    assertTrue(MarkdownLivePreviewDocumentVersion(patchVersion, 42).matches(MarkdownLivePreviewDocumentVersion(patchVersion, 99)))
+    assertFalse(
+      MarkdownLivePreviewDocumentVersion(patchVersion, 42).matches(
+        MarkdownLivePreviewDocumentVersion(DocumentPatchVersion(8, 11), 42)
+      )
+    )
+    assertFalse(MarkdownLivePreviewDocumentVersion(patchVersion, 42).matches(MarkdownLivePreviewDocumentVersion(null, 42)))
+  }
+
+  private fun MarkdownLivePreviewSpec.concealedRanges(): List<MarkdownLivePreviewRange> = when (this) {
     is MarkdownLivePreviewSpec.Conceal -> conceals
     is MarkdownLivePreviewSpec.HorizontalRule -> listOf(range)
     is MarkdownLivePreviewSpec.Image -> listOf(range)
@@ -206,4 +229,9 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
 
   private fun images(content: String): List<MarkdownLivePreviewSpec.Image> =
     elements(content).filterIsInstance<MarkdownLivePreviewSpec.Image>()
+
+  private fun MarkdownLivePreviewRange.contains(other: MarkdownLivePreviewRange): Boolean {
+    return startOffset <= other.startOffset && endOffset >= other.endOffset
+  }
+
 }

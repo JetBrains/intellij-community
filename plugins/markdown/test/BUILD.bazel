@@ -84,6 +84,7 @@ jvm_library(
         "//platform/ide-core:ide-core_test_lib",
         "//plugins/jcef/plugin:plugin_test_lib",
         "//platform/structure-view-impl/plugin:plugin_test_lib",
+        "//platform/platform-impl/rpc:rpc_test_lib",
     ],
     deps = [
         # do not sort,
@@ -233,6 +234,7 @@ jvm_library(
         "//libraries/junit5:junit5_test_lib",
         "//plugins/grazie/src/test:grazie-tests",
         "//plugins/grazie/src/test:grazie-tests_test_lib",
+        "//platform/platform-impl/rpc",
     ],
 )
 ### auto-generated section `build intellij.markdown.tests` end
