@@ -17,9 +17,11 @@ class TcpEelEnvironmentInitializer : EelEnvironmentInitializer {
       return null
     }
     val descriptor = eelDescriptor as? TcpEelDescriptor ?: return null
-    val tcpMachine = descriptor.resolveEelMachine() as? TcpEelMachine ?: return null
+    // The machine does not have to be a TcpEelMachine: a resolver can route a TCP-family descriptor
+    // to a machine of another kind, for example a delegating host machine over a changing transport.
+    val machine = descriptor.resolveEelMachine()
     try {
-      tcpMachine.toEelApi(descriptor) // deploy ijent
+      machine.toEelApi(descriptor) // deploy ijent
     }
     catch (e: CancellationException) {
       throw e
@@ -29,6 +31,6 @@ class TcpEelEnvironmentInitializer : EelEnvironmentInitializer {
       // it be deployed lazily on the next request. Otherwise project opening would fall back to local Eel.
       LOG.error("Failed to deploy IJent for $descriptor", e)
     }
-    return tcpMachine
+    return machine
   }
 }

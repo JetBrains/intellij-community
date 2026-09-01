@@ -56,7 +56,7 @@ class IjentFailSafeFileSystemApiTest {
 
   @Test
   fun `uninitialized interactive environment fails fast inside fsBlocking`(): Unit = runBlocking {
-    val fs = ijentFailSafeFileSystemApi(scope, descriptor, checkIsIjentInitialized = { false }, deploymentMayRequireUserInteraction = true)
+    val fs = ijentFailSafeFileSystemApi(scope, descriptor, checkIsIjentInitialized = { false }, deploymentMayRequireUserInteraction = { true })
     withContext(fsBlockingMarker()) {
       val err = shouldThrow<IllegalStateException> { fs.touch() }
       err.message shouldContain "IJPL-245001"
@@ -65,7 +65,7 @@ class IjentFailSafeFileSystemApiTest {
 
   @Test
   fun `initialized interactive environment is awaited despite the marker`(): Unit = runBlocking {
-    val fs = ijentFailSafeFileSystemApi(scope, descriptor, checkIsIjentInitialized = { true }, deploymentMayRequireUserInteraction = true)
+    val fs = ijentFailSafeFileSystemApi(scope, descriptor, checkIsIjentInitialized = { true }, deploymentMayRequireUserInteraction = { true })
     withContext(fsBlockingMarker()) {
       val err = shouldThrowAny { fs.touch() }
       (err.message ?: "") shouldNotContain "IJPL-245001"
@@ -74,7 +74,7 @@ class IjentFailSafeFileSystemApiTest {
 
   @Test
   fun `uninitialized interactive environment deploys outside of fsBlocking`(): Unit = runBlocking {
-    val fs = ijentFailSafeFileSystemApi(scope, descriptor, checkIsIjentInitialized = { false }, deploymentMayRequireUserInteraction = true)
+    val fs = ijentFailSafeFileSystemApi(scope, descriptor, checkIsIjentInitialized = { false }, deploymentMayRequireUserInteraction = { true })
     val err = shouldThrowAny { fs.touch() }
     (err.message ?: "") shouldNotContain "IJPL-245001"
   }
@@ -90,7 +90,7 @@ class IjentFailSafeFileSystemApiTest {
 
   @Test
   fun `delegate stays usable for a safe caller after a fail-fast`(): Unit = runBlocking {
-    val fs = ijentFailSafeFileSystemApi(scope, descriptor, checkIsIjentInitialized = { false }, deploymentMayRequireUserInteraction = true)
+    val fs = ijentFailSafeFileSystemApi(scope, descriptor, checkIsIjentInitialized = { false }, deploymentMayRequireUserInteraction = { true })
     withContext(fsBlockingMarker()) {
       shouldThrow<IllegalStateException> { fs.touch() }.message shouldContain "IJPL-245001"
     }

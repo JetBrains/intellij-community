@@ -199,6 +199,9 @@ f:com.intellij.platform.eel.EelExecWindowsApiHelpersKt
 *:com.intellij.platform.eel.EelMachine
 - a:ownsDescriptor(com.intellij.platform.eel.EelDescriptor):Z
 - *a:toEelApi(com.intellij.platform.eel.EelDescriptor,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.eel.EelMachineWithConnectionState
+- com.intellij.platform.eel.EelMachine
+- a:isConnected():Z
 *:com.intellij.platform.eel.EelNetworkError
 - com.intellij.platform.eel.EelError
 *e:com.intellij.platform.eel.EelOsFamily
@@ -280,6 +283,7 @@ f:com.intellij.platform.eel.EelPlatformKt
 - *sf:isWindows(com.intellij.platform.eel.EelPlatform):Z
 - *sf:isX86(com.intellij.platform.eel.EelPlatform):Z
 - *sf:isX86_64(com.intellij.platform.eel.EelPlatform):Z
+- *sf:osNameAsEelOsFamily(java.lang.String):com.intellij.platform.eel.EelOsFamily
 *:com.intellij.platform.eel.EelPosixApi
 - com.intellij.platform.eel.EelApi
 - a:getExec():com.intellij.platform.eel.EelExecPosixApi

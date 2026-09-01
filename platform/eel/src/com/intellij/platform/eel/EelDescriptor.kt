@@ -41,6 +41,21 @@ interface EelDescriptorWithIsolatedWorkspace : EelDescriptor
 interface EelDescriptorWithSshForwardingEnabled : EelDescriptor
 
 /**
+ * The deployment of this environment can ask for user interaction, for example an SSH authentication dialog.
+ * The synchronous NIO bridge fails fast instead of awaiting such a deployment, because the dialog
+ * needs the thread the bridge blocks (IJPL-245001).
+ *
+ * Read [deploymentMayRequireUserInteraction]; the instanceof check alone is not the answer:
+ * a delegating descriptor reports the answer of its current target, and the answer changes with the target.
+ */
+@ApiStatus.OverrideOnly
+@ApiStatus.Internal
+interface EelDescriptorWithInteractiveDeployment : EelDescriptor {
+  val deploymentMayRequireUserInteraction: Boolean
+    get() = true
+}
+
+/**
  * Identifies a specific machine — such as a Docker container, WSL distribution, or SSH host.
  *
  * Multiple [EelDescriptor]s may map to the same machine.
@@ -67,6 +82,19 @@ interface EelMachine {
   suspend fun toEelApi(descriptor: EelDescriptor): EelApi
 
   fun ownsDescriptor(descriptor: EelDescriptor): Boolean
+}
+
+/**
+ * An [EelMachine] that reports whether it holds a live connection.
+ *
+ * The value is a snapshot and can change at any moment. Treat `true` as a hint, for example
+ * "an await of [EelMachine.toEelApi] only fetches the existing session", never as a correctness
+ * guarantee. A machine that does not implement this interface does not report its state;
+ * the absence of the interface is not evidence of a missing connection.
+ */
+@ApiStatus.Experimental
+interface EelMachineWithConnectionState : EelMachine {
+  val isConnected: Boolean
 }
 
 /**

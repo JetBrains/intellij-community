@@ -4,6 +4,7 @@ package com.intellij.platform.ijent.community.impl
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelDescriptorWithInteractiveDeployment
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.EelUserPosixInfo
@@ -59,12 +60,14 @@ import kotlin.coroutines.EmptyCoroutineContext
  * [coroutineScope] is used for calling [delegateFactory], but cancellation of [coroutineScope] does NOT close already created
  * instances of [IjentApi].
  *
- * [deploymentMayRequireUserInteraction] must be `true` for environments whose deployment may need a round trip to EDT,
+ * [deploymentMayRequireUserInteraction] must report `true` for environments whose deployment may need a round trip to EDT,
  * e.g., an SSH authentication dialog. For them, an operation that would start or await a deployment fails fast
  * when it is called from inside the synchronous nio bridge, instead of deadlocking (IJPL-245001).
  * The deployment itself runs in [coroutineScope] and does not inherit the caller's coroutine context,
  * so the check is performed here, on the awaiting side. It is skipped while [checkIsIjentInitialized] reports
  * the environment as initialized, because awaiting an initialized environment only fetches the existing session.
+ * The answer is a function, not a constant, because a delegating descriptor reports the answer of its
+ * current target, and the target can change. The default reads [EelDescriptorWithInteractiveDeployment].
  * See [com.intellij.platform.ijent.throwIfInsideIjentFsBlocking].
  *
  * TODO Currently, the implementation retries EVERY operation.
@@ -76,7 +79,9 @@ fun ijentFailSafeFileSystemApi(
   coroutineScope: CoroutineScope,
   descriptor: EelDescriptor,
   checkIsIjentInitialized: (() -> Boolean)?,
-  deploymentMayRequireUserInteraction: Boolean = false,
+  deploymentMayRequireUserInteraction: () -> Boolean = {
+    (descriptor as? EelDescriptorWithInteractiveDeployment)?.deploymentMayRequireUserInteraction == true
+  },
 ): IjentFileSystemApi {
   return when (descriptor.osFamily) {
     EelOsFamily.Posix -> {
@@ -96,7 +101,7 @@ private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
   private val coroutineScope: CoroutineScope,
   private val descriptor: EelDescriptor,
   private val isIjentInitialized: (() -> Boolean)?,
-  private val deploymentMayRequireUserInteraction: Boolean,
+  private val deploymentMayRequireUserInteraction: () -> Boolean,
 ) {
   private val delegate = AtomicReference<Deferred<I>?>(null)
 
@@ -141,7 +146,7 @@ private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
 
   private suspend fun awaitDelegate(callerContext: IjentCallerContextElement?): I {
     val delegate = getDelegate(callerContext)
-    if (deploymentMayRequireUserInteraction && !delegate.isCompleted && isIjentInitialized?.invoke() != true) {
+    if (deploymentMayRequireUserInteraction() && !delegate.isCompleted && isIjentInitialized?.invoke() != true) {
       // A deployment is about to start (or is in flight) in a detached scope that does not inherit
       // the caller's coroutine context, so the awaiting side performs the check (IJPL-245001).
       // An initialized environment is exempt: awaiting it only fetches the already-created session.

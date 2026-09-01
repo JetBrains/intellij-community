@@ -56,7 +56,7 @@ class IjentFsBlockingFailFastSimulationTest {
       scope,
       descriptor,
       checkIsIjentInitialized = { initialized },
-      deploymentMayRequireUserInteraction = true,
+      deploymentMayRequireUserInteraction = { true },
     ) as IjentFileSystemPosixApi
 
   private fun listRootThroughFsBlocking(fs: IjentFileSystemPosixApi) {
