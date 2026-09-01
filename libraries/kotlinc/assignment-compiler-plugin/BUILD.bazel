@@ -14,17 +14,17 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlinc-assignment-compiler-plugin"],
+    exports = ["@lib//:libraries-kotlinc-assignment-compiler-plugin-kotlinc-assignment-compiler-plugin"],
     runtime_deps = [
         # do not sort,
-        "@lib//:kotlinc-assignment-compiler-plugin",
+        "@lib//:libraries-kotlinc-assignment-compiler-plugin-kotlinc-assignment-compiler-plugin",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir",
     ],
 )
 
 content_module_jar(
-    libraries = ["@lib//:kotlinc-assignment-compiler-plugin"],
+    libraries = ["@lib//:libraries-kotlinc-assignment-compiler-plugin-kotlinc-assignment-compiler-plugin"],
     module = ":libraries-kotlinc-assignment-compiler-plugin",
 )
 
@@ -37,7 +37,7 @@ jvm_library(
     ),
     module_name = "intellij.libraries.kotlinc.assignment.compiler.plugin",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlinc-assignment-compiler-plugin"],
+    exports = ["@lib//:libraries-kotlinc-assignment-compiler-plugin-kotlinc-assignment-compiler-plugin"],
     runtime_deps = [
         # do not sort,
         ":libraries-kotlinc-assignment-compiler-plugin",

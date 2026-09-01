@@ -73,11 +73,11 @@ dev_dist_plugin(
     ],
     descriptor_module = ":jsr223-plugin",
     libraries = [
-        "@lib//:kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-compiler-fe10",
-        "@lib//:kotlinc-kotlin-script-runtime",
-        "@lib//:kotlinc-kotlin-scripting-common",
-        "@lib//:kotlinc-kotlin-scripting-jvm",
+        "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common",
+        "@lib//:libraries-kotlinc-kotlin-script-runtime-kotlinc-kotlin-script-runtime",
+        "@lib//:libraries-kotlinc-kotlin-scripting-common-kotlinc-kotlin-scripting-common",
+        "@lib//:libraries-kotlinc-kotlin-scripting-jvm-kotlinc-kotlin-scripting-jvm",
     ],
     prepacked_jars = {
         "//plugins/kotlin/jsr223:jsr223_content_module_jar": "intellij.kotlin.jsr223.jar",

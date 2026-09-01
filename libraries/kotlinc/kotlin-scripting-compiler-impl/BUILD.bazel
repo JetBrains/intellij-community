@@ -14,10 +14,10 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlinc-kotlin-scripting-compiler-impl"],
+    exports = ["@lib//:libraries-kotlinc-kotlin-scripting-compiler-impl-kotlinc-kotlin-scripting-compiler-impl"],
     runtime_deps = [
         # do not sort,
-        "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+        "@lib//:libraries-kotlinc-kotlin-scripting-compiler-impl-kotlinc-kotlin-scripting-compiler-impl",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common",
         "//libraries/kotlinc/kotlin-scripting-jvm:libraries-kotlinc-kotlin-scripting-jvm",
@@ -25,7 +25,7 @@ jvm_library(
 )
 
 content_module_jar(
-    libraries = ["@lib//:kotlinc-kotlin-scripting-compiler-impl"],
+    libraries = ["@lib//:libraries-kotlinc-kotlin-scripting-compiler-impl-kotlinc-kotlin-scripting-compiler-impl"],
     module = ":libraries-kotlinc-kotlin-scripting-compiler-impl",
 )
 
@@ -39,7 +39,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.kotlinc.kotlin.scripting.compiler.impl",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlinc-kotlin-scripting-compiler-impl"],
+    exports = ["@lib//:libraries-kotlinc-kotlin-scripting-compiler-impl-kotlinc-kotlin-scripting-compiler-impl"],
     runtime_deps = [
         # do not sort,
         ":libraries-kotlinc-kotlin-scripting-compiler-impl",

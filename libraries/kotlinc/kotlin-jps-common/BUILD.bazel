@@ -14,12 +14,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlinc-kotlin-jps-common"],
-    runtime_deps = ["@lib//:kotlinc-kotlin-jps-common"],
+    exports = ["@lib//:libraries-kotlinc-kotlin-jps-common-kotlinc-kotlin-jps-common"],
+    runtime_deps = ["@lib//:libraries-kotlinc-kotlin-jps-common-kotlinc-kotlin-jps-common"],
 )
 
 content_module_jar(
-    libraries = ["@lib//:kotlinc-kotlin-jps-common"],
+    libraries = ["@lib//:libraries-kotlinc-kotlin-jps-common-kotlinc-kotlin-jps-common"],
     module = ":libraries-kotlinc-kotlin-jps-common",
 )
 
@@ -33,7 +33,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.kotlinc.kotlin.jps.common",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlinc-kotlin-jps-common"],
+    exports = ["@lib//:libraries-kotlinc-kotlin-jps-common-kotlinc-kotlin-jps-common"],
     runtime_deps = [":libraries-kotlinc-kotlin-jps-common"],
 )
 ### auto-generated section `build intellij.libraries.kotlinc.kotlin.jps.common` end
