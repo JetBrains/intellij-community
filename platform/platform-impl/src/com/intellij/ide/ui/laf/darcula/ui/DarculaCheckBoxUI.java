@@ -5,6 +5,7 @@ import com.intellij.ide.ui.laf.LookAndFeelThemeAdapter;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DrawUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.EmptyIcon;
@@ -122,12 +123,22 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
       if (op != null) {
         op.setGraphicsColor(g2, b.hasFocus());
         Path2D outline = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-        outline.append(new RoundRectangle2D.Float(iconRect.x + JBUIScale.scale(3), iconRect.y + JBUIScale.scale(3),
-                                                  JBUIScale.scale(18), JBUIScale.scale(18),
-                                                  JBUIScale.scale(8), JBUIScale.scale(8)), false);
-        outline.append(new RoundRectangle2D.Float(iconRect.x + JBUIScale.scale(5),  iconRect.y + JBUIScale.scale(5),
-                                                  JBUIScale.scale(14), JBUIScale.scale(14),
-                                                  JBUIScale.scale(4), JBUIScale.scale(4)), false);
+        if (ExperimentalUI.isNewUI()) {
+          outline.append(new RoundRectangle2D.Float(iconRect.x + JBUIScale.scale(3), iconRect.y + JBUIScale.scale(3),
+                                                    JBUIScale.scale(18), JBUIScale.scale(18),
+                                                    JBUIScale.scale(8), JBUIScale.scale(8)), false);
+          outline.append(new RoundRectangle2D.Float(iconRect.x + JBUIScale.scale(5), iconRect.y + JBUIScale.scale(5),
+                                                    JBUIScale.scale(14), JBUIScale.scale(14),
+                                                    JBUIScale.scale(4), JBUIScale.scale(4)), false);
+        }
+        else {
+          outline.append(new RoundRectangle2D.Float(iconRect.x + JBUIScale.scale(1), iconRect.y,
+                                                    JBUIScale.scale(17), JBUIScale.scale(17),
+                                                    JBUIScale.scale(8), JBUIScale.scale(8)), false);
+          outline.append(new RoundRectangle2D.Float(iconRect.x + JBUIScale.scale(4), iconRect.y + JBUIScale.scale(3),
+                                                    JBUIScale.scale(12), JBUIScale.scale(12),
+                                                    JBUIScale.scale(3), JBUIScale.scale(3)), false);
+        }
 
         DrawUtil.setupRenderingHints(g2);
         g2.fill(outline);
