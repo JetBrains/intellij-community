@@ -523,6 +523,8 @@ public final class TerminalToolWindowManager implements Disposable {
     var manager = content.getManager();
     if (manager != null) {
       manager.removeContent(content, true, true, true);
+    } else {
+      content.release();
     }
   }
 

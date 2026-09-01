@@ -89,8 +89,12 @@ class TerminalToolWindowTabsManagerImpl(
   }
 
   override fun closeTab(tab: TerminalToolWindowTab) {
-    val manager = tab.content.manager ?: return
-    manager.removeContent(/* content = */ tab.content, /* dispose = */ true, /* requestFocus = */ true, /* forcedFocus = */ true)
+    val manager = tab.content.manager
+    if (manager != null) {
+      manager.removeContent(/* content = */ tab.content, /* dispose = */ true, /* requestFocus = */ true, /* forcedFocus = */ true)
+    } else {
+      tab.content.release()
+    }
   }
 
   override fun detachTab(tab: TerminalToolWindowTab) {
