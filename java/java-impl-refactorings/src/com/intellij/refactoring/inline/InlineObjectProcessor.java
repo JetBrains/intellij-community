@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -190,7 +190,7 @@ public final class InlineObjectProcessor extends BaseRefactoringProcessor {
       ChangeContextUtil.decodeContextInfo(anchorParent, null, null);
     }
 
-    PsiReferenceExpression resultUsage = InlineMethodProcessor.replaceCall(factory, myNextCall, firstAdded, result);
+    PsiReferenceExpression resultUsage = InlineMethodProcessorUtil.replaceCall(factory, myNextCall, firstAdded, result);
     if (resultUsage != null) {
       PsiLocalVariable resultVar = ExpressionUtils.resolveLocalVariable(resultUsage);
       if (resultVar != null) {
@@ -289,8 +289,7 @@ public final class InlineObjectProcessor extends BaseRefactoringProcessor {
     myMethod.accept(collector);
     myNextMethod.accept(collector);
 
-    final Map<PsiMember, Set<PsiMember>> containersToReferenced = InlineMethodProcessor
-      .getInaccessible(collector.myReferencedMembers, usagesIn, myMethod);
+    final Map<PsiMember, Set<PsiMember>> containersToReferenced = InlineMethodProcessorUtil.getInaccessible(collector.myReferencedMembers, usagesIn, myMethod);
 
     containersToReferenced.forEach((container, referencedInaccessible) -> {
       for (PsiMember referenced : referencedInaccessible) {

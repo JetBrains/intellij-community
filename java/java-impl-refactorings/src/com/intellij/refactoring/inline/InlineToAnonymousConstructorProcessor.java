@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -206,7 +206,7 @@ class InlineToAnonymousConstructorProcessor {
     while(true) {
       PsiMethod constructor = myNewExpression.resolveConstructor();
       if (constructor == null || !InlineUtil.isChainingConstructor(constructor)) break;
-      InlineMethodProcessor.inlineConstructorCall(myNewExpression);
+      InlineMethodProcessorUtil.inlineConstructorCall(myNewExpression);
     }
   }
 

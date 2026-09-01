@@ -196,7 +196,7 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
     }
 
     if (reference != null) {
-      final String errorMessage = InlineMethodProcessor.checkUnableToInsertCodeBlock(methodBody, reference.getElement());
+      final String errorMessage = InlineMethodProcessorUtil.checkUnableToInsertCodeBlock(methodBody, reference.getElement());
       if (errorMessage != null) {
         return new ContextOrError.Error(errorMessage);
       }

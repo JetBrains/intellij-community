@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -226,7 +226,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       element = element.getNextSibling();
     }
     final Map<PsiMember, Set<PsiMember>> containersToReferenced = 
-      InlineMethodProcessor.getInaccessible(collector.myReferencedMembers, usages, myClass);
+      InlineMethodProcessorUtil.getInaccessible(collector.myReferencedMembers, usages, myClass);
     String classDescription = RefactoringUIUtil.getDescription(myClass, true);
 
     containersToReferenced.forEach((container, inaccessibles) -> {

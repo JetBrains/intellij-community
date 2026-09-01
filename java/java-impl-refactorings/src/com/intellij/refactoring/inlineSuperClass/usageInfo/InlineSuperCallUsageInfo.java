@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.inlineSuperClass.usageInfo;
 
@@ -16,6 +16,7 @@ import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.inline.InlineMethodProcessor;
+import com.intellij.refactoring.inline.InlineMethodProcessorUtil;
 import com.intellij.refactoring.inline.ReferencedElementsCollector;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.InlineUtil;
@@ -78,7 +79,7 @@ public class InlineSuperCallUsageInfo extends FixableUsageInfo {
     if (element instanceof PsiMethodCallExpression methodCallExpression) {
       final PsiMethod superConstructor = methodCallExpression.resolveMethod();
       if (superConstructor != null) {
-        InlineMethodProcessor.addInaccessibleMemberConflicts(superConstructor, new UsageInfo[]{new UsageInfo(methodCallExpression.getMethodExpression())}, new ReferencedElementsCollector(){
+        InlineMethodProcessorUtil.addInaccessibleMemberConflicts(superConstructor, new UsageInfo[]{new UsageInfo(methodCallExpression.getMethodExpression())}, new ReferencedElementsCollector(){
           @Override
           protected void checkAddMember(@NotNull PsiMember member) {
             if (!PsiTreeUtil.isAncestor(superConstructor.getContainingClass(), member, false)) {
