@@ -16,6 +16,9 @@
 - name: lib/modules/intellij.markdown.fenceInjector.textMate.jar
   contentModules:
   - name: intellij.markdown.fenceInjector.textMate
+- name: lib/modules/intellij.markdown.figmaAdvertiser.jar
+  contentModules:
+  - name: intellij.markdown.figmaAdvertiser
 - name: lib/modules/intellij.markdown.frontend.jar
   contentModules:
   - name: intellij.markdown.frontend
