@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.CommonBundle;
@@ -36,10 +36,13 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 public final class InlineMethodHandler extends JavaInlineActionHandler {
@@ -68,8 +71,104 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
   public static void performInline(Project project, Editor editor, PsiMethod method, boolean allowInlineThisOnly) {
     PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
 
+    ContextOrError contextOrError = createInlineContext(method, reference, allowInlineThisOnly);
+
+    switch (contextOrError) {
+      case ContextOrError.InlineAbstractMethod context -> {
+        inlineAbstractMethod(project, editor, context);
+      }
+      case ContextOrError.InlineObjectMethod context -> {
+        inlineObjectMethod(context);
+      }
+      case ContextOrError.InlineRegularMethod context -> {
+        inlineRegularMethod(project, editor, context);
+      }
+      case ContextOrError.Error error -> {
+        CommonRefactoringUtil.showErrorHint(project, editor, error.message(), getRefactoringName(), HelpID.INLINE_METHOD);
+      }
+    }
+  }
+
+
+  private static void inlineAbstractMethod(@NotNull Project project,
+                                           @NotNull Editor editor,
+                                           @NotNull ContextOrError.InlineAbstractMethod context) {
+    PsiMethod realMethod = context.method();
+    PsiReference reference = context.reference();
+    String message = JavaRefactoringBundle.message("dialog.message.confirmation.to.process.only.implementation",
+                                                   PsiFormatUtil.formatMethod(realMethod, PsiSubstitutor.EMPTY,
+                                                                              PsiFormatUtilBase.SHOW_NAME |
+                                                                              PsiFormatUtilBase.SHOW_CONTAINING_CLASS, 0));
+    int answer = Messages.showYesNoDialog(project, message, getRefactoringName(), Messages.getQuestionIcon());
+    if (answer == Messages.NO) return;
+    InlineMethodProcessor processor = new InlineMethodProcessor(project, realMethod, reference, editor, true, false, false, true);
+    // Without this line, conflicts view is not shown
+    processor.setPrepareSuccessfulSwingThreadCallback(() -> {});
+    processor.run();
+  }
+
+  private static void inlineObjectMethod(ContextOrError.InlineObjectMethod context) {
+    InlineObjectProcessor processor = context.processor();
+    if (Messages.showOkCancelDialog(JavaRefactoringBundle.message("inline.method.object.suggestion.message"),
+                                    JavaRefactoringBundle.message("inline.method.object.action.name"),
+                                    JavaRefactoringBundle.message("inline.action.name"), CommonBundle.getCancelButtonText(),
+                                    Messages.getQuestionIcon()) == Messages.OK) {
+      processor.setPrepareSuccessfulSwingThreadCallback(() -> {
+      });
+      processor.run();
+    }
+  }
+
+  private static void inlineRegularMethod(Project project, Editor editor, ContextOrError.InlineRegularMethod context) {
+    InlineMethodDialog dialog = new InlineMethodDialog(project, context.method(), context.reference(), editor, context.allowInsideThisOnly());
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      try {
+        dialog.doAction();
+      } finally {
+        dialog.close(DialogWrapper.OK_EXIT_CODE, true);
+      }
+    }
+    else {
+      dialog.show();
+    }
+  }
+
+  public static boolean checkRecursive(PsiMethod method) {
+    PsiCodeBlock body = method.getBody();
+    return body != null && checkCalls(body, method);
+  }
+
+  private static boolean checkCalls(PsiElement scope, PsiMethod method) {
+    if (scope instanceof PsiMethodCallExpression call) {
+      if (method.equals(call.getMethodExpression().resolve())) return true;
+    }
+
+    if (scope instanceof PsiMethodReferenceExpression ref) {
+      if (method.equals(ref.resolve())) return true;
+    }
+
+    for (PsiElement child = scope.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (checkCalls(child, method)) return true;
+    }
+
+    return false;
+  }
+
+
+  public static @NotNull ContextOrError createInlineContext(@NotNull PsiMethod method, @Nullable PsiReference reference, boolean allowInlineThisOnly) {
+    Project project = method.getProject();
     if (reference != null && reference.isReferenceTo(method) && method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-      if (tryInlineAbstractMethodImplementation(project, editor, method, reference)) return;
+      PsiMethod realMethod = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        () -> ReadAction.nonBlocking(() -> {
+          Collection<PsiMethod> methods =
+            OverridingMethodsSearch.search(method).filtering(m -> !m.hasModifierProperty(PsiModifier.ABSTRACT))
+              .findAll();
+          return ContainerUtil.getOnlyItem(methods);
+        }).executeSynchronously(),
+        JavaRefactoringBundle.message("dialog.title.resolving.method.implementation"), true, project);
+      if (realMethod != null && realMethod.getBody() != null) {
+        return new ContextOrError.InlineAbstractMethod(realMethod, reference);
+      }
     }
 
     PsiCodeBlock methodBody = method.getBody();
@@ -80,58 +179,43 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
     }
 
     if (methodBody == null) {
-      String message;
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        message = JavaRefactoringBundle.message("refactoring.cannot.be.applied.to.abstract.methods", getRefactoringName());
+        return new ContextOrError.Error(JavaRefactoringBundle.message("refactoring.cannot.be.applied.to.abstract.methods", getRefactoringName()));
       }
       else if (method.hasModifierProperty(PsiModifier.NATIVE)) {
-        message = JavaRefactoringBundle.message("refactoring.cannot.be.applied.to.native.methods", getRefactoringName());
+        return new ContextOrError.Error(JavaRefactoringBundle.message("refactoring.cannot.be.applied.to.native.methods", getRefactoringName()));
       }
       else {
-        message = JavaRefactoringBundle.message("refactoring.cannot.be.applied.no.sources.attached", getRefactoringName());
+        return new ContextOrError.Error(JavaRefactoringBundle.message("refactoring.cannot.be.applied.no.sources.attached", getRefactoringName()));
       }
-      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_METHOD);
-      return;
     }
 
+
     if (reference == null && checkRecursive(method)) {
-      String message = RefactoringBundle.message("refactoring.is.not.supported.for.recursive.methods", getRefactoringName());
-      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_METHOD);
-      return;
+      return new ContextOrError.Error(RefactoringBundle.message("refactoring.is.not.supported.for.recursive.methods", getRefactoringName()));
     }
 
     if (reference != null) {
       final String errorMessage = InlineMethodProcessor.checkUnableToInsertCodeBlock(methodBody, reference.getElement());
       if (errorMessage != null) {
-        CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, getRefactoringName(), HelpID.INLINE_METHOD);
-        return;
+        return new ContextOrError.Error(errorMessage);
       }
     }
-
     if (method.isConstructor()) {
       if (!InlineUtil.isChainingConstructor(method)) {
         InlineObjectProcessor processor = InlineObjectProcessor.create(reference, method);
         if (processor != null) {
-          if (Messages.showOkCancelDialog(JavaRefactoringBundle.message("inline.method.object.suggestion.message"),
-                                          JavaRefactoringBundle.message("inline.method.object.action.name"),
-                                          JavaRefactoringBundle.message("inline.action.name"), CommonBundle.getCancelButtonText(),
-                                          Messages.getQuestionIcon()) == Messages.OK) {
-            processor.setPrepareSuccessfulSwingThreadCallback(() -> {});
-            processor.run();
-          }
-          return;
+          return new ContextOrError.InlineObjectMethod(processor, method, reference);
         }
         if (!isThisReference(reference)) {
-          String message = 
-            JavaRefactoringBundle.message("refactoring.cannot.be.applied.to.inline.non.chaining.constructors", getRefactoringName());
-          CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_CONSTRUCTOR);
-          return;
+          return new ContextOrError.Error(
+            JavaRefactoringBundle.message("refactoring.cannot.be.applied.to.inline.non.chaining.constructors", getRefactoringName()));
         }
         allowInlineThisOnly = true;
       }
       if (reference != null) {
         final PsiElement refElement = reference.getElement();
-        PsiCall constructorCall = 
+        PsiCall constructorCall =
           refElement instanceof PsiJavaCodeReferenceElement ref ? RefactoringUtil.getEnclosingConstructorCall(ref) : null;
         if (constructorCall == null || !method.equals(constructorCall.resolveMethod())) reference = null;
       }
@@ -158,64 +242,8 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
         reference = null;
       }
     }
-    InlineMethodDialog dialog = new InlineMethodDialog(project, method, reference, editor, allowInlineThisOnly);
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      try {
-        dialog.doAction();
-      } finally {
-        dialog.close(DialogWrapper.OK_EXIT_CODE, true);
-      }
-    }
-    else {
-      dialog.show();
-    }
-  }
 
-  private static boolean tryInlineAbstractMethodImplementation(@NotNull Project project,
-                                                               @NotNull Editor editor,
-                                                               @NotNull PsiMethod method,
-                                                               @NotNull PsiReference reference) {
-    PsiMethod realMethod = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> ReadAction.nonBlocking(() -> {
-        Collection<PsiMethod> methods =
-          OverridingMethodsSearch.search(method).filtering(m -> !m.hasModifierProperty(PsiModifier.ABSTRACT))
-            .findAll();
-        return ContainerUtil.getOnlyItem(methods);
-      }).executeSynchronously(),
-      JavaRefactoringBundle.message("dialog.title.resolving.method.implementation"), true, project);
-    if (realMethod == null || realMethod.getBody() == null) return false;
-    String message = JavaRefactoringBundle.message("dialog.message.confirmation.to.process.only.implementation",
-                                                   PsiFormatUtil.formatMethod(realMethod, PsiSubstitutor.EMPTY,
-                                                                              PsiFormatUtilBase.SHOW_NAME |
-                                                                              PsiFormatUtilBase.SHOW_CONTAINING_CLASS, 0));
-    int answer = Messages.showYesNoDialog(project, message, getRefactoringName(), Messages.getQuestionIcon());
-    if (answer == Messages.NO) return true;
-    InlineMethodProcessor processor = new InlineMethodProcessor(project, realMethod, reference, editor, true, false, false, true);
-    // Without this line, conflicts view is not shown
-    processor.setPrepareSuccessfulSwingThreadCallback(() -> {});
-    processor.run();
-    return true;
-  }
-
-  public static boolean checkRecursive(PsiMethod method) {
-    PsiCodeBlock body = method.getBody();
-    return body != null && checkCalls(body, method);
-  }
-
-  private static boolean checkCalls(PsiElement scope, PsiMethod method) {
-    if (scope instanceof PsiMethodCallExpression call) {
-      if (method.equals(call.getMethodExpression().resolve())) return true;
-    }
-
-    if (scope instanceof PsiMethodReferenceExpression ref) {
-      if (method.equals(ref.resolve())) return true;
-    }
-
-    for (PsiElement child = scope.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (checkCalls(child, method)) return true;
-    }
-
-    return false;
+    return new ContextOrError.InlineRegularMethod(method, reference, allowInlineThisOnly);
   }
 
   public static boolean isThisReference(PsiReference reference) {
@@ -232,5 +260,22 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
 
   private static @NlsContexts.DialogTitle String getRefactoringName() {
     return RefactoringBundle.message("inline.method.title");
+  }
+
+  public sealed interface ContextOrError
+    permits ContextOrError.Error, ContextOrError.InlineAbstractMethod, ContextOrError.InlineObjectMethod,
+            ContextOrError.InlineRegularMethod {
+    record InlineAbstractMethod(@NotNull PsiMethod method, @NotNull PsiReference reference) implements ContextOrError {
+    }
+
+    record InlineObjectMethod(@NotNull InlineObjectProcessor processor, @NotNull PsiMethod method, @Nullable PsiReference reference) implements ContextOrError {
+    }
+
+    record InlineRegularMethod(@NotNull PsiMethod method, @Nullable PsiReference reference, boolean allowInsideThisOnly)
+      implements ContextOrError {
+    }
+
+    record Error(@Nls String message) implements ContextOrError {
+    }
   }
 }
