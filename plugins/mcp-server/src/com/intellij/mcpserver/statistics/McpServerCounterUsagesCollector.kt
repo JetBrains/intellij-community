@@ -116,12 +116,6 @@ internal fun McpToolCallResult.reportableResultSize(): Int =
   content.sumOf { part -> (part as? McpToolCallResultContent.Text)?.text?.length ?: 0 }
 
 object McpServerCounterUsagesCollector : CounterUsagesCollector() {
-  // v10: `invocation_mode` gained ROUTER_ENTRY and now reports DIRECT_WITH_ROUTER_ENABLED, so the router's own row is
-  // separable from the tool it dispatched to and a bypassed router is separable from an absent one.
-  // v9: mcp.tool.call gained `toolset`, so usage can be read per toolset rather than per tool name only, and
-  // `result_bytes` is now filled on both call paths instead of being registered and always empty.
-  // v8: mcp.tool.call gained the caller, transport, invocation mode and payload-size dimensions, without which a
-  // cost-per-tool analysis cannot separate one client or one dispatch path from another.
   private val GROUP = EventLogGroup("mcpserver.events", 10)
 
   private val TOOL_NAME = EventFields.StringValidatedByCustomRule<McpToolNameValidator>("tool_name")
