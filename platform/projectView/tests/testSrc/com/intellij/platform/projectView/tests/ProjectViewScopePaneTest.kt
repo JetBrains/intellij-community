@@ -96,8 +96,8 @@ internal class ProjectViewScopePaneTest : AbstractProjectViewPaneTest() {
    */
   private suspend fun ProjectViewPaneTester.assertTreeWithContentRoot(expected: String) {
     val dump = dumpTree().lines().joinToString("\n") { line ->
-      val indent = line.takeWhile { it == ' ' }
-      if (line.startsWith("$indent/")) "$indent<content root>" else line
+      val indent = line.takeWhile { it == ' ' } // a single space indent means the content root
+      if (indent == " ") "$indent<content root>" else line
     }
     assertEquals(expected.trimIndent().trimEnd(), dump)
   }
