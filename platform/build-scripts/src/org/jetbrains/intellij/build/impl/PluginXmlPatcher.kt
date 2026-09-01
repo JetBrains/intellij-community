@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
+import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.text.SemVer
 import io.opentelemetry.api.trace.Span
@@ -9,6 +10,7 @@ import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompatibleBuildRange
+import org.jetbrains.intellij.build.FileSource
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.classPath.DescriptorSearchScope
 import org.jetbrains.intellij.build.classPath.XIncludeElementResolverImpl
@@ -20,6 +22,7 @@ import org.jetbrains.intellij.build.dev.DevDistDescriptorStages
 import org.jetbrains.intellij.build.dev.DevDistPatchedDescriptors
 import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
 import java.nio.file.Files
+import java.nio.file.Path
 
 private val buildNumberRegex = Regex("""(\d+\.)+\d+""")
 private val digitDotDigitRegex = Regex("""\d+\.\d+""")
@@ -232,6 +235,7 @@ internal suspend fun patchPluginXml(
       pluginDescriptorCache = pluginDescriptorCache,
       mainModule = pluginLayout.mainModule,
       content = produced,
+      producedFile = producedDescriptor,
     )
     return
   }
@@ -308,15 +312,45 @@ internal suspend fun patchPluginXml(
  *
  * `IF_EQUAL` holds for a produced descriptor more strongly than for a computed one: the file is one manifest entry
  * resolved to one path, so two reads of it are the same bytes by construction.
+ *
+ * ### Which channel the jar takes the descriptor from
+ *
+ * [producedFile] is the file a `dev_dist_plugin_descriptor` action wrote, when this plugin was handed one. The jar then
+ * takes the descriptor as a [FileSource], so the executed recipe states its label instead of `inMemory`, and the replay
+ * gate can pack the jar again from the recipe alone. A computed text has no file to name, so it keeps the byte channel.
+ *
+ * The jar bytes do not change with the channel. A plugin jar is built with `compress = false`, so `buildJar` passes no
+ * `Deflater` and `ZipFileWriter.file` stores the entry rather than deflating it, which is what `uncompressedData` does
+ * for the byte channel. The jar cache's digest does change - `FileSourceCacheStrategy` hashes the path and the content
+ * hash - so the first build after this re-packs the main jar of every plugin that reads a produced descriptor.
+ *
+ * The cache publish stays on the text either way. Its readers want bytes, not a path, and one of them falls back to the
+ * unpatched source when the entry is missing.
  */
 private fun publishPatchedPluginXml(
   moduleOutputPatcher: ModuleOutputPatcher,
   pluginDescriptorCache: ScopedCachedDescriptorContainer,
   mainModule: String,
   content: String,
+  producedFile: Path? = null,
 ) {
-  // OS-specific plugins being built several times - we expect that plugin.xml must be the same
-  moduleOutputPatcher.patchModuleOutput(moduleName = mainModule, path = PLUGIN_XML_RELATIVE_PATH, content = content, overwrite = PatchOverwriteMode.IF_EQUAL)
+  if (producedFile == null) {
+    // OS-specific plugins being built several times - we expect that plugin.xml must be the same
+    moduleOutputPatcher.patchModuleOutput(moduleName = mainModule, path = PLUGIN_XML_RELATIVE_PATH, content = content, overwrite = PatchOverwriteMode.IF_EQUAL)
+  }
+  else {
+    val bytes = content.toByteArray()
+    moduleOutputPatcher.patchModuleOutputWithFile(
+      moduleName = mainModule,
+      path = PLUGIN_XML_RELATIVE_PATH,
+      source = FileSource(
+        relativePath = PLUGIN_XML_RELATIVE_PATH,
+        size = bytes.size,
+        hash = Hashing.xxh3_64().hashBytesToLong(bytes),
+        file = producedFile,
+      ),
+    )
+  }
   pluginDescriptorCache.put(PLUGIN_XML_RELATIVE_PATH, content.toByteArray())
 }
 

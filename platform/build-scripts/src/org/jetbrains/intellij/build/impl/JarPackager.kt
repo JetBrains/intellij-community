@@ -320,10 +320,12 @@ class JarPackager private constructor(
       expected = expected,
       actualRelativeOutputFile = relativeOutputFile,
       hasModuleExclusions = !pluginLayout.moduleExcludes.get(moduleName).isNullOrEmpty(),
-      hasPatchedOutput = moduleOutputPatcher.getPatchedContent(moduleName).isNotEmpty(),
-      // The plugin's descriptor lands in the jar of the main module, which is the layout's main jar.
-      hasInMemoryDescriptor = relativeOutputFile == pluginLayout.getMainJarName() &&
-                              moduleOutputPatcher.getPatchedContent(pluginLayout.mainModule).containsKey(PLUGIN_XML_RELATIVE_PATH),
+      hasPatchedOutput = moduleOutputPatcher.patchCount(moduleName) != 0,
+      // The plugin's descriptor lands in the jar of the main module, which is the layout's main jar. Both patch
+      // channels count: a produced descriptor is a file patch and a computed one is a byte patch, and the hand-off
+      // drops either.
+      hasPatchedDescriptor = relativeOutputFile == pluginLayout.getMainJarName() &&
+                             moduleOutputPatcher.hasPatch(pluginLayout.mainModule, PLUGIN_XML_RELATIVE_PATH),
       hasGeneratedSearchableOptions = !searchableOptionSet?.createSourceByModule(moduleName).isNullOrEmpty(),
       // The JPS model's declared paths, not the resolved jars. `isSeparateLibraryJar` is a pure name predicate and this
       // is a guard, so a name is all it needs - and the two agree: a Maven library's Bazel jar target is named
@@ -388,7 +390,7 @@ class JarPackager private constructor(
 
   internal suspend fun computeSourcesForModule(item: ModuleItem, layout: BaseLayout?, searchableOptionSet: SearchableOptionSetDescriptor?) {
     val moduleName = item.moduleName
-    val patchedContent = moduleOutputPatcher.getPatchedContent(moduleName)
+    val patchedSources = moduleOutputPatcher.getPatchedSources(moduleName)
 
     val module = context.outputProvider.findRequiredModule(moduleName)
     val useTestModuleOutput = helper.isTestPluginModule(moduleName, module)
@@ -399,7 +401,11 @@ class JarPackager private constructor(
     val packToDir = context.options.isUnpackedDist &&
                     !item.relativeOutputFile.contains('/') &&
                     !item.isProductModule() &&
-                    (patchedContent.isEmpty() || (patchedContent.size == 1 && patchedContent.containsKey("META-INF/plugin.xml"))) &&
+                    // Over both patch channels. A produced plugin descriptor is a file patch, and this asks how many
+                    // paths the jar carries that the module output does not hold, which is the same question either way.
+                    (moduleOutputPatcher.patchCount(moduleName) == 0 ||
+                     (moduleOutputPatcher.patchCount(moduleName) == 1 &&
+                      moduleOutputPatcher.hasPatch(moduleName, PLUGIN_XML_RELATIVE_PATH))) &&
                     extraExcludes.isEmpty() &&
                     moduleOutputRoots.isNotEmpty()
 
@@ -417,11 +423,14 @@ class JarPackager private constructor(
 
     val moduleSources = asset.includedModules.computeIfAbsent(item) { mutableListOf() }
 
-    for ((relativePath, data) in patchedContent) {
+    // One loop over both kinds of patch, in the order the patcher recorded them. That order reaches the jar, so a loop
+    // per kind re-orders a module which states both and changes the jar's `__index__` while every entry stays
+    // byte-identical.
+    for ((relativePath, source) in patchedSources) {
       if (layout is PluginLayout && moduleName != layout.mainModule && relativePath == "META-INF/plugin.xml") {
         continue
       }
-      moduleSources.add(InMemoryContentSource(relativePath, data))
+      moduleSources.add(source)
     }
 
     val jarAsset = lazy(LazyThreadSafetyMode.NONE) {
@@ -842,7 +851,7 @@ internal fun validatePrepackedPluginContentHandoff(
   actualRelativeOutputFile: String,
   hasModuleExclusions: Boolean,
   hasPatchedOutput: Boolean,
-  hasInMemoryDescriptor: Boolean,
+  hasPatchedDescriptor: Boolean,
   hasGeneratedSearchableOptions: Boolean,
   hasSeparateLibraryJar: Boolean,
   hasLayoutPlacedModuleLibrary: Boolean,
@@ -854,13 +863,18 @@ internal fun validatePrepackedPluginContentHandoff(
   }
   check(!hasModuleExclusions) { "Prepacked plugin content $relation has module exclusions" }
   check(!hasPatchedOutput) { "Prepacked plugin content $relation has patched module output" }
-  // `patchPluginXml` computes the plugin's `META-INF/plugin.xml` during the assembly, so that text exists in no file and
-  // a packing action cannot hold it. A handed-off jar would ship without its descriptor, and no byte gate would see it:
-  // `dev-dist.cmd jars` compares the action's output against the `JarPackager` jar, and neither holds the descriptor.
-  // The failure surfaces at IDE start. `hasPatchedOutput` asks about one module. This clause asks about the jar,
-  // because a relation keyed by a jar can name a jar whose descriptor comes from another module of the same plugin.
-  check(!hasInMemoryDescriptor) {
-    "Prepacked plugin content $relation would replace '$actualRelativeOutputFile', which receives a computed $PLUGIN_XML_RELATIVE_PATH"
+  // The plugin's `META-INF/plugin.xml` reaches the jar through `computeSourcesForModule`, and a hand-off is exactly the
+  // case where that function never runs. So a handed-off jar would ship without its descriptor whichever patch channel
+  // holds it, and no byte gate would see it: `dev-dist.cmd jars` compares the action's output against the `JarPackager`
+  // jar, and neither holds the descriptor. The failure surfaces at IDE start.
+  //
+  // `hasPatchedOutput` asks about one module. This clause asks about the jar, because a relation keyed by a jar can name
+  // a jar whose descriptor comes from another module of the same plugin.
+  //
+  // A produced descriptor is a file, so a packing action *could* hold it. Lifting this refusal for that case is a
+  // change to what the packing action declares, and it needs its own gate. It is not a consequence of the channel.
+  check(!hasPatchedDescriptor) {
+    "Prepacked plugin content $relation would replace '$actualRelativeOutputFile', which receives a patched $PLUGIN_XML_RELATIVE_PATH"
   }
   check(!hasGeneratedSearchableOptions) { "Prepacked plugin content $relation has generated searchable options" }
   // `computeSourcesForModuleLibs` lifts every `isSeparateLibraryJar` file out of the module jar into its own `lib/<name>.jar`. That call
