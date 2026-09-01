@@ -1201,8 +1201,13 @@ private suspend fun buildAsset(
   val file = asset.file
   spanBuilder("build jar")
     .setAttribute("jar", file.toString())
-    .setAttribute(AttributeKey.stringArrayKey("sources"), sources.map(Source::toString))
     .use { span ->
+      // Behind `isRecording`, because a builder argument is evaluated whatever the tracer does with it. A packaging
+      // suite installs a no-op tracer and still builds every jar, so this list would be formatted and dropped more
+      // than 14 000 times per run.
+      if (span.isRecording) {
+        span.setAttribute(AttributeKey.stringArrayKey("sources"), sources.map(Source::toString))
+      }
       asset.effectiveFile = cache.computeIfAbsent(
         sources = sources,
         targetFile = file,
