@@ -15,7 +15,6 @@ import com.intellij.platform.lsp.impl.logging.LanguageServiceLogger
 import com.intellij.platform.lsp.impl.logging.LanguageServiceLoggerService
 import com.intellij.platform.lsp.impl.serviceView.LspServiceViewSupport
 import com.intellij.util.ConcurrencyUtil
-import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import org.eclipse.lsp4j.InitializeResult
@@ -35,9 +34,6 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 private val logger = logger<Lsp4jServerConnector>()
-
-private val defaultMessageToFixRegex =
-  Regex("\\{\"jsonrpc\":\"2.0\",(\"method\":\"exit\"|\"id\":\"[^\"]+\",\"method\":\"shutdown\")(,\"params\":null)}")
 
 internal abstract class Lsp4jServerConnector protected constructor(private val lspClient: LspClientImpl) {
   private val descriptor: LspClientDescriptor = lspClient.descriptor
@@ -201,20 +197,9 @@ internal abstract class Lsp4jServerConnector protected constructor(private val l
     return object : MessageJsonHandler(supportedMethods, { it.disableHtmlEscaping() }) {
       override fun serialize(message: Message): String {
         val serialized = super.serialize(message)
-        val fixed = fixMessage(serialized)
-        lsCommunicationLogger?.logOutbound(fixed)
-        printTrafficSafely(outbound = true, message, fixed)
-        return fixed
-      }
-
-      private val messageToFixRegex: Regex = descriptor.asSafely<LspMessageFixRegexProvider>()?.messageToFixRegex
-                                             ?: defaultMessageToFixRegex
-
-      // https://github.com/eclipse-lsp4j/lsp4j/issues/655
-      private fun fixMessage(input: String): String {
-        val m = messageToFixRegex.matchEntire(input) ?: return input
-        val paramsRange = m.groups[2]!!.range
-        return input.removeRange(paramsRange)
+        lsCommunicationLogger?.logOutbound(serialized)
+        printTrafficSafely(outbound = true, message, serialized)
+        return serialized
       }
 
       @Throws(JsonParseException::class)
