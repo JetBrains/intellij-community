@@ -9,6 +9,7 @@ import com.intellij.ide.impl.OpenUntrustedProjectChoice
 import com.intellij.ide.impl.TRUSTED_PROJECTS_HELP_TOPIC
 import com.intellij.ide.impl.TrustedPathsSettings
 import com.intellij.ide.impl.TrustedProjectsStatistics
+import com.intellij.ide.trustedProjects.impl.TrustedFileDialog
 import com.intellij.ide.trustedProjects.impl.TrustedProjectStartupDialog
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.EDT
@@ -168,18 +169,17 @@ object TrustedProjectsDialog {
       return true
     }
 
-    val answer = invokeAndWaitIfNeeded {
-      MessageDialogBuilder.yesNo(
-        IdeBundle.message("untrusted.file.dialog.title"),
-        IdeBundle.message("untrusted.file.dialog.text", ApplicationInfoEx.getInstanceEx().fullApplicationName, filePath.toString()))
-        .yesText(IdeBundle.message("untrusted.file.dialog.trust.button"))
-        .noText(IdeBundle.message("untrusted.project.dialog.distrust.button"))
-        .asWarning()
-        .help(TRUSTED_PROJECTS_HELP_TOPIC)
-        .ask(hostProject)
-    }
+    val choice = TrustedFileDialog.showAndGet(hostProject, filePath)
+    val answer = choice.isTrusted
 
     if (answer) {
+      val parentPath = filePath.parent
+      if (choice.isTrustFolder && parentPath != null) {
+        TrustedProjectsStatistics.TRUST_FILE_LOCATION_CHECKBOX_SELECTED.log()
+        // record the folder grant first: setProjectTrusted fires the only trust event,
+        // and TrustedFilesCache must see the granted folder when it resets on that event
+        service<TrustedPathsSettings>().addTrustedPath(parentPath.toString())
+      }
       TrustedProjects.setProjectTrusted(locatedFile, true)
     }
 

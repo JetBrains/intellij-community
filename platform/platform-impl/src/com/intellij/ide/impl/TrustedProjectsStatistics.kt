@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal // Used in MPS
 object TrustedProjectsStatistics : CounterUsagesCollector() {
 
-  val GROUP: EventLogGroup = EventLogGroup("trusted_projects", 3)
+  val GROUP: EventLogGroup = EventLogGroup("trusted_projects", 4)
   val NEW_PROJECT_OPEN_OR_IMPORT_CHOICE: EventId1<OpenUntrustedProjectChoice> = GROUP.registerEvent("open_new_project",
                                                                                                     EventFields.Enum("choice",
                                                                                                                      OpenUntrustedProjectChoice::class.java))
@@ -21,6 +21,7 @@ object TrustedProjectsStatistics : CounterUsagesCollector() {
   val PROJECT_IMPLICITLY_TRUSTED_BY_URL: EventId = GROUP.registerEvent("project_implicitly_trusted_by_url")
   val TRUST_HOST_CHECKBOX_SELECTED: EventId = GROUP.registerEvent("trust_host_checkbox_selected")
   val TRUST_LOCATION_CHECKBOX_SELECTED: EventId = GROUP.registerEvent("trust_location_checkbox_selected")
+  val TRUST_FILE_LOCATION_CHECKBOX_SELECTED: EventId = GROUP.registerEvent("trust_file_location_checkbox_selected")
   val TRUST_PROJECT_FROM_BANNER: EventId = GROUP.registerEvent("trust_project_from_notification_banner")
   val READ_MORE_FROM_BANNER: EventId = GROUP.registerEvent("read_more_from_notification_banner")
 
