@@ -108,8 +108,8 @@ internal class FrozenColumnsController(
 
   /** Installs navigation that treats the frozen strip and the primary table as one displayed column sequence. */
   fun installColumnNavigationActions(view: TableResultView, actionMap: ActionMap) {
-    wrapColumnMoveAction(view, actionMap, "selectNextColumnCell", forward = true, extend = false)
-    wrapColumnMoveAction(view, actionMap, "selectPreviousColumnCell", forward = false, extend = false)
+    wrapColumnMoveAction(view, actionMap, "selectNextColumnCell", forward = true, extend = false, wrapsRows = true)
+    wrapColumnMoveAction(view, actionMap, "selectPreviousColumnCell", forward = false, extend = false, wrapsRows = true)
     wrapColumnMoveAction(view, actionMap, "selectNextColumn", forward = true, extend = false)
     wrapColumnMoveAction(view, actionMap, "selectPreviousColumn", forward = false, extend = false)
     wrapColumnMoveAction(view, actionMap, "selectNextColumnExtendSelection", forward = true, extend = true)
@@ -120,8 +120,13 @@ internal class FrozenColumnsController(
     wrapColumnEdgeAction(view, actionMap, "selectLastColumnExtendSelection", first = false, extend = true)
   }
 
-  private fun wrapColumnMoveAction(view: TableResultView, actionMap: ActionMap, name: String, forward: Boolean, extend: Boolean) {
-    wrapNavigationAction(actionMap, name) { handleColumnMove(view, forward, extend) }
+  private fun wrapColumnMoveAction(view: TableResultView,
+                                   actionMap: ActionMap,
+                                   name: String,
+                                   forward: Boolean,
+                                   extend: Boolean,
+                                   wrapsRows: Boolean = false) {
+    wrapNavigationAction(actionMap, name) { handleColumnMove(view, forward, extend, wrapsRows) }
   }
 
   private fun wrapColumnEdgeAction(view: TableResultView, actionMap: ActionMap, name: String, first: Boolean, extend: Boolean) {
@@ -1040,18 +1045,41 @@ internal class FrozenColumnsController(
   }
 
   /** Handles horizontal moves while a strip exists, skipping hidden placeholders and retaining one unified anchor. */
-  fun handleColumnMove(view: TableResultView, forward: Boolean, extend: Boolean): Boolean {
+  fun handleColumnMove(view: TableResultView, forward: Boolean, extend: Boolean, wrapsRows: Boolean): Boolean {
     val frozen = frozenView ?: return false
     if (view !== frozen && view !== primaryView) return false
     val lead = leadColumn(view)
     if (lead !in 0 until view.columnCount) return false
     val order = displayedColumnOrder(frozen)
     val current = if (view === primaryView) lead else order.primaryIndexOfFrozen(lead) ?: return false
-    val target = order.adjacent(current, forward) ?: return false
     val row = leadRow(view)
     if (row < 0) return false
+    // A move that stays in one table is left to Swing, which steps to the next column-model index. That index is the
+    // zero-width placeholder of a pinned column whenever one sits between, or past, the columns displayed here.
+    val swingTarget = lead + if (forward) 1 else -1
+    val swingHitsPlaceholder = view === primaryView && isPinnedPlaceholder(primaryView.columnModel, swingTarget)
+    val target = order.adjacent(current, forward)
+    // Nothing displayed that way: Tab carries on in the next row, and an arrow is consumed rather than left to Swing,
+    // which would walk onto a placeholder.
+    if (target == null) {
+      return wrapsRows && !extend && continueInAdjacentRow(frozen, order, row, forward) || swingHitsPlaceholder
+    }
     val focusTarget = if (isPinnedPlaceholder(primaryView.columnModel, target)) frozen else primaryView
-    return (extend || focusTarget !== view) && changeColumnSelection(order, row, target, extend, focusTarget)
+    val handledHere = extend || focusTarget !== view || (view === primaryView && target != swingTarget)
+    return handledHere && changeColumnSelection(order, row, target, extend, focusTarget)
+  }
+
+  /**
+   * Tab and Shift+Tab carry on in the neighbouring row once the columns run out. Each table holds only part of the
+   * displayed order, so Swing would wrap inside whichever one has focus and skip every column of the other.
+   */
+  private fun continueInAdjacentRow(frozen: TableResultView, order: DisplayedColumnOrder, row: Int, forward: Boolean): Boolean {
+    val rows = primaryView.rowCount
+    if (rows == 0) return false
+    val target = order.edge(forward) ?: return false
+    val focusTarget = if (isPinnedPlaceholder(primaryView.columnModel, target)) frozen else primaryView
+    val nextRow = if (forward) (row + 1) % rows else (row + rows - 1) % rows
+    return changeColumnSelection(order, nextRow, target, false, focusTarget)
   }
 
   /** Handles moves to the first or last displayed column, including their selection-extending variants. */

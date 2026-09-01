@@ -93,6 +93,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -559,6 +560,14 @@ public final class TableResultView extends JBTableWithResizableCells
   @Override
   protected @NotNull ExpandableItemsHandler<TableCell> createExpandableItemsHandler() {
     return new TableExpandableItemsHandler(this) {
+      @Override
+      public @Nullable Pair<Component, Rectangle> getCellRendererAndBounds(TableCell key) {
+        // A pinned column stays here as a zero-width placeholder, which always counts as truncated. Expanding it
+        // would draw the pinned value, selected, on top of the columns next to the strip.
+        if (isColumnFrozenHidden(key.column)) return null;
+        return super.getCellRendererAndBounds(key);
+      }
+
       @Override
       protected void handleSelectionChange(TableCell selected, boolean processIfUnfocused) {
         if (selected == null) {
