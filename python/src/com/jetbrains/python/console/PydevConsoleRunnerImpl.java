@@ -1040,7 +1040,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         else {
           myConsoleListeners.clear();
         }
-        if (PyConsoleUtil.isCommandQueueEnabled(myProject)) {
+        if (PyConsoleOptions.getInstance(myProject).isCommandQueueEnabled()) {
           myConsoleView.restoreQueueWindow(true);
         }
       }

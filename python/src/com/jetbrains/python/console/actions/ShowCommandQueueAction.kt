@@ -25,7 +25,7 @@ internal class ShowCommandQueueAction(private val consoleView: PythonConsoleView
     super.update(e)
     val communication = consoleView.file.getCopyableUserData(CONSOLE_COMMUNICATION_KEY)
     communication?.let {
-      if (PyConsoleUtil.isCommandQueueEnabled(consoleView.project)) {
+      if (consoleView.isCommandQueueEnabled) {
         e.presentation.isEnabled = true
 
         if (PyConsoleUtil.isCommandQueueEmpty(consoleView.project, communication)) {

@@ -60,6 +60,7 @@ import com.jetbrains.python.console.PydevConsoleRunnerFactory;
 import com.jetbrains.python.console.PydevConsoleRunnerImpl;
 import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.console.PythonDebugConsoleCommunication;
+import com.jetbrains.python.console.PyConsoleOptions;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
@@ -539,8 +540,11 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       initDebugConsole(pythonConsoleView, consoleExecuteActionHandler, debugProcess, processHandler, debugConsoleCommunication,
                        session);
 
-    // We need to enable Debug Console one more time after adding the consoleExecuteActionHandler to the pythonConsoleView
-    if (console.isEnabled()) {
+    // Readiness is unconditional: the Debug Console has to work whichever console is on screen. It can only be
+    // marked ready here, because it needs the execute action handler that was attached just above.
+    // "Always show Debug Console" then picks the visible one, and nothing else.
+    console.initDebugConsole();
+    if (console.isEnabled() && PyConsoleOptions.getInstance(project).isShowDebugConsoleByDefault()) {
       console.enableConsole(false);
     }
 
@@ -839,7 +843,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       environmentController.putFixedValue(PyDebugValue.POLICY_ENV_VARS.get(debuggerSettings.getValuesPolicy()), "True");
     }
 
-    PydevConsoleRunnerFactory.putIPythonEnvFlag(project, environmentController);
+    PydevConsoleRunnerFactory.putDebugConsoleIPythonEnvFlag(project, environmentController);
 
     if (addCythonExtensionsToPythonPath) {
       environmentController.appendTargetPathToPathsValue(PYTHONPATH_ENV_NAME, CYTHON_EXTENSIONS_DIR);

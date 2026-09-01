@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.PathMapper
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.console.PyConsoleOptions.PyConsoleSettings
+import com.jetbrains.python.debugger.PyDebuggerOptionsProvider
 import com.jetbrains.python.remote.PyRemotePathMapper
 import com.jetbrains.python.run.EnvironmentController
 import com.jetbrains.python.run.PlainEnvironmentController
@@ -123,13 +124,26 @@ open class PydevConsoleRunnerFactory : PythonConsoleRunnerFactory() {
 
     @JvmStatic
     fun putIPythonEnvFlag(project: Project, environmentController: EnvironmentController) {
-      val ipythonEnabled = if (PyConsoleOptions.getInstance(project).isIpythonEnabled) "True" else "False"
-      environmentController.putFixedValue(PythonEnvUtil.IPYTHONENABLE, ipythonEnabled)
+      putIPythonEnvFlag(environmentController, PyConsoleOptions.getInstance(project).isIpythonEnabled)
     }
 
-    fun getWorkingDir(project: Project, module: Module?, pathMapper: PathMapper?, settingsProvider: PyConsoleSettings): String? {
+    /**
+     * The Debug Console reads the same variable but keeps its own setting, so the debugger passes the value
+     * of [PyConsoleOptions.isDebugConsoleIpythonEnabled] instead.
+     */
+    @ApiStatus.Internal
+    @JvmStatic
+    fun putDebugConsoleIPythonEnvFlag(project: Project, environmentController: EnvironmentController) {
+      putIPythonEnvFlag(environmentController, PyDebuggerOptionsProvider.getInstance(project).isDebugConsoleIpythonEnabled)
+    }
+
+    private fun putIPythonEnvFlag(environmentController: EnvironmentController, enabled: Boolean) {
+      environmentController.putFixedValue(PythonEnvUtil.IPYTHONENABLE, if (enabled) "True" else "False")
+    }
+
+    fun getWorkingDir(project: Project, module: Module?, pathMapper: PathMapper?, settingsProvider: PyConsoleSettings): String {
       var workingDir = getWorkingDirFromSettings(project, module, settingsProvider)
-      if (pathMapper != null && workingDir != null) {
+      if (pathMapper != null) {
         workingDir = pathMapper.convertToRemote(workingDir)
       }
       return workingDir
@@ -140,13 +154,13 @@ open class PydevConsoleRunnerFactory : PythonConsoleRunnerFactory() {
                               pathMapper: PathMapper?,
                               settingsProvider: PyConsoleSettings): TargetEnvironmentFunction<String>? {
       val workingDir = getWorkingDirFromSettings(project, module, settingsProvider)
-      if (pathMapper != null && workingDir != null && pathMapper.canReplaceLocal(workingDir)) {
+      if (pathMapper != null && pathMapper.canReplaceLocal(workingDir)) {
         return constant(pathMapper.convertToRemote(workingDir))
       }
 
       var path: Path? = null
       try {
-        path = workingDir?.let { Path.of(it) }
+        path = workingDir.let { Path.of(it) }
       }
       catch (e: InvalidPathException) {
         thisLogger().warn(e)
@@ -155,12 +169,12 @@ open class PydevConsoleRunnerFactory : PythonConsoleRunnerFactory() {
         thisLogger().warn("Can't find $path")
         path = null
       }
-      return path?.let { targetPath(it) } ?: if (!workingDir.isNullOrBlank()) constant(workingDir) else null
+      return path?.let { targetPath(it) } ?: if (workingDir.isNotBlank()) constant(workingDir) else null
     }
 
-    private fun getWorkingDirFromSettings(project: Project, module: Module?, settingsProvider: PyConsoleSettings): String? {
+    private fun getWorkingDirFromSettings(project: Project, module: Module?, settingsProvider: PyConsoleSettings): String {
       val workingDirectoryInSettings = settingsProvider.workingDirectory
-      if (!workingDirectoryInSettings.isNullOrEmpty()) {
+      if (workingDirectoryInSettings.isNotEmpty()) {
         return workingDirectoryInSettings
       }
       if (module != null && ModuleRootManager.getInstance(module).contentRoots.isNotEmpty()) {

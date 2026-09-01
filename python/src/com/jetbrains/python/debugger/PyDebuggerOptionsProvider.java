@@ -16,6 +16,8 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.console.PyConsoleOptions;
+import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -33,9 +35,58 @@ import java.util.List;
 @ApiStatus.Internal
 public final class PyDebuggerOptionsProvider implements PersistentStateComponent<PyDebuggerOptionsProvider.State> {
   private @NotNull State myState = new State();
+  private final @NotNull Project myProject;
+
+  public PyDebuggerOptionsProvider(@NotNull Project project) {
+    myProject = project;
+  }
 
   public static PyDebuggerOptionsProvider getInstance(Project project) {
     return project.getService(PyDebuggerOptionsProvider.class);
+  }
+
+  /**
+   * IPython in the Debug Console.
+   * <p>
+   * Falls back to the Python Console value while the Debug Console keeps none of its own, so a project
+   * configured before the two consoles were split behaves as it did. See PY-91913.
+   */
+  public boolean isDebugConsoleIpythonEnabled() {
+    Boolean own = myState.myDebugConsoleIpythonEnabled;
+    return own != null ? own : PyConsoleOptions.getInstance(myProject).isIpythonEnabled();
+  }
+
+  public void setDebugConsoleIpythonEnabled(boolean enabled) {
+    myState.myDebugConsoleIpythonEnabled = enabled;
+  }
+
+  /**
+   * The command queue in the Debug Console.
+   * <p>
+   * Falls back to the Python Console value, see {@link #isDebugConsoleIpythonEnabled}.
+   */
+  public boolean isDebugConsoleCommandQueueEnabled() {
+    Boolean own = myState.myDebugConsoleCommandQueueEnabled;
+    return own != null ? own : PyConsoleOptions.getInstance(myProject).isCommandQueueEnabled();
+  }
+
+  /**
+   * Deliberately does not call {@code CommandQueueForPythonConsoleService.disableCommandQueue}, unlike
+   * {@link PyConsoleOptions#setCommandQueueEnabled}. That method clears every queue in the project and disables
+   * every console panel, so it would switch the Python Console queue off together with this one. Commands already
+   * queued for the Debug Console drain as usual, and nothing new is queued once the setting is off.
+   */
+  public void setDebugConsoleCommandQueueEnabled(boolean enabled) {
+    myState.myDebugConsoleCommandQueueEnabled = enabled;
+  }
+
+  /** The script the Debug Console runs when it starts. */
+  public @NotNull String getDebugConsoleStartScript() {
+    return myState.myDebugConsoleStartScript;
+  }
+
+  public void setDebugConsoleStartScript(@NotNull String script) {
+    myState.myDebugConsoleStartScript = script;
   }
 
   @Override
@@ -60,6 +111,16 @@ public final class PyDebuggerOptionsProvider implements PersistentStateComponent
     public @NonNls String myAttachProcessFilter = "python";
     public int myEvaluationResponseTimeout = 60_000;
     public @NonNls String myDebuggerBackend = DEFAULT_BACKEND_MARKER;
+
+    /**
+     * Stays {@code null} until the user sets it, and {@link #isDebugConsoleIpythonEnabled} then reads the
+     * Python Console value instead.
+     */
+    public Boolean myDebugConsoleIpythonEnabled = null;
+
+    public Boolean myDebugConsoleCommandQueueEnabled = null;
+
+    public @NonNls String myDebugConsoleStartScript = PythonDebugLanguageConsoleView.DEBUG_CONSOLE_START_COMMAND;
   }
 
 

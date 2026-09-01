@@ -72,6 +72,7 @@ import com.jetbrains.python.debugger.PyDebugValueDescriptor;
 import com.jetbrains.python.debugger.PyDebuggerEditorsProvider;
 import com.jetbrains.python.debugger.PyStackFrame;
 import com.jetbrains.python.debugger.PyStackFrameInfo;
+import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
@@ -106,6 +107,7 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
 
   private PythonConsoleExecuteActionHandler myExecuteActionHandler;
   private PyConsoleSourceHighlighter mySourceHighlighter;
+  private boolean myDebugConsole = false;
   private boolean myIsIPythonOutput;
   private final PyHighlighter myPyHighlighter;
   private boolean myHyperlink;
@@ -319,7 +321,7 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
    */
   private void executeCodeImpl(@Nullable String code) {
     if (code != null) {
-      if (PyConsoleUtil.isCommandQueueEnabled(getProject())) {
+      if (isCommandQueueEnabled()) {
         executeInConsole(code);
       }
       else {
@@ -382,8 +384,38 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
     }
   }
 
+  /**
+   * Marks this view as the Debug Console one. The Debug Console keeps its own settings, see PY-91913.
+   */
+  @ApiStatus.Internal
+  public void markAsDebugConsole() {
+    myDebugConsole = true;
+  }
+
+  /**
+   * Whether the command queue applies to this console. The Debug Console and the Python Console are configured
+   * separately, and this class serves both.
+   */
+  @ApiStatus.Internal
+  public boolean isCommandQueueEnabled() {
+    return myDebugConsole
+           ? PyDebuggerOptionsProvider.getInstance(getProject()).isDebugConsoleCommandQueueEnabled()
+           : PyConsoleOptions.getInstance(getProject()).isCommandQueueEnabled();
+  }
+
   public void executeStatement(@NotNull String statement, @NotNull Key<?> attributes) {
     print(statement, outputTypeForAttributes(attributes));
+    myExecuteActionHandler.processLine(statement);
+  }
+
+  /**
+   * Executes {@code statement} and shows it with Python syntax highlighting, the way executed input looks.
+   * <p>
+   * Used for the Debug Console start script: it is code, so it should not read as plain system output.
+   */
+  @ApiStatus.Internal
+  public void executeStatementWithHighlighting(@NotNull String statement) {
+    new PyConsoleSourceHighlighter(this, myPyHighlighter).printHighlightedSource(statement);
     myExecuteActionHandler.processLine(statement);
   }
 
@@ -699,11 +731,6 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
 
   public PydevConsoleRunner getRunner() {
     return myRunner;
-  }
-
-  @TestOnly
-  public @Nullable XDebuggerTreeNode getDebuggerTreeRootNode() {
-    return mySplitView.getTree().getRoot();
   }
 
   @Override

@@ -974,7 +974,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
 
     @Override
     public void notifyFinished(boolean needsMoreInput, boolean exceptionOccurred) {
-      if (PyConsoleUtil.isCommandQueueEnabled(myProject)) {
+      if (PyConsoleOptions.getInstance(myProject).isCommandQueueEnabled()) {
         // notify the CommandQueue service that the command has been completed without exceptions
         // and it must be removed from the queue
         // or clear queue if exception occurred

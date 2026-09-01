@@ -30,6 +30,13 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
                                             final override val consoleCommunication: ConsoleCommunication) : PythonConsoleExecuteActionHandler(processHandler, false), ConsoleCommunicationListener {
 
   private val project = myConsoleView.project
+
+  /**
+   * Whether the command queue applies to this console. The Debug Console overrides it: the two consoles are
+   * configured separately, see PY-91913.
+   */
+  protected open val isCommandQueueEnabled: Boolean
+    get() = PyConsoleOptions.getInstance(project).isCommandQueueEnabled
   private val myEnterHandler = PyConsoleEnterHandler()
   protected open var ipythonInputPromptCount: Int = 2
 
@@ -77,7 +84,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
     if (ipythonEnabled && !consoleComm.isWaitingForInput && !code.text.isBlank()) {
       ++ipythonInputPromptCount
     }
-    if (PyConsoleUtil.isCommandQueueEnabled(project)) {
+    if (isCommandQueueEnabled) {
       // add new command to CommandQueue service
       project.service<CommandQueueForPythonConsoleService>().addNewCommand(this, code)
     } else {
@@ -101,7 +108,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
       }
     }
     else {
-      if (PyConsoleUtil.isCommandQueueEnabled(project)) {
+      if (isCommandQueueEnabled) {
         inPrompt()
       } else {
         executingPrompt()
@@ -196,7 +203,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
 
   override fun runExecuteAction(console: LanguageConsoleView) {
     if (isEnabled) {
-      if (PyConsoleUtil.isCommandQueueEnabled(project)) {
+      if (isCommandQueueEnabled) {
         doRunExecuteAction(console)
       } else {
         if (!canExecuteNow()) {

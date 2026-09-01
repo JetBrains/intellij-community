@@ -16,6 +16,7 @@ import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebugProcessWithConsole;
 import com.jetbrains.python.debugger.PyDebuggerEditorsProvider;
 import com.jetbrains.python.debugger.PyDebuggerException;
+import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import org.jetbrains.annotations.ApiStatus;
@@ -87,7 +88,7 @@ public class PythonDebugConsoleCommunication<T extends XDebugProcess & PyDebugPr
       @Override
       public void ok(String value) {
         callback.ok(parseExecResponseString(value));
-        if (PyConsoleUtil.isCommandQueueEnabled(myProject)) {
+        if (PyDebuggerOptionsProvider.getInstance(myProject).isDebugConsoleCommandQueueEnabled()) {
           myProject.getService(CommandQueueForPythonConsoleService.class)
             .removeCommand(PythonDebugConsoleCommunication.this, false);
         }
@@ -96,7 +97,7 @@ public class PythonDebugConsoleCommunication<T extends XDebugProcess & PyDebugPr
       @Override
       public void error(PyDebuggerException exception) {
         callback.error(exception);
-        if (PyConsoleUtil.isCommandQueueEnabled(myProject)) {
+        if (PyDebuggerOptionsProvider.getInstance(myProject).isDebugConsoleCommandQueueEnabled()) {
           myProject.getService(CommandQueueForPythonConsoleService.class)
             .removeCommand(PythonDebugConsoleCommunication.this, true);
         }

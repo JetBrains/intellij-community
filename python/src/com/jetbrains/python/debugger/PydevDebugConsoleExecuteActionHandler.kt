@@ -10,17 +10,23 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.console.PydevConsoleExecuteActionHandler
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView
 import com.jetbrains.python.console.pydev.ConsoleCommunication
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 open class PydevDebugConsoleExecuteActionHandler(private val myConsole: PythonDebugLanguageConsoleView,
                                                  myProcessHandler: ProcessHandler,
                                                  consoleCommunication: ConsoleCommunication) : PydevConsoleExecuteActionHandler(myConsole.pydevConsoleView, myProcessHandler, consoleCommunication), XDebugSessionListener {
+  override val isCommandQueueEnabled: Boolean
+    @ApiStatus.Internal
+    get() = PyDebuggerOptionsProvider.getInstance(myConsole.pydevConsoleView.project).isDebugConsoleCommandQueueEnabled
 
   override val consoleIsNotEnabledMessage: @Nls String
     get() = PyBundle.message("debugger.pydev.console.pause.the.process.to.use.command.line")
 
   override fun sessionPaused() {
     isEnabled = true
+    // The start script needs a stack frame, so the first pause is the earliest moment it can run.
+    myConsole.executeStartScriptIfNeeded()
   }
 
   override fun sessionResumed() {
