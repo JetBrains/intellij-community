@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.idea.projectModel.KotlinNativeCompilationExtensions
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
 import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
+import org.jetbrains.kotlin.idea.projectModel.KotlinJsSubTarget
 import org.jetbrains.kotlin.idea.projectModel.KotlinTaskProperties
 import org.jetbrains.kotlin.idea.projectModel.KotlinWasmCompilationExtensions
 import org.jetbrains.kotlin.tooling.core.MutableExtras
@@ -141,6 +142,7 @@ internal fun createKotlinTarget(
     name: String,
     platform: KotlinPlatform = KotlinPlatform.COMMON,
     compilations: Iterable<KotlinCompilation> = emptyList(),
+    binaries: Iterable<KotlinJsSubTarget> = emptyList(),
     extras: MutableExtras = mutableExtrasOf()
 ): KotlinTargetImpl {
     return KotlinTargetImpl(
@@ -150,6 +152,7 @@ internal fun createKotlinTarget(
         platform = platform,
         isManagedByComAndroidLibraryPlugin = false,
         compilations = compilations.toList(),
+        jsSubTargets = binaries.toList(),
         testRunTasks = emptyList(),
         nativeMainRunTasks = emptyList(),
         jar = null,

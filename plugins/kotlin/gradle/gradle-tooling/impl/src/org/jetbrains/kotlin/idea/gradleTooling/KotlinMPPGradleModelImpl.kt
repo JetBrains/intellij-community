@@ -3,12 +3,15 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.api.tasks.Exec
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinSwiftExportModelImpl
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinSwiftPMImportReflection
+import org.jetbrains.kotlin.idea.projectModel.BrowserTestRunner
+import org.jetbrains.kotlin.idea.projectModel.BrowserTestRunnerType
 import org.jetbrains.kotlin.idea.projectModel.ExtraFeatures
 import org.jetbrains.kotlin.idea.projectModel.KonanArtifactModel
 import org.jetbrains.kotlin.idea.projectModel.KonanRunConfigurationModel
 import org.jetbrains.kotlin.idea.projectModel.KotlinAndroidSourceSetInfo
+import org.jetbrains.kotlin.idea.projectModel.KotlinBrowserDebugProtocolVersion
+import org.jetbrains.kotlin.idea.projectModel.KotlinJsBrowserSubTarget
+import org.jetbrains.kotlin.idea.projectModel.KotlinBrowserTestExtensions
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilationCoordinates
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilationOutput
@@ -21,6 +24,7 @@ import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatformContainer
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
 import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
+import org.jetbrains.kotlin.idea.projectModel.KotlinJsSubTarget
 import org.jetbrains.kotlin.idea.projectModel.KotlinTargetJar
 import org.jetbrains.kotlin.idea.projectModel.KotlinTaskProperties
 import org.jetbrains.kotlin.idea.projectModel.KotlinTestRunTask
@@ -135,6 +139,47 @@ data class KotlinWasmCompilationExtensionsImpl(
     constructor(extensions: KotlinWasmCompilationExtensions) : this(extensions.wasmTarget)
 }
 
+data class KotlinBrowserTestExtensionsImpl(
+    override val browserTestRunners: Set<BrowserTestRunner>?,
+) : KotlinBrowserTestExtensions {
+    constructor(extensions: KotlinBrowserTestExtensions) : this(
+        browserTestRunners = extensions.browserTestRunners?.mapTo(LinkedHashSet<BrowserTestRunner>(), ::BrowserTestRunnerImpl),
+    )
+}
+
+data class BrowserTestRunnerImpl(
+    override val name: String,
+    override val type: BrowserTestRunnerType,
+    override val testTaskName: String,
+    override val supportsKotlinBrowserDebugProtocolVersion: KotlinBrowserDebugProtocolVersion,
+) : BrowserTestRunner {
+    constructor(browserTestRunner: BrowserTestRunner) : this(
+        name = browserTestRunner.name,
+        type = browserTestRunner.type,
+        testTaskName = browserTestRunner.testTaskName,
+        supportsKotlinBrowserDebugProtocolVersion = browserTestRunner.supportsKotlinBrowserDebugProtocolVersion,
+    )
+}
+
+data class KotlinJsSubTargetImpl(
+    override val name: String,
+    override val testRuns: List<String>,
+) : KotlinJsSubTarget {
+    constructor(binary: KotlinJsSubTarget) : this(binary.name, binary.testRuns.toList())
+}
+
+data class KotlinJsBrowserSubTargetImpl(
+    override val name: String,
+    override val testRuns: List<String>,
+    override val test: KotlinBrowserTestExtensions,
+) : KotlinJsBrowserSubTarget {
+    constructor(binary: KotlinJsBrowserSubTarget) : this(
+        name = binary.name,
+        testRuns = binary.testRuns.toList(),
+        test = KotlinBrowserTestExtensionsImpl(binary.test),
+    )
+}
+
 data class KotlinCompilationCoordinatesImpl(
     override val targetName: String,
     override val compilationName: String
@@ -222,6 +267,7 @@ data class KotlinTargetImpl(
     override val platform: KotlinPlatform,
     override val isManagedByComAndroidLibraryPlugin: Boolean,
     override val compilations: Collection<KotlinCompilation>,
+    override val jsSubTargets: Collection<KotlinJsSubTarget>?,
     override val testRunTasks: Collection<KotlinTestRunTask>,
     override val nativeMainRunTasks: Collection<KotlinNativeMainRunTask>,
     override val jar: KotlinTargetJar?,
@@ -242,6 +288,12 @@ data class KotlinTargetImpl(
                     cloningCache[initialCompilation] = it
                 }
         }.toList(),
+        target.jsSubTargets?.map { subTarget ->
+            when (subTarget) {
+                is KotlinJsBrowserSubTarget -> KotlinJsBrowserSubTargetImpl(subTarget)
+                else -> KotlinJsSubTargetImpl(subTarget)
+            }
+        },
         target.testRunTasks.map { initialTestTask ->
             (cloningCache[initialTestTask] as? KotlinTestRunTask)
                 ?: KotlinTestRunTaskImpl(

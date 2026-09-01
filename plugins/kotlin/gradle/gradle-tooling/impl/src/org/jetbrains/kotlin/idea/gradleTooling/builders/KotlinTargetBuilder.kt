@@ -45,6 +45,11 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTargetRef
         val compilations = reflectionsByCompilations.mapNotNull { it.key }
 
         val testRunTasks = buildTestRunTasks(importingContext.project, origin)
+        val jsSubTargets = if (origin.isKotlinJsIrTargetClass) {
+            origin.jsSubTargets.mapNotNull { binary -> KotlinJsSubTargetBuilder.buildComponent(binary) }
+        } else {
+            null
+        }
 
         val nativeMainRunTasks =
             if (platform == KotlinPlatform.NATIVE) origin.nativeMainRunTasks.orEmpty().mapNotNull { nativeMainRunReflection ->
@@ -94,6 +99,7 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTargetRef
             platform,
             isManagedByComAndroidLibraryPlugin,
             compilations,
+            jsSubTargets,
             testRunTasks,
             nativeMainRunTasks,
             jar,

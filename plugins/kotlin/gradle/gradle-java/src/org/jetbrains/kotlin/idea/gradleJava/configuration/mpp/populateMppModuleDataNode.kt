@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.base.externalSystem.find
 import org.jetbrains.kotlin.idea.gradle.configuration.CompilerArgumentsProvider
+import org.jetbrains.kotlin.idea.gradle.configuration.KotlinBrowserTestRunnerData
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinGradleProjectData
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinSourceSetData
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinSourceSetInfo
@@ -43,6 +44,7 @@ import org.jetbrains.kotlin.idea.gradleTooling.isDependsOn
 import org.jetbrains.kotlin.idea.gradleTooling.resolveAllDependsOnSourceSets
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
+import org.jetbrains.kotlin.idea.projectModel.KotlinJsBrowserSubTarget
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
 import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
@@ -293,6 +295,20 @@ private fun KotlinMppGradleProjectResolver.Context.createMppGradleSourceSetDataN
         val targetData = KotlinTargetData(target.name).also {
             it.archiveFile = target.jar?.archiveFile
             it.konanArtifacts = target.konanArtifacts
+            it.browserTestRunners = target.jsSubTargets.orEmpty()
+                .filterIsInstance<KotlinJsBrowserSubTarget>()
+                .flatMap { subTarget -> subTarget.test.browserTestRunners.orEmpty() }
+                .mapNotNull { browserTestRunner ->
+                    val testTaskName = browserTestRunner.testTaskName
+                    KotlinBrowserTestRunnerData(
+                        name = browserTestRunner.name,
+                        type = browserTestRunner.type,
+                        gradleProjectPath = gradleModule.gradleProject.path,
+                        externalProjectPath = gradleModule.gradleProject.projectDirectory.absolutePath,
+                        testTaskName = testTaskName,
+                        debugProtocolVersion = browserTestRunner.supportsKotlinBrowserDebugProtocolVersion,
+                    )
+                }
         }
         moduleDataNode.createChild(KotlinTargetData.KEY, targetData)
 

@@ -16,7 +16,9 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.config.ExternalSystemRunTask
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinPlatformContainerImpl
+import org.jetbrains.kotlin.idea.projectModel.BrowserTestRunnerType
 import org.jetbrains.kotlin.idea.projectModel.KonanArtifactModel
+import org.jetbrains.kotlin.idea.projectModel.KotlinBrowserDebugProtocolVersion
 import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatformContainer
 import org.jetbrains.kotlin.idea.util.CopyableDataNodeUserDataProperty
@@ -100,11 +102,21 @@ class KotlinTargetData @PropertyMapping("externalName") constructor(externalName
     var moduleIds: Set<String> = emptySet()
     var archiveFile: File? = null
     var konanArtifacts: Collection<KonanArtifactModel>? = null
+    var browserTestRunners: Collection<KotlinBrowserTestRunnerData> = emptyList()
 
     companion object {
         val KEY = ExternalKey.create(KotlinTargetData::class.java, ProjectKeys.MODULE.processingWeight + 1)
     }
 }
+
+data class KotlinBrowserTestRunnerData(
+    val name: String,
+    val type: BrowserTestRunnerType,
+    val gradleProjectPath: String,
+    val externalProjectPath: String,
+    val testTaskName: String,
+    val debugProtocolVersion: KotlinBrowserDebugProtocolVersion,
+) : Serializable
 
 class KotlinOutputPathsData @PropertyMapping("paths") constructor(val paths: MultiMap<ExternalSystemSourceType, String>) :
     AbstractExternalEntityData(GradleConstants.SYSTEM_ID) {

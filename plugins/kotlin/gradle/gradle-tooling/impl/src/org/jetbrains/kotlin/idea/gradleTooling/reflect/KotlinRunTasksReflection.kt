@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleTooling.reflect
 
+import org.gradle.api.Task
+import org.gradle.api.provider.Provider
 import org.jetbrains.kotlin.idea.gradleTooling.getMethodOrNull
 
 interface KotlinRunTaskReflection {
@@ -13,6 +15,27 @@ interface KotlinRunTaskReflection {
 }
 
 interface KotlinTestRunTaskReflection : KotlinRunTaskReflection
+
+fun KotlinTestRunReflection(testRun: Any): KotlinTestRunReflection = KotlinTestRunReflectionImpl(testRun)
+
+interface KotlinTestRunReflection {
+    val name: String?
+    val executionTask: Task?
+}
+
+private class KotlinTestRunReflectionImpl(private val instance: Any) : KotlinTestRunReflection {
+    override val name: String? by lazy {
+        instance.callReflectiveGetter("getName", KotlinRunTaskReflection.logger)
+    }
+
+    override val executionTask: Task? by lazy {
+        when (val executionTask = instance.callReflectiveAnyGetter("getExecutionTask", KotlinRunTaskReflection.logger)) {
+            is Provider<*> -> executionTask.orNull as? Task
+            is Task -> executionTask
+            else -> null
+        }
+    }
+}
 
 private abstract class AbstractKotlinTestRunTaskReflection(private val instance: Any) : KotlinTestRunTaskReflection {
     override val taskName: String? by lazy {

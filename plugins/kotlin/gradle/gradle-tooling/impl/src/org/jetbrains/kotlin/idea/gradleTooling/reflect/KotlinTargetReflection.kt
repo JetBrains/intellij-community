@@ -15,10 +15,12 @@ interface KotlinTargetReflection {
     val compilations: Collection<KotlinCompilationReflection>?
     val isMetadataTargetClass: Boolean
     val isKotlinAndroidTargetClass: Boolean
+    val isKotlinJsIrTargetClass: Boolean
 
     val nativeMainRunTasks: Collection<KotlinNativeMainRunTaskReflection>?
     val artifactsTaskName: String?
     val konanArtifacts: Collection<Any>?
+    val jsSubTargets: Set<KotlinJsSubTargetReflection>
 }
 
 private class KotlinTargetReflectionImpl(private val instance: Any) : KotlinTargetReflection {
@@ -35,6 +37,12 @@ private class KotlinTargetReflectionImpl(private val instance: Any) : KotlinTarg
         val kotlinAndroidTargetClass =
             instance.javaClass.classLoader.loadClassOrNull("org.jetbrains.kotlin.gradle.plugin.mpp.KotlinAndroidTarget")
         kotlinAndroidTargetClass?.isInstance(instance) == true
+    }
+
+    override val isKotlinJsIrTargetClass: Boolean by lazy {
+        val kotlinJsIrClass =
+            instance.javaClass.classLoader.loadClassOrNull("org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTarget")
+        kotlinJsIrClass?.isInstance(instance) == true
     }
 
     override val targetName: String by lazy {
@@ -76,6 +84,13 @@ private class KotlinTargetReflectionImpl(private val instance: Any) : KotlinTarg
             null
         else
             instance.callReflective("getBinaries", parameters(), returnType<Iterable<Any?>>(), logger)?.filterNotNull()
+    }
+
+    override val jsSubTargets: Set<KotlinJsSubTargetReflection> by lazy {
+        instance.callReflective("getSubTargets", parameters(), returnType<Iterable<Any?>>(), logger)
+            ?.filterNotNull()
+            ?.mapTo(LinkedHashSet<KotlinJsSubTargetReflection>(), ::KotlinJsSubTargetReflection)
+            .orEmpty()
     }
 
     companion object {

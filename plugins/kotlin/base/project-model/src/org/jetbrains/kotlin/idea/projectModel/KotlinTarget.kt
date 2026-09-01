@@ -11,6 +11,7 @@ interface KotlinTarget : Serializable, HasMutableExtras {
     val platform: KotlinPlatform
     val isManagedByComAndroidLibraryPlugin: Boolean
     val compilations: Collection<KotlinCompilation>
+    val jsSubTargets: Collection<KotlinJsSubTarget>?
     val testRunTasks: Collection<KotlinTestRunTask>
     val nativeMainRunTasks: Collection<KotlinNativeMainRunTask>
     val jar: KotlinTargetJar?

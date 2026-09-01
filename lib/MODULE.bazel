@@ -8758,6 +8758,20 @@ http_file(
 )
 
 http_file(
+    name = "org_jetbrains_kotlin-kotlin-gradle-plugin-idea-browser-debug-2_5_0-dev-6142_http",
+    downloaded_file_path = "kotlin-gradle-plugin-idea-browser-debug-2.5.0-dev-6142.jar",
+    sha256 = "2ad81e0842ad4815abbf08f1f2ade22231a4a0c79bc78a52bea7d2a6a5a31435",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kt/bootstrap/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-browser-debug/2.5.0-dev-6142/kotlin-gradle-plugin-idea-browser-debug-2.5.0-dev-6142.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlin-kotlin-gradle-plugin-idea-browser-debug-2_5_0-dev-6142-sources_http",
+    downloaded_file_path = "kotlin-gradle-plugin-idea-browser-debug-2.5.0-dev-6142-sources.jar",
+    sha256 = "7d87c8928bf20253a894b4a7a86516ff9d1f6687e41de915afd05dbbb0513732",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kt/bootstrap/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-browser-debug/2.5.0-dev-6142/kotlin-gradle-plugin-idea-browser-debug-2.5.0-dev-6142-sources.jar",
+)
+
+http_file(
     name = "org_jetbrains_kotlin-kotlin-gradle-plugin-idea-1_9_20-dev-8162_http",
     downloaded_file_path = "kotlin-gradle-plugin-idea-1.9.20-dev-8162.jar",
     sha256 = "8d1af87632d95148f122a9fa0ae2903c19ee6fab7d01e017f76e0d2c9a022c20",
