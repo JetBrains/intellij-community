@@ -63,7 +63,11 @@ abstract class TcpEelMachine(override val internalName: String) : EelMachineWith
   }
   suspend fun getOrCreateIjentSession(): IjentSession {
     // Fast path: check if session is still running without acquiring mutex
-    (state as? SessionState.Started)?.session?.takeIf { it.isRunning }?.let {
+    val runningSession = when (val currentState = state) {
+      is SessionState.Started -> currentState.session.takeIf { it.isRunning }
+      is SessionState.Failed, SessionState.NotStarted -> null
+    }
+    runningSession?.let {
       return it
     }
 
