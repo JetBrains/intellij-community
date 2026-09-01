@@ -204,7 +204,7 @@ open class PluginAdvertiserServiceImpl(
 
       launch {
         val dependencies = serviceAsync<PluginFeatureCacheService>().dependencies.get()
-        withContext(Dispatchers.EDT) {
+        val hasOwnOffer = withContext(Dispatchers.EDT) {
           notifyUser(
             bundledPlugins = getBundledPluginToInstall(plugins, descriptorsById),
             suggestionPlugins = suggestToInstall,
@@ -214,6 +214,9 @@ open class PluginAdvertiserServiceImpl(
             dependencies = dependencies,
             includeIgnored = includeIgnored,
           )
+        }
+        if (!hasOwnOffer) {
+          showPluginSuggestionNotification(project)
         }
       }
     }
@@ -401,6 +404,12 @@ open class PluginAdvertiserServiceImpl(
       .toList()
   }
 
+  /**
+   * @return whether the advertiser has an offer of its own for this project. False is the verdict a
+   *   [PluginSuggestionNotificationProvider] is asked on. True says the advertiser reached
+   *   `notify`, which raises no balloon while an earlier balloon of the group is visible and none
+   *   at all for a group the user set to no popup.
+   */
   @RequiresEdt
   private fun notifyUser(
     bundledPlugins: List<String>,
@@ -410,7 +419,7 @@ open class PluginAdvertiserServiceImpl(
     allUnknownFeatures: Collection<UnknownFeature>,
     dependencies: PluginFeatureMap?,
     includeIgnored: Boolean,
-  ) {
+  ): Boolean {
     for (plugin in suggestionPlugins) {
       FUSEventSource.NOTIFICATION.logPluginSuggested(project, plugin.id)
     }
@@ -470,13 +479,15 @@ open class PluginAdvertiserServiceImpl(
           .createNotification(IdeBundle.message("plugins.advertiser.no.suggested.plugins"), NotificationType.INFORMATION)
           .setDisplayId("advertiser.no.plugins")
           .notify(project)
+        return true
       }
-      return
+      return false
     }
 
     notificationManager.notify("", notificationMessage, project) {
       it.setSuggestionType(true).addActions(notificationActions as Collection<AnAction>)
     }
+    return true
   }
 
   private fun createIgnoreUnknownFeaturesAction(

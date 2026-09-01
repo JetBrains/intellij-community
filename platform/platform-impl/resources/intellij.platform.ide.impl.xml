@@ -237,6 +237,8 @@
                     interface="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestionProvider"/>
     <extensionPoint qualifiedName="com.intellij.pluginAdvertiserSuppressor" dynamic="true"
                     interface="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserSuppressor"/>
+    <extensionPoint qualifiedName="com.intellij.pluginSuggestionNotificationProvider" dynamic="true"
+                    interface="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestionNotificationProvider"/>
     <extensionPoint qualifiedName="com.intellij.pluginRepositoryAuthProvider" interface="com.intellij.ide.plugins.auth.PluginRepositoryAuthProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.pluginsViewCustomizer" interface="com.intellij.ide.plugins.newui.PluginsViewCustomizer" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.schemeImporter" beanClass="com.intellij.openapi.options.SchemeImporterEP" dynamic="true">
