@@ -10938,6 +10938,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/modifiers/operatorModifierCollection.kt");
             }
 
+            @TestMetadata("operatorModifierCompanionBlock.kt")
+            public void testOperatorModifierCompanionBlock() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/modifiers/operatorModifierCompanionBlock.kt");
+            }
+
+            @TestMetadata("operatorModifierCompanionExtension.kt")
+            public void testOperatorModifierCompanionExtension() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/modifiers/operatorModifierCompanionExtension.kt");
+            }
+
             @TestMetadata("operatorModifierComponent.kt")
             public void testOperatorModifierComponent() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/modifiers/operatorModifierComponent.kt");
