@@ -11,14 +11,22 @@ import (
 	"strings"
 )
 
-// Source is one input of a merge: a jar, and which of its entries belong in the result.
+// Source is one input of a merge: a jar and which of its entries belong in the result, or one file and the name it
+// takes.
 //
-// The filter is per source because the two kinds of input are filtered differently. A module output contributes almost
-// everything it holds; a third-party library jar has to lose its licences, signatures and multi-release module-info
-// entries, or several of them would collide on the same name and the survivors would ship for nothing.
+// The filter is per source because the two kinds of jar input are filtered differently. A module output contributes
+// almost everything it holds; a third-party library jar has to lose its licences, signatures and multi-release
+// module-info entries, or several of them would collide on the same name and the survivors would ship for nothing.
+//
+// [Source.Name] selects the third kind. It is empty for a jar, and a jar's entry names come from the jar. It is set for
+// a single file, whose bytes become one entry under that name, and then [Source.Filter] says nothing and is nil: a
+// source of one entry has nothing to select. The dev distribution's produced plugin descriptor is that kind - the text
+// lives in a file an action wrote, so the recipe names the file's label and this packer can pack it.
 type Source struct {
 	Path   string
 	Filter func(string) bool
+	// Name is the entry name a single-file source takes, and empty for a jar source.
+	Name string
 }
 
 // Merge writes target from the entries of sources and returns the names more than one source offered.
@@ -62,6 +70,17 @@ func (s MergeSpec) Merge() ([]string, error) {
 	var duplicates []string
 
 	for _, source := range sources {
+		if source.Name != "" {
+			dup, err := addFileSource(writer, source, seen, keepManifest, rewriteBootClassPath, target)
+			if err != nil {
+				return nil, err
+			}
+			if dup {
+				duplicates = append(duplicates, source.Name)
+			}
+			continue
+		}
+
 		jar, err := OpenJar(source.Path)
 		if err != nil {
 			return nil, err
@@ -111,6 +130,42 @@ func (s MergeSpec) Merge() ([]string, error) {
 		return nil, err
 	}
 	return duplicates, nil
+}
+
+// addFileSource writes a single-file source as one entry, and reports whether an earlier source already took the name.
+//
+// It reads the whole file rather than mapping it. A single-file source is one small entry - the widest one in this
+// product is a 600 KiB plugin descriptor - so there is nothing for a mapping to save, and the bytes must outlive the
+// read anyway because Writer.Add keeps them until Close.
+//
+// The manifest rules of Merge apply unchanged, so a file source cannot smuggle a manifest past keepManifest. Its CRC is
+// always computed, because no source states one for it, so this takes no VerifyCRC parameter.
+func addFileSource(
+	writer *Writer,
+	source Source,
+	seen map[string]struct{},
+	keepManifest bool,
+	rewriteBootClassPath bool,
+	target string,
+) (bool, error) {
+	isRewrittenManifest := rewriteBootClassPath && source.Name == ManifestEntryName
+	if source.Name == ManifestEntryName && !keepManifest && !isRewrittenManifest {
+		return false, nil
+	}
+	if _, dup := seen[source.Name]; dup {
+		return true, nil
+	}
+	seen[source.Name] = struct{}{}
+
+	data, err := os.ReadFile(source.Path)
+	if err != nil {
+		return false, err
+	}
+	if isRewrittenManifest {
+		data = rewriteBootClassPathAttribute(data, filepath.Base(target))
+		return false, writer.Add(source.Name, data, crc32.ChecksumIEEE(data), false)
+	}
+	return false, writer.Add(source.Name, data, crc32.ChecksumIEEE(data), true)
 }
 
 var bootClassPathPattern = regexp.MustCompile(`Boot-Class-Path:[^\r\n]*`)
