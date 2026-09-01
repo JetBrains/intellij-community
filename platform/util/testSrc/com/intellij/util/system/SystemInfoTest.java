@@ -40,11 +40,4 @@ class SystemInfoTest {
     assertThat(osInfo.getDistro()).isNotBlank();
     assertThat(osInfo.getRelease()).isNotBlank();
   }
-
-  @Test void glibcVersionDetection() {
-    assumeTrue(OS.CURRENT == OS.Linux);
-
-    var osInfo = (OS.LinuxInfo)OS.CURRENT.getOsInfo();
-    assertThat(osInfo.getGlibcVersion()).isNotBlank();
-  }
 }

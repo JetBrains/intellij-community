@@ -8,6 +8,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsContexts.DetailedDescription
 import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.GlibcVersion
 import com.intellij.util.system.OS
 import com.intellij.util.ui.UnixDesktopEnv
 import kotlinx.coroutines.CoroutineScope
@@ -37,7 +38,7 @@ private class OsDataLogger(val coroutineScope: CoroutineScope) {
       }
       if (osInfo is OS.LinuxInfo) {
         if (osInfo.isUnderWsl) info += " (in WSL)"
-        if (osInfo.glibcVersion != null) info += "; glibc: " + osInfo.glibcVersion
+        GlibcVersion.current?.let { info += "; glibc: $it" }
       }
       UnixDesktopEnv.CURRENT?.let { currentEnv ->
         info += "; desktop: " + currentEnv.presentableName

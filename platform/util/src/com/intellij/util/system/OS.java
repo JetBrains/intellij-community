@@ -3,12 +3,9 @@ package com.intellij.util.system;
 
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.execution.Platform;
-import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.WinBuildNumber;
 import com.intellij.util.ArrayUtil;
-import com.sun.jna.Library;
-import com.sun.jna.Native;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -183,7 +180,6 @@ public enum OS {
     private static final LinuxInfo INSTANCE = new LinuxInfo();
 
     private volatile Boolean isUnderWsl = null;
-    private volatile String glibcVersion = "not-initialized";
 
     private LinuxInfo() { }
 
@@ -198,37 +194,6 @@ public enum OS {
         }
       }
       return isUnderWsl;
-    }
-
-    @ApiStatus.Internal
-    public @Nullable String getGlibcVersion() {
-      if ("not-initialized".equals(glibcVersion)) {
-        String version = null;
-        if (JnaLoader.isLoaded()) {
-          try {
-            byte[] buf = new byte[64];
-            long res = LibC.INSTANCE.confstr(LibC._CS_GNU_LIBC_VERSION, buf, buf.length);
-            if (res > 6) {
-              String str = new String(buf, 0, (int)res - 1, StandardCharsets.US_ASCII);
-              if (str.startsWith("glibc ")) {
-                version = str.substring(6);
-              }
-            }
-          }
-          catch (Throwable ignored) { }
-        }
-        glibcVersion = version;
-      }
-      return glibcVersion;
-    }
-
-    private interface LibC extends Library {
-      LibC INSTANCE = Native.load(LibC.class);
-
-      int _CS_GNU_LIBC_VERSION = 2;
-
-      @SuppressWarnings("SpellCheckingInspection")
-      long confstr(int name, byte[] buf, long size);
     }
   }
   public static final class HarmonyOSInfo extends UnixInfo {

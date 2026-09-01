@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidat
 import com.intellij.internal.statistic.eventLog.events.EventFields.Version
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.GlibcVersion
 import com.intellij.util.system.OS
 import java.nio.file.Path
 import java.time.OffsetDateTime
@@ -70,7 +71,7 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
         HAS_GDBUS.with(PathEnvironmentVariableUtil.isOnPath("gdbus")),
         HAS_XDG_OPEN.with(PathEnvironmentVariableUtil.isOnPath("xdg-open")),
       )
-      osInfo.glibcVersion?.let {
+      GlibcVersion.current?.let {
         linuxMetrics.add(GLIBC.with(it))
       }
       metrics += LINUX.metric(*linuxMetrics.toTypedArray())
