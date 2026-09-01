@@ -17,6 +17,7 @@ interface PluginLayoutProvider {
   fun loadCorePluginLayout(): PluginLayoutDescription
   fun loadMainModulesOfBundledPlugins(): List<String>
   fun loadPluginLayout(mainModule: JpsModule): PluginLayoutDescription?
+  fun findModuleLibraryRoots(moduleName: String): List<Path> = emptyList()
   val messageDescribingHowToUpdateLayoutData: String
 }
 
@@ -78,6 +79,13 @@ private class ContentReportBasedPluginLayoutProvider(
   private val outputProvider: ModuleOutputProvider,
   private val mainModulesWithPluginDescriptor: Set<String>,
 ) : PluginLayoutProvider {
+  override fun findModuleLibraryRoots(moduleName: String): List<Path> {
+    val module = outputProvider.findModule(moduleName) ?: return emptyList()
+    return module.libraryCollection.libraries.flatMap { library ->
+      outputProvider.findLibraryRoots(library.name, moduleLibraryModuleName = moduleName)
+    }
+  }
+
   private val mainModulesOfBundledPlugins by lazy {
     content.bundled.mapTo(LinkedHashSet()) { it.mainModule }
   }

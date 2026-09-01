@@ -26,13 +26,7 @@ abstract class KotlinPluginBuilder(val kind: KotlinPluginKind = System.getProper
      * Module which contains META-INF/plugin.xml
      */
     const val MAIN_KOTLIN_PLUGIN_MODULE: String = "intellij.kotlin.plugin"
-    const val MAIN_FRONTEND_MODULE_NAME: String = "kotlin.frontend.split"
     private const val SERIALIZATION_COMPILER_PLUGIN_MODULE = "intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin"
-
-    private val MODULES_SHARED_WITH_CLIENT = java.util.List.of(
-      "intellij.kotlin.base.codeInsight.minimal",
-      "intellij.kotlin.highlighting.minimal"
-    )
 
     private val KOTLINC_LIBRARY_MODULES = java.util.List.of(
       "intellij.libraries.kotlinc.analysis.api",
@@ -130,16 +124,6 @@ abstract class KotlinPluginBuilder(val kind: KotlinPluginKind = System.getProper
         lifetime = lifetime,
       )
       createBuildTasks(context).buildNonBundledPlugins(listOf(MAIN_KOTLIN_PLUGIN_MODULE))
-    }
-  }
-
-  /**
-   * A special plugin for JetBrains Client
-   */
-  fun kotlinFrontendPlugin(): PluginLayout {
-    return PluginLayout.plugin(MAIN_FRONTEND_MODULE_NAME) { spec ->
-      spec.withModules(MODULES_SHARED_WITH_CLIENT)
-      spec.withModule(KOTLINC_KOTLIN_COMPILER_COMMON_MODULE, KOTLINC_KOTLIN_COMPILER_COMMON_JAR)
     }
   }
 

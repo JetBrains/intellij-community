@@ -56,6 +56,8 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.lang.UrlClassLoader
 import java.util.concurrent.locks.ReentrantLock
 import org.jetbrains.intellij.build.BuildPaths
+import org.jetbrains.intellij.build.impl.moduleBased.JpsProductModeMatcher
+import org.jetbrains.intellij.build.productLayout.util.getProductionModuleDependencies
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
@@ -78,9 +80,11 @@ class PluginDependenciesValidator private constructor(
   private val tempDir: Path,
   private val project: JpsProject,
   private val productMode: ProductMode,
-  pluginLayoutProvider: PluginLayoutProvider,
+  private val pluginLayoutProvider: PluginLayoutProvider,
   private val options: PluginDependenciesValidationOptions,
 ) {
+  private val productModeMatcher = JpsProductModeMatcher(productMode)
+
   companion object {
     private val pluginSetBuildLock = ReentrantLock()
 
@@ -595,6 +599,14 @@ class PluginDependenciesValidator private constructor(
     override fun toString(): String {
       return "PluginMainModuleFromSourceXIncludeLoader(plugin=${layout.mainJpsModule})"
     }
+
+    fun loadXIncludeReferenceFromLibraries(path: String, moduleName: String): LoadedXIncludeReference? {
+      val roots = pluginLayoutProvider.findModuleLibraryRoots(moduleName)
+      return loadXIncludeReferenceFromResolvedRoots(
+        path = path,
+        roots = roots.asSequence(),
+      )
+    }
   }
   
   private inner class PluginContentModuleFromSourceXIncludeLoader(
@@ -606,6 +618,25 @@ class PluginDependenciesValidator private constructor(
       if (file != null) {
         return LoadedXIncludeReference(Files.readAllBytes(file), file.pathString)
       }
+
+      val moduleName = jpsModule.name
+      if (moduleName.startsWith("intellij.libraries.kotlinc.")) {
+        val selfAndDependentLibraries = buildList {
+          add(moduleName)
+          addAll(jpsModule.getProductionModuleDependencies().mapNotNull { dependency -> dependency.module?.name?.takeIf { it.startsWith("intellij.libraries.kotlinc.") } })
+        }
+        val xIncludeReference = selfAndDependentLibraries.firstNotNullOfOrNull {
+          parentXIncludeLoader.loadXIncludeReferenceFromLibraries(path, it)
+        }
+        if (xIncludeReference != null) {
+          return xIncludeReference
+        }
+
+        if (!productModeMatcher.matches(jpsModule)) {
+          return LoadedXIncludeReference("<idea-plugin/>".encodeToByteArray(), "ignored include from incompatible module '$moduleName'")
+        }
+      }
+
       return parentXIncludeLoader.loadXIncludeReference(path)
     }
 
