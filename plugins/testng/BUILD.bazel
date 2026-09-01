@@ -185,6 +185,9 @@ dev_dist_plugin(
         "//libraries/testng:testng_content_module_jar": "intellij.libraries.testng.jar",
     },
     prepacked_layout_jars = [":testng-rt_dev_dist_plugin_jar"],
+    residue_member_jars = {
+        "intellij.testng.rt": ["testng-rt.jar"],
+    },
 )
 
 dev_dist_plugin_jar(

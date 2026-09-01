@@ -52,5 +52,6 @@ dev_dist_plugin(
         "//plugins/textmate/joni:joni_content_module_jar",
         "//plugins/textmate:textmate_content_module_jar",
     ],
+    residue_vetoed_members = ["intellij.libraries.joni"],
 )
 ### auto-generated section `dev intellij.textmate.plugin` end

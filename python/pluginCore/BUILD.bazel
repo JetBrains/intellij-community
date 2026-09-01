@@ -148,5 +148,11 @@ dev_dist_plugin(
         "//python/terminal/shared:shared_content_module_jar",
         "//python:python-pydev_content_module_jar",
     ],
+    residue_vetoed_members = [
+        "intellij.libraries.jsr305",
+        "intellij.libraries.mlapi.catboost",
+        "intellij.libraries.tuweni.toml",
+        "intellij.python.community.impl",
+    ],
 )
 ### auto-generated section `dev intellij.python.community.plugin` end

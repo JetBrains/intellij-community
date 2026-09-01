@@ -163,6 +163,10 @@ dev_dist_plugin(
         ":eclipse-common_dev_dist_plugin_jar",
         ":eclipse-jps_dev_dist_plugin_jar",
     ],
+    residue_member_jars = {
+        "intellij.eclipse.common": ["eclipse-common.jar"],
+        "intellij.eclipse.jps": ["eclipse-jps.jar"],
+    },
 )
 
 dev_dist_plugin_jar(

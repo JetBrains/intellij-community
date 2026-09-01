@@ -114,6 +114,21 @@ dev_dist_plugin(
         ":intellij.maven.server4_maven40-server_dev_dist_plugin_jar",
         ":maven-server_dev_dist_plugin_jar",
     ],
+    residue_member_jars = {
+        "intellij.maven.artifactResolver.common": ["artifact-resolver-m31.jar"],
+        "intellij.maven.artifactResolver.m31": ["artifact-resolver-m31.jar"],
+        "intellij.maven.server": ["maven-server.jar"],
+        "intellij.maven.server.eventListener": ["intellij.maven.rt/maven-event-listener.jar"],
+        "intellij.maven.server.indexer": ["intellij.maven.server.indexer/maven-server-indexer.jar"],
+        "intellij.maven.server.m3.common": ["intellij.maven.server3/maven3-server-common.jar"],
+        "intellij.maven.server.m3.impl": ["intellij.maven.server3/maven3-server.jar"],
+        "intellij.maven.server.m36.impl": ["intellij.maven.server36/maven36-server.jar"],
+        "intellij.maven.server.m40": ["intellij.maven.server4/maven40-server.jar"],
+        "intellij.maven.server.telemetry": [
+            "intellij.maven.server3/maven-server-telemetry.jar",
+            "intellij.maven.server4/maven-server-telemetry.jar",
+        ],
+    },
 )
 
 dev_dist_plugin_jar(

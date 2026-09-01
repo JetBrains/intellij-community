@@ -116,6 +116,7 @@ dev_dist_plugin(
         "//plugins/search-everywhere-ml/ranking/yaml:yaml_content_module_jar",
         "//plugins/search-everywhere-ml/typos:typos_content_module_jar",
     ],
+    residue_vetoed_members = ["intellij.libraries.mlapi.core"],
 )
 ### auto-generated section `dev intellij.searchEverywhereMl` end
 

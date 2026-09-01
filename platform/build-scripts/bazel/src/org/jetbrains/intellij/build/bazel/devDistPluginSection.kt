@@ -22,18 +22,25 @@ internal fun BuildFile.emitDevDistPlugin(
   descriptors: List<PluginDescriptor>,
   jars: List<PluginJarTarget>,
 ) {
+  val residue = module.devDistResidue?.content?.takeIf { it != EMPTY_CONTENT_RESIDUE }
   if (content == null && descriptors.isEmpty()) {
     check(jars.isEmpty()) {
       "${module.module.name}: ${jars.size} plugin jars for a plugin that states no content and no descriptor." +
       " Every jar of the movable set comes from the plugin's own content derivation, so a jar without content is a" +
       " target no consumer could name"
     }
+    check(residue == null) {
+      "${module.module.name}: a content residue, and no `dev_dist_plugin` call to carry it. The call is the plugin's" +
+      " one statement, so a plugin that states neither content nor a descriptor has nowhere to put" +
+      " ${contentResidueFieldRows(residue).keys}"
+    }
     return
   }
 
   load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
   val descriptor = commonPluginDescriptor(module = module, descriptors = descriptors)
-  target("dev_dist_plugin") {
+  val call = Target("dev_dist_plugin")
+  call.apply {
     // Emitted in the order the Starlark formatter sorts them - alphabetical - so that a regeneration needs no reformat.
     // The two halves interleave, which is why every line states which one it belongs to by taking `content` or
     // `descriptor`. Neither `name` nor `visibility`: each leaf macro derives its own name and defaults to public.
@@ -64,6 +71,7 @@ internal fun BuildFile.emitDevDistPlugin(
     // statement of the label would be one more thing for the two to disagree about.
     jars.map { ":" + pluginJarTargetName(it.relativeOutputFile) }.sorted().ifNotEmpty { option("prepacked_layout_jars", it) }
     descriptor?.refusedContentModules?.ifNotEmpty { option("refused_content_modules", it) }
+    residue?.let { residueOptions(plugin = module.module.name, residue = it) }
     if (descriptor?.retainProductDescriptor == true) {
       option("retain_product_descriptor", true)
     }
@@ -73,7 +81,79 @@ internal fun BuildFile.emitDevDistPlugin(
     descriptors.map { it.variant }.filter { it.isNotEmpty() }.ifNotEmpty { option("variants", it) }
     descriptor?.versionSuffix?.ifNotEmpty { option("version_suffix", it) }
   }
+  verifyDevDistPluginResidueReadBack(plugin = module.module.name, residue = residue, call = call.render())
+  addTarget(call)
   emitDevDistPluginJars(module = module, jars = jars)
+}
+
+/**
+ * The residue attributes of one plugin's call, in the alphabetical order the Starlark formatter leaves alone.
+ *
+ * `dev_dist_plugin` reads none of them. They are this converter's own input, carried on the plugin's one statement so
+ * that the plugin needs no second file, and `dev_dist_plugin.bzl` states the same rule from its end.
+ *
+ * An empty field is left out, so an absent attribute means the plugin states nothing about that field. It is the rule
+ * the residue file follows too, and [parseDevDistPluginResidue] refuses an attribute written as an empty list or dict.
+ */
+internal fun Target.residueOptions(plugin: String, residue: ContentResidueSection) {
+  residue.libRootJars.ifNotEmpty { option(RESIDUE_LIB_ROOT_JARS, it) }
+  residue.memberJars.ifNotEmpty { option(RESIDUE_MEMBER_JARS, nameListDict(it)) }
+  residue.mergedLibraries.ifNotEmpty { option(RESIDUE_MERGED_LIBRARIES, nameListDict(it)) }
+  residueModuleLibraries(plugin = plugin, rows = residue.libraries).ifNotEmpty { option(RESIDUE_MODULE_LIBRARIES, nameListDict(it)) }
+  residue.libraries.filter { it.module == null }.map { it.name }.ifNotEmpty { option(RESIDUE_PROJECT_LIBRARIES, it) }
+  residue.rawMembers.ifNotEmpty { option(RESIDUE_RAW_MEMBERS, it) }
+  residue.separateJars.ifNotEmpty { option(RESIDUE_SEPARATE_JARS, it) }
+  residue.vetoedMembers.ifNotEmpty { option(RESIDUE_VETOED_MEMBERS, it) }
+}
+
+/**
+ * The module-owned library rows of a residue, by the module that owns them.
+ *
+ * A row states a library the layout packs that no member declares, and a row with no module states a project library.
+ * Starlark has no optional field of a record, so the two kinds take two attributes - see
+ * `dev_dist_plugin.residue_project_libraries`. Two attributes can restate one list only in the order the residue
+ * writer's own sort gives, so another order is refused rather than quietly changed.
+ */
+private fun residueModuleLibraries(plugin: String, rows: List<ResidueLibraryRow>): Map<String, List<String>> {
+  check(rows == rows.sortedWith(compareBy({ it.module ?: "" }, { it.name }))) {
+    "$plugin: the residue states its libraries in another order than by (module, name), and" +
+    " `residue_project_libraries` with `residue_module_libraries` can restate only that order"
+  }
+  val result = LinkedHashMap<String, MutableList<String>>()
+  for (row in rows) {
+    result.computeIfAbsent(row.module ?: continue) { ArrayList() }.add(row.name)
+  }
+  return result
+}
+
+/**
+ * A dict from a name to its own name list, in the one nesting `buildifier` leaves alone.
+ *
+ * Rendered here and not by the `dsl.kt` value formatter, which nests a list inside a dict at the wrong depth. A
+ * regeneration would then need a reformat, and the next run would rewrite what the formatter just wrote.
+ */
+private fun nameListDict(rows: Map<String, Collection<String>>): Renderable = object : Renderable {
+  override fun render(): String {
+    return buildString {
+      append("{\n")
+      for ((key, names) in rows) {
+        append("$INDENT$INDENT\"$key\": ")
+        when (names.size) {
+          0 -> append("[]")
+          1 -> append("[\"${names.first()}\"]")
+          else -> {
+            append("[\n")
+            for (name in names) {
+              append("$INDENT$INDENT$INDENT\"$name\",\n")
+            }
+            append("$INDENT$INDENT]")
+          }
+        }
+        append(",\n")
+      }
+      append("$INDENT}")
+    }
+  }
 }
 
 /**

@@ -82,6 +82,19 @@ dev_dist_plugin(
         ":groovy-ant_dev_dist_plugin_jar",
         ":groovy_dev_dist_plugin_jar",
     ],
+    residue_member_jars = {
+        "intellij.gradle.toolingExtension": ["gradle-tooling-extension-api.jar"],
+        "intellij.gradle.toolingExtension.impl": ["gradle-tooling-extension-impl.jar"],
+        "intellij.gradle.toolingProxy": ["gradle-tooling-proxy.jar"],
+        "intellij.libraries.groovy": ["groovy.jar"],
+        "intellij.libraries.groovy.ant": ["groovy-ant.jar"],
+    },
+    residue_project_libraries = ["Ant"],
+    residue_vetoed_members = [
+        "intellij.gradle.toolingExtension",
+        "intellij.gradle.toolingExtension.impl",
+        "intellij.gradle.toolingProxy",
+    ],
 )
 
 dev_dist_plugin_jar(

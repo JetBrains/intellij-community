@@ -108,5 +108,6 @@ dev_dist_plugin(
         "//plugins/mcp-server/mcpserver.toolsets:mcpserver.toolsets_content_module_jar",
         "//plugins/mcp-server/mcpserver.vcs:mcpserver.vcs_content_module_jar",
     ],
+    residue_vetoed_members = ["intellij.mcpserver.stdio"],
 )
 ### auto-generated section `dev intellij.mcpserver.plugin` end

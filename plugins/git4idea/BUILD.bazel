@@ -82,6 +82,9 @@ dev_dist_plugin(
         "//plugins/git4idea/terminal:terminal_content_module_jar",
     ],
     prepacked_layout_jars = [":git4idea-rt_dev_dist_plugin_jar"],
+    residue_member_jars = {
+        "intellij.vcs.git.rt": ["git4idea-rt.jar"],
+    },
 )
 
 dev_dist_plugin_jar(

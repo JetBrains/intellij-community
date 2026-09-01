@@ -182,6 +182,9 @@ dev_dist_plugin(
     descriptor_module = ":ant",
     libraries = ["@lib//ant/lib:ant"],
     prepacked_layout_jars = [":ant-jps_dev_dist_plugin_jar"],
+    residue_member_jars = {
+        "intellij.ant.jps": ["ant-jps.jar"],
+    },
 )
 
 dev_dist_plugin_jar(
