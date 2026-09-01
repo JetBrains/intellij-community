@@ -17,13 +17,20 @@ import java.util.concurrent.atomic.AtomicReference
  * Ordinary range marker whose offsets are stored in the snapshot marker engine.
  */
 @ApiStatus.Internal
-class SnapshotRangeMarkerImpl internal constructor(
+open class SnapshotRangeMarkerImpl internal constructor(
   document: Document,
   internal val fileRoot: FileMarkerRoot?,
   internal val markerId: Long,
   initialSpec: MarkerSpec,
   internal val initialRange: TextRange,
 ) : UserDataHolderBase(), PMarker, RangeMarkerEx {
+  protected constructor(
+    document: Document,
+    markerId: Long,
+    initialSpec: MarkerSpec,
+    initialRange: TextRange,
+  ) : this(document, null, markerId, initialSpec, initialRange)
+
   private val documentOrFile: Any = fileRoot?.file ?: document
 
   @Volatile
@@ -38,12 +45,12 @@ class SnapshotRangeMarkerImpl internal constructor(
   private var spec = initialSpec
 
   override fun getId(): Long {
-    val id = markerId
-    check(!disposed) { "Marker $id is disposed" }
-    return id
+    return markerId
   }
 
-  override fun resolve(snapshot: DocumentSnapshot): PMarkerResolution = SnapshotMarkerEngineImpl.resolveRangeMarker(this, snapshot)
+  override fun resolve(snapshot: DocumentSnapshot): PMarkerResolution {
+    return SnapshotMarkerEngineImpl.resolveRangeMarker(this, rootReference(snapshot).get())
+  }
 
   override fun getDocument(): Document {
     val documentOrFile = documentOrFile
@@ -81,8 +88,20 @@ class SnapshotRangeMarkerImpl internal constructor(
     updateSpec { it.copy(isStickingToRight = value) }
   }
 
+  protected fun isStickingToRight(): Boolean = spec.isStickingToRight
+
+  @Synchronized
   override fun dispose() {
+    if (disposed) return
+    beforeDispose()
     SnapshotMarkerEngineImpl.removeRangeMarker(this)
+    afterDispose()
+  }
+
+  protected open fun beforeDispose() {
+  }
+
+  protected open fun afterDispose() {
   }
 
   /**
@@ -111,26 +130,31 @@ class SnapshotRangeMarkerImpl internal constructor(
 
   private data class CachedResolution(val root: PMarkerRoot, val resolution: PMarkerResolution)
 
-  private var cached: CachedResolution? = null
+  private var cachedResolution: CachedResolution? = null
 
   private fun currentResolution(): PMarkerResolution {
     val root = currentRootReference().get()
-    val cached = cached
+    val cached = cachedResolution
     if (cached != null && cached.root === root) {
       return cached.resolution
     }
     val resolution = SnapshotMarkerEngineImpl.resolveRangeMarker(this, root)
-    this.cached = CachedResolution(root, resolution)
+    this.cachedResolution = CachedResolution(root, resolution)
     return resolution
   }
 
-  internal fun currentRootReference(): AtomicReference<PMarkerRoot> {
+  @ApiStatus.Internal
+  open fun currentRootReference(): AtomicReference<PMarkerRoot> {
     val documentOrFile = documentOrFile
     if (documentOrFile is VirtualFile) {
       return checkNotNull(fileRoot).rootReference()
     }
     val document = documentOrFile as DocumentImpl
     return (document.core.snapshot() as DocumentSnapshotImpl).markerRoot
+  }
+
+  protected open fun rootReference(snapshot: DocumentSnapshot): AtomicReference<PMarkerRoot> {
+    return (snapshot as DocumentSnapshotImpl).markerRoot
   }
 
 

@@ -116,7 +116,7 @@ public class SnapshotMarkerEngineBenchmark {
     accumulator.reset();
 
     for (int index = 0; index < INTERSECTION_CALLS; index++) {
-      root.processRangeMarkersOverlappingWith(queryStarts[index], queryEnds[index], accumulator);
+      root.processRangeMarkersOverlappingWith(queryStarts[index], queryEnds[index], 0, accumulator);
     }
 
     return accumulator.getChecksum() ^ accumulator.getCount();
@@ -214,7 +214,7 @@ public class SnapshotMarkerEngineBenchmark {
           (long)index + 1L,
           startOffset,
           startOffset + MARKER_LENGTH,
-          NON_GREEDY_SPEC
+          NON_GREEDY_SPEC, (byte)0, null
         );
       }
       root = currentRoot;

@@ -42,8 +42,14 @@ interface PMarkerRoot {
    * 6. Returns a new persistent root.
    *
    * Already-invalid markers normally remain invalid.
+   * [invalidatedMarkerConsumer] receives each marker ID that changes from valid to invalid.
    */
-  fun applyPatch(patch: DocumentTextPatch, beforeText: DocumentText, afterText: DocumentText): PMarkerRoot
+  fun applyPatch(
+    patch: DocumentTextPatch,
+    beforeText: DocumentText,
+    afterText: DocumentText,
+    invalidatedMarkerConsumer: LongConsumer = EMPTY_LONG_CONSUMER,
+  ): PMarkerRoot
 
   /**
    * Inserts a marker whose ID is absent from this root.
@@ -66,9 +72,6 @@ interface PMarkerRoot {
     flavorFlags: Byte,
     markerReference: WeakReference<SnapshotRangeMarkerImpl>? = null,
   ): PMarkerRoot
-
-  fun insert(markerId: Long, startOffset: Int, endOffset: Int, spec: MarkerSpec): PMarkerRoot =
-    insert(markerId, startOffset, endOffset, spec, flavorFlags = 0, markerReference = null)
 
   /**
    * Replaces the flavor flags of a valid marker, preserving its range and specification.
@@ -110,6 +113,11 @@ interface PMarkerRoot {
    */
   fun purge(markerId: Long): PMarkerRoot
 
+  /**
+   * Keeps this root's marker states and adds valid markers that exist only in [other].
+   */
+  fun mergeValidMarkersFrom(other: PMarkerRoot): PMarkerRoot
+
   data class MarkerEntry(
     val markerId: Long,
     val startOffset: Int,
@@ -130,9 +138,15 @@ interface PMarkerRoot {
     processor: Processor<in MarkerEntry>,
   ): Boolean
 
-  fun processRangeMarkersOverlappingWith(
-    startOffset: Int,
-    endOffset: Int,
-    processor: Processor<in MarkerEntry>,
-  ): Boolean = processRangeMarkersOverlappingWith(startOffset, endOffset, tastePreference = 0, processor = processor)
+  /**
+   * Returns a lazy iterator over valid markers that intersect the requested range and match [tastePreference].
+   * The iterator orders entries by start offset and marker ID.
+   */
+  fun overlappingIterator(startOffset: Int, endOffset: Int, tastePreference: Int): Iterator<MarkerEntry>
+
+  companion object {
+    /** Ignores invalidated marker IDs. */
+    @JvmField
+    val EMPTY_LONG_CONSUMER: LongConsumer = LongConsumer { }
+  }
 }

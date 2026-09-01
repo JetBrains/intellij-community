@@ -10,11 +10,13 @@ import com.intellij.openapi.editor.impl.DocumentSnapshotImpl
 import com.intellij.openapi.editor.impl.StripedIDGenerator
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.Processor
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ReferenceQueueable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.lang.ref.ReferenceQueue
 import java.lang.ref.WeakReference
+import java.util.Collections
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -32,6 +34,21 @@ import java.util.concurrent.atomic.AtomicReference
 object SnapshotMarkerEngineImpl : SnapshotMarkerEngine, ReferenceQueueable {
   private val markerQueue = ReferenceQueue<SnapshotRangeMarkerImpl>()
   private val nextMarkerId: StripedIDGenerator = StripedIDGenerator().also { it.next() /* id must not be 0 */ }
+  /// collection of [SnapshotMarkerRootStore] that need to be updated on [DocumentSnapshot] change
+  private val rootStores: MutableSet<SnapshotMarkerRootStore> = Collections.newSetFromMap(CollectionFactory.createConcurrentWeakIdentityMap<SnapshotMarkerRootStore, Boolean>())
+
+  @ApiStatus.Internal
+  fun registerRootStore(store: SnapshotMarkerRootStore) {
+    rootStores.add(store)
+  }
+
+  @ApiStatus.Internal
+  fun unregisterRootStore(store: SnapshotMarkerRootStore) {
+    rootStores.remove(store)
+  }
+
+  @ApiStatus.Internal
+  fun nextMarkerId(): Long = nextMarkerId.next()
 
   /**
    * Canonical weak handle reference retained by persistent marker states until the handle can be queue-purged.
@@ -64,6 +81,7 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine, ReferenceQueueable {
     publishRoot(beforeSnapshot, afterSnapshot) {
       it.applyPatch(patch, beforeSnapshot.text(), afterSnapshot.text())
     }
+    rootStores.forEach { it.applyPatch(beforeSnapshot, afterSnapshot, patch) }
   }
 
   override fun inherit(beforeSnapshot: DocumentSnapshot, afterSnapshot: DocumentSnapshot) {
@@ -71,6 +89,7 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine, ReferenceQueueable {
       "Snapshots must share the same text instance"
     }
     publishRoot(beforeSnapshot, afterSnapshot) { it }
+    rootStores.forEach { it.inherit(beforeSnapshot, afterSnapshot) }
   }
 
   /**
@@ -89,10 +108,14 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine, ReferenceQueueable {
     if (markerSnapshot === metadataSnapshot) return metadataSnapshot
 
     val primaryRoot = markerRoot(markerSnapshot).get() as PMarkerRootImpl
-    if (primaryRoot === PMarkerRootImpl.empty()) return metadataSnapshot
     val metadataRoot = markerRoot(metadataSnapshot).get() as PMarkerRootImpl
+    val hasExternalPrimaryRoot = rootStores.any { it.containsSnapshot(markerSnapshot) }
+    if (primaryRoot === PMarkerRootImpl.empty() && !hasExternalPrimaryRoot) return metadataSnapshot
+
     val mergedRoot = primaryRoot.mergeValidMarkersFrom(metadataRoot)
-    return (metadataSnapshot as DocumentSnapshotImpl).copyWithMarkerRoot(mergedRoot)
+    val mergedSnapshot = (metadataSnapshot as DocumentSnapshotImpl).copyWithMarkerRoot(mergedRoot)
+    rootStores.forEach { it.merge(markerSnapshot, metadataSnapshot, mergedSnapshot) }
+    return mergedSnapshot
   }
 
   private inline fun publishRoot(
@@ -134,7 +157,7 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine, ReferenceQueueable {
     val documentImpl = document as DocumentImpl
     val fileRoot = FileMarkerRoot.getOrCreate(documentImpl)
 
-    val markerId = nextMarkerId.next()
+    val markerId = nextMarkerId()
     val marker = SnapshotRangeMarkerImpl(document, fileRoot, markerId, spec, TextRange(startOffset, endOffset))
     val markerReference = MarkerReference(marker, documentImpl, markerQueue)
 

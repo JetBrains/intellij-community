@@ -10,6 +10,9 @@ import com.intellij.util.containers.ConcurrentLongObjectMap
 import com.intellij.util.containers.Java11Shim
 import org.jetbrains.annotations.TestOnly
 import java.lang.ref.WeakReference
+import java.util.ArrayDeque
+import java.util.NoSuchElementException
+import java.util.function.LongConsumer
 
 /**
  * Immutable persistent marker root backed by an AVL tree keyed by `(startOffset, markerId)`.
@@ -166,7 +169,12 @@ open class PMarkerRootImpl private constructor(
   @TestOnly
   fun containsMarkerId(markerId: Long): Boolean = states.getUnchecked(markerId) != null
 
-  override fun applyPatch(patch: DocumentTextPatch, beforeText: DocumentText, afterText: DocumentText): PMarkerRoot {
+  override fun applyPatch(
+    patch: DocumentTextPatch,
+    beforeText: DocumentText,
+    afterText: DocumentText,
+    invalidatedMarkerConsumer: LongConsumer,
+  ): PMarkerRoot {
     validatePatch(patch, beforeText, afterText)
     val editStart = patch.startOffset()
     val editEnd = patch.endOffset()
@@ -174,7 +182,7 @@ open class PMarkerRootImpl private constructor(
     val newLength = patch.newFragment().length
     if (oldLength == 0 && newLength == 0 || rootId == NULL_NODE) return this
     if (persistentMarkerCount > 0 && PersistentMarkerPolicy.requiresFullTraversal(patch, beforeText, afterText)) {
-      return applyPatchWithFullTraversal(patch, beforeText, afterText)
+      return applyPatchWithFullTraversal(patch, beforeText, afterText, invalidatedMarkerConsumer)
     }
 
     val delta = newLength - oldLength
@@ -183,13 +191,13 @@ open class PMarkerRootImpl private constructor(
     val (before, fromEditStart) = splitByStart(editor, rootId, editStart, equalGoesLeft = false)
     val (middle, after) = splitByStart(editor, fromEditStart, editEnd, equalGoesLeft = true)
 
-    val updatedBefore = updateMarkersStartingBeforeEdit(editor, before, patch, beforeText, afterText)
+    val updatedBefore = updateMarkersStartingBeforeEdit(editor, before, patch, beforeText, afterText, invalidatedMarkerConsumer)
     val middleEntries = ArrayList<MarkerEntry>()
     collectEntries(editor, middle, 0, middleEntries)
 
     val transformedMiddle = ArrayList<MarkerEntry>(middleEntries.size)
     for (entry in middleEntries) {
-      when (val update = transform(editor, entry, patch, beforeText, afterText)) {
+      when (val update = transform(editor, entry, patch, beforeText, afterText, invalidatedMarkerConsumer)) {
         is MarkerTransformResult.Valid -> transformedMiddle.add(update.entry)
         is MarkerTransformResult.Invalid -> editor.putInvalid(entry, update.reason)
       }
@@ -217,6 +225,7 @@ open class PMarkerRootImpl private constructor(
     patch: DocumentTextPatch,
     beforeText: DocumentText,
     afterText: DocumentText,
+    invalidatedMarkerConsumer: LongConsumer,
   ): PMarkerRoot {
     val editor = MapBatchEditor(states, persistentMarkerCount)
     val entries = ArrayList<MarkerEntry>()
@@ -224,7 +233,7 @@ open class PMarkerRootImpl private constructor(
 
     val transformedEntries = ArrayList<MarkerEntry>(entries.size)
     for (entry in entries) {
-      when (val update = transform(editor, entry, patch, beforeText, afterText)) {
+      when (val update = transform(editor, entry, patch, beforeText, afterText, invalidatedMarkerConsumer)) {
         is MarkerTransformResult.Valid -> transformedEntries.add(update.entry)
         is MarkerTransformResult.Invalid -> editor.putInvalid(entry, update.reason)
       }
@@ -248,7 +257,8 @@ open class PMarkerRootImpl private constructor(
    * Invalid or removed markers that exist only in [other] remain absent, which preserves their invalidity while this
    * branch stays authoritative for every marker ID it has already observed.
    */
-  internal fun mergeValidMarkersFrom(other: PMarkerRootImpl): PMarkerRootImpl {
+  override fun mergeValidMarkersFrom(other: PMarkerRoot): PMarkerRootImpl {
+    other as PMarkerRootImpl
     if (other.rootId == NULL_NODE) return this
 
     val otherEntries = ArrayList<MarkerEntry>()
@@ -301,6 +311,67 @@ open class PMarkerRootImpl private constructor(
       requiredFlavorFlags = tastePreference and ALL_FLAVOR_FLAGS,
       processor = processor,
     )
+  }
+
+  override fun overlappingIterator(startOffset: Int, endOffset: Int, tastePreference: Int): Iterator<MarkerEntry> {
+    require(startOffset >= 0) { "startOffset must be non-negative" }
+    require(endOffset >= startOffset) { "endOffset must not precede startOffset" }
+    val requiredFlavorFlags = tastePreference and ALL_FLAVOR_FLAGS
+
+    return object : Iterator<MarkerEntry> {
+      private val stack = ArrayDeque<TraversalFrame>()
+      private var nextEntry: MarkerEntry? = null
+
+      init {
+        pushLeft(rootId, initialAncestorDelta = 0)
+      }
+
+      override fun hasNext(): Boolean {
+        if (nextEntry == null) nextEntry = findNext()
+        return nextEntry != null
+      }
+
+      override fun next(): MarkerEntry {
+        if (!hasNext()) throw NoSuchElementException()
+        val result = nextEntry!!
+        nextEntry = null
+        return result
+      }
+
+      private fun findNext(): MarkerEntry? {
+        while (stack.isNotEmpty()) {
+          val (node, ancestorDelta) = stack.removeLast()
+          val childDelta = ancestorDelta + node.lazyOffsetDelta
+          pushLeft(node.rightId, childDelta)
+
+          val start = node.entry.startOffset + ancestorDelta
+          val end = node.entry.endOffset + ancestorDelta
+          if (end > startOffset && containsAllFlavorFlags(node.entry.flavorFlags, requiredFlavorFlags)) {
+            return if (ancestorDelta == 0) node.entry else node.entry.copy(startOffset = start, endOffset = end)
+          }
+        }
+        return null
+      }
+
+      private fun pushLeft(initialNodeId: Long, initialAncestorDelta: Int) {
+        var nodeId = initialNodeId
+        var ancestorDelta = initialAncestorDelta
+        while (nodeId != NULL_NODE) {
+          val node = states.getUnchecked(nodeId) as ValidNode
+          if (!containsAllFlavorFlags(node.subtreeFlavorFlags, requiredFlavorFlags) ||
+              node.maximumEndOffset + ancestorDelta <= startOffset) {
+            return
+          }
+
+          val childDelta = ancestorDelta + node.lazyOffsetDelta
+          if (node.entry.startOffset + ancestorDelta < endOffset) {
+            stack.addLast(TraversalFrame(node, ancestorDelta))
+          }
+          nodeId = node.leftId
+          ancestorDelta = childDelta
+        }
+      }
+    }
   }
 
   private fun ancestorDelta(state: ValidNode, markerId: Long): Int {
@@ -372,6 +443,8 @@ open class PMarkerRootImpl private constructor(
   }
 
   private sealed interface StoredNode
+
+  private data class TraversalFrame(val node: ValidNode, val ancestorDelta: Int)
 
   private data class ValidNode(
     val entry: MarkerEntry,
@@ -709,13 +782,6 @@ open class PMarkerRootImpl private constructor(
       return ExtractMinimumResult(rebalance(editor, rootId), extracted.minimumId)
     }
 
-    private fun joinWithPivot(editor: MapBatchEditor, leftId: Long, pivotId: Long, rightId: Long): Long {
-      editor.setParent(leftId, NULL_NODE)
-      editor.setParent(rightId, NULL_NODE)
-      detachAsLeaf(editor, pivotId)
-      return joinPrepared(editor, leftId, pivotId, rightId)
-    }
-
     private fun checkNotNull(id: Long): Long {
       check(id != NULL_NODE)
       return id
@@ -808,6 +874,7 @@ open class PMarkerRootImpl private constructor(
       patch: DocumentTextPatch,
       beforeText: DocumentText,
       afterText: DocumentText,
+      invalidatedMarkerConsumer: LongConsumer,
     ): Long {
       if (rootId == NULL_NODE) return NULL_NODE
       val initial = editor.valid(rootId)
@@ -819,10 +886,10 @@ open class PMarkerRootImpl private constructor(
       val entry = root.entry
       detachAsLeaf(editor, rootId)
 
-      val newLeft = updateMarkersStartingBeforeEdit(editor, leftId, patch, beforeText, afterText)
-      val newRight = updateMarkersStartingBeforeEdit(editor, rightId, patch, beforeText, afterText)
+      val newLeft = updateMarkersStartingBeforeEdit(editor, leftId, patch, beforeText, afterText, invalidatedMarkerConsumer)
+      val newRight = updateMarkersStartingBeforeEdit(editor, rightId, patch, beforeText, afterText, invalidatedMarkerConsumer)
 
-      return when (val update = transform(editor, entry, patch, beforeText, afterText)) {
+      return when (val update = transform(editor, entry, patch, beforeText, afterText, invalidatedMarkerConsumer)) {
         is MarkerTransformResult.Valid -> {
           check(update.entry.startOffset == entry.startOffset) {
             "An edit changed the start of a marker that starts before the edit"
@@ -972,6 +1039,7 @@ open class PMarkerRootImpl private constructor(
       patch: DocumentTextPatch,
       beforeText: DocumentText,
       afterText: DocumentText,
+      invalidatedMarkerConsumer: LongConsumer,
     ): MarkerTransformResult {
       val result = entry.spec.policy.transform(entry, patch, beforeText, afterText)
       if (result is MarkerTransformResult.Valid) {
@@ -979,6 +1047,9 @@ open class PMarkerRootImpl private constructor(
           "Marker policy changed marker ID ${entry.markerId} to ${result.entry.markerId}"
         }
         editor.replacePolicy(entry.spec.policy, result.entry.spec.policy)
+      }
+      else {
+        invalidatedMarkerConsumer.accept(entry.markerId)
       }
       return result
     }

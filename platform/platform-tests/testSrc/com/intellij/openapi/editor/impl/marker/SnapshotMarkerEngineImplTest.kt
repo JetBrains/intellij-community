@@ -6,25 +6,19 @@ import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.openapi.editor.impl.DocumentImpl
-import com.intellij.openapi.editor.impl.RangeMarkerStorageImpl
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.ref.GCUtil
-import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
-import org.junit.jupiter.api.extension.ExtensionContext
-import org.junit.jupiter.api.extension.InvocationInterceptor
-import org.junit.jupiter.api.extension.ReflectiveInvocationContext
 import java.lang.ref.WeakReference
-import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
+import java.util.function.LongConsumer
 import kotlin.concurrent.thread
 
 @UsePMarkerImplementation
@@ -628,7 +622,7 @@ class SnapshotMarkerEngineImplTest {
 
   @Test
   fun `root purge removes state while disposal removal retains it`() {
-    val root = PMarkerRootImpl.empty().insert(1, 2, 4, nonGreedySpec())
+    val root = PMarkerRootImpl.empty().insert(1, 2, 4, nonGreedySpec(), flavorFlags = 0, markerReference = null)
 
     val removed = root.remove(1) as PMarkerRootImpl
     val purged = root.purge(1) as PMarkerRootImpl
@@ -640,6 +634,7 @@ class SnapshotMarkerEngineImplTest {
   @Test
   fun `marker spec delegates transformation to its policy`() {
     var receivedPatch: DocumentTextPatch? = null
+    val invalidatedMarkerIds = ArrayList<Long>()
     val policy = MarkerPolicy { _, patch, _, _ ->
       receivedPatch = patch
       MarkerTransformResult.Invalid("Invalidated by test marker policy")
@@ -649,7 +644,8 @@ class SnapshotMarkerEngineImplTest {
       startOffset = 2,
       endOffset = 4,
       spec = nonGreedySpec().copy(policy = policy),
-    )
+      flavorFlags = 0,
+      markerReference = null)
 
     val patch = DocumentTextPatch.complex(
       startOffset = 2,
@@ -661,10 +657,11 @@ class SnapshotMarkerEngineImplTest {
       originEndOffset = 2,
       moveOffset = 3,
     )
-    val edited = applyPatch(root, "abcd", patch)
+    val edited = applyPatch(root, "abcd", patch, LongConsumer(invalidatedMarkerIds::add))
 
     val invalid = edited.resolve(1, TextRange(0, 0)) as PMarkerResolution.Invalid
     assertEquals("Invalidated by test marker policy", invalid.reason)
+    assertEquals(listOf(1L), invalidatedMarkerIds)
     assertSame(patch, receivedPatch)
   }
 
@@ -701,6 +698,23 @@ class SnapshotMarkerEngineImplTest {
     val updated = removed.updateFlavor(1, combinedFlavor)
     assertTrue(markerIds(removed, tastePreference = combinedFlavor.toInt()).isEmpty())
     assertEquals(listOf(1L), markerIds(updated, tastePreference = combinedFlavor.toInt()))
+  }
+
+  @Test
+  fun `root overlapping iterator respects flavors and lazy shifts`() {
+    val firstFlavor: Byte = 1
+    val secondFlavor: Byte = 2
+    val root = PMarkerRootImpl.empty()
+      .insert(1, 0, 2, nonGreedySpec(), firstFlavor)
+      .insert(2, 3, 5, nonGreedySpec(), secondFlavor)
+      .insert(3, 6, 8, nonGreedySpec(), firstFlavor)
+    val edited = applyPatch(root, "abcdefgh", textPatch(startOffset = 0, endOffset = 0, newFragment = "xx"))
+
+    val entries = edited.overlappingIterator(3, 9, firstFlavor.toInt()).asSequence().toList()
+
+    assertEquals(listOf(1L, 3L), entries.map { it.markerId })
+    assertEquals(listOf(2, 8), entries.map { it.startOffset })
+    assertEquals(listOf(4, 10), entries.map { it.endOffset })
   }
 
   @Test
@@ -900,10 +914,15 @@ class SnapshotMarkerEngineImplTest {
     )
   }
 
-  private fun applyPatch(root: PMarkerRoot, before: String, patch: DocumentTextPatch): PMarkerRoot {
+  private fun applyPatch(
+    root: PMarkerRoot,
+    before: String,
+    patch: DocumentTextPatch,
+    invalidatedMarkerConsumer: LongConsumer = PMarkerRoot.EMPTY_LONG_CONSUMER,
+  ): PMarkerRoot {
     val beforeText = DocumentImpl(before, true).core.snapshot().text()
     val afterText = beforeText.applyOp(patch)
-    return root.applyPatch(patch, beforeText, afterText)
+    return root.applyPatch(patch, beforeText, afterText, invalidatedMarkerConsumer)
   }
 
   private class Fixture(initialText: String) {
