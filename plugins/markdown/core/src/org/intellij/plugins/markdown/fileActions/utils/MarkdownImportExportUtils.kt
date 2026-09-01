@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.fileActions.utils
 
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.ProcessNotCreatedException
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.util.ExecUtil
 import com.intellij.ide.actions.OpenFileAction
@@ -119,10 +120,16 @@ object MarkdownImportExportUtils {
       }
 
       override fun onThrowable(error: Throwable) {
+        val errorMessage = if (error is ProcessNotCreatedException) {
+          MarkdownBundle.message("markdown.import.from.docx.pandoc.not.found")
+        } else {
+          @Suppress("HardCodedStringLiteral")
+          error.localizedMessage ?: MarkdownBundle.message("markdown.export.failure.msg", vFileToImport.name)
+        }
         MarkdownNotifications.showError(
           project,
           id = MarkdownExportProvider.Companion.NotificationIds.exportFailed,
-          message = "[${vFileToImport.name}] ${error.localizedMessage}"
+          message = "[${vFileToImport.name}] $errorMessage"
         )
       }
 
