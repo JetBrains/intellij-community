@@ -1689,6 +1689,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
         }
 
+        @TestMetadata("accessorDeprecation.before.Main.kt")
+        public void testAccessorDeprecation() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/migration/javaAnnotationPositionedArguments/accessorDeprecation.before.Main.kt");
+        }
+
         @TestMetadata("basicMultiple.before.Main.kt")
         public void testBasicMultiple() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/migration/javaAnnotationPositionedArguments/basicMultiple.before.Main.kt");

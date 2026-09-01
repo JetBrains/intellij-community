@@ -1,0 +1,8 @@
+// "Replace invalid positioned arguments for annotation" "true"
+// WITH_STDLIB
+// ERROR: Only named arguments are available for Java annotations
+// ERROR: Only named arguments are available for Java annotations
+// COMPILER_ARGUMENTS: -XXLanguage:-EnforceNamedArgumentsOnJavaAnnotationInAccessors
+
+@get:Ann(1, /*abc*/"abc", arrayOf(Int::class, Array<Int>::class)<caret>, arg3 = String::class)
+val prop = ""

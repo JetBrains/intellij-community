@@ -14,12 +14,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-kotlinc-kotlin-script-runtime-kotlinc-kotlin-script-runtime"],
-    runtime_deps = ["@lib//:libraries-kotlinc-kotlin-script-runtime-kotlinc-kotlin-script-runtime"],
+    exports = ["@lib//:kotlinc-kotlin-script-runtime"],
+    runtime_deps = ["@lib//:kotlinc-kotlin-script-runtime"],
 )
 
 content_module_jar(
-    libraries = ["@lib//:libraries-kotlinc-kotlin-script-runtime-kotlinc-kotlin-script-runtime"],
+    libraries = ["@lib//:kotlinc-kotlin-script-runtime"],
     module = ":libraries-kotlinc-kotlin-script-runtime",
 )
 
@@ -33,7 +33,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.kotlinc.kotlin.script.runtime",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-kotlinc-kotlin-script-runtime-kotlinc-kotlin-script-runtime"],
+    exports = ["@lib//:kotlinc-kotlin-script-runtime"],
     runtime_deps = [":libraries-kotlinc-kotlin-script-runtime"],
 )
 ### auto-generated section `build intellij.libraries.kotlinc.kotlin.script.runtime` end

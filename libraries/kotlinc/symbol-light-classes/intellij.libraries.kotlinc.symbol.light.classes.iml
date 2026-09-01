@@ -25,20 +25,13 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" scope="RUNTIME" />
     <orderEntry type="module-library" exported="">
-      <library name="kotlinc.symbol-light-classes" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:symbol-light-classes-for-ide:2.5.0-dev-5674">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/symbol-light-classes-for-ide/2.5.0-dev-5674/symbol-light-classes-for-ide-2.5.0-dev-5674.jar">
-              <sha256sum>25dfa3cfe3258b993efc4c64c846210ea3acb832353ad2f37a6697871fa2c4c8</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
+      <library name="kotlinc.symbol-light-classes">
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/symbol-light-classes-for-ide/2.5.0-dev-5674/symbol-light-classes-for-ide-2.5.0-dev-5674.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../lib/kotlin-snapshot/org/jetbrains/kotlin/symbol-light-classes-for-ide/2.5.255-dev-255/symbol-light-classes-for-ide-2.5.255-dev-255.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/symbol-light-classes-for-ide/2.5.0-dev-5674/symbol-light-classes-for-ide-2.5.0-dev-5674-sources.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../lib/kotlin-snapshot/org/jetbrains/kotlin/symbol-light-classes-for-ide/2.5.255-dev-255/symbol-light-classes-for-ide-2.5.255-dev-255-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
