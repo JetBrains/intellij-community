@@ -88,10 +88,14 @@ interface Activatable {
 }
 
 /**
- * The kind of Python environment detected from the file system layout.
+ * A kind of Python environment, detected from the file system layout.
+ *
+ * The hierarchy is open: a tool contributes its own kind from its own module, together with the
+ * [PythonEnvironmentProvider] that detects it. So never match on a concrete kind. Ask the environment instead, through
+ * this interface or through [HasPythonHome], [HasOwnLibRoot] and [Activatable].
  */
 @ApiStatus.Internal
-sealed interface PythonEnvironment {
+interface PythonEnvironment {
   /**
    * The interpreter version this environment records about itself, or null when it records none.
    *
