@@ -121,6 +121,7 @@ sealed interface EelPlatform {
         "linux" -> Linux(resolvedArch)
         "windows" -> Windows(resolvedArch)
         "freebsd" -> FreeBSD(resolvedArch)
+        "harmonyos" -> HarmonyOS(resolvedArch)
         else -> null
       }
     }
