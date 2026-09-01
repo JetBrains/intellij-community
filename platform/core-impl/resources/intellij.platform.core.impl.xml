@@ -76,5 +76,7 @@
                         serviceImplementation="com.intellij.psi.stubs.StubElementRegistryServiceImpl"/>
     <applicationService serviceInterface="com.intellij.psi.impl.source.tree.mvcc.PsiVersioningGarbageCollector"
                         serviceImplementation="com.intellij.psi.impl.AsyncPsiVersioningGarbageCollector"/>
+    <applicationService serviceInterface="com.intellij.openapi.vfs.VirtualFileSetFactory"
+                        serviceImplementation="com.intellij.openapi.vfs.CompactVirtualFileSetFactory"/>
   </extensions>
 </idea-plugin>
