@@ -276,7 +276,7 @@ class NavigatorWithinProject(
       val endLocation = parseLocationInFile(split[1])
 
       if (startLocation != null && endLocation != null) {
-        return@mapNotNull Pair(startLocation, startLocation)
+        return@mapNotNull Pair(startLocation, endLocation)
       }
       return@mapNotNull null
     }
