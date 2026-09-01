@@ -22,18 +22,13 @@ val PythonInterpreter.presentation: PythonInterpreterPresentation
 /**
  * The Python `lib/` directory backing this SDK, or `null` when it cannot be located.
  *
- * For a [PythonEnvironment.Venv] this returns the venv's own lib root via [venvLibDirectory];
- * for any other environment (or an unknown one) it returns the interpreter's standard library
- * directory via [stdlibLibDirectory].
+ * An environment with a library directory of its own ([HasOwnLibRoot]) answers with it, through
+ * [venvLibDirectory]. Every other environment, and an unknown one, answers with the interpreter's
+ * standard library directory, through [stdlibLibDirectory].
  */
 @RequiresBackgroundThread
-private fun PythonInterpreter.libDirectory(): VirtualFile? = when (pythonEnvironment) {
-  is PythonEnvironment.Venv -> venvLibDirectory()
-  is PythonEnvironment.Conda,
-  is PythonEnvironment.SystemPython,
-  null,
-    -> stdlibLibDirectory()
-}
+private fun PythonInterpreter.libDirectory(): VirtualFile? =
+  if (pythonEnvironment is HasOwnLibRoot) venvLibDirectory() else stdlibLibDirectory()
 
 /**
  * The `site-packages/` directory inside this SDK's [libDirectory], or `null` when either the lib
@@ -75,10 +70,10 @@ fun PythonInterpreter.stdlibLibDirectory(): VirtualFile? {
 }
 
 /**
- * The virtual environment's own `lib/pythonX.Y/` directory when this SDK's environment is a
- * [PythonEnvironment.Venv], or `null` otherwise (including when no environment was detected).
+ * The environment's own `lib/pythonX.Y/` directory when this SDK's environment has one
+ * ([HasOwnLibRoot]), or `null` otherwise (including when no environment was detected).
  *
- * Resolves [PythonEnvironment.Venv.libRoot] against the SDK's class roots first (covering both
+ * Resolves [HasOwnLibRoot.libRoot] against the SDK's class roots first (covering both
  * direct matches and the `site-packages` shortcut, since the `venv` module doesn't add
  * `lib/pythonX.Y` itself to `sys.path`), with a [LocalFileSystem] fallback when the SDK has no
  * class roots yet (e.g. a fresh empty SDK created for package management).
@@ -86,8 +81,7 @@ fun PythonInterpreter.stdlibLibDirectory(): VirtualFile? {
 @Internal
 @RequiresBackgroundThread
 fun PythonInterpreter.venvLibDirectory(): VirtualFile? {
-  val venv = pythonEnvironment as? PythonEnvironment.Venv ?: return null
-  val libRoot = venv.libRoot
+  val libRoot = (pythonEnvironment as? HasOwnLibRoot)?.libRoot ?: return null
   val classRoots = sdkClassRoots
   // Empty in case of a temporary empty SDK created to install package management.
   if (classRoots.isEmpty()) {

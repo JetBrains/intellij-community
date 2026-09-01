@@ -93,10 +93,7 @@ fun getPregeneratedSkeletonsName(
   if (PythonSdkUtil.isRemote(sdk)) return null
   @NonNls val versionString = sdk.versionString ?: return null
   val rich = sdk.pythonInterpreter(false)
-  val effectiveVersion = when (rich.pythonEnvironment) {
-    is PythonEnvironment.Conda -> "Anaconda-$versionString"
-    is PythonEnvironment.Venv, is PythonEnvironment.SystemPython, null -> versionString
-  }
+  val effectiveVersion = if (rich.pythonEnvironment is PythonEnvironment.Conda) "Anaconda-$versionString" else versionString
   return getPrebuiltSkeletonsName(generatorVersion, effectiveVersion, withMinorVersion, withExtension)
 }
 

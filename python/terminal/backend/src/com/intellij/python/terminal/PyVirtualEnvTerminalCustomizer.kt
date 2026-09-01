@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.toNioPathOrNull
@@ -19,12 +18,11 @@ import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.entities
-import com.intellij.python.terminal.shared.PyTerminalBundle
 import com.intellij.python.terminal.shared.PyVirtualEnvTerminalSettings
 import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.Activatable
 import com.jetbrains.python.sdk.activationEnvironment
-import com.jetbrains.python.sdk.PythonEnvironment
+import com.jetbrains.python.sdk.TerminalActivation
 import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 import com.jetbrains.python.sdk.pythonInterpreter
 import com.jetbrains.python.sdk.pythonSdk
@@ -35,7 +33,6 @@ import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.startup.MutableShellExecOptions
 import org.jetbrains.plugins.terminal.startup.ShellExecOptionsCustomizer
 import java.nio.file.Path
-import kotlin.io.path.isExecutable
 
 
 private data class Jediterm(val source: String, val sourceArgs: List<String>? = null) {
@@ -49,7 +46,6 @@ private data class Jediterm(val source: String, val sourceArgs: List<String>? = 
   }
 
   constructor(path: Path, args: List<String>? = null) : this(path.toAbsolutePath().toString(), args)
-  constructor(activateScript: Activatable.Script) : this(activateScript.scriptPath, activateScript.args)
 
   fun buildEnvironmentVariables(): Map<String, String> = buildMap {
     put(JEDITERM_SOURCE, source)
@@ -69,37 +65,6 @@ class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
     val logger = fileLogger()
   }
 
-  /**
-   *``conda init`` installs conda activation hook into user profile
-   *  We run this hook manually because we can't ask user to install hook and restart terminal
-   *  In case of failure we ask user to run "conda init" manually
-   */
-  private fun PythonEnvironment.Conda.getPowerShellActivationCommand(): Jediterm {
-    val condaPath = condaExecutable?.takeIf { it.isExecutable() }
-
-    if (condaPath == null) {
-      logger.warn("Can't find $condaExecutable, will not activate conda")
-      val message = PyTerminalBundle.message("powershell.conda.not.activated", "conda")
-      return Jediterm("echo '$message'")
-    }
-
-    // ' are in "Write-Host"
-    val errorMessage = PyTerminalBundle.message("powershell.conda.not.activated", condaPath).replace('\'', '"')
-
-
-    // No need to escape path: conda can't have spaces
-    return Jediterm(
-      """
-        & '${StringUtil.escapeChar(condaPath.toString(), '\'')}' shell.powershell hook | Out-String | Invoke-Expression ;
-        try {
-          conda activate '${StringUtil.escapeChar(pythonHomePath.toString(), '\'')}'
-        } catch {
-          Write-Host('${StringUtil.escapeChar(errorMessage, '\'')}')
-        }
-        """.trimIndent()
-    )
-  }
-
   private fun activateUnknownShell(sdk: Sdk, envs: MutableMap<String, String>): Jediterm? {
     //for other shells we read envs from activate script by the default shell and pass them to the process
     val envVars = runBlockingMaybeCancellable { sdk.activationEnvironment() }.successOrNull ?: emptyMap()
@@ -112,20 +77,18 @@ class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
     return null
   }
 
-  private fun activateVenv(shell: Shell, sdk: Sdk, venv: PythonEnvironment.Venv, envs: MutableMap<String, String>): Jediterm? {
-    return when (shell.type) {
-      Shell.Type.UNKNOWN -> activateUnknownShell(sdk, envs)
-      else -> venv.activation.invoke(shell.type)?.let { Jediterm(it) }
-    }
-  }
-
-  private fun activateConda(shell: Shell, sdk: Sdk, condaEnv: PythonEnvironment.Conda, envs: MutableMap<String, String>): Jediterm? {
-    return when (shell.type) {
-      Shell.Type.POWERSHELL -> condaEnv.getPowerShellActivationCommand()
-      Shell.Type.BASH, Shell.Type.SH, Shell.Type.ZSH, Shell.Type.FISH, Shell.Type.CSH -> {
-        condaEnv.activation.invoke(shell.type)?.let { Jediterm(it) }
-      }
-      Shell.Type.UNKNOWN -> activateUnknownShell(sdk, envs)
+  /**
+   * What the shell must run to activate [environment], or null when there is nothing to run.
+   *
+   * An unknown shell cannot source anything, so the environment is read by the default shell and passed on as
+   * variables instead. Every other shell asks the environment itself, so no kind of environment is named here.
+   */
+  private fun activate(shell: Shell, sdk: Sdk, environment: Activatable, envs: MutableMap<String, String>): Jediterm? {
+    if (shell.type == Shell.Type.UNKNOWN) return activateUnknownShell(sdk, envs)
+    return when (val activation = environment.terminalActivation(shell.type)) {
+      null -> null
+      is TerminalActivation.SourceScript -> Jediterm(activation.scriptPath, activation.args)
+      is TerminalActivation.Snippet -> Jediterm(activation.code)
     }
   }
 
@@ -217,18 +180,12 @@ class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
       return
     }
 
-    val jediterm = when (pythonEnvironment) {
-      is PythonEnvironment.Venv -> {
-        activateVenv(shell, sdk, pythonEnvironment, envs)
-      }
-      is PythonEnvironment.Conda -> {
-        activateConda(shell, sdk, pythonEnvironment, envs)
-      }
-      is PythonEnvironment.SystemPython -> {
-        logger.debug("No activation for system python ${sdk.homePath}")
-        null
-      }
+    val activatable = pythonEnvironment as? Activatable
+    if (activatable == null) {
+      logger.debug("Nothing to activate for ${sdk.homePath}")
+      return
     }
+    val jediterm = activate(shell, sdk, activatable, envs)
     jediterm?.buildEnvironmentVariables()?.let { envs.putAll(it) }
 
 

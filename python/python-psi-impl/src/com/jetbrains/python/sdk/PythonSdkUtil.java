@@ -96,23 +96,4 @@ public final class PythonSdkUtil {
     return PySkeletonUtil.getSitePackagesDirectory(pythonSdk);
   }
 
-  /**
-   * @deprecated use {@link PythonInterpreter}
-   */
-  @Deprecated
-  @RequiresBackgroundThread(generateAssertion = false)
-  public static boolean isVirtualEnv(@NotNull Sdk sdk) {
-    return PythonInterpreterKt.pythonInterpreter(sdk, false).getPythonEnvironment() instanceof PythonEnvironment.Venv;
-  }
-
-  /**
-   * @deprecated use {@link PythonInterpreter}
-   */
-  @Deprecated
-  @RequiresBackgroundThread(generateAssertion = false)
-  public static boolean isCondaVirtualEnv(@NotNull Sdk sdk) {
-    PythonInterpreter pythonInterpreter = PythonInterpreterKt.pythonInterpreter(sdk, false);
-    PythonEnvironment environment = pythonInterpreter.getPythonEnvironment();
-    return environment instanceof PythonEnvironment.Conda && !((PythonEnvironment.Conda)environment).isBase();
-  }
 }

@@ -21,11 +21,11 @@ import com.intellij.python.pyproject.model.api.SdkForModuleConfigInstruction
 import com.intellij.python.pyproject.model.api.configureSdkIfNeeded
 import com.intellij.python.pyproject.model.api.getModuleSdkState
 import com.intellij.python.pyproject.model.api.getPyProjectManager
-import com.jetbrains.python.sdk.PythonEnvironment
 import com.jetbrains.python.sdk.PythonInterpreter
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.findPythonSdk
 import com.jetbrains.python.sdk.getVersion
+import com.jetbrains.python.sdk.kindId
 import com.jetbrains.python.sdk.pythonInterpreterAsync
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.serialization.Serializable
@@ -163,16 +163,9 @@ class PythonEnvironmentMcpToolset : McpToolset {
     val env = interpreter.pythonEnvironment
               ?: throw McpExpectedError("$filePath is broken")
 
-    val environmentType = when (env) {
-      is PythonEnvironment.Venv -> "venv"
-      is PythonEnvironment.Conda -> "conda"
-      is PythonEnvironment.SystemPython -> "system"
-    }
-
-    val environmentPath = when (env) {
-      is PythonEnvironment.Conda, is PythonEnvironment.Venv -> env.pythonHomePath
-      is PythonEnvironment.SystemPython -> null
-    }
+    // The kind is named once, by the `id` of the provider that detected it. See `PythonEnvironmentProvider`.
+    val environmentType = env.kindId ?: "unknown"
+    val environmentPath = interpreter.pythonHomePath
 
 
     val packageManager = interpreter.getPyProjectManager().id.id

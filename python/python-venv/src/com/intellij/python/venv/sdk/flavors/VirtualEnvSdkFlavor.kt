@@ -45,20 +45,12 @@ class VirtualEnvSdkFlavor private constructor() : CPythonSdkFlavor<PyFlavorData.
     candidates.addAll(reader.findVEnvInterpreters())
     candidates.addAll(reader.findPyenvInterpreters())
 
-    candidates.filter {
-      when (it.detectPythonEnvironment().successOrNull) {
-        is PythonEnvironment.Venv -> true
-        is PythonEnvironment.Conda, is PythonEnvironment.SystemPython, null -> false
-      }
-    }
+    candidates.filter { it.detectPythonEnvironment().successOrNull is PythonEnvironment.Venv }
   }
 
   override fun isValidSdkPath(pythonBinaryPath: Path): Boolean {
-    if (!super.isValidSdkPath(pythonBinaryPath)) return false
-    return when (pythonBinaryPath.detectPythonEnvironment().successOrNull) {
-      is PythonEnvironment.Venv -> true
-      is PythonEnvironment.Conda, is PythonEnvironment.SystemPython, null -> false
-    }
+    return super.isValidSdkPath(pythonBinaryPath) &&
+           pythonBinaryPath.detectPythonEnvironment().successOrNull is PythonEnvironment.Venv
   }
 
   override fun getIcon(): Icon = PythonVenvIcons.VirtualEnv

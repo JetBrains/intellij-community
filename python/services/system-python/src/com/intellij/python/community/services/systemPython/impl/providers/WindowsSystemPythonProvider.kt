@@ -54,12 +54,7 @@ class WindowsSystemPythonProvider(val winRegistryBase: WinRegistryService? = nul
     val pythons = withContext(Dispatchers.IO) {
       val fromPath = names.flatMap { name ->
         PathEnvironmentVariableUtil.findAll(name)
-      }.filter {
-        when (it.detectPythonEnvironment().successOrNull) {
-          is PythonEnvironment.SystemPython -> true
-          is PythonEnvironment.Venv, is PythonEnvironment.Conda, null -> false
-        }
-      }
+      }.filter { it.detectPythonEnvironment().successOrNull is PythonEnvironment.SystemPython }
 
       (fromPath + getPythonsFromStore() + getPythonsFromRegistry()).toSet()
     }
