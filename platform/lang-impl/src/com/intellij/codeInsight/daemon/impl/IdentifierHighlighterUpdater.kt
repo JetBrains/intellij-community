@@ -74,7 +74,7 @@ class IdentifierHighlighterUpdater(
     val existingMarkupTooltips: MutableSet<Pair<String, Segment>> = HashSet()
     for (highlighter in myEditor.getMarkupModel().getAllHighlighters()) {
       val tooltip = highlighter.getErrorStripeTooltip()
-      if (tooltip is String) {
+      if (tooltip is String && highlighter.isValid) {
         existingMarkupTooltips.add(Pair.create(tooltip, highlighter.textRange))
       }
     }
