@@ -41,7 +41,10 @@ internal class CondaPackageManagerEngine(private val sdk: Sdk) : PythonPackageMa
   }
 
   override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): PyResult<Unit> {
-    val packages = specifications.map { it.name }
+    // Pass the caller's constraint through, the same way installPackageCommand does: with a bare name
+    // conda updates to the newest version it can resolve, silently ignoring the requested spec.
+    // Specs are single argv elements (no shell) and must not be quoted, see PY-91412.
+    val packages = specifications.map { it.nameWithVersionSpecs }
     val env = getEnvData()
     return CondaExecutor.installPackages(sdk.getCondaBinToExecute(), env.envIdentity, packages, emptyList())
   }
