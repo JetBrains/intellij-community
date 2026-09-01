@@ -97,7 +97,7 @@ class MinimapModel(private val editor: Editor): Disposable {
     val previousByElement = IdentityHashMap<StructureViewTreeElement, MinimapStructureMarker>(previousStructureMarkers.size)
 
     for (marker in previousStructureMarkers) {
-      previousByElement[marker.element] = marker
+      marker.element?.let { previousByElement[it] = marker }
     }
     val reusedStructureMarkers = IdentityHashMap<MinimapStructureMarker, Boolean>()
     val result = mutableListOf<MinimapStructureMarker>()

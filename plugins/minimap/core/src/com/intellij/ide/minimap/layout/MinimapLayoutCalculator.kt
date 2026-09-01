@@ -262,7 +262,7 @@ class MinimapLayoutCalculator(private val editor: Editor) {
       val startColumn = (startOffset - lineStartOffset).coerceAtLeast(0)
       val endColumn = (endOffsetInLine - lineStartOffset).coerceAtLeast(startColumn + 1)
       val rect2d = rectForColumns(startColumn, endColumn, band, context, pxPerColumn)
-      result.add(MinimapRenderEntry(marker.element, rect2d, sampleOffset = startOffset))
+      result.add(MinimapRenderEntry.forStructureElement(marker.elementReference, rect2d, startOffset))
     }
   }
 

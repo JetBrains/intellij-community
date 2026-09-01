@@ -5,9 +5,13 @@ import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
+import java.lang.ref.SoftReference
 
 data class MinimapStructureMarker(
-  val element: StructureViewTreeElement,
+  val elementReference: SoftReference<StructureViewTreeElement>,
   val rangeMarker: RangeMarker?,
   val pointer: SmartPsiElementPointer<out PsiElement>?
-)
+) {
+  val element: StructureViewTreeElement?
+    get() = elementReference.get()
+}

@@ -4,10 +4,13 @@ package com.intellij.ide.minimap
 import com.intellij.ide.minimap.geometry.MinimapGeometryCalculator
 import com.intellij.ide.minimap.geometry.MinimapScaleData
 import com.intellij.ide.minimap.layout.MinimapLayoutCalculator
+import com.intellij.ide.minimap.model.MinimapStructureMarker
 import com.intellij.ide.minimap.model.MinimapModel
+import com.intellij.ide.minimap.render.MinimapRenderEntry
 import com.intellij.ide.minimap.scene.MinimapSceneBuilder
 import com.intellij.ide.minimap.scene.MinimapSnapshot
 import com.intellij.ide.minimap.settings.MinimapScaleMode
+import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.editor.impl.AbstractEditorTest
 import com.intellij.openapi.util.Disposer
@@ -51,5 +54,15 @@ class MinimapSnapshotSmokeTest : AbstractEditorTest() {
 
     assertTrue(snapshot.geometry.minimapHeight >= 0)
     assertTrue("an empty document has nothing to render", snapshot.tokenEntries.isEmpty())
+  }
+
+  fun testStructureEntriesDoNotRetainStructureElementsDirectly() {
+    assertHasNoStructureElementField(MinimapStructureMarker::class.java)
+    assertHasNoStructureElementField(MinimapRenderEntry::class.java)
+  }
+
+  private fun assertHasNoStructureElementField(clazz: Class<*>) {
+    val retainingField = clazz.declaredFields.firstOrNull { StructureViewTreeElement::class.java.isAssignableFrom(it.type) }
+    assertNull("${clazz.simpleName} must not retain a structure element directly", retainingField)
   }
 }

@@ -12,6 +12,7 @@ import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import java.lang.ref.SoftReference
 import java.util.IdentityHashMap
 
 internal class MinimapStructureMarkerCollector(
@@ -43,7 +44,8 @@ internal class MinimapStructureMarkerCollector(
 
     val marker = resolveRangeMarker(existing, data.range)
     markAsReused(existing, marker, data.pointer)
-    result.add(MinimapStructureMarker(element, marker, data.pointer))
+    val elementReference = existing?.elementReference ?: SoftReference(element)
+    result.add(MinimapStructureMarker(elementReference, marker, data.pointer))
   }
 
   private fun resolveElementData(
