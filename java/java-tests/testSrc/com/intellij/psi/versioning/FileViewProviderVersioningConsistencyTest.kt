@@ -256,7 +256,7 @@ internal class FileViewProviderVersioningConsistencyTest {
   }
 
   // until it is possible to use document outside RA, this test will fail
-  // @Test
+  @Test
   fun `PsiUtilBase#getLanguageInEditor can be retrieved in without read lock`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     launch(Dispatchers.UiWithModelAccess) { // UI because we touch editor
       val file = runReadActionBlocking {
@@ -543,16 +543,6 @@ internal class FileViewProviderVersioningConsistencyTest {
     val text: String,
     val textLength: Int,
   )
-
-  private fun PsiFile.assertAstState(shouldBeBuilt: Boolean) {
-    val refs = (this as PsiFileImpl).stubTreeOrFileElement
-    if (shouldBeBuilt) {
-      Assertions.assertNotNull(refs.second, "AST for $this should be built")
-    }
-    else {
-      Assertions.assertNull(refs.second, "AST for $this should not be built")
-    }
-  }
 
   private fun assertSwitchedToIndexes(file: PsiFileImpl, className: String) {
     Assertions.assertNull(file.treeElement, "AST should not be retained in the live file")

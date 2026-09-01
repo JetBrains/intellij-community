@@ -11,6 +11,16 @@ jps_test(
 
 ### auto-generated section `build intellij.platform.testFramework.junit5.codeInsight` start
 jvm_provided_library(
+    name = "libraries_junit5_provided",
+    lib = "//libraries/junit5",
+)
+
+jvm_provided_library(
+    name = "libraries_junit5-jupiter_provided",
+    lib = "//libraries/junit5-jupiter",
+)
+
+jvm_provided_library(
     name = "libraries_junit4_provided",
     lib = "//libraries/junit4",
 )
@@ -34,15 +44,19 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
         "//platform/testFramework",
         "//platform/testFramework/junit5",
         "//platform/core-api:core",
+        "//platform/core-impl",
         "//platform/core-ui",
         "//platform/editor-ui-api:editor-ui",
         "//platform/lang-impl",
         "//platform/lang-api:lang",
         "//platform/projectModel-api:projectModel",
         "//platform/ide-core",
+        ":libraries_junit5_provided",
+        ":libraries_junit5-jupiter_provided",
         ":libraries_junit4_provided",
     ],
 )
@@ -59,9 +73,15 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":codeInsight",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-jupiter",
+        "//libraries/junit5-jupiter:junit5-jupiter_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/testFramework:testFramework_test_lib",
         "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
         "//platform/core-ui:core-ui_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
