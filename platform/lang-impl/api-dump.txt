@@ -212,13 +212,13 @@ f:com.intellij.build.BuildContentDescriptor
 - setNavigateToError(com.intellij.util.ThreeState):V
 f:com.intellij.build.BuildTextConsoleView
 - com.intellij.execution.impl.ConsoleViewImpl
-- com.intellij.build.BuildConsoleView
+- com.intellij.build.BuildProgressListener
 - <init>(com.intellij.openapi.project.Project,Z,java.util.List):V
 - append(java.lang.String,Z):V
 - onEvent(java.lang.Object,com.intellij.build.events.BuildEvent):V
 - print(java.lang.String,com.intellij.openapi.util.Key):V
 f:com.intellij.build.BuildTreeConsoleView
-- com.intellij.build.BuildConsoleView
+- com.intellij.build.BuildProgressListener
 - com.intellij.build.Filterable
 - com.intellij.execution.ui.ConsoleView
 - com.intellij.ide.OccurenceNavigator

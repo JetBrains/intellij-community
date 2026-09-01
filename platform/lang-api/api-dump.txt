@@ -27,9 +27,6 @@ c:com.intellij.application.options.codeStyle.properties.MagicIntegerConstAccesso
 a:com.intellij.application.options.codeStyle.properties.ValueListPropertyAccessor
 - com.intellij.application.options.codeStyle.properties.CodeStyleFieldAccessor
 - com.intellij.application.options.codeStyle.properties.CodeStyleValueList
-com.intellij.build.BuildConsoleView
-- com.intellij.build.BuildProgressListener
-- com.intellij.openapi.ui.ComponentContainer
 com.intellij.build.BuildDescriptor
 - getGroupId():java.lang.Object
 - a:getId():java.lang.Object

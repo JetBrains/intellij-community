@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * @author Vladislav.Soroka
  */
-public final class BuildTextConsoleView extends ConsoleViewImpl implements BuildConsoleView {
+public final class BuildTextConsoleView extends ConsoleViewImpl implements BuildProgressListener {
 
   private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
 

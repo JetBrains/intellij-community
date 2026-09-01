@@ -103,7 +103,7 @@ import java.util.function.Supplier;
  * @author Vladislav.Soroka
  */
 public final class BuildTreeConsoleView
-  implements ConsoleView, UiDataProvider, BuildConsoleView, Filterable<ExecutionNode>, OccurenceNavigator {
+  implements ConsoleView, UiDataProvider, BuildProgressListener, Filterable<ExecutionNode>, OccurenceNavigator {
   private static final Logger LOG = Logger.getInstance(BuildTreeConsoleView.class);
   @ApiStatus.Internal
   public static final DataKey<BuildTreeConsoleView> COMPONENT_KEY = DataKey.create("BuildTreeConsoleView");
