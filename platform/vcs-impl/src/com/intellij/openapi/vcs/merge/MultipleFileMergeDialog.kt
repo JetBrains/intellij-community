@@ -294,10 +294,10 @@ open class MultipleFileMergeDialog(
                 val model = iterativeDataHolder.prepareModelIfSupported(file, request) ?: return@itemStep
 
                 edtWriteAction {
-                  model.resolveAllChangesAutomatically()
-
-                  saveDocument(file)
-                  checkMarkModifiedProject(project, file)
+                  if (model.resolveAllChangesAutomatically()) {
+                    saveDocument(file)
+                    checkMarkModifiedProject(project, file)
+                  }
                   updateModelFromFiles()
                 }
               }
