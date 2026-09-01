@@ -334,7 +334,7 @@ public final class SdkDownloadTracker {
     protected void runTask(@Nullable Project project,
                            @NotNull @NlsContexts.ProgressTitle String title,
                            @NotNull java.util.function.Consumer<ProgressIndicator> downloadAction) {
-      SdkDownloadTrackerKt.runSdkDownloadTask(project, title, downloadAction);
+      SdkDownloadTrackerKt.runWithIndicator(project, title, downloadAction);
     }
 
     void startDownloadIfNeeded(@Nullable Project project, @NotNull Sdk sdkFromTable) {

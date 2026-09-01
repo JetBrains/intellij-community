@@ -28,7 +28,7 @@ private val LOG = logger<SdkDownloadTracker>()
 @Service(Service.Level.APP)
 private class SdkDownloadTrackerService(val scope: CoroutineScope)
 
-internal fun runSdkDownloadTask(
+internal fun runWithIndicator(
   project: Project?,
   title: @NlsContexts.ProgressTitle String,
   downloadAction: Consumer<ProgressIndicator>,
