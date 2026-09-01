@@ -79,8 +79,8 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
   @Override
   public void loadState(@NotNull State state) {
     myState = state;
-
-    addAbsentEntriesFromDefaultState(myState);
+    if(state.getEntries().isEmpty())
+      addAbsentEntriesFromDefaultState(myState);
   }
 
   private static void addAbsentEntriesFromDefaultState(@NotNull State state) {
