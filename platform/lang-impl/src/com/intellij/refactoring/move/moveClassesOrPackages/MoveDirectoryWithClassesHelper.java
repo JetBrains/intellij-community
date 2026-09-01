@@ -141,7 +141,7 @@ public abstract class MoveDirectoryWithClassesHelper {
       if (moving == null) {
         MoveFilesOrDirectoriesUtil.doMoveFile(psiFile, moveDestination);
       }
-      moving = MovedFileProvider.getInstance().getUpdatedFile(moveDestination, psiFile);
+      moving = moveDestination.findFile(psiFile.getName());
       movedFiles.add(moving);
       listener.elementMoved(psiFile);
       return true;
