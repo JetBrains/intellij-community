@@ -1128,6 +1128,13 @@ public final class TableResultView extends JBTableWithResizableCells
     }
     revalidate();
     repaint();
+    // The strip caches its own cell images and is never told about the update, so a pinned column would keep
+    // the old one.
+    TableResultView frozenView = getPairedFrozenView();
+    if (frozenView != null) {
+      frozenView.dropCaches();
+      frozenView.repaint();
+    }
   }
 
   private void setupFocusListener() {
