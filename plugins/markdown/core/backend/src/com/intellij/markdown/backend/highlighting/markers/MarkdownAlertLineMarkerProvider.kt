@@ -1,17 +1,22 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.intellij.plugins.markdown.highlighting
+package com.intellij.markdown.backend.highlighting.markers
 
 import com.intellij.application.options.editor.GutterIconsConfigurable
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.editor.markup.GutterIconRenderer
+import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownAlertTitle
 import java.util.Locale.getDefault
+import java.util.function.Supplier
 import javax.swing.Icon
 
 internal class MarkdownAlertLineMarkerProvider : LineMarkerProviderDescriptor() {
@@ -35,11 +40,18 @@ internal class MarkdownAlertLineMarkerProvider : LineMarkerProviderDescriptor() 
         override fun isNavigateAction() = true
         override fun getPopupMenuActions() =
           DefaultActionGroup(
-            GutterIconsConfigurable.ShowSettingsAction(
+            ShowSettingsAction(
               MarkdownBundle.messagePointer("markdown.alert.gutter.icon.disable.action")
             )
           )
       }
     }
   }
+
+  private class ShowSettingsAction : DumbAwareAction, ActionRemoteBehaviorSpecification.BackendOnly {
+    constructor(dynamicText: Supplier<String?>) : super(dynamicText)
+    override fun actionPerformed(e: AnActionEvent) =
+      ShowSettingsUtil.getInstance().showSettingsDialog(e.project, GutterIconsConfigurable::class.java)
+  }
 }
+

@@ -3,9 +3,11 @@ package org.intellij.plugins.markdown.lang.psi.impl
 
 import com.intellij.icons.AllIcons
 import com.intellij.psi.tree.IElementType
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
-internal class MarkdownAlertTitle(type: IElementType, text: CharSequence) : MarkdownLeafPsiElement(type, text) {
+@ApiStatus.Internal
+class MarkdownAlertTitle(type: IElementType, text: CharSequence) : MarkdownLeafPsiElement(type, text) {
 
   fun getType(): AlertType? = AlertType.fromTitleText(text)
 

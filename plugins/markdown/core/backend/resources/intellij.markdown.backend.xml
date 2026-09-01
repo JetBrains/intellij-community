@@ -5,6 +5,8 @@
       <module name="intellij.markdown"/>
     </dependencies>
     <extensions defaultExtensionNs="com.intellij">
+      <codeInsight.lineMarkerProvider language="Markdown"
+                                      implementationClass="com.intellij.markdown.backend.highlighting.markers.MarkdownAlertLineMarkerProvider"/>
       <platform.rpc.backend.remoteApiProvider
         implementation="com.intellij.markdown.backend.providers.MarkdownLinkOpenerApiProvider"/>
       <platform.rpc.backend.remoteApiProvider
