@@ -162,13 +162,29 @@ fun findProductModulesFile(clientMainModuleName: String, provider: ModuleOutputP
   return findFileInModuleSources(provider.findRequiredModule(clientMainModuleName), "META-INF/$clientMainModuleName/product-modules.xml")
 }
 
+/**
+ * Which module dependencies a descriptor search reads, and which of them it goes into.
+ *
+ * @property includePrefix Keeps only a dependency whose name starts with this text. `null` keeps every dependency.
+ * @property excludeRecursionPrefix Reads a dependency whose name starts with this text, but does not go into it.
+ * @property recursive `false` reads the direct dependencies only.
+ */
+class DescriptorDependencyWalk(
+  @JvmField val includePrefix: String? = null,
+  @JvmField val excludeRecursionPrefix: String? = null,
+  @JvmField val recursive: Boolean = true,
+) {
+  override fun toString(): String =
+    "DescriptorDependencyWalk(includePrefix=$includePrefix, excludeRecursionPrefix=$excludeRecursionPrefix, recursive=$recursive)"
+}
+
 suspend fun findFileInModuleDependenciesRecursive(
   module: JpsModule,
   relativePath: String,
   provider: ModuleOutputProvider,
   processedModules: MutableSet<String>,
   pass: DescriptorSearchPass,
-  moduleNamePrefix: String? = null,
+  walk: DescriptorDependencyWalk = DescriptorDependencyWalk(),
 ): ByteArray? {
   for (dependency in module.dependenciesList.dependencies) {
     if (dependency !is JpsModuleDependency) {
@@ -176,7 +192,7 @@ suspend fun findFileInModuleDependenciesRecursive(
     }
 
     val moduleName = dependency.moduleReference.moduleName
-    if (moduleNamePrefix != null && !moduleName.startsWith(moduleNamePrefix)) {
+    if (walk.includePrefix != null && !moduleName.startsWith(walk.includePrefix)) {
       continue
     }
     if (!processedModules.add(moduleName)) {
@@ -188,13 +204,17 @@ suspend fun findFileInModuleDependenciesRecursive(
       return it
     }
 
+    if (!walk.recursive || (walk.excludeRecursionPrefix != null && moduleName.startsWith(walk.excludeRecursionPrefix))) {
+      continue
+    }
+
     findFileInModuleDependenciesRecursive(
       module = dependentModule,
       relativePath = relativePath,
       provider = provider,
       processedModules = processedModules,
       pass = pass,
-      moduleNamePrefix = moduleNamePrefix,
+      walk = walk,
     )?.let {
       return it
     }
@@ -203,37 +223,66 @@ suspend fun findFileInModuleDependenciesRecursive(
 }
 
 /**
- * The bytes of [relativePath] in [module]'s own output, or `null` if it has none.
+ * The bytes of the descriptor [path] for [module], or `null` if no candidate has the file.
  *
- * [findUnprocessedDescriptorContent] is the usual way to read a module's output and should be preferred. This
- * exists for XML generation, which runs inside a non-suspending `buildString` builder and would otherwise have
- * to fall back to reading the checkout - which is not there when the build assembles from Bazel outputs alone.
+ * The order inside one [DescriptorSearchPass] is [declaredOwner], then [module], then the libraries of [module], then
+ * the dependency [walk], then any module output. A library and any module output answer [DescriptorSearchPass.MODULE_OUTPUT]
+ * alone. The whole order runs in [DescriptorSearchPass.PRODUCTION_SOURCES] first, because the last two steps resolve a
+ * Bazel output for each module they ask, and that resolution declares the output as an input. See [DescriptorSearchPass].
+ *
+ * This is the one order every descriptor search uses. Eight searches held five disagreements before it:
+ * 1. A test source root answered the first read. Here only [readDescriptor] reaches test content, through the test
+ *    output of a test-only module.
+ * 2. A library jar came before or after the module's own output. Here the module answers first.
+ * 3. A library jar came before or after the dependency walk. Here the library answers first.
+ * 4. A test-only module resolved or answered `null`. Here [readDescriptor] decides it for every caller.
+ * 5. A miss threw, answered `null`, or answered a failure object. Here a miss answers `null`, and the caller says how
+ *    to fail.
+ *
+ * @param declaredOwner The module the model names as the owner of the file. It is read first, because it makes the
+ * last resort unnecessary.
+ * @param walk How to read the module dependencies of [module]. `null` reads no dependency.
+ * @param searchAnyModuleOutput Whether the last resort may open the output of every module in the project.
  */
-@Internal
-fun readFileFromModuleOutput(module: JpsModule, relativePath: String, outputProvider: ModuleOutputProvider): ByteArray? {
-  for (output in outputProvider.getModuleOutputRoots(module)) {
-    val attributes = try {
-      Files.readAttributes(output, BasicFileAttributes::class.java)
-    }
-    catch (_: FileSystemException) {
-      continue
+suspend fun resolveDescriptor(
+  module: JpsModule,
+  path: String,
+  outputProvider: ModuleOutputProvider,
+  declaredOwner: JpsModule? = null,
+  walk: DescriptorDependencyWalk? = DescriptorDependencyWalk(),
+  searchAnyModuleOutput: Boolean = true,
+): ByteArray? {
+  for (pass in DescriptorSearchPass.entries) {
+    if (declaredOwner != null && declaredOwner.name != module.name) {
+      readDescriptor(module = declaredOwner, path = path, outputProvider = outputProvider, pass = pass)?.let { return it }
     }
 
-    if (attributes.isDirectory) {
-      val file = output.resolve(relativePath)
-      if (Files.exists(file)) {
-        return Files.readAllBytes(file)
-      }
+    readDescriptor(module = module, path = path, outputProvider = outputProvider, pass = pass)?.let { return it }
+
+    if (pass == DescriptorSearchPass.MODULE_OUTPUT) {
+      findFileInModuleLibraryDependencies(module = module, relativePath = path, outputProvider = outputProvider)?.let { return it }
     }
-    else if (attributes.isRegularFile && output.toString().endsWith(".jar")) {
-      ImmutableZipFile.load(output).use { zipFile ->
-        zipFile.getData(relativePath)?.let { return it }
-      }
+
+    // Fresh per pass: a shared set would make the output pass skip every module the sources pass missed.
+    val processedModules = HashSet<String>()
+    processedModules.add(module.name)
+
+    if (walk != null) {
+      findFileInModuleDependenciesRecursive(
+        module = module,
+        relativePath = path,
+        provider = outputProvider,
+        processedModules = processedModules,
+        pass = pass,
+        walk = walk,
+      )?.let { return it }
     }
-    else {
-      throw IllegalStateException("Module '${module.name}' output is neither directory, nor jar $output")
+
+    if (pass == DescriptorSearchPass.MODULE_OUTPUT && searchAnyModuleOutput) {
+      outputProvider.findFileInAnyModuleOutput(path, walk?.includePrefix, processedModules)?.let { return it }
     }
   }
+
   return null
 }
 

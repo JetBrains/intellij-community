@@ -13,7 +13,7 @@ import org.jdom.Namespace
  */
 interface XIncludeElementResolver {
   /** Return the Element for the given href, or null to leave the xi:include in place. */
-  fun resolveElement(relativePath: String, isOptional: Boolean, isDynamic: Boolean): Element?
+  suspend fun resolveElement(relativePath: String, isOptional: Boolean, isDynamic: Boolean): Element?
 }
 
 /**
@@ -28,7 +28,7 @@ interface XIncludeElementResolver {
  * @param element The root element to process. Will be mutated in place.
  * @param elementResolver Strategy for resolving include references to preloaded Elements.
  */
-internal fun resolveIncludes(element: Element, elementResolver: XIncludeElementResolver) {
+internal suspend fun resolveIncludes(element: Element, elementResolver: XIncludeElementResolver) {
   check(!isIncludeElement(element))
   doResolveNonXIncludeElement(original = element, elementResolver = elementResolver)
 }
@@ -66,7 +66,7 @@ private fun extractNeededChildren(element: Element, remoteElement: Element): Mut
   return e.children.toMutableList()
 }
 
-private fun resolveXIncludeElement(element: Element, elementResolver: XIncludeElementResolver): MutableList<Element>? {
+private suspend fun resolveXIncludeElement(element: Element, elementResolver: XIncludeElementResolver): MutableList<Element>? {
   val href = requireNotNull(element.getAttributeValue("href")) { "Missing href attribute" }
 
   val baseAttribute = element.getAttributeValue("base", Namespace.XML_NAMESPACE)
@@ -118,7 +118,7 @@ private fun resolveXIncludeElement(element: Element, elementResolver: XIncludeEl
   return remoteParsed
 }
 
-private fun doResolveNonXIncludeElement(original: Element, elementResolver: XIncludeElementResolver) {
+private suspend fun doResolveNonXIncludeElement(original: Element, elementResolver: XIncludeElementResolver) {
   val contentList = original.content
   for (i in contentList.size - 1 downTo 0) {
     val content = contentList.get(i)

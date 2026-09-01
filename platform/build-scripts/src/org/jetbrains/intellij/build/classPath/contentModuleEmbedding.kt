@@ -28,11 +28,13 @@ import org.jdom.CDATA
 import org.jdom.Element
 import org.jdom.Namespace
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.DescriptorDependencyWalk
 import org.jetbrains.intellij.build.DescriptorSearchPass
 import org.jetbrains.intellij.build.FrontendModuleFilter
 import org.jetbrains.intellij.build.JarPackagerDependencyHelper
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
+import org.jetbrains.intellij.build.findFileInModuleDependenciesRecursive
 import org.jetbrains.intellij.build.findFileInModuleLibraryDependencies
 import org.jetbrains.intellij.build.findUnprocessedDescriptorContent
 import org.jetbrains.intellij.build.impl.BuildContextImpl
@@ -44,7 +46,6 @@ import org.jetbrains.intellij.build.impl.contentModuleNameToDescriptorFileName
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
 import org.jetbrains.intellij.build.productLayout.buildProductContentXml
 import org.jetbrains.intellij.build.readDescriptor
-import org.jetbrains.jps.model.module.JpsModuleDependency
 import java.nio.file.Path
 
 /**
@@ -438,17 +439,36 @@ internal class XIncludeElementResolverImpl(
         val searchInDependencies = searchPath.searchInDependencies
         // search in module deps only if we cannot find in modules
         if (searchInDependencies != DescriptorSearchScope.SearchMode.WITHOUT_DEPENDENCIES) {
+          // The plugin collector reads a platform dependency but does not go into it. Every other mode reads the
+          // direct dependencies alone.
+          val walk = if (searchInDependencies == DescriptorSearchScope.SearchMode.PLUGIN_COLLECTOR) {
+            DescriptorDependencyWalk(excludeRecursionPrefix = "intellij.platform.")
+          }
+          else {
+            DescriptorDependencyWalk(recursive = false)
+          }
+
           // Fresh per pass: a set shared with the sources pass would make the output pass skip every module it visited.
           val processedModules = HashSet(searchPath.modules)
           for (module in searchPath.modules) {
-            findFileInModuleDependencies(
-              module = outputProvider.findRequiredModule(module),
+            val jpsModule = outputProvider.findRequiredModule(module)
+            // A library has no source root, so it can only answer the output pass - and it answers from the jars this
+            // build declares, so asking costs no declaration.
+            val libraryData = if (pass == DescriptorSearchPass.MODULE_OUTPUT) {
+              findFileInModuleLibraryDependencies(jpsModule, loadPath, outputProvider)
+            }
+            else {
+              null
+            }
+            val data = libraryData ?: findFileInModuleDependenciesRecursive(
+              module = jpsModule,
               relativePath = loadPath,
-              outputProvider = outputProvider,
+              provider = outputProvider,
               processedModules = processedModules,
               pass = pass,
-              recursiveModuleExclude = if (searchInDependencies == DescriptorSearchScope.SearchMode.PLUGIN_COLLECTOR) "intellij.platform." else null,
-            )?.let { data ->
+              walk = walk,
+            )
+            if (data != null) {
               descriptorCache.putIfAbsent(loadPath, data)
               return JDOMUtil.load(data)
             }
@@ -613,72 +633,6 @@ private fun extractNeededChildrenFor(element: Element, remoteElement: Element): 
     e = requireNotNull(e.getChild(subTagName.substring(1))) { "Child element not found: ${subTagName.substring(1)}" }
   }
   return e.children.toMutableList()
-}
-
-private suspend fun findFileInModuleDependencies(
-  module: org.jetbrains.jps.model.module.JpsModule,
-  relativePath: String,
-  outputProvider: ModuleOutputProvider,
-  processedModules: MutableSet<String>,
-  pass: DescriptorSearchPass,
-  recursiveModuleExclude: String? = null,
-): ByteArray? {
-  // A library has no source root, so it can only answer the output pass - and it answers from the jars this build
-  // declares, so asking costs no declaration.
-  if (pass == DescriptorSearchPass.MODULE_OUTPUT) {
-    findFileInModuleLibraryDependencies(module, relativePath, outputProvider)?.let {
-      return it
-    }
-  }
-
-  return findFileInModuleDependenciesRecursive(
-    module = module,
-    relativePath = relativePath,
-    provider = outputProvider,
-    processedModules = processedModules,
-    pass = pass,
-    recursiveModuleExclude = recursiveModuleExclude,
-  )
-}
-
-private suspend fun findFileInModuleDependenciesRecursive(
-  module: org.jetbrains.jps.model.module.JpsModule,
-  relativePath: String,
-  provider: ModuleOutputProvider,
-  processedModules: MutableSet<String>,
-  pass: DescriptorSearchPass,
-  recursiveModuleExclude: String? = null,
-): ByteArray? {
-  for (dependency in module.dependenciesList.dependencies) {
-    if (dependency !is JpsModuleDependency) {
-      continue
-    }
-
-    val moduleName = dependency.moduleReference.moduleName
-    if (!processedModules.add(moduleName)) {
-      continue
-    }
-
-    val dependentModule = provider.findRequiredModule(moduleName)
-    readDescriptor(module = dependentModule, path = relativePath, outputProvider = provider, pass = pass)?.let {
-      return it
-    }
-
-    // if recursiveModuleFilter is null, it means that non-direct search not needed
-    if (recursiveModuleExclude != null && !moduleName.startsWith(recursiveModuleExclude)) {
-      findFileInModuleDependenciesRecursive(
-        module = dependentModule,
-        relativePath = relativePath,
-        provider = provider,
-        processedModules = processedModules,
-        pass = pass,
-        recursiveModuleExclude = recursiveModuleExclude,
-      )?.let {
-        return it
-      }
-    }
-  }
-  return null
 }
 
 private val badIncludesForPluginCollector = hashSetOf(

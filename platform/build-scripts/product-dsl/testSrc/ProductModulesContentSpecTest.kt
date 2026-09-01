@@ -2,6 +2,8 @@
 package org.jetbrains.intellij.build.productLayout
 
 import com.intellij.platform.pluginGraph.PluginModuleId
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jetbrains.intellij.build.ModuleOutputProvider
@@ -13,6 +15,25 @@ import java.nio.file.Path
 private val TEST_METADATA_BUILDER: (StringBuilder) -> Unit = { sb ->
   sb.append("  <id>com.intellij</id>\n")
   sb.append("  <name>Test</name>\n")
+}
+
+/** [buildProductContentXml] suspends. These tests are not coroutines, and each one renders once. */
+private fun buildProductContentXmlBlocking(
+  spec: ProductModulesContentSpec,
+  outputProvider: ModuleOutputProvider?,
+  inlineXmlIncludes: Boolean,
+  inlineModuleSets: Boolean,
+  metadataBuilder: (StringBuilder) -> Unit,
+): ProductContentBuildResult {
+  return runBlocking(Dispatchers.Default) {
+    buildProductContentXml(
+      spec = spec,
+      outputProvider = outputProvider,
+      inlineXmlIncludes = inlineXmlIncludes,
+      inlineModuleSets = inlineModuleSets,
+      metadataBuilder = metadataBuilder,
+    )
+  }
 }
 
 @ExtendWith(TestFailureLogger::class)
@@ -37,7 +58,7 @@ class ProductModulesContentSpecTest {
     }
 
     // This should not throw - all overridden modules exist
-    val result = buildProductContentXml(
+    val result = buildProductContentXmlBlocking(
       spec = spec,
       outputProvider = MockModuleOutputProvider(),
       inlineXmlIncludes = false,
@@ -68,7 +89,7 @@ class ProductModulesContentSpecTest {
 
     // This should throw because module.nonexistent doesn't exist
     assertThatThrownBy {
-      buildProductContentXml(
+      buildProductContentXmlBlocking(
         spec = spec,
         outputProvider = MockModuleOutputProvider(),
         inlineXmlIncludes = false,
@@ -109,7 +130,7 @@ class ProductModulesContentSpecTest {
 
     // This should throw because nested.module.a is not a direct module of parent
     assertThatThrownBy {
-      buildProductContentXml(
+      buildProductContentXmlBlocking(
         spec = spec,
         outputProvider = MockModuleOutputProvider(),
         inlineXmlIncludes = false,
@@ -137,7 +158,7 @@ class ProductModulesContentSpecTest {
     }
 
     // This should not throw
-    val result = buildProductContentXml(
+    val result = buildProductContentXmlBlocking(
       spec = spec,
       outputProvider = MockModuleOutputProvider(),
       inlineXmlIncludes = false,
@@ -167,7 +188,7 @@ class ProductModulesContentSpecTest {
 
     // Should report both nonexistent modules
     assertThatThrownBy {
-      buildProductContentXml(
+      buildProductContentXmlBlocking(
         spec = spec,
         outputProvider = MockModuleOutputProvider(),
         inlineXmlIncludes = false,
@@ -206,7 +227,7 @@ class ProductModulesContentSpecTest {
     }
 
     // Test with inlineModuleSets = false (selective inlining mode)
-    val result = buildProductContentXml(
+    val result = buildProductContentXmlBlocking(
       spec = spec,
       outputProvider = MockModuleOutputProvider(),
       inlineXmlIncludes = false,
@@ -242,7 +263,7 @@ class ProductModulesContentSpecTest {
     }
 
     // Test with inlineModuleSets = true (full inlining mode)
-    val result = buildProductContentXml(
+    val result = buildProductContentXmlBlocking(
       spec = spec,
       outputProvider = MockModuleOutputProvider(),
       inlineXmlIncludes = false,
@@ -302,7 +323,7 @@ class ProductModulesContentSpecTest {
       }
     }
 
-    val result = buildProductContentXml(
+    val result = buildProductContentXmlBlocking(
       spec = spec,
       outputProvider = MockModuleOutputProvider(),
       inlineXmlIncludes = false,
@@ -363,7 +384,7 @@ class ProductModulesContentSpecTest {
     }
 
     // Test with inlineModuleSets = true (full inlining mode) - this is where the bug occurs
-    val result = buildProductContentXml(
+    val result = buildProductContentXmlBlocking(
       spec = spec,
       outputProvider = MockModuleOutputProvider(),
       inlineXmlIncludes = false,
@@ -402,7 +423,7 @@ class ProductModulesContentSpecTest {
       module("intellij.additional.module")
     }
 
-    val result = buildProductContentXml(
+    val result = buildProductContentXmlBlocking(
       spec = spec,
       outputProvider = null,  // null for test plugins
       inlineXmlIncludes = true,
@@ -440,7 +461,7 @@ class ProductModulesContentSpecTest {
       moduleSet(parentSet)
     }
 
-    val result = buildProductContentXml(
+    val result = buildProductContentXmlBlocking(
       spec = spec,
       outputProvider = null,
       inlineXmlIncludes = true,

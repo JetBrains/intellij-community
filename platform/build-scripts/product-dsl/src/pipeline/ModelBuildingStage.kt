@@ -23,8 +23,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
-import org.jetbrains.intellij.build.findFileInModuleLibraryDependencies
 import org.jetbrains.intellij.build.findFileInModuleSources
+import org.jetbrains.intellij.build.resolveDescriptor
 import org.jetbrains.intellij.build.productLayout.ContentModule
 import org.jetbrains.intellij.build.productLayout.DeprecatedXmlInclude
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
@@ -1330,7 +1330,14 @@ internal object ModelBuildingStage {
                  ?: error("Module '$moduleName' not found (referenced in deprecated include for '${include.resourcePath}')")
 
 
-    val initialData = resolveDeprecatedIncludeBytes(include, module, outputProvider)
+    // The model names the owner of a `deprecatedInclude`, so the search stays inside that module and its libraries.
+    val initialData = resolveDescriptor(
+      module = module,
+      path = include.resourcePath,
+      outputProvider = outputProvider,
+      walk = null,
+      searchAnyModuleOutput = false,
+    )
     if (initialData == null) {
       if (include.optional) {
         debug("aliasGraph") { "deprecated include '${include.resourcePath}' not found in module '$moduleName' (optional)" }
@@ -1347,18 +1354,6 @@ internal object ModelBuildingStage {
       prefix = prefix,
       skipXIncludePaths = skipXIncludePaths,
     )
-  }
-
-  private suspend fun resolveDeprecatedIncludeBytes(
-    include: DeprecatedXmlInclude,
-    module: JpsModule,
-    outputProvider: ModuleOutputProvider,
-  ): ByteArray? {
-    val resourcePath = include.resourcePath
-    findFileInModuleSources(module, resourcePath)?.let { return Files.readAllBytes(it) }
-    findFileInModuleLibraryDependencies(module, resourcePath, outputProvider)?.let { return it }
-    outputProvider.readFileContentFromModuleOutput(module, resourcePath)?.let { return it }
-    return null
   }
 
   private suspend fun collectPluginAliasesFromXml(

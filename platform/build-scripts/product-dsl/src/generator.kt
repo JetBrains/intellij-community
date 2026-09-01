@@ -68,7 +68,7 @@ internal fun generateModuleSetXml(moduleSet: ModuleSet, outputDir: Path, label: 
  *
  * @return Result containing file status and statistics
  */
-internal fun generateProductXml(
+internal suspend fun generateProductXml(
   pluginXmlPath: Path,
   spec: ProductModulesContentSpec,
   productName: String,
@@ -123,7 +123,7 @@ internal fun generateProductXml(
  * @param strategy File update strategy (for deferred writes)
  * @return Result containing file status and statistics
  */
-internal fun generateTestPluginXml(
+internal suspend fun generateTestPluginXml(
   spec: TestPluginSpec,
   productPropertiesClass: String,
   productName: String,
@@ -267,7 +267,7 @@ private fun sortModuleSet(moduleSet: ModuleSet): ModuleSet {
  * @param metadataBuilder Lambda that generates the metadata after opening tag (comments, id/name/vendor)
  * @return Build result containing generated XML and metadata
  */
-fun buildProductContentXml(
+suspend fun buildProductContentXml(
   spec: ProductModulesContentSpec,
   outputProvider: ModuleOutputProvider?,
   inlineXmlIncludes: Boolean,
@@ -284,7 +284,9 @@ fun buildProductContentXml(
   val moduleSetAliases = buildData.aliasToSource
   val moduleToIncludeDependenciesMapping = buildData.moduleToIncludeDependencies
 
-  val xml = buildString {
+  // A plain builder and not `buildString`: `generateXIncludes` suspends, and a `buildString` block cannot.
+  val sb = StringBuilder()
+  with(sb) {
     // Header comments go BEFORE the opening tag (outside <idea-plugin>)
     headerBuilder?.invoke(this)
     appendOpeningTag(spec, inlineXmlIncludes, inlineModuleSets)
@@ -368,7 +370,7 @@ fun buildProductContentXml(
   }
 
   return ProductContentBuildResult(
-    xml = xml,
+    xml = sb.toString(),
     contentBlocks = contentBlocks,
     moduleToSetChainMapping = moduleToSetChainMapping,
     moduleToIncludeDependenciesMapping = moduleToIncludeDependenciesMapping,

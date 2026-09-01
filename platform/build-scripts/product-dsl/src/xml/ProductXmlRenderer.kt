@@ -7,10 +7,8 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.pluginSystem.parser.impl.LoadPathUtil
 import org.jdom.Element
 import org.jetbrains.intellij.build.ModuleOutputProvider
-import org.jetbrains.intellij.build.findFileInModuleLibraryDependencies
-import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.isModuleNameLikeFilename
-import org.jetbrains.intellij.build.readFileFromModuleOutput
+import org.jetbrains.intellij.build.resolveDescriptor
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
 import org.jetbrains.jps.model.module.JpsModule
 
@@ -49,7 +47,7 @@ internal fun StringBuilder.appendOpeningTag(
 /**
  * Generates xi:include directives or inline content for deprecated XML includes.
  */
-internal fun generateXIncludes(
+internal suspend fun generateXIncludes(
   spec: ProductModulesContentSpec,
   outputProvider: ModuleOutputProvider,
   inlineXmlIncludes: Boolean,
@@ -63,14 +61,15 @@ internal fun generateXIncludes(
       error("Module '${include.contentModuleName.value}' not found (referenced in xi:include for '$resourcePath')")
     }
 
-    // Sources, then libraries, then the module's own output - the same order `resolveXIncludeBytes` uses. The
-    // output is not a mere fallback: a build assembling from Bazel outputs has no checkout to read sources from,
-    // and the file it wants is the one that module compiled into its jar.
-    val data = findFileInModuleSources(module, resourcePath)?.let { JDOMUtil.load(it) }
-               ?: findFileInModuleLibraryDependencies(module = module, relativePath = resourcePath, outputProvider = outputProvider)
-                 ?.let { JDOMUtil.load(it) }
-               ?: readFileFromModuleOutput(module = module, relativePath = resourcePath, outputProvider = outputProvider)
-                 ?.let { JDOMUtil.load(it) }
+    // The `deprecatedInclude` API names the owner, so the search stays inside that module and its libraries. It
+    // reads the module output too, because a build that assembles from Bazel outputs has no checkout to read.
+    val data = resolveDescriptor(
+      module = module,
+      path = resourcePath,
+      outputProvider = outputProvider,
+      walk = null,
+      searchAnyModuleOutput = false,
+    )?.let { JDOMUtil.load(it) }
                ?: error("Resource '$resourcePath' not found in module '${module.name}' sources, libraries or output (referenced in xi:include)")
 
     if (inlineXmlIncludes && !include.optional) {
@@ -111,8 +110,8 @@ internal fun resourcePathToXIncludePath(resourcePath: String): String {
 }
 
 /**
- * Resolves nested `<xi:include>` elements inside a `deprecatedInclude` resource against
- * the **owning** module's sources and libraries.
+ * Resolves a nested `<xi:include>` element inside a `deprecatedInclude` resource against the **owning** module alone.
+ * It reads no dependency of that module, and it never opens the output of another module.
  *
  * The `deprecatedInclude("<module>", "<resource>")` API unambiguously identifies the
  * owning module; xi:includes inside that resource are expected to live in the same
@@ -128,12 +127,16 @@ private class ModuleScopedXIncludeResolver(
   private val module: JpsModule,
   private val outputProvider: ModuleOutputProvider,
 ) : XIncludeElementResolver {
-  override fun resolveElement(relativePath: String, isOptional: Boolean, isDynamic: Boolean): Element? {
+  override suspend fun resolveElement(relativePath: String, isOptional: Boolean, isDynamic: Boolean): Element? {
     if (isOptional || isDynamic) return null
     val loadPath = hrefToLoadPath(relativePath)
-    return findFileInModuleSources(module, loadPath)?.let { JDOMUtil.load(it) }
-           ?: findFileInModuleLibraryDependencies(module = module, relativePath = loadPath, outputProvider = outputProvider)
-             ?.let { JDOMUtil.load(it) }
+    return resolveDescriptor(
+      module = module,
+      path = loadPath,
+      outputProvider = outputProvider,
+      walk = null,
+      searchAnyModuleOutput = false,
+    )?.let { JDOMUtil.load(it) }
   }
 }
 

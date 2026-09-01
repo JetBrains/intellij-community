@@ -495,7 +495,7 @@ suspend fun testLayoutBundledPlugins(
 /**
  * Validates module structure to ensure all module dependencies are included.
  */
-fun validateModuleStructure(platform: PlatformLayout, context: BuildContext) {
+suspend fun validateModuleStructure(platform: PlatformLayout, context: BuildContext) {
   if (context.options.validateModuleStructure) {
     ModuleStructureValidator(context = context, allProductModules = platform.includedModules).validate()
   }

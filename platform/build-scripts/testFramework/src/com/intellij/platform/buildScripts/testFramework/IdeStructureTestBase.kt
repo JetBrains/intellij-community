@@ -50,7 +50,7 @@ abstract class IdeStructureTestBase {
     }
 
     val validator = ModuleStructureValidator(context, state.platformLayout.includedModules)
-    val errors = validator.validate()
+    val errors = runBlocking { validator.validate() }
     val expectedMissingModuleMessages = missingModulesException.mapTo(HashSet()) {
       "Missing dependency found: ${it.fromModule} -> ${it.toModule} [${it.scope.name}]"
     }
