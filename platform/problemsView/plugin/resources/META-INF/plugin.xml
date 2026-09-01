@@ -1,10 +1,22 @@
 <!--suppress SplitModeMixedDependencies -->
-<!--suppress PluginXmlPluginLogo -->
 <idea-plugin>
   <id>intellij.problemView.plugin</id>
   <name>Problems View</name>
-  <description>Provides Problems View platform modules for the IDE.</description>
   <vendor>JetBrains</vendor>
+  <description><![CDATA[
+    Provides the Problems tool window. The tool window shows the problems that the IDE finds in the project.
+    <br/>
+    The Current File tab lists the code issues of the file that is open in the editor.
+    The list changes when you switch to another file.
+    The Project Errors tab lists the errors that the project-wide analysis finds.
+    <br/>
+    Select a problem to read its description and to see the code in the preview.
+    Double-click a problem to go to the related line in the editor, then apply a quick-fix.
+    Filter the problems by severity, and group them by folder or by severity.
+    <br/>
+    Other plugins add their own tabs to the same tool window such as Qodana and Vulnerable Dependencies.
+  ]]></description>
+
   <content namespace="jetbrains">
     <module name="intellij.platform.problemView.core" loading="required"/>
     <module name="intellij.platform.problemView.collector"/>
