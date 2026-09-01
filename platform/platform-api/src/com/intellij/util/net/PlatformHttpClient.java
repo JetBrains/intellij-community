@@ -127,8 +127,20 @@ public final class PlatformHttpClient {
   public static <T> T send(
     @NotNull HttpClient client,
     @NotNull HttpRequest request,
-    @NotNull HttpResponse.BodyHandler<T> bodyHandler
+    HttpResponse.@NotNull BodyHandler<T> bodyHandler
   ) throws IOException, InterruptedException {
+    return response(client, request, bodyHandler).body();
+  }
+
+  /// Throws [HttpStatusException] if a response status code is not in the `[200, 300)` range, and returns the response object.
+  ///
+  /// **Note:** It is important to use this method instead of [HttpClient#send], because it handles I/O exceptions from JRE internals
+  /// and detects proxy misconfiguration issues.
+  public static <T> @NotNull HttpResponse<T> response(
+    @NotNull HttpClient client,
+    @NotNull HttpRequest request,
+    HttpResponse.@NotNull BodyHandler<T> bodyHandler
+  ) throws InterruptedException, IOException {
     HttpResponse<T> response;
 
     try {
@@ -178,7 +190,7 @@ public final class PlatformHttpClient {
       throw new HttpStatusException(message, statusCode, response.uri().toString());
     }
 
-    return response.body();
+    return response;
   }
 
   public static HttpResponse.BodyHandler<String> gzipStringBodyHandler() {

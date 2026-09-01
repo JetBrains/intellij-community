@@ -945,6 +945,7 @@ com.intellij.util.net.JdkProxyCustomizer
 - s:gzipStringBodyHandler():java.net.http.HttpResponse$BodyHandler
 - s:request(java.net.URI):java.net.http.HttpRequest
 - s:requestBuilder(java.net.URI):java.net.http.HttpRequest$Builder
+- s:response(java.net.http.HttpClient,java.net.http.HttpRequest,java.net.http.HttpResponse$BodyHandler):java.net.http.HttpResponse
 - s:send(java.net.http.HttpClient,java.net.http.HttpRequest,java.net.http.HttpResponse$BodyHandler):java.lang.Object
 - s:userAgent():java.lang.String
 *:com.intellij.util.ui.table.EditableTable

@@ -21,6 +21,7 @@ import com.intellij.platform.buildData.productInfo.CustomPropertyNames
 import com.intellij.platform.ide.productInfo.IdeProductInfo
 import com.intellij.ui.JBAccountInfoService
 import com.intellij.ui.LicensingFacade
+import com.intellij.util.net.PlatformHttpClient
 import com.intellij.util.net.ssl.CertificateManager
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.LowLevelLocalMachineAccess
@@ -37,12 +38,10 @@ import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URI
 import java.net.URLEncoder
-import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
 import java.security.KeyStore
-import java.time.Duration
 import java.util.Base64
 import java.util.zip.GZIPOutputStream
 import javax.net.ssl.SSLContext
@@ -202,17 +201,10 @@ object ITNProxy {
       ?: error("No X509TrustManager available")
   }
 
-  private val defaultHttpClient by lazy {
-    HttpClient.newBuilder()
-      .followRedirects(HttpClient.Redirect.NORMAL)
-      .connectTimeout(Duration.ofMinutes(2))
-      .build()
-  }
-
   @Throws(Exception::class)
-  internal suspend fun sendError(error: ErrorBean, postUrl: URI?): Long {
+  internal suspend fun sendError(errorBean: ErrorBean, postUrl: URI?): Long {
     val context = currentCoroutineContext()
-    val request = createRequest(error.event, error)
+    val request = createRequest(errorBean.event, errorBean)
     val response = post(resolveReportEndpoint(postUrl), request)
     context.ensureActive()
     val reportId = handleResponse(response)
@@ -380,11 +372,6 @@ object ITNProxy {
     }
   }
 
-  /**
-   * The maximum number of threads the Kotlin coroutines `Dispatchers.Default` pool may use, i.e. its parallelism
-   * (kotlinx.coroutines `CORE_POOL_SIZE`). Overridable via the `kotlinx.coroutines.scheduler.core.pool.size` system
-   * property; otherwise defaults to `max(2, availableProcessors)`.
-   */
   private fun coroutineDefaultPoolMaxSize(): Int =
     System.getProperty("kotlinx.coroutines.scheduler.core.pool.size")?.trim()?.toIntOrNull()
     ?: maxOf(2, Runtime.getRuntime().availableProcessors())
@@ -410,18 +397,18 @@ object ITNProxy {
       .header("Content-Encoding", "gzip")
       .POST(HttpRequest.BodyPublishers.ofByteArray(compressed.toByteArray(), 0, compressed.size()))
       .build()
-    val client = if (pinnedPublicKey != null) createPinnedHttpClient(pinnedPublicKey) else defaultHttpClient
-    return client.send(request, HttpResponse.BodyHandlers.ofString())
-  }
-
-  private fun createPinnedHttpClient(expectedPublicKey: ByteArray): HttpClient {
-    val sslContext = SSLContext.getInstance("TLS")
-    sslContext.init(null, arrayOf<TrustManager>(PinnedPublicKeyTrustManager(getEndpointTrustManager(), expectedPublicKey)), null)
-    return HttpClient.newBuilder()
-      .followRedirects(HttpClient.Redirect.NORMAL)
-      .connectTimeout(Duration.ofMinutes(2))
-      .sslContext(sslContext)
+    val client = PlatformHttpClient.clientBuilder()
+      .apply {
+        if (pinnedPublicKey != null) {
+          val sslContext = SSLContext.getInstance("TLS")
+          sslContext.init(null, arrayOf<TrustManager>(PinnedPublicKeyTrustManager(getEndpointTrustManager(), pinnedPublicKey)), null)
+          this.sslContext(sslContext)
+        }
+      }
       .build()
+    return client.use {
+      PlatformHttpClient.response(it, request, HttpResponse.BodyHandlers.ofString())
+    }
   }
 
   private fun getEndpointTrustManager(): X509TrustManager {
