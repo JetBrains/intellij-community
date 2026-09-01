@@ -161,6 +161,7 @@
 - a:addSelectInTarget(java.lang.String,java.lang.String,F):V
 - a:build(com.intellij.platform.projectView.pane.ProjectViewPaneId,java.lang.String,I):com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 - a:setDefault(Z):V
+- a:setIcon(javax.swing.Icon):V
 *f:com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorKt
 - *sf:projectViewPaneId(java.lang.String):com.intellij.platform.projectView.pane.ProjectViewPaneId
 *:com.intellij.platform.projectView.pane.ProjectViewPaneDnDHandler

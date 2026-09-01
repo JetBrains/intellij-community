@@ -4,6 +4,7 @@ package com.intellij.platform.projectView.rpc
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.projectView.actions.EditorChoice
 import com.intellij.platform.projectView.pane.ProjectViewNodePathImpl
+import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorDTO
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
@@ -22,7 +23,7 @@ import org.jetbrains.annotations.ApiStatus
 interface ProjectViewRpc : RemoteApi<Unit> {
   suspend fun getPaneRequestChannel(projectId: ProjectId, paneId: ProjectViewPaneId): SendChannel<ProjectViewPaneRequest>
   
-  suspend fun getPaneDescriptorsFlow(projectId: ProjectId): Flow<List<ProjectViewPaneDescriptorImpl>>
+  suspend fun getPaneDescriptorsFlow(projectId: ProjectId): Flow<List<ProjectViewPaneDescriptorDTO>>
 
   suspend fun getPaneStateFlow(projectId: ProjectId, paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEventDTO>
 

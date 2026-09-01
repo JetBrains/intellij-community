@@ -159,7 +159,9 @@ private class BackendDelegatingProjectViewPaneService(
 ) : ProjectViewPaneService {
 
   override suspend fun getPaneDescriptorsFlow(): Flow<Collection<ProjectViewPaneDescriptorImpl>> {
-    return rpc.getPaneDescriptorsFlow(project.projectId())
+    return rpc.getPaneDescriptorsFlow(project.projectId()).map { dtos ->
+      dtos.map { it.toDescriptor() }
+    }
   }
 
   override suspend fun getPaneStateFlow(paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEvent> {

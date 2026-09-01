@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NlsSafe
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import javax.swing.Icon
 
 @ApiStatus.Experimental
 @Serializable
@@ -29,6 +30,8 @@ sealed interface ProjectViewPaneDescriptor
 @ApiStatus.Experimental
 sealed interface ProjectViewPaneDescriptorBuilder {
   fun setDefault(isDefault: Boolean)
+
+  fun setIcon(icon: Icon)
 
   fun addSelectInTarget(
     id: @NonNls String,

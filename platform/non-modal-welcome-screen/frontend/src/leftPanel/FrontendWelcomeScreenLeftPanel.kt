@@ -33,6 +33,8 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder
 import com.intellij.platform.projectView.pane.projectViewPaneId
 import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.IconManager
+import com.intellij.ui.PlatformIcons
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.JBPanel
@@ -69,6 +71,7 @@ private class FrontendWelcomeScreenLeftPanelModel(private val project: Project) 
       !Registry.`is`("ide.welcome.screen.change.project.view.depending.on.opened.file", false) &&
       project.isWelcomeExperienceProject()
     )
+    builder.setIcon(IconManager.getInstance().getPlatformIcon(PlatformIcons.Folder))
     return builder.build(
       id = projectViewPaneId(WelcomeScreenLeftPanel.ID),
       presentableName = NonModalWelcomeScreenBundle.message("welcome.screen.project.view.title"),
@@ -107,9 +110,6 @@ internal class FrontendWelcomeScreenLeftPanel(
   override var isCurrent: Boolean = false
 
   override val selectInTargets: Collection<SelectInTarget> = listOf(WelcomeScreenLeftPanelSelectInTarget())
-
-// TODO
-  // override fun getIcon(): Icon = IconManager.getInstance().getPlatformIcon(PlatformIcons.Folder)
 
   private fun setupDragAndDrop(component: JComponent) {
     val target = object : DnDNativeTarget {
