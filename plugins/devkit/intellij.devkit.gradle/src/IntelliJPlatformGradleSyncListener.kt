@@ -19,6 +19,7 @@ internal class IntelliJPlatformGradleSyncListener : GradleSyncListener {
 
   @Suppress("SSBasedInspection") // Gradle's tooling model exposes the project directory as File.
   private fun importProjectModels(context: ProjectResolverContext) {
+    if (!context.hasModulesWithModel(IntelliJPlatformGradleModel::class.java)) return
     val provider = IntelliJPlatformGradleModelProvider.getInstance(context.project) as? IntelliJPlatformGradleModelProviderImpl ?: return
     val modelsByModulePath = context.allBuilds
       .asSequence()

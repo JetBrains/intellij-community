@@ -1,8 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.gradle
 
+import com.intellij.devkit.gradle.tooling.IntelliJPlatformGradleModel
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import junit.framework.TestCase
+import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
+import java.lang.reflect.Proxy
 import java.nio.file.Files
 
 internal class DevKitGradleProjectResolverExtensionTest : TestCase() {
@@ -11,6 +14,23 @@ internal class DevKitGradleProjectResolverExtensionTest : TestCase() {
     val modelProvider = DevKitGradleProjectResolverExtension().modelProviders.single()
 
     assertEquals(GradleModelFetchPhase.PROJECT_LOADED_PHASE, modelProvider.phase)
+  }
+
+  fun testFailedFetchWithoutIntelliJPlatformModelIsIgnored() {
+    val context = Proxy.newProxyInstance(
+      javaClass.classLoader,
+      arrayOf(ProjectResolverContext::class.java),
+    ) { _, method, arguments ->
+      when (method.name) {
+        "hasModulesWithModel" -> {
+          assertSame(IntelliJPlatformGradleModel::class.java, arguments.single())
+          false
+        }
+        else -> error("Unexpected ProjectResolverContext call: ${method.name}")
+      }
+    } as ProjectResolverContext
+
+    IntelliJPlatformGradleSyncListener().onModelFetchFailed(context, RuntimeException("Expected sync failure"))
   }
 
   fun testReadsProductReleaseCatalog() {
