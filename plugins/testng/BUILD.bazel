@@ -1,6 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "dev_dist_plugin_jar")
 
 jps_test(
     name = "testng-tests_test",
@@ -184,6 +185,12 @@ dev_dist_plugin(
     prepacked_jars = {
         "//libraries/testng:testng_content_module_jar": "intellij.libraries.testng.jar",
     },
+)
+
+dev_dist_plugin_jar(
+    modules = ["//plugins/testng_rt:testng-rt"],
+    plugin_main_module = "intellij.testng",
+    relative_output_file = "testng-rt.jar",
 )
 ### auto-generated section `dev intellij.testng` end
 

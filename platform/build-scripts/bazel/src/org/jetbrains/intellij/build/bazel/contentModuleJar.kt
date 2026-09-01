@@ -335,6 +335,7 @@ internal fun computeContentModuleJar(module: ModuleDescriptor, moduleList: Modul
       recordedNames = recordedNames,
       moduleList = moduleList,
       context = context,
+      refuse = { context.reportContentModuleJarRefusal(moduleName, it) },
     ) ?: return null
     return ContentModuleJar(
       libraryTargetLabels = libraryTargetLabels,
@@ -379,6 +380,7 @@ internal fun computeContentModuleJar(module: ModuleDescriptor, moduleList: Modul
     recordedNames = recordedNames,
     moduleList = moduleList,
     context = context,
+    refuse = { context.reportContentModuleJarRefusal(moduleName, it) },
   ) ?: return null
 
   return ContentModuleJar(
@@ -468,7 +470,7 @@ private fun isCompatibleSingleModuleRecipe(entry: RecipeEntry, moduleName: Strin
 }
 
 /** Whose layout decides which of a walked module's libraries its content-module jar merges. */
-private enum class MergeRules {
+internal enum class MergeRules {
   /**
    * The platform layout, which this generator mirrors.
    *
@@ -502,14 +504,19 @@ private enum class MergeRules {
  * `null` for three reasons, and each is stated where it is decided: a merged module the converter does not know, a
  * merged library with no target it can name, or a set that disagrees with [recordedNames]. A disagreement is warned
  * about, because a jar that differs from the distribution's surfaces at class-load time and nowhere earlier.
+ *
+ * [refuse] takes the two reasons that have a message, because the two callers pack two different jars: a
+ * `content_module_jar` of one module, and one `dev_dist_plugin_jar` of a plugin's own. One message naming a module would
+ * be wrong for the second one.
  */
-private fun mergedLibraryTargetLabels(
+internal fun mergedLibraryTargetLabels(
   dependent: ModuleDescriptor,
   packedModuleNames: List<String>,
   rules: MergeRules,
   recordedNames: Set<String>,
   moduleList: ModuleList,
   context: BazelBuildFileGenerator,
+  refuse: (String) -> Unit,
 ): List<String>? {
   // A set, because two libraries of one module can intern to the same Bazel target, and Bazel rejects a repeated label
   // in an attribute outright. The first-wins jar order the packer needs is preserved by the rule, which expands these
@@ -561,7 +568,7 @@ private fun mergedLibraryTargetLabels(
       }
       if (reportName == null) {
         // Reached on the platform path only: the merge rules said yes and the comparison below has nothing to compare.
-        context.reportContentModuleJarRefusal(dependent.module.name, "an unnamed merged library has no single jar to name it by")
+        refuse("an unnamed merged library has no single jar to name it by")
         return null
       }
       names.add(reportName)
@@ -585,11 +592,10 @@ private fun mergedLibraryTargetLabels(
     // construction, so `only merged` is always empty there and printing it would be dead text.
     val onlyRecorded = (recordedNames - names).sorted()
     val onlyMerged = (names - recordedNames).sorted()
-    context.reportContentModuleJarRefusal(
-      dependent.module.name,
+    refuse(
       "the merged library set does not match its recipe" +
       (if (onlyRecorded.isEmpty()) "" else " (only in the recipe: $onlyRecorded)") +
-      (if (onlyMerged.isEmpty()) "" else " (only merged: $onlyMerged)"),
+      (if (onlyMerged.isEmpty()) "" else " (only merged: $onlyMerged)")
     )
     return null
   }

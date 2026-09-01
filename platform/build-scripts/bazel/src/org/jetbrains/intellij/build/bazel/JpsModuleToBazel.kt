@@ -180,8 +180,12 @@ internal class JpsModuleToBazel {
       // first, generate community to collect libs that used by community (to separate community and ultimate libs)
       val communityResult = generator.generateModuleBuildFiles(moduleList, isCommunity = true, skipGenerationOfPluginTargets)
       val ultimateResult = generator.generateModuleBuildFiles(moduleList, isCommunity = false, skipGenerationOfPluginTargets)
+      val moduleTargets = communityResult.moduleTargets + ultimateResult.moduleTargets
+      // Before the first save, so that a target-name collision fails the run with the tree as it was found.
+      checkOnePluginPerJarTargetPackage(pluginJarPackagesOf(moduleTargets))
       generator.save(communityResult.moduleBuildFiles)
       generator.save(ultimateResult.moduleBuildFiles)
+      reportMovablePluginJars(moduleTargets)
 
       generator.generateLibs(jarRepositories = jarRepositories, m2Repo = m2RepoPath)
       generateDebuggerTestDepsModuleBazel(

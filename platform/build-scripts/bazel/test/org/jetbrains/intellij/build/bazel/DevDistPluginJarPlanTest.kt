@@ -167,6 +167,8 @@ internal class DevDistPluginJarPlanTest {
         mainJar(modules = emptyList(), contentModules = emptyList()),
         DerivedPluginJar(
           name = "plugins/demo/lib/modules/intellij.demo.core.jar",
+          relativeOutputFile = "modules/intellij.demo.core.jar",
+          members = listOf("intellij.demo.core"),
           modules = emptyList(),
           contentModules = listOf("intellij.demo.core"),
           isHandedOver = true,
@@ -185,6 +187,8 @@ internal class DevDistPluginJarPlanTest {
         mainJar(modules = emptyList(), contentModules = emptyList()),
         DerivedPluginJar(
           name = "plugins/demo/lib/modules/intellij.demo.core.jar",
+          relativeOutputFile = "modules/intellij.demo.core.jar",
+          members = listOf("intellij.demo.core"),
           modules = emptyList(),
           contentModules = listOf("intellij.demo.core"),
           isHandedOver = false,
@@ -433,6 +437,168 @@ internal class DevDistPluginJarPlanTest {
     }
   }
 
+  @Test
+  fun `a jar of one member the model can name earns a packing target`() {
+    assertNull(refuse())
+  }
+
+  @Test
+  fun `a jar named after its one member belongs to that member's own target`() {
+    // The rule the user's rejection of 2026-09-01 states: the two destinations `_collect_prepacked` accepts are the
+    // member's own jar under `lib/modules/` and in `lib/` itself, and a target here would restate the member's own facts.
+    assertEquals(PluginJarProducer.MEMBER_JAR_TARGET, producerOf("modules/$MEMBER.jar", hasMemberJarTarget = true))
+    assertEquals(PluginJarProducer.MEMBER_JAR_TARGET, producerOf("$MEMBER.jar", hasMemberJarTarget = true))
+    // The candidacy states no target, so no relation can name one either. The hand-over slice owns that half.
+    assertEquals(PluginJarProducer.MEMBER_JAR_CANDIDACY, producerOf("modules/$MEMBER.jar", hasMemberJarTarget = false))
+  }
+
+  @Test
+  fun `a jar the plugin names itself is this generator's to emit`() {
+    // Three shapes, and every one of them states something no member does: a name, a directory, and a second member.
+    assertEquals(PluginJarProducer.PLUGIN_JAR_TARGET, producerOf("demo-rt.jar", hasMemberJarTarget = true))
+    assertEquals(PluginJarProducer.PLUGIN_JAR_TARGET, producerOf("specifics/$MEMBER.jar", hasMemberJarTarget = true))
+    assertEquals(
+      PluginJarProducer.PLUGIN_JAR_TARGET,
+      producerOf("modules/$MEMBER.jar", hasMemberJarTarget = true, members = listOf(MEMBER, "intellij.demo.extra")),
+    )
+  }
+
+  @Test
+  fun `one ambiguous destination takes its two jars through two exits`() {
+    // The station case: the plugin states `modules/<member>.jar` for one member and derives the same path for another.
+    // `computeMovablePluginJars` asks the producer first, and the producer reads the destination alone. So the
+    // member-named half is counted under its member's own target and never reaches the refusal, and only the half this
+    // generator answers for is refused. The refused count is 1 for the pair, and the hand-over slice has to ask the
+    // ambiguity again before it wires a relation for the other half.
+    assertEquals(PluginJarProducer.MEMBER_JAR_TARGET, producerOf("modules/$MEMBER.jar", hasMemberJarTarget = true))
+    assertEquals(
+      PluginJarProducer.PLUGIN_JAR_TARGET,
+      producerOf("modules/$MEMBER.jar", hasMemberJarTarget = true, members = listOf("intellij.demo.other")),
+    )
+    assertEquals(PluginJarExclusion.AMBIGUOUS_DESTINATION, refuse(ambiguousDestinations = setOf("modules/$MEMBER.jar")))
+  }
+
+  /** [pluginJarProducer] over one jar of [members] at [relativeOutputFile]. */
+  private fun producerOf(
+    relativeOutputFile: String,
+    hasMemberJarTarget: Boolean,
+    members: List<String> = listOf(MEMBER),
+  ): PluginJarProducer = pluginJarProducer(
+    jar = DerivedPluginJar(
+      name = "plugins/demo/lib/$relativeOutputFile",
+      relativeOutputFile = relativeOutputFile,
+      members = members,
+      modules = emptyList(),
+      contentModules = members,
+      isHandedOver = false,
+    ),
+    hasMemberJarTarget = { hasMemberJarTarget },
+  )
+
+  @Test
+  fun `each refusal class takes the jar out of the movable set`() {
+    // One case per class, and the message is asserted rather than the constant, so a renamed class still reads.
+    assertEquals(PluginJarExclusion.SCRAMBLING_PLUGIN, refuse(scrambles = true))
+    assertEquals(PluginJarExclusion.AMBIGUOUS_DESTINATION, refuse(ambiguousDestinations = setOf("modules/$MEMBER.jar")))
+    assertEquals(PluginJarExclusion.VETOED_MEMBER, refuse(vetoedMembers = setOf(MEMBER)))
+    assertEquals(PluginJarExclusion.UNKNOWN_MEMBER, refuse(unknownMembers = setOf(MEMBER)))
+    assertEquals(PluginJarExclusion.CROSS_REPOSITORY_MEMBER, refuse(crossRepositoryMembers = setOf(MEMBER)))
+    assertEquals(PluginJarExclusion.UNSTATED_MEMBER_LIBRARIES, refuse(memberLibraries = emptyMap()))
+    assertEquals(PluginJarExclusion.UNNAMEABLE_LIBRARY, refuse(memberLibraries = mapOf(MEMBER to null)))
+  }
+
+  @Test
+  fun `a stated unpackable jar is refused by its distribution path`() {
+    // The one class no derivation reaches, so the row is keyed by where the jar lands and not by a member.
+    val jar = DerivedPluginJar(
+      name = "plugins/maven-plugin/lib/artifact-resolver-m31.jar",
+      relativeOutputFile = "artifact-resolver-m31.jar",
+      members = listOf(MEMBER),
+      modules = listOf(MEMBER),
+      contentModules = emptyList(),
+      isHandedOver = false,
+    )
+
+    assertEquals(
+      PluginJarExclusion.STATED_UNPACKABLE,
+      refusePluginJar(
+        jar = jar,
+        scrambles = false,
+        ambiguousDestinations = emptySet(),
+        vetoedMembers = emptySet(),
+        unknownMembers = emptySet(),
+        crossRepositoryMembers = emptySet(),
+        memberLibraries = mapOf(MEMBER to emptySet()),
+      ),
+    )
+  }
+
+  @Test
+  fun `the widest refusal wins, so the counts partition the refused set`() {
+    // Every class holds at once. The order decides which one the table counts it under, and a jar counted twice would
+    // make the refused total larger than the derived set.
+    assertEquals(
+      PluginJarExclusion.SCRAMBLING_PLUGIN,
+      refuse(
+        scrambles = true,
+        ambiguousDestinations = setOf("modules/$MEMBER.jar"),
+        vetoedMembers = setOf(MEMBER),
+        unknownMembers = setOf(MEMBER),
+        crossRepositoryMembers = setOf(MEMBER),
+        memberLibraries = emptyMap(),
+      ),
+    )
+  }
+
+  @Test
+  fun `two plugins of one package emitting one target name fail the run, and both are named`() {
+    // The check the converter runs before it saves the first file. One plugin stating one destination twice is no
+    // collision, because the emission writes one target for it.
+    val plugins = listOf(
+      PluginJarPackage(packagePath = "/repo/plugins/demo", plugin = "intellij.demo", relativeOutputFiles = listOf("modules/$MEMBER.jar")),
+      PluginJarPackage(packagePath = "/repo/plugins/demo", plugin = "intellij.other", relativeOutputFiles = listOf("modules/$MEMBER.jar")),
+    )
+
+    checkOnePluginPerJarTargetPackage(listOf(plugins[0], plugins[0]))
+    val failure = assertThrows(IllegalStateException::class.java) { checkOnePluginPerJarTargetPackage(plugins) }
+    assertTrue(failure.message, failure.message!!.contains("`intellij.other` and `intellij.demo`"))
+    assertTrue(failure.message, failure.message!!.contains(pluginJarTargetName("modules/$MEMBER.jar")))
+  }
+
+  @Test
+  fun `a plugin jar target is named after its destination`() {
+    // The Kotlin half of the macro's own rule. A subdirectory becomes one token, so two jars of one package cannot
+    // collide unless their destinations do.
+    assertEquals("modules_intellij.demo.core_dev_dist_plugin_jar", pluginJarTargetName("modules/intellij.demo.core.jar"))
+    assertEquals("specifics_tomee-specifics_dev_dist_plugin_jar", pluginJarTargetName("specifics/tomee-specifics.jar"))
+    assertEquals("demo_dev_dist_plugin_jar", pluginJarTargetName("demo.jar"))
+  }
+
+  /** [refusePluginJar] over one derived jar of [MEMBER], with every fact defaulting to the movable answer. */
+  private fun refuse(
+    scrambles: Boolean = false,
+    ambiguousDestinations: Set<String> = emptySet(),
+    vetoedMembers: Set<String> = emptySet(),
+    unknownMembers: Set<String> = emptySet(),
+    crossRepositoryMembers: Set<String> = emptySet(),
+    memberLibraries: Map<String, Set<String>?> = mapOf(MEMBER to setOf("junit4")),
+  ): PluginJarExclusion? = refusePluginJar(
+    jar = DerivedPluginJar(
+      name = "plugins/demo/lib/modules/$MEMBER.jar",
+      relativeOutputFile = "modules/$MEMBER.jar",
+      members = listOf(MEMBER),
+      modules = emptyList(),
+      contentModules = listOf(MEMBER),
+      isHandedOver = false,
+    ),
+    scrambles = scrambles,
+    ambiguousDestinations = ambiguousDestinations,
+    vetoedMembers = vetoedMembers,
+    unknownMembers = unknownMembers,
+    crossRepositoryMembers = crossRepositoryMembers,
+    memberLibraries = memberLibraries,
+  )
+
   /** One demo plugin's jars, from the facts [composeDerivedPluginJars] takes and a fixed placement. */
   private fun derive(
     memberNames: List<String>,
@@ -493,6 +659,8 @@ internal class DevDistPluginJarPlanTest {
 
   private fun mainJar(modules: List<String>, contentModules: List<String>): DerivedPluginJar = DerivedPluginJar(
     name = "plugins/demo/lib/demo.jar",
+    relativeOutputFile = "demo.jar",
+    members = modules + contentModules,
     modules = modules,
     contentModules = contentModules,
     isHandedOver = false,

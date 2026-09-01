@@ -1,6 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "dev_dist_plugin_jar")
 
 # Checkout directories that plugin layouts copy into a distribution verbatim (`withResource*`). They are
 # resolved against the module content root and exist in no jar, so a dev assembly that materializes its own
@@ -249,6 +250,36 @@ dev_dist_plugin(
         "//plugins/groovy/spock:spock_content_module_jar",
         "//plugins/groovy/structuralsearch-groovy:structuralSearch_content_module_jar",
     ],
+)
+
+dev_dist_plugin_jar(
+    modules = ["//plugins/groovy/rt-constants:constants-rt"],
+    plugin_main_module = "intellij.groovy",
+    relative_output_file = "groovy-constants-rt.jar",
+)
+
+dev_dist_plugin_jar(
+    modules = ["//plugins/groovy/jps-plugin:jps"],
+    plugin_main_module = "intellij.groovy",
+    relative_output_file = "groovy-jps.jar",
+)
+
+dev_dist_plugin_jar(
+    modules = ["//plugins/groovy/rt/classLoader"],
+    plugin_main_module = "intellij.groovy",
+    relative_output_file = "groovy-rt-class-loader.jar",
+)
+
+dev_dist_plugin_jar(
+    modules = ["//plugins/groovy/rt"],
+    plugin_main_module = "intellij.groovy",
+    relative_output_file = "groovy-rt.jar",
+)
+
+dev_dist_plugin_jar(
+    modules = ["//plugins/groovy/spock-rt"],
+    plugin_main_module = "intellij.groovy",
+    relative_output_file = "groovy-spock-rt.jar",
 )
 ### auto-generated section `dev intellij.groovy` end
 

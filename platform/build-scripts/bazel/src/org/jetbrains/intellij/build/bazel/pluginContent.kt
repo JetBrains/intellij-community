@@ -92,6 +92,15 @@ internal class PluginContentResult(
    * label carries no artifact version, so a Maven bump leaves this record alone.
    */
   @JvmField val crossRepositoryLibraryContainers: List<String> = emptyList(),
+  /**
+   * The members whose jar this plugin really handed over, whichever repository packs it.
+   *
+   * The one decision, carried out rather than asked twice. [isPrepackedPluginContentModule] is what decides it, and that
+   * question costs a `content_module_jar` derivation per (plugin, member) - one module is content of up to 45 plugins. So
+   * [derivedPluginJarsOf] reads this set instead of asking again, which also makes the two answers agree by construction
+   * rather than by two identical conditions.
+   */
+  @JvmField val handedOverMembers: Set<String> = emptySet(),
 )
 
 /** The population the residue writer states; see [readPluginContentPopulation]. */
@@ -337,6 +346,7 @@ internal fun resolvePluginContent(
       crossRepositoryPrepackedModules = crossRepository,
       crossRepositoryRawModules = crossRepositoryRaw,
       crossRepositoryLibraryContainers = crossRepositoryLibraries,
+      handedOverMembers = handedOver,
     )
   }
 
@@ -350,6 +360,7 @@ internal fun resolvePluginContent(
     crossRepositoryPrepackedModules = crossRepository,
     crossRepositoryRawModules = crossRepositoryRaw,
     crossRepositoryLibraryContainers = crossRepositoryLibraries,
+    handedOverMembers = handedOver,
   )
 }
 

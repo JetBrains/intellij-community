@@ -1,5 +1,6 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "dev_dist_plugin_jar")
 
 ### auto-generated section `build intellij.devkit` start
 jvm_library(
@@ -77,6 +78,12 @@ dev_dist_plugin(
         "//plugins/devkit/intellij.kotlin.devkit/k2:k2_content_module_jar",
         "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit_content_module_jar",
     ],
+)
+
+dev_dist_plugin_jar(
+    modules = ["//plugins/devkit/jps-plugin:jps"],
+    plugin_main_module = "intellij.devkit",
+    relative_output_file = "devkit-jps.jar",
 )
 ### auto-generated section `dev intellij.devkit` end
 

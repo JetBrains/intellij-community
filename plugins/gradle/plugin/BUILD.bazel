@@ -1,5 +1,6 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "dev_dist_plugin_jar")
 
 ### auto-generated section `build intellij.gradle.plugin` start
 jvm_library(
@@ -81,5 +82,19 @@ dev_dist_plugin(
         "//plugins/gradle/settings:settings_content_module_jar": "intellij.gradle.settings.jar",
         "//plugins/gradle:gradle_content_module_jar": "intellij.gradle.jar",
     },
+)
+
+dev_dist_plugin_jar(
+    libraries = ["@lib//:libraries-groovy-ant-groovy-ant"],
+    modules = ["//libraries/groovy/ant"],
+    plugin_main_module = "intellij.gradle.plugin",
+    relative_output_file = "groovy-ant.jar",
+)
+
+dev_dist_plugin_jar(
+    libraries = ["@lib//:libraries-groovy-groovy"],
+    modules = ["//libraries/groovy"],
+    plugin_main_module = "intellij.gradle.plugin",
+    relative_output_file = "groovy.jar",
 )
 ### auto-generated section `dev intellij.gradle.plugin` end

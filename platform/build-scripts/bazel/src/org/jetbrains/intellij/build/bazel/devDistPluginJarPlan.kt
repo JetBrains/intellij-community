@@ -23,6 +23,21 @@ import kotlin.io.path.readText
 internal class DerivedPluginJar(
   /** The jar's path relative to the distribution root, which is how a plan row names itself. */
   @JvmField val name: String,
+  /**
+   * The jar's path relative to the plugin's own `lib/`, which is how the packing relation names it.
+   *
+   * The same token `dev_dist_plugin_jar.relative_output_file` takes. [name] is this under the plugin's directory, and the
+   * directory is a `PluginLayout` decision the comparison needs and a packing target does not.
+   */
+  @JvmField val relativeOutputFile: String,
+  /**
+   * Every member of the jar, in the order the layout merges them.
+   *
+   * [modules] and [contentModules] are the same names split by where the plugin names the member, which is what the
+   * comparison joins on. The order is lost in that split, and a packing action needs it: the packer resolves an entry two
+   * sources both offer to the first one.
+   */
+  @JvmField val members: List<String>,
   /** The plugin's main module, and every member the layout packs from its raw output; `FileEntry.modules`. */
   @JvmField val modules: List<String>,
   /** The members that come from the plugin's own `<content>`; `FileEntry.contentModules`. */
@@ -54,15 +69,17 @@ internal class DerivedPluginJar(
  *    answers the jar, as the convention with the three corrections the residue states;
  * 2. [DevDistPluginModelTables.pluginJarPlacement] gives the plugin's directory and main jar name, which are a
  *    `PluginLayout` decision the model does not hold. A plugin with no row takes [pluginJarPlacementConvention];
- * 3. [isPrepackedPluginContentModule] says which of those jars a `content_module_jar` target already packs;
+ * 3. [PluginContentResult.handedOverMembers] says which of those jars a packing target already packs, which is the
+ *    decision [resolvePluginContent] made for the content leaf;
  * 4. [ContentResidueSection.memberJars] gives the jars the layout names itself, which no rule derives. A row states the
  *    member's whole jar set, so it wins over the path of 1 and over the main-jar co-pack below.
  *
  * A member with neither a row nor a jar of its own is co-packed into the plugin's main jar. [deriveMemberJarPath] states
  * that by answering the main jar's own name, which is what `getDefaultJarName` returns for such a member.
  *
- * Empty for a module the dev distribution states no content for. This walks the closure a second time, so only the
- * comparison mode calls it - a generation run must not pay for it.
+ * Empty for a module the dev distribution states no content for. It walks the plugin's content, so a caller that already
+ * has it takes [derivedPluginJarsOf] instead - which is what generation does, since the emission of the movable set and
+ * the content leaf come from one walk.
  */
 internal fun derivePluginJars(
   module: ModuleDescriptor,
@@ -72,25 +89,37 @@ internal fun derivePluginJars(
   if (!isDevDistContentPlugin(module = module, context = context)) {
     return emptyList()
   }
+  return derivedPluginJarsOf(
+    module = module,
+    derived = derivePluginContent(module = module, moduleList = moduleList, context = context),
+    moduleList = moduleList,
+    context = context,
+  )
+}
+
+/**
+ * [derivePluginJars] over a content derivation the caller already made.
+ *
+ * The one body both modes run. The comparison takes it through [derivePluginJars], and generation takes it beside the
+ * content leaf, so the jars the comparison measures and the jars the converter emits targets for are one derivation.
+ */
+internal fun derivedPluginJarsOf(
+  module: ModuleDescriptor,
+  derived: DerivedPluginContent,
+  moduleList: ModuleList,
+  context: BazelBuildFileGenerator,
+): List<DerivedPluginJar> {
   val mainModule = module.module.name
   val placement = pluginJarPlacementOf(mainModule = mainModule, context = context)
-  val derived = derivePluginContent(module = module, moduleList = moduleList, context = context)
   // Which members the plugin's own `<content>` names, so a member reaches `contentModules` and a `withModule` member
   // reaches `modules`. `DevDistRecipe.record` splits the two on the inclusion reason, which is the same distinction.
-  val closureMembers = derivePluginContentClosure(module = module, moduleList = moduleList, context = context)
-    ?.moduleNames
-    ?.mapTo(HashSet()) { it.substringBeforeLast('/') }
-    ?: emptySet()
+  val closureMembers = derived.closureMembers
 
-  // The jar of each member this project holds a module for, and which of those jars a packing target serves.
+  // The jar of each member this project holds a module for.
   val derivedJars = LinkedHashMap<String, String>()
-  val handedOverMembers = HashSet<String>()
   for ((memberName, relativeOutputFile) in derived.memberPaths) {
-    val member = moduleList.getModuleDescriptorOrNull(memberName) ?: continue
-    derivedJars.put(memberName, relativeOutputFile)
-    if (memberName in derived.prepackedPaths &&
-        isPrepackedPluginContentModule(module = member, moduleList = moduleList, context = context)) {
-      handedOverMembers.add(memberName)
+    if (moduleList.getModuleDescriptorOrNull(memberName) != null) {
+      derivedJars.put(memberName, relativeOutputFile)
     }
   }
 
@@ -102,7 +131,7 @@ internal fun derivePluginJars(
     // with no module behind it, and the plugin's main jar does not hold the member either.
     memberNames = derived.memberNames.filter { it !in derived.memberPaths || it in derivedJars },
     derivedJars = derivedJars,
-    handedOverMembers = handedOverMembers,
+    handedOverMembers = derived.result.handedOverMembers,
     closureMembers = closureMembers,
     memberJars = contentResidueOf(module).memberJars,
   )
@@ -140,6 +169,9 @@ internal fun composeDerivedPluginJars(
   val mainJarContentModules = ArrayList<String>()
   val mainJarModules = ArrayList<String>()
   mainJarModules.add(mainModule)
+  // The main jar's merge order, which its two split lists cannot state. `buildAsset` merges the co-packed members in
+  // `<content>` order and the main module after them, so the main module is appended last and not first.
+  val mainJarMembers = ArrayList<String>()
   // The members of each jar the residue names, by the jar's path under the plugin's `lib/`. One jar can hold several
   // members, so the rows are grouped rather than turned into one jar each.
   val statedJarMembers = LinkedHashMap<String, MutableList<String>>()
@@ -149,6 +181,7 @@ internal fun composeDerivedPluginJars(
       for (path in statedJars) {
         if (path == mainJarName) {
           (if (memberName in closureMembers) mainJarContentModules else mainJarModules).add(memberName)
+          mainJarMembers.add(memberName)
         }
         else {
           statedJarMembers.computeIfAbsent(path) { ArrayList() }.add(memberName)
@@ -159,11 +192,14 @@ internal fun composeDerivedPluginJars(
     val relativeOutputFile = derivedJars.get(memberName)
     if (relativeOutputFile == null || relativeOutputFile == mainJarName) {
       (if (memberName in closureMembers) mainJarContentModules else mainJarModules).add(memberName)
+      mainJarMembers.add(memberName)
       continue
     }
     result.add(
       DerivedPluginJar(
         name = libDir + relativeOutputFile,
+        relativeOutputFile = relativeOutputFile,
+        members = listOf(memberName),
         modules = if (memberName in closureMembers) emptyList() else listOf(memberName),
         contentModules = if (memberName in closureMembers) listOf(memberName) else emptyList(),
         isHandedOver = memberName in handedOverMembers,
@@ -174,6 +210,8 @@ internal fun composeDerivedPluginJars(
     result.add(
       DerivedPluginJar(
         name = libDir + path,
+        relativeOutputFile = path,
+        members = members,
         modules = members.filter { it !in closureMembers },
         contentModules = members.filter { it in closureMembers },
         // A jar the layout names holds a raw module output, so no `content_module_jar` target packs it.
@@ -184,6 +222,8 @@ internal fun composeDerivedPluginJars(
   result.add(
     DerivedPluginJar(
       name = libDir + mainJarName,
+      relativeOutputFile = mainJarName,
+      members = mainJarMembers + mainModule,
       modules = mainJarModules,
       contentModules = mainJarContentModules,
       // The plugin's main jar holds the plugin's own descriptor, so it is a jar only a fragment packs.

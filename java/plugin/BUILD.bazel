@@ -1,5 +1,6 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "dev_dist_plugin_jar")
 
 ### auto-generated section `build intellij.java.plugin` start
 jvm_library(
@@ -159,5 +160,11 @@ dev_dist_plugin(
         "//java/java-syntax:syntax_content_module_jar": "intellij.java.syntax.jar",
         "@community//build:build-javac-rt_content_module_jar": "intellij.platform.jps.build.javac.rt.jar",
     },
+)
+
+dev_dist_plugin_jar(
+    modules = ["//jps/jps-launcher:build-launcher"],
+    plugin_main_module = "intellij.java.plugin",
+    relative_output_file = "jps-launcher.jar",
 )
 ### auto-generated section `dev intellij.java.plugin` end

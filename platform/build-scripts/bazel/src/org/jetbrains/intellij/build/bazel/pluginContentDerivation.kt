@@ -23,6 +23,16 @@ internal class DerivedPluginContent(
    * hand-off itself, exactly as it reads the report's own map, so a member here loses its raw output from the fragment.
    */
   @JvmField val prepackedPaths: Map<String, String>,
+  /**
+   * The members the plugin's own `<content>` names, which is what splits `contentModules` from `modules`.
+   *
+   * Carried out of the walk rather than walked again. [derivePluginJars] needs the same set, and a second
+   * [derivePluginContentClosure] call re-reads the plugin's descriptor once per include round for every one of the 516
+   * plugins of the population.
+   */
+  @JvmField val closureMembers: Set<String>,
+  /** See [DerivedPluginCandidacy.memberLibraries]. */
+  @JvmField val memberLibraries: Map<String, Set<String>?>,
   /** What [resolvePluginContent] would have printed. Collected rather than printed: the writer only measures. */
   @JvmField val warnings: List<String>,
 )
@@ -58,9 +68,11 @@ internal class PluginContentResidue(
 }
 
 /**
- * [derivePluginContent] as the generator asks it: the result only, and nothing for a module outside the population.
+ * [derivePluginContent] as the generator asks it, and `null` for a module outside the population.
  *
- * The one producer at the emit site. It answers an empty result for a module the dev distribution states no content for.
+ * The one producer at the emit site. `null` rather than an empty result, because the generator reads two things off one
+ * derivation - the content leaf and the movable jar set - and a module the dev distribution states no content for has
+ * neither.
  *
  * The two plugins Phase 0 of this arc held out need no branch here, and both are worth naming. `intellij.lombok` keeps
  * its `META-INF/plugin.xml` in `community/plugins/lombok/plugin/resources/`, which belongs to another module, so the
@@ -73,15 +85,15 @@ internal fun computeDerivedPluginContent(
   module: ModuleDescriptor,
   moduleList: ModuleList,
   context: BazelBuildFileGenerator,
-): PluginContentResult {
+): DerivedPluginContent? {
   if (!isDevDistContentPlugin(module = module, context = context)) {
-    return EMPTY_PLUGIN_CONTENT_RESULT
+    return null
   }
   val derived = derivePluginContent(module = module, moduleList = moduleList, context = context)
   for (warning in derived.warnings) {
     println(warning)
   }
-  return derived.result
+  return derived
 }
 
 /**
@@ -150,6 +162,9 @@ internal fun derivePluginContent(
     memberNames = memberNames.toList(),
     memberPaths = memberPaths,
     prepackedPaths = prepackedPaths,
+    // The same key the member set takes, so a module shipped under another descriptor names one member on both sides.
+    closureMembers = walked.moduleNames.mapTo(HashSet()) { it.substringBeforeLast('/') },
+    memberLibraries = candidacy.memberLibraries,
     warnings = warnings,
   )
 }

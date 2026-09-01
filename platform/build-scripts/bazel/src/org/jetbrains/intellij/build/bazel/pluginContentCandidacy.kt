@@ -1,4 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
 package org.jetbrains.intellij.build.bazel
 
 import com.intellij.openapi.util.JDOMUtil
@@ -49,6 +51,14 @@ internal class DerivedPluginCandidacy(
    * [ContentResidueSection.memberJars] states only what this map does not answer, so the writer needs every path.
    */
   @JvmField val memberPaths: Map<String, String>,
+  /**
+   * The module libraries each member's jar merges, by module name, and `null` for a member with a library it cannot name.
+   *
+   * The same set [DerivedCandidacyOffer.libraries] holds, for **every** member and not for the offered half.
+   * [computeMovablePluginJars] needs it for a jar no packing target serves: such a jar has no offer, and the libraries
+   * still go into it. It is the read [readMemberJar] already made, carried out rather than made a second time.
+   */
+  @JvmField val memberLibraries: Map<String, Set<String>?>,
 )
 
 /**
@@ -84,17 +94,34 @@ internal fun derivePluginContentCandidacy(
   val offers = ArrayList<DerivedCandidacyOffer>()
   val vetoes = ArrayList<String>(residue.vetoedMembers)
   val memberPaths = HashMap<String, String>()
+  val memberLibraries = HashMap<String, Set<String>?>()
   val seen = HashSet<String>()
   val mainJarName = pluginJarPlacementOf(mainModule = module.module.name, context = context).mainJarName
+  // One library read per member, and only for a member that needs one. The walk costs a dependency list per member and
+  // this generator visits every member of every one of the 516 plugins, so an unconditional read costs about 9 s of the
+  // run - measured on 2026-09-01.
+  val libraryReads = HashMap<String, MergedMemberLibraries>()
+  fun librariesOf(member: ModuleDescriptor): MergedMemberLibraries {
+    return libraryReads.computeIfAbsent(member.module.name) { mergedLibrariesOf(member = member, residue = residue, context = context) }
+  }
   for (name in residue.extraMembers) {
     val member = moduleList.getModuleDescriptorOrNull(name) ?: continue
     val jar = readMemberJar(
       member = member,
       loadingRule = null,
       residue = residue,
-      context = context,
       mainJarName = mainJarName,
-    ) ?: continue
+      libraries = ::librariesOf,
+    )
+    // A member of a jar the residue names needs its library set even with no descriptor of its own, and a
+    // `PluginLayout.withModule` member is a plain runtime module that usually ships none. Every other descriptor-less
+    // member has no derived jar at all, so the plugin's main jar holds it and no packing target ever asks.
+    if (jar != null || name in residue.memberJars) {
+      memberLibraries.putIfAbsent(name, librariesOf(member).names)
+    }
+    if (jar == null) {
+      continue
+    }
     memberPaths.putIfAbsent(name, jar.relativeOutputFile)
     // A stated member gets an offer only where the residue states its jar as well. A `PluginLayout.withModule` member is
     // packed from its raw output into a jar of the plugin's, which is no jar of the member's own, and 359 of the 399
@@ -124,9 +151,12 @@ internal fun derivePluginContentCandidacy(
       member = member,
       loadingRule = closure?.loadingRules?.get(rawName),
       residue = residue,
-      context = context,
       mainJarName = mainJarName,
+      libraries = ::librariesOf,
     )
+    if (jar != null || rawName in residue.memberJars) {
+      memberLibraries.put(rawName, librariesOf(member).names)
+    }
     if (jar != null) {
       memberPaths.put(rawName, jar.relativeOutputFile)
     }
@@ -143,7 +173,12 @@ internal fun derivePluginContentCandidacy(
       offers.add(offer)
     }
   }
-  return DerivedPluginCandidacy(offers = offers, vetoes = vetoes, memberPaths = memberPaths)
+  return DerivedPluginCandidacy(
+    offers = offers,
+    vetoes = vetoes,
+    memberPaths = memberPaths,
+    memberLibraries = memberLibraries,
+  )
 }
 
 /**
@@ -207,31 +242,61 @@ internal class DerivedMemberJar(
 )
 
 /**
+ * The module libraries one member's jar merges: the set, and whether the residue states it.
+ *
+ * [names] is `null` for a member with a module library this generator cannot name; see [distributionLibraryName].
+ */
+internal class MergedMemberLibraries(
+  @JvmField val names: Set<String>?,
+  /** See [DerivedCandidacyOffer.isStated]. */
+  @JvmField val isStated: Boolean,
+)
+
+/**
+ * What [member]'s jar merges: the residue's row where there is one, and the member's own module libraries otherwise.
+ *
+ * Its own function because two readers need the answer and it must be one read. [readMemberJar] takes it for the path
+ * rule, and [DerivedPluginCandidacy.memberLibraries] carries it out for the jar the plugin packs the member into.
+ */
+internal fun mergedLibrariesOf(
+  member: ModuleDescriptor,
+  residue: PluginContentResidue,
+  context: BazelBuildFileGenerator,
+): MergedMemberLibraries {
+  val stated = residue.mergedLibraries.get(member.module.name)
+  return MergedMemberLibraries(
+    names = stated ?: productionModuleLibraryNames(module = member, context = context),
+    isStated = stated != null,
+  )
+}
+
+/**
  * [member]'s jar under [mainJarName], or `null` when no resource root holds the member's own descriptor.
  *
- * The model read of [deriveMemberJar]. One read answers both questions, because the path and the offer need the same
- * descriptor and the same library set.
+ * The model read of [deriveMemberJar]: the two facts the path rule needs out of the member's own descriptor.
  *
  * `null` is the one case this generator can state no path for. A member with no readable descriptor has no
  * `packIntoPluginJar` and no `package` attribute to read, so the caller vetoes it.
+ *
+ * [libraries] is a function and not a set, so that the descriptor decides whether the library walk runs at all. The
+ * caller's own comment holds the measurement.
  */
 private fun readMemberJar(
   member: ModuleDescriptor,
   loadingRule: String?,
   residue: PluginContentResidue,
-  context: BazelBuildFileGenerator,
   mainJarName: String,
+  libraries: (ModuleDescriptor) -> MergedMemberLibraries,
 ): DerivedMemberJar? {
-  val moduleName = member.module.name
   val descriptor = memberDescriptor(member) ?: return null
-  val statedLibraries = residue.mergedLibraries.get(moduleName)
+  val merged = libraries(member)
   return deriveMemberJar(
-    moduleName = moduleName,
+    moduleName = member.module.name,
     loadingRule = loadingRule,
     packIntoPluginJar = descriptor.packIntoPluginJar,
     hasPackageAttribute = descriptor.hasPackageAttribute,
-    libraries = statedLibraries ?: productionModuleLibraryNames(module = member, context = context),
-    isStated = statedLibraries != null,
+    libraries = merged.names,
+    isStated = merged.isStated,
     residue = residue,
     mainJarName = mainJarName,
   )

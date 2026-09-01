@@ -2,6 +2,7 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "dev_dist_plugin_jar")
 
 ### auto-generated section `build intellij.vcs.git` start
 create_kotlinc_options(
@@ -83,6 +84,12 @@ dev_dist_plugin(
         "//plugins/git4idea/shared:shared_content_module_jar",
         "//plugins/git4idea/terminal:terminal_content_module_jar",
     ],
+)
+
+dev_dist_plugin_jar(
+    modules = ["//plugins/git4idea/rt"],
+    plugin_main_module = "intellij.vcs.git",
+    relative_output_file = "git4idea-rt.jar",
 )
 ### auto-generated section `dev intellij.vcs.git` end
 

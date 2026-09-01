@@ -233,6 +233,26 @@ internal class BazelBuildFileGenerator(
     }
   }
 
+  /** Whether a `content_module_jar` target packs a module's own jar, answered once per module for the whole run. */
+  private val contentModuleJarTargets = ConcurrentHashMap<String, Boolean>()
+
+  /**
+   * Whether this tree holds a `content_module_jar` beside [memberName], so a plugin may name that target in a relation.
+   *
+   * Memoized for the reason [reportedContentModuleJarRefusals] is memoized: the question costs a whole
+   * [computeContentModuleJar] derivation, and one module is content of up to 45 plugins. [pluginJarProducer] is the
+   * caller, and it asks only about a member whose own jar name a plugin's jar carries.
+   *
+   * A module this generator converts nothing for answers `false`, which is the same answer for the same reason: no
+   * target stands beside it, so no relation can name one.
+   */
+  fun hasContentModuleJarTarget(memberName: String, moduleList: ModuleList): Boolean {
+    return contentModuleJarTargets.computeIfAbsent(memberName) {
+      val member = moduleList.getModuleDescriptorOrNull(memberName)
+      member != null && isPrepackedPluginContentModule(module = member, moduleList = moduleList, context = this)
+    }
+  }
+
   /**
    * The layout variants a `dev_dist_plugin_descriptor` target exists for, by plugin main module; see
    * [DevDistPluginModelTables.descriptorPopulation].
@@ -262,8 +282,9 @@ internal class BazelBuildFileGenerator(
    * Where a plugin puts its own jars, by plugin main module, for the plugin that deviates; see
    * [DevDistPluginModelTables.pluginJarPlacement].
    *
-   * Read by the dev-distribution jar-plan comparison alone. Generation states membership and never a path of the
-   * plugin's own, so nothing a generation run writes depends on this table.
+   * Read by both the jar-plan comparison and generation, since generation emits one `dev_dist_plugin_jar` per movable
+   * jar and the main jar name decides which member has a jar of its own. Only the main jar name reaches a written
+   * attribute: `relative_output_file` is relative to the plugin's `lib/`, so the directory is the comparison's alone.
    */
   val pluginJarPlacement: Map<String, PluginJarPlacement>
     get() = devDistPluginModelTables.pluginJarPlacement
@@ -722,6 +743,7 @@ internal class BazelBuildFileGenerator(
           module = module,
           content = moduleBuildTargets.pluginContent,
           descriptors = moduleBuildTargets.pluginDescriptors,
+          jars = moduleBuildTargets.pluginJars.targets,
         )
 
         val testTargetsBazel = BuildFile()
@@ -868,6 +890,13 @@ internal class BazelBuildFileGenerator(
     val pluginDescriptors: List<PluginDescriptor>,
     /** The label of each descriptor target, keyed by layout variant. Empty exactly when [pluginDescriptors] is. */
     val pluginDescriptorTargets: Map<String, String>,
+    /**
+     * The jars of this plugin a `dev_dist_plugin_jar` target packs; see [computeMovablePluginJars].
+     *
+     * Carried out for [pluginContent]'s reason: the targets go into the `dev` section, which is written whatever happens
+     * to the module's compilation targets.
+     */
+    val pluginJars: MovablePluginJars,
     /**
      * Prepack-eligible members of this plugin that only the other repository can name - see [PluginContentResult].
      *
@@ -1164,8 +1193,20 @@ internal class BazelBuildFileGenerator(
 
     // What this plugin contributes to a dev distribution: derived from the project model for every plugin the
     // population names, and gated on nothing else, unlike `ij_plugin`, whose opt-in marker is about packaging.
-    val pluginContentResult = computeDerivedPluginContent(module = moduleDescriptor, moduleList = moduleList, context = this@BazelBuildFileGenerator)
+    val derivedPluginContent = computeDerivedPluginContent(module = moduleDescriptor, moduleList = moduleList, context = this@BazelBuildFileGenerator)
+    val pluginContentResult = derivedPluginContent?.result ?: EMPTY_PLUGIN_CONTENT_RESULT
     val pluginContent = pluginContentResult.content
+
+    // The jars of this plugin a `dev_dist_plugin_jar` target may pack, from the same derivation the jar comparison
+    // measures. Off the content derivation above, so the movable set costs no second walk of the plugin's `<content>`.
+    val movablePluginJars = derivedPluginContent?.let {
+      computeMovablePluginJars(
+        module = moduleDescriptor,
+        derived = it,
+        moduleList = moduleList,
+        context = this@BazelBuildFileGenerator,
+      )
+    } ?: MovablePluginJars.NONE
 
     // What this plugin's descriptor patch declares. Gated on the same thing the content target is - the module is a
     // plugin main module the dev distribution knows - plus a `META-INF/plugin.xml` its own Bazel package holds.
@@ -1178,6 +1219,7 @@ internal class BazelBuildFileGenerator(
     return ModuleTargets(
       moduleDescriptor = moduleDescriptor,
       pluginContent = pluginContent,
+      pluginJars = movablePluginJars,
       pluginDescriptors = pluginDescriptors,
       pluginDescriptorTargets = pluginDescriptors.associate { descriptor ->
         descriptor.variant to addPackagePrefix(
