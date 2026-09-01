@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.trustedProjects.impl
 
+import com.intellij.ide.trustedProjects.TrustedFiles
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsDialog
 import com.intellij.ide.trustedProjects.TrustedProjectsListener
@@ -17,6 +18,8 @@ import javax.swing.JComponent
 class UntrustedProjectNotificationProvider : EditorNotificationProvider, DumbAware {
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     if (TrustedProjects.isProjectTrusted(project)) return null
+    // a standalone externally opened file gets the file banner, or no banner, see UntrustedFileNotificationProvider
+    if (TrustedFiles.isTrustDecidedByFile(file, project)) return null
 
     return Function {
       UntrustedProjectEditorNotificationPanel(project, it) {

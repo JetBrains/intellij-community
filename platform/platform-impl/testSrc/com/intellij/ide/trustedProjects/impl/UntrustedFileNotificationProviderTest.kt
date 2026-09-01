@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.trustedProjects.impl
 
+import com.intellij.ide.impl.TrustedPaths
 import com.intellij.ide.trustedProjects.ExternallyOpenedFiles
 import com.intellij.ide.trustedProjects.TrustedFiles
 import com.intellij.ide.trustedProjects.TrustedProjects
@@ -81,5 +82,59 @@ class UntrustedFileNotificationProviderTest {
       TrustedProjects.setProjectTrusted(outsideFile, true)
       assertNull(provider.collectNotificationData(host, file))
       assertNotNull(provider.collectNotificationData(host, sibling))
+    }
+
+  @Test
+  fun `in an untrusted project a standalone file gets the file banner instead of the project banner`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      Registry.get(TrustedFiles.SAFE_MODE_REGISTRY_KEY).setValue(true, asDisposable())
+      val host = hostFixture.get()
+
+      // an explicit trust state in TrustedPaths outlives the fixture, so restore the snapshot at the end
+      val trustedPathsSnapshot = TrustedPaths.getInstance().state
+      try {
+        TrustedProjects.setProjectTrusted(host, false)
+
+        val outsideFile = tempPath.resolve("outside").resolve("data.txt")
+        Files.createDirectories(outsideFile.parent)
+        Files.writeString(outsideFile, "text")
+        val file = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(outsideFile))
+        TrustedFiles.markExternallyOpened(file)
+
+        // an unmarked outside file follows the project-level trust
+        val unmarkedPath = tempPath.resolve("outside").resolve("unmarked.txt")
+        Files.writeString(unmarkedPath, "text")
+        val unmarkedFile = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(unmarkedPath))
+
+        val insidePath = Path.of(host.basePath!!).resolve("inside.txt")
+        Files.writeString(insidePath, "text")
+        // refreshing under an open project's root fires VFS events synchronously and needs the write-intent lock
+        val insideFile = requireNotNull(writeIntentReadAction {
+          LocalFileSystem.getInstance().refreshAndFindFileByNioFile(insidePath)
+        })
+        TrustedFiles.markExternallyOpened(insideFile)
+
+        val fileProvider = UntrustedFileNotificationProvider()
+        val projectProvider = UntrustedProjectNotificationProvider()
+
+        // the marked outside file gets the file banner, not the project banner
+        assertNotNull(fileProvider.collectNotificationData(host, file))
+        assertNull(projectProvider.collectNotificationData(host, file))
+
+        // the inside file and the unmarked outside file keep the project banner
+        assertNull(fileProvider.collectNotificationData(host, insideFile))
+        assertNotNull(projectProvider.collectNotificationData(host, insideFile))
+        assertNull(fileProvider.collectNotificationData(host, unmarkedFile))
+        assertNotNull(projectProvider.collectNotificationData(host, unmarkedFile))
+
+        // a trusted file location removes both banners for the file; the inside file keeps the project banner
+        TrustedProjects.setProjectTrusted(outsideFile, true)
+        assertNull(fileProvider.collectNotificationData(host, file))
+        assertNull(projectProvider.collectNotificationData(host, file))
+        assertNotNull(projectProvider.collectNotificationData(host, insideFile))
+      }
+      finally {
+        TrustedPaths.getInstance().loadState(trustedPathsSnapshot)
+      }
     }
 }

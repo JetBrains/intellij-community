@@ -2,7 +2,6 @@
 package com.intellij.ide.trustedProjects.impl
 
 import com.intellij.ide.trustedProjects.TrustedFiles
-import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsDialog
 import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator.LocatedProject
@@ -16,14 +15,15 @@ import java.util.function.Function
 import javax.swing.JComponent
 
 /**
- * Shows the "safe mode" banner on editors of files opened in the safe mode inside a trusted project's frame
+ * Shows the "safe mode" banner on editors of files opened in the safe mode
  * (local files outside the project's trusted roots, see [TrustedFiles]).
  *
- * When the hosting project itself isn't trusted, [UntrustedProjectNotificationProvider] owns the editor banner instead.
+ * The banner does not depend on the trust state of the hosting project: a standalone
+ * externally opened file gets this banner, not the project banner
+ * (see [UntrustedProjectNotificationProvider]).
  */
 internal class UntrustedFileNotificationProvider : EditorNotificationProvider, DumbAware {
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
-    if (!TrustedProjects.isProjectTrusted(project)) return null
     if (TrustedFiles.isTrusted(file, project)) return null
     val filePath = file.fileSystem.getNioPath(file) ?: return null
 

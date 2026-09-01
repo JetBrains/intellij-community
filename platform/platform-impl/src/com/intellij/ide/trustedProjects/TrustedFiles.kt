@@ -67,6 +67,32 @@ object TrustedFiles {
   }
 
   /**
+   * Returns `true` when per-file trust governs [file] in [project]: the file is an externally
+   * opened local file outside the project's roots (see [markExternallyOpened]).
+   *
+   * The result does not depend on the trust state of the file location. When the safe mode
+   * is off, or the trust check is disabled, the project-level trust governs every file,
+   * so the method returns `false`.
+   */
+  @ApiStatus.Internal
+  @JvmStatic
+  fun isTrustDecidedByFile(file: VirtualFile, project: Project): Boolean {
+    if (!Registry.`is`(SAFE_MODE_REGISTRY_KEY, false)) {
+      return false
+    }
+    if (TrustedProjects.isTrustedCheckDisabled()) {
+      return false
+    }
+    // the LightEdit project has its own trust model; the default project has no content of its own
+    if (project.isDefault || project.isDisposed || LightEdit.owns(project)) {
+      return false
+    }
+    val nioPath = file.fileSystem.getNioPath(file) ?: return false
+    return ExternallyOpenedFiles.getInstance().isMarked(nioPath) &&
+           TrustedProjectsLocator.locateProject(project).projectRoots.none { nioPath.startsWith(it) }
+  }
+
+  /**
    * Marks [file] as opened from an external source: the system file manager, the command line,
    * a protocol URI, or drag and drop. Only a marked file is a safe-mode candidate.
    *
