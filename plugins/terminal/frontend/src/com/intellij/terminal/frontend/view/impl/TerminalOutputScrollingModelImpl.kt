@@ -76,10 +76,6 @@ class TerminalOutputScrollingModelImpl(
   private val lifetimeDisposable = coroutineScope.asDisposable()
 
   init {
-    // The platform tries to keep the caret's pixel position on every document change, which would randomly scroll the
-    // viewport as terminal output streams in. Disable it: this model is the sole authority over the scroll offset.
-    editor.putUserData(EditorImpl.DISABLE_CARET_POSITION_KEEPING, true)
-
     // Make the platform's wheel/scrollbar scrolling come to rest on a whole grid line (accounting for block insets),
     // instead of the editor's default fixed-line-height increment.
     editor.scrollableIncrementProvider = LineSnappingIncrementProvider()

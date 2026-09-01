@@ -575,6 +575,36 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
   }
 
   @Test
+  fun `scroll position keeps showing the same content when output is trimmed while not following`() =
+    timeoutRunBlocking(context = Dispatchers.EDT) {
+      val editor = createEditor(rows = 3)
+      // Same setup as 'scrolling action stops following the cursor': one line up from the followed bottom lands at
+      // TerminalUi.blockTopInset + 2 * editor.lineHeight there. Trimming one whole line above the viewport must then
+      // shift that position up by one more line height, so the same content ("3", "4", "5") stays on screen.
+      val expected = TerminalUi.blockTopInset + editor.lineHeight
+      // Exactly the length of the initial fill ("1\n2\n3\n4\n5\n6", 11 chars), so appending "\n7" trims exactly "1\n":
+      // one whole line removed from the top, cleanly, with nothing left over from a partially trimmed line.
+      doTest(editor, expected, maxOutputLength = 11) {
+        updateText(0, outputPattern("""
+        1
+        2
+        3
+        4
+        5
+        6<cursor>
+      """.trimIndent()))
+
+        // The platform only keeps the scroll position stable across this trim if the real editor caret sits past the
+        // trimmed range (TerminalKeyilEventsHandlerImpl.syncEditorCaretWithModel does this on every keystroke); simulate
+        // that here since this test never types into the editor.
+        syncCaretWithCursor()
+
+        invokeAction("Terminal.LineUp")
+        updateText(6, outputPattern("7"))
+      }
+    }
+
+  @Test
   fun `page down at the bottom resumes following the cursor`() = timeoutRunBlocking(context = Dispatchers.EDT) {
     val editor = createEditor(rows = 3)
     // Page up unsticks, paging back down to the bottom resumes following, so the later output is followed again.
@@ -602,11 +632,12 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     editor: EditorImpl,
     expectedScrollOffset: Int,
     showCursor: Boolean = true,
+    maxOutputLength: Int = 0,
     operations: suspend ScrollingModelTestContext.() -> Unit,
   ) {
     val scrollingModelScope = childScope("TerminalOutputScrollingModel")
     try {
-      val outputModel = MutableTerminalOutputModelImpl(editor.document, maxOutputLength = 0)
+      val outputModel = MutableTerminalOutputModelImpl(editor.document, maxOutputLength)
       val sessionModel = createSessionModel(showCursor)
       val scrollingModel = TerminalOutputScrollingModelImpl(editor, outputModel, sessionModel, scrollingModelScope)
       editor.putUserData(TerminalOutputScrollingModel.KEY, scrollingModel)
@@ -669,6 +700,10 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
     suspend fun updateCursor(absoluteLineIndex: Long, column: Int) {
       outputModel.updateCursorPosition(absoluteLineIndex, column)
       scrollingModel.awaitEventProcessing()
+    }
+
+    fun syncCaretWithCursor() {
+      editor.caretModel.moveToOffset((outputModel.cursorOffset - outputModel.startOffset).toInt())
     }
 
     fun invokeAction(actionId: String) {
