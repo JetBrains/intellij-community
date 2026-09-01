@@ -156,10 +156,7 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
         strategy.shellProcess.platformProbeStarted.await()
         parentScope.cancel(CancellationException("Test cancellation during shell command"))
 
-        val failure = shouldThrow<RuntimeException> { deployment.await() }
-        failure::class shouldBe RuntimeException::class
-        failure.message shouldBe "Cancellation during target platform retrieval"
-        failure.cause.shouldBeInstanceOf<RuntimeException>().cause.shouldBeInstanceOf<CancellationException>()
+        shouldThrow<CancellationException> { deployment.await() }
 
         strategy.shellProcess.destroyed.await()
         strategy.shellProcess.isAlive shouldBe false

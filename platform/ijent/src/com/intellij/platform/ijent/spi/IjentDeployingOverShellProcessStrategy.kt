@@ -194,7 +194,7 @@ abstract class IjentDeployingOverShellProcessStrategy(
     }
     catch (e: CancellationException) {
       currentCoroutineContext().ensureActive()
-      throw RuntimeException("Cancellation during target platform retrieval", e)
+      throw IjentUnavailableException.unwrapFromCancellationExceptions(e)
     }
   }
 
@@ -228,7 +228,7 @@ abstract class IjentDeployingOverShellProcessStrategy(
     }
     catch (e: CancellationException) {
       currentCoroutineContext().ensureActive()
-      throw RuntimeException("Cancellation during context retrieval", e)
+      throw IjentUnavailableException.unwrapFromCancellationExceptions(e)
     }
 
   final override fun close() {
