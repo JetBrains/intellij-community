@@ -1670,29 +1670,6 @@
           <module name="intellij.java.frontback.impl" />
         </modules-set>
         <modules-set>
-          <module name="intellij.evaluationPlugin" />
-          <module name="intellij.evaluationPlugin.languages.cppClassic" />
-          <module name="intellij.evaluationPlugin.languages.cppRider" />
-          <module name="intellij.evaluationPlugin.languages.csharp" />
-          <module name="intellij.evaluationPlugin.languages.go" />
-          <module name="intellij.evaluationPlugin.languages.java" />
-          <module name="intellij.evaluationPlugin.languages.js" />
-          <module name="intellij.evaluationPlugin.languages.json" />
-          <module name="intellij.evaluationPlugin.languages.kotlin" />
-          <module name="intellij.evaluationPlugin.languages.markdown" />
-          <module name="intellij.evaluationPlugin.languages.php" />
-          <module name="intellij.evaluationPlugin.languages.properties" />
-          <module name="intellij.evaluationPlugin.languages.python" />
-          <module name="intellij.evaluationPlugin.languages.pythonDocker" />
-          <module name="intellij.evaluationPlugin.languages.ruby" />
-          <module name="intellij.evaluationPlugin.languages.rust" />
-          <module name="intellij.evaluationPlugin.languages.sql" />
-          <module name="intellij.evaluationPlugin.languages.terminal" />
-          <module name="intellij.evaluationPlugin.languages.terraform" />
-          <module name="intellij.evaluationPlugin.languages.xml" />
-          <module name="intellij.evaluationPlugin.languages.yaml" />
-        </modules-set>
-        <modules-set>
           <module name="intellij.java.backend" />
           <module name="intellij.java.xml.dom.impl" />
         </modules-set>

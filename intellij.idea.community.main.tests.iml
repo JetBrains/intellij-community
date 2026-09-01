@@ -153,7 +153,6 @@
     <orderEntry type="module" module-name="intellij.relaxng.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vcs.git.coverage" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.rareRefactorings" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.evaluationPlugin.languages.kotlin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.findUsagesMl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.idea.tools.launch" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.jshell.protocol" scope="TEST" />
@@ -184,8 +183,6 @@
     <orderEntry type="module" module-name="intellij.devkit.i18n.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.eclipse.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.editorconfig.backend.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.evaluationPlugin.languages.java.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.evaluationPlugin.languages.kotlin.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.findUsagesMl.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.completion.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.java.maven.tests" scope="TEST" />

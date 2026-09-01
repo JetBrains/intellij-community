@@ -997,7 +997,6 @@
       AddAntBuildFile
     ExternalToolsGroup
     com.intellij.mcpserver.actions.ShowMcpToolsAction
-    EvaluationDatasetTool
     com.jetbrains.python.console.RunPythonOrDebugConsoleAction
     PyPackagingMenu
       CreateSetupPy
@@ -3147,7 +3146,6 @@
   ToolsXmlGroup
   ExternalToolsGroup
   com.intellij.mcpserver.actions.ShowMcpToolsAction
-  EvaluationDatasetTool
   com.jetbrains.python.console.RunPythonOrDebugConsoleAction
   PyPackagingMenu
   DevKit.Bootstrap

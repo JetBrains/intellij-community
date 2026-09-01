@@ -1200,12 +1200,6 @@ plugins/env-files-support
 plugins/env-files-support/java
 plugins/env-files-support/kotlin
 plugins/env-files-support/python
-plugins/evaluation-plugin
-plugins/evaluation-plugin/core
-plugins/evaluation-plugin/languages
-plugins/evaluation-plugin/languages/java
-plugins/evaluation-plugin/languages/kotlin
-plugins/evaluation-plugin/languages/python
 plugins/extended-toolwindows-ui
 plugins/extended-toolwindows-ui/frontend
 plugins/filePrediction
