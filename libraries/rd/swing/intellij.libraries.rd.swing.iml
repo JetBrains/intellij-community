@@ -9,21 +9,21 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="rd-swing" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-swing:2026.2.5">
+        <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-swing:2026.3.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-swing/2026.2.5/rd-swing-2026.2.5.jar">
-              <sha256sum>79d038eb2cb05e5122d204607ee2336d9ec40d21ed2a2cb665b0b112cbfed0e1</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-swing/2026.3.0/rd-swing-2026.3.0.jar">
+              <sha256sum>3f349b66c1217f02e339744284bba2c4e4645a7c627be3b5dd452f93b39994a4</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-swing/2026.2.5/rd-swing-2026.2.5.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-swing/2026.3.0/rd-swing-2026.3.0.jar!/" />
         </CLASSES>
         <JAVADOC>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-swing/2026.2.5/rd-swing-2026.2.5-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-swing/2026.3.0/rd-swing-2026.3.0-javadoc.jar!/" />
         </JAVADOC>
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-swing/2026.2.5/rd-swing-2026.2.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-swing/2026.3.0/rd-swing-2026.3.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
