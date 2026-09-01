@@ -40,6 +40,8 @@
     <module name="intellij.libraries.guava"/>
     <module name="intellij.libraries.kotlin.gradle.plugin.idea"/>
     <module name="intellij.libraries.kotlin.gradle.plugin.idea.proto"/>
+    <module name="intellij.libraries.kotlin.gradle.plugin.idea.browser.debug"/>
+    <module name="intellij.libraries.kotlin.reflect"/>
     <module name="intellij.libraries.kotlin.tooling.core"/>
     <module name="intellij.libraries.kotlinc.allopen.compiler.plugin"/>
     <module name="intellij.libraries.kotlinc.analysis.api"/>

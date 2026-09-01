@@ -7,6 +7,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" scope="RUNTIME" />
     <orderEntry type="module-library" exported="">
       <library name="kotlin-gradle-plugin-idea-browser-debug" type="repository">
         <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-gradle-plugin-idea-browser-debug:2.5.0-dev-6142">

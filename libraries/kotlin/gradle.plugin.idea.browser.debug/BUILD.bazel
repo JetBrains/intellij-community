@@ -14,7 +14,12 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlin-gradle-plugin-idea-browser-debug-kotlin-gradle-plugin-idea-browser-debug"],
-    runtime_deps = ["@lib//:libraries-kotlin-gradle-plugin-idea-browser-debug-kotlin-gradle-plugin-idea-browser-debug"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+        "@lib//:libraries-kotlin-gradle-plugin-idea-browser-debug-kotlin-gradle-plugin-idea-browser-debug",
+    ],
 )
 
 jvm_library(
@@ -28,7 +33,12 @@ jvm_library(
     module_name = "intellij.libraries.kotlin.gradle.plugin.idea.browser.debug",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-kotlin-gradle-plugin-idea-browser-debug-kotlin-gradle-plugin-idea-browser-debug"],
-    runtime_deps = [":gradle.plugin.idea.browser.debug"],
+    runtime_deps = [
+        # do not sort,
+        ":gradle.plugin.idea.browser.debug",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.libraries.kotlin.gradle.plugin.idea.browser.debug` end
 
