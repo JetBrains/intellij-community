@@ -97,6 +97,12 @@ object GoSdkDownloaderFacade {
       downloadAndInstallGoSdk(version, platformInfo, installPath)
     }
 
+    // The caller writes this path into the `GOROOT` of the IDE. An absent directory is not a usable SDK:
+    // the IDE drops it and takes the `GOROOT` of the host machine instead. Then the test runs against the wrong Go.
+    if (!goHome.exists()) {
+      throw DownloadGoSdkException("The Go SDK $version is not at $goHome after the download")
+    }
+
     return GoSdkPaths(homePath = goHome, installPath = installPath)
   }
 
@@ -117,6 +123,8 @@ object GoSdkDownloaderFacade {
 
       downloadedFile.deleteIfExists()
     }
+    // `withRetryBlocking` returns null after the last try, and it logs the error only.
+    ?: throw DownloadGoSdkException("Failed to download and install the Go SDK $version from $url. See the log above.")
   }
 
   private fun getTargetPlatform(): EelPlatform? {
