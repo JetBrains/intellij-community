@@ -5,8 +5,10 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.trustedProjects.TrustedFiles;
 import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.ide.trustedProjects.TrustedProjectsListener;
+import com.intellij.ide.trustedProjects.TrustedProjectsLocator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -102,21 +104,23 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     ApplicationManager.getApplication().getMessageBus().connect(this)
       .subscribe(TrustedProjectsListener.TOPIC, new TrustedProjectsListener() {
         @Override
-        public void onProjectTrusted(@NotNull Project project) {
-          resetAfterTrustChange(project);
+        public void onProjectTrusted(@NotNull TrustedProjectsLocator.LocatedProject locatedProject) {
+          resetAfterTrustChange(locatedProject);
         }
 
         @Override
-        public void onProjectUntrusted(@NotNull Project project) {
-          resetAfterTrustChange(project);
+        public void onProjectUntrusted(@NotNull TrustedProjectsLocator.LocatedProject locatedProject) {
+          resetAfterTrustChange(locatedProject);
         }
       });
     JsonSchemaVfsListener.startListening(project);
     myCatalogManager.startUpdates(this);
   }
 
-  private void resetAfterTrustChange(@NotNull Project project) {
-    if (myProject == project) {
+  private void resetAfterTrustChange(@NotNull TrustedProjectsLocator.LocatedProject locatedProject) {
+    // a per-file trust grant fires a path-only event with a null project; it can affect this project's files
+    Project project = locatedProject.getProject();
+    if (project == null || project == myProject) {
       reset();
     }
   }
@@ -200,22 +204,22 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
   /**
    * Restricts {@code $schema}/{@code $ref} references originating in a project before the user has granted trust
    * (IJPL-249802, CWE-22 / CWE-862 / CWE-918).
+   * Also restricts references from a file in the safe mode (IJPL-254130).
    */
   @Override
   public boolean shouldRestrictSchemaReferences(@NotNull VirtualFile referent) {
+    if (!TrustedFiles.isTrusted(referent, myProject)) return true;
     if (TrustedProjects.isProjectTrusted(myProject)) return false;
     ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(myProject);
     return fileIndex.isInContent(referent) || isPathInsideProject(toPath(referent.getPath(), false));
   }
 
   private boolean isForbiddenBeforeResolution(@NotNull String resolvedUrl) {
-    if (TrustedProjects.isProjectTrusted(myProject)) return false;
     if (!LocalFileSystem.PROTOCOL.equals(VirtualFileManager.extractProtocol(resolvedUrl))) return true;
     return !isPathInsideProject(toPath(VirtualFileManager.extractPath(resolvedUrl), false));
   }
 
   private boolean isForbiddenAfterResolution(@NotNull VirtualFile resolved) {
-    if (TrustedProjects.isProjectTrusted(myProject)) return false;
     if (!resolved.isInLocalFileSystem()) return true;
     try {
       return !isPathInsideProject(resolved.toNioPath().toRealPath());

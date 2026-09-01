@@ -1,8 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema;
 
+import com.intellij.ide.trustedProjects.TrustedFiles;
 import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,6 +37,8 @@ import java.util.Objects;
  * </ul>
  * The local cases use real files on disk (under and next to the project base directory) because the guard intentionally
  * applies only to local files; the in-memory test file system would not exercise it.
+ * <p>
+ * Also covers IJPL-254130: the same guard applies to a safe-mode file (see {@link TrustedFiles}) in a trusted project.
  */
 public class JsonSchemaUntrustedResolveTest extends BasePlatformTestCase {
 
@@ -275,6 +279,78 @@ public class JsonSchemaUntrustedResolveTest extends BasePlatformTestCase {
     if (remoteHandle != null) {
       assertFalse("A remote schema must resolve to a non-local handle", remoteHandle.isInLocalFileSystem());
     }
+  }
+
+  public void testSafeModeFileInTrustedProjectDoesNotResolveRemoteOrOutsideSchema() throws IOException {
+    Registry.get(TrustedFiles.SAFE_MODE_REGISTRY_KEY).setValue(true, getTestRootDisposable());
+    warmUpJsonSchemaService();
+    Path baseDir = projectBaseDir();
+    Path outsideDir = Files.createDirectories(baseDir.resolveSibling(baseDir.getFileName() + "-safe-mode"));
+    myPathsToDelete.add(outsideDir);
+    VfsRootAccess.allowRootAccess(getTestRootDisposable(), outsideDir.toString());
+    Path schemaPath = Files.writeString(outsideDir.resolve("schema.json"), SCHEMA_TEXT);
+    String remoteReference = "http://schema.example.test/attacker.json";
+    Path remoteDataPath = Files.writeString(outsideDir.resolve("remote-data.json"), DATA_TEXT_TEMPLATE.formatted(remoteReference));
+    Path localDataPath = Files.writeString(outsideDir.resolve("local-data.json"), DATA_TEXT_TEMPLATE.formatted("schema.json"));
+
+    VirtualFile remoteDataFile = findLocalFile(remoteDataPath);
+    VirtualFile localDataFile = findLocalFile(localDataPath);
+    TrustedFiles.markExternallyOpened(remoteDataFile);
+    TrustedFiles.markExternallyOpened(localDataFile);
+    JsonSchemaService service = JsonSchemaService.Impl.get(getProject());
+
+    TrustedProjects.setProjectTrusted(getProject(), true);
+    assertFalse("Test precondition: the marked outside file must be in the safe mode",
+                TrustedFiles.isTrusted(localDataFile, getProject()));
+    assertNull("A remote schema referenced from a safe-mode file must not resolve in a trusted project",
+               service.findSchemaFileByReference(remoteReference, remoteDataFile));
+    assertNull("An outside-project schema referenced from a safe-mode file must not resolve in a trusted project",
+               service.findSchemaFileByReference("schema.json", localDataFile));
+
+    // Cache the unresolved selection: the trust grant below must invalidate it through the path-only event.
+    PsiFile localDataPsiFile = PsiManager.getInstance(getProject()).findFile(localDataFile);
+    assertNotNull(localDataPsiFile);
+    assertNull("The forbidden schema selection must initially be cached as unresolved",
+               service.getSchemaObject(localDataPsiFile));
+
+    // Trusting the file location lifts the safe mode; resolution works again.
+    TrustedProjects.setProjectTrusted(localDataPath, true);
+    VirtualFile schemaFile = findLocalFile(schemaPath);
+    assertEquals("The outside schema must resolve once the file location is trusted",
+                 schemaFile, service.findSchemaFileByReference("schema.json", localDataFile));
+    assertNotNull("Trusting the file location must immediately invalidate the cached unresolved schema",
+                  service.getSchemaObject(localDataPsiFile));
+  }
+
+  public void testInProjectReferentIsNotRestrictedByMarkedOutsideFile() throws IOException {
+    Registry.get(TrustedFiles.SAFE_MODE_REGISTRY_KEY).setValue(true, getTestRootDisposable());
+    warmUpJsonSchemaService();
+    Path baseDir = projectBaseDir();
+    Path outsideDir = Files.createDirectories(baseDir.resolveSibling(baseDir.getFileName() + "-safe-mode-neighbor"));
+    myPathsToDelete.add(outsideDir);
+    VfsRootAccess.allowRootAccess(getTestRootDisposable(), outsideDir.toString());
+    Path outsideSchemaPath = Files.writeString(outsideDir.resolve("schema.json"), SCHEMA_TEXT);
+    Path outsideDataPath = Files.writeString(outsideDir.resolve("data.json"), DATA_TEXT_TEMPLATE.formatted("schema.json"));
+    Path schemaDir = Files.createDirectories(baseDir.resolve("schemas"));
+    myPathsToDelete.add(schemaDir);
+    Path schemaPath = Files.writeString(schemaDir.resolve("schema.json"), SCHEMA_TEXT);
+    Path dataPath = Files.writeString(baseDir.resolve("data.json"), DATA_TEXT_TEMPLATE.formatted("schemas/schema.json"));
+    myPathsToDelete.add(dataPath);
+
+    VirtualFile outsideDataFile = findLocalFile(outsideDataPath);
+    TrustedFiles.markExternallyOpened(outsideDataFile);
+    VirtualFile dataFile = findLocalFile(dataPath);
+    VirtualFile schemaFile = findLocalFile(schemaPath);
+    JsonSchemaService service = JsonSchemaService.Impl.get(getProject());
+
+    TrustedProjects.setProjectTrusted(getProject(), true);
+    assertNull("Test precondition: the marked outside file must stay restricted",
+               service.findSchemaFileByReference("schema.json", outsideDataFile));
+    assertEquals("An in-project referent must keep resolving an in-project schema",
+                 schemaFile, service.findSchemaFileByReference("schemas/schema.json", dataFile));
+    String outsideReference = "../" + outsideDir.getFileName() + "/schema.json";
+    assertEquals("An in-project referent in a trusted project must keep resolving a schema outside the project",
+                 findLocalFile(outsideSchemaPath), service.findSchemaFileByReference(outsideReference, dataFile));
   }
 
   /** Touches the fixture so the JSON plugin content module (and its {@link JsonSchemaService}) is loaded. */
