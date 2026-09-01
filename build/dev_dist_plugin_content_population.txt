@@ -15,6 +15,7 @@ intellij.aidebugger
 intellij.aiplayground
 intellij.air.plugin
 intellij.amper
+intellij.amper.plugin
 intellij.android.compose-ide-plugin
 intellij.android.design-plugin.descriptor
 intellij.android.gradle.declarative.lang.ide

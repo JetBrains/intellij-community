@@ -15,11 +15,20 @@
 # layout variant. `descriptor:` is keyed by `<main module>` or `<main module>/<variant>`, because a descriptor
 # deviation is a fact about one variant. Each producer rewrites only its own part.
 #
-# No row is a Bazel label, and no row is a path. A label carries the artifact version of a library, and a path
-# restates a rule the rule already derives.
+# No row is a Bazel label, because a label carries the artifact version of a library. A row is a path only
+# where the layout names a jar that no rule derives, which is what `member_jars` states.
 content:
   # Modules the layout packs that this plugin's `<content>` does not name - a `PluginLayout.withModule` call.
   extra_members:
   - "intellij.junit.rt"
   - "intellij.junit.v5.rt"
   - "intellij.junit.v6.rt"
+  # The jars this plugin packs a member into, where `PluginLayout.withModule(name, jarName)` names the jar. The
+  # whole jar set of the member, relative to the plugin's `lib/`, and the plugin's main jar name means the main jar.
+  member_jars:
+    "intellij.junit.rt":
+    - "junit-rt.jar"
+    "intellij.junit.v5.rt":
+    - "junit5-rt.jar"
+    "intellij.junit.v6.rt":
+    - "junit6-rt.jar"

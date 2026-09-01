@@ -15,8 +15,8 @@
 # layout variant. `descriptor:` is keyed by `<main module>` or `<main module>/<variant>`, because a descriptor
 # deviation is a fact about one variant. Each producer rewrites only its own part.
 #
-# No row is a Bazel label, and no row is a path. A label carries the artifact version of a library, and a path
-# restates a rule the rule already derives.
+# No row is a Bazel label, because a label carries the artifact version of a library. A row is a path only
+# where the layout names a jar that no rule derives, which is what `member_jars` states.
 content:
   # Modules the layout packs that this plugin's `<content>` does not name - a `PluginLayout.withModule` call.
   extra_members:
@@ -31,3 +31,27 @@ content:
   - "intellij.maven.server.m36.impl"
   - "intellij.maven.server.m40"
   - "intellij.maven.server.telemetry"
+  # The jars this plugin packs a member into, where `PluginLayout.withModule(name, jarName)` names the jar. The
+  # whole jar set of the member, relative to the plugin's `lib/`, and the plugin's main jar name means the main jar.
+  member_jars:
+    "intellij.maven.artifactResolver.common":
+    - "artifact-resolver-m31.jar"
+    "intellij.maven.artifactResolver.m31":
+    - "artifact-resolver-m31.jar"
+    "intellij.maven.server":
+    - "maven-server.jar"
+    "intellij.maven.server.eventListener":
+    - "intellij.maven.rt/maven-event-listener.jar"
+    "intellij.maven.server.indexer":
+    - "intellij.maven.server.indexer/maven-server-indexer.jar"
+    "intellij.maven.server.m3.common":
+    - "intellij.maven.server3/maven3-server-common.jar"
+    "intellij.maven.server.m3.impl":
+    - "intellij.maven.server3/maven3-server.jar"
+    "intellij.maven.server.m36.impl":
+    - "intellij.maven.server36/maven36-server.jar"
+    "intellij.maven.server.m40":
+    - "intellij.maven.server4/maven40-server.jar"
+    "intellij.maven.server.telemetry":
+    - "intellij.maven.server3/maven-server-telemetry.jar"
+    - "intellij.maven.server4/maven-server-telemetry.jar"
