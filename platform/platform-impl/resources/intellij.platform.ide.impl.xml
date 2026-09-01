@@ -134,6 +134,8 @@
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.projectStoreClassProvider" interface="com.intellij.openapi.project.impl.ProjectStoreFactory" dynamic="false"/>
     <extensionPoint qualifiedName="com.intellij.configFolderChangedListener" interface="com.intellij.openapi.project.impl.shared.ConfigFolderChangedListener" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.editorAudioCueDetector" interface="com.intellij.ide.audioCues.EditorAudioCueDetector" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.audioCueProvider" interface="com.intellij.ide.audioCues.AudioCueProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.jps.plugin"
                     beanClass="com.intellij.jps.impl.JpsPluginBean" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.groupConfigurable"
@@ -442,6 +444,18 @@
       key="ide.windows.main.menu.focus.on.alt"
       defaultValue="true"
       description="Enable Alt key to focus the main menu bar on Windows"
+      restartRequired="true"
+    />
+    <registryKey
+      key="ide.audio.cues.enabled"
+      defaultValue="false"
+      description="Enables the audio cues feature. The feature and its settings page are hidden when this is off."
+      restartRequired="false"
+    />
+    <registryKey
+      key="ide.audio.cues.editor.settle.delay.ms"
+      defaultValue="50"
+      description="How long the caret must rest, in milliseconds, before editor audio cues are detected"
       restartRequired="true"
     />
     <registryKey
@@ -909,6 +923,13 @@
                              bundle="messages.IdeBundle"
                              key="configurable.notifications.name"/>
     <search.optionContributor implementation="com.intellij.notification.impl.NotificationSearchableOptionContributor"/>
+    <!-- Audio Cues -->
+    <applicationConfigurable groupId="appearance"
+                             groupWeight="140"
+                             id="ide.audiocues"
+                             provider="com.intellij.ide.audioCues.AudioCuesConfigurableProvider"
+                             bundle="messages.IdeBundle"
+                             key="configurable.AudioCuesConfigurable.display.name"/>
     <!-- Plugins -->
     <applicationConfigurable groupId="root"
                              groupWeight="55"
@@ -1154,6 +1175,15 @@
     <search.topHitProvider implementation="com.intellij.ide.ui.OptionsTopHitProvider$ProjectLevelProvidersAdapter"/>
     <postStartupActivity implementation="com.intellij.ide.ui.localization.statistics.StartupStatisticsListener"/>
     <postStartupActivity implementation="com.intellij.xml.breadcrumbs.BreadcrumbsInitializingActivity"/>
+    <applicationService serviceImplementation="com.intellij.ide.audioCues.EditorAudioCuesManager"
+                        preload="notHeadless"/>
+    <applicationService serviceInterface="com.intellij.ide.audioCues.AudioCuePlayer"
+                        serviceImplementation="com.intellij.ide.audioCues.AudioCuePlayerImpl"/>
+    <applicationService serviceImplementation="com.intellij.ide.audioCues.AudioCuesSettings"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.ide.audioCues.AudioCueIdValidationRule"/>
+    <audioCueProvider implementation="com.intellij.ide.audioCues.IdeAudioCueProvider"/>
+    <editorAudioCueDetector implementation="com.intellij.ide.audioCues.ErrorWarningAudioCueDetector"/>
+    <editorAudioCueDetector implementation="com.intellij.ide.audioCues.FoldedCodeAudioCueDetector"/>
     <applicationConfigurable parentId="preferences.editor" id="editor.breadcrumbs"
                              key="configurable.breadcrumbs" bundle="messages.ApplicationBundle"
                              instance="com.intellij.xml.breadcrumbs.BreadcrumbsConfigurable"/>

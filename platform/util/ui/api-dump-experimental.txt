@@ -8,6 +8,8 @@ f:com.intellij.ui.ComponentUtil
 *f:com.intellij.util.ui.JLabelUtil
 - sf:INSTANCE:com.intellij.util.ui.JLabelUtil
 - sf:setTrimOverflow(javax.swing.JLabel,Z):V
+*f:com.intellij.util.ui.SoundsKt
+- sf:playSound(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.util.ui.UIUtil
 - *s:colorHashCode(java.awt.Color):I
 - *s:equalColors(java.awt.Color,java.awt.Color):Z

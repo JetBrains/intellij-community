@@ -1140,6 +1140,7 @@
         <reference ref="NotificationTestAction"/>
         <reference ref="TestMessageBoxAction"/>
         <reference ref="ShowCountdownDialog"/>
+        <reference ref="PlayTestSoundAction"/>
         <separator/>
         <reference ref="ShowSplash"/>
         <reference ref="ColorBlindnessTest"/>

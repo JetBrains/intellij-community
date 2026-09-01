@@ -71,6 +71,9 @@
   <xi:include href="/META-INF/VcsActions.xml"/>
 
   <extensions defaultExtensionNs="com.intellij">
+    <editorAudioCueDetector implementation="com.intellij.openapi.vcs.ex.LineStatusTrackerAudioCueDetector"/>
+    <audioCueProvider implementation="com.intellij.openapi.vcs.ex.VcsAudioCueProvider"/>
+
     <fileType language="IgnoreLang" extensions="ignore" fieldName="INSTANCE" name="IgnoreLang file"
               implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileType"/>
     <psi.referenceContributor language="IgnoreLang"

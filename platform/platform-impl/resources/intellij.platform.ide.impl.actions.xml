@@ -658,6 +658,7 @@
     <action id="NotificationTestAction" internal="true" class="com.intellij.notification.impl.actions.NotificationTestAction"/>
     <action id="TestMessageBoxAction" internal="true" class="com.intellij.diagnostic.TestMessageBoxAction"/>
     <action id="ShowCountdownDialog" internal="true" class="com.intellij.openapi.updateSettings.impl.ShowCountdownDialogAction"/>
+    <action id="PlayTestSoundAction" internal="true" class="com.intellij.ide.audioCues.PlayTestSoundAction"/>
     <action id="ShowSplash" internal="true" class="com.intellij.ui.ShowSplashAction"/>
     <action id="ColorBlindnessTest" internal="true" class="com.intellij.ide.ui.ColorBlindnessInternalAction"/>
     <action id="UIDefaults" internal="true" class="com.intellij.ui.ShowUIDefaultsAction">

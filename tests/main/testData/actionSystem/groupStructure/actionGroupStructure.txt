@@ -744,6 +744,7 @@
         NotificationTestAction
         TestMessageBoxAction
         ShowCountdownDialog
+        PlayTestSoundAction
         <separator>
         ShowSplash
         ColorBlindnessTest
