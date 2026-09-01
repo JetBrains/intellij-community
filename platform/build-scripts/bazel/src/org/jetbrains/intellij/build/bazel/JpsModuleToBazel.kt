@@ -48,6 +48,37 @@ private const val CONTENT_REPORT_USAGE: String =
   "deletes its build output, the report with it."
 
 /**
+ * What `--verify-dev-dist-plan=` takes, and how to get the file it names.
+ *
+ * The plan is a pure side output of a fragment action, so a plain build writes none: the flag has to be on, and the
+ * output group has to be asked for. `_declare_plan` in `intellij_dev_dist.bzl` is the declaration.
+ */
+private const val DEV_DIST_PLAN_USAGE: String =
+  "--verify-dev-dist-plan=<file> compares the jars this model derives for a plugin against the jars a dev-distribution\n" +
+  "fragment really packed. Repeat it once per fragment.\n" +
+  "\n" +
+  "A fragment writes its plan only when asked:\n" +
+  "  ./bazel.cmd build //build:idea_dev_plugins_plugins_rest \\\n" +
+  "    --@community//platform/build-scripts/bazel-rules:dev_dist_plans \\\n" +
+  "    --output_groups=+dev_dist_plans\n" +
+  "\n" +
+  "The file is '<target name>.plan.yaml' beside the fragment's other outputs."
+
+/**
+ * What a differing plan comparison prints, which names the repair for most of the remainder.
+ *
+ * Beside the two usage strings above, because all three are what this entry point says about one mode.
+ */
+private const val PLUGIN_JAR_PLAN_REMAINDER: String =
+  "The model and the run name different jars above. A missing or stale `member_jars` row causes most of it. The\n" +
+  "derivation co-packs a `PluginLayout.withModule(name, jarName)` member with no row into the plugin's main jar. That\n" +
+  "over-states the main jar and leaves the member's own jar unnamed. The comparison then counts one fact twice, once\n" +
+  "as a difference and once as a hold-out.\n" +
+  "\n" +
+  "The rows are written off a distribution build's content report:\n" +
+  "  ./build/jpsModelToBazel.cmd --write-dev-dist-residue --content-report=<zip or directory>"
+
+/**
  To enable debug logging in Bazel: --sandbox_debug --verbose_failures --define=kt_trace=1
  */
 internal class JpsModuleToBazel {
@@ -67,11 +98,17 @@ internal class JpsModuleToBazel {
       var writeDevDistResidue = false
       var verifyDevDistResidue = false
       val contentReports = ArrayList<Path>()
+      val devDistPlans = ArrayList<Path>()
 
       for (arg in args) {
         when {
           arg == "--write-dev-dist-residue" -> writeDevDistResidue = true
           arg == "--verify-dev-dist-residue" -> verifyDevDistResidue = true
+          arg.startsWith("--verify-dev-dist-plan=") -> {
+            val plan = Path.of(arg.substringAfter("=")).toAbsolutePath().normalize()
+            check(plan.isRegularFile()) { "Dev-distribution plan $plan must be an existing file. $DEV_DIST_PLAN_USAGE" }
+            devDistPlans.add(plan)
+          }
           arg.startsWith("--content-report=") -> {
             contentReports.addAll(resolveContentReports(Path.of(arg.substringAfter("="))))
           }
@@ -143,8 +180,12 @@ internal class JpsModuleToBazel {
       // first, generate community to collect libs that used by community (to separate community and ultimate libs)
       val communityResult = generator.generateModuleBuildFiles(moduleList, isCommunity = true, skipGenerationOfPluginTargets)
       val ultimateResult = generator.generateModuleBuildFiles(moduleList, isCommunity = false, skipGenerationOfPluginTargets)
+      val moduleTargets = communityResult.moduleTargets + ultimateResult.moduleTargets
+      // Before the first save, so that a target-name collision fails the run with the tree as it was found.
+      checkOnePluginPerJarTargetPackage(pluginJarPackagesOf(moduleTargets))
       generator.save(communityResult.moduleBuildFiles)
       generator.save(ultimateResult.moduleBuildFiles)
+      reportMovablePluginJars(moduleTargets)
 
       generator.generateLibs(jarRepositories = jarRepositories, m2Repo = m2RepoPath)
       generateDebuggerTestDepsModuleBazel(
@@ -249,6 +290,18 @@ internal class JpsModuleToBazel {
           reportSkippedPartialRemovals(result)
         }
       }
+
+      // After the residue, for the same reason it comes after generation: a check must not change what the run writes.
+      if (devDistPlans.isNotEmpty()) {
+        println()
+        println("dev-dist plan: ${devDistPlans.size} fragment plan(s)")
+        val agreed = reportPluginJarPlanComparison(moduleList = moduleList, context = generator, plans = devDistPlans)
+        if (!agreed) {
+          println()
+          println(PLUGIN_JAR_PLAN_REMAINDER)
+          exitProcess(1)
+        }
+      }
     }
 
     /**
@@ -308,7 +361,8 @@ internal class JpsModuleToBazel {
       }
       println()
       println("Every other change of this run is written. To let these rows leave, either add the reports of the")
-      println("products that are missing above, or delete the row from that plugin's 'dev-dist.yaml' by hand and let")
+      println("products that are missing above, or delete the plugin's row from")
+      println("'$PLUGIN_CONTENT_RESIDUE_FILE_NAME' by hand and let")
       println("--verify-dev-dist-residue confirm it.")
       println()
       println(CONTENT_REPORT_USAGE)
@@ -322,7 +376,7 @@ internal class JpsModuleToBazel {
      * residue together no longer reproduce what those builds pack, and it never compares the derivation against itself.
      *
      * The run still regenerates the tree, because the synthesis needs the whole module list. `verify` withholds the
-     * residue writes alone, so this mode is a check on `dev-dist.yaml` and not a read-only run of the converter.
+     * residue writes alone, so this mode is a check on the residue and not a read-only run of the converter.
      *
      * The repair command names every zip this run read. A repair against fewer products than the check would fit the
      * residue to those products, which is the corruption this gate exists to prevent.
@@ -332,7 +386,7 @@ internal class JpsModuleToBazel {
     private fun reportStaleDevDistResidues(result: DevDistResidueWriteResult, contentReports: List<Path>) {
       println()
       if (result.divergent.isNotEmpty()) {
-        println("${result.divergent.size} plugins have a stale 'dev-dist.yaml':")
+        println("${result.divergent.size} plugins have a stale row set in '$PLUGIN_CONTENT_RESIDUE_FILE_NAME':")
         for (divergence in result.divergent) {
           print(devDistResidueDivergenceReport(divergence))
         }

@@ -4,12 +4,8 @@ package org.jetbrains.intellij.build.bazel
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TemporaryFolder
-import kotlin.io.path.writeText
 
 internal class PluginContentModuleJarTest {
   @Test
@@ -203,49 +199,6 @@ internal class PluginContentModuleJarTest {
 
     assertEquals(emptyMap<String, Set<String>>(), foldPluginContentCandidacy(listOf(listOf(simple, takenOut)), emptyMap()))
     assertEquals(emptyMap<String, Set<String>>(), foldPluginContentCandidacy(listOf(listOf(takenOut, simple)), emptyMap()))
-  }
-
-  @JvmField
-  @Rule
-  val temporaryFolder: TemporaryFolder = TemporaryFolder()
-
-  @Test
-  fun `an override line names a module and its libraries`() {
-    val overrides = readOverrides(
-      "# a comment\n" +
-      "\n" +
-      "+intellij.plain\n" +
-      "+intellij.merging first second\n" +
-      "-intellij.vetoed\n"
-    )
-
-    assertEquals(mapOf("intellij.plain" to emptySet(), "intellij.merging" to setOf("first", "second"), "intellij.vetoed" to null), overrides)
-  }
-
-  @Test
-  fun `an absent overrides file records nothing`() {
-    assertEquals(emptyMap<String, Set<String>?>(), readPluginContentCandidateOverrides(temporaryFolder.root.toPath().resolve("absent.txt")))
-  }
-
-  @Test
-  fun `a line this reader cannot state is an error`() {
-    // Each of these would otherwise change how a module is packed, and a jar that differs from the distribution's is
-    // not noticed until class-load time. The expected clause differs per line, because every message starts with the
-    // file name and asserting on that would pass for any of the three.
-    for ((line, clause) in listOf(
-      "intellij.unsigned" to "a line must start with",
-      "+" to "a line must name a module",
-      "-intellij.vetoed with-a-library" to "a `-` line records no library",
-    )) {
-      val failure = assertThrows(IllegalStateException::class.java) { readOverrides(line + "\n") }
-      assertTrue(failure.message, failure.message!!.contains(clause))
-    }
-  }
-
-  private fun readOverrides(text: String): Map<String, Set<String>?> {
-    val file = temporaryFolder.root.toPath().resolve(PLUGIN_CONTENT_CANDIDATE_OVERRIDES_FILE_NAME)
-    file.writeText(text)
-    return readPluginContentCandidateOverrides(file)
   }
 
   @Test

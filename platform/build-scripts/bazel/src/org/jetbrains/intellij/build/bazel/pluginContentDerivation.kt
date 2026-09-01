@@ -10,22 +10,41 @@ internal class DerivedPluginContent(
   /** The members the model states, without the main module - the counterpart of the report's member set. */
   @JvmField val memberNames: List<String>,
   /**
-   * Where this producer offered to put each member's jar, by module name.
+   * Where this producer puts each member's jar, by module name; see [DerivedPluginCandidacy.memberPaths].
    *
-   * The offer, not the verdict: [resolvePluginContent] applies the eligibility gate to it, exactly as it does to the
-   * report's own map. Kept so that the residue writer reads the relation off the producer instead of assuming the
-   * convention, which stops holding as soon as a residue states a destination.
+   * Every member, whatever its eligibility and whatever the residue vetoes. A member absent from the map has no
+   * derivable jar at all, and both readers then co-pack it into the plugin's main jar.
+   */
+  @JvmField val memberPaths: Map<String, String>,
+  /**
+   * Where this producer hands each member's jar over, by module name.
+   *
+   * The eligible half of [memberPaths], with the `raw_members` rows taken out. [resolvePluginContent] reads it as the
+   * hand-off itself, exactly as it reads the report's own map, so a member here loses its raw output from the fragment.
+   *
+   * [withPluginJarHandOff] adds the relations the movable-set decision found, so this always states what
+   * [resolvePluginContent] was given.
    */
   @JvmField val prepackedPaths: Map<String, String>,
+  /**
+   * The members the plugin's own `<content>` names, which is what splits `contentModules` from `modules`.
+   *
+   * Carried out of the walk rather than walked again. [derivePluginJars] needs the same set, and a second
+   * [derivePluginContentClosure] call re-reads the plugin's descriptor once per include round for every one of the 516
+   * plugins of the population.
+   */
+  @JvmField val closureMembers: Set<String>,
+  /** See [DerivedPluginCandidacy.memberLibraries]. */
+  @JvmField val memberLibraries: Map<String, Set<String>?>,
   /** What [resolvePluginContent] would have printed. Collected rather than printed: the writer only measures. */
   @JvmField val warnings: List<String>,
 )
 
 /**
- * What the model cannot answer about one plugin's content, which is what a `dev-dist.yaml` beside the plugin would hold.
+ * What the model cannot answer about one plugin's content, which is what one plugin's residue rows hold.
  *
  * [PluginContentResidue.NONE] means pure convention, and the Phase-0 measurement is what the fields are: every one of
- * them is a class the comparison found and no field is speculative. A plugin layout decides all four, and evaluating a
+ * them is a class the comparison found and no field is speculative. A plugin layout decides each field, and evaluating a
  * product layout is the work this generator exists to keep out of a fragment action.
  */
 internal class PluginContentResidue(
@@ -39,6 +58,8 @@ internal class PluginContentResidue(
   @JvmField val vetoedMembers: Set<String> = emptySet(),
   /** See [ContentResidueSection.separateJars]. */
   @JvmField val separateJars: Set<String> = emptySet(),
+  /** See [ContentResidueSection.memberJars]. Read by [derivePluginJars] alone, and never by the generation path. */
+  @JvmField val memberJars: Map<String, Set<String>> = emptyMap(),
   /** See [ContentResidueSection.mergedLibraries]. */
   @JvmField val mergedLibraries: Map<String, Set<String>> = emptyMap(),
   /** See [ContentResidueSection.libraries]. */
@@ -50,9 +71,11 @@ internal class PluginContentResidue(
 }
 
 /**
- * [derivePluginContent] as the generator asks it: the result only, and nothing for a module outside the population.
+ * [derivePluginContent] over one plugin, and `null` for a module outside the population.
  *
- * The one producer at the emit site. It answers an empty result for a module the dev distribution states no content for.
+ * The first of the two passes [computeDerivedPluginPacking] makes, and no caller outside it. `null` rather than an empty
+ * result, because the generator reads two things off one derivation - the content leaf and the movable jar set - and a
+ * module the dev distribution states no content for has neither.
  *
  * The two plugins Phase 0 of this arc held out need no branch here, and both are worth naming. `intellij.lombok` keeps
  * its `META-INF/plugin.xml` in `community/plugins/lombok/plugin/resources/`, which belongs to another module, so the
@@ -65,15 +88,57 @@ internal fun computeDerivedPluginContent(
   module: ModuleDescriptor,
   moduleList: ModuleList,
   context: BazelBuildFileGenerator,
-): PluginContentResult {
+  residue: PluginContentResidue = contentResidueOf(module = module, context = context),
+): DerivedPluginContent? {
   if (!isDevDistContentPlugin(module = module, context = context)) {
-    return EMPTY_PLUGIN_CONTENT_RESULT
+    return null
   }
-  val derived = derivePluginContent(module = module, moduleList = moduleList, context = context)
-  for (warning in derived.warnings) {
-    println(warning)
-  }
-  return derived.result
+  return derivePluginContent(module = module, moduleList = moduleList, context = context, residue = residue)
+}
+
+/**
+ * The same derivation, with the jars the plugin's own packing targets pack handed over as well.
+ *
+ * A second [resolvePluginContent] and not a patch of the first one's answer. Handing a member over changes three things
+ * at once - the member leaves `contentModuleLabels`, its libraries leave the library walk, and its residue rows leave
+ * `recordedLibraries` - and only the one body that decides all three can keep them in step. Everything before that body
+ * is unchanged, so nothing is walked, parsed or read a second time.
+ *
+ * Two passes and not one, because the movable set is a function of the jars, and the jars are a function of the first
+ * pass. [computeDerivedPluginPacking] is the one caller and holds that order.
+ */
+internal fun DerivedPluginContent.withPluginJarHandOff(
+  module: ModuleDescriptor,
+  residue: PluginContentResidue,
+  /** The members of the jars a `dev_dist_plugin_jar` of this plugin packs. */
+  layoutJarMembers: Set<String>,
+  /** Where this plugin puts the jar of each member it now hands to that member's own `content_module_jar`. */
+  memberRelations: Map<String, String>,
+  moduleList: ModuleList,
+  context: BazelBuildFileGenerator,
+): DerivedPluginContent {
+  val warnings = ArrayList<String>()
+  val paths = if (memberRelations.isEmpty()) prepackedPaths else prepackedPaths + memberRelations
+  return DerivedPluginContent(
+    result = resolvePluginContent(
+      module = module,
+      memberNames = memberNames,
+      prepackedMemberPaths = paths,
+      prepackedByPluginJar = layoutJarMembers,
+      recordedLibrariesOf = { handedOver ->
+        residue.libraries.filterTo(LinkedHashSet()) { it.ownerModule == null || it.ownerModule !in handedOver }
+      },
+      moduleList = moduleList,
+      context = context,
+      warn = warnings::add,
+    ),
+    memberNames = memberNames,
+    memberPaths = memberPaths,
+    prepackedPaths = paths,
+    closureMembers = closureMembers,
+    memberLibraries = memberLibraries,
+    warnings = warnings,
+  )
 }
 
 /**
@@ -84,15 +149,16 @@ internal fun computeDerivedPluginContent(
  * libraries come from the member walk. [computePluginContent] projects a distribution build's report through the same
  * [resolvePluginContent] body, so the residue writer's comparison measures the facts and never the label resolution.
  *
- * One derivation of the jar path, not two. [derivePluginContentCandidacy] reproduces `computeOutputJarPath`, and the
- * repo-global fold it feeds is what [resolvePluginContent] then gates every relation on. Offering a member a path this
- * function invented instead would let the two disagree, and the disagreement would read as a plugin's deviation.
+ * One derivation of the jar path, not two. [deriveMemberJarPath] holds that rule, as the convention with the three
+ * corrections the residue states, and [derivePluginContentCandidacy] is the one caller of it. The repo-global fold that
+ * caller feeds is what [resolvePluginContent] then gates every relation on. Offering a member a path this function
+ * invented instead would let the two disagree, and the disagreement would read as a plugin's deviation.
  */
 internal fun derivePluginContent(
   module: ModuleDescriptor,
   moduleList: ModuleList,
   context: BazelBuildFileGenerator,
-  residue: PluginContentResidue = contentResidueOf(module),
+  residue: PluginContentResidue = contentResidueOf(module = module, context = context),
 ): DerivedPluginContent {
   val moduleName = module.module.name
   val closure = derivePluginContentClosure(module = module, moduleList = moduleList, context = context)
@@ -103,9 +169,8 @@ internal fun derivePluginContent(
   memberNames.addAll(residue.extraMembers)
   memberNames.remove(moduleName)
 
-  // Where this plugin puts each member's jar, from the one derivation of that question. A member with no offer is packed
-  // into a jar of the plugin's that this generator does not pack, so it stays a raw member - which is also what the
-  // report path does with it. `resolvePluginContent` applies the eligibility gate to what is left.
+  // Where this plugin puts each member's jar, from the one derivation of that question. A member with no offer keeps its
+  // path and loses only the hand-off, so this plugin's own fragment packs its jar as it always did.
   //
   // The closure is handed over rather than walked a second time. Every plugin of the population pays one descriptor
   // parse per include round, so a second walk here would double that cost for all 516 of them.
@@ -116,6 +181,9 @@ internal fun derivePluginContent(
     residue = residue,
     closure = closure,
   )
+  val memberPaths = candidacy.memberPaths.filterKeys { it in memberNames }
+  // The hand-off is the narrow half. `raw_members` gates it alone: a member of that list keeps the jar it derives above,
+  // and only its hand-off goes, because a second jar of this plugin holds the module's raw output.
   val prepackedPaths = candidacy.offers.asSequence()
     .filterNot { it.moduleName in residue.rawMembers }
     .filter { it.moduleName in memberNames }
@@ -137,7 +205,11 @@ internal fun derivePluginContent(
   return DerivedPluginContent(
     result = result,
     memberNames = memberNames.toList(),
+    memberPaths = memberPaths,
     prepackedPaths = prepackedPaths,
+    // The same key the member set takes, so a module shipped under another descriptor names one member on both sides.
+    closureMembers = walked.moduleNames.mapTo(HashSet()) { it.substringBeforeLast('/') },
+    memberLibraries = candidacy.memberLibraries,
     warnings = warnings,
   )
 }
@@ -206,15 +278,15 @@ private fun walkPluginContentClosure(
 private const val MAX_INCLUDE_ROUNDS: Int = 3
 
 /**
- * The `xi:include` targets the `descriptor:` part of `dev-dist.yaml` states, by load path, for the plugin that has one.
+ * The `xi:include` targets the descriptor residue states, by load path, for the plugin that has a key.
  *
  * Every section is unioned. A section is one layout variant, and an include is a fact about the plugin's descriptor
  * rather than about a variant, so a row of any section answers the same load path.
  */
 private fun descriptorResidueFiles(module: ModuleDescriptor, context: BazelBuildFileGenerator): Map<String, Path> {
   val result = HashMap<String, Path>()
-  for (section in descriptorResidueOf(module).values) {
-    for (row in section?.descriptors.orEmpty()) {
+  for (section in descriptorResidueOf(module = module, context = context).values) {
+    for (row in section.descriptors) {
       residueRowFile(row = row.path, context = context)?.let { result.putIfAbsent(row.loadPath, it) }
     }
   }

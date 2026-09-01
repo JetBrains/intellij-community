@@ -1903,8 +1903,6 @@
     <projectSettings service="com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl"/>
     <applicationSettings service="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettingsImpl"/>
     <applicationSettings service="com.intellij.codeInsight.inline.completion.tooltip.onboarding.InlineCompletionOnboardingComponent"/>
-    <applicationService serviceInterface="com.intellij.refactoring.move.moveClassesOrPackages.MovedFileProvider"
-                        serviceImplementation="com.intellij.refactoring.move.moveClassesOrPackages.DefaultMovedFileProvider"/>
 
     <applicationActivity implementation="com.intellij.ide.RegionSettingsServiceActivity"/>
   </extensions>

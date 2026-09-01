@@ -3,6 +3,7 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "dev_dist_plugin_jar")
 
 BAZEL_TARGETS_JSON = current_bazel_targets_json()
 
@@ -207,7 +208,6 @@ exports_files(
         "resources/com/intellij/uiDesigner/NewDialog.xml",
         "resources/com/intellij/uiDesigner/NewForm.xml",
         "resources/gui-designer-properties.xml",
-        "dev-dist.yaml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -215,8 +215,14 @@ exports_files(
 
 ### auto-generated section `dev intellij.java.guiForms.designer` start
 dev_dist_plugin(
-    content_modules = ["//plugins/ui-designer/jps-plugin:java-guiForms-jps"],
     descriptor_module = ":java-guiForms-designer",
+    prepacked_layout_jars = [":jps_java-guiForms-jps_dev_dist_plugin_jar"],
+)
+
+dev_dist_plugin_jar(
+    modules = ["//plugins/ui-designer/jps-plugin:java-guiForms-jps"],
+    plugin_main_module = "intellij.java.guiForms.designer",
+    relative_output_file = "jps/java-guiForms-jps.jar",
 )
 ### auto-generated section `dev intellij.java.guiForms.designer` end
 

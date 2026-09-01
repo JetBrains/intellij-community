@@ -24,6 +24,11 @@ neither. Over the 102 plugins that have both halves, the two name 1 011 packages
 half names and 34 that only the descriptor half names, and only 55 of the 102 name the same set. A joint table keyed by
 module name would therefore add a third token to every relation and still need a two-sided remainder. That is the mistake
 `PluginContent.prepackedContentModuleLabels` already records having made once, at 2 030 relations.
+
+**The plugin's content residue is not here.** It is in `community/build/dev_dist_plugin_content_residue.txt`, which the
+converter writes and reads. This call carried it for one commit, and a measurement took it back off: the hermetic
+`bazel-targets.json` run materializes its project model from declared labels alone, no `BUILD.bazel` is among them, and
+the residue therefore reached that run by no route.
 """
 
 load(":dev_dist_content.bzl", "dev_dist_plugin_content")
@@ -41,6 +46,7 @@ def dev_dist_plugin(
         libraries = [],
         prepacked_content_modules = [],
         prepacked_jars = {},
+        prepacked_layout_jars = [],
         descriptor = "",
         variants = [],
         **descriptor_attrs):
@@ -57,6 +63,7 @@ def dev_dist_plugin(
         libraries: see `dev_dist_plugin_content.libraries`.
         prepacked_content_modules: see `dev_dist_plugin_content.prepacked_content_modules`.
         prepacked_jars: see `dev_dist_plugin_content.prepacked_jars`.
+        prepacked_layout_jars: see `dev_dist_plugin_content.prepacked_layout_jars`.
         descriptor: the plugin's own `META-INF/plugin.xml`, as a path inside `descriptor_module`'s Bazel package. Its
             presence is what asks for the descriptor leaves, for the reason the content attributes are what ask for the
             content leaf: the rule makes it mandatory, and `computePluginDescriptor` emits nothing without it.
@@ -66,13 +73,14 @@ def dev_dist_plugin(
             A list and not a table of per-variant deviations. Every other attribute here is a fact about the plugin, and
             the two plugins that have variants today state their six leaves identically apart from the variant token.
             A variant that ever needs its own deviation must be refused by whatever writes this call, not approximated:
-            the residue's `descriptor:` part is keyed by `<plugin>/<variant>`, so the writer sees both sections and one
-            of them would be silently dropped here.
+            the descriptor residue is keyed by `<plugin>/<variant>`, so the writer sees both keys and one of them would
+            be silently dropped here.
         **descriptor_attrs: every remaining `dev_dist_plugin_descriptor` attribute, forwarded to each *descriptor* leaf
             unchanged. Forwarded rather than enumerated so that this macro has no second copy of that rule's surface to
             keep in step; an attribute that rule does not have fails at the rule, which names it. An attribute both leaf
             macros take is refused instead - see `_SHARED_LEAF_ATTRS`.
     """
+
     shared = [attr for attr in _SHARED_LEAF_ATTRS if attr in descriptor_attrs]
     if shared:
         fail("dev_dist_plugin: %s states %s, which would reach the descriptor leaf and not the content leaf" %
@@ -87,6 +95,7 @@ def dev_dist_plugin(
         "libraries": libraries,
         "prepacked_content_modules": prepacked_content_modules,
         "prepacked_jars": prepacked_jars,
+        "prepacked_layout_jars": prepacked_layout_jars,
     }
     stated_content = [attr for attr, value in content.items() if value]
     if stated_content:

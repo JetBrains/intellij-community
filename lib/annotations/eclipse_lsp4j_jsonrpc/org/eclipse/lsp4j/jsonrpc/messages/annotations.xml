@@ -46,15 +46,6 @@
   <item name='org.eclipse.lsp4j.jsonrpc.messages.Either org.eclipse.lsp4j.jsonrpc.messages.Either&lt;L,R&gt; forRight(R) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-  <item name='org.eclipse.lsp4j.jsonrpc.messages.Either org.eclipse.lsp4j.jsonrpc.messages.boolean isEither(java.lang.reflect.ParameterizedType) 0'>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
-  </item>
-  <item name='org.eclipse.lsp4j.jsonrpc.messages.Either org.eclipse.lsp4j.jsonrpc.messages.boolean isEither(java.lang.reflect.Type) 0'>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
-  </item>
-  <item name='org.eclipse.lsp4j.jsonrpc.messages.Either org.eclipse.lsp4j.jsonrpc.messages.boolean isEither(org.eclipse.lsp4j.jsonrpc.messages.&gt;) 0'>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
-  </item>
   <item name='org.eclipse.lsp4j.jsonrpc.messages.Either right'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>

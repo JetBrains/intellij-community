@@ -102,3 +102,34 @@ func TestParseFlagFileReadsTheTraceDestination(t *testing.T) {
 		t.Errorf("a recipe with no trace-file produced %q", none[0].TraceFile)
 	}
 }
+
+func TestParseFlagFileReadsAFileSourceAndItsEntryName(t *testing.T) {
+	specs, err := parseRecipe(t, "output=out/a.jar\nfile=META-INF/plugin.xml=gen/a.plugin.xml\nmodule=mod/a.jar\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	source := specs[0].Sources[0]
+	if got, want := source.Name, "META-INF/plugin.xml"; got != want {
+		t.Errorf("entry name is %q, want %q", got, want)
+	}
+	if got, want := source.Path, filepath.Join("/exec/root", "gen/a.plugin.xml"); got != want {
+		t.Errorf("path is %q, want %q resolved against the base directory", got, want)
+	}
+	if source.Filter != nil {
+		t.Error("a source of one entry has nothing to select, so its filter must stay nil")
+	}
+}
+
+func TestParseFlagFileRejectsAFileSourceItCannotRead(t *testing.T) {
+	for name, lines := range map[string]string{
+		"no entry name":    "output=out/a.jar\nfile=gen/a.plugin.xml\n",
+		"empty entry name": "output=out/a.jar\nfile==gen/a.plugin.xml\n",
+		"empty path":       "output=out/a.jar\nfile=META-INF/plugin.xml=\n",
+	} {
+		t.Run(name, func(t *testing.T) {
+			if _, err := parseRecipe(t, lines); err == nil {
+				t.Error("want an error rather than a source that packs the wrong bytes")
+			}
+		})
+	}
+}

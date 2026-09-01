@@ -77,21 +77,25 @@ def _add_input_entry(ctx, entries, origins, logical_key, files, source, origin):
         ))
 
 def _prepacked_by_relation(ctx, entries):
-    """Index prepacked plugin-jar records by their *(plugin, content module)* relation.
+    """Index prepacked plugin-jar records by their *(plugin, destination)* relation.
 
-    Same relation, same placement and same jar is the normal case - a content module shared by two plugins, or a
-    community half and the completion set naming the same member - and deduplicates. Anything else is two producers
-    disagreeing about where one jar goes, which the composer would only catch if the paths happened to collide.
+    The destination and not the member, because the jar is what a packing action produces and what the composer places.
+    One packed jar reaches two plugins at two destinations, so the destination is what tells the two relations apart;
+    the member cannot, and a later slice gives one relation more than one member.
+
+    Same relation, same members and same jar is the normal case - a content module shared by two plugins, or a community
+    half and the completion set naming the same member - and deduplicates. Anything else is two producers disagreeing
+    about what goes to one destination of one plugin, which the composer would only catch as a path collision.
     """
     result = {}
     for entry in entries:
-        key = (entry.plugin_main_module, entry.content_module)
+        key = (entry.plugin_main_module, entry.relative_output_file)
         previous = result.get(key)
-        if previous != None and (previous.relative_output_file != entry.relative_output_file or previous.jar != entry.jar):
+        if previous != None and (previous.content_modules != entry.content_modules or previous.jar != entry.jar):
             fail("%s: prepacked plugin relation %s/%s is provided by conflicting records" % (
                 ctx.label,
                 entry.plugin_main_module,
-                entry.content_module,
+                entry.relative_output_file,
             ))
         result[key] = entry
     return result
@@ -145,6 +149,17 @@ def _dev_build_inputs_impl(ctx):
             _add_input_entry(ctx, entries, origins, entry.label, entry.jars, entry.label, "library")
 
         prepacked_plugin_jars = content.prepacked_plugin_jars.to_list()
+        if ctx.attr.packs_layout_jars:
+            # The reference arm. It packs the jars a plugin's own `dev_dist_plugin_jar` targets pack, the `JarPackager`
+            # way, so `./build/dev-dist.cmd plugin-jars` keeps a comparand once the composed fragment stops packing them.
+            # So it takes no relation for them and declares what they are made of instead - the same two lists the
+            # packing target merges.
+            for jar in content.layout_jar_module_jars.to_list():
+                _add_input_entry(ctx, entries, origins, str(jar.owner) + ".jar", (jar,), jar.owner, "member")
+            for entry in content.layout_jar_library_jars.to_list():
+                _add_input_entry(ctx, entries, origins, entry.label, entry.jars, entry.label, "library")
+        else:
+            prepacked_plugin_jars = prepacked_plugin_jars + content.prepacked_layout_jars.to_list()
 
     if ctx.attr.patched_descriptors:
         # A produced descriptor is a *file* a fragment reads, so it travels in the manifest and not in a relation-only
@@ -189,13 +204,23 @@ def _dev_build_inputs_impl(ctx):
 
     prepacked_by_key = _prepacked_by_relation(ctx, prepacked_plugin_jars)
 
+    # One relation per line, as `<plugin main module>\t<`lib/`-relative destination>\t<space-separated members>`. The
+    # first two columns are the relation's key, which is why they lead; the members follow as the payload, and they are
+    # what tells `JarPackager` which modules not to pack. `readPrepackedPluginContentPlan` in `DevDistMain.kt` is the one
+    # reader. A space separates the members, and no JPS module name holds one - the check below is what keeps that true.
     plan_lines = []
     for key in sorted(prepacked_by_key.keys()):
         entry = prepacked_by_key[key]
-        for value in [entry.plugin_main_module, entry.content_module, entry.relative_output_file]:
-            if "\t" in value or "\n" in value:
-                fail("%s: prepacked plugin plan value contains a tab or newline: %s" % (ctx.label, value))
-        plan_lines.append("%s\t%s\t%s" % (entry.plugin_main_module, entry.content_module, entry.relative_output_file))
+        if not entry.content_modules:
+            fail("%s: prepacked plugin relation %s/%s names no member" % (ctx.label, key[0], key[1]))
+        for value in [entry.plugin_main_module, entry.relative_output_file] + list(entry.content_modules):
+            if "\t" in value or "\n" in value or " " in value:
+                fail("%s: prepacked plugin plan value contains a tab, a newline or a space: %s" % (ctx.label, value))
+        plan_lines.append("%s\t%s\t%s" % (
+            entry.plugin_main_module,
+            entry.relative_output_file,
+            " ".join(entry.content_modules),
+        ))
     prepacked_plan = ctx.actions.declare_file(ctx.label.name + ".prepacked-plugin-jars")
     ctx.actions.write(prepacked_plan, ("\n".join(plan_lines) + "\n") if plan_lines else "")
 
@@ -243,6 +268,13 @@ intellij_dev_build_inputs = rule(
         "owned_inputs": attr.label_keyed_string_dict(
             allow_files = True,
             doc = "Raw input to the space-separated names of the payload modules that asked for it.",
+        ),
+        # Set on the reference arm of the plugin byte gate, and on nothing a distribution composes. The two views of one
+        # jar come off one `content` target, exactly as the platform's two come off one payload target, so the reference
+        # and the fragment cannot disagree about which jars moved.
+        "packs_layout_jars": attr.bool(
+            default = False,
+            doc = "Pack the plugins' own layout jars instead of taking their relations - see `prepacked_layout_jars`.",
         ),
         # One label and not a list: which plugins this fragment lays out is the plan's partition, and the set target in
         # `//build/dev-dist-descriptors` is where that partition is applied. See `DevDistPluginDescriptorSetInfo`.
@@ -769,13 +801,16 @@ def _packed_plugin_jars_component_impl(ctx):
         entries.extend(fragment.prepacked_plugin_jars.to_list())
     records = _prepacked_by_relation(ctx, entries)
 
+    # One relation per line, as `<plugin main module>\t<`lib/`-relative destination>\t<jar path>`. The first two columns
+    # are the relation's key, and the third is the bytes to place there. The member is not written: this component only
+    # copies a jar to a destination, and the destination is now part of the key. `collectPrepackedPluginContentJars` is
+    # the one reader, and it joins these lines to the fragment's placement manifests on the same two columns.
     metadata_lines = []
     jars = []
     for key in sorted(records.keys()):
         entry = records[key]
-        metadata_lines.append("%s\t%s\t%s\t%s" % (
+        metadata_lines.append("%s\t%s\t%s" % (
             entry.plugin_main_module,
-            entry.content_module,
             entry.relative_output_file,
             entry.jar.path,
         ))

@@ -9,8 +9,8 @@ import (
 	"strings"
 )
 
-// ParseFlagFile reads the packer's argument grammar: one `output=` line per jar, followed by the `module=` and
-// `library=` lines it is built from.
+// ParseFlagFile reads the packer's argument grammar: one `output=` line per jar, followed by the `module=`, `library=`
+// and `file=` lines it is built from.
 //
 // A flag file rather than plain arguments because a product packs thousands of jars from thousands of inputs, which
 // does not fit a command line. `output=` starts a group, so the file is ordered and that order is the precedence Merge
@@ -71,6 +71,17 @@ func ParseFlagFile(path string, baseDir string) ([]MergeSpec, error) {
 			current.Sources = append(current.Sources, Source{Path: resolve(value), Filter: ModuleOutputNameFilter})
 		case "library":
 			current.Sources = append(current.Sources, Source{Path: resolve(value), Filter: LibraryNameFilter})
+		case "file":
+			// `file=<entry name>=<path>`, cut at the first `=`, so the entry name states no `=` and a path may. A jar
+			// entry name is a jar path and carries none; a `bazel-out` path is free to.
+			name, filePath, ok := strings.Cut(value, "=")
+			if !ok {
+				return nil, fmt.Errorf("expected `file=<entry name>=<path>`, got %q", line)
+			}
+			if name == "" || filePath == "" {
+				return nil, fmt.Errorf("`file=` states an empty entry name or path in %q", line)
+			}
+			current.Sources = append(current.Sources, Source{Path: resolve(filePath), Name: name})
 		default:
 			return nil, fmt.Errorf("unknown option %q in %q", option, line)
 		}

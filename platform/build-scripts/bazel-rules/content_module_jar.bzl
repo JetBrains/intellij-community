@@ -1,4 +1,9 @@
-"""Packs a module's `lib/<module>.jar` of an IntelliJ-based product's platform distribution.
+"""Packs one jar of a dev distribution: a module's `lib/<module>.jar` of the platform, or one jar of a plugin's `lib/`.
+
+Two rules, because a jar has two kinds of identity. `content_module_jar` packs a jar the platform names after the one
+module that owns it. `dev_dist_plugin_jar` packs a jar a plugin's layout names itself, which is free to hold several
+members under a name no member has and to sit in a subdirectory of `lib/`. They share the library expansion, the merge
+order, the module expansion, the manifest rule and the packer, and differ in nothing else.
 
 A target of its own, next to the `jvm_library` whose module it is named after - not attributes on that library. It was
 attributes until the packer moved into this module, and the reason it could not be a target then was the reason the whole
@@ -139,39 +144,42 @@ def _module(target, attr_name):
         fail("%s has a module name ('%s') but produced no output jar" % (target.label, info.module_name), attr = attr_name)
     return struct(jar = info.all_output_jars[0], name = info.module_name)
 
-def _content_module_jar_impl(ctx):
-    before = [_module(target, "modules_before") for target in ctx.attr.modules_before]
-    owner = _module(ctx.attr.module, "module")
-    after = [_module(target, "modules_after") for target in ctx.attr.modules_after]
-    merged = before + [owner] + after
+def _declare_spans(ctx, name):
+    """The action's span file, or `None` when the trace flag is off.
 
-    module_name = owner.name
-    module_jars = [module.jar for module in merged]
-    merged_module_names = [module.name for module in merged]
+    Named after what the caller states rather than after the jar, because two targets may write a jar of one name and a
+    target name is unique in its package. `dev-dist trace` joins a span file to an action through the action's primary
+    output, so the jar and this file must not disagree about which action wrote them.
+    """
+    if not ctx.attr._trace_spans[BuildSettingInfo].value:
+        return None
+    return ctx.actions.declare_file(name + ".spans.json")
 
-    library_entries = _library_entries(ctx)
-    library_jars = _merge_order_jars(library_entries)
+def _pack(ctx, output, spans, module_jars, library_jars, merged_module_names, mnemonic, progress_message, extra_flags = []):
+    """Runs the packer over one jar, for either of this file's two rules.
 
-    output = ctx.actions.declare_file(module_name + ".jar")
+    The two rules differ in the jar's identity - its path, its mnemonic and its provider - and in nothing the packer
+    sees. So the flag file, the worker contract and the merge order are stated once here.
+
+    The packer takes a flag file rather than arguments: a product packs hundreds of jars from thousands of inputs, and
+    `--flagfile=` is the only argument it accepts. `output=` starts a group, so the order below is the grammar's own:
+    the output, the trace file, the flags of the jar, then the libraries and then the module outputs. Libraries lead
+    because that is `buildAsset`'s order, and the packer resolves an entry two sources both offer to the first one.
+    """
     args = ctx.actions.args()
     args.set_param_file_format("multiline")
-
-    # The packer takes a flag file rather than arguments: a product packs hundreds of jars from thousands of inputs, and
-    # `--flagfile=` is the only argument it accepts.
     args.use_param_file("--flagfile=%s", use_always = True)
     args.add(output, format = "output=%s")
 
     outputs = [output]
-
-    # Inside the flag file, as a `trace-file=` line, rather than as a `--trace-file=` argument - which is what every
-    # other producer of these span files takes. A worker has no other per-action channel: Bazel splits a worker spawn's
-    # arguments at the param file, everything before it becomes the worker *process*'s command line and part of its
-    # `WorkerKey`, and a per-action path there would start a fresh worker for each of the ~2 500 actions. Everything
-    # added to this `Args` lands in the file instead. It follows `output=`, because the grammar starts a group there.
-    spans = None
-    if ctx.attr._trace_spans[BuildSettingInfo].value:
-        spans = ctx.actions.declare_file(module_name + ".spans.json")
-
+    if spans:
+        # Inside the flag file, as a `trace-file=` line, rather than as a `--trace-file=` argument - which is what every
+        # other producer of these span files takes. A worker has no other per-action channel: Bazel splits a worker
+        # spawn's arguments at the param file, everything before it becomes the worker *process*'s command line and part
+        # of its `WorkerKey`, and a per-action path there would start a fresh worker for each of the ~2 500 actions.
+        # Everything added to this `Args` lands in the file instead. It follows `output=`, because the grammar starts a
+        # group there.
+        #
         # The `File`, not `spans.path`: this argument travels in a param file that output path mapping may rewrite, and
         # only the `File` form is rewritten with it. `intellij_dev_dist.bzl`'s `_declare_spans` passes the string,
         # because there the argument sits on a local-exec command line among neighbours that all pass strings.
@@ -183,16 +191,17 @@ def _content_module_jar_impl(ctx):
 
     if _keep_manifest(library_jars, merged_module_names):
         args.add("keep-manifest=true")
-    if ctx.attr.rewrite_boot_class_path:
-        args.add("rewrite-boot-class-path=true")
+    for flag in extra_flags:
+        args.add(flag)
 
     # Files, not `.path` strings, so path mapping can rewrite them.
     args.add_all(library_jars, format_each = "library=%s")
     args.add_all(module_jars, format_each = "module=%s")
 
     ctx.actions.run(
-        # One mnemonic for every content-module jar, so a strategy or an execution-info override reaches all of them.
-        mnemonic = "PackContentModuleJar",
+        # One mnemonic per producer, so a strategy or an execution-info override reaches every jar of that producer and
+        # of no other. `common.bazelrc` pins a pool size to each, and `no-cache` to the platform one alone.
+        mnemonic = mnemonic,
         inputs = depset(library_jars + module_jars),
         outputs = outputs,
         executable = ctx.executable._packer,
@@ -202,8 +211,8 @@ def _content_module_jar_impl(ctx):
         # repository at 2 524 jars, one process per action cost 38.4 s where the worker costs 26.0 s, and 6.6 s once the
         # action stopped being cached.
         #
-        # `requires-worker-protocol` is absent because proto is Bazel's default, and the packer speaks it: it decodes the
-        # six fields by hand in `internal/worker`, with no protobuf dependency and no generated schema, the way
+        # `requires-worker-protocol` is absent because proto is Bazel's default, and the packer speaks it: it decodes
+        # the six fields by hand in `internal/worker`, with no protobuf dependency and no generated schema, the way
         # `@rules_jvm//worker-framework:protocol.kt` already decodes the same message on the JVM side. Every other worker
         # in this repository is on the same default. An explicit `"proto"` would only add something that can drift from
         # the code - and an unrecognised value here is a hard failure, so a typo in one is worse than its absence.
@@ -224,7 +233,35 @@ def _content_module_jar_impl(ctx):
             "no-sandbox": "1",
         },
         arguments = [args],
+        progress_message = progress_message,
+    )
+    return outputs
+
+def _content_module_jar_impl(ctx):
+    before = [_module(target, "modules_before") for target in ctx.attr.modules_before]
+    owner = _module(ctx.attr.module, "module")
+    after = [_module(target, "modules_after") for target in ctx.attr.modules_after]
+    merged = before + [owner] + after
+
+    module_name = owner.name
+    module_jars = [module.jar for module in merged]
+    merged_module_names = [module.name for module in merged]
+
+    library_entries = _library_entries(ctx)
+    library_jars = _merge_order_jars(library_entries)
+
+    output = ctx.actions.declare_file(module_name + ".jar")
+    spans = _declare_spans(ctx, module_name)
+    _pack(
+        ctx,
+        output = output,
+        spans = spans,
+        module_jars = module_jars,
+        library_jars = library_jars,
+        merged_module_names = merged_module_names,
+        mnemonic = "PackContentModuleJar",
         progress_message = "Packing distribution jar of %{label}",
+        extra_flags = ["rewrite-boot-class-path=true"] if ctx.attr.rewrite_boot_class_path else [],
     )
     return [
         DefaultInfo(files = depset([output])),
@@ -294,6 +331,173 @@ in - and merging it into `lib/<module>.jar` renames it. `mergeJars.kt` does the 
         ),
     },
 )
+
+DevDistPluginJarInfo = provider(
+    doc = """A packed jar of one plugin's `lib/`, and what went into it.
+
+    The sibling of `ContentModuleJarInfo` for the other producer this file holds. The two are separate providers rather
+    than one, because the identity differs: a platform jar is named after the one module that owns it, and a plugin jar
+    is named by the plugin's layout, which is free to hold several members under a name no member has.""",
+    fields = {
+        "jar": "The packed `File`.",
+        "plugin_main_module": """The JPS main module of the plugin whose `lib/` this jar belongs to.
+
+        A module name and not a label, for the reason `ContentModuleJarInfo.member_modules` gives: the hand-off relation
+        is a payload a fragment reads, and a module name is the one key that means the same thing on both sides of the
+        loading/analysis boundary.""",
+        "relative_output_file": """Where the plugin puts this jar, relative to the plugin's own `lib/`.
+
+        The same token `dev_dist_content.bzl` already carries on a prepacked relation, so the two producers of a plugin
+        jar state its destination in one vocabulary. It holds a `/` for a jar the layout puts in a subdirectory, which
+        `_conventional_prepacked_path` cannot express and which a fifth of a plugin fragment's packed jars need.""",
+        "member_jars": "tuple of File: the own jar of every merged module, in merge order.",
+        "member_modules": "tuple of string: the same members by JPS module name - see `ContentModuleJarInfo`.",
+        "library_jars": "tuple of struct(label, jars): the merged libraries, one entry per container.",
+    },
+)
+
+def _relative_output_file(ctx):
+    """The jar's `lib/`-relative destination, refused rather than repaired when it cannot be one.
+
+    Four shapes a generator can produce that would silently place a jar somewhere else, and every one of them is cheaper
+    to refuse here than to find in a distribution: an absolute path, a `..` element, a `lib/` prefix on a token that is
+    already `lib/`-relative, and a name that is not a jar at all.
+    """
+    path = ctx.attr.relative_output_file
+    if not path.endswith(".jar"):
+        fail("'%s' is not a jar name" % path, attr = "relative_output_file")
+    if path.startswith("/"):
+        fail("'%s' is absolute; state the path relative to the plugin's own `lib/`" % path, attr = "relative_output_file")
+    if path.startswith("lib/"):
+        fail("'%s' is already relative to the plugin's `lib/`, so it states no `lib/` itself" % path, attr = "relative_output_file")
+    for element in path.split("/"):
+        if element == "" or element == "." or element == "..":
+            fail("'%s' holds an empty or relative path element" % path, attr = "relative_output_file")
+    return path
+
+def _dev_dist_plugin_jar_impl(ctx):
+    members = [_module(target, "modules") for target in ctx.attr.modules]
+    module_jars = [member.jar for member in members]
+    merged_module_names = [member.name for member in members]
+
+    library_entries = _library_entries(ctx)
+    library_jars = _merge_order_jars(library_entries)
+
+    relative_output_file = _relative_output_file(ctx)
+
+    # Under the target's own name, so that the jar's path ends with exactly the destination the relation states and two
+    # jars of one package can never collide. Two plugins declared in one package - which the completion set in
+    # `//build/dev-dist-content` is - can both hold `modules/x.jar`, and a target name is the one token Bazel already
+    # keeps unique per package.
+    output = ctx.actions.declare_file(ctx.label.name + "/" + relative_output_file)
+    spans = _declare_spans(ctx, ctx.label.name)
+    _pack(
+        ctx,
+        output = output,
+        spans = spans,
+        module_jars = module_jars,
+        library_jars = library_jars,
+        merged_module_names = merged_module_names,
+        # A mnemonic of its own, and not the sibling's. `common.bazelrc` pins two options to `PackContentModuleJar` -
+        # `no-cache` and the multiplex instance count - and both were measured over the platform's 2 524 jars, whose
+        # median is a fraction of a plugin jar's. Sharing the mnemonic would apply both figures to a population nothing
+        # has measured yet, and would also fold this population into the standing per-mnemonic figure that
+        # `dev-dist-measurements.md` quotes for the platform.
+        mnemonic = "PackPluginJar",
+        progress_message = "Packing plugin jar of %{label}",
+    )
+    return [
+        DefaultInfo(files = depset([output])),
+        OutputGroupInfo(trace_spans = depset([spans] if spans else [])),
+        DevDistPluginJarInfo(
+            jar = output,
+            plugin_main_module = ctx.attr.plugin_main_module,
+            relative_output_file = relative_output_file,
+            member_jars = tuple(module_jars),
+            member_modules = tuple(merged_module_names),
+            library_jars = tuple(library_entries),
+        ),
+    ]
+
+_dev_dist_plugin_jar = rule(
+    doc = "Packs one jar of a plugin's `lib/` in a dev distribution.",
+    implementation = _dev_dist_plugin_jar_impl,
+    attrs = {
+        "plugin_main_module": attr.string(
+            doc = "The JPS main module of the plugin this jar belongs to - see the provider's own field.",
+            mandatory = True,
+        ),
+        "relative_output_file": attr.string(
+            doc = """The jar's destination, relative to the plugin's own `lib/` - `modules/x.jar`, `specifics/y.jar`, `z.jar`.
+
+The jar's name comes from here and not from a module, which is the first reason this is a rule of its own: a plugin
+layout names a jar freely, and a jar it names itself carries a name no member has. `reportMovablePluginJars` prints how
+many such jars got a target, how many the model derives and every refusal, once per converter run, so no count is
+frozen here. `build/dev-dist-measurements.md` holds the dated figures.
+
+**A jar named after its one member never comes here.** The `content_module_jar` beside that member packs the same bytes
+under the same name, and a plugin says only where its `lib/` puts the jar - `prepacked_content_modules`, or a
+`prepacked_jars` row. Most of the movable jars are that shape, and a target here for one of them would be a checked-in
+copy of the model. `_collect_prepacked` in `dev_dist_content.bzl` refuses the same restatement one layer up.""",
+            mandatory = True,
+        ),
+        "modules": attr.label_list(
+            doc = """The modules whose output is merged, in the layout's member order.
+
+One ordered list and no owner in the middle, which is the second reason this is a rule of its own. The sibling splits
+its members into `modules_before` and `modules_after` because the jar is named after a module that must sit between
+them; here the name is on the relation, so the member order is simply the order stated.""",
+            providers = [_KtJvmInfo],
+        ),
+        "libraries": attr.label_list(
+            doc = """Libraries merged into the jar, in merge order - see the sibling's own `libraries`.
+
+They precede every module output, which is `buildAsset`'s order and not a choice of this rule.""",
+            providers = [[JavaInfo]],
+        ),
+        "_packer": attr.label(
+            default = "//build/content-module-packer",
+            executable = True,
+            cfg = "exec",
+        ),
+        "_trace_spans": attr.label(
+            default = "//platform/build-scripts/bazel-rules:trace_spans",
+            providers = [BuildSettingInfo],
+        ),
+    },
+)
+
+def dev_dist_plugin_jar_target_name(relative_output_file):
+    """The packing target's name, from the destination - `"specifics/x.jar"` gives `"specifics_x_dev_dist_plugin_jar"`.
+
+    Public for the reason `content_module_jar_target_name` is: the name is written where the target is and again where
+    the plugin's own package names it as prepacked content, and the two must agree.
+
+    The destination alone, with no plugin token, because the emission convention is one plugin per package - the package
+    that holds the plugin's `dev_dist_plugin` call. A writer that puts two plugins' jars in one package owes its own
+    disambiguation; the completion set in `//build/dev-dist-content` is the one package where that can arise.
+    """
+    return relative_output_file.removesuffix(".jar").replace("/", "_") + "_dev_dist_plugin_jar"
+
+def dev_dist_plugin_jar(relative_output_file, tags = [], visibility = ["//visibility:public"], **kwargs):
+    """Packs one jar of a plugin's `lib/`, as a target excluded from wildcard builds.
+
+    `manual` for the sibling's reason: the jar is this target's `DefaultInfo`, and `bazel build //...` would otherwise
+    pack every one of them.
+
+    Args:
+        relative_output_file: the jar's destination - see the rule's own attribute. The target's name comes from it.
+        tags: extra tags. `manual` is added.
+        visibility: public by default - the plugin's own package names the target as prepacked content.
+        **kwargs: see `_dev_dist_plugin_jar`.
+    """
+    _dev_dist_plugin_jar(
+        name = dev_dist_plugin_jar_target_name(relative_output_file),
+        relative_output_file = relative_output_file,
+        tags = tags + ["manual"],
+        visibility = visibility,
+        **kwargs
+    )
 
 def content_module_jar_target_name(module):
     """The packing target's name, from the owner's label - `":core-impl"` gives `"core-impl_content_module_jar"`.

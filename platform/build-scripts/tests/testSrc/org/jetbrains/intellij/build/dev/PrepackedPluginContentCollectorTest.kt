@@ -20,13 +20,13 @@ internal class PrepackedPluginContentCollectorTest {
     Files.writeString(jar, "packed bytes")
     val metadata = writeLines(
       tempDir.resolve("jars.tsv"),
-      "plugin.one\tcontent.shared\tmodules/content.shared.jar\t$jar",
-      "plugin.two\tcontent.shared\tmodules/content.shared.jar\t$jar",
+      "plugin.one\tmodules/content.shared.jar\t$jar",
+      "plugin.two\tmodules/content.shared.jar\t$jar",
     )
     val placements = writeLines(
       tempDir.resolve("placements.tsv"),
-      "plugin.two\tcontent.shared\tplugins/two/lib/modules/content.shared.jar",
-      "plugin.one\tcontent.shared\tplugins/one/lib/modules/content.shared.jar",
+      "plugin.two\tmodules/content.shared.jar\tplugins/two/lib/modules/content.shared.jar",
+      "plugin.one\tmodules/content.shared.jar\tplugins/one/lib/modules/content.shared.jar",
     )
 
     assertThat(collectPrepackedPluginContentJars(metadata, listOf(placements))).containsExactly(
@@ -35,26 +35,53 @@ internal class PrepackedPluginContentCollectorTest {
     )
   }
 
+  /**
+   * Two jars of one plugin, which is what the key must tell apart: the destination is what separates them, and neither
+   * line names a member.
+   */
+  @Test
+  fun `names two jars of one plugin by their destinations`(@TempDir tempDir: Path) {
+    val first = tempDir.resolve("first.jar")
+    val second = tempDir.resolve("second.jar")
+    Files.writeString(first, "first")
+    Files.writeString(second, "second")
+    val metadata = writeLines(
+      tempDir.resolve("jars.tsv"),
+      "plugin.one\tmodules/content.one.jar\t$first",
+      "plugin.one\tcustom.jar\t$second",
+    )
+    val placements = writeLines(
+      tempDir.resolve("placements.tsv"),
+      "plugin.one\tmodules/content.one.jar\tplugins/one/lib/modules/content.one.jar",
+      "plugin.one\tcustom.jar\tplugins/one/lib/custom.jar",
+    )
+
+    assertThat(collectPrepackedPluginContentJars(metadata, listOf(placements))).containsExactly(
+      DevBuildComponentSourcedFile(relativePath = "plugins/one/lib/custom.jar", source = second.toString()),
+      DevBuildComponentSourcedFile(relativePath = "plugins/one/lib/modules/content.one.jar", source = first.toString()),
+    )
+  }
+
   @Test
   fun `rejects missing and unknown placements`(@TempDir tempDir: Path) {
     val jar = tempDir.resolve("content.jar")
     Files.writeString(jar, "content")
-    val metadata = writeLines(tempDir.resolve("jars.tsv"), "plugin.one\tcontent.one\tmodules/content.one.jar\t$jar")
+    val metadata = writeLines(tempDir.resolve("jars.tsv"), "plugin.one\tmodules/content.one.jar\t$jar")
 
     assertThatThrownBy {
       collectPrepackedPluginContentJars(metadata, emptyList())
     }.isInstanceOf(IllegalArgumentException::class.java)
-      .hasMessageContaining("missing placements [plugin.one/content.one]")
+      .hasMessageContaining("missing placements [plugin.one/modules/content.one.jar]")
 
     val unknown = writeLines(
       tempDir.resolve("unknown.tsv"),
-      "plugin.one\tcontent.one\tplugins/one/lib/modules/content.one.jar",
-      "plugin.two\tcontent.two\tplugins/two/lib/modules/content.two.jar",
+      "plugin.one\tmodules/content.one.jar\tplugins/one/lib/modules/content.one.jar",
+      "plugin.two\tmodules/content.two.jar\tplugins/two/lib/modules/content.two.jar",
     )
     assertThatThrownBy {
       collectPrepackedPluginContentJars(metadata, listOf(unknown))
     }.isInstanceOf(IllegalArgumentException::class.java)
-      .hasMessageContaining("unknown placements [plugin.two/content.two]")
+      .hasMessageContaining("unknown placements [plugin.two/modules/content.two.jar]")
   }
 
   @Test
@@ -63,17 +90,17 @@ internal class PrepackedPluginContentCollectorTest {
     Files.writeString(jar, "content")
     val duplicateJars = writeLines(
       tempDir.resolve("duplicate-jars.tsv"),
-      "plugin.one\tcontent.one\tmodules/content.one.jar\t$jar",
-      "plugin.one\tcontent.one\tmodules/content.one.jar\t$jar",
+      "plugin.one\tmodules/content.one.jar\t$jar",
+      "plugin.one\tmodules/content.one.jar\t$jar",
     )
     assertThatThrownBy {
       collectPrepackedPluginContentJars(duplicateJars, emptyList())
     }.isInstanceOf(IllegalArgumentException::class.java)
       .hasMessageContaining("duplicate plugin jar relation")
 
-    val metadata = writeLines(tempDir.resolve("jars.tsv"), "plugin.one\tcontent.one\tmodules/content.one.jar\t$jar")
-    val first = writeLines(tempDir.resolve("first.tsv"), "plugin.one\tcontent.one\tplugins/one/lib/modules/content.one.jar")
-    val second = writeLines(tempDir.resolve("second.tsv"), "plugin.one\tcontent.one\tplugins/one/lib/modules/content.one.jar")
+    val metadata = writeLines(tempDir.resolve("jars.tsv"), "plugin.one\tmodules/content.one.jar\t$jar")
+    val first = writeLines(tempDir.resolve("first.tsv"), "plugin.one\tmodules/content.one.jar\tplugins/one/lib/modules/content.one.jar")
+    val second = writeLines(tempDir.resolve("second.tsv"), "plugin.one\tmodules/content.one.jar\tplugins/one/lib/modules/content.one.jar")
     assertThatThrownBy {
       collectPrepackedPluginContentJars(metadata, listOf(first, second))
     }.isInstanceOf(IllegalArgumentException::class.java)
@@ -84,20 +111,20 @@ internal class PrepackedPluginContentCollectorTest {
   fun `rejects path escapes and placement mismatches`(@TempDir tempDir: Path) {
     val jar = tempDir.resolve("content.jar")
     Files.writeString(jar, "content")
-    val escapingMetadata = writeLines(tempDir.resolve("escaping-jars.tsv"), "plugin.one\tcontent.one\t../content.jar\t$jar")
+    val escapingMetadata = writeLines(tempDir.resolve("escaping-jars.tsv"), "plugin.one\t../content.jar\t$jar")
     assertThatThrownBy {
       collectPrepackedPluginContentJars(escapingMetadata, emptyList())
     }.isInstanceOf(IllegalArgumentException::class.java)
       .hasMessageContaining("escapes plugin lib")
 
-    val metadata = writeLines(tempDir.resolve("jars.tsv"), "plugin.one\tcontent.one\tmodules/content.one.jar\t$jar")
-    val escapingPlacement = writeLines(tempDir.resolve("escaping-placement.tsv"), "plugin.one\tcontent.one\t../outside.jar")
+    val metadata = writeLines(tempDir.resolve("jars.tsv"), "plugin.one\tmodules/content.one.jar\t$jar")
+    val escapingPlacement = writeLines(tempDir.resolve("escaping-placement.tsv"), "plugin.one\tmodules/content.one.jar\t../outside.jar")
     assertThatThrownBy {
       collectPrepackedPluginContentJars(metadata, listOf(escapingPlacement))
     }.isInstanceOf(IllegalArgumentException::class.java)
       .hasMessageContaining("escapes the distribution")
 
-    val mismatched = writeLines(tempDir.resolve("mismatched.tsv"), "plugin.one\tcontent.one\tplugins/one/lib/modules/other.jar")
+    val mismatched = writeLines(tempDir.resolve("mismatched.tsv"), "plugin.one\tmodules/content.one.jar\tplugins/one/lib/modules/other.jar")
     assertThatThrownBy {
       collectPrepackedPluginContentJars(metadata, listOf(mismatched))
     }.isInstanceOf(IllegalArgumentException::class.java)
@@ -112,13 +139,13 @@ internal class PrepackedPluginContentCollectorTest {
     Files.writeString(secondJar, "second")
     val metadata = writeLines(
       tempDir.resolve("jars.tsv"),
-      "plugin.one\tcontent.one\tmodules/content.jar\t$firstJar",
-      "plugin.two\tcontent.two\tmodules/content.jar\t$secondJar",
+      "plugin.one\tmodules/content.jar\t$firstJar",
+      "plugin.two\tmodules/content.jar\t$secondJar",
     )
     val placements = writeLines(
       tempDir.resolve("placements.tsv"),
-      "plugin.one\tcontent.one\tplugins/shared/lib/modules/content.jar",
-      "plugin.two\tcontent.two\tplugins/shared/lib/modules/content.jar",
+      "plugin.one\tmodules/content.jar\tplugins/shared/lib/modules/content.jar",
+      "plugin.two\tmodules/content.jar\tplugins/shared/lib/modules/content.jar",
     )
 
     assertThatThrownBy {

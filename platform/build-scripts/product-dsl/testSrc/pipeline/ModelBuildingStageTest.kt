@@ -76,6 +76,7 @@ class ModelBuildingStageTest {
         updateSuppressions = false,
         commitChanges = false,
         errorSink = ErrorSink(),
+        phaseTimings = ArrayList(),
       )
 
       val wrapperPlugin = model.pluginContentCache.getOrExtract(wrapperModule)

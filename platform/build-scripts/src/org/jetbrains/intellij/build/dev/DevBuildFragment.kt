@@ -4,23 +4,38 @@ package org.jetbrains.intellij.build.dev
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.ModuleItem
 
-/** Stable key of one plugin content-module jar handed from JarPackager to a Bazel packing action. */
+/**
+ * Stable key of one plugin jar handed from JarPackager to a Bazel packing action.
+ *
+ * One jar of one plugin, because the jar is what a packing action produces and what the composer places. A plugin puts
+ * one member's jar under `lib/modules/` and another plugin puts the same bytes directly in `lib/`, so the destination
+ * belongs to the relation - and it identifies the relation, while the member alone cannot: a jar may hold a name no
+ * member gives it, and a jar may hold more than one member.
+ */
 @ApiStatus.Internal
 data class PrepackedPluginContentKey(
   @JvmField val pluginMainModule: String,
-  @JvmField val contentModule: String,
+  /** Path below the plugin's `lib/` directory. */
+  @JvmField val relativeOutputFile: String,
 )
 
-/** The product-independent jar relation. Placement is validated against the product layout before it is used. */
+/**
+ * The product-independent jar relation. Placement is validated against the product layout before it is used.
+ *
+ * [key] is the relation's identity. [contentModules] is the payload: every member this jar holds, in the order the
+ * packing target merged them. A list and not one name, because a plugin's layout names a jar freely: `tomee-specifics.jar`
+ * holds two members, and a jar the layout names after neither of them holds one. `JarPackager` offers the members one at
+ * a time, so the list is what says when the offer is complete - see `validatePrepackedPluginContent`.
+ */
 @ApiStatus.Internal
 data class PrepackedPluginContentJar(
   @JvmField val pluginMainModule: String,
-  @JvmField val contentModule: String,
+  @JvmField val contentModules: List<String>,
   /** Path below the plugin's `lib/` directory. */
   @JvmField val relativeOutputFile: String,
 ) {
   val key: PrepackedPluginContentKey
-    get() = PrepackedPluginContentKey(pluginMainModule = pluginMainModule, contentModule = contentModule)
+    get() = PrepackedPluginContentKey(pluginMainModule = pluginMainModule, relativeOutputFile = relativeOutputFile)
 }
 
 /**
@@ -42,6 +57,9 @@ data class AssembledPrepackedPluginContentJar(
    * therefore let the *producer* of a jar decide the classpath order, and handing a jar over would reorder
    * `plugin-classpath.txt` without changing a byte of any jar. With the ordinal the merge puts each handed-off jar back
    * where `computeSourcesForModule` would have put its asset, so the sort sees the same input either way.
+   *
+   * A jar of several members has one asset, and the **first** member the assembly offers is the one that would have
+   * created it. So the ordinal is recorded at that first offer and the later members of the same jar add none.
    */
   @JvmField val assetOrdinal: Int,
 )

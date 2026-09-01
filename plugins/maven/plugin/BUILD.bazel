@@ -1,5 +1,6 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "dev_dist_plugin_jar")
 
 ### auto-generated section `build intellij.maven.plugin` start
 jvm_library(
@@ -34,7 +35,6 @@ exports_files(
     [
         "intellij.maven.plugin.iml",
         "resources/META-INF/plugin.xml",
-        "dev-dist.yaml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -45,16 +45,10 @@ dev_dist_plugin(
     content_modules = [
         "//build/deps:dependencies",
         "//plugins/maven",
-        "//plugins/maven-server-api:maven-server",
         "//plugins/maven/artifact-resolver-m31:artifactResolver-m31",
         "//plugins/maven/artifact-resolver/common",
-        "//plugins/maven/maven-event-listener:server-eventListener",
         "//plugins/maven/maven-server-indexer:server-indexer",
         "//plugins/maven/maven-server-telemetry:server-telemetry",
-        "//plugins/maven/maven3-server-common:server-m3-common",
-        "//plugins/maven/maven3-server-impl:server-m3-impl",
-        "//plugins/maven/maven36-server-impl:server-m36-impl",
-        "//plugins/maven/maven40-server-impl:server-m40",
     ],
     descriptor_module = ":plugin",
     libraries = [
@@ -109,5 +103,63 @@ dev_dist_plugin(
     prepacked_jars = {
         "//plugins/maven/model:model_content_module_jar": "intellij.maven.model.jar",
     },
+    prepacked_layout_jars = [
+        ":intellij.maven.rt_maven-event-listener_dev_dist_plugin_jar",
+        ":intellij.maven.server36_maven36-server_dev_dist_plugin_jar",
+        ":intellij.maven.server3_maven-server-telemetry_dev_dist_plugin_jar",
+        ":intellij.maven.server3_maven3-server-common_dev_dist_plugin_jar",
+        ":intellij.maven.server3_maven3-server_dev_dist_plugin_jar",
+        ":intellij.maven.server4_maven-server-telemetry_dev_dist_plugin_jar",
+        ":intellij.maven.server4_maven40-server_dev_dist_plugin_jar",
+        ":maven-server_dev_dist_plugin_jar",
+    ],
+)
+
+dev_dist_plugin_jar(
+    modules = ["//plugins/maven/maven-event-listener:server-eventListener"],
+    plugin_main_module = "intellij.maven.plugin",
+    relative_output_file = "intellij.maven.rt/maven-event-listener.jar",
+)
+
+dev_dist_plugin_jar(
+    modules = ["//plugins/maven/maven-server-telemetry:server-telemetry"],
+    plugin_main_module = "intellij.maven.plugin",
+    relative_output_file = "intellij.maven.server3/maven-server-telemetry.jar",
+)
+
+dev_dist_plugin_jar(
+    modules = ["//plugins/maven/maven3-server-common:server-m3-common"],
+    plugin_main_module = "intellij.maven.plugin",
+    relative_output_file = "intellij.maven.server3/maven3-server-common.jar",
+)
+
+dev_dist_plugin_jar(
+    modules = ["//plugins/maven/maven3-server-impl:server-m3-impl"],
+    plugin_main_module = "intellij.maven.plugin",
+    relative_output_file = "intellij.maven.server3/maven3-server.jar",
+)
+
+dev_dist_plugin_jar(
+    modules = ["//plugins/maven/maven36-server-impl:server-m36-impl"],
+    plugin_main_module = "intellij.maven.plugin",
+    relative_output_file = "intellij.maven.server36/maven36-server.jar",
+)
+
+dev_dist_plugin_jar(
+    modules = ["//plugins/maven/maven-server-telemetry:server-telemetry"],
+    plugin_main_module = "intellij.maven.plugin",
+    relative_output_file = "intellij.maven.server4/maven-server-telemetry.jar",
+)
+
+dev_dist_plugin_jar(
+    modules = ["//plugins/maven/maven40-server-impl:server-m40"],
+    plugin_main_module = "intellij.maven.plugin",
+    relative_output_file = "intellij.maven.server4/maven40-server.jar",
+)
+
+dev_dist_plugin_jar(
+    modules = ["//plugins/maven-server-api:maven-server"],
+    plugin_main_module = "intellij.maven.plugin",
+    relative_output_file = "maven-server.jar",
 )
 ### auto-generated section `dev intellij.maven.plugin` end

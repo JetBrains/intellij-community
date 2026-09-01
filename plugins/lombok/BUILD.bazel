@@ -136,7 +136,6 @@ exports_files(
     [
         "intellij.lombok.iml",
         "src/main/resources/intellij.lombok.xml",
-        "dev-dist.yaml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -144,8 +143,8 @@ exports_files(
 
 ### auto-generated section `dev intellij.lombok` start
 dev_dist_plugin(
-    content_modules = ["//plugins/lombok/generated"],
     descriptor_module = ":lombok",
+    prepacked_content_modules = ["//plugins/lombok/generated:generated_content_module_jar"],
 )
 ### auto-generated section `dev intellij.lombok` end
 

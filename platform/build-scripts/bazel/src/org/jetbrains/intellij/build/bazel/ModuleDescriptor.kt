@@ -63,22 +63,6 @@ internal data class ModuleDescriptor(
    * (plugin, member) relation, so an uncached read would re-parse the same file once per plugin shipping the module.
    */
   val contentModuleRecipe: RecipeEntry? by lazy(LazyThreadSafetyMode.NONE) { parseContentModuleRecipe(contentModuleRecipeFile) }
-
-  /**
-   * The dev-distribution residue of the plugin whose main module this is, if it has one; beside the first content root,
-   * the same rule [contentModuleRecipeFile] follows.
-   *
-   * Existence only, deliberately. `_find_dev_dist_residue_rel_path` in `@community//build:jps_model.bzl` probes for
-   * exactly this file, so that the hermetic `bazel-targets.json` run is handed the same residues the full-checkout run
-   * reads. That side cannot parse YAML and does not have to: both sides agree only on *which file is a plugin's
-   * residue*, which [JpsModuleToBazelTargetsOnly] asserts, and the one converter decides the rest.
-   */
-  val devDistResidueFile: Path? by lazy(LazyThreadSafetyMode.NONE) {
-    contentRoots.firstOrNull()?.resolve(DEV_DIST_RESIDUE_FILE_NAME)?.takeIf { it.isRegularFile() }
-  }
-
-  /** [devDistResidueFile], parsed at most once per module. */
-  val devDistResidue: DevDistResidueFile? by lazy(LazyThreadSafetyMode.NONE) { parseDevDistResidue(devDistResidueFile) }
 }
 
 internal data class ResourceDescriptor(

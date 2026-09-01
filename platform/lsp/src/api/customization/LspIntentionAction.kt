@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.LspServer
+import com.intellij.platform.lsp.util.applySimpleTextEdits
 import com.intellij.platform.lsp.util.applyTextEdits
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -161,7 +162,7 @@ open class LspIntentionAction(protected val lspClient: LspClient, private val in
             thisLogger().error("No Document for ${textDocumentEdit.textDocument.uri}")
             return@applyWorkspaceEdit
           }
-          if (!applyTextEdits(document, textDocumentEdit.edits)) return@applyWorkspaceEdit
+          if (!applySimpleTextEdits(document, textDocumentEdit.edits)) return@applyWorkspaceEdit
         }
 
         editOrResourceOperation.right?.let { resourceOperation ->
@@ -367,7 +368,7 @@ open class LspIntentionAction(protected val lspClient: LspClient, private val in
       documentChanges.forEach { editOrResourceOperation ->
         editOrResourceOperation.left?.let { textDocumentEdit ->
           if (physicalDocument != uriToDocumentMap[textDocumentEdit.textDocument.uri]) return@forEach
-          if (!applyTextEdits(nonPhysicalDocument, textDocumentEdit.edits)) return@invokeForPreview
+          if (!applySimpleTextEdits(nonPhysicalDocument, textDocumentEdit.edits)) return@invokeForPreview
         }
       }
     }

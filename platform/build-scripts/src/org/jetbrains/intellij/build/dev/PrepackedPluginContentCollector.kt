@@ -9,19 +9,16 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 
-private data class PackedPluginJar(
-  @JvmField val key: PrepackedPluginContentKey,
-  @JvmField val relativeOutputFile: String,
-  /** The jar's path as the record gave it - execution-root-relative, and the composer resolves it the same way. */
-  @JvmField val source: String,
-)
-
 /**
  * Joins Bazel-built plugin jars to the destinations a fragment validated through `JarPackager`.
  *
  * Copies nothing: the result is the component's content stated as pairs of destination and existing bytes, which
  * `writeSourcedDevBuildComponentManifest` turns into the manifest the composer copies from. One jar may be named by
  * several plugins, so the same source appears under more than one destination.
+ *
+ * Both files are keyed by *(plugin main module, `lib/`-relative destination)*, which is the relation's key and the
+ * leading two columns of each line. `pluginJarsFile` adds the jar to place, and a placement file adds where in the
+ * distribution this assembly put it.
  */
 @ApiStatus.Internal
 fun collectPrepackedPluginContentJars(pluginJarsFile: Path, placementFiles: List<Path>): List<DevBuildComponentSourcedFile> {
@@ -39,19 +36,18 @@ private fun collectPrepackedPluginContentJars(
   placementFiles: List<Path>,
   span: Span,
 ): List<DevBuildComponentSourcedFile> {
-  val jars = LinkedHashMap<PrepackedPluginContentKey, PackedPluginJar>()
-  readTabSeparated(pluginJarsFile, fieldCount = 4) { fields, lineNumber ->
-    val key = PrepackedPluginContentKey(pluginMainModule = fields[0], contentModule = fields[1])
-    val relativeOutputFile = validateRelativeOutputFile(key = key, value = fields[2], source = "$pluginJarsFile:$lineNumber")
-    val jar = PackedPluginJar(key = key, relativeOutputFile = relativeOutputFile, source = fields[3])
-    val previous = jars.put(key, jar)
+  // Relation to the jar's path as the record gave it: execution-root-relative, and the composer resolves it the same way.
+  val jars = LinkedHashMap<PrepackedPluginContentKey, String>()
+  readTabSeparated(pluginJarsFile) { fields, lineNumber ->
+    val key = readKey(fields, source = "$pluginJarsFile:$lineNumber")
+    val previous = jars.put(key, fields[2])
     require(previous == null) { "$pluginJarsFile:$lineNumber: duplicate plugin jar relation $key" }
   }
 
   val placements = LinkedHashMap<PrepackedPluginContentKey, String>()
   for (placementFile in placementFiles) {
-    readTabSeparated(placementFile, fieldCount = 3) { fields, lineNumber ->
-      val key = PrepackedPluginContentKey(pluginMainModule = fields[0], contentModule = fields[1])
+    readTabSeparated(placementFile) { fields, lineNumber ->
+      val key = readKey(fields, source = "$placementFile:$lineNumber")
       val previous = placements.put(key, fields[2])
       require(previous == null) { "$placementFile:$lineNumber: duplicate placement for $key (already $previous)" }
     }
@@ -67,8 +63,8 @@ private fun collectPrepackedPluginContentJars(
   val destinations = HashMap<String, PrepackedPluginContentKey>()
   var byteCount = 0L
   val result = ArrayList<DevBuildComponentSourcedFile>(placements.size)
-  for (key in placements.keys.sortedWith(compareBy(PrepackedPluginContentKey::pluginMainModule, PrepackedPluginContentKey::contentModule))) {
-    val jar = jars.getValue(key)
+  for (key in placements.keys.sortedWith(compareBy(PrepackedPluginContentKey::pluginMainModule, PrepackedPluginContentKey::relativeOutputFile))) {
+    val source = jars.getValue(key)
     val distributionPathString = placements.getValue(key)
     val distributionPath = Path.of(distributionPathString)
     // The only escape check there is now: with no output directory to resolve against, a placement is accepted or
@@ -77,37 +73,44 @@ private fun collectPrepackedPluginContentJars(
     require(!distributionPath.isAbsolute && distributionPath.normalize() == distributionPath && !distributionPath.startsWith("..")) {
       "Placement for $key escapes the distribution: $distributionPathString"
     }
-    val expectedSuffix = Path.of("lib").resolve(jar.relativeOutputFile)
+    val expectedSuffix = Path.of("lib").resolve(key.relativeOutputFile)
     require(distributionPath.startsWith("plugins") && distributionPath.endsWith(expectedSuffix)) {
       "Placement for $key is '$distributionPathString', expected plugins/<directory>/$expectedSuffix"
     }
     val relativePath = distributionPath.invariantSeparatorsPathString
     val previous = destinations.put(relativePath, key)
     require(previous == null) { "Plugin jars $previous and $key both claim $distributionPathString" }
-    byteCount += Files.size(Path.of(jar.source))
-    result.add(DevBuildComponentSourcedFile(relativePath = relativePath, source = jar.source))
+    byteCount += Files.size(Path.of(source))
+    result.add(DevBuildComponentSourcedFile(relativePath = relativePath, source = source))
   }
   span.setAttribute("jarCount", placements.size.toLong())
   span.setAttribute("byteCount", byteCount)
   return result
 }
 
-private fun validateRelativeOutputFile(key: PrepackedPluginContentKey, value: String, source: String): String {
-  val path = Path.of(value)
-  require(value.isNotBlank() && !path.isAbsolute && path.normalize() == path && !path.startsWith("..")) {
-    "$source: relative output file of $key escapes plugin lib: '$value'"
+/** The relation's key, from the leading two columns both formats share. */
+private fun readKey(fields: List<String>, source: String): PrepackedPluginContentKey {
+  val relativeOutputFile = fields[1]
+  val path = Path.of(relativeOutputFile)
+  require(!path.isAbsolute && path.normalize() == path && !path.startsWith("..")) {
+    "$source: relative output file of ${fields[0]} escapes plugin lib: '$relativeOutputFile'"
   }
-  return value
+  return PrepackedPluginContentKey(pluginMainModule = fields[0], relativeOutputFile = relativeOutputFile)
 }
 
 private fun formatKeys(keys: Collection<PrepackedPluginContentKey>): String {
-  return keys.sortedWith(compareBy(PrepackedPluginContentKey::pluginMainModule, PrepackedPluginContentKey::contentModule)).joinToString(
+  return keys.sortedWith(compareBy(PrepackedPluginContentKey::pluginMainModule, PrepackedPluginContentKey::relativeOutputFile)).joinToString(
     prefix = "[",
     postfix = "]",
-  ) { "${it.pluginMainModule}/${it.contentModule}" }
+  ) { "${it.pluginMainModule}/${it.relativeOutputFile}" }
 }
 
-private inline fun readTabSeparated(file: Path, fieldCount: Int, consumer: (List<String>, Int) -> Unit) {
+/**
+ * Reads one of the two formats this function joins: the relation's key in the leading two columns, and one value in the
+ * third. Both hold three fields, so the count is stated once here rather than at each call.
+ */
+private inline fun readTabSeparated(file: Path, consumer: (List<String>, Int) -> Unit) {
+  val fieldCount = 3
   for ((index, line) in Files.readAllLines(file).withIndex()) {
     if (line.isBlank()) {
       continue

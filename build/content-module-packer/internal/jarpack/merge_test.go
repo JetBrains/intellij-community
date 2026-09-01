@@ -3,6 +3,8 @@
 package jarpack
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -195,5 +197,66 @@ func TestPackWritesNoIndexPointerForAnEmptyResult(t *testing.T) {
 	}
 	if got := entryNames(t, data); len(got) != 0 {
 		t.Errorf("entries are %v, want none", got)
+	}
+}
+
+// fileSource is what an action hands the packer when the bytes of one entry live in a file of their own rather than in
+// a jar. The dev distribution's produced plugin descriptor is the case.
+func fileSource(t *testing.T, name string, data string) string {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), name)
+	if err := os.WriteFile(path, []byte(data), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	return path
+}
+
+func TestPackTakesASingleFileAsOneEntryAtTheStatedName(t *testing.T) {
+	descriptor := "<idea-plugin><id>example</id></idea-plugin>"
+	data, duplicates := pack(t, MergeSpec{
+		Output: "intellij.example.jar",
+		Sources: []Source{
+			{Path: fileSource(t, "produced.xml", descriptor), Name: "META-INF/plugin.xml"},
+			{Path: moduleSource(t, "module.jar"), Filter: ModuleOutputNameFilter},
+		},
+	})
+	if len(duplicates) != 0 {
+		t.Errorf("the file's name is in no other source, got duplicates %v", duplicates)
+	}
+	// The file keeps the position its source has, because that order is the precedence Merge applies. The Kotlin
+	// `JarPackager` adds a patched entry ahead of the module output, so a file source must be able to lead.
+	if got, want := strings.Join(entryNames(t, data), ","),
+		"META-INF/plugin.xml,com/example/Service.class,com/example/nested/Inner.class,messages/Bundle.properties,__index__"; got != want {
+		t.Errorf("entries are %q, want %q", got, want)
+	}
+	if got := readEntry(t, data, "META-INF/plugin.xml"); got != descriptor {
+		t.Errorf("the entry holds %q, want the file's bytes %q", got, descriptor)
+	}
+}
+
+func TestPackReportsAFileSourceWhoseNameAnEarlierSourceTook(t *testing.T) {
+	data, duplicates := pack(t, MergeSpec{
+		Output: "intellij.example.jar",
+		Sources: []Source{
+			{Path: moduleSource(t, "module.jar"), Filter: ModuleOutputNameFilter},
+			{Path: fileSource(t, "bundle.properties", "key=overwritten"), Name: "messages/Bundle.properties"},
+		},
+	})
+	if got, want := strings.Join(duplicates, ","), "messages/Bundle.properties"; got != want {
+		t.Errorf("duplicates are %q, want %q", got, want)
+	}
+	// First source wins, for a file source exactly as for a jar one.
+	if got, want := readEntry(t, data, "messages/Bundle.properties"), "key=value"; got != want {
+		t.Errorf("the entry holds %q, want the first source's %q", got, want)
+	}
+}
+
+func TestPackDropsAFileSourceThatWouldSmuggleAManifest(t *testing.T) {
+	data, _ := pack(t, MergeSpec{
+		Output:  "intellij.example.jar",
+		Sources: []Source{{Path: fileSource(t, "MANIFEST.MF", "Manifest-Version: 1.0\r\n\r\n"), Name: ManifestEntryName}},
+	})
+	if names := strings.Join(entryNames(t, data), ","); strings.Contains(names, ManifestEntryName) {
+		t.Errorf("entries are %q, want no manifest: keepManifest is false", names)
 	}
 }

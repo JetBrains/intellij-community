@@ -302,6 +302,35 @@ data class SuppressionConfigStats(
 )
 
 /**
+ * When one part of the generation ran, and for how long. A stage or a pipeline node.
+ *
+ * [startEpochMs] is wall-clock, so a caller can replay the part as a span at the time it really happened. Millisecond
+ * resolution, because the whole generation takes seconds.
+ */
+data class GenerationTiming(
+  @JvmField val name: String,
+  @JvmField val startEpochMs: Long,
+  @JvmField val durationMs: Long,
+)
+
+/**
+ * Times [block] and appends the result to [into].
+ *
+ * The `finally` matters: a stage that throws still reports how long it ran before it did, and a failed generation is
+ * exactly when a reader wants the timing.
+ */
+suspend fun <T> recordGenerationTiming(name: String, into: MutableList<GenerationTiming>, block: suspend () -> T): T {
+  val startEpochMs = System.currentTimeMillis()
+  val startNano = System.nanoTime()
+  try {
+    return block()
+  }
+  finally {
+    into.add(GenerationTiming(name = name, startEpochMs = startEpochMs, durationMs = (System.nanoTime() - startNano) / 1_000_000))
+  }
+}
+
+/**
  * Combined results from all generation operations.
  * Used to collect parallel generation results before printing summary.
  */
@@ -319,6 +348,30 @@ data class GenerationStats(
   @JvmField val durationMs: Long,
   /** All file diffs from DeferredFileUpdater. The pipeline owns these files. See [hasChanges] for the rest. */
   @JvmField val fileUpdaterDiffs: List<FileDiff> = emptyList(),
+  /**
+   * When each pipeline node ran, and for how long, sorted by start.
+   *
+   * The pipeline runs a level of nodes in parallel, so these overlap and do not sum to [durationMs]. A caller that
+   * traces the generation replays them as spans, which is how one slow node becomes visible inside one opaque total.
+   */
+  @JvmField val nodeTimings: List<GenerationTiming> = emptyList(),
+  /**
+   * When each generation stage ran, and for how long, sorted by start.
+   *
+   * The stages are sequential, so these do sum to close to [durationMs]. This is the list that says which stage owns
+   * the time; [nodeTimings] then says which node owns the EXECUTE stage. A caller past the pipeline appends its own
+   * stages here, so one list covers the whole generation.
+   */
+  @JvmField val stageTimings: List<GenerationTiming> = emptyList(),
+  /**
+   * When each step of the BUILD_MODEL stage ran, and for how long, sorted by start.
+   *
+   * A step nests inside the `build model` stage, so this list is separate from [stageTimings]. One list would count the
+   * same time twice. The steps are sequential, so they sum to close to the `build model` entry of [stageTimings]. A
+   * name is the name of the called function, and never a phase label, because the labels do not follow the execution
+   * order.
+   */
+  @JvmField val phaseTimings: List<GenerationTiming> = emptyList(),
 ) {
   /**
    * Central file tracking, plus the dev-distribution plan.

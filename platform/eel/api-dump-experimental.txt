@@ -247,6 +247,10 @@ f:com.intellij.platform.eel.EelExecWindowsApiHelpersKt
 - com.intellij.platform.eel.EelPlatform$Posix
 - <init>(com.intellij.platform.eel.EelPlatform$Arch):V
 - getArch():com.intellij.platform.eel.EelPlatform$Arch
+*f:com.intellij.platform.eel.EelPlatform$HarmonyOS
+- com.intellij.platform.eel.EelPlatform$Posix
+- <init>(com.intellij.platform.eel.EelPlatform$Arch):V
+- getArch():com.intellij.platform.eel.EelPlatform$Arch
 *f:com.intellij.platform.eel.EelPlatform$Linux
 - com.intellij.platform.eel.EelPlatform$Posix
 - <init>(com.intellij.platform.eel.EelPlatform$Arch):V

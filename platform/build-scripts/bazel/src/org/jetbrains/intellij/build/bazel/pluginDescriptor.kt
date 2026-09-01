@@ -2,8 +2,6 @@
 package org.jetbrains.intellij.build.bazel
 
 import com.intellij.openapi.util.JDOMUtil
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 import org.jdom.Element
 import java.nio.file.Path
 import java.util.TreeMap
@@ -22,8 +20,8 @@ import kotlin.io.path.relativeTo
  *
  * Almost everything is derived. The plugin's own descriptor comes from its production resource roots, the descriptor of
  * every content module comes from the plugin's own `<content>`, and the plugin directory and the main jar name come from
- * the main module's name. The `descriptor:` part of `dev-dist.yaml` is the remainder, and it sits beside the plugin only
- * where the convention fails - see [DevDistResidueFile].
+ * the main module's name. The `plugin_descriptor_residue` section of `dev_dist_plugin_model_tables.txt` is the
+ * remainder, and it names a plugin only where the convention fails; see [DescriptorResidueSection].
  */
 internal class PluginDescriptor(
   @JvmField val mainModule: String,
@@ -47,67 +45,38 @@ internal class PluginDescriptor(
   @JvmField val retainProductDescriptor: Boolean,
 )
 
-/** The population the plan generator states; see [readPluginDescriptorPopulation]. */
-internal const val PLUGIN_DESCRIPTOR_POPULATION_FILE_NAME: String = "dev_dist_plugin_descriptor_population.txt"
-
-/**
- * Which layout variants a descriptor target exists for, by plugin main module.
- *
- * One `<main module>` or `<main module>/<variant>` per line, and a `#` line is a comment. The empty string is the
- * variant of a plugin whose one layout serves every platform.
- *
- * Fail-open on an absent file: an empty map emits no descriptor target anywhere, and a checkout whose plan generator
- * has never run is exactly the case that must still convert.
- */
-internal fun readPluginDescriptorPopulation(file: Path): Map<String, List<String>> {
-  if (!file.exists()) {
-    return emptyMap()
-  }
-  val result = LinkedHashMap<String, MutableList<String>>()
-  for (raw in file.readText().lineSequence()) {
-    val line = raw.trim()
-    if (line.isEmpty() || line.startsWith('#')) {
-      continue
-    }
-    result.computeIfAbsent(line.substringBefore('/')) { ArrayList() }.add(line.substringAfter('/', ""))
-  }
-  return result
-}
-
 /**
  * One section of a plugin's descriptor residue - what the convention does not give about one (plugin, layout variant).
  *
- * Every field defaults, and an absent section means every default. So a plugin with no `descriptor:` part at all is pure
- * convention, which is what keeps this part beside about 24 plugins instead of beside every one.
+ * Every field defaults, and an absent section means every default. So a plugin the residue does not name is pure
+ * convention, which is what keeps the table at a small minority of the bundled plugins.
+ *
+ * The plugin directory and the main jar name are not fields. `[plugin_jar_placement]` states both, and
+ * [statedPluginJarPlacement] is where [computePluginDescriptor] reads them.
  */
-@Serializable
-internal data class DescriptorResidueSection(
+internal class DescriptorResidueSection(
   /** Every descriptor an `xi:include` of this plugin's closure reaches. */
   @JvmField val descriptors: List<DescriptorRow> = emptyList(),
-  @JvmField @SerialName("library_descriptors") val libraryDescriptors: List<DescriptorLibraryRow> = emptyList(),
+  @JvmField val libraryDescriptors: List<DescriptorLibraryRow> = emptyList(),
   /** The content modules the product's `ContentModuleFilter` refuses, in descriptor order. */
-  @JvmField @SerialName("refused_content_modules") val refusedContentModules: List<String> = emptyList(),
-  @JvmField @SerialName("separate_jar") val separateJar: List<String> = emptyList(),
+  @JvmField val refusedContentModules: List<String> = emptyList(),
+  @JvmField val separateJar: List<String> = emptyList(),
   @JvmField val markers: List<String> = emptyList(),
-  @JvmField @SerialName("version_suffix") val versionSuffix: String = "",
-  @JvmField @SerialName("directory_name") val directoryName: String = "",
-  @JvmField @SerialName("main_jar_name") val mainJarName: String = "",
-  @JvmField @SerialName("no_embedding") val noEmbedding: Boolean = false,
-  @JvmField @SerialName("exact_version") val exactVersion: Boolean = false,
-  @JvmField @SerialName("retain_product_descriptor") val retainProductDescriptor: Boolean = false,
+  @JvmField val versionSuffix: String = "",
+  @JvmField val noEmbedding: Boolean = false,
+  @JvmField val exactVersion: Boolean = false,
+  @JvmField val retainProductDescriptor: Boolean = false,
 )
 
 /** One descriptor of a residue: the load path a resolver asks for, and the project-relative path of the file. */
-@Serializable
-internal data class DescriptorRow(
-  @JvmField @SerialName("load_path") val loadPath: String,
+internal class DescriptorRow(
+  @JvmField val loadPath: String,
   @JvmField val path: String,
 )
 
 /** One library descriptor of a residue, by name. A jar file name carries the artifact version, so no row states one. */
-@Serializable
-internal data class DescriptorLibraryRow(
-  @JvmField @SerialName("load_path") val loadPath: String,
+internal class DescriptorLibraryRow(
+  @JvmField val loadPath: String,
   @JvmField val module: String,
   @JvmField val library: String,
 )
@@ -216,13 +185,8 @@ internal fun computePluginDescriptor(
   val variants = context.pluginDescriptorPopulation.get(moduleName) ?: return emptyList()
   val descriptorPath = ownDescriptorPackagePath(module) ?: return emptyList()
 
-  val residue = descriptorResidueOf(module)
-  for (key in residue.keys) {
-    if (key.substringBefore('/') != moduleName) {
-      println("WARN: $moduleName descriptor target: $DEV_DIST_RESIDUE_FILE_NAME states the section '$key'," +
-              " which names another plugin")
-    }
-  }
+  val residue = descriptorResidueOf(module = module, context = context)
+  val placement = statedPluginJarPlacement(mainModule = moduleName, context = context)
   val result = ArrayList<PluginDescriptor>(variants.size)
   for (variant in variants) {
     val key = if (variant.isEmpty()) moduleName else "$moduleName/$variant"
@@ -244,8 +208,8 @@ internal fun computePluginDescriptor(
       separateJar = section.separateJar,
       markers = section.markers,
       versionSuffix = section.versionSuffix,
-      directoryName = section.directoryName,
-      mainJarName = section.mainJarName,
+      directoryName = placement.directory,
+      mainJarName = placement.mainJarName,
       embedContentModules = !section.noEmbedding,
       exactVersion = section.exactVersion,
       retainProductDescriptor = section.retainProductDescriptor,

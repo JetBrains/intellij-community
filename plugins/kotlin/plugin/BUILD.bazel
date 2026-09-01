@@ -56,7 +56,6 @@ exports_files(
     [
         "intellij.kotlin.plugin.iml",
         "resources/META-INF/plugin.xml",
-        "dev-dist.yaml",
     ],
     visibility = ["//visibility:public"],
 )

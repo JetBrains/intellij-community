@@ -1,5 +1,6 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "dev_dist_plugin_jar")
 
 ### auto-generated section `build intellij.gradle.plugin` start
 jvm_library(
@@ -34,7 +35,6 @@ exports_files(
     [
         "intellij.gradle.plugin.iml",
         "resources/META-INF/plugin.xml",
-        "dev-dist.yaml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -44,8 +44,6 @@ exports_files(
 dev_dist_plugin(
     content_modules = [
         "//libraries/gradle",
-        "//libraries/groovy",
-        "//libraries/groovy/ant",
         "//plugins/gradle/tooling-extension-api:toolingExtension",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
         "//plugins/gradle/tooling-proxy",
@@ -54,8 +52,6 @@ dev_dist_plugin(
     descriptor_module = ":plugin",
     libraries = [
         "@lib//:libraries-gradle-_gradle",
-        "@lib//:libraries-groovy-ant-groovy-ant",
-        "@lib//:libraries-groovy-groovy",
         "@lib//:slf4j-api",
         "@lib//:slf4j-jdk14",
         "@lib//ant/lib:ant",
@@ -81,5 +77,23 @@ dev_dist_plugin(
         "//plugins/gradle/settings:settings_content_module_jar": "intellij.gradle.settings.jar",
         "//plugins/gradle:gradle_content_module_jar": "intellij.gradle.jar",
     },
+    prepacked_layout_jars = [
+        ":groovy-ant_dev_dist_plugin_jar",
+        ":groovy_dev_dist_plugin_jar",
+    ],
+)
+
+dev_dist_plugin_jar(
+    libraries = ["@lib//:libraries-groovy-ant-groovy-ant"],
+    modules = ["//libraries/groovy/ant"],
+    plugin_main_module = "intellij.gradle.plugin",
+    relative_output_file = "groovy-ant.jar",
+)
+
+dev_dist_plugin_jar(
+    libraries = ["@lib//:libraries-groovy-groovy"],
+    modules = ["//libraries/groovy"],
+    plugin_main_module = "intellij.gradle.plugin",
+    relative_output_file = "groovy.jar",
 )
 ### auto-generated section `dev intellij.gradle.plugin` end

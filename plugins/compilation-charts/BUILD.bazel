@@ -1,5 +1,6 @@
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "dev_dist_plugin_jar")
 
 ### auto-generated section `build intellij.compilation.charts` start
 jvm_library(
@@ -103,7 +104,6 @@ exports_files(
     [
         "intellij.compilation.charts.iml",
         "resources/META-INF/plugin.xml",
-        "dev-dist.yaml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -111,7 +111,13 @@ exports_files(
 
 ### auto-generated section `dev intellij.compilation.charts` start
 dev_dist_plugin(
-    content_modules = ["//plugins/compilation-charts/jps-plugin:compilation-charts-jps"],
     descriptor_module = ":compilation-charts",
+    prepacked_layout_jars = [":compilation-charts-jps_dev_dist_plugin_jar"],
+)
+
+dev_dist_plugin_jar(
+    modules = ["//plugins/compilation-charts/jps-plugin:compilation-charts-jps"],
+    plugin_main_module = "intellij.compilation.charts",
+    relative_output_file = "compilation-charts-jps.jar",
 )
 ### auto-generated section `dev intellij.compilation.charts` end

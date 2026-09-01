@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.google.common.hash.Hashing
@@ -14,7 +14,6 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -197,7 +196,7 @@ class JdkInstaller : JdkInstallerBase() {
     val userHome = eel.fs.user.home
 
     val relativePath = when (eel.platform) {
-      is EelPlatform.Windows, is EelPlatform.Linux, is EelPlatform.FreeBSD -> ".jdks"
+      is EelPlatform.Windows, is EelPlatform.Linux, is EelPlatform.FreeBSD, is EelPlatform.HarmonyOS -> ".jdks"
       is EelPlatform.Darwin -> "Library/Java/JavaVirtualMachines"
     }
 

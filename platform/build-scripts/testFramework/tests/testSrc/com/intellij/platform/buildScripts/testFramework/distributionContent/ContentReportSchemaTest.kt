@@ -22,6 +22,9 @@ import org.junit.jupiter.api.assertAll
  *   entry classes.
  * - `ReportedPlugin` in `pluginContentReportZip.kt` of the same directory mirrors [PluginContentReport]. That class is the
  *   envelope of one per-plugin report in the zip.
+ * - `ExecutedPlanEntry` in `devDistPluginJarPlan.kt` of the same directory mirrors [FileEntry] a second time, for the
+ *   executed recipe a dev-distribution fragment writes. Two schemas over one canonical class, because the two read two
+ *   different artifacts and ignore two different halves of it.
  *
  * Both narrow schemas decode with `recipeYaml`, which sets `strictMode = false`. A field a narrow schema fails to declare
  * is dropped in silence instead of reported. That is how `module:` once went missing from the converter's view of a
@@ -62,6 +65,7 @@ class ContentReportSchemaTest {
       { checkSchema(MODULE_ENTRY) },
       { checkSchema(PROJECT_LIBRARY_ENTRY) },
       { checkSchema(PLUGIN_CONTENT_REPORT) },
+      { checkSchema(EXECUTED_PLAN_ENTRY) },
     )
   }
 
@@ -179,6 +183,38 @@ private val PROJECT_LIBRARY_ENTRY = NarrowSchema(
 // `dev_dist_plugin_content_population.txt` from `mainModule`, so a `mainModule` that read as absent would empty that file
 // and drop every content leaf with it. That reader now refuses an empty main module at run time, and this row is the check
 // that fails first, before any build reaches the reader.
+// The second narrow schema over `FileEntry`, for a dev-distribution fragment's executed `<fragment>.plan.yaml`. Its
+// question is where a jar went and whose module output it holds, so it declares `kind` - which `RecipeEntry` ignores,
+// because a content report carries none - and it ignores the whole membership detail a content target needs.
+private val EXECUTED_PLAN_ENTRY = NarrowSchema(
+  canonical = FileEntry.serializer(),
+  canonicalName = "FileEntry",
+  narrowName = "ExecutedPlanEntry",
+  narrowFile = "devDistPluginJarPlan.kt",
+  modeled = setOf("name", "kind", "modules", "contentModules"),
+  ignored = mapOf(
+    // The plan's own selectors. A fragment assembles one target platform, so every row of one plan carries the same
+    // three values and none of them tells two rows apart.
+    "os" to "one plan is one target platform, so this is constant over its rows",
+    "arch" to "one plan is one target platform, so this is constant over its rows",
+    "libc" to "one plan is one target platform, so this is constant over its rows",
+    // The packer's half of the recipe. `./build/dev-dist.cmd replay` packs a fragment's own source list again and
+    // compares the bytes, so the ordered list already has a gate; this comparison covers the other half.
+    "sources" to "the executed ordered source list, which the replay gate reproduces byte for byte",
+    // Membership facts a content target needs and a jar's identity does not. A jar name plus its two module lists is
+    // what a per-jar packing action declares, and the libraries inside a member's jar come from the member.
+    "projectLibraries" to "the libraries in a jar, which a per-jar action gets from its members",
+    "library" to "a bare library jar's library, which a per-jar action gets from its members",
+    "module" to "the module owning `library`, which a per-jar action gets from its members",
+    "productModules" to "product-level modules of a platform report; a fragment plan carries none",
+    "productEmbeddedModules" to "product-level embedded modules of a platform report; a fragment plan carries none",
+    "files" to "jar file names and sizes, a measurement of the run",
+    "reason" to "inclusion provenance for review, names no member and no jar",
+    "bundled" to "plugin index of a platform report; a fragment plan carries none",
+    "nonBundled" to "plugin index of a platform report; a fragment plan carries none",
+  ),
+)
+
 private val PLUGIN_CONTENT_REPORT = NarrowSchema(
   canonical = PluginContentReport.serializer(),
   canonicalName = "PluginContentReport",

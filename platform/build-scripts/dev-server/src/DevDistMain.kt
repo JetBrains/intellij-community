@@ -224,6 +224,14 @@ private suspend fun assembleDevDistribution(options: CommandLineOptions) {
   unusedInputs?.let(BazelBuildInputs::writeUnusedInputs)
 }
 
+/**
+ * Reads the relation-only plan `intellij_dev_build_inputs` wrote: one line per relation, as
+ * `<plugin main module>\t<`lib/`-relative destination>\t<space-separated members>`.
+ *
+ * The first two columns are the relation's key, and the members follow in merge order. A space separates them, which no
+ * JPS module name holds; the writer refuses one that does. The plan holds no jar path by design - a jar reaches the
+ * assembly through the input manifest, and this file states only what belongs where.
+ */
 private fun readPrepackedPluginContentPlan(file: Path): Map<PrepackedPluginContentKey, PrepackedPluginContentJar> {
   val result = LinkedHashMap<PrepackedPluginContentKey, PrepackedPluginContentJar>()
   for ((index, line) in Files.readAllLines(file).withIndex()) {
@@ -231,11 +239,12 @@ private fun readPrepackedPluginContentPlan(file: Path): Map<PrepackedPluginConte
       continue
     }
     val fields = line.split('\t')
-    require(fields.size == 3) { "$file:${index + 1}: expected plugin, content module and relative output path" }
+    require(fields.size == 3) { "$file:${index + 1}: expected plugin, relative output path and the members" }
+    require(fields[2].isNotEmpty()) { "$file:${index + 1}: a relation with no member hands over nothing" }
     val jar = PrepackedPluginContentJar(
       pluginMainModule = fields[0],
-      contentModule = fields[1],
-      relativeOutputFile = fields[2],
+      contentModules = fields[2].split(' '),
+      relativeOutputFile = fields[1],
     )
     val previous = result.put(jar.key, jar)
     require(previous == null) { "$file:${index + 1}: duplicate prepacked plugin relation ${jar.key}" }

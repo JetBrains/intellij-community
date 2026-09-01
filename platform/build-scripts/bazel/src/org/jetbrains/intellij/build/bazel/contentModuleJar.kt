@@ -335,6 +335,7 @@ internal fun computeContentModuleJar(module: ModuleDescriptor, moduleList: Modul
       recordedNames = recordedNames,
       moduleList = moduleList,
       context = context,
+      refuse = { context.reportContentModuleJarRefusal(moduleName, it) },
     ) ?: return null
     return ContentModuleJar(
       libraryTargetLabels = libraryTargetLabels,
@@ -379,6 +380,7 @@ internal fun computeContentModuleJar(module: ModuleDescriptor, moduleList: Modul
     recordedNames = recordedNames,
     moduleList = moduleList,
     context = context,
+    refuse = { context.reportContentModuleJarRefusal(moduleName, it) },
   ) ?: return null
 
   return ContentModuleJar(
@@ -468,7 +470,7 @@ private fun isCompatibleSingleModuleRecipe(entry: RecipeEntry, moduleName: Strin
 }
 
 /** Whose layout decides which of a walked module's libraries its content-module jar merges. */
-private enum class MergeRules {
+internal enum class MergeRules {
   /**
    * The platform layout, which this generator mirrors.
    *
@@ -502,14 +504,19 @@ private enum class MergeRules {
  * `null` for three reasons, and each is stated where it is decided: a merged module the converter does not know, a
  * merged library with no target it can name, or a set that disagrees with [recordedNames]. A disagreement is warned
  * about, because a jar that differs from the distribution's surfaces at class-load time and nowhere earlier.
+ *
+ * [refuse] takes the two reasons that have a message, because the two callers pack two different jars: a
+ * `content_module_jar` of one module, and one `dev_dist_plugin_jar` of a plugin's own. One message naming a module would
+ * be wrong for the second one.
  */
-private fun mergedLibraryTargetLabels(
+internal fun mergedLibraryTargetLabels(
   dependent: ModuleDescriptor,
   packedModuleNames: List<String>,
   rules: MergeRules,
   recordedNames: Set<String>,
   moduleList: ModuleList,
   context: BazelBuildFileGenerator,
+  refuse: (String) -> Unit,
 ): List<String>? {
   // A set, because two libraries of one module can intern to the same Bazel target, and Bazel rejects a repeated label
   // in an attribute outright. The first-wins jar order the packer needs is preserved by the rule, which expands these
@@ -561,7 +568,7 @@ private fun mergedLibraryTargetLabels(
       }
       if (reportName == null) {
         // Reached on the platform path only: the merge rules said yes and the comparison below has nothing to compare.
-        context.reportContentModuleJarRefusal(dependent.module.name, "an unnamed merged library has no single jar to name it by")
+        refuse("an unnamed merged library has no single jar to name it by")
         return null
       }
       names.add(reportName)
@@ -585,11 +592,10 @@ private fun mergedLibraryTargetLabels(
     // construction, so `only merged` is always empty there and printing it would be dead text.
     val onlyRecorded = (recordedNames - names).sorted()
     val onlyMerged = (names - recordedNames).sorted()
-    context.reportContentModuleJarRefusal(
-      dependent.module.name,
+    refuse(
       "the merged library set does not match its recipe" +
       (if (onlyRecorded.isEmpty()) "" else " (only in the recipe: $onlyRecorded)") +
-      (if (onlyMerged.isEmpty()) "" else " (only merged: $onlyMerged)"),
+      (if (onlyMerged.isEmpty()) "" else " (only merged: $onlyMerged)")
     )
     return null
   }
@@ -659,7 +665,7 @@ private fun mergedLibraryTargetLabels(
  * keeps the fold an AND: once a module is vetoed no later occurrence brings it back, whatever order the reports are
  * read in.
  *
- * [overrides] is what a community-only run cannot fold for itself; see [PLUGIN_CONTENT_CANDIDATE_OVERRIDES_FILE_NAME].
+ * [overrides] is what a community-only run cannot fold for itself; see [DevDistPluginModelTables.contentCandidateOverrides].
  * It is applied after the fold, so it decides both directions. Every caller passes an empty map today, because the
  * residue writer folds this over one build's reports and states rows from the answer alone.
  *
@@ -711,79 +717,6 @@ internal fun foldPluginContentCandidacy(reports: List<List<RecipeEntry>>, overri
     }
   }
   return agreed
-}
-
-/**
- * The file the answers this generator cannot fold for itself are recorded in.
- *
- * The candidacy fold is an AND over every plugin of the project, and a community checkout does not contain the ultimate
- * ones. So a community-only run folds a different answer for a community module the ultimate half has an opinion about,
- * in both directions - a module only an ultimate plugin offers is not a candidate at all, and a module an *ultimate*
- * plugin vetoes is not vetoed. Either way that run generates `content_module_jar` and
- * `prepacked_content_modules` attributes differing from the checked-in ones, which is what
- * `Assert Bazel Files Are In Sync With JPS Model (Community Only)` fails on.
- *
- * Only those modules are recorded, not the whole set. The converter folds both halves and records the global answer for
- * the community modules they disagree about, in `bazel-targets.json`; `plugin-model-tool` only writes those rows out.
- * [communityOnlyCandidacyOverrideRows] is the one producer, and it states 8 rows today, where the whole set was 1892.
- * The sign is that answer, so `+` and `-` both occur. An override always agrees with what an ultimate run folds for
- * itself, by construction, so no run needs to know which kind of checkout it is in.
- *
- * That is why a `+` line also carries the merged library names, space separated after the module name. The fold agrees
- * on a library *set* and not only on a boolean, and the set of a module whose only report is in ultimate is another
- * thing a community-only run cannot see. Without it that run would emit a `libraries` attribute the ultimate run
- * refuses, or refuse one the ultimate run emits. A `-` line records no library, because a vetoed module has no jar.
- *
- * A plain text file for the same reason as the sibling `dev_dist_plugin_content_vetoes.txt`: it keeps this reader
- * independent of Starlark. Staleness is caught where the other plan files' is: the blocking `model-generation`
- * validation of `AllProductsPackagingTest` regenerates and diffs it.
- */
-internal const val PLUGIN_CONTENT_CANDIDATE_OVERRIDES_FILE_NAME: String = "dev_dist_plugin_content_candidate_overrides.txt"
-
-/**
- * Reads what `plugin-model-tool` recorded, or nothing when no run has recorded it. A `null` value is "not a candidate".
- *
- * Nothing rather than a failure, because a project the tool has never run over is a real case and not a mistake: the
- * generator's own integration tests each build a throwaway community project. Such a project has one plugin and no
- * ultimate half, so the fold reaches the same verdict with or without this file. What an absent file costs a real
- * checkout is only the modules it would have corrected, which the sync assertion then reports.
- *
- * A line without a sign is a hard error, unlike a missing file: it would silently change how a module is packed, and a
- * jar that differs from the distribution's is not noticed until class-load time. A `-` line with a library is the same
- * class of mistake read from the other side.
- */
-internal fun readPluginContentCandidateOverrides(file: Path): Map<String, Set<String>?> {
-  if (!Files.exists(file)) {
-    return emptyMap()
-  }
-
-  val result = HashMap<String, Set<String>?>()
-  for (line in Files.readAllLines(file)) {
-    val trimmed = line.trim()
-    if (trimmed.isEmpty() || trimmed.startsWith('#')) {
-      continue
-    }
-
-    val isCandidate = when (trimmed.first()) {
-      '+' -> true
-      '-' -> false
-      else -> error("$file: a line must start with `+` (a candidate) or `-` (not a candidate), got `$trimmed`")
-    }
-    val fields = trimmed.substring(1).split(' ').filter { it.isNotEmpty() }
-    val moduleName = fields.firstOrNull() ?: error("$file: a line must name a module, got `$trimmed`")
-    if (isCandidate) {
-      result.put(moduleName, fields.drop(1).toSet())
-    }
-    else {
-      // The same class of mistake as a line without a sign, and reported the same way: it would silently change how a
-      // module is packed.
-      if (fields.size != 1) {
-        error("$file: a `-` line records no library, got `$trimmed`")
-      }
-      result.put(moduleName, null)
-    }
-  }
-  return result
 }
 
 /**

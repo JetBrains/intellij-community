@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
@@ -25,6 +25,9 @@ enum class IdeaPluginOsRequirement {
   },
   FreeBSD {
     override fun isHostOs(): Boolean = OS.CURRENT == OS.FreeBSD
+  },
+  HarmonyOS {
+    override fun isHostOs(): Boolean = OS.CURRENT == OS.HarmonyOS
   },
   Unix {
     override fun isHostOs(): Boolean = OS.CURRENT != OS.Windows
@@ -53,6 +56,7 @@ enum class IdeaPluginOsRequirement {
       OS.macOS -> Mac
       OS.Linux -> Linux
       OS.FreeBSD -> FreeBSD
+      OS.HarmonyOS -> HarmonyOS
       OS.Other -> null
     }
 

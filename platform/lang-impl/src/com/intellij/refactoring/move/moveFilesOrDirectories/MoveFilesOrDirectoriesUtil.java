@@ -30,7 +30,6 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.FileReferenceContextUtil;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
-import com.intellij.refactoring.move.moveClassesOrPackages.MovedFileProvider;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
@@ -501,7 +500,7 @@ public final class MoveFilesOrDirectoriesUtil {
         if (moving == null) {
           doMoveFile(movedFile, newParent);
         }
-        moving = MovedFileProvider.getInstance().getUpdatedFile(newParent, movedFile);
+        moving = newParent.findFile(movedFile.getName());
         if (moving != null) {
           movedFiles.add(SmartPointerManager.createPointer(moving));
         }

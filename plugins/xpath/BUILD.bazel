@@ -1,6 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:dev_dist_plugin.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "dev_dist_plugin_jar")
 
 jps_test(
     name = "xpath-tests_test",
@@ -142,7 +143,6 @@ exports_files(
         "xpath-lang/resources/META-INF/plugin.xml",
         "xpath-lang/resources/liveTemplates/xsl.xml",
         "xpath-lang/resources/org/intellij/lang/xpath/xslt/resources/documentation.xml",
-        "dev-dist.yaml",
     ],
     visibility = ["//visibility:public"],
 )
@@ -150,10 +150,16 @@ exports_files(
 
 ### auto-generated section `dev intellij.xpath` start
 dev_dist_plugin(
-    content_modules = ["//plugins/xpath/xslt-rt:rt"],
     descriptor = "xpath-lang/resources/META-INF/plugin.xml",
     descriptor_module = ":xpath",
     main_module = "intellij.xpath",
+    prepacked_layout_jars = [":rt_xslt-rt_dev_dist_plugin_jar"],
+)
+
+dev_dist_plugin_jar(
+    modules = ["//plugins/xpath/xslt-rt:rt"],
+    plugin_main_module = "intellij.xpath",
+    relative_output_file = "rt/xslt-rt.jar",
 )
 ### auto-generated section `dev intellij.xpath` end
 

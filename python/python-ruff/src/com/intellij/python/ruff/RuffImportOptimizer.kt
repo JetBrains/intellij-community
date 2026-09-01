@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.api.getClients
-import com.intellij.platform.lsp.util.applyTextEdits
+import com.intellij.platform.lsp.util.applySimpleTextEdits
 import com.intellij.platform.lsp.util.getLsp4jRange
 import com.intellij.psi.PsiFile
 import com.intellij.python.ruff.server.RuffLspIntegrationProvider
@@ -84,7 +84,7 @@ class RuffImportOptimizer : ImportOptimizer {
         val edits = textDocumentEdit.edits
 
         updated = true
-        applyTextEdits(tempDocument, edits)
+        applySimpleTextEdits(tempDocument, edits)
       }
     }
     return Runnable {

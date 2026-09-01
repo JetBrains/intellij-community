@@ -18,7 +18,7 @@ class ExtensionDescriptor(
   @ApiStatus.Internal
   @Suppress("EnumEntryName")
   enum class Os {
-    windows, unix, mac, linux, freebsd;
+    windows, unix, mac, linux, freebsd, harmonyos;
 
     @OptIn(LowLevelLocalMachineAccess::class)
     fun isSuitableForOs(): Boolean = when (this) {
@@ -27,6 +27,7 @@ class ExtensionDescriptor(
       mac -> OS.CURRENT == OS.macOS
       linux -> OS.CURRENT == OS.Linux
       freebsd -> OS.CURRENT == OS.FreeBSD
+      harmonyos -> OS.CURRENT == OS.HarmonyOS
     }
   }
 }

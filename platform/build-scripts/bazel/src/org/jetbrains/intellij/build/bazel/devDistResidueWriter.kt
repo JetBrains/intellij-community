@@ -3,12 +3,12 @@ package org.jetbrains.intellij.build.bazel
 
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.deleteIfExists
+import java.util.TreeMap
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 /**
- * Writes the content half of every plugin's `dev-dist.yaml`, read off a distribution build's content report.
+ * Writes every plugin's content residue into one central file, read off a distribution build's content report.
  *
  * `derivePluginContentCandidacy` and `derivePluginContent` state a plugin's content from the project model, and this
  * states what is left - the `PluginLayout` decisions the model cannot reach. The report zip is the authority it reads
@@ -23,13 +23,12 @@ import kotlin.io.path.writeText
  * fold, which is folded over the residues the first pass wrote - so a first run over a tree with no residue writes the
  * candidacy rows, and the second run adds the rows that depend on them. A third run writes nothing.
  *
- * A plugin whose residue would be empty gets no file, and an existing empty one is deleted. So an absent file always
- * means pure convention.
+ * A plugin whose residue would be empty gets no row. So an absent plugin always means pure convention.
  *
- * A plugin the reports do not hold is left alone, file and all. A build reports the products it built, so a plugin
- * outside them says nothing about its own residue, and deleting that residue would silently change the plugin's leaves.
- * That is the first rule that makes a partial run safe: it can correct a plugin the reports cover, and it can do nothing
- * at all to one they do not.
+ * A plugin the reports do not hold keeps every row it has. A build reports the products it built, so a plugin outside
+ * them says nothing about its own residue, and dropping its rows would silently change the plugin's leaves. That is the
+ * first rule that makes a partial run safe: it can correct a plugin the reports cover, and it can do nothing at all to
+ * one they do not.
  *
  * The second rule is the direction of the change. See [residueChangeAddsOnly]. It gates a write alone. A verify run
  * withholds every write, so it reports each divergence and holds nothing back.
@@ -48,46 +47,58 @@ internal fun writeDevDistResidues(
   val divergent = ArrayList<DevDistResidueDivergence>()
   // The fold over the reports, with no override in play. It is the authority for every row this writes.
   val reportCandidates = foldPluginContentCandidacy(reports = reports.values.toList(), overrides = emptyMap())
+  // What each covered plugin merges, for the central table below. A plugin with no row states no merged member.
+  val extraMembers = TreeMap<String, List<String>>()
+  // The other seven fields of each covered plugin, for the central table below.
+  val contentResidues = TreeMap<String, ContentResidueSection>()
   for (module in moduleList.community + moduleList.ultimate) {
     val entries = reports.get(module.module.name) ?: continue
-    val file = module.contentRoots.firstOrNull()?.resolve(DEV_DIST_RESIDUE_FILE_NAME) ?: continue
-    val section = synthesizeContentResidue(
+    val synthesized = synthesizeContentResidue(
       module = module,
       moduleList = moduleList,
       context = context,
       reportCandidates = reportCandidates,
       entries = entries,
     )
+    val section = synthesized.section
+    if (synthesized.extraMembers.isNotEmpty()) {
+      extraMembers.put(module.module.name, synthesized.extraMembers)
+      rowsPerField.merge("extra_members", synthesized.extraMembers.size, Int::plus)
+      pluginsPerField.merge("extra_members", 1, Int::plus)
+    }
     for ((field, rows) in contentResidueFieldRows(section)) {
       rowsPerField.merge(field, rows, Int::plus)
       pluginsPerField.merge(field, 1, Int::plus)
     }
-    val text = composeDevDistResidueText(content = section, existing = file)
-    val before = if (Files.isRegularFile(file)) file.readText() else null
+    section?.let { contentResidues.put(module.module.name, it) }
+    val after = section?.let { contentResidueRows(plugin = module.module.name, section = it) }
+    val before = context.pluginContentResidue.get(module.module.name)
+      ?.let { contentResidueRows(plugin = module.module.name, section = it) }
     when {
-      text == null && before == null -> Unit
-      text == before -> unchanged++
-      else -> divergent.add(DevDistResidueDivergence(mainModule = module.module.name, file = file, before = before, after = text))
+      after == null && before == null -> Unit
+      after == before -> unchanged++
+      else -> divergent.add(DevDistResidueDivergence(mainModule = module.module.name, before = before, after = after))
     }
   }
   val population = foldPluginContentPopulation(moduleList = moduleList, context = context, reports = reports)
+  val extraMembersTable = foldPluginExtraMembers(context = context, reported = reports.keys, folded = extraMembers)
   // The direction rule gates a write alone. A verify run writes nothing, so holding a change back there would only hide
   // it from the reader; `reportStaleDevDistResidues` states the partial read instead.
   val (skipped, applied) = when {
     verify || !population.partial -> emptyList<DevDistResidueDivergence>() to divergent
     else -> divergent.partition { !residueChangeAddsOnly(it) }
   }
+  val contentResidueTable = foldPluginContentResidue(
+    file = (context.ultimateRoot?.resolve("community") ?: context.communityRoot)
+      .resolve("build/$PLUGIN_CONTENT_RESIDUE_FILE_NAME"),
+    reported = reports.keys,
+    folded = contentResidues,
+    skipped = skipped.mapTo(HashSet()) { it.mainModule },
+  )
   if (!verify) {
-    for (divergence in applied) {
-      if (divergence.after == null) {
-        divergence.file.deleteIfExists()
-      }
-      else {
-        Files.createDirectories(divergence.file.parent)
-        divergence.file.writeText(divergence.after)
-      }
-    }
     population.write()
+    extraMembersTable.write()
+    contentResidueTable.write()
   }
   return DevDistResidueWriteResult(
     // What the run applied, so that a held-back plugin is counted under `skipped` alone and never twice.
@@ -116,79 +127,14 @@ internal fun writeDevDistResidues(
  * `raw_members` rows, and the union of seven products keeps every one of them. So a removal waits for the products that
  * are missing, and this pass leaves the file exactly as it is.
  *
- * Whole rows, and not a text comparison. The header is the same text in every file and the fields are sorted, so a set
- * difference of the rows states the change. A plugin whose file has to go counts as a removal of all of it.
+ * Whole rows, and not a text comparison. [contentResidueRows] sorts them, so a set difference of two row lists states
+ * the change. A plugin whose rows all have to go counts as a removal of all of them.
  */
 internal fun residueChangeAddsOnly(divergence: DevDistResidueDivergence): Boolean {
-  val after = residueRows(divergence.after) ?: return false
-  return residueRows(divergence.before).orEmpty().all { it in after }
+  val after = divergence.after?.toHashSet() ?: return false
+  return divergence.before.orEmpty().all { it in after }
 }
 
-/**
- * The rows of one residue file, each under the field that holds it, or `null` when the plugin has no file.
- *
- * A row states one `PluginLayout` decision. A comment and a blank line state none, and a comment sits at the indent of
- * the field it explains, so neither is a row.
- *
- * The field is part of the row, because a member name stands in several fields and means a different decision in each.
- * Without it, a name that moves from `extra_members` to `raw_members` would read as no change at all, and
- * [residueChangeAddsOnly] would let a partial read apply the move.
- *
- * A `libraries` row spans two lines, `- name:` and then `module:`, and the two state one decision together. The deeper
- * line joins the row above it. Two rows of their own would let two libraries swap their owning modules while the row
- * set stands still, and [residueChangeAddsOnly] would call that swap an addition.
- */
-private fun residueRows(text: String?): Set<String>? {
-  if (text == null) {
-    return null
-  }
-  val rows = LinkedHashSet<String>()
-  var field = ""
-  // The member key of `merged_libraries`, which is the one field that nests. Empty under every other field.
-  var member = ""
-  var item: String? = null
-  var itemIndent = 0
-  for (line in text.lineSequence()) {
-    val trimmed = line.trim()
-    if (trimmed.isEmpty() || trimmed.startsWith("#")) {
-      continue
-    }
-    val indent = line.length - line.trimStart().length
-    // The second line of a `libraries` row: deeper than the row above, and no key or list marker of its own.
-    if (item != null && indent > itemIndent && !trimmed.startsWith("- ") && !trimmed.endsWith(":")) {
-      rows.remove(item)
-      item = "$item $trimmed"
-      rows.add(item)
-      continue
-    }
-    item = null
-    val prefix = if (member.isEmpty()) field else "$field $member"
-    when {
-      // A key with nothing after it opens a field of the section, or one member key of `merged_libraries`. It carries
-      // the rows under it and is no row of its own, so a field that goes takes every one of its rows with it.
-      trimmed.endsWith(":") -> {
-        if (indent > FIELD_INDENT) {
-          member = trimmed
-        }
-        else {
-          field = trimmed
-          member = ""
-        }
-      }
-      trimmed.startsWith("- ") -> {
-        item = "$prefix ${trimmed.removePrefix("- ")}"
-        itemIndent = indent
-        rows.add(item)
-      }
-      // A key with a value of its own: a member that merges no library at all.
-      else -> rows.add("$prefix $trimmed")
-    }
-  }
-  return rows
-}
-
-/** How far a field of the `content:` section is indented. A deeper key is one member of `merged_libraries`. */
-private const val FIELD_INDENT: Int = 2
 
 /**
  * Folds the content population off the distribution builds' content reports, and says whether the file is stale.
@@ -267,17 +213,124 @@ private class PluginContentPopulation(
   }
 }
 
+/**
+ * Folds the merged members off the same reports, into the one content-residue field the monorepo reads.
+ *
+ * The partial-read rule is the population's, and for the same reason: a report names the plugins of one product, so a
+ * run given fewer reports than the whole population **keeps** every plugin it cannot speak for. Writing only what the
+ * supplied reports name would drop another product's merged members, and every dropped row takes a `withModule` call
+ * with it. See [foldPluginContentPopulation] for the argument in full.
+ *
+ * A plugin a report covers and this run folds no member for loses its rows, which is a removal a covering report may
+ * make. That is the one direction that differs from [residueChangeAddsOnly]: there the unit is a file and a partial
+ * read holds a whole file back, here the unit is a plugin and a covered plugin is fully spoken for.
+ */
+private fun foldPluginExtraMembers(
+  context: BazelBuildFileGenerator,
+  reported: Set<String>,
+  folded: Map<String, List<String>>,
+): PluginExtraMembersTable {
+  val file = (context.ultimateRoot?.resolve("community") ?: context.communityRoot)
+    .resolve("build/$PLUGIN_EXTRA_MEMBERS_FILE_NAME")
+  val rows = TreeMap<String, List<String>>()
+  // Every plugin no supplied report covers, exactly as the file already states it.
+  for ((plugin, members) in readPluginExtraMembers(file)) {
+    if (plugin !in reported) {
+      rows.put(plugin, members)
+    }
+  }
+  rows.putAll(folded)
+  val text = buildString {
+    append(EXTRA_MEMBERS_HEADER)
+    for ((plugin, members) in rows) {
+      append('\n').append('[').append(plugin).append(']').append('\n')
+      for (member in members) {
+        append(member).append('\n')
+      }
+    }
+  }
+  return PluginExtraMembersTable(file = file, text = text)
+}
+
+/** The merged-member table one pass folded, ready to write. */
+private class PluginExtraMembersTable(@JvmField val file: Path, @JvmField val text: String) {
+  fun write() {
+    if (!Files.isRegularFile(file) || file.readText() != text) {
+      file.writeText(text)
+    }
+  }
+}
+
+/**
+ * Folds the content residue off the reports, keeping every plugin this run cannot speak for.
+ *
+ * The partial-read rule is [foldPluginExtraMembers]'s, because the file is central for the same reason: one plugin's
+ * rows leaving would take a `PluginLayout` decision with them, and a run given fewer reports than the population cannot
+ * tell a removal from an absence.
+ *
+ * Two kinds of plugin keep their checked-in rows. One is a plugin no supplied report covers, exactly as
+ * [foldPluginExtraMembers] keeps it. The other is [skipped], a plugin a report does cover whose change the direction
+ * rule held back. The direction rule is per plugin and this file is one file, so a held-back plugin has to be written
+ * back as it stands; otherwise the rule would hold a change back from the reader and drop it from the tree anyway.
+ *
+ * [file] is a parameter, and the two folds above resolve their own. This one keeps every row a plugin already has, so a
+ * rule that drops one drops a `PluginLayout` decision from the tree in silence. `DevDistContentResidueFoldTest` states
+ * each rule against a temporary file, which needs the path from the caller.
+ */
+internal fun foldPluginContentResidue(
+  file: Path,
+  reported: Set<String>,
+  folded: Map<String, ContentResidueSection>,
+  skipped: Set<String>,
+): PluginContentResidueTable {
+  val rows = TreeMap<String, ContentResidueSection>()
+  for ((plugin, section) in readPluginContentResidue(file)) {
+    if (plugin !in reported || plugin in skipped) {
+      rows.put(plugin, section)
+    }
+  }
+  for ((plugin, section) in folded) {
+    if (plugin !in skipped) {
+      rows.put(plugin, section)
+    }
+  }
+  return PluginContentResidueTable(file = file, text = renderPluginContentResidue(rows))
+}
+
+/** The content-residue table one pass folded, ready to write. */
+internal class PluginContentResidueTable(@JvmField val file: Path, @JvmField val text: String) {
+  fun write() {
+    if (!Files.isRegularFile(file) || file.readText() != text) {
+      file.writeText(text)
+    }
+  }
+}
+
+private const val EXTRA_MEMBERS_HEADER: String = """# Generated - do not edit.
+#
+# Modules a plugin's layout packs that the plugin's own `<content>` does not name, by plugin main module.
+#
+# One `PluginLayout.withModule` call per line, under the `[<plugin main module>]` that makes it. Nothing in the
+# project model states these, which is why they are written down at all.
+#
+# The rest of a plugin's content residue sits on the plugin's own `dev_dist_plugin` call. This one field is
+# central because it is the one field the monorepo reads: `readDevDistExtraMembers` of
+# `community/platform/distribution-content/src/DevDistResidue.kt`, reached by the Patronus rule seeds and by the
+# plugin-layout description the Rider and CLion packaging tests use. Neither runs the converter and neither can
+# parse Starlark, so the field a third reader needs is the field that stays in a flat file.
+"""
+
 private const val POPULATION_HEADER: String = """# Generated - do not edit.
 #
 # Which modules a `dev_dist_plugin` states dev-distribution content for, one plugin main module per line.
 #
 # The JPS-to-Bazel converter derives a plugin's content from the project model and needs the population, which
 # is a product question it cannot fold for itself. One line per plugin keeps that reader independent of
-# Starlark, and it states no deviation: a deviation is a fact about one plugin, and it sits beside that plugin
-# in `dev-dist.yaml`.
+# Starlark, and it states no deviation: a deviation is a fact about one plugin, and it sits under that
+# plugin's name in `dev_dist_plugin_content_residue.txt`.
 #
 # The layout variant is not here. A plugin's membership does not depend on it, which is what separates this
-# file from `dev_dist_plugin_descriptor_population.txt`.
+# file from the `descriptor_population` section of `dev_dist_plugin_model_tables.txt`.
 """
 
 /** What one [writeDevDistResidues] pass did, so a caller can print the population the arc pays for. */
@@ -312,31 +365,30 @@ internal class DevDistResidueWriteResult(
 /**
  * One plugin whose checked-in residue does not state what the derivation needs.
  *
- * [before] is `null` when the plugin has no file yet, and [after] is `null` when the derivation reproduces the report on
- * its own and the file has to go.
+ * [before] is `null` when the plugin has no row yet, and [after] is `null` when the derivation reproduces the report on
+ * its own and every row of the plugin has to go. Both are [contentResidueRows] output, so a row carries its field.
  */
 internal class DevDistResidueDivergence(
   @JvmField val mainModule: String,
-  @JvmField val file: Path,
-  @JvmField val before: String?,
-  @JvmField val after: String?,
+  @JvmField val before: List<String>?,
+  @JvmField val after: List<String>?,
 )
 
 /**
  * What a reader has to change in one plugin's residue, as the rows that enter and leave.
  *
- * Rows and not a unified diff. Every row of the file is one `PluginLayout` decision, the fields are sorted, and the
- * header is the same text in every file - so the set difference states the whole change. Each row carries its field, so
- * a row states which decision it is and not only which module.
+ * Rows and not a unified diff. Every row is one `PluginLayout` decision and [contentResidueRows] sorts them, so the
+ * set difference states the whole change. Each row carries its field, so a row states which decision it is and not only
+ * which module.
  */
 internal fun devDistResidueDivergenceReport(divergence: DevDistResidueDivergence): String {
-  val before = residueRows(divergence.before).orEmpty()
-  val after = residueRows(divergence.after).orEmpty()
+  val before = divergence.before.orEmpty().toSet()
+  val after = divergence.after.orEmpty().toSet()
   val builder = StringBuilder()
   builder.append(divergence.mainModule)
   when {
-    divergence.before == null -> builder.append("  (no residue file yet)")
-    divergence.after == null -> builder.append("  (the file has to go - the derivation needs no residue)")
+    divergence.before == null -> builder.append("  (no residue row yet)")
+    divergence.after == null -> builder.append("  (every row has to go - the derivation needs no residue)")
   }
   builder.append('\n')
   for (row in after - before) {
@@ -352,9 +404,9 @@ internal fun devDistResidueDivergenceReport(divergence: DevDistResidueDivergence
  * The residue one plugin needs, or `null` when the derivation reproduces the report on its own.
  *
  * Two groups of rows, and the order matters. The first four state where a member's jar goes, and [reportCandidates] is
- * the authority for them, because they are what the candidacy fold reads. The last three state membership, and they are
- * read off a derivation that already has the first four, so a row is written only where the members and the libraries
- * still differ.
+ * the authority for them, because they are what the candidacy fold reads. The last four state the membership, the jars
+ * the layout names itself and the libraries. They are read off a derivation that already has the first four, so a row
+ * is written only where the two sides still differ.
  */
 private fun synthesizeContentResidue(
   module: ModuleDescriptor,
@@ -362,7 +414,7 @@ private fun synthesizeContentResidue(
   context: BazelBuildFileGenerator,
   reportCandidates: Map<String, Set<String>>,
   entries: List<RecipeEntry>,
-): ContentResidueSection? {
+): SynthesizedContentResidue {
   val reportPaths = reportedPrepackedMemberPaths(entries)
   val libRootJars = ArrayList<String>()
   val separateJars = ArrayList<String>()
@@ -432,7 +484,7 @@ private fun synthesizeContentResidue(
   val derived = derivePluginContent(module = module, moduleList = moduleList, context = context, residue = section.toResidue())
   val reportMembers = reportMemberNames(module = module, entries = entries)
   val extraMembers = (reportMembers - derived.memberNames.toSet()).sorted()
-  val withExtras = section.copy(extraMembers = extraMembers).toResidue()
+  val withExtras = section.toResidue(extraMembers.toSet())
   val withMembers = derivePluginContent(module = module, moduleList = moduleList, context = context, residue = withExtras)
 
   val rawMembers = ArrayList<String>()
@@ -445,7 +497,10 @@ private fun synthesizeContentResidue(
       rawMembers.add(memberName)
     }
   }
-  val withMembership = section.copy(extraMembers = extraMembers, rawMembers = rawMembers.sorted())
+  val withMembership = section.copy(
+    rawMembers = rawMembers.sorted(),
+    memberJars = synthesizeMemberJars(module = module, context = context, derived = withMembers, entries = entries),
+  )
   val result = withMembership.copy(
     libraries = missingLibraries(
       module = module,
@@ -455,8 +510,90 @@ private fun synthesizeContentResidue(
       entries = entries,
     )
   )
-  return result.takeIf { contentResidueFieldRows(it).isNotEmpty() }
+  return SynthesizedContentResidue(
+    section = result.takeIf { contentResidueFieldRows(it).isNotEmpty() },
+    extraMembers = extraMembers,
+  )
 }
+
+/**
+ * What [synthesizeContentResidue] states for one plugin, split by where each half is written.
+ *
+ * [section] goes beside the plugin and [extraMembers] goes into the central table, because the merged members are the
+ * one field the monorepo reads; see [readPluginExtraMembers]. Either half can be empty on its own.
+ */
+private class SynthesizedContentResidue(
+  @JvmField val section: ContentResidueSection?,
+  @JvmField val extraMembers: List<String>,
+)
+
+/** [memberJarRows] for one plugin, with the plugin's own main jar name read off the placement table. */
+private fun synthesizeMemberJars(
+  module: ModuleDescriptor,
+  context: BazelBuildFileGenerator,
+  derived: DerivedPluginContent,
+  entries: List<RecipeEntry>,
+): Map<String, List<String>> {
+  return memberJarRows(
+    mainJarName = pluginJarPlacementOf(mainModule = module.module.name, context = context).mainJarName,
+    memberNames = derived.memberNames.toSet(),
+    derivedJars = derived.memberPaths,
+    entries = entries,
+  )
+}
+
+/**
+ * The jars the layout names for a member, by member, relative to the plugin's `lib/`.
+ *
+ * The one field whose value is a path, and it earns that: `PluginLayout.withModule(name, jarName)` states a free string
+ * that no rule derives. [derivedJars] is where [deriveMemberJarPath] puts each member, with the membership rows already
+ * in play, so this asks the derivation what is left rather than copying the report's whole jar list.
+ *
+ * **Set against set, and never containment.** A row states the member's whole jar set, because
+ * `BaseLayout.checkNotExists` lets one plugin pack one module into several jars. `intellij.spring.customNs` sits in the
+ * plugin's main jar and in `customNs/customNs.jar`, so its row names both, and a rule reading one jar at a time would
+ * write half of it. The derivation's set is one jar, or [mainJarName] for a member it co-packs, which is what
+ * [composeDerivedPluginJars] concludes for such a member. So the writer is the reader's inverse: a row exists exactly
+ * where the reader would state another jar set.
+ *
+ * Two rules narrow which jars the report contributes:
+ *
+ * 1. only an entry under the plugin's `lib/`, because the plugin packs no member's jar anywhere else;
+ * 2. only a member of [memberNames], because a row states a jar of this plugin's own member.
+ *
+ * A member no entry names gets no row. The reports say nothing about such a member, and a row has to rest on a jar a
+ * build really packed. The report's set is the union over [entries], because two products can pack one member
+ * differently and one row states both jars.
+ */
+internal fun memberJarRows(
+  mainJarName: String,
+  memberNames: Set<String>,
+  derivedJars: Map<String, String>,
+  entries: List<RecipeEntry>,
+): Map<String, List<String>> {
+  val reported = HashMap<String, MutableSet<String>>()
+  for (entry in entries) {
+    if (!entry.name.startsWith(LIB_ENTRY_PREFIX)) {
+      continue
+    }
+    val path = entry.name.removePrefix(LIB_ENTRY_PREFIX)
+    for (member in entry.modules + entry.contentModules) {
+      if (member.moduleName in memberNames) {
+        reported.computeIfAbsent(member.moduleName) { sortedSetOf() }.add(path)
+      }
+    }
+  }
+  val result = TreeMap<String, List<String>>()
+  for ((memberName, paths) in reported) {
+    if (paths != setOf(derivedJars.get(memberName) ?: mainJarName)) {
+      result.put(memberName, paths.toList())
+    }
+  }
+  return result
+}
+
+/** Where a report entry of one plugin states its jars. A plugin's own report names every path from its directory. */
+private const val LIB_ENTRY_PREFIX: String = "lib/"
 
 /**
  * The libraries the report records and the derivation, with [section] in play, still does not reach.
@@ -527,136 +664,13 @@ internal fun contentResidueFieldRows(section: ContentResidueSection?): Map<Strin
       result.put(field, rows)
     }
   }
-  // The order [composeDevDistResidueText] writes the fields in, so a reader meets them once.
-  put("extra_members", section.extraMembers.size)
+  // A reader meets the seven fields once, in the order [ContentResidueSection] declares them.
   put("lib_root_jars", section.libRootJars.size)
   put("separate_jars", section.separateJars.size)
+  put("member_jars", section.memberJars.size)
   put("raw_members", section.rawMembers.size)
   put("vetoed_members", section.vetoedMembers.size)
   put("merged_libraries", section.mergedLibraries.size)
   put("libraries", section.libraries.size)
   return result
 }
-
-/**
- * The whole text of one plugin's `dev-dist.yaml`, or `null` when the plugin needs no file at all.
- *
- * The `descriptor:` part of [existing] is kept verbatim. The two parts have two producers - `plugin-model-tool` writes
- * the descriptor deviations and this writes the content ones - so each has to leave the other's key alone. A file that
- * holds only a `descriptor:` part therefore survives a run of this writer untouched.
- *
- * The split is the line `descriptor:`, and neither producer may put a comment on the other's side of it.
- * `renderDescriptorPart` of `devDistDescriptorResidue.kt` states the same rule from its end, and
- * [DEV_DIST_RESIDUE_HEADER] is the one text both producers write - byte for byte, or the regeneration reaches no fixed
- * point, because each tool would rewrite what the other just wrote.
- */
-private fun composeDevDistResidueText(content: ContentResidueSection?, existing: Path): String? {
-  val descriptorPart = existingDescriptorPart(existing)
-  if (content == null && descriptorPart == null) {
-    return null
-  }
-  val builder = StringBuilder()
-  builder.append(DEV_DIST_RESIDUE_HEADER)
-  if (content != null) {
-    builder.append("content:\n")
-    appendNames(builder, "extra_members", content.extraMembers, EXTRA_MEMBERS_COMMENT)
-    appendNames(builder, "lib_root_jars", content.libRootJars, LIB_ROOT_JARS_COMMENT)
-    appendNames(builder, "separate_jars", content.separateJars, SEPARATE_JARS_COMMENT)
-    appendNames(builder, "raw_members", content.rawMembers, RAW_MEMBERS_COMMENT)
-    appendNames(builder, "vetoed_members", content.vetoedMembers, VETOED_MEMBERS_COMMENT)
-    if (content.mergedLibraries.isNotEmpty()) {
-      builder.append(MERGED_LIBRARIES_COMMENT)
-      builder.append("  merged_libraries:\n")
-      for ((member, libraries) in content.mergedLibraries) {
-        if (libraries.isEmpty()) {
-          builder.append("    ${quote(member)}: []\n")
-          continue
-        }
-        builder.append("    ${quote(member)}:\n")
-        for (library in libraries) {
-          builder.append("    - ${quote(library)}\n")
-        }
-      }
-    }
-    if (content.libraries.isNotEmpty()) {
-      builder.append(LIBRARIES_COMMENT)
-      builder.append("  libraries:\n")
-      for (row in content.libraries) {
-        builder.append("  - name: ${quote(row.name)}\n")
-        row.module?.let { builder.append("    module: ${quote(it)}\n") }
-      }
-    }
-  }
-  descriptorPart?.let(builder::append)
-  return builder.toString()
-}
-
-/** The `descriptor:` block of an existing file, verbatim, or `null` when the file has none. */
-private fun existingDescriptorPart(file: Path): String? {
-  if (!Files.isRegularFile(file)) {
-    return null
-  }
-  val text = file.readText()
-  val start = text.indexOf("\ndescriptor:\n")
-  if (start < 0) {
-    return if (text.startsWith("descriptor:\n")) text else null
-  }
-  return text.substring(start + 1)
-}
-
-private fun appendNames(builder: StringBuilder, field: String, names: List<String>, comment: String) {
-  if (names.isEmpty()) {
-    return
-  }
-  builder.append(comment)
-  builder.append("  $field:\n")
-  for (name in names) {
-    builder.append("  - ${quote(name)}\n")
-  }
-}
-
-private fun quote(value: String): String = "\"$value\""
-
-private const val DEV_DIST_RESIDUE_HEADER: String = """# Generated - do not edit.
-#
-# What this plugin's dev-distribution leaves need that the convention does not give.
-#
-# `dev_dist_plugin` in this plugin's own `BUILD.bazel` states the plugin's content and its patched descriptor.
-# The JPS-to-Bazel converter derives both from the project model: the members come from the plugin's own
-# `<content>`, the jar of each member from the loading rule and the member's own descriptor, the libraries from
-# what the members declare, and the descriptor of every content module from its module's resource roots.
-#
-# This file is the remainder, so a plugin with no such file is pure convention. Every row states one
-# `PluginLayout` decision, and evaluating a product layout is the work the converter exists to keep out of a
-# fragment action.
-#
-# Two parts, two producers. `content:` is one section for the plugin, because membership does not depend on the
-# layout variant. `descriptor:` is keyed by `<main module>` or `<main module>/<variant>`, because a descriptor
-# deviation is a fact about one variant. Each producer rewrites only its own part.
-#
-# No row is a Bazel label, and no row is a path. A label carries the artifact version of a library, and a path
-# restates a rule the rule already derives.
-"""
-
-private const val EXTRA_MEMBERS_COMMENT: String = """  # Modules the layout packs that this plugin's `<content>` does not name - a `PluginLayout.withModule` call.
-"""
-
-private const val LIB_ROOT_JARS_COMMENT: String = """  # Members whose jar goes to `lib/<module>.jar` where the derivation says `lib/modules/<module>.jar`.
-"""
-
-private const val SEPARATE_JARS_COMMENT: String = """  # Members that get a jar of their own where the derivation packs them into the plugin's main jar.
-"""
-
-private const val RAW_MEMBERS_COMMENT: String = """  # Members this plugin does not hand over, because a second jar of this plugin holds the module too.
-"""
-
-private const val VETOED_MEMBERS_COMMENT: String = """  # Members this plugin packs beside another content module, which takes the packing target away from every
-  # plugin that ships the module.
-"""
-
-private const val MERGED_LIBRARIES_COMMENT: String = """  # The module libraries a member's jar really merges, where the layout excluded some of them. The whole set,
-  # so one row states the jar rather than a patch of it.
-"""
-
-private const val LIBRARIES_COMMENT: String = """  # Libraries the layout packs that no member declares. A row with no `module` is a project library.
-"""

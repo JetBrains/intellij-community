@@ -56,13 +56,22 @@
   <item name='org.eclipse.lsp4j.ApplyWorkspaceEditParams label'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.eclipse.lsp4j.ApplyWorkspaceEditParams metadata'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.ApplyWorkspaceEditParams org.eclipse.lsp4j.WorkspaceEdit getEdit()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.ApplyWorkspaceEditParams org.eclipse.lsp4j.WorkspaceEditMetadata getMetadata()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.ApplyWorkspaceEditParams void setEdit(org.eclipse.lsp4j.WorkspaceEdit) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='org.eclipse.lsp4j.ApplyWorkspaceEditParams void setLabel(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.ApplyWorkspaceEditParams void setMetadata(org.eclipse.lsp4j.WorkspaceEditMetadata) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.ApplyWorkspaceEditResponse failedChange'>
@@ -436,6 +445,9 @@
   <item name='org.eclipse.lsp4j.CodeAction java.lang.String getTitle()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.eclipse.lsp4j.CodeAction java.util.List&lt;org.eclipse.lsp4j.CodeActionTag&gt; getTags()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.CodeAction java.util.List&lt;org.eclipse.lsp4j.Diagnostic&gt; getDiagnostics()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
@@ -449,6 +461,9 @@
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.CodeAction org.eclipse.lsp4j.WorkspaceEdit getEdit()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.CodeAction tags'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.CodeAction title'>
@@ -473,6 +488,9 @@
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.CodeAction void setKind(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.CodeAction void setTags(java.util.List&lt;org.eclipse.lsp4j.CodeActionTag&gt;) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.CodeAction void setTitle(java.lang.String) 0'>
@@ -505,6 +523,9 @@
   <item name='org.eclipse.lsp4j.CodeActionCapabilities disabledSupport'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.eclipse.lsp4j.CodeActionCapabilities documentationSupport'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.CodeActionCapabilities honorsChangeAnnotations'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
@@ -515,6 +536,9 @@
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.CodeActionCapabilities java.lang.Boolean getDisabledSupport()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.CodeActionCapabilities java.lang.Boolean getDocumentationSupport()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.CodeActionCapabilities java.lang.Boolean getHonorsChangeAnnotations()'>
@@ -529,7 +553,13 @@
   <item name='org.eclipse.lsp4j.CodeActionCapabilities org.eclipse.lsp4j.CodeActionResolveSupportCapabilities getResolveSupport()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.eclipse.lsp4j.CodeActionCapabilities org.eclipse.lsp4j.CodeActionTagSupportCapabilities getTagSupport()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.CodeActionCapabilities resolveSupport'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.CodeActionCapabilities tagSupport'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.CodeActionCapabilities void setCodeActionLiteralSupport(org.eclipse.lsp4j.CodeActionLiteralSupportCapabilities) 0'>
@@ -541,6 +571,9 @@
   <item name='org.eclipse.lsp4j.CodeActionCapabilities void setDisabledSupport(java.lang.Boolean) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.eclipse.lsp4j.CodeActionCapabilities void setDocumentationSupport(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.CodeActionCapabilities void setHonorsChangeAnnotations(java.lang.Boolean) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
@@ -548,6 +581,9 @@
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.CodeActionCapabilities void setResolveSupport(org.eclipse.lsp4j.CodeActionResolveSupportCapabilities) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.CodeActionCapabilities void setTagSupport(org.eclipse.lsp4j.CodeActionTagSupportCapabilities) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.CodeActionContext CodeActionContext(java.util.List&lt;org.eclipse.lsp4j.Diagnostic&gt;) 0'>
@@ -619,6 +655,24 @@
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
   </item>
+  <item name='org.eclipse.lsp4j.CodeActionKindDocumentation command'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.CodeActionKindDocumentation java.lang.String getKind()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.CodeActionKindDocumentation kind'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.CodeActionKindDocumentation org.eclipse.lsp4j.Command getCommand()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.CodeActionKindDocumentation void setCommand(org.eclipse.lsp4j.Command) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.CodeActionKindDocumentation void setKind(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='org.eclipse.lsp4j.CodeActionLiteralSupportCapabilities CodeActionLiteralSupportCapabilities(org.eclipse.lsp4j.CodeActionKindCapabilities) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
@@ -637,16 +691,25 @@
   <item name='org.eclipse.lsp4j.CodeActionOptions codeActionKinds'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.eclipse.lsp4j.CodeActionOptions documentation'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.CodeActionOptions java.lang.Boolean getResolveProvider()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.CodeActionOptions java.util.List&lt;java.lang.String&gt; getCodeActionKinds()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.eclipse.lsp4j.CodeActionOptions java.util.List&lt;org.eclipse.lsp4j.CodeActionKindDocumentation&gt; getDocumentation()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.CodeActionOptions resolveProvider'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.CodeActionOptions void setCodeActionKinds(java.util.List&lt;java.lang.String&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.CodeActionOptions void setDocumentation(java.util.List&lt;org.eclipse.lsp4j.CodeActionKindDocumentation&gt;) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.CodeActionOptions void setResolveProvider(java.lang.Boolean) 0'>
@@ -725,6 +788,22 @@
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
   </item>
+  <item name='org.eclipse.lsp4j.CodeActionTagSupportCapabilities CodeActionTagSupportCapabilities(java.util.List&lt;org.eclipse.lsp4j.CodeActionTag&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
+  <item name='org.eclipse.lsp4j.CodeActionTagSupportCapabilities java.util.List&lt;org.eclipse.lsp4j.CodeActionTag&gt; getValueSet()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
+  <item name='org.eclipse.lsp4j.CodeActionTagSupportCapabilities valueSet'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
+  <item name='org.eclipse.lsp4j.CodeActionTagSupportCapabilities void setValueSet(java.util.List&lt;org.eclipse.lsp4j.CodeActionTag&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
   <item name='org.eclipse.lsp4j.CodeLens CodeLens(org.eclipse.lsp4j.Range) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -767,6 +846,15 @@
   <item name='org.eclipse.lsp4j.CodeLensCapabilities CodeLensCapabilities(java.lang.Boolean) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.eclipse.lsp4j.CodeLensCapabilities org.eclipse.lsp4j.CodeLensResolveSupportCapabilities getResolveSupport()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.CodeLensCapabilities resolveSupport'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.CodeLensCapabilities void setResolveSupport(org.eclipse.lsp4j.CodeLensResolveSupportCapabilities) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.CodeLensOptions CodeLensOptions(java.lang.Boolean) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
@@ -802,6 +890,22 @@
   </item>
   <item name='org.eclipse.lsp4j.CodeLensRegistrationOptions void setResolveProvider(java.lang.Boolean) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.CodeLensResolveSupportCapabilities CodeLensResolveSupportCapabilities(java.util.List&lt;java.lang.String&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
+  <item name='org.eclipse.lsp4j.CodeLensResolveSupportCapabilities java.util.List&lt;java.lang.String&gt; getProperties()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
+  <item name='org.eclipse.lsp4j.CodeLensResolveSupportCapabilities properties'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
+  <item name='org.eclipse.lsp4j.CodeLensResolveSupportCapabilities void setProperties(java.util.List&lt;java.lang.String&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
   </item>
   <item name='org.eclipse.lsp4j.CodeLensWorkspaceCapabilities CodeLensWorkspaceCapabilities(java.lang.Boolean) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -962,11 +1066,17 @@
   <item name='org.eclipse.lsp4j.Command java.lang.String getTitle()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.eclipse.lsp4j.Command java.lang.String getTooltip()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.Command java.util.List&lt;java.lang.Object&gt; getArguments()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.Command title'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.Command tooltip'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.Command void setArguments(java.util.List&lt;java.lang.Object&gt;) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -976,6 +1086,27 @@
   </item>
   <item name='org.eclipse.lsp4j.Command void setTitle(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.Command void setTooltip(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.CompletionApplyKind commitCharacters'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.CompletionApplyKind data'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.CompletionApplyKind org.eclipse.lsp4j.ApplyKind getCommitCharacters()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.CompletionApplyKind org.eclipse.lsp4j.ApplyKind getData()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.CompletionApplyKind void setCommitCharacters(org.eclipse.lsp4j.ApplyKind) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.CompletionApplyKind void setData(org.eclipse.lsp4j.ApplyKind) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.CompletionCapabilities CompletionCapabilities(java.lang.Boolean) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -1481,6 +1612,9 @@
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
   </item>
+  <item name='org.eclipse.lsp4j.CompletionList applyKind'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.CompletionList itemDefaults'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
@@ -1492,7 +1626,13 @@
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
   </item>
+  <item name='org.eclipse.lsp4j.CompletionList org.eclipse.lsp4j.CompletionApplyKind getApplyKind()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.CompletionList org.eclipse.lsp4j.CompletionItemDefaults getItemDefaults()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.CompletionList void setApplyKind(org.eclipse.lsp4j.CompletionApplyKind) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.CompletionList void setItemDefaults(org.eclipse.lsp4j.CompletionItemDefaults) 0'>
@@ -1505,10 +1645,19 @@
   <item name='org.eclipse.lsp4j.CompletionListCapabilities CompletionListCapabilities(java.util.List&lt;java.lang.String&gt;) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.eclipse.lsp4j.CompletionListCapabilities applyKindSupport'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.CompletionListCapabilities itemDefaults'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.eclipse.lsp4j.CompletionListCapabilities java.lang.Boolean getApplyKindSupport()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.CompletionListCapabilities java.util.List&lt;java.lang.String&gt; getItemDefaults()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.CompletionListCapabilities void setApplyKindSupport(java.lang.Boolean) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.CompletionListCapabilities void setItemDefaults(java.util.List&lt;java.lang.String&gt;) 0'>
@@ -1895,9 +2044,6 @@
   <item name='org.eclipse.lsp4j.Diagnostic java.lang.Object getData()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
-  <item name='org.eclipse.lsp4j.Diagnostic java.lang.String getMessage()'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
   <item name='org.eclipse.lsp4j.Diagnostic java.lang.String getSource()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
@@ -1909,6 +2055,8 @@
   </item>
   <item name='org.eclipse.lsp4j.Diagnostic message'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/2"/>
   </item>
   <item name='org.eclipse.lsp4j.Diagnostic org.eclipse.lsp4j.DiagnosticCodeDescription getCodeDescription()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -1921,6 +2069,11 @@
   </item>
   <item name='org.eclipse.lsp4j.Diagnostic org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.String,java.lang.Integer&gt; getCode()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.Diagnostic org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.String,org.eclipse.lsp4j.MarkupContent&gt; getMessage()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/2"/>
   </item>
   <item name='org.eclipse.lsp4j.Diagnostic range'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1953,7 +2106,15 @@
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.Diagnostic void setMessage(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.Diagnostic void setMessage(org.eclipse.lsp4j.MarkupContent) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.Diagnostic void setMessage(org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.String,org.eclipse.lsp4j.MarkupContent&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/2"/>
   </item>
   <item name='org.eclipse.lsp4j.Diagnostic void setRange(org.eclipse.lsp4j.Range) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1979,13 +2140,58 @@
   <item name='org.eclipse.lsp4j.DiagnosticCapabilities DiagnosticCapabilities(java.lang.Boolean, java.lang.Boolean) 1'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.eclipse.lsp4j.DiagnosticCapabilities codeDescriptionSupport'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DiagnosticCapabilities dataSupport'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DiagnosticCapabilities java.lang.Boolean getCodeDescriptionSupport()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DiagnosticCapabilities java.lang.Boolean getDataSupport()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DiagnosticCapabilities java.lang.Boolean getMarkupMessageSupport()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.DiagnosticCapabilities java.lang.Boolean getRelatedDocumentSupport()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DiagnosticCapabilities java.lang.Boolean getRelatedInformation()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DiagnosticCapabilities markupMessageSupport'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DiagnosticCapabilities org.eclipse.lsp4j.DiagnosticsTagSupport getTagSupport()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.DiagnosticCapabilities relatedDocumentSupport'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.eclipse.lsp4j.DiagnosticCapabilities relatedInformation'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DiagnosticCapabilities tagSupport'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DiagnosticCapabilities void setCodeDescriptionSupport(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DiagnosticCapabilities void setDataSupport(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DiagnosticCapabilities void setMarkupMessageSupport(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.DiagnosticCapabilities void setRelatedDocumentSupport(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DiagnosticCapabilities void setRelatedInformation(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DiagnosticCapabilities void setTagSupport(org.eclipse.lsp4j.DiagnosticsTagSupport) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.DiagnosticCodeDescription DiagnosticCodeDescription(java.lang.String) 0'>
@@ -2044,6 +2250,15 @@
   </item>
   <item name='org.eclipse.lsp4j.DiagnosticRelatedInformation void setMessage(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DiagnosticServerCapabilities java.lang.Boolean getMarkupMessageSupport()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DiagnosticServerCapabilities markupMessageSupport'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DiagnosticServerCapabilities void setMarkupMessageSupport(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.DiagnosticWorkspaceCapabilities DiagnosticWorkspaceCapabilities(java.lang.Boolean) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -2397,25 +2612,25 @@
     <annotation name='org.jetbrains.annotations.NotNull' typePath="/2/1"/>
     <annotation name='org.jetbrains.annotations.NotNull' typePath="/2/2"/>
   </item>
-  <item name='org.eclipse.lsp4j.DocumentFilter DocumentFilter(java.lang.String, java.lang.String, java.lang.String) 0'>
+  <item name='org.eclipse.lsp4j.DocumentFilter DocumentFilter(java.lang.String, java.lang.String, org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.String,org.eclipse.lsp4j.RelativePattern&gt;) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
-  <item name='org.eclipse.lsp4j.DocumentFilter DocumentFilter(java.lang.String, java.lang.String, java.lang.String) 1'>
+  <item name='org.eclipse.lsp4j.DocumentFilter DocumentFilter(java.lang.String, java.lang.String, org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.String,org.eclipse.lsp4j.RelativePattern&gt;) 1'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
-  <item name='org.eclipse.lsp4j.DocumentFilter DocumentFilter(java.lang.String, java.lang.String, java.lang.String) 2'>
+  <item name='org.eclipse.lsp4j.DocumentFilter DocumentFilter(java.lang.String, java.lang.String, org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.String,org.eclipse.lsp4j.RelativePattern&gt;) 2'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.DocumentFilter java.lang.String getLanguage()'>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
-  </item>
-  <item name='org.eclipse.lsp4j.DocumentFilter java.lang.String getPattern()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.DocumentFilter java.lang.String getScheme()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.DocumentFilter language'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DocumentFilter org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.String,org.eclipse.lsp4j.RelativePattern&gt; getPattern()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.DocumentFilter pattern'>
@@ -2428,6 +2643,12 @@
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.DocumentFilter void setPattern(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DocumentFilter void setPattern(org.eclipse.lsp4j.RelativePattern) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DocumentFilter void setPattern(org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.String,org.eclipse.lsp4j.RelativePattern&gt;) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.DocumentFilter void setScheme(java.lang.String) 0'>
@@ -2655,12 +2876,6 @@
   <item name='org.eclipse.lsp4j.DocumentOnTypeFormattingOptions void setMoreTriggerCharacter(java.util.List&lt;java.lang.String&gt;) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
-  <item name='org.eclipse.lsp4j.DocumentOnTypeFormattingParams DocumentOnTypeFormattingParams(org.eclipse.lsp4j.Position, java.lang.String) 0'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
-  <item name='org.eclipse.lsp4j.DocumentOnTypeFormattingParams DocumentOnTypeFormattingParams(org.eclipse.lsp4j.Position, java.lang.String) 1'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
   <item name='org.eclipse.lsp4j.DocumentOnTypeFormattingParams DocumentOnTypeFormattingParams(org.eclipse.lsp4j.TextDocumentIdentifier, org.eclipse.lsp4j.FormattingOptions, org.eclipse.lsp4j.Position, java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -2718,8 +2933,14 @@
   <item name='org.eclipse.lsp4j.DocumentOnTypeFormattingRegistrationOptions void setMoreTriggerCharacter(java.util.List&lt;java.lang.String&gt;) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
-  <item name='org.eclipse.lsp4j.DocumentRangeFormattingParams DocumentRangeFormattingParams(org.eclipse.lsp4j.Range) 0'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
+  <item name='org.eclipse.lsp4j.DocumentRangeFormattingOptions java.lang.Boolean getRangesSupport()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DocumentRangeFormattingOptions rangesSupport'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DocumentRangeFormattingOptions void setRangesSupport(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.DocumentRangeFormattingParams DocumentRangeFormattingParams(org.eclipse.lsp4j.TextDocumentIdentifier, org.eclipse.lsp4j.FormattingOptions, org.eclipse.lsp4j.Range) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2770,6 +2991,70 @@
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.DocumentRangeFormattingParams workDoneToken'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DocumentRangeFormattingRegistrationOptions java.lang.Boolean getRangesSupport()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DocumentRangeFormattingRegistrationOptions rangesSupport'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DocumentRangeFormattingRegistrationOptions void setRangesSupport(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DocumentRangesFormattingParams DocumentRangesFormattingParams(org.eclipse.lsp4j.TextDocumentIdentifier, org.eclipse.lsp4j.FormattingOptions, java.util.List&lt;org.eclipse.lsp4j.Range&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DocumentRangesFormattingParams DocumentRangesFormattingParams(org.eclipse.lsp4j.TextDocumentIdentifier, org.eclipse.lsp4j.FormattingOptions, java.util.List&lt;org.eclipse.lsp4j.Range&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DocumentRangesFormattingParams DocumentRangesFormattingParams(org.eclipse.lsp4j.TextDocumentIdentifier, org.eclipse.lsp4j.FormattingOptions, java.util.List&lt;org.eclipse.lsp4j.Range&gt;) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
+  <item name='org.eclipse.lsp4j.DocumentRangesFormattingParams java.util.List&lt;org.eclipse.lsp4j.Range&gt; getRanges()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
+  <item name='org.eclipse.lsp4j.DocumentRangesFormattingParams options'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DocumentRangesFormattingParams org.eclipse.lsp4j.FormattingOptions getOptions()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DocumentRangesFormattingParams org.eclipse.lsp4j.TextDocumentIdentifier getTextDocument()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DocumentRangesFormattingParams org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.String,java.lang.Integer&gt; getWorkDoneToken()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DocumentRangesFormattingParams ranges'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
+  <item name='org.eclipse.lsp4j.DocumentRangesFormattingParams textDocument'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DocumentRangesFormattingParams void setOptions(org.eclipse.lsp4j.FormattingOptions) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DocumentRangesFormattingParams void setRanges(java.util.List&lt;org.eclipse.lsp4j.Range&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
+  <item name='org.eclipse.lsp4j.DocumentRangesFormattingParams void setTextDocument(org.eclipse.lsp4j.TextDocumentIdentifier) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DocumentRangesFormattingParams void setWorkDoneToken(java.lang.Integer) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DocumentRangesFormattingParams void setWorkDoneToken(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DocumentRangesFormattingParams void setWorkDoneToken(org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.String,java.lang.Integer&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.DocumentRangesFormattingParams workDoneToken'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.DocumentSymbol DocumentSymbol(java.lang.String, org.eclipse.lsp4j.SymbolKind, org.eclipse.lsp4j.Range, org.eclipse.lsp4j.Range) 0'>
@@ -3381,6 +3666,15 @@
   <item name='org.eclipse.lsp4j.FileSystemWatcher void setKind(java.lang.Integer) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.eclipse.lsp4j.FiltersCapabilities java.lang.Boolean getRelativePatternSupport()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.FiltersCapabilities relativePatternSupport'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.FiltersCapabilities void setRelativePatternSupport(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.FoldingRange collapsedText'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
@@ -3501,10 +3795,19 @@
   <item name='org.eclipse.lsp4j.FoldingRangeSupportCapabilities void setCollapsedText(java.lang.Boolean) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
-  <item name='org.eclipse.lsp4j.FormattingCapabilities FormattingCapabilities(java.lang.Boolean) 0'>
+  <item name='org.eclipse.lsp4j.FoldingRangeWorkspaceCapabilities FoldingRangeWorkspaceCapabilities(java.lang.Boolean) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
-  <item name='org.eclipse.lsp4j.FormattingOptions FormattingOptions(int, boolean, java.util.Map&lt;java.lang.String,java.lang.String&gt;) 2'>
+  <item name='org.eclipse.lsp4j.FoldingRangeWorkspaceCapabilities java.lang.Boolean getRefreshSupport()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.FoldingRangeWorkspaceCapabilities refreshSupport'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.FoldingRangeWorkspaceCapabilities void setRefreshSupport(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.FormattingCapabilities FormattingCapabilities(java.lang.Boolean) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.FormattingOptions INSERT_FINAL_NEWLINE'>
@@ -3520,12 +3823,6 @@
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.FormattingOptions TRIM_TRAILING_WHITESPACE'>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
-  </item>
-  <item name='org.eclipse.lsp4j.FormattingOptions java.util.Map&lt;java.lang.String,java.lang.String&gt; getProperties()'>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
-  </item>
-  <item name='org.eclipse.lsp4j.FormattingOptions void setProperties(java.util.Map&lt;java.lang.String,java.lang.String&gt;) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.FullDocumentDiagnosticReport FullDocumentDiagnosticReport(java.util.List&lt;org.eclipse.lsp4j.Diagnostic&gt;) 0'>
@@ -4091,6 +4388,135 @@
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.InlayHintWorkspaceCapabilities void setRefreshSupport(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionCapabilities InlineCompletionCapabilities(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionContext InlineCompletionContext(org.eclipse.lsp4j.InlineCompletionTriggerKind) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionContext InlineCompletionContext(org.eclipse.lsp4j.InlineCompletionTriggerKind, org.eclipse.lsp4j.SelectedCompletionInfo) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionContext InlineCompletionContext(org.eclipse.lsp4j.InlineCompletionTriggerKind, org.eclipse.lsp4j.SelectedCompletionInfo) 1'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionContext org.eclipse.lsp4j.InlineCompletionTriggerKind getTriggerKind()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionContext org.eclipse.lsp4j.SelectedCompletionInfo getSelectedCompletionInfo()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionContext selectedCompletionInfo'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionContext triggerKind'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionContext void setSelectedCompletionInfo(org.eclipse.lsp4j.SelectedCompletionInfo) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionContext void setTriggerKind(org.eclipse.lsp4j.InlineCompletionTriggerKind) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionItem InlineCompletionItem(org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.String,org.eclipse.lsp4j.StringValue&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/2"/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionItem command'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionItem filterText'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionItem insertText'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/2"/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionItem java.lang.String getFilterText()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionItem org.eclipse.lsp4j.Command getCommand()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionItem org.eclipse.lsp4j.Range getRange()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionItem org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.String,org.eclipse.lsp4j.StringValue&gt; getInsertText()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/2"/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionItem range'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionItem void setCommand(org.eclipse.lsp4j.Command) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionItem void setFilterText(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionItem void setInsertText(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionItem void setInsertText(org.eclipse.lsp4j.StringValue) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionItem void setInsertText(org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.String,org.eclipse.lsp4j.StringValue&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/2"/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionItem void setRange(org.eclipse.lsp4j.Range) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionList InlineCompletionList(java.util.List&lt;org.eclipse.lsp4j.InlineCompletionItem&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionList items'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionList java.util.List&lt;org.eclipse.lsp4j.InlineCompletionItem&gt; getItems()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionList void setItems(java.util.List&lt;org.eclipse.lsp4j.InlineCompletionItem&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionParams InlineCompletionParams(org.eclipse.lsp4j.TextDocumentIdentifier, org.eclipse.lsp4j.Position, org.eclipse.lsp4j.InlineCompletionContext) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionParams InlineCompletionParams(org.eclipse.lsp4j.TextDocumentIdentifier, org.eclipse.lsp4j.Position, org.eclipse.lsp4j.InlineCompletionContext) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionParams InlineCompletionParams(org.eclipse.lsp4j.TextDocumentIdentifier, org.eclipse.lsp4j.Position, org.eclipse.lsp4j.InlineCompletionContext) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionParams context'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionParams org.eclipse.lsp4j.InlineCompletionContext getContext()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionParams void setContext(org.eclipse.lsp4j.InlineCompletionContext) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionRegistrationOptions InlineCompletionRegistrationOptions(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionRegistrationOptions id'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionRegistrationOptions java.lang.String getId()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.InlineCompletionRegistrationOptions void setId(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.InlineValue InlineValue(org.eclipse.lsp4j.InlineValueEvaluatableExpression) 0'>
@@ -4950,13 +5376,13 @@
   <item name='org.eclipse.lsp4j.NotebookDocumentFilter java.lang.String getNotebookType()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
-  <item name='org.eclipse.lsp4j.NotebookDocumentFilter java.lang.String getPattern()'>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
-  </item>
   <item name='org.eclipse.lsp4j.NotebookDocumentFilter java.lang.String getScheme()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.NotebookDocumentFilter notebookType'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.NotebookDocumentFilter org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.String,org.eclipse.lsp4j.RelativePattern&gt; getPattern()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.NotebookDocumentFilter pattern'>
@@ -4969,6 +5395,12 @@
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.NotebookDocumentFilter void setPattern(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.NotebookDocumentFilter void setPattern(org.eclipse.lsp4j.RelativePattern) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.NotebookDocumentFilter void setPattern(org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.String,org.eclipse.lsp4j.RelativePattern&gt;) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.NotebookDocumentFilter void setScheme(java.lang.String) 0'>
@@ -5428,8 +5860,14 @@
   <item name='org.eclipse.lsp4j.RangeFormattingCapabilities RangeFormattingCapabilities(java.lang.Boolean) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
-  <item name='org.eclipse.lsp4j.ReferenceParams ReferenceParams(org.eclipse.lsp4j.ReferenceContext) 0'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
+  <item name='org.eclipse.lsp4j.RangeFormattingCapabilities java.lang.Boolean getRangesSupport()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.RangeFormattingCapabilities rangesSupport'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.RangeFormattingCapabilities void setRangesSupport(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.ReferenceParams ReferenceParams(org.eclipse.lsp4j.TextDocumentIdentifier, org.eclipse.lsp4j.Position, org.eclipse.lsp4j.ReferenceContext) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -5780,6 +6218,30 @@
   </item>
   <item name='org.eclipse.lsp4j.SaveOptions void setIncludeText(java.lang.Boolean) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.SelectedCompletionInfo SelectedCompletionInfo(org.eclipse.lsp4j.Range, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.SelectedCompletionInfo SelectedCompletionInfo(org.eclipse.lsp4j.Range, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.SelectedCompletionInfo java.lang.String getText()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.SelectedCompletionInfo org.eclipse.lsp4j.Range getRange()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.SelectedCompletionInfo range'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.SelectedCompletionInfo text'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.SelectedCompletionInfo void setRange(org.eclipse.lsp4j.Range) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.SelectedCompletionInfo void setText(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='org.eclipse.lsp4j.SelectionRange SelectionRange(org.eclipse.lsp4j.Range, org.eclipse.lsp4j.SelectionRange) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -6402,6 +6864,9 @@
   <item name='org.eclipse.lsp4j.ServerCapabilities inlayHintProvider'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.eclipse.lsp4j.ServerCapabilities inlineCompletionProvider'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.ServerCapabilities inlineValueProvider'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
@@ -6447,6 +6912,9 @@
   <item name='org.eclipse.lsp4j.ServerCapabilities org.eclipse.lsp4j.SignatureHelpOptions getSignatureHelpProvider()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.eclipse.lsp4j.ServerCapabilities org.eclipse.lsp4j.TextDocumentServerCapabilities getTextDocument()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.ServerCapabilities org.eclipse.lsp4j.WorkspaceServerCapabilities getWorkspace()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
@@ -6487,6 +6955,9 @@
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.ServerCapabilities org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.Boolean,org.eclipse.lsp4j.InlayHintRegistrationOptions&gt; getInlayHintProvider()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.ServerCapabilities org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.Boolean,org.eclipse.lsp4j.InlineCompletionRegistrationOptions&gt; getInlineCompletionProvider()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.ServerCapabilities org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.Boolean,org.eclipse.lsp4j.InlineValueRegistrationOptions&gt; getInlineValueProvider()'>
@@ -6535,6 +7006,9 @@
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.ServerCapabilities signatureHelpProvider'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.ServerCapabilities textDocument'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.ServerCapabilities textDocumentSync'>
@@ -6684,6 +7158,15 @@
   <item name='org.eclipse.lsp4j.ServerCapabilities void setInlayHintProvider(org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.Boolean,org.eclipse.lsp4j.InlayHintRegistrationOptions&gt;) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.eclipse.lsp4j.ServerCapabilities void setInlineCompletionProvider(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.ServerCapabilities void setInlineCompletionProvider(org.eclipse.lsp4j.InlineCompletionRegistrationOptions) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.ServerCapabilities void setInlineCompletionProvider(org.eclipse.lsp4j.jsonrpc.messages.Either&lt;java.lang.Boolean,org.eclipse.lsp4j.InlineCompletionRegistrationOptions&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.ServerCapabilities void setInlineValueProvider(java.lang.Boolean) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
@@ -6748,6 +7231,9 @@
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.ServerCapabilities void setSignatureHelpProvider(org.eclipse.lsp4j.SignatureHelpOptions) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.ServerCapabilities void setTextDocument(org.eclipse.lsp4j.TextDocumentServerCapabilities) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.ServerCapabilities void setTextDocumentSync(org.eclipse.lsp4j.TextDocumentSyncKind) 0'>
@@ -7153,6 +7639,48 @@
   <item name='org.eclipse.lsp4j.SignatureInformationCapabilities void setParameterInformation(org.eclipse.lsp4j.ParameterInformationCapabilities) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.eclipse.lsp4j.SnippetTextEdit SnippetTextEdit(org.eclipse.lsp4j.Range, org.eclipse.lsp4j.StringValue) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.SnippetTextEdit SnippetTextEdit(org.eclipse.lsp4j.Range, org.eclipse.lsp4j.StringValue) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.SnippetTextEdit SnippetTextEdit(org.eclipse.lsp4j.Range, org.eclipse.lsp4j.StringValue, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.SnippetTextEdit SnippetTextEdit(org.eclipse.lsp4j.Range, org.eclipse.lsp4j.StringValue, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.SnippetTextEdit SnippetTextEdit(org.eclipse.lsp4j.Range, org.eclipse.lsp4j.StringValue, java.lang.String) 2'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.SnippetTextEdit annotationId'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.SnippetTextEdit java.lang.String getAnnotationId()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.SnippetTextEdit org.eclipse.lsp4j.Range getRange()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.SnippetTextEdit org.eclipse.lsp4j.StringValue getSnippet()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.SnippetTextEdit range'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.SnippetTextEdit snippet'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.SnippetTextEdit void setAnnotationId(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.SnippetTextEdit void setRange(org.eclipse.lsp4j.Range) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.SnippetTextEdit void setSnippet(org.eclipse.lsp4j.StringValue) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='org.eclipse.lsp4j.StaleRequestCapabilities StaleRequestCapabilities(boolean, java.util.List&lt;java.lang.String&gt;) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
@@ -7180,6 +7708,30 @@
   </item>
   <item name='org.eclipse.lsp4j.StaticRegistrationOptions void setId(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.StringValue StringValue(java.lang.String, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.StringValue StringValue(java.lang.String, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.StringValue java.lang.String getKind()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.StringValue java.lang.String getValue()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.StringValue kind'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.StringValue value'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.StringValue void setKind(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.StringValue void setValue(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='org.eclipse.lsp4j.SymbolCapabilities SymbolCapabilities(java.lang.Boolean) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -7416,6 +7968,9 @@
   <item name='org.eclipse.lsp4j.TextDocumentClientCapabilities documentSymbol'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.eclipse.lsp4j.TextDocumentClientCapabilities filters'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.TextDocumentClientCapabilities foldingRange'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
@@ -7429,6 +7984,9 @@
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.TextDocumentClientCapabilities inlayHint'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.TextDocumentClientCapabilities inlineCompletion'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.TextDocumentClientCapabilities inlineValue'>
@@ -7476,6 +8034,9 @@
   <item name='org.eclipse.lsp4j.TextDocumentClientCapabilities org.eclipse.lsp4j.DocumentSymbolCapabilities getDocumentSymbol()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.eclipse.lsp4j.TextDocumentClientCapabilities org.eclipse.lsp4j.FiltersCapabilities getFilters()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.TextDocumentClientCapabilities org.eclipse.lsp4j.FoldingRangeCapabilities getFoldingRange()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
@@ -7489,6 +8050,9 @@
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.TextDocumentClientCapabilities org.eclipse.lsp4j.InlayHintCapabilities getInlayHint()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.TextDocumentClientCapabilities org.eclipse.lsp4j.InlineCompletionCapabilities getInlineCompletion()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.TextDocumentClientCapabilities org.eclipse.lsp4j.InlineValueCapabilities getInlineValue()'>
@@ -7596,6 +8160,9 @@
   <item name='org.eclipse.lsp4j.TextDocumentClientCapabilities void setDocumentSymbol(org.eclipse.lsp4j.DocumentSymbolCapabilities) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.eclipse.lsp4j.TextDocumentClientCapabilities void setFilters(org.eclipse.lsp4j.FiltersCapabilities) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.TextDocumentClientCapabilities void setFoldingRange(org.eclipse.lsp4j.FoldingRangeCapabilities) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
@@ -7609,6 +8176,9 @@
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.TextDocumentClientCapabilities void setInlayHint(org.eclipse.lsp4j.InlayHintCapabilities) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.TextDocumentClientCapabilities void setInlineCompletion(org.eclipse.lsp4j.InlineCompletionCapabilities) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.TextDocumentClientCapabilities void setInlineValue(org.eclipse.lsp4j.InlineValueCapabilities) 0'>
@@ -7653,16 +8223,10 @@
   <item name='org.eclipse.lsp4j.TextDocumentClientCapabilities void setTypeHierarchy(org.eclipse.lsp4j.TypeHierarchyCapabilities) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.eclipse.lsp4j.TextDocumentContentCapabilities TextDocumentContentCapabilities(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.TextDocumentContentChangeEvent TextDocumentContentChangeEvent(java.lang.String) 0'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
-  <item name='org.eclipse.lsp4j.TextDocumentContentChangeEvent TextDocumentContentChangeEvent(org.eclipse.lsp4j.Range, java.lang.Integer, java.lang.String) 0'>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
-  </item>
-  <item name='org.eclipse.lsp4j.TextDocumentContentChangeEvent TextDocumentContentChangeEvent(org.eclipse.lsp4j.Range, java.lang.Integer, java.lang.String) 1'>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
-  </item>
-  <item name='org.eclipse.lsp4j.TextDocumentContentChangeEvent TextDocumentContentChangeEvent(org.eclipse.lsp4j.Range, java.lang.Integer, java.lang.String) 2'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='org.eclipse.lsp4j.TextDocumentContentChangeEvent TextDocumentContentChangeEvent(org.eclipse.lsp4j.Range, java.lang.String) 0'>
@@ -7698,20 +8262,87 @@
   <item name='org.eclipse.lsp4j.TextDocumentContentChangeEvent void setText(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-  <item name='org.eclipse.lsp4j.TextDocumentEdit TextDocumentEdit(org.eclipse.lsp4j.VersionedTextDocumentIdentifier, java.util.List&lt;org.eclipse.lsp4j.TextEdit&gt;) 0'>
+  <item name='org.eclipse.lsp4j.TextDocumentContentParams TextDocumentContentParams(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-  <item name='org.eclipse.lsp4j.TextDocumentEdit TextDocumentEdit(org.eclipse.lsp4j.VersionedTextDocumentIdentifier, java.util.List&lt;org.eclipse.lsp4j.TextEdit&gt;) 1'>
+  <item name='org.eclipse.lsp4j.TextDocumentContentParams java.lang.String getUri()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.TextDocumentContentParams uri'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.TextDocumentContentParams void setUri(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.TextDocumentContentRefreshParams TextDocumentContentRefreshParams(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.TextDocumentContentRefreshParams java.lang.String getUri()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.TextDocumentContentRefreshParams uri'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.TextDocumentContentRefreshParams void setUri(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.TextDocumentContentRegistrationOptions TextDocumentContentRegistrationOptions(java.util.List&lt;java.lang.String&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
+  <item name='org.eclipse.lsp4j.TextDocumentContentRegistrationOptions id'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.TextDocumentContentRegistrationOptions java.lang.String getId()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.TextDocumentContentRegistrationOptions java.util.List&lt;java.lang.String&gt; getSchemes()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
+  <item name='org.eclipse.lsp4j.TextDocumentContentRegistrationOptions schemes'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
+  <item name='org.eclipse.lsp4j.TextDocumentContentRegistrationOptions void setId(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.TextDocumentContentRegistrationOptions void setSchemes(java.util.List&lt;java.lang.String&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
+  <item name='org.eclipse.lsp4j.TextDocumentContentResult TextDocumentContentResult(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.TextDocumentContentResult java.lang.String getText()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.TextDocumentContentResult text'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.TextDocumentContentResult void setText(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.TextDocumentEdit TextDocumentEdit(org.eclipse.lsp4j.VersionedTextDocumentIdentifier, java.util.List&lt;org.eclipse.lsp4j.jsonrpc.messages.Either&lt;org.eclipse.lsp4j.TextEdit,org.eclipse.lsp4j.SnippetTextEdit&gt;&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.eclipse.lsp4j.TextDocumentEdit TextDocumentEdit(org.eclipse.lsp4j.VersionedTextDocumentIdentifier, java.util.List&lt;org.eclipse.lsp4j.jsonrpc.messages.Either&lt;org.eclipse.lsp4j.TextEdit,org.eclipse.lsp4j.SnippetTextEdit&gt;&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/2"/>
   </item>
   <item name='org.eclipse.lsp4j.TextDocumentEdit edits'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/2"/>
   </item>
-  <item name='org.eclipse.lsp4j.TextDocumentEdit java.util.List&lt;org.eclipse.lsp4j.TextEdit&gt; getEdits()'>
+  <item name='org.eclipse.lsp4j.TextDocumentEdit java.util.List&lt;org.eclipse.lsp4j.jsonrpc.messages.Either&lt;org.eclipse.lsp4j.TextEdit,org.eclipse.lsp4j.SnippetTextEdit&gt;&gt; getEdits()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/2"/>
   </item>
   <item name='org.eclipse.lsp4j.TextDocumentEdit org.eclipse.lsp4j.VersionedTextDocumentIdentifier getTextDocument()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -7719,9 +8350,11 @@
   <item name='org.eclipse.lsp4j.TextDocumentEdit textDocument'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-  <item name='org.eclipse.lsp4j.TextDocumentEdit void setEdits(java.util.List&lt;org.eclipse.lsp4j.TextEdit&gt;) 0'>
+  <item name='org.eclipse.lsp4j.TextDocumentEdit void setEdits(java.util.List&lt;org.eclipse.lsp4j.jsonrpc.messages.Either&lt;org.eclipse.lsp4j.TextEdit,org.eclipse.lsp4j.SnippetTextEdit&gt;&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/2"/>
   </item>
   <item name='org.eclipse.lsp4j.TextDocumentEdit void setTextDocument(org.eclipse.lsp4j.VersionedTextDocumentIdentifier) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -7862,6 +8495,15 @@
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.TextDocumentSaveRegistrationOptions void setIncludeText(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.TextDocumentServerCapabilities diagnostic'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.TextDocumentServerCapabilities org.eclipse.lsp4j.DiagnosticServerCapabilities getDiagnostic()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.TextDocumentServerCapabilities void setDiagnostic(org.eclipse.lsp4j.DiagnosticServerCapabilities) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.TextDocumentSyncOptions change'>
@@ -8195,9 +8837,6 @@
   <item name='org.eclipse.lsp4j.VersionedNotebookDocumentIdentifier void setUri(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-  <item name='org.eclipse.lsp4j.VersionedTextDocumentIdentifier VersionedTextDocumentIdentifier(java.lang.Integer) 0'>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
-  </item>
   <item name='org.eclipse.lsp4j.VersionedTextDocumentIdentifier VersionedTextDocumentIdentifier(java.lang.String, java.lang.Integer) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -8472,6 +9111,9 @@
   <item name='org.eclipse.lsp4j.WorkspaceClientCapabilities fileOperations'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.eclipse.lsp4j.WorkspaceClientCapabilities foldingRange'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.WorkspaceClientCapabilities inlayHint'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
@@ -8505,6 +9147,9 @@
   <item name='org.eclipse.lsp4j.WorkspaceClientCapabilities org.eclipse.lsp4j.FileOperationsWorkspaceCapabilities getFileOperations()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.eclipse.lsp4j.WorkspaceClientCapabilities org.eclipse.lsp4j.FoldingRangeWorkspaceCapabilities getFoldingRange()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.WorkspaceClientCapabilities org.eclipse.lsp4j.InlayHintWorkspaceCapabilities getInlayHint()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
@@ -8517,6 +9162,9 @@
   <item name='org.eclipse.lsp4j.WorkspaceClientCapabilities org.eclipse.lsp4j.SymbolCapabilities getSymbol()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.eclipse.lsp4j.WorkspaceClientCapabilities org.eclipse.lsp4j.TextDocumentContentCapabilities getTextDocumentContent()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.WorkspaceClientCapabilities org.eclipse.lsp4j.WorkspaceEditCapabilities getWorkspaceEdit()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
@@ -8524,6 +9172,9 @@
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.WorkspaceClientCapabilities symbol'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.WorkspaceClientCapabilities textDocumentContent'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.WorkspaceClientCapabilities void setApplyEdit(java.lang.Boolean) 0'>
@@ -8550,6 +9201,9 @@
   <item name='org.eclipse.lsp4j.WorkspaceClientCapabilities void setFileOperations(org.eclipse.lsp4j.FileOperationsWorkspaceCapabilities) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.eclipse.lsp4j.WorkspaceClientCapabilities void setFoldingRange(org.eclipse.lsp4j.FoldingRangeWorkspaceCapabilities) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.WorkspaceClientCapabilities void setInlayHint(org.eclipse.lsp4j.InlayHintWorkspaceCapabilities) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
@@ -8560,6 +9214,9 @@
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.WorkspaceClientCapabilities void setSymbol(org.eclipse.lsp4j.SymbolCapabilities) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.WorkspaceClientCapabilities void setTextDocumentContent(org.eclipse.lsp4j.TextDocumentContentCapabilities) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.WorkspaceClientCapabilities void setWorkspaceEdit(org.eclipse.lsp4j.WorkspaceEditCapabilities) 0'>
@@ -8676,9 +9333,6 @@
   <item name='org.eclipse.lsp4j.WorkspaceEdit void setDocumentChanges(java.util.List&lt;org.eclipse.lsp4j.jsonrpc.messages.Either&lt;org.eclipse.lsp4j.TextDocumentEdit,org.eclipse.lsp4j.ResourceOperation&gt;&gt;) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
-  <item name='org.eclipse.lsp4j.WorkspaceEditCapabilities WorkspaceEditCapabilities(java.lang.Boolean) 0'>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
-  </item>
   <item name='org.eclipse.lsp4j.WorkspaceEditCapabilities changeAnnotationSupport'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
@@ -8691,13 +9345,22 @@
   <item name='org.eclipse.lsp4j.WorkspaceEditCapabilities java.lang.Boolean getDocumentChanges()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.eclipse.lsp4j.WorkspaceEditCapabilities java.lang.Boolean getMetadataSupport()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.WorkspaceEditCapabilities java.lang.Boolean getNormalizesLineEndings()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.WorkspaceEditCapabilities java.lang.Boolean getSnippetEditSupport()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.WorkspaceEditCapabilities java.lang.String getFailureHandling()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.WorkspaceEditCapabilities java.util.List&lt;java.lang.String&gt; getResourceOperations()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.WorkspaceEditCapabilities metadataSupport'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.WorkspaceEditCapabilities normalizesLineEndings'>
@@ -8709,6 +9372,9 @@
   <item name='org.eclipse.lsp4j.WorkspaceEditCapabilities resourceOperations'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.eclipse.lsp4j.WorkspaceEditCapabilities snippetEditSupport'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.WorkspaceEditCapabilities void setChangeAnnotationSupport(org.eclipse.lsp4j.WorkspaceEditChangeAnnotationSupportCapabilities) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
@@ -8718,10 +9384,16 @@
   <item name='org.eclipse.lsp4j.WorkspaceEditCapabilities void setFailureHandling(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.eclipse.lsp4j.WorkspaceEditCapabilities void setMetadataSupport(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.WorkspaceEditCapabilities void setNormalizesLineEndings(java.lang.Boolean) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.WorkspaceEditCapabilities void setResourceOperations(java.util.List&lt;java.lang.String&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.WorkspaceEditCapabilities void setSnippetEditSupport(java.lang.Boolean) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.WorkspaceEditChangeAnnotationSupportCapabilities WorkspaceEditChangeAnnotationSupportCapabilities(java.lang.Boolean) 0'>
@@ -8734,6 +9406,15 @@
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.WorkspaceEditChangeAnnotationSupportCapabilities void setGroupsOnLabel(java.lang.Boolean) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.WorkspaceEditMetadata isRefactoring'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.WorkspaceEditMetadata java.lang.Boolean getIsRefactoring()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.WorkspaceEditMetadata void setIsRefactoring(java.lang.Boolean) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.WorkspaceFolder WorkspaceFolder(java.lang.String, java.lang.String) 0'>
@@ -8853,10 +9534,19 @@
   <item name='org.eclipse.lsp4j.WorkspaceServerCapabilities org.eclipse.lsp4j.FileOperationsServerCapabilities getFileOperations()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.eclipse.lsp4j.WorkspaceServerCapabilities org.eclipse.lsp4j.TextDocumentContentRegistrationOptions getTextDocumentContent()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.WorkspaceServerCapabilities org.eclipse.lsp4j.WorkspaceFoldersOptions getWorkspaceFolders()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='org.eclipse.lsp4j.WorkspaceServerCapabilities textDocumentContent'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='org.eclipse.lsp4j.WorkspaceServerCapabilities void setFileOperations(org.eclipse.lsp4j.FileOperationsServerCapabilities) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.eclipse.lsp4j.WorkspaceServerCapabilities void setTextDocumentContent(org.eclipse.lsp4j.TextDocumentContentRegistrationOptions) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='org.eclipse.lsp4j.WorkspaceServerCapabilities void setWorkspaceFolders(org.eclipse.lsp4j.WorkspaceFoldersOptions) 0'>

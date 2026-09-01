@@ -4,7 +4,7 @@ packing action declares."""
 load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts")
 load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
-load(":content_module_jar.bzl", "ContentModuleJarInfo", "content_module_jar", "content_module_jar_target_name")
+load(":content_module_jar.bzl", "ContentModuleJarInfo", "DevDistPluginJarInfo", "content_module_jar", "content_module_jar_target_name")
 load(":dev_dist_content.bzl", "DevDistContentInfo", "dev_dist_content_set", "dev_dist_plugin_content")
 load(":intellij_dev_dist.bzl", "intellij_dev_build_inputs")
 
@@ -73,6 +73,43 @@ _fake_packed = rule(
     implementation = _fake_packed_impl,
     attrs = {
         "module_name": attr.string(mandatory = True),
+    },
+)
+
+def _fake_layout_jar_impl(ctx):
+    """A `dev_dist_plugin_jar` target: the packed jar, the plugin, the destination, and what was merged into it.
+
+    A fake rather than the real rule, for the reason [_fake_packed] is one: the real rule runs the packer, and this
+    suite asserts what the provider carries rather than what the packer writes. Two members, because that is the shape a
+    member relation cannot express and this attribute exists for.
+    """
+    packed_jar = ctx.actions.declare_file(ctx.label.name + ".jar")
+    ctx.actions.write(packed_jar, ctx.attr.relative_output_file)
+    member_jars = []
+    for member in ctx.attr.member_modules:
+        member_jar = ctx.actions.declare_file("%s-%s.jar" % (ctx.label.name, member))
+        ctx.actions.write(member_jar, member)
+        member_jars.append(member_jar)
+    library_jar = ctx.actions.declare_file(ctx.label.name + "-library.jar")
+    ctx.actions.write(library_jar, ctx.label.name)
+    return [
+        DefaultInfo(files = depset([packed_jar])),
+        DevDistPluginJarInfo(
+            jar = packed_jar,
+            plugin_main_module = ctx.attr.plugin_main_module,
+            relative_output_file = ctx.attr.relative_output_file,
+            member_jars = tuple(member_jars),
+            member_modules = tuple(ctx.attr.member_modules),
+            library_jars = (struct(label = str(ctx.label) + "-library", jars = (library_jar,)),),
+        ),
+    ]
+
+_fake_layout_jar = rule(
+    implementation = _fake_layout_jar_impl,
+    attrs = {
+        "plugin_main_module": attr.string(mandatory = True),
+        "relative_output_file": attr.string(mandatory = True),
+        "member_modules": attr.string_list(mandatory = True),
     },
 )
 
@@ -153,7 +190,7 @@ def _composed_provider_test_impl(ctx):
     asserts.equals(env, 1, len(records))
     record = records[0]
     asserts.equals(env, "test.plugin", record.plugin_main_module)
-    asserts.equals(env, "test.content", record.content_module)
+    asserts.equals(env, ("test.content",), record.content_modules)
     asserts.equals(env, "modules/test.content.jar", record.relative_output_file)
     return analysistest.end(env)
 
@@ -169,12 +206,12 @@ def _placed_provider_test_impl(ctx):
     env = analysistest.begin(ctx)
     records = analysistest.target_under_test(env)[DevDistContentInfo].prepacked_plugin_jars.to_list()
 
-    # The module beside its destination, not the destinations alone: a record that carried the wrong `content_module`
+    # The members beside the destination, not the destinations alone: a record that carried the wrong member list
     # would pass a test that compares only paths, and the key of the whole relation is that pair.
     asserts.equals(
         env,
-        [("test.content", "modules/test.content.jar"), ("test.other", "test.other.jar")],
-        sorted([(record.content_module, record.relative_output_file) for record in records]),
+        [(("test.content",), "modules/test.content.jar"), (("test.other",), "test.other.jar")],
+        sorted([(record.content_modules, record.relative_output_file) for record in records]),
     )
     for record in records:
         asserts.equals(env, "test.plugin", record.plugin_main_module)
@@ -183,10 +220,10 @@ def _placed_provider_test_impl(ctx):
     asserts.equals(
         env,
         [
-            ("test.content", "dev_dist_content_tests_content.jar"),
-            ("test.other", "dev_dist_content_tests_other_content.jar"),
+            (("test.content",), "dev_dist_content_tests_content.jar"),
+            (("test.other",), "dev_dist_content_tests_other_content.jar"),
         ],
-        sorted([(record.content_module, record.jar.basename) for record in records]),
+        sorted([(record.content_modules, record.jar.basename) for record in records]),
     )
     return analysistest.end(env)
 
@@ -202,11 +239,36 @@ def _completion_provider_test_impl(ctx):
     records = analysistest.target_under_test(env)[DevDistContentInfo].prepacked_plugin_jars.to_list()
     asserts.equals(env, 1, len(records))
     asserts.equals(env, "test.plugin", records[0].plugin_main_module)
-    asserts.equals(env, "test.content", records[0].content_module)
+    asserts.equals(env, ("test.content",), records[0].content_modules)
     asserts.equals(env, "modules/test.content.jar", records[0].relative_output_file)
     return analysistest.end(env)
 
 _completion_provider_test = analysistest.make(_completion_provider_test_impl)
+
+def _layout_jar_provider_test_impl(ctx):
+    """A jar the plugin's own layout names travels as one relation with its whole member list.
+
+    Its own depset, and both halves of it: the relation the fragment takes, and the two lists a reference arm declares
+    instead. One provider answers both, which is what keeps the two arms describing one jar.
+    """
+    env = analysistest.begin(ctx)
+    info = analysistest.target_under_test(env)[DevDistContentInfo]
+    asserts.equals(env, [], info.prepacked_plugin_jars.to_list())
+    records = info.prepacked_layout_jars.to_list()
+    asserts.equals(env, 1, len(records))
+    asserts.equals(env, "test.plugin", records[0].plugin_main_module)
+    asserts.equals(env, ("test.content", "test.other"), records[0].content_modules)
+    asserts.equals(env, "specifics/test-specifics.jar", records[0].relative_output_file)
+
+    asserts.equals(
+        env,
+        2,
+        len(info.layout_jar_module_jars.to_list()),
+    )
+    asserts.equals(env, 1, len(info.layout_jar_library_jars.to_list()))
+    return analysistest.end(env)
+
+_layout_jar_provider_test = analysistest.make(_layout_jar_provider_test_impl)
 
 # The setting the two packing-output tests differ by, in the canonical form a transition needs. Written once: the same
 # label is the rule's own `_trace_spans` default, and a test that named a different one would pass while asserting
@@ -317,6 +379,44 @@ def dev_dist_content_test_suite(name):
         name = name + "_provided_library_test",
         expected_message = "contributes no runtime jars",
         target_under_test = name + "_provided_library_content",
+    )
+
+    # A jar the plugin's own layout names: two members and a name neither of them has, which is what no member relation
+    # can express.
+    _fake_layout_jar(
+        name = name + "_layout_jar",
+        member_modules = ["test.content", "test.other"],
+        plugin_main_module = "test.plugin",
+        relative_output_file = "specifics/test-specifics.jar",
+    )
+    dev_dist_plugin_content(
+        name = name + "_layout_jar_content",
+        descriptor_module = name + "_descriptor",
+        prepacked_layout_jars = [name + "_layout_jar"],
+    )
+    _layout_jar_provider_test(
+        name = name + "_layout_jar_provider_test",
+        target_under_test = name + "_layout_jar_content",
+    )
+
+    # A packing target of another plugin keys its relation to that other plugin, so the content that names it would hand
+    # off a jar of a layout it does not describe.
+    _fake_layout_jar(
+        name = name + "_other_plugin_layout_jar",
+        member_modules = ["test.content"],
+        plugin_main_module = "test.other.plugin",
+        relative_output_file = "specifics/other.jar",
+    )
+    dev_dist_plugin_content(
+        name = name + "_foreign_layout_jar_content",
+        descriptor_module = name + "_descriptor",
+        prepacked_layout_jars = [name + "_other_plugin_layout_jar"],
+        tags = ["manual"],
+    )
+    _expected_failure_test(
+        name = name + "_foreign_layout_jar_test",
+        expected_message = "packs a jar of 'test.other.plugin'",
+        target_under_test = name + "_foreign_layout_jar_content",
     )
 
     dev_dist_plugin_content(
@@ -480,6 +580,8 @@ def dev_dist_content_test_suite(name):
             name + "_measuring_packing_outputs_test",
             name + "_multi_jar_library_test",
             name + "_provided_library_test",
+            name + "_layout_jar_provider_test",
+            name + "_foreign_layout_jar_test",
             name + "_composed_provider_test",
             name + "_placed_provider_test",
             name + "_restated_path_test",

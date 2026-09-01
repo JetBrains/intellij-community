@@ -84,7 +84,13 @@ class GitSettingsLog(private val settingsSyncStorage: Path,
 
   private fun initAndCheckRepository(canRetry: Boolean) {
     val dotGit: Path = settingsSyncStorage.resolve(".git")
-    repository = FileRepositoryBuilder().setGitDir(dotGit.toFile()).setAutonomous(true).readEnvironment().build()
+    // The work tree must be set explicitly. GIT_WORK_TREE of the parent process would make this repository
+    // operate on the directory that variable points to, and delete it.
+    repository = FileRepositoryBuilder()
+      .setGitDir(dotGit.toFile())
+      .setWorkTree(settingsSyncStorage.toFile())
+      .setAutonomous(true)
+      .build()
     git = Git(repository)
 
     val newRepository = !dotGit.exists()

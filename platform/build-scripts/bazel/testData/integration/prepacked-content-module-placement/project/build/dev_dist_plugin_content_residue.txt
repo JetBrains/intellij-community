@@ -1,0 +1,7 @@
+# What a plugin's dev-distribution content needs that the convention does not give, by plugin main module.
+#
+# Fixture input. A real checkout gets this file from a distribution build's content report, through
+# `jpsModelToBazel --write-dev-dist-residue --content-report=<zip>`. A throwaway project has no such build, so
+# the residue is stated here and the converter reads it exactly as it reads the real one.
+
+intellij.example.plugin	raw_member	intellij.libraries.conflicting
