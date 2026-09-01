@@ -2,7 +2,6 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -26,7 +25,6 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.LambdaUtil;
-import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiCall;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeBlock;
@@ -45,7 +43,6 @@ import com.intellij.psi.PsiImportStaticReferenceElement;
 import com.intellij.psi.PsiImportStaticStatement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiLambdaExpression;
-import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
@@ -79,7 +76,6 @@ import com.intellij.psi.controlFlow.Instruction;
 import com.intellij.psi.controlFlow.LocalsControlFlowPolicy;
 import com.intellij.psi.controlFlow.ThrowToInstruction;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
-import com.intellij.psi.impl.source.resolve.reference.impl.JavaLangClassMemberReference;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -102,12 +98,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.CodeBlockSurrounder;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.FieldAccessFixer;
-import com.siyeh.ig.psiutils.SideEffectChecker;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -238,125 +232,19 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     final MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
 
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> ReadAction.run(() -> {
-        if (!myInlineThisOnly) {
-          final PsiMethod[] superMethods = myMethod.findSuperMethods();
-          for (PsiMethod method : superMethods) {
-            String className = Objects.requireNonNull(method.getContainingClass()).getQualifiedName();
-            final String message = method.hasModifierProperty(PsiModifier.ABSTRACT) ?
-                                   JavaRefactoringBundle.message("inlined.method.implements.method.from.0", className) :
-                                   JavaRefactoringBundle.message("inlined.method.overrides.method.from.0", className);
-            conflicts.putValue(method, message);
-          }
-
-          for (UsageInfo info : usagesIn) {
-            final PsiElement element = info.getElement();
-            if (element instanceof PsiDocMethodOrFieldRef && !PsiTreeUtil.isAncestor(myMethod, element, false)) {
-              conflicts.putValue(element, JavaRefactoringBundle.message("inline.method.used.in.javadoc"));
-            }
-            if (element instanceof PsiLiteralExpression &&
-                ContainerUtil.or(element.getReferences(), JavaLangClassMemberReference.class::isInstance)) {
-              conflicts.putValue(element, JavaRefactoringBundle.message("inline.method.used.in.reflection"));
-            }
-            if (element instanceof PsiMethodReferenceExpression ref) {
-              processSideEffectsInMethodReferenceQualifier(conflicts, ref);
-            }
-            if (element instanceof PsiReferenceExpression ref && myTransformerChooser.apply(ref).isFallBackTransformer()) {
-              conflicts.putValue(element, JavaRefactoringBundle.message("inlined.method.will.be.transformed.to.single.return.form"));
-            }
-
-            final String errorMessage = checkUnableToInsertCodeBlock(myMethod.getBody(), element);
-            if (errorMessage != null) {
-              conflicts.putValue(element, errorMessage);
-            }
-          }
-        }
-        else if (myReference != null && myTransformerChooser.apply(myReference).isFallBackTransformer()) {
-          conflicts.putValue(myReference.getElement(),
-                             JavaRefactoringBundle.message("inlined.method.will.be.transformed.to.single.return.form"));
-        }
-        else if (myReference instanceof PsiMethodReferenceExpression ref) {
-          processSideEffectsInMethodReferenceQualifier(conflicts, ref);
-        }
-        addInaccessibleMemberConflicts(myMethod, usagesIn, new ReferencedElementsCollector(), conflicts);
-        addInaccessibleSuperCallsConflicts(usagesIn, conflicts);
-      }),
+      () -> ReadAction.run(() -> collectConflicts(myMethod, myReference, usagesIn, conflicts, myTransformerChooser, myInlineThisOnly)),
       RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) {
       return false;
     }
 
     //kotlin j2k fails badly if moved under progress
-    myInliners = GenericInlineHandler.initInliners(myMethod, usagesIn, new InlineHandler.Settings() {
-      @Override
-      public boolean isOnlyOneReferenceToInline() {
-        return myInlineThisOnly;
-      }
-    }, conflicts, JavaLanguage.INSTANCE);
+    myInliners = initInliners(myMethod, usagesIn, myInlineThisOnly, conflicts);
 
     return showConflicts(conflicts, usagesIn);
   }
 
-  private static void processSideEffectsInMethodReferenceQualifier(@NotNull MultiMap<PsiElement, @DialogMessage String> conflicts,
-                                                                   @NotNull PsiMethodReferenceExpression methodReferenceExpression) {
-    final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
-    if (qualifierExpression != null) {
-      final List<PsiElement> sideEffects = new ArrayList<>();
-      SideEffectChecker.checkSideEffects(qualifierExpression, sideEffects);
-      if (!sideEffects.isEmpty()) {
-        conflicts.putValue(methodReferenceExpression, JavaRefactoringBundle.message("inline.method.qualifier.usage.side.effect"));
-      }
-    }
-  }
-
   private boolean checkReadOnly() {
     return myMethod.isWritable() || myMethod instanceof PsiCompiledElement;
-  }
-
-  private void addInaccessibleSuperCallsConflicts(UsageInfo[] usagesIn, MultiMap<PsiElement, @DialogMessage String> conflicts) {
-    myMethod.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitClass(@NotNull PsiClass aClass) {}
-
-      @Override
-      public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {}
-
-      @Override
-      public void visitSuperExpression(@NotNull PsiSuperExpression expression) {
-        super.visitSuperExpression(expression);
-        final PsiType type = expression.getType();
-        final PsiClass superClass = PsiUtil.resolveClassInType(type);
-        if (superClass != null) {
-          final Set<PsiClass> targetContainingClasses = new HashSet<>();
-          PsiElement qualifiedCall = null;
-          for (UsageInfo info : usagesIn) {
-            final PsiElement element = info.getElement();
-            if (element != null) {
-              final PsiClass targetContainingClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-              if (targetContainingClass != null &&
-                  (!InheritanceUtil.isInheritorOrSelf(targetContainingClass, superClass, true) ||
-                   PsiUtil.getEnclosingStaticElement(element, targetContainingClass) != null)) {
-                targetContainingClasses.add(targetContainingClass);
-              }
-              else if (element instanceof PsiReferenceExpression ref && !ExpressionUtil.isEffectivelyUnqualified(ref)) {
-                qualifiedCall = ref.getQualifierExpression();
-              }
-            }
-          }
-          final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class);
-          LOG.assertTrue(methodCallExpression != null);
-          if (!targetContainingClasses.isEmpty()) {
-            String names = StringUtil.join(targetContainingClasses, psiClass -> RefactoringUIUtil.getDescription(psiClass, false), ",");
-            String message = JavaRefactoringBundle.message("inline.method.calls.not.accessible.in", methodCallExpression.getText(), names);
-            conflicts.putValue(expression, message);
-          }
-
-          if (qualifiedCall != null) {
-            conflicts.putValue(expression, JavaRefactoringBundle.message("inline.method.calls.not.accessible.on.qualifier",
-                                                                         methodCallExpression.getText(), qualifiedCall.getText()));
-          }
-        }
-      }
-    });
   }
 
   public static void addInaccessibleMemberConflicts(PsiMethod method,
