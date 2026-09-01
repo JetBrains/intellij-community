@@ -303,6 +303,8 @@ jvm_library(
         "//plugins/kotlin/jvm/shared:shared_test_lib",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5:junit5_test_lib",
+        "//platform/testFramework/junit5/codeInsight",
+        "//platform/testFramework/junit5/codeInsight:codeInsight_test_lib",
         "//platform/workspace/jps",
         "//platform/workspace/jps:jps_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
