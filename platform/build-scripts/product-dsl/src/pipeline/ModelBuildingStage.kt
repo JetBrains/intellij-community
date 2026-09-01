@@ -63,6 +63,8 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
+import org.jetbrains.intellij.build.productLayout.ModuleSet
+import org.jetbrains.intellij.build.productLayout.MODULE_SET_PREFIX
 
 private val CORE_PLUGIN_ID = PluginId("com.intellij")
 private val CORE_PLUGIN_NODE_NAME = TargetName("__core__:com.intellij")
@@ -125,6 +127,8 @@ internal object ModelBuildingStage {
     val productPluginXmlOverrides = recordGenerationTiming("buildProductPluginXmlOverrides", phaseTimings) {
       buildProductPluginXmlOverrides(
         products = discovery.products,
+        moduleSetsByLabel = discovery.moduleSetsByLabel,
+        moduleSetSources = discovery.moduleSetSources,
         outputProvider = outputProvider,
         projectRoot = projectRoot,
         skipXIncludePaths = config.skipXIncludePaths,
@@ -385,11 +389,23 @@ internal object ModelBuildingStage {
    */
   internal suspend fun buildProductPluginXmlOverrides(
     products: List<DiscoveredProduct>,
+    moduleSetsByLabel: Map<String, List<ModuleSet>> = emptyMap(),
+    moduleSetSources: Map<String, Pair<Any, Path>> = emptyMap(),
     outputProvider: ModuleOutputProvider,
     projectRoot: Path,
     skipXIncludePaths: Set<String>,
     xIncludePrefixFilter: (String) -> String?,
   ): Map<TargetName, PluginXmlOverride> {
+    // Only the descriptors the products name are wanted, so only a module that could hold one is worth a stat.
+    // `findFileInModuleSources` resolves the relative path under a source root, so a module answers for a path only
+    // when one of its production roots is a parent of that path. Asking every module cost a stat per root of all
+    // 7089 of them, to learn about at most 28 paths.
+    val wantedPluginXmlPaths = products.mapNotNullTo(HashSet()) { product ->
+      product.pluginXmlPath?.let { projectRoot.resolve(it).normalize() }
+    }
+
+    val sweepStartNano = System.nanoTime()
+    var scannedModuleCount = 0
     val moduleByPluginXmlPath = LinkedHashMap<Path, TargetName>()
     val productionSourceRootsByModule = LinkedHashMap<TargetName, List<Path>>()
     for (module in outputProvider.getAllModules()) {
@@ -405,15 +421,56 @@ internal object ModelBuildingStage {
         productionSourceRootsByModule[moduleName] = productionSourceRoots
       }
 
+      if (productionSourceRoots.none { root -> wantedPluginXmlPaths.any { it.startsWith(root) } }) {
+        continue
+      }
+
+      scannedModuleCount++
       val pluginXmlPath = findFileInModuleSources(module = module, relativePath = PLUGIN_XML_RELATIVE_PATH, onlyProductionSources = true)
       if (pluginXmlPath != null) {
         moduleByPluginXmlPath[pluginXmlPath.normalize()] = moduleName
       }
     }
 
+    val sweepMs = (System.nanoTime() - sweepStartNano) / 1_000_000
+    val productLoopStartNano = System.nanoTime()
+    var examinedProductCount = 0
+    var checkedProductCount = 0
+    var renderedProductCount = 0
+    var descriptorCheckNano = 0L
+    var renderNano = 0L
+    val probeStats = XIncludeProbeStats()
+
+    // The model states the module that owns an include, so the search does not have to look for it. Without the
+    // owner the search reaches a generated module-set descriptor only through the last resort, which opens an output
+    // jar for every module in the project. An include that the model does not name keeps that search.
+    val declaredIncludeOwners = HashMap<String, JpsModule>()
+    for (product in products) {
+      for (include in product.spec?.deprecatedXmlIncludes.orEmpty()) {
+        val owner = outputProvider.findModule(include.contentModuleName.value) ?: continue
+        declaredIncludeOwners.putIfAbsent(include.resourcePath.removePrefix("/"), owner)
+      }
+    }
+    // A module set writes its descriptor either into the module it names, or into the resource root that its label's
+    // output directory belongs to. `productionSourceRootsByModule` above already holds every root, so the second case
+    // needs no new I/O.
+    for ((label, moduleSets) in moduleSetsByLabel) {
+      val defaultOutputDir = moduleSetSources.get(label)?.second ?: continue
+      val labelOwner = productionSourceRootsByModule.entries
+        .firstOrNull { (_, roots) -> roots.any { defaultOutputDir.startsWith(it) } }
+        ?.let { outputProvider.findModule(it.key.value) }
+      for (moduleSet in moduleSets) {
+        val owner = moduleSet.outputModule?.let { outputProvider.findModule(it.value) } ?: labelOwner ?: continue
+        declaredIncludeOwners.putIfAbsent("META-INF/$MODULE_SET_PREFIX${moduleSet.name}.xml", owner)
+      }
+    }
+    // One resolution per path for the whole run. Twenty-nine paths answered 121 requests before this cache.
+    val resolvedIncludes = HashMap<String, ByteArray?>()
+
     val result = LinkedHashMap<TargetName, PluginXmlOverride>()
     val ownerByModule = LinkedHashMap<TargetName, String>()
     for (product in products) {
+      examinedProductCount++
       val spec = product.spec ?: continue
       val relativePluginXmlPath = product.pluginXmlPath ?: continue
       val pluginXmlPath = projectRoot.resolve(relativePluginXmlPath).normalize()
@@ -437,30 +494,29 @@ internal object ModelBuildingStage {
         error("Product '${product.name}' plugin.xml '$relativePluginXmlPath' does not exist at '$pluginXmlPath'")
       }
 
+      checkedProductCount++
+      val xIncludePrefix = xIncludePrefixFilter(pluginModule.value)
+      val descriptorCheckStartNano = System.nanoTime()
       val pluginXmlData = withContext(Dispatchers.IO) { Files.readAllBytes(pluginXmlPath) }
-      val unresolvedXInclude = findFirstUnresolvedXIncludePath(
+      val problems = findDescriptorProblems(
         pluginXmlData = pluginXmlData,
         module = module,
         outputProvider = outputProvider,
-        prefix = xIncludePrefixFilter(pluginModule.value),
+        prefix = xIncludePrefix,
         skipXIncludePaths = skipXIncludePaths,
+        declaredIncludeOwners = declaredIncludeOwners,
+        resolvedIncludes = resolvedIncludes,
+        stats = probeStats,
       )
-      val missingBackingContentModule = if (unresolvedXInclude == null) {
-        findFirstMissingBackingContentModuleInDescriptor(
-          pluginXmlData = pluginXmlData,
-          module = module,
-          outputProvider = outputProvider,
-          prefix = xIncludePrefixFilter(pluginModule.value),
-          skipXIncludePaths = skipXIncludePaths,
-        )
-      }
-      else {
-        null
-      }
+      val unresolvedXInclude = problems.unresolvedXInclude
+      val missingBackingContentModule = problems.missingBackingContentModule
+      descriptorCheckNano += System.nanoTime() - descriptorCheckStartNano
       if (unresolvedXInclude == null && missingBackingContentModule == null) {
         continue
       }
 
+      renderedProductCount++
+      val renderStartNano = System.nanoTime()
       val generatedPluginXml = buildProductContentXml(
         spec = spec,
         outputProvider = outputProvider,
@@ -470,13 +526,17 @@ internal object ModelBuildingStage {
           appendDefaultProductPluginMetadata(sb = sb, spec = spec)
         },
       ).xml
-      val unresolvedXIncludeInGenerated = findFirstUnresolvedXIncludePath(
+      val unresolvedXIncludeInGenerated = findDescriptorProblems(
         pluginXmlData = generatedPluginXml.toByteArray(),
         module = module,
         outputProvider = outputProvider,
-        prefix = xIncludePrefixFilter(pluginModule.value),
+        prefix = xIncludePrefix,
         skipXIncludePaths = skipXIncludePaths,
-      )
+        declaredIncludeOwners = declaredIncludeOwners,
+        resolvedIncludes = resolvedIncludes,
+        stats = probeStats,
+      ).unresolvedXInclude
+      renderNano += System.nanoTime() - renderStartNano
       if (unresolvedXIncludeInGenerated != null) {
         debug("productPluginOverride") {
           "skipping generated override for ${pluginModule.value}: unresolved xi:include '$unresolvedXIncludeInGenerated' remains in generated descriptor"
@@ -508,6 +568,16 @@ internal object ModelBuildingStage {
       }
     }
 
+    debug("timings") {
+      val productLoopMs = (System.nanoTime() - productLoopStartNano) / 1_000_000
+      "buildProductPluginXmlOverrides: module sweep $sweepMs ms over $scannedModuleCount statted modules, " +
+      "product loop $productLoopMs ms over $examinedProductCount products " +
+      "(descriptor check ${descriptorCheckNano / 1_000_000} ms over $checkedProductCount, " +
+      "render ${renderNano / 1_000_000} ms over $renderedProductCount), " +
+      "${probeStats.parseCalls} parses, ${probeStats.resolveRequests} include requests met by " +
+      "${probeStats.resolveMisses} resolutions costing ${probeStats.resolveNano / 1_000_000} ms, " +
+      "${result.size} overrides"
+    }
     return result
   }
 
@@ -540,65 +610,61 @@ internal object ModelBuildingStage {
     error("Cannot map product '$productName' plugin.xml '$relativePluginXmlPath' to a module with production sources")
   }
 
-  private suspend fun findFirstUnresolvedXIncludePath(
-    pluginXmlData: ByteArray,
-    module: JpsModule,
-    outputProvider: ModuleOutputProvider,
-    prefix: String?,
-    skipXIncludePaths: Set<String>,
-  ): String? {
-    val processedPaths = HashSet<String>()
-    var pending: List<Pair<String, ByteArray>> = listOf(PLUGIN_XML_RELATIVE_PATH to pluginXmlData)
-
-    while (pending.isNotEmpty()) {
-      val next = ArrayList<Pair<String, ByteArray>>()
-      for ((_, data) in pending) {
-        val parseResult = parseContentAndXIncludes(input = data, locationSource = null)
-        for (xIncludePath in parseResult.xIncludePaths) {
-          if (xIncludePath in skipXIncludePaths) continue
-          if (!processedPaths.add(xIncludePath)) continue
-
-          val includeData = resolveXIncludeBytes(
-            path = xIncludePath,
-            module = module,
-            outputProvider = outputProvider,
-            prefix = prefix,
-          )
-          if (includeData == null) {
-            return xIncludePath
-          }
-          next.add(xIncludePath to includeData)
-        }
-      }
-      pending = next
-    }
-
-    return null
+  /** Counts what one run of the descriptor pre-check spends, for the `timings` debug tag. */
+  internal class XIncludeProbeStats {
+    @JvmField var resolveRequests: Int = 0
+    @JvmField var resolveMisses: Int = 0
+    @JvmField var parseCalls: Int = 0
+    @JvmField var resolveNano: Long = 0
   }
 
-  private suspend fun findFirstMissingBackingContentModuleInDescriptor(
+  /** What a product's on-disk descriptor gets wrong, or nothing at all when it is healthy. */
+  private class DescriptorProblems(
+    @JvmField val unresolvedXInclude: String?,
+    @JvmField val missingBackingContentModule: String?,
+  )
+
+  /**
+   * Walks the `xi:include` closure of [pluginXmlData] once, and reports both faults that an override repairs.
+   *
+   * One walk answers both questions. The two faults come from the same parse of the same file, and resolving an
+   * include is what the walk spends its time on. Two walks resolved every include twice.
+   *
+   * An unresolved include wins over a missing content module. A file that does not resolve hides what it declares,
+   * so the include is the fault to report and the walk stops there.
+   */
+  private suspend fun findDescriptorProblems(
     pluginXmlData: ByteArray,
     module: JpsModule,
     outputProvider: ModuleOutputProvider,
     prefix: String?,
     skipXIncludePaths: Set<String>,
-  ): String? {
+    declaredIncludeOwners: Map<String, JpsModule>,
+    resolvedIncludes: MutableMap<String, ByteArray?>,
+    stats: XIncludeProbeStats? = null,
+  ): DescriptorProblems {
     val processedPaths = HashSet<String>()
     var pending: List<Pair<String, ByteArray>> = listOf(PLUGIN_XML_RELATIVE_PATH to pluginXmlData)
+    var missingBackingContentModule: String? = null
 
     while (pending.isNotEmpty()) {
       val next = ArrayList<Pair<String, ByteArray>>()
       for ((_, data) in pending) {
+        if (stats != null) stats.parseCalls++
         val parseResult = parseContentAndXIncludes(input = data, locationSource = null)
-        for (contentModule in parseResult.contentModules) {
-          val moduleName = ContentModuleName(contentModule.name)
-          if (moduleName.isSlashNotation()) {
-            continue
-          }
 
-          val expectedTarget = moduleName.baseModuleName().value
-          if (outputProvider.findModule(expectedTarget) == null) {
-            return moduleName.value
+        if (missingBackingContentModule == null) {
+          for (contentModule in parseResult.contentModules) {
+            val moduleName = ContentModuleName(contentModule.name)
+            if (moduleName.isSlashNotation()) {
+              continue
+            }
+
+            val expectedTarget = moduleName.baseModuleName().value
+            if (outputProvider.findModule(expectedTarget) == null) {
+              missingBackingContentModule = moduleName.value
+              break
+            }
           }
         }
 
@@ -606,14 +672,24 @@ internal object ModelBuildingStage {
           if (xIncludePath in skipXIncludePaths) continue
           if (!processedPaths.add(xIncludePath)) continue
 
-          val includeData = resolveXIncludeBytes(
-            path = xIncludePath,
-            module = module,
-            outputProvider = outputProvider,
-            prefix = prefix,
-          )
+          if (stats != null) stats.resolveRequests++
+          val resolveStartNano = System.nanoTime()
+          val includeData = if (resolvedIncludes.containsKey(xIncludePath)) {
+            resolvedIncludes.get(xIncludePath)
+          }
+          else {
+            if (stats != null) stats.resolveMisses++
+            resolveXIncludeBytes(
+              path = xIncludePath,
+              module = module,
+              outputProvider = outputProvider,
+              prefix = prefix,
+              declaredOwner = declaredIncludeOwners.get(xIncludePath.removePrefix("/")),
+            ).also { resolvedIncludes.put(xIncludePath, it) }
+          }
+          if (stats != null) stats.resolveNano += System.nanoTime() - resolveStartNano
           if (includeData == null) {
-            continue
+            return DescriptorProblems(unresolvedXInclude = xIncludePath, missingBackingContentModule = null)
           }
           next.add(xIncludePath to includeData)
         }
@@ -621,7 +697,7 @@ internal object ModelBuildingStage {
       pending = next
     }
 
-    return null
+    return DescriptorProblems(unresolvedXInclude = null, missingBackingContentModule = missingBackingContentModule)
   }
 
   private fun linkProductsAndBundledPlugins(

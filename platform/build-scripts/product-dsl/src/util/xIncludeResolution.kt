@@ -6,6 +6,7 @@ import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.findFileInModuleDependenciesRecursive
 import org.jetbrains.intellij.build.findFileInModuleLibraryDependencies
 import org.jetbrains.intellij.build.findFileInModuleSources
+import org.jetbrains.intellij.build.readDescriptor
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
 
@@ -23,10 +24,19 @@ internal suspend fun resolveXIncludeBytes(
   module: JpsModule,
   outputProvider: ModuleOutputProvider,
   prefix: String?,
+  declaredOwner: JpsModule? = null,
 ): ByteArray? {
   findFileInModuleSources(module, path)?.let { return Files.readAllBytes(it) }
 
   for (pass in DescriptorSearchPass.entries) {
+    // The model names the module that owns a generated module-set descriptor and every `deprecatedInclude`, so a
+    // caller that has the model can say where the file is. Without the hint the search reaches the file only through
+    // the last resort, which opens an output jar for every module in the project. It reads the owner through
+    // [readDescriptor], so the owner obeys the same pass rules as any other candidate.
+    if (declaredOwner != null && declaredOwner.name != module.name) {
+      readDescriptor(module = declaredOwner, path = path, outputProvider = outputProvider, pass = pass)?.let { return it }
+    }
+
     if (pass == DescriptorSearchPass.MODULE_OUTPUT) {
       findFileInModuleLibraryDependencies(module, path, outputProvider)?.let { return it }
       outputProvider.readFileContentFromModuleOutput(module, path)?.let { return it }
