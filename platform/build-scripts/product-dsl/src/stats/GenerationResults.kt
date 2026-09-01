@@ -363,6 +363,15 @@ data class GenerationStats(
    * stages here, so one list covers the whole generation.
    */
   @JvmField val stageTimings: List<GenerationTiming> = emptyList(),
+  /**
+   * When each step of the BUILD_MODEL stage ran, and for how long, sorted by start.
+   *
+   * A step nests inside the `build model` stage, so this list is separate from [stageTimings]. One list would count the
+   * same time twice. The steps are sequential, so they sum to close to the `build model` entry of [stageTimings]. A
+   * name is the name of the called function, and never a phase label, because the labels do not follow the execution
+   * order.
+   */
+  @JvmField val phaseTimings: List<GenerationTiming> = emptyList(),
 ) {
   /**
    * Central file tracking, plus the dev-distribution plan.

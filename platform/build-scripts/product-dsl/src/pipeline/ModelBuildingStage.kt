@@ -47,7 +47,9 @@ import org.jetbrains.intellij.build.productLayout.discovery.computePluginContent
 import org.jetbrains.intellij.build.productLayout.graph.PluginGraphBuilder
 import org.jetbrains.intellij.build.productLayout.model.ErrorSink
 import org.jetbrains.intellij.build.productLayout.model.error.DuplicateDslTestPluginIdError
+import org.jetbrains.intellij.build.productLayout.stats.GenerationTiming
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionUsage
+import org.jetbrains.intellij.build.productLayout.stats.recordGenerationTiming
 import org.jetbrains.intellij.build.productLayout.traversal.collectPluginContentModules
 import org.jetbrains.intellij.build.productLayout.traversal.collectProductModuleNames
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
@@ -91,10 +93,22 @@ internal object ModelBuildingStage {
   /**
    * Executes the model building stage.
    *
+   * Each step is timed into [phaseTimings], because the whole stage reports as one bucket to the caller. Two rules hold
+   * for a timing here.
+   *
+   * A span carries the name of the called function. A step also carries a `Phase N` label in a comment, and the labels
+   * do not follow the execution order. The order of the labels is 1, 2, 3, 4, 4b, 6, 7, 5, 6, 7 and 8. A span named
+   * after a label would mislabel itself. A step that runs twice gets a `#2` suffix, so a reader can compare the two
+   * runs.
+   *
+   * The top level of this method is sequential, so a plain list is correct. This method also takes a [CoroutineScope].
+   * A timing recorded inside a `scope.launch` would race, so never put one there.
+   *
    * @param discovery Results from discovery stage
    * @param config Generation configuration
    * @param scope Coroutine scope for async operations
    * @param errorSink Sink for errors discovered during model building (e.g., xi:include resolution)
+   * @param phaseTimings Collects one timing per step of this stage
    * @return Fully initialized generation model
    */
   suspend fun execute(
@@ -104,19 +118,24 @@ internal object ModelBuildingStage {
     updateSuppressions: Boolean,
     commitChanges: Boolean,
     errorSink: ErrorSink,
+    phaseTimings: MutableList<GenerationTiming>,
   ): GenerationModel {
     val projectRoot = config.projectRoot
     val outputProvider = config.outputProvider
-    val productPluginXmlOverrides = buildProductPluginXmlOverrides(
-      products = discovery.products,
-      outputProvider = outputProvider,
-      projectRoot = projectRoot,
-      skipXIncludePaths = config.skipXIncludePaths,
-      xIncludePrefixFilter = config.xIncludePrefixFilter,
-    )
+    val productPluginXmlOverrides = recordGenerationTiming("buildProductPluginXmlOverrides", phaseTimings) {
+      buildProductPluginXmlOverrides(
+        products = discovery.products,
+        outputProvider = outputProvider,
+        projectRoot = projectRoot,
+        skipXIncludePaths = config.skipXIncludePaths,
+        xIncludePrefixFilter = config.xIncludePrefixFilter,
+      )
+    }
 
     // Load suppression config from path (single source of truth)
-    val suppressionConfig = SuppressionConfig.load(config.suppressionConfigPath)
+    val suppressionConfig = recordGenerationTiming("SuppressionConfig.load", phaseTimings) {
+      SuppressionConfig.load(config.suppressionConfigPath)
+    }
 
     // Create file updater for deferred writes
     val fileUpdater = DeferredFileUpdater(projectRoot)
@@ -187,79 +206,104 @@ internal object ModelBuildingStage {
       val dslOwnedPluginXmlPaths = dslTestPluginsByProduct.values.asSequence()
         .flatten()
         .mapTo(HashSet()) { config.projectRoot.resolve(it.pluginXmlPath).normalize() }
-      discoverPluginDescriptorsFromSources(
-        outputProvider = outputProvider,
-        testFrameworkContentModules = config.testFrameworkContentModules,
-        dslOwnedPluginXmlPaths = dslOwnedPluginXmlPaths,
-        contentPluginPopulation = readDevDistContentPluginPopulation(projectRoot),
-      )
+      // The span covers `readDevDistContentPluginPopulation` too, because the call reads a file.
+      // `config.includeTestPluginDescriptorsFromSources` guards the step, so no span means the flag was off.
+      recordGenerationTiming("discoverPluginDescriptorsFromSources", phaseTimings) {
+        discoverPluginDescriptorsFromSources(
+          outputProvider = outputProvider,
+          testFrameworkContentModules = config.testFrameworkContentModules,
+          dslOwnedPluginXmlPaths = dslOwnedPluginXmlPaths,
+          contentPluginPopulation = readDevDistContentPluginPopulation(projectRoot),
+        )
+      }
     }
     else {
       DiscoveredPluginDescriptors(emptySet(), emptySet())
     }
     val testPluginModuleNames = config.testPluginsByProduct.values.flatten().toHashSet()
     testPluginModuleNames.addAll(extraPluginDescriptors.testPluginModules)
-    seedPluginsForExtraction(
-      discovery = discovery,
-      config = config,
-      builder = builder,
-      dslTestPluginIds = dslTestPluginIds,
-      dslTestPluginAdditionalBundles = dslTestPluginAdditionalBundles,
-      testPluginModuleNames = testPluginModuleNames,
-      extraPluginModules = extraPluginDescriptors.pluginModules,
-    )
-    val pluginsToExtract = collectSeededPluginTargets(builder.build())
-    extractPlugins(
-      pluginTargets = pluginsToExtract,
-      pluginContentCache = pluginContentCache,
-      builder = builder,
-      pluginInfos = pluginInfos,
-      testPluginModuleNames = testPluginModuleNames,
-      testFrameworkContentModules = config.testFrameworkContentModules,
-    )
+    recordGenerationTiming("seedPluginsForExtraction", phaseTimings) {
+      seedPluginsForExtraction(
+        discovery = discovery,
+        config = config,
+        builder = builder,
+        dslTestPluginIds = dslTestPluginIds,
+        dslTestPluginAdditionalBundles = dslTestPluginAdditionalBundles,
+        testPluginModuleNames = testPluginModuleNames,
+        extraPluginModules = extraPluginDescriptors.pluginModules,
+      )
+    }
+    // The graph view is built three times here, and frozen once. Each build gets its own span, because the cost of a
+    // rebuild is not known.
+    val seededGraphView = recordGenerationTiming("builder.build", phaseTimings) { builder.build() }
+    val pluginsToExtract = recordGenerationTiming("collectSeededPluginTargets", phaseTimings) {
+      collectSeededPluginTargets(seededGraphView)
+    }
+    recordGenerationTiming("extractPlugins", phaseTimings) {
+      extractPlugins(
+        pluginTargets = pluginsToExtract,
+        pluginContentCache = pluginContentCache,
+        builder = builder,
+        pluginInfos = pluginInfos,
+        testPluginModuleNames = testPluginModuleNames,
+        testFrameworkContentModules = config.testFrameworkContentModules,
+      )
+    }
 
     val includeAliasCache = AsyncCache<String, Set<PluginId>>()
     val moduleDescriptorAliasCache = AsyncCache<ContentModuleName, Set<PluginId>>()
-    linkProductsAndBundledPlugins(discovery, builder)
-    linkTestPluginsByProduct(config, builder)
-    addModuleSets(discovery, builder)
-    val baseGraphView = builder.build()
-    linkProductAliases(
-      discovery = discovery,
-      config = config,
-      builder = builder,
-      graphView = baseGraphView,
-      outputProvider = outputProvider,
-      descriptorCache = descriptorCache,
-      includeAliasCache = includeAliasCache,
-      moduleDescriptorAliasCache = moduleDescriptorAliasCache,
-      pluginInfos = pluginInfos,
-    )
-    seedDslTestPluginTargets(builder, dslTestPluginsByProduct)
-    addJpsDependencies(builder, outputProvider, config.projectLibraryToModuleMap)
-    registerReferencedPlugins(builder, pluginContentCache, pluginInfos)
-    builder.markDescriptorModules(descriptorCache)
-    val graphWithJpsDeps = builder.build()
+    recordGenerationTiming("linkProductsAndBundledPlugins", phaseTimings) { linkProductsAndBundledPlugins(discovery, builder) }
+    recordGenerationTiming("linkTestPluginsByProduct", phaseTimings) { linkTestPluginsByProduct(config, builder) }
+    recordGenerationTiming("addModuleSets", phaseTimings) { addModuleSets(discovery, builder) }
+    val baseGraphView = recordGenerationTiming("builder.build #2", phaseTimings) { builder.build() }
+    recordGenerationTiming("linkProductAliases", phaseTimings) {
+      linkProductAliases(
+        discovery = discovery,
+        config = config,
+        builder = builder,
+        graphView = baseGraphView,
+        outputProvider = outputProvider,
+        descriptorCache = descriptorCache,
+        includeAliasCache = includeAliasCache,
+        moduleDescriptorAliasCache = moduleDescriptorAliasCache,
+        pluginInfos = pluginInfos,
+      )
+    }
+    recordGenerationTiming("seedDslTestPluginTargets", phaseTimings) { seedDslTestPluginTargets(builder, dslTestPluginsByProduct) }
+    recordGenerationTiming("addJpsDependencies", phaseTimings) {
+      addJpsDependencies(builder, outputProvider, config.projectLibraryToModuleMap)
+    }
+    recordGenerationTiming("registerReferencedPlugins", phaseTimings) {
+      registerReferencedPlugins(builder, pluginContentCache, pluginInfos)
+    }
+    recordGenerationTiming("builder.markDescriptorModules", phaseTimings) { builder.markDescriptorModules(descriptorCache) }
+    val graphWithJpsDeps = recordGenerationTiming("builder.build #3", phaseTimings) { builder.build() }
 
-    val dslTestPluginExpansion = expandDslTestPlugins(
-      discovery = discovery,
-      config = config,
-      builder = builder,
-      graphView = graphWithJpsDeps,
-      pluginContentCache = pluginContentCache,
-      dslTestPluginsByProduct = dslTestPluginsByProduct,
-      descriptorCache = descriptorCache,
-      suppressionConfig = suppressionConfig,
-      updateSuppressions = updateSuppressions,
-      projectRoot = projectRoot,
-      errorSink = errorSink,
-    )
-    addJpsDependencies(builder, outputProvider, config.projectLibraryToModuleMap)
-    registerReferencedPlugins(builder, pluginContentCache, pluginInfos)
-    builder.markDescriptorModules(descriptorCache)
-    addPluginDependencyEdges(builder, pluginInfos)
+    val dslTestPluginExpansion = recordGenerationTiming("expandDslTestPlugins", phaseTimings) {
+      expandDslTestPlugins(
+        discovery = discovery,
+        config = config,
+        builder = builder,
+        graphView = graphWithJpsDeps,
+        pluginContentCache = pluginContentCache,
+        dslTestPluginsByProduct = dslTestPluginsByProduct,
+        descriptorCache = descriptorCache,
+        suppressionConfig = suppressionConfig,
+        updateSuppressions = updateSuppressions,
+        projectRoot = projectRoot,
+        errorSink = errorSink,
+      )
+    }
+    recordGenerationTiming("addJpsDependencies #2", phaseTimings) {
+      addJpsDependencies(builder, outputProvider, config.projectLibraryToModuleMap)
+    }
+    recordGenerationTiming("registerReferencedPlugins #2", phaseTimings) {
+      registerReferencedPlugins(builder, pluginContentCache, pluginInfos)
+    }
+    recordGenerationTiming("builder.markDescriptorModules #2", phaseTimings) { builder.markDescriptorModules(descriptorCache) }
+    recordGenerationTiming("addPluginDependencyEdges", phaseTimings) { addPluginDependencyEdges(builder, pluginInfos) }
 
-    val pluginGraph = builder.buildFrozen()
+    val pluginGraph = recordGenerationTiming("builder.buildFrozen", phaseTimings) { builder.buildFrozen() }
 
     // Build per-product allowedMissingDependencies map — includes both real products and test product specs
     val productAllowedMissing = (

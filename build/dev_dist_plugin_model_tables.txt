@@ -202,7 +202,6 @@ intellij.postcss.plugin
 intellij.prettierJS
 intellij.profiler.lineProfiler
 intellij.properties
-intellij.protoeditor
 intellij.qodana
 intellij.quarkus
 intellij.react.plugin

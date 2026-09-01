@@ -152,6 +152,8 @@ internal class GenerationPipeline(
     // The five stages are sequential, so this list is what says which one owns the run's time. Without it a caller sees
     // one total, and `nodeTimings` covers only the EXECUTE stage.
     val stageTimings = ArrayList<GenerationTiming>(5)
+    // The steps of the BUILD_MODEL stage. They nest inside the `build model` stage, so they travel in their own list.
+    val phaseTimings = ArrayList<GenerationTiming>(23)
     return coroutineScope {
       // Stage 1: DISCOVER - Scan DSL definitions
       val discovery = recordGenerationTiming("discover", stageTimings) { discover(config) }
@@ -166,7 +168,8 @@ internal class GenerationPipeline(
           scope = this,
           updateSuppressions = updateSuppressions,
           commitChanges = commitChanges,
-          errorSink = modelBuildingErrorSink
+          errorSink = modelBuildingErrorSink,
+          phaseTimings = phaseTimings,
         )
       }
 
@@ -184,7 +187,7 @@ internal class GenerationPipeline(
       // Build final stats including deleted files (after cleanup)
       val stats = buildStats(ctx, System.currentTimeMillis() - startTime, outputResult.deletedModuleSetFiles, model.fileUpdater.getDiffs())
 
-      GenerationResult(errors = aggregated.errors, diffs = aggregated.diffs, stats = stats.copy(stageTimings = stageTimings))
+      GenerationResult(errors = aggregated.errors, diffs = aggregated.diffs, stats = stats.copy(stageTimings = stageTimings, phaseTimings = phaseTimings))
     }
   }
 

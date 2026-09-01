@@ -23,6 +23,8 @@ suspend fun buildPluginGraphForJson(config: ModuleSetGenerationConfig): PluginGr
       updateSuppressions = false,
       commitChanges = false,
       errorSink = errorSink,
+      // this path builds a graph for the JSON output, and it reports no timing
+      phaseTimings = ArrayList(),
     )
     val context = ComputeContextImpl(model)
     context.initSlot(Slots.CONTENT_MODULE_PLAN)
