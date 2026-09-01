@@ -5,10 +5,13 @@ import com.intellij.execution.portsWatcher.ListeningPort
 import com.intellij.execution.portsWatcher.ListeningPortHandler
 import com.intellij.execution.portsWatcher.PortListeningOptions
 import com.intellij.execution.portsWatcher.ProcessPortsWatcher
+import com.intellij.internal.statistic.SmartModeTransitionPhaseListener
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.EelUnavailableException
@@ -19,6 +22,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.impl.cursorOffsetFlow
 import com.intellij.util.asDisposable
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,6 +36,9 @@ import kotlin.time.Duration.Companion.milliseconds
 /**
  * Installs a port-forwarding panel above the terminal output for [terminalView].
  *
+ * In the light mode the install is deferred until the transition to the smart mode completes.
+ * The light mode offers no port forwarding (IJPL-252746); see [awaitSmartModeTransitionIfLight].
+ *
  * Waits for the terminal session to be ready, then (if port forwarding is required):
  * 1. Starts a [ProcessPortsWatcher] against the shell's EEL environment
  * and PID.
@@ -42,14 +49,16 @@ import kotlin.time.Duration.Companion.milliseconds
  * Once it is canceled, watcher stops, all established forwardings are stopped, and the top component is removed.
  */
 internal fun installPortForwarding(terminalView: TerminalView, coroutineScope: CoroutineScope) {
-  // Resolve the manager once and reuse it for the whole lifetime of this session.
-  // The implementations are stateful, so a single session must not switch between them: sessions created before the
-  // RD client is loaded keep using the EEL-based manager, while sessions created afterward use the RD client manager.
-  // This also triggers eager init, which ThinClientTerminalPortForwardingManager needs to receive port forwarding data
-  // from the backend before any interaction.
-  val portForwardingManager = TerminalPortForwardingManager.getInstance()
-
   coroutineScope.launch {
+    awaitSmartModeTransitionIfLight()
+
+    // Resolve the manager once and reuse it for the whole lifetime of this panel.
+    // The implementations are stateful, so a single panel must not switch between them: panels installed before the
+    // RD client is loaded keep using the EEL-based manager, while panels installed afterward use the RD client manager.
+    // This also triggers eager init, which ThinClientTerminalPortForwardingManager needs to receive port forwarding data
+    // from the backend before any interaction.
+    val portForwardingManager = TerminalPortForwardingManager.getInstance()
+
     val session = terminalView.sessionDeferred.await()
     val startupOptions = terminalView.startupOptionsDeferred.await()
     if (startupOptions.processType != TerminalProcessType.SHELL) {
@@ -88,6 +97,40 @@ internal fun installPortForwarding(terminalView: TerminalView, coroutineScope: C
       val panel = PortForwardingWidget(model, portForwardingManager, panelScope)
       terminalView.setTopComponent(panel, panelScope.asDisposable())
     }
+  }
+}
+
+/**
+ * Suspends while the IDE runs in the light mode, until the transition to the smart mode completes.
+ * Returns immediately in the other modes.
+ *
+ * The light mode has no backend, so the RemDev port forwarding stack is absent.
+ * An EEL tunnel created in the light mode would stay invisible to that stack after the transition (IJPL-252746).
+ * So the terminal offers no port forwarding in the light mode.
+ * After the transition, [TerminalPortForwardingManager.getInstance] resolves to the split-mode implementation,
+ * and the panels of the terminals that survived the transition work through it, the same as the new ones.
+ */
+private suspend fun awaitSmartModeTransitionIfLight() {
+  if (!IdeProductMode.isLight) return
+
+  val transitionFinished = CompletableDeferred<Unit>()
+  val connection = ApplicationManager.getApplication().messageBus.connect()
+  try {
+    connection.subscribe(SmartModeTransitionPhaseListener.TOPIC, object : SmartModeTransitionPhaseListener {
+      override fun transitionFinished(reachedSmart: Boolean) {
+        // A failed transition leaves the IDE in the light mode. Keep waiting for the next attempt.
+        if (reachedSmart) {
+          transitionFinished.complete(Unit)
+        }
+      }
+    })
+    // The transition can complete between the check above and the subscription. Re-check to not wait forever.
+    if (IdeProductMode.isLight) {
+      transitionFinished.await()
+    }
+  }
+  finally {
+    connection.disconnect()
   }
 }
 
