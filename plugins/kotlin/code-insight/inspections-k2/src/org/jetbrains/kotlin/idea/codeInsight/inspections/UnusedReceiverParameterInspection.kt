@@ -37,6 +37,8 @@ import org.jetbrains.kotlin.analysis.api.types.defaultType
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.idea.base.psi.EditCommaSeparatedListHelper
+import org.jetbrains.kotlin.idea.base.psi.setCallableReceiverTypeReference
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.inspections.utils.getThisLabelName
 import org.jetbrains.kotlin.idea.codeInsight.inspections.utils.getThisWithLabel
@@ -51,7 +53,6 @@ import org.jetbrains.kotlin.idea.k2.refactoring.getThisReceiverOwner
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isOverridable
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.EditCommaSeparatedListHelper
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassLiteralExpression
@@ -81,7 +82,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComme
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.parents
-import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
 import org.jetbrains.kotlin.resolution.KtResolvable
 import org.jetbrains.kotlin.resolution.KtResolvableCall
 
@@ -188,7 +188,7 @@ internal class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
                     function.forEachDescendantOfType<KtThisExpression> {
                         if (it.text == textForReceiver) it.labelQualifier?.delete()
                     }
-                    function.setReceiverTypeReference(null)
+                    function.setCallableReceiverTypeReference(null)
                 }
             } else {
                 val methodDescriptor = KotlinMethodDescriptor(function)
@@ -249,7 +249,7 @@ private fun typeParameters(typeReference: KtTypeReference): List<KtTypeParameter
  */
 private fun removeUnusedTypeParameters(typeParameters: List<KtTypeParameter>) {
     val unusedTypeParams = typeParameters.filter { typeParameter ->
-        ReferencesSearch.search(typeParameter).asIterable().none { (it as? KtSimpleNameReference)?.expression?.parent !is KtTypeConstraint }
+        !ReferencesSearch.search(typeParameter).anyMatch { (it as? KtSimpleNameReference)?.expression?.parent !is KtTypeConstraint }
     }
     if (unusedTypeParams.isEmpty()) return
     runWriteAction {
