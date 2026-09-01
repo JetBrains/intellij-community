@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 /**
  * A formatter used for formatting KDoc comments and stripping trailing whitespace.
  * This formatter is mostly ported from the Java equivalent `com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter`.
- * See [KDocParser] for more information about capabilities and options.
+ * See [KDocFormattingParser] for more information about capabilities and options.
  */
 internal class CommentFormatter(
     ktFile: KtFile,
@@ -34,7 +34,7 @@ internal class CommentFormatter(
     }
 
     private val codeStyleSettings: CodeStyleSettings = CodeStyle.getSettings(ktFile)
-    private val parser = KDocParser(codeStyleSettings.kotlinCommonSettings)
+    private val parser = KDocFormattingParser(codeStyleSettings.kotlinCommonSettings)
 
     /**
      * Returns the indent of the line this element starts on, in columns.

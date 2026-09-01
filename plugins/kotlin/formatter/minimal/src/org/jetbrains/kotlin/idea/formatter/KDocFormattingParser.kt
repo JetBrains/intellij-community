@@ -16,7 +16,7 @@ import java.util.regex.Pattern
  *
  * Mostly ported from the equivalent in Java: `com.intellij.psi.impl.source.codeStyle.javadoc.JDParser`
  */
-internal class KDocParser(
+internal class KDocFormattingParser(
     private val codeStyleSettings: KotlinCommonCodeStyleSettings,
 ) {
 
