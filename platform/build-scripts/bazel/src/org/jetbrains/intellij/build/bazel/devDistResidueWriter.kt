@@ -4,7 +4,6 @@ package org.jetbrains.intellij.build.bazel
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.TreeMap
-import kotlin.io.path.deleteIfExists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
@@ -90,7 +89,8 @@ internal fun writeDevDistResidues(
     else -> divergent.partition { !residueChangeAddsOnly(it) }
   }
   val contentResidueTable = foldPluginContentResidue(
-    context = context,
+    file = (context.ultimateRoot?.resolve("community") ?: context.communityRoot)
+      .resolve("build/$PLUGIN_CONTENT_RESIDUE_FILE_NAME"),
     reported = reports.keys,
     folded = contentResidues,
     skipped = skipped.mapTo(HashSet()) { it.mainModule },
@@ -272,15 +272,17 @@ private class PluginExtraMembersTable(@JvmField val file: Path, @JvmField val te
  * [foldPluginExtraMembers] keeps it. The other is [skipped], a plugin a report does cover whose change the direction
  * rule held back. The direction rule is per plugin and this file is one file, so a held-back plugin has to be written
  * back as it stands; otherwise the rule would hold a change back from the reader and drop it from the tree anyway.
+ *
+ * [file] is a parameter, and the two folds above resolve their own. This one keeps every row a plugin already has, so a
+ * rule that drops one drops a `PluginLayout` decision from the tree in silence. `DevDistContentResidueFoldTest` states
+ * each rule against a temporary file, which needs the path from the caller.
  */
-private fun foldPluginContentResidue(
-  context: BazelBuildFileGenerator,
+internal fun foldPluginContentResidue(
+  file: Path,
   reported: Set<String>,
   folded: Map<String, ContentResidueSection>,
   skipped: Set<String>,
 ): PluginContentResidueTable {
-  val file = (context.ultimateRoot?.resolve("community") ?: context.communityRoot)
-    .resolve("build/$PLUGIN_CONTENT_RESIDUE_FILE_NAME")
   val rows = TreeMap<String, ContentResidueSection>()
   for ((plugin, section) in readPluginContentResidue(file)) {
     if (plugin !in reported || plugin in skipped) {
@@ -296,7 +298,7 @@ private fun foldPluginContentResidue(
 }
 
 /** The content-residue table one pass folded, ready to write. */
-private class PluginContentResidueTable(@JvmField val file: Path, @JvmField val text: String) {
+internal class PluginContentResidueTable(@JvmField val file: Path, @JvmField val text: String) {
   fun write() {
     if (!Files.isRegularFile(file) || file.readText() != text) {
       file.writeText(text)
