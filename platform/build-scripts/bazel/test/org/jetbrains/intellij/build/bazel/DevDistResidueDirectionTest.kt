@@ -111,8 +111,8 @@ internal class DevDistResidueDirectionTest {
       ),
     )
 
-    // `merged_libraries` is the one field that nests, so the member key belongs to the row. Without it both files
-    // state the same two library names and the move reads as no change.
+    // `merged_libraries` is a nested field, so the member key belongs to the row. Without it both files state the
+    // same two library names and the move reads as no change.
     assertFalse(residueChangeAddsOnly(change))
   }
 
@@ -125,6 +125,41 @@ internal class DevDistResidueDirectionTest {
 
     // The whole set states the jar, so a library that leaves says the layout stopped merging it. A product this read
     // never saw can still merge it.
+    assertFalse(residueChangeAddsOnly(change))
+  }
+
+  @Test
+  fun `a member jars row that only enters is written`() {
+    val change = divergence(
+      before = residue("  member_jars:", "    \"intellij.member\":", "    - \"member.jar\""),
+      after = residue(
+        "  member_jars:",
+        "    \"intellij.member\":", "    - \"member.jar\"",
+        "    \"intellij.second\":", "    - \"second.jar\"",
+      ),
+    )
+
+    // The new row rests on a jar a build really packed, so reading more products can only add such a row.
+    assertTrue(residueChangeAddsOnly(change))
+  }
+
+  @Test
+  fun `a member jar that moves to another member is held back`() {
+    val change = divergence(
+      before = residue(
+        "  member_jars:",
+        "    \"intellij.first\":", "    - \"alpha.jar\"",
+        "    \"intellij.second\":", "    - \"beta.jar\"",
+      ),
+      after = residue(
+        "  member_jars:",
+        "    \"intellij.first\":", "    - \"beta.jar\"",
+        "    \"intellij.second\":", "    - \"alpha.jar\"",
+      ),
+    )
+
+    // `member_jars` nests like `merged_libraries`, so the member key belongs to the row. Without it both files state
+    // the same two jar names and the move reads as no change.
     assertFalse(residueChangeAddsOnly(change))
   }
 

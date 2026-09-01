@@ -65,15 +65,18 @@ private const val DEV_DIST_PLAN_USAGE: String =
   "The file is '<target name>.plan.yaml' beside the fragment's other outputs."
 
 /**
- * What a differing plan comparison prints, which names the one field that closes most of the remainder.
+ * What a differing plan comparison prints, which names the repair for most of the remainder.
  *
  * Beside the two usage strings above, because all three are what this entry point says about one mode.
  */
 private const val PLUGIN_JAR_PLAN_REMAINDER: String =
-  "The model and the run name different jars above, and one missing residue field is what most of it is: a\n" +
-  "`PluginLayout.withModule(name, jarName)` member reaches `extra_members` of 'dev-dist.yaml' with no jar name, so the\n" +
-  "derivation co-packs it into the plugin's main jar. That over-states the main jar and leaves the member's own jar\n" +
-  "unnamed, which is the same fact counted twice - once as a difference and once as a hold-out."
+  "The model and the run name different jars above. A missing or stale `member_jars` row causes most of it. The\n" +
+  "derivation co-packs a `PluginLayout.withModule(name, jarName)` member with no row into the plugin's main jar. That\n" +
+  "over-states the main jar and leaves the member's own jar unnamed. The comparison then counts one fact twice, once\n" +
+  "as a difference and once as a hold-out.\n" +
+  "\n" +
+  "The rows are written off a distribution build's content report:\n" +
+  "  ./build/jpsModelToBazel.cmd --write-dev-dist-residue --content-report=<zip or directory>"
 
 /**
  To enable debug logging in Bazel: --sandbox_debug --verbose_failures --define=kt_trace=1

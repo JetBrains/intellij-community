@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.bazel
 
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.TreeMap
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
@@ -144,7 +145,7 @@ private fun residueRows(text: String?): Set<String>? {
   }
   val rows = LinkedHashSet<String>()
   var field = ""
-  // The member key of `merged_libraries`, which is the one field that nests. Empty under every other field.
+  // The member key of a nested field - `member_jars` or `merged_libraries`. Empty under every other field.
   var member = ""
   var item: String? = null
   var itemIndent = 0
@@ -164,7 +165,7 @@ private fun residueRows(text: String?): Set<String>? {
     item = null
     val prefix = if (member.isEmpty()) field else "$field $member"
     when {
-      // A key with nothing after it opens a field of the section, or one member key of `merged_libraries`. It carries
+      // A key with nothing after it opens a field of the section, or one member key of a nested field. It carries
       // the rows under it and is no row of its own, so a field that goes takes every one of its rows with it.
       trimmed.endsWith(":") -> {
         if (indent > FIELD_INDENT) {
@@ -187,7 +188,7 @@ private fun residueRows(text: String?): Set<String>? {
   return rows
 }
 
-/** How far a field of the `content:` section is indented. A deeper key is one member of `merged_libraries`. */
+/** How far a field of the `content:` section is indented. A deeper key is one member of a nested field. */
 private const val FIELD_INDENT: Int = 2
 
 /**
@@ -352,9 +353,9 @@ internal fun devDistResidueDivergenceReport(divergence: DevDistResidueDivergence
  * The residue one plugin needs, or `null` when the derivation reproduces the report on its own.
  *
  * Two groups of rows, and the order matters. The first four state where a member's jar goes, and [reportCandidates] is
- * the authority for them, because they are what the candidacy fold reads. The last three state membership, and they are
- * read off a derivation that already has the first four, so a row is written only where the members and the libraries
- * still differ.
+ * the authority for them, because they are what the candidacy fold reads. The last four state the membership, the jars
+ * the layout names itself and the libraries. They are read off a derivation that already has the first four, so a row
+ * is written only where the two sides still differ.
  */
 private fun synthesizeContentResidue(
   module: ModuleDescriptor,
@@ -445,7 +446,11 @@ private fun synthesizeContentResidue(
       rawMembers.add(memberName)
     }
   }
-  val withMembership = section.copy(extraMembers = extraMembers, rawMembers = rawMembers.sorted())
+  val withMembership = section.copy(
+    extraMembers = extraMembers,
+    rawMembers = rawMembers.sorted(),
+    memberJars = synthesizeMemberJars(module = module, context = context, derived = withMembers, entries = entries),
+  )
   val result = withMembership.copy(
     libraries = missingLibraries(
       module = module,
@@ -457,6 +462,74 @@ private fun synthesizeContentResidue(
   )
   return result.takeIf { contentResidueFieldRows(it).isNotEmpty() }
 }
+
+/** [memberJarRows] for one plugin, with the plugin's own main jar name read off the placement table. */
+private fun synthesizeMemberJars(
+  module: ModuleDescriptor,
+  context: BazelBuildFileGenerator,
+  derived: DerivedPluginContent,
+  entries: List<RecipeEntry>,
+): Map<String, List<String>> {
+  return memberJarRows(
+    mainJarName = pluginJarPlacementOf(mainModule = module.module.name, context = context).mainJarName,
+    memberNames = derived.memberNames.toSet(),
+    derivedJars = derived.memberPaths,
+    entries = entries,
+  )
+}
+
+/**
+ * The jars the layout names for a member, by member, relative to the plugin's `lib/`.
+ *
+ * The one field whose value is a path, and it earns that: `PluginLayout.withModule(name, jarName)` states a free string
+ * that no rule derives. [derivedJars] is where [deriveMemberJarPath] puts each member, with the membership rows already
+ * in play, so this asks the derivation what is left rather than copying the report's whole jar list.
+ *
+ * **Set against set, and never containment.** A row states the member's whole jar set, because
+ * `BaseLayout.checkNotExists` lets one plugin pack one module into several jars. `intellij.spring.customNs` sits in the
+ * plugin's main jar and in `customNs/customNs.jar`, so its row names both, and a rule reading one jar at a time would
+ * write half of it. The derivation's set is one jar, or [mainJarName] for a member it co-packs, which is what
+ * [composeDerivedPluginJars] concludes for such a member. So the writer is the reader's inverse: a row exists exactly
+ * where the reader would state another jar set.
+ *
+ * Two rules narrow which jars the report contributes:
+ *
+ * 1. only an entry under the plugin's `lib/`, because the plugin packs no member's jar anywhere else;
+ * 2. only a member of [memberNames], because a row states a jar of this plugin's own member.
+ *
+ * A member no entry names gets no row. The reports say nothing about such a member, and a row has to rest on a jar a
+ * build really packed. The report's set is the union over [entries], because two products can pack one member
+ * differently and one row states both jars.
+ */
+internal fun memberJarRows(
+  mainJarName: String,
+  memberNames: Set<String>,
+  derivedJars: Map<String, String>,
+  entries: List<RecipeEntry>,
+): Map<String, List<String>> {
+  val reported = HashMap<String, MutableSet<String>>()
+  for (entry in entries) {
+    if (!entry.name.startsWith(LIB_ENTRY_PREFIX)) {
+      continue
+    }
+    val path = entry.name.removePrefix(LIB_ENTRY_PREFIX)
+    for (member in entry.modules + entry.contentModules) {
+      if (member.moduleName in memberNames) {
+        reported.computeIfAbsent(member.moduleName) { sortedSetOf() }.add(path)
+      }
+    }
+  }
+  val result = TreeMap<String, List<String>>()
+  for ((memberName, paths) in reported) {
+    if (paths != setOf(derivedJars.get(memberName) ?: mainJarName)) {
+      result.put(memberName, paths.toList())
+    }
+  }
+  return result
+}
+
+/** Where a report entry of one plugin states its jars. A plugin's own report names every path from its directory. */
+private const val LIB_ENTRY_PREFIX: String = "lib/"
 
 /**
  * The libraries the report records and the derivation, with [section] in play, still does not reach.
@@ -531,6 +604,7 @@ internal fun contentResidueFieldRows(section: ContentResidueSection?): Map<Strin
   put("extra_members", section.extraMembers.size)
   put("lib_root_jars", section.libRootJars.size)
   put("separate_jars", section.separateJars.size)
+  put("member_jars", section.memberJars.size)
   put("raw_members", section.rawMembers.size)
   put("vetoed_members", section.vetoedMembers.size)
   put("merged_libraries", section.mergedLibraries.size)
@@ -550,7 +624,7 @@ internal fun contentResidueFieldRows(section: ContentResidueSection?): Map<Strin
  * [DEV_DIST_RESIDUE_HEADER] is the one text both producers write - byte for byte, or the regeneration reaches no fixed
  * point, because each tool would rewrite what the other just wrote.
  */
-private fun composeDevDistResidueText(content: ContentResidueSection?, existing: Path): String? {
+internal fun composeDevDistResidueText(content: ContentResidueSection?, existing: Path): String? {
   val descriptorPart = existingDescriptorPart(existing)
   if (content == null && descriptorPart == null) {
     return null
@@ -562,22 +636,10 @@ private fun composeDevDistResidueText(content: ContentResidueSection?, existing:
     appendNames(builder, "extra_members", content.extraMembers, EXTRA_MEMBERS_COMMENT)
     appendNames(builder, "lib_root_jars", content.libRootJars, LIB_ROOT_JARS_COMMENT)
     appendNames(builder, "separate_jars", content.separateJars, SEPARATE_JARS_COMMENT)
+    appendNestedNames(builder, "member_jars", content.memberJars, MEMBER_JARS_COMMENT)
     appendNames(builder, "raw_members", content.rawMembers, RAW_MEMBERS_COMMENT)
     appendNames(builder, "vetoed_members", content.vetoedMembers, VETOED_MEMBERS_COMMENT)
-    if (content.mergedLibraries.isNotEmpty()) {
-      builder.append(MERGED_LIBRARIES_COMMENT)
-      builder.append("  merged_libraries:\n")
-      for ((member, libraries) in content.mergedLibraries) {
-        if (libraries.isEmpty()) {
-          builder.append("    ${quote(member)}: []\n")
-          continue
-        }
-        builder.append("    ${quote(member)}:\n")
-        for (library in libraries) {
-          builder.append("    - ${quote(library)}\n")
-        }
-      }
-    }
+    appendNestedNames(builder, "merged_libraries", content.mergedLibraries, MERGED_LIBRARIES_COMMENT)
     if (content.libraries.isNotEmpty()) {
       builder.append(LIBRARIES_COMMENT)
       builder.append("  libraries:\n")
@@ -615,6 +677,30 @@ private fun appendNames(builder: StringBuilder, field: String, names: List<Strin
   }
 }
 
+/**
+ * One field whose rows nest a list under a key, in the shape [residueRows] reads as a (field, key) row.
+ *
+ * The two fields of this shape share the writer, so a reader meets one indentation rule and the parser one shape. An
+ * empty list is a key with `[]`, which states a set the layout emptied rather than an absent key.
+ */
+private fun appendNestedNames(builder: StringBuilder, field: String, rows: Map<String, List<String>>, comment: String) {
+  if (rows.isEmpty()) {
+    return
+  }
+  builder.append(comment)
+  builder.append("  $field:\n")
+  for ((key, values) in rows) {
+    if (values.isEmpty()) {
+      builder.append("    ${quote(key)}: []\n")
+      continue
+    }
+    builder.append("    ${quote(key)}:\n")
+    for (value in values) {
+      builder.append("    - ${quote(value)}\n")
+    }
+  }
+}
+
 private fun quote(value: String): String = "\"$value\""
 
 private const val DEV_DIST_RESIDUE_HEADER: String = """# Generated - do not edit.
@@ -634,8 +720,8 @@ private const val DEV_DIST_RESIDUE_HEADER: String = """# Generated - do not edit
 # layout variant. `descriptor:` is keyed by `<main module>` or `<main module>/<variant>`, because a descriptor
 # deviation is a fact about one variant. Each producer rewrites only its own part.
 #
-# No row is a Bazel label, and no row is a path. A label carries the artifact version of a library, and a path
-# restates a rule the rule already derives.
+# No row is a Bazel label, because a label carries the artifact version of a library. A row is a path only
+# where the layout names a jar that no rule derives, which is what `member_jars` states.
 """
 
 private const val EXTRA_MEMBERS_COMMENT: String = """  # Modules the layout packs that this plugin's `<content>` does not name - a `PluginLayout.withModule` call.
@@ -645,6 +731,10 @@ private const val LIB_ROOT_JARS_COMMENT: String = """  # Members whose jar goes 
 """
 
 private const val SEPARATE_JARS_COMMENT: String = """  # Members that get a jar of their own where the derivation packs them into the plugin's main jar.
+"""
+
+private const val MEMBER_JARS_COMMENT: String = """  # The jars this plugin packs a member into, where `PluginLayout.withModule(name, jarName)` names the jar. The
+  # whole jar set of the member, relative to the plugin's `lib/`, and the plugin's main jar name means the main jar.
 """
 
 private const val RAW_MEMBERS_COMMENT: String = """  # Members this plugin does not hand over, because a second jar of this plugin holds the module too.

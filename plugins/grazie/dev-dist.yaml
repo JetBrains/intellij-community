@@ -25,10 +25,9 @@ descriptor:
   # `<content>` names, the plugin directory and the main jar name. This part is the remainder, so a plugin that
   # reads no descriptor through an `xi:include` and whose `PluginLayout` states no deviation has no such part.
   #
-  # Every path here is project-relative, and it is the one part of this file that states a path. The converter
-  # resolves a path to a label itself, which is what lets the community half decide alone: a path outside
-  # `community/` is a path a community package cannot name, and the community half then emits no section for
-  # this plugin.
+  # Every path here is project-relative. The converter resolves a path to a label itself, which is what lets the
+  # community half decide alone: a path outside `community/` is a path a community package cannot name, and the
+  # community half then emits no section for this plugin.
   "intellij.grazie":
     # Which content module's embedded descriptor takes `separate-jar="true"`.
     separate_jar:

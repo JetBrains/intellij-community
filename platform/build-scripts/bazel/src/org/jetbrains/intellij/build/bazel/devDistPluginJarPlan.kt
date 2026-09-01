@@ -37,8 +37,9 @@ internal class DerivedPluginJar(
   /**
    * Whether this is the plugin's main jar, which is where the derivation co-packs a member with no jar of its own.
    *
-   * The comparison reads it to tell a jar the layout named from a jar nothing knows about; see
-   * [PlanHoldOutReason.UNSTATED_MEMBER_JAR_NAME].
+   * A member the residue names a jar for is not co-packed, so it leaves this jar; see
+   * [ContentResidueSection.memberJars]. The comparison reads the field to tell a jar the layout named from a jar nothing
+   * knows about; see [PlanHoldOutReason.UNSTATED_MEMBER_JAR_NAME].
    */
   @JvmField val isMainJar: Boolean = false,
 )
@@ -46,18 +47,19 @@ internal class DerivedPluginJar(
 /**
  * Every jar the plugin [module] puts in its own directory, derived from the project model.
  *
- * Three derivations meet here, and each one already existed:
+ * Four derivations meet here, and each one already existed:
  *
  * 1. [derivePluginContent] gives the members - the plugin's own `<content>` with every `xi:include` followed, plus the
- *    `extra_members` rows of `dev-dist.yaml` - and where the plugin puts each member's jar. That map reproduces
- *    `computeOutputJarPath` of `autoLayout.kt`;
+ *    `extra_members` rows of `dev-dist.yaml` - and where the plugin puts each member's jar. [deriveMemberJarPath]
+ *    answers the jar, as the convention with the three corrections the residue states;
  * 2. [DevDistPluginModelTables.pluginJarPlacement] gives the plugin's directory and main jar name, which are a
  *    `PluginLayout` decision the model does not hold. A plugin with no row takes [pluginJarPlacementConvention];
- * 3. [isPrepackedPluginContentModule] says which of those jars a `content_module_jar` target already packs.
+ * 3. [isPrepackedPluginContentModule] says which of those jars a `content_module_jar` target already packs;
+ * 4. [ContentResidueSection.memberJars] gives the jars the layout names itself, which no rule derives. A row states the
+ *    member's whole jar set, so it wins over the path of 1 and over the main-jar co-pack below.
  *
- * A member with no jar of its own is co-packed into the plugin's main jar, which is the same verdict
- * [DerivedCandidacyOffer] absence carries: `deriveMemberJar` answers `null` exactly where `computeOutputJarPath` puts
- * the member's output into `getDefaultJarName`.
+ * A member with neither a row nor a jar of its own is co-packed into the plugin's main jar. [deriveMemberJarPath] states
+ * that by answering the main jar's own name, which is what `getDefaultJarName` returns for such a member.
  *
  * Empty for a module the dev distribution states no content for. This walks the closure a second time, so only the
  * comparison mode calls it - a generation run must not pay for it.
@@ -71,8 +73,7 @@ internal fun derivePluginJars(
     return emptyList()
   }
   val mainModule = module.module.name
-  val placement = context.pluginJarPlacement.get(mainModule) ?: pluginJarPlacementConvention(mainModule)
-  val libDir = "plugins/${placement.directory}/lib/"
+  val placement = pluginJarPlacementOf(mainModule = mainModule, context = context)
   val derived = derivePluginContent(module = module, moduleList = moduleList, context = context)
   // Which members the plugin's own `<content>` names, so a member reaches `contentModules` and a `withModule` member
   // reaches `modules`. `DevDistRecipe.record` splits the two on the inclusion reason, which is the same distinction.
@@ -81,29 +82,108 @@ internal fun derivePluginJars(
     ?.mapTo(HashSet()) { it.substringBeforeLast('/') }
     ?: emptySet()
 
+  // The jar of each member this project holds a module for, and which of those jars a packing target serves.
+  val derivedJars = LinkedHashMap<String, String>()
+  val handedOverMembers = HashSet<String>()
+  for ((memberName, relativeOutputFile) in derived.memberPaths) {
+    val member = moduleList.getModuleDescriptorOrNull(memberName) ?: continue
+    derivedJars.put(memberName, relativeOutputFile)
+    if (memberName in derived.prepackedPaths &&
+        isPrepackedPluginContentModule(module = member, moduleList = moduleList, context = context)) {
+      handedOverMembers.add(memberName)
+    }
+  }
+
+  return composeDerivedPluginJars(
+    libDir = "plugins/${placement.directory}/lib/",
+    mainJarName = placement.mainJarName,
+    mainModule = mainModule,
+    // A member with a derived jar this project holds no module for gets no jar at all. Nothing can say who packs a path
+    // with no module behind it, and the plugin's main jar does not hold the member either.
+    memberNames = derived.memberNames.filter { it !in derived.memberPaths || it in derivedJars },
+    derivedJars = derivedJars,
+    handedOverMembers = handedOverMembers,
+    closureMembers = closureMembers,
+    memberJars = contentResidueOf(module).memberJars,
+  )
+}
+
+/**
+ * The jars of one plugin, from the four facts [derivePluginJars] gathers and nothing else.
+ *
+ * The whole rule, and it reads no project model. Every fact is a parameter, so a caller states them directly.
+ */
+internal fun composeDerivedPluginJars(
+  libDir: String,
+  mainJarName: String,
+  mainModule: String,
+  /**
+   * The plugin's members, in the order the jars take. The caller already dropped a member that the derivation states a
+   * jar for and this project holds no module for. Such a member gets no jar at all.
+   */
+  memberNames: List<String>,
+  /**
+   * Where the derivation puts each member's jar, relative to the plugin's `lib/`.
+   *
+   * [mainJarName] is one of the values it may hold, and it means the plugin co-packs the member. A member absent from the
+   * map has no derivable jar, and the main jar holds it too.
+   */
+  derivedJars: Map<String, String>,
+  /** The members of [derivedJars] whose jar a `content_module_jar` target packs. */
+  handedOverMembers: Set<String>,
+  /** The members the plugin's own `<content>` names, which is what splits `contentModules` from `modules`. */
+  closureMembers: Set<String>,
+  /** See [ContentResidueSection.memberJars]. */
+  memberJars: Map<String, Set<String>>,
+): List<DerivedPluginJar> {
   val result = ArrayList<DerivedPluginJar>()
   val mainJarContentModules = ArrayList<String>()
   val mainJarModules = ArrayList<String>()
   mainJarModules.add(mainModule)
-  for (memberName in derived.memberNames) {
-    val relativeOutputFile = derived.prepackedPaths.get(memberName)
-    if (relativeOutputFile == null) {
+  // The members of each jar the residue names, by the jar's path under the plugin's `lib/`. One jar can hold several
+  // members, so the rows are grouped rather than turned into one jar each.
+  val statedJarMembers = LinkedHashMap<String, MutableList<String>>()
+  for (memberName in memberNames) {
+    val statedJars = memberJars.get(memberName)
+    if (statedJars != null) {
+      for (path in statedJars) {
+        if (path == mainJarName) {
+          (if (memberName in closureMembers) mainJarContentModules else mainJarModules).add(memberName)
+        }
+        else {
+          statedJarMembers.computeIfAbsent(path) { ArrayList() }.add(memberName)
+        }
+      }
+      continue
+    }
+    val relativeOutputFile = derivedJars.get(memberName)
+    if (relativeOutputFile == null || relativeOutputFile == mainJarName) {
       (if (memberName in closureMembers) mainJarContentModules else mainJarModules).add(memberName)
       continue
     }
-    val member = moduleList.getModuleDescriptorOrNull(memberName) ?: continue
     result.add(
       DerivedPluginJar(
         name = libDir + relativeOutputFile,
         modules = if (memberName in closureMembers) emptyList() else listOf(memberName),
         contentModules = if (memberName in closureMembers) listOf(memberName) else emptyList(),
-        isHandedOver = isPrepackedPluginContentModule(module = member, moduleList = moduleList, context = context),
+        isHandedOver = memberName in handedOverMembers,
+      )
+    )
+  }
+  for ((path, members) in statedJarMembers) {
+    result.add(
+      DerivedPluginJar(
+        name = libDir + path,
+        modules = members.filter { it !in closureMembers },
+        contentModules = members.filter { it in closureMembers },
+        // A jar the layout names holds a raw module output, so no `content_module_jar` target packs it.
+        isHandedOver = false,
       )
     )
   }
   result.add(
     DerivedPluginJar(
-      name = libDir + placement.mainJarName,
+      name = libDir + mainJarName,
       modules = mainJarModules,
       contentModules = mainJarContentModules,
       // The plugin's main jar holds the plugin's own descriptor, so it is a jar only a fragment packs.
@@ -168,10 +248,13 @@ internal enum class PlanHoldOutReason(@JvmField val message: String) {
   /**
    * The layout gives a member a jar of its own and names it, and the residue states only the member.
    *
-   * `PluginLayout.withModule(name, jarName)` is what states such a jar. `extra_members` of `dev-dist.yaml` carries the
-   * member and no jar name, so the derivation co-packs the member into the plugin's main jar instead. That is one
-   * missing residue field, and it is the same fact seen from the other side as the main jar's own difference: the model
-   * over-states the main jar by exactly the members these jars hold.
+   * `PluginLayout.withModule(name, jarName)` is what states such a jar, and [ContentResidueSection.memberJars] is where
+   * the jar's path belongs. So a row of this class marks a missing or a stale `member_jars` row, and
+   * `--write-dev-dist-residue` repairs it off a distribution build's content report.
+   *
+   * Until the row exists, the derivation co-packs the member into the plugin's main jar. That is the same fact seen from
+   * the other side as the main jar's own difference: the model over-states the main jar by exactly the members these
+   * jars hold.
    */
   UNSTATED_MEMBER_JAR_NAME("the layout names a jar for a member the residue states without one"),
 
@@ -179,11 +262,15 @@ internal enum class PlanHoldOutReason(@JvmField val message: String) {
   NO_DERIVED_JAR("the plugin's derived jar set holds no jar of that name"),
 
   /**
-   * Two plugins of the population derive one jar path, so the derivation states no single answer for it.
+   * The population derives one jar path twice, so the derivation states no single answer for it.
    *
-   * Two plugins share a directory today - `intellij.java.plugin` and `language-server.plugins.java` both place
-   * `plugins/java/` - because they belong to different products and no distribution holds both. The population is the
+   * Two plugins share a directory today. `intellij.java.plugin` and `language-server.plugins.java` both place
+   * `plugins/java/`, because they belong to different products and no distribution holds both. The population is the
    * union over the products, so this side sees both, and taking one of them would compare a jar of the other product.
+   *
+   * One plugin can also derive one name twice, and the message does not tell that case from the one above. The station
+   * plugin is the live case: it states `modules/intellij.station.aia.jar` for one member and derives the same path for
+   * another. Widening the relation key from the jar name to the plugin and the jar is what separates the two.
    */
   AMBIGUOUS_JAR_NAME("two plugins of the population derive a jar of that name"),
 }

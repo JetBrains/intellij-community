@@ -29,7 +29,7 @@ internal data class DevDistResidueFile(
 )
 
 /**
- * The content half of a plugin's residue: seven lists, every one optional.
+ * The content half of a plugin's residue: eight fields, every one optional.
  *
  * Every field is a class the Phase-0 two-producer comparison found, and no field is speculative. Each states one
  * `PluginLayout` decision, and evaluating a product layout is the work this generator exists to keep out of a fragment
@@ -81,6 +81,21 @@ internal data class ContentResidueSection(
    * is stated here.
    */
   @JvmField @SerialName("separate_jars") val separateJars: List<String> = emptyList(),
+  /**
+   * The jars this plugin packs a member into, by member, where the layout names the jar itself.
+   *
+   * `PluginLayout.withModule(name, jarName)` is the decision, and nothing derives it: the jar name is a free string of
+   * the layout. So the value is a path, unlike [libRootJars], and the two do not overlap - a `lib_root_jars` row still
+   * takes the derived `lib/<module>.jar`.
+   *
+   * The whole jar set of the member, and not one jar. `BaseLayout.checkNotExists` lets one plugin pack one module into
+   * several jars, and `intellij.spring.customNs` sits both in the main jar and in `customNs/customNs.jar`. A member with
+   * a row leaves the main-jar co-pack, and a row naming the plugin's main jar puts it back there.
+   *
+   * The jar set is the union over every product report the writer reads, so a member that two products place
+   * differently states both jars.
+   */
+  @JvmField @SerialName("member_jars") val memberJars: Map<String, List<String>> = emptyMap(),
   /**
    * The module libraries a member's jar really merges, by member, where the layout excluded some of them.
    *
@@ -154,7 +169,7 @@ internal fun contentResidueOf(module: ModuleDescriptor): PluginContentResidue {
 /**
  * This section in the shape the two derivations take.
  *
- * The one place the seven fields cross from the file's shape into the derivation's. The residue writer composes a
+ * The one place the eight fields cross from the file's shape into the derivation's. The residue writer composes a
  * section rather than reading one, and it takes the same route, so a new field reaches both readers together.
  */
 internal fun ContentResidueSection.toResidue(): PluginContentResidue {
@@ -164,6 +179,7 @@ internal fun ContentResidueSection.toResidue(): PluginContentResidue {
     rawMembers = rawMembers.toSet(),
     vetoedMembers = vetoedMembers.toSet(),
     separateJars = separateJars.toSet(),
+    memberJars = memberJars.mapValues { it.value.toSet() },
     mergedLibraries = mergedLibraries.mapValues { it.value.toSet() },
     libraries = libraries.mapTo(LinkedHashSet()) { RecordedLibrary(name = it.name, ownerModule = it.module) },
   )

@@ -39,10 +39,20 @@ internal class DerivedPluginCandidacy(
    * ships the module, so a plugin that co-packs the module takes the target away from all of them.
    */
   @JvmField val vetoes: List<String>,
+  /**
+   * Where this plugin puts each member's jar, by module name, relative to the plugin's `lib/`.
+   *
+   * Every member [deriveMemberJarPath] answers for, whatever [offers] and [vetoes] say about it. The two questions are
+   * not the same one. A path is a fact of the convention, and an offer is the narrower claim that one packing target may
+   * serve that jar. So a vetoed member keeps its path here, and so does a member the plugin co-packs into its main jar.
+   *
+   * [ContentResidueSection.memberJars] states only what this map does not answer, so the writer needs every path.
+   */
+  @JvmField val memberPaths: Map<String, String>,
 )
 
 /**
- * Where each of [module]'s members' jars goes, reproducing `computeOutputJarPath` of `autoLayout.kt` from the model.
+ * Where each of [module]'s members' jars goes, and which of those jars one packing target may serve.
  *
  * The candidacy fold asks one question - is this module's jar a plain, product-independent, self-named jar, and which
  * libraries does it merge. This states the answer from what the model already holds:
@@ -52,9 +62,9 @@ internal class DerivedPluginCandidacy(
  *   is the same file `contentDescriptorLabels` already names for the descriptor leaf;
  * - the merged library set comes from the member's production-scope module libraries.
  *
- * Three inputs of the original are `PluginLayout` state and stay out: `modulesWithCustomPath`, the frontend module
- * filter, and `getModulesWithExcludedModuleLibraries`. Evaluating a product layout is the work this generator exists to
- * keep out of a fragment action, so where one of those decides, the answer is stated rather than derived - see
+ * [deriveMemberJarPath] holds the path rule and names the three inputs that stay stated. [deriveMemberJar] puts the
+ * eligibility gate on top of it. This function folds the two answers over the plugin's members, and the repo-global
+ * answer for a module two halves of the repository see differently is
  * [DevDistPluginModelTables.contentCandidateOverrides].
  *
  * Fail closed. A member whose descriptor this cannot read is vetoed rather than offered, because an offered jar that the
@@ -73,19 +83,29 @@ internal fun derivePluginContentCandidacy(
 ): DerivedPluginCandidacy {
   val offers = ArrayList<DerivedCandidacyOffer>()
   val vetoes = ArrayList<String>(residue.vetoedMembers)
+  val memberPaths = HashMap<String, String>()
   val seen = HashSet<String>()
-  // A stated member gets an offer only where the residue states its jar as well. A `PluginLayout.withModule` member is
-  // packed from its raw output into a jar of the plugin's, which is no jar of the member's own, and 359 of the 399 stated
-  // members are that. So the offer is opt-in, and `lib_root_jars` or `separate_jars` is the opt-in.
+  val mainJarName = pluginJarPlacementOf(mainModule = module.module.name, context = context).mainJarName
   for (name in residue.extraMembers) {
+    val member = moduleList.getModuleDescriptorOrNull(name) ?: continue
+    val jar = readMemberJar(
+      member = member,
+      loadingRule = null,
+      residue = residue,
+      context = context,
+      mainJarName = mainJarName,
+    ) ?: continue
+    memberPaths.putIfAbsent(name, jar.relativeOutputFile)
+    // A stated member gets an offer only where the residue states its jar as well. A `PluginLayout.withModule` member is
+    // packed from its raw output into a jar of the plugin's, which is no jar of the member's own, and 359 of the 399
+    // stated members are that. So the offer is opt-in, and `lib_root_jars` or `separate_jars` is the opt-in.
     if (name !in residue.libRootJars && name !in residue.separateJars) {
       continue
     }
     if (!seen.add(name)) {
       continue
     }
-    val member = moduleList.getModuleDescriptorOrNull(name) ?: continue
-    deriveMemberJar(member = member, loadingRule = null, residue = residue, context = context)?.let(offers::add)
+    jar.offer?.let(offers::add)
   }
   for (rawName in (closure ?: EMPTY_WALKED_CONTENT_MODULES).moduleNames) {
     // `computeModuleSourcesByContent` skips a `moduleName/descriptorName` element outright, so such a member reaches no
@@ -93,20 +113,29 @@ internal fun derivePluginContentCandidacy(
     if (rawName.contains('/') || !seen.add(rawName)) {
       continue
     }
-    if (rawName in residue.vetoedMembers) {
-      continue
-    }
     val member = moduleList.getModuleDescriptorOrNull(rawName)
     if (member == null) {
-      vetoes.add(rawName)
+      if (rawName !in residue.vetoedMembers) {
+        vetoes.add(rawName)
+      }
       continue
     }
-    val offer = deriveMemberJar(
+    val jar = readMemberJar(
       member = member,
       loadingRule = closure?.loadingRules?.get(rawName),
       residue = residue,
       context = context,
+      mainJarName = mainJarName,
     )
+    if (jar != null) {
+      memberPaths.put(rawName, jar.relativeOutputFile)
+    }
+    // A vetoed member keeps the path above and makes no offer. The veto answers who packs the jar, and the convention
+    // answers where the jar goes, so one of the two answers survives the other.
+    if (rawName in residue.vetoedMembers) {
+      continue
+    }
+    val offer = jar?.offer
     if (offer == null) {
       vetoes.add(rawName)
     }
@@ -114,66 +143,160 @@ internal fun derivePluginContentCandidacy(
       offers.add(offer)
     }
   }
-  return DerivedPluginCandidacy(offers = offers, vetoes = vetoes)
+  return DerivedPluginCandidacy(offers = offers, vetoes = vetoes, memberPaths = memberPaths)
 }
 
-/** One member's jar, or `null` when the plugin packs the member somewhere that is not a jar of its own. */
-private fun deriveMemberJar(
+/**
+ * Where a plugin whose main jar is [mainJarName] puts [moduleName]'s jar, relative to its own `lib/`.
+ *
+ * The convention plus three stated corrections. The convention is `computeOutputJarPath` of `autoLayout.kt` with
+ * `computeEmbeddedOutputJarPath`, `needsSeparateJar` and `getDefaultJarName`. Three inputs of that function are
+ * `PluginLayout` state. Evaluating a product layout is the work this generator keeps out of a fragment action. So each
+ * one of the three is stated rather than derived:
+ *
+ * 1. `modulesWithCustomPath` holds the jar `PluginLayout.withModule(name, jarName)` names, and the authority answers no
+ *    path at all for such a member. This answers the convention's path instead, so the two differ and
+ *    [ContentResidueSection.memberJars] states the jar. A `withModule` path holding a `/` never enters that set. Such a
+ *    member really sits in the convention's jar as well as in the named one. A flat `withModule` path does enter the
+ *    set, and the layout then packs the member in the named jar alone. So this answers a jar no distribution holds for
+ *    such a member with no row, and [comparePluginJarPlan] reports it under `derived, not packed`;
+ * 2. the frontend module filter reaches the path twice. `isPluginModulePackedIntoSeparateJar` reads it, and
+ *    `getDefaultJarName` renames the main jar to `<main>-frontend.jar` through it.
+ *    [ContentResidueSection.separateJars] states the first and [ContentResidueSection.memberJars] the second;
+ * 3. `getModulesWithExcludedModuleLibraries` is the other half of `isPluginModulePackedIntoSeparateJar`, and
+ *    [ContentResidueSection.mergedLibraries] states the library set the layout really merges. [mergesLibraries] is that
+ *    set where a row exists.
+ *
+ * An answer for every member, and never `null`. A member the convention gives no jar of its own is co-packed into
+ * [mainJarName], which is what `getDefaultJarName` returns for it. [composeDerivedPluginJars] reads that answer the
+ * same way.
+ */
+internal fun deriveMemberJarPath(
+  moduleName: String,
+  loadingRule: String?,
+  packIntoPluginJar: Boolean,
+  hasPackageAttribute: Boolean,
+  mergesLibraries: Boolean,
+  residue: PluginContentResidue,
+  mainJarName: String,
+): String {
+  // The two stated corrections first. Each row exists because the convention below answers another path.
+  if (moduleName in residue.libRootJars) {
+    return "$moduleName.jar"
+  }
+  if (moduleName in residue.separateJars) {
+    return "modules/$moduleName.jar"
+  }
+  if (loadingRule == EMBEDDED_LOADING_RULE) {
+    // `computeEmbeddedOutputJarPath`. The marker sends the member into the plugin's main jar, and every other embedded
+    // member gets `lib/<module>.jar`, whatever libraries that jar merges.
+    return if (packIntoPluginJar) mainJarName else "$moduleName.jar"
+  }
+  // `needsSeparateJar`. The marker wins outright. Then a descriptor with no `package` attribute cannot be loaded from
+  // the plugin jar, and a module declaring a module library is put in its own jar so that the library travels with it.
+  if (!packIntoPluginJar && (!hasPackageAttribute || mergesLibraries)) {
+    return "modules/$moduleName.jar"
+  }
+  return mainJarName
+}
+
+/** One member's jar: where the plugin puts it, and the offer a packing target may serve, where there is one. */
+internal class DerivedMemberJar(
+  @JvmField val relativeOutputFile: String,
+  @JvmField val offer: DerivedCandidacyOffer?,
+)
+
+/**
+ * [member]'s jar under [mainJarName], or `null` when no resource root holds the member's own descriptor.
+ *
+ * The model read of [deriveMemberJar]. One read answers both questions, because the path and the offer need the same
+ * descriptor and the same library set.
+ *
+ * `null` is the one case this generator can state no path for. A member with no readable descriptor has no
+ * `packIntoPluginJar` and no `package` attribute to read, so the caller vetoes it.
+ */
+private fun readMemberJar(
   member: ModuleDescriptor,
   loadingRule: String?,
   residue: PluginContentResidue,
   context: BazelBuildFileGenerator,
-): DerivedCandidacyOffer? {
+  mainJarName: String,
+): DerivedMemberJar? {
   val moduleName = member.module.name
   val descriptor = memberDescriptor(member) ?: return null
   val statedLibraries = residue.mergedLibraries.get(moduleName)
-  val libraries = statedLibraries ?: productionModuleLibraryNames(module = member, context = context) ?: return null
-  val isStated = statedLibraries != null
-  if (moduleName in residue.libRootJars) {
-    return DerivedCandidacyOffer(
-      moduleName = moduleName,
-      relativeOutputFile = "$moduleName.jar",
-      libraries = libraries,
-      isStated = isStated,
-    )
+  return deriveMemberJar(
+    moduleName = moduleName,
+    loadingRule = loadingRule,
+    packIntoPluginJar = descriptor.packIntoPluginJar,
+    hasPackageAttribute = descriptor.hasPackageAttribute,
+    libraries = statedLibraries ?: productionModuleLibraryNames(module = member, context = context),
+    isStated = statedLibraries != null,
+    residue = residue,
+    mainJarName = mainJarName,
+  )
+}
+
+/**
+ * [moduleName]'s jar under [mainJarName], and the offer one packing target may serve, where there is one.
+ *
+ * The path is [deriveMemberJarPath]. The offer is that path narrowed to a jar of the member's own:
+ * `lib/modules/<module>.jar`, or `lib/<module>.jar` for a jar that merges no module library.
+ * `simplePluginContentEntryPath` holds the reason the second shape is restricted, and the Kotlin plugin is the case its
+ * KDoc records.
+ *
+ * A path for every member, and never `null`. The two questions are not the same one, so a member this generator cannot
+ * offer keeps the path the convention gives it.
+ *
+ * [libraries] is `null` for a member whose module library has no single jar; see [distributionLibraryName]. Such a
+ * member gets a path and no offer. The path rule still reads `true` for the merge. A library this generator cannot name
+ * is a module library all the same, and that is the only fact `needsSeparateJar` asks for.
+ */
+internal fun deriveMemberJar(
+  moduleName: String,
+  loadingRule: String?,
+  packIntoPluginJar: Boolean,
+  hasPackageAttribute: Boolean,
+  libraries: Set<String>?,
+  isStated: Boolean,
+  residue: PluginContentResidue,
+  mainJarName: String,
+): DerivedMemberJar {
+  val relativeOutputFile = deriveMemberJarPath(
+    moduleName = moduleName,
+    loadingRule = loadingRule,
+    packIntoPluginJar = packIntoPluginJar,
+    hasPackageAttribute = hasPackageAttribute,
+    mergesLibraries = libraries == null || libraries.isNotEmpty(),
+    residue = residue,
+    mainJarName = mainJarName,
+  )
+  if (libraries == null) {
+    return DerivedMemberJar(relativeOutputFile = relativeOutputFile, offer = null)
   }
-  if (moduleName in residue.separateJars) {
-    return DerivedCandidacyOffer(
-      moduleName = moduleName,
-      relativeOutputFile = "modules/$moduleName.jar",
-      libraries = libraries,
-      isStated = isStated,
-    )
+  val servesOneMember = when (relativeOutputFile) {
+    "modules/$moduleName.jar" -> true
+    "$moduleName.jar" -> moduleName in residue.libRootJars || libraries.isEmpty()
+    else -> false
   }
-  if (descriptor.packIntoPluginJar) {
-    return null
-  }
-  if (loadingRule == EMBEDDED_LOADING_RULE) {
-    // `computeEmbeddedOutputJarPath`: the jar goes to `lib/<module>.jar`. `simplePluginContentEntryPath` accepts that
-    // path only for a jar merging no module library, and the Kotlin plugin is the case its KDoc records.
-    return if (libraries.isEmpty()) {
-      DerivedCandidacyOffer(moduleName = moduleName, relativeOutputFile = "$moduleName.jar", libraries = emptySet())
+  return DerivedMemberJar(
+    relativeOutputFile = relativeOutputFile,
+    offer = if (servesOneMember) {
+      DerivedCandidacyOffer(
+        moduleName = moduleName,
+        relativeOutputFile = relativeOutputFile,
+        libraries = libraries,
+        isStated = isStated,
+      )
     }
     else {
       null
-    }
-  }
-  // `needsSeparateJar`: a descriptor with no `package` attribute cannot be loaded from the plugin jar, and a module
-  // declaring a module library is put in its own jar so that the library travels with it. Anything else is co-packed
-  // into the plugin's main jar, which is a jar this generator does not pack.
-  if (descriptor.hasPackageAttribute && libraries.isEmpty()) {
-    return null
-  }
-  return DerivedCandidacyOffer(
-    moduleName = moduleName,
-    relativeOutputFile = "modules/$moduleName.jar",
-    libraries = libraries,
-    isStated = isStated,
+    },
   )
 }
 
 /** `ModuleLoadingRule.EMBEDDED` as the `loading` attribute spells it. */
-private const val EMBEDDED_LOADING_RULE: String = "embedded"
+internal const val EMBEDDED_LOADING_RULE: String = "embedded"
 
 /** The two facts `computeOutputJarPath` reads out of a content module's own descriptor. */
 private class MemberDescriptorFacts(

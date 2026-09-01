@@ -10,11 +10,17 @@ internal class DerivedPluginContent(
   /** The members the model states, without the main module - the counterpart of the report's member set. */
   @JvmField val memberNames: List<String>,
   /**
-   * Where this producer offered to put each member's jar, by module name.
+   * Where this producer puts each member's jar, by module name; see [DerivedPluginCandidacy.memberPaths].
    *
-   * The offer, not the verdict: [resolvePluginContent] applies the eligibility gate to it, exactly as it does to the
-   * report's own map. Kept so that the residue writer reads the relation off the producer instead of assuming the
-   * convention, which stops holding as soon as a residue states a destination.
+   * Every member, whatever its eligibility and whatever the residue vetoes. A member absent from the map has no
+   * derivable jar at all, and both readers then co-pack it into the plugin's main jar.
+   */
+  @JvmField val memberPaths: Map<String, String>,
+  /**
+   * Where this producer hands each member's jar over, by module name.
+   *
+   * The eligible half of [memberPaths], with the `raw_members` rows taken out. [resolvePluginContent] reads it as the
+   * hand-off itself, exactly as it reads the report's own map, so a member here loses its raw output from the fragment.
    */
   @JvmField val prepackedPaths: Map<String, String>,
   /** What [resolvePluginContent] would have printed. Collected rather than printed: the writer only measures. */
@@ -25,7 +31,7 @@ internal class DerivedPluginContent(
  * What the model cannot answer about one plugin's content, which is what a `dev-dist.yaml` beside the plugin would hold.
  *
  * [PluginContentResidue.NONE] means pure convention, and the Phase-0 measurement is what the fields are: every one of
- * them is a class the comparison found and no field is speculative. A plugin layout decides all four, and evaluating a
+ * them is a class the comparison found and no field is speculative. A plugin layout decides each field, and evaluating a
  * product layout is the work this generator exists to keep out of a fragment action.
  */
 internal class PluginContentResidue(
@@ -39,6 +45,8 @@ internal class PluginContentResidue(
   @JvmField val vetoedMembers: Set<String> = emptySet(),
   /** See [ContentResidueSection.separateJars]. */
   @JvmField val separateJars: Set<String> = emptySet(),
+  /** See [ContentResidueSection.memberJars]. Read by [derivePluginJars] alone, and never by the generation path. */
+  @JvmField val memberJars: Map<String, Set<String>> = emptyMap(),
   /** See [ContentResidueSection.mergedLibraries]. */
   @JvmField val mergedLibraries: Map<String, Set<String>> = emptyMap(),
   /** See [ContentResidueSection.libraries]. */
@@ -84,9 +92,10 @@ internal fun computeDerivedPluginContent(
  * libraries come from the member walk. [computePluginContent] projects a distribution build's report through the same
  * [resolvePluginContent] body, so the residue writer's comparison measures the facts and never the label resolution.
  *
- * One derivation of the jar path, not two. [derivePluginContentCandidacy] reproduces `computeOutputJarPath`, and the
- * repo-global fold it feeds is what [resolvePluginContent] then gates every relation on. Offering a member a path this
- * function invented instead would let the two disagree, and the disagreement would read as a plugin's deviation.
+ * One derivation of the jar path, not two. [deriveMemberJarPath] holds that rule, as the convention with the three
+ * corrections the residue states, and [derivePluginContentCandidacy] is the one caller of it. The repo-global fold that
+ * caller feeds is what [resolvePluginContent] then gates every relation on. Offering a member a path this function
+ * invented instead would let the two disagree, and the disagreement would read as a plugin's deviation.
  */
 internal fun derivePluginContent(
   module: ModuleDescriptor,
@@ -103,9 +112,8 @@ internal fun derivePluginContent(
   memberNames.addAll(residue.extraMembers)
   memberNames.remove(moduleName)
 
-  // Where this plugin puts each member's jar, from the one derivation of that question. A member with no offer is packed
-  // into a jar of the plugin's that this generator does not pack, so it stays a raw member - which is also what the
-  // report path does with it. `resolvePluginContent` applies the eligibility gate to what is left.
+  // Where this plugin puts each member's jar, from the one derivation of that question. A member with no offer keeps its
+  // path and loses only the hand-off, so this plugin's own fragment packs its jar as it always did.
   //
   // The closure is handed over rather than walked a second time. Every plugin of the population pays one descriptor
   // parse per include round, so a second walk here would double that cost for all 516 of them.
@@ -116,6 +124,9 @@ internal fun derivePluginContent(
     residue = residue,
     closure = closure,
   )
+  val memberPaths = candidacy.memberPaths.filterKeys { it in memberNames }
+  // The hand-off is the narrow half. `raw_members` gates it alone: a member of that list keeps the jar it derives above,
+  // and only its hand-off goes, because a second jar of this plugin holds the module's raw output.
   val prepackedPaths = candidacy.offers.asSequence()
     .filterNot { it.moduleName in residue.rawMembers }
     .filter { it.moduleName in memberNames }
@@ -137,6 +148,7 @@ internal fun derivePluginContent(
   return DerivedPluginContent(
     result = result,
     memberNames = memberNames.toList(),
+    memberPaths = memberPaths,
     prepackedPaths = prepackedPaths,
     warnings = warnings,
   )

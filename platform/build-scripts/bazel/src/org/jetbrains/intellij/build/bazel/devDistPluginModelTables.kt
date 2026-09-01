@@ -77,6 +77,16 @@ internal fun pluginJarPlacementConvention(mainModule: String): PluginJarPlacemen
 }
 
 /**
+ * Where [mainModule] puts its own jars: its row of [DevDistPluginModelTables.pluginJarPlacement], or the convention.
+ *
+ * The one reader of that table. Three derivations need the plugin's main jar name, and each one has to fall back the
+ * same way, because a plugin absent from the table is the rule and not a gap.
+ */
+internal fun pluginJarPlacementOf(mainModule: String, context: BazelBuildFileGenerator): PluginJarPlacement {
+  return context.pluginJarPlacement.get(mainModule) ?: pluginJarPlacementConvention(mainModule)
+}
+
+/**
  * What one read of [PLUGIN_MODEL_TABLES_FILE_NAME] produced.
  *
  * Four fields and one read. Each field used to be a file with a reader of its own, and each reader repeated the same
