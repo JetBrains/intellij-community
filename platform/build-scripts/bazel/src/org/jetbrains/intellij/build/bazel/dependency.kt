@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.bazel
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsSimpleElement
+import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.jps.model.library.JpsOrderRootType
@@ -39,6 +40,8 @@ internal data class ModuleDeps(
   @JvmField val deps: List<BazelLabel>,
   @JvmField val provided: List<BazelLabel>,
   @JvmField val runtimeDeps: List<BazelLabel>,
+  /** Dependencies that should be packed together with this module in the plugin distribution; used to populate `packed_deps` attribute in `ij_plugin_module` rule */
+  @JvmField val packedDeps: List<BazelLabel>,
   @JvmField val exports: List<BazelLabel>,
   @JvmField val associates: List<BazelLabel>,
   @JvmField val plugins: List<String>,
@@ -55,6 +58,7 @@ internal fun generateDeps(
   val associates = mutableListOf<BazelLabel>()
   val exports = mutableListOf<BazelLabel>()
   val runtimeDeps = mutableListOf<BazelLabel>()
+  val packedDeps = mutableListOf<BazelLabel>()
   val provided = mutableListOf<BazelLabel>()
 
   if (isTest) {  // test always depends on production
@@ -156,21 +160,22 @@ internal fun generateDeps(
           val library = LocalLibrary(files = localFiles, target = libraryTarget, bazelBuildFileDir = libSnapshotsDir)
           context.addLocalLibrary(lib = library, isProvided = isProvided)
 
+          val dependencyLabel = BazelLabel(
+            libraryDependencyLabel(
+              library = library,
+              container = libraryContainer,
+              communityRoot = context.communityRoot,
+              ultimateRoot = context.ultimateRoot,
+              isCommunityDependent = module.isCommunity,
+              isProvided = isProvided,
+            ),
+            null,
+          )
           addDep(
             isTest = isTest,
             scope = scope,
             deps = deps,
-            dependencyLabel = BazelLabel(
-              libraryDependencyLabel(
-                library = library,
-                container = libraryContainer,
-                communityRoot = context.communityRoot,
-                ultimateRoot = context.ultimateRoot,
-                isCommunityDependent = module.isCommunity,
-                isProvided = isProvided,
-              ),
-              null,
-            ),
+            dependencyLabel = dependencyLabel,
             runtimeDeps = runtimeDeps,
             hasSources = hasSources,
             dependentModule = module,
@@ -179,6 +184,7 @@ internal fun generateDeps(
             provided = provided,
             isExported = isExported,
           )
+          addPackedDepIfNeeded(dependencyLabel, packedDeps, isTest, scope, moduleLibraryModuleName)
         }
 
         // repositoryJpsLibrary == null
@@ -231,21 +237,22 @@ internal fun generateDeps(
             }
           }
 
+          val dependencyLabel = BazelLabel(
+            libraryDependencyLabel(
+              library = library,
+              container = libraryContainer,
+              communityRoot = context.communityRoot,
+              ultimateRoot = context.ultimateRoot,
+              isCommunityDependent = module.isCommunity,
+              isProvided = isProvided,
+            ),
+            null,
+          )
           addDep(
             isTest = isTest,
             scope = scope,
             deps = deps,
-            dependencyLabel = BazelLabel(
-              libraryDependencyLabel(
-                library = library,
-                container = libraryContainer,
-                communityRoot = context.communityRoot,
-                ultimateRoot = context.ultimateRoot,
-                isCommunityDependent = module.isCommunity,
-                isProvided = isProvided,
-              ),
-              null,
-            ),
+            dependencyLabel = dependencyLabel,
             runtimeDeps = runtimeDeps,
             hasSources = hasSources,
             dependentModule = module,
@@ -254,6 +261,7 @@ internal fun generateDeps(
             provided = provided,
             isExported = isExported,
           )
+          addPackedDepIfNeeded(dependencyLabel, packedDeps, isTest, scope, moduleLibraryModuleName)
         }
 
         // Repository library, meaning library files are under .m2 and not under VCS
@@ -327,6 +335,7 @@ internal fun generateDeps(
             provided = provided,
             isExported = isExported,
           )
+          addPackedDepIfNeeded(libLabel, packedDeps, isTest, scope, moduleLibraryModuleName)
         }
       }
     }
@@ -363,10 +372,23 @@ internal fun generateDeps(
   checkForDuplicates("bazel deps", deps)
   checkForDuplicates("bazel associates", associates)
   checkForDuplicates("bazel runtimeDeps", runtimeDeps)
+  checkForDuplicates("bazel packedDeps", packedDeps)
   checkForDuplicates("bazel exports", exports)
   checkForDuplicates("bazel provided", provided)
 
-  return ModuleDeps(deps = deps, associates = associates, runtimeDeps = runtimeDeps, exports = exports, provided = provided, plugins = plugins.toList())
+  return ModuleDeps(deps = deps, associates = associates, runtimeDeps = runtimeDeps, packedDeps = packedDeps, exports = exports, provided = provided, plugins = plugins.toList())
+}
+
+private fun addPackedDepIfNeeded(
+  dependencyLabel: BazelLabel,
+  packedDeps: MutableList<BazelLabel>,
+  isTest: Boolean,
+  scope: JpsJavaDependencyScope,
+  moduleLibraryModuleName: String?,
+) {
+  if (moduleLibraryModuleName != null && !isTest && scope.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME)) {
+    packedDeps.add(dependencyLabel)
+  }
 }
 
 private fun getLocalLibBazelFileDir(files: List<Path>, communityRoot: Path): Path {

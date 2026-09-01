@@ -1,14 +1,21 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `build intellij.libraries.example` start
-jvm_library(
+ij_plugin_module(
     name = "libraries-example",
     srcs = glob(
         [],
         allow_empty = True,
     ),
     module_name = "intellij.libraries.example",
+    packed_deps = [
+        # do not sort,
+        "//libs:libraries-example-first",
+        "//libs:libraries-example-second",
+        "//libs:libraries-example-third",
+    ],
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],

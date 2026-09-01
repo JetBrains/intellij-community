@@ -35,7 +35,7 @@ ij_plugin(
     descriptor_module = ":plugin",
     content_modules = [
         # do not sort,
-        "//content:libraries-example",
+        "//content:libraries-example_plugin_module",
         "//refused",
     ],
     visibility = ["//visibility:public"],

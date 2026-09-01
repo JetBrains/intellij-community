@@ -75,6 +75,15 @@ internal class ModuleList(
   @JvmField val testDeps = IdentityHashMap<ModuleDescriptor, ModuleDeps>()
 
   /**
+   * Names of plugin descriptor modules and content modules included in `ij_plugin` rule
+   */
+  val modulesIncludedInIjPluginRule: Set<String> by lazy {
+    moduleToPluginXmlContentData.entries.flatMapTo(HashSet()) {
+      sequenceOf(it.key.module.name) + it.value.contentModuleNames
+    }
+  }
+
+  /**
    * Modules that own a content-module jar, i.e. that a product layout includes as a `<content>` module.
    *
    * Stands in for `layout.includedModules` where `JarPackager` consults it. Owning a jar is what a checked-in
@@ -842,22 +851,23 @@ internal class BazelBuildFileGenerator(
     }
   }
 
-  fun getBazelDependencyLabel(module: ModuleDescriptor, dependent: ModuleDescriptor): String {
+  fun getBazelDependencyLabel(module: ModuleDescriptor, dependent: ModuleDescriptor, targetNameSuffix: String = ""): String {
     val customModule = customModules[module.module.name]
-    if (customModule != null) {
+    if (customModule != null && targetNameSuffix.isEmpty()) {
       return customModule.dependencyLabel
     }
 
     val dependentIsCommunity = dependent.isCommunity
+    val targetName = module.targetName + targetNameSuffix
     if (!dependentIsCommunity && module.isCommunity) {
       require(module.isCommunity)
 
       val path = checkAndGetRelativePath(communityRoot, module.bazelBuildFileDir).invariantSeparatorsPathString
-      return if (path.substringAfterLast('/') == module.targetName) {
+      return if (path.substringAfterLast('/') == targetName) {
         "@community//$path"
       }
       else {
-        "@community//$path:${module.targetName}"
+        "@community//$path:$targetName"
       }
     }
 
@@ -896,8 +906,7 @@ internal class BazelBuildFileGenerator(
       else -> "@community//$relativeToCommunityPath"
     }
 
-    val bazelName = module.targetName
-    val result = path + (if (module.bazelBuildFileDir.fileName.toString() == bazelName) "" else ":${bazelName}")
+    val result = path + (if (module.bazelBuildFileDir.fileName.toString() == targetName) "" else ":$targetName")
     return result
   }
 
@@ -1053,7 +1062,17 @@ internal class BazelBuildFileGenerator(
       )
     }
 
-    target("jvm_library") {
+
+    val useIjPluginModule = shouldUseIjPluginModuleFunction(moduleDescriptor, moduleList)
+    val moduleTargetType: String
+    if (useIjPluginModule) {
+      load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
+      moduleTargetType = "ij_plugin_module"
+    }
+    else {
+      moduleTargetType = "jvm_library"
+    }
+    target(moduleTargetType) {
       option("name", moduleDescriptor.targetName)
       productionCompileTargets.add(moduleDescriptor.targetAsLabel)
       productionCompileJars.add(moduleDescriptor.targetAsLabel)
@@ -1094,6 +1113,10 @@ internal class BazelBuildFileGenerator(
       }
 
       option("module_name", module.name)
+
+      if (useIjPluginModule && deps != null && deps.packedDeps.isNotEmpty()) {
+        option("packed_deps", deps.packedDeps.unsorted())
+      }
 
       if (deps != null && deps.plugins.isNotEmpty()) {
         option("plugins", deps.plugins.sorted())
@@ -1209,9 +1232,12 @@ internal class BazelBuildFileGenerator(
       load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
       target("ij_plugin") {
         option("name", moduleDescriptor.targetName + "_plugin")
-        option("descriptor_module", ":${moduleDescriptor.targetName}")
+        option("descriptor_module", ":${moduleDescriptor.targetName}${getPluginModuleTargetNameSuffix(moduleDescriptor, moduleList)}")
         if (pluginDescriptorContentData.contentModuleNames.isNotEmpty()) {
-          val contentModuleLabels = pluginDescriptorContentData.contentModuleNames.map { getBazelDependencyLabel(moduleList.getModuleDescriptor(it), moduleDescriptor) }
+          val contentModuleLabels = pluginDescriptorContentData.contentModuleNames.map {
+            val contentModuleDescriptor = moduleList.getModuleDescriptor(it)
+            getBazelDependencyLabel(contentModuleDescriptor, moduleDescriptor, targetNameSuffix = getPluginModuleTargetNameSuffix(contentModuleDescriptor, moduleList))
+          }
           option("content_modules", contentModuleLabels.unsorted())
         }
         // the distribution is consumed from other packages: by the build scripts building this plugin by Bazel,
@@ -1262,6 +1288,17 @@ internal class BazelBuildFileGenerator(
       testJars = testCompileTargets.map { getJarLocation(it) },
       pluginDistributionTarget = pluginDistributionTarget,
     )
+  }
+
+  /**
+   * Determines whether `ij_plugin_module` rule should be used for the given module or the default `jvm_library` rule is enough.
+   */
+  private fun shouldUseIjPluginModuleFunction(
+    moduleDescriptor: ModuleDescriptor,
+    moduleList: ModuleList,
+  ): Boolean {
+    val deps = moduleList.deps[moduleDescriptor]
+    return moduleDescriptor.module.name in moduleList.modulesIncludedInIjPluginRule && deps != null && deps.packedDeps.isNotEmpty()
   }
 
   private fun ModuleDescriptor.isFleetModule(): Boolean {
@@ -1412,6 +1449,11 @@ internal class BazelBuildFileGenerator(
       LanguageLevel.JDK_25 -> "25"
       else -> error("Unsupported language level: $languageLevel for module ${module.name}")
     }
+  }
+
+  private fun getPluginModuleTargetNameSuffix(module: ModuleDescriptor, moduleList: ModuleList): String {
+    //follows the logic in `ij_plugin_module` function in ij_plugin_module.bzl
+    return if (shouldUseIjPluginModuleFunction(module, moduleList)) "_plugin_module" else ""
   }
 
   private fun jpsModuleNameToBazelBuildName(module: JpsModule, baseBuildDir: Path, communityRoot: Path, ultimateRoot: Path?): @NlsSafe String {
