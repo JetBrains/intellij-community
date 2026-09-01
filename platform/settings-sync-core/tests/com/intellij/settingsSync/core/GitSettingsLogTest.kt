@@ -21,6 +21,7 @@ import org.eclipse.jgit.storage.file.FileBasedConfig
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.util.FS
 import org.eclipse.jgit.util.SystemReader
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -65,6 +66,7 @@ internal class GitSettingsLogTest {
   private lateinit var configDir: Path
   private lateinit var settingsSyncStorage: Path
   private var userData: SettingsSyncUserData? = null
+  private val defaultSystemReader: SystemReader = SystemReader.getInstance()
 
   @Before
   fun setUp() {
@@ -72,6 +74,12 @@ internal class GitSettingsLogTest {
     configDir = mainDir.resolve("rootconfig").createDirectories()
     settingsSyncStorage = configDir.resolve("settingsSync")
     userData = null
+  }
+
+  @After
+  fun tearDown() {
+    // SystemReader is global. A test that replaces it must not leak the replacement into the next test.
+    SystemReader.setInstance(defaultSystemReader)
   }
 
   @Test
@@ -371,6 +379,55 @@ internal class GitSettingsLogTest {
       System.setProperty("user.home", userHomeDefault)
     }
 
+  }
+
+  @Test
+  @TestFor(issues = ["IJPL-251529"])
+  fun `should not adopt the work tree from the environment`() {
+    // git-gui and git mergetool export GIT_DIR and GIT_WORK_TREE, and the IDE inherits them.
+    // The settings log must never write into the directory these variables point to.
+    val projectDir = (tempDirManager.createDir() / "project").createDirectories()
+    val projectFile = (projectDir / "main.py").createFile()
+    projectFile.writeText("print('my precious sources')")
+
+    val editorXml = (configDir / "options" / "editor.xml").createParentDirectories().createFile()
+    editorXml.writeText("editorContent")
+
+    // The settings log already has a history, as it does for a user who has synchronized settings before.
+    initializeGitSettingsLog(editorXml).also { Disposer.dispose(it) }
+
+    SystemReader.setInstance(object : SystemReader() {
+      override fun getHostname() = defaultSystemReader.hostname
+
+      override fun getenv(variable: String?): String? = when (variable) {
+        "GIT_DIR" -> (projectDir / ".git").absolutePathString()
+        "GIT_WORK_TREE" -> projectDir.absolutePathString()
+        else -> defaultSystemReader.getenv(variable)
+      }
+
+      override fun getProperty(key: String?) = defaultSystemReader.getProperty(key)
+      override fun openUserConfig(parent: Config?, fs: FS?) = defaultSystemReader.openUserConfig(parent, fs)
+      override fun openSystemConfig(parent: Config?, fs: FS?) = defaultSystemReader.openSystemConfig(parent, fs)
+      override fun openJGitConfig(parent: Config?, fs: FS?) = defaultSystemReader.openJGitConfig(parent, fs)
+      override fun getCurrentTime() = defaultSystemReader.currentTime
+      override fun getTimezone(`when`: Long) = defaultSystemReader.getTimezone(`when`)
+    })
+
+    val settingsLog = initializeGitSettingsLog(editorXml)
+    settingsLog.applyIdeState(
+      settingsSnapshot {
+        fileState("options/editor.xml", "ideEditorContent")
+      }, "Local changes"
+    )
+    settingsLog.advanceMaster()
+
+    assertTrue("The settings log has deleted a file of the project", projectFile.exists())
+    assertFalse("The settings log has written the settings into the project", (projectDir / "options").exists())
+    assertFalse("The settings log has committed a file of the project", (projectDir / ".gitignore").exists())
+    // The settings log must still work, otherwise the assertions above pass for the wrong reason.
+    settingsLog.collectCurrentSnapshot().assertSettingsSnapshot {
+      fileState("options/editor.xml", "ideEditorContent")
+    }
   }
 
   @Test
