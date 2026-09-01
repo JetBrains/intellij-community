@@ -1,5 +1,6 @@
 *:com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 - a:getComponent():javax.swing.JComponent
+- a:getComponentToFocus():javax.swing.JComponent
 - a:getDescriptor():com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 - a:getSelectInTargets():java.util.Collection
 - a:isCurrent():Z

@@ -83,9 +83,12 @@ internal class FrontendWelcomeScreenLeftPanel(
   private val scope: CoroutineScope,
   override val descriptor: ProjectViewPaneDescriptor,
 ) : PureUiProjectViewPane {
-  private var searchField: SearchTextField? = null
+  private lateinit var searchField: SearchTextField
 
   override val component: JComponent by lazy { createComponent() }
+
+  override val componentToFocus: JComponent
+    get() = searchField
 
   override var isCurrent: Boolean = false
 
@@ -145,11 +148,6 @@ internal class FrontendWelcomeScreenLeftPanel(
 
     return mainPanel
   }
-
-  // TODO
-  //override fun getComponentToFocus(): JComponent? {
-  //  return searchField
-  //}
 
   private fun searchPanel(recentProjectTree: RecentProjectFilteringTree) = panel {
     row {

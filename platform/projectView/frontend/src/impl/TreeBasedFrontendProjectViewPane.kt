@@ -75,6 +75,7 @@ import kotlin.time.TimeSource
  * populates it. Keeping the Swing-free logic in [FrontendProjectViewPaneTreeModel] allows testing the
  * whole pipeline (backend models -> events -> populated tree) without instantiating this UI.
  */
+@Suppress("ConvertToExplicitBackingFields") // no, thank you, I don't want to write `componentToFocus` everywhere
 internal class TreeBasedFrontendProjectViewPane(
   project: Project,
   descriptor: ProjectViewPaneDescriptorImpl,
@@ -110,6 +111,9 @@ internal class TreeBasedFrontendProjectViewPane(
 
   override val component: JComponent
     field = ContentPanel(scrollPane)
+
+  override val componentToFocus: JComponent
+    get() = tree
 
   val requestChannel: ReceiveChannel<ProjectViewPaneRequest>
     get() = paneTreeModel.requestChannel

@@ -518,6 +518,7 @@ internal class ProjectViewToolWindowServiceImpl(
         /* displayName = */ (pane.descriptor as ProjectViewPaneDescriptorImpl).presentableName,
         /* isLockable = */ false
       )
+      newContent.setPreferredFocusedComponent { pane.componentToFocus }
       newContent.putUserData(PANE_KEY, pane)
       val index = findSuitableIndex(pane) ?: return null
       contentManager.addContent(newContent, index)

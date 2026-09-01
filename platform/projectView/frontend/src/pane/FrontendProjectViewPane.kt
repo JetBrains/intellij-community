@@ -16,6 +16,8 @@ interface FrontendProjectViewPane {
 
   val component: JComponent
 
+  val componentToFocus: JComponent
+
   var isCurrent: Boolean
   
   val selectInTargets: Collection<SelectInTarget>
