@@ -11,6 +11,8 @@
     <module name="intellij.platform.ide.nonModalWelcomeScreen"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.project"/>
+    <module name="intellij.platform.projectView"/>
+    <module name="intellij.platform.projectView.frontend"/>
   </dependencies>
   <!-- endregion -->
 
@@ -18,4 +20,9 @@
     <listener class="com.intellij.platform.ide.nonModalWelcomeScreen.frontend.WelcomeScreenLeftTabListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
   </projectListeners>
+  <extensions defaultExtensionNs="com.intellij">
+    <project.view.pane.pure.ui
+      implementation="com.intellij.platform.ide.nonModalWelcomeScreen.frontend.leftPanel.FrontendWelcomeScreenLeftPanelProvider"
+    />
+  </extensions>
 </idea-plugin>

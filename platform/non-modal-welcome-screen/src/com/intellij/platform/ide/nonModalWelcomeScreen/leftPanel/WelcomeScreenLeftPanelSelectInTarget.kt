@@ -4,8 +4,10 @@ import com.intellij.ide.SelectInContext
 import com.intellij.ide.SelectInTarget
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowId
+import org.jetbrains.annotations.ApiStatus
 
-internal class WelcomeScreenLeftPanelSelectInTarget : SelectInTarget {
+@ApiStatus.Internal
+class WelcomeScreenLeftPanelSelectInTarget : SelectInTarget {
   override fun isAvailable(project: Project): Boolean = false
 
   override fun canSelect(context: SelectInContext?): Boolean = false

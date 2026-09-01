@@ -119,7 +119,7 @@ internal class LegacyBackendProjectViewPaneProvider : ProjectViewPaneProvider {
   }
 }
 
-private val PANES_WITH_NEW_IMPLEMENTATIONS = setOf(ProjectViewPane.ID, "PackagesPane", ScopeViewPane.ID)
+private val PANES_WITH_NEW_IMPLEMENTATIONS = setOf(ProjectViewPane.ID, "PackagesPane", ScopeViewPane.ID, "NonModalWelcomeScreenProjectPane")
 
 @Service(Service.Level.PROJECT)
 private class LegacyBackendProjectViewPaneService(

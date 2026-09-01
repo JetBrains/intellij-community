@@ -1,4 +1,5 @@
-package com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.ide.nonModalWelcomeScreen.frontend.leftPanel
 
 import com.intellij.icons.AllIcons.Actions.Search
 import com.intellij.ide.SelectInTarget
@@ -6,9 +7,11 @@ import com.intellij.ide.dnd.DnDEvent
 import com.intellij.ide.dnd.DnDNativeTarget
 import com.intellij.ide.dnd.DnDSupport
 import com.intellij.ide.dnd.FileCopyPasteUtil
-import com.intellij.ide.projectView.impl.ProjectViewPane
-import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.Service.Level
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectCollectors
@@ -16,12 +19,18 @@ import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFi
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory
 import com.intellij.platform.ide.nonModalWelcomeScreen.DefaultFileDragAndDropHandler
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
-import com.intellij.platform.ide.nonModalWelcomeScreen.isNonModalWelcomeScreenEnabled
 import com.intellij.platform.ide.nonModalWelcomeScreen.isWelcomeExperienceProjectSync
+import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WELCOME_SCREEN_IS_SHOWN
+import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanel
+import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanelActions
+import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanelSelectInTarget
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider
+import com.intellij.platform.projectView.frontend.pane.PureUiProjectViewPane
+import com.intellij.platform.projectView.frontend.pane.PureUiProjectViewPaneProvider
+import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
+import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder
+import com.intellij.platform.projectView.pane.projectViewPaneId
 import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.IconManager
-import com.intellij.ui.PlatformIcons
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.JBPanel
@@ -30,35 +39,63 @@ import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
+import com.intellij.util.asDisposable
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.annotations.ApiStatus
+import org.jdom.Element
 import java.awt.BorderLayout
 import javax.swing.BoxLayout
-import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
 import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
 
-@ApiStatus.Internal
-class WelcomeScreenLeftPanel(private val project: Project, private val scope: CoroutineScope) : ProjectViewPane(project) {
-  private var searchField: SearchTextField? = null
-
-  override fun getTitle(): String = NonModalWelcomeScreenBundle.message("welcome.screen.project.view.title")
-
-  override fun getId(): String = ID
-
-  override fun getIcon(): Icon = IconManager.getInstance().getPlatformIcon(PlatformIcons.Folder)
-
-  override fun isInitiallyVisible(): Boolean = project.isWelcomeExperienceProjectSync() && isNonModalWelcomeScreenEnabled
-
-  override fun isDefaultPane(project: Project): Boolean {
-    return !Registry.`is`("ide.welcome.screen.change.project.view.depending.on.opened.file", false) && project.isWelcomeExperienceProjectSync()
+internal class FrontendWelcomeScreenLeftPanelProvider : PureUiProjectViewPaneProvider {
+  override fun describe(project: Project, builder: ProjectViewPaneDescriptorBuilder): ProjectViewPaneDescriptor {
+    builder.setDefault(
+      !Registry.`is`("ide.welcome.screen.change.project.view.depending.on.opened.file", false) &&
+      project.isWelcomeExperienceProjectSync()
+    )
+    return builder.build(
+      id = projectViewPaneId(WelcomeScreenLeftPanel.ID),
+      presentableName = NonModalWelcomeScreenBundle.message("welcome.screen.project.view.title"),
+      order = -10,
+    )
   }
 
-  override fun getWeight(): Int = -10 // TODO: Increase weight?
+  override fun createPane(project: Project, descriptor: ProjectViewPaneDescriptor): PureUiProjectViewPane {
+    return FrontendWelcomeScreenLeftPanelService.getInstance(project).createPane(descriptor)
+  }
+}
 
-  override fun createSelectInTarget(): SelectInTarget = WelcomeScreenLeftPanelSelectInTarget()
+@Service(Level.PROJECT)
+internal class FrontendWelcomeScreenLeftPanelService(private val project: Project, private val scope: CoroutineScope) {
+  companion object {
+    fun getInstance(project: Project): FrontendWelcomeScreenLeftPanelService = project.service()
+  }
+
+  fun createPane(descriptor: ProjectViewPaneDescriptor): FrontendWelcomeScreenLeftPanel {
+    return FrontendWelcomeScreenLeftPanel(project, scope, descriptor)
+  }
+}
+
+internal class FrontendWelcomeScreenLeftPanel(
+  private val project: Project,
+  private val scope: CoroutineScope,
+  override val descriptor: ProjectViewPaneDescriptor,
+) : PureUiProjectViewPane {
+  private var searchField: SearchTextField? = null
+
+  override val component: JComponent by lazy { createComponent() }
+
+  override var isCurrent: Boolean = false
+
+  override val selectInTargets: Collection<SelectInTarget> = listOf(WelcomeScreenLeftPanelSelectInTarget())
+
+// TODO
+  // override fun getIcon(): Icon = IconManager.getInstance().getPlatformIcon(PlatformIcons.Folder)
+
+  // TODO
+  // override fun isInitiallyVisible(): Boolean = project.isWelcomeExperienceProjectSync() && isNonModalWelcomeScreenEnabled
 
   private fun setupDragAndDrop(component: JComponent) {
     val target = object : DnDNativeTarget {
@@ -83,15 +120,12 @@ class WelcomeScreenLeftPanel(private val project: Project, private val scope: Co
       .enableAsNativeTarget()
       .setTargetChecker(target)
       .setDropHandler(target)
-      .setDisposableParent(this)
+      .setDisposableParent(scope.asDisposable())
       .install()
   }
 
-  override fun createComponent(): JComponent {
-
-    val mainPanel = JBPanel<JBPanel<*>>(BorderLayout()).apply {
-      border = JBUI.Borders.empty()
-    }
+  private fun createComponent(): JComponent {
+    val mainPanel = MyMainPanel()
 
     val projectFilteringTree = createRecentProjectTree()
     setupDragAndDrop(projectFilteringTree.component)
@@ -112,14 +146,10 @@ class WelcomeScreenLeftPanel(private val project: Project, private val scope: Co
     return mainPanel
   }
 
-  override fun getComponentToFocus(): JComponent? {
-    return searchField
-  }
-
-  override fun dispose() {
-    searchField = null
-    super.dispose()
-  }
+  // TODO
+  //override fun getComponentToFocus(): JComponent? {
+  //  return searchField
+  //}
 
   private fun searchPanel(recentProjectTree: RecentProjectFilteringTree) = panel {
     row {
@@ -133,7 +163,7 @@ class WelcomeScreenLeftPanel(private val project: Project, private val scope: Co
 
   private fun createRecentProjectTree(): RecentProjectFilteringTree =
     RecentProjectPanelComponentFactory.createComponent(
-      this,
+      scope.asDisposable(),
       collectors = listOf(ProjectCollectors.cloneableProjectsCollector, ProjectCollectors.createRecentProjectsWithoutCurrentCollector(project)),
       treeBackground = null
     ).apply {
@@ -152,15 +182,19 @@ class WelcomeScreenLeftPanel(private val project: Project, private val scope: Co
     separator().customize()
   }
 
-  override fun uiDataSnapshot(sink: DataSink) {
-    super.uiDataSnapshot(sink)
-    sink[WELCOME_SCREEN_IS_SHOWN] = true
-  }
+  override suspend fun manage() { }
 
-  companion object {
-    const val ID: String = "NonModalWelcomeScreenProjectPane"
+  override fun saveStateTo(element: Element) { }
+
+  override fun restoreStateFrom(element: Element) { }
+
+  private class MyMainPanel : JBPanel<JBPanel<*>>(BorderLayout()), UiDataProvider {
+    init {
+      border = JBUI.Borders.empty()
+    }
+
+    override fun uiDataSnapshot(sink: DataSink) {
+      sink[WELCOME_SCREEN_IS_SHOWN] = true
+    }
   }
 }
-
-@ApiStatus.Internal
-val WELCOME_SCREEN_IS_SHOWN: DataKey<Boolean> = DataKey.create("NonModalWelcomeScreenProjectPane.isShown")

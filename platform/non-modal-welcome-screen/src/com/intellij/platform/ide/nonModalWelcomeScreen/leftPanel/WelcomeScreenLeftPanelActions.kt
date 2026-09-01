@@ -23,10 +23,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
 import javax.swing.JComponent
 
-internal class WelcomeScreenLeftPanelActions(val project: Project) {
+@ApiStatus.Internal
+class WelcomeScreenLeftPanelActions(val project: Project) {
   fun createButtonsComponent(scope: CoroutineScope): JComponent {
     val group = DefaultActionGroup()
     val toolbar = createToolWindowWelcomeScreenVerticalToolbar(group)
