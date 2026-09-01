@@ -112,8 +112,18 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
     Consumer<RangeHighlighterEx> changeAction = textAttributes == null ? null : ex -> ex.setTextAttributes(textAttributes);
 
-    PersistentRangeHighlighterImpl highlighter = PersistentRangeHighlighterImpl.create(
-      this, offset, layer, HighlighterTargetArea.LINES_IN_RANGE, textAttributesKey, false);
+    RangeHighlighterEx highlighter = mySnapshotHighlighterStorage != null && RangeMarkerStorageImpl.Holder.USE_PMARKER_IMPLEMENTATION ?
+                                     SnapshotRangeHighlighterImpl.createPersistent(
+                                       mySnapshotHighlighterStorage,
+                                       offset,
+                                       layer,
+                                       HighlighterTargetArea.LINES_IN_RANGE,
+                                       textAttributesKey,
+                                       false
+                                     ) :
+                                     PersistentRangeHighlighterImpl.create(
+                                       this, offset, layer, HighlighterTargetArea.LINES_IN_RANGE, textAttributesKey, false
+                                     );
     changeAttributes(highlighter, changeAction);
     return highlighter;
   }
@@ -148,13 +158,21 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
                                                                             boolean isPersistent,
                                                                             @Nullable Consumer<? super RangeHighlighterEx> changeAttributesAction) {
     if (mySnapshotHighlighterStorage != null) mySnapshotHighlighterStorage.assertMayChange();
-    RangeHighlighterEx highlighter = isPersistent ?
-      PersistentRangeHighlighterImpl.create(this, startOffset, layer, targetArea, textAttributesKey, true) :
-      mySnapshotHighlighterStorage != null && RangeMarkerStorageImpl.Holder.USE_PMARKER_IMPLEMENTATION ?
-      SnapshotRangeHighlighterImpl.create(
-        mySnapshotHighlighterStorage, startOffset, endOffset, layer, targetArea, textAttributesKey, false, false
-      ) :
-      new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea, textAttributesKey, false, false);
+    RangeHighlighterEx highlighter;
+    if (mySnapshotHighlighterStorage != null && RangeMarkerStorageImpl.Holder.USE_PMARKER_IMPLEMENTATION) {
+      highlighter = isPersistent ?
+                    SnapshotRangeHighlighterImpl.createPersistent(
+                      mySnapshotHighlighterStorage, startOffset, layer, targetArea, textAttributesKey, true
+                    ) :
+                    SnapshotRangeHighlighterImpl.create(
+                      mySnapshotHighlighterStorage, startOffset, endOffset, layer, targetArea, textAttributesKey, false, false
+                    );
+    }
+    else {
+      highlighter = isPersistent ?
+                    PersistentRangeHighlighterImpl.create(this, startOffset, layer, targetArea, textAttributesKey, true) :
+                    new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea, textAttributesKey, false, false);
+    }
     changeAttributes(highlighter, changeAttributesAction);
     return highlighter;
   }

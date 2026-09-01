@@ -13,6 +13,10 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 fun interface MarkerPolicy {
+  /** True when this policy uses persistent line translation for large document replacements. */
+  val isPersistent: Boolean
+    get() = false
+
   fun transform(
     entry: MarkerEntry,
     patch: DocumentTextPatch,

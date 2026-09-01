@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.marker.DefaultMarkerPolicy
 import com.intellij.openapi.editor.impl.marker.MarkerSpec
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot
+import com.intellij.openapi.editor.impl.marker.PersistentHighlighterPolicy
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
@@ -37,6 +38,7 @@ internal class SnapshotRangeHighlighterImpl private constructor(
   private val layer: Int,
   private val targetArea: HighlighterTargetArea,
   initialSpec: MarkerSpec,
+  private val persistent: Boolean,
   private var textAttributesKey: TextAttributesKey?,
 ) : SnapshotRangeMarkerImpl(
   storage.document,
@@ -74,6 +76,8 @@ internal class SnapshotRangeHighlighterImpl private constructor(
   override fun getLayer(): Int = layer
 
   override fun getTargetArea(): HighlighterTargetArea = targetArea
+
+  override fun isPersistent(): Boolean = persistent
 
   override fun getFlavorFlags(): Byte {
     return ((if (getErrorStripeMarkColor(null) != null) RangeHighlighterTree.ERROR_STRIPE_FLAVOR_FLAG.toInt() else 0) or
@@ -348,6 +352,42 @@ internal class SnapshotRangeHighlighterImpl private constructor(
       greedyToRight: Boolean,
     ): SnapshotRangeHighlighterImpl {
       val spec = MarkerSpec(greedyToLeft, greedyToRight, policy = DefaultMarkerPolicy)
+      return create(storage, startOffset, endOffset, layer, targetArea, textAttributesKey, spec, persistent = false)
+    }
+
+    @JvmStatic
+    fun createPersistent(
+      storage: SnapshotHighlighterStorage,
+      offset: Int,
+      layer: Int,
+      targetArea: HighlighterTargetArea,
+      textAttributesKey: TextAttributesKey?,
+      normalizeStartOffset: Boolean,
+    ): SnapshotRangeHighlighterImpl {
+      val document = storage.document
+      val line = document.getLineNumber(offset)
+      val startOffset = if (normalizeStartOffset) document.getLineStartOffset(line) else offset
+      val endOffset = document.getLineEndOffset(line)
+      val policy = if (targetArea == HighlighterTargetArea.LINES_IN_RANGE) {
+        PersistentHighlighterPolicy.LINES_IN_RANGE
+      }
+      else {
+        PersistentHighlighterPolicy.EXACT_RANGE
+      }
+      val spec = MarkerSpec(false, false, policy = policy)
+      return create(storage, startOffset, endOffset, layer, targetArea, textAttributesKey, spec, persistent = true)
+    }
+
+    private fun create(
+      storage: SnapshotHighlighterStorage,
+      startOffset: Int,
+      endOffset: Int,
+      layer: Int,
+      targetArea: HighlighterTargetArea,
+      textAttributesKey: TextAttributesKey?,
+      spec: MarkerSpec,
+      persistent: Boolean,
+    ): SnapshotRangeHighlighterImpl {
       val highlighter = SnapshotRangeHighlighterImpl(
         storage,
         SnapshotMarkerEngineImpl.nextMarkerId(),
@@ -356,6 +396,7 @@ internal class SnapshotRangeHighlighterImpl private constructor(
         layer,
         targetArea,
         spec,
+        persistent,
         textAttributesKey,
       )
       storage.add(highlighter, startOffset, endOffset, spec)

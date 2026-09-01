@@ -27,7 +27,7 @@ import java.util.function.LongConsumer
 open class PMarkerRootImpl private constructor(
   private val rootId: Long,
   private val states: PersistentLongMap<StoredNode>,
-  /** Number of valid markers using [PersistentMarkerPolicy] in the entire tree represented by this root. */
+  /** Number of valid markers that use a persistent policy in the entire tree represented by this root. */
   private val persistentMarkerCount: Int,
 ) : PMarkerRoot {
   private val cachedDelta: ConcurrentLongObjectMap<Int> = Java11Shim.createConcurrentLongObjectMap()
@@ -573,14 +573,14 @@ open class PMarkerRootImpl private constructor(
       count: Int,
       policy: MarkerPolicy,
     ): Int {
-      return if (policy === PersistentMarkerPolicy) count + 1 else count
+      return if (policy.isPersistent) count + 1 else count
     }
 
     private fun decrementPersistentMarkerCount(
       count: Int,
       policy: MarkerPolicy,
     ): Int {
-      return if (policy === PersistentMarkerPolicy) count - 1 else count
+      return if (policy.isPersistent) count - 1 else count
     }
 
     private fun key(markerId: Long, node: ValidNode): PositionKey = PositionKey(node.entry.startOffset, markerId)

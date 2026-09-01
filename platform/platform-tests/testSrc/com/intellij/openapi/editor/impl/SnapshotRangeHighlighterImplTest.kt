@@ -21,8 +21,52 @@ class SnapshotRangeHighlighterImplTest {
     val model = DocumentMarkupModel.forDocument(document, null, true) as MarkupModelImpl
     try {
       val highlighter = model.addRangeHighlighter(2, 4, 1, null, HighlighterTargetArea.EXACT_RANGE)
+      val persistentHighlighter = model.addPersistentLineHighlighter(null, 0, 1)
 
       Assertions.assertThat(highlighter).isExactlyInstanceOf(RangeHighlighterImpl::class.java)
+      Assertions.assertThat(persistentHighlighter).isExactlyInstanceOf(PersistentRangeHighlighterImpl::class.java)
+    }
+    finally {
+      model.dispose()
+    }
+  }
+
+  @Test
+  fun `persistent highlighters follow line changes in snapshot branches`() {
+    val document = DocumentImpl("one\n  target\nlast", true)
+    val model = MarkupModelImpl(document)
+    try {
+      val initialSnapshot = document.core.snapshot()
+      val exactHighlighter = model.addRangeHighlighterAndChangeAttributes(
+        null, 6, 7, 1, HighlighterTargetArea.EXACT_RANGE, true, null
+      )
+      val lineHighlighter = model.addPersistentLineHighlighter(null, 1, 1)!!
+
+      Assertions.assertThat(exactHighlighter).isInstanceOf(SnapshotRangeMarkerImpl::class.java)
+      Assertions.assertThat(lineHighlighter).isInstanceOf(SnapshotRangeMarkerImpl::class.java)
+      Assertions.assertThat(exactHighlighter.isPersistent).isTrue()
+      Assertions.assertThat(lineHighlighter.isPersistent).isTrue()
+      Assertions.assertThat((exactHighlighter as PMarker).resolve(initialSnapshot))
+        .extracting("startOffset", "endOffset").containsExactly(4, 12)
+      Assertions.assertThat((lineHighlighter as PMarker).resolve(initialSnapshot))
+        .extracting("startOffset", "endOffset").containsExactly(6, 12)
+
+      val insertedBefore = initialSnapshot.applyOp(textPatch(0, 0, "x\n"))
+      Assertions.assertThat(exactHighlighter.resolve(insertedBefore))
+        .extracting("startOffset", "endOffset").containsExactly(6, 14)
+      Assertions.assertThat(lineHighlighter.resolve(insertedBefore))
+        .extracting("startOffset", "endOffset").containsExactly(8, 14)
+
+      val replacedText = "prefix\none\n  target\nlast"
+      val replaced = initialSnapshot.applyOp(textPatch(0, initialSnapshot.text().length(), replacedText))
+      Assertions.assertThat(exactHighlighter.resolve(replaced))
+        .extracting("startOffset", "endOffset").containsExactly(11, 19)
+      Assertions.assertThat(lineHighlighter.resolve(replaced))
+        .extracting("startOffset", "endOffset").containsExactly(13, 19)
+
+      val deleted = initialSnapshot.applyOp(textPatch(4, 13, ""))
+      Assertions.assertThat(exactHighlighter.resolve(deleted).isValid).isFalse()
+      Assertions.assertThat(lineHighlighter.resolve(deleted).isValid).isFalse()
     }
     finally {
       model.dispose()

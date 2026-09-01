@@ -14,6 +14,9 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 object PersistentMarkerPolicy : MarkerPolicy {
+  override val isPersistent: Boolean
+    get() = true
+
   fun requiresFullTraversal(
     patch: DocumentTextPatch,
     beforeText: DocumentText,
