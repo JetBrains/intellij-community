@@ -15,8 +15,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
-import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.SeTextSearchOptions
 import com.intellij.platform.searchEverywhere.frontend.tabs.target.SeScopeChooserActionProvider
@@ -39,28 +39,35 @@ class SeTextFilterEditor(
                isRegex = initialTextSearchOptions?.isRegex ?: false)
 ) {
   private val findInProjectModel = FindManager.getInstance(project).findInProjectModel
+
   private val scopeFilterAction: AnAction? = scopesInfo?.let {
     SeScopeChooserActionProvider(scopesInfo) { scopeId, _ ->
       filterValue = filterValue.cloneWithScope(scopeId)
     }.getAction()
   }
+
   private val typesFilterAction: JComboboxAction? = project?.let {
     JComboboxAction(project, disposable) { filterValue = filterValue.cloneWithType(it) }.also {
-      disposable.whenDisposed { it.saveMask() }
+      Disposer.tryRegister(disposable, Disposable {
+        it.saveMask()
+      })
     }
   }
+
   private val caseSensitiveAction = CaseSensitiveAction(AtomicBooleanProperty(initialTextSearchOptions?.isCaseSensitive ?: false).apply {
     afterChange {
       filterValue = filterValue.cloneWithCase(it)
       findInProjectModel.isCaseSensitive = it
     }
   }, registerShortcut) { }
+
   private val wordAction = WordAction(AtomicBooleanProperty(initialTextSearchOptions?.isWholeWordsOnly ?: false).apply {
     afterChange {
       filterValue = filterValue.cloneWithWords(it)
       findInProjectModel.isWholeWordsOnly = it
     }
   }, registerShortcut) { }
+
   private val regexpAction = RegexpAction(AtomicBooleanProperty(initialTextSearchOptions?.isRegex ?: false).apply {
     afterChange {
       filterValue = filterValue.cloneWithRegex(it)
