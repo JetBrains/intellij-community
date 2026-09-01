@@ -45,7 +45,7 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.ide.todo.TodoConfigurationCollector"/>
 
     <!-- T.O.D.O -->
-    <projectConfigurable groupId="editor" instance="com.intellij.ide.todo.configurable.TodoConfigurable" id="preferences.toDoOptions"
+    <applicationConfigurable groupId="editor" instance="com.intellij.ide.todo.configurable.TodoConfigurable" id="preferences.toDoOptions"
                              key="title.todo"
                              bundle="messages.IdeBundle"/>
 
@@ -63,11 +63,6 @@
 
     <rdct.remoteSettingProvider implementation="com.intellij.ide.todo.settings.TodoRemoteSettingsInfoProvider"/>
     <applicationSettings service="com.intellij.ide.todo.TodoConfiguration"/>
-
-    <projectService
-      serviceImplementation="com.intellij.ide.todo.configurable.DefaultTodoConfigurableProductCallbackService"
-      serviceInterface="com.intellij.ide.todo.configurable.TodoConfigurableProductCallbackService"
-      open="true"/>
   </extensions>
 
   <actions>

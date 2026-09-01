@@ -46,13 +46,11 @@ public class TodoConfigurable implements SearchableConfigurable, Configurable.No
   private final PatternsTableModel myPatternsModel;
   protected final List<TodoFilter> myFilters;
   private final FiltersTableModel myFiltersModel;
-  @NotNull private final Project myProject;
 
   /**
    * Invoked by reflection
    */
-  public TodoConfigurable(@NotNull Project project) {
-    myProject = project;
+  public TodoConfigurable() {
     myPatterns = new ArrayList<>();
     myFilters = new ArrayList<>();
     myFiltersModel = new FiltersTableModel(myFilters);
