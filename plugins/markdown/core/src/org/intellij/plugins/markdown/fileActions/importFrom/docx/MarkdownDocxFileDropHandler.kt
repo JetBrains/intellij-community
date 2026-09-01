@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.TrustedProjectUtil
 import org.intellij.plugins.markdown.fileActions.export.MarkdownDocxExportProvider
 import org.intellij.plugins.markdown.fileActions.utils.MarkdownImportExportUtils
 import java.io.File
@@ -30,6 +31,8 @@ internal class MarkdownDocxFileDropHandler : FileDropHandler {
     val suggestedFilePath = readAction {
       MarkdownImportExportUtils.suggestFileNameToCreate(project, vFileToImport, dataContext)
     }
+
+    if (!TrustedProjectUtil.executeIfTrusted(project) {}) return true
 
     withContext(Dispatchers.EDT) {
       MarkdownImportDocxDialog(
