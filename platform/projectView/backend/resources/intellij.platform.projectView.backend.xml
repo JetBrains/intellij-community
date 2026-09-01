@@ -31,7 +31,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.projectView.backend.rpc.ProjectViewRpcProvider"/>
     <project.view.pane.model.backend implementation="com.intellij.platform.projectView.backend.impl.project.BackendProjectPaneProvider"/>
-    <project.view.pane.model.backend implementation="com.intellij.platform.projectView.impl.scope.ScopePaneProvider"/>
+    <project.view.pane.model.backend implementation="com.intellij.platform.projectView.backend.impl.scope.ScopePaneProvider"/>
     <project.view.pane.model.backend implementation="com.intellij.platform.projectView.backend.impl.legacy.LegacyBackendProjectViewPaneProvider"/>
     <uiDataRule implementation="com.intellij.platform.projectView.backend.pane.BackendProjectViewPaneUiDataRule"/>
   </extensions>

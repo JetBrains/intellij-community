@@ -5,7 +5,7 @@ import com.intellij.ide.scopeView.NamedScopeFilter
 import com.intellij.openapi.project.Project
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneAggregator
-import com.intellij.platform.projectView.impl.scope.ScopePaneModel
+import com.intellij.platform.projectView.backend.impl.scope.ScopePaneModel
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.psi.search.scope.ProjectFilesScope
 import com.intellij.psi.search.scope.packageSet.FilePatternPackageSet

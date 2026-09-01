@@ -1,3 +1,4 @@
+@file:ApiStatus.Experimental
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.impl
 
@@ -64,7 +65,8 @@ abstract class TreeStructureBasedProjectViewPaneModel(project: Project) : TreeBa
 }
 
 /** Navigates to the legacy node descriptor behind a [TreeStructureProjectViewNode], if it's navigatable. */
-internal suspend fun navigateToTreeStructureNode(
+@ApiStatus.Experimental
+suspend fun navigateToTreeStructureNode(
   project: Project,
   node: BackendProjectViewNodeModel<TreeStructureProjectViewNode>?,
   options: ProjectViewPaneNavigateOptions,

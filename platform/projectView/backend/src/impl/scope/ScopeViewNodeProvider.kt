@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.projectView.impl.scope
+package com.intellij.platform.projectView.backend.impl.scope
 
 import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.ide.projectView.ProjectViewNode
@@ -11,8 +11,9 @@ import com.intellij.platform.projectView.impl.ProjectViewTreeNodeProvider
 import com.intellij.platform.projectView.impl.TreeStructureProjectViewNode
 import com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
 import com.intellij.platform.projectView.pane.buildProjectViewNodeModel
-import com.intellij.platform.projectView.settings.ProjectViewPaneOptionImpl
+import com.intellij.platform.projectView.settings.ProjectViewPaneOption
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
+import com.intellij.platform.projectView.settings.projectViewPaneOption
 import com.intellij.platform.projectView.settings.toLegacySortKey
 import com.intellij.pom.Navigatable
 import com.intellij.ui.tree.buildTreeNodeDescriptorPresentation
@@ -96,9 +97,9 @@ private class ScopeViewComparator(
 
   override fun getSortKey(): NodeSortKey = settings.getSortKey().toLegacySortKey()
 
-  override fun isManualOrder(): Boolean = settings.isOptionSelected(ProjectViewPaneOptionImpl.ManualOrder)
+  override fun isManualOrder(): Boolean = settings.isOptionSelected(projectViewPaneOption<ProjectViewPaneOption.ManualOrder>())
 
-  override fun isAbbreviateQualifiedNames(): Boolean = settings.isOptionSelected(ProjectViewPaneOptionImpl.AbbreviatePackageNames)
+  override fun isAbbreviateQualifiedNames(): Boolean = settings.isOptionSelected(projectViewPaneOption<ProjectViewPaneOption.AbbreviatePackageNames>())
 
-  override fun isFoldersAlwaysOnTop(): Boolean = settings.isOptionSelected(ProjectViewPaneOptionImpl.FoldersAlwaysOnTop)
+  override fun isFoldersAlwaysOnTop(): Boolean = settings.isOptionSelected(projectViewPaneOption<ProjectViewPaneOption.FoldersAlwaysOnTop>())
 }

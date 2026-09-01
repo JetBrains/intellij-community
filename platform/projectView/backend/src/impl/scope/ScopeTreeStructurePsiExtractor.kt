@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(ExperimentalAtomicApi::class)
 
-package com.intellij.platform.projectView.impl.scope
+package com.intellij.platform.projectView.backend.impl.scope
 
 import com.intellij.ide.scopeView.ScopeViewTreeModel
 import com.intellij.openapi.project.Project
