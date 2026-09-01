@@ -145,7 +145,6 @@ intellij.spring.boot.initializr
 intellij.spring.boot.plugin
 intellij.spring.core.plugin
 intellij.spring.data.plugin
-intellij.spring.integration.core
 intellij.spring.messaging
 intellij.spring.modulith
 intellij.spring.mvc.plugin
