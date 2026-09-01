@@ -5,7 +5,9 @@ package org.jetbrains.intellij.build.productLayout.pipeline
 
 import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.intellij.build.productLayout.model.error.ValidationError
+import org.jetbrains.intellij.build.productLayout.stats.NodeTiming
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
@@ -28,6 +30,13 @@ internal class ComputeContextImpl(
 
   /** Error registry: NodeId → list of errors emitted by that node */
   private val errorsByNode = ConcurrentHashMap<NodeId, MutableList<ValidationError>>()
+
+  /**
+   * When each node ran, and for how long. A level runs its nodes in parallel, so these overlap and do not add up to the
+   * stage time. A caller that traces the generation replays them as spans, which shows both the slow node and the
+   * parallelism. Wall-clock, because a span needs a real start, not an elapsed count.
+   */
+  val nodeTimings: MutableCollection<NodeTiming> = ConcurrentLinkedQueue()
 
   /**
    * Initializes a slot for use. Called by the pipeline before execution.

@@ -302,6 +302,18 @@ data class SuppressionConfigStats(
 )
 
 /**
+ * When one pipeline node ran, and for how long.
+ *
+ * [startEpochMs] is wall-clock, so a caller can replay the node as a span at the time it really happened. Millisecond
+ * resolution, because the stage this measures takes seconds.
+ */
+data class NodeTiming(
+  @JvmField val name: String,
+  @JvmField val startEpochMs: Long,
+  @JvmField val durationMs: Long,
+)
+
+/**
  * Combined results from all generation operations.
  * Used to collect parallel generation results before printing summary.
  */
@@ -319,6 +331,13 @@ data class GenerationStats(
   @JvmField val durationMs: Long,
   /** All file diffs from DeferredFileUpdater. The pipeline owns these files. See [hasChanges] for the rest. */
   @JvmField val fileUpdaterDiffs: List<FileDiff> = emptyList(),
+  /**
+   * When each pipeline node ran, and for how long, sorted by start.
+   *
+   * The pipeline runs a level of nodes in parallel, so these overlap and do not sum to [durationMs]. A caller that
+   * traces the generation replays them as spans, which is how one slow node becomes visible inside one opaque total.
+   */
+  @JvmField val nodeTimings: List<NodeTiming> = emptyList(),
 ) {
   /**
    * Central file tracking, plus the dev-distribution plan.

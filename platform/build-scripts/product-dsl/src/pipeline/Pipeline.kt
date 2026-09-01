@@ -26,6 +26,7 @@ import org.jetbrains.intellij.build.productLayout.stats.DependencyGenerationResu
 import org.jetbrains.intellij.build.productLayout.stats.GenerationStats
 import org.jetbrains.intellij.build.productLayout.stats.ModuleSetFileResult
 import org.jetbrains.intellij.build.productLayout.stats.ModuleSetGenerationResult
+import org.jetbrains.intellij.build.productLayout.stats.NodeTiming
 import org.jetbrains.intellij.build.productLayout.stats.PluginDependencyGenerationResult
 import org.jetbrains.intellij.build.productLayout.stats.ProductGenerationResult
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionConfigStats
@@ -229,7 +230,19 @@ internal class GenerationPipeline(
         level.map { node ->
           async {
             val nodeCtx = ctx.forNode(node.id)
-            node.execute(nodeCtx)
+            val startEpochMs = System.currentTimeMillis()
+            val startNano = System.nanoTime()
+            try {
+              node.execute(nodeCtx)
+            }
+            finally {
+              // in a `finally`, so a node that throws still reports how long it took before it did
+              ctx.nodeTimings.add(NodeTiming(
+                name = node.id.name,
+                startEpochMs = startEpochMs,
+                durationMs = (System.nanoTime() - startNano) / 1_000_000,
+              ))
+            }
             ctx.finalizeNodeErrors(node.id)
           }
         }.awaitAll()
@@ -469,6 +482,7 @@ internal class GenerationPipeline(
       },
       durationMs = durationMs,
       fileUpdaterDiffs = fileUpdaterDiffs,
+      nodeTimings = ctx.nodeTimings.sortedBy(NodeTiming::startEpochMs),
     )
   }
 
