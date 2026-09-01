@@ -8,11 +8,14 @@ import com.intellij.ide.minimap.hover.MinimapHoverController
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileType
+import com.intellij.ui.ComponentUtil
+import com.intellij.util.ui.MouseEventAdapter
 import java.awt.Cursor
 import java.awt.Point
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.event.MouseWheelEvent
+import javax.swing.JScrollPane
 import javax.swing.SwingUtilities
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -133,17 +136,19 @@ class MinimapMouseInteractionController(
 
   override fun mouseWheelMoved(mouseWheelEvent: MouseWheelEvent) {
     val preciseWheelRotation = mouseWheelEvent.preciseWheelRotation
-    if (preciseWheelRotation == 0.0) return
-    val direction = if (preciseWheelRotation > 0) MinimapUsageCollector.ScrollDirection.DOWN else MinimapUsageCollector.ScrollDirection.UP
-    if (shouldLogWheelScroll()) {
-      val interactionPolicy = MinimapInteractionPolicy.forEditor(editor)
-      if (interactionPolicy.isGenericInteractionLoggingEnabled(editor)) {
-        logWheelScrolled(direction)
+    if (preciseWheelRotation != 0.0) {
+      val direction = if (preciseWheelRotation > 0) MinimapUsageCollector.ScrollDirection.DOWN else MinimapUsageCollector.ScrollDirection.UP
+      if (shouldLogWheelScroll()) {
+        val interactionPolicy = MinimapInteractionPolicy.forEditor(editor)
+        if (interactionPolicy.isGenericInteractionLoggingEnabled(editor)) {
+          logWheelScrolled(direction)
+        }
+        interactionPolicy.onWheelScrolled(panel, direction)
       }
-      interactionPolicy.onWheelScrolled(panel, direction)
     }
 
     if (panel.isIndependentScrollEnabled()) {
+      if (preciseWheelRotation == 0.0) return
       val independentDeltaPx = independentWheelDeltaPx(preciseWheelRotation)
       if (independentDeltaPx != 0) {
         panel.scrollIndependentViewportBy(independentDeltaPx)
@@ -152,9 +157,9 @@ class MinimapMouseInteractionController(
       return
     }
 
-    val deltaPx = (preciseWheelRotation * editor.lineHeight * WHEEL_SCROLL_LINES).toInt()
-    editor.scrollingModel.scrollVertically(
-      editor.scrollingModel.verticalScrollOffset + deltaPx)
+    val scrollPane = ComponentUtil.getParentOfType(JScrollPane::class.java, editor.contentComponent) ?: return
+    val scrollPanePoint = SwingUtilities.convertPoint(mouseWheelEvent.component, mouseWheelEvent.point, scrollPane)
+    MouseEventAdapter.redispatch(mouseWheelEvent, scrollPane, scrollPanePoint.x, scrollPanePoint.y)
     hoverController.onScroll(mouseWheelEvent.point)
   }
 

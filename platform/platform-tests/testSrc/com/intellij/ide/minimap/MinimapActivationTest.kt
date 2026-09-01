@@ -10,6 +10,12 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.ui.ComponentUtil
+import java.awt.event.MouseEvent
+import java.awt.event.MouseWheelEvent
+import java.awt.event.MouseWheelListener
+import javax.swing.JPanel
+import javax.swing.JScrollPane
 
 /**
  * Guards the minimap *activation* path: given availability + the enabled setting + a supported file, the
@@ -68,5 +74,59 @@ class MinimapActivationTest : BasePlatformTestCase() {
     setSettings(enabled = false)
     val editor = openAndUpdate("a.txt", "alpha\nbeta\n")
     assertFalse(MinimapService.getInstance().isMinimapInstalled(editor))
+  }
+
+  fun testWheelEventIsForwardedToEditorScrollPane() {
+    val editor = openAndUpdate("a.txt", (0 until 100).joinToString("\n") { "line $it" })
+    val minimap = (editor.component as JPanel).components.filterIsInstance<MinimapPanel>().single()
+    val scrollPane = ComponentUtil.getParentOfType(JScrollPane::class.java, editor.contentComponent)!!
+    var forwardedEvent: MouseWheelEvent? = null
+    val recordingListener = MouseWheelListener { forwardedEvent = it }
+    scrollPane.addMouseWheelListener(recordingListener)
+    Disposer.register(testRootDisposable) { scrollPane.removeMouseWheelListener(recordingListener) }
+
+    val event = MouseWheelEvent(
+      minimap,
+      MouseEvent.MOUSE_WHEEL,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      false,
+      MouseWheelEvent.WHEEL_UNIT_SCROLL,
+      3,
+      1,
+      0.25,
+    )
+    minimap.mouseWheelListeners.single().mouseWheelMoved(event)
+
+    assertNotNull("the editor scroll pane must receive the wheel event", forwardedEvent)
+    assertSame(scrollPane, forwardedEvent!!.source)
+    assertEquals(event.preciseWheelRotation, forwardedEvent!!.preciseWheelRotation, 0.0)
+    assertEquals(event.scrollAmount, forwardedEvent!!.scrollAmount)
+
+    forwardedEvent = null
+    val zeroDeltaEvent = MouseWheelEvent(
+      minimap,
+      MouseEvent.MOUSE_WHEEL,
+      2,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      false,
+      MouseWheelEvent.WHEEL_UNIT_SCROLL,
+      0,
+      0,
+      0.0,
+    )
+    minimap.mouseWheelListeners.single().mouseWheelMoved(zeroDeltaEvent)
+
+    assertNotNull("the editor scroll pane must receive a zero-delta wheel event", forwardedEvent)
   }
 }
