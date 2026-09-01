@@ -3,11 +3,11 @@ package com.intellij.platform.ijent
 
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments
+import com.intellij.platform.eel.EelUnavailableException
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -16,7 +16,7 @@ import kotlin.time.Duration.Companion.seconds
  * This error declares that communication with a specific IJent is impossible anymore.
  * To keep working with a remote machine, a new IJent should be launched.
  */
-sealed class IjentUnavailableException : IOException, ExceptionWithAttachments {
+sealed class IjentUnavailableException : EelUnavailableException, ExceptionWithAttachments {
   private val attachments: Array<out Attachment>
 
   constructor(message: String, cause: Throwable?, vararg attachments: Attachment) : super(message, cause) {

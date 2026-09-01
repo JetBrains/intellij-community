@@ -2,6 +2,7 @@
 package com.intellij.platform.ijent
 
 import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.EelUnavailableException
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 
@@ -17,6 +18,6 @@ interface IjentExecFileProvider {
   suspend fun getIjentBinary(targetPlatform: EelPlatform): Path
 }
 
-class IjentMissingBinary(platform: EelPlatform, cause: String? = null) : Exception("Failed to get an IJent binary for $platform" + cause?.let { ": $cause" }) {
+class IjentMissingBinary(platform: EelPlatform, cause: String? = null) : EelUnavailableException("Failed to get an IJent binary for $platform" + cause?.let { ": $cause" }) {
   override fun toString(): String = "${javaClass.name}: $message"
 }

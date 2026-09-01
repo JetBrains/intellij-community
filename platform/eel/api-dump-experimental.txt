@@ -445,7 +445,7 @@ f:com.intellij.platform.eel.EelTunnelsApiKt
 - com.intellij.platform.eel.EelTunnelsApi
 *:com.intellij.platform.eel.EelTunnelsWindowsApi
 - com.intellij.platform.eel.EelTunnelsApi
-*f:com.intellij.platform.eel.EelUnavailableException
+*Fc:com.intellij.platform.eel.EelUnavailableException
 - java.io.IOException
 - getMessage():java.lang.String
 *:com.intellij.platform.eel.EelUserInfo

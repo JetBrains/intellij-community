@@ -29,4 +29,5 @@ import java.io.IOException
  *
  */
 @ApiStatus.Experimental
-class EelUnavailableException @ApiStatus.Internal constructor(override val message: @Nls String, cause: Throwable? = null) : IOException(message, cause)
+@ApiStatus.NonExtendable
+open class EelUnavailableException @ApiStatus.Internal constructor(override val message: @Nls String, cause: Throwable? = null) : IOException(message, cause)
