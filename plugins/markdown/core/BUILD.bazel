@@ -180,6 +180,7 @@ dev_dist_plugin(
         "//plugins/markdown/core/backend:backend_content_module_jar",
         "//plugins/markdown/core/frontend:frontend_content_module_jar",
         "//plugins/markdown/fenceInjection:fenceInjection_content_module_jar",
+        "//plugins/markdown/figmaAdvertiser:figmaAdvertiser_content_module_jar",
         "//plugins/markdown/frontmatter/toml:toml_content_module_jar",
         "//plugins/markdown/frontmatter/yaml:yaml_content_module_jar",
         "//plugins/markdown/frontmatter:frontmatter_content_module_jar",

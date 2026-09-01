@@ -84,6 +84,11 @@
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.grazie.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.markdown.figmaAdvertiser" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinTestAssertionsCoreJvm" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.statistics.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.pluginSystem.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.rpc" scope="TEST" />
   </component>
 </module>

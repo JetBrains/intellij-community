@@ -57,6 +57,7 @@ jvm_library(
         "//platform/structure-view-impl/plugin",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/lang-core",
+        "//plugins/markdown/figmaAdvertiser",
     ],
 )
 
@@ -234,6 +235,16 @@ jvm_library(
         "//libraries/junit5:junit5_test_lib",
         "//plugins/grazie/src/test:grazie-tests",
         "//plugins/grazie/src/test:grazie-tests_test_lib",
+        "//plugins/markdown/figmaAdvertiser",
+        "//plugins/markdown/figmaAdvertiser:figmaAdvertiser_test_lib",
+        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
+        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
+        "//platform/statistics",
+        "//platform/statistics:statistics_test_lib",
+        "//platform/statistics/testFramework",
+        "//platform/statistics/testFramework:testFramework_test_lib",
+        "//platform/pluginSystem/testFramework",
+        "//platform/pluginSystem/testFramework:testFramework_test_lib",
         "//platform/platform-impl/rpc",
     ],
 )

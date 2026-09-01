@@ -1,0 +1,39 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.statistics"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <!--
+      The advertisement's switch, separate from Figma Connect's own keys: those ship inside the
+      plugin, and this runs where the plugin is absent. No restartRequired — the value is read on
+      every getSuggestion call.
+
+      defaultValue is written twice, here and in FigmaAdvertiserRegistry, and they must agree.
+    -->
+    <registryKey defaultValue="true"
+                 description="Suggest the Figma Connect plugin over a Markdown file that links to Figma"
+                 key="markdown.figma.advertiser.enabled"/>
+
+    <!--
+      Advertises Figma Connect over a Markdown file that links to a design. Deliberately not a
+      dependency of that plugin, and deliberately not depended on by it: this runs when the plugin is
+      absent, and the platform drops the suggestion once it is loaded.
+    -->
+    <pluginSuggestionProvider
+      implementation="com.intellij.markdown.figmaAdvertiser.FigmaConnectPluginSuggestionProvider"/>
+
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.markdown.figmaAdvertiser.FigmaAdvertiserUsagesCollector"/>
+  </extensions>
+</idea-plugin>

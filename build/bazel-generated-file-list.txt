@@ -1567,6 +1567,7 @@ plugins/markdown/core
 plugins/markdown/core/backend
 plugins/markdown/core/frontend
 plugins/markdown/fenceInjection
+plugins/markdown/figmaAdvertiser
 plugins/markdown/frontmatter
 plugins/markdown/frontmatter/toml
 plugins/markdown/frontmatter/yaml
