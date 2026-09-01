@@ -1,0 +1,10 @@
+// COMPILER_ARGUMENTS: -Xcompanion-blocks
+// K2_AFTER_ERROR: REDECLARATION
+// K2_AFTER_ERROR: REDECLARATION
+
+class Foo {
+    companion {
+        val i: Int = 2
+        val i: Int = 1
+    }
+}

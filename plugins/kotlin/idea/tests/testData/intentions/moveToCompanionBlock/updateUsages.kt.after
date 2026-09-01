@@ -1,0 +1,21 @@
+// COMPILER_ARGUMENTS: -Xcompanion-blocks
+
+class Foo(val v: Int) {
+
+    fun baz() {
+        bar(this, 1)
+    }
+
+    companion {
+        fun bar(<caret>foo: Foo, param: Int): String {
+            println(foo.v + 1)
+            return "$param ${foo.v}"
+        }
+    }
+}
+
+fun boo(f: Foo): String {
+    Foo.bar(f, 2)
+    return Foo.bar(f, 3)
+}
+

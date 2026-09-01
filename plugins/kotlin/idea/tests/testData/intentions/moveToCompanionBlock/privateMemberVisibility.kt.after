@@ -1,0 +1,13 @@
+// COMPILER_ARGUMENTS: -Xcompanion-blocks
+
+class Foo {
+
+    fun bar() {
+        helper()
+    }
+
+    companion {
+        <caret>private fun helper() {
+        }
+    }
+}

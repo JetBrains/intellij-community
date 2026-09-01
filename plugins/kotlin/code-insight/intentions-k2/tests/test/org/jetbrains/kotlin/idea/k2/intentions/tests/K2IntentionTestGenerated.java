@@ -13876,6 +13876,104 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/moveToCompanionBlock")
+    public static class MoveToCompanionBlock extends AbstractK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("comments.kt")
+        public void testComments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/comments.kt");
+        }
+
+        @TestMetadata("disabledFeatureFlag.kt")
+        public void testDisabledFeatureFlag() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/disabledFeatureFlag.kt");
+        }
+
+        @TestMetadata("existingCompanionBlock.kt")
+        public void testExistingCompanionBlock() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/existingCompanionBlock.kt");
+        }
+
+        @TestMetadata("existingMultipleCompanionBlocks.kt")
+        public void testExistingMultipleCompanionBlocks() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/existingMultipleCompanionBlocks.kt");
+        }
+
+        @TestMetadata("funFromCompanionObject.kt")
+        public void testFunFromCompanionObject() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/funFromCompanionObject.kt");
+        }
+
+        @TestMetadata("inObject.kt")
+        public void testInObject() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/inObject.kt");
+        }
+
+        @TestMetadata("incompleteFunction.kt")
+        public void testIncompleteFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/incompleteFunction.kt");
+        }
+
+        @TestMetadata("incompleteProperty.kt")
+        public void testIncompleteProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/incompleteProperty.kt");
+        }
+
+        @TestMetadata("lastFunFromCompanionObject.kt")
+        public void testLastFunFromCompanionObject() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/lastFunFromCompanionObject.kt");
+        }
+
+        @TestMetadata("memberFunctionWithNoParams.kt")
+        public void testMemberFunctionWithNoParams() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/memberFunctionWithNoParams.kt");
+        }
+
+        @TestMetadata("memberProperty.kt")
+        public void testMemberProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/memberProperty.kt");
+        }
+
+        @TestMetadata("nestedClass.kt")
+        public void testNestedClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/nestedClass.kt");
+        }
+
+        @TestMetadata("nonConflictingOverload.kt")
+        public void testNonConflictingOverload() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/nonConflictingOverload.kt");
+        }
+
+        @TestMetadata("privateMemberVisibility.kt")
+        public void testPrivateMemberVisibility() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/privateMemberVisibility.kt");
+        }
+
+        @TestMetadata("redeclarationConflictFunction.kt")
+        public void testRedeclarationConflictFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/redeclarationConflictFunction.kt");
+        }
+
+        @TestMetadata("redeclarationConflictProperty.kt")
+        public void testRedeclarationConflictProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/redeclarationConflictProperty.kt");
+        }
+
+        @TestMetadata("updateUsages.kt")
+        public void testUpdateUsages() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/updateUsages.kt");
+        }
+
+        @TestMetadata("valFromCompanionObject.kt")
+        public void testValFromCompanionObject() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/valFromCompanionObject.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/moveToCompanionObject")
     public static class MoveToCompanionObject extends AbstractK2IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {

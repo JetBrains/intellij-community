@@ -5,9 +5,10 @@ import com.intellij.ide.util.DirectoryUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import org.jetbrains.kotlin.idea.base.psi.appendElementToClassBody
+import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionBlock
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
 import org.jetbrains.kotlin.idea.core.getFqNameByDirectoryOrRoot
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
@@ -17,11 +18,12 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.withChildDeclarat
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtCompanionBlock
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
-import org.jetbrains.kotlin.psi.getOrCreateBody
 
 sealed interface K2MoveTargetDescriptor {
     /**
@@ -75,7 +77,7 @@ sealed interface K2MoveTargetDescriptor {
         fun addElement(target: T, element: PsiElement): PsiElement
 
         enum class DeclarationTargetType {
-            CLASS, OBJECT, COMPANION_OBJECT, FILE
+            CLASS, OBJECT, COMPANION_OBJECT, COMPANION_BLOCK, FILE
         }
 
         fun getTargetType(): DeclarationTargetType
@@ -129,16 +131,13 @@ sealed interface K2MoveTargetDescriptor {
         override val pkgName: FqName = targetClass.containingKtFile.packageFqName
 
         override fun addElement(target: T, element: PsiElement): PsiElement {
-            return target.addElementToClassBody(element)
+            return target.appendElementToClassBody(element)
         }
     }
 
     class CompanionObject(
         private val containingClass: KtClass
     ) : ClassBody<KtObjectDeclaration>(containingClass) {
-        override val baseDirectory: PsiDirectory = containingClass.containingKtFile.containingDirectory!!
-        override val pkgName: FqName = containingClass.containingKtFile.packageFqName
-
         override fun getTargetType(): Declaration.DeclarationTargetType = Declaration.DeclarationTargetType.COMPANION_OBJECT
 
         override fun getOrCreateTarget(dirStructureMatchesPkg: Boolean): KtObjectDeclaration {
@@ -151,11 +150,27 @@ sealed interface K2MoveTargetDescriptor {
         }
     }
 
+    @OptIn(KtExperimentalApi::class)
+    class CompanionBlock(
+        internal val containingClass: KtClass
+    ) : Declaration<KtCompanionBlock> {
+        override val baseDirectory: PsiDirectory = containingClass.containingKtFile.containingDirectory!!
+        override val pkgName: FqName = containingClass.containingKtFile.packageFqName
+
+        override fun getTargetType(): Declaration.DeclarationTargetType = Declaration.DeclarationTargetType.COMPANION_BLOCK
+
+        override fun getOrCreateTarget(dirStructureMatchesPkg: Boolean): KtCompanionBlock =
+            containingClass.getOrCreateCompanionBlock()
+
+        override fun getTarget(): KtCompanionBlock? = containingClass.companionBlocks.firstOrNull()
+
+        override fun addElement(target: KtCompanionBlock, element: PsiElement): PsiElement =
+            appendElementToClassBody(target.body, element)
+    }
+
     class ClassOrObject(
         private val classOrObject: KtClassOrObject
     ) : ClassBody<KtClassOrObject>(classOrObject) {
-        override val baseDirectory: PsiDirectory = classOrObject.containingKtFile.containingDirectory!!
-        override val pkgName: FqName = classOrObject.containingKtFile.packageFqName
 
         override fun getTargetType(): Declaration.DeclarationTargetType {
             if (classOrObject is KtObjectDeclaration) {
@@ -183,16 +198,6 @@ sealed interface K2MoveTargetDescriptor {
         fun File(file: KtFile): File {
             val directory = file.containingDirectory ?: error("No containing directory was found")
             return File(file.name, file.packageFqName, directory)
-        }
-
-        private fun KtClassOrObject.addElementToClassBody(element: PsiElement): PsiElement {
-            val body = getOrCreateBody()
-            val anchor = (body.rBrace ?: body.lastChild!!).prevSibling
-            return if (anchor?.nextSibling is PsiErrorElement) {
-                body.addBefore(element, anchor)
-            } else {
-                body.addAfter(element, anchor)
-            }
         }
     }
 }

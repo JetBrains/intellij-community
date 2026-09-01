@@ -121,6 +121,7 @@ private fun isPrivateVisibleAt(referencingElement: PsiElement, target: K2MoveTar
             // For top level declarations, private members will be visible within the entire file
             referencingElement.containingFile == target.getTarget()
         }
+
         is K2MoveTargetDescriptor.ClassBody<*> -> {
             val targetClass = target.getTarget() ?: return false
             // Companion objects can access private members in its parent and vice versa
@@ -131,6 +132,10 @@ private fun isPrivateVisibleAt(referencingElement: PsiElement, target: K2MoveTar
             }
             // Private members are visible anywhere inside its hierarchy
             visibilityTarget.isAncestor(referencingElement)
+        }
+
+        is K2MoveTargetDescriptor.CompanionBlock -> {
+            target.containingClass.isAncestor(referencingElement)
         }
     }
 }
