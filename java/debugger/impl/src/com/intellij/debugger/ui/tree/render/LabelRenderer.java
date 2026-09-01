@@ -69,6 +69,7 @@ public class LabelRenderer extends ReferenceRenderer implements ValueLabelRender
 
     EvaluationContextImpl evaluationContextImpl = (EvaluationContextImpl)evaluationContext;
     DebugProcessImpl debugProcess = evaluationContextImpl.getDebugProcess();
+    DescriptorLabelListener wrappedListener = ValueDescriptorImpl.startLabelUpdate(descriptor, labelListener);
     evaluationContextImpl.getManagerThread().schedule(new PossiblySyncCommand(evaluationContextImpl.getSuspendContext()) {
       @Override
       public void syncAction(@NotNull SuspendContextImpl suspendContext) {
@@ -100,7 +101,7 @@ public class LabelRenderer extends ReferenceRenderer implements ValueLabelRender
             OverheadTimings.add(debugProcess, new NodeRendererImpl.Overhead(nodeRenderer), 0, timeMs);
           }
         }
-        labelListener.labelChanged();
+        wrappedListener.labelChanged();
       }
     });
     return XDebuggerUIConstants.getCollectingDataMessage();

@@ -311,6 +311,10 @@ class FrontendXValue private constructor(
     override fun isAsync(): Boolean {
       return advancedPresentation.isAsync
     }
+
+    override fun isTemporary(): Boolean {
+      return advancedPresentation.isTemporary
+    }
   }
 
   private class FrontendXValueExtendedPresentation(
@@ -339,6 +343,10 @@ class FrontendXValue private constructor(
 
     override fun isAsync(): Boolean {
       return advancedPresentation.isAsync
+    }
+
+    override fun isTemporary(): Boolean {
+      return advancedPresentation.isTemporary
     }
   }
 

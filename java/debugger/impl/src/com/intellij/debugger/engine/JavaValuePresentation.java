@@ -29,6 +29,11 @@ public class JavaValuePresentation extends XValueExtendedPresentation implements
   }
 
   @Override
+  public boolean isTemporary() {
+    return myValueDescriptor.hasPendingLabelUpdate();
+  }
+
+  @Override
   public void renderValue(@NotNull XValueTextRenderer renderer) {
     renderValue(renderer, null);
   }

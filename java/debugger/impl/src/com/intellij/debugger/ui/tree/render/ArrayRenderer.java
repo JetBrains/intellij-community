@@ -156,10 +156,14 @@ public class ArrayRenderer extends NodeRendererImpl {
           return asyncLabel.join();
         }
         else {
-          asyncLabel.thenAccept(res -> {
-            descriptor.setValueLabel(res);
-            listener.labelChanged();
-          });
+          DescriptorLabelListener updateListener = ValueDescriptorImpl.startLabelUpdate(descriptor, listener);
+          asyncLabel
+            .thenAccept(descriptor::setValueLabel)
+            .exceptionally(throwable -> {
+              ValueDescriptorImpl.setValueLabelFailed(descriptor, throwable);
+              return null;
+            })
+            .whenComplete((_, _) -> updateListener.labelChanged());
         }
       }
       return "";

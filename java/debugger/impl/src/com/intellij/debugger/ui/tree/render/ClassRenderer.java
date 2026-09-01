@@ -134,6 +134,7 @@ public class ClassRenderer extends NodeRendererImpl {
                                             ValueDescriptor descriptor,
                                             DescriptorLabelListener labelListener) {
     if (!future.isDone()) {
+      DescriptorLabelListener wrappedListener = ValueDescriptorImpl.startLabelUpdate(descriptor, labelListener);
       future.whenComplete((s, throwable) -> {
         if (throwable != null) {
           descriptor.setValueLabelFailed((EvaluateException)throwable);
@@ -141,7 +142,7 @@ public class ClassRenderer extends NodeRendererImpl {
         else {
           descriptor.setValueLabel(s);
         }
-        labelListener.labelChanged();
+        wrappedListener.labelChanged();
       });
     }
     return future.getNow(XDebuggerUIConstants.getCollectingDataMessage());

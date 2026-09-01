@@ -612,6 +612,17 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
           return inCollection && !isMuted() ? null : super.getType();
         }
 
+        @Override
+        public boolean isTemporary() {
+          // the label of this node is the label of the two child descriptors
+          return super.isTemporary() || isChildPending(KEY_DESCRIPTOR) || isChildPending(VALUE_DESCRIPTOR);
+        }
+
+        private boolean isChildPending(Key<ValueDescriptorImpl> key) {
+          ValueDescriptorImpl valueDescriptor = myValueDescriptor.getUserData(key);
+          return valueDescriptor != null && valueDescriptor.hasPendingLabelUpdate();
+        }
+
         private boolean isMuted() {
           return myValueDescriptor.getUserData(RENDERER_MUTED) != null && !OnDemandRenderer.isCalculated(myValueDescriptor);
         }

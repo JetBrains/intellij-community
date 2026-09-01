@@ -62,7 +62,7 @@ internal fun XValue.computePresentation(
         val advancedPresentation = XValueSerializedPresentation.AdvancedPresentation(
           icon?.rpcId(), _inlayIcon?.rpcId(), hasChildren,
           presentation.separator, presentation.isShowName, presentation.type, presentation.isAsync,
-          partsCollector.parts
+          presentation.isTemporary, partsCollector.parts
         )
         val serializedPresentation = if (presentation is XValueExtendedPresentation) {
           XValueSerializedPresentation.ExtendedPresentation(advancedPresentation, presentation.isModified)

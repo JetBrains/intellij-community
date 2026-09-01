@@ -50,6 +50,16 @@ public abstract class XValuePresentation {
   @ApiStatus.Internal
   public boolean isAsync() { return false; }
 
+  /**
+   * A temporary presentation shows that the debugger still computes a more complete presentation.
+   * A client can show a loading state or omit a temporary presentation if it cannot update it asynchronously later.
+   * <p>
+   * {@code isTemporary=false} does not mean that the presentation is final.
+   * A later update can change this value if the debugger backend decides to update the presentation again.
+   */
+  @ApiStatus.Internal
+  public boolean isTemporary() { return false; }
+
   public interface XValueTextRenderer {
     /**
      * Appends {@code value} with to the node text. Invisible characters are shown in escaped form.

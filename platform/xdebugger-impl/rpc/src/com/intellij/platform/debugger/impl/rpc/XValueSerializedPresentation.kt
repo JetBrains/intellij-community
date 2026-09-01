@@ -30,6 +30,7 @@ sealed interface XValueSerializedPresentation {
     val isShownName: Boolean,
     val presentationType: String?,
     val isAsync: Boolean,
+    val isTemporary: Boolean,
     val parts: List<XValueAdvancedPresentationPart>,
   ) : XValueSerializedPresentation
 

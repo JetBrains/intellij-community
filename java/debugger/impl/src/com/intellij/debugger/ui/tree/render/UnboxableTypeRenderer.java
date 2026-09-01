@@ -5,6 +5,7 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.expression.UnBoxingEvaluator;
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,6 +44,7 @@ public abstract class UnboxableTypeRenderer extends CompoundRendererProvider {
         if (future.isDone()) {
           return DebuggerUtils.getValueAsString(evaluationContext, future.join());
         }
+        DescriptorLabelListener wrappedListener = ValueDescriptorImpl.startLabelUpdate(descriptor, labelListener);
         return future.handle((r, ex) -> {
           String res = "";
           if (ex == null) {
@@ -57,7 +59,7 @@ public abstract class UnboxableTypeRenderer extends CompoundRendererProvider {
           else {
             descriptor.setValueLabelFailed(new EvaluateException(null, ex));
           }
-          labelListener.labelChanged();
+          wrappedListener.labelChanged();
           return res;
         }).getNow(XDebuggerUIConstants.getCollectingDataMessage());
       }
