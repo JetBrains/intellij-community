@@ -278,15 +278,15 @@ private fun walkPluginContentClosure(
 private const val MAX_INCLUDE_ROUNDS: Int = 3
 
 /**
- * The `xi:include` targets the `descriptor:` part of `dev-dist.yaml` states, by load path, for the plugin that has one.
+ * The `xi:include` targets the descriptor residue states, by load path, for the plugin that has a key.
  *
  * Every section is unioned. A section is one layout variant, and an include is a fact about the plugin's descriptor
  * rather than about a variant, so a row of any section answers the same load path.
  */
 private fun descriptorResidueFiles(module: ModuleDescriptor, context: BazelBuildFileGenerator): Map<String, Path> {
   val result = HashMap<String, Path>()
-  for (section in descriptorResidueOf(module).values) {
-    for (row in section?.descriptors.orEmpty()) {
+  for (section in descriptorResidueOf(module = module, context = context).values) {
+    for (row in section.descriptors) {
       residueRowFile(row = row.path, context = context)?.let { result.putIfAbsent(row.loadPath, it) }
     }
   }

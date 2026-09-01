@@ -11,12 +11,12 @@
 # `PluginLayout` decision, and evaluating a product layout is the work the converter exists to keep out of a
 # fragment action.
 #
-# Two parts, two producers. `content:` is one section for the plugin, because membership does not depend on the
-# layout variant. `descriptor:` is keyed by `<main module>` or `<main module>/<variant>`, because a descriptor
-# deviation is a fact about one variant. Each producer rewrites only its own part.
+# One part and one producer. `content:` is one section for the plugin, because membership does not depend on the
+# layout variant. The descriptor deviations are keyed by the layout variant, so they sit in the
+# `plugin_descriptor_residue` section of `community/build/dev_dist_plugin_model_tables.txt` instead.
 #
-# No row is a Bazel label, and no row is a path. A label carries the artifact version of a library, and a path
-# restates a rule the rule already derives.
+# No row is a Bazel label, because a label carries the artifact version of a library. A row is a path only
+# where the layout names a jar that no rule derives, which is what `member_jars` states.
 content:
   # Members that get a jar of their own where the derivation packs them into the plugin's main jar.
   separate_jars:
@@ -55,57 +55,3 @@ content:
   - name: "kotlinc.sam-with-receiver-compiler-plugin"
   - name: "kotlinc.scripting-compiler-plugin"
   - name: "vavr"
-descriptor:
-  # What this plugin's patched dev-distribution descriptor needs that the convention does not give.
-  #
-  # `dev_dist_plugin_descriptor` patches the plugin's `META-INF/plugin.xml` the way a dev-distribution assembly
-  # does. The converter derives the plugin's own descriptor, the descriptor of every content module the plugin's
-  # `<content>` names, the plugin directory and the main jar name. This part is the remainder, so a plugin that
-  # reads no descriptor through an `xi:include` and whose `PluginLayout` states no deviation has no such part.
-  #
-  # Every path here is project-relative. The converter resolves a path to a label itself, which is what lets the
-  # community half decide alone: a path outside `community/` is a path a community package cannot name, and the
-  # community half then emits no section for this plugin.
-  "intellij.kotlin.plugin":
-    # Every descriptor an `xi:include` of this plugin's closure reaches, as the load path a resolver asks
-    # for and the file that answers it.
-    descriptors:
-    - load_path: "META-INF/KotlinCommonNativeDebugger.xml"
-      path: "mobile-ide/native-debugger/resources/META-INF/KotlinCommonNativeDebugger.xml"
-    - load_path: "META-INF/KotlinIdeaNativeDebugger.xml"
-      path: "plugins/kotlin/ultimate-native/resources/META-INF/KotlinIdeaNativeDebugger.xml"
-    - load_path: "META-INF/KotlinNonCidrDebugger.xml"
-      path: "mobile-ide/native-debugger/resources/META-INF/KotlinNonCidrDebugger.xml"
-    # A descriptor no production source root holds, which a library jar answers instead. The load path is
-    # also the zip entry. The two names are what the converter looks the library up by. No jar is named
-    # here, because a jar file name carries the artifact version.
-    library_descriptors:
-    - load_path: "META-INF/analysis-api/analysis-api-fir.xml"
-      module: "intellij.libraries.kotlinc.analysis.api.k2"
-      library: "kotlinc.analysis-api-k2"
-    - load_path: "META-INF/analysis-api/analysis-api-impl-base.xml"
-      module: "intellij.libraries.kotlinc.analysis.api.impl.base"
-      library: "kotlinc.analysis-api-impl-base"
-    - load_path: "META-INF/extensions/compiler.xml"
-      module: "intellij.libraries.kotlinc.kotlin.compiler.common"
-      library: "kotlinc.kotlin-compiler-common"
-    - load_path: "META-INF/analysis-api/analysis-api-platform-interface.xml"
-      module: "intellij.libraries.kotlinc.analysis.api.platform.interface"
-      library: "kotlinc.analysis-api-platform-interface"
-    - load_path: "META-INF/analysis-api/low-level-api-fir.xml"
-      module: "intellij.libraries.kotlinc.low.level.api.fir"
-      library: "kotlinc.low-level-api-fir"
-    - load_path: "META-INF/analysis-api/symbol-light-classes.xml"
-      module: "intellij.libraries.kotlinc.symbol.light.classes"
-      library: "kotlinc.symbol-light-classes"
-    # Which content module's embedded descriptor takes `separate-jar="true"`.
-    separate_jar:
-    - "intellij.kotlin.duplicate.scope"
-    # The layout's raw text patch, as marker-table rows in the order it applies them. A variant of one
-    # operating system and one architecture states no row, because the variant gives it.
-    markers:
-    - "marker:<!-- IJ/AS-INCOMPATIBLE-PLACEHOLDER -->:<incompatible-with>com.intellij.modules.androidstudio</incompatible-with>"
-    # `PluginLayout.versionSuffix`.
-    version_suffix: "-IJ"
-    # `PluginLayout.directoryName`, which the derived name does not give.
-    directory_name: "Kotlin"

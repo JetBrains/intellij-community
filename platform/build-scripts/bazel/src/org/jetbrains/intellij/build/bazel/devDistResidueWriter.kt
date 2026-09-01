@@ -9,7 +9,7 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 /**
- * Writes the content half of every plugin's `dev-dist.yaml`, read off a distribution build's content report.
+ * Writes every plugin's `dev-dist.yaml`, read off a distribution build's content report.
  *
  * `derivePluginContentCandidacy` and `derivePluginContent` state a plugin's content from the project model, and this
  * states what is left - the `PluginLayout` decisions the model cannot reach. The report zip is the authority it reads
@@ -71,7 +71,7 @@ internal fun writeDevDistResidues(
       rowsPerField.merge(field, rows, Int::plus)
       pluginsPerField.merge(field, 1, Int::plus)
     }
-    val text = composeDevDistResidueText(content = section, existing = file)
+    val text = composeDevDistResidueText(section)
     val before = if (Files.isRegularFile(file)) file.readText() else null
     when {
       text == null && before == null -> Unit
@@ -699,54 +699,32 @@ internal fun contentResidueFieldRows(section: ContentResidueSection?): Map<Strin
 /**
  * The whole text of one plugin's `dev-dist.yaml`, or `null` when the plugin needs no file at all.
  *
- * The `descriptor:` part of [existing] is kept verbatim. The two parts have two producers - `plugin-model-tool` writes
- * the descriptor deviations and this writes the content ones - so each has to leave the other's key alone. A file that
- * holds only a `descriptor:` part therefore survives a run of this writer untouched.
- *
- * The split is the line `descriptor:`, and neither producer may put a comment on the other's side of it.
- * `renderDescriptorPart` of `devDistDescriptorResidue.kt` states the same rule from its end, and
- * [DEV_DIST_RESIDUE_HEADER] is the one text both producers write - byte for byte, or the regeneration reaches no fixed
- * point, because each tool would rewrite what the other just wrote.
+ * This run is the one producer of the whole file. `plugin-model-tool` wrote a `descriptor:` part of it until the
+ * descriptor deviations moved into the `plugin_descriptor_residue` section of `dev_dist_plugin_model_tables.txt`, and
+ * each producer had to keep the other's bytes verbatim around the split. So this composes the file and reads none of it.
  */
-internal fun composeDevDistResidueText(content: ContentResidueSection?, existing: Path): String? {
-  val descriptorPart = existingDescriptorPart(existing)
-  if (content == null && descriptorPart == null) {
+internal fun composeDevDistResidueText(content: ContentResidueSection?): String? {
+  if (content == null) {
     return null
   }
   val builder = StringBuilder()
   builder.append(DEV_DIST_RESIDUE_HEADER)
-  if (content != null) {
-    builder.append("content:\n")
-    appendNames(builder, "lib_root_jars", content.libRootJars, LIB_ROOT_JARS_COMMENT)
-    appendNames(builder, "separate_jars", content.separateJars, SEPARATE_JARS_COMMENT)
-    appendNestedNames(builder, "member_jars", content.memberJars, MEMBER_JARS_COMMENT)
-    appendNames(builder, "raw_members", content.rawMembers, RAW_MEMBERS_COMMENT)
-    appendNames(builder, "vetoed_members", content.vetoedMembers, VETOED_MEMBERS_COMMENT)
-    appendNestedNames(builder, "merged_libraries", content.mergedLibraries, MERGED_LIBRARIES_COMMENT)
-    if (content.libraries.isNotEmpty()) {
-      builder.append(LIBRARIES_COMMENT)
-      builder.append("  libraries:\n")
-      for (row in content.libraries) {
-        builder.append("  - name: ${quote(row.name)}\n")
-        row.module?.let { builder.append("    module: ${quote(it)}\n") }
-      }
+  builder.append("content:\n")
+  appendNames(builder, "lib_root_jars", content.libRootJars, LIB_ROOT_JARS_COMMENT)
+  appendNames(builder, "separate_jars", content.separateJars, SEPARATE_JARS_COMMENT)
+  appendNestedNames(builder, "member_jars", content.memberJars, MEMBER_JARS_COMMENT)
+  appendNames(builder, "raw_members", content.rawMembers, RAW_MEMBERS_COMMENT)
+  appendNames(builder, "vetoed_members", content.vetoedMembers, VETOED_MEMBERS_COMMENT)
+  appendNestedNames(builder, "merged_libraries", content.mergedLibraries, MERGED_LIBRARIES_COMMENT)
+  if (content.libraries.isNotEmpty()) {
+    builder.append(LIBRARIES_COMMENT)
+    builder.append("  libraries:\n")
+    for (row in content.libraries) {
+      builder.append("  - name: ${quote(row.name)}\n")
+      row.module?.let { builder.append("    module: ${quote(it)}\n") }
     }
   }
-  descriptorPart?.let(builder::append)
   return builder.toString()
-}
-
-/** The `descriptor:` block of an existing file, verbatim, or `null` when the file has none. */
-private fun existingDescriptorPart(file: Path): String? {
-  if (!Files.isRegularFile(file)) {
-    return null
-  }
-  val text = file.readText()
-  val start = text.indexOf("\ndescriptor:\n")
-  if (start < 0) {
-    return if (text.startsWith("descriptor:\n")) text else null
-  }
-  return text.substring(start + 1)
 }
 
 private fun appendNames(builder: StringBuilder, field: String, names: List<String>, comment: String) {
@@ -799,9 +777,9 @@ private const val DEV_DIST_RESIDUE_HEADER: String = """# Generated - do not edit
 # `PluginLayout` decision, and evaluating a product layout is the work the converter exists to keep out of a
 # fragment action.
 #
-# Two parts, two producers. `content:` is one section for the plugin, because membership does not depend on the
-# layout variant. `descriptor:` is keyed by `<main module>` or `<main module>/<variant>`, because a descriptor
-# deviation is a fact about one variant. Each producer rewrites only its own part.
+# One part and one producer. `content:` is one section for the plugin, because membership does not depend on the
+# layout variant. The descriptor deviations are keyed by the layout variant, so they sit in the
+# `plugin_descriptor_residue` section of `community/build/dev_dist_plugin_model_tables.txt` instead.
 #
 # No row is a Bazel label, because a label carries the artifact version of a library. A row is a path only
 # where the layout names a jar that no rule derives, which is what `member_jars` states.

@@ -24,6 +24,29 @@
 # A plugin with no row takes the convention `intellij.a.b` -> `a-b` and `a-b.jar`, which is what
 # `PluginLayout` gives a plugin that renames neither. The converter needs both names to state a jar of the
 # plugin in the dev-distribution recipe, and no project model holds either.
+#
+# `[plugin_descriptor_residue]` - what a plugin's patched descriptor needs that the convention does not
+# give, for the plugin that reads a descriptor through an `xi:include` or whose `PluginLayout` deviates. The
+# key is `<main module>` or `<main module>/<variant>`, because a descriptor deviation is a fact about one
+# layout variant. A plugin the section does not name is pure convention.
+#
+# One row per fact, tab separated: the key, the field name, then that field's own tokens. So one key states
+# several rows, and a flat reader needs no nesting rule. A field whose value is a list states one row per
+# item, and the rows keep the order the patch applies them in. A flag field states the key and the field
+# name alone. Tabs, because a marker row states a `:` and a space.
+#
+# The fields: `descriptor` states a load path and the project-relative path that answers it;
+# `library_descriptor` states a load path, the owning module and the library name; `refused_content_module`
+# and `separate_jar` each state one content module; `marker` states one marker-table row of the layout's raw
+# text patch; `version_suffix` states what the layout appends to the build version; `no_embedding`,
+# `exact_version` and `retain_product_descriptor` are flags.
+#
+# Every path here is project-relative, and no row is a Bazel label. The converter resolves a path to a label
+# itself, which is what lets the community half decide alone: a path outside `community/` is a path a
+# community package cannot name, and the community half then emits no target for that plugin.
+#
+# The plugin directory and the main jar name are not rows here. `[plugin_jar_placement]` states
+# both, for every plugin that renames either, and the converter reads them there.
 
 [content_vetoes]
 intellij.angular.backend
@@ -289,3 +312,99 @@ language-server.plugins.spring	spring	language-server-plugins-spring.jar
 language-server.plugins.spring.lsp	spring.lsp	language-server-plugins-spring-lsp.jar
 language-server.plugins.sql	sql	language-server-plugins-sql.jar
 language-server.plugins.sql.lsp	sql.lsp	language-server-plugins-sql-lsp.jar
+
+[plugin_descriptor_residue]
+intellij.android.gradle.declarative.lang.ide	separate_jar	intellij.android.gradle.declarative.lang
+intellij.android.gradle.dsl	descriptor	META-INF/gradle-dsl.xml	community/android/gradle-dsl/resources/META-INF/gradle-dsl.xml
+intellij.android.gradle.dsl	separate_jar	intellij.android.gradle.dsl.flags
+intellij.cwm	no_embedding
+intellij.cwm	exact_version
+intellij.cwm	retain_product_descriptor
+intellij.database.plugin	descriptor	META-INF/AllDatabaseDialectsCore.xml	dbe/dialects/_core/resources/META-INF/AllDatabaseDialectsCore.xml
+intellij.database.plugin	descriptor	META-INF/AllDatabaseDialectsCoreEx.xml	dbe/dialects/_core/resources/META-INF/AllDatabaseDialectsCoreEx.xml
+intellij.database.plugin	descriptor	META-INF/AllDatabaseDialectsEx.xml	dbe/dialects/_core/resources/META-INF/AllDatabaseDialectsEx.xml
+intellij.database.plugin	descriptor	META-INF/AllDatabaseDialectsShared.xml	dbe/dialects/_core/resources/META-INF/AllDatabaseDialectsShared.xml
+intellij.database.plugin	separate_jar	intellij.database.impl.frontend
+intellij.fullLine	separate_jar	intellij.fullLine.css.local
+intellij.fullLine	separate_jar	intellij.fullLine.go.local
+intellij.fullLine	separate_jar	intellij.fullLine.html.local
+intellij.fullLine	separate_jar	intellij.fullLine.java.local
+intellij.fullLine	separate_jar	intellij.fullLine.js.local
+intellij.fullLine	separate_jar	intellij.fullLine.kotlin.local
+intellij.fullLine	separate_jar	intellij.fullLine.php.local
+intellij.fullLine	separate_jar	intellij.fullLine.rider.cpp.local
+intellij.fullLine	separate_jar	intellij.fullLine.rider.csharp.local
+intellij.fullLine	separate_jar	intellij.fullLine.ruby.local
+intellij.fullLine	separate_jar	intellij.fullLine.rust.local
+intellij.fullLine	separate_jar	intellij.fullLine.terraform.local
+intellij.fullLine	separate_jar	intellij.ml.llm.completion
+intellij.fullLine	separate_jar	intellij.ml.llm.java.completion
+intellij.fullLine	separate_jar	intellij.ml.llm.python.completion
+intellij.fullLine	separate_jar	intellij.ml.llm.ruby.completion
+intellij.fullLine	separate_jar	intellij.ml.llm.php.completion
+intellij.fullLine	separate_jar	intellij.ml.llm.javascript.completion
+intellij.fullLine	separate_jar	intellij.ml.llm.css.completion
+intellij.fullLine	separate_jar	intellij.ml.llm.html.completion
+intellij.fullLine	separate_jar	intellij.ml.llm.rust.completion
+intellij.fullLine	separate_jar	intellij.ml.llm.rider.csharp.completion
+intellij.fullLine	separate_jar	intellij.ml.llm.vcs.completion
+intellij.fullLine	exact_version
+intellij.gateway.plugin	exact_version
+intellij.grazie	separate_jar	intellij.grazie.markdown
+intellij.groovy	descriptor	META-INF/gant-support.xml	community/plugins/groovy/resources/META-INF/gant-support.xml
+intellij.groovy	descriptor	META-INF/geb-support.xml	community/plugins/groovy/resources/META-INF/geb-support.xml
+intellij.groovy	descriptor	META-INF/groovy-console.xml	community/plugins/groovy/resources/META-INF/groovy-console.xml
+intellij.groovy	descriptor	META-INF/groovy-dynamic-members.xml	community/plugins/groovy/resources/META-INF/groovy-dynamic-members.xml
+intellij.groovy	descriptor	META-INF/groovy-indexed-property-support.xml	community/plugins/groovy/resources/META-INF/groovy-indexed-property-support.xml
+intellij.groovy	descriptor	META-INF/groovy-intentions.xml	community/plugins/groovy/resources/META-INF/groovy-intentions.xml
+intellij.groovy	descriptor	META-INF/groovy-logback-support.xml	community/plugins/groovy/resources/META-INF/groovy-logback-support.xml
+intellij.groovy	descriptor	META-INF/groovy-templates.xml	community/plugins/groovy/resources/META-INF/groovy-templates.xml
+intellij.java.plugin	descriptor	META-INF/GlobalInspections.xml	community/java/java-backend/resources/META-INF/GlobalInspections.xml
+intellij.java.plugin	descriptor	META-INF/InspectionGadgets.xml	community/java/java-backend/resources/META-INF/InspectionGadgets.xml
+intellij.java.plugin	descriptor	META-INF/Inspections.xml	community/java/java-backend/resources/META-INF/Inspections.xml
+intellij.java.plugin	descriptor	META-INF/IntentionPowerPack.xml	community/java/java-impl/resources/META-INF/IntentionPowerPack.xml
+intellij.java.plugin	descriptor	META-INF/Intentions.xml	community/java/java-impl/resources/META-INF/Intentions.xml
+intellij.java.plugin	descriptor	META-INF/JavaActions.xml	community/java/java-backend/resources/META-INF/JavaActions.xml
+intellij.java.plugin	descriptor	META-INF/JavaCodeServerCore.xml	community/java/codeserver/core/resources/META-INF/JavaCodeServerCore.xml
+intellij.java.plugin	descriptor	META-INF/JavaCodeServerHighlighting.xml	community/java/codeserver/highlighting/resources/META-INF/JavaCodeServerHighlighting.xml
+intellij.java.plugin	descriptor	META-INF/JavaIndexingApi.xml	community/java/java-indexing-api/resources/META-INF/JavaIndexingApi.xml
+intellij.java.plugin	descriptor	META-INF/JavaIndexingPlugin.xml	community/java/java-indexing-impl/resources/META-INF/JavaIndexingPlugin.xml
+intellij.java.plugin	descriptor	META-INF/JavaPlugin.xml	community/java/java-backend/resources/META-INF/JavaPlugin.xml
+intellij.java.plugin	descriptor	META-INF/ManifestSupport.xml	community/java/manifest/resources/META-INF/ManifestSupport.xml
+intellij.java.plugin	descriptor	META-INF/RegistryKeys.xml	community/java/java-backend/resources/META-INF/RegistryKeys.xml
+intellij.java.plugin	descriptor	META-INF/RegistryKeysAnalysisApi.xml	community/java/java-analysis-api/resources/META-INF/RegistryKeysAnalysisApi.xml
+intellij.java.plugin	descriptor	META-INF/RegistryKeysAnalysisImpl.xml	community/java/java-analysis-impl/resources/META-INF/RegistryKeysAnalysisImpl.xml
+intellij.java.plugin	descriptor	META-INF/RegistryKeysCompilerImpl.xml	community/java/compiler/impl/resources/META-INF/RegistryKeysCompilerImpl.xml
+intellij.java.plugin	descriptor	META-INF/RegistryKeysExecutionImpl.xml	community/java/execution/impl/resources/META-INF/RegistryKeysExecutionImpl.xml
+intellij.java.plugin	descriptor	META-INF/RegistryKeysIndexingImpl.xml	community/java/java-indexing-impl/resources/META-INF/RegistryKeysIndexingImpl.xml
+intellij.java.plugin	descriptor	META-INF/RegistryKeysJavaImpl.xml	community/java/java-impl/resources/META-INF/RegistryKeysJavaImpl.xml
+intellij.java.plugin	descriptor	META-INF/RegistryKeysJavaUi.xml	community/java/idea-ui/resources/META-INF/RegistryKeysJavaUi.xml
+intellij.java.plugin	descriptor	META-INF/RegistryKeysRefactorings.xml	community/java/java-impl-refactorings/resources/META-INF/RegistryKeysRefactorings.xml
+intellij.java.plugin	descriptor	META-INF/RegistryKeysStructureView.xml	community/java/java-structure-view/resources/META-INF/RegistryKeysStructureView.xml
+intellij.java.plugin	descriptor	META-INF/TypeMigration.xml	community/java/typeMigration/resources/META-INF/TypeMigration.xml
+intellij.java.plugin	descriptor	META-INF/UsageData.xml	community/java/java-impl/resources/META-INF/UsageData.xml
+intellij.java.plugin	descriptor	META-INF/community-integration.xml	community/java/java-promo/resources/META-INF/community-integration.xml
+intellij.java.plugin	descriptor	META-INF/java-debugger.xml	community/java/debugger/impl/resources/META-INF/java-debugger.xml
+intellij.java.plugin	descriptor	intellij.java.analysis.impl.analyzer.xml	community/java/java-analysis-impl/resources/intellij.java.analysis.impl.analyzer.xml
+intellij.java.plugin	descriptor	intellij.java.debugger.content.xml	community/java/debugger/openapi/resources/intellij.java.debugger.content.xml
+intellij.java.plugin	descriptor	intellij.java.debugger.impl.backend.content.xml	community/java/debugger/backend/resources/intellij.java.debugger.impl.backend.content.xml
+intellij.java.plugin	descriptor	intellij.java.debugger.impl.shared.content.xml	community/java/debugger/shared/resources/intellij.java.debugger.impl.shared.content.xml
+intellij.javaee.app.servers.impl	descriptor	META-INF/app-servers-service-view-integration.xml	plugins/AppServersView/resources/META-INF/app-servers-service-view-integration.xml
+intellij.kotlin.plugin	descriptor	META-INF/KotlinCommonNativeDebugger.xml	mobile-ide/native-debugger/resources/META-INF/KotlinCommonNativeDebugger.xml
+intellij.kotlin.plugin	descriptor	META-INF/KotlinIdeaNativeDebugger.xml	plugins/kotlin/ultimate-native/resources/META-INF/KotlinIdeaNativeDebugger.xml
+intellij.kotlin.plugin	descriptor	META-INF/KotlinNonCidrDebugger.xml	mobile-ide/native-debugger/resources/META-INF/KotlinNonCidrDebugger.xml
+intellij.kotlin.plugin	library_descriptor	META-INF/analysis-api/analysis-api-fir.xml	intellij.libraries.kotlinc.analysis.api.k2	kotlinc.analysis-api-k2
+intellij.kotlin.plugin	library_descriptor	META-INF/analysis-api/analysis-api-impl-base.xml	intellij.libraries.kotlinc.analysis.api.impl.base	kotlinc.analysis-api-impl-base
+intellij.kotlin.plugin	library_descriptor	META-INF/extensions/compiler.xml	intellij.libraries.kotlinc.kotlin.compiler.common	kotlinc.kotlin-compiler-common
+intellij.kotlin.plugin	library_descriptor	META-INF/analysis-api/analysis-api-platform-interface.xml	intellij.libraries.kotlinc.analysis.api.platform.interface	kotlinc.analysis-api-platform-interface
+intellij.kotlin.plugin	library_descriptor	META-INF/analysis-api/low-level-api-fir.xml	intellij.libraries.kotlinc.low.level.api.fir	kotlinc.low-level-api-fir
+intellij.kotlin.plugin	library_descriptor	META-INF/analysis-api/symbol-light-classes.xml	intellij.libraries.kotlinc.symbol.light.classes	kotlinc.symbol-light-classes
+intellij.kotlin.plugin	separate_jar	intellij.kotlin.duplicate.scope
+intellij.kotlin.plugin	marker	marker:<!-- IJ/AS-INCOMPATIBLE-PLACEHOLDER -->:<incompatible-with>com.intellij.modules.androidstudio</incompatible-with>
+intellij.kotlin.plugin	version_suffix	-IJ
+intellij.platform.vcs.plugin	descriptor	META-INF/VcsActions.xml	community/platform/vcs-impl/resources/META-INF/VcsActions.xml
+intellij.platform.vcs.plugin	descriptor	META-INF/VcsExtensionPoints.xml	community/platform/vcs-impl/resources/META-INF/VcsExtensionPoints.xml
+intellij.platform.vcs.plugin	descriptor	META-INF/VcsExtensions.xml	community/platform/vcs-impl/resources/META-INF/VcsExtensions.xml
+intellij.terminal	descriptor	META-INF/terminal.xml	community/plugins/terminal/resources/META-INF/terminal.xml
+intellij.ultimate.plugin	no_embedding
+intellij.ultimate.plugin	exact_version

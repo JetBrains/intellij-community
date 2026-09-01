@@ -39,7 +39,6 @@ exports_files(
     [
         "intellij.lombok.plugin.iml",
         "resources/META-INF/plugin.xml",
-        "dev-dist.yaml",
     ],
     visibility = ["//visibility:public"],
 )

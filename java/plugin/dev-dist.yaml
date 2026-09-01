@@ -11,9 +11,9 @@
 # `PluginLayout` decision, and evaluating a product layout is the work the converter exists to keep out of a
 # fragment action.
 #
-# Two parts, two producers. `content:` is one section for the plugin, because membership does not depend on the
-# layout variant. `descriptor:` is keyed by `<main module>` or `<main module>/<variant>`, because a descriptor
-# deviation is a fact about one variant. Each producer rewrites only its own part.
+# One part and one producer. `content:` is one section for the plugin, because membership does not depend on the
+# layout variant. The descriptor deviations are keyed by the layout variant, so they sit in the
+# `plugin_descriptor_residue` section of `community/build/dev_dist_plugin_model_tables.txt` instead.
 #
 # No row is a Bazel label, because a label carries the artifact version of a library. A row is a path only
 # where the layout names a jar that no rule derives, which is what `member_jars` states.
@@ -33,82 +33,3 @@ content:
   # Libraries the layout packs that no member declares. A row with no `module` is a project library.
   libraries:
   - name: "Eclipse"
-descriptor:
-  # What this plugin's patched dev-distribution descriptor needs that the convention does not give.
-  #
-  # `dev_dist_plugin_descriptor` patches the plugin's `META-INF/plugin.xml` the way a dev-distribution assembly
-  # does. The converter derives the plugin's own descriptor, the descriptor of every content module the plugin's
-  # `<content>` names, the plugin directory and the main jar name. This part is the remainder, so a plugin that
-  # reads no descriptor through an `xi:include` and whose `PluginLayout` states no deviation has no such part.
-  #
-  # Every path here is project-relative. The converter resolves a path to a label itself, which is what lets the
-  # community half decide alone: a path outside `community/` is a path a community package cannot name, and the
-  # community half then emits no section for this plugin.
-  "intellij.java.plugin":
-    # Every descriptor an `xi:include` of this plugin's closure reaches, as the load path a resolver asks
-    # for and the file that answers it.
-    descriptors:
-    - load_path: "META-INF/GlobalInspections.xml"
-      path: "community/java/java-backend/resources/META-INF/GlobalInspections.xml"
-    - load_path: "META-INF/InspectionGadgets.xml"
-      path: "community/java/java-backend/resources/META-INF/InspectionGadgets.xml"
-    - load_path: "META-INF/Inspections.xml"
-      path: "community/java/java-backend/resources/META-INF/Inspections.xml"
-    - load_path: "META-INF/IntentionPowerPack.xml"
-      path: "community/java/java-impl/resources/META-INF/IntentionPowerPack.xml"
-    - load_path: "META-INF/Intentions.xml"
-      path: "community/java/java-impl/resources/META-INF/Intentions.xml"
-    - load_path: "META-INF/JavaActions.xml"
-      path: "community/java/java-backend/resources/META-INF/JavaActions.xml"
-    - load_path: "META-INF/JavaCodeServerCore.xml"
-      path: "community/java/codeserver/core/resources/META-INF/JavaCodeServerCore.xml"
-    - load_path: "META-INF/JavaCodeServerHighlighting.xml"
-      path: "community/java/codeserver/highlighting/resources/META-INF/JavaCodeServerHighlighting.xml"
-    - load_path: "META-INF/JavaIndexingApi.xml"
-      path: "community/java/java-indexing-api/resources/META-INF/JavaIndexingApi.xml"
-    - load_path: "META-INF/JavaIndexingPlugin.xml"
-      path: "community/java/java-indexing-impl/resources/META-INF/JavaIndexingPlugin.xml"
-    - load_path: "META-INF/JavaPlugin.xml"
-      path: "community/java/java-backend/resources/META-INF/JavaPlugin.xml"
-    - load_path: "META-INF/ManifestSupport.xml"
-      path: "community/java/manifest/resources/META-INF/ManifestSupport.xml"
-    - load_path: "META-INF/RegistryKeys.xml"
-      path: "community/java/java-backend/resources/META-INF/RegistryKeys.xml"
-    - load_path: "META-INF/RegistryKeysAnalysisApi.xml"
-      path: "community/java/java-analysis-api/resources/META-INF/RegistryKeysAnalysisApi.xml"
-    - load_path: "META-INF/RegistryKeysAnalysisImpl.xml"
-      path: "community/java/java-analysis-impl/resources/META-INF/RegistryKeysAnalysisImpl.xml"
-    - load_path: "META-INF/RegistryKeysCompilerImpl.xml"
-      path: "community/java/compiler/impl/resources/META-INF/RegistryKeysCompilerImpl.xml"
-    - load_path: "META-INF/RegistryKeysExecutionImpl.xml"
-      path: "community/java/execution/impl/resources/META-INF/RegistryKeysExecutionImpl.xml"
-    - load_path: "META-INF/RegistryKeysIndexingImpl.xml"
-      path: "community/java/java-indexing-impl/resources/META-INF/RegistryKeysIndexingImpl.xml"
-    - load_path: "META-INF/RegistryKeysJavaImpl.xml"
-      path: "community/java/java-impl/resources/META-INF/RegistryKeysJavaImpl.xml"
-    - load_path: "META-INF/RegistryKeysJavaUi.xml"
-      path: "community/java/idea-ui/resources/META-INF/RegistryKeysJavaUi.xml"
-    - load_path: "META-INF/RegistryKeysRefactorings.xml"
-      path: "community/java/java-impl-refactorings/resources/META-INF/RegistryKeysRefactorings.xml"
-    - load_path: "META-INF/RegistryKeysStructureView.xml"
-      path: "community/java/java-structure-view/resources/META-INF/RegistryKeysStructureView.xml"
-    - load_path: "META-INF/TypeMigration.xml"
-      path: "community/java/typeMigration/resources/META-INF/TypeMigration.xml"
-    - load_path: "META-INF/UsageData.xml"
-      path: "community/java/java-impl/resources/META-INF/UsageData.xml"
-    - load_path: "META-INF/community-integration.xml"
-      path: "community/java/java-promo/resources/META-INF/community-integration.xml"
-    - load_path: "META-INF/java-debugger.xml"
-      path: "community/java/debugger/impl/resources/META-INF/java-debugger.xml"
-    - load_path: "intellij.java.analysis.impl.analyzer.xml"
-      path: "community/java/java-analysis-impl/resources/intellij.java.analysis.impl.analyzer.xml"
-    - load_path: "intellij.java.debugger.content.xml"
-      path: "community/java/debugger/openapi/resources/intellij.java.debugger.content.xml"
-    - load_path: "intellij.java.debugger.impl.backend.content.xml"
-      path: "community/java/debugger/backend/resources/intellij.java.debugger.impl.backend.content.xml"
-    - load_path: "intellij.java.debugger.impl.shared.content.xml"
-      path: "community/java/debugger/shared/resources/intellij.java.debugger.impl.shared.content.xml"
-    # `PluginLayout.directoryName`, which the derived name does not give.
-    directory_name: "java"
-    # `PluginLayout.getMainJarName()`, which the derived name does not give.
-    main_jar_name: "java-impl.jar"

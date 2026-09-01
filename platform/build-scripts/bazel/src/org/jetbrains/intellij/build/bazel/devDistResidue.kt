@@ -9,23 +9,19 @@ import kotlin.io.path.readText
 import kotlin.io.path.relativeTo
 
 /**
- * One plugin's whole dev-distribution residue: what the derivation cannot state about its content or its descriptor.
+ * One plugin's dev-distribution content residue: what the derivation cannot state about the plugin's members.
  *
- * ADR 0007 rule 1 applied to both leaves of `dev_dist_plugin`. The converter derives a plugin's members, the jar of each
- * member, the libraries the members declare and the descriptor of every content module from the project model. This file
- * is the remainder, and a plugin with no file at all is pure convention.
+ * ADR 0007 rule 1 applied to the content leaf of `dev_dist_plugin`. The converter derives a plugin's members, the jar of
+ * each member and the libraries the members declare from the project model. This file is the remainder, and a plugin
+ * with no file at all is pure convention.
  *
- * Two parts, because two things decide them. [content] is one section for the plugin, since a plugin's membership does
- * not depend on the layout variant. [descriptor] is keyed by (plugin, layout variant), since a descriptor deviation is a
- * fact about one variant - two variants state different markers.
- *
- * The two parts also have two producers, and each rewrites only its own key. Neither may drop the other's, which is what
- * [parseDevDistResidue] and both writers are careful about.
+ * One part and one producer. [content] is one section for the plugin, since a plugin's membership does not depend on the
+ * layout variant. The descriptor deviations are keyed by (plugin, layout variant), so they are in the
+ * `plugin_descriptor_residue` section of `dev_dist_plugin_model_tables.txt` instead; see [descriptorResidueOf].
  */
 @Serializable
 internal data class DevDistResidueFile(
   @JvmField val content: ContentResidueSection? = null,
-  @JvmField val descriptor: Map<String, DescriptorResidueSection?> = emptyMap(),
 )
 
 /**
@@ -145,18 +141,7 @@ internal fun devDistResiduePackagePath(module: ModuleDescriptor): String? {
 }
 
 /**
- * The descriptor half of [module]'s residue, by `<main module>` or `<main module>/<variant>`.
- *
- * A keyed map and not a list, unlike the content half: the key is one (plugin, layout variant), and a descriptor
- * deviation is a fact about one variant rather than about the plugin. A section may be `null`, which is how a plugin
- * whose only deviation is having a variant at all is expressed.
- */
-internal fun descriptorResidueOf(module: ModuleDescriptor): Map<String, DescriptorResidueSection?> {
-  return module.devDistResidue?.descriptor ?: emptyMap()
-}
-
-/**
- * The content half of [module]'s residue, in the shape the two derivations take, or [PluginContentResidue.NONE].
+ * [module]'s residue, in the shape the two derivations take, or [PluginContentResidue.NONE].
  *
  * Joins the plugin's own seven fields with its merged members, which are central; see [readPluginExtraMembers]. A
  * plugin can have either half alone: one that only merges a member has no section, and one that only renames a jar has

@@ -34,9 +34,9 @@ const val DEV_DIST_EXTRA_MEMBERS_FILE_NAME: String = "dev_dist_plugin_extra_memb
  * One plugin's remaining dev-distribution residue, beside the plugin's own main module.
  *
  * The merged members left this file for the table above, and the rest of the content residue is moving onto the
- * plugin's own `dev_dist_plugin` call. The name is still declared here because two readers outside the converter name
- * it: the orphan sweep of `contentRecipeOrphans.kt` claims the file, and `devDistDescriptorResidue.kt` writes the
- * `descriptor:` part of it.
+ * plugin's own `dev_dist_plugin` call. The name is still declared here because one reader outside the converter names
+ * it: the orphan sweep of `contentRecipeOrphans.kt` claims the file. The descriptor deviations left for the
+ * `plugin_descriptor_residue` section of `dev_dist_plugin_model_tables.txt`, so the converter is the one producer now.
  *
  * The name states the dev distribution, because `plugin-descriptor.yaml` is DevKit's documentation data for the plugin
  * descriptor format. `PluginDescriptorDocumentationTargetProvider` reads that file, and the SDK Docs page generator

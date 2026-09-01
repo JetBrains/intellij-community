@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.bazel
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -15,7 +16,7 @@ internal class DevDistPluginModelTablesTest {
   val temporaryFolder: TemporaryFolder = TemporaryFolder()
 
   @Test
-  fun `one file states the four tables`() {
+  fun `one file states the five tables`() {
     val tables = read(
       "# a comment\n" +
       "\n" +
@@ -33,7 +34,19 @@ internal class DevDistPluginModelTablesTest {
       "intellij.per.platform/win\n" +
       "\n" +
       "[$PLUGIN_JAR_PLACEMENT_SECTION]\n" +
-      "intellij.renamed\tRenamed Plugin\trenamed.jar\n"
+      "intellij.renamed\tRenamed Plugin\trenamed.jar\n" +
+      "\n" +
+      "[$PLUGIN_DESCRIPTOR_RESIDUE_SECTION]\n" +
+      "intellij.deviating\tdescriptor\tMETA-INF/Extra.xml\tcommunity/demo/resources/META-INF/Extra.xml\n" +
+      "intellij.deviating\tlibrary_descriptor\tMETA-INF/lib.xml\tintellij.libraries.demo\tdemo-library\n" +
+      "intellij.deviating\trefused_content_module\tintellij.deviating/refused\n" +
+      "intellij.deviating\tseparate_jar\tintellij.deviating/apart\n" +
+      "intellij.deviating\tmarker\tmarker:<!-- PLACEHOLDER -->:<incompatible-with>a b</incompatible-with>\n" +
+      "intellij.deviating\tversion_suffix\t-IJ\n" +
+      "intellij.deviating\tno_embedding\n" +
+      "intellij.deviating\texact_version\n" +
+      "intellij.deviating\tretain_product_descriptor\n" +
+      "intellij.per.platform/mac\tseparate_jar\tintellij.per.platform/apart\n"
     )
 
     assertEquals(setOf("intellij.vetoed"), tables.contentModuleJarVetoes)
@@ -49,6 +62,40 @@ internal class DevDistPluginModelTablesTest {
     val placement = tables.pluginJarPlacement.getValue("intellij.renamed")
     assertEquals("Renamed Plugin", placement.directory)
     assertEquals("renamed.jar", placement.mainJarName)
+    // Every field of one key, from nine rows, and the second key states that a variant carries its own residue.
+    val residue = tables.pluginDescriptorResidue.getValue("intellij.deviating").getValue("intellij.deviating")
+    assertEquals(listOf("META-INF/Extra.xml"), residue.descriptors.map { it.loadPath })
+    assertEquals(listOf("community/demo/resources/META-INF/Extra.xml"), residue.descriptors.map { it.path })
+    assertEquals(listOf("intellij.libraries.demo"), residue.libraryDescriptors.map { it.module })
+    assertEquals(listOf("demo-library"), residue.libraryDescriptors.map { it.library })
+    assertEquals(listOf("intellij.deviating/refused"), residue.refusedContentModules)
+    assertEquals(listOf("intellij.deviating/apart"), residue.separateJar)
+    assertEquals(listOf("marker:<!-- PLACEHOLDER -->:<incompatible-with>a b</incompatible-with>"), residue.markers)
+    assertEquals("-IJ", residue.versionSuffix)
+    assertTrue(residue.noEmbedding)
+    assertTrue(residue.exactVersion)
+    assertTrue(residue.retainProductDescriptor)
+    assertEquals(
+      listOf("intellij.per.platform/apart"),
+      tables.pluginDescriptorResidue.getValue("intellij.per.platform").getValue("intellij.per.platform/mac").separateJar,
+    )
+  }
+
+  @Test
+  fun `a key of one flag row states that flag and every other default`() {
+    // A key states one row per fact, so most keys state a few of the nine fields. Every other field has to read as the
+    // default a key the section does not name reads as, or a plugin would lose a row the patch needs.
+    val tables = read("[$PLUGIN_DESCRIPTOR_RESIDUE_SECTION]\nintellij.scrambled\tno_embedding\n")
+
+    val residue = tables.pluginDescriptorResidue.getValue("intellij.scrambled").getValue("intellij.scrambled")
+    assertTrue(residue.noEmbedding)
+    assertEquals(emptyList<DescriptorRow>(), residue.descriptors)
+    assertEquals(emptyList<String>(), residue.refusedContentModules)
+    assertEquals(emptyList<String>(), residue.separateJar)
+    assertEquals(emptyList<String>(), residue.markers)
+    assertEquals("", residue.versionSuffix)
+    assertFalse(residue.exactVersion)
+    assertFalse(residue.retainProductDescriptor)
   }
 
   @Test
@@ -67,19 +114,22 @@ internal class DevDistPluginModelTablesTest {
     assertEquals(emptyMap<String, Set<String>?>(), tables.contentCandidateOverrides)
     assertEquals(emptyMap<String, List<String>>(), tables.descriptorPopulation)
     assertEquals(emptyMap<String, PluginJarPlacement>(), tables.pluginJarPlacement)
+    assertEquals(emptyMap<String, Map<String, DescriptorResidueSection>>(), tables.pluginDescriptorResidue)
   }
 
   @Test
   fun `an empty section states an empty table`() {
     val tables = read(
       "[$CONTENT_VETOES_SECTION]\n[$CONTENT_CANDIDATE_OVERRIDES_SECTION]\n" +
-      "[$DESCRIPTOR_POPULATION_SECTION]\n[$PLUGIN_JAR_PLACEMENT_SECTION]\n"
+      "[$DESCRIPTOR_POPULATION_SECTION]\n[$PLUGIN_JAR_PLACEMENT_SECTION]\n" +
+      "[$PLUGIN_DESCRIPTOR_RESIDUE_SECTION]\n"
     )
 
     assertEquals(emptySet<String>(), tables.contentModuleJarVetoes)
     assertEquals(emptyMap<String, Set<String>?>(), tables.contentCandidateOverrides)
     assertEquals(emptyMap<String, List<String>>(), tables.descriptorPopulation)
     assertEquals(emptyMap<String, PluginJarPlacement>(), tables.pluginJarPlacement)
+    assertEquals(emptyMap<String, Map<String, DescriptorResidueSection>>(), tables.pluginDescriptorResidue)
   }
 
   @Test
@@ -100,6 +150,17 @@ internal class DevDistPluginModelTablesTest {
       "[$PLUGIN_JAR_PLACEMENT_SECTION]\nintellij.renamed\tRenamed\n" to "a row states",
       "[$PLUGIN_JAR_PLACEMENT_SECTION]\nintellij.renamed\tRenamed\tone.jar\nintellij.renamed\tOther\ttwo.jar\n" to
         "has two placement rows",
+      // A field the writer renamed and this reader does not know. The two spellings are in two Bazel modules, so no
+      // compiler pins them to each other and a dropped field would be a descriptor row the patch never reads.
+      "[$PLUGIN_DESCRIPTOR_RESIDUE_SECTION]\nintellij.deviating\tdirectory_name\tRenamed\n" to
+        "is not a field of this section",
+      // A `descriptor` row with one token would read the answering file as absent, and the include would go unfollowed.
+      "[$PLUGIN_DESCRIPTOR_RESIDUE_SECTION]\nintellij.deviating\tdescriptor\tMETA-INF/Extra.xml\n" to
+        "takes 2 tokens after the field name",
+      // A flag row with a token is the same class of mistake read from the other side.
+      "[$PLUGIN_DESCRIPTOR_RESIDUE_SECTION]\nintellij.deviating\tno_embedding\ttrue\n" to
+        "takes 0 tokens after the field name",
+      "[$PLUGIN_DESCRIPTOR_RESIDUE_SECTION]\nintellij.deviating\n" to "a row states",
     )) {
       val failure = assertThrows(IllegalStateException::class.java) { read(text) }
       assertTrue(failure.message, failure.message!!.contains(clause))

@@ -197,7 +197,7 @@ internal class BazelBuildFileGenerator(
   private val moduleToDescriptor = IdentityHashMap<JpsModule, ModuleDescriptor>()
 
   /**
-   * The four tables `plugin-model-tool` hands this run; see [PLUGIN_MODEL_TABLES_FILE_NAME].
+   * The five tables `plugin-model-tool` hands this run; see [PLUGIN_MODEL_TABLES_FILE_NAME].
    *
    * One read, because they are one file. Under `community/build/` in both kinds of checkout, so a community-only run
    * reads the same rows and never matches one naming a plugin it does not have.
@@ -300,6 +300,15 @@ internal class BazelBuildFileGenerator(
    */
   val pluginJarPlacement: Map<String, PluginJarPlacement>
     get() = devDistPluginModelTables.pluginJarPlacement
+
+  /**
+   * What a plugin's patched descriptor needs that the convention does not give, by plugin main module; see
+   * [DevDistPluginModelTables.pluginDescriptorResidue].
+   *
+   * Read through [descriptorResidueOf], which is the fall-back rule every caller shares.
+   */
+  val pluginDescriptorResidue: Map<String, Map<String, DescriptorResidueSection>>
+    get() = devDistPluginModelTables.pluginDescriptorResidue
 
   fun getKnownModuleDescriptorOrError(module: JpsModule): ModuleDescriptor {
     return moduleToDescriptor.get(module) ?: error("No descriptor for module ${module.name}")
@@ -741,9 +750,9 @@ internal class BazelBuildFileGenerator(
             imlTargetsBazel.exportFile(recipePath)
           }
         }
-        // The residue both leaves read, exported for the reason the recipe is: it states the members the derivation
-        // cannot reach and the descriptor rows the convention does not give, so a residue the hermetic run cannot see is
-        // a `contentTarget` naming fewer members than the checked-in one and a `descriptorTargets` entry it cannot form.
+        // The content residue, exported for the reason the recipe is: it states the members the derivation cannot
+        // reach, so a residue the hermetic run cannot see is a `contentTarget` naming fewer members than the
+        // checked-in one.
         devDistResiduePackagePath(module)?.let { residuePath ->
           if (!fileUpdater.handWrittenExportedFiles().contains(residuePath)) {
             imlTargetsBazel.exportFile(residuePath)

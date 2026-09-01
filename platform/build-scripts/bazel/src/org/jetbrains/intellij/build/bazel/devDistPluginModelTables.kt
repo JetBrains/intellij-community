@@ -10,17 +10,18 @@ import kotlin.io.path.readText
 /**
  * The one file `plugin-model-tool` hands this converter, beside the project model.
  *
- * Four tables, one per section, and the tool writes all four in one run: the layout exclusions that make a module
+ * Five tables, one per section, and the tool writes all five in one run: the layout exclusions that make a module
  * output unpackable, the candidacy answer a community-only checkout folds the other way, the (plugin, layout
- * variant) keys a `dev_dist_plugin_descriptor` target exists for, and where a plugin puts its own jars. They were three
- * files, and the merge is by producer.
+ * variant) keys a `dev_dist_plugin_descriptor` target exists for, where a plugin puts its own jars, and what a
+ * plugin's patched descriptor needs that the convention does not give. They were three files, plus one file per
+ * deviating plugin, and the merge is by producer.
  *
  * One file so that one Bazel declaration covers the whole hand-off. A table this converter reads and the hermetic
  * `bazel-targets.json` run does not declare is a table that run decides the other way, in silence: the population file
  * was such a table, the run answered the population question from the checked-in reports for months, and the visible
  * symptom was a shrink that looked like the intended shrink.
  * `build/decisions/0008-the-content-leaf-follows-the-descriptor-leaf.md` records it.
- * `@community//build:dev_dist_plugin_tables` is the declaration, and a new section needs no new one.
+ * `@community//build:dev_dist_plugin_tables` is the declaration, and a sixth section needs no new one.
  *
  * `dev_dist_plugin_content_population.txt` stays its own file, because its producer is not this file's producer. The
  * residue-writing run of this converter states the population from a distribution build's `content-report.zip`, and
@@ -31,7 +32,9 @@ import kotlin.io.path.readText
  * community-only checkout reads the same file. A line naming a plugin that checkout does not have is a line it never
  * matches, which is the verdict the community half of an ultimate checkout reaches too.
  *
- * It states no deviation. A deviation is a fact about one plugin, and it sits beside that plugin in `dev-dist.yaml`.
+ * The descriptor deviation of a plugin is here and no longer beside the plugin. `plugin-model-tool` is its one
+ * producer, so a file beside the plugin needed a second producer that kept this file's bytes verbatim. The content
+ * deviation still sits beside the plugin, in `dev-dist.yaml`, because the converter is that file's producer.
  */
 internal const val PLUGIN_MODEL_TABLES_FILE_NAME: String = "dev_dist_plugin_model_tables.txt"
 
@@ -46,6 +49,29 @@ internal const val DESCRIPTOR_POPULATION_SECTION: String = "descriptor_populatio
 
 /** The rows of [DevDistPluginModelTables.pluginJarPlacement]. */
 internal const val PLUGIN_JAR_PLACEMENT_SECTION: String = "plugin_jar_placement"
+
+/** The rows of [DevDistPluginModelTables.pluginDescriptorResidue]. */
+internal const val PLUGIN_DESCRIPTOR_RESIDUE_SECTION: String = "plugin_descriptor_residue"
+
+/**
+ * The field vocabulary of [PLUGIN_DESCRIPTOR_RESIDUE_SECTION], by field name, valued by the token count that follows.
+ *
+ * One map, so the reader has one arity rule and the failure message can name every field it knows. A field this map
+ * does not hold is a hard error, because the writer states the vocabulary too and no compiler pins the two to each
+ * other: `pluginDescriptorResidueRows` of `devDistDescriptorResidue.kt` is that writer, and it is in the monorepo,
+ * which this standalone Bazel module cannot compile against.
+ */
+private val DESCRIPTOR_RESIDUE_FIELD_ARITY: Map<String, Int> = mapOf(
+  "descriptor" to 2,
+  "library_descriptor" to 3,
+  "refused_content_module" to 1,
+  "separate_jar" to 1,
+  "marker" to 1,
+  "version_suffix" to 1,
+  "no_embedding" to 0,
+  "exact_version" to 0,
+  "retain_product_descriptor" to 0,
+)
 
 /**
  * Where a plugin's own jars go, for the plugin whose layout does not take [pluginJarPlacementConvention].
@@ -87,9 +113,25 @@ internal fun pluginJarPlacementOf(mainModule: String, context: BazelBuildFileGen
 }
 
 /**
+ * The two names [mainModule]'s layout states over [pluginJarPlacementConvention], each empty where the convention holds.
+ *
+ * `dev_dist_plugin_descriptor` derives both names from the main module name, so the target states a name only where the
+ * layout renames. `PluginLayout` decides the two independently: `intellij.kotlin.plugin` renames the directory to
+ * `Kotlin` and keeps `kotlin-plugin.jar`, and `intellij.testng` renames only the jar.
+ */
+internal fun statedPluginJarPlacement(mainModule: String, context: BazelBuildFileGenerator): PluginJarPlacement {
+  val placement = context.pluginJarPlacement.get(mainModule) ?: return PluginJarPlacement(directory = "", mainJarName = "")
+  val convention = pluginJarPlacementConvention(mainModule)
+  return PluginJarPlacement(
+    directory = if (placement.directory == convention.directory) "" else placement.directory,
+    mainJarName = if (placement.mainJarName == convention.mainJarName) "" else placement.mainJarName,
+  )
+}
+
+/**
  * What one read of [PLUGIN_MODEL_TABLES_FILE_NAME] produced.
  *
- * Four fields and one read. Each field used to be a file with a reader of its own, and each reader repeated the same
+ * Five fields and one read. Each field used to be a file with a reader of its own, and each reader repeated the same
  * three line rules.
  */
 internal class DevDistPluginModelTables(
@@ -143,7 +185,27 @@ internal class DevDistPluginModelTables(
    * `plugins/<directory>/lib/<...>`, and the plugin's main jar is where every member the layout co-packs ends up.
    */
   @JvmField val pluginJarPlacement: Map<String, PluginJarPlacement>,
+  /**
+   * What a plugin's patched descriptor needs that the convention does not give, by plugin main module.
+   *
+   * The inner key is `<main module>` or `<main module>/<variant>`, the same key [descriptorPopulation] states, because
+   * a descriptor deviation is a fact about one layout variant. Two variants of one plugin state different markers. A
+   * key this table does not hold is pure convention, so only a small minority of the bundled plugins are here.
+   *
+   * Grouped by main module, because every reader asks for one plugin. `descriptorResidueOf` is that reader.
+   */
+  @JvmField val pluginDescriptorResidue: Map<String, Map<String, DescriptorResidueSection>>,
 )
+
+/**
+ * The descriptor residue of the plugin whose main module [module] is, by key, or an empty map for pure convention.
+ *
+ * The one reader of [DevDistPluginModelTables.pluginDescriptorResidue], and the twin of [pluginJarPlacementOf]. A
+ * plugin absent from the table is the rule and not a gap, so every caller has to fall back the same way.
+ */
+internal fun descriptorResidueOf(module: ModuleDescriptor, context: BazelBuildFileGenerator): Map<String, DescriptorResidueSection> {
+  return context.pluginDescriptorResidue.get(module.module.name).orEmpty()
+}
 
 /** Every section empty, which is what an absent file answers. */
 internal val EMPTY_PLUGIN_MODEL_TABLES: DevDistPluginModelTables = DevDistPluginModelTables(
@@ -151,6 +213,7 @@ internal val EMPTY_PLUGIN_MODEL_TABLES: DevDistPluginModelTables = DevDistPlugin
   contentCandidateOverrides = emptyMap(),
   descriptorPopulation = emptyMap(),
   pluginJarPlacement = emptyMap(),
+  pluginDescriptorResidue = emptyMap(),
 )
 
 /**
@@ -179,6 +242,7 @@ internal fun readDevDistPluginModelTables(file: Path): DevDistPluginModelTables 
   val overrides = HashMap<String, Set<String>?>()
   val descriptorPopulation = LinkedHashMap<String, MutableList<String>>()
   val jarPlacement = HashMap<String, PluginJarPlacement>()
+  val descriptorResidue = LinkedHashMap<String, DescriptorResidueRows>()
   var section: String? = null
   for (raw in file.readText().lineSequence()) {
     val line = raw.trim()
@@ -197,6 +261,7 @@ internal fun readDevDistPluginModelTables(file: Path): DevDistPluginModelTables 
       CONTENT_CANDIDATE_OVERRIDES_SECTION -> parseContentCandidateOverrideRow(file = file, row = line, result = overrides)
       DESCRIPTOR_POPULATION_SECTION -> descriptorPopulation.computeIfAbsent(line.substringBefore('/')) { ArrayList() }.add(line.substringAfter('/', ""))
       PLUGIN_JAR_PLACEMENT_SECTION -> parsePluginJarPlacementRow(file = file, row = line, result = jarPlacement)
+      PLUGIN_DESCRIPTOR_RESIDUE_SECTION -> parsePluginDescriptorResidueRow(file = file, row = line, result = descriptorResidue)
       else -> error("$file: `$line` is above the first section header, so no section states it")
     }
   }
@@ -205,12 +270,95 @@ internal fun readDevDistPluginModelTables(file: Path): DevDistPluginModelTables 
     contentCandidateOverrides = overrides,
     descriptorPopulation = descriptorPopulation,
     pluginJarPlacement = jarPlacement,
+    pluginDescriptorResidue = groupDescriptorResidueByMainModule(descriptorResidue),
   )
 }
 
+/** One key's rows, grouped under the plugin every reader asks by. */
+private fun groupDescriptorResidueByMainModule(
+  rows: Map<String, DescriptorResidueRows>,
+): Map<String, Map<String, DescriptorResidueSection>> {
+  val result = LinkedHashMap<String, MutableMap<String, DescriptorResidueSection>>()
+  for ((key, builder) in rows) {
+    result.computeIfAbsent(key.substringBefore('/')) { LinkedHashMap() }.put(key, builder.build())
+  }
+  return result
+}
+
 /** Every section name, so the reader states one list and the failure message reads it. */
-private val PLUGIN_MODEL_TABLE_SECTIONS: List<String> =
-  listOf(CONTENT_VETOES_SECTION, CONTENT_CANDIDATE_OVERRIDES_SECTION, DESCRIPTOR_POPULATION_SECTION, PLUGIN_JAR_PLACEMENT_SECTION)
+private val PLUGIN_MODEL_TABLE_SECTIONS: List<String> = listOf(
+  CONTENT_VETOES_SECTION,
+  CONTENT_CANDIDATE_OVERRIDES_SECTION,
+  DESCRIPTOR_POPULATION_SECTION,
+  PLUGIN_JAR_PLACEMENT_SECTION,
+  PLUGIN_DESCRIPTOR_RESIDUE_SECTION,
+)
+
+/**
+ * One key's rows of [PLUGIN_DESCRIPTOR_RESIDUE_SECTION], collected until the read ends.
+ *
+ * The section states one row per fact, so a key's fields arrive over several rows and a mutable accumulator is what
+ * reads them. [build] is what hands the immutable section on. Every list keeps the file's order, because the order of
+ * a refusal and of a marker is what the patch applies.
+ */
+private class DescriptorResidueRows {
+  @JvmField val descriptors: MutableList<DescriptorRow> = ArrayList()
+  @JvmField val libraryDescriptors: MutableList<DescriptorLibraryRow> = ArrayList()
+  @JvmField val refusedContentModules: MutableList<String> = ArrayList()
+  @JvmField val separateJar: MutableList<String> = ArrayList()
+  @JvmField val markers: MutableList<String> = ArrayList()
+  @JvmField var versionSuffix: String = ""
+  @JvmField var noEmbedding: Boolean = false
+  @JvmField var exactVersion: Boolean = false
+  @JvmField var retainProductDescriptor: Boolean = false
+
+  fun build(): DescriptorResidueSection = DescriptorResidueSection(
+    descriptors = descriptors,
+    libraryDescriptors = libraryDescriptors,
+    refusedContentModules = refusedContentModules,
+    separateJar = separateJar,
+    markers = markers,
+    versionSuffix = versionSuffix,
+    noEmbedding = noEmbedding,
+    exactVersion = exactVersion,
+    retainProductDescriptor = retainProductDescriptor,
+  )
+}
+
+/**
+ * Reads one row of [PLUGIN_DESCRIPTOR_RESIDUE_SECTION] into [result].
+ *
+ * `<key>`, the field name, then that field's own tokens, tab separated. Tabs, unlike the space-separated candidacy
+ * rows, because a marker row states a `:` and a space of its own.
+ *
+ * An unknown field and a wrong token count are both hard errors, unlike an absent file. Either one drops a fact the
+ * patch needs, and a descriptor that lost a row is not noticed until the plugin loads.
+ */
+private fun parsePluginDescriptorResidueRow(file: Path, row: String, result: MutableMap<String, DescriptorResidueRows>) {
+  val fields = row.split('\t')
+  if (fields.size < 2 || fields[0].isEmpty()) {
+    error("$file: a row states `<key>\t<field>` and then that field's own tokens, got `$row`")
+  }
+  val field = fields[1]
+  val arity = DESCRIPTOR_RESIDUE_FIELD_ARITY.get(field)
+             ?: error("$file: `$field` is not a field of this section. It states ${DESCRIPTOR_RESIDUE_FIELD_ARITY.keys.joinToString { "`$it`" }}")
+  val values = fields.drop(2)
+  if (values.size != arity || values.any { it.isEmpty() }) {
+    error("$file: the `$field` field takes $arity tokens after the field name, got `$row`")
+  }
+  val rows = result.computeIfAbsent(fields[0]) { DescriptorResidueRows() }
+  when (field) {
+    "descriptor" -> rows.descriptors.add(DescriptorRow(loadPath = values[0], path = values[1]))
+    "library_descriptor" -> rows.libraryDescriptors.add(DescriptorLibraryRow(loadPath = values[0], module = values[1], library = values[2]))
+    "refused_content_module" -> rows.refusedContentModules.add(values[0])
+    "separate_jar" -> rows.separateJar.add(values[0])
+    "marker" -> rows.markers.add(values[0])
+    "version_suffix" -> rows.versionSuffix = values[0]
+    "no_embedding" -> rows.noEmbedding = true
+    "exact_version" -> rows.exactVersion = true
+    "retain_product_descriptor" -> rows.retainProductDescriptor = true
+  }
+}
 
 /**
  * Reads one row of [PLUGIN_JAR_PLACEMENT_SECTION] into [result].

@@ -415,7 +415,7 @@ internal class DevDistPluginJarPlanTest {
       memberJars = mapOf("intellij.demo.rt" to listOf("demo-rt.jar"), "intellij.demo.ns" to listOf("ns/ns.jar", "demo.jar")),
     )
     val file = temporaryFolder.root.toPath().resolve("dev-dist.yaml")
-    file.writeText(composeDevDistResidueText(content = section, existing = file)!!)
+    file.writeText(composeDevDistResidueText(section)!!)
 
     val parsed = parseDevDistResidue(file)!!.content!!
     assertEquals(section.memberJars, parsed.memberJars)

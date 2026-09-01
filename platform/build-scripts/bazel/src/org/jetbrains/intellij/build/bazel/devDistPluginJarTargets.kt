@@ -532,7 +532,7 @@ internal fun computeMovablePluginJars(
   val memberRelations = LinkedHashMap<String, String>()
   val withheldRelations = LinkedHashMap<PluginJarExclusion, MutableList<String>>()
 
-  val scrambles = descriptorResidueOf(module).values.any { it?.noEmbedding == true }
+  val scrambles = descriptorResidueOf(module = module, context = context).values.any { it.noEmbedding }
   // Every destination this plugin derives twice. A partition needs the whole set before the first verdict, which is why
   // this is counted ahead of the loop rather than inside it.
   val ambiguous = movable.groupingBy { it.relativeOutputFile }.eachCount().filterValues { it > 1 }.keys
