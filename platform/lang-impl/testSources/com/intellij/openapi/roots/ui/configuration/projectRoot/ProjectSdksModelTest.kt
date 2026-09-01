@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.downloadSdk
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -19,7 +20,7 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.UIUtil
 import org.junit.Assert
 import java.io.IOException
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.absolute
 import kotlin.io.path.createTempDirectory
@@ -94,27 +95,28 @@ class ProjectSdksModelTest : LightPlatformTestCase() {
     fun doDownload(onSdk: (Sdk) -> Unit = {},
                    actualDownload: (ProgressIndicator) -> Unit) {
       val editableSdk = AtomicReference<Sdk>()
-      val isDownloadCompleted = AtomicBoolean(false)
+      val isDownloadCompleted = CountDownLatch(1)
 
-      model.setupInstallableSdk(project, type, MyDownloadTask(
+      val incompleteSdk = model.createIncompleteSdk(type, MyDownloadTask(
         homeDir = plannedDir,
         sdkName = sdkName,
-        onDownload = {indicator ->
-              ThreadingAssertions.assertBackgroundThread()
-              actualDownload(indicator)
+        onDownload = { indicator ->
+          ThreadingAssertions.assertBackgroundThread()
+          actualDownload(indicator)
         }
       ), Consumer { sdk ->
         editableSdk.set(sdk)
         onSdk(sdk)
       })
+      downloadSdk(project, incompleteSdk)
 
       // wait for background download completion
       val sdk = editableSdk.get() ?: error("The incomplete SDK is expected to be created")
       Assert.assertTrue("The download is expected to be running for $sdk",
                         SdkDownloadTracker.getInstance().tryRegisterDownloadingListener(
-                          sdk, testRootDisposable, null, Consumer { isDownloadCompleted.set(true) }))
+                          sdk, testRootDisposable, null) { isDownloadCompleted.countDown() })
 
-      PlatformTestUtil.waitWithEventsDispatching("The SDK download is not completed", { isDownloadCompleted.get() }, 60)
+      PlatformTestUtil.waitWithEventsDispatching("The SDK download is not completed", { isDownloadCompleted.count == 0L }, 60)
       UIUtil.dispatchAllInvocationEvents()
     }
   }
